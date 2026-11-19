@@ -22,7 +22,7 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
-vi.mock("react", () => ({ cache: (fn: Function) => fn }));
+vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
 
 const workspaceId = "workspace-1";
 const mockKeys = [

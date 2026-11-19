@@ -13,7 +13,7 @@ import {
 
 const t = ((key: string, options?: Record<string, unknown>) => {
   const translations: Record<string, string> = {
-    "common.choice_n": `Choice ${options?.n}`,
+    "common.choice_n": `Choice ${String(options?.n)}`,
     "common.headline": "Headline",
     "common.other_placeholder": "Other Placeholder",
     "workspace.surveys.edit.please_specify": "Please specify",

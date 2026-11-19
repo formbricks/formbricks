@@ -2,7 +2,7 @@ type: object
 description: >-
   The outcome of one Test request. When an answer came, it is also kept as the step's last Test
   request response (status, content type and up to 64 KB of body), which the editor offers to use as
-  the step's expected response, whose fields are that step's Variables.
+  the step's expected response body, whose fields are that step's Variables.
 required:
   - request
   - response

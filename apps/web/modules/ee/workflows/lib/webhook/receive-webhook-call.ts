@@ -70,7 +70,7 @@ const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
 const RUN_SELECT = { id: true, createdAt: true } as const;
 
 /**
- * HTTPS is required (ADR 0041). Behind a proxy the scheme comes from `X-Forwarded-Proto` (its first hop
+ * HTTPS is required (ADR 0057). Behind a proxy the scheme comes from `X-Forwarded-Proto` (its first hop
  * when several proxies appended), otherwise from the request itself. Plain HTTP is accepted for localhost,
  * and on a self-hosted instance whose admin set `DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP=1` (never on Cloud).
  */

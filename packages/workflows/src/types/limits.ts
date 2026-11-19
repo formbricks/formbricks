@@ -11,6 +11,7 @@ export const WORKFLOW_LIMITS = {
   /** Steps (nodes after the trigger) per workflow. The editor's add-step menu disables at this. */
   maxSteps: 25,
   /** Leaf conditions per If/else, nested groups included. */
+  /** Per If/else and per Filter: both take a condition group. */
   maxConditionsPerIfElse: 20,
   /** Cases per Switch, its Default branch not counted (ENG-7157). */
   minSwitchCases: 2,

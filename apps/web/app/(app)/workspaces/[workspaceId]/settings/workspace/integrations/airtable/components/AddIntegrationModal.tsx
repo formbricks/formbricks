@@ -108,7 +108,7 @@ type AddIntegrationModalProps = {
 const NoBaseFoundError = () => {
   const { t } = useTranslation();
   return (
-    <Alert role="status">
+    <Alert alertRole="status">
       <AlertTitle>{t("workspace.integrations.airtable.no_bases_found")}</AlertTitle>
       <AlertDescription>{t("workspace.integrations.airtable.please_create_a_base")}</AlertDescription>
     </Alert>
@@ -214,7 +214,7 @@ export const AddIntegrationModal = ({
     if (isEditMode) {
       const { index: _index, ...rest } = defaultData;
       reset(rest);
-      fetchTable(defaultData.base);
+      void fetchTable(defaultData.base);
       setIncludeVariables(!!defaultData.includeVariables);
       setIncludeHiddenFields(!!defaultData.includeHiddenFields);
       setIncludeMetadata(!!defaultData.includeMetadata);

@@ -9,6 +9,12 @@ export const isValidValue = (value: TResponseDataValue) => {
   );
 };
 
+/** Whether an answer is empty: an empty string, an empty list or an object without keys. */
+export const isEmptyResponseValue = (value: TResponseDataValue): boolean =>
+  (typeof value === "string" && value === "") ||
+  (Array.isArray(value) && value.length === 0) ||
+  (typeof value === "object" && Object.keys(value).length === 0);
+
 export const isSubmissionTimeMoreThan5Minutes = (submissionTimeISOString: Date) => {
   const submissionTime: Date = new Date(submissionTimeISOString);
   const currentTime: Date = new Date();

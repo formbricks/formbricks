@@ -13,7 +13,15 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
@@ -24,6 +32,7 @@ import type { TEditorTokenChip } from "../lib/token-chips";
 import "../styles-editor-frontend.css";
 import "../styles-editor.css";
 import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "./auto-link-plugin";
+import { ChipClickPlugin } from "./chip-click-plugin";
 import { EditorContentChecker } from "./editor-content-checker";
 import { LinkEditor } from "./link-editor";
 import { ListTabIndentationPlugin } from "./list-tab-indentation-plugin";
@@ -32,7 +41,9 @@ import { RecallPlugin } from "./recall-plugin";
 import { type TEditorRecallSource, createSurveyRecallSource } from "./recall-source";
 import { TokenChipNode } from "./token-chip-node";
 import { TokenChipPlugin } from "./token-chip-plugin";
+import { TokenChipRendererContext } from "./token-chip-view";
 import { ToolbarPlugin } from "./toolbar-plugin";
+import { useFallbackPopover } from "./use-fallback-popover";
 
 /*
  Detault toolbar items:
@@ -77,9 +88,18 @@ export type TextEditorProps = {
    * it changes.
    */
   readonly tokenChips?: readonly TEditorTokenChip[];
+  /**
+   * Draws a token chip instead of its label, e.g. a workflow email's survey link as a menu with the
+   * survey's name. Return null to keep the default chip. Keep its identity stable (memoize it): every
+   * chip redraws when it changes.
+   */
+  readonly renderTokenChip?: (chip: TEditorTokenChip) => ReactNode;
+  /** Controls drawn after the toolbar's own buttons, given what they may do to the text. */
+  readonly renderToolbarExtras?: (actions: TEditorToolbarActions) => ReactNode;
   readonly fallbacks?: { [id: string]: string };
   readonly addFallback?: () => void;
-  readonly autoFocus?: boolean;
+  /** Focus the editor when it mounts (Lexical's AutoFocusPlugin), e.g. the empty headline of a question the user just added. */
+  readonly focusOnMount?: boolean;
   readonly id?: string;
   readonly isExternalUrlsAllowed?: boolean;
   /**
@@ -89,9 +109,18 @@ export type TextEditorProps = {
   readonly keepEscapedText?: boolean;
 };
 
+/** What a control in `renderToolbarExtras` may do to the text. */
+export interface TEditorToolbarActions {
+  /**
+   * Types text at the cursor the editor last had (or on a new line at the end); a token in
+   * `tokenChips` becomes its chip.
+   */
+  insertText: (text: string) => void;
+}
+
 const editorConfig = {
   theme: exampleTheme,
-  onError(error: any) {
+  onError(error: Error) {
     throw error;
   },
   namespace: "",
@@ -130,7 +159,9 @@ const SyncEditablePlugin = ({ editable }: Readonly<{ editable: boolean }>) => {
 export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
   const editorContainerRef = useRef<HTMLDivElement>(null);
-  const [showFallbackInput, setShowFallbackInput] = useState(false);
+  const fallbackPopover = useFallbackPopover();
+  const showFallbackInput = fallbackPopover.isOpen;
+  const setShowFallbackInput = fallbackPopover.setOpen;
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>([]);
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(props.fallbacks || {});
   const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
@@ -148,96 +179,100 @@ export const Editor = (props: TextEditorProps) => {
   return (
     <>
       <div className={cn("editor rounded-md", editable ? "cursor-text" : "cursor-not-allowed")}>
-        <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
-          <SyncEditablePlugin editable={editable} />
-          <div
-            ref={editorContainerRef}
-            className={cn(
-              "editor-container rounded-md p-0",
-              // Defined in styles-editor.css — see the comment there for why this state can't be
-              // expressed as Tailwind utilities.
-              !editable && "editor-container-disabled",
-              props.isInvalid && "border! border-red-500!"
-            )}>
-            <ToolbarPlugin
-              getText={props.getText}
-              setText={props.setText}
-              editable={editable}
-              excludedToolbarItems={props.excludedToolbarItems}
-              variables={props.variables}
-              updateTemplate={props.updateTemplate}
-              firstRender={props.firstRender}
-              setFirstRender={props.setFirstRender}
-              localSurvey={props.localSurvey}
-              elementId={props.elementId}
-              selectedLanguageCode={props.selectedLanguageCode}
-              setShowRecallItemSelect={setShowRecallItemSelect}
-              recallItemsCount={recallItems.length}
-              setShowFallbackInput={setShowFallbackInput}
-              setShowLinkEditor={setShowLinkEditor}
-              isExternalUrlsAllowed={props.isExternalUrlsAllowed}
-              keepEscapedText={props.keepEscapedText}
-            />
-            {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
-            <div className="editor-inner scroll-bar" style={{ height: props.height }}>
-              <RichTextPlugin
-                contentEditable={
-                  <ContentEditable
-                    style={{ height: props.height }}
-                    className="editor-input"
-                    aria-labelledby={props.id}
-                    aria-invalid={props.isInvalid ? true : undefined}
-                    aria-describedby={props.ariaDescribedBy}
-                    dir="auto"
-                  />
-                }
-                placeholder={
-                  // Overlay the (empty-state-only) placeholder on the contentEditable instead of
-                  // flowing after it — a static sibling would render below the input, which shows
-                  // once the input's min-height exceeds one line. pointer-events-none keeps clicks
-                  // on the placeholder text focusing the editor. Padding/leading mirror .editor-input.
-                  <div
-                    className="pointer-events-none absolute top-0 left-0 px-2.5 pt-[5px] text-sm leading-6 text-slate-400"
-                    dir="auto">
-                    {props.placeholder ?? ""}
-                  </div>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
+        <TokenChipRendererContext.Provider value={props.renderTokenChip ?? null}>
+          <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
+            <SyncEditablePlugin editable={editable} />
+            <div
+              ref={editorContainerRef}
+              className={cn(
+                "editor-container rounded-md p-0",
+                // Defined in styles-editor.css — see the comment there for why this state can't be
+                // expressed as Tailwind utilities.
+                !editable && "editor-container-disabled",
+                props.isInvalid && "border! border-red-500!"
+              )}>
+              <ToolbarPlugin
+                getText={props.getText}
+                setText={props.setText}
+                editable={editable}
+                excludedToolbarItems={props.excludedToolbarItems}
+                variables={props.variables}
+                updateTemplate={props.updateTemplate}
+                firstRender={props.firstRender}
+                setFirstRender={props.setFirstRender}
+                localSurvey={props.localSurvey}
+                elementId={props.elementId}
+                selectedLanguageCode={props.selectedLanguageCode}
+                setShowRecallItemSelect={setShowRecallItemSelect}
+                recallItemsCount={recallItems.length}
+                setShowFallbackInput={setShowFallbackInput}
+                setShowLinkEditor={setShowLinkEditor}
+                isExternalUrlsAllowed={props.isExternalUrlsAllowed}
+                keepEscapedText={props.keepEscapedText}
+                renderToolbarExtras={props.renderToolbarExtras}
               />
-              <ListPlugin />
-              <ListTabIndentationPlugin />
-              {props.isExternalUrlsAllowed && <LinkPlugin />}
-              {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
-              {props.autoFocus && <AutoFocusPlugin />}
-              {props.tokenChips && props.tokenChips.length > 0 && (
-                <TokenChipPlugin chips={props.tokenChips} />
-              )}
-              {recallSource && (
-                <RecallPlugin
-                  recallSource={recallSource}
-                  recallItems={recallItems}
-                  setRecallItems={setRecallItems}
-                  fallbacks={fallbacks}
-                  setFallbacks={setFallbacks}
-                  onShowFallbackInput={() => setShowFallbackInput(true)}
-                  setAddFallbackFunction={setAddFallbackFunction}
-                  setShowRecallItemSelect={setShowRecallItemSelect}
-                  showRecallItemSelect={showRecallItemSelect}
+              {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
+              <div className="editor-inner scroll-bar" style={{ height: props.height }}>
+                <RichTextPlugin
+                  contentEditable={
+                    <ContentEditable
+                      style={{ height: props.height }}
+                      className="editor-input"
+                      aria-labelledby={props.id}
+                      aria-invalid={props.isInvalid ? true : undefined}
+                      aria-describedby={props.ariaDescribedBy}
+                      dir="auto"
+                    />
+                  }
+                  placeholder={
+                    // Overlay the (empty-state-only) placeholder on the contentEditable instead of
+                    // flowing after it — a static sibling would render below the input, which shows
+                    // once the input's min-height exceeds one line. pointer-events-none keeps clicks
+                    // on the placeholder text focusing the editor. Padding/leading mirror .editor-input.
+                    <div
+                      className="pointer-events-none absolute top-0 left-0 px-2.5 pt-[5px] text-sm leading-6 text-slate-400"
+                      dir="auto">
+                      {props.placeholder ?? ""}
+                    </div>
+                  }
+                  ErrorBoundary={LexicalErrorBoundary}
                 />
-              )}
-              <LinkEditor open={showLinkEditor} setOpen={setShowLinkEditor} />
-              <MarkdownShortcutPlugin
-                transformers={
-                  props.disableLists
-                    ? TRANSFORMERS.filter((value, index) => {
-                        if (index !== 3 && index !== 4) return value;
-                      }).filter((t) => (props.isExternalUrlsAllowed ? true : t !== LINK))
-                    : TRANSFORMERS.filter((t) => (props.isExternalUrlsAllowed ? true : t !== LINK))
-                }
-              />
+                <ListPlugin />
+                <ListTabIndentationPlugin />
+                {props.isExternalUrlsAllowed && <LinkPlugin />}
+                {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
+                {props.focusOnMount && <AutoFocusPlugin />}
+                {props.tokenChips && props.tokenChips.length > 0 && (
+                  <TokenChipPlugin chips={props.tokenChips} />
+                )}
+                {recallSource && editable && <ChipClickPlugin onChipClick={fallbackPopover.openForChip} />}
+                {recallSource && (
+                  <RecallPlugin
+                    recallSource={recallSource}
+                    recallItems={recallItems}
+                    setRecallItems={setRecallItems}
+                    fallbacks={fallbacks}
+                    setFallbacks={setFallbacks}
+                    onShowFallbackInput={() => setShowFallbackInput(true)}
+                    setAddFallbackFunction={setAddFallbackFunction}
+                    setShowRecallItemSelect={setShowRecallItemSelect}
+                    showRecallItemSelect={showRecallItemSelect}
+                  />
+                )}
+                <LinkEditor open={showLinkEditor} setOpen={setShowLinkEditor} />
+                <MarkdownShortcutPlugin
+                  transformers={
+                    props.disableLists
+                      ? TRANSFORMERS.filter((value, index) => {
+                          if (index !== 3 && index !== 4) return value;
+                        }).filter((t) => (props.isExternalUrlsAllowed ? true : t !== LINK))
+                      : TRANSFORMERS.filter((t) => (props.isExternalUrlsAllowed ? true : t !== LINK))
+                  }
+                />
+              </div>
             </div>
-          </div>
-        </LexicalComposer>
+          </LexicalComposer>
+        </TokenChipRendererContext.Provider>
       </div>
       {recallItems.length > 0 && (
         <FallbackInput
@@ -247,6 +282,7 @@ export const Editor = (props: TextEditorProps) => {
           addFallback={addFallbackFunction || props.addFallback || (() => {})}
           open={showFallbackInput}
           setOpen={setShowFallbackInput}
+          focusItemId={fallbackPopover.focusItemId}
         />
       )}
     </>

@@ -65,7 +65,7 @@ const responseTrigger = {
 const get = (query = "") =>
   GET(new NextRequest(`http://localhost/api/internal/workflows/${WORKFLOW_ID}/test-responses${query}`), {
     params: Promise.resolve({ workflowId: WORKFLOW_ID }),
-  } as never);
+  });
 
 /** `count` rows, newest first, one second apart: odd ones partial, every one answering q2 only. */
 const makeRows = (count: number) =>

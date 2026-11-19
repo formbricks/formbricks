@@ -18,14 +18,24 @@ export type TWorkflowWalkDecision =
    * picks `then` or `else`; a Switch picks a case id or `default`.
    */
   | { next: "branch"; branch: string }
+  /**
+   * A Filter whose conditions don't hold: the run ends here, completed, and every step after it is
+   * not taken (ADR 0056).
+   */
+  | { next: "end" }
   /** End the walk here (a step failed, or another delivery owns the run). */
   | { next: "stop" };
 
 const isBranchingNode = (node: TWorkflowStepNode): boolean =>
   node.type === "if_else" || node.type === "switch";
 
-/** Only an If/else or a Switch chooses a branch, and they always do. */
+/** Only an If/else or a Switch chooses a branch, and they always do; only a Filter ends the run. */
 const assertDecisionFitsNode = (node: TWorkflowStepNode, decision: TWorkflowWalkDecision): void => {
+  if (decision.next === "end") {
+    if (node.type !== "filter")
+      throw new WorkflowWalkError(`Only a filter node can end the run (${node.id})`);
+    return;
+  }
   const isBranching = isBranchingNode(node);
   if (isBranching !== (decision.next === "branch")) {
     throw new WorkflowWalkError(
@@ -103,7 +113,23 @@ const createWalkGraph = (definition: TWorkflowExecutableDefinition) => {
     return steps;
   };
 
-  return { nodesById, nextNodeId, collectNotTaken };
+  /** Every step after `nodeId`, in canvas order: what a Filter that ended the run did not take. */
+  const collectAfter = (nodeId: string, visited: ReadonlySet<string>): TWorkflowStepNode[] => {
+    const steps: TWorkflowStepNode[] = [];
+    for (const edge of orderedOutgoing(nodeId)) collectFrom(edge.target, new Set(visited), steps);
+    return steps;
+  };
+
+  /** The step `nodeId` names, refusing a cycle or a missing step. */
+  const enter = (nodeId: string, visited: Set<string>): TWorkflowStepNode => {
+    if (visited.has(nodeId)) throw new WorkflowWalkError("Workflow graph must be acyclic");
+    visited.add(nodeId);
+    const node = nodesById.get(nodeId);
+    if (!node) throw new WorkflowWalkError(`Workflow edge targets a missing node: ${nodeId}`);
+    return node;
+  };
+
+  return { nextNodeId, collectNotTaken, collectAfter, enter };
 };
 
 /**
@@ -123,24 +149,21 @@ export const walkWorkflowSteps = async (
   definition: TWorkflowExecutableDefinition,
   visit: (node: TWorkflowStepNode, sequence: number) => Promise<TWorkflowWalkDecision>
 ): Promise<{ stopped: boolean; notTaken: TWorkflowStepNode[] }> => {
-  const { nodesById, nextNodeId, collectNotTaken } = createWalkGraph(definition);
+  const { nextNodeId, collectNotTaken, collectAfter, enter } = createWalkGraph(definition);
   const notTaken: TWorkflowStepNode[] = [];
   const visited = new Set<string>();
   let nodeId = nextNodeId(definition.trigger.id);
   let sequence = 0;
 
   while (nodeId !== null) {
-    if (visited.has(nodeId)) throw new WorkflowWalkError("Workflow graph must be acyclic");
-    visited.add(nodeId);
-
-    const node = nodesById.get(nodeId);
-    if (!node) throw new WorkflowWalkError(`Workflow edge targets a missing node: ${nodeId}`);
-
+    const node = enter(nodeId, visited);
     sequence += 1;
     const decision = await visit(node, sequence);
 
     if (decision.next === "stop") return { stopped: true, notTaken };
     assertDecisionFitsNode(node, decision);
+    if (decision.next === "end")
+      return { stopped: false, notTaken: [...notTaken, ...collectAfter(node.id, visited)] };
     if (decision.next === "branch") notTaken.push(...collectNotTaken(node.id, decision.branch, visited));
 
     nodeId = nextNodeId(node.id, decision.next === "branch" ? decision.branch : undefined);

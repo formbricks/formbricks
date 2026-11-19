@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
+import type { TWorkflowDefinition } from "@formbricks/workflows";
 import {
   type TWorkflowCanvasDirection,
   getAppendedStepPosition,
@@ -88,7 +88,7 @@ const findOpenEnd = (
   let nodeId = rootId;
   for (let guard = 0; guard <= nodes.length; guard++) {
     const node = nodes.find((item) => item.id === nodeId);
-    const branch = node ? getBranchHandles(node as TWorkflowNode)?.[0] : undefined;
+    const branch = node ? getBranchHandles(node)?.[0] : undefined;
     const next = edges.find(
       (edge) => edge.source === nodeId && (branch === undefined || edge.sourceHandle === branch)
     );
@@ -219,7 +219,7 @@ const resolveAnchor = (
   const sourcePosition = positionOf(next, target.sourceNodeId);
   const legOffset =
     target.branch !== undefined && sourceNode
-      ? getBranchLegOffset(next, sourceNode as TWorkflowNode, target.branch, direction)
+      ? getBranchLegOffset(next, sourceNode, target.branch, direction)
       : null;
   return {
     source: target.sourceNodeId,
@@ -298,14 +298,17 @@ export const pasteSteps = ({
   return { definition: next, rootId: piece.rootId, stepCount: piece.nodes.length };
 };
 
-const STEP_REFERENCE = /steps\.([A-Za-z0-9_-]+)\./g;
+const STEP_REFERENCE = /steps\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_[\]-]+(?:\.[A-Za-z0-9_[\]-]+)*)/g;
+
+/** A step reading another step's output (`steps.<sourceStepId>.<field>`). */
+export type TStepReference = { readerId: string; sourceStepId: string; field: string };
 
 /**
- * Steps that read a step's output (`steps.<id>.…`) where that step no longer runs before them, e.g.
- * after a move: the checks before Enable flag them on their cards; this counts them for the warning
- * after a paste.
+ * Every read of a step's output (`steps.<id>.…`) where that step doesn't run before the reader, e.g.
+ * after a move: the checks before Enable flag the readers on their cards; the editor names them in its
+ * warnings.
  */
-export const findStepsReadingUnreachableSteps = (definition: TWorkflowDefinition): string[] => {
+export const findBrokenStepReferences = (definition: TWorkflowDefinition): TStepReference[] => {
   const parents = new Map<string, string[]>();
   for (const edge of definition.edges) {
     parents.set(edge.target, [...(parents.get(edge.target) ?? []), edge.source]);
@@ -321,12 +324,21 @@ export const findStepsReadingUnreachableSteps = (definition: TWorkflowDefinition
     }
     return found;
   };
-  return definition.nodes
-    .filter((node) => {
-      const read = [...JSON.stringify(node.config).matchAll(STEP_REFERENCE)].map((match) => match[1]);
-      if (read.length === 0) return false;
-      const earlier = earlierSteps(node.id);
-      return read.some((id) => !earlier.has(id));
-    })
-    .map((node) => node.id);
+  return definition.nodes.flatMap((node) => {
+    const reads = [...JSON.stringify(node.config).matchAll(STEP_REFERENCE)];
+    if (reads.length === 0) return [];
+    const earlier = earlierSteps(node.id);
+    const broken = new Map<string, TStepReference>();
+    for (const [, sourceStepId, field] of reads) {
+      if (!earlier.has(sourceStepId)) {
+        broken.set(`${sourceStepId}.${field}`, { readerId: node.id, sourceStepId, field });
+      }
+    }
+    return [...broken.values()];
+  });
 };
+
+/** The steps that read a step which no longer runs before them; counted for the warning after a paste. */
+export const findStepsReadingUnreachableSteps = (definition: TWorkflowDefinition): string[] => [
+  ...new Set(findBrokenStepReferences(definition).map((reference) => reference.readerId)),
+];

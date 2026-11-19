@@ -1,6 +1,6 @@
 "use client";
 
-import { LockIcon, PencilIcon } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -33,7 +33,7 @@ const getObjectBody = (entry: TWorkflowSampleListItem | null): Record<string, un
   return isPlainObject(entry.sample.body) ? entry.sample.body : null;
 };
 
-/** The expected response's JSON editor state: saves a valid object a moment after typing stops. */
+/** The expected response body's JSON editor state: saves a valid object a moment after typing stops. */
 const useResponseEditor = (workflowId: string, stepId: string) => {
   const { t } = useTranslation();
   const mutation = useSetExpectedResponse(workflowId, stepId);
@@ -77,13 +77,13 @@ const ResponseBody = ({
   view,
   editor,
   isEditable,
-}: {
+}: Readonly<{
   stepId: string;
   body: Record<string, unknown> | null;
   view: TPayloadView;
   editor: TResponseEditor | null;
   isEditable: boolean;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const pasteErrorMessage = usePasteErrorMessage();
   if (view === "json") {
@@ -124,7 +124,7 @@ type TOfferedTest = { at: string; body: Record<string, unknown> };
 
 /**
  * A test response worth offering: a JSON object, not dismissed, and either the first answer while no
- * response fields are set, or a newer one than them with a different body.
+ * expected response body is set, or a newer one than it with a different body.
  */
 const getOfferedTest = (
   expected: TWorkflowSampleListItem | null,
@@ -149,7 +149,7 @@ const TestResponseNotice = ({
   onReview,
   onEditFirst,
   onDone,
-}: {
+}: Readonly<{
   offeredTest: TOfferedTest;
   isFirst: boolean;
   editor: TResponseEditor;
@@ -158,7 +158,7 @@ const TestResponseNotice = ({
   onReview: () => void;
   onEditFirst: () => void;
   onDone: (dismissed: boolean) => void;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
   const time = relativeTime(offeredTest.at);
@@ -202,7 +202,7 @@ const TestResponseNotice = ({
 };
 
 /**
- * An HTTP request step's response fields (ADR 0054): the body its API answers with, whose fields the
+ * An HTTP request step's expected response body (ADR 0054): the body its API answers with, whose fields the
  * later steps use as Variables. Editors own it, like the Webhook trigger's expected payload: they write
  * or paste it, or choose to use a Test request's response. A Test request never changes it.
  */
@@ -212,13 +212,13 @@ export const HttpResponseFieldsCard = ({
   expected,
   lastTest,
   isEditable,
-}: {
+}: Readonly<{
   readonly stepId: string;
   readonly workflowId: string;
   readonly expected: TWorkflowSampleListItem | null;
   readonly lastTest: TWorkflowSampleListItem | null;
   readonly isEditable: boolean;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
   const editor = useResponseEditor(workflowId, stepId);
@@ -249,7 +249,7 @@ export const HttpResponseFieldsCard = ({
     />
   ) : null;
 
-  // What the card shows: the test response under review or offered, else the response fields.
+  // What the card shows: the test response under review or offered, else the expected response body.
   const shownBody =
     (isReviewing || (!expected && !isWriting)) && offeredTest ? offeredTest.body : expectedBody;
   const showsEditor = expected !== null || isWriting;
@@ -295,15 +295,12 @@ export const HttpResponseFieldsCard = ({
         </div>
       )}
       {expected ? (
-        <footer className="flex items-start gap-1.5 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-          <LockIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-          <span>
-            {editor.draft !== null && editor.parsed?.ok === true
-              ? t("workspace.workflows.webhook_payload_saving")
-              : t("workspace.workflows.webhook_expected_payload_owned", {
-                  time: relativeTime(expected.updatedAt),
-                })}
-          </span>
+        <footer className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          {editor.draft !== null && editor.parsed?.ok === true
+            ? t("workspace.workflows.webhook_payload_saving")
+            : t("workspace.workflows.http_response_fields_owned", {
+                time: relativeTime(expected.updatedAt),
+              })}
         </footer>
       ) : null}
     </section>

@@ -2,6 +2,7 @@ import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/prisma";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -251,6 +252,11 @@ const toUpdateUserError = (error: unknown, demoting: boolean): ApiErrorResponseV
   };
 };
 
+/** The user row `updateUser` writes, with the memberships it reads the role from. */
+type TUpdatedUser = Prisma.UserGetPayload<{
+  include: { memberships: { select: { role: true; organizationId: true } } };
+}>;
+
 export const updateUser = async (
   userInput: TUserInputPatch,
   organizationId: string
@@ -301,7 +307,7 @@ export const updateUser = async (
     existingTeams = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
 
     // Build an array of operations for deleting teamUsers that are not in the input.
-    const deleteTeamOps = [] as Prisma.PrismaPromise<any>[];
+    const deleteTeamOps: Prisma.PrismaPromise<unknown>[] = [];
     existingUser.teamUsers.forEach((teamUser) => {
       if (teams && !teams?.includes(teamUser.team.name)) {
         deleteTeamOps.push(
@@ -331,7 +337,7 @@ export const updateUser = async (
     const existingUserTeamNames = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
 
     // Build an array of operations for creating new teamUsers.
-    const createTeamOps = [] as Prisma.PrismaPromise<any>[];
+    const createTeamOps: Prisma.PrismaPromise<unknown>[] = [];
     newTeams?.forEach((team) => {
       if (!existingUserTeamNames.includes(team.name)) {
         createTeamOps.push(
@@ -372,10 +378,7 @@ export const updateUser = async (
       },
     };
 
-    // Matches the pre-existing looseness of `results: any[]` from the array-style transaction
-    // below rather than introducing a stricter type here that the rest of this function's
-    // (already loosely-typed) User <-> TUser mapping isn't written to satisfy.
-    let updatedUser: any;
+    let updatedUser: TUpdatedUser;
 
     const touchesAccountFields = name !== undefined || isActive !== undefined;
 
@@ -436,7 +439,10 @@ export const updateUser = async (
           });
           if (reactivating) await reactivateLockedUser(tx, existingUser.id);
           return user;
-        }
+        },
+        // Every path here updates the user's row, which a Revoke or a bulk end of their MCP grants can hold
+        // while it waits behind a reconciling pass.
+        { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
       );
     } else {
       // Update by id so the mutation is bound to the org-scoped lookup above. Email is
@@ -458,7 +464,8 @@ export const updateUser = async (
       const results = await prisma.$transaction(operations);
 
       // Retrieve the updated user result. Since the update was the last operation, it is the last item.
-      updatedUser = results.at(-1);
+      // The update is the last operation, so its row is the last result.
+      updatedUser = results.at(-1) as TUpdatedUser;
     }
 
     await reconcileOrganizationMembership(organizationId, updatedUser.id);
@@ -480,11 +487,9 @@ export const updateUser = async (
       name: updatedUser.name,
       lastLoginAt: updatedUser.lastLoginAt,
       isActive: updatedUser.isActive,
-      role: updatedUser.memberships.find(
-        (m: { organizationId: string }) => m.organizationId === organizationId
-      )?.role,
+      role: updatedUser.memberships.find((m) => m.organizationId === organizationId)?.role,
       teams: newTeams ? newTeams.map((team) => team.name) : existingTeams,
-    };
+    } as TUser;
 
     return ok(returnedUser);
   } catch (error) {

@@ -1,7 +1,7 @@
 "use client";
 
-import { CopyIcon, InboxIcon, LockIcon, PencilIcon } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { CopyIcon, InboxIcon, PencilIcon } from "lucide-react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowWebhookResource } from "@formbricks/workflows";
@@ -52,11 +52,12 @@ const isNewerDifferentCall = (
 export const ViewSwitch = ({
   value,
   onChange,
-}: {
+}: Readonly<{
   value: TPayloadView;
   onChange: (next: TPayloadView) => void;
-}) => {
+}>) => {
   const { t } = useTranslation();
+  const name = useId();
   const options: { value: TPayloadView; label: string }[] = [
     { value: "variables", label: t("workspace.workflows.webhook_payload_view_variables") },
     { value: "json", label: t("workspace.workflows.webhook_payload_view_json") },
@@ -66,26 +67,31 @@ export const ViewSwitch = ({
       role="radiogroup"
       aria-label={t("workspace.workflows.webhook_payload_view")}
       className="flex shrink-0 rounded-md bg-slate-100 p-0.5">
+      {/* Native radios, as TabToggle has them: arrow keys move between the two views. */}
       {options.map((option) => (
-        <button
+        <label
           key={option.value}
-          type="button"
-          role="radio"
-          aria-checked={value === option.value}
-          onClick={() => onChange(option.value)}
           className={cn(
-            "rounded px-2 py-0.5 text-xs text-slate-600 transition-colors",
+            "cursor-pointer rounded px-2 py-0.5 text-xs text-slate-600 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-dark/50",
             value === option.value && "bg-white font-medium text-slate-900 shadow-xs"
           )}>
+          <input
+            type="radio"
+            name={name}
+            value={option.value}
+            checked={value === option.value}
+            onChange={() => onChange(option.value)}
+            className="sr-only"
+          />
           {option.label}
-        </button>
+        </label>
       ))}
     </div>
   );
 };
 
 /** The card header: what the expected payload is, then the view switch or the "Required" tag. */
-const PayloadHeader = ({ aside }: { aside: ReactNode }) => {
+const PayloadHeader = ({ aside }: Readonly<{ aside: ReactNode }>) => {
   const { t } = useTranslation();
   return (
     <header className="flex items-start justify-between gap-3 px-3 py-2.5">
@@ -110,7 +116,7 @@ const RequiredTag = () => {
 };
 
 /** A blue notice about a received call, with the actions it offers. */
-export const CallNotice = ({ message, children }: { message: string; children: ReactNode }) => (
+export const CallNotice = ({ message, children }: Readonly<{ message: string; children: ReactNode }>) => (
   <div className="flex flex-col gap-2 border-t border-blue-100 bg-blue-50 px-3 py-2.5">
     <p className="flex items-start gap-1.5 text-xs text-blue-900">
       <InboxIcon className="mt-px size-3.5 shrink-0" aria-hidden />
@@ -121,7 +127,7 @@ export const CallNotice = ({ message, children }: { message: string; children: R
 );
 
 /** The Variables inferred from a payload; lists are shown as not supported yet. */
-export const VariableRows = ({ variables }: { variables: TExpectedPayload["variables"] }) => {
+export const VariableRows = ({ variables }: Readonly<{ variables: TExpectedPayload["variables"] }>) => {
   const { t } = useTranslation();
   const typeLabel = useTypeLabel();
   const rows = toVariableListRows(variables);
@@ -165,7 +171,7 @@ export const VariableRows = ({ variables }: { variables: TExpectedPayload["varia
 };
 
 /** What a received call sent: its Variables, or its JSON (read-only). */
-const CallPayload = ({ call, view }: { call: TLastCall; view: TPayloadView }) =>
+const CallPayload = ({ call, view }: Readonly<{ call: TLastCall; view: TPayloadView }>) =>
   view === "json" ? (
     <div className="ph-no-capture max-h-64 overflow-auto p-3">
       <CodeBlock language="json" noMargin>
@@ -181,11 +187,11 @@ const WaitingForCall = ({
   url,
   canSetSample,
   onWrite,
-}: {
+}: Readonly<{
   url: string;
   canSetSample: boolean;
   onWrite: () => void;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const copyCurl = async () => {
     try {
@@ -287,12 +293,12 @@ const PayloadJsonEditor = ({
   sample,
   canSetSample,
   onSaved,
-}: {
+}: Readonly<{
   editor: TEditor;
   sample: TExpectedPayload | null;
   canSetSample: boolean;
   onSaved: () => void;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const pasteErrorMessage = usePasteErrorMessage();
   const reason = editor.parsed && !editor.parsed.ok ? editor.parsed.reason : null;
@@ -324,14 +330,14 @@ const NoPayloadCard = ({
   isWriting,
   onWrite,
   onSaved,
-}: {
+}: Readonly<{
   url: string;
   editor: TEditor;
   canSetSample: boolean;
   isWriting: boolean;
   onWrite: () => void;
   onSaved: () => void;
-}) => (
+}>) => (
   <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
     <PayloadHeader aside={<RequiredTag />} />
     {isWriting ? (
@@ -350,12 +356,12 @@ const ReceivedCallCard = ({
   editor,
   canSetSample,
   onEditFirst,
-}: {
+}: Readonly<{
   lastCall: TLastCall;
   editor: TEditor;
   canSetSample: boolean;
   onEditFirst: () => void;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
   const callerIpLabel = useCallerIpLabel();
@@ -400,14 +406,14 @@ const NewerCallNotice = ({
   isReviewing,
   onReview,
   onDone,
-}: {
+}: Readonly<{
   call: TLastCall;
   editor: TEditor;
   canSetSample: boolean;
   isReviewing: boolean;
   onReview: () => void;
   onDone: (dismissed: boolean) => void;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
   return (
@@ -442,12 +448,12 @@ const SetPayloadCard = ({
   lastCall,
   editor,
   canSetSample,
-}: {
+}: Readonly<{
   sample: TExpectedPayload;
   lastCall: TLastCall | null;
   editor: TEditor;
   canSetSample: boolean;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
   const [view, setView] = useState<TPayloadView>("variables");
@@ -490,9 +496,8 @@ const SetPayloadCard = ({
           }
         />
       </div>
-      <footer className="flex items-start gap-1.5 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        <LockIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-        <span>{footer}</span>
+      <footer className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        {footer}
       </footer>
     </section>
   );
@@ -510,13 +515,13 @@ export const WebhookPayloadSection = ({
   sample,
   lastCall,
   canSetSample,
-}: {
+}: Readonly<{
   readonly workflowId: string;
   readonly url: string;
   readonly sample: TExpectedPayload | null;
   readonly lastCall: TLastCall | null;
   readonly canSetSample: boolean;
-}) => {
+}>) => {
   const editor = usePayloadEditor(workflowId);
   const [isWriting, setIsWriting] = useState(false);
   const startWriting = (initial: string) => {
@@ -555,12 +560,12 @@ const ExpectedPayloadBody = ({
   view,
   reviewedCall,
   jsonEditor,
-}: {
+}: Readonly<{
   sample: TExpectedPayload;
   view: TPayloadView;
   reviewedCall: TLastCall | null;
   jsonEditor: ReactNode;
-}) => {
+}>) => {
   const { t } = useTranslation();
   if (reviewedCall) {
     return (

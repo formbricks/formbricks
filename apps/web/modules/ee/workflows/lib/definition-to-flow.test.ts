@@ -15,37 +15,36 @@ import {
 
 const t = ((key: string) => key) as unknown as TFunction;
 
-const buildDefinition = (overrides?: Partial<TWorkflowDefinition>): TWorkflowDefinition =>
-  ({
-    schemaVersion: 1,
-    entryNodeId: "trigger-1",
-    trigger: {
-      id: "trigger-1",
-      type: "trigger",
-      triggerType: "response.completed",
-      config: { surveyId: "u9aohwvk1n3e0gms8p2q6lwt", endingCardIds: [] },
+const buildDefinition = (overrides?: Partial<TWorkflowDefinition>): TWorkflowDefinition => ({
+  schemaVersion: 1,
+  entryNodeId: "trigger-1",
+  trigger: {
+    id: "trigger-1",
+    type: "trigger",
+    triggerType: "response.completed",
+    config: { surveyId: "u9aohwvk1n3e0gms8p2q6lwt", endingCardIds: [] },
+    ui: { position: { x: 0, y: 0 } },
+  },
+  nodes: [
+    {
+      id: "action-1",
+      type: "action",
+      actionType: "send_email",
+      label: "Send email",
+      config: {
+        to: "respondent@example.com",
+        from: "team@example.com",
+        replyTo: [],
+        subject: "Thanks",
+        body: "Body",
+        attachResponseData: false,
+      },
       ui: { position: { x: 0, y: 0 } },
     },
-    nodes: [
-      {
-        id: "action-1",
-        type: "action",
-        actionType: "send_email",
-        label: "Send email",
-        config: {
-          to: "respondent@example.com",
-          from: "team@example.com",
-          replyTo: [],
-          subject: "Thanks",
-          body: "Body",
-          attachResponseData: false,
-        },
-        ui: { position: { x: 0, y: 0 } },
-      },
-    ],
-    edges: [{ id: "edge-1", source: "trigger-1", target: "action-1" }],
-    ...overrides,
-  }) as TWorkflowDefinition;
+  ],
+  edges: [{ id: "edge-1", source: "trigger-1", target: "action-1" }],
+  ...overrides,
+});
 
 describe("snapWorkflowNodePosition", () => {
   test("snaps to the 20px grid", () => {
@@ -77,7 +76,7 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     expect(nodes).toHaveLength(2);
     expect(nodes[0]).toMatchObject({
       id: "trigger-1",
-      data: { category: "trigger", icon: "trigger", title: "workspace.workflows.response_completed" },
+      data: { category: "trigger", icon: "survey", title: "workspace.workflows.response_completed" },
     });
     expect(nodes[1]).toMatchObject({
       id: "action-1",
@@ -397,6 +396,18 @@ describe("withBranchLegOffsets", () => {
       node.id === "email-a" ? { ...node, position: { x: -300, y: 460 } } : node
     );
     expect(legsById(withBranchLegOffsets(dragged, definition.edges))["if-1"]).toEqual([-520, 180]);
+  });
+
+  test("holds a fork's legs still while a branch's step is being moved onto a `+`", () => {
+    const { definition, nodes } = nestedFlow();
+    const emailA = nodes.find((node) => node.id === "email-a")!;
+    const dragged = nodes.map((node) =>
+      node.id === "email-a" ? { ...node, position: { x: 600, y: 460 } } : node
+    );
+    const frozen = { id: "email-a", position: emailA.position };
+    expect(legsById(withBranchLegOffsets(dragged, definition.edges, "vertical", frozen))["if-1"]).toEqual([
+      -360, 180,
+    ]);
   });
 
   test("gives an empty branch its own leg beside the other one", () => {

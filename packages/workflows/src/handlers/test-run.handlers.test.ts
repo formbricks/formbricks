@@ -178,7 +178,7 @@ beforeEach(() => {
   service.createTestRun.mockResolvedValue({ id: runId });
   service.getWorkflowRun.mockImplementation(() => {
     const calls = service.createTestRun.mock.calls;
-    const trigger = calls.length > 0 ? calls[0][1] : null;
+    const trigger = calls.length > 0 ? calls[0][1].triggerPayload : null;
     return Promise.resolve(makeRunDetail(trigger?.type === "webhook" ? trigger.payload : {}));
   });
   runTest.mockResolvedValue(undefined);
@@ -190,10 +190,19 @@ describe("createTestRun", () => {
 
     expect(res.status).toBe(201);
     expect(res.headers.get("Location")).toBe(`/api/v3/workflows/runs/${runId}`);
-    expect(service.createTestRun).toHaveBeenCalledWith(
-      { workflowId, workspaceId },
-      expect.objectContaining({ type: "webhook", workspaceId, payload: { order: { id: 42 } } })
-    );
+    const [scope, created] = service.createTestRun.mock.calls[0];
+    expect(scope).toEqual({ workflowId, workspaceId });
+    expect(created.triggerPayload).toMatchObject({
+      type: "webhook",
+      workspaceId,
+      payload: { order: { id: 42 } },
+    });
+    // The draft it runs is saved with the run, so its graph can be drawn after the draft changes.
+    expect(created.definition).toMatchObject({
+      trigger: { triggerType: "webhook" },
+      nodes: [{ id: "send-email" }],
+      entryNodeId: "trigger",
+    });
     expect(runTest).toHaveBeenCalledWith({ runId, workflowId, workspaceId });
     const body = (await res.json()) as { data: Record<string, unknown> };
     expect(body.data).toMatchObject({
@@ -210,7 +219,7 @@ describe("createTestRun", () => {
 
     expect(service.createTestRun).toHaveBeenCalledTimes(2);
     for (const call of service.createTestRun.mock.calls) {
-      expect(call[1]).toMatchObject({ payload: { order: { id: 7 } } });
+      expect(call[1].triggerPayload).toMatchObject({ payload: { order: { id: 7 } } });
     }
   });
 
@@ -306,17 +315,16 @@ describe("createTestRun for a Response completed workflow", () => {
 
     expect(res.status).toBe(201);
     expect(loadTestRunResponse).toHaveBeenCalledWith({ workspaceId, surveyId, responseId });
-    expect(service.createTestRun).toHaveBeenCalledWith(
-      { workflowId, workspaceId },
-      expect.objectContaining({
-        type: "response.completed",
-        workspaceId,
-        surveyId,
-        responseId,
-        endingCardId: endingId,
-        data: { nps: 9 },
-      })
-    );
+    const [scope, created] = service.createTestRun.mock.calls[0];
+    expect(scope).toEqual({ workflowId, workspaceId });
+    expect(created.triggerPayload).toMatchObject({
+      type: "response.completed",
+      workspaceId,
+      surveyId,
+      responseId,
+      endingCardId: endingId,
+      data: { nps: 9 },
+    });
     expect(runTest).toHaveBeenCalledWith({ runId, workflowId, workspaceId });
   });
 
@@ -325,7 +333,7 @@ describe("createTestRun for a Response completed workflow", () => {
 
     await startTestRun({ responseId });
 
-    expect(service.createTestRun.mock.calls[0][1]).not.toHaveProperty("endingCardId");
+    expect(service.createTestRun.mock.calls[0][1].triggerPayload).not.toHaveProperty("endingCardId");
   });
 
   test("refuses a response outside the trigger's survey or workspace like an unknown id, running nothing", async () => {

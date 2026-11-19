@@ -12,7 +12,7 @@ vi.mock("react", async () => {
   const actualReact = await vi.importActual("react");
   return {
     ...actualReact,
-    cache: vi.fn((fn: (...args: any[]) => any) => fn),
+    cache: vi.fn((fn: (...args: unknown[]) => unknown) => fn),
   };
 });
 
@@ -23,11 +23,11 @@ const baseWorkspace: Workspace = {
   legacyEnvironmentId: null,
   name: "Workspace 1",
   organizationId: "org1",
-  styling: { allowStyleOverwrite: true } as any,
+  styling: { allowStyleOverwrite: true },
   recontactDays: 0,
   inAppSurveyBranding: false,
   linkSurveyBranding: false,
-  config: { channel: null, industry: null } as any,
+  config: { channel: null, industry: null },
   placement: "bottomRight",
   clickOutsideClose: false,
   overlay: "none",

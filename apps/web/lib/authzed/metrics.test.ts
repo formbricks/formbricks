@@ -155,6 +155,7 @@ describe("observeAuthzedOutboxStatus", () => {
     pending: 11,
     revocationsPastCritical: 1,
     revocationsPastWarning: 3,
+    unknownType: 4,
   };
   const readStatus = vi.fn();
   const collect = async () => {
@@ -188,6 +189,7 @@ describe("observeAuthzedOutboxStatus", () => {
       ["formbricks_authzed_projection_outbox_status", 2, { state: "dead_lettered" }],
       ["formbricks_authzed_projection_outbox_status", 3, { state: "revocation_warning" }],
       ["formbricks_authzed_projection_outbox_status", 1, { state: "revocation_critical" }],
+      ["formbricks_authzed_projection_outbox_status", 4, { state: "unknown_type" }],
       ["formbricks_authzed_projection_outbox_oldest_pending_age_seconds", 47, undefined],
       ["formbricks_authzed_projection_outbox_status_last_read_timestamp_seconds", 1_700_000_000, undefined],
     ]);

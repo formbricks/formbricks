@@ -332,7 +332,7 @@ describe("updateBlock", () => {
 
   test("should return error when trying to update id", () => {
     const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
-    const result = updateBlock(survey, "block-1", { id: "new-id" } as any);
+    const result = updateBlock(survey, "block-1", { id: "new-id" } as Parameters<typeof updateBlock>[2]);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -992,7 +992,7 @@ describe("default codes (ENG-6782)", () => {
     ]);
     const result = updateElementInBlock(survey, "b1", "a", {
       choices: [choice("x", "1"), choice("y", "2"), choice("z")],
-    } as Partial<TSurveyElement>);
+    });
     if (!result.ok) throw result.error;
     const element = result.data.blocks[0].elements[0] as unknown as { choices: { code: string }[] };
     expect(element.choices.map((c) => c.code)).toEqual(["1", "2", "3"]);

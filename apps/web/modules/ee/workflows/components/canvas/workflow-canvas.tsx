@@ -10,25 +10,26 @@ import {
   ReactFlow,
   ReactFlowProvider,
   applyNodeChanges,
-  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { CollapsedStepPill } from "@/modules/ee/workflows/components/inspector/workflow-inspector-panel";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
+import {
+  WORKFLOW_CANVAS_MAX_ZOOM,
+  useCanvasViewport,
+} from "@/modules/ee/workflows/hooks/use-canvas-viewport";
+import { useDeleteStepShortcut } from "@/modules/ee/workflows/hooks/use-delete-step-shortcut";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import { useStepClipboardShortcuts } from "@/modules/ee/workflows/hooks/use-step-clipboard";
+import { useStepMoveDrag } from "@/modules/ee/workflows/hooks/use-step-move";
 import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
-import {
-  TEST_RUN_DRAWER_SELECTOR,
-  WORKFLOW_CANVAS_FIT_PADDING,
-  getCanvasFitPadding,
-} from "@/modules/ee/workflows/lib/canvas-fit";
+import { WORKFLOW_CANVAS_FIT_PADDING } from "@/modules/ee/workflows/lib/canvas-fit";
 import { getSurveyChoiceLabels } from "@/modules/ee/workflows/lib/choice-conditions";
 import {
   WORKFLOW_ADD_BUTTON_EDGE_TYPE,
@@ -38,8 +39,6 @@ import {
   WORKFLOW_CANVAS_SNAP_GRID,
   haveSameNodePositions,
   reorganizeWorkflowDefinition,
-  snapWorkflowNodePosition,
-  updateNodePosition,
   withBranchLegOffsets,
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
@@ -59,19 +58,19 @@ import {
   isWorkflowReadOnlyAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
+  selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
-  toggleWorkflowInspectorAtom,
+  stepMoveDragAtom,
   workflowAtom,
   workflowCanvasDirectionAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
 } from "@/modules/ee/workflows/state/editor";
-import { editorRunDrawerAtom } from "@/modules/ee/workflows/state/run-drawer";
-import { Button } from "@/modules/ui/components/button";
 import { AddButtonEdge } from "./add-button-edge";
 import { BranchEdge } from "./branch-edge";
 import { CanvasControls } from "./canvas-controls";
 import { hoveredWorkflowEdgeIdAtom } from "./edge-insert-button";
+import { StepMoveOrigin } from "./step-move-origin";
 import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
 import { WorkflowBranchNode } from "./workflow-branch-node";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
@@ -88,36 +87,23 @@ const EDGE_TYPES: EdgeTypes = {
   [WORKFLOW_BRANCH_EDGE_TYPE]: BranchEdge,
 };
 
-// The canvas is the page's main action — let fitView scale small flows past the former 0.85 cap,
-// which rendered a fresh two-node workflow noticeably small. 2x proved too big; 1.15 is three
-// zoom-out steps down from it (RF's zoomIn/zoomOut step is 1.2x, and 2 / 1.2^3 ≈ 1.157).
-const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
-
-// The inspector column animates its width over 150ms (see workflow-inspector-panel.tsx); refit
-// only after the canvas has its final size, with a small buffer.
-const INSPECTOR_RESIZE_SETTLE_MS = 170;
-// Near-instant pan: the refit should feel like part of the sidebar toggle, not a second animation.
-const INSPECTOR_REFIT_PAN_MS = INSPECTOR_RESIZE_SETTLE_MS / 4;
-
 interface WorkflowCanvasProps {
   isEditable: boolean;
 }
-
-/** How long a re-arranged flow takes to reach React Flow and be measured, before the view refits. */
-const LAYOUT_REFIT_DELAY_MS = 120;
 
 const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) => {
   const { t } = useTranslation();
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
   const flowNodes = useAtomValue(workflowFlowNodesAtom);
+  const stepMoveDragState = useAtomValue(stepMoveDragAtom);
   const isSnapToCanvasEnabled = useAtomValue(isWorkflowSnapToCanvasEnabledAtom);
   const isLocked = useAtomValue(isCanvasLockedAtom);
   const setLocked = useSetAtom(isCanvasLockedAtom);
   const direction = useAtomValue(workflowCanvasDirectionAtom);
   const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
-  const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
+  const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
   const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setHoveredEdgeId = useSetAtom(hoveredWorkflowEdgeIdAtom);
   useStepClipboardShortcuts();
@@ -125,9 +111,8 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
-  const { fitView } = useReactFlow();
-  const isRunDrawerOpen = useAtomValue(editorRunDrawerAtom).isOpen;
   const canvasRef = useRef<HTMLDivElement>(null);
+  useDeleteStepShortcut(canvasRef);
   // `isEditable` (canEditDefinition) is the API-side gate. The drag/pointer mode toggle is the
   // user-driven gate layered on top: even when permissions allow editing, the canvas stays
   // non-mutable until the user switches to pointer mode.
@@ -200,100 +185,59 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     );
   }, [definition, runHighlight]);
 
+  // The step whose panel is open. Its card is always the highlighted one, however the panel opened
+  // (a click, a new step, the URL), so the panel and the canvas never disagree.
+  const openNodeId = isNodeConfigOpen ? selectedNodeId : null;
+
   // Keep ReactFlow's nodes in sync with the projected definition while preserving the user's
   // current selection — recomputing from scratch would lose it on every definition edit.
+  // Closing the panel clears the highlight once, so a card is never highlighted without its panel.
+  const wasPanelOpenRef = useRef(false);
   useEffect(() => {
+    const hasPanelClosed = wasPanelOpenRef.current && !openNodeId;
+    wasPanelOpenRef.current = openNodeId !== null;
     setFlowNodes((currentNodes) => {
       const currentNodesById = new Map(currentNodes.map((node) => [node.id, node]));
 
-      return derivedFlowNodes.map((node) => ({
-        ...node,
-        selected: currentNodesById.get(node.id)?.selected ?? node.selected,
-      }));
+      return derivedFlowNodes.map((node) => {
+        let selected = currentNodesById.get(node.id)?.selected ?? node.selected;
+        if (openNodeId) selected = node.id === openNodeId;
+        else if (hasPanelClosed) selected = false;
+        return { ...node, selected };
+      });
     });
-  }, [derivedFlowNodes, setFlowNodes]);
+  }, [derivedFlowNodes, openNodeId, setFlowNodes]);
 
   // Each If/else and Switch puts its fork's legs right above its branches' steps, from where the
-  // canvas has them now, so a branch's line runs straight down even while its step is dragged.
+  // canvas has them now. While a card is dragged its legs stay put, so the `+` on them hold still.
   const definitionEdges = definition?.edges;
+  const draggedStepId = stepMoveDragState?.stepId;
+  const draggedFrom = stepMoveDragState?.start;
   const displayedFlowNodes = useMemo(() => {
-    const nodes = withBranchLegOffsets(flowNodes, definitionEdges ?? [], direction);
+    const frozen = draggedStepId && draggedFrom ? { id: draggedStepId, position: draggedFrom } : null;
+    const nodes = withBranchLegOffsets(flowNodes, definitionEdges ?? [], direction, frozen);
     if (!runHighlight) return nodes;
     return nodes.map((node) =>
       runHighlight.notTakenStepIds.has(node.id)
         ? { ...node, className: cn(node.className, "opacity-40") }
         : node
     );
-  }, [flowNodes, definitionEdges, runHighlight, direction]);
+  }, [flowNodes, definitionEdges, runHighlight, direction, draggedStepId, draggedFrom]);
 
   const handleNodesChange: OnNodesChange<Node<TWorkflowNodeData>> = useCallback(
     (changes) => setFlowNodes((currentNodes) => applyNodeChanges(changes, currentNodes)),
     [setFlowNodes]
   );
 
-  const handleNodeDragStop = useCallback(
-    (node: Node<TWorkflowNodeData>) => {
-      if (!canMutate) return;
+  // Dragging a card onto a `+` moves its step there; anywhere else it stays where dropped (use-step-move).
+  const stepMoveDrag = useStepMoveDrag(canvasRef);
 
-      const position = isSnapToCanvasEnabled ? snapWorkflowNodePosition(node.position) : node.position;
-      setDefinition((currentDefinition) =>
-        currentDefinition ? updateNodePosition(currentDefinition, node.id, position) : currentDefinition
-      );
-    },
-    [canMutate, isSnapToCanvasEnabled, setDefinition]
-  );
-
-  // Fit the flow into the part of the canvas that is not behind the Test run drawer, which slides
-  // in over the canvas's right side without resizing it. The drawer is measured at call time, so a
-  // narrow screen's full-width drawer counts too.
-  const refitViewport = useCallback(
-    (duration: number) => {
-      const canvas = canvasRef.current?.getBoundingClientRect();
-      let coverLeft: number | null = null;
-      if (isRunDrawerOpen) {
-        const drawerWidth =
-          document.querySelector<HTMLElement>(TEST_RUN_DRAWER_SELECTOR)?.offsetWidth ?? window.innerWidth;
-        coverLeft = window.innerWidth - drawerWidth;
-      }
-      const padding = canvas
-        ? getCanvasFitPadding({ canvasLeft: canvas.left, canvasRight: canvas.right, coverLeft })
-        : WORKFLOW_CANVAS_FIT_PADDING;
-      // Too little left visible to fit into: keep the current zoom and pan.
-      if (padding === null) return;
-      void fitView({ padding, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4, duration });
-    },
-    [fitView, isRunDrawerOpen]
-  );
-
-  // Opening/closing the inspector resizes the canvas by the panel's width, which can push nodes behind the
-  // panel edge. Refit the VIEWPORT once the width transition settles — fitView only pans/zooms;
-  // node coordinates are untouched. Opening or closing the Test run drawer refits the same way.
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
-  const previousLayoutRef = useRef({ isInspectorVisible, isRunDrawerOpen });
-  useEffect(() => {
-    const previous = previousLayoutRef.current;
-    if (previous.isInspectorVisible === isInspectorVisible && previous.isRunDrawerOpen === isRunDrawerOpen) {
-      return;
-    }
-    previousLayoutRef.current = { isInspectorVisible, isRunDrawerOpen };
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Wait out the whole width transition: fitting mid-way measured a canvas still wider than it ends
-    // up, which cut off a wide flow once the inspector had finished opening.
-    const timeoutHandle = setTimeout(
-      () => refitViewport(prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS),
-      INSPECTOR_RESIZE_SETTLE_MS
-    );
-    return () => clearTimeout(timeoutHandle);
-  }, [isInspectorVisible, isRunDrawerOpen, refitViewport]);
-
-  const recenterAfterLayout = useCallback(() => {
-    // Skip the animated recenter for users who ask for reduced motion (read at call time —
-    // no reactivity needed for a click handler).
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Wait for the new positions to reach React Flow (definition, then nodes, then their measured
-    // sizes) before it recenters the viewport; one frame is too early for a whole new orientation.
-    setTimeout(() => refitViewport(prefersReducedMotion ? 0 : 300), LAYOUT_REFIT_DELAY_MS);
-  }, [refitViewport]);
+  const { handleFitView, recenterAfterLayout, refitAfterLayout } = useCanvasViewport({
+    canvasRef,
+    openNodeId,
+    isInspectorVisible,
+  });
 
   const handleAutoLayout = useCallback(() => {
     if (!canMutate || !definition) return;
@@ -317,8 +261,8 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   useEffect(() => {
     if (!workflow?.id || !definition || refitForDirectionRef.current === workflow.id) return;
     refitForDirectionRef.current = workflow.id;
-    if (direction === "horizontal") setTimeout(() => refitViewport(0), LAYOUT_REFIT_DELAY_MS);
-  }, [workflow?.id, definition, direction, refitViewport]);
+    if (direction === "horizontal") refitAfterLayout();
+  }, [workflow?.id, definition, direction, refitAfterLayout]);
 
   // Switching the orientation re-arranges every step for it: positions laid out top to bottom
   // would read wrong left to right. Saved with the workflow and undone like Auto layout.
@@ -363,32 +307,17 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         // scroll policy: it pans and zooms, so clipping is correct here.
         "relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      {/* The inspector only ever shows a node's config now, so the collapse toggle is only
-          offered while one is open. */}
-      {isNodeConfigOpen ? (
-        <div className="absolute top-4 right-4 z-10">
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-white"
-            aria-label={
-              isInspectorCollapsed
-                ? t("workspace.workflows.expand_inspector")
-                : t("workspace.workflows.collapse_inspector")
-            }
-            aria-pressed={!isInspectorCollapsed}
-            onClick={toggleInspector}>
-            {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
-          </Button>
-        </div>
-      ) : null}
       <ReactFlow
         nodes={displayedFlowNodes}
         edges={flowEdges}
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}
         onNodesChange={handleNodesChange}
-        onNodeDragStop={(_event, node) => handleNodeDragStop(node)}
+        onNodeDragStart={stepMoveDrag.onNodeDragStart}
+        onNodeDrag={stepMoveDrag.onNodeDrag}
+        onNodeDragStop={stepMoveDrag.onNodeDragStop}
+        // A click that wobbles a little still opens the step instead of starting a move.
+        nodeDragThreshold={4}
         onNodeClick={(_event, node) => {
           if (!isLocked) openNodeConfigModal(node.id);
         }}
@@ -410,12 +339,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         }}
         defaultViewport={{ x: 0, y: 0, zoom: WORKFLOW_CANVAS_MAX_ZOOM }}
         nodesDraggable={canMutate}
-        // Disable the delete key entirely when mutation is gated. RF's deleteKeyCode defaults to
-        // "Backspace"; leaving it on lets a read-only member (or an editor on an enabled/archived
-        // workflow) visually drop a selected node — applyNodeChanges removes it from local flowNodes
-        // without ever touching the definition, so the change never persists and re-syncs on reload
-        // into an inconsistent canvas (orphaned edge). `null` disables the shortcut in RF 12.
-        deleteKeyCode={canMutate ? "Backspace" : null}
+        // React Flow's delete key only drops the card from local flowNodes, never from the definition,
+        // so the step came back on the next redraw. Backspace/Delete delete the step through the
+        // definition instead (useDeleteStepShortcut). `null` disables the shortcut in RF 12.
+        deleteKeyCode={null}
         nodesConnectable={false}
         snapGrid={WORKFLOW_CANVAS_SNAP_GRID}
         snapToGrid={isSnapToCanvasEnabled}
@@ -424,6 +351,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         nodesFocusable={!isLocked}>
         {/* Same dot grid the pre-ReactFlow mockup used: radial-gradient(#cbd5e1 1px) on an 18px grid. */}
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} color="#cbd5e1" />
+        <StepMoveOrigin />
       </ReactFlow>
       {/* Empty drafts start with no nodes: the centered picker is how the trigger gets added.
           Gated on status-based editability (not the layout lock) — adding nodes is a content
@@ -440,6 +368,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         isPanMode={isLocked}
         direction={direction}
         onAutoLayout={handleAutoLayout}
+        onFitView={handleFitView}
         onToggleDirection={handleToggleDirection}
         onPanMode={handlePanMode}
         onPointerMode={handlePointerMode}
@@ -448,6 +377,8 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
           a passive badge while valid, a button listing the problems while not. Suppressed while
           the add-trigger picker is up so a fresh draft isn't greeted with a problem count. */}
       {!isTriggerPickerVisible && <WorkflowValidationStatus />}
+      {/* The collapsed step panel stays as a pill at the canvas's top-right (review point 5). */}
+      {isNodeConfigOpen && isInspectorCollapsed ? <CollapsedStepPill /> : null}
     </div>
   );
 };

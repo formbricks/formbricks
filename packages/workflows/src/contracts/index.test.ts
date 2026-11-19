@@ -115,7 +115,7 @@ describe("workflow operation inputs", () => {
     expect(ZListWorkflowRunsInput.safeParse({ workspaceId, statusIn: [] }).success).toBe(false);
   });
 
-  test("test input accepts replay and idempotency key", () => {
+  test("the test input accepts replay and idempotency key", () => {
     expect(() => ZTestWorkflowInput.parse({})).not.toThrow();
     expect(() => ZTestWorkflowInput.parse({ responseId, idempotencyKey: "retry-1" })).not.toThrow();
     expect(ZTestWorkflowInput.safeParse({ idempotencyKey: "" }).success).toBe(false);

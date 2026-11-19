@@ -1,5 +1,5 @@
 /* Which lines a commit stages, for the pre-commit checks that hold new code only to a rule
- * (scripts/lint-staged-eslint.mjs). */
+ * (scripts/lint-staged-oxlint.mjs). */
 
 /** The added or changed lines in a `git diff --unified=0` of one file, as inclusive [start, end] ranges. */
 export function parseStagedLineRanges(diff) {
@@ -24,7 +24,9 @@ export function touchesStagedLines(message, ranges) {
  * `settings.sonarRuntime` decoded: `{ ...message, message: <text>, secondaryLocations }`.
  */
 export function decodeSonarMessage(message) {
-  if (message.messageId !== "sonarRuntime") return { ...message, secondaryLocations: [] };
+  if (!message.ruleId?.startsWith("sonarjs/") || !message.message.startsWith("{")) {
+    return { ...message, secondaryLocations: [] };
+  }
   try {
     const decoded = JSON.parse(message.message);
     return { ...message, message: decoded.message, secondaryLocations: decoded.secondaryLocations ?? [] };

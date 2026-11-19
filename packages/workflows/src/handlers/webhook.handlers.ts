@@ -103,7 +103,7 @@ const webhookResponse = async (
 export const createWebhookHandlers = (service: WorkflowsService): WebhookHandlers => ({
   /**
    * The Webhook Secret URL, the last call and the Sample payload. Write access only: the URL is a
-   * credential, so read-only members never see it (ADR 0041).
+   * credential, so read-only members never see it (ADR 0057).
    */
   async getWebhook({ ctx, params }) {
     try {

@@ -5,16 +5,18 @@ import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { assertCan } from "@/lib/authorization";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { assertUserManagementAllowed } from "@/lib/membership/user-management";
 import { lockUserActiveState } from "@/lib/user/reactivation";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { finishRevokedMcpGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
-import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { updateMembership, updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
 import {
   assertCanAssignRole,
   checkRoleManagementPermission,
@@ -72,19 +74,34 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
   })
 );
 
+/**
+ * Demotes an owner under the owners' lock, refusing to demote the last active one. `actorUserId` is the
+ * user making the change: the actor of the audit entries of any MCP grant it ends, which are finished once
+ * the transaction commits. Each attempt returns its own records, so a retried attempt's are dropped.
+ */
 const demoteOwner = async (
   organizationId: string,
   userId: string,
-  data: z.infer<typeof ZMembershipUpdateInput>
+  data: z.infer<typeof ZMembershipUpdateInput>,
+  actorUserId: string
 ) => {
   try {
-    return await runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
-      // The user's row, as removing a member takes it: a demotion to Dashboard viewer decides whether only
-      // viewer memberships remain (and revokes the wider OAuth grants), and must see a removal from another
-      // organization that commits at the same moment.
-      await lockUserActiveState(tx, userId);
-      return updateMembership(userId, organizationId, data, tx);
-    });
+    const { membership, grantAudits } = await runOwnerGuardedTransaction(
+      organizationId,
+      userId,
+      async (tx) => {
+        // The user's row, as removing a member takes it: a demotion to Dashboard viewer decides whether only
+        // viewer memberships remain (and revokes the wider OAuth grants), and must see a removal from another
+        // organization that commits at the same moment. After the owners' lock, before the user's MCP grant
+        // and consent rows.
+        await lockUserActiveState(tx, userId);
+        return updateMembershipInTransaction(tx, userId, organizationId, data);
+      },
+      // A demotion to Dashboard viewer ends the user's MCP grants, which can wait on a reconciling pass.
+      { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+    );
+    await finishRevokedMcpGrants(grantAudits, { actorUserId });
+    return membership;
   } catch (error) {
     if (error instanceof LastActiveOwnerError) {
       throw new ValidationError("You cannot demote the last owner of the organization");
@@ -140,8 +157,8 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
     // Only a demotion of an owner runs in a transaction, as before; deciding it under the lock instead
     // of from the lookup above is ENG-2177.
     const result = isDemotingOwner
-      ? await demoteOwner(parsedInput.organizationId, parsedInput.userId, parsedInput.data)
-      : await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
+      ? await demoteOwner(parsedInput.organizationId, parsedInput.userId, parsedInput.data, ctx.user.id)
+      : await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data, ctx.user.id);
 
     ctx.auditLoggingCtx.newObject = result;
     return result;

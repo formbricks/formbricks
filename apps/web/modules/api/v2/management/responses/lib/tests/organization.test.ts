@@ -21,7 +21,7 @@ describe("Organization Lib", () => {
 
   describe("getOrganizationIdFromWorkspaceId", () => {
     test("return organization id when found", async () => {
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: organizationId } as any);
+      vi.mocked(prisma.organization.findFirst, { partial: true }).mockResolvedValue({ id: organizationId });
 
       const result = await getOrganizationIdFromWorkspaceId(workspaceId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({
@@ -66,7 +66,7 @@ describe("Organization Lib", () => {
     test("return organization billing when found", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.organization.findFirst>>);
 
       const result = await getOrganizationBilling(organizationId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({

@@ -12,7 +12,7 @@ import { getStepResponseSamples } from "@/modules/ee/workflows/lib/workflow-samp
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 
 /**
- * Whether the run waits for the API's answer, and, when it does, the response fields later steps use
+ * Whether the run waits for the API's answer, and, when it does, the expected response body later steps use
  * (ADR 0054), in their own card below.
  */
 export const HttpResponseSection = ({

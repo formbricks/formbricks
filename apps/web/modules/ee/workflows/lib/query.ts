@@ -48,6 +48,12 @@ export const workflowRunKeys = {
   list: (input: TWorkflowRunListKeyInput) => [...workflowRunKeys.lists(), input] as const,
   details: () => [...workflowRunKeys.all, "detail"] as const,
   detail: (runId: string) => [...workflowRunKeys.details(), runId] as const,
+  /**
+   * The graph the run executed. Never changes, so it sits outside `detail`: refreshing a run's detail
+   * does not refetch it.
+   */
+  definition: (workflowId: string, runId: string) =>
+    [...workflowRunKeys.all, "definition", workflowId, runId] as const,
 };
 
 export function flattenWorkflowRunPages(data?: InfiniteData<TWorkflowRunListPage>): TWorkflowRunListItem[] {

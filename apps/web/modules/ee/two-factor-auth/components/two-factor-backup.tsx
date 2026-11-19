@@ -6,15 +6,12 @@ import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 
 interface TwoFactorBackupProps {
-  readonly form: UseFormReturn<
-    {
-      email: string;
-      password: string;
-      totpCode?: string | undefined;
-      backupCode?: string | undefined;
-    },
-    any
-  >;
+  readonly form: UseFormReturn<{
+    email: string;
+    password: string;
+    totpCode?: string | undefined;
+    backupCode?: string | undefined;
+  }>;
 }
 
 export const TwoFactorBackup = ({ form }: TwoFactorBackupProps) => {

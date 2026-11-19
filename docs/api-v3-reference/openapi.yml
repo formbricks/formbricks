@@ -2856,7 +2856,7 @@ paths:
 
         **Round-tripping.** This read returns `data` in the stored, write-shaped form, so the simplest correction is to take it, change one entry and `PATCH` it back. Embedded Data round-trips through `embeddedData[]` instead: the `key` you read is the `key` a write accepts. `answers[]` is the typed view of the same information, offered alongside. Independently of that, a client working from a *list* row — which omits the maps — can still rebuild the write-shaped payload: `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both are contractual:
 
-        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls`, `imageUrl` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
+        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls`, `imageUrl` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one. The exception is an answer whose stored value is outside the published `ResponseRawValue` shapes (a legacy format or a JSON `null`): `data`, `answers[]` and `unresolved[]` all withhold it, and `PATCH` keeps it unless the request sends a new value for that key.
       tags:
         - V3 Responses
       parameters:
@@ -3103,7 +3103,7 @@ paths:
               replaceAnswers:
                 summary: Replace the stored answers wholesale
                 description: |
-                  `data` is not merged. Anything omitted from this map is removed from the response.
+                  `data` is not merged. A published answer omitted from this map is removed from the response; a stored value the read withholds (a legacy format or a JSON `null`) is kept.
                 value:
                   data:
                     nps_score: 8
@@ -3466,6 +3466,19 @@ paths:
           description: |
             Run lifecycle-state filter. Repeat the parameter or use comma-separated values
             (`filter[status][in]=failed,canceled`). Invalid values → **400**.
+        - in: query
+          name: filter[triggerType][in]
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - response.completed
+                - webhook
+          style: form
+          explode: true
+          description: |
+            Trigger filter: runs started by these trigger types. Repeat the parameter or use comma-separated values (`filter[triggerType][in]=webhook`). Invalid values → **400**.
         - in: query
           name: filter[isDryRun][eq]
           schema:
@@ -4295,7 +4308,7 @@ paths:
       description: |
         Makes one real call of an HTTP request step, from its saved or draft settings, so the author sees the real response. It is not a run: no later step runs and nothing is billed. The call goes through the same address checks as a run (HTTPS, no private addresses, no redirects followed), times out after 10 s and is not retried. A target that answers with an error status still returns **200**: the request itself succeeded.
 
-        When an answer came, it is kept as the step's last Test request response (up to 64 KB), which the editor offers to use as the step's expected response; it never replaces it. Recorded in the audit log as `testRequestSent` with the host and status.
+        When an answer came, it is kept as the step's last Test request response (up to 64 KB), which the editor offers to use as the step's expected response body; it never replaces it. Recorded in the audit log as `testRequestSent` with the host and status.
 
         Requires **write** access and is limited to 30 calls per minute per user or API key (**429**). A step that is not an HTTP request answers **404**; an archived workflow **422** `invalid_workflow_state`; settings that can't be sent (no URL, a secret header with no value, a body that is not JSON, or a URL on another origin than a stored secret header value was set for) **400**. A stored secret value is only sent to the origin it was set for (its `boundOrigin`); a value typed in the draft `config` is used for this call only and goes to the draft URL.
       tags:
@@ -4368,9 +4381,9 @@ paths:
   /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response:
     put:
       operationId: setWorkflowExpectedResponseV3
-      summary: Set an HTTP request step's expected response
+      summary: Set an HTTP request step's expected response body
       description: |
-        Sets the expected response of an HTTP request step — the JSON body its API answers with — and returns it with the Variables inferred from it. Later steps use those Variables as `steps.<stepId>.body.*`, and a Test run's "Wait and use it" answers with this body (status 200). Send test request never changes it: its answer is kept apart, and the editor offers it to use. The body must be a JSON object of at most 100 KB nested at most 10 levels: a larger one answers **413** `payload_too_large`, a deeper one or a non-object **400**.
+        Sets the expected response body of an HTTP request step — the JSON body its API answers with — and returns it with the Variables inferred from it. Later steps use those Variables as `steps.<stepId>.body.*`, and a Test run's "Wait and use it" answers with this body (status 200). Send test request never changes it: its answer is kept apart, and the editor offers it to use. The body must be a JSON object of at most 100 KB nested at most 10 levels: a larger one answers **413** `payload_too_large`, a deeper one or a non-object **400**.
 
         Requires **write** access. A step that isn't an HTTP request in the workflow's definition answers **404**; an archived workflow **422** `invalid_workflow_state`. Recorded in the audit log as an update of the workflow, with the step id and never the body.
       tags:
@@ -4400,7 +4413,7 @@ paths:
                       status: open
       responses:
         '200':
-          description: The expected response and its Variables.
+          description: The expected response body and its Variables.
           headers:
             X-Request-Id:
               schema:
@@ -4462,7 +4475,7 @@ paths:
       operationId: createWorkflowTestRunV3
       summary: Start a Test run of a workflow's draft
       description: |
-        Runs the workflow's current draft at once, inside the request, with the same runner as a real run but with fake effects: Send email records whom it would send to, and an HTTP request records what it would call (secret header values masked) and sends nothing. In "Wait and use it" mode an HTTP request's output is that step's expected response, set by an editor; without one it is empty and flagged (`testSample: missing`), and the run goes on. If/else conditions are evaluated for real, so the answer shows the branch a real run would take.
+        Runs the workflow's current draft at once, inside the request, with the same runner as a real run but with fake effects: Send email records whom it would send to, and an HTTP request records what it would call (secret header values masked) and sends nothing. In "Wait and use it" mode an HTTP request's output is that step's expected response body, set by an editor; without one it is empty and flagged (`testSample: missing`), and the run goes on. If/else conditions are evaluated for real, so the answer shows the branch a real run would take.
 
         The run is saved with `isDryRun: true` and no version, appears in the runs list (hide it with `filter[isDryRun][eq]=false`), and is never billed or counted as usage. A failed step fails the run, not the call: the answer is still **201** with the run's `status` and step detail. Recorded in the audit log as `testRunStarted` with the run id. `POST .../test`, the setup check that runs nothing, is unchanged.
 
@@ -7710,7 +7723,8 @@ paths:
         Moves every response tagged `{tagId}` onto `newTagId`, then deletes `{tagId}`.
 
         Both tags must belong to the same workspace — a cross-workspace merge answers `403`, since it would
-        move responses across a tenant boundary. Same authorization as rename.
+        move responses across a tenant boundary. It is the same `403` as for a `newTagId` that names no tag,
+        so a merge can't tell whether a tag exists in another workspace. Same authorization as rename.
 
         Merging a tag into itself answers `400`.
       tags:
@@ -13577,7 +13591,7 @@ components:
       description: |
         A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the list view omits.
 
-        It also carries `data` — the answers as stored, returned unchanged, so a client can read a response, edit an answer and send it straight back. Embedded Data is not echoed in stored form: the read's `embeddedData[]` and a request's `embeddedData` map already address the same fields by the same names, so a second raw map would only republish the storage layout. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
+        It also carries `data` — the answers as stored, returned unchanged, so a client can read a response, edit an answer and send it straight back. A stored value outside the `ResponseRawValue` shapes (a legacy format or a JSON `null`) is withheld from `data`, and `PATCH` keeps it when the key is left out. Embedded Data is not echoed in stored form: the read's `embeddedData[]` and a request's `embeddedData` map already address the same fields by the same names, so a second raw map would only republish the storage layout. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
 
         They are not the *same* view, and the differences are deliberate. A write accepts `ingested` and `computed` fields only: a `reserved` entry describes the submission environment, and being able to read one back is not a licence to author it. An unset field is **omitted** from the read while `null` on a write **clears** one, because a merge-shaped map has no other way to spell deletion. And a name the read returns twice under different `kind`s cannot be written at all — see `ResponseEmbeddedDataInput`, which refuses an ambiguous name rather than guessing.
 
@@ -13763,7 +13777,7 @@ components:
       description: |
         Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
 
-        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
+        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. Keys the read withholds are kept rather than removed: hidden-field and system keys, and an answer whose stored value is outside the shapes `ResponseRawValue` publishes (a legacy format or a JSON `null`). Sending a new value for such an answer replaces it; leaving it out keeps it. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
 
         v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer, which a correction flow needs.
 
@@ -13880,6 +13894,7 @@ components:
           type: string
           enum:
             - response.completed
+            - webhook
         surveyId:
           type:
             - string
@@ -13952,14 +13967,20 @@ components:
         status:
           $ref: '#/components/schemas/WorkflowStatus'
         triggerType:
-          type: string
+          type:
+            - string
+            - 'null'
           enum:
             - response.completed
-          description: Derived from `definition.trigger.triggerType`.
+            - webhook
+            - null
+          description: Derived from `definition.trigger.triggerType`. `null` while the draft has no trigger.
         surveyId:
-          type: string
+          type:
+            - string
+            - 'null'
           format: cuid2
-          description: Derived from `definition.trigger.config.surveyId`.
+          description: Derived from `definition.trigger.config.surveyId`. `null` for a Webhook trigger, or while the draft has no trigger.
         createdBy:
           type:
             - string
@@ -14546,6 +14567,37 @@ components:
         ui:
           $ref: '#/components/schemas/WorkflowNodeUi'
       additionalProperties: false
+    WorkflowFilterNode:
+      type: object
+      description: 'Filter logic step (ADR 0056): an If/else with one way out. When the condition group holds, the run continues down the step''s one edge (no `sourceHandle`); when it doesn''t, the run ends there, completed, and the steps after it are not taken. Same condition group, operators and limits as `if_else`.'
+      required:
+        - id
+        - type
+        - config
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - filter
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          type: object
+          required:
+            - condition
+          properties:
+            condition:
+              $ref: '#/components/schemas/WorkflowConditionGroup'
+          additionalProperties: false
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
     WorkflowSwitchCase:
       type: object
       description: 'One case of a Switch, mirroring `ZWorkflowSwitchCase`: its branch''s id and label, and how the Switch''s Variable is compared, with the If/else operator and value rules (see `WorkflowCondition`).'
@@ -14661,9 +14713,9 @@ components:
     WorkflowDefinition:
       type: object
       description: |
-        Workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The definition is the public source of truth for the builder and API clients. A run walks it from the trigger along its edges; an `if_else` step picks its `then` or `else` edge, and a `switch` step the edge of the first case that matches or its `default` edge. Future node types extend `nodes` additively.
+        Workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The definition is the public source of truth for the builder and API clients. A run walks it from the trigger along its edges; an `if_else` step picks its `then` or `else` edge, and a `switch` step the edge of the first case that matches or its `default` edge; a `filter` step goes on down its one edge when its conditions hold and ends the run otherwise. Future node types extend `nodes` additively.
 
-        Rules enforced on every write (**400** with `invalid_params` on violation): node ids are unique across `trigger` and `nodes`; every edge references existing node ids; the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`; only `if_else` edges use the `then` / `else` handles, at most one each; `switch` edges use one of its case ids or `default`, at most one each; no node has more than one incoming edge (branches never join); at most 25 steps (`nodes`), 20 conditions per `if_else` and 2 to 10 cases per `switch`, with unique case ids other than `default`; Variable paths start with `payload.`, `steps.` or `response.`; one definition uses either the survey operator names or the deprecated workflow operator names, never both. Trigger-only drafts (no `nodes`, no `edges`) are valid persisted documents.
+        Rules enforced on every write (**400** with `invalid_params` on violation): node ids are unique across `trigger` and `nodes`; every edge references existing node ids; the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`; only `if_else` edges use the `then` / `else` handles, at most one each; `switch` edges use one of its case ids or `default`, at most one each; no node has more than one incoming edge (branches never join); at most 25 steps (`nodes`), 20 conditions per `if_else` or `filter` and 2 to 10 cases per `switch`, with unique case ids other than `default`; Variable paths start with `payload.`, `steps.` or `response.`; one definition uses either the survey operator names or the deprecated workflow operator names, never both. Trigger-only drafts (no `nodes`, no `edges`) are valid persisted documents.
 
         Executability rules are additionally enforced by `enable` and `test` with **422** `workflow_not_executable`: exactly one outgoing trigger edge, an acyclic graph, every node reachable from the trigger, at most one next step for every node other than `if_else` and `switch`, every `switch` case named, and every Variable readable where it is used (a source the trigger provides, and `steps.<id>` only for a step that runs earlier on the same branch).
       required:
@@ -14690,6 +14742,7 @@ components:
               - $ref: '#/components/schemas/WorkflowSendEmailActionNode'
               - $ref: '#/components/schemas/WorkflowHttpRequestActionNode'
               - $ref: '#/components/schemas/WorkflowIfElseNode'
+              - $ref: '#/components/schemas/WorkflowFilterNode'
               - $ref: '#/components/schemas/WorkflowSwitchNode'
           description: Steps of the graph. The trigger lives in `trigger`, not in this array. Optional on writes (defaults to empty for trigger-only drafts); always present in responses.
         edges:
@@ -15001,6 +15054,38 @@ components:
                 type: boolean
             additionalProperties: false
       additionalProperties: false
+    WorkflowRunFilterDetail:
+      type: object
+      description: A Filter step's result. `passed` false means the conditions didn't hold and the run ended here, completed; run detail shows each condition as "(matched)" or "(not matched)".
+      required:
+        - kind
+        - passed
+        - conditions
+      properties:
+        kind:
+          type: string
+          enum:
+            - filter
+        passed:
+          type:
+            - boolean
+            - 'null'
+          description: Whether the run went on past the Filter; null until decided.
+        conditions:
+          type: array
+          description: Each condition, in order.
+          items:
+            type: object
+            required:
+              - id
+              - matched
+            properties:
+              id:
+                type: string
+              matched:
+                type: boolean
+            additionalProperties: false
+      additionalProperties: false
     WorkflowRunSwitchDetail:
       type: object
       description: 'A Switch step''s result: the branch it took and each case it tried, in order, up to and including the one that matched. Cases after the match are not tried.'
@@ -15193,7 +15278,7 @@ components:
         stepType:
           type: string
           minLength: 1
-          description: '`if_else`, `switch`, `send_email` or `http_request`.'
+          description: '`if_else`, `filter`, `switch`, `send_email` or `http_request`.'
         status:
           type: string
           enum:
@@ -15203,7 +15288,7 @@ components:
             - failed
             - skipped
             - not_taken
-          description: The step's log status, or `not_taken` for a step on an If/else or Switch branch the run did not take. A Don't wait HTTP request stays `running` while it sends; its delivery is in `detail.delivery`.
+          description: The step's log status, or `not_taken` for a step on an If/else or Switch branch the run did not take, or after a Filter that ended the run. A Don't wait HTTP request stays `running` while it sends; its delivery is in `detail.delivery`.
         error:
           type:
             - string
@@ -15222,6 +15307,7 @@ components:
           description: What the step did, by step type (`kind`). Null for a step not taken and for a step type without detail.
           oneOf:
             - $ref: '#/components/schemas/WorkflowRunIfElseDetail'
+            - $ref: '#/components/schemas/WorkflowRunFilterDetail'
             - $ref: '#/components/schemas/WorkflowRunSwitchDetail'
             - $ref: '#/components/schemas/WorkflowRunSendEmailDetail'
             - $ref: '#/components/schemas/WorkflowRunHttpRequestDetail'
@@ -15584,7 +15670,7 @@ components:
       additionalProperties: false
     WorkflowTestRequestResult:
       type: object
-      description: The outcome of one Test request. When an answer came, it is also kept as the step's last Test request response (status, content type and up to 64 KB of body), which the editor offers to use as the step's expected response, whose fields are that step's Variables.
+      description: The outcome of one Test request. When an answer came, it is also kept as the step's last Test request response (status, content type and up to 64 KB of body), which the editor offers to use as the step's expected response body, whose fields are that step's Variables.
       required:
         - request
         - response
@@ -15651,7 +15737,7 @@ components:
           description: Why the call got no answer, or null.
     SetWorkflowExpectedResponseRequest:
       type: object
-      description: 'Sets an HTTP request step''s expected response: the body its API answers with, typed or pasted, or a Test request response chosen to use.'
+      description: 'Sets an HTTP request step''s expected response body: the body its API answers with, typed or pasted, or a Test request response chosen to use.'
       required:
         - body
       properties:
@@ -15663,7 +15749,7 @@ components:
     WorkflowExpectedResponseResource:
       type: object
       description: |
-        An HTTP request step's expected response — the body its API answers with — and the Variables inferred from it, which later steps use as `steps.<stepId>.body.*`. Only editors and API or MCP clients set it; a Test request never changes it.
+        An HTTP request step's expected response body — the body its API answers with — and the Variables inferred from it, which later steps use as `steps.<stepId>.body.*`. Only editors and API or MCP clients set it; a Test request never changes it.
       required:
         - workflowId
         - stepId

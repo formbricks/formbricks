@@ -161,7 +161,7 @@ export const createTestRunHandlers = (service: WorkflowsService): TestRunHandler
           : await buildWebhookTriggerPayload(service, loaded, input);
 
       const scope = { workflowId: loaded.id, workspaceId: loaded.workspaceId };
-      const created = await service.createTestRun(scope, triggerPayload);
+      const created = await service.createTestRun(scope, { triggerPayload, definition: executable.data });
       await ctx.runTest({ runId: created.id, ...scope });
 
       const run = await service.getWorkflowRun(created.id);

@@ -17,7 +17,7 @@ export const getActionClasses = reactCache(async (workspaceId: string): Promise<
         createdAt: "asc",
       },
     });
-  } catch (error) {
+  } catch {
     throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceId}`);
   }
 });

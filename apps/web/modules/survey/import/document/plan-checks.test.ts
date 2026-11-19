@@ -359,7 +359,7 @@ describe("checkDocumentPlanResponses: an entry's shape", () => {
 
 describe("checkDocumentPlanResponses: an answer", () => {
   test("an answer that is not a plan fails every line it was asked about", () => {
-    const { plan } = check([{ refs: new Set(["R2", "R3"]), object: { questions: "none" } } as never]);
+    const { plan } = check([{ refs: new Set(["R2", "R3"]), object: { questions: "none" } }]);
 
     expect(Object.fromEntries(plan.failures)).toEqual({ R2: ["invalid_output"], R3: ["invalid_output"] });
   });
@@ -588,9 +588,7 @@ describe("mergeDocumentPlans", () => {
     // The first answer is unreadable, so every line it was asked about failed with the call.
     const first = check([
       // Not a plan at all: what a model sends when it ignores the schema.
-      { refs: new Set(["R1", "R2", "R3"]), object: { questions: "unreadable" } } as unknown as ReturnType<
-        typeof answer
-      >,
+      { refs: new Set(["R1", "R2", "R3"]), object: { questions: "unreadable" } },
     ]).plan;
     // The retry places Q1 and leaves the header and Q2's line out.
     const retry = check([answer(["R1", "R2", "R3"], [entry("R2")])], true).plan;
@@ -602,11 +600,7 @@ describe("mergeDocumentPlans", () => {
   });
 
   test("keeps a whole-call failure when the retry answers but names none of its lines: still unread", () => {
-    const first = check([
-      { refs: new Set(["R1", "R2", "R3"]), object: { questions: "unreadable" } } as unknown as ReturnType<
-        typeof answer
-      >,
-    ]).plan;
+    const first = check([{ refs: new Set(["R1", "R2", "R3"]), object: { questions: "unreadable" } }]).plan;
     // A valid answer that places, skips and reads nothing: no evidence the lines were read.
     const retry = check([answer(["R1", "R2", "R3"], [])], true).plan;
 

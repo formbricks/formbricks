@@ -20,6 +20,7 @@ import {
   workflowAtom,
   workflowDefinitionAtom,
   workflowStepClipboardAtom,
+  workflowUndoAtom,
 } from "@/modules/ee/workflows/state/editor";
 
 /**
@@ -58,6 +59,7 @@ export const useWorkflowHistory = () => {
     // plaintext values, so undoing never sends a secret again.
     if (lastSecretSettle?.result === definition) {
       const { sent } = lastSecretSettle;
+      // eslint-disable-next-line react/set-state-in-effect -- the history records definition changes the editor writes elsewhere (atoms), so it follows them here
       setHistory((current) => ({
         ...current,
         past: current.past.map((step) => settleSentSecretValues(step, sent)),
@@ -94,6 +96,17 @@ export const useWorkflowHistory = () => {
     apply(undoStep);
   }, [apply, cancelCut, clipboard]);
   const redo = useCallback(() => apply(redoStep), [apply]);
+
+  // A toast's Undo (after moving a step) undoes through this history, so Redo can bring the edit back.
+  const setUndoForToasts = useSetAtom(workflowUndoAtom);
+  const undoesTo = useCallback(
+    (earlier: TWorkflowDefinition) => clipboard?.mode !== "cut" && history.past.at(-1) === earlier,
+    [clipboard, history]
+  );
+  useEffect(() => {
+    setUndoForToasts({ undo, undoesTo });
+    return () => setUndoForToasts(null);
+  }, [undo, undoesTo, setUndoForToasts]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

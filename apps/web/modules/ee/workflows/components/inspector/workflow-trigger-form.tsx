@@ -137,6 +137,38 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   const showFiresOnEveryEndingNotice =
     node.config.endingCardIds.length === 0 && (endingScope === "specific" || prunedEndingCardIds.length > 0);
 
+  // No endings on the survey: say so in place of the checkbox list, but keep the scope select and
+  // the every-ending notice below reachable. Returning early here hid both, so a prune that
+  // emptied the selection widened the trigger to every response with nothing on screen saying so
+  // (the validity pill has nothing to flag either — the stale ids are gone by then).
+  const renderEndingSelection = () => {
+    if (endingsQuery.endings.length === 0) {
+      return <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>;
+    }
+    if (endingScope !== "specific") return null;
+    return (
+      <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
+        {endingsQuery.endings.map((ending) => {
+          const checked = node.config.endingCardIds.includes(ending.id);
+          return (
+            <label
+              key={ending.id}
+              className="flex items-center gap-2 text-sm text-slate-700"
+              htmlFor={`workflow-trigger-ending-${ending.id}`}>
+              <Checkbox
+                id={`workflow-trigger-ending-${ending.id}`}
+                checked={checked}
+                disabled={!isEditable}
+                onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
+              />
+              <span className="truncate">{ending.label}</span>
+            </label>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderEndingChoices = () => {
     if (!node.config.surveyId) {
       return (
@@ -146,38 +178,6 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
     if (endingsQuery.isLoading) {
       return <p className="text-xs text-slate-500">{t("common.loading")}</p>;
     }
-    // No endings on the survey: say so in place of the checkbox list, but keep the scope select and
-    // the every-ending notice below reachable. Returning early here hid both, so a prune that
-    // emptied the selection widened the trigger to every response with nothing on screen saying so
-    // (the validity pill has nothing to flag either — the stale ids are gone by then).
-    const renderEndingSelection = () => {
-      if (endingsQuery.endings.length === 0) {
-        return <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_ending_cards_none")}</p>;
-      }
-      if (endingScope !== "specific") return null;
-      return (
-        <div className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-md border border-slate-200 bg-white px-3 py-2">
-          {endingsQuery.endings.map((ending) => {
-            const checked = node.config.endingCardIds.includes(ending.id);
-            return (
-              <label
-                key={ending.id}
-                className="flex items-center gap-2 text-sm text-slate-700"
-                htmlFor={`workflow-trigger-ending-${ending.id}`}>
-                <Checkbox
-                  id={`workflow-trigger-ending-${ending.id}`}
-                  checked={checked}
-                  disabled={!isEditable}
-                  onCheckedChange={(value) => toggleEnding(ending.id, value === true)}
-                />
-                <span className="truncate">{ending.label}</span>
-              </label>
-            );
-          })}
-        </div>
-      );
-    };
-
     return (
       <>
         <Select

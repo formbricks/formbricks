@@ -95,7 +95,7 @@ describe("getWorkspaceWithTeamIds", () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
       ...mockWorkspacePrisma,
       styling: { allowStyleOverwrite: true, fontFamily: "Inter's Font", buttonHeight: "40px" },
-    } as unknown as Workspace);
+    });
 
     const workspace = await getWorkspaceWithTeamIds(workspaceId);
 

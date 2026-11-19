@@ -300,7 +300,7 @@ const post = (body: unknown = {}) =>
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
     }),
-    { params: Promise.resolve({ workflowId: WORKFLOW_ID }) } as never
+    { params: Promise.resolve({ workflowId: WORKFLOW_ID }) }
   );
 
 const steps = async (response: Response) =>

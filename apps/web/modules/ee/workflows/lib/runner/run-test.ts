@@ -8,7 +8,8 @@ import { createTestRunEffects } from "./test-run-effects";
  * Runs a saved Test run inside the request (ENG-7181, ADR 0049): the same job handler and walker as a
  * real run, with fake effects, against the workflow's draft (a Test run has no version, so the handler
  * reads the live definition). One attempt: a failed step fails the run, never the request. The run is
- * never queued, so no worker can pick it up with the live effects, and the reconcilers skip dry runs.
+ * never queued, so no worker can pick it up with the live effects, and the reconcilers never queue it:
+ * one this request leaves unfinished is failed after 10 minutes (`failInterruptedTestRuns`).
  */
 export const executeWorkflowTestRun = async ({
   runId,
@@ -19,7 +20,7 @@ export const executeWorkflowTestRun = async ({
   workflowId: string;
   workspaceId: string;
 }): Promise<void> => {
-  // Each HTTP request step's expected response, for "Wait and use it" (ENG-7179, ADR 0054). One query;
+  // Each HTTP request step's expected response body, for "Wait and use it" (ENG-7179, ADR 0054). One query;
   // last Test request responses are left out, since only editors decide what a step answers with.
   const samples = await prisma.workflowSample.findMany({
     where: { workflowId, workspaceId, source: { notIn: [...WORKFLOW_TRIGGER_SAMPLE_SOURCES] } },

@@ -4,7 +4,7 @@ import type { WebhookTokenIssuer } from "@formbricks/workflows/server";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { constantTimeEqual, hashSha256, symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 
-/** 128 bits, the Webhook Secret URL's entropy (ADR 0041). */
+/** 128 bits, the Webhook Secret URL's entropy (ADR 0057). */
 const WEBHOOK_TOKEN_BYTES = 16;
 
 /**

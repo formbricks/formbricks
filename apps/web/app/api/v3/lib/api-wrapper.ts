@@ -89,7 +89,7 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    * sent without a `Content-Length` header is cut off at the limit rather than buffered whole.
    *
    * Raise it only for a route that genuinely takes a file-sized body, and keep it below Next's
-   * `proxyClientMaxBodySize` (`next.config.mjs`). The patched Next (`patches/next@16.4.1.patch`) no longer
+   * `proxyClientMaxBodySize` (`next.config.mjs`). The patched Next (`patches/next@16.4.5.patch`) no longer
    * clones bodies for the proxy, but without the patch Next truncates a longer body before this reader sees
    * it, so the caller would get a 400 for malformed JSON instead of a 413.
    */
@@ -537,14 +537,14 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       return formResult;
     }
 
-    parsedInput.formData = formResult.formData as TV3ParsedInput<S>["formData"];
+    parsedInput.formData = formResult.formData;
   } else if (schemas?.body) {
     const bodyResult = await parseV3Body(req, schemas.body, context);
     if (!bodyResult.ok) {
       return bodyResult;
     }
 
-    parsedInput.body = bodyResult.body as TV3ParsedInput<S>["body"];
+    parsedInput.body = bodyResult.body;
   } else if (!context.handlerReadsBody) {
     const preflightFailure = await preflightUndeclaredBody(req, context);
     if (preflightFailure) {
@@ -567,7 +567,7 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       };
     }
 
-    parsedInput.query = queryResult.data as TV3ParsedInput<S>["query"];
+    parsedInput.query = queryResult.data;
   }
 
   if (schemas?.params) {
@@ -585,7 +585,7 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       };
     }
 
-    parsedInput.params = paramsResult.data as TV3ParsedInput<S>["params"];
+    parsedInput.params = paramsResult.data;
   }
 
   return { ok: true, parsedInput };
@@ -888,8 +888,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // to attribute — and an unauthenticated caller could fill the audit store one row per bad key; a
       // 429 is already logged by the limiter; a 400 is a malformed request, not an authorization event.
       // The rejection a reviewer wants — the 403 an authenticated caller gets for someone else's
-      // resource — is raised by the operation below and is audited as a failure. MCP's scope gate
-      // audits its own refusals in `registerScopedTool`.
+      // resource — is raised by the operation below and is audited as a failure. MCP's permission gate
+      // audits its own refusals in `registerMcpTool`.
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, recordedRequest.url);
 
       const execute = () =>

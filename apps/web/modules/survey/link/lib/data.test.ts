@@ -58,6 +58,7 @@ describe("data", () => {
       workspaceId: "ws-1",
       createdBy: "user-1",
       status: "inProgress",
+      publishOn: null,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -105,7 +106,9 @@ describe("data", () => {
     test("should fetch and transform survey data successfully", async () => {
       const surveyId = "survey-1";
 
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
       vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
 
       const result = await getSurveyWithMetadata(surveyId);
@@ -138,7 +141,9 @@ describe("data", () => {
      */
     test("carries the Embedded Data join, which is the renderer's ingest allow-list", async () => {
       const surveyId = "survey-1";
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
       vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
 
       await getSurveyWithMetadata(surveyId);
@@ -146,6 +151,26 @@ describe("data", () => {
       expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
         expect.objectContaining({ embeddedDataLinks: selectPublicSurveyEmbeddedDataLinks })
       );
+    });
+
+    /**
+     * ENG-3935: the renderer tells a scheduled survey from a paused one by `publishOn !== null`. A select
+     * without the column leaves it `undefined`, which is not `null`, so every paused survey showed the
+     * "Survey scheduled" screen.
+     */
+    test("selects publishOn, which separates a scheduled survey from a paused one", async () => {
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
+      vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
+
+      const result = await getSurveyWithMetadata("survey-1");
+
+      expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
+        expect.objectContaining({ publishOn: true })
+      );
+      // A paused survey with no publish date must reach the renderer as `null`, not `undefined`.
+      expect(result.publishOn).toBeNull();
     });
 
     test("should throw ResourceNotFoundError when survey not found", async () => {
@@ -236,7 +261,9 @@ describe("data", () => {
         followUps: [],
       };
 
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
       vi.mocked(transformPrismaSurvey).mockReturnValue(mockFullSurvey);
 
       const result = await getSurveyMetadata(surveyId);
@@ -267,7 +294,9 @@ describe("data", () => {
       const surveyId = "survey-1";
       const singleUseId = "single-use-1";
 
-      vi.mocked(prisma.response.findFirst).mockResolvedValue(mockResponse as any);
+      vi.mocked(prisma.response.findFirst).mockResolvedValue(
+        mockResponse as Awaited<ReturnType<typeof prisma.response.findFirst>>
+      );
 
       const result = await getResponseBySingleUseId(surveyId, singleUseId)();
 
@@ -329,7 +358,9 @@ describe("data", () => {
       const surveyId = "survey-1";
       const contactId = "contact-1";
 
-      vi.mocked(prisma.response.findFirst).mockResolvedValue(mockResponse as any);
+      vi.mocked(prisma.response.findFirst).mockResolvedValue(
+        mockResponse as Awaited<ReturnType<typeof prisma.response.findFirst>>
+      );
 
       const result = await getExistingContactResponse(surveyId, contactId)();
 
@@ -397,7 +428,9 @@ describe("data", () => {
 
     test("should fetch organization billing successfully", async () => {
       const organizationId = "org-1";
-      vi.mocked(getOrganizationBillingWithReadThroughSync).mockResolvedValue(mockBilling as any);
+      vi.mocked(getOrganizationBillingWithReadThroughSync).mockResolvedValue(
+        mockBilling as Awaited<ReturnType<typeof getOrganizationBillingWithReadThroughSync>>
+      );
 
       const result = await getOrganizationBilling(organizationId);
 

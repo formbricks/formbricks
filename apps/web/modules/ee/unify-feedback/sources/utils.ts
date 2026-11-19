@@ -337,6 +337,53 @@ interface TAutoMapInput {
   fileName: string;
 }
 
+/** What the auto-mapper has decided so far, shared by its steps. */
+interface TAutoMapState {
+  mappings: TFieldMapping[];
+  confidence: Record<string, TMappingConfidence>;
+  claimedSources: Set<string>;
+  mappableFields: TSourceField[];
+}
+
+/** Maps a target to the first unclaimed column one of its aliases at `level` names, if any. */
+const mapTargetByAliases = (
+  targetId: (typeof CSV_TARGET_FIELDS)[number]["id"],
+  level: "high" | "medium",
+  { mappings, confidence, claimedSources, mappableFields }: TAutoMapState
+): void => {
+  const aliases = CSV_COLUMN_ALIASES[targetId];
+  if (!aliases) return;
+  for (const pattern of aliases[level]) {
+    const match = mappableFields.find((f) => !claimedSources.has(f.id) && pattern.test(f.name));
+    if (match) {
+      mappings.push({ targetFieldId: targetId, sourceFieldId: match.id });
+      confidence[targetId] = level;
+      claimedSources.add(match.id);
+      return;
+    }
+  }
+};
+
+/** A field type inferred from the response column's name and sample, when a column is mapped to it. */
+const mapInferredFieldType = (
+  { mappings, confidence }: TAutoMapState,
+  sourceFields: TSourceField[],
+  sampleRow: Record<string, string>
+): void => {
+  const responseMapping = mappings.find((m) => m.targetFieldId === "response_value");
+  if (!responseMapping?.sourceFieldId) return;
+  const sourceField = sourceFields.find((f) => f.id === responseMapping.sourceFieldId);
+  const inferred = inferFieldType({
+    columnName: sourceField?.name,
+    samples: [sampleRow[responseMapping.sourceFieldId] ?? ""],
+  });
+  mappings.push({ targetFieldId: "field_type", staticValue: inferred });
+  const nameHinted = sourceField?.name
+    ? FIELD_TYPE_NAME_HINTS.some((h) => h.pattern.test(sourceField.name))
+    : false;
+  confidence.field_type = nameHinted ? "high" : "medium";
+};
+
 export const autoMapCsvSourceFields = ({
   sourceFields,
   sampleRow,
@@ -354,33 +401,14 @@ export const autoMapCsvSourceFields = ({
   // target unmapped so the required-fields check forces an explicit, data-bearing choice.
   const mappableFields = sourceFields.filter((f) => (sampleRow[f.id] ?? "").trim() !== "");
 
+  const state: TAutoMapState = { mappings, confidence, claimedSources, mappableFields };
   for (const targetId of orderedTargets) {
-    const aliases = CSV_COLUMN_ALIASES[targetId];
-    if (!aliases) continue;
-    for (const pattern of aliases.high) {
-      const match = mappableFields.find((f) => !claimedSources.has(f.id) && pattern.test(f.name));
-      if (match) {
-        mappings.push({ targetFieldId: targetId, sourceFieldId: match.id });
-        confidence[targetId] = "high";
-        claimedSources.add(match.id);
-        break;
-      }
-    }
+    mapTargetByAliases(targetId, "high", state);
   }
 
   for (const targetId of orderedTargets) {
     if (confidence[targetId]) continue;
-    const aliases = CSV_COLUMN_ALIASES[targetId];
-    if (!aliases) continue;
-    for (const pattern of aliases.medium) {
-      const match = mappableFields.find((f) => !claimedSources.has(f.id) && pattern.test(f.name));
-      if (match) {
-        mappings.push({ targetFieldId: targetId, sourceFieldId: match.id });
-        confidence[targetId] = "medium";
-        claimedSources.add(match.id);
-        break;
-      }
-    }
+    mapTargetByAliases(targetId, "medium", state);
   }
 
   if (!confidence.collected_at) {
@@ -400,19 +428,7 @@ export const autoMapCsvSourceFields = ({
   }
 
   if (!confidence.field_type) {
-    const responseMapping = mappings.find((m) => m.targetFieldId === "response_value");
-    if (responseMapping?.sourceFieldId) {
-      const sourceField = sourceFields.find((f) => f.id === responseMapping.sourceFieldId);
-      const inferred = inferFieldType({
-        columnName: sourceField?.name,
-        samples: [sampleRow[responseMapping.sourceFieldId] ?? ""],
-      });
-      mappings.push({ targetFieldId: "field_type", staticValue: inferred });
-      const nameHinted = sourceField?.name
-        ? FIELD_TYPE_NAME_HINTS.some((h) => h.pattern.test(sourceField.name))
-        : false;
-      confidence.field_type = nameHinted ? "high" : "medium";
-    }
+    mapInferredFieldType(state, sourceFields, sampleRow);
   }
 
   return { mappings, confidence };

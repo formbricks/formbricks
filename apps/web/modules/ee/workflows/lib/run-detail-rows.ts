@@ -9,6 +9,7 @@ import {
   type TWorkflowTriggerType,
   WORKFLOW_SWITCH_DEFAULT_BRANCH,
   flattenWorkflowConditions,
+  isConditionStepNode,
 } from "@formbricks/workflows";
 import { formatStepDuration } from "@/modules/ee/workflows/lib/run-display";
 
@@ -69,6 +70,13 @@ export interface TRunDetailIfElseRow extends TRunDetailStepRowBase {
   conditions: TRunDetailConditionResult[];
 }
 
+/** A Filter's result: its conditions, and whether the run went on (true) or ended there (false). */
+export interface TRunDetailFilterRow extends TRunDetailStepRowBase {
+  kind: "filter";
+  passed: boolean | null;
+  conditions: TRunDetailConditionResult[];
+}
+
 /**
  * A Switch branch as run detail names it: Default, or a case by its name. A case without a name reads
  * by its 1-based number; `number` is null for a case the definition no longer has.
@@ -124,6 +132,7 @@ export interface TRunDetailOtherRow extends TRunDetailStepRowBase {
 
 export type TRunDetailStepRow =
   | TRunDetailIfElseRow
+  | TRunDetailFilterRow
   | TRunDetailSwitchRow
   | TRunDetailSendEmailRow
   | TRunDetailHttpRequestRow
@@ -190,6 +199,8 @@ const findBranchOfStep = (
     const incoming = definition.edges.find((edge) => edge.target === current);
     if (!incoming) return none;
     const source = nodesById.get(incoming.source);
+    // After a Filter, a step wasn't taken because the Filter ended the run, not because of a branch.
+    if (source?.type === "filter") return none;
     if (source?.type === "if_else") {
       const isIfElseBranch = incoming.sourceHandle === "then" || incoming.sourceHandle === "else";
       return {
@@ -215,8 +226,29 @@ const findConditionsOf = (
   stepId: string
 ): Map<string, TWorkflowCondition> => {
   const node = definition?.nodes.find((n) => n.id === stepId);
-  if (node?.type !== "if_else") return new Map();
+  if (!node || !isConditionStepNode(node)) return new Map();
   return new Map(flattenWorkflowConditions(node.config.condition).map((c) => [c.id, c]));
+};
+
+/** Each condition's result with the condition as the definition has it (null when it's gone). */
+const withConditionTexts = (
+  results: ReadonlyArray<{ id: string; matched: boolean }>,
+  definition: TWorkflowDefinition | null,
+  stepId: string
+): TRunDetailConditionResult[] => {
+  const conditions = findConditionsOf(definition, stepId);
+  return results.map(({ id, matched }) => ({ id, matched, condition: conditions.get(id) ?? null }));
+};
+
+/**
+ * A condition step whose log has no readable detail (still running, or an older runner) is still its
+ * own row, with nothing decided yet.
+ */
+const toUndecidedRow = (base: TRunDetailStepRowBase, stepType: string): TRunDetailStepRow => {
+  if (stepType === "if_else") return { ...base, kind: "if_else", branch: null, conditions: [] };
+  if (stepType === "filter") return { ...base, kind: "filter", passed: null, conditions: [] };
+  if (stepType === "switch") return { ...base, kind: "switch", taken: null, cases: [] };
+  return { ...base, kind: "other" };
 };
 
 const toStepRow = (
@@ -245,19 +277,20 @@ const toStepRow = (
 
   const { detail } = step;
   switch (detail?.kind) {
-    case "if_else": {
-      const conditions = findConditionsOf(definition, step.stepId);
+    case "if_else":
       return {
         ...base,
         kind: "if_else",
         branch: detail.branch,
-        conditions: detail.conditions.map(({ id, matched }) => ({
-          id,
-          matched,
-          condition: conditions.get(id) ?? null,
-        })),
+        conditions: withConditionTexts(detail.conditions, definition, step.stepId),
       };
-    }
+    case "filter":
+      return {
+        ...base,
+        kind: "filter",
+        passed: detail.passed,
+        conditions: withConditionTexts(detail.conditions, definition, step.stepId),
+      };
     case "switch": {
       const node = findSwitchOf(definition, step.stepId);
       return {
@@ -300,11 +333,7 @@ const toStepRow = (
         httpError: detail.error,
       };
     default:
-      // An If/else or Switch whose log has no readable detail (still running, or an older runner) is
-      // still its own row, with no branch yet.
-      if (step.stepType === "if_else") return { ...base, kind: "if_else", branch: null, conditions: [] };
-      if (step.stepType === "switch") return { ...base, kind: "switch", taken: null, cases: [] };
-      return { ...base, kind: "other" };
+      return toUndecidedRow(base, step.stepType);
   }
 };
 

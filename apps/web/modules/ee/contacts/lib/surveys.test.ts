@@ -26,7 +26,7 @@ describe("getPublishedLinkSurveys", () => {
       { id: "survey3", name: "NPS Survey" },
     ];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
+    vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue(mockSurveys);
 
     const result = await getPublishedLinkSurveys(workspaceId, {});
 
@@ -79,7 +79,7 @@ describe("getPublishedLinkSurveys", () => {
   test("filters surveys by status inProgress", async () => {
     const mockSurveys = [{ id: "survey1", name: "Active Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
+    vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue(mockSurveys);
 
     await getPublishedLinkSurveys(workspaceId, {});
 
@@ -95,7 +95,7 @@ describe("getPublishedLinkSurveys", () => {
   test("filters surveys by type link", async () => {
     const mockSurveys = [{ id: "survey1", name: "Link Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
+    vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue(mockSurveys);
 
     await getPublishedLinkSurveys(workspaceId, {});
 
@@ -111,7 +111,7 @@ describe("getPublishedLinkSurveys", () => {
   test("only selects id and name fields", async () => {
     const mockSurveys = [{ id: "survey1", name: "Test Survey" }];
 
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockSurveys as any);
+    vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue(mockSurveys);
 
     const result = await getPublishedLinkSurveys(workspaceId, {});
 

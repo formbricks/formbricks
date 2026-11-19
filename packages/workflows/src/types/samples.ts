@@ -4,7 +4,7 @@ import { z } from "zod";
  * A workflow keeps one sample per source (ADR 0048, ADR 0052, ADR 0054): `trigger` for the Webhook
  * trigger's expected payload, which only editors set (calls never change it); `trigger_last_call` for
  * the last payload a call to the Secret URL sent, with its time and IP; an HTTP request step id for
- * that step's expected response, which only editors set (Test requests never change it); and
+ * that step's expected response body, which only editors set (Test requests never change it); and
  * `<step id>:last_test` for that step's last Test request response.
  */
 export const WORKFLOW_SAMPLE_TRIGGER_SOURCE = "trigger";
@@ -23,7 +23,7 @@ export const WORKFLOW_SAMPLE_LAST_TEST_SUFFIX = ":last_test";
 export const getLastTestSampleSource = (stepId: string): string =>
   `${stepId}${WORKFLOW_SAMPLE_LAST_TEST_SUFFIX}`;
 
-/** Whether a source holds a step's last Test request response rather than its expected response. */
+/** Whether a source holds a step's last Test request response rather than its expected response body. */
 export const isLastTestSampleSource = (source: string): boolean =>
   source.endsWith(WORKFLOW_SAMPLE_LAST_TEST_SUFFIX);
 

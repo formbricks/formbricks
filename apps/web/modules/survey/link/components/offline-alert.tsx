@@ -15,18 +15,22 @@ export function OfflineAlert({ isOnline, isSyncing, pendingSyncCount }: OfflineA
   const [showSyncDone, setShowSyncDone] = useState(false);
   const [wasSyncing, setWasSyncing] = useState(false);
 
+  // Adjusted during render: remember a sync, and flash "done" once it finishes while online.
+  const isBusySyncing = isSyncing || pendingSyncCount > 0;
+  if (isBusySyncing && !wasSyncing) {
+    setWasSyncing(true);
+  } else if (!isBusySyncing && wasSyncing && isOnline && !showSyncDone) {
+    setShowSyncDone(true);
+  }
+
   useEffect(() => {
-    if (isSyncing || pendingSyncCount > 0) {
-      setWasSyncing(true);
-    } else if (wasSyncing && isOnline) {
-      setShowSyncDone(true);
-      const timer = setTimeout(() => {
-        setShowSyncDone(false);
-        setWasSyncing(false);
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [isSyncing, pendingSyncCount, isOnline, wasSyncing]);
+    if (!showSyncDone) return;
+    const timer = setTimeout(() => {
+      setShowSyncDone(false);
+      setWasSyncing(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [showSyncDone]);
 
   const isVisible = !isOnline || isSyncing || pendingSyncCount > 0 || showSyncDone;
 

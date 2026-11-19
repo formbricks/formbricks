@@ -14,7 +14,7 @@ import {
 import { IntegrationModalInputs } from "../lib/types";
 
 interface BaseSelectProps {
-  readonly control: Control<IntegrationModalInputs, any>;
+  readonly control: Control<IntegrationModalInputs>;
   readonly isLoading: boolean;
   readonly fetchTable: (val: string) => Promise<void>;
   readonly airtableArray: TIntegrationItem[];

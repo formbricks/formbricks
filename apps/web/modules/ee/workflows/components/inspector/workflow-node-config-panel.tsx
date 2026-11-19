@@ -5,8 +5,9 @@ import { ExternalLinkIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode, TWorkflowResource } from "@formbricks/workflows";
-import { getWorkflowNodeConcreteType } from "@formbricks/workflows";
+import { getWorkflowNodeConcreteType, isConditionStepNode } from "@formbricks/workflows";
 import { WorkflowNodeChip } from "@/modules/ee/workflows/components/canvas/workflow-node-card";
+import { WorkflowPanelCollapseButton } from "@/modules/ee/workflows/components/workflow-side-panel";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import { withSurveyOperatorNamesInDefinition } from "@/modules/ee/workflows/lib/if-else-conditions";
@@ -16,6 +17,7 @@ import {
   isWorkflowReadOnlyAtom,
   selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
+  toggleWorkflowInspectorAtom,
   workflowDefinitionAtom,
   workflowStatusAtom,
 } from "@/modules/ee/workflows/state/editor";
@@ -84,6 +86,7 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
   const status = useAtomValue(workflowStatusAtom);
   const isReadOnly = useAtomValue(isWorkflowReadOnlyAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
+  const collapsePanel = useSetAtom(toggleWorkflowInspectorAtom);
 
   const selectedNode = findSelectedNode(definition, selectedNodeId);
   const registryEntry = selectedNode ? getNodeRegistryEntry(selectedNode) : null;
@@ -123,8 +126,9 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
       if (nextNode.type === "switch") {
         return withSurveyOperatorNamesInDefinition(withSwitchBranchesPruned(next, nextNode));
       }
-      // The If/else panel writes survey operator names; keep every other If/else and Switch on the same set.
-      return nextNode.type === "if_else" ? withSurveyOperatorNamesInDefinition(next) : next;
+      // The If/else and Filter panels write survey operator names; keep every other condition step on
+      // the same set.
+      return isConditionStepNode(nextNode) ? withSurveyOperatorNamesInDefinition(next) : next;
     });
   };
 
@@ -135,7 +139,7 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
     // is what allows the shrink; without it the flex item would be floored at its content height.
     // The header sits outside the scrolling area and stays put.
     <aside className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 py-2 pr-2 pl-4">
         {/* The step's colored icon, as on its canvas card, so the panel reads as that step at a glance. */}
         <div className="flex min-w-0 items-center gap-2">
           <WorkflowNodeChip icon={registryEntry.icon} category={registryEntry.category} size="sm" />
@@ -143,16 +147,20 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
             {registryEntry.title(selectedNode, t)}
           </h2>
         </div>
-        {registryEntry.docsUrl ? (
-          <a
-            href={registryEntry.docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800">
-            {t("common.docs")}
-            <ExternalLinkIcon className="size-3" aria-hidden />
-          </a>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-2">
+          {registryEntry.docsUrl ? (
+            <a
+              href={registryEntry.docsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800">
+              {t("common.docs")}
+              <ExternalLinkIcon className="size-3" aria-hidden />
+            </a>
+          ) : null}
+          {/* In the panel it collapses, as in the main navigation (review point 5). */}
+          <WorkflowPanelCollapseButton side="right" onCollapse={collapsePanel} />
+        </div>
       </header>
       <div className="scroll-bar min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 px-3 pt-3 pb-4">

@@ -5,7 +5,6 @@ import {
   classifyTestRunError,
   getTestRunBlocker,
   getTestRunDrawerPayload,
-  withTestRunsHidden,
 } from "./test-run";
 
 describe("buildTestRunInput", () => {
@@ -78,19 +77,6 @@ describe("classifyTestRunError", () => {
     expect(classifyTestRunError(problem(422, "invalid_workflow_state"), { sentPayload: true })).toBe("other");
     expect(classifyTestRunError(problem(500, "internal_server_error"), { sentPayload: false })).toBe("other");
     expect(classifyTestRunError(new TypeError("Failed to fetch"), { sentPayload: false })).toBe("other");
-  });
-});
-
-describe("withTestRunsHidden", () => {
-  test("hiding Test runs asks the list for real runs only, keeping the other filters", () => {
-    expect(withTestRunsHidden({ workflowId: "wf_1" }, true)).toEqual({ workflowId: "wf_1", isDryRun: false });
-  });
-
-  test("showing them drops the filter", () => {
-    expect(withTestRunsHidden({ workflowId: "wf_1", isDryRun: false }, false)).toEqual({
-      workflowId: "wf_1",
-    });
-    expect(withTestRunsHidden(undefined, false)).toEqual({});
   });
 });
 

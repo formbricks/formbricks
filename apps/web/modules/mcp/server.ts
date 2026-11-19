@@ -8,11 +8,13 @@ import { getMcpAuthentication } from "./auth";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
 import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
 import { mcpRequestStateCodec } from "./request-state";
+import { registerAudienceTools } from "./tools/audience";
 import { registerCreativeTools } from "./tools/creatives";
 import { registerDashboardTools } from "./tools/dashboards";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
 import { registerResponseTools } from "./tools/responses";
 import { registerSurveyTools } from "./tools/surveys";
+import { registerTagTools } from "./tools/tags";
 import { registerWorkflowTools } from "./tools/workflows";
 import { registerWorkspaceTools } from "./tools/workspaces";
 
@@ -115,6 +117,7 @@ export const MCP_HANDLER_OPTIONS = {
    * Server-level rather than per-tool because that is where the SDK puts it: one verifier covers
    * every tool that ever mints state, which is also what stops a future tool from forgetting.
    */
+  // eslint-disable-next-line typescript/unbound-method -- the SDK codec's methods are closures, and server.test.ts pins this to be the codec's own verifier
   requestState: { verify: mcpRequestStateCodec.verify },
 } as const;
 
@@ -124,7 +127,9 @@ export const mcpHandler = createMcpHandler((server) => {
   registerWorkspaceTools(server);
   registerFeedbackRecordTools(server);
   registerResponseTools(server);
+  registerTagTools(server);
   registerCreativeTools(server);
   registerDashboardTools(server);
+  registerAudienceTools(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);
 }, MCP_HANDLER_OPTIONS);

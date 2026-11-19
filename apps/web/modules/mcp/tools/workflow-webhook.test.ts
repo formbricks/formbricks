@@ -3,6 +3,7 @@ import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { successResponse } from "@/app/api/v3/lib/response";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
+import type { TToolHandler } from "./test-utils";
 import { registerWorkflowWebhookTools } from "./workflow-webhook";
 
 vi.mock("@/app/api/v3/workflows/lib/context", () => ({
@@ -46,24 +47,25 @@ const readOnlyAuthInfo = {
 };
 
 const createToolServer = () => {
-  const tools = new Map<
-    string,
-    { config: Record<string, unknown>; handler: (input: any, extra: any) => any }
-  >();
+  const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
-  registerWorkflowWebhookTools(server as any);
+  registerWorkflowWebhookTools(server as unknown as Parameters<typeof registerWorkflowWebhookTools>[0]);
   return { server, tools };
 };
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as any);
+  vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as unknown as ReturnType<
+    typeof buildWorkflowApiContext
+  >);
   vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
-  vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+  vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as ReturnType<
+    typeof buildV3AuditLog
+  >);
   for (const handler of Object.values(workflowsHandlers)) {
     vi.mocked(handler).mockResolvedValue(
       successResponse({ workflowId: WORKFLOW_ID }, { requestId: "req_tool" })
@@ -110,7 +112,7 @@ describe("registerWorkflowWebhookTools", () => {
 
   test("set_sample_payload is a mutation: audited as updated on the workflow, success on 200", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" } as any;
+    const auditLog = { status: "failure" } as NonNullable<ReturnType<typeof buildV3AuditLog>>;
     vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
 
     await tools

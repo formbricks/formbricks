@@ -553,7 +553,7 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as any;
+    } as unknown as Parameters<typeof validateEmailAttribute>[1];
     const result = validateEmailAttribute(attributes, mockCtx);
     expect(result.isValid).toBe(true);
     expect(result.emailAttr).toEqual(attributes[0]);
@@ -571,7 +571,7 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as any;
+    } as unknown as Parameters<typeof validateEmailAttribute>[1];
     const result = validateEmailAttribute(attributes, mockCtx);
     expect(result.isValid).toBe(false);
     expect(result.emailAttr).toBeUndefined();
@@ -589,7 +589,7 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as any;
+    } as unknown as Parameters<typeof validateEmailAttribute>[1];
     const result = validateEmailAttribute(attributes, mockCtx);
     expect(result.isValid).toBe(false);
   });
@@ -606,7 +606,7 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as any;
+    } as unknown as Parameters<typeof validateEmailAttribute>[1];
     const result = validateEmailAttribute(attributes, mockCtx);
     expect(result.isValid).toBe(false);
   });
@@ -623,7 +623,7 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as any;
+    } as unknown as Parameters<typeof validateEmailAttribute>[1];
     const result = validateEmailAttribute(attributes, mockCtx, 5);
     expect(result.isValid).toBe(false);
   });
@@ -649,7 +649,7 @@ describe("validateUniqueAttributeKeys", () => {
     ];
     const mockCtx = {
       addIssue: vi.fn(),
-    } as any;
+    } as unknown as Parameters<typeof validateUniqueAttributeKeys>[1];
     validateUniqueAttributeKeys(attributes, mockCtx);
     expect(mockCtx.addIssue).not.toHaveBeenCalled();
   });
@@ -676,7 +676,7 @@ describe("validateUniqueAttributeKeys", () => {
       addIssue: () => {
         issueAdded = true;
       },
-    } as any;
+    } as unknown as Parameters<typeof validateUniqueAttributeKeys>[1];
     validateUniqueAttributeKeys(attributes, mockCtx);
     expect(issueAdded).toBe(true);
   });
@@ -703,7 +703,7 @@ describe("validateUniqueAttributeKeys", () => {
       addIssue: () => {
         issueAdded = true;
       },
-    } as any;
+    } as unknown as Parameters<typeof validateUniqueAttributeKeys>[1];
     validateUniqueAttributeKeys(attributes, mockCtx, 3);
     expect(issueAdded).toBe(true);
   });

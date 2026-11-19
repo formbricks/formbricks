@@ -8,6 +8,7 @@ import {
 } from "./actions/send-email";
 import { type TWorkflowDataRef } from "./common";
 import { flattenWorkflowConditions } from "./conditions/base";
+import type { TWorkflowFilterNode } from "./conditions/filter";
 import type { TWorkflowIfElseNode } from "./conditions/if-else";
 import type { TWorkflowSwitchNode } from "./conditions/switch";
 import { getBlankSendEmailContentFields } from "./content";
@@ -172,7 +173,11 @@ const checkSendEmail = (
   checkSurveyLink(node, context);
 };
 
-const checkIfElse = (node: TWorkflowIfElseNode, context: TWorkflowExecutableCheckContext): void => {
+/** Every Variable an If/else's or a Filter's conditions read is one this step can see. */
+const checkConditions = (
+  node: TWorkflowIfElseNode | TWorkflowFilterNode,
+  context: TWorkflowExecutableCheckContext
+): void => {
   for (const condition of flattenWorkflowConditions(node.config.condition)) {
     checkWorkflowVariableRef(condition.left, context, ["config", "condition"]);
     if (isDataRef(condition.right)) {
@@ -202,6 +207,7 @@ export const WORKFLOW_EXECUTABLE_NODE_CHECKS: { [T in TWorkflowStepType]: TWorkf
   {
     send_email: checkSendEmail,
     http_request: checkHttpRequest,
-    if_else: checkIfElse,
+    if_else: checkConditions,
+    filter: checkConditions,
     switch: checkSwitch,
   };

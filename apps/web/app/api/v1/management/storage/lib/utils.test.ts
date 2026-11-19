@@ -30,7 +30,7 @@ describe("checkAuth", () => {
   });
 
   test("returns notAuthenticatedResponse when authentication is undefined", async () => {
-    const result = await checkAuth(undefined as any, workspaceId);
+    const result = await checkAuth(undefined, workspaceId);
 
     expect(responses.notAuthenticatedResponse).toHaveBeenCalled();
     expect(result).toBe(mockNotAuthenticatedResponse);
@@ -133,7 +133,8 @@ describe("checkAuth", () => {
   });
 
   test("returns notAuthenticatedResponse when authentication object is neither session nor API key", async () => {
-    const invalidAuth = { someProperty: "value" } as any;
+    // Neither a session nor an API key: the shape the guard must reject.
+    const invalidAuth = { someProperty: "value" } as unknown as TAuthenticationApiKey;
 
     const result = await checkAuth(invalidAuth, workspaceId);
 

@@ -17,7 +17,6 @@ import {
   ZWebhookIdSchema,
   ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
-import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 export const GET = async (request: NextRequest, props: { params: Promise<{ webhookId: string }> }) =>
   authenticatedApiClient({
@@ -39,7 +38,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error as ApiErrorResponseV2);
+        return handleApiError(request, webhook.error);
       }
 
       if (
@@ -96,7 +95,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
+        return handleApiError(request, webhook.error, auditLog);
       }
 
       if (
@@ -141,7 +140,7 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
       const updatedWebhook = await updateWebhook(params.webhookId, body);
 
       if (!updatedWebhook.ok) {
-        return handleApiError(request, updatedWebhook.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+        return handleApiError(request, updatedWebhook.error, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
       if (auditLog) {
@@ -182,7 +181,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
       const webhook = await getWebhook(params.webhookId);
 
       if (!webhook.ok) {
-        return handleApiError(request, webhook.error as ApiErrorResponseV2, auditLog);
+        return handleApiError(request, webhook.error, auditLog);
       }
 
       if (
@@ -205,7 +204,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
       const deletedWebhook = await deleteWebhook(params.webhookId);
 
       if (!deletedWebhook.ok) {
-        return handleApiError(request, deletedWebhook.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+        return handleApiError(request, deletedWebhook.error, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
       if (auditLog) {

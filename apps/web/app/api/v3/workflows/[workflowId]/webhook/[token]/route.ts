@@ -1,6 +1,6 @@
 /**
  * POST /api/v3/workflows/{workflowId}/webhook/{token} — the Webhook Secret URL (ENG-7177). No login: the
- * token in the path is the credential (ADR 0041), so the path is redacted before anything records it,
+ * token in the path is the credential (ADR 0057), so the path is redacted before anything records it,
  * and the handler does its own rate limiting (the wrapper's needs an authenticated principal) and reads
  * and bounds its own body. Route placement is interim until the infra ticket (ENG-7178) confirms it.
  */

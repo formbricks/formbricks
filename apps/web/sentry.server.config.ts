@@ -34,7 +34,7 @@ if (SENTRY_DSN) {
     beforeSend(event, hint) {
       const error = hint.originalException as Error;
 
-      // @ts-expect-error
+      // @ts-expect-error -- Next.js adds `digest` to the errors it throws; `Error` does not declare it
       if (error?.digest === "NEXT_NOT_FOUND") {
         return null;
       }
@@ -45,7 +45,7 @@ if (SENTRY_DSN) {
         return null;
       }
 
-      // A Webhook Secret URL's token is a credential (ADR 0041); it never leaves in an event.
+      // A Webhook Secret URL's token is a credential (ADR 0057); it never leaves in an event.
       return scrubWebhookTokens(event);
     },
 

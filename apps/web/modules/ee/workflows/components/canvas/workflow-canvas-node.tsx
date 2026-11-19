@@ -15,6 +15,7 @@ import {
   canMutateCanvasAtom,
   cutWorkflowStepIdsAtom,
   deleteWorkflowNodeAtom,
+  stepIdsMovingAlongAtom,
   workflowCanvasDirectionAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { Button } from "@/modules/ui/components/button";
@@ -25,12 +26,13 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { InsertStepAfterMenuItem } from "./insert-step-after-menu-item";
+import { MoveStepMenuItem } from "./move-step-menu-item";
 import { StepClipboardMenuItems } from "./step-clipboard-menu-items";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 import { HANDLE_CLASS_NAMES, WorkflowNodeCard } from "./workflow-node-card";
 
 export const WorkflowCanvasNode = memo(
-  ({ id, data, selected }: Readonly<NodeProps<Node<TWorkflowNodeData>>>) => {
+  ({ id, data, selected, dragging }: Readonly<NodeProps<Node<TWorkflowNodeData>>>) => {
     const { t } = useTranslation();
     const deleteNode = useSetAtom(deleteWorkflowNodeAtom);
     const appendStep = useAppendWorkflowStep();
@@ -38,6 +40,8 @@ export const WorkflowCanvasNode = memo(
     const isTrigger = data.category === "trigger";
     const isHorizontal = useAtomValue(workflowCanvasDirectionAtom) === "horizontal";
     const cutStepIds = useAtomValue(cutWorkflowStepIdsAtom);
+    // Steps a dragged If/else, Switch or Filter takes along look like a pending cut while it moves.
+    const movingAlong = useAtomValue(stepIdsMovingAlongAtom);
     const { paste, canPasteAt } = useStepClipboard();
 
     return (
@@ -45,7 +49,7 @@ export const WorkflowCanvasNode = memo(
         <WorkflowNodeCard
           data={data}
           selected={selected}
-          isCut={cutStepIds.has(id)}
+          isCut={cutStepIds.has(id) || (movingAlong.has(id) && !dragging)}
           direction={isHorizontal ? "horizontal" : "vertical"}
           menu={
             !isTrigger &&
@@ -64,6 +68,7 @@ export const WorkflowCanvasNode = memo(
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="motion-reduce:animate-none">
                   <InsertStepAfterMenuItem nodeId={id} nodeType={data.nodeType} />
+                  <MoveStepMenuItem nodeId={id} />
                   <StepClipboardMenuItems nodeId={id} />
                   <DropdownMenuItem
                     onClick={(event) => {
@@ -94,6 +99,7 @@ export const WorkflowCanvasNode = memo(
               ariaLabel={t("workspace.workflows.add_step")}
               onAdd={(stepType) => appendStep(id, stepType)}
               onPaste={canPasteAt({ sourceNodeId: id }) ? () => paste({ sourceNodeId: id }) : undefined}
+              moveTarget={{ sourceNodeId: id }}
             />
           </div>
         )}

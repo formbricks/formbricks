@@ -38,7 +38,7 @@ const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
   if (webhook.triggers.length === 0) {
     return <p className="text-slate-400">{t("workspace.integrations.webhooks.no_triggers")}</p>;
   } else {
-    let cleanedTriggers = webhook.triggers.map((trigger) => {
+    const cleanedTriggers = webhook.triggers.map((trigger) => {
       if (trigger === "responseCreated") {
         return t("workspace.integrations.webhooks.response_created");
       } else if (trigger === "responseUpdated") {

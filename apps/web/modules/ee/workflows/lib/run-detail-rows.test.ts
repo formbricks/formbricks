@@ -440,6 +440,58 @@ describe("toRunDetailRows", () => {
   });
 });
 
+describe("a Filter in run detail (ADR 0056)", () => {
+  // trigger → gate (Filter) → after
+  const filtered = {
+    schemaVersion: 1,
+    entryNodeId: "trigger",
+    trigger: { id: "trigger", type: "trigger", triggerType: "webhook", config: {} },
+    nodes: [
+      {
+        id: "gate",
+        type: "filter",
+        label: "Gold customers only",
+        config: {
+          condition: {
+            id: "group",
+            connector: "and",
+            conditions: [{ id: "c1", left: { path: "payload.tier" }, operator: "equals", right: "gold" }],
+          },
+        },
+      },
+      { id: "after", type: "action", actionType: "send_email", config: {} },
+    ],
+    edges: [
+      { id: "e0", source: "trigger", target: "gate" },
+      { id: "e1", source: "gate", target: "after" },
+    ],
+  } as unknown as TWorkflowDefinition;
+
+  test("says the run ended at the Filter and marks the steps after it not taken, on no branch", () => {
+    const [, gate, after] = toRunDetailRows(
+      buildRun({
+        steps: [
+          step({
+            stepId: "gate",
+            stepType: "filter",
+            detail: { kind: "filter", passed: false, conditions: [{ id: "c1", matched: false }] },
+          }),
+          step({ stepId: "after", status: "not_taken" }),
+        ],
+      }),
+      filtered
+    );
+
+    expect(gate).toMatchObject({
+      kind: "filter",
+      label: "Gold customers only",
+      passed: false,
+      conditions: [{ id: "c1", matched: false, condition: { left: { path: "payload.tier" } } }],
+    });
+    expect(after).toMatchObject({ kind: "not_taken", branch: null, switchBranch: null });
+  });
+});
+
 describe("a run whose details were deleted", () => {
   const deleted = buildRun({
     triggerPayload: {

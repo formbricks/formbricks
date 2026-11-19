@@ -364,7 +364,7 @@ describe("useFocusTrap", () => {
       setTimeout(resolve, 50);
     });
 
-    expect(onCompetingRedirect.mock.calls.length).toBe(redirectsOnBackoff);
+    expect(onCompetingRedirect.mock.calls).toHaveLength(redirectsOnBackoff);
 
     warnSpy.mockRestore();
   });

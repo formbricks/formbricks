@@ -115,6 +115,38 @@ describe("validators", () => {
       consoleSpy.mockRestore();
     });
 
+    test("should use the matcher passed in options instead of RegExp", () => {
+      const matchPattern = vi.fn().mockReturnValue(false);
+      const result = validators.pattern.check(
+        "Hello",
+        { pattern: "^[A-Z]", flags: "i" },
+        {} as TSurveyElement,
+        { matchPattern }
+      );
+      expect(result.valid).toBe(false);
+      expect(matchPattern).toHaveBeenCalledWith("^[A-Z]", "i", "Hello");
+    });
+
+    test("should pass when the matcher cannot evaluate the pattern", () => {
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const result = validators.pattern.check("test", { pattern: "(?=t)t" }, {} as TSurveyElement, {
+        matchPattern: () => undefined,
+      });
+      expect(result.valid).toBe(true);
+      consoleSpy.mockRestore();
+    });
+
+    test("should not call the matcher for values over the size cap", () => {
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const matchPattern = vi.fn();
+      const result = validators.pattern.check("a".repeat(4097), { pattern: ".*" }, {} as TSurveyElement, {
+        matchPattern,
+      });
+      expect(result.valid).toBe(false);
+      expect(matchPattern).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
     test("should return correct error message", () => {
       const message = validators.pattern.getDefaultMessage({ pattern: ".*" }, {} as TSurveyElement, mockT);
       expect(message).toBe("errors.invalid_format");
@@ -618,7 +650,7 @@ describe("validators", () => {
         { id: "opt2", label: { default: "Option 2" } },
         { id: "opt3", label: { default: "Option 3" } },
       ],
-    } as TSurveyElement;
+    };
 
     test("should return valid true when ranked count >= min", () => {
       const result = validators.minRanked.check(["opt1", "opt2"], { min: 2 }, rankingElement);
@@ -657,7 +689,7 @@ describe("validators", () => {
         { id: "opt2", label: { default: "Option 2" } },
         { id: "opt3", label: { default: "Option 3" } },
       ],
-    } as TSurveyElement;
+    };
 
     test("should return valid true when all options are ranked", () => {
       const result = validators.rankAll.check(["opt1", "opt2", "opt3"], {}, rankingElement);
@@ -701,7 +733,7 @@ describe("validators", () => {
         { id: "col1", label: { default: "Col 1" } },
         { id: "col2", label: { default: "Col 2" } },
       ],
-    } as TSurveyElement;
+    };
 
     test("should return valid true when answered rows >= min", () => {
       const result = validators.minRowsAnswered.check(
@@ -747,7 +779,7 @@ describe("validators", () => {
       headline: { default: "Upload file" },
       required: false,
       allowMultipleFiles: false,
-    } as TSurveyElement;
+    };
 
     test("should return valid true when file extension matches", () => {
       const result = validators.fileExtensionIs.check(
@@ -852,7 +884,7 @@ describe("validators", () => {
       headline: { default: "Upload file" },
       required: false,
       allowMultipleFiles: false,
-    } as TSurveyElement;
+    };
 
     test("should return valid true when file extension does not match", () => {
       const result = validators.fileExtensionIsNot.check(

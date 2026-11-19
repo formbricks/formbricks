@@ -20,7 +20,7 @@ export const Slider: React.ForwardRefExoticComponent<
     </SliderPrimitive.Track>
     <SliderPrimitive.Thumb
       aria-label={thumbAriaLabel}
-      className="ring-offset-background focus-visible:ring-ring block size-5 rounded-full border-2 border-primary bg-slate-900 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+      className="ring-offset-background block size-5 rounded-full border-2 border-primary bg-slate-900 transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
     />
   </SliderPrimitive.Root>
 ));

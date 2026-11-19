@@ -8,6 +8,7 @@ import {
   WORKFLOW_SWITCH_DEFAULT_BRANCH,
   getBlankSendEmailContentFields,
   getWorkflowNodeConcreteType,
+  isConditionStepNode,
   isResponseCompletedTrigger,
 } from "@formbricks/workflows";
 import {
@@ -171,7 +172,7 @@ const withStepVariableLabels = (
 ): TVariableLabels => {
   const paths = new Set<string>();
   for (const node of definition.nodes) {
-    if (node.type === "if_else") collectConditionPaths(node.config.condition, paths);
+    if (isConditionStepNode(node)) collectConditionPaths(node.config.condition, paths);
     if (node.type === "switch") paths.add(node.config.left.path);
   }
   const titles = new Map(
@@ -186,14 +187,14 @@ const withStepVariableLabels = (
   return result;
 };
 
-/** The If/else and Switch summaries as sentences with chips; null for every other step. */
+/** The If/else, Filter and Switch summaries as sentences with chips; null for every other step. */
 const getSummaryParts = (
   node: TWorkflowNode,
   t: TFunction,
   refs: TVariableRefs | undefined,
   choiceLabels: TChoiceLabels | undefined
 ): TFlowTextPart[] | null => {
-  if (node.type === "if_else") {
+  if (isConditionStepNode(node)) {
     return describeIfElseConditionParts(node.config.condition, t, refs, choiceLabels);
   }
   if (node.type === "switch")
@@ -290,17 +291,21 @@ export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): 
 export const withBranchLegOffsets = <TNode extends Node<TWorkflowNodeData>>(
   nodes: TNode[],
   edges: ReadonlyArray<Pick<Edge, "source" | "target" | "sourceHandle">>,
-  direction: TWorkflowCanvasDirection = "vertical"
+  direction: TWorkflowCanvasDirection = "vertical",
+  /** A card being moved onto a `+`: the legs stay where it was, so the `+` on them hold still. */
+  frozen?: { id: string; position: { x: number; y: number } } | null
 ): TNode[] => {
   // Left to right, the legs spread down: offsets are along y.
   const axis = direction === "horizontal" ? "y" : "x";
-  const coordinateById = new Map(nodes.map((node) => [node.id, node.position[axis]]));
+  const coordinateOf = (node: TNode) =>
+    frozen && node.id === frozen.id ? frozen.position[axis] : node.position[axis];
+  const coordinateById = new Map(nodes.map((node) => [node.id, coordinateOf(node)]));
   return nodes.map((node) => {
     if (node.data.branches.length === 0) return node;
     const childOffsets = node.data.branches.map(({ handle }) => {
       const edge = edges.find((item) => item.source === node.id && item.sourceHandle === handle);
       const childCoordinate = edge ? coordinateById.get(edge.target) : undefined;
-      return childCoordinate === undefined ? null : childCoordinate - node.position[axis];
+      return childCoordinate === undefined ? null : childCoordinate - coordinateOf(node);
     });
     return {
       ...node,

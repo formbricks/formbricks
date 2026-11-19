@@ -598,6 +598,44 @@ Example:
 }
 ```
 
+### `ZWorkflowFilterNode` / `TWorkflowFilterNode`
+
+An If/else with one way out (ADR 0056). When the condition group holds, the run continues down the step's one
+edge; when it doesn't, the run ends there, completed, and the steps after it are `not_taken` in run detail. Same
+condition group, operators and limits as `if_else`. Its output (`passed`, per-condition results) is kept for run
+detail; later steps only run when it passed, so it offers them no Variables.
+
+Properties:
+
+- `id`: Node id used by edges.
+- `type`: Always `filter`.
+- `label`: Optional builder label.
+- `ui`: Optional builder-only metadata.
+- `config.condition`: `ZWorkflowConditionGroup` the run must match to go on.
+
+Edge rules:
+
+- At most one outgoing edge, without a `sourceHandle`.
+
+Example:
+
+```json
+{
+  "config": {
+    "condition": {
+      "conditions": [
+        { "id": "gold", "left": { "path": "payload.customer.tier" }, "operator": "equals", "right": "gold" }
+      ],
+      "connector": "and",
+      "id": "gold-only"
+    }
+  },
+  "id": "gate",
+  "label": "Gold customers only",
+  "type": "filter"
+}
+```
+
 ### `ZWorkflowSwitchNode` / `TWorkflowSwitchNode`
 
 Branching node that compares one Variable against several cases (ENG-7157). A run continues down the edge of the

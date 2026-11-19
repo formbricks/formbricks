@@ -6,8 +6,8 @@ import { hasWorkflowsLicense } from "./utils/license";
  * The Workflows journey (ENG-7183): the one place the editor, a Test run's fake effects, the Webhook
  * Secret URL, the run queue and the runs list meet. A Webhook workflow with an If/else is seeded
  * through API v3; in the editor a test payload takes the Then branch and the email "would send"; once
- * enabled, a real call to the Secret URL starts a run that takes the Else branch and shows under Runs,
- * where Test runs are hidden by default.
+ * enabled, a real call to the Secret URL starts a run that takes the Else branch and shows in the Runs
+ * view beside the Test run, where the Live filter keeps it alone.
  *
  * The real call takes the Else branch, which is empty, so the run sends no email: the journey needs no
  * mail server, and the Then branch's email is proven by the Test run.
@@ -79,14 +79,14 @@ test.describe("Workflows", () => {
     if (!workspaceId) throw new Error("Workspace not seeded for the test user");
     await user.login();
 
-    // CI's Enterprise license doesn't grant Workflows yet (decision 16), so the journey skips there
-    // instead of failing every run. Once the CI license has the flag, this runs in full.
+    // The journey needs the `workflows` license feature, which CI's Enterprise license grants. Without
+    // it the run fails here, naming the cause, rather than skipping or failing on a later step.
     const licensed = await test.step("the instance's license includes Workflows", () =>
       hasWorkflowsLicense(page.request, workspaceId));
-    test.skip(
-      !licensed,
+    expect(
+      licensed,
       "The instance's Enterprise license doesn't include Workflows: GET /api/v3/workflows answered 403 \"Workflows are not enabled for this organization\"."
-    );
+    ).toBe(true);
 
     const workflowId = await test.step("seed a Webhook workflow through API v3", async () => {
       const response = await page.request.post("/api/v3/workflows", {
@@ -104,20 +104,30 @@ test.describe("Workflows", () => {
       // Test run sends (ADR 0052), and enabling needs one.
       await page.getByText("Starts when its Webhook Secret URL is called").click();
       await page.getByRole("button", { name: "Write or paste the expected payload" }).click();
-      const expectedPayload = page.getByRole("textbox", { name: "Response fields, JSON editor" });
+      const expectedPayload = page.getByRole("textbox", { name: "Expected payload, JSON editor" });
       await expectedPayload.fill(JSON.stringify({ customer: { plan: "enterprise" } }));
-      await expect(page.getByText(/^Modified: /)).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText(/^Saved: .*New calls don’t change these fields\.$/)).toBeVisible({
+        timeout: 15_000,
+      });
 
-      await page.getByRole("button", { name: "Test run" }).click();
+      // Test opens the Runs view's test form, ready to run; "Run test" starts it (review point 1).
+      await page.getByRole("button", { name: "Test", exact: true }).click();
+      await page.waitForURL(`**/workflows/${workflowId}/runs**`);
+      const runTest = page.getByRole("button", { name: "Run test" });
+      await expect(runTest).toBeFocused();
+      await runTest.click();
 
-      const drawer = page.getByRole("dialog");
-      await expect(drawer.getByRole("heading", { name: `Run · ${WORKFLOW_NAME}` })).toContainText("Test");
-      await expect(drawer.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
+      // The result shows in the Runs view: the run on the canvas, its steps on the right.
+      const runPanel = page.getByTestId("workflow-run-panel");
+      await expect(runPanel.getByText("Test run · listed under Runs", { exact: false })).toBeVisible();
+      await expect(runPanel.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
         /customer\.plan is .enterprise. \(matched\) → Then/
       );
-      await expect(drawer.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText("Would send");
-      await page.keyboard.press("Escape");
-      await expect(drawer).toBeHidden();
+      await expect(runPanel.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText(
+        "Would send"
+      );
+      await page.getByRole("link", { name: "Editor" }).click();
+      await page.waitForURL(`**/workflows/${workflowId}`);
     });
 
     await test.step("enable the workflow", async () => {
@@ -148,22 +158,25 @@ test.describe("Workflows", () => {
         .toBe("completed");
     });
 
-    await test.step("Runs lists the real run and hides the Test run", async () => {
+    await test.step("Runs lists the real run beside the Test run, and Live filters it", async () => {
       await page.getByRole("link", { name: "Runs" }).click();
       await page.waitForURL(`**/workflows/${workflowId}/runs`);
 
-      const runs = page.getByRole("table").getByRole("button");
+      const runs = page.getByTestId("workflow-run-list").getByRole("listitem");
+      await expect(runs).toHaveCount(2);
+      await page.getByRole("group", { name: "Show runs" }).getByRole("button", { name: "Live" }).click();
       await expect(runs).toHaveCount(1);
-      await expect(runs).toContainText("Webhook");
       await expect(runs).toContainText("Completed");
       await expect(runs).not.toContainText("Test");
 
-      await runs.click();
-      const drawer = page.getByRole("dialog");
-      await expect(drawer.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
+      // The newest listed run is the one shown.
+      const runPanel = page.getByTestId("workflow-run-panel");
+      await expect(runPanel.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
         /customer\.plan is .enterprise. \(not matched\) → Else/
       );
-      await expect(drawer.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText("Not taken");
+      await expect(runPanel.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText(
+        "Not taken"
+      );
     });
   });
 });

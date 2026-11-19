@@ -47,6 +47,7 @@ const workflowRunSelect = {
   triggerType: true,
   triggerPayload: true,
   isDryRun: true,
+  testRunDefinition: true,
   workflowVersion: { select: { definition: true } },
   // `createdBy` carries the per-user email limit: the respondent who triggers a run is anonymous.
   workflow: { select: { definition: true, createdBy: true } },
@@ -89,14 +90,17 @@ const getWorkflowRunLogContext = (
 
 /**
  * Resolve the run's executable definition: prefer the immutable `workflowVersion.definition`
- * snapshot, fall back to the workflow's live `definition`. The persisted JSON is untrusted, so it is
- * parsed through `ZWorkflowExecutableDefinition`; a non-executable definition fails the run.
+ * snapshot, then the draft a Test run saved when it was created (`testRunDefinition`), and fall back
+ * to the workflow's live `definition` (Test runs saved before the column existed). The persisted JSON
+ * is untrusted, so it is parsed through `ZWorkflowExecutableDefinition`; a non-executable definition
+ * fails the run.
  */
 const resolveExecutableDefinition = (run: {
   workflowVersion: { definition: unknown } | null;
+  testRunDefinition?: unknown;
   workflow: { definition: unknown };
 }): ReturnType<typeof ZWorkflowExecutableDefinition.parse> => {
-  const rawDefinition = run.workflowVersion?.definition ?? run.workflow.definition;
+  const rawDefinition = run.workflowVersion?.definition ?? run.testRunDefinition ?? run.workflow.definition;
   const parsed = ZWorkflowExecutableDefinition.safeParse(rawDefinition);
   if (!parsed.success) {
     throw new WorkflowRunNotExecutableError("Workflow run definition is not executable");
@@ -182,19 +186,41 @@ interface StepRunInput {
  * accepted policy: never send the same step twice.
  */
 const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
+  const where = { runId_stepId: { runId: step.runId, stepId: step.node.id } };
   const { status, error, output, retryable, variables } = await step.executor.execute({
     node: step.node,
     context: step.context,
     environment: step.environment,
     effects: step.effects,
+    saveOutput: async (saved) => {
+      await prisma.workflowRunLog.update({ where, data: { output: saved } });
+    },
   });
   const finishedAt = new Date();
   const failedForGood = retryable === false || (status === "failed" && step.executor.failsForGood === true);
 
-  await prisma.workflowRunLog.update({
-    where: { runId_stepId: { runId: step.runId, stepId: step.node.id } },
-    data: { status, output, error, finishedAt },
-  });
+  if (step.executor.handedOff?.(output) && output.delivery !== undefined) {
+    // Handed to its own job, which may already have run and recorded the call's outcome (even when the
+    // enqueue reported an error): only a row still `running` is ours. A Test run sets no `delivery`.
+    const written = await prisma.workflowRunLog.updateMany({
+      where: { runId: step.runId, stepId: step.node.id, status: "running" },
+      data: { status, output, error, finishedAt },
+    });
+    if (written.count === 0) {
+      // The job got there first: the run mirrors what its log row says, not this step's own result.
+      const row: StepLogRow | null = await prisma.workflowRunLog.findFirst({
+        where: {
+          runId: step.runId,
+          stepId: step.node.id,
+          run: { workspaceId: step.environment.workspaceId },
+        },
+        select: stepLogSelect,
+      });
+      if (row) return resumedStep(step.executor, resultFromLogRow(row, row.status));
+    }
+  } else {
+    await prisma.workflowRunLog.update({ where, data: { status, output, error, finishedAt } });
+  }
 
   return {
     stepId: step.node.id,
@@ -420,6 +446,7 @@ const executeClaimedRun = async (
   run: {
     id: string;
     workflowVersion: { definition: unknown } | null;
+    testRunDefinition?: unknown;
     workflow: { definition: unknown; createdBy: string | null };
   },
   data: TWorkflowRunJobData,

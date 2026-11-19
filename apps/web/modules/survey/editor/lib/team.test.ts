@@ -38,8 +38,12 @@ describe("getTeamMemberDetails", () => {
       { email: "user2@example.com", name: "User Two" },
     ];
 
-    vi.mocked(prisma.teamUser.findMany).mockResolvedValue(Promise.resolve(mockTeamUsers) as any);
-    vi.mocked(prisma.user.findMany).mockResolvedValue(Promise.resolve(mockUsers) as any);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue(
+      Promise.resolve(mockTeamUsers) as unknown as Awaited<ReturnType<typeof prisma.teamUser.findMany>>
+    );
+    vi.mocked(prisma.user.findMany).mockResolvedValue(
+      Promise.resolve(mockUsers) as unknown as Awaited<ReturnType<typeof prisma.user.findMany>>
+    );
 
     const result = await getTeamMemberDetails([teamId]);
 
@@ -74,12 +78,22 @@ describe("getTeamMemberDetails", () => {
     };
 
     vi.mocked(prisma.teamUser.findMany)
-      .mockResolvedValueOnce(Promise.resolve(mockTeamUsersTeam1) as any)
-      .mockResolvedValueOnce(Promise.resolve(mockTeamUsersTeam2) as any);
-    vi.mocked(prisma.user.findMany)
-      .mockResolvedValueOnce(Promise.resolve([mockUsersResponseMap.user1]) as any)
       .mockResolvedValueOnce(
-        Promise.resolve([mockUsersResponseMap.user1, mockUsersResponseMap.user2]) as any
+        Promise.resolve(mockTeamUsersTeam1) as unknown as Awaited<ReturnType<typeof prisma.teamUser.findMany>>
+      )
+      .mockResolvedValueOnce(
+        Promise.resolve(mockTeamUsersTeam2) as unknown as Awaited<ReturnType<typeof prisma.teamUser.findMany>>
+      );
+    vi.mocked(prisma.user.findMany)
+      .mockResolvedValueOnce(
+        Promise.resolve([mockUsersResponseMap.user1]) as unknown as Awaited<
+          ReturnType<typeof prisma.user.findMany>
+        >
+      )
+      .mockResolvedValueOnce(
+        Promise.resolve([mockUsersResponseMap.user1, mockUsersResponseMap.user2]) as unknown as Awaited<
+          ReturnType<typeof prisma.user.findMany>
+        >
       );
 
     const result = await getTeamMemberDetails(teamIds);
@@ -112,9 +126,13 @@ describe("getTeamMemberDetails", () => {
 
   test("should return an empty array if a team has no users", async () => {
     const teamId = "teamWithNoUsers";
-    vi.mocked(prisma.teamUser.findMany).mockResolvedValue(Promise.resolve([]) as any);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue(
+      Promise.resolve([]) as unknown as Awaited<ReturnType<typeof prisma.teamUser.findMany>>
+    );
     // prisma.user.findMany will be called with an empty 'in' array if teamUser.findMany returns empty
-    vi.mocked(prisma.user.findMany).mockResolvedValue(Promise.resolve([]) as any);
+    vi.mocked(prisma.user.findMany).mockResolvedValue(
+      Promise.resolve([]) as unknown as Awaited<ReturnType<typeof prisma.user.findMany>>
+    );
 
     const result = await getTeamMemberDetails([teamId]);
 
@@ -138,10 +156,17 @@ describe("getTeamMemberDetails", () => {
   test("should handle users with null names gracefully", async () => {
     const teamId = "team1";
     const mockTeamUsers = [{ userId: "user1", teamId: teamId }];
-    const mockUsers: TFollowUpEmailToUser[] = [{ email: "user1@example.com", name: null as any }]; // Cast to any to satisfy TFollowUpEmailToUser if name is strictly string
+    const mockUsers: TFollowUpEmailToUser[] = [
+      // A user without a name, which the type does not allow but the database can hold
+      { email: "user1@example.com", name: null as unknown as string },
+    ];
 
-    vi.mocked(prisma.teamUser.findMany).mockResolvedValue(Promise.resolve(mockTeamUsers) as any);
-    vi.mocked(prisma.user.findMany).mockResolvedValue(Promise.resolve(mockUsers) as any);
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue(
+      Promise.resolve(mockTeamUsers) as unknown as Awaited<ReturnType<typeof prisma.teamUser.findMany>>
+    );
+    vi.mocked(prisma.user.findMany).mockResolvedValue(
+      Promise.resolve(mockUsers) as unknown as Awaited<ReturnType<typeof prisma.user.findMany>>
+    );
 
     const result = await getTeamMemberDetails([teamId]);
     expect(result).toEqual([{ email: "user1@example.com", name: null }]);

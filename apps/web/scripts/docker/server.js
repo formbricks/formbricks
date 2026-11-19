@@ -30,16 +30,16 @@ const server = createServer((request, response) => {
   });
 });
 
+const closeServer = () =>
+  new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+
 // Signals can arrive while instrumentation is starting workers, before Next has returned handlers.
 const stop = (exitCode = 0) => {
   state.draining = true;
   stopping ??= (async () => {
     await initialization.catch(() => undefined);
     await shutdown({
-      closeHttp: () =>
-        server.listening
-          ? new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
-          : Promise.resolve(),
+      closeHttp: () => (server.listening ? closeServer() : Promise.resolve()),
       closeWorkers: async () => {
         // Draining already stops new safety-net ticks; this waits out a drain one of them started.
         await globalThis.formbricksAuthzedOutboxSafetyNet?.close();

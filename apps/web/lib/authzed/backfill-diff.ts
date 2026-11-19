@@ -1,6 +1,8 @@
 import "server-only";
 import type { TAuthzedRelationship } from "./client";
 import {
+  MCP_GRANT_RELATION,
+  MCP_GRANT_SUBJECT_TYPE,
   ORGANIZATION_ACCESS_RELATIONS,
   ORGANIZATION_RELATIONS,
   SURVEY_RELATIONS,
@@ -54,6 +56,12 @@ export type TAuthzedSourceRef =
       kind: "feedbackDirectoryAssignment";
       workspaceId?: string;
     }>
+  | Readonly<{
+      grantId: string;
+      kind: "mcpGrantSelection";
+      resourceId: string;
+      resourceType: "organization" | "workspace";
+    }>
   | Readonly<{ kind: "membership"; organizationId: string; userId: string }>
   | Readonly<{ kind: "survey"; surveyId: string }>
   | Readonly<{ kind: "team"; teamId: string }>
@@ -95,6 +103,19 @@ const WORKSPACE_API_KEY_GRANT_RELATIONS = new Set<string>(Object.values(WORKSPAC
 /** The relation naming a resource's owning organization, shared by `api_key`, `team`, and `workspace`. */
 const PARENT_RELATION = "organization";
 
+/**
+ * An MCP grant's selection (ENG-7153): `organization#mcp_grant@mcp_grant:G` or
+ * `workspace#mcp_grant@mcp_grant:G`, sourced by the `McpGrantOrganization` / `McpGrantWorkspace` row of a
+ * grant whose access selects that kind. Key order is fixed so both constructors serialize alike.
+ */
+const toMcpGrantSelectionRef = (
+  { relation, resource, subject }: TAuthzedRelationship,
+  resourceType: "organization" | "workspace"
+): TAuthzedSourceRef | null =>
+  relation === MCP_GRANT_RELATION && subject.objectType === MCP_GRANT_SUBJECT_TYPE
+    ? { grantId: subject.objectId, kind: "mcpGrantSelection", resourceId: resource.objectId, resourceType }
+    : null;
+
 export const isUnprojectedResourceType = (resourceType: string): boolean =>
   (UNPROJECTED_RESOURCE_TYPES as readonly string[]).includes(resourceType);
 
@@ -113,7 +134,7 @@ const toOrganizationSourceRef: TSourceRefResolver = ({ relation, resource, subje
     return { apiKeyId: subject.objectId, kind: "apiKey" };
   }
 
-  return null;
+  return toMcpGrantSelectionRef({ relation, resource, subject }, "organization");
 };
 
 const toTeamSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
@@ -142,7 +163,7 @@ const toWorkspaceSourceRef: TSourceRefResolver = ({ relation, resource, subject 
     };
   }
 
-  return null;
+  return toMcpGrantSelectionRef({ relation, resource, subject }, "workspace");
 };
 
 const toApiKeySourceRef: TSourceRefResolver = ({ relation, resource, subject }) =>

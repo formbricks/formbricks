@@ -67,6 +67,7 @@ describe("pg-pool connection timeout patch", () => {
     });
 
     const connection = pool.connect();
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const rejection = expect(connection).rejects.toThrow("Connection terminated due to connection timeout");
 
     await vi.advanceTimersByTimeAsync(100);
@@ -97,7 +98,7 @@ describe("pg-pool connection timeout patch", () => {
         try {
           expect(error).toMatchObject({ message: "Connection terminated due to connection timeout" });
           expect(client).toBeUndefined();
-          void pool.end(() => {
+          pool.end(() => {
             shutdownComplete = true;
             resolve();
           });
@@ -133,6 +134,7 @@ describe("pg-pool connection timeout patch", () => {
     });
 
     const firstConnection = pool.connect();
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const firstRejection = expect(firstConnection).rejects.toThrow(
       "Connection terminated due to connection timeout"
     );
@@ -173,6 +175,7 @@ describe("pg-pool connection timeout patch", () => {
     });
 
     const connection = pool.connect();
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const rejection = expect(connection).rejects.toThrow("Connection terminated due to connection timeout");
 
     await vi.advanceTimersByTimeAsync(100);

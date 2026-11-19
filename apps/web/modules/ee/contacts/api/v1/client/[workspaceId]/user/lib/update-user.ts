@@ -6,7 +6,8 @@ import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
-import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { formatAttributeMessage } from "@/modules/ee/contacts/lib/attribute-messages";
+import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 
 /** Message codes whose presence alone reveals whether an identifier is already a contact here. */
@@ -161,6 +162,56 @@ const resolveWorkspaceLanguageIdentifier = async (
   return match.alias && match.alias.toLowerCase() === target ? match.alias : match.code;
 };
 
+/**
+ * The attributes with `language` in its canonical BCP-47 tag (or a configured alias); an invalid one is
+ * dropped, and returned so the caller can say so.
+ */
+const normalizeLanguageAttribute = async (
+  workspaceId: string,
+  attributes: TContactAttributesInput | undefined
+): Promise<{
+  normalizedAttributes: TContactAttributesInput | undefined;
+  droppedInvalidLanguage: string | null;
+}> => {
+  if (!attributes || !("language" in attributes)) {
+    return { normalizedAttributes: attributes, droppedInvalidLanguage: null };
+  }
+  let normalizedAttributes: TContactAttributesInput;
+  let droppedInvalidLanguage: string | null = null;
+  const { language: rawLanguage, ...otherAttributes } = attributes;
+  // `rawLanguage` is string | number | boolean — stringify once, then decide on the *trimmed* content,
+  // so falsy-but-real values (0, false, "0") are treated like any other invalid code while blank or
+  // whitespace-only input stays silent (truthiness alone would drop 0/false without a message).
+  const languageStr = String(rawLanguage);
+  const trimmedLanguage = languageStr.trim();
+  const canonicalLanguage = trimmedLanguage ? normalizeLanguageCode(languageStr) : null;
+  const configuredLanguage =
+    !canonicalLanguage && trimmedLanguage
+      ? await resolveWorkspaceLanguageIdentifier(workspaceId, trimmedLanguage)
+      : null;
+  if (canonicalLanguage) {
+    normalizedAttributes = { ...otherAttributes, language: canonicalLanguage };
+  } else if (configuredLanguage) {
+    // Not a canonicalizable code, but it matches a configured survey-language alias in this workspace
+    // (documented setLanguage("<alias>")). Store the configured form (not the caller's casing) so the
+    // persisted/echoed value is consistent with the workspace config, and alias matching keeps working.
+    normalizedAttributes = { ...otherAttributes, language: configuredLanguage };
+  } else {
+    normalizedAttributes = otherAttributes;
+    // Surface a non-blank, unrecognized value back to the caller; blank/whitespace-only stays silent.
+    if (trimmedLanguage) droppedInvalidLanguage = languageStr;
+  }
+  return { normalizedAttributes, droppedInvalidLanguage };
+};
+
+/** The language echoed to the SDK: a canonical code in its first legacy form, anything else verbatim. */
+const toResponseLanguage = (language: string | undefined): string | undefined => {
+  const storedCanonicalLanguage = language ? normalizeLanguageCode(String(language)) : null;
+  return storedCanonicalLanguage
+    ? (toLegacyLanguageCodes(storedCanonicalLanguage)[0] ?? storedCanonicalLanguage)
+    : (language ?? undefined);
+};
+
 export const updateUser = async (
   workspaceId: string,
   userId: string,
@@ -176,7 +227,7 @@ export const updateUser = async (
   }
 
   // Process contact attributes efficiently (single pass)
-  let contactAttributes = contactData.attributes.reduce(
+  const contactAttributes = contactData.attributes.reduce(
     (acc, ctx) => {
       acc[ctx.attributeKey.key] = ctx.value;
       return acc;
@@ -193,33 +244,10 @@ export const updateUser = async (
   // payload — the rest of the attributes still persist — rather than stored verbatim. (The SDK never
   // validated `setLanguage`, so callers could send anything; this keeps junk out of the column going
   // forward. Pre-existing invalid values are left as-is; they simply don't match any survey language.)
-  let normalizedAttributes = attributes;
-  let droppedInvalidLanguage: string | null = null;
-  if (attributes && "language" in attributes) {
-    const { language: rawLanguage, ...otherAttributes } = attributes;
-    // `rawLanguage` is string | number | boolean — stringify once, then decide on the *trimmed* content,
-    // so falsy-but-real values (0, false, "0") are treated like any other invalid code while blank or
-    // whitespace-only input stays silent (truthiness alone would drop 0/false without a message).
-    const languageStr = String(rawLanguage);
-    const trimmedLanguage = languageStr.trim();
-    const canonicalLanguage = trimmedLanguage ? normalizeLanguageCode(languageStr) : null;
-    const configuredLanguage =
-      !canonicalLanguage && trimmedLanguage
-        ? await resolveWorkspaceLanguageIdentifier(workspaceId, trimmedLanguage)
-        : null;
-    if (canonicalLanguage) {
-      normalizedAttributes = { ...otherAttributes, language: canonicalLanguage };
-    } else if (configuredLanguage) {
-      // Not a canonicalizable code, but it matches a configured survey-language alias in this workspace
-      // (documented setLanguage("<alias>")). Store the configured form (not the caller's casing) so the
-      // persisted/echoed value is consistent with the workspace config, and alias matching keeps working.
-      normalizedAttributes = { ...otherAttributes, language: configuredLanguage };
-    } else {
-      normalizedAttributes = otherAttributes;
-      // Surface a non-blank, unrecognized value back to the caller; blank/whitespace-only stays silent.
-      if (trimmedLanguage) droppedInvalidLanguage = languageStr;
-    }
-  }
+  const { normalizedAttributes, droppedInvalidLanguage } = await normalizeLanguageAttribute(
+    workspaceId,
+    attributes
+  );
 
   // Handle attribute updates efficiently
   if (normalizedAttributes && Object.keys(normalizedAttributes).length > 0) {
@@ -273,10 +301,7 @@ export const updateUser = async (
   // non-canonicalizable stored value is a verified survey-language alias (the write path only stores those
   // or canonical codes), so echo it verbatim so the SDK still matches the aliased language. Remove once
   // those clients have drained.
-  const storedCanonicalLanguage = language ? normalizeLanguageCode(String(language)) : null;
-  const responseLanguage = storedCanonicalLanguage
-    ? (toLegacyLanguageCodes(storedCanonicalLanguage)[0] ?? storedCanonicalLanguage)
-    : (language ?? undefined);
+  const responseLanguage = toResponseLanguage(language);
 
   return {
     state: {

@@ -44,7 +44,7 @@ const WORKSPACE_ID = "cm9zr4mps000008l8btfy1vtz";
 const get = () =>
   GET(new NextRequest(`http://localhost/api/internal/workflows/${WORKFLOW_ID}/published-version`), {
     params: Promise.resolve({ workflowId: WORKFLOW_ID }),
-  } as never);
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();

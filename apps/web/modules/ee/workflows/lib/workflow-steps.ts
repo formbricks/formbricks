@@ -14,7 +14,7 @@ import {
 import type { TWorkflowVariableGroup } from "@/modules/ee/workflows/lib/variable-picker";
 
 /** The step types the add-step menu offers (ENG-7182, ENG-7157): Logic, then Actions. */
-export type TAddableWorkflowStepType = "if_else" | "switch" | "send_email" | "http_request";
+export type TAddableWorkflowStepType = "if_else" | "filter" | "switch" | "send_email" | "http_request";
 
 type TStepNode = TWorkflowDefinition["nodes"][number];
 type TPosition = { x: number; y: number };
@@ -74,9 +74,10 @@ export const createDefaultWorkflowStep = (
         ui,
       };
     case "if_else":
+    case "filter":
       return {
         id: createId(),
-        type: "if_else",
+        type: stepType,
         config: {
           condition: {
             id: createId(),

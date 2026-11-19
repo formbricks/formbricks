@@ -28,7 +28,7 @@ describe("getHobbyDowngradeChurnSignal", () => {
 describe("trackSubscriptionCancelled", () => {
   test("sends subscription_cancelled", () => {
     const track = vi.fn().mockResolvedValue(undefined);
-    trackSubscriptionCancelled(track);
+    void trackSubscriptionCancelled(track);
     expect(track).toHaveBeenCalledExactlyOnceWith(SUBSCRIPTION_CANCELLED_EVENT);
   });
 

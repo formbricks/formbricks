@@ -33,18 +33,17 @@ export function collectImages(node, found = new Set()) {
   return found;
 }
 
-export function inventory(run = execFileSync) {
-  const images = new Map();
-  const add = (image, source) => {
-    if (!images.has(image)) images.set(image, new Set());
-    images.get(image).add(source);
-  };
-  // Both files ship image defaults; parsing all services includes Compose profiles without starting anything.
+// Both files ship image defaults; parsing all services includes Compose profiles without starting anything.
+function addComposeImages(add) {
   for (const file of ["docker/docker-compose.yml", "docker-compose.dev.yml"]) {
     for (const [name, service] of Object.entries(readYaml(file).services)) {
       if (service.image) add(composeDefault(service.image), `${file}#${name}`);
     }
   }
+}
+
+// The images the Helm chart renders, with its defaults and with every optional profile on.
+function addChartImages(run, add) {
   for (const profile of [null, "scripts/container-security/profiles.yaml"]) {
     const args = [
       "template",
@@ -60,6 +59,16 @@ export function inventory(run = execFileSync) {
         add(image, `charts/formbricks#${profile ? "optional" : "default"}`);
     }
   }
+}
+
+export function inventory(run = execFileSync) {
+  const images = new Map();
+  const add = (image, source) => {
+    if (!images.has(image)) images.set(image, new Set());
+    images.get(image).add(source);
+  };
+  addComposeImages(add);
+  addChartImages(run, add);
   const operators = JSON.parse(readFileSync("scripts/container-security/operator-images.json", "utf8"));
   const gateway = readYaml("charts/formbricks/Chart.yaml").dependencies.find((d) => d.alias === "envoy");
   if (gateway.version !== operators.gatewayChartVersion) {

@@ -34,10 +34,11 @@ export interface WorkflowRunEffects {
   sendHttpRequest: (call: WorkflowHttpCall, step: { stepId: string }) => Promise<WorkflowRunHttpResult>;
   /**
    * Hands a "Don't wait" HTTP request to its own background job, which reads the request from the
-   * step's run log. The run moves on without waiting (ADR 0047). `handedOff: false` means nothing
-   * will send it (a Test run), so the step ends at once with the request it would have sent.
+   * step's run log, so the step stores it there first. The run moves on without waiting (ADR 0047).
+   * Throws when the job can't be queued. `null` when nothing would send it (a Test run), so the step
+   * ends at once with the request it would have sent.
    */
-  enqueueHttpRequestDelivery: (data: TWorkflowHttpRequestDeliveryJobData) => Promise<{ handedOff: boolean }>;
+  enqueueHttpRequestDelivery: ((data: TWorkflowHttpRequestDeliveryJobData) => Promise<void>) | null;
 }
 
 export const liveWorkflowRunEffects: WorkflowRunEffects = {
@@ -45,6 +46,5 @@ export const liveWorkflowRunEffects: WorkflowRunEffects = {
   sendHttpRequest: (call) => sendWorkflowHttpRequest(call, { retries: WORKFLOW_HTTP_RUN_LIMITS.retries }),
   enqueueHttpRequestDelivery: async (data) => {
     await enqueueWorkflowHttpRequestDeliveryJob(data);
-    return { handedOff: true };
   },
 };

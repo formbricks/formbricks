@@ -25,6 +25,8 @@ import {
   countStepsOnBranches,
   cutWorkflowStepIdsAtom,
   deleteWorkflowNodeAtom,
+  stepDeleteRequestAtom,
+  stepIdsMovingAlongAtom,
   workflowCanvasDirectionAtom,
   workflowDefinitionAtom,
 } from "@/modules/ee/workflows/state/editor";
@@ -38,6 +40,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { BranchEndMarker } from "./branch-end-marker";
 import { BranchLabel } from "./branch-label";
+import { MoveStepMenuItem } from "./move-step-menu-item";
 import { StepClipboardMenuItems } from "./step-clipboard-menu-items";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 import { HANDLE_CLASS_NAMES, WorkflowNodeCard } from "./workflow-node-card";
@@ -65,11 +68,13 @@ const { forkBarLeft: FORK_BAR_LEFT } = WORKFLOW_CANVAS_HORIZONTAL;
  * branch's first step will go.
  */
 export const WorkflowBranchNode = memo(
-  ({ id, data, selected }: Readonly<NodeProps<Node<TWorkflowNodeData>>>) => {
+  ({ id, data, selected, dragging }: Readonly<NodeProps<Node<TWorkflowNodeData>>>) => {
     const { t } = useTranslation();
     const appendStep = useAppendWorkflowStep();
     const deleteNode = useSetAtom(deleteWorkflowNodeAtom);
     const cutStepIds = useAtomValue(cutWorkflowStepIdsAtom);
+    // Steps a dragged If/else, Switch or Filter takes along look like a pending cut while it moves.
+    const movingAlong = useAtomValue(stepIdsMovingAlongAtom);
     const { paste, canPasteAt } = useStepClipboard();
     const store = useStore();
     const canMutate = useAtomValue(canMutateCanvasAtom);
@@ -78,6 +83,15 @@ export const WorkflowBranchNode = memo(
     // Deleting an If/else or a Switch takes its branches with it (spec §2), so it asks first, saying how many
     // steps go too. Counted when the menu item is picked, not on every render of the card.
     const [deleteStepCount, setDeleteStepCount] = useState<number | null>(null);
+    // Backspace or Delete on this card (use-delete-step-shortcut) asks the same.
+    const deleteRequest = useAtomValue(stepDeleteRequestAtom);
+    const setDeleteRequest = useSetAtom(stepDeleteRequestAtom);
+    useEffect(() => {
+      if (deleteRequest !== id) return;
+      setDeleteRequest(null);
+      const definition = store.get(workflowDefinitionAtom);
+      setDeleteStepCount(definition ? countStepsOnBranches(definition, id) : 0);
+    }, [deleteRequest, id, setDeleteRequest, store]);
     const isHorizontal = useAtomValue(workflowCanvasDirectionAtom) === "horizontal";
     const legs = data.branches;
     const legOffsets =
@@ -132,7 +146,7 @@ export const WorkflowBranchNode = memo(
         <WorkflowNodeCard
           data={data}
           selected={selected}
-          isCut={cutStepIds.has(id)}
+          isCut={cutStepIds.has(id) || (movingAlong.has(id) && !dragging)}
           direction={isHorizontal ? "horizontal" : "vertical"}
           menu={
             canMutate && (
@@ -149,6 +163,7 @@ export const WorkflowBranchNode = memo(
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="motion-reduce:animate-none">
+                  <MoveStepMenuItem nodeId={id} />
                   <StepClipboardMenuItems nodeId={id} />
                   <DropdownMenuItem
                     onClick={(event) => {
@@ -247,6 +262,7 @@ export const WorkflowBranchNode = memo(
                                   ? () => paste({ sourceNodeId: id, branch: branch.handle })
                                   : undefined
                               }
+                              moveTarget={{ sourceNodeId: id, branch: branch.handle }}
                             />
                           </div>
                         ) : (
@@ -322,6 +338,7 @@ export const WorkflowBranchNode = memo(
                                   ? () => paste({ sourceNodeId: id, branch: branch.handle })
                                   : undefined
                               }
+                              moveTarget={{ sourceNodeId: id, branch: branch.handle }}
                             />
                           </div>
                         ) : (

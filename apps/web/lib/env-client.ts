@@ -13,7 +13,7 @@
  * `process.env` — anything an operator configures stays server-side, behind `lib/env.ts`.
  */
 
-// eslint-disable-next-line no-restricted-syntax -- the one client-side process.env read; see above
+// oxlint-disable-next-line formbricks/restricted-syntax -- the one client-side process.env read; see above
 const NODE_ENV = process.env.NODE_ENV;
 
 export const IS_PRODUCTION_BUILD = NODE_ENV === "production";

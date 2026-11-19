@@ -2,14 +2,15 @@
 
 import { Handle, Position } from "@xyflow/react";
 import {
+  FilterIcon,
   GitBranchIcon,
   GlobeIcon,
   type LucideIcon,
   MailIcon,
+  MessageCircleIcon,
   SplitIcon,
   TriangleAlertIcon,
   WebhookIcon,
-  ZapIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
@@ -19,12 +20,14 @@ import {
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import type { TWorkflowNodeData, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
 import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
+import { Badge } from "@/modules/ui/components/badge";
 import { TruncationTooltip } from "@/modules/ui/components/info-tooltip";
 
 export const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
-  trigger: ZapIcon,
+  survey: MessageCircleIcon,
   webhook: WebhookIcon,
   ifElse: GitBranchIcon,
+  filter: FilterIcon,
   switch: SplitIcon,
   email: MailIcon,
   http: GlobeIcon,
@@ -90,6 +93,8 @@ export const WorkflowNodeCard = ({
 
   return (
     <div
+      // Measured when the card is dragged, to outline its old place (use-step-move).
+      data-step-card=""
       className={cn(
         // Issues don't tint the card border — the inline alert line below carries the
         // severity; a second color signal on the frame just adds noise.
@@ -98,7 +103,9 @@ export const WorkflowNodeCard = ({
         "flex w-64 items-start gap-2.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 shadow-card-sm transition-shadow hover:shadow-card-md",
         selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50",
         // Cut and not pasted yet: faded until it moves, or Escape or Undo puts it back.
-        isCut && "border-dashed opacity-50"
+        isCut && "border-dashed opacity-50",
+        // On the Runs view's canvas, the shown run's result for this step sits above the card.
+        data.runBadge && "relative"
       )}
       style={isHorizontal ? { height: WORKFLOW_CANVAS_HORIZONTAL.cardHeight } : undefined}>
       <Handle
@@ -142,6 +149,11 @@ export const WorkflowNodeCard = ({
       </div>
       {menu}
       {children}
+      {data.runBadge ? (
+        <span className="absolute -top-6 right-0">
+          <Badge text={data.runBadge.label} type={data.runBadge.type} size="tiny" />
+        </span>
+      ) : null}
     </div>
   );
 };

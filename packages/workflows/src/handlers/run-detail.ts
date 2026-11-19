@@ -37,6 +37,15 @@ const describeIfElse = (output: Record<string, unknown>): TWorkflowRunStepDetail
   })),
 });
 
+const describeFilter = (output: Record<string, unknown>): TWorkflowRunStepDetail => ({
+  kind: "filter",
+  passed: readAs(z.boolean(), output.passed),
+  conditions: (readAs(ZConditionResults, output.conditions) ?? []).map(({ id, matched }) => ({
+    id,
+    matched,
+  })),
+});
+
 const describeSwitch = (output: Record<string, unknown>): TWorkflowRunStepDetail => ({
   kind: "switch",
   branch: readAs(ZString, output.branch),
@@ -98,6 +107,8 @@ const describeLog = (log: WorkflowRunLogRow): TWorkflowRunStepDetail | null => {
   switch (log.stepType) {
     case "if_else":
       return describeIfElse(output);
+    case "filter":
+      return describeFilter(output);
     case "switch":
       return describeSwitch(output);
     case "send_email":

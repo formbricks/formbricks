@@ -35,9 +35,16 @@ export const AutoSaveIndicator = ({
   const { t } = useTranslation();
   const [showSaved, setShowSaved] = useState(false);
 
+  // Each new save (and one already on record at mount) flashes "Saved": shown from the render that
+  // sees it, hidden by the timer below.
+  const [flashedSave, setFlashedSave] = useState<typeof lastSaved | null>(null);
+  if (lastSaved !== flashedSave) {
+    setFlashedSave(lastSaved);
+    if (lastSaved) setShowSaved(true);
+  }
+
   useEffect(() => {
     if (lastSaved) {
-      setShowSaved(true);
       const timer = setTimeout(() => {
         setShowSaved(false);
       }, 3000);
@@ -76,7 +83,7 @@ export const AutoSaveIndicator = ({
             <button
               type="button"
               className={cn(
-                "focus-visible:ring-ring inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors duration-300 focus-visible:ring-1 focus-visible:outline-hidden",
+                "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors duration-300 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden",
                 toneClassName[badge.tone]
               )}>
               {label}

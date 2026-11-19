@@ -8,6 +8,7 @@ import {
   type TWorkflowSurveyConditionOperator,
   WORKFLOW_LIMITS,
   flattenWorkflowConditions,
+  isConditionStepNode,
   isWorkflowChoiceIds,
   toSurveyConditionOperator,
 } from "@formbricks/workflows";
@@ -219,7 +220,7 @@ export const withSurveyOperatorNames = (group: TWorkflowConditionGroup): TWorkfl
   );
 
 const withSurveyOperatorNamesInNode = <N extends TWorkflowDefinition["nodes"][number]>(node: N): N => {
-  if (node.type === "if_else") {
+  if (isConditionStepNode(node)) {
     return { ...node, config: { ...node.config, condition: withSurveyOperatorNames(node.config.condition) } };
   }
   if (node.type === "switch") {

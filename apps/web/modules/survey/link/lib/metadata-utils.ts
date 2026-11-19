@@ -84,7 +84,7 @@ export const getBasicSurveyMetadata = async (
   const descriptionFromMetadata = metadata?.description
     ? getLocalizedValue(metadata.description, langCode) || ""
     : undefined;
-  let description = descriptionFromMetadata || "Please complete this survey.";
+  const description = descriptionFromMetadata || "Please complete this survey.";
 
   // Get OG image from link metadata if available
   const ogImage = metadata?.ogImage;

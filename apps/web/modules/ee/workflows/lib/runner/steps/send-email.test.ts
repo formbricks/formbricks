@@ -78,7 +78,14 @@ const run = (
   stepNode: TWorkflowSendEmailActionNode,
   context: TWorkflowRunContext,
   env: WorkflowRunEnvironment = environment()
-) => sendEmailStepExecutor.execute({ node: stepNode, context, environment: env, effects });
+) =>
+  sendEmailStepExecutor.execute({
+    node: stepNode,
+    context,
+    environment: env,
+    effects,
+    saveOutput: vi.fn(),
+  });
 
 const surveyLink = `https://surveys.example.com/s/${linkSurveyId}?call_id=K-771`;
 

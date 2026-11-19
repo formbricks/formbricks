@@ -17,7 +17,7 @@ properties:
   stepType:
     type: string
     minLength: 1
-    description: "`if_else`, `switch`, `send_email` or `http_request`."
+    description: "`if_else`, `filter`, `switch`, `send_email` or `http_request`."
   status:
     type: string
     enum:
@@ -28,7 +28,8 @@ properties:
       - skipped
       - not_taken
     description: >-
-      The step's log status, or `not_taken` for a step on an If/else or Switch branch the run did not take. A
+      The step's log status, or `not_taken` for a step on an If/else or Switch branch the run did not take,
+      or after a Filter that ended the run. A
       Don't wait HTTP request stays `running` while it sends; its delivery is in `detail.delivery`.
   error:
     type:
@@ -50,6 +51,7 @@ properties:
       without detail.
     oneOf:
       - $ref: ./WorkflowRunIfElseDetail.yml
+      - $ref: ./WorkflowRunFilterDetail.yml
       - $ref: ./WorkflowRunSwitchDetail.yml
       - $ref: ./WorkflowRunSendEmailDetail.yml
       - $ref: ./WorkflowRunHttpRequestDetail.yml

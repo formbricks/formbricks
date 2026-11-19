@@ -4,7 +4,6 @@ import { ArrowLeftIcon, WorkflowIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { WorkflowTestRunDrawer } from "@/modules/ee/workflows/components/runs/workflow-test-run-drawer";
 import { WorkflowHeaderCta } from "@/modules/ee/workflows/components/workflow-header-cta";
 import { WorkflowPageTitle } from "@/modules/ee/workflows/components/workflow-page-title";
 import { useWorkflowTestRun } from "@/modules/ee/workflows/hooks/use-workflow-test-run";
@@ -53,35 +52,22 @@ export const WorkflowEditorHeader = ({
   isReadOnly,
 }: Readonly<WorkflowEditorHeaderProps>) => {
   // The server layout can't pass a function, so the Test run is wired here, on the client: the
-  // header starts it and owns the run drawer it opens (ED6).
-  const testRun = useWorkflowTestRun({ workflowId, isReadOnly });
-  const startTestRun = () => void testRun.startTestRun();
+  // header's Test opens the Runs view's test form, where "Run test" starts it (review point 1).
+  const testRun = useWorkflowTestRun({ workspaceId, workflowId, isReadOnly });
 
   return (
-    <>
-      <HeaderBar
-        workspaceId={workspaceId}
-        title={<WorkflowPageTitle workflowId={workflowId} isReadOnly={isReadOnly} />}
-        actions={
-          <WorkflowHeaderCta
-            workflowId={workflowId}
-            isReadOnly={isReadOnly}
-            onTestRun={isReadOnly ? undefined : startTestRun}
-            isTestRunning={testRun.isRunning}
-          />
-        }
-      />
-      <WorkflowTestRunDrawer
-        open={testRun.isDrawerOpen}
-        onClose={testRun.closeDrawer}
-        onRunAgain={(responseId) => void testRun.startTestRun(responseId)}
-        runId={testRun.runId}
-        isRunning={testRun.isRunning}
-        isPickingResponse={testRun.isPickingResponse}
-        failure={testRun.failure}
-        error={testRun.error}
-      />
-    </>
+    <HeaderBar
+      workspaceId={workspaceId}
+      title={<WorkflowPageTitle workflowId={workflowId} isReadOnly={isReadOnly} />}
+      actions={
+        <WorkflowHeaderCta
+          workflowId={workflowId}
+          isReadOnly={isReadOnly}
+          onTest={isReadOnly ? undefined : testRun.toggleTestForm}
+          isTestActive={testRun.isTestFormActive}
+        />
+      }
+    />
   );
 };
 

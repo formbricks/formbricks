@@ -6,6 +6,31 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const isMap = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 
+// The events a workflow's `on:` names, in any of its three shapes.
+const workflowTriggers = (on) => {
+  if (isMap(on)) return Object.keys(on);
+  if (Array.isArray(on)) return on;
+  return [on];
+};
+
+// Whether the job runs on a literal ubuntu-* runner label.
+const runsOnUbuntu = (job) => {
+  const labels = isMap(job["runs-on"]) ? job["runs-on"].labels : job["runs-on"];
+  const runners = Array.isArray(labels) ? labels : [labels];
+  return runners.some((runner) => typeof runner === "string" && /^ubuntu-/.test(runner));
+};
+
+// Whether the job's first step runs step-security/harden-runner unconditionally and fails on error.
+const hardensRunnerFirst = (job) => {
+  const first = job.steps?.[0];
+  return (
+    typeof first?.uses === "string" &&
+    first.uses.startsWith("step-security/harden-runner@") &&
+    (first.if === undefined || first.if === true) &&
+    (first["continue-on-error"] === undefined || first["continue-on-error"] === false)
+  );
+};
+
 // Dynamic runners and least-privilege choices still need review. This check covers the
 // mechanical rules: explicit permission maps and hardening first on literal ubuntu-* jobs.
 export function checkWorkflow(source) {
@@ -15,11 +40,7 @@ export function checkWorkflow(source) {
   }
 
   const errors = [];
-  const triggers = isMap(workflow.on)
-    ? Object.keys(workflow.on)
-    : Array.isArray(workflow.on)
-      ? workflow.on
-      : [workflow.on];
+  const triggers = workflowTriggers(workflow.on);
   // Workflows that can only be called inherit the caller's permission ceiling.
   const onlyWorkflowCall = triggers.length === 1 && triggers[0] === "workflow_call";
   if (workflow.permissions !== undefined && !isMap(workflow.permissions)) {
@@ -35,16 +56,8 @@ export function checkWorkflow(source) {
     if (!inheritsCallerPermissions && !isMap(job.permissions ?? workflow.permissions)) {
       errors.push(`${name}: declare an explicit permissions map on the job or workflow.`);
     }
-    const labels = isMap(job["runs-on"]) ? job["runs-on"].labels : job["runs-on"];
-    const runners = Array.isArray(labels) ? labels : [labels];
-    if (!runners.some((runner) => typeof runner === "string" && /^ubuntu-/.test(runner))) continue;
-    const first = job.steps?.[0];
-    if (
-      typeof first?.uses !== "string" ||
-      !first.uses.startsWith("step-security/harden-runner@") ||
-      (first.if !== undefined && first.if !== true) ||
-      (first["continue-on-error"] !== undefined && first["continue-on-error"] !== false)
-    ) {
+    if (!runsOnUbuntu(job)) continue;
+    if (!hardensRunnerFirst(job)) {
       errors.push(
         `${name}: the first step must run step-security/harden-runner unconditionally and fail on error.`
       );

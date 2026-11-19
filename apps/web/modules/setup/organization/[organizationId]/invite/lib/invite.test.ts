@@ -72,7 +72,7 @@ describe("inviteUser", () => {
   });
 
   test("should throw InvalidInputError if invite already exists", async () => {
-    vi.mocked(prisma.invite.findFirst).mockResolvedValue({ id: "existing-invite-id" } as any);
+    vi.mocked(prisma.invite.findFirst, { partial: true }).mockResolvedValue({ id: "existing-invite-id" });
 
     await expect(inviteUser({ invitee, organizationId, currentUserId })).rejects.toThrowError(
       new InvalidInputError("Invite already exists")
@@ -87,8 +87,8 @@ describe("inviteUser", () => {
   test("should throw InvalidInputError if user is already a member", async () => {
     const mockUser = { id: "test-user-id", email: invitee.email };
     vi.mocked(prisma.invite.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
-    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({} as any);
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue(mockUser);
+    vi.mocked(getMembershipByUserIdOrganizationId, { partial: true }).mockResolvedValue({});
 
     await expect(inviteUser({ invitee, organizationId, currentUserId })).rejects.toThrowError(
       new InvalidInputError("User is already a member of this organization")
@@ -110,7 +110,7 @@ describe("inviteUser", () => {
       name: invitee.name,
     } as Invite;
     vi.mocked(prisma.invite.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue(mockUser);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
     vi.mocked(prisma.invite.create).mockResolvedValue(mockInvite);
 

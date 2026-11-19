@@ -527,11 +527,11 @@ describe("listWorkflowRuns", () => {
     expect(args.orderBy).toEqual([{ createdAt: "desc" }, { id: "desc" }]);
     expect(args.take).toBe(21);
     // List omits the large JSON columns and joins the workflow name (omit + include compose in Prisma).
-    expect(args.omit).toEqual({ triggerPayload: true, data: true });
+    expect(args.omit).toEqual({ triggerPayload: true, data: true, testRunDefinition: true });
     expect(args.include).toEqual({ workflow: { select: { name: true } } });
   });
 
-  test("applies workflowId, responseId, statusIn, and isDryRun filters", async () => {
+  test("applies workflowId, responseId, statusIn, triggerTypeIn, and isDryRun filters", async () => {
     runFindMany.mockResolvedValue([]);
 
     await service.listWorkflowRuns({
@@ -540,6 +540,7 @@ describe("listWorkflowRuns", () => {
       workflowId: "cm9zr4t2b000208l8h2m1aq3c",
       responseId: "cm9zr5resp0000000000000000",
       statusIn: ["failed", "completed"],
+      triggerTypeIn: ["webhook"],
       isDryRun: true,
     });
 
@@ -548,6 +549,7 @@ describe("listWorkflowRuns", () => {
       workflowId: "cm9zr4t2b000208l8h2m1aq3c",
       responseId: "cm9zr5resp0000000000000000",
       status: { in: ["failed", "completed"] },
+      triggerType: { in: ["webhook"] },
       isDryRun: true,
     });
   });
@@ -677,7 +679,7 @@ describe("listWorkflowRuns", () => {
 });
 
 describe("createTestRun", () => {
-  test("saves a queued dry run with no version, so nothing bills or dispatches it", async () => {
+  test("saves a queued dry run with no version and the draft it runs, so nothing bills or dispatches it", async () => {
     runCreate.mockResolvedValue({ id: runId });
     const triggerPayload = {
       type: "webhook" as const,
@@ -688,7 +690,7 @@ describe("createTestRun", () => {
 
     const result = await service.createTestRun(
       { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId: "cm9zr4mps000008l8btfy1vtz" },
-      triggerPayload
+      { triggerPayload, definition }
     );
 
     expect(result).toEqual({ id: runId });
@@ -702,6 +704,7 @@ describe("createTestRun", () => {
         isDryRun: true,
         attempt: 0,
         triggerPayload,
+        testRunDefinition: definition,
       },
       select: { id: true },
     });
@@ -713,12 +716,15 @@ describe("createTestRun", () => {
     await service.createTestRun(
       { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId: "cm9zr4mps000008l8btfy1vtz" },
       {
-        type: "response.completed",
-        workspaceId: "cm9zr4mps000008l8btfy1vtz",
-        surveyId: "cm9zr4q7i000108l84gozfggr",
-        responseId: "cm9zr5res000000000000000a",
-        data: {},
-        triggeredAt: "2026-11-13T10:00:00.000Z",
+        triggerPayload: {
+          type: "response.completed",
+          workspaceId: "cm9zr4mps000008l8btfy1vtz",
+          surveyId: "cm9zr4q7i000108l84gozfggr",
+          responseId: "cm9zr5res000000000000000a",
+          data: {},
+          triggeredAt: "2026-11-13T10:00:00.000Z",
+        },
+        definition,
       }
     );
 

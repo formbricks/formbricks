@@ -215,7 +215,7 @@ const mount = (): void => {
   host.id = PANEL_ID;
   document.body.appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
-  // eslint-disable-next-line no-restricted-syntax -- the nonce is set on the next lines
+  // oxlint-disable-next-line formbricks/restricted-syntax -- the nonce is set on the next lines
   const style = document.createElement("style");
   // The host page's `style-src` blocks a <style> without the nonce it gave `setNonce()`.
   const nonce = (window as TWindowWithFormbricks).__formbricksNonce;

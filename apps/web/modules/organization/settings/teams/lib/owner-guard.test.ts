@@ -110,6 +110,17 @@ describe("runOwnerGuardedTransaction", () => {
     expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(change.mock.invocationCallOrder[0]);
   });
 
+  test("runs on the app client's budget unless the caller names a timeout, and then on that", async () => {
+    runIn(transactionClient({ role: "owner", isActive: true }, 1));
+    const change = vi.fn().mockResolvedValue("done");
+
+    await runOwnerGuardedTransaction(organizationId, null, change);
+    expect(prisma.$transaction).toHaveBeenLastCalledWith(expect.any(Function), undefined);
+
+    await runOwnerGuardedTransaction(organizationId, null, change, { timeout: 35_000 });
+    expect(prisma.$transaction).toHaveBeenLastCalledWith(expect.any(Function), { timeout: 35_000 });
+  });
+
   test("takes no lock and reads nothing when the change cannot remove an owner", async () => {
     const tx = transactionClient({ role: "owner", isActive: true }, 1);
     runIn(tx);

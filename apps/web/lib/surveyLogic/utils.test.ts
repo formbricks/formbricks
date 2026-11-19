@@ -244,6 +244,26 @@ describe("surveyLogic", () => {
     });
   });
 
+  // An operator outside the enum was false under the old switch; a prototype key must not read as one.
+  test.each(["constructor", "toString", "hasOwnProperty"])(
+    "evaluateLogic: unknown operator %s is false",
+    (operator) => {
+      const group = {
+        id: "g",
+        connector: "and",
+        conditions: [
+          {
+            id: "c1",
+            leftOperand: { type: "hiddenField", value: "f1" },
+            operator,
+            rightOperand: { type: "static", value: "v1" },
+          },
+        ],
+      } as unknown as TConditionGroup;
+      expect(evaluateLogic(mockSurvey, { f1: "v1" }, {}, group, "en")).toBe(false);
+    }
+  );
+
   test("evaluateLogic handles AND/OR groups and single conditions", () => {
     const data: TResponseData = { f1: "v1", f2: "x" };
     const vars: TResponseVariables = {};
@@ -374,6 +394,7 @@ describe("surveyLogic", () => {
   });
 
   test("evaluateLogic reads a Signature answer (one URL string) as signed, and empty or missing as not signed", () => {
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     const surveyWithSignature = {
       ...mockSurvey,
       blocks: [
@@ -409,14 +430,14 @@ describe("surveyLogic", () => {
   });
 
   test("evaluateLogic handles all operators and error cases", () => {
-    const baseCond = (operator: string, right: any = undefined) => ({
+    const baseCond = (operator: string, right: unknown = undefined) => ({
       id: "c",
       leftOperand: { type: "hiddenField", value: "f" },
       operator,
       ...(right !== undefined ? { rightOperand: { type: "static", value: right } } : {}),
     });
     const vars: TResponseVariables = {};
-    const group = (cond: any) => ({ id: "g", connector: "and" as const, conditions: [cond] });
+    const group = (cond: unknown) => ({ id: "g", connector: "and", conditions: [cond] }) as TConditionGroup;
     expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("equals", "foo")), "en")).toBe(true);
     expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("doesNotEqual", "bar")), "en")).toBe(
       true
@@ -653,18 +674,18 @@ describe("surveyLogic", () => {
       operator: "equals",
       rightOperand: { type: "static", value: "b" },
     });
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
     toggleGroupConnector(group, "notfound");
     expect(group.connector).toBe("and");
     const result = removeCondition(group, "notfound");
     expect(result).toBe(false);
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
     duplicateCondition(group, "notfound");
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
     createGroupFromResource(group, "notfound");
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
     updateCondition(group, "notfound", { operator: "equals" });
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
   });
 
   test("removeCondition returns false when condition not found in nested groups", () => {
@@ -1099,7 +1120,7 @@ describe("surveyLogic", () => {
     // Test with unknown value type in leftOperand
     const unknownTypeCondition: TSingleCondition = {
       id: "unknownCond",
-      leftOperand: { type: "unknown" as any, value: "x" },
+      leftOperand: { type: "unknown" as unknown as "hiddenField", value: "x" },
       operator: "equals",
       rightOperand: { type: "static", value: "x" },
     };
@@ -1331,7 +1352,7 @@ describe("surveyLogic", () => {
       id: "unknownCond",
       leftOperand: { type: "hiddenField", value: "f" },
       operator: "equals",
-      rightOperand: { type: "unknown" as any, value: "x" },
+      rightOperand: { type: "unknown" as unknown as "hiddenField", value: "x" },
     };
 
     expect(
@@ -1576,7 +1597,7 @@ describe("surveyLogic", () => {
           rightOperand: { type: "static", value: "v2" },
         },
       ],
-    } as any; // Intentionally missing connector
+    } as TConditionGroup; // Intentionally missing connector
 
     createGroupFromResource(group, "c1");
     expect(group.connector).toBe("and");

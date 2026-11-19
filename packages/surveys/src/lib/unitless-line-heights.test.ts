@@ -28,7 +28,7 @@ const compile = async (cssPath: string, configPath: string): Promise<postcss.Roo
 };
 
 const selectorOf = (decl: postcss.Declaration): string =>
-  decl.parent?.type === "rule" ? (decl.parent as postcss.Rule).selector : "";
+  decl.parent?.type === "rule" ? decl.parent.selector : "";
 
 const isLineHeight = (prop: string): boolean =>
   prop === "line-height" || prop === "--tw-leading" || /^--leading-|^--text-.+--line-height$/.test(prop);

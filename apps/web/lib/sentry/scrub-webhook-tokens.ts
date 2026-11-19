@@ -16,7 +16,7 @@ const scrubValue = (value: unknown, depth: number): unknown => {
 };
 
 /**
- * `beforeSend` step that removes Webhook Secret URL tokens (ADR 0041) from a Sentry event: the request
+ * `beforeSend` step that removes Webhook Secret URL tokens (ADR 0057) from a Sentry event: the request
  * URL and headers, the transaction name, exception messages, breadcrumbs, tags and contexts. Every string
  * is checked rather than a list of known fields, because the SDK and Next.js add the request path to
  * more places than one would list.

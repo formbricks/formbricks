@@ -5,17 +5,18 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { CLICK_COMMAND, COMMAND_PRIORITY_LOW } from "lexical";
 import { PencilIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
 import { $getOneLineText, $setOneLineText, registerOneLineEditor } from "../lib/one-line-editor";
+import { ChipClickPlugin } from "./chip-click-plugin";
 import { RecallNode } from "./recall-node";
 import { RecallPlugin } from "./recall-plugin";
 import type { TEditorRecallSource } from "./recall-source";
+import { useFallbackPopover } from "./use-fallback-popover";
 
 interface RecallInputProps {
   /** Stored text, recall tokens included. */
@@ -43,24 +44,6 @@ const SyncEditablePlugin = ({ editable }: Readonly<{ editable: boolean }>) => {
   useEffect(() => {
     if (editor.isEditable() !== editable) editor.setEditable(editable);
   }, [editor, editable]);
-  return null;
-};
-
-/** A click on a recall chip opens its fallback, the chip's only setting. */
-const ChipClickPlugin = ({ onChipClick }: Readonly<{ onChipClick: () => void }>) => {
-  const [editor] = useLexicalComposerContext();
-  useEffect(
-    () =>
-      editor.registerCommand(
-        CLICK_COMMAND,
-        (event) => {
-          if (event.target instanceof Element && event.target.closest(".recall-node")) onChipClick();
-          return false;
-        },
-        COMMAND_PRIORITY_LOW
-      ),
-    [editor, onChipClick]
-  );
   return null;
 };
 
@@ -118,9 +101,10 @@ export const RecallInput = ({
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>([]);
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>({});
   const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
-  const [showFallbackInput, setShowFallbackInput] = useState(false);
+  const fallbackPopover = useFallbackPopover();
+  const showFallbackInput = fallbackPopover.isOpen;
+  const setShowFallbackInput = fallbackPopover.setOpen;
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
-  const openFallbackInput = useCallback(() => setShowFallbackInput(true), []);
 
   // Read once: LexicalComposer only uses its initial config at mount; `ValuePlugin` handles changes.
   const [initialConfig] = useState(() => ({
@@ -169,7 +153,7 @@ export const RecallInput = ({
           ) : null}
         </div>
         <OneLinePlugin />
-        {editable ? <ChipClickPlugin onChipClick={openFallbackInput} /> : null}
+        {editable ? <ChipClickPlugin onChipClick={fallbackPopover.openForChip} /> : null}
         <SyncEditablePlugin editable={editable} />
         <ValuePlugin value={value} onChange={onChange} />
         <div className="absolute top-full left-0 w-full">
@@ -195,6 +179,7 @@ export const RecallInput = ({
             addFallback={addFallbackFunction ?? (() => {})}
             open={showFallbackInput}
             setOpen={setShowFallbackInput}
+            focusItemId={fallbackPopover.focusItemId}
           />
         </div>
       )}

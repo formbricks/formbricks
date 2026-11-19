@@ -160,6 +160,7 @@ export const useWorkflowBuilder = ({
   useEffect(() => {
     if (!loadOnMount) return;
     const controller = new AbortController();
+    // eslint-disable-next-line react/set-state-in-effect -- fetch effect: the flags track the request it starts and aborts
     setIsFetching(true);
     setLoadError(null);
 

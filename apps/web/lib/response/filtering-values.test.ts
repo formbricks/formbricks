@@ -40,7 +40,7 @@ const asRead = (over: Partial<TSurvey> = {}): TSurvey =>
   ({
     ...survey,
     ...over,
-    embeddedFields: embeddedFieldsFromLegacyInput({ ...survey, ...over } as Partial<TSurvey>),
+    embeddedFields: embeddedFieldsFromLegacyInput({ ...survey, ...over }),
   }) as unknown as TSurvey;
 
 /** jsonb `value::text` as Postgres renders it. */

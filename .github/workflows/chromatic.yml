@@ -52,7 +52,7 @@ jobs:
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
 
       - name: Run Chromatic
-        uses: chromaui/action@6ac4c49524e1b1358b8c593c5eea877604228268 # v18.14.2
+        uses: chromaui/action@5d18868345f53a8f61258ad393396c7e169100fd # v18.14.4
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: apps/storybook

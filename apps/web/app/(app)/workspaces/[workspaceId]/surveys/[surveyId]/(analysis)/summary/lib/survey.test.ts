@@ -72,7 +72,7 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
     });
 
     test("marks every response copy before the reset deletes its source rows", async () => {
-      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
       vi.mocked(prisma.response.deleteMany).mockResolvedValue({ count: 5 });
       vi.mocked(prisma.display.deleteMany).mockResolvedValue({ count: 3 });
 
@@ -137,14 +137,14 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
 
       mockSurvey(surveyWithFileUpload);
       vi.mocked(prisma.response.findMany).mockReset();
-      vi.mocked(prisma.response.findMany).mockImplementation((() => {
+      vi.mocked(prisma.response.findMany).mockImplementation(() => {
         callOrder.push("scan");
         return Promise.resolve([responseWithFiles("response-1", ["f.png"])]) as never;
-      }) as never);
-      vi.mocked(prisma.$transaction).mockImplementation((() => {
+      });
+      vi.mocked(prisma.$transaction).mockImplementation(() => {
         callOrder.push("delete");
         return Promise.resolve([{ count: 1 }, { count: 0 }]) as never;
-      }) as never);
+      });
       deleteResponseFileUrls.mockImplementation(async () => {
         callOrder.push("storage");
         return { failed: [] };
@@ -306,7 +306,7 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
         {
           id: "response-3",
           createdAt: scanTimestamp(2),
-          data: { [signatureElement.id]: [ownSignature] as unknown as string },
+          data: { [signatureElement.id]: [ownSignature] },
         },
         // A pasted copy of an own signature URL under another id names another element, so it is refused.
         { id: "response-4", createdAt: scanTimestamp(3), data: { "free-text": ownSignature } },

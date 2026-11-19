@@ -252,13 +252,13 @@ describe("resolveInviteMatch", () => {
     vi.mocked(verifyInviteToken).mockReturnValue({
       inviteId: mockInviteId,
       email: "other@acme.com",
-    } as never);
+    });
     expect(await resolveInviteMatch(token, "user@acme.com")).toBe("email_mismatch");
     expect(prisma.invite.findUnique).not.toHaveBeenCalled();
   });
 
   test("matches the email case- and whitespace-insensitively", async () => {
-    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: mockInviteId, email: "User@Acme.com" } as never);
+    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: mockInviteId, email: "User@Acme.com" });
     vi.mocked(prisma.invite.findUnique).mockResolvedValue(mockInvite);
     expect(await resolveInviteMatch(token, "  user@acme.COM  ")).toBe("valid");
   });
@@ -267,7 +267,7 @@ describe("resolveInviteMatch", () => {
     vi.mocked(verifyInviteToken).mockReturnValue({
       inviteId: mockInviteId,
       email: mockInvite.email,
-    } as never);
+    });
     vi.mocked(prisma.invite.findUnique).mockResolvedValue({
       ...mockInvite,
       expiresAt: new Date(Date.now() - 1000),

@@ -39,7 +39,7 @@ model Workflow {
   secrets     WorkflowSecret[]
   samples     WorkflowSample[]
 
-  /// Webhook Secret URL token (ADR 0041, 0048): SHA-256 hash to check calls, and an encrypted copy so
+  /// Webhook Secret URL token (ADRs 0048, 0057): SHA-256 hash to check calls, and an encrypted copy so
   /// the editor can show the URL again. Never part of the definition, its versions or its copies.
   webhookTokenHash      String?
   webhookTokenEncrypted String?
@@ -103,6 +103,11 @@ model WorkflowRun {
   contentDeletedAt     DateTime?
   /// The retention period in days that applied when the content was cleared ("Details deleted after N days").
   contentRetentionDays Int?
+  /// The draft definition a Test run executed (ADR 0049), so its graph can be drawn after the draft
+  /// changes. Null for live runs (they point at `workflowVersionId`) and for Test runs saved before it
+  /// existed. Configuration like a version's definition, not run content: retention leaves it alone.
+  /// [WorkflowExecutableDefinition]
+  testRunDefinition    Json?
 
   @@unique([workflowId, idempotencyKey])
   @@index([workspaceId, createdAt])

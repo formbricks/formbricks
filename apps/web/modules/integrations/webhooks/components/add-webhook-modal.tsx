@@ -13,7 +13,12 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { SurveySelect } from "@/modules/integrations/webhooks/components/survey-select";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
 import { WebhookCreatedModal } from "@/modules/integrations/webhooks/components/webhook-created-modal";
-import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
+import {
+  type TNewWebhookInputProblem,
+  getEndpointAccessibleClassName,
+  getNewWebhookInputProblem,
+  validWebHookURL,
+} from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -119,23 +124,25 @@ export const AddWebhookModal = ({
     );
   };
 
+  const inputProblemMessages: Record<TNewWebhookInputProblem, () => string> = {
+    missing_url: () => t("workspace.integrations.webhooks.please_enter_a_url"),
+    missing_trigger: () => t("common.please_select_at_least_one_trigger"),
+    missing_survey: () => t("common.please_select_at_least_one_survey"),
+    discord_url: () => t("workspace.integrations.webhooks.discord_webhook_not_supported"),
+  };
+
   const submitWebhook = async (data: TWebhookInput): Promise<void> => {
     if (!isSubmitting) {
       try {
         setCreatingWebhook(true);
-        if (!testEndpointInput || testEndpointInput === "") {
-          throw new Error(t("workspace.integrations.webhooks.please_enter_a_url"));
-        }
-        if (selectedTriggers.length === 0) {
-          throw new Error(t("common.please_select_at_least_one_trigger"));
-        }
-
-        if (!selectedAllSurveys && selectedSurveys.length === 0) {
-          throw new Error(t("common.please_select_at_least_one_survey"));
-        }
-
-        if (isDiscordWebhook(testEndpointInput)) {
-          throw new Error(t("workspace.integrations.webhooks.discord_webhook_not_supported"));
+        const problem = getNewWebhookInputProblem({
+          url: testEndpointInput,
+          triggerCount: selectedTriggers.length,
+          allSurveys: selectedAllSurveys,
+          surveyCount: selectedSurveys.length,
+        });
+        if (problem) {
+          throw new Error(inputProblemMessages[problem]());
         }
 
         const testResult = await handleTestEndpoint(false);
@@ -222,15 +229,7 @@ export const AddWebhookModal = ({
                   onChange={(e) => {
                     setTestEndpointInput(e.target.value);
                   }}
-                  className={clsx(
-                    endpointAccessible === true
-                      ? "border-green-500 bg-green-50"
-                      : endpointAccessible === false
-                        ? "border-red-200 bg-red-50"
-                        : endpointAccessible === undefined
-                          ? "border-slate-200 bg-white"
-                          : null
-                  )}
+                  className={clsx(getEndpointAccessibleClassName(endpointAccessible))}
                   placeholder={t("workspace.integrations.webhooks.webhook_url_placeholder")}
                 />
                 <Button
@@ -240,7 +239,7 @@ export const AddWebhookModal = ({
                   className="ml-2 whitespace-nowrap"
                   disabled={testEndpointInput.trim() === ""}
                   onClick={() => {
-                    handleTestEndpoint(true);
+                    void handleTestEndpoint(true);
                   }}>
                   {t("workspace.integrations.webhooks.test_endpoint")}
                 </Button>

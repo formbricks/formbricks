@@ -8,7 +8,6 @@ import {
   type TWorkflowResource,
   type TWorkflowTriggerType,
   WORKFLOW_LIMITS,
-  WORKFLOW_TRIGGERS,
   ZWorkflowEnableDefinition,
   isResponseCompletedTrigger,
 } from "@formbricks/workflows";
@@ -17,6 +16,7 @@ import {
   getAppendedStepPosition,
   getCanvasDirection,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
+import { createDefaultTrigger } from "@/modules/ee/workflows/lib/default-workflow";
 import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/workflows/lib/http-request-panel";
 import {
   type TPasteTarget,
@@ -26,6 +26,7 @@ import {
   getStepAndAfter,
   pasteSteps,
 } from "@/modules/ee/workflows/lib/step-clipboard";
+import { type TMoveStepResult, moveStep } from "@/modules/ee/workflows/lib/step-move";
 import {
   type TAddableWorkflowStepType,
   createDefaultWorkflowStep,
@@ -39,7 +40,7 @@ import type { TFlowTextPart } from "@/modules/survey/editor/lib/reference-chips"
 export { countStepsOnBranches } from "@/modules/ee/workflows/lib/workflow-steps";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
-export type TWorkflowNodeIcon = "trigger" | "webhook" | "ifElse" | "switch" | "email" | "http";
+export type TWorkflowNodeIcon = "survey" | "webhook" | "ifElse" | "filter" | "switch" | "email" | "http";
 
 export type TWorkflowNodeIssue = {
   /**
@@ -92,7 +93,14 @@ export type TWorkflowNodeData = {
    */
   legOffsets?: number[];
   issue: TWorkflowNodeIssue | null;
+  /**
+   * Only on the Runs view's read-only canvas: what the shown run did at this step ("Succeeded",
+   * "Not taken"…), drawn above the card (review point 1).
+   */
+  runBadge?: TWorkflowNodeRunBadge;
 };
+
+export type TWorkflowNodeRunBadge = { label: string; type: "success" | "error" | "warning" | "gray" };
 
 /**
  * A pending "take me to the field that's wrong" jump, raised by the validation problems dialog and
@@ -857,6 +865,9 @@ export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
   );
 });
 
+/** An If/else or Switch whose deletion was asked for from the keyboard; its card asks to confirm. */
+export const stepDeleteRequestAtom = atom<string | null>(null);
+
 // Seed the trigger on an empty draft canvas (the "Add trigger" picker). A Response completed trigger
 // gets a placeholder surveyId that keeps the config schema-valid until the user binds a real survey;
 // a Webhook trigger has nothing to configure (its Secret URL is issued when the save lands). Opening
@@ -868,22 +879,9 @@ export const addWorkflowTriggerAtom = atom(null, (get, set, triggerType: TWorkfl
       const definition = draft.definition;
       if (!definition || definition.trigger) return;
 
-      const triggerId = createId();
-      // Matches WORKFLOW_CANVAS_START_POSITION in definition-to-flow (not imported to avoid a cycle).
-      const ui = { position: { x: 220, y: 80 } };
-      if (triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) {
-        definition.trigger = {
-          id: triggerId,
-          type: "trigger",
-          triggerType,
-          config: { surveyId: createId(), endingCardIds: [] },
-          ui,
-        };
-      } else if (triggerType === WORKFLOW_TRIGGERS.WEBHOOK) {
-        definition.trigger = { id: triggerId, type: "trigger", triggerType, config: {}, ui };
-      } else {
-        return;
-      }
+      const trigger = createDefaultTrigger(triggerType);
+      const triggerId = trigger.id;
+      definition.trigger = trigger;
       definition.entryNodeId = triggerId;
 
       draft.selectedNodeId = triggerId;
@@ -1066,30 +1064,30 @@ export const cutWorkflowStepIdsAtom = atom((get) => {
   return new Set(clipboard?.mode === "cut" ? clipboard.stepIds : []);
 });
 
-/** Cut a step and everything after it; a previous cut that wasn't pasted is put back. */
-export const cutWorkflowStepAtom = atom(null, (get, set, nodeId: string) => {
+/**
+ * Cut a step and everything after it; a previous cut that wasn't pasted is put back. Returns how many
+ * steps are on the clipboard, 0 when nothing was cut.
+ */
+export const cutWorkflowStepAtom = atom(null, (get, set, nodeId: string): number => {
   const definition = get(workflowEditorAtom).definition;
   const workflowId = get(workflowAtom)?.id;
-  if (!definition || !workflowId || definition.trigger?.id === nodeId) return;
-  set(stepClipboardStateAtom, {
-    mode: "cut",
-    workflowId,
-    rootId: nodeId,
-    stepIds: getStepAndAfter(definition, nodeId),
-  });
+  if (!definition || !workflowId || definition.trigger?.id === nodeId) return 0;
+  const stepIds = getStepAndAfter(definition, nodeId);
+  set(stepClipboardStateAtom, { mode: "cut", workflowId, rootId: nodeId, stepIds });
+  return stepIds.length;
 });
 
-/** Copy a step and everything after it; a pending cut is put back. */
-export const copyWorkflowStepAtom = atom(null, (get, set, nodeId: string) => {
+/**
+ * Copy a step and everything after it; a pending cut is put back. Returns how many steps are on the
+ * clipboard, 0 when nothing was copied.
+ */
+export const copyWorkflowStepAtom = atom(null, (get, set, nodeId: string): number => {
   const definition = get(workflowEditorAtom).definition;
   const workflowId = get(workflowAtom)?.id;
-  if (!definition || !workflowId || definition.trigger?.id === nodeId) return;
-  set(stepClipboardStateAtom, {
-    mode: "copy",
-    workflowId,
-    rootId: nodeId,
-    ...captureStepCopy(definition, nodeId),
-  });
+  if (!definition || !workflowId || definition.trigger?.id === nodeId) return 0;
+  const captured = captureStepCopy(definition, nodeId);
+  set(stepClipboardStateAtom, { mode: "copy", workflowId, rootId: nodeId, ...captured });
+  return captured.nodes.length;
 });
 
 /** Puts a pending cut back: Escape, Undo. A copy stays on the clipboard. */
@@ -1155,6 +1153,71 @@ export const pasteWorkflowStepsAtom = atom(
     return { ok: true, stepCount: result.stepCount, mode: clipboard.mode };
   }
 );
+
+// ---- Moving a step onto a `+` (lib/step-move.ts) ----
+
+/** A step card being dragged to another `+`; null while nothing is. */
+export type TStepMoveDrag = {
+  stepId: string;
+  /** The card's position when the drag started; the fork legs stay drawn from it while dragging. */
+  start: { x: number; y: number };
+  /** The step and the steps it takes along, drawn faded while they move. */
+  movingStepIds: ReadonlySet<string>;
+  /** The `+` it can land on (getMoveTargetKey), lit while dragging. */
+  targetKeys: ReadonlySet<string>;
+  /** The `+` nearest the pointer, which reads "Move here"; a drop anywhere else just places the card. */
+  hotTargetKey: string | null;
+  /** Where the card was, drawn as a dashed outline. */
+  origin: { x: number; y: number; width: number; height: number };
+};
+
+export const stepMoveDragAtom = atom<TStepMoveDrag | null>(null);
+
+const NO_STEPS: ReadonlySet<string> = new Set();
+
+/** The steps a dragged If/else, Switch or Filter takes along (not itself), faded like a pending cut. */
+export const stepIdsMovingAlongAtom = atom((get) => get(stepMoveDragAtom)?.movingStepIds ?? NO_STEPS);
+
+/**
+ * Moves a step to a `+` as one edit (one Undo) and opens it; the other steps stay where they are. Returns the
+ * definitions before and after, for the toast's Undo, and the Variables the move put before the step
+ * they come from. Null when the step can't go there. A pending cut is put back first.
+ */
+export const moveWorkflowStepAtom = atom(
+  null,
+  (
+    get,
+    set,
+    input: { stepId: string; target: TPasteTarget }
+  ): (TMoveStepResult & { previous: TWorkflowDefinition }) | null => {
+    const editor = get(workflowEditorAtom);
+    if (!editor.definition || !get(canEditWorkflowDefinitionAtom)) return null;
+    const result = moveStep({
+      definition: editor.definition,
+      stepId: input.stepId,
+      target: input.target,
+      direction: get(workflowCanvasDirectionAtom),
+    });
+    if (!result) return null;
+    set(cancelWorkflowStepCutAtom);
+    set(
+      workflowEditorAtom,
+      produce(editor, (draft) => {
+        draft.definition = result.definition;
+        draft.selectedNodeId = input.stepId;
+        draft.isNodeConfigModalOpen = true;
+      })
+    );
+    return { ...result, previous: editor.definition };
+  }
+);
+
+/** The workflow history's Undo, registered by the history (it lives in the toolbar) for toasts to call. */
+export const workflowUndoAtom = atom<{
+  undo: () => void;
+  /** Whether the next Undo puts back `earlier` (edits right after it, such as a panel opening, count with it). */
+  undoesTo: (earlier: TWorkflowDefinition) => boolean;
+} | null>(null);
 
 export const setWorkflowSnapToCanvasEnabledAtom = atom(null, (get, set, isSnapToCanvasEnabled: boolean) => {
   set(

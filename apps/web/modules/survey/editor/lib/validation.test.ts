@@ -1373,7 +1373,7 @@ describe("validation.isSurveyValid", () => {
         },
       } as unknown as TSurvey;
       const mockSafeParse = vi.spyOn(ZSegmentFilters, "safeParse");
-      mockSafeParse.mockReturnValue({ success: true, data: surveyWithValidSegment.segment!.filters } as any);
+      mockSafeParse.mockReturnValue({ success: true, data: surveyWithValidSegment.segment!.filters });
 
       expect(validation.isSurveyValid(surveyWithValidSegment, "en", mockT)).toBe(true);
       expect(toast.error).not.toHaveBeenCalled();

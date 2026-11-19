@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { PUT } from "./route";
 
-/** Setting an HTTP request step's expected response (ADR 0054): who may, which step, what is stored and audited. */
+/** Setting an HTTP request step's expected response body (ADR 0054): who may, which step, what is stored and audited. */
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   authenticateRequest: vi.fn(),
@@ -81,7 +81,7 @@ const put = (stepId: string, body: unknown) =>
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
     }),
-    { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId }) } as never
+    { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId }) }
   );
 
 beforeEach(() => {
@@ -104,7 +104,7 @@ beforeEach(() => {
 });
 
 describe("PUT /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response", () => {
-  test("stores the body as the step's expected response, in a test response's shape", async () => {
+  test("stores the body as the step's expected response body, in a test response's shape", async () => {
     const response = await put("call", { body: { ticketId: "tk_1" } });
 
     expect(response.status).toBe(200);

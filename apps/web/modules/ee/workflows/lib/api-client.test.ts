@@ -75,7 +75,7 @@ describe("webhook, sample and test request calls", () => {
   });
 
   test("replacing a secret PUTs the one value to the step's header", async () => {
-    fetchMock.mockResolvedValueOnce({ ok: true, status: 204 } as Response);
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 204 });
 
     await replaceWorkflowSecretHeader("wf1", "call", "Authorization", "Bearer new");
 
@@ -119,7 +119,7 @@ describe("getWorkflow", () => {
       statusText: "Not Found",
       headers: { get: () => null },
       json: async () => ({ detail: "missing" }),
-    } as unknown as Response);
+    });
 
     await expect(getWorkflow("wf1")).rejects.toBeInstanceOf(V3ApiError);
   });
@@ -242,7 +242,7 @@ describe("workflows api-client requests", () => {
     const result = await createWorkflow(input);
 
     expect(result).toEqual(resource);
-    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    const [url, init] = vi.mocked(global.fetch).mock.calls[0];
     expect(url).toBe("/api/v3/workflows");
     expect(init).toMatchObject({ method: "POST", cache: "no-store" });
     // Mutations are timeout-bounded so a stalled request can't hang the editor spinner.
@@ -259,7 +259,7 @@ describe("workflows api-client requests", () => {
     const result = await duplicateWorkflow("wf_1");
 
     expect(result).toEqual({ id: "wf_copy" });
-    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    const [url, init] = vi.mocked(global.fetch).mock.calls[0];
     expect(url).toBe("/api/v3/workflows/wf_1/duplicate");
     expect((init as RequestInit).signal).toBeInstanceOf(AbortSignal);
     expect(JSON.parse(String((init as RequestInit).body))).toEqual({});
@@ -386,7 +386,7 @@ describe("workflow runs api-client requests", () => {
     });
 
     expect(result).toEqual(page);
-    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    const [url, init] = vi.mocked(global.fetch).mock.calls[0];
     expect(url).toBe("/api/v3/workflows/runs?workspaceId=ws_1&limit=20&workflowId=wf_1");
     expect(init).toMatchObject({ method: "GET", cache: "no-store" });
   });
@@ -453,7 +453,7 @@ describe("workflow runs api-client requests", () => {
     const result = await createWorkflowTestRun("wf_1", { payload: { channel: "call" } });
 
     expect(result).toEqual({ id: "run_t", isDryRun: true });
-    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    const [url, init] = vi.mocked(global.fetch).mock.calls[0];
     expect(url).toBe("/api/v3/workflows/wf_1/test-runs");
     expect(init).toMatchObject({ method: "POST", cache: "no-store" });
     expect(JSON.parse(String((init as RequestInit).body))).toEqual({ payload: { channel: "call" } });

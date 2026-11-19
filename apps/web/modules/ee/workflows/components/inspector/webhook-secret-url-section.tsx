@@ -31,9 +31,12 @@ const SECRET_URL_FIELD_ID = "workflow-webhook-secret-url";
 
 /**
  * The Webhook Secret URL as one compact card (redesign prototype): the masked URL, Copy, and a menu
- * for the rarer actions (show, regenerate). The URL is a credential (ADR 0041), so the card keeps one
+ * for the rarer actions (show, regenerate). The URL is a credential (ADR 0057), so the card keeps one
  * line about keeping it private; the rest lives in the docs linked from the panel header.
  */
+// About how many monospace characters fit on one row of the narrowest panel.
+const SECRET_URL_CHARS_PER_ROW = 44;
+
 export const WebhookSecretUrlSection = ({
   workflowId,
   url,
@@ -108,11 +111,16 @@ export const WebhookSecretUrlSection = ({
       </div>
       {/* ph-no-capture keeps the URL out of PostHog session recordings. */}
       <div className="ph-no-capture px-3 pt-1.5 pb-2.5">
-        <input
+        {/* Wrapped, never cut off: the token is at the end of the URL, so a one-line field hid the
+            only part Show changes. */}
+        <textarea
           id={SECRET_URL_FIELD_ID}
           readOnly
+          // `field-sizing: content` sizes it where supported; elsewhere (Firefox) rows does, roughly
+          // one row per line of monospace text at this width.
+          rows={Math.max(1, Math.ceil(url.length / SECRET_URL_CHARS_PER_ROW))}
           value={isRevealed ? url : maskWebhookSecretUrl(url)}
-          className="ph-no-capture w-full truncate rounded-md border-0 bg-slate-50 px-2 py-1.5 font-mono text-xs text-slate-700 focus:ring-2 focus:ring-slate-300 focus:outline-hidden"
+          className="ph-no-capture block field-sizing-content w-full resize-none rounded-md border-0 bg-slate-50 px-2 py-1.5 font-mono text-xs break-all text-slate-700 focus:ring-2 focus:ring-slate-300 focus:outline-hidden"
           onFocus={(event) => event.currentTarget.select()}
         />
       </div>

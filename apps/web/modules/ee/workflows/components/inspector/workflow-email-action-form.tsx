@@ -10,17 +10,18 @@ import {
   WORKFLOW_SURVEY_LINK_TOKEN,
   WORKFLOW_TRIGGERS,
   getBlankSendEmailContentFields,
-  getIncludeEmbeddedData,
   getTriggerSurveyId,
   isVariableEmailRecipient,
 } from "@formbricks/workflows";
 import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
+import { useWorkflowEmailSurveyLink } from "@/modules/ee/workflows/components/inspector/use-workflow-email-survey-link";
 import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
-import { WorkflowEmailSurveyLinkSection } from "@/modules/ee/workflows/components/inspector/workflow-email-survey-link-section";
+import { WorkflowEmailResponseDataFields } from "@/modules/ee/workflows/components/inspector/workflow-email-response-data-fields";
 import {
   WorkflowFieldError,
   WorkflowFieldLabel,
 } from "@/modules/ee/workflows/components/inspector/workflow-field";
+import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { useWorkflowVariablePicker } from "@/modules/ee/workflows/components/variable-picker/use-workflow-variable-picker";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
@@ -30,11 +31,6 @@ import {
   getRecipientVariableOptions,
   toRecipientSelectValue,
 } from "@/modules/ee/workflows/lib/email-recipient";
-import {
-  appendSurveyLinkToken,
-  withSurveyLinkSurvey,
-  withoutSurveyLink,
-} from "@/modules/ee/workflows/lib/email-survey-link";
 import {
   getSendEmailBodyRecall,
   withWorkflowVariableItems,
@@ -54,7 +50,6 @@ import {
 import type { TEditorTokenChip } from "@/modules/ui/components/editor/lib/token-chips";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { Switch } from "@/modules/ui/components/switch";
 
 interface WorkflowEmailActionFormProps {
   node: TWorkflowSendEmailActionNode;
@@ -142,8 +137,17 @@ export const WorkflowEmailActionForm = ({
     [markTouched]
   );
 
-  const updateConfig = (next: Partial<TWorkflowSendEmailActionNode["config"]>) =>
-    onChange({ ...node, config: { ...node.config, ...next } });
+  // Two writes can land before the next render: Insert link stores the link, then the editor reports
+  // the body with its chip. Each builds on the one before, not on this render's `node`.
+  const latestNodeRef = useRef(node);
+  useEffect(() => {
+    latestNodeRef.current = node;
+  }, [node]);
+  const updateConfig = (next: Partial<TWorkflowSendEmailActionNode["config"]>) => {
+    const latest = latestNodeRef.current;
+    latestNodeRef.current = { ...latest, config: { ...latest.config, ...next } };
+    onChange(latestNodeRef.current);
+  };
 
   const invalidFields = new Set(
     getBlankSendEmailContentFields(node.config).filter((field) => touchedFields[field])
@@ -198,7 +202,22 @@ export const WorkflowEmailActionForm = ({
     return undefined;
   }, [bodyRecall, survey, node.id, variablePicker.recallSource, variablePicker.groups]);
 
-  // `#survey-link#` shows as a "Survey link" chip and is stored as the bare token.
+  // The body only changes from outside the editor here; re-seed it so it shows the new text.
+  const replaceBody = (next: Partial<TWorkflowSendEmailActionNode["config"]>) => {
+    updateConfig(next);
+    setFirstRender(true);
+    setBodyEditorKey((key) => key + 1);
+  };
+  const surveyLinkControls = useWorkflowEmailSurveyLink({
+    config: node.config,
+    isEditable,
+    onChangeSurveyLink: (surveyLink) => updateConfig({ surveyLink }),
+    onReplaceBody: replaceBody,
+    recallSource: variablePicker.recallSource,
+    variableGroups: variablePicker.groups,
+  });
+
+  // `#survey-link#` shows as a chip with the survey's name and is stored as the bare token.
   const bodyTokenChips: TEditorTokenChip[] = useMemo(
     () => [
       {
@@ -246,16 +265,11 @@ export const WorkflowEmailActionForm = ({
     );
   }
 
-  // The body only changes from outside the editor here; re-seed it so it shows the new text.
-  const replaceBody = (next: Partial<TWorkflowSendEmailActionNode["config"]>) => {
-    updateConfig(next);
-    setFirstRender(true);
-    setBodyEditorKey((key) => key + 1);
-  };
   const isVariableRecipient = isVariableEmailRecipient(node.config.to);
 
   return (
     <div className="flex flex-col gap-3">
+      <WorkflowStepNameField node={node} isEditable={isEditable} onChange={onChange} />
       {/* Who gets it and from whom, then what it says: one card per question. The rule for a payload
           recipient is the footer of the card it applies to. */}
       <InspectorCard
@@ -363,6 +377,8 @@ export const WorkflowEmailActionForm = ({
             placeholder={t("workspace.workflows.email_body_placeholder")}
             recallSource={bodyRecallSource}
             tokenChips={bodyTokenChips}
+            renderTokenChip={surveyLinkControls.renderTokenChip}
+            renderToolbarExtras={surveyLinkControls.renderToolbarExtras}
           />
           {invalidFields.has("body") ? (
             <WorkflowFieldError id="workflow-email-body-error">
@@ -372,83 +388,10 @@ export const WorkflowEmailActionForm = ({
         </div>
       </InspectorCard>
 
-      <WorkflowEmailSurveyLinkSection
-        config={node.config}
-        isEditable={isEditable}
-        onPickSurvey={(surveyId) => replaceBody(withSurveyLinkSurvey(node.config, surveyId))}
-        onRemove={() => replaceBody(withoutSurveyLink(node.config))}
-        onInsertLink={() => replaceBody({ body: appendSurveyLinkToken(node.config.body) })}
-        onChangeEmbeddedData={(embeddedData) =>
-          node.config.surveyLink && updateConfig({ surveyLink: { ...node.config.surveyLink, embeddedData } })
-        }
-        recallSource={variablePicker.recallSource}
-      />
-
       {/* A Webhook run has no response to attach. */}
       {isWebhookTrigger ? null : (
         <WorkflowEmailResponseDataFields node={node} isEditable={isEditable} updateConfig={updateConfig} />
       )}
     </div>
-  );
-};
-
-const WorkflowEmailResponseDataFields = ({
-  node,
-  isEditable,
-  updateConfig,
-}: Readonly<{
-  node: TWorkflowSendEmailActionNode;
-  isEditable: boolean;
-  updateConfig: (next: Partial<TWorkflowSendEmailActionNode["config"]>) => void;
-}>) => {
-  const { t } = useTranslation();
-  // One card: the switch in its header turns response data on; the options for it follow inside,
-  // instead of a second bordered box under the first.
-  return (
-    <InspectorCard
-      title={
-        <Label htmlFor="workflow-email-attach-response-data" className="text-sm font-medium">
-          {t("workspace.workflows.email_attach_response_data_label")}
-        </Label>
-      }
-      description={t("workspace.workflows.email_attach_response_data_description")}
-      aside={
-        <Switch
-          id="workflow-email-attach-response-data"
-          checked={node.config.attachResponseData}
-          disabled={!isEditable}
-          onCheckedChange={(checked) => updateConfig({ attachResponseData: checked })}
-        />
-      }>
-      {node.config.attachResponseData ? (
-        <div className="flex flex-col gap-3 border-t border-slate-100 pt-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-col">
-              <Label htmlFor="workflow-email-include-variables" className="text-sm font-medium">
-                {t("workspace.workflows.email_include_variables_label")}
-              </Label>
-              <p className="text-xs text-slate-500">
-                {t("workspace.workflows.email_include_embedded_data_description")}
-              </p>
-            </div>
-            {/* One switch for all Embedded Data: the passed-in fields (Follow-ups' "hidden fields") and
-                the computed ones are both Embedded Data now. It sets both settings the step keeps for
-                Follow-ups parity; the deprecated name is dropped so the two never mix (ADR 0050). */}
-            <Switch
-              id="workflow-email-include-variables"
-              checked={getIncludeEmbeddedData(node.config) || (node.config.includeHiddenFields ?? false)}
-              disabled={!isEditable}
-              onCheckedChange={(checked) =>
-                updateConfig({
-                  includeEmbeddedData: checked,
-                  includeHiddenFields: checked,
-                  includeVariables: undefined,
-                })
-              }
-            />
-          </div>
-        </div>
-      ) : null}
-    </InspectorCard>
   );
 };

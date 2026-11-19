@@ -1,5 +1,4 @@
 import {
-  type TWorkflowDefinition,
   type TWorkflowResource,
   type TWorkflowSampleList,
   type TWorkflowSampleListItem,
@@ -12,7 +11,7 @@ import type { TWorkflowStepVariableContext } from "@/modules/ee/workflows/lib/va
 
 /**
  * The Variable picker's step samples from a workflow's saved samples: each HTTP request step's
- * expected response, keyed by step id (ADR 0054). The trigger's expected payload is not a step output,
+ * expected response body, keyed by step id (ADR 0054). The trigger's expected payload is not a step output,
  * and a step's last Test request response only counts once an editor chooses to use it.
  */
 export const toStepVariableContext = (
@@ -27,7 +26,7 @@ export const toStepVariableContext = (
   ),
 });
 
-/** A step's expected response and its last Test request response, each with when it was saved. */
+/** A step's expected response body and its last Test request response, each with when it was saved. */
 export const getStepResponseSamples = (
   samples: TWorkflowSampleList | undefined,
   stepId: string
@@ -42,5 +41,4 @@ export const getStepResponseSamples = (
  * an error the author has no part in.
  */
 export const hasSavedWebhookTrigger = (workflow: Pick<TWorkflowResource, "definition"> | null): boolean =>
-  (workflow?.definition as TWorkflowDefinition | undefined)?.trigger?.triggerType ===
-  WORKFLOW_TRIGGERS.WEBHOOK;
+  workflow?.definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.WEBHOOK;

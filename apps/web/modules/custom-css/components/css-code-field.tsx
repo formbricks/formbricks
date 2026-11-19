@@ -314,6 +314,7 @@ export const CssCodeField = ({
         {suggestions && (
           <ul
             id={listboxId}
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a styled, positioned suggestion popup for the code editor; <datalist> and <select> cannot render it
             role="listbox"
             className="absolute z-20 max-h-56 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg"
             style={{ top: suggestions.top, left: suggestions.left, width: SUGGESTION_LIST_WIDTH_PX }}>
@@ -321,6 +322,7 @@ export const CssCodeField = ({
               <li
                 key={suggestion}
                 id={`${listboxId}-${index}`}
+                // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- an item of the suggestion listbox above
                 role="option"
                 aria-selected={index === suggestions.active}
                 ref={(element) => {

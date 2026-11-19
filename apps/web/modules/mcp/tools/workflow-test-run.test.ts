@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { startWorkflowTestRun } from "@/app/api/v3/workflows/lib/test-run";
+import type { TToolHandler } from "./test-utils";
 import { registerWorkflowTestRunTools } from "./workflow-test-run";
 
 vi.mock("@/app/api/v3/workflows/lib/test-run", () => ({ startWorkflowTestRun: vi.fn() }));
@@ -42,23 +43,22 @@ const readOnlyAuthInfo = {
 };
 
 const createToolServer = () => {
-  const tools = new Map<
-    string,
-    { config: Record<string, unknown>; handler: (input: any, extra: any) => any }
-  >();
+  const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
-  registerWorkflowTestRunTools(server as any);
+  registerWorkflowTestRunTools(server as unknown as Parameters<typeof registerWorkflowTestRunTools>[0]);
   return tools;
 };
 
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
-  vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+  vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as ReturnType<
+    typeof buildV3AuditLog
+  >);
   vi.mocked(startWorkflowTestRun).mockResolvedValue(
     Response.json({ code: "invalid_workflow_state" }, { status: 422 })
   );
@@ -89,6 +89,44 @@ describe("registerWorkflowTestRunTools", () => {
     expect(await call.req.json()).toEqual({ payload: { plan: "pro" } });
     expect(vi.mocked(buildV3AuditLog).mock.calls[0][1]).toBe("testRunStarted");
     expect(queueV3AuditLog).toHaveBeenCalled();
+  });
+
+  describe("respondent data", () => {
+    const run = {
+      id: "run_1",
+      status: "completed",
+      error: null,
+      triggerPayload: { email: "ana@example.com" },
+      data: { answer: "Too expensive" },
+      logs: [{ nodeId: "n1", input: { to: "ana@example.com" }, output: { sent: false }, error: null }],
+    };
+    const callWith = async (caller: typeof authInfo) => {
+      vi.mocked(startWorkflowTestRun).mockResolvedValue(Response.json({ data: run }, { status: 201 }));
+      return createToolServer()
+        .get("run_test")!
+        .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: caller } });
+    };
+
+    test("leaves the respondent-derived fields out without Responses: Read, as get_workflow_run does", async () => {
+      const result = await callWith(authInfo);
+
+      expect(result.structuredContent.data).toEqual({
+        ...run,
+        triggerPayload: null,
+        data: null,
+        logs: [{ nodeId: "n1", input: null, output: null, error: null }],
+      });
+      expect(JSON.stringify(result.content)).not.toContain("ana@example.com");
+    });
+
+    test("returns the run whole to a caller holding responses:read", async () => {
+      const result = await callWith({
+        ...authInfo,
+        scopes: ["workflows:read", "workflows:write", "responses:read"],
+      });
+
+      expect(result.structuredContent.data).toEqual(run);
+    });
   });
 
   test("tells the agent that payload values and responses are untrusted", () => {

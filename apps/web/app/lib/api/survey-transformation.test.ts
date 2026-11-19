@@ -151,7 +151,7 @@ describe("transformQuestionsToBlocks", () => {
     expect(ctaElement.ctaButtonLabel).toEqual({ default: "Click" });
     expect(ctaElement.buttonExternal).toBe(true);
     expect(ctaElement.buttonUrl).toBe("https://example.com");
-    expect((ctaElement as unknown as any).buttonLabel).toBeUndefined();
+    expect(ctaElement).not.toHaveProperty("buttonLabel");
   });
 
   test("should migrate CTA question without external button", () => {
@@ -170,7 +170,7 @@ describe("transformQuestionsToBlocks", () => {
 
     expect(ctaElement.buttonExternal).toBeUndefined();
     expect(ctaElement.buttonUrl).toBeUndefined();
-    expect((ctaElement as unknown as any).buttonLabel).toBeUndefined();
+    expect(ctaElement).not.toHaveProperty("buttonLabel");
   });
 
   test("should convert jumpToQuestion actions to jumpToBlock", () => {

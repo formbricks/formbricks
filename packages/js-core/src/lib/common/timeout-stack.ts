@@ -20,9 +20,7 @@ export class TimeoutStack {
 
   // Retrieve the singleton instance of TimeoutStack
   public static getInstance(): TimeoutStack {
-    if (!TimeoutStack.instance) {
-      TimeoutStack.instance = new TimeoutStack();
-    }
+    TimeoutStack.instance ??= new TimeoutStack();
     return TimeoutStack.instance;
   }
 

@@ -157,6 +157,8 @@ const getHttpRequestVariables: TWorkflowStepVariableProvider<"http_request">["ge
 export const WORKFLOW_STEP_VARIABLE_PROVIDERS: TWorkflowStepVariableProviders = {
   send_email: { getTypeLabel: (t) => t("workspace.workflows.send_email"), getVariables: noVariables },
   if_else: { getTypeLabel: (t) => t("workspace.workflows.if_else"), getVariables: noVariables },
+  // A step after a Filter only runs when it passed, so its result is nothing to read.
+  filter: { getTypeLabel: (t) => t("workspace.workflows.filter"), getVariables: noVariables },
   switch: { getTypeLabel: (t) => t("workspace.workflows.switch"), getVariables: noVariables },
   http_request: {
     getTypeLabel: (t) => t("workspace.workflows.http_request"),
@@ -260,7 +262,7 @@ const getStepGroups = (
   getEarlierWorkflowSteps(definition, nodeId).flatMap((step) => {
     const stepType = getWorkflowStepType(step);
     const provider = providers[stepType] as TWorkflowStepVariableProvider<TWorkflowStepType>;
-    const options = provider.getVariables(step as TWorkflowStepNodeOfType<TWorkflowStepType>, context);
+    const options = provider.getVariables(step, context);
     if (options.length === 0) return [];
     return [{ kind: "step" as const, stepId: step.id, stepType, stepLabel: step.label ?? null, options }];
   });
@@ -504,7 +506,7 @@ export const filterWorkflowVariableGroups = (
       ...option,
       index: option.isPickable ? pickableCount++ : null,
     }));
-    if (options.length > 0) listed.push({ ...group, options } as TWorkflowVariableListGroup);
+    if (options.length > 0) listed.push({ ...group, options });
   }
   return { groups: listed, pickableCount };
 };

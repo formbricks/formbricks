@@ -152,7 +152,7 @@ describe("streamObject", () => {
     // NoOutputGeneratedError that carries no status code, so classification off it always misses.
     const providerError = new Error("provider returned 429");
     mocks.streamText.mockImplementationOnce((request: { onError: (e: { error: unknown }) => void }) => {
-      void request.onError({ error: providerError });
+      request.onError({ error: providerError });
       return {
         get partialOutputStream() {
           return Symbol("partialOutputStream");
@@ -178,7 +178,7 @@ describe("streamObject", () => {
     const callerOnError = vi.fn();
     const providerError = new Error("boom");
     mocks.streamText.mockImplementationOnce((request: { onError: (e: { error: unknown }) => void }) => {
-      void request.onError({ error: providerError });
+      request.onError({ error: providerError });
       return createStreamResult();
     });
 

@@ -16,6 +16,7 @@ export const PUT = async (request: Request) =>
     },
     bodyTransform: async (body, auth) => {
       const resolved = await resolveBodyIdsV2(body, auth, "PUT");
+      // eslint-disable-next-line typescript/only-throw-error -- the API wrapper turns a thrown error response into its reply
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },
@@ -70,7 +71,7 @@ export const PUT = async (request: Request) =>
       }
 
       const emails = contacts.map(
-        (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value!
+        (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value as string
       );
 
       const upsertBulkContactsResult = await upsertBulkContacts(contacts, workspaceId, emails);

@@ -13,7 +13,7 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog } from "@/app/api/v3/lib/types";
+import { generateV3Survey } from "@/app/api/v3/surveys/generate/operations";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -25,7 +25,13 @@ import {
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
-import { type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
+import {
+  FULL_MCP_GRANT,
+  type TToolHandler,
+  type ToolCallEra,
+  callToolOverHttp,
+  errorText,
+} from "./test-utils";
 
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
@@ -52,6 +58,8 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
     ),
   validateV3SurveyFromRawInput: vi.fn(),
 }));
+
+vi.mock("@/app/api/v3/surveys/generate/operations", () => ({ generateV3Survey: vi.fn() }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
@@ -108,6 +116,7 @@ const readOnlyOAuthAuthInfo = {
     },
     requestId: "req_tool",
     authMethod: "oauth",
+    grant: FULL_MCP_GRANT,
   },
 };
 
@@ -121,16 +130,16 @@ function createToolServer() {
     string,
     {
       config: Record<string, unknown>;
-      handler: (input: any, extra: any) => Promise<any>;
+      handler: TToolHandler;
     }
   >();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
 
-  registerSurveyTools(server as any);
+  registerSurveyTools(server as unknown as Parameters<typeof registerSurveyTools>[0]);
   return { server, tools };
 }
 
@@ -178,7 +187,7 @@ describe("registerSurveyTools", () => {
   test("registers survey tools with planning annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(8);
+    expect(server.registerTool).toHaveBeenCalledTimes(9);
     expect(tools.get("list_surveys")?.config).toMatchObject({
       title: "List surveys",
       annotations: {
@@ -222,7 +231,7 @@ describe("registerSurveyTools", () => {
       },
     });
     expect(
-      Object.keys((tools.get("create_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
+      Object.keys((tools.get("create_survey")!.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
     ).toEqual(
       expect.arrayContaining([
         "workspaceId",
@@ -250,7 +259,7 @@ describe("registerSurveyTools", () => {
       },
     });
     expect(
-      Object.keys((tools.get("validate_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
+      Object.keys((tools.get("validate_survey")!.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
     ).toEqual(expect.arrayContaining(["operation", "surveyId", "data"]));
     expect(tools.get("patch_survey")?.config).toMatchObject({
       title: "Patch survey",
@@ -268,6 +277,58 @@ describe("registerSurveyTools", () => {
         idempotentHint: false,
       },
     });
+  });
+
+  /**
+   * Generation persists nothing, so it is read-only to a client, but it is never idempotent: each call
+   * is a fresh model run that spends from the caller's AI budget.
+   */
+  test("generate_survey is a non-idempotent read that takes the v3 generate body", () => {
+    const { tools } = createToolServer();
+
+    expect(tools.get("generate_survey")?.config).toMatchObject({
+      title: "Generate survey draft",
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    });
+    const inputSchema = tools.get("generate_survey")?.config.inputSchema as
+      | z.ZodObject<z.ZodRawShape>
+      | undefined;
+    expect(Object.keys(inputSchema?.shape ?? {}).sort()).toEqual([
+      "language",
+      "prompt",
+      "surveyLanguage",
+      "type",
+      "workspaceId",
+    ]);
+    expect(tools.get("generate_survey")?.config.outputSchema).toBeDefined();
+  });
+
+  test("generate_survey calls the shared generate operation and returns the draft", async () => {
+    const { tools } = createToolServer();
+    const draft = {
+      language: "en-US",
+      payload: { workspaceId: "clxx1234567890123456789012", name: "Onboarding" },
+      validation: { valid: true, invalid_params: [], languages: [] },
+    };
+    vi.mocked(generateV3Survey).mockResolvedValue(successResponse(draft, { requestId: "req_tool" }));
+    const input = {
+      workspaceId: "clxx1234567890123456789012",
+      prompt: "Ask new users what slowed them down during onboarding",
+      type: "link",
+    };
+
+    const result = await tools.get("generate_survey")!.handler(input, {
+      http: { authInfo: writeOnlyOAuthAuthInfo },
+    });
+
+    expect(generateV3Survey).toHaveBeenCalledWith({
+      body: input,
+      authentication: writeOnlyOAuthAuthInfo.extra.formbricksAuthentication,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+    });
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual({ data: draft, requestId: "req_tool" });
   });
 
   test("list_surveys calls the shared v3 list operation and returns structured content", async () => {
@@ -330,6 +391,93 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  // Targeting filters carry literal contact attribute values, which list_segments gates on Segments and
+  // Contact attributes: Read. A survey tool leaves them out for a caller without both, over MCP only.
+  describe("an app survey's targeting", () => {
+    const survey = {
+      id: "clxx1234567890123456789012",
+      type: "app",
+      targeting: { filters: [{ attributeKey: "email", value: "ceo@example.com" }] },
+    };
+    const withoutTargeting = { id: survey.id, type: "app" };
+    const oauthWith = (scopes: string[], permissions: Record<string, string>) => ({
+      ...readOnlyOAuthAuthInfo,
+      scopes,
+      extra: { ...readOnlyOAuthAuthInfo.extra, grant: { access: "all", permissions } },
+    });
+    const getWith = async (callerAuthInfo: unknown) => {
+      const { tools } = createToolServer();
+      vi.mocked(getV3Survey).mockResolvedValue(successResponse(survey, { requestId: "req_tool" }));
+      return tools
+        .get("get_survey")!
+        .handler({ surveyId: survey.id }, { http: { authInfo: callerAuthInfo } });
+    };
+
+    test.each([
+      ["Surveys: Read alone", oauthWith(["surveys:read", "audience:read"], { surveys: "read" })],
+      [
+        "Segments but not Contact attributes",
+        oauthWith(["surveys:read", "audience:read"], { surveys: "read", segments: "read" }),
+      ],
+      [
+        "a grant with both, on a token without audience:read",
+        oauthWith(["surveys:read"], FULL_MCP_GRANT.permissions),
+      ],
+      ["an API key without audience:read", authInfo],
+    ])("is left out for %s, in the text too", async (_case, callerAuthInfo) => {
+      const result = await getWith(callerAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: withoutTargeting, requestId: "req_tool" });
+      expect(JSON.parse(result.content[0].text)).toEqual({ data: withoutTargeting, requestId: "req_tool" });
+    });
+
+    test.each([
+      [
+        "Segments and Contact attributes: Read",
+        oauthWith(["surveys:read", "audience:read"], {
+          surveys: "read",
+          segments: "read",
+          contactAttributes: "read",
+        }),
+      ],
+      ["an API key with audience:read", { ...authInfo, scopes: ["surveys:read", "audience:read"] }],
+    ])("is returned for %s", async (_case, callerAuthInfo) => {
+      const result = await getWith(callerAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: survey, requestId: "req_tool" });
+    });
+
+    test("is left out of every listed survey", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(listV3Surveys).mockResolvedValue(
+        successListResponse(
+          [survey, { id: "link", type: "link" }],
+          { limit: 20, nextCursor: null },
+          {
+            requestId: "req_tool",
+          }
+        )
+      );
+
+      const result = await tools
+        .get("list_surveys")!
+        .handler({ workspaceId: "clws1234567890123456789012" }, { http: { authInfo } });
+
+      expect(result.structuredContent.data).toEqual([withoutTargeting, { id: "link", type: "link" }]);
+    });
+
+    test("is left out of a patched survey", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(patchV3SurveyResponse).mockResolvedValue(successResponse(survey, { requestId: "req_tool" }));
+
+      const result = await tools
+        .get("patch_survey")!
+        .handler({ surveyId: survey.id, data: { name: "Renamed" } }, { http: { authInfo } });
+
+      expect(result.structuredContent.data).toEqual(withoutTargeting);
+    });
+  });
+
   test("get_survey calls the shared v3 get operation", async () => {
     const { tools } = createToolServer();
     vi.mocked(getV3Survey).mockResolvedValue(
@@ -359,7 +507,7 @@ describe("registerSurveyTools", () => {
 
   test("create_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" };
+    const auditLog = { status: "failure" as const };
     const createBody = {
       workspaceId: "clxx1234567890123456789012",
       name: "New survey",
@@ -387,7 +535,7 @@ describe("registerSurveyTools", () => {
       hiddenFields: { enabled: false, fieldIds: [] },
       variables: [],
     };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
       createdResponse({ id: "clxx1234567890123456789012" }, { requestId: "req_tool", location: "/survey" })
     );
@@ -531,7 +679,7 @@ describe("registerSurveyTools", () => {
 
     test("every tool that changes a survey takes `confirm` and hands it to the operation, not the body", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
 
       for (const [name, input, operation, expected] of cases) {
         vi.mocked(operation as typeof patchV3SurveyResponse).mockResolvedValue(
@@ -551,7 +699,7 @@ describe("registerSurveyTools", () => {
 
     test("relays the refusal as an error carrying the caution text", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(patchV3SurveyResponse).mockResolvedValue(
         problemConfirmationRequired(
           "req_tool",
@@ -573,14 +721,14 @@ describe("registerSurveyTools", () => {
 
   test("patch_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" };
+    const auditLog = { status: "failure" as const };
     const patchInput = {
       surveyId: "clxx1234567890123456789012",
       data: {
         name: "Updated survey",
       },
     };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(patchV3SurveyResponse).mockResolvedValue(
       successResponse({ id: "clxx1234567890123456789012", name: "Updated survey" }, { requestId: "req_tool" })
     );
@@ -609,8 +757,8 @@ describe("registerSurveyTools", () => {
 
   test("delete_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    const auditLog = { status: "failure" as const };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(deleteV3Survey).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
 
     const result = await tools.get("delete_survey")!.handler(
@@ -637,8 +785,8 @@ describe("registerSurveyTools", () => {
 
   test("delete_survey preserves forbidden errors without leaking resource existence", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    const auditLog = { status: "failure" as const };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(deleteV3Survey).mockResolvedValue(
       problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
     );
@@ -666,7 +814,7 @@ describe("registerSurveyTools", () => {
 
   test("delete_survey relays the 409 naming the creatives that still open the survey", async () => {
     const { tools } = createToolServer();
-    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
     const creatives = [{ id: "clcr1234567890123456789012", name: "Feedback tab" }];
     vi.mocked(deleteV3Survey).mockResolvedValue(
       problemSurveyHasLinkedCreatives("req_conflict", creatives, "/api/mcp")
@@ -693,6 +841,8 @@ describe("registerSurveyTools", () => {
       ["delete_survey", { surveyId }, deleteV3Survey],
       ["edit_survey_blocks", { surveyId, ops: [{ op: "remove", id: "blk_a" }] }, editV3SurveyBlocksResponse],
       ["set_survey_block_order", { surveyId, order: ["blk_a"] }, setV3SurveyBlockOrderResponse],
+      // Writes nothing, but spends AI budget on the caller's behalf: Surveys: Write, like the REST route.
+      ["generate_survey", { workspaceId: surveyId, prompt: "A survey about onboarding" }, generateV3Survey],
     ];
 
     for (const [name, input, operation] of cases) {
@@ -703,7 +853,7 @@ describe("registerSurveyTools", () => {
       expect(result.structuredContent.error, name).toMatchObject({
         status: 403,
         code: "forbidden",
-        detail: "OAuth token does not include the required MCP scope: surveys:write",
+        detail: expect.stringContaining("its OAuth token lacks the scope surveys:write."),
         requestId: "req_tool",
       });
     }
@@ -752,7 +902,7 @@ describe("registerSurveyTools", () => {
     expect(result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope: surveys:read",
+      detail: expect.stringContaining("its OAuth token lacks the scope surveys:read."),
       requestId: "req_tool",
     });
   });
@@ -839,8 +989,8 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("edit_survey_blocks forwards the ops body and queues a successful audit log", async () => {
       const { tools } = createToolServer();
-      const auditLog = { status: "failure" };
-      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+      const auditLog = { status: "failure" as const };
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
       vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
         successResponse(fullResource, { requestId: "req_tool" })
       );
@@ -879,7 +1029,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("reports the generated id of an inserted block, so the agent can reference it", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
         successResponse(fullResource, { requestId: "req_tool" })
       );
@@ -891,7 +1041,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
           { http: { authInfo } }
         );
 
-      expect((result.structuredContent as any).data.applied).toEqual([
+      expect(result.structuredContent.data).toHaveProperty("applied", [
         { op: "insert", id: "generated_block_id" },
       ]);
       // and the operation receives the same minted id, not a second one
@@ -902,7 +1052,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("edit_survey_blocks returns the full resource when asked for detail", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
         successResponse(fullResource, { requestId: "req_tool" })
       );
@@ -919,7 +1069,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("a 409 reaches the agent with both timestamps intact", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
         problemConflict("req_conflict", "stale", "/api/mcp", {
           details: {
@@ -945,7 +1095,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("set_survey_block_order forwards the order and echoes it back concisely", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(setV3SurveyBlockOrderResponse).mockResolvedValue(
         successResponse(fullResource, { requestId: "req_tool" })
       );

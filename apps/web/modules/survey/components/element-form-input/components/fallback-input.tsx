@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
@@ -7,6 +7,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { focusOnOpen } from "@/modules/ui/lib/focus-on-open";
 
 interface FallbackInputProps {
   readonly filteredRecallItems: (TSurveyRecallItem | undefined)[];
@@ -16,6 +17,8 @@ interface FallbackInputProps {
   readonly open: boolean;
   readonly setOpen: (open: boolean) => void;
   readonly triggerButton?: ReactNode;
+  /** The recall item whose field takes focus on open (a clicked chip); else the newest one's. */
+  readonly focusItemId?: string;
 }
 
 export const FallbackInput = ({
@@ -26,15 +29,26 @@ export const FallbackInput = ({
   open,
   setOpen,
   triggerButton,
+  focusItemId,
 }: FallbackInputProps) => {
   const { t } = useTranslation();
+  // The newest recall item's fallback, which is the one the user just inserted.
+  const lastInputRef = useRef<HTMLInputElement>(null);
   const containsEmptyFallback = () => {
     const fallBacksList = Object.values(fallbacks);
     return fallBacksList.length === 0 || fallBacksList.map((value) => value.trim()).includes("");
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // Closing by clicking outside or Escape keeps what was typed: every field is applied to its
+    // Variable, an empty one too (it stays without a fallback, which the editor's own checks catch).
+    // Kept only in this popover's state, typing would be lost on the editor's next update.
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) addFallback();
+        setOpen(next);
+      }}>
       <PopoverTrigger asChild>
         {open || !triggerButton ? <div className="z-10 h-0 w-full cursor-pointer" /> : triggerButton}
       </PopoverTrigger>
@@ -44,7 +58,15 @@ export const FallbackInput = ({
         align="start"
         side="bottom"
         sideOffset={4}
-        onInteractOutside={(e) => e.preventDefault()}>
+        // Closes on a click outside or Escape, never on focus leaving: the recall picker that opens
+        // this popover hands focus back to the editor as it closes, which would close it at once.
+        onFocusOutside={(event) => event.preventDefault()}
+        onOpenAutoFocus={(event) =>
+          focusOnOpen(
+            event,
+            (focusItemId ? document.getElementById(`fallback-${focusItemId}`) : null) ?? lastInputRef.current
+          )
+        }>
         <p className="font-medium">{t("workspace.surveys.edit.add_fallback_placeholder")}</p>
 
         <div className="mt-2 space-y-3">
@@ -59,7 +81,7 @@ export const FallbackInput = ({
                 <Input
                   className="h-9 bg-white"
                   id={inputId}
-                  autoFocus={idx === filteredRecallItems.length - 1}
+                  ref={idx === filteredRecallItems.length - 1 ? lastInputRef : undefined}
                   value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ") || ""}
                   placeholder={t("workspace.surveys.edit.enter_fallback_value")}
                   onKeyDown={(e) => {

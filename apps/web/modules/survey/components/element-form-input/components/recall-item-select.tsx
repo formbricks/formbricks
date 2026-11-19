@@ -222,17 +222,25 @@ export const RecallItemSelect = ({
       getTextContent(option.label).toLowerCase().includes(query) ||
       (option.secondaryLabel ?? "").toLowerCase().includes(query);
 
-    let index = 0;
-    return [
+    const groups = [
       { label: t("common.questions"), options: surveyElementRecallItems },
       { label: t("common.embedded_data"), options: embeddedDataRecallItems },
       { label: t("common.auto_captured"), options: reservedRecallItems },
     ]
-      .map((group) => ({
-        label: group.label,
-        options: group.options.filter(matches).map((option) => ({ ...option, index: index++ })),
-      }))
+      .map((group) => ({ label: group.label, options: group.options.filter(matches) }))
       .filter((group) => group.options.length > 0);
+
+    // Options are numbered across groups, in display order, for keyboard navigation.
+    const firstIndexOfGroup = groups.map((_, groupIdx) =>
+      groups.slice(0, groupIdx).reduce((count, group) => count + group.options.length, 0)
+    );
+    return groups.map((group, groupIdx) => ({
+      label: group.label,
+      options: group.options.map((option, optionIdx) => ({
+        ...option,
+        index: firstIndexOfGroup[groupIdx] + optionIdx,
+      })),
+    }));
   }, [surveyElementRecallItems, embeddedDataRecallItems, reservedRecallItems, searchValue, t]);
 
   const visibleCount = useMemo(
@@ -256,6 +264,7 @@ export const RecallItemSelect = ({
           placeholder="Search options"
           className="w-full bg-white"
           onChange={(e) => setSearchValue(e.target.value)}
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- Radix DropdownMenu exposes no onOpenAutoFocus; the menu's search field takes focus when the user opens it
           autoFocus={true}
           value={searchValue}
           onKeyDown={(e) => {
@@ -266,7 +275,11 @@ export const RecallItemSelect = ({
         />
         <div className="max-h-72 overflow-x-hidden overflow-y-auto">
           {filteredGroups.map((group, groupIndex) => (
-            <div key={group.label} role="group" aria-labelledby={`recallGroup-${groupIndex}`}>
+            <div
+              key={group.label}
+              // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a labelled group of menu options; <fieldset> groups form controls
+              role="group"
+              aria-labelledby={`recallGroup-${groupIndex}`}>
               <p
                 id={`recallGroup-${groupIndex}`}
                 className="px-2 pt-2 pb-1 text-xs font-medium text-slate-500">

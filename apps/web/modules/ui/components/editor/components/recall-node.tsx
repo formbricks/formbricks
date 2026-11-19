@@ -12,7 +12,7 @@ export interface RecallPayload {
   key?: NodeKey;
 }
 
-export interface SerializedRecallNode extends Spread<RecallPayload, { type: "recall"; version: 1 }> {}
+export type SerializedRecallNode = Spread<RecallPayload, { type: "recall"; version: 1 }>;
 
 const convertRecallElement = (domNode: Node): null | DOMConversionOutput => {
   const node = domNode as HTMLElement;
@@ -145,7 +145,8 @@ export class RecallNode extends DecoratorNode<ReactNode> {
       <span
         className="recall-node z-30 inline-flex h-fit justify-center rounded-md bg-slate-100 text-sm whitespace-nowrap text-slate-700"
         aria-label={`Recall: ${displayLabel}`}
-        title={displayLabel}>
+        title={displayLabel}
+        data-recall-id={this.__recallItem.id}>
         @{displayLabel}
       </span>
     );

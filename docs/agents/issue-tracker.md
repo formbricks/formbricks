@@ -4,7 +4,7 @@ Work items live as Linear issues in the Engineering team (`ENG`); specs and PRDs
 
 ## Conventions
 
-- **Create**: `save_issue` with team `Engineering`, plus the project and milestone the work belongs to, a priority and labels. File straight into Backlog or Todo. Triage is only for externally reported items and vulnerabilities, which follow the security process.
+- **Create**: `save_issue` with team `Engineering`, plus the project and milestone the work belongs to, a priority and labels. File straight into Todo. Triage is only for externally reported items and vulnerabilities, which follow the security process.
 - **Read**: `get_issue` by identifier (`ENG-1234`); `list_comments` for the thread.
 - **List**: `list_issues`, filtered by project, state, label or assignee.
 - **Sub-issue**: `save_issue` with `parentId`.

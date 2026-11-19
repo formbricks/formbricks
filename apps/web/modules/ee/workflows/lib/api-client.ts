@@ -15,6 +15,7 @@ import type {
   TWorkflowSortBy,
   TWorkflowStatus,
   TWorkflowTestRequestResult,
+  TWorkflowTriggerType,
   TWorkflowWebhookResource,
 } from "@formbricks/workflows";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
@@ -26,6 +27,15 @@ export type TPublishedWorkflowVersion = {
   publishedAt: string;
   definition: TWorkflowDefinition;
 };
+
+/**
+ * The graph a run executed, for drawing it on the Runs tab: its version's for a live run, the draft a
+ * Test run saved for a Test run, or none (`unknown`) for a Test run saved before runs kept their draft.
+ */
+export type TWorkflowRunDefinition =
+  | { source: "version"; versionNumber: number; definition: TWorkflowDefinition }
+  | { source: "test_run"; definition: TWorkflowDefinition }
+  | { source: "unknown"; definition: null };
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -155,7 +165,7 @@ export async function getWorkflow(workflowId: string, signal?: AbortSignal): Pro
 
 /**
  * The workflow's Webhook Secret URL, last call and Sample payload (with the Variables it offers).
- * Write access only: the URL is a credential (ADR 0041).
+ * Write access only: the URL is a credential (ADR 0057).
  */
 export async function getWorkflowWebhook(
   workflowId: string,
@@ -241,6 +251,7 @@ export interface TWorkflowRunListFilters {
   workflowId?: string;
   responseId?: string;
   statusIn?: TWorkflowRunStatus[];
+  triggerTypeIn?: TWorkflowTriggerType[];
   isDryRun?: boolean;
 }
 
@@ -278,6 +289,10 @@ export function buildWorkflowRunListSearchParams({
 
   filters?.statusIn?.forEach((status) => {
     searchParams.append("filter[status][in]", status);
+  });
+
+  filters?.triggerTypeIn?.forEach((triggerType) => {
+    searchParams.append("filter[triggerType][in]", triggerType);
   });
 
   return searchParams;
@@ -409,6 +424,20 @@ export async function getPublishedWorkflowVersion(
   return readDataResponse<TPublishedWorkflowVersion | null>(response);
 }
 
+/** The definition a run executed: its version's, a Test run's saved draft, or none. */
+export async function getWorkflowRunDefinition(
+  workflowId: string,
+  runId: string,
+  signal?: AbortSignal
+): Promise<TWorkflowRunDefinition> {
+  const response = await fetch(`/api/internal/workflows/${workflowId}/runs/${runId}/definition`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  return readDataResponse<TWorkflowRunDefinition>(response);
+}
+
 /** Replaces the Webhook Secret URL; the old one stops working at once. */
 export async function regenerateWorkflowWebhook(workflowId: string): Promise<TWorkflowWebhookResource> {
   const response = await fetch(`/api/v3/workflows/${workflowId}/webhook/regenerate`, {
@@ -434,7 +463,7 @@ export async function setWorkflowSample(
   return readDataResponse<TWorkflowSampleResource>(response);
 }
 
-/** Sets an HTTP request step's expected response (ADR 0054): the body its API answers with. */
+/** Sets an HTTP request step's expected response body (ADR 0054): the body its API answers with. */
 export async function setWorkflowExpectedResponse(
   workflowId: string,
   stepId: string,

@@ -250,7 +250,30 @@ describe("transformResponseToFeedbackRecords", () => {
     expect(result[0].tenant_id).toBe("tenant-abc");
   });
 
-  test("omits language when response language is 'default'", () => {
+  test("sends the survey's default language code when the response language is 'default'", () => {
+    // The Hub only translates a record that names its source language: dropping the tag here
+    // copied default-language feedback through untranslated (ENG-2443).
+    const survey = { ...mockSurvey, languages: bilingualLanguages } as unknown as TSurvey;
+    const response = { ...mockResponse, language: "default" } as unknown as TResponse;
+    const mappings = [
+      createMapping({ elementId: "el-text", hubFieldType: "text" }),
+      createMapping({ elementId: "el-nps", hubFieldType: "nps" }),
+    ];
+    const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+    expect(result.map((record) => record.language)).toEqual(["en-US", "en-US"]);
+  });
+
+  test("keeps a non-default response language as submitted", () => {
+    const survey = { ...mockSurvey, languages: bilingualLanguages } as unknown as TSurvey;
+    const response = { ...mockResponse, language: "ar" } as unknown as TResponse;
+    const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
+    const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
+    expect(result[0].language).toBe("ar");
+  });
+
+  test("omits language when the response language is 'default' and the survey names no languages", () => {
+    // A survey without configured languages has no code to resolve "default" to; sending the
+    // literal "default" would hand the Hub a tag that is not BCP-47.
     const response = { ...mockResponse, language: "default" } as unknown as TResponse;
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
     const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
@@ -1306,8 +1329,10 @@ describe("transformResponseToFeedbackRecords", () => {
       link: { storageKey },
     });
 
-    const surveyWith = (embeddedFields: TLinkedEmbeddedField[]): TSurvey =>
-      ({ ...mockSurvey, embeddedFields }) as unknown as TSurvey;
+    const surveyWith = (embeddedFields: TLinkedEmbeddedField[]): TSurvey => ({
+      ...mockSurvey,
+      embeddedFields,
+    });
 
     const responseWith = (
       data: Record<string, unknown> = {},

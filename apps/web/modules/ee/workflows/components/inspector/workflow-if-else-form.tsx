@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type TWorkflowConditionGroup,
+  type TWorkflowFilterNode,
   type TWorkflowIfElseNode,
   flattenWorkflowConditions,
 } from "@formbricks/workflows";
@@ -44,18 +45,29 @@ import type {
 } from "@/modules/ui/components/conditions-editor/types";
 import { Input } from "@/modules/ui/components/input";
 
-interface WorkflowIfElseFormProps {
-  node: TWorkflowIfElseNode;
+type TConditionStepNode = TWorkflowIfElseNode | TWorkflowFilterNode;
+
+interface ConditionStepFormProps<TNode extends TConditionStepNode> {
+  node: TNode;
   isEditable: boolean;
-  onChange: (next: TWorkflowIfElseNode) => void;
+  onChange: (next: TNode) => void;
+  /** The card's question ("Run “Then” when", "Continue when") and what happens otherwise. */
+  title: string;
+  footer: string;
 }
 
 /**
- * The If/else panel (ED8, mock screen 3): the kit ConditionsEditor with survey operator names, its
- * Variables from the Variable picker's groups (payload, earlier steps, survey answers). Runs that do
- * not match take the Else branch.
+ * The If/else and Filter panels (ED8, mock screen 3; ADR 0056): the kit ConditionsEditor with survey
+ * operator names, its Variables from the Variable picker's groups (payload, earlier steps, survey
+ * answers). Only the card's question and its footer differ.
  */
-export const WorkflowIfElseForm = ({ node, isEditable, onChange }: Readonly<WorkflowIfElseFormProps>) => {
+const ConditionStepForm = <TNode extends TConditionStepNode>({
+  node,
+  isEditable,
+  onChange,
+  title,
+  footer,
+}: Readonly<ConditionStepFormProps<TNode>>) => {
   const { t } = useTranslation();
   const groups = useWorkflowVariableGroups(node.id);
   const group = node.config.condition;
@@ -177,9 +189,7 @@ export const WorkflowIfElseForm = ({ node, isEditable, onChange }: Readonly<Work
       <WorkflowStepNameField node={node} isEditable={isEditable} onChange={onChange} />
       {/* One card for the one question this step asks: when does "Then" run. What happens otherwise is
           its footer, next to the conditions it depends on, instead of a separate blue alert. */}
-      <InspectorCard
-        title={t("workspace.workflows.if_else_run_then_when")}
-        footer={t("workspace.workflows.if_else_else_hint")}>
+      <InspectorCard title={title} footer={footer}>
         {/* Inert for a read-only member or a live workflow: the editor has no disabled mode. */}
         <fieldset
           disabled={!isEditable}
@@ -204,5 +214,34 @@ export const WorkflowIfElseForm = ({ node, isEditable, onChange }: Readonly<Work
         ) : null}
       </InspectorCard>
     </div>
+  );
+};
+
+type TStepFormProps<TNode extends TConditionStepNode> = Omit<
+  ConditionStepFormProps<TNode>,
+  "title" | "footer"
+>;
+
+/** Runs that do not match take the Else branch. */
+export const WorkflowIfElseForm = (props: Readonly<TStepFormProps<TWorkflowIfElseNode>>) => {
+  const { t } = useTranslation();
+  return (
+    <ConditionStepForm
+      {...props}
+      title={t("workspace.workflows.if_else_run_then_when")}
+      footer={t("workspace.workflows.if_else_else_hint")}
+    />
+  );
+};
+
+/** Runs that do not match end at the Filter (ADR 0056). */
+export const WorkflowFilterForm = (props: Readonly<TStepFormProps<TWorkflowFilterNode>>) => {
+  const { t } = useTranslation();
+  return (
+    <ConditionStepForm
+      {...props}
+      title={t("workspace.workflows.filter_continue_when")}
+      footer={t("workspace.workflows.filter_end_hint")}
+    />
   );
 };

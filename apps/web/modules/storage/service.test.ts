@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { StorageErrorCode } from "@formbricks/storage";
-import { TAccessType } from "@formbricks/types/storage";
 import {
   deleteFile,
   deleteFilesByWorkspaceId,
@@ -71,12 +70,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test-image.jpg",
-        "env-123",
-        "image/jpeg",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test-image.jpg", "env-123", "public");
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -104,12 +98,11 @@ describe("storage service", () => {
       vi.mocked(getSignedUploadUrl).mockResolvedValue({
         ok: true,
         data: { signedUrl: "https://s3.example.com/upload", presignedFields: {} },
-      } as MockedSignedUploadReturn);
+      });
 
       const result = await getSignedUrlForUpload(
         "signature.png",
         "ws-1",
-        "image/png",
         "private",
         uploadElementKinds.signature.maxFileSizeBytes,
         ["surveys", "survey-1", "elements", "sig-1"]
@@ -128,6 +121,35 @@ describe("storage service", () => {
       );
     });
 
+    // Regression (ENG-7108): the uploader's own type string used to be signed into the upload, so
+    // `image/png;,text/html` was stored and later served as HTML.
+    test.each([
+      ["photo.PNG", "image/png", "png"],
+      ["report.pdf", "application/pdf", "pdf"],
+      ["sheet.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx"],
+    ])("should sign the type derived from the extension of %s", async (fileName, expectedType, ext) => {
+      vi.mocked(getSignedUploadUrl).mockResolvedValue({
+        ok: true,
+        data: { signedUrl: "https://s3.example.com/upload", presignedFields: {} },
+      });
+
+      await getSignedUrlForUpload(fileName, "ws-1", "public");
+
+      expect(getSignedUploadUrl).toHaveBeenCalledWith(
+        expect.stringMatching(new RegExp(String.raw`--fid--.+\.${ext}$`, "i")),
+        expectedType,
+        "ws-1/public",
+        1024 * 1024 * 10
+      );
+    });
+
+    test("should refuse a file whose extension has no allowed type, without signing anything", async () => {
+      const result = await getSignedUrlForUpload("page.html", "ws-1", "public");
+
+      expect(result).toEqual({ ok: false, error: { code: StorageErrorCode.InvalidInput } });
+      expect(getSignedUploadUrl).not.toHaveBeenCalled();
+    });
+
     test("should return relative URL for private files", async () => {
       const mockSignedUrlResponse = {
         ok: true,
@@ -139,12 +161,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test-doc.pdf",
-        "env-123",
-        "application/pdf",
-        "private" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test-doc.pdf", "env-123", "private");
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -163,14 +180,12 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test-doc.pdf",
-        "ws-123",
-        "application/pdf",
-        "private" as TAccessType,
-        1024 * 1024 * 10,
-        ["surveys", "survey-123", "elements", "element-123"]
-      );
+      const result = await getSignedUrlForUpload("test-doc.pdf", "ws-123", "private", 1024 * 1024 * 10, [
+        "surveys",
+        "survey-123",
+        "elements",
+        "element-123",
+      ]);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -190,14 +205,10 @@ describe("storage service", () => {
     test.each(["", ".", "..", "bad segment", "bad/segment", "bad\\segment", "bad?segment", "bad#segment"])(
       "should reject unsafe scoped private upload path segment %s",
       async (unsafeSegment) => {
-        const result = await getSignedUrlForUpload(
-          "test-doc.pdf",
-          "ws-123",
-          "application/pdf",
-          "private" as TAccessType,
-          1024 * 1024 * 10,
-          ["surveys", unsafeSegment]
-        );
+        const result = await getSignedUrlForUpload("test-doc.pdf", "ws-123", "private", 1024 * 1024 * 10, [
+          "surveys",
+          unsafeSegment,
+        ]);
 
         expect(result.ok).toBe(false);
         if (!result.ok) {
@@ -218,12 +229,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test#file.txt",
-        "env-123",
-        "text/plain",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test#file.txt", "env-123", "public");
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -250,12 +256,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "my.backup.file.pdf",
-        "env-123",
-        "application/pdf",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("my.backup.file.pdf", "env-123", "public");
 
       expect(result.ok).toBe(true);
       expect(getSignedUploadUrl).toHaveBeenCalledWith(
@@ -280,8 +281,7 @@ describe("storage service", () => {
       await getSignedUrlForUpload(
         "large-file.pdf",
         "env-123",
-        "application/pdf",
-        "public" as TAccessType,
+        "public",
         1024 * 1024 * 50 // 50MB
       );
 
@@ -303,12 +303,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockErrorResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test-file.pdf",
-        "env-123",
-        "application/pdf",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test-file.pdf", "env-123", "public");
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -319,12 +314,7 @@ describe("storage service", () => {
     test("should handle unexpected errors and return unknown error", async () => {
       vi.mocked(getSignedUploadUrl).mockRejectedValue(new Error("Unexpected error"));
 
-      const result = await getSignedUrlForUpload(
-        "test-file.pdf",
-        "env-123",
-        "application/pdf",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test-file.pdf", "env-123", "public");
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -344,7 +334,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockErrorResponse);
 
-      const result = await getSignedUrlForUpload("----.png", "env-123", "image/png", "public" as TAccessType);
+      const result = await getSignedUrlForUpload("----.png", "env-123", "public");
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -362,7 +352,7 @@ describe("storage service", () => {
 
       vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccessResult);
 
-      const result = await deleteFile("env-123", "public" as TAccessType, "test-file.jpg");
+      const result = await deleteFile("env-123", "public", "test-file.jpg");
 
       expect(result).toEqual(mockSuccessResult);
       expect(deleteFileFromS3).toHaveBeenCalledWith("env-123/public/test-file.jpg");
@@ -376,7 +366,7 @@ describe("storage service", () => {
 
       vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccessResult);
 
-      const result = await deleteFile("env-456", "private" as TAccessType, "private-doc.pdf");
+      const result = await deleteFile("env-456", "private", "private-doc.pdf");
 
       expect(result).toEqual(mockSuccessResult);
       expect(deleteFileFromS3).toHaveBeenCalledWith("env-456/private/private-doc.pdf");
@@ -392,7 +382,7 @@ describe("storage service", () => {
 
       vi.mocked(deleteFileFromS3).mockResolvedValue(mockErrorResult);
 
-      const result = await deleteFile("env-123", "public" as TAccessType, "test-file.jpg");
+      const result = await deleteFile("env-123", "public", "test-file.jpg");
 
       expect(result).toEqual(mockErrorResult);
       expect(deleteFileFromS3).toHaveBeenCalledWith("env-123/public/test-file.jpg");
@@ -407,7 +397,7 @@ describe("storage service", () => {
 
       vi.mocked(deleteFileFromS3).mockResolvedValueOnce(mockNotFound).mockResolvedValueOnce(mockSuccess);
 
-      const result = await deleteFile("ws-456", "public" as TAccessType, "file.jpg", "env-123");
+      const result = await deleteFile("ws-456", "public", "file.jpg", "env-123");
 
       expect(result).toEqual(mockSuccess);
       expect(deleteFileFromS3).toHaveBeenCalledTimes(2);
@@ -420,7 +410,7 @@ describe("storage service", () => {
 
       vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccess);
 
-      const result = await deleteFile("ws-456", "public" as TAccessType, "file.jpg", "env-123");
+      const result = await deleteFile("ws-456", "public", "file.jpg", "env-123");
 
       expect(result).toEqual(mockSuccess);
       expect(deleteFileFromS3).toHaveBeenCalledTimes(1);
@@ -435,7 +425,7 @@ describe("storage service", () => {
 
       vi.mocked(deleteFileFromS3).mockResolvedValue(mockError);
 
-      const result = await deleteFile("ws-456", "public" as TAccessType, "file.jpg", "env-123");
+      const result = await deleteFile("ws-456", "public", "file.jpg", "env-123");
 
       expect(result).toEqual(mockError);
       expect(deleteFileFromS3).toHaveBeenCalledTimes(1);
@@ -453,7 +443,7 @@ describe("storage service", () => {
       "%2e%2e%2f100%--fid--1.png",
       "a%2f..%2fb",
     ])("should reject traversal in the file name: %s", async (fileName) => {
-      const result = await deleteFile("ws-456", "public" as TAccessType, fileName);
+      const result = await deleteFile("ws-456", "public", fileName);
 
       expect(result.ok).toBe(false);
       expect(deleteFileFromS3).not.toHaveBeenCalled();
@@ -468,7 +458,7 @@ describe("storage service", () => {
       const mockSuccess = { ok: true, data: undefined } as MockedDeleteFileReturn;
       vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccess);
 
-      const result = await deleteFile("ws-456", "private" as TAccessType, fileName, "env-123");
+      const result = await deleteFile("ws-456", "private", fileName, "env-123");
 
       expect(result).toEqual(mockSuccess);
       expect(deleteFileFromS3).toHaveBeenCalledWith(`ws-456/private/${fileName}`);
@@ -478,7 +468,7 @@ describe("storage service", () => {
     test.each(["surveys//x/elements/e/f", "/surveys/x/f", "a\\b"])(
       "should reject an empty segment or a backslash in the file name: %s",
       async (fileName) => {
-        const result = await deleteFile("ws-456", "private" as TAccessType, fileName);
+        const result = await deleteFile("ws-456", "private", fileName);
 
         expect(result).toEqual({ ok: false, error: { code: StorageErrorCode.InvalidInput } });
         expect(deleteFileFromS3).not.toHaveBeenCalled();
@@ -489,7 +479,7 @@ describe("storage service", () => {
       const mockSuccess = { ok: true, data: undefined } as MockedDeleteFileReturn;
       vi.mocked(deleteFileFromS3).mockResolvedValue(mockSuccess);
 
-      const result = await deleteFile("ws-456", "public" as TAccessType, "survey-1/q-2/file.jpg");
+      const result = await deleteFile("ws-456", "public", "survey-1/q-2/file.jpg");
 
       expect(result).toEqual(mockSuccess);
       expect(deleteFileFromS3).toHaveBeenCalledWith("ws-456/public/survey-1/q-2/file.jpg");
@@ -533,7 +523,7 @@ describe("storage service", () => {
 
       const result = await deleteFilesByWorkspaceId("ws-456", ["env-123"]);
 
-      expect(result!.ok).toBe(false);
+      expect(result.ok).toBe(false);
     });
   });
 
@@ -569,7 +559,7 @@ describe("storage service", () => {
       vi.mocked(deleteFilesByPrefix).mockResolvedValue({
         ok: false,
         error: { code: StorageErrorCode.S3CredentialsError },
-      } as MockedDeleteFilesByPrefixReturn);
+      });
 
       await expect(
         deleteWorkspaceFilesBestEffort({ id: "ws-456", legacyEnvironmentId: null })
@@ -596,7 +586,7 @@ describe("storage service", () => {
       vi.mocked(deleteFilesByPrefix).mockResolvedValue({
         ok: true,
         data: undefined,
-      } as MockedDeleteFilesByPrefixReturn);
+      });
 
       await expect(deleteSurveyUploadFolder({ workspaceId: "ws-456", surveyId: "survey-1" })).resolves.toBe(
         true
@@ -613,7 +603,7 @@ describe("storage service", () => {
       vi.mocked(deleteFilesByPrefix).mockResolvedValue({
         ok: false,
         error: { code: StorageErrorCode.S3CredentialsError },
-      } as MockedDeleteFilesByPrefixReturn);
+      });
 
       await expect(deleteSurveyUploadFolder({ workspaceId: "ws-456", surveyId: "survey-1" })).resolves.toBe(
         false
@@ -650,7 +640,7 @@ describe("storage service", () => {
       "%2e%2e%2f100%--fid--1.png",
       "a%2f..%2fb",
     ])("should reject traversal in the file name: %s", async (fileName) => {
-      const result = await getFileStreamForDownload(fileName, "ws-attacker", "public" as TAccessType);
+      const result = await getFileStreamForDownload(fileName, "ws-attacker", "public");
 
       expect(result.ok).toBe(false);
       expect(getFileStream).not.toHaveBeenCalled();
@@ -663,11 +653,7 @@ describe("storage service", () => {
       } as MockedFileStreamReturn;
       vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
 
-      const result = await getFileStreamForDownload(
-        "survey-1/q-2/file.jpg",
-        "ws-456",
-        "public" as TAccessType
-      );
+      const result = await getFileStreamForDownload("survey-1/q-2/file.jpg", "ws-456", "public");
 
       expect(result.ok).toBe(true);
       expect(getFileStream).toHaveBeenCalledWith("ws-456/public/survey-1/q-2/file.jpg");
@@ -686,7 +672,7 @@ describe("storage service", () => {
 
       vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
 
-      const result = await getFileStreamForDownload("test-image.jpg", "env-123", "public" as TAccessType);
+      const result = await getFileStreamForDownload("test-image.jpg", "env-123", "public");
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -710,7 +696,7 @@ describe("storage service", () => {
 
       vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
 
-      const result = await getFileStreamForDownload("document.pdf", "env-456", "private" as TAccessType);
+      const result = await getFileStreamForDownload("document.pdf", "env-456", "private");
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -732,7 +718,7 @@ describe("storage service", () => {
       } as MockedFileStreamReturn;
       vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
 
-      const result = await getFileStreamForDownload(fileName, "env-123", "private" as TAccessType);
+      const result = await getFileStreamForDownload(fileName, "env-123", "private");
 
       expect(result.ok).toBe(true);
       expect(getFileStream).toHaveBeenCalledWith(`env-123/private/${fileName}`);
@@ -743,16 +729,16 @@ describe("storage service", () => {
         .mockResolvedValueOnce({
           ok: false,
           error: { code: StorageErrorCode.FileNotFoundError },
-        } as MockedFileStreamReturn)
+        })
         .mockResolvedValueOnce({
           ok: true,
           data: { body: new ReadableStream(), contentType: "image/png", contentLength: 1 },
-        } as MockedFileStreamReturn);
+        });
 
       const result = await getFileStreamForDownload(
         "Test%20tiara--fid--1.png",
         "ws-456",
-        "private" as TAccessType,
+        "private",
         "env-123"
       );
 
@@ -771,7 +757,7 @@ describe("storage service", () => {
 
       vi.mocked(getFileStream).mockResolvedValue(mockErrorResult);
 
-      const result = await getFileStreamForDownload("missing-file.jpg", "env-123", "public" as TAccessType);
+      const result = await getFileStreamForDownload("missing-file.jpg", "env-123", "public");
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -794,12 +780,7 @@ describe("storage service", () => {
 
       vi.mocked(getFileStream).mockResolvedValueOnce(mockErrorResult).mockResolvedValueOnce(mockStreamResult);
 
-      const result = await getFileStreamForDownload(
-        "legacy-file.jpg",
-        "ws-456",
-        "public" as TAccessType,
-        "env-123"
-      );
+      const result = await getFileStreamForDownload("legacy-file.jpg", "ws-456", "public", "env-123");
 
       expect(result.ok).toBe(true);
       expect(getFileStream).toHaveBeenCalledTimes(2);
@@ -816,7 +797,7 @@ describe("storage service", () => {
 
       vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
 
-      const result = await getFileStreamForDownload("file.jpg", "ws-456", "public" as TAccessType, "env-123");
+      const result = await getFileStreamForDownload("file.jpg", "ws-456", "public", "env-123");
 
       expect(result.ok).toBe(true);
       expect(getFileStream).toHaveBeenCalledTimes(1);
@@ -831,7 +812,7 @@ describe("storage service", () => {
 
       vi.mocked(getFileStream).mockResolvedValue(mockErrorResult);
 
-      const result = await getFileStreamForDownload("file.jpg", "ws-456", "public" as TAccessType, "env-123");
+      const result = await getFileStreamForDownload("file.jpg", "ws-456", "public", "env-123");
 
       expect(result.ok).toBe(false);
       expect(getFileStream).toHaveBeenCalledTimes(1);
@@ -847,7 +828,7 @@ describe("storage service", () => {
 
       vi.mocked(getFileStream).mockResolvedValue(mockErrorResult);
 
-      const result = await getFileStreamForDownload("some-file.jpg", "env-123", "public" as TAccessType);
+      const result = await getFileStreamForDownload("some-file.jpg", "env-123", "public");
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -858,7 +839,7 @@ describe("storage service", () => {
     test("should handle unexpected errors and return unknown error", async () => {
       vi.mocked(getFileStream).mockRejectedValue(new Error("Unexpected S3 error"));
 
-      const result = await getFileStreamForDownload("test-file.jpg", "env-123", "public" as TAccessType);
+      const result = await getFileStreamForDownload("test-file.jpg", "env-123", "public");
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -883,11 +864,7 @@ describe("storage service", () => {
 
       vi.mocked(getFileStream).mockResolvedValue(mockStreamResult);
 
-      const result = await getFileStreamForDownload(
-        "photo--fid--abc123-def456.jpg",
-        "env-123",
-        "public" as TAccessType
-      );
+      const result = await getFileStreamForDownload("photo--fid--abc123-def456.jpg", "env-123", "public");
 
       expect(result.ok).toBe(true);
       expect(getFileStream).toHaveBeenCalledWith("env-123/public/photo--fid--abc123-def456.jpg");

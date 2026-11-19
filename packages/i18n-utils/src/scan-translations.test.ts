@@ -1291,9 +1291,9 @@ describe("Translation Scanner", () => {
           expect(validation.outOfSync).toContain("auth/login");
           expect(validation.extra).toContain("common/extra_key");
 
-          expect(validation.missing.length).toBe(1);
-          expect(validation.outOfSync.length).toBe(1);
-          expect(validation.extra.length).toBe(1);
+          expect(validation.missing).toHaveLength(1);
+          expect(validation.outOfSync).toHaveLength(1);
+          expect(validation.extra).toHaveLength(1);
         }
       } finally {
         // Cleanup files

@@ -60,16 +60,20 @@ const answer = (
 const effects = {
   sendEmail: vi.fn(),
   sendHttpRequest: vi.fn<WorkflowRunEffects["sendHttpRequest"]>(),
-  enqueueHttpRequestDelivery: vi.fn<WorkflowRunEffects["enqueueHttpRequestDelivery"]>(),
+  enqueueHttpRequestDelivery: vi.fn<NonNullable<WorkflowRunEffects["enqueueHttpRequestDelivery"]>>(),
 };
+// A Test run's effects (ADR 0049): nothing would send a "Don't wait" call.
+const testRunEffects = { ...effects, enqueueHttpRequestDelivery: null };
+const saveOutput = vi.fn<(output: Record<string, unknown>) => Promise<void>>();
 
 const run = (config?: Partial<TWorkflowHttpRequestActionConfig>) =>
-  httpRequestStepExecutor.execute({ node: node(config), context, environment, effects });
+  httpRequestStepExecutor.execute({ node: node(config), context, environment, effects, saveOutput });
 
 beforeEach(() => {
   vi.clearAllMocks();
   effects.sendHttpRequest.mockResolvedValue(answer(201, '{"id":"c_1","plan":{"name":"pro"}}'));
-  effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: true });
+  effects.enqueueHttpRequestDelivery.mockResolvedValue(undefined);
+  saveOutput.mockResolvedValue(undefined);
 });
 
 describe("httpRequestStepExecutor", () => {
@@ -167,6 +171,7 @@ describe("httpRequestStepExecutor", () => {
       context,
       environment: { ...environment, secretValues: new Map() },
       effects,
+      saveOutput,
     });
 
     expect(outcome).toMatchObject({ status: "failed", error: expect.stringContaining("Authorization") });
@@ -185,6 +190,7 @@ describe("httpRequestStepExecutor", () => {
         context,
         environment: movedEnvironment,
         effects,
+        saveOutput,
       });
       expect(outcome).toMatchObject({
         status: "failed",
@@ -205,6 +211,7 @@ describe("httpRequestStepExecutor", () => {
         secretValues: new Map([["sec_1", { value: SECRET, boundOrigin: "https://old-api.example.com" }]]),
       },
       effects,
+      saveOutput,
     });
 
     expect(outcome).toMatchObject({
@@ -228,6 +235,7 @@ describe("httpRequestStepExecutor", () => {
         secretValues: new Map([["sec_1", { value: SECRET, boundOrigin: null }]]),
       },
       effects,
+      saveOutput,
     });
 
     expect(effects.sendHttpRequest.mock.calls[0][0].headers).toMatchObject({ Authorization: SECRET });
@@ -251,6 +259,52 @@ describe("httpRequestStepExecutor", () => {
       stepId: "call",
     });
     expect(outcome).toMatchObject({ status: "running", output: { mode: "dont_wait", delivery: "sending" } });
+    expect(httpRequestStepExecutor.handedOff?.(outcome.output)).toBe(true);
+    expect(JSON.stringify(outcome)).not.toContain(SECRET);
+  });
+
+  test("Don't wait stores the sending request on the step's row before its job is queued", async () => {
+    let finishSave = () => {};
+    saveOutput.mockImplementation(() => new Promise<void>((resolve) => (finishSave = resolve)));
+
+    const pending = run({ responseMode: "dont_wait" });
+    await vi.waitFor(() => expect(saveOutput).toHaveBeenCalled());
+    // The job reads the row, so it must not be queued until the save has finished.
+    await Promise.resolve();
+    expect(effects.enqueueHttpRequestDelivery).not.toHaveBeenCalled();
+    finishSave();
+    await pending;
+
+    expect(effects.enqueueHttpRequestDelivery).toHaveBeenCalledTimes(1);
+    expect(saveOutput).toHaveBeenCalledWith({
+      mode: "dont_wait",
+      delivery: "sending",
+      request: expect.objectContaining({ method: "POST", url: expect.stringContaining("api.example.com") }),
+    });
+  });
+
+  test("a Don't wait response never becomes Variables, even once its job recorded one", () => {
+    const sent = { mode: "dont_wait", delivery: "sent", status: 200, body: { plan: "pro" } };
+
+    expect(httpRequestStepExecutor.variablesFromOutput?.(sent)).toEqual({});
+    expect(httpRequestStepExecutor.variablesFromOutput?.({ ...sent, mode: "wait" })).toEqual({
+      status: 200,
+      body: { plan: "pro" },
+    });
+  });
+
+  test("Don't wait fails the step at once, with the reason, when its job can't be queued", async () => {
+    effects.enqueueHttpRequestDelivery.mockRejectedValue(new Error("Connection is closed."));
+
+    const outcome = await run({ responseMode: "dont_wait" });
+
+    expect(outcome).toMatchObject({
+      status: "failed",
+      error: "The HTTP request could not be handed to its sending job: Connection is closed.",
+      output: { mode: "dont_wait", delivery: "failed", request: { method: "POST" } },
+      variables: {},
+    });
+    // Still a handed-off step: its failure shows on the step and never fails the run.
     expect(httpRequestStepExecutor.handedOff?.(outcome.output)).toBe(true);
     expect(JSON.stringify(outcome)).not.toContain(SECRET);
   });
@@ -285,23 +339,33 @@ describe("httpRequestStepExecutor", () => {
   });
 
   test("Don't wait in a Test run hands nothing off: the step ends with the request it would send", async () => {
-    effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: false });
-
-    const outcome = await run({ responseMode: "dont_wait" });
+    const outcome = await httpRequestStepExecutor.execute({
+      node: node({ responseMode: "dont_wait" }),
+      context,
+      environment,
+      effects: testRunEffects,
+      saveOutput,
+    });
 
     expect(outcome.status).toBe("succeeded");
     expect(outcome.output).toMatchObject({ mode: "dont_wait", request: { method: "POST" } });
     expect(outcome.output).not.toHaveProperty("delivery");
+    expect(saveOutput).not.toHaveBeenCalled();
     expect(JSON.stringify(outcome)).not.toContain(SECRET);
   });
   describe("Variables in the URL path (ADR 0053)", () => {
     const PATH_URL = "https://api.example.com/customers/#recall:payload.id/fallback:#/orders";
-    const runWithId = (id: unknown, config: Partial<TWorkflowHttpRequestActionConfig> = {}) =>
+    const runWithId = (
+      id: unknown,
+      config: Partial<TWorkflowHttpRequestActionConfig> = {},
+      runEffects: WorkflowRunEffects = effects
+    ) =>
       httpRequestStepExecutor.execute({
         node: node({ url: PATH_URL, queryParameters: [], ...config }),
         context: { ...context, payload: { ...context.payload, id } },
         environment,
-        effects,
+        effects: runEffects,
+        saveOutput,
       });
 
     test("inserts the value as one segment and still sends the secret set for that host", async () => {
@@ -339,8 +403,7 @@ describe("httpRequestStepExecutor", () => {
         request: { url: "https://api.example.com/customers/cus_42/orders" },
       });
 
-      effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: false });
-      const testRun = await runWithId("cus_42", { responseMode: "dont_wait" });
+      const testRun = await runWithId("cus_42", { responseMode: "dont_wait" }, testRunEffects);
       expect(testRun.output).toMatchObject({
         request: { url: "https://api.example.com/customers/cus_42/orders" },
       });

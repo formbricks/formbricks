@@ -2,6 +2,7 @@
 
 import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
+import { maskWebhookNetworkRequests } from "@/app/posthog/mask-webhook-network-requests";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 
 interface PostHogIdentifyProps {
@@ -24,6 +25,7 @@ export const PostHogIdentify = ({ posthogKey, userId, email, name }: PostHogIden
         debug: IS_DEVELOPMENT_BUILD,
         session_recording: {
           blockSelector: "iframe[src*='cdn-plain']",
+          maskCapturedNetworkRequestFn: maskWebhookNetworkRequests,
         },
       });
     }

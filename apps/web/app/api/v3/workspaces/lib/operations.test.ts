@@ -39,7 +39,7 @@ const ws = (id: string, name: string, organizationId: string) =>
     updatedAt: new Date(),
     config: { secret: "should-not-leak" },
     styling: {},
-  }) as any;
+  }) as unknown as Awaited<ReturnType<typeof getWorkspacesByIds>>[number];
 
 describe("listV3Workspaces", () => {
   beforeEach(() => {

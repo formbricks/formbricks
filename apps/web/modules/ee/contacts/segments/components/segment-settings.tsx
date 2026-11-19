@@ -95,7 +95,7 @@ export function SegmentSettings({
 
       setIsUpdatingSegment(false);
       toast.success("Segment updated successfully!");
-    } catch (err: any) {
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
       setIsUpdatingSegment(false);
       return;
@@ -120,7 +120,7 @@ export function SegmentSettings({
       setIsDeletingSegment(false);
       toast.success(t("workspace.segments.segment_deleted_successfully"));
       handleResetState();
-    } catch (err: any) {
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
 
@@ -250,7 +250,7 @@ export function SegmentSettings({
                   disabled={isSaveDisabled}
                   loading={isUpdatingSegment}
                   onClick={() => {
-                    handleUpdateSegment();
+                    void handleUpdateSegment();
                   }}
                   type="submit">
                   {t("common.save_changes")}

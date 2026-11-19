@@ -1,6 +1,6 @@
 /**
  * The token segment of a Webhook Secret URL (`…/api/v3/workflows/{id}/webhook/{token}`), which is a
- * credential (ADR 0041). Matches anywhere in a string, so it works on a pathname, a full URL with a
+ * credential (ADR 0057). Matches anywhere in a string, so it works on a pathname, a full URL with a
  * base path or query, or a log or error message; `webhook/regenerate` is an operation, not a token.
  */
 const WEBHOOK_TOKEN_SEGMENT =

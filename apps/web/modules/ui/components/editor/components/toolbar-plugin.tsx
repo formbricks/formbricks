@@ -13,7 +13,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
 import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
-import type { RangeSelection } from "lexical";
+import type { LexicalNode, RangeSelection } from "lexical";
 import {
   $createParagraphNode,
   $getRoot,
@@ -33,7 +33,7 @@ import {
   PencilIcon,
   Underline,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -45,9 +45,19 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
 import { toEditorOutputHtml } from "../lib/exported-html";
-import type { TextEditorProps } from "./editor";
+import { $insertTextAtCursor } from "../lib/insert-text";
+import type { TEditorToolbarActions, TextEditorProps } from "./editor";
 
 const LowPriority = 1;
+
+/** The block type the toolbar shows for a selection: the list's tag, the heading's tag, or the node type. */
+const getSelectionBlockType = (anchorNode: LexicalNode, element: LexicalNode): string => {
+  if ($isListNode(element)) {
+    const parentList = $getNearestNodeOfType(anchorNode, ListNode);
+    return parentList ? parentList.getTag() : element.getTag();
+  }
+  return $isHeadingNode(element) ? element.getTag() : element.getType();
+};
 
 const supportedBlockTypes = new Set(["paragraph", "h1", "h2", "ul", "ol"]);
 
@@ -135,7 +145,7 @@ export const ToolbarPlugin = (
   const [hasTextSelection, setHasTextSelection] = useState(false);
 
   // save ref to setText to use it in event listeners safely
-  const setText = useRef<any>(props.setText);
+  const setText = useRef(props.setText);
 
   useEffect(() => {
     setText.current = props.setText;
@@ -222,14 +232,7 @@ export const ToolbarPlugin = (
       const elementKey = element.getKey();
       const elementDOM = editor.getElementByKey(elementKey);
       if (elementDOM !== null) {
-        if ($isListNode(element)) {
-          const parentList = $getNearestNodeOfType(anchorNode, ListNode);
-          const type = parentList ? parentList.getTag() : element.getTag();
-          setBlockType(type);
-        } else {
-          const type = $isHeadingNode(element) ? element.getTag() : element.getType();
-          setBlockType(type);
-        }
+        setBlockType(getSelectionBlockType(anchorNode, element));
       }
       setIsBold(selection.hasFormat("bold"));
       setIsItalic(selection.hasFormat("italic"));
@@ -337,6 +340,11 @@ export const ToolbarPlugin = (
       props.setShowLinkEditor(true);
     }
   }, [editor, isLink, props]);
+
+  const extraActions: TEditorToolbarActions = useMemo(
+    () => ({ insertText: (text) => editor.update(() => $insertTextAtCursor(text)) }),
+    [editor]
+  );
 
   // Removed custom PASTE_COMMAND handler to allow Lexical's default paste handler
   // to properly preserve rich text formatting (bold, italic, links, etc.)
@@ -452,7 +460,8 @@ export const ToolbarPlugin = (
         </DropdownMenu>
       )}
 
-      <div className="flex items-center gap-1">
+      {/* Extra controls may not fit next to the icons in a narrow panel: they wrap to a second row. */}
+      <div className={cn("flex items-center gap-1", props.renderToolbarExtras && "flex-wrap")}>
         {items.map(({ key, icon, onClick, active, tooltipText, disabled }) =>
           !props.excludedToolbarItems?.includes(key) ? (
             <ToolbarButton
@@ -465,6 +474,7 @@ export const ToolbarPlugin = (
             />
           ) : null
         )}
+        {props.renderToolbarExtras?.(extraActions)}
       </div>
     </div>
   );

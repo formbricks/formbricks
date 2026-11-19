@@ -4,10 +4,12 @@ import { ZWorkflowDefinitionUi } from "./common";
 import {
   type TWorkflowConditionOperator,
   WORKFLOW_SWITCH_DEFAULT_BRANCH,
+  ZWorkflowFilterNode,
   ZWorkflowIfElseNode,
   ZWorkflowSwitchNode,
   flattenWorkflowConditions,
   getConditionOperatorNameSet,
+  isConditionStepNode,
 } from "./conditions";
 import {
   type TWorkflowExecutableCheckContext,
@@ -28,7 +30,12 @@ export const ZWorkflowSchemaVersion = z
   .default(WORKFLOW_SCHEMA_VERSION)
   .describe("Workflow definition schema version understood by this package.");
 
-export const ZWorkflowChildNode = z.union([ZWorkflowActionNode, ZWorkflowIfElseNode, ZWorkflowSwitchNode]);
+export const ZWorkflowChildNode = z.union([
+  ZWorkflowActionNode,
+  ZWorkflowIfElseNode,
+  ZWorkflowFilterNode,
+  ZWorkflowSwitchNode,
+]);
 export type TWorkflowChildNode = z.infer<typeof ZWorkflowChildNode>;
 
 export const ZWorkflowNode = z.union([ZWorkflowChildNode, ZWorkflowTriggerNode]);
@@ -241,9 +248,9 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
   validateConditionOperatorNames(definition, ctx);
 };
 
-/** The operators a step compares with: an If/else's conditions, a Switch's cases, none otherwise. */
+/** The operators a step compares with: an If/else's or Filter's conditions, a Switch's cases, none otherwise. */
 const getComparisonOperators = (node: TWorkflowChildNode): TWorkflowConditionOperator[] => {
-  if (node.type === "if_else") {
+  if (isConditionStepNode(node)) {
     return flattenWorkflowConditions(node.config.condition).map((condition) => condition.operator);
   }
   if (node.type === "switch") return node.config.cases.map((switchCase) => switchCase.operator);
@@ -288,7 +295,7 @@ export const ZWorkflowDefinitionInput = ZWorkflowDefinition.superRefine((definit
   validateBranchesNeverJoin(definition, ctx);
   validateWorkflowDefinitionSaveRules(definition, ctx);
 }).describe(
-  `Workflow definition with graph references validated. At most ${WORKFLOW_LIMITS.maxSteps} steps, ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else and ${WORKFLOW_LIMITS.minSwitchCases} to ${WORKFLOW_LIMITS.maxSwitchCases} cases per switch; branches never join; Variable paths start with payload., steps. or response.`
+  `Workflow definition with graph references validated. At most ${WORKFLOW_LIMITS.maxSteps} steps, ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else or filter and ${WORKFLOW_LIMITS.minSwitchCases} to ${WORKFLOW_LIMITS.maxSwitchCases} cases per switch; branches never join; Variable paths start with payload., steps. or response.`
 );
 
 // Executable workflows are the enable-time subset: the trigger (and with it the entry point)

@@ -60,7 +60,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { fileName, fileType, workspaceId } = parsedInputResult.data;
+    const { fileName, workspaceId } = parsedInputResult.data;
 
     const authResponse = await checkAuth(authentication, workspaceId);
     if (authResponse) {
@@ -72,13 +72,7 @@ export const POST = withV1ApiWrapper({
     const MAX_PUBLIC_FILE_SIZE_MB = 5;
     const maxFileUploadSize = MAX_PUBLIC_FILE_SIZE_MB * 1024 * 1024;
 
-    const signedUrlResponse = await getSignedUrlForUpload(
-      fileName,
-      workspaceId,
-      fileType,
-      "public",
-      maxFileUploadSize
-    );
+    const signedUrlResponse = await getSignedUrlForUpload(fileName, workspaceId, "public", maxFileUploadSize);
 
     if (!signedUrlResponse.ok) {
       logger.error({ error: signedUrlResponse.error }, "Error getting signed url for upload");

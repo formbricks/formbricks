@@ -22,7 +22,7 @@ interface WorkflowWebhookTriggerFormProps {
  * The Webhook trigger panel (ED3, ED6, mock screens 2 and 6): the Webhook Secret URL (masked, eye,
  * Copy, Regenerate), its last call and limits, the Sample payload (or how to get one) with the
  * Variables it offers, and the editable test payload a Test run uses. The Secret URL is a credential
- * (ADR 0041): only people who can edit the workflow see it, and it is kept out of session recordings.
+ * (ADR 0057): only people who can edit the workflow see it, and it is kept out of session recordings.
  */
 export const WorkflowWebhookTriggerForm = (_props: Readonly<WorkflowWebhookTriggerFormProps>) => {
   const { t } = useTranslation();

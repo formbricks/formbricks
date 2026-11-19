@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { type TWorkflowRunListFilters, listWorkflowRuns } from "../lib/api-client";
 import { flattenWorkflowRunPages, workflowRunKeys } from "../lib/query";
 
@@ -30,7 +31,9 @@ export const useWorkflowRuns = ({
     getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
   });
 
-  const runs = flattenWorkflowRunPages(query.data);
+  // Held steady while the pages are: the table keys its rows on this array, so a new one each render
+  // re-renders every row, and the toolbar's open popover then never settles (ENG review of #10010).
+  const runs = useMemo(() => flattenWorkflowRunPages(query.data), [query.data]);
 
   return {
     ...query,

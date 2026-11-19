@@ -23,10 +23,7 @@ type TResolveFilename = (request: string, ...rest: unknown[]) => string;
 const moduleWithResolver = Module as unknown as { _resolveFilename: TResolveFilename };
 const originalResolveFilename = moduleWithResolver._resolveFilename;
 
-type TServerActionReducer = (
-  state: Record<string, unknown>,
-  action: Record<string, unknown>
-) => Promise<unknown> | unknown;
+type TServerActionReducer = (state: Record<string, unknown>, action: Record<string, unknown>) => unknown;
 let serverActionReducer: TServerActionReducer;
 
 beforeAll(() => {
@@ -117,7 +114,7 @@ describe("Next.js server-action rejections, as the installed version raises them
       new Response("upstream connect error", { status: 503, headers: { "content-type": "text/plain" } })
     );
 
-    // Next.js 16.4.1 stamps no error code, so a body-as-message rejection cannot be told from any
+    // Next.js 16.4.5 stamps no error code, so a body-as-message rejection cannot be told from any
     // other Error.
     expect((rejection as Error).message).toBe("upstream connect error");
   });

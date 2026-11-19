@@ -12,6 +12,7 @@ import {
   ImageIcon,
   ListIcon,
   ListOrderedIcon,
+  type LucideIcon,
   MessageSquareTextIcon,
   MousePointerClickIcon,
   PhoneIcon,
@@ -46,12 +47,12 @@ export type TElementCategoryMeta = {
 };
 
 export type TElement = {
-  id: string;
+  id: TSurveyElementTypeEnum;
   label: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   category: TElementCategory;
-  preset: any;
+  preset: Record<string, unknown>;
 };
 
 export const getElementTypes = (t: TFunction): TElement[] => [
@@ -256,7 +257,7 @@ export const getCXElementTypes = (t: TFunction) =>
       TSurveyElementTypeEnum.CES,
       TSurveyElementTypeEnum.Consent,
       TSurveyElementTypeEnum.CTA,
-    ].includes(elementType.id as TSurveyElementTypeEnum);
+    ].includes(elementType.id);
   });
 
 export type TElementCategoryGroup = {

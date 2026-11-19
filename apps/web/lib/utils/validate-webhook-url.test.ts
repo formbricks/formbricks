@@ -427,12 +427,13 @@ describe("validateWebhookUrl", () => {
     test("rejects with timeout error when DNS resolution hangs", async () => {
       vi.useFakeTimers();
 
-      mockResolve.mockImplementation((() => {
+      mockResolve.mockImplementation(() => {
         // never calls callback — simulates a hanging DNS server
-      }) as never);
+      });
 
       const promise = validateWebhookUrl("https://slow-dns.example.com/webhook");
 
+      // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
       const assertion = expect(promise).rejects.toThrow(
         "DNS resolution timed out for webhook URL hostname: slow-dns.example.com"
       );
@@ -464,9 +465,10 @@ describe("validateWebhookUrl", () => {
 
     test("a DNS timeout is also the WebhookDnsResolutionError subclass", async () => {
       vi.useFakeTimers();
-      mockResolve.mockImplementation((() => {}) as never);
+      mockResolve.mockImplementation(() => {});
 
       const rejection = validateWebhookUrl("https://slow-dns.example.com/webhook");
+      // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
       const assertion = Promise.all([
         expect(rejection).rejects.toBeInstanceOf(WebhookDnsResolutionError),
         expect(rejection).rejects.toMatchObject({ statusCode: 400 }),

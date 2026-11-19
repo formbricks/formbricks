@@ -207,6 +207,22 @@ describe("probeSamlResponseParse failure paths", () => {
     });
   });
 
+  // A worker can throw a non-Error value, which its "error" event passes on as is. It is a plain failure, and
+  // reading it must not throw: `"code" in` a string would.
+  test("leaves a job whose worker threw a string once decrypting for jackson to answer", async () => {
+    const { probe, worker } = await holdingOneJob();
+    worker.decrypting();
+    mainPort(worker).flush();
+
+    worker.emit("error", "boom");
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "failed" },
+    });
+  });
+
   test("reads a decrypting notice the main thread had not got to when the worker died", async () => {
     const { probe, worker } = await holdingOneJob();
     // Posted, but not yet read when the worker runs out of heap.

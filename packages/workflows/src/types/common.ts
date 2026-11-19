@@ -8,10 +8,10 @@ export const ZWorkflowStatus = z
   );
 export type TWorkflowStatus = z.infer<typeof ZWorkflowStatus>;
 
-export const ZWorkflowNodeType = z.enum(["action", "if_else", "switch", "trigger"]);
+export const ZWorkflowNodeType = z.enum(["action", "if_else", "filter", "switch", "trigger"]);
 export type TWorkflowNodeType = z.infer<typeof ZWorkflowNodeType>;
 
-export const ZWorkflowChildNodeType = z.enum(["action", "if_else", "switch"]);
+export const ZWorkflowChildNodeType = z.enum(["action", "if_else", "filter", "switch"]);
 export type TWorkflowChildNodeType = z.infer<typeof ZWorkflowChildNodeType>;
 
 export const ZWorkflowNodePosition = z.object({

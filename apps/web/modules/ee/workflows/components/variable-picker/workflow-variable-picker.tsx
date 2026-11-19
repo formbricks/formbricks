@@ -140,6 +140,7 @@ export const WorkflowVariablePicker = ({
           placeholder={t("workspace.workflows.variable_picker_search")}
           className="w-full bg-white"
           onChange={(event) => setSearch(event.target.value)}
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- the picker opens on the user's @ or click; its search field takes focus then, as the survey recall picker's does
           autoFocus={true}
           value={search}
           onKeyDown={(event) => {

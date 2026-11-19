@@ -1,6 +1,6 @@
 /**
  * GET /api/v3/workflows/{workflowId}/webhook — the workflow's Webhook Secret URL, its last call and its
- * Sample payload. Write access only: the URL is a credential (ADR 0041). Thin adapter delegating to
+ * Sample payload. Write access only: the URL is a credential (ADR 0057). Thin adapter delegating to
  * @formbricks/workflows/server.
  */
 import { ZWorkflowIdInput } from "@formbricks/workflows";

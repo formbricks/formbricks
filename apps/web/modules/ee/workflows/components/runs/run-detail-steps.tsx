@@ -10,6 +10,8 @@ import { getWorkflowTriggerTypeLabel } from "@/modules/ee/workflows/lib/display"
 import { describeWorkflowCondition } from "@/modules/ee/workflows/lib/if-else-summary";
 import type {
   TRunDetailBadge,
+  TRunDetailConditionResult,
+  TRunDetailFilterRow,
   TRunDetailHttpRequestRow,
   TRunDetailIfElseRow,
   TRunDetailRow,
@@ -24,7 +26,11 @@ import { RunJsonCode } from "./run-json-code";
 
 type TBadgeType = "warning" | "success" | "error" | "gray";
 
-const getBadge = (badge: TRunDetailBadge, t: TFunction): { label: string; type: TBadgeType } => {
+/** A step's result as a badge, the same in run detail and on the Runs view's canvas. */
+export const getRunDetailBadge = (
+  badge: TRunDetailBadge,
+  t: TFunction
+): { label: string; type: TBadgeType } => {
   switch (badge) {
     case "succeeded":
       return { label: t("common.succeeded"), type: "success" };
@@ -57,6 +63,8 @@ const getStepTypeLabel = (stepType: string, t: TFunction): string => {
   switch (stepType) {
     case "if_else":
       return t("workspace.workflows.if_else");
+    case "filter":
+      return t("workspace.workflows.filter");
     case "switch":
       return t("workspace.workflows.switch");
     case "send_email":
@@ -86,6 +94,7 @@ const RowFrame = ({
   duration,
   badge,
   isMuted = false,
+  onSelect,
   children,
 }: {
   readonly position: number;
@@ -93,6 +102,8 @@ const RowFrame = ({
   readonly duration: string | null;
   readonly badge: { label: string; type: TBadgeType };
   readonly isMuted?: boolean;
+  /** Makes the title a button that opens this step (the Runs view's run summary). */
+  readonly onSelect?: () => void;
   readonly children?: React.ReactNode;
 }) => (
   <li className={cn("rounded-lg border border-slate-200 bg-white p-4", isMuted && "bg-slate-50")}>
@@ -100,10 +111,25 @@ const RowFrame = ({
       <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-700">
         {position}
       </span>
-      <span
-        className={cn("min-w-0 truncate text-sm font-medium", isMuted ? "text-slate-500" : "text-slate-800")}>
-        {title}
-      </span>
+      {onSelect ? (
+        <button
+          type="button"
+          onClick={onSelect}
+          className={cn(
+            "min-w-0 truncate text-left text-sm font-medium hover:underline",
+            isMuted ? "text-slate-500" : "text-slate-800"
+          )}>
+          {title}
+        </button>
+      ) : (
+        <span
+          className={cn(
+            "min-w-0 truncate text-sm font-medium",
+            isMuted ? "text-slate-500" : "text-slate-800"
+          )}>
+          {title}
+        </span>
+      )}
       <span className="shrink-0 text-xs text-slate-500">{duration ?? "—"}</span>
       <span className="ml-auto shrink-0">
         <Badge text={badge.label} type={badge.type} size="tiny" />
@@ -120,14 +146,17 @@ const FieldLine = ({ label, value }: { readonly label: string; readonly value: R
   </div>
 );
 
-const IfElseBody = ({ row }: { readonly row: TRunDetailIfElseRow }) => {
+/** Each condition "(matched)" / "(not matched)" in words, no icons (mock screen 7), then the outcome. */
+const ConditionResults = ({
+  conditions,
+  outcome,
+}: Readonly<{ conditions: TRunDetailConditionResult[]; outcome: string | null }>) => {
   const { t } = useTranslation();
   // In the editor, picked choices (DC11) read by their label; elsewhere by id.
   const survey = useBoundTriggerSurvey();
   const choiceLabels = useMemo(() => getSurveyChoiceLabels(survey), [survey]);
-  if (row.conditions.length === 0 && !row.branch) return null;
-  // "(matched)" / "(not matched)" in words, no icons (mock screen 7).
-  const parts = row.conditions.map(({ id, matched, condition }, index) => {
+  if (conditions.length === 0 && !outcome) return null;
+  const parts = conditions.map(({ id, matched, condition }, index) => {
     const text =
       (condition ? describeWorkflowCondition(condition, t, undefined, choiceLabels) : null) ??
       t("workspace.workflows.run_condition_unknown", { number: index + 1 });
@@ -146,14 +175,33 @@ const IfElseBody = ({ row }: { readonly row: TRunDetailIfElseRow }) => {
           {part.text}
         </span>
       ))}
-      {row.branch ? (
+      {outcome ? (
         <>
           {" → "}
-          <b>{getBranchLabel(row.branch, t)}</b>
+          <b>{outcome}</b>
         </>
       ) : null}
     </p>
   );
+};
+
+const IfElseBody = ({ row }: { readonly row: TRunDetailIfElseRow }) => {
+  const { t } = useTranslation();
+  return (
+    <ConditionResults
+      conditions={row.conditions}
+      outcome={row.branch ? getBranchLabel(row.branch, t) : null}
+    />
+  );
+};
+
+/** A Filter's conditions, then whether the run went on or ended there (ADR 0056). */
+const FilterBody = ({ row }: { readonly row: TRunDetailFilterRow }) => {
+  const { t } = useTranslation();
+  let outcome: string | null = null;
+  if (row.passed === true) outcome = t("workspace.workflows.run_filter_passed");
+  if (row.passed === false) outcome = t("workspace.workflows.run_filter_ended");
+  return <ConditionResults conditions={row.conditions} outcome={outcome} />;
 };
 
 /** "Gold (not matched) · Silver (matched) → Silver": the cases tried, in words, then the case taken as a badge. */
@@ -251,10 +299,10 @@ const HttpRequestBody = ({ row }: { readonly row: TRunDetailHttpRequestRow }) =>
   );
 };
 
-const StepRow = ({ row }: { readonly row: TRunDetailStepRow }) => {
+const StepRow = ({ row, onSelect }: { readonly row: TRunDetailStepRow; readonly onSelect?: () => void }) => {
   const { t } = useTranslation();
   const title = row.label ?? getStepTypeLabel(row.stepType, t);
-  const badge = getBadge(row.badge, t);
+  const badge = getRunDetailBadge(row.badge, t);
 
   if (row.kind === "not_taken") {
     let branchText: string | null = null;
@@ -269,19 +317,58 @@ const StepRow = ({ row }: { readonly row: TRunDetailStepRow }) => {
       });
     }
     return (
-      <RowFrame position={row.position} title={title} duration={null} badge={badge} isMuted>
+      <RowFrame
+        position={row.position}
+        title={title}
+        duration={null}
+        badge={badge}
+        isMuted
+        onSelect={onSelect}>
         {branchText ? <p className="text-xs text-slate-500">{branchText}</p> : null}
       </RowFrame>
     );
   }
 
   return (
-    <RowFrame position={row.position} title={title} duration={row.duration} badge={badge}>
+    <RowFrame position={row.position} title={title} duration={row.duration} badge={badge} onSelect={onSelect}>
       {row.error ? <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{row.error}</p> : null}
       {row.kind === "if_else" ? <IfElseBody row={row} /> : null}
+      {row.kind === "filter" ? <FilterBody row={row} /> : null}
       {row.kind === "switch" ? <SwitchBody row={row} /> : null}
       {row.kind === "send_email" ? <SendEmailBody row={row} /> : null}
       {row.kind === "http_request" ? <HttpRequestBody row={row} /> : null}
+    </RowFrame>
+  );
+};
+
+interface RunDetailRowProps {
+  row: TRunDetailRow;
+  /** Shown on the trigger row of a response-completed run, which has no payload. */
+  responseId: string | null;
+  /** Under the trigger's payload or response: what to do with it (the Runs view's "Use as test input"). */
+  triggerAction?: React.ReactNode;
+  /** Makes the row's title open that step (the Runs view's run summary). */
+  onSelect?: () => void;
+}
+
+/** One row of run detail: the trigger with what started the run, or a step with its result. */
+export const RunDetailRow = ({ row, responseId, triggerAction, onSelect }: Readonly<RunDetailRowProps>) => {
+  const { t } = useTranslation();
+  if (row.kind !== "trigger") return <StepRow row={row} onSelect={onSelect} />;
+  return (
+    <RowFrame
+      position={1}
+      title={getWorkflowTriggerTypeLabel(row.triggerType, t)}
+      duration={null}
+      badge={getRunDetailBadge("succeeded", t)}
+      onSelect={onSelect}>
+      {row.payload ? <RunJsonCode value={row.payload} /> : null}
+      {!row.payload && responseId ? (
+        <p className="text-xs text-slate-600">
+          {t("workspace.workflows.run_trigger_response", { responseId })}
+        </p>
+      ) : null}
+      {triggerAction}
     </RowFrame>
   );
 };
@@ -290,40 +377,20 @@ interface RunDetailStepsProps {
   rows: TRunDetailRow[];
   /** Shown on the trigger row of a response-completed run, which has no payload. */
   responseId: string | null;
-  /**
-   * Replaces the Webhook step's read-only payload with the Test run drawer's editable test payload, or
-   * follows a Response completed step's response with the drawer's response picker. Real runs leave
-   * it out.
-   */
-  triggerPayloadEditor?: React.ReactNode;
+  /** Makes each row's title open its step; the trigger passes null. */
+  onSelectStep?: (stepId: string | null) => void;
 }
 
 /** Run detail's numbered list (mock screens 7–9): the trigger, then each step. */
-export const RunDetailSteps = ({ rows, responseId, triggerPayloadEditor }: Readonly<RunDetailStepsProps>) => {
-  const { t } = useTranslation();
-  return (
-    <ol className="flex flex-col gap-3">
-      {rows.map((row) =>
-        row.kind === "trigger" ? (
-          <RowFrame
-            key="trigger"
-            position={1}
-            title={getWorkflowTriggerTypeLabel(row.triggerType, t)}
-            duration={null}
-            badge={getBadge("succeeded", t)}>
-            {row.payload ? (triggerPayloadEditor ?? <RunJsonCode value={row.payload} />) : null}
-            {!row.payload && responseId ? (
-              <p className="text-xs text-slate-600">
-                {t("workspace.workflows.run_trigger_response", { responseId })}
-              </p>
-            ) : null}
-            {/* A Response completed Test run: the picker to run again with another response. */}
-            {!row.payload && responseId && triggerPayloadEditor ? triggerPayloadEditor : null}
-          </RowFrame>
-        ) : (
-          <StepRow key={row.stepId} row={row} />
-        )
-      )}
-    </ol>
-  );
-};
+export const RunDetailSteps = ({ rows, responseId, onSelectStep }: Readonly<RunDetailStepsProps>) => (
+  <ol className="flex flex-col gap-3">
+    {rows.map((row) => (
+      <RunDetailRow
+        key={row.stepId ?? "trigger"}
+        row={row}
+        responseId={responseId}
+        onSelect={onSelectStep ? () => onSelectStep(row.stepId) : undefined}
+      />
+    ))}
+  </ol>
+);

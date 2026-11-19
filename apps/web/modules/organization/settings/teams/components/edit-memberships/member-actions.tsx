@@ -76,7 +76,7 @@ export const MemberActions = ({
 
       setIsDeleting(false);
       router.refresh();
-    } catch (err) {
+    } catch {
       setIsDeleting(false);
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
@@ -153,7 +153,7 @@ export const MemberActions = ({
           id="shareInviteButton"
           disabled={!canActOnInvite}
           onClick={() => {
-            handleShareInvite();
+            void handleShareInvite();
           }}>
           <ShareIcon />
         </Button>
@@ -168,7 +168,7 @@ export const MemberActions = ({
           id="resendInviteButton"
           disabled={!canActOnInvite}
           onClick={() => {
-            handleResendInvite();
+            void handleResendInvite();
           }}>
           <SendHorizonalIcon />
         </Button>

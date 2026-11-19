@@ -11,8 +11,10 @@ import {
   V3_SURVEY_MAX_VARIABLES,
 } from "@/app/api/v3/surveys/schemas";
 import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/lib/creative-texts";
+import * as audienceSchemas from "./audience-schemas";
 import * as creativeSchemas from "./creative-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
+import * as tagSchemas from "./tag-schemas";
 import * as workflowSchemas from "./workflow-schemas";
 import * as workflowTestRequestSchemas from "./workflow-test-request-schemas";
 import * as workflowTestRunSchemas from "./workflow-test-run-schemas";
@@ -140,6 +142,8 @@ const allExports: [string, unknown][] = Object.entries({
   ...workflowTestRequestSchemas,
   ...workflowTestRunSchemas,
   ...creativeSchemas,
+  ...tagSchemas,
+  ...audienceSchemas,
 });
 
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);
@@ -197,7 +201,7 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
   // A Webhook workflow's Sample payload is any JSON object an outside system would send; the operation
   // bounds its size and depth.
   ZMcpSetSamplePayloadInput: ["ZMcpSetSamplePayloadInput.payload"],
-  // An HTTP request step's expected response: any JSON object, like a Sample payload.
+  // An HTTP request step's expected response body: any JSON object, like a Sample payload.
   ZMcpSetExpectedResponseInput: ["ZMcpSetExpectedResponseInput.body"],
   // A Test request's Variables: a test payload (any JSON object, like a Sample payload) and earlier
   // steps' outputs keyed by step id, each an outside server's JSON response.

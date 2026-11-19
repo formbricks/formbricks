@@ -261,6 +261,7 @@ const InlineRename = ({
   return (
     <div className="flex flex-1 items-center gap-1 py-1">
       <Input
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- the inline keyword editor mounts when the user clicks edit; focus follows that click
         autoFocus
         value={value}
         maxLength={1000}

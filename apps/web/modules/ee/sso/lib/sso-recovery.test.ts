@@ -12,6 +12,8 @@ import {
   SsoRecoveryError,
   completeSsoRecovery,
   getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoverySecondFactorRedirectUrl,
+  getSsoRecoverySecondFactorUnavailableRedirectUrl,
   startSsoRecovery,
 } from "./sso-recovery";
 
@@ -56,6 +58,8 @@ vi.mock("./recovery-intent", () => ({
   consumeSsoRecoveryIntent: mocks.consumeSsoRecoveryIntent,
 }));
 
+// Ending the user's OAuth grants marks their pending sign-in codes in Redis, which the unit run has none of.
+vi.mock("@/modules/auth/lib/oauth-revocation-marker", () => ({ markOAuthRevocation: vi.fn() }));
 vi.mock("@/modules/auth/lib/session-revocation", () => ({
   revokeUserSessionsExcept: vi.fn(),
 }));
@@ -124,6 +128,8 @@ describe("sso-recovery", () => {
   // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
   // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
+    // The consent rows are locked in id order before they are deleted.
+    $queryRaw: async () => [],
     user: {
       update: txUserUpdate,
       updateMany: txUserUpdateMany,
@@ -142,6 +148,11 @@ describe("sso-recovery", () => {
     },
     oauthConsent: {
       deleteMany: txOauthConsentDeleteMany,
+    },
+    // The squatter's MCP grants go with its consents (ENG-7149); it held none here.
+    mcpGrant: {
+      findMany: vi.fn(async () => []),
+      deleteMany: vi.fn(async () => ({ count: 0 })),
     },
     apiKey: {
       findMany: txApiKeyFindMany,
@@ -218,7 +229,7 @@ describe("sso-recovery", () => {
         type: "oauth",
         provider: "google",
         providerAccountId: "provider-account-1",
-      } as any,
+      },
       callbackUrl: "http://localhost:3000/environments/env_1",
     });
 
@@ -257,7 +268,7 @@ describe("sso-recovery", () => {
           type: "oauth",
           provider: "google",
           providerAccountId: "provider-account-1",
-        } as any,
+        },
         callbackUrl: "https://evil.example/phish",
       })
     ).rejects.toThrow("smtp unavailable");
@@ -284,7 +295,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     withApiKeys(["apikey_1", "apikey_2"]);
     // Same commit-step trick as `consumeSsoRecoveryIntent`: SpiceDB is not part of the transaction, so a
     // reconciliation issued inside it would survive a rollback and delete relationships for keys that
@@ -301,6 +312,8 @@ describe("sso-recovery", () => {
       sessionToken: "current-session-token",
     });
 
+    // The reclaim may end the user's MCP grants, whose rows a reconciling pass can hold for 30 s.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     // Exact-match on purpose: the legacy nulls are load-bearing, not leftovers. `better-auth-two-factor-backfill`
     // re-materialises a `TwoFactor` row from `twoFactorEnabled && twoFactorSecret` on the next credential
     // sign-in, so dropping them from this payload would let the stripped factor come back.
@@ -599,7 +612,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
 
@@ -623,7 +636,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(syncSsoIdentityForUser).mockRejectedValue(new Error("deadlock detected"));
 
     await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).rejects.toThrow(
@@ -661,7 +674,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     // First completion: the account is unproven, so this is the one that strips and sweeps.
     await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
@@ -678,7 +691,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     txUserUpdate.mockClear();
     vi.mocked(revokeUserSessionsExcept).mockClear();
     vi.mocked(syncSsoIdentityForUser).mockClear();
@@ -701,7 +714,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await completeSsoRecovery({
       stateId: "test-state",
@@ -744,7 +757,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "google",
       identityProviderAccountId: "provider-account-1",
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await completeSsoRecovery({
       stateId: "test-state",
@@ -775,7 +788,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(revokeUserSessionsExcept).mockRejectedValue(new Error("redis unavailable"));
 
     const callbackUrl = await completeSsoRecovery({
@@ -949,7 +962,7 @@ describe("sso-recovery", () => {
       twoFactorEnabled: false,
       twoFactorSecret: null,
       backupCodes: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await expect(
       completeSsoRecovery({
@@ -984,7 +997,7 @@ describe("sso-recovery", () => {
       twoFactorEnabled: false,
       twoFactorSecret: null,
       backupCodes: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(finalizeSuccessfulSignIn).mockRejectedValue(new Error("tracking unavailable"));
 
     await expect(
@@ -1033,7 +1046,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await expect(
       completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })
@@ -1070,7 +1083,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).resolves.toBe(
       "http://localhost:3000"
@@ -1083,6 +1096,32 @@ describe("sso-recovery", () => {
     );
     expect(getSsoRecoveryFailureRedirectUrl("https://evil.example/phish")).toBe(
       "http://localhost:3000/auth/login?error=OAuthAccountNotLinked"
+    );
+  });
+
+  test("sends a 2FA user to the login page with the completion URL as callbackUrl and no error", () => {
+    expect(
+      getSsoRecoverySecondFactorRedirectUrl(
+        "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state"
+      )
+    ).toBe(
+      "http://localhost:3000/auth/login?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fsso%2Frecovery%2Fcomplete%3Fstate%3Dtest-state"
+    );
+    expect(getSsoRecoverySecondFactorRedirectUrl("https://evil.example/phish")).toBe(
+      "http://localhost:3000/auth/login"
+    );
+  });
+
+  test("names the dead end when credential sign-in is off, filtering callbacks the same way", () => {
+    expect(
+      getSsoRecoverySecondFactorUnavailableRedirectUrl(
+        "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state"
+      )
+    ).toBe(
+      "http://localhost:3000/auth/login?error=sso_recovery_second_factor_unavailable&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fsso%2Frecovery%2Fcomplete%3Fstate%3Dtest-state"
+    );
+    expect(getSsoRecoverySecondFactorUnavailableRedirectUrl("https://evil.example/phish")).toBe(
+      "http://localhost:3000/auth/login?error=sso_recovery_second_factor_unavailable"
     );
   });
 });

@@ -412,6 +412,17 @@ describe("toV3PipelineResponse", () => {
     expect(parsed.success).toBe(true);
   });
 
+  /** A legacy answer `PATCH` keeps must not make the whole payload unqueueable. */
+  test("a legacy-shaped answer is left out of the payload, and the rest still parses", () => {
+    const payload = toV3PipelineResponse(
+      readbackRow({ data: { q1: "hi", plan: "enterprise", q2: null, q3: [1, 2] } })
+    );
+
+    // Filtered by value shape only: a hidden-field value (`plan`) still reaches the pipeline.
+    expect(payload.data).toEqual({ q1: "hi", plan: "enterprise" });
+    expect(ZResponse.safeParse(payload).success).toBe(true);
+  });
+
   test.each([null, "lowQuality"] as const)("the outcome %s is carried, never dropped", (outcome) => {
     const payload = toV3PipelineResponse(readbackRow({ outcome }));
 
@@ -991,7 +1002,7 @@ describe("updateScopedResponse — the Feedback Record cleanup on an outcome cha
     const tx = txStub({
       workspace: { findUniqueOrThrow: vi.fn().mockResolvedValue({ organizationId: "clorg" }) },
     });
-    tx.response.findFirst.mockResolvedValue({ outcome: previous } as never);
+    tx.response.findFirst.mockResolvedValue({ outcome: previous });
     return runTx(tx);
   };
 

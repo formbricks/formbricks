@@ -7,7 +7,7 @@ import { workflowKeys } from "../lib/query";
 
 /**
  * "Send test request" (ENG-7179): the one real call an author can make from the editor. An answer is
- * kept as the step's last Test request response, so the samples refresh and the step's Response fields
+ * kept as the step's last Test request response, so the samples refresh and the step's Expected response body
  * card can offer it (ADR 0054); the step's Variables only change once the author uses it.
  */
 export const useSendTestRequest = ({ workflowId, stepId }: { workflowId: string; stepId: string }) => {

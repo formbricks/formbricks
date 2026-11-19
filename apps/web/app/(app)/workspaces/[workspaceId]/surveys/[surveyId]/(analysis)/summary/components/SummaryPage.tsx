@@ -71,7 +71,7 @@ export const SummaryPage = ({
 
   const { registerAnalysisRefreshHandler } = useResponseFilter();
   const filterState = useResponseTableFilters(survey);
-  const { selectedFilter, dateRange } = filterState;
+  const { selectedFilter, dateRange, resolveFreshCriteria } = filterState;
 
   const [displays, setDisplays] = useState<TDisplayWithContact[]>([]);
   const [isDisplaysLoading, setIsDisplaysLoading] = useState(false);
@@ -128,13 +128,13 @@ export const SummaryPage = ({
   useEffect(() => {
     if (tab === "impressions" && !displaysFetchedRef.current) {
       displaysFetchedRef.current = true;
-      loadInitialDisplays();
+      void loadInitialDisplays();
     }
   }, [tab, loadInitialDisplays]);
 
   const fetchSummary = useCallback(async () => {
     // Asked about now: a refresh after midnight must not reuse yesterday's relative date window.
-    const currentFilters = filterState.resolveFreshCriteria();
+    const currentFilters = resolveFreshCriteria();
     const updatedSurveySummary = await getSurveySummaryAction({
       surveyId,
       filterCriteria: currentFilters,
@@ -145,7 +145,7 @@ export const SummaryPage = ({
     }
 
     setSurveySummary(updatedSurveySummary?.data ?? defaultSurveySummary);
-  }, [filterState.resolveFreshCriteria, surveyId]);
+  }, [resolveFreshCriteria, surveyId]);
 
   const refreshSummary = useCallback(async () => {
     if (!filterState.isReady) return;
@@ -181,6 +181,7 @@ export const SummaryPage = ({
     // A rule in the URL still waiting for the filter data: the summary would answer for every response.
     if (!filterState.isReady) {
       lastFetchedFiltersKeyRef.current = null;
+      // eslint-disable-next-line react/set-state-in-effect -- fetch effect: the loading flag and summary track the request it starts, deduped by lastFetchedFiltersKeyRef
       setIsLoading(true);
       return;
     }
@@ -220,7 +221,7 @@ export const SummaryPage = ({
       }
     };
 
-    fetchFilteredSummary();
+    void fetchFilteredSummary();
   }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, filterState.isReady, survey, t]);
 
   const surveyMemoized = useMemo(() => {

@@ -1,6 +1,6 @@
 type: object
 description: >-
-  Sets an HTTP request step's expected response: the body its API answers with,
+  Sets an HTTP request step's expected response body: the body its API answers with,
   typed or pasted, or a Test request response chosen to use.
 required:
   - body
