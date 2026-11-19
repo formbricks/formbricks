@@ -768,6 +768,33 @@ describe("cross-origin protection (ENG-3380, ENG-3984)", () => {
   const write = (headers: Record<string, string>, method = "POST") =>
     new NextRequest("http://localhost/api/internal/things", { method, headers });
 
+  test("refuses a cross-site pre-login write before reading its body, however large", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    let bodyRead = false;
+    const request = new NextRequest("http://localhost/api/internal/password-resets", {
+      method: "POST",
+      headers: { "sec-fetch-site": "cross-site", "content-type": "application/json" },
+      // No buffer, so `pull` runs only when something reads the body (the default buffer pulls one chunk up front).
+      body: new ReadableStream<Uint8Array>(
+        {
+          pull(controller) {
+            bodyRead = true;
+            controller.enqueue(new Uint8Array(64 * 1024));
+          },
+        },
+        { highWaterMark: 0 }
+      ),
+      duplex: "half",
+    });
+
+    const response = await withV3ApiWrapper({ auth: "none", bodyLimitBytes: 1024, handler })(request, {});
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("Cross-origin requests are not allowed.");
+    expect(handler).not.toHaveBeenCalled();
+    expect(bodyRead).toBe(false);
+  });
+
   test.each([
     ["Sec-Fetch-Site: same-site (a sibling subdomain)", { "sec-fetch-site": "same-site" }],
     ["Sec-Fetch-Site: cross-site", { "sec-fetch-site": "cross-site" }],
