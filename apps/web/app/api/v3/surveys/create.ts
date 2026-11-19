@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TCustomCssStored, TCustomCssWarning } from "@formbricks/types/custom-css";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
+import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
@@ -43,6 +44,11 @@ import { resolveV3SurveyTargetingActor, resolveV3VisibleSurveyWhere } from "./vi
 
 export type TV3SurveyCreateOptions = {
   skipExternalUrlPermissionCheck?: boolean;
+  /**
+   * Imports keep links in rich text on every plan (ENG-3607), so they skip only the rich-text half
+   * of the external-URL gate; CTA buttons and ending links stay gated.
+   */
+  skipRichTextLinkPermissionCheck?: boolean;
   surveyCreateInputOverrides?: Partial<TSurveyCreateInput>;
   /** Filled with the custom CSS warnings when the create processed custom CSS. */
   report?: TV3SurveyWriteReport;
@@ -92,7 +98,33 @@ function getCreatedBy(authentication: TV3Authentication): string | null {
   return null;
 }
 
-function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
+/** An `<a>` tag that carries an `href`, which is how the rich-text editor stores a link. */
+const RICH_TEXT_LINK_PATTERN = /<a\s[^>]*\bhref\s*=/i;
+
+const hasRichTextLink = (...fields: (TI18nString | undefined)[]): boolean =>
+  fields.some((field) => Object.values(field ?? {}).some((text) => RICH_TEXT_LINK_PATTERN.test(text)));
+
+/**
+ * The editor offers links in rich text (headlines, subheaders, a date element's html) only when the
+ * plan allows external URLs, so a link there counts as an external URL like a CTA button does
+ * (ENG-3891). Every language is checked, not just the default one.
+ */
+function hasRichTextLinkReferences(input: TV3CreateSurveyBody): boolean {
+  const inElements = getElementsFromBlocks(input.blocks).some((element) =>
+    hasRichTextLink(element.headline, element.subheader, "html" in element ? element.html : undefined)
+  );
+  const inWelcomeCard = hasRichTextLink(input.welcomeCard?.headline, input.welcomeCard?.subheader);
+  const inEndings = input.endings.some(
+    (ending) => ending.type === "endScreen" && hasRichTextLink(ending.headline, ending.subheader)
+  );
+
+  return inElements || inWelcomeCard || inEndings;
+}
+
+function hasExternalUrlReferences(
+  input: TV3CreateSurveyBody,
+  options: Pick<TV3SurveyCreateOptions, "skipRichTextLinkPermissionCheck">
+): boolean {
   const hasExternalEndingLink = input.endings.some((ending) => {
     if (ending.type === "endScreen") {
       return Boolean(ending.buttonLink) && !isDefaultEndingCardButtonLink(ending.buttonLink);
@@ -104,15 +136,22 @@ function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
     (element) => element.type === "cta" && element.buttonExternal
   );
 
-  return hasExternalEndingLink || hasExternalCtaButton;
+  return (
+    hasExternalEndingLink ||
+    hasExternalCtaButton ||
+    (!options.skipRichTextLinkPermissionCheck && hasRichTextLinkReferences(input))
+  );
 }
 
 async function assertV3SurveyCreatePermissions(
   input: TV3CreateSurveyBody,
   organizationId?: string,
-  options: Pick<TV3SurveyCreateOptions, "skipExternalUrlPermissionCheck"> = {}
+  options: Pick<
+    TV3SurveyCreateOptions,
+    "skipExternalUrlPermissionCheck" | "skipRichTextLinkPermissionCheck"
+  > = {}
 ): Promise<void> {
-  if (options.skipExternalUrlPermissionCheck || !hasExternalUrlReferences(input)) {
+  if (options.skipExternalUrlPermissionCheck || !hasExternalUrlReferences(input, options)) {
     return;
   }
 
