@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getDraggedItems, getDroppedFiles, setDropEffect } from "@formbricks/survey-ui/drag-data";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { cn } from "@/lib/cn";
@@ -392,19 +393,19 @@ export const UploadContactsCSVButton = ({
     e.stopPropagation();
 
     // Only show copy cursor if file is CSV
-    const items = Array.from(e.dataTransfer.items);
+    const items = getDraggedItems(e);
     const isCSV = items.some(
       (item) => item.type === "text/csv" || (item.type === "" && item.kind === "file") // For when type isn't available
     );
 
-    e.dataTransfer.dropEffect = isCSV ? "copy" : "none";
+    setDropEffect(e, isCSV ? "copy" : "none");
   };
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const file = e.dataTransfer.files[0];
+    const file = getDroppedFiles(e)[0];
     if (file) {
       void processCSVFile(file);
     }
