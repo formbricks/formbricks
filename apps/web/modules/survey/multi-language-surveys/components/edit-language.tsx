@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/survey-runtime-languages";
-import { getLanguageLabel, iso639Languages } from "@formbricks/i18n-utils/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
@@ -31,6 +31,7 @@ import {
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
+import { type TLanguagesValidationError, getLanguagesValidationError } from "../lib/validate-languages";
 import { AddLanguageButton } from "./add-language-button";
 import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
@@ -41,49 +42,12 @@ interface EditLanguageProps {
   readonly isReadOnly: boolean;
 }
 
-const checkIfDuplicateExists = (arr: string[]) => {
-  return new Set(arr).size !== arr.length;
-};
-
-const validateLanguages = (languages: Language[], t: TFunction) => {
-  const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
-  const languageAliases = languages
-    .filter((language) => language.alias)
-    .map((language) => language.alias!.toLowerCase().trim());
-
-  if (languageCodes.includes("")) {
-    toast.error(t("workspace.languages.please_select_a_language"), { duration: 2000 });
-    return false;
-  }
-
-  // Check for duplicates within the languageCodes and languageAliases
-  if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageCodes)) {
-    toast.error(t("workspace.languages.duplicate_language_or_language_id"), { duration: 4000 });
-    return false;
-  }
-
-  // Check if any alias matches the identifier of any added languages
-  if (languageCodes.some((code) => languageAliases.includes(code))) {
-    toast.error(t("workspace.languages.conflict_between_identifier_and_alias"), {
-      duration: 6000,
-    });
-    return false;
-  }
-
-  // Prevent choosing an alias that clashes with the ISO code of some other
-  // language. Without this guard users could create ambiguous language entries
-  // (e.g. alias "nl" pointing to a non-Dutch language) which later breaks the
-  // dropdowns that rely on ISO identifiers.
-  for (const alias of languageAliases) {
-    if (iso639Languages.some((language) => language.code === alias && !languageCodes.includes(alias))) {
-      toast.error(t("workspace.languages.conflict_between_selected_alias_and_another_language"), {
-        duration: 6000,
-      });
-      return false;
-    }
-  }
-
-  return true;
+/** Longer toasts for the problems whose message takes longer to read. */
+const VALIDATION_TOAST_DURATION_MS: Record<TLanguagesValidationError, number> = {
+  "workspace.languages.please_select_a_language": 2000,
+  "workspace.languages.duplicate_language_or_language_id": 4000,
+  "workspace.languages.conflict_between_identifier_and_alias": 6000,
+  "workspace.languages.conflict_between_selected_alias_and_another_language": 6000,
 };
 
 export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProps) {
@@ -233,7 +197,11 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   };
 
   const handleSaveChanges = async () => {
-    if (!validateLanguages(languages, t)) return;
+    const validationError = getLanguagesValidationError(languages);
+    if (validationError) {
+      toast.error(t(validationError), { duration: VALIDATION_TOAST_DURATION_MS[validationError] });
+      return;
+    }
     const results = await Promise.all(
       languages.map((lang) => {
         return lang.id === "new"
