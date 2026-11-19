@@ -10,13 +10,13 @@ describe("getLanguagesValidationError", () => {
 
   test("asks for a language when a row has none", () => {
     expect(getLanguagesValidationError(rows("de-DE", ""))).toBe(
-      "workspace.languages.please_select_a_language"
+      "missing_language"
     );
   });
 
   test("refuses the same code twice", () => {
     expect(getLanguagesValidationError(rows("de-DE", "de-de"))).toBe(
-      "workspace.languages.duplicate_language_or_language_id"
+      "duplicate_language_or_alias"
     );
   });
 
@@ -28,7 +28,7 @@ describe("getLanguagesValidationError", () => {
     ["  DE  ", "de-DE"],
   ])("refuses %j next to %j, which the server stores as the same language", (added, existing) => {
     expect(getLanguagesValidationError(rows(existing, added))).toBe(
-      "workspace.languages.duplicate_language_or_language_id"
+      "duplicate_language_or_alias"
     );
   });
 
@@ -38,7 +38,7 @@ describe("getLanguagesValidationError", () => {
         { code: "de-DE", alias: "german" },
         { code: "fr-FR", alias: "German" },
       ])
-    ).toBe("workspace.languages.duplicate_language_or_language_id");
+    ).toBe("duplicate_language_or_alias");
   });
 
   test("refuses an alias equal to another row's code", () => {
@@ -47,12 +47,12 @@ describe("getLanguagesValidationError", () => {
         { code: "de-de", alias: null },
         { code: "fr-FR", alias: "de-DE" },
       ])
-    ).toBe("workspace.languages.conflict_between_identifier_and_alias");
+    ).toBe("alias_matches_a_code");
   });
 
   test("refuses an alias that is the ISO code of a language not in the list", () => {
     expect(getLanguagesValidationError([{ code: "fr-FR", alias: "nl" }])).toBe(
-      "workspace.languages.conflict_between_selected_alias_and_another_language"
+      "alias_matches_another_language"
     );
   });
 });

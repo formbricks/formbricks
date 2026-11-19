@@ -1,12 +1,12 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { iso639Languages } from "@formbricks/i18n-utils/utils";
 
-/** The translation key of the first problem a languages edit has, as `EditLanguage` toasts it. */
+/** The first problem a languages edit has. */
 export type TLanguagesValidationError =
-  | "workspace.languages.please_select_a_language"
-  | "workspace.languages.duplicate_language_or_language_id"
-  | "workspace.languages.conflict_between_identifier_and_alias"
-  | "workspace.languages.conflict_between_selected_alias_and_another_language";
+  | "missing_language"
+  | "duplicate_language_or_alias"
+  | "alias_matches_a_code"
+  | "alias_matches_another_language";
 
 const hasDuplicates = (values: string[]): boolean => new Set(values).size !== values.length;
 
@@ -25,17 +25,17 @@ export const getLanguagesValidationError = (
     .map((language) => language.alias!.toLowerCase().trim());
 
   if (languageCodes.includes("")) {
-    return "workspace.languages.please_select_a_language";
+    return "missing_language";
   }
 
   // The same language twice (by canonical code), or the same alias twice
   if (hasDuplicates(languageAliases) || hasDuplicates(canonicalCodes)) {
-    return "workspace.languages.duplicate_language_or_language_id";
+    return "duplicate_language_or_alias";
   }
 
   // Check if any alias matches the identifier of any added languages
   if (languageCodes.some((code) => languageAliases.includes(code))) {
-    return "workspace.languages.conflict_between_identifier_and_alias";
+    return "alias_matches_a_code";
   }
 
   // Prevent choosing an alias that clashes with the ISO code of some other
@@ -44,7 +44,7 @@ export const getLanguagesValidationError = (
   // dropdowns that rely on ISO identifiers.
   for (const alias of languageAliases) {
     if (iso639Languages.some((language) => language.code === alias && !languageCodes.includes(alias))) {
-      return "workspace.languages.conflict_between_selected_alias_and_another_language";
+      return "alias_matches_another_language";
     }
   }
 

@@ -42,12 +42,24 @@ interface EditLanguageProps {
   readonly isReadOnly: boolean;
 }
 
-/** Longer toasts for the problems whose message takes longer to read. */
-const VALIDATION_TOAST_DURATION_MS: Record<TLanguagesValidationError, number> = {
-  "workspace.languages.please_select_a_language": 2000,
-  "workspace.languages.duplicate_language_or_language_id": 4000,
-  "workspace.languages.conflict_between_identifier_and_alias": 6000,
-  "workspace.languages.conflict_between_selected_alias_and_another_language": 6000,
+/** The toast for each problem; the longer messages stay up longer. */
+const getValidationToast = (
+  error: TLanguagesValidationError,
+  t: TFunction
+): { message: string; duration: number } => {
+  switch (error) {
+    case "missing_language":
+      return { message: t("workspace.languages.please_select_a_language"), duration: 2000 };
+    case "duplicate_language_or_alias":
+      return { message: t("workspace.languages.duplicate_language_or_language_id"), duration: 4000 };
+    case "alias_matches_a_code":
+      return { message: t("workspace.languages.conflict_between_identifier_and_alias"), duration: 6000 };
+    case "alias_matches_another_language":
+      return {
+        message: t("workspace.languages.conflict_between_selected_alias_and_another_language"),
+        duration: 6000,
+      };
+  }
 };
 
 export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProps) {
@@ -215,7 +227,8 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   const saveChanges = async () => {
     const validationError = getLanguagesValidationError(languages);
     if (validationError) {
-      toast.error(t(validationError), { duration: VALIDATION_TOAST_DURATION_MS[validationError] });
+      const { message, duration } = getValidationToast(validationError, t);
+      toast.error(message, { duration });
       return;
     }
     const results = await Promise.all(
