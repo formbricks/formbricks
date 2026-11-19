@@ -155,7 +155,7 @@ export const updateMembership = async (
   } finally {
     // Outside a transaction each write commits on its own, so what was written before a later write failed
     // stays all the same: the role is projected, then its ended grants are audited and removed from SpiceDB.
-    // The role first, so a failure finishing the grants can't leave the old role in SpiceDB.
+    // The role first: it is what the user could still act on, and finishing the grants can't then delay it.
     if (progress.membershipUpdated) {
       await projectMembershipRoleChange(organizationId, userId, progress.affectedTeamIds);
     }

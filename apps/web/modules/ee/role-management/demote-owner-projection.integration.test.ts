@@ -81,55 +81,58 @@ beforeEach(async () => {
   await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
+/**
+ * Owner A demotes the other owner, and asserts the outbox has not delivered that change yet: what SpiceDB
+ * holds afterwards is what the action projected itself.
+ */
+const demote = async (role: "member" | "dashboard_viewer") => {
+  as(ids.owner);
+  const demotion = await updateMembershipAction({
+    organizationId: ids.organization,
+    userId: ids.demoted,
+    data: { role },
+  });
+  expect(demotion?.serverError).toBeUndefined();
+
+  // The fixture drained everything before it, so an undelivered event for this membership is the demotion's.
+  const undelivered = await prisma.authzedProjectionOutbox.count({
+    where: {
+      targetType: "membership",
+      primaryId: ids.organization,
+      secondaryId: ids.demoted,
+      processedAt: null,
+    },
+  });
+  expect(undelivered).toBeGreaterThan(0);
+};
+
 describe("demoting an owner", () => {
-  test.each(["member", "dashboard_viewer"] as const)(
-    "an owner demoted to %s can no longer mint an API key, before the outbox delivers",
-    async (role) => {
-      as(ids.owner);
-      const demotion = await updateMembershipAction({
-        organizationId: ids.organization,
-        userId: ids.demoted,
-        data: { role },
-      });
-      expect(demotion?.serverError).toBeUndefined();
+  test("an owner demoted to Member loses the owner relation and can't mint an API key, before the outbox delivers", async () => {
+    await demote("member");
 
-      // The outbox still holds the demotion: nothing has delivered it.
-      expect(await prisma.authzedProjectionOutbox.count()).toBeGreaterThan(0);
+    expect(await relationsOf("organization", ids.organization)).toEqual(["member"]);
+    as(ids.demoted);
+    expect((await mintApiKey())?.serverError).toBeDefined();
+    expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(0);
+  });
 
-      as(ids.demoted);
-      const result = await mintApiKey();
-
-      expect(result?.serverError).toBeDefined();
-      expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(0);
-    }
-  );
-
-  test("an owner demoted to Dashboard viewer stops being a team admin in SpiceDB, before the outbox delivers", async () => {
-    as(ids.owner);
-    const demotion = await updateMembershipAction({
-      organizationId: ids.organization,
-      userId: ids.demoted,
-      data: { role: "dashboard_viewer" },
-    });
-    expect(demotion?.serverError).toBeUndefined();
-    expect(await prisma.authzedProjectionOutbox.count()).toBeGreaterThan(0);
+  // Its own case: a demotion to Dashboard viewer also turns team admin into contributor, which only the
+  // team projection carries to SpiceDB.
+  test("an owner demoted to Dashboard viewer stops being a team admin and can't mint an API key, before the outbox delivers", async () => {
+    await demote("dashboard_viewer");
 
     expect(await relationsOf("organization", ids.organization)).toEqual(["dashboard_viewer"]);
     expect(await relationsOf("team", ids.team)).toEqual(["contributor"]);
+    as(ids.demoted);
+    expect((await mintApiKey())?.serverError).toBeDefined();
+    expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(0);
   });
 
   test("the owner who stays can still mint an API key", async () => {
+    await demote("member");
+
     as(ids.owner);
-    const demotion = await updateMembershipAction({
-      organizationId: ids.organization,
-      userId: ids.demoted,
-      data: { role: "member" },
-    });
-    expect(demotion?.serverError).toBeUndefined();
-
-    const result = await mintApiKey();
-
-    expect(result?.serverError).toBeUndefined();
+    expect((await mintApiKey())?.serverError).toBeUndefined();
     expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(1);
   });
 });
