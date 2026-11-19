@@ -225,6 +225,13 @@
       "user_successfully_created": "User başarıyla oluşturuldu",
       "user_successfully_created_info": "{email} ile ilişkili bir hesap kontrol ettik. Yoksa sizin için bir tane oluşturduk. Zaten bir hesap varsa, herhangi bir değişiklik yapılmadı. Devam etmek için lütfen aşağıdan giriş yapın."
     },
+    "sso_recovery_confirm": {
+      "cancel": "İptal",
+      "confirm": "{provider} hesabını bağla",
+      "description": "Bunun ardından bu Formbricks hesabına {provider} ile giriş yapabilirsin.",
+      "title": "{provider} hesabı hesabına bağlansın mı?",
+      "warning": "Yalnızca Formbricks'e {provider} ile giriş yapmayı bizzat sen istediysen devam et. İstemediysen iptal et: başka biri hesabına girmeye çalışıyor olabilir."
+    },
     "verification-requested": {
       "email_not_configured_description": "Bu Formbricks örneğinde yapılandırılmış bir email sunucusu yok, bu nedenle doğrulama bağlantısı gönderilemedi. Lütfen yöneticinizle iletişime geçin.",
       "email_not_configured_title": "Email yapılandırılmamış",

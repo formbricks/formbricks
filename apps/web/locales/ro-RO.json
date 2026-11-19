@@ -225,6 +225,13 @@
       "user_successfully_created": "Utilizator creat cu succes",
       "user_successfully_created_info": "Am verificat pentru un cont asociat cu {email}. Dacă nu a existat niciunul, am creat unul pentru tine. Dacă un cont deja exista, nu s-au făcut modificări. Vă rugăm să vă conectați mai jos pentru a continua."
     },
+    "sso_recovery_confirm": {
+      "cancel": "Anulează",
+      "confirm": "Asociază {provider}",
+      "description": "După aceasta, te poți conecta la acest cont Formbricks cu {provider}.",
+      "title": "Asociezi {provider} cu contul tău?",
+      "warning": "Continuă doar dacă tu ai cerut să te conectezi la Formbricks cu {provider}. Dacă nu, anulează: este posibil ca altcineva să încerce să îți acceseze contul."
+    },
     "verification-requested": {
       "email_not_configured_description": "Această instanță Formbricks nu are un server de email configurat, așa că nu a putut fi trimis niciun link de verificare. Vă rugăm să contactați administratorul.",
       "email_not_configured_title": "Emailul nu este configurat",

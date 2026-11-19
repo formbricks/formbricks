@@ -12,7 +12,10 @@ import { createSsoRecoveryProof } from "./recovery-proof";
 import {
   SsoRecoveryError,
   completeSsoRecovery,
+  getSsoRecoveryConfirmUrl,
+  getSsoRecoveryConfirmation,
   getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoveryRefusalRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
   getSsoRecoverySecondFactorUnavailableRedirectUrl,
   startSsoRecovery,
@@ -926,6 +929,82 @@ describe("sso-recovery", () => {
         })
       ).resolves.toBe("http://localhost:3000/environments/env_1");
       expect(syncSsoIdentityForUser).toHaveBeenCalled();
+    });
+  });
+
+  describe("the confirmation step (ENG-7395)", () => {
+    const verifiedUser = {
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: true,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+      twoFactorEnabled: false,
+    };
+
+    test("names the provider and writes nothing", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(verifiedUser as never);
+
+      await expect(
+        getSsoRecoveryConfirmation({
+          stateId: "test-state",
+          recoveryProof: createSsoRecoveryProof("user_1", "test-state"),
+          sessionUserId: "user_1",
+        })
+      ).resolves.toEqual({ provider: "google" });
+
+      // A page view must not link, strip, consume or finalize anything.
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+      expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+      expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["no proof", undefined, "user_1", "unproven"],
+      ["another user's session", createSsoRecoveryProof("user_1", "test-state"), "user_2", "rejected"],
+      ["no session", createSsoRecoveryProof("user_1", "test-state"), undefined, "rejected"],
+    ])(
+      "refuses %s exactly as the completion would",
+      async (_label, recoveryProof, sessionUserId, failure) => {
+        const outcome = getSsoRecoveryConfirmation({ stateId: "test-state", recoveryProof, sessionUserId });
+
+        await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe(failure);
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+      }
+    );
+
+    test("points at the confirmation page for a state", () => {
+      expect(getSsoRecoveryConfirmUrl("abc")).toBe("http://localhost:3000/sso-recovery/confirm?state=abc");
+    });
+
+    test.each([
+      [
+        "unproven",
+        new SsoRecoveryError("unproven", "http://localhost:3000/secret"),
+        "error=sso_recovery_link_not_opened",
+        false,
+      ],
+      [
+        "intent_unusable",
+        new SsoRecoveryError("intent_unusable", "http://localhost:3000/secret"),
+        "error=OAuthAccountNotLinked",
+        false,
+      ],
+      [
+        "rejected with its own callback",
+        new SsoRecoveryError("rejected", "http://localhost:3000/secret"),
+        "error=OAuthAccountNotLinked",
+        true,
+      ],
+      ["an unexpected error", new Error("boom"), "error=OAuthAccountNotLinked", false],
+    ])("maps %s to its login redirect", (_label, error, code, carriesCallback) => {
+      const url = getSsoRecoveryRefusalRedirectUrl(error);
+
+      expect(url).toContain(code);
+      expect(url.includes("callbackUrl=")).toBe(carriesCallback);
     });
   });
 

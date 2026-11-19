@@ -15,6 +15,12 @@ const RELATIVE_URL_BASE = "http://localhost";
  */
 export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
 
+/**
+ * The page that asks the account holder to confirm the link (ENG-7395). A GET on the completion path
+ * only forwards here; the page's POST back to the completion path is what links.
+ */
+export const SSO_RECOVERY_CONFIRM_PATH = "/sso-recovery/confirm";
+
 /** Better Auth's recovery magic-link endpoint, mounted by `ssoRecoverySignInPlugin` under `/api/auth`. */
 export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
 

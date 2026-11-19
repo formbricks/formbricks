@@ -17,6 +17,7 @@ import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation"
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import {
   SSO_RECOVERY_COMPLETION_PATH,
+  SSO_RECOVERY_CONFIRM_PATH,
   buildVerificationRequestedPath,
 } from "@/modules/auth/lib/verification-links";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
@@ -30,7 +31,7 @@ import {
   syncSsoIdentityForUser,
 } from "./account-linking";
 import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, isSsoRecoveryInternalCallbackUrl } from "./constants";
-import { normalizeSsoProvider } from "./provider-normalization";
+import { type TSsoIdentityProvider, normalizeSsoProvider } from "./provider-normalization";
 import { consumeSsoRecoveryIntent, createSsoRecoveryIntent, readSsoRecoveryIntent } from "./recovery-intent";
 import { isValidSsoRecoveryProof } from "./recovery-proof";
 
@@ -467,6 +468,26 @@ export const getSsoRecoverySecondFactorUnavailableRedirectUrl = (callbackUrl?: s
 export const getSsoRecoveryLinkNotOpenedRedirectUrl = (): string =>
   buildSsoRecoveryLoginUrl(undefined, SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE);
 
+/**
+ * Where a refused recovery sends the browser, for the confirmation page and the completion route alike.
+ * The route adds the ENG-2557 session teardown for a `rejected` failure on top; the page never tears down.
+ */
+export const getSsoRecoveryRefusalRedirectUrl = (error: unknown): string => {
+  const recoveryError = error instanceof SsoRecoveryError ? error : null;
+
+  if (recoveryError?.failure === "unproven") return getSsoRecoveryLinkNotOpenedRedirectUrl();
+  if (recoveryError?.failure === "intent_unusable") return getSsoRecoveryFailureRedirectUrl();
+  return getSsoRecoveryFailureRedirectUrl(recoveryError?.callbackUrl);
+};
+
+/** The confirmation page for a recovery (ENG-7395). */
+export const getSsoRecoveryConfirmUrl = (stateId: string): string => {
+  const confirmUrl = new URL(SSO_RECOVERY_CONFIRM_PATH, WEBAPP_URL);
+  confirmUrl.searchParams.set("state", stateId);
+
+  return confirmUrl.toString();
+};
+
 export const startSsoRecovery = async ({
   existingUser,
   provider,
@@ -595,22 +616,21 @@ const notifyRemovedFactors = async (
   }
 };
 
-export const completeSsoRecovery = async ({
+/**
+ * Every check a recovery must pass before anything is written, shared by the confirmation page (which
+ * only shows what would be linked) and the completion POST (which links it), so the page can never
+ * offer a recovery the POST would refuse. Throws `SsoRecoveryError`; audits each refusal.
+ */
+const authorizeSsoRecovery = async ({
   stateId,
   recoveryProof,
   sessionUserId,
-  sessionToken,
 }: {
   stateId: string;
   /** The proof cookie set when this browser opened the emailed link (`recovery-proof.ts`). */
   recoveryProof?: string;
   sessionUserId?: string;
-  /**
-   * The recovering user's own session token, so the post-commit revocation can spare it. Everything else
-   * the account accrued while its address was unproven is swept.
-   */
-  sessionToken?: string;
-}): Promise<string> => {
+}) => {
   // Reads without consuming. The completion URL sits in an email, and mail security gateways fetch
   // every link in a message before the human sees it — burning the intent on read would let a scanner
   // spend it and lock the real user out. It is consumed after the link commits instead.
@@ -746,6 +766,45 @@ export const completeSsoRecovery = async ({
     // discloses nothing they did not already supply.
     throw new SsoRecoveryError("rejected", intent.callbackUrl);
   }
+
+  return { intent, provider, user };
+};
+
+/**
+ * What the confirmation page shows before the account holder chooses to link (ENG-7395): the provider
+ * that would be linked. Runs every completion guard and writes nothing, so a page view cannot link,
+ * strip or consume anything, and a browser the POST would refuse is refused here first.
+ */
+export const getSsoRecoveryConfirmation = async (args: {
+  stateId: string;
+  recoveryProof?: string;
+  sessionUserId?: string;
+}): Promise<{ provider: TSsoIdentityProvider }> => {
+  const { provider } = await authorizeSsoRecovery(args);
+  return { provider };
+};
+
+/**
+ * Links the pending SSO identity. Reached only by the POST from the confirmation page (ENG-7395): a GET
+ * can be issued by a mail scanner or by a page the account holder never meant to act on.
+ */
+export const completeSsoRecovery = async ({
+  stateId,
+  recoveryProof,
+  sessionUserId,
+  sessionToken,
+}: {
+  stateId: string;
+  /** The proof cookie set when this browser opened the emailed link (`recovery-proof.ts`). */
+  recoveryProof?: string;
+  sessionUserId?: string;
+  /**
+   * The recovering user's own session token, so the post-commit revocation can spare it. Everything else
+   * the account accrued while its address was unproven is swept.
+   */
+  sessionToken?: string;
+}): Promise<string> => {
+  const { intent, provider, user } = await authorizeSsoRecovery({ stateId, recoveryProof, sessionUserId });
 
   const reclaimed = await prisma.$transaction(
     async (tx) => {

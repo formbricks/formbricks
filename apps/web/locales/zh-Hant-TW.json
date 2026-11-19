@@ -225,6 +225,13 @@
       "user_successfully_created": "使用者建立成功",
       "user_successfully_created_info": "我們已檢查與 {email} 相關聯的帳戶。如果不存在，我們已為您建立一個。如果帳戶已存在，則未進行任何更改。請在下方登入以繼續。"
     },
+    "sso_recovery_confirm": {
+      "cancel": "取消",
+      "confirm": "連結 {provider}",
+      "description": "完成後,你就可以使用 {provider} 登入這個 Formbricks 帳號了。",
+      "title": "要將 {provider} 連結到你的帳號嗎?",
+      "warning": "只有在你本人要求使用 {provider} 登入 Formbricks 時才繼續。如果不是,請取消:可能有其他人正試圖進入你的帳號。"
+    },
     "verification-requested": {
       "email_not_configured_description": "此 Formbricks 實例未設定電子郵件伺服器，因此無法發送驗證連結。請聯絡您的管理員。",
       "email_not_configured_title": "電子郵件未設定",

@@ -225,6 +225,13 @@
       "user_successfully_created": "A felhasználó sikeresen létrehozva",
       "user_successfully_created_info": "Ellenőriztük, hogy létezik-e a(z) {email} címhez rendelt fiók. Ha nem létezett, akkor létrehoztunk egyet Önnek. Ha a fiók már létezett, akkor nem történt változtatás. Jelentkezzen be lent a folytatáshoz."
     },
+    "sso_recovery_confirm": {
+      "cancel": "Mégse",
+      "confirm": "{provider} összekapcsolása",
+      "description": "Ezt követően Ön a(z) {provider} használatával be tud jelentkezni ebbe a Formbricks-fiókba.",
+      "title": "Összekapcsolja a(z) {provider} szolgáltatást a fiókjával?",
+      "warning": "Kizárólag abban az esetben folytassa, ha Ön személyesen kezdeményezte a Formbricks-be történő bejelentkezést a(z) {provider} használatával. Amennyiben nem Ön kezdeményezte, kérjük, szakítsa meg a folyamatot: előfordulhat, hogy valaki más próbál hozzáférni az Ön fiókjához."
+    },
     "verification-requested": {
       "email_not_configured_description": "Ez a Formbricks-példány nem rendelkezik beállított e-mail-kiszolgálóval, ezért nem sikerült elküldeni az ellenőrzési hivatkozást. Vegye fel a kapcsolatot az adminisztrátorral.",
       "email_not_configured_title": "Az e-mail nincs beállítva",

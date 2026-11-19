@@ -3,7 +3,7 @@ import { getSession } from "@/modules/auth/lib/session";
 import { revokeSessionByToken } from "@/modules/auth/lib/session-revocation";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
 import { SsoRecoveryError, completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
-import { GET } from "./route";
+import { GET, POST } from "./route";
 
 /**
  * The completion route had no test of its own, which is part of why the ENG-2783 loop went unnoticed:
@@ -40,16 +40,97 @@ const request = (url: string, cookie?: string) =>
 
 const location = (response: Response) => response.headers.get("location");
 
-describe("GET /api/auth/sso/recovery/complete", () => {
+/** The confirmation page's form submission: same-origin, form-encoded, state in the body. */
+const submit = (stateId: string, cookie?: string, headers: Record<string, string> = {}) =>
+  new Request(`${WEBAPP_URL}/api/auth/sso/recovery/complete`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "sec-fetch-site": "same-origin",
+      ...(cookie ? { cookie } : {}),
+      ...headers,
+    },
+    body: new URLSearchParams({ state: stateId }).toString(),
+  });
+
+describe("/api/auth/sso/recovery/complete", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user_1" } } as never);
   });
 
+  /**
+   * ENG-7395. The emailed link redirects here, and a GET can come from a mail scanner or from a click
+   * the account holder did not mean as consent. Even a browser with a matching session AND a valid
+   * proof cookie only gets the confirmation page.
+   */
+  test("a GET never links, even with a session and a proof cookie", async () => {
+    vi.mocked(completeSsoRecovery).mockResolvedValue(`${WEBAPP_URL}/environments/env_1`);
+
+    const response = await GET(
+      request(
+        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
+        `formbricks.session_token=token-abc.signature; ${SSO_RECOVERY_PROOF_COOKIE_NAME}=proof-value`
+      )
+    );
+
+    expect(completeSsoRecovery).not.toHaveBeenCalled();
+    expect(revokeSessionByToken).not.toHaveBeenCalled();
+    expect(location(response)).toBe(`${WEBAPP_URL}/sso-recovery/confirm?state=state-id`);
+  });
+
+  test("the POST from the confirmation page links, with the proof and session it carries", async () => {
+    vi.mocked(completeSsoRecovery).mockResolvedValue(`${WEBAPP_URL}/environments/env_1`);
+
+    const response = await POST(
+      submit(
+        "state-id",
+        `formbricks.session_token=token-abc.signature; ${SSO_RECOVERY_PROOF_COOKIE_NAME}=proof-value`
+      )
+    );
+
+    expect(completeSsoRecovery).toHaveBeenCalledWith({
+      stateId: "state-id",
+      recoveryProof: "proof-value",
+      sessionUserId: "user_1",
+      sessionToken: "token-abc",
+    });
+    // 303 so the browser follows with a GET; a 307 would replay this POST against the callback.
+    expect(response.status).toBe(303);
+    expect(location(response)).toBe(`${WEBAPP_URL}/environments/env_1`);
+  });
+
+  test.each([["cross-site"], ["same-site"], ["none"]])(
+    "refuses a %s submission without trying to link",
+    async (fetchSite) => {
+      const response = await POST(
+        submit("state-id", "formbricks.session_token=token-abc.signature", { "sec-fetch-site": fetchSite })
+      );
+
+      expect(completeSsoRecovery).not.toHaveBeenCalled();
+      expect(revokeSessionByToken).not.toHaveBeenCalled();
+      expect(response.status).toBe(303);
+      expect(location(response)).toContain("error=OAuthAccountNotLinked");
+    }
+  );
+
+  test("refuses a submission with no state", async () => {
+    const response = await POST(
+      new Request(`${WEBAPP_URL}/api/auth/sso/recovery/complete`, {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded", "sec-fetch-site": "same-origin" },
+        body: "",
+      })
+    );
+
+    expect(completeSsoRecovery).not.toHaveBeenCalled();
+    expect(location(response)).toContain("error=OAuthAccountNotLinked");
+  });
+
   test("sends the user on to the callback the completed recovery returns", async () => {
     vi.mocked(completeSsoRecovery).mockResolvedValue(`${WEBAPP_URL}/environments/env_1`);
 
-    const response = await GET(request(`${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`));
+    const response = await POST(submit("state-id"));
 
     expect(completeSsoRecovery).toHaveBeenCalledWith(
       expect.objectContaining({ stateId: "state-id", sessionUserId: "user_1" })
@@ -60,12 +141,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   test("hands the session token through, so the post-commit sweep can spare it", async () => {
     vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
 
-    await GET(
-      request(
-        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
-        "formbricks.session_token=token-abc.signature"
-      )
-    );
+    await POST(submit("state-id", "formbricks.session_token=token-abc.signature"));
 
     // The exact value, not just "some token": forwarding the wrong one would still be defined.
     expect(vi.mocked(completeSsoRecovery).mock.calls[0][0].sessionToken).toBe("token-abc");
@@ -74,9 +150,9 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   test("hands the recovery proof cookie through to the completion (ENG-7310)", async () => {
     vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
 
-    await GET(
-      request(
-        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
+    await POST(
+      submit(
+        "state-id",
         `formbricks.session_token=token-abc.signature; ${SSO_RECOVERY_PROOF_COOKIE_NAME}=proof-value`
       )
     );
@@ -87,12 +163,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   test("passes no proof when the browser holds none", async () => {
     vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
 
-    await GET(
-      request(
-        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
-        "formbricks.session_token=token-abc.signature"
-      )
-    );
+    await POST(submit("state-id", "formbricks.session_token=token-abc.signature"));
 
     expect(vi.mocked(completeSsoRecovery).mock.calls[0][0].recoveryProof).toBeUndefined();
   });
@@ -100,12 +171,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   test("clears the spent proof cookie once recovery completes", async () => {
     vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
 
-    const response = await GET(
-      request(
-        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
-        `${SSO_RECOVERY_PROOF_COOKIE_NAME}=p`
-      )
-    );
+    const response = await POST(submit("state-id", `${SSO_RECOVERY_PROOF_COOKIE_NAME}=p`));
 
     expect(response.headers.getSetCookie().join("\n")).toMatch(
       new RegExp(`${SSO_RECOVERY_PROOF_COOKIE_NAME}=;.*Max-Age=0`)
@@ -124,12 +190,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
       new SsoRecoveryError("unproven", `${WEBAPP_URL}/environments/secret`)
     );
 
-    const response = await GET(
-      request(
-        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
-        "formbricks.session_token=token-abc.signature"
-      )
-    );
+    const response = await POST(submit("state-id", "formbricks.session_token=token-abc.signature"));
 
     expect(revokeSessionByToken).not.toHaveBeenCalled();
     expect(response.headers.getSetCookie().join("\n")).not.toContain("session_token=;");
@@ -162,7 +223,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
       new SsoRecoveryError("rejected", `${WEBAPP_URL}/environments/env_1`)
     );
 
-    const response = await GET(request(`${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`));
+    const response = await POST(submit("state-id"));
 
     expect(location(response)).toContain(
       `callbackUrl=${encodeURIComponent(`${WEBAPP_URL}/environments/env_1`)}`
@@ -172,7 +233,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   test("omits the callback when the intent could not be read at all", async () => {
     vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("intent_unusable"));
 
-    const response = await GET(request(`${WEBAPP_URL}/api/auth/sso/recovery/complete?state=unknown`));
+    const response = await POST(submit("unknown"));
 
     expect(location(response)).toContain("error=OAuthAccountNotLinked");
     expect(location(response)).not.toContain("callbackUrl=");
@@ -188,12 +249,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   test("leaves the session alone when the intent is simply gone", async () => {
     vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("intent_unusable"));
 
-    const response = await GET(
-      request(
-        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
-        "formbricks.session_token=token-abc.signature"
-      )
-    );
+    const response = await POST(submit("state-id", "formbricks.session_token=token-abc.signature"));
 
     expect(revokeSessionByToken).not.toHaveBeenCalled();
     expect(response.headers.getSetCookie().join("\n")).not.toContain("session_token=;");
@@ -203,7 +259,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   test("still redirects safely when the failure is not one of ours", async () => {
     vi.mocked(completeSsoRecovery).mockRejectedValue(new Error("redis exploded"));
 
-    const response = await GET(request(`${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`));
+    const response = await POST(submit("state-id"));
 
     expect(location(response)).toContain("error=OAuthAccountNotLinked");
     expect(location(response)).not.toContain("callbackUrl=");
@@ -212,12 +268,7 @@ describe("GET /api/auth/sso/recovery/complete", () => {
   test("clears the session cookies and revokes the session it was given on a rejected recovery", async () => {
     vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("rejected"));
 
-    const response = await GET(
-      request(
-        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
-        "formbricks.session_token=token-abc.signature"
-      )
-    );
+    const response = await POST(submit("state-id", "formbricks.session_token=token-abc.signature"));
 
     const setCookies = response.headers.getSetCookie().join("\n");
     expect(setCookies).toContain("formbricks.session_token=;");

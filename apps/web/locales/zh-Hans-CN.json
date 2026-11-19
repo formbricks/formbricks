@@ -225,6 +225,13 @@
       "user_successfully_created": "用户已成功创建",
       "user_successfully_created_info": "我们已检查与 {email} 相关联的账户。如果没有，我们已为您创建一个。如果已有账户，则未作任何更改。请在下面登录以继续。"
     },
+    "sso_recovery_confirm": {
+      "cancel": "取消",
+      "confirm": "关联 {provider}",
+      "description": "完成后,你就可以使用 {provider} 登录此 Formbricks 账户了。",
+      "title": "要将 {provider} 关联到你的账户吗?",
+      "warning": "只有在你本人想要使用 {provider} 登录 Formbricks 时才可继续。如果不是,请取消:可能有其他人正试图进入你的账户。"
+    },
     "verification-requested": {
       "email_not_configured_description": "此 Formbricks 实例未配置邮件服务器，因此无法发送验证链接。请联系您的管理员。",
       "email_not_configured_title": "邮件未配置",

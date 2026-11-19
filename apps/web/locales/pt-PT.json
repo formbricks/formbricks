@@ -225,6 +225,13 @@
       "user_successfully_created": "Utilizador criado com sucesso",
       "user_successfully_created_info": "Verificámos a existência de uma conta associada a {email}. Se não existia, criámos uma para ti. Se já existia uma conta, não foram feitas alterações. Por favor, inicia sessão abaixo para continuar."
     },
+    "sso_recovery_confirm": {
+      "cancel": "Cancelar",
+      "confirm": "Associar {provider}",
+      "description": "Depois disto, podes iniciar sessão nesta conta do Formbricks com {provider}.",
+      "title": "Associar {provider} à tua conta?",
+      "warning": "Só deves continuar se foste tu a pedir para iniciar sessão no Formbricks com {provider}. Caso contrário, cancela: alguém pode estar a tentar aceder à tua conta."
+    },
     "verification-requested": {
       "email_not_configured_description": "Esta instância do Formbricks não tem um servidor de email configurado, pelo que não foi possível enviar qualquer link de verificação. Por favor, contacta o teu administrador.",
       "email_not_configured_title": "O email não está configurado",

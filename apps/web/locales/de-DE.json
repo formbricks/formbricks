@@ -225,6 +225,13 @@
       "user_successfully_created": "Nutzer erfolgreich erstellt",
       "user_successfully_created_info": "Wir haben nach einem Konto gesucht, das mit {email} verknüpft ist. Falls keines existierte, haben wir eines für dich erstellt. Falls bereits ein Konto vorhanden war, wurden keine Änderungen vorgenommen. Bitte melde dich unten an, um fortzufahren."
     },
+    "sso_recovery_confirm": {
+      "cancel": "Abbrechen",
+      "confirm": "{provider} verknüpfen",
+      "description": "Danach kannst Du Dich mit {provider} bei diesem Formbricks-Konto anmelden.",
+      "title": "{provider} mit Deinem Konto verknüpfen?",
+      "warning": "Fahre nur fort, wenn Du selbst darum gebeten hast, Dich mit {provider} bei Formbricks anzumelden. Falls nicht, brich den Vorgang ab: Möglicherweise versucht jemand anderes, Zugriff auf Dein Konto zu bekommen."
+    },
     "verification-requested": {
       "email_not_configured_description": "Für diese Formbricks-Instanz ist kein E-Mail-Server eingerichtet, daher konnte kein Bestätigungslink gesendet werden. Bitte wende dich an deinen Administrator.",
       "email_not_configured_title": "E-Mail ist nicht konfiguriert",

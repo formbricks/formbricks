@@ -225,6 +225,13 @@
       "user_successfully_created": "User created successfully",
       "user_successfully_created_info": "We have checked for an account associated with {email}. If none existed, we have created one for you. If an account already existed, no changes were made. Please log in below to continue."
     },
+    "sso_recovery_confirm": {
+      "cancel": "Cancel",
+      "confirm": "Link {provider}",
+      "description": "After this, you can sign in to this Formbricks account with {provider}.",
+      "title": "Link {provider} to your account?",
+      "warning": "Only continue if you yourself asked to sign in to Formbricks with {provider}. If you did not, cancel: someone else may be trying to get into your account."
+    },
     "verification-requested": {
       "email_not_configured_description": "This Formbricks instance has no email server set up, so no verification link could be sent. Please contact your administrator.",
       "email_not_configured_title": "Email is not configured",
