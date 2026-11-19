@@ -115,6 +115,11 @@ export const INTERNAL_PROBLEM_CODES = [
   "formbricks_file_too_new",
   "idempotency_key_in_use",
   "idempotency_key_reused",
+  "mcp_grant_beyond_scopes",
+  "mcp_grant_changed",
+  "mcp_grant_invalid",
+  "mcp_grant_not_saved",
+  "mcp_grant_selection_unavailable",
   "member_in_other_organizations",
   "retention_exemption_exists",
   "retention_exemption_not_active",
@@ -249,10 +254,10 @@ function problemResponse(
 export function problemBadRequest(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string }
+  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: ProblemCode }
 ): Response {
   return problemResponse(400, "Bad Request", detail, requestId, {
-    code: "bad_request",
+    code: options?.code ?? "bad_request",
     instance: options?.instance,
     invalid_params: options?.invalid_params,
   });
@@ -380,6 +385,16 @@ export function problemDashboardsPlanRequired(requestId: string, instance?: stri
     requestId,
     { code: "dashboards_plan_required", instance }
   );
+}
+
+/** The organization isn't entitled to Contacts (the enterprise Contacts, Attributes and Segments feature). */
+export function problemContactsNotEntitled(requestId: string, instance?: string): Response {
+  return problemForbidden(requestId, "The contacts feature is not enabled for this organization.", instance);
+}
+
+/** The organization isn't entitled to Workflows (a Cloud plan or a self-hosted license that includes them). */
+export function problemWorkflowsNotEntitled(requestId: string, instance?: string): Response {
+  return problemForbidden(requestId, "Workflows are not enabled for this organization", instance);
 }
 
 /**
@@ -702,10 +717,11 @@ export function problemNotFound(
 export function problemInternalError(
   requestId: string,
   detail: string = "An unexpected error occurred.",
-  instance?: string
+  instance?: string,
+  code: ProblemCode = "internal_server_error"
 ): Response {
   return problemResponse(500, "Internal Server Error", detail, requestId, {
-    code: "internal_server_error",
+    code,
     instance,
   });
 }

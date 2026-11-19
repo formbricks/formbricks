@@ -68,7 +68,10 @@ export async function leaveOrganizationOperation({
   }
 
   if (auditLog) auditLog.oldObject = membership;
-  const conflict = await deleteMembershipOrConflict(actor.id, organizationId, { requestId, instance });
+  const conflict = await deleteMembershipOrConflict(actor.id, organizationId, actor.id, {
+    requestId,
+    instance,
+  });
   if (conflict) return conflict;
   return noContentResponse({ requestId });
 }

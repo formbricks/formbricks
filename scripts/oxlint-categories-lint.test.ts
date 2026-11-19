@@ -45,13 +45,17 @@ run("adds");
   "convention.tsx": "export const C = () => <div />;\n",
 };
 
-// Positive control for the fixture above: the same file shape with three arguments to `expect`, one past
-// `maxArgs`, must report, so the absence of `vitest/valid-expect` above is not vacuous.
+// Positive controls for the fixture above: three arguments to `expect` (one past `maxArgs`) and an empty
+// literal title (which `allowArguments` does not exempt) must report, so the absence of
+// `vitest/valid-expect` and `vitest/valid-title` above is not vacuous. A `.js` file: the three-argument
+// `expect` is a type error, and a `.ts` fixture written into apps/web falls inside its tsconfig's
+// `**/*.ts`, so a typecheck or build running at the same time would fail on it.
 const controlFixtures = {
-  "invalid-vitest.ts": `import { expect, test } from "vitest";
+  "invalid-vitest.js": `import { expect, test } from "vitest";
 test("adds", () => {
   expect(1, "one is one", "extra").toBe(1);
 });
+test("", () => {});
 `,
 };
 
@@ -83,9 +87,16 @@ describe("every tier runs oxlint's correctness and suspicious categories", () =>
     });
 
     test("vitest rules run on the non-test-named fixture: a third `expect` argument reports", () => {
-      const diagnostics = results[tier]["invalid-vitest.ts"];
+      const diagnostics = results[tier]["invalid-vitest.js"];
       expect(diagnostics, JSON.stringify(diagnostics)).toContainEqual(
         expect.objectContaining({ ruleId: "vitest/valid-expect", severity: "error" })
+      );
+    });
+
+    test("vitest/valid-title runs: an empty literal title reports", () => {
+      const diagnostics = results[tier]["invalid-vitest.js"];
+      expect(diagnostics, JSON.stringify(diagnostics)).toContainEqual(
+        expect.objectContaining({ ruleId: "vitest/valid-title", severity: "error" })
       );
     });
 

@@ -54,6 +54,8 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/link-survey-pin-verifications` | POST | none | dashboard | `/api/internal` | `app/api/internal/link-survey-pin-verifications/route.ts` |
 | `/api/internal/link-survey-verification-emails` | POST | none | dashboard | `/api/internal` | `app/api/internal/link-survey-verification-emails/route.ts` |
 | `/api/internal/matrix-questions` | GET | session | dashboard | `/api/internal` | `app/api/internal/matrix-questions/route.ts` |
+| `/api/internal/mcp-grants` | GET | session | dashboard | `/api/internal` | `app/api/internal/mcp-grants/route.ts` |
+| `/api/internal/mcp-grants/{clientId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/mcp-grants/[clientId]/route.ts` |
 | `/api/internal/members/{userId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
 | `/api/internal/members/me` | DELETE | session | dashboard | `/api/internal` | `app/api/internal/members/me/route.ts` |

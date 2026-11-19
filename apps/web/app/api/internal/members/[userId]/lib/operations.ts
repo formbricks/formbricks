@@ -15,15 +15,17 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { canManageUsers } from "@/lib/membership/user-management";
 import { lockUserActiveState } from "@/lib/user/reactivation";
+import { finishRevokedMcpGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   refuseRoleAssignment,
   requireRoleManagementEntitlement,
 } from "@/modules/ee/role-management/lib/api-access";
-import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { updateMembership, updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
 import {
   LastActiveOwnerError,
@@ -43,22 +45,34 @@ export const LAST_OWNER_DETAIL = "You cannot demote the last owner of the organi
  * must see a removal from another organization that commits at the same moment.
  *
  * Whether this is an owner's demotion is decided from the lookup before the lock, as the action did;
- * deciding it under the lock instead is ENG-2177.
+ * deciding it under the lock instead is ENG-2177. `actorUserId` is the user making the change: the actor of
+ * the audit entries of any MCP grant it ends (a demotion to Dashboard viewer ends them), which are finished
+ * once the transaction commits. Each attempt returns its own records, so a retried attempt's are dropped.
  */
 const applyRoleChange = async (
   target: TMembership,
-  body: TMemberUpdateBody
+  body: TMemberUpdateBody,
+  actorUserId: string
 ): Promise<TMembership | LastActiveOwnerError> => {
   const { userId, organizationId } = target;
   if (target.role !== "owner" || body.role === "owner") {
-    return updateMembership(userId, organizationId, body);
+    return updateMembership(userId, organizationId, body, actorUserId);
   }
 
   try {
-    return await runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
-      await lockUserActiveState(tx, userId);
-      return updateMembership(userId, organizationId, body, tx);
-    });
+    const { membership, grantAudits } = await runOwnerGuardedTransaction(
+      organizationId,
+      userId,
+      async (tx) => {
+        // After the owners' lock, before the user's MCP grant and consent rows.
+        await lockUserActiveState(tx, userId);
+        return updateMembershipInTransaction(tx, userId, organizationId, body);
+      },
+      // Ending the user's MCP grants can wait on a reconciling pass.
+      { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+    );
+    await finishRevokedMcpGrants(grantAudits, { actorUserId });
+    return membership;
   } catch (error) {
     if (error instanceof LastActiveOwnerError) return error;
     throw error;
@@ -145,7 +159,7 @@ export async function updateMemberRoleOperation({
   if (!target) return problemForbidden(requestId, undefined, instance);
   if (auditLog) auditLog.oldObject = target;
 
-  const result = await applyRoleChange(target, body);
+  const result = await applyRoleChange(target, body, actor.id);
   if (result instanceof LastActiveOwnerError) {
     return problemConflict(requestId, LAST_OWNER_DETAIL, instance);
   }
@@ -157,14 +171,17 @@ export async function updateMemberRoleOperation({
 /**
  * Remove a membership, mapping the last-owner guard `deleteMembership` runs under the owners' lock
  * (`runOwnerGuardedTransaction`, where two concurrent removals can't both pass it) to a 409 with its reason.
+ * `actorUserId` is the user removing it (the member themselves when leaving): the actor of the audit entries
+ * of the MCP grants the removal ends.
  */
 export async function deleteMembershipOrConflict(
   userId: string,
   organizationId: string,
+  actorUserId: string,
   { requestId, instance }: { requestId: string; instance?: string }
 ): Promise<Response | null> {
   try {
-    await deleteMembership(userId, organizationId);
+    await deleteMembership(userId, organizationId, actorUserId);
     return null;
   } catch (error) {
     if (error instanceof ValidationError) return problemConflict(requestId, error.message, instance);
@@ -222,7 +239,10 @@ export async function deleteMemberOperation({
   }
 
   if (auditLog) auditLog.oldObject = membership;
-  const conflict = await deleteMembershipOrConflict(userId, organizationId, { requestId, instance });
+  const conflict = await deleteMembershipOrConflict(userId, organizationId, access.userId, {
+    requestId,
+    instance,
+  });
   if (conflict) return conflict;
   return noContentResponse({ requestId });
 }

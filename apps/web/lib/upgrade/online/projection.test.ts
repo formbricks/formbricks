@@ -46,6 +46,7 @@ beforeEach(() => {
     overdueRevocations: 0,
     revocationsPastCritical: 0,
     revocationsPastWarning: 0,
+    unknownType: 0,
   });
 });
 
@@ -82,6 +83,7 @@ test("fresh live grants need not drain to zero; dead letters and late revocation
   vi.mocked(getAuthzedOutboxStatus).mockResolvedValueOnce({
     deadLettered: 0,
     revocationsPastWarning: 1,
+    unknownType: 0,
   } as never);
   await expect(verifyOnlineProjection(lock)).rejects.toThrow("revocation_delivery_unhealthy");
 });

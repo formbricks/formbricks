@@ -12,9 +12,9 @@ import {
   isMultiSelectOperator,
 } from "@/modules/ui/components/conditions-editor/lib/condition-handlers";
 import {
-  SENTENCE_FIELDS_CLASS,
   SENTENCE_ICON_BUTTON_CLASS,
   SENTENCE_ROW_ACTIONS_CLASS,
+  getSentenceFieldsClass,
   getSentenceLead,
   getSentenceLeadClass,
   getSentenceRowClass,
@@ -62,6 +62,7 @@ export function SentenceConditionsEditor({
   const { t } = useTranslation();
   const rowClass = getSentenceRowClass(leadAlign);
   const leadClass = getSentenceLeadClass(leadAlign);
+  const fieldsClass = getSentenceFieldsClass(leadAlign);
   const [parent] = useAutoAnimate();
 
   const { handleLeftOperandChange, handleOperatorChange, handleRightOperandChange } = createConditionHandlers(
@@ -191,7 +192,7 @@ export function SentenceConditionsEditor({
         <div className={rowClass}>
           <div className={leadClass}>{renderLead(index)}</div>
 
-          <div className={SENTENCE_FIELDS_CLASS}>
+          <div className={fieldsClass}>
             <InputCombobox
               id={`condition-${depth}-${index}-conditionValue`}
               key="conditionValue"

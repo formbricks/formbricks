@@ -1,5 +1,6 @@
 import "server-only";
 import { deadlineInterceptor, v1 } from "@authzed/authzed-node";
+import { Metadata } from "@grpc/grpc-js";
 import { env } from "@/lib/env";
 import { type TAuthzedConsistency, isAuthzedEnabled } from "./config";
 import {
@@ -173,7 +174,15 @@ export type TAuthzedClient = Readonly<{
   readRelationships: (query: TAuthzedRelationshipQuery) => Promise<TAuthzedRelationshipPage>;
   readSchema: () => Promise<TAuthzedSchema>;
   systemKey: string;
-  writeRelationships: (updates: ReadonlyArray<TAuthzedRelationshipUpdate>) => Promise<void>;
+  /**
+   * Touch or delete relationships in one transaction. `deadline` (epoch ms) replaces the channel's per-call
+   * deadline for every attempt, so no attempt, retries included, runs past it: SpiceDB abandons a write
+   * still under way at the deadline.
+   */
+  writeRelationships: (
+    updates: ReadonlyArray<TAuthzedRelationshipUpdate>,
+    options?: Readonly<{ deadline?: number }>
+  ) => Promise<void>;
   writeSchema: (schemaText: string) => Promise<void>;
 }>;
 
@@ -519,6 +528,14 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
         });
       if (response.pairs.length !== checks.length) throw invalidResponse();
       return response.pairs.map((pair, index) => {
+        // SpiceDB answers a failed item with its own status (bulkcheck.go), such as FAILED_PRECONDITION
+        // for a permission the schema lacks. Raised as that status, not as a malformed response, so the
+        // retry wrapper doesn't retry a permanent failure and callers can read which element is missing
+        // (`isPermissionMissingFromSchema`). Never a decision either way.
+        if (pair.response.oneofKind === "error") {
+          const { code, message } = pair.response.error;
+          throw mapAuthzedError(Object.assign(new Error(message), { code }), "check_bulk_permissions", 1);
+        }
         const expected = items[index];
         const echoed = pair.request;
         // Never associate an allow with a different recipient or permission, including reordered pairs.
@@ -815,35 +832,41 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
     systemKey: config.systemKey,
     // TOUCH and DELETE relationship updates are idempotent. Keep retries opt-in at this facade
     // operation so future non-idempotent mutations cannot inherit them accidentally.
-    writeRelationships: async (updates) => {
+    writeRelationships: async (updates, options) => {
       validateRelationshipUpdates(updates);
+      // The deadline interceptor only sets a deadline on a call that has none, so this one wins.
+      const callOptions = options?.deadline === undefined ? {} : { deadline: options.deadline };
 
       await executeAuthzedOperation("write_relationships", async () => {
-        await sdkClient.promises.writeRelationships({
-          optionalPreconditions: [],
-          updates: updates.map(({ operation, relationship }) => ({
-            operation:
-              operation === "touch"
-                ? v1.RelationshipUpdate_Operation.TOUCH
-                : v1.RelationshipUpdate_Operation.DELETE,
-            relationship: {
-              optionalCaveat: undefined,
-              optionalExpiresAt: undefined,
-              relation: relationship.relation,
-              resource: {
-                objectId: relationship.resource.objectId,
-                objectType: relationship.resource.objectType,
-              },
-              subject: {
-                object: {
-                  objectId: relationship.subject.objectId,
-                  objectType: relationship.subject.objectType,
+        await sdkClient.promises.writeRelationships(
+          {
+            optionalPreconditions: [],
+            updates: updates.map(({ operation, relationship }) => ({
+              operation:
+                operation === "touch"
+                  ? v1.RelationshipUpdate_Operation.TOUCH
+                  : v1.RelationshipUpdate_Operation.DELETE,
+              relationship: {
+                optionalCaveat: undefined,
+                optionalExpiresAt: undefined,
+                relation: relationship.relation,
+                resource: {
+                  objectId: relationship.resource.objectId,
+                  objectType: relationship.resource.objectType,
                 },
-                optionalRelation: relationship.subject.relation ?? "",
+                subject: {
+                  object: {
+                    objectId: relationship.subject.objectId,
+                    objectType: relationship.subject.objectType,
+                  },
+                  optionalRelation: relationship.subject.relation ?? "",
+                },
               },
-            },
-          })),
-        });
+            })),
+          },
+          new Metadata(),
+          callOptions
+        );
       });
     },
     // Repeating WriteSchema with the exact same schema is idempotent. Keep this explicit so future

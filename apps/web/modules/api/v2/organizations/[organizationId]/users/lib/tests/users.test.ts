@@ -569,6 +569,34 @@ describe("Users Lib", () => {
   });
 
   describe("updateUser on a user who also belongs to other organizations", () => {
+    // Locking the account takes the user's row, which a Revoke or a bulk end of the user's MCP grants can
+    // hold while it waits behind a reconciling pass: that transaction allows Revoke's timeout.
+    test("locks the account on Revoke's transaction timeout", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
+      lockedAccount({ otherOrganizations: ["org789"] });
+
+      await updateUser({ email: mockUser.email, isActive: false, name: "Other" }, "org456");
+
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
+    });
+
+    // A role-only change still updates the user's row, so it waits behind the same Revoke.
+    test("gives a role-only change Revoke's transaction timeout too", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(2);
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "member" }],
+      } as never);
+
+      await updateUser({ email: mockUser.email, role: "member" }, "org456");
+
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
+    });
+
     test("decides under the user row's lock, counting only other organizations' memberships", async () => {
       runInTransaction();
       vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);

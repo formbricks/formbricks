@@ -423,7 +423,10 @@
                   },
                   {
                     "group": "Upcoming changes",
-                    "pages": ["self-hosting/upgrade/versions/session-cookie-writes"]
+                    "pages": [
+                      "self-hosting/upgrade/versions/session-cookie-writes",
+                      "self-hosting/upgrade/versions/mcp-access"
+                    ]
                   }
                 ]
               },

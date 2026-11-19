@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ValidationError } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
-import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
 import {
   LastActiveOwnerError,
@@ -50,7 +50,7 @@ describe("deleteMembership last-owner guard (real Postgres)", () => {
       const { organizationId, ownerIds } = await seedOrganizationWithOwners(round);
 
       const outcomes = await Promise.allSettled(
-        ownerIds.map((userId) => deleteMembership(userId, organizationId))
+        ownerIds.map((userId) => deleteMembership(userId, organizationId, userId))
       );
 
       expect(await countOwners(organizationId)).toBe(1);
@@ -70,9 +70,9 @@ describe("deleteMembership last-owner guard (real Postgres)", () => {
 
       const outcomes = await Promise.allSettled([
         runOwnerGuardedTransaction(organizationId, ownerIds[0], (tx) =>
-          updateMembership(ownerIds[0], organizationId, { role: "member" }, tx)
+          updateMembershipInTransaction(tx, ownerIds[0], organizationId, { role: "member" })
         ),
-        deleteMembership(ownerIds[1], organizationId),
+        deleteMembership(ownerIds[1], organizationId, ownerIds[0]),
       ]);
 
       expect(await countOwners(organizationId)).toBe(1);
@@ -88,9 +88,9 @@ describe("deleteMembership last-owner guard (real Postgres)", () => {
 
   test("refuses to remove the only owner", async () => {
     const { organizationId, ownerIds } = await seedOrganizationWithOwners(0);
-    await deleteMembership(ownerIds[0], organizationId);
+    await deleteMembership(ownerIds[0], organizationId, ownerIds[1]);
 
-    await expect(deleteMembership(ownerIds[1], organizationId)).rejects.toThrow(ValidationError);
+    await expect(deleteMembership(ownerIds[1], organizationId, ownerIds[1])).rejects.toThrow(ValidationError);
     expect(await countOwners(organizationId)).toBe(1);
   });
 });

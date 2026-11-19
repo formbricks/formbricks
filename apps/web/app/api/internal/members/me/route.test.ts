@@ -86,7 +86,8 @@ describe("DELETE /api/internal/members/me", () => {
 
     expect(response.status).toBe(204);
     expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.stateMutation, ORG_ID);
-    expect(mocks.deleteMembership).toHaveBeenCalledWith(USER_ID, ORG_ID);
+    // Leaving, the member is the actor of the MCP grants it ends.
+    expect(mocks.deleteMembership).toHaveBeenCalledWith(USER_ID, ORG_ID, USER_ID);
     expect(lastAudit()).toEqual(
       expect.objectContaining({
         action: "deleted",

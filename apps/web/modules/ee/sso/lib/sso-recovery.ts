@@ -4,11 +4,12 @@ import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
 import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
-import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import {
@@ -18,6 +19,7 @@ import {
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
+import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-audit";
 import {
   LINKED_SSO_LOOKUP_SELECT,
   TSsoAccountLinkInput,
@@ -125,6 +127,8 @@ type TReclaimOutcome = {
   apiKeysRevoked: number;
   /** The same keys by id, for the post-commit SpiceDB cleanup. Not part of the audit record. */
   revokedApiKeyIds: string[];
+  /** The MCP grants that ended, audited on their own once the transaction commits. */
+  revokedMcpGrantAudits: TMcpGrantAuditRecord[];
 } | null;
 
 /**
@@ -218,7 +222,7 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // Left as-is on purpose: there is no signal here that separates the two populations, and weakening the
   // guard would reopen the takeover. What was missing was telling the user, and the completion path now
   // does — `sendSsoRecoveryFactorsRemovedEmail` names what was removed and links to re-enrolment
-  // (ENG-2633). The in-app re-enrolment prompt is still open on that ticket.
+  // (ENG-2633).
   if (user.emailVerified) {
     return null;
   }
@@ -270,8 +274,8 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // MCP OAuth grants the account minted while its address was unproven. Without this the sweep is
   // incomplete in the one direction that outlives it: `oauthProvider` is registered unconditionally
   // (auth.ts) with open dynamic client registration, so a holder of a live session can bank a refresh
-  // token good for 30 days — far longer than the session revoked below. What revoking covers, and the
-  // 15-minute JWT access-token residual it leaves, is on `revokeAllUserOAuthGrants`.
+  // token good for 30 days — far longer than the session revoked below. What revoking covers, MCP grants
+  // and so the live JWT access tokens included (ENG-7149), is on `revokeAllUserOAuthGrants`.
   const oauth = await revokeAllUserOAuthGrants(tx, user.id);
 
   // The keys this user minted (ENG-2634). Ids first: `deleteMany` reports only a count, and the caller
@@ -290,7 +294,39 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
     oauthConsentsRevoked: oauth.consentsDeleted,
     apiKeysRevoked: apiKeyRows.count,
     revokedApiKeyIds: apiKeys.map(({ id }) => id),
+    revokedMcpGrantAudits: oauth.grantAudits,
   };
+};
+
+/**
+ * After a committed reclaim: revoke the account's other sessions, and what the removed API keys and MCP
+ * grants still need outside Postgres. Returns the sessions revoked, `null` when revoking them failed.
+ */
+const settleReclaimedCredentials = async (
+  reclaimed: NonNullable<TReclaimOutcome>,
+  userId: string,
+  keepSessionToken: string | undefined
+): Promise<number | null> => {
+  let sessionsRevoked: number | null;
+  try {
+    sessionsRevoked = await revokeUserSessionsExcept({ userId, keepSessionToken });
+  } catch (error) {
+    sessionsRevoked = null;
+    logger.error({ error, userId }, "Failed to revoke sessions after reclaiming unverified local auth");
+  }
+  // The keys are already gone from Postgres, which is what ends their access — the API auth path looks
+  // a key up by hash and now finds nothing. SpiceDB keeps their relationships until the outbox worker
+  // reaches the trigger-enqueued event; reconciling here is the same belt-and-braces `deleteApiKey`
+  // does, and best-effort for the same reason the session sweep is.
+  if (reclaimed.revokedApiKeyIds.length > 0) {
+    await runPostCommitProjection("sso_recovery_api_key_cleanup", () =>
+      reconcileApiKeyRelationships({ apiKeyIds: reclaimed.revokedApiKeyIds })
+    );
+  }
+  // Each ended MCP grant loses its SpiceDB relationships, best-effort, and gets its own entry under the
+  // organizations it reached, as any revoke does.
+  await finishRevokedMcpGrants(reclaimed.revokedMcpGrantAudits);
+  return sessionsRevoked;
 };
 
 const createSsoRecoveryCompletionUrl = (stateId: string): string => {
@@ -658,27 +694,31 @@ export const completeSsoRecovery = async ({
     throw new SsoRecoveryError("rejected", intent.callbackUrl);
   }
 
-  const reclaimed = await prisma.$transaction(async (tx) => {
-    const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
-      tx,
-      user,
-    });
+  const reclaimed = await prisma.$transaction(
+    async (tx) => {
+      const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
+        tx,
+        user,
+      });
 
-    const recoveryAccount: TSsoAccountLinkInput = {
-      type: "oauth",
-      provider,
-      providerAccountId: intent.providerAccountId,
-    };
+      const recoveryAccount: TSsoAccountLinkInput = {
+        type: "oauth",
+        provider,
+        providerAccountId: intent.providerAccountId,
+      };
 
-    await syncSsoIdentityForUser({
-      userId: user.id,
-      provider,
-      account: recoveryAccount,
-      tx,
-    });
+      await syncSsoIdentityForUser({
+        userId: user.id,
+        provider,
+        account: recoveryAccount,
+        tx,
+      });
 
-    return outcome;
-  });
+      return outcome;
+    },
+    // It may end the user's MCP grants, whose rows a reconciling pass can hold: the Revoke timeout.
+    { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+  );
 
   // Single use, applied at the only point where it is safe to: the link has committed, so the intent
   // has done its job and a replay would only redo work. Not on read — see the note above the read.
@@ -695,31 +735,7 @@ export const completeSsoRecovery = async ({
   // After commit, never inside the transaction: Better Auth resolves its adapter from its own
   // AsyncLocalStorage, so this would run outside `tx` and outlive a rollback. Best-effort for the same
   // reason the strip must not be undone by a revocation failure — it has already committed.
-  let sessionsRevoked: number | null = 0;
-  if (reclaimed) {
-    try {
-      sessionsRevoked = await revokeUserSessionsExcept({
-        userId: user.id,
-        keepSessionToken: sessionToken,
-      });
-    } catch (error) {
-      sessionsRevoked = null;
-      logger.error(
-        { error, userId: user.id },
-        "Failed to revoke sessions after reclaiming unverified local auth"
-      );
-    }
-  }
-
-  // The keys are already gone from Postgres, which is what ends their access — the API auth path looks
-  // a key up by hash and now finds nothing. SpiceDB keeps their relationships until the outbox worker
-  // reaches the trigger-enqueued event; reconciling here is the same belt-and-braces `deleteApiKey`
-  // does, and best-effort for the same reason the session sweep is.
-  if (reclaimed && reclaimed.revokedApiKeyIds.length > 0) {
-    await runPostCommitProjection("sso_recovery_api_key_cleanup", () =>
-      reconcileApiKeyRelationships({ apiKeyIds: reclaimed.revokedApiKeyIds })
-    );
-  }
+  const sessionsRevoked = reclaimed ? await settleReclaimedCredentials(reclaimed, user.id, sessionToken) : 0;
 
   await notifyRemovedFactors(user, reclaimed);
 

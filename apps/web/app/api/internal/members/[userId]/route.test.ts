@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS, SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { LastActiveOwnerError } from "@/modules/organization/settings/teams/lib/owner-guard";
 import { PATCH } from "./route";
@@ -14,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   runOwnerGuardedTransaction: vi.fn(),
   lockUserActiveState: vi.fn(),
   updateMembership: vi.fn(),
+  updateMembershipInTransaction: vi.fn(),
+  finishRevokedMcpGrants: vi.fn(),
   checkRoleManagementPermission: vi.fn(),
   getIsDashboardViewerRoleEnabled: vi.fn(),
   queueAuditEvent: vi.fn(),
@@ -38,7 +41,13 @@ vi.mock("@/modules/organization/settings/teams/lib/owner-guard", async (importOr
 }));
 vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({ deleteMembership: vi.fn() }));
 vi.mock("@/lib/user/reactivation", () => ({ lockUserActiveState: mocks.lockUserActiveState }));
-vi.mock("@/modules/ee/role-management/lib/membership", () => ({ updateMembership: mocks.updateMembership }));
+vi.mock("@/modules/ee/role-management/lib/membership", () => ({
+  updateMembership: mocks.updateMembership,
+  updateMembershipInTransaction: mocks.updateMembershipInTransaction,
+}));
+vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({
+  finishRevokedMcpGrants: mocks.finishRevokedMcpGrants,
+}));
 // The real role rules (`assertCanAssignRole`); only the licence lookup is stubbed.
 vi.mock("@/modules/ee/role-management/lib/permission", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/role-management/lib/permission")>()),
@@ -68,6 +77,7 @@ const ORG_ID = "cm9gptbhg0000192zceq9ayuc";
 const OTHER_ORG_ID = "cm9gptbhg0003192zceq9ayuf";
 const CURRENT_USER_ID = "cm9gptbhg0001192zceq9ayud";
 const TARGET_USER_ID = "cm9gptbhg0002192zceq9ayue";
+const GRANT_AUDITS = [{ grantId: "grant-1" }];
 const TX = { stand: "in" };
 
 const membership = (userId: string, role: string) => ({
@@ -124,6 +134,13 @@ beforeEach(() => {
   mocks.updateMembership.mockImplementation(async (userId: string, _orgId: string, data: { role: string }) =>
     membership(userId, data.role)
   );
+  mocks.updateMembershipInTransaction.mockImplementation(
+    async (_tx: unknown, userId: string, _orgId: string, data: { role: string }) => ({
+      membership: membership(userId, data.role),
+      grantAudits: GRANT_AUDITS,
+    })
+  );
+  mocks.finishRevokedMcpGrants.mockResolvedValue(undefined);
 });
 
 describe("PATCH /api/internal/members/{userId}", () => {
@@ -134,7 +151,8 @@ describe("PATCH /api/internal/members/{userId}", () => {
 
       expect(response.status).toBe(409);
       expect((await response.json()).detail).toBe("You cannot demote the last owner of the organization");
-      expect(mocks.updateMembership).not.toHaveBeenCalled();
+      expect(mocks.updateMembershipInTransaction).not.toHaveBeenCalled();
+      expect(mocks.finishRevokedMcpGrants).not.toHaveBeenCalled();
     });
 
     test("demotes an owner under the owners' lock, then the user's row, in one transaction", async () => {
@@ -147,16 +165,30 @@ describe("PATCH /api/internal/members/{userId}", () => {
         role: "member",
       });
       // The guard is told who may leave the owners, so it counts without them before the change runs.
+      // Ending the user's MCP grants can wait on a reconciling pass, so the transaction gets its timeout.
       expect(mocks.runOwnerGuardedTransaction).toHaveBeenCalledWith(
         ORG_ID,
         TARGET_USER_ID,
-        expect.any(Function)
+        expect.any(Function),
+        {
+          timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
+        }
       );
       expect(mocks.lockUserActiveState).toHaveBeenCalledWith(TX, TARGET_USER_ID);
       expect(mocks.lockUserActiveState.mock.invocationCallOrder[0]).toBeLessThan(
-        mocks.updateMembership.mock.invocationCallOrder[0]
+        mocks.updateMembershipInTransaction.mock.invocationCallOrder[0]
       );
-      expect(mocks.updateMembership).toHaveBeenCalledWith(TARGET_USER_ID, ORG_ID, { role: "member" }, TX);
+      expect(mocks.updateMembershipInTransaction).toHaveBeenCalledWith(TX, TARGET_USER_ID, ORG_ID, {
+        role: "member",
+      });
+      expect(mocks.updateMembership).not.toHaveBeenCalled();
+      // The grants it ended are audited once the transaction commits, with the caller as the actor.
+      expect(mocks.finishRevokedMcpGrants).toHaveBeenCalledWith(GRANT_AUDITS, {
+        actorUserId: CURRENT_USER_ID,
+      });
+      expect(mocks.runOwnerGuardedTransaction.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.finishRevokedMcpGrants.mock.invocationCallOrder[0]
+      );
     });
 
     test("changes a non-owner's role without counting owners", async () => {
@@ -164,7 +196,13 @@ describe("PATCH /api/internal/members/{userId}", () => {
 
       expect((await setRole("manager")).status).toBe(200);
       expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
-      expect(mocks.updateMembership).toHaveBeenCalledWith(TARGET_USER_ID, ORG_ID, { role: "manager" });
+      // The caller is the actor of any MCP grant the change ends.
+      expect(mocks.updateMembership).toHaveBeenCalledWith(
+        TARGET_USER_ID,
+        ORG_ID,
+        { role: "manager" },
+        CURRENT_USER_ID
+      );
     });
 
     test("keeps an owner's role unchanged without counting owners", async () => {

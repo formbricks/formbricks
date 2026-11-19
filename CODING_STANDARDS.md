@@ -64,13 +64,16 @@ These remain review checks until their enforcement handles the repository's exis
 
 ## API Design
 
-- New endpoints start internal ([ADR-0041](docs/adr/0041-internal-endpoints-live-outside-v3.md)):
+- New endpoints start internal ([ADR-0043](docs/adr/0043-internal-endpoints-live-outside-v3.md)):
   `/api/internal/<resource>`, session auth, no OpenAPI entry and no stability promise. Internal routes are
   v3 in everything but the contract, so they can change freely while the shape settles.
 - An endpoint is promoted to public `/api/v3` once an external caller (an API key, an integration, an MCP
   tool that writes) needs it: it gains its OpenAPI contract and stability promise, and the app moves to the
   public route rather than keeping an internal twin. A feature built for external callers from day one
   starts public, as dashboards did ([ADR-0002](docs/adr/0002-the-app-uses-the-public-dashboard-api.md)).
+- A public `/api/v3` operation ships with its MCP tool in the same PR, so agents can do what API keys can.
+  Exceptions are allowed, such as hard deletes, when the PR names them and says why. "Adding a tool" in
+  `docs/development/technical-handbook/mcp-server.mdx` covers the tool side.
 - The route framework is in `AGENTS.md` under "Architecture & Patterns" and "API v3".
 - Paths name resources, and each response uses the method and status code HTTP defines for the case. Writes
   that can race take the `updatedAt` compare-and-set (409 on mismatch); writes a retry could repeat are

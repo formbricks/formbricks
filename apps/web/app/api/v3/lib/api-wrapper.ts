@@ -674,7 +674,7 @@ async function authenticateV3RequestOrRespond(
 
 /**
  * The bucket a route charges unless it names its own: the dashboard's `/api/internal` surface gets one
- * sized for page loads and refetches, so it never spends a user's public API budget (ADR 0041: the
+ * sized for page loads and refetches, so it never spends a user's public API budget (ADR 0043: the
  * directory is the declaration). Under a `basePath` deployment the request URL keeps the prefix (see
  * `reportServerError`), so the first `/api/` segment decides, wherever it sits: a later one, say inside a
  * catch-all's path, can't move a request into the larger bucket.
@@ -949,8 +949,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // to attribute — and an unauthenticated caller could fill the audit store one row per bad key; a
       // 429 is already logged by the limiter; a 400 is a malformed request, not an authorization event.
       // The rejection a reviewer wants — the 403 an authenticated caller gets for someone else's
-      // resource — is raised by the operation below and is audited as a failure. MCP's scope gate
-      // audits its own refusals in `registerScopedTool`. A pre-login route that names an audit action is
+      // resource — is raised by the operation below and is audited as a failure. MCP's permission gate
+      // audits its own refusals in `registerMcpTool`. A pre-login route that names an audit action is
       // audited with no actor: what it changes (an account, through a link's token) is worth a record. Its
       // operation charges an IP budget and skips the entry when that refuses, so the budget bounds the rows.
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url, auth === "none");

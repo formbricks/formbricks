@@ -34,6 +34,9 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string): Promis
         createdBy: true,
         status: true,
         archivedAt: true,
+        // The renderer reads `publishOn !== null` to tell a scheduled survey from a paused one (ENG-3935);
+        // the return below reads it straight off this row, so dropping it here fails to compile.
+        publishOn: true,
 
         // Survey configuration
         welcomeCard: true,
@@ -154,6 +157,10 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string): Promis
     return {
       ...transformedSurvey,
       archivedAt: survey.archivedAt,
+      // `transformPrismaSurvey` is an unchecked generic, so a select without `publishOn` would compile and
+      // leave it `undefined`, which the renderer reads as "scheduled" (ENG-3935). Reading it off the row
+      // makes that a type error.
+      publishOn: survey.publishOn,
       followUps: [],
       ...(transformedSurvey.segment
         ? { segment: { ...transformedSurvey.segment, filters: [], description: null } }
