@@ -519,8 +519,10 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     mcpGrantOrganizationSelections,
     mcpGrantWorkspaceSelections,
   ] = await Promise.all([
+    // Active users only, as the outbox projects them: a deactivated member holds no relationships, so
+    // an audit must not report theirs as missing nor an apply write them back (ENG-3899).
     prisma.membership.findMany({
-      where: { organizationId },
+      where: { organizationId, user: { isActive: true } },
       select: { role: true, userId: true },
       orderBy: { userId: "asc" },
     }),
@@ -540,7 +542,7 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       orderBy: { id: "asc" },
     }),
     prisma.teamUser.findMany({
-      where: { team: { organizationId } },
+      where: { team: { organizationId }, user: { isActive: true } },
       select: { role: true, teamId: true, userId: true },
       orderBy: [{ teamId: "asc" }, { userId: "asc" }],
     }),
@@ -839,6 +841,8 @@ export const findMissingSourceRefs = async (
       : prisma.membership.findMany({
           where: {
             OR: membershipRefs.map(({ organizationId, userId }) => ({ organizationId, userId })),
+            // A deactivated user's relationship has no source, so a pruning run removes it.
+            user: { isActive: true },
           },
           select: { organizationId: true, userId: true },
         }),
@@ -851,7 +855,10 @@ export const findMissingSourceRefs = async (
     teamMembershipRefs.length === 0
       ? []
       : prisma.teamUser.findMany({
-          where: { OR: teamMembershipRefs.map(({ teamId, userId }) => ({ teamId, userId })) },
+          where: {
+            OR: teamMembershipRefs.map(({ teamId, userId }) => ({ teamId, userId })),
+            user: { isActive: true },
+          },
           select: { teamId: true, userId: true },
         }),
     workspaceRefs.length === 0

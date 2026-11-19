@@ -121,6 +121,8 @@ const readSnapshot = async (targets: TNormalizedTargets): Promise<TTeamWorkspace
       : prisma.teamUser.findMany({
           where: {
             OR: targets.teamMemberships.map(({ teamId, userId }) => ({ teamId, userId })),
+            // A deactivated user's team roles are deleted, never written (ENG-3899).
+            user: { isActive: true },
           },
           select: { role: true, teamId: true, userId: true },
           orderBy: [{ teamId: "asc" }, { userId: "asc" }],

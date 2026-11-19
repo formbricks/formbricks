@@ -55,9 +55,12 @@ const readSnapshot = async (
   prisma.membership.findMany({
     where: {
       OR: targets.map(({ organizationId, userId }) => ({ organizationId, userId })),
+      // A deactivated user holds no relationships: the outbox removes them on deactivation, so their
+      // rows read as absent here and the targets are deleted rather than written back (ENG-3899).
+      user: { isActive: true },
     },
-    // The current contract does not gate organization membership on `accepted`. Project every row so
-    // the SpiceDB graph preserves that behavior exactly.
+    // The current contract does not gate organization membership on `accepted`. Project every active
+    // user's row so the SpiceDB graph preserves that behavior exactly.
     select: { organizationId: true, role: true, userId: true },
     orderBy: [{ organizationId: "asc" }, { userId: "asc" }],
   });
