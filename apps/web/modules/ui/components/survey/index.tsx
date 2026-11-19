@@ -37,7 +37,7 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const hasLoadedRef = useRef(false);
 
-  const loadSurveyScript: () => Promise<void> = async () => {
+  const loadRendererAndMarkLoaded: () => Promise<void> = async () => {
     // Set loading flag immediately to prevent concurrent loads
     isLoadingScript = true;
     try {
@@ -62,7 +62,7 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
           if (props.isSpamProtectionEnabled && props.recaptchaSiteKey) {
             await loadRecaptchaScript(props.recaptchaSiteKey);
           }
-          await loadSurveyScript();
+          await loadRendererAndMarkLoaded();
         } catch (error) {
           console.error("Failed to load the surveys package: ", error);
         }
@@ -72,7 +72,7 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
     };
 
     void loadScript();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time script load guarded by hasLoadedRef; depending on loadSurveyScript/renderInline would re-trigger the load
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time script load guarded by hasLoadedRef; depending on loadRendererAndMarkLoaded/renderInline would re-trigger the load
   }, [props]);
 
   useEffect(() => {
