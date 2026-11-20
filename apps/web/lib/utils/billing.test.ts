@@ -62,4 +62,70 @@ describe("getBillingUsageCycleWindow", () => {
       end: new Date("2026-03-10T00:00:00.000Z"),
     });
   });
+
+  // ENG-7024: Stripe anchors a trialing subscription at the trial end, so counting a month back from it
+  // starts the window before the trial (and the org) existed.
+  test("starts a trialing subscription's window at the trial start", () => {
+    const result = getBillingUsageCycleWindow(
+      {
+        usageCycleAnchor: new Date("2026-11-23T10:00:00.000Z"),
+        stripe: { subscriptionStatus: "trialing", trialStart: "2026-11-09T10:00:00.000Z" },
+      },
+      new Date("2026-11-17T12:00:00.000Z")
+    );
+
+    expect(result).toEqual({
+      start: new Date("2026-11-09T10:00:00.000Z"),
+      end: new Date("2026-11-23T10:00:00.000Z"),
+    });
+  });
+
+  test("keeps the anchored window once the subscription is no longer trialing", () => {
+    const result = getBillingUsageCycleWindow(
+      {
+        usageCycleAnchor: new Date("2026-11-23T10:00:00.000Z"),
+        stripe: { subscriptionStatus: "active", trialStart: "2026-11-09T10:00:00.000Z" },
+      },
+      new Date("2026-11-17T12:00:00.000Z")
+    );
+
+    expect(result).toEqual({
+      start: new Date("2026-10-23T10:00:00.000Z"),
+      end: new Date("2026-11-23T10:00:00.000Z"),
+    });
+  });
+
+  test("keeps the anchored window when the trial started before it", () => {
+    const result = getBillingUsageCycleWindow(
+      {
+        usageCycleAnchor: new Date("2026-11-23T10:00:00.000Z"),
+        stripe: { subscriptionStatus: "trialing", trialStart: "2026-10-01T10:00:00.000Z" },
+      },
+      new Date("2026-11-17T12:00:00.000Z")
+    );
+
+    expect(result).toEqual({
+      start: new Date("2026-10-23T10:00:00.000Z"),
+      end: new Date("2026-11-23T10:00:00.000Z"),
+    });
+  });
+
+  test.each([
+    { label: "missing", trialStart: undefined },
+    { label: "null", trialStart: null },
+    { label: "not a date", trialStart: "not-a-date" },
+  ])("keeps the anchored window when the trial start is $label", ({ trialStart }) => {
+    const result = getBillingUsageCycleWindow(
+      {
+        usageCycleAnchor: new Date("2026-11-23T10:00:00.000Z"),
+        stripe: { subscriptionStatus: "trialing", trialStart },
+      },
+      new Date("2026-11-17T12:00:00.000Z")
+    );
+
+    expect(result).toEqual({
+      start: new Date("2026-10-23T10:00:00.000Z"),
+      end: new Date("2026-11-23T10:00:00.000Z"),
+    });
+  });
 });
