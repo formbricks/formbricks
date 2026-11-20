@@ -845,13 +845,31 @@ const isRequestRead = (node) => {
 // `value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")`: a global character class holding every
 // metacharacter, each match prefixed with a backslash, so the result matches only itself.
 const REGEXP_METACHARACTERS = [...String.raw`\^$.*+?()[]{}|`];
+const ESCAPE_CLASS = /[\dA-Za-z]/;
+// The literal characters a character class body matches, or null when it holds a range (`a-z`) or an
+// escape class (`\d`), whose members a lint rule should not guess.
+const classMembers = (body) => {
+  const members = new Set();
+  for (let index = 0; index < body.length; index += 1) {
+    let character = body[index];
+    if (character === "\\") {
+      index += 1;
+      character = body[index];
+      if (character === undefined || ESCAPE_CLASS.test(character)) return null;
+    } else if (character === "-" && index > 0 && index < body.length - 1) {
+      return null;
+    }
+    members.add(character);
+  }
+  return members;
+};
 const isRegExpEscape = (node) => {
   if (calleeName(node) !== "replace" && calleeName(node) !== "replaceAll") return false;
   const [pattern, replacement] = node.arguments.map(unwrapExpression);
   const source = pattern?.type === "Literal" ? (pattern.regex?.pattern ?? "") : "";
   return (
     /^\[[^^].*\]$/.test(source) &&
-    REGEXP_METACHARACTERS.every((character) => source.includes(character)) &&
+    REGEXP_METACHARACTERS.every((character) => classMembers(source.slice(1, -1))?.has(character)) &&
     pattern.regex.flags.includes("g") &&
     replacement?.type === "Literal" &&
     replacement.value === String.raw`\$&`

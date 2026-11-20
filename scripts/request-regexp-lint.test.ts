@@ -98,6 +98,10 @@ export const run = ({ parsedInput }: any) => parsedInput.patterns.map(compile);
   "partial-escape.ts": `export const run = ({ parsedInput }: any) =>
   new RegExp(parsedInput.search.replace(/[.]/g, "\\\\$&")).test("x");
 `,
+  // The class matches no backslash, so \\d stays a live class.
+  "escape-without-backslash.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[.*+?^\${}()|[\\]]/g, "\\\\$&")).test("x");
+`,
   // Two call sites pass the value at different depths; the whole-value one still counts.
   "helper-two-call-sites.ts": `export async function POST(req: Request) {
   const body = await req.json();

@@ -142,7 +142,6 @@ export const LOOSE_SCHEMA_ALLOWLIST = {
  * The `.tsx` unit tests that predate `formbricks/no-tsx-unit-test` (CODING_STANDARDS.md, Testing
  * Guidelines), by repo-relative path. Remove an entry when its test goes; don't add one.
  */
-
 export const TSX_UNIT_TEST_ALLOWLIST = [
   "apps/web/modules/auth/hooks/use-sign-out.test.tsx",
   "apps/web/modules/ee/analysis/charts/components/embedded-field-rename-button.test.tsx",

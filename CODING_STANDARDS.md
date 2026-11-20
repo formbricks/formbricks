@@ -24,9 +24,10 @@ check need hardening.
 fails a zod schema that keeps unknown keys (`.loose()`, `.passthrough()`, `z.looseObject()`, `.catchall()`
 without `z.never()`). Each allowlist in `packages/config-oxlint/base.mjs` only shrinks. An entry in
 `LOOSE_SCHEMA_ALLOWLIST` carries the reason its schemas never reach a write's `data` as columns or
-relations; in a shared types file, the one open schema carries a disable comment with that reason instead. `formbricks/no-request-regexp`
-reports request input compiled into a regex only inside one file: a pattern loaded from a stored survey or
-filter, or one that crosses files, is still a review check under "Security".
+relations; in a shared types file, the one open schema carries a disable comment with that reason
+instead. `formbricks/no-request-regexp` reports request input compiled into a regex only inside one file: a
+pattern loaded from a stored survey or filter, or one that crosses files, is still a review check under
+"Security".
 
 ## Conventions Awaiting Automated Enforcement
 
@@ -147,8 +148,8 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
     single-use and runs only through a `POST` from a confirmation page, so a scanner's `GET` changes
     nothing. A new emailed link creates no session on `GET`. The one that does, the SSO-recovery sign-in
     link (`apps/web/modules/ee/sso/lib/better-auth-recovery-signin.ts`), is the accepted exception: it
-    stays usable until it expires so a scanner cannot spend it, signs in only an account without verified
-    2FA (completing recovery strips an unverified account's local factors, ENG-2557), and the identity
+    stays usable until it expires so a scanner cannot spend it, signs in only an account without both a
+    verified email and 2FA (completing recovery strips an unverified account's local factors, ENG-2557), and the identity
     link it leads to still needs the `POST` and the proof cookie.
 - **No path creates a session weaker than the account requires.** Local paths (password, magic link, account
   recovery) go through the app's 2FA check. SSO relies on the IdP's MFA; a new SSO sign-in path verifies it
