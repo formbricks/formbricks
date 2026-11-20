@@ -15,7 +15,10 @@ import { can } from "@/lib/authorization";
  * decide whether to offer those controls, so a control is never offered where its action refuses. The v2
  * users API still decides it through `getUserManagementAccess`, pinned equal by the integration test.
  * `organization.manage` is a different capability that the actions still require on top of this one.
- * Team admins inviting into their own teams are decided by `team.manage` instead.
+ * Team admins inviting into their own teams are decided by `team.manage` instead: they are plain
+ * members, below every `owner` / `manager` floor by definition, so the floor cannot rank them. The one
+ * floor value that does apply to them is `disabled`, which switches user management off for everyone
+ * (`assertTeamAdminInviteAllowed`, in its own module so the many importers of this one do not load the constants).
  */
 export const canManageUsers = async (userId: string, organizationId: string): Promise<boolean> =>
   can({ type: "user", id: userId }, "organization.manage_access", {

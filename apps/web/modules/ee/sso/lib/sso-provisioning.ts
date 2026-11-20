@@ -10,6 +10,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_ORGANIZATION_ID, DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
+import { isSetupTokenConfigured } from "@/lib/instance/setup-token";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
@@ -99,28 +100,25 @@ const admitsAsBootstrapAdmin = (isFirstUser: boolean, isMultiOrgEnabled: boolean
   isFirstUser && !isMultiOrgEnabled;
 
 /**
- * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
- * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
- *
- * MUST be called from `databaseHooks.user.create.before`, which Better Auth runs INSIDE the
- * user+account transaction: a `"reject"` there → throw an APIError → the row rolls back, so no orphan
- * user is created (design doc §13; the post-commit `user.create.after` could not reject safely). The
- * `"provision"` decision (resolved org + flags) is carried to the after-hook, which performs the
- * membership writes.
- *
- * Invariants (covered by sso-provisioning.test.ts): `DEFAULT_ORGANIZATION_ID` wins over everything
- * below it; fresh-instance & multi-org bypass all gates; single-org + `SKIP_INVITE_FOR_SSO` requires
- * `DEFAULT_TEAM_ID`; otherwise a valid invite token matching the email is required; the assignment org
- * is the default team's org (skip-invite) or the first org; access control without a callback URL is
- * refused.
+ * Whether this SSO sign-up is the fresh instance's first user. ENG-7313: SSO has no form to carry the
+ * setup token, so with `SETUP_TOKEN` configured the SSO route cannot be the way in on a fresh instance;
+ * the administrator completes setup with the token first.
  */
-export const gateSsoProvisioning = async ({
-  email,
-  callbackUrl,
-}: {
-  email: string;
-  callbackUrl: string;
-}): Promise<TSsoProvisioningDecision> => {
+const getIsSsoFirstUser = async (): Promise<boolean> =>
+  !isSetupTokenConfigured() && (await getIsFreshInstance());
+
+/** A fresh instance that only the setup form, carrying `SETUP_TOKEN`, may claim (ENG-7313). */
+const isFreshInstanceReservedForSetupToken = async (): Promise<boolean> =>
+  isSetupTokenConfigured() && (await getIsFreshInstance());
+
+/**
+ * The refusals that come before any organization is resolved: the Cloud email-domain block and, with
+ * `SETUP_TOKEN` set, a fresh instance that only the setup form may claim.
+ */
+const getSsoPreflightRejection = async (
+  email: string,
+  callbackUrl: string
+): Promise<TSsoProvisioningDecision | null> => {
   // Formbricks Cloud only: block SSO sign-ups from personal/free/disposable email domains, before any
   // org resolution. Placed above the multi-org / fresh-instance bypass below (Cloud is multi-org, so
   // the bypass would otherwise let these through). Invited users — a valid token whose email matches —
@@ -133,6 +131,43 @@ export const gateSsoProvisioning = async ({
   if (isDomainBlocked) {
     return { action: "reject", reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE };
   }
+
+  // ENG-7313: with SETUP_TOKEN set, a fresh instance is claimed only through the setup form, which carries
+  // the token. Checked before DEFAULT_ORGANIZATION_ID, whose branch would otherwise create that
+  // organization and make any account at the IdP its owner. Same answer as SSO on a fresh instance
+  // without a default organization: there is no organization to join yet.
+  if (await isFreshInstanceReservedForSetupToken()) {
+    return { action: "reject", reason: "no_organization_found" };
+  }
+
+  return null;
+};
+
+/**
+ * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
+ * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
+ *
+ * MUST be called from `databaseHooks.user.create.before`, which Better Auth runs INSIDE the
+ * user+account transaction: a `"reject"` there → throw an APIError → the row rolls back, so no orphan
+ * user is created (design doc §13; the post-commit `user.create.after` could not reject safely). The
+ * `"provision"` decision (resolved org + flags) is carried to the after-hook, which performs the
+ * membership writes.
+ *
+ * Invariants (covered by sso-provisioning.test.ts): with `SETUP_TOKEN` set, a fresh instance is refused
+ * first; `DEFAULT_ORGANIZATION_ID` wins over everything below it; fresh-instance & multi-org bypass all gates; single-org + `SKIP_INVITE_FOR_SSO` requires
+ * `DEFAULT_TEAM_ID`; otherwise a valid invite token matching the email is required; the assignment org
+ * is the default team's org (skip-invite) or the first org; access control without a callback URL is
+ * refused.
+ */
+export const gateSsoProvisioning = async ({
+  email,
+  callbackUrl,
+}: {
+  email: string;
+  callbackUrl: string;
+}): Promise<TSsoProvisioningDecision> => {
+  const rejection = await getSsoPreflightRejection(email, callbackUrl);
+  if (rejection) return rejection;
 
   const signupSource = callbackUrl.includes("token=") ? "invite" : "direct";
 
@@ -156,7 +191,7 @@ export const gateSsoProvisioning = async ({
   }
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const isFirstUser = await getIsFreshInstance();
+  const isFirstUser = await getIsSsoFirstUser();
 
   // Fresh instance or multi-org: create the user with no org auto-assignment (handled by onboarding
   // / explicit invites elsewhere).

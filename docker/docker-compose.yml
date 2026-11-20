@@ -114,6 +114,9 @@ x-environment: &environment
     # Set the below to 0 to enable Password Reset (will required Email Configuration)
     PASSWORD_RESET_DISABLED: 1
 
+    # Optional: require this token to create the first administrator on a fresh instance (min. 16 characters)
+    # SETUP_TOKEN:
+
     # Set the below to 1 to disable logins with email
     # EMAIL_AUTH_DISABLED:
 

@@ -1001,6 +1001,8 @@
     },
     "signup": {
       "create_administrator": "Yönetici Oluştur",
+      "setup_token": "Kurulum belirteci",
+      "setup_token_invalid": "Kurulum belirteci hatalı.",
       "this_user_has_all_the_power": "Bu kullanıcı tüm yetkilere sahiptir."
     }
   },

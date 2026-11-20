@@ -759,6 +759,10 @@ const parsedEnv = createEnv({
     PASSWORD_HIBP_CHECK_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z.coerce.number().int().min(5).max(120).optional().default(30),
+    SETUP_TOKEN: z
+      .string()
+      .min(16, "SETUP_TOKEN must be at least 16 characters (generate one with `openssl rand -hex 16`)")
+      .optional(),
     PRIVACY_URL: z
       .url()
       .optional()
@@ -987,6 +991,7 @@ const parsedEnv = createEnv({
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: process.env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
     PRIVACY_URL: process.env.PRIVACY_URL,
+    SETUP_TOKEN: process.env.SETUP_TOKEN,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
     ENVOY_RATE_LIMITING_ENABLED: process.env.ENVOY_RATE_LIMITING_ENABLED,
     TRUSTED_PROXY_HOP_COUNT: process.env.TRUSTED_PROXY_HOP_COUNT,

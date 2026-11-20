@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SETUP_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
@@ -25,6 +26,10 @@ describe("getSignupErrorPlacement", () => {
     expect(getSignupErrorPlacement(PASSWORD_COMPROMISED_ERROR_CODE, t)).toEqual({
       field: "password",
       message: "t:auth.password_compromised",
+    });
+    expect(getSignupErrorPlacement(SETUP_TOKEN_INVALID_ERROR_CODE, t)).toEqual({
+      field: "setupToken",
+      message: "t:setup.signup.setup_token_invalid",
     });
   });
 

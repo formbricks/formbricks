@@ -1001,6 +1001,8 @@
     },
     "signup": {
       "create_administrator": "Administrator erstellen",
+      "setup_token": "Einrichtungs-Token",
+      "setup_token_invalid": "Das Einrichtungs-Token ist nicht korrekt.",
       "this_user_has_all_the_power": "Dieser Nutzer hat alle Rechte."
     }
   },

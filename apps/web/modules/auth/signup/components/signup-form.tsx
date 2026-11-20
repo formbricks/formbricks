@@ -33,6 +33,7 @@ const ZSignupInput = z.object({
   name: ZUserName,
   email: z.email(),
   password: ZUserPassword,
+  setupToken: z.string().optional(),
 });
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
@@ -55,6 +56,8 @@ interface SignupFormProps {
   isTurnstileConfigured: boolean;
   turnstileSiteKey?: string;
   isFormbricksCloud: boolean;
+  /** The instance requires `SETUP_TOKEN` to create the first administrator (ENG-7313). */
+  isSetupTokenRequired?: boolean;
 }
 
 export const SignupForm = ({
@@ -75,6 +78,7 @@ export const SignupForm = ({
   isTurnstileConfigured,
   turnstileSiteKey,
   isFormbricksCloud,
+  isSetupTokenRequired = false,
 }: Readonly<SignupFormProps>) => {
   const [showLogin, setShowLogin] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -121,6 +125,7 @@ export const SignupForm = ({
       name: "",
       email: emailFromSearchParams || "",
       password: "",
+      setupToken: "",
     },
     resolver: zodResolver(ZSignupInput),
   });
@@ -128,11 +133,17 @@ export const SignupForm = ({
   /** Show a failed `createUserAction` under the field that caused it, or as a toast. */
   const surfaceSignupError = (errorMessage: string) => {
     const placement = getSignupErrorPlacement(errorMessage, t);
-    if ("field" in placement) {
-      form.setError(placement.field, { type: "manual", message: placement.message });
+    // The setup-token field is on the page only when the instance asked for it as the page rendered;
+    // if that changed since, an error under a missing field would show nothing.
+    if (!("field" in placement)) {
+      toast.error(placement.toast);
       return;
     }
-    toast.error(placement.toast);
+    if (placement.field === "setupToken" && !isSetupTokenRequired) {
+      toast.error(placement.message);
+      return;
+    }
+    form.setError(placement.field, { type: "manual", message: placement.message });
   };
 
   const handleSubmit = async (data: TSignupInput) => {
@@ -155,6 +166,7 @@ export const SignupForm = ({
         password: data.password,
         userLocale,
         inviteToken: inviteToken ?? "",
+        setupToken: isSetupTokenRequired ? data.setupToken : undefined,
         turnstileToken,
         subscribeToSecurityUpdates,
         subscribeToProductUpdates,
@@ -266,6 +278,30 @@ export const SignupForm = ({
                       </FormItem>
                     )}
                   />
+                  {isSetupTokenRequired && (
+                    <FormField
+                      control={form.control}
+                      name="setupToken"
+                      render={({ field }) => (
+                        <FormItem className="w-full text-left">
+                          <FormLabel>{t("setup.signup.setup_token")}</FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              data-testid="signup-setup-token"
+                              name="setupToken"
+                              value={field.value ?? ""}
+                              onBlur={field.onBlur}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              autoComplete="off"
+                              required
+                              className="bg-white"
+                            />
+                          </FormControl>
+                          <FormError role="alert" />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
                 <PasswordChecks password={form.watch("password")} />
               </div>
@@ -343,7 +379,9 @@ export const SignupForm = ({
                       nameInputRef.current?.focus();
                     }
               }
-              disabled={showLogin && !form.formState.isValid}
+              disabled={
+                showLogin && (!form.formState.isValid || (isSetupTokenRequired && !form.watch("setupToken")))
+              }
               className="h-11 w-full justify-center sm:h-10"
               loading={showLogin && form.formState.isSubmitting}>
               {t("auth.continue_with_email")}

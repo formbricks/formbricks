@@ -1001,6 +1001,8 @@
     },
     "signup": {
       "create_administrator": "Criar Administrador",
+      "setup_token": "Token de configuração",
+      "setup_token_invalid": "O token de configuração está incorreto.",
       "this_user_has_all_the_power": "Esse usuário tem todo o poder."
     }
   },
