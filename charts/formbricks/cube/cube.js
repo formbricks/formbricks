@@ -478,6 +478,10 @@ function contextToAppId({ securityContext } = {}) {
 const ANSWER_MEMBER = "FeedbackRecords.answer";
 const ANSWER_FILTER_ALIAS_COUNT = 25;
 const ANSWER_FILTER_CUBE = /^AnswerFilter\d+$/;
+// The taxonomy topic cubes (schema/FeedbackRecords.js): only the FeedbackRecords topic dimensions read
+// them. The tenant filter is added per queried cube, and these have no tenant member of their own, so a
+// caller naming one directly would read every tenant's topics.
+const TOPIC_CUBES = new Set(["RecordTopic", "ResponseTopic"]);
 const NUMERIC_VALUE = /^[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?$/;
 
 function getAnswerKind(securityContext, questionId) {
@@ -591,14 +595,18 @@ function expandAnswerRules(filters, securityContext) {
 }
 
 /**
- * Members only the rewrite may write: the answer-filter joins, the embedded `equals` twins, and the
- * answer member anywhere but a filter (it has no column to select or sort by).
+ * Members a caller may not name: the answer-filter joins, the taxonomy topic cubes, the embedded
+ * `equals` twins, and the answer member anywhere but a filter (it has no column to select or sort by).
  */
 function assertNoReservedMember(query) {
   const cubeQuery = query ?? {};
   for (const member of collectQueryMembers(cubeQuery)) {
     const [cubeName, memberName = ""] = member.split(".");
-    if (ANSWER_FILTER_CUBE.test(cubeName) || memberName.startsWith(EMBEDDED_EQUALS_MEMBER_PREFIX)) {
+    if (
+      ANSWER_FILTER_CUBE.test(cubeName) ||
+      TOPIC_CUBES.has(cubeName) ||
+      memberName.startsWith(EMBEDDED_EQUALS_MEMBER_PREFIX)
+    ) {
       throw new Error("Cube query rejected: reserved member");
     }
   }

@@ -48,6 +48,37 @@ const TRUTH_KEYS = {
   tier: "Kundenstufe",
   seats: "Seats (licensed)",
 };
+// Taxonomy topics (ENG-6989): each submission's open-text answers name the "Topic/Subtopic" leaf they are
+// clustered into ("outlier" for the outlier cluster, null for none), with an optional emotion, next to
+// its scores (an NPS of null was dismissed). Each tenant gets an active directory taxonomy written into
+// Hub's tables, which Cube reads through Hub's taxonomy_current_record_topics view. The second tenant
+// reuses a submission id and the Billing label, so neither may cross tenants.
+const TOPIC_TENANT = "smoke-tenant-topics";
+const TOPIC_OTHER_TENANT = "smoke-tenant-topics-other";
+const TOPIC_SUBMISSIONS = {
+  [TOPIC_TENANT]: [
+    {
+      id: "topic-s1",
+      texts: [{ leaf: "Billing/Invoices", emotion: "anger" }, { leaf: "Billing/Refunds" }],
+      nps: 9,
+      csat: 5,
+    },
+    { id: "topic-s2", texts: [{ leaf: "Login/Password reset", emotion: "anger" }], nps: 3, csat: 2, ces: 4 },
+    {
+      id: "topic-s3",
+      texts: [{ leaf: "Billing/Invoices" }, { leaf: "Login/Password reset" }],
+      nps: 10,
+      ces: 6,
+    },
+    { id: "topic-s4", texts: [{ leaf: "outlier" }], nps: 6 },
+    { id: "topic-s5", texts: [{ leaf: null }], nps: 8 },
+    { id: "topic-s6", texts: [{ leaf: "Shipping/Late" }], nps: null, csat: 4 },
+  ],
+  [TOPIC_OTHER_TENANT]: [{ id: "topic-s1", texts: [{ leaf: "Billing/Invoices" }], nps: 0 }],
+};
+// Where the taxonomy service would put it: the outlier leaf sits under an ordinary branch, so a record in
+// it would count under Login if the outlier filter were missing.
+const TOPIC_OUTLIER_PARENT = "Login/Password reset";
 
 const fail = (message) => {
   console.error(`FAIL: ${message}`);
@@ -716,6 +747,304 @@ const benchJoins = async (composeJsonPath, baseUrl, submissions) => {
   }
 };
 
+// SQL for one directory run of `tenant`: a five-level tree (root, topic, subtopic, a level-3 detail, leaf)
+// with one leaf and cluster per "Topic/Subtopic" named in `members`, and the memberships. `members` pairs
+// a SQL expression for a record id with its leaf, or with "outlier" for the outlier cluster's leaf.
+const topicRunSql = (tenant, runId, members) => {
+  const tenantSql = sqlString(tenant);
+  const run = sqlString(runId);
+  const statements = [
+    "INSERT INTO taxonomy_runs (id, tenant_id, scope_type, source_type, source_id, field_id, status) " +
+      `VALUES (${run}, ${tenantSql}, 'directory', '', '', '', 'succeeded');`,
+  ];
+  const node = (parentId, clusterId, nodeType, label, level) => {
+    const id = randomUUID();
+    statements.push(
+      "INSERT INTO taxonomy_nodes (id, run_id, parent_id, cluster_id, node_type, label, level) VALUES " +
+        `(${sqlString(id)}, ${run}, ${parentId ? sqlString(parentId) : "NULL"}, ` +
+        `${clusterId ? sqlString(clusterId) : "NULL"}, '${nodeType}', ${sqlString(label)}, ${level});`
+    );
+    return id;
+  };
+  const rootId = node(null, null, "root", "Feedback", 0);
+  const topicIds = new Map();
+  const detailIds = new Map();
+  const branch = (path) => {
+    if (!detailIds.has(path)) {
+      const [topic, subtopic] = path.split("/");
+      if (!topicIds.has(topic)) topicIds.set(topic, node(rootId, null, "branch", topic, 1));
+      const subtopicId = node(topicIds.get(topic), null, "branch", subtopic, 2);
+      detailIds.set(path, node(subtopicId, null, "branch", `${subtopic} detail`, 3));
+    }
+    return detailIds.get(path);
+  };
+  const clusterIds = new Map();
+  let clusterKey = 0;
+  for (const leaf of new Set(members.map(([, member]) => member))) {
+    const outlier = leaf === "outlier";
+    const clusterId = randomUUID();
+    const label = outlier ? "Uncategorized Feedback" : `${leaf} leaf`;
+    statements.push(
+      "INSERT INTO taxonomy_clusters (id, run_id, cluster_key, size, is_outlier, label) VALUES " +
+        `(${sqlString(clusterId)}, ${run}, ${outlier ? -1 : clusterKey++}, 1, ${outlier}, ${sqlString(label)});`
+    );
+    node(branch(outlier ? TOPIC_OUTLIER_PARENT : leaf), clusterId, "leaf", label, 4);
+    clusterIds.set(leaf, clusterId);
+  }
+  for (const [recordId, leaf] of members) {
+    statements.push(
+      "INSERT INTO taxonomy_cluster_memberships (run_id, tenant_id, cluster_id, feedback_record_id) " +
+        `VALUES (${run}, ${tenantSql}, ${sqlString(clusterIds.get(leaf))}, ${recordId});`
+    );
+  }
+  return statements;
+};
+
+const activateTopicRunSql = (tenant, runId) =>
+  "INSERT INTO taxonomy_active_runs (tenant_id, scope_type, source_type, source_id, field_id, run_id) " +
+  `VALUES (${sqlString(tenant)}, 'directory', '', '', '', ${sqlString(runId)}) ` +
+  "ON CONFLICT (tenant_id, scope_type, source_type, source_id, field_id) DO UPDATE SET run_id = EXCLUDED.run_id;";
+
+// The record of `submission` that answers `fieldId`, as a SQL expression.
+const topicRecordSql = (tenant, submission, fieldId) =>
+  `(SELECT id FROM feedback_records WHERE tenant_id = ${sqlString(tenant)} ` +
+  `AND submission_id = ${sqlString(submission)} AND field_id = ${sqlString(fieldId)})`;
+
+const printTopicSeedSql = () => {
+  const statements = [];
+  for (const [tenant, submissions] of Object.entries(TOPIC_SUBMISSIONS)) {
+    const members = [];
+    const record = (submission, fieldId, fieldType, { text = null, number = null, emotion = null }) => {
+      const value = number === null ? "NULL" : Number(number);
+      statements.push(
+        "INSERT INTO feedback_records " +
+          "(source_type, field_id, field_type, value_text, value_number, emotions, tenant_id, submission_id) VALUES " +
+          `('formbricks', ${sqlString(fieldId)}, '${fieldType}', ${text === null ? "NULL" : sqlString(text)}, ${value}, ` +
+          `${emotion ? `ARRAY[${sqlString(emotion)}]::text[]` : "NULL"}, ${sqlString(tenant)}, ${sqlString(submission)});`
+      );
+    };
+    for (const { id, texts, nps, csat, ces } of submissions) {
+      texts.forEach(({ leaf, emotion = null }, index) => {
+        const fieldId = `q_text${index + 1}`;
+        record(id, fieldId, "text", { text: `answer ${index + 1}`, emotion });
+        if (leaf) members.push([topicRecordSql(tenant, id, fieldId), leaf]);
+      });
+      if (nps !== undefined) record(id, "q_nps", "nps", { number: nps });
+      if (csat !== undefined) record(id, "q_csat", "csat", { number: csat });
+      if (ces !== undefined) record(id, "q_ces", "ces", { number: ces });
+    }
+    const runId = randomUUID();
+    statements.push(...topicRunSql(tenant, runId, members), activateTopicRunSql(tenant, runId));
+  }
+  console.log(statements.join("\n"));
+};
+
+// The topic dimensions against the numbers TOPIC_SUBMISSIONS works out to, then again after each kind of
+// change the Topics page can make: a rename, a removed subtopic, a removed topic and a new active run.
+const checkTopics = async (composeJsonPath, baseUrl, postgresContainer) => {
+  const environment = serviceEnvironment(readService(composeJsonPath, "cube"));
+  const NO_TOPIC = "(no topic)";
+  // Cube keeps a result until its refresh key changes. A filter every record passes, different on each
+  // load, makes every load read Postgres, so a change to the taxonomy shows up on the next one.
+  const fresh = () => ({
+    member: "FeedbackRecords.sourceType",
+    operator: "notEquals",
+    values: [`topics-${randomUUID()}`],
+  });
+  const loadTable = async (tenant, query, label) => {
+    const token = createToken(environment, tenant, { userId: "smoke-user" });
+    const { status, body } = await load(baseUrl, token, {
+      ...query,
+      filters: [...(query.filters ?? []), fresh()],
+    });
+    if (status !== 200) fail(`${label}: HTTP ${status} ${JSON.stringify(body)}`);
+    const [dimension] = query.dimensions ?? [];
+    return (body.data ?? []).map((row) => [
+      dimension ? (row[dimension] ?? NO_TOPIC) : "(all)",
+      query.measures.map((measure) => (row[measure] == null ? null : Number(row[measure]))),
+    ]);
+  };
+  const sorted = (entries) => JSON.stringify([...entries].sort(([a], [b]) => a.localeCompare(b)));
+  const expectTable = async (label, tenant, query, expected) => {
+    const actual = await loadTable(tenant, query, label);
+    if (sorted(actual) !== sorted(Object.entries(expected))) {
+      fail(`${label}: Cube returned ${sorted(actual)}; expected ${sorted(Object.entries(expected))}`);
+    }
+    pass(`${label}: ${sorted(actual)}`);
+  };
+  // The app narrows a response-topic query to the score's field type only where that cannot change the
+  // chart: every measure is a score or an average of that type, so a group the filter empties had only
+  // empty cells, and the app drops such rows anyway (dropEmptyMeasureRows).
+  const expectSameNarrowed = async (label, query, fieldType) => {
+    const withoutEmpty = (entries) => entries.filter(([, cells]) => cells.some((cell) => cell !== null));
+    const plain = withoutEmpty(await loadTable(TOPIC_TENANT, query, label));
+    const narrowed = withoutEmpty(
+      await loadTable(
+        TOPIC_TENANT,
+        {
+          ...query,
+          filters: [{ member: "FeedbackRecords.fieldType", operator: "equals", values: [fieldType] }],
+        },
+        label
+      )
+    );
+    if (sorted(plain) !== sorted(narrowed)) {
+      fail(`${label}: ${sorted(plain)} without the fieldType filter, ${sorted(narrowed)} with it`);
+    }
+    pass(`${label}: ${sorted(plain)} with or without fieldType = ${fieldType}`);
+  };
+  const changeTaxonomy = (statements) => sqlRows(postgresContainer, statements.join("\n"));
+  const nodesOf = (tenant) =>
+    `run_id IN (SELECT id FROM taxonomy_runs WHERE tenant_id = ${sqlString(tenant)})`;
+  const NPS = ["FeedbackRecords.npsCount", "FeedbackRecords.npsScore"];
+  const npsByResponseTopic = { measures: NPS, dimensions: ["FeedbackRecords.responseTopic"] };
+
+  await expectTable(
+    "count and anger by the record's own topic",
+    TOPIC_TENANT,
+    {
+      measures: ["FeedbackRecords.count", "FeedbackRecords.angerCount"],
+      dimensions: ["FeedbackRecords.topic"],
+    },
+    // The outlier and the unclassified answer have no topic, nor does any score record.
+    { Billing: [3, 1], Login: [2, 1], Shipping: [1, 0], [NO_TOPIC]: [13, 0] }
+  );
+  // topic-s1's two Billing answers count its NPS once; topic-s3 counts under Billing and under Login;
+  // Shipping's only NPS was dismissed; the outlier and the unclassified responses have no topic.
+  await expectTable("NPS by topic in the response", TOPIC_TENANT, npsByResponseTopic, {
+    Billing: [2, 100],
+    Login: [2, 0],
+    Shipping: [0, null],
+    [NO_TOPIC]: [2, -50],
+  });
+  await expectTable(
+    "NPS by subtopic in the response",
+    TOPIC_TENANT,
+    { measures: NPS, dimensions: ["FeedbackRecords.responseSubtopic"] },
+    {
+      "Billing › Invoices": [2, 100],
+      "Billing › Refunds": [1, 100],
+      "Login › Password reset": [2, 0],
+      "Shipping › Late": [0, null],
+      [NO_TOPIC]: [2, -50],
+    }
+  );
+  await expectTable(
+    "CSAT by topic in the response",
+    TOPIC_TENANT,
+    {
+      measures: ["FeedbackRecords.csatCount", "FeedbackRecords.csatScore"],
+      dimensions: ["FeedbackRecords.responseTopic"],
+    },
+    { Billing: [1, 100], Login: [1, 0], Shipping: [1, 100], [NO_TOPIC]: [0, null] }
+  );
+  await expectTable(
+    "CES by topic in the response",
+    TOPIC_TENANT,
+    {
+      measures: ["FeedbackRecords.cesCount", "FeedbackRecords.cesAverage"],
+      dimensions: ["FeedbackRecords.responseTopic"],
+    },
+    { Billing: [1, 6], Login: [2, 5], Shipping: [0, null], [NO_TOPIC]: [0, null] }
+  );
+  await expectTable(
+    "NPS of the responses that mention Billing",
+    TOPIC_TENANT,
+    {
+      measures: NPS,
+      filters: [{ member: "FeedbackRecords.responseTopic", operator: "equals", values: ["Billing"] }],
+    },
+    { "(all)": [2, 100] }
+  );
+  await expectTable(
+    "NPS of the responses that mention Billing or Login",
+    TOPIC_TENANT,
+    {
+      measures: NPS,
+      filters: [
+        { member: "FeedbackRecords.responseTopic", operator: "equals", values: ["Billing", "Login"] },
+      ],
+    },
+    { "(all)": [3, 33.33] }
+  );
+  for (const [measure, fieldType] of [
+    ["FeedbackRecords.npsScore", "nps"],
+    ["FeedbackRecords.csatScore", "csat"],
+    ["FeedbackRecords.cesAverage", "ces"],
+  ]) {
+    await expectSameNarrowed(
+      `${measure} by topic in the response`,
+      { measures: [measure], dimensions: ["FeedbackRecords.responseTopic"] },
+      fieldType
+    );
+  }
+  await expectTable("another tenant's taxonomy stays its own", TOPIC_OTHER_TENANT, npsByResponseTopic, {
+    Billing: [1, -100],
+  });
+
+  const token = createToken(environment, TOPIC_TENANT, { userId: "smoke-user" });
+  for (const query of [
+    { dimensions: ["RecordTopic.topic"] },
+    { measures: ["FeedbackRecords.count"], dimensions: ["ResponseTopic.subtopic"] },
+  ]) {
+    const { status, body } = await load(baseUrl, token, query);
+    if (status === 200 || !String(body.error ?? "").includes("reserved member")) {
+      fail(`a query naming a topic cube directly was not rejected: HTTP ${status} ${JSON.stringify(body)}`);
+    }
+  }
+  pass("a query naming RecordTopic or ResponseTopic directly is rejected");
+
+  changeTaxonomy([
+    `UPDATE taxonomy_nodes SET label = 'Payments' WHERE label = 'Billing' AND ${nodesOf(TOPIC_TENANT)};`,
+  ]);
+  await expectTable("a renamed topic shows its new label", TOPIC_TENANT, npsByResponseTopic, {
+    Payments: [2, 100],
+    Login: [2, 0],
+    Shipping: [0, null],
+    [NO_TOPIC]: [2, -50],
+  });
+  await expectTable("a rename leaves another tenant's label alone", TOPIC_OTHER_TENANT, npsByResponseTopic, {
+    Billing: [1, -100],
+  });
+
+  changeTaxonomy([
+    `UPDATE taxonomy_nodes SET removed_at = NOW() WHERE label = 'Refunds' AND ${nodesOf(TOPIC_TENANT)};`,
+  ]);
+  await expectTable(
+    "a removed subtopic leaves its answers without a topic",
+    TOPIC_TENANT,
+    { measures: NPS, dimensions: ["FeedbackRecords.responseSubtopic"] },
+    {
+      "Payments › Invoices": [2, 100],
+      "Login › Password reset": [2, 0],
+      "Shipping › Late": [0, null],
+      [NO_TOPIC]: [2, -50],
+    }
+  );
+
+  changeTaxonomy([
+    `UPDATE taxonomy_nodes SET removed_at = NOW() WHERE label = 'Login' AND ${nodesOf(TOPIC_TENANT)};`,
+  ]);
+  // topic-s2 loses its only topic; topic-s3 keeps Payments.
+  await expectTable("a removed topic leaves its answers without a topic", TOPIC_TENANT, npsByResponseTopic, {
+    Payments: [2, 100],
+    Shipping: [0, null],
+    [NO_TOPIC]: [3, -66.67],
+  });
+
+  const nextRunId = randomUUID();
+  changeTaxonomy([
+    ...topicRunSql(TOPIC_TENANT, nextRunId, [
+      [topicRecordSql(TOPIC_TENANT, "topic-s5", "q_text1"), "Onboarding/Sign-up"],
+    ]),
+    activateTopicRunSql(TOPIC_TENANT, nextRunId),
+  ]);
+  await expectTable("a newly activated run replaces every assignment", TOPIC_TENANT, npsByResponseTopic, {
+    Onboarding: [1, 0],
+    [NO_TOPIC]: [4, 0],
+  });
+};
+
 const [command, ...args] = process.argv.slice(2);
 switch (command) {
   case "random-hex":
@@ -738,6 +1067,12 @@ switch (command) {
     break;
   case "check-correctness":
     await checkCorrectness(args[0], args[1], args[2]);
+    break;
+  case "topic-seed-sql":
+    printTopicSeedSql();
+    break;
+  case "check-topics":
+    await checkTopics(args[0], args[1], args[2]);
     break;
   case "bench-seed-sql":
     printBenchSeedSql(Number(args[0] ?? BENCH_DEFAULT_SUBMISSIONS));
