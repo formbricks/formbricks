@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { statSync } from "node:fs";
+import { accessSync, constants as fsConstants, statSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -61,9 +61,12 @@ export interface TPrismaCliTls {
   rootCertFile?: string;
 }
 
-const isFile = (filePath: string): boolean => {
+// Checked before any migration runs, so an unreadable CA stops the run before a data migration can commit.
+const isReadableFile = (filePath: string): boolean => {
   try {
-    return statSync(filePath).isFile();
+    if (!statSync(filePath).isFile()) return false;
+    accessSync(filePath, fsConstants.R_OK);
+    return true;
   } catch {
     return false;
   }
@@ -141,7 +144,7 @@ const resolveRootCertFile = (
 export const resolvePrismaCliTls = (
   databaseUrl: string,
   env: NodeJS.ProcessEnv = process.env,
-  fileExists: (filePath: string) => boolean = isFile
+  fileExists: (filePath: string) => boolean = isReadableFile
 ): TPrismaCliTls => {
   const parts = splitConnectionUrl(databaseUrl);
   const request = readTlsRequest(parts.params, env);

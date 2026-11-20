@@ -264,6 +264,27 @@ describe("resolvePrismaCliTls", () => {
     expect(() => resolve(`${base}?sslmode=bogus&sslaccept=strict`)).toThrow(PrismaCliTlsConfigError);
   });
 
+  // root reads any file, so the permission cannot make it unreadable there.
+  test.skipIf(process.getuid?.() === 0)(
+    "rejects an unreadable root certificate before any migration runs",
+    async () => {
+      const dir = await fs.mkdtemp(path.join(os.tmpdir(), "prisma-cli-tls-unreadable-"));
+      const ca = path.join(dir, "ca.pem");
+      await fs.writeFile(ca, "pem");
+      await fs.chmod(ca, 0o000);
+      try {
+        expect(() =>
+          assertPrismaCliTlsSupported(`${base}?sslmode=verify-full&sslrootcert=${ca}`, {})
+        ).toThrow(PrismaCliTlsConfigError);
+        expect(() => assertPrismaCliTlsSupported(`${base}?sslmode=require`, { PGSSLROOTCERT: ca })).toThrow(
+          PrismaCliTlsConfigError
+        );
+      } finally {
+        await fs.rm(dir, { recursive: true, force: true });
+      }
+    }
+  );
+
   test("assertPrismaCliTlsSupported throws only for settings the CLI cannot honour", () => {
     expect(() => assertPrismaCliTlsSupported(`${base}?sslmode=verify-full`, {})).not.toThrow();
     expect(() =>
