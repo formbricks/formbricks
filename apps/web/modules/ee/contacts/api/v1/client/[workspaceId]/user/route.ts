@@ -58,18 +58,7 @@ const readUserRequestBody = async (
   }
 };
 
-/**
- * The first attribute whose string value holds a NULL byte. Postgres `text` refuses U+0000, so one such
- * value would fail the whole contact upsert with a 500 (ENG-4019). Keys need no check here: the key
- * format check in `updateAttributes` already skips a key with one, and reports it in `errors`.
- */
-const findNullByteAttribute = (attributes: Record<string, unknown>): string | undefined =>
-  Object.entries(attributes).find(([, value]) => typeof value === "string" && hasNullByte(value))?.[0];
-
-/**
- * Why the attributes are rejected (array, too many keys, a NULL byte, malformed email), or null when
- * they pass.
- */
+/** Why the attributes are rejected (array, too many keys, malformed email), or null when they pass. */
 const getAttributesError = (attributes: Record<string, unknown> | undefined): string | null => {
   if (Array.isArray(attributes)) {
     return "attributes must be an object";
@@ -77,11 +66,6 @@ const getAttributesError = (attributes: Record<string, unknown> | undefined): st
 
   if (attributes && Object.keys(attributes).length > MAX_CONTACT_ATTRIBUTES_PER_REQUEST) {
     return `A request may set at most ${MAX_CONTACT_ATTRIBUTES_PER_REQUEST} attributes`;
-  }
-
-  const nullByteAttribute = attributes ? findNullByteAttribute(attributes) : undefined;
-  if (nullByteAttribute !== undefined) {
-    return `Attribute ${JSON.stringify(nullByteAttribute)} ${NULL_BYTE_REASON}`;
   }
 
   if (attributes && Object.hasOwn(attributes, "email")) {

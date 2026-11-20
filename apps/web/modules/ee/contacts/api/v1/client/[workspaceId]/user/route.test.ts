@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
 import { POST } from "./route";
 
@@ -71,7 +71,8 @@ describe("POST /api/v1/client/[workspaceId]/user attribute cap", () => {
 });
 
 // ENG-4019: Postgres `text` cannot hold U+0000, so a NULL byte that reaches the contact upsert fails the
-// whole write with 22021 and the identify call answers 500. It is refused at the boundary instead.
+// whole write with 22021 and the identify call answers 500. The userId is refused at the boundary; an
+// attribute value is refused by `updateAttributes`, which knows which values would reach Postgres.
 describe("POST /api/v1/client/[workspaceId]/user NULL bytes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,10 +88,23 @@ describe("POST /api/v1/client/[workspaceId]/user NULL bytes", () => {
     expect(mocks.updateUser).not.toHaveBeenCalled();
   };
 
-  test("refuses an attribute value with a NULL byte", async () => {
+  test("answers 400 when the attribute write refuses a NULL byte", async () => {
+    mocks.updateUser.mockRejectedValue(new ValidationError('Attribute "plan" must not contain NULL bytes'));
+
     const { response } = await identify({ plan: "pro\u0000" });
 
-    await expectRefused(response);
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(await response.json())).toContain(
+      'Attribute \\"plan\\" must not contain NULL bytes'
+    );
+  });
+
+  // The route strips `userId` and `id` from the attributes, so a NULL byte there never reaches Postgres.
+  test("leaves a NULL byte in an attribute the route strips", async () => {
+    const { response } = await identify({ userId: "x\u0000", plan: "pro" });
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateUser).toHaveBeenCalledOnce();
   });
 
   // A key with a NULL byte never reaches Postgres: the key format check skips it and reports it, so the
