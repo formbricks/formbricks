@@ -155,7 +155,6 @@ with `sslaccept=accept_invalid_certs`: schema migrations still require TLS but s
 app's connections, which use `DATABASE_URL`, keep whatever verification that URL sets. This does not help when the app's connections reject the certificate
 too: the migration runner opens the same kind of connection, so fix the certificate setup first.
 
-
 #### OAuth and MCP URLs
 
 The MCP server is available on the private/admin app at `/api/mcp`. OAuth discovery and token
