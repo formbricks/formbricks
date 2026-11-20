@@ -183,6 +183,41 @@ describe("getRichTextLinks with recall", () => {
     expect(getRichTextLinks(withVariable(`<p>${token}</p>`, `a ${token}`)).size).toBe(1);
   });
 
+  test("resolves a finite chain of variables deeper than ten, to see a link another token adds", () => {
+    const chainIds = Array.from({ length: 12 }, (_, i) => `clchain${String(i).padStart(20, "0")}`);
+    const chain = chainIds.map((id, i) => ({
+      id,
+      name: `c${i}`,
+      type: "text" as const,
+      value: i < chainIds.length - 1 ? `#recall:${chainIds[i + 1]}/fallback:x#` : "end",
+    }));
+    const html = `<p>#recall:${chainIds[0]}/fallback:x# #recall:${VARIABLE_ID}/fallback:x#</p>`;
+    const withValue = (value: string): TRichTextSurveyContent => ({
+      ...withHeadline(html),
+      variables: [...chain, { id: VARIABLE_ID, name: "v1", type: "text", value }],
+    });
+
+    expect(addsRichTextLink(withValue('<a href="https://example.com/a">y</a>'), withValue("friend"))).toBe(
+      true
+    );
+  });
+
+  test("does not grandfather a self-recalling variable once another variable changes", () => {
+    const loopId = "clloop1234567890123456789012";
+    const html = `<p>#recall:${loopId}/fallback:x# #recall:${VARIABLE_ID}/fallback:x#</p>`;
+    const withValue = (value: string): TRichTextSurveyContent => ({
+      ...withHeadline(html),
+      variables: [
+        { id: loopId, name: "loop", type: "text", value: `a #recall:${loopId}/fallback:x#` },
+        { id: VARIABLE_ID, name: "v1", type: "text", value },
+      ],
+    });
+
+    expect(addsRichTextLink(withValue('<a href="https://example.com/a">y</a>'), withValue("friend"))).toBe(
+      true
+    );
+  });
+
   test("grandfathers a token in a tag the previous version already had", () => {
     const html = "<p><a #recall:q9/fallback:x#>go</a></p>";
     expect(addsRichTextLink(withHeadline(html), withHeadline(html))).toBe(false);

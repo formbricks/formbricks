@@ -128,6 +128,36 @@ describe("assertV3SurveyWritePermissions", () => {
       ).rejects.toThrow(V3SurveyWritePermissionError);
     });
 
+    test("rejects a variable that becomes a link beside a recall chain deeper than ten", async () => {
+      const variableId = "clvar1234567890123456789012";
+      const chainIds = Array.from({ length: 12 }, (_, i) => `clchain${String(i).padStart(20, "0")}`);
+      const chain = chainIds.map((id, i) => ({
+        id,
+        name: `c${i}`,
+        type: "text" as const,
+        value: i < chainIds.length - 1 ? `#recall:${chainIds[i + 1]}/fallback:x#` : "end",
+      }));
+      const blocks = blockWithHeadline(
+        `<p>#recall:${chainIds[0]}/fallback:x# #recall:${variableId}/fallback:x#</p>`
+      );
+      const variables = (value: string) => [
+        ...chain,
+        { id: variableId, name: "v1", type: "text" as const, value },
+      ];
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks,
+            endings: [],
+            variables: variables(LINKED),
+            previous: { blocks, endings: [], variables: variables("friend") },
+          },
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+    });
+
     test("rejects a welcome card that gains a link", async () => {
       const welcomeCard = {
         enabled: true,

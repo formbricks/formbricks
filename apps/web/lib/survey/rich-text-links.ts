@@ -48,20 +48,27 @@ const collectLinksFromRendered = (html: string, links: Set<string>): void => {
 // `replaceRecallInfo` in `@formbricks/surveys` resolves these before the text is parsed: a variable's
 // value, else the respondent's answer or hidden field, else the fallback (`nbsp` read as a space).
 const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/;
-// The renderer loops until no token is left, so a value may itself hold one. Each pass resolves every
-// token, so the bound is on that nesting, not on how many tokens the text has.
-const MAX_RECALL_DEPTH = 10;
+// The renderer loops until no token is left, so a value may itself hold one. A fallback cannot (it
+// stops at the first `#`), so only variable values nest, and a chain that ends is never deeper than the
+// survey has variables. Each pass resolves every token, so that depth is the only bound needed; the
+// length cap stops values that fan out from growing without limit.
+const MAX_RESOLVED_LENGTH = 200_000;
 const RECALL_TOKENS = new RegExp(RECALL_TOKEN.source, "g");
 // One opening tag, a quoted value consumed whole (the pattern survey-ui strips styles with).
 const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
 
-/** The text with its tokens resolved, or `null` when values keep nesting tokens past the bound. */
-const resolveRecall = (html: string, resolve: (id: string, fallback: string) => string): string | null => {
+/** The text with its tokens resolved, or `null` when it never settles: a cycle, or past the length cap. */
+const resolveRecall = (
+  html: string,
+  maxDepth: number,
+  resolve: (id: string, fallback: string) => string
+): string | null => {
   let text = html;
-  for (let depth = 0; depth < MAX_RECALL_DEPTH && RECALL_TOKEN.test(text); depth++) {
+  for (let depth = 0; depth < maxDepth && RECALL_TOKEN.test(text); depth++) {
     text = text.replaceAll(RECALL_TOKENS, (_token, id: string, fallback: string) =>
       resolve(id, fallback.replaceAll("nbsp", " ").trim())
     );
+    if (text.length > MAX_RESOLVED_LENGTH) return null;
   }
   return RECALL_TOKEN.test(text) ? null : text;
 };
@@ -80,14 +87,20 @@ const collectRecallLinks = (
   }
   // What the survey shows when each token resolves to nothing, to its fallback, or to the variable's
   // value the survey defines.
+  const maxDepth = recallValues.size + 1;
   for (const resolved of new Set([
-    resolveRecall(html, () => ""),
-    resolveRecall(html, (_id, fallback) => fallback),
-    resolveRecall(html, (id, fallback) => recallValues.get(id) || fallback),
+    resolveRecall(html, maxDepth, () => ""),
+    resolveRecall(html, maxDepth, (_id, fallback) => fallback),
+    resolveRecall(html, maxDepth, (id, fallback) => recallValues.get(id) || fallback),
   ])) {
-    // A value that keeps recalling itself never settles, so what it shows cannot be checked: count it.
-    if (resolved === null) links.add(`recall that does not resolve: ${html}`);
-    else collectLinksFromRendered(resolved, links);
+    if (resolved !== null) {
+      collectLinksFromRendered(resolved, links);
+      continue;
+    }
+    // Text that never settles cannot be checked, so it counts as a link. Keyed on the variables' values
+    // too, so changing any of them is a new link rather than a grandfathered one.
+    const values = JSON.stringify([...recallValues].sort(([a], [b]) => a.localeCompare(b)));
+    links.add(`recall that does not resolve: ${html} with ${values}`);
   }
 };
 
