@@ -26,7 +26,10 @@ import {
   resetSegmentFiltersAction,
   updateSegmentAction,
 } from "@/modules/ee/contacts/segments/actions";
-import type { TSharedSegmentEdit } from "@/modules/survey/editor/lib/shared-segment-edit";
+import {
+  type TSharedSegmentEdit,
+  nextSharedSegmentEdit,
+} from "@/modules/survey/editor/lib/shared-segment-edit";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -105,18 +108,11 @@ export function TargetingCard({
       ...localSurveyOld,
       segment,
     }));
-    // An edit of another segment ends once the survey is on a different one (Load, Clone, Reset).
-    setSharedSegmentEdit((edit) => (edit && edit.segmentId !== segment?.id ? null : edit));
-  }, [setLocalSurvey, setSharedSegmentEdit, segment]);
+  }, [setLocalSurvey, segment]);
 
-  // The editor open on a shared segment, however it got there ("Edit segment", or a segment loaded while
-  // the editor was open), is an edit the survey save will not write: record its stored filters once, when
-  // it opens, so a later reopen or edit keeps them.
+  // The shared-segment edit follows the segment and the editor: the survey save will not write it.
   useEffect(() => {
-    if (!isSegmentEditorOpen || !segment || segment.isPrivate) return;
-    setSharedSegmentEdit((edit) =>
-      edit?.segmentId === segment.id ? edit : { segmentId: segment.id, savedFilters: segment.filters }
-    );
+    setSharedSegmentEdit((edit) => nextSharedSegmentEdit(edit, segment, isSegmentEditorOpen));
   }, [isSegmentEditorOpen, segment, setSharedSegmentEdit]);
 
   const isSegmentUsedInOtherSurveys = useMemo(

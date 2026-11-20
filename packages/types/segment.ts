@@ -669,7 +669,9 @@ export const ZSegmentUpdateInput = z
   .object({
     title: z.string(),
     description: z.string().nullable(),
-    isPrivate: z.boolean().prefault(true),
+    // No default: an update that leaves `isPrivate` out keeps the stored value. A default under
+    // `.partial()` still fills it in, so a filters-only save turned a shared segment private (ENG-6957).
+    isPrivate: z.boolean(),
     filters: ZRequiredSegmentFilters,
     surveys: ZSegmentSurveyIds,
   })
