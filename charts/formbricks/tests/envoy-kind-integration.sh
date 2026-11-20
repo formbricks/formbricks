@@ -35,8 +35,22 @@ diagnostics() {
     kubectl_test -n "$NAMESPACE" logs "job/$job" --all-containers --tail=100 >&2 || true
   done
 }
+# The port-forward of the running check_envoy, stopped on exit so a failed check cannot leave it behind.
+port_forward_pid=""
+# Each check_envoy forwards from its own local port, so a forward that outlived its check is never reused.
+envoy_checks=0
+
+stop_port_forward() {
+  if [[ -n "$port_forward_pid" ]]; then
+    kill "$port_forward_pid" >/dev/null 2>&1 || true
+    wait "$port_forward_pid" 2>/dev/null || true
+    port_forward_pid=""
+  fi
+}
+
 cleanup() {
   local code=$?
+  stop_port_forward
   if (( code != 0 )); then diagnostics; fi
   if [[ -x "$kind_bin" ]]; then
     "$kind_bin" delete cluster --name "$CLUSTER_NAME" >/dev/null 2>&1 || true
@@ -228,20 +242,23 @@ check_envoy() {
       "$gateway_address" "$proxy_namespace" "$proxy_address" >&2
     return 1
   fi
-  kubectl_test -n "$proxy_namespace" port-forward "svc/$proxy_service" 18080:80 \
+  envoy_checks=$((envoy_checks + 1))
+  local local_port=$((18080 + envoy_checks))
+  # kubectl itself, not the kubectl_test function: a backgrounded function runs in a subshell, so $! would
+  # be the subshell and killing it would leave kubectl holding the port, still forwarding to the old proxy.
+  kubectl --context "$context" -n "$proxy_namespace" port-forward "svc/$proxy_service" "${local_port}:80" \
     >"${temp_dir}/port-forward.log" 2>&1 &
-  local forward_pid=$!
+  port_forward_pid=$!
   local success=false
   for attempt in {1..60}; do
-    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:18080/health \
+    if curl --fail --silent --show-error --max-time 3 "http://127.0.0.1:${local_port}/health" \
       >"${temp_dir}/gateway-health.log" 2>/dev/null; then
       success=true
       break
     fi
     sleep 2
   done
-  kill "$forward_pid" >/dev/null 2>&1 || true
-  wait "$forward_pid" 2>/dev/null || true
+  stop_port_forward
   if [[ "$success" != true ]]; then
     cat "${temp_dir}/port-forward.log" >&2
     echo 'No successful /health response through the Envoy proxy' >&2
