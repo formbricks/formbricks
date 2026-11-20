@@ -13,6 +13,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getActionClasses, getActionClassesInTransaction } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
+import { addsRichTextLink } from "@/lib/survey/rich-text-links";
 import { createSurvey, getSurveyWithCustomCss, selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { getElementsFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
@@ -43,6 +44,11 @@ import { resolveV3SurveyTargetingActor, resolveV3VisibleSurveyWhere } from "./vi
 
 export type TV3SurveyCreateOptions = {
   skipExternalUrlPermissionCheck?: boolean;
+  /**
+   * Imports keep links in rich text on every plan (ENG-3607), so they skip only the rich-text half
+   * of the external-URL gate; CTA buttons and ending links stay gated.
+   */
+  skipRichTextLinkPermissionCheck?: boolean;
   surveyCreateInputOverrides?: Partial<TSurveyCreateInput>;
   /** Filled with the custom CSS warnings when the create processed custom CSS. */
   report?: TV3SurveyWriteReport;
@@ -92,7 +98,10 @@ function getCreatedBy(authentication: TV3Authentication): string | null {
   return null;
 }
 
-function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
+function hasExternalUrlReferences(
+  input: TV3CreateSurveyBody,
+  options: Pick<TV3SurveyCreateOptions, "skipRichTextLinkPermissionCheck">
+): boolean {
   const hasExternalEndingLink = input.endings.some((ending) => {
     if (ending.type === "endScreen") {
       return Boolean(ending.buttonLink) && !isDefaultEndingCardButtonLink(ending.buttonLink);
@@ -104,15 +113,22 @@ function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
     (element) => element.type === "cta" && element.buttonExternal
   );
 
-  return hasExternalEndingLink || hasExternalCtaButton;
+  return (
+    hasExternalEndingLink ||
+    hasExternalCtaButton ||
+    (!options.skipRichTextLinkPermissionCheck && addsRichTextLink(input))
+  );
 }
 
 async function assertV3SurveyCreatePermissions(
   input: TV3CreateSurveyBody,
   organizationId?: string,
-  options: Pick<TV3SurveyCreateOptions, "skipExternalUrlPermissionCheck"> = {}
+  options: Pick<
+    TV3SurveyCreateOptions,
+    "skipExternalUrlPermissionCheck" | "skipRichTextLinkPermissionCheck"
+  > = {}
 ): Promise<void> {
-  if (options.skipExternalUrlPermissionCheck || !hasExternalUrlReferences(input)) {
+  if (options.skipExternalUrlPermissionCheck || !hasExternalUrlReferences(input, options)) {
     return;
   }
 

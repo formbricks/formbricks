@@ -512,4 +512,44 @@ describe("checkExternalUrlsPermission", () => {
 
     await expect(checkExternalUrlsPermission(mockOrganizationId, complexSurvey, null)).resolves.not.toThrow();
   });
+
+  // ENG-3891: the editor offers links in rich text only on plans that allow external URLs.
+  describe("links in rich text", () => {
+    const withLink = (href: string): TSurvey => ({
+      ...baseSurvey,
+      endings: [
+        {
+          id: "ending1",
+          type: "endScreen",
+          headline: createI18nString(`<p>Thanks, see <a href="${href}">more</a></p>`, []),
+        },
+      ],
+    });
+
+    beforeEach(() => {
+      vi.mocked(getOrganizationBilling, { partial: true }).mockResolvedValue(mockOrganizationBilling);
+      vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    });
+
+    test("throws for a new link without permission", async () => {
+      await expect(
+        checkExternalUrlsPermission(mockOrganizationId, withLink("https://example.com/b"), baseSurvey)
+      ).rejects.toThrow(OperationNotAllowedError);
+    });
+
+    test("allows a link the survey already had (grandfathering)", async () => {
+      const survey = withLink("https://example.com/a");
+      await expect(checkExternalUrlsPermission(mockOrganizationId, survey, survey)).resolves.toBeUndefined();
+    });
+
+    test("throws when an existing link points somewhere new", async () => {
+      await expect(
+        checkExternalUrlsPermission(
+          mockOrganizationId,
+          withLink("https://example.com/b"),
+          withLink("https://example.com/a")
+        )
+      ).rejects.toThrow(OperationNotAllowedError);
+    });
+  });
 });

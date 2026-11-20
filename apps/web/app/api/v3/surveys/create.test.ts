@@ -416,6 +416,141 @@ describe("createV3Survey", () => {
     );
   });
 
+  // ENG-3891: the editor only offers links in rich text when the plan allows external URLs, so the
+  // API must gate an `<a href>` in a rich-text field the same way it gates CTA buttons and endings.
+  describe("links in rich text", () => {
+    const LINK = '<p>Read our <a href="https://example.com/terms" target="_blank">terms</a></p>';
+
+    const withElement = (element: Record<string, unknown>) =>
+      ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        blocks: [
+          {
+            ...rawCreateBody.blocks[0],
+            elements: [{ ...rawCreateBody.blocks[0].elements[0], ...element }],
+          },
+        ],
+      });
+
+    test.each([
+      ["an element headline", withElement({ headline: { "en-US": LINK, "de-DE": "Bedingungen" } })],
+      [
+        "an element subheader in a non-default language",
+        withElement({ subheader: { "en-US": "<p>Terms</p>", "de-DE": LINK } }),
+      ],
+      [
+        "an <a/href> that the renderer still shows as a link",
+        withElement({
+          headline: { "en-US": '<p><a/href="https://example.com">x</a></p>', "de-DE": "Bedingungen" },
+        }),
+      ],
+      [
+        "an href the renderer joins by removing a style attribute",
+        withElement({
+          headline: {
+            "en-US": '<p><a hr style="x"ef="https://example.com">x</a></p>',
+            "de-DE": "Bedingungen",
+          },
+        }),
+      ],
+      [
+        "a date element's html",
+        withElement({ type: "date", format: "M-d-y", html: { "en-US": LINK, "de-DE": LINK } }),
+      ],
+      [
+        "the welcome card",
+        ZV3CreateSurveyBody.parse({
+          ...rawCreateBody,
+          welcomeCard: {
+            enabled: true,
+            headline: { "en-US": "Welcome", "de-DE": "Willkommen" },
+            subheader: { "en-US": LINK, "de-DE": "Bedingungen" },
+          },
+        }),
+      ],
+      [
+        "an ending card",
+        ZV3CreateSurveyBody.parse({
+          ...rawCreateBody,
+          endings: [
+            {
+              id: "clen1234567890123456789012",
+              type: "endScreen",
+              headline: { "en-US": "Thanks", "de-DE": "Danke" },
+              subheader: { "en-US": LINK, "de-DE": LINK },
+            },
+          ],
+        }),
+      ],
+    ])("rejects a link in %s without external URL permission", async (_field, body) => {
+      vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+
+      await expect(createV3Survey(body, null, "req_rich_text_link")).rejects.toThrow(
+        V3SurveyCreatePermissionError
+      );
+      expect(getExternalUrlsPermission).toHaveBeenCalledWith("org_1");
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
+
+    test("creates a survey with a rich-text link when the organization has external URL permission", async () => {
+      vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+
+      await createV3Survey(
+        withElement({ headline: { "en-US": LINK, "de-DE": "Bedingungen" } }),
+        null,
+        "req_rich_text_link_allowed"
+      );
+
+      expect(getExternalUrlsPermission).toHaveBeenCalledWith("org_1");
+      expect(createSurvey).toHaveBeenCalled();
+    });
+
+    test("lets an import keep a rich-text link but still gates its external CTA buttons", async () => {
+      vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+      const options = { skipRichTextLinkPermissionCheck: true };
+
+      await createV3Survey(
+        withElement({ headline: { "en-US": LINK, "de-DE": LINK } }),
+        null,
+        "req_import_link",
+        undefined,
+        options
+      );
+      expect(getExternalUrlsPermission).not.toHaveBeenCalled();
+      expect(createSurvey).toHaveBeenCalledTimes(1);
+
+      const withCta = withElement({
+        id: "external_cta",
+        type: "cta",
+        headline: { "en-US": LINK, "de-DE": LINK },
+        buttonExternal: true,
+        buttonUrl: "https://example.com",
+        ctaButtonLabel: { "en-US": "Open", "de-DE": "Öffnen" },
+        required: false,
+      });
+      await expect(createV3Survey(withCta, null, "req_import_cta", undefined, options)).rejects.toThrow(
+        V3SurveyCreatePermissionError
+      );
+      expect(createSurvey).toHaveBeenCalledTimes(1);
+    });
+
+    test("does not check the plan for rich text without a link", async () => {
+      vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+
+      await createV3Survey(
+        withElement({
+          headline: { "en-US": "<p><strong>Bold</strong> question</p>", "de-DE": "<p>Frage</p>" },
+          subheader: { "en-US": "<p>a < b and <abbr>HTML</abbr></p>", "de-DE": "<p>Text</p>" },
+        }),
+        null,
+        "req_rich_text_no_link"
+      );
+
+      expect(getExternalUrlsPermission).not.toHaveBeenCalled();
+      expect(createSurvey).toHaveBeenCalled();
+    });
+  });
+
   // ENG-2587. Driven through the real `ZSurveyCreateInput`/`surveyRefinement` rather than a
   // synthetic schema, so it also fails if the refinement's issue path moves, or if the CTA branch
   // stops firing (it is gated on `buttonExternal`). `createSurvey` is mocked, so no DB is involved.
