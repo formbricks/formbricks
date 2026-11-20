@@ -606,7 +606,7 @@ describe("Segment Service Tests", () => {
       expect(getSurvey).toHaveBeenCalledWith(surveyId);
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(prisma.segment.findFirst).toHaveBeenCalledWith({
-        where: { title: surveyId, isPrivate: true },
+        where: { workspaceId, title: surveyId, isPrivate: true },
         select: selectSegment,
       });
       expect(prisma.survey.update).toHaveBeenCalledWith({
