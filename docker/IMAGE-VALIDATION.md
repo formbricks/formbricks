@@ -125,9 +125,10 @@ Prisma's schema engine, which runs the migrations, uses OpenSSL and ignores libp
 `verify-ca`, `verify-full` and `sslrootcert`. The migration runner translates them before starting it
 (`packages/database/src/prisma-cli-tls.ts`): with `sslrootcert`, the engine trusts only that file
 (`SSL_CERT_FILE`, with `SSL_CERT_DIR` pointed at an empty directory); without it, the OS bundle, which is
-Debian's `ca-certificates` with every emSign root deselected, as the image build checks. A database
-certificate from a private CA therefore needs only `sslrootcert` in `DATABASE_URL`: the app's `pg`
-connections read the same file.
+Debian's `ca-certificates` with every emSign root deselected, as the image build checks. For a database
+certificate from a private CA, set `sslmode=verify-full` and point `sslrootcert` at the CA in `DATABASE_URL`:
+the app's `pg` connections read the same file. The runner drops `sslcert` from the engine's URL, because the
+engine would trust it as a root while libpq means a client certificate.
 
 ## Repair and recovery
 
