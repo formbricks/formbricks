@@ -176,17 +176,26 @@ const parseBody = (response: WorkflowHttpResponse): unknown => {
 /**
  * One response two ways: `variables` is what later steps read (`status`, the whole body up to 1 MB,
  * in memory only); `record` is what run detail and samples keep (≤64 KB, parsed only when it fits).
+ * An echoed secret is masked in both: a later step could otherwise insert it into a call to another
+ * host, past the secret's host binding (ADR 0051), and its run detail would keep it in plain text.
  */
 export const summarizeWorkflowHttpResponse = (
   response: WorkflowHttpResponse,
-  /** Secret header values this call sent; an endpoint that echoes them back gets them masked in `record`. */
+  /** Secret header values this call sent; an endpoint that echoes them back gets them masked. */
   secretValues: readonly string[] = []
 ): { variables: { status: number; body: unknown }; record: TWorkflowHttpResponseRecord } => {
-  const variables = { status: response.status, body: parseBody(response) };
+  const parsed = parseBody(response);
+  // Masked after parsing, so a secret the JSON spells with escapes (`\/`, `\u0041`) is caught too.
+  const variables = {
+    status: response.status,
+    body:
+      typeof parsed === "string"
+        ? maskSecretValues(parsed, secretValues)
+        : maskSecretsInJson(parsed, secretValues),
+  };
   const base = { status: response.status, contentType: response.contentType };
   if (typeof variables.body !== "string") {
-    // Masked after parsing, so a secret the JSON spells with escapes (`\/`, `\u0041`) is caught too.
-    const body = maskSecretsInJson(variables.body, secretValues);
+    const body = variables.body;
     const serialized = JSON.stringify(body);
     if (new TextEncoder().encode(serialized).length <= WORKFLOW_HTTP_LOGGED_BODY_BYTES) {
       return { variables, record: { ...base, body } };

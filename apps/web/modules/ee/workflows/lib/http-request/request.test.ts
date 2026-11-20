@@ -11,15 +11,15 @@ const echo = (body: unknown): WorkflowHttpResponse => ({
 });
 
 describe("summarizeWorkflowHttpResponse", () => {
-  test("masks a secret header value the endpoint echoes back in what run detail and samples keep", () => {
+  test("masks a secret header value the endpoint echoes back, in what is kept and in what later steps read", () => {
     const response = echo({ headers: { "X-Api-Key": "sk-live-123456" }, ok: true });
 
     const { record, variables } = summarizeWorkflowHttpResponse(response, ["sk-live-123456"]);
 
     expect(JSON.stringify(record)).not.toContain("sk-live-123456");
     expect(record.body).toEqual({ headers: { "X-Api-Key": WORKFLOW_SECRET_MASK }, ok: true });
-    // Later steps read the response in memory as the endpoint sent it.
-    expect(variables.body).toEqual({ headers: { "X-Api-Key": "sk-live-123456" }, ok: true });
+    // A later step could otherwise send the secret to another host, past its host binding.
+    expect(variables.body).toEqual({ headers: { "X-Api-Key": WORKFLOW_SECRET_MASK }, ok: true });
   });
 
   test("masks the secret in a text body too", () => {
@@ -30,9 +30,10 @@ describe("summarizeWorkflowHttpResponse", () => {
       truncated: false,
     };
 
-    const { record } = summarizeWorkflowHttpResponse(response, ["abcd-secret-9"]);
+    const { record, variables } = summarizeWorkflowHttpResponse(response, ["abcd-secret-9"]);
 
     expect(record.body).toBe(`you sent token=${WORKFLOW_SECRET_MASK} ok`);
+    expect(variables.body).toBe(`you sent token=${WORKFLOW_SECRET_MASK} ok`);
   });
 
   test("masks a secret the JSON spells with escapes, which the raw text doesn't contain byte for byte", () => {
