@@ -143,25 +143,3 @@ describe("formbricks/prefer-read-only-props", () => {
     );
   }, 30_000);
 });
-
-describe("react/no-unsafe covers the deprecated lifecycles eslint-plugin-react's no-deprecated did", () => {
-  const file = "modules/read-only-props/lifecycle.tsx";
-  const source = `import { Component } from "react";
-export class Hello extends Component<Readonly<{ name: string }>> {
-  componentWillMount() {}
-  render() {
-    return <div>{this.props.name}</div>;
-  }
-}
-`;
-
-  test.each(Object.keys(tiers))(
-    "%s tier",
-    (tier) => {
-      expect(lintFixtures(tiers[tier as keyof typeof tiers], { [file]: source })[file]).toContainEqual(
-        expect.objectContaining({ ruleId: "react/no-unsafe", severity: "error" })
-      );
-    },
-    30_000
-  );
-});

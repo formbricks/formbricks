@@ -11,7 +11,7 @@
  * ignores without a warning: a rule configured that way silently does nothing.
  *
  * `formbricks/prefer-read-only-props` replaces eslint-plugin-react's rule of the same name, whose
- * component detection made it the slowest rule in the lint run (ENG-7401).
+ * component detection cost about half of apps/web's lint run (ENG-7401).
  */
 
 const restrictedSyntax = {
@@ -93,7 +93,6 @@ const PROPS_TYPE_ARGUMENT = {
   ComponentPropsWithRef: 0,
   ComponentPropsWithoutRef: 0,
   ForwardRefRenderFunction: 1,
-  forwardRef: 1,
   VoidFunctionComponent: 0,
   VFC: 0,
   PropsWithChildren: 0,
@@ -102,11 +101,12 @@ const PROPS_TYPE_ARGUMENT = {
   FunctionComponent: 0,
   FC: 0,
 };
-const WRAPPERS = new Set(["memo", "forwardRef"]);
+// The call wrappers a component passes through, and which of their type arguments is the props type.
+const WRAPPERS = { memo: 0, forwardRef: 1 };
 const COMPONENT_CLASSES = new Set(["Component", "PureComponent"]);
 const PASCAL_CASE = /^[A-Z]/;
 
-const typeArgumentsOf = (node) => (node.typeArguments ?? node.typeParameters)?.params ?? [];
+const typeArgumentsOf = (node) => node.typeArguments?.params ?? [];
 
 const isFunction = (node) =>
   node?.type === "ArrowFunctionExpression" ||
@@ -246,7 +246,7 @@ const preferReadOnlyProps = {
       return (
         callee.type === "MemberExpression" &&
         reactNamespaces.has(callee.object.name) &&
-        WRAPPERS.has(callee.property.name)
+        callee.property.name in WRAPPERS
       );
     };
 
@@ -257,7 +257,7 @@ const preferReadOnlyProps = {
       let current = node;
       while (isWrapperCall(current)) {
         const name = current.callee.name ?? current.callee.property.name;
-        const typeArgument = typeArgumentsOf(current)[name === "forwardRef" ? 1 : 0];
+        const typeArgument = typeArgumentsOf(current)[WRAPPERS[name]];
         propsType ??= typeArgument;
         current = current.arguments[0];
       }
@@ -276,7 +276,7 @@ const preferReadOnlyProps = {
           }
           const imported = specifier.imported.name ?? specifier.imported.value;
           if (imported in PROPS_TYPE_ARGUMENT) reactGenerics.set(specifier.local.name, imported);
-          if (WRAPPERS.has(imported)) reactWrappers.add(specifier.local.name);
+          if (imported in WRAPPERS) reactWrappers.add(specifier.local.name);
           if (COMPONENT_CLASSES.has(imported)) reactClasses.add(specifier.local.name);
         }
       },
@@ -308,7 +308,7 @@ const preferReadOnlyProps = {
             reactNamespaces.has(superClass.object.name) &&
             COMPONENT_CLASSES.has(superClass.property.name));
         if (!isComponent) return;
-        const typeArgument = (node.superTypeArguments ?? node.superTypeParameters)?.params?.[0];
+        const typeArgument = node.superTypeArguments?.params?.[0];
         components.push(() => check(typeArgument));
       },
       // Type declarations may follow the component that uses them, so props resolve at the end.
