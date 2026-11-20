@@ -1101,6 +1101,18 @@ describe("Tests for updateSurvey", () => {
           },
         },
       ];
+      // The stored survey's own private segment, as `getSurvey` reads it (connected surveys as `{ id }`).
+      const ownSegment = (filters: unknown) => ({
+        id: SEGMENT_ID,
+        title: updateSurveyInput.id,
+        description: null,
+        isPrivate: true,
+        filters,
+        workspaceId: updateSurveyInput.workspaceId,
+        surveys: [{ id: updateSurveyInput.id }],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       const save = (filters: unknown) =>
         updateSurveyInternal(
           {
@@ -1109,12 +1121,12 @@ describe("Tests for updateSurvey", () => {
             type: "app",
             segment: {
               id: SEGMENT_ID,
-              title: "seg",
+              title: updateSurveyInput.id,
               description: null,
-              isPrivate: false,
+              isPrivate: true,
               filters,
               workspaceId: updateSurveyInput.workspaceId,
-              surveys: [],
+              surveys: [updateSurveyInput.id],
               createdAt: new Date(),
               updatedAt: new Date(),
             },
@@ -1123,7 +1135,13 @@ describe("Tests for updateSurvey", () => {
         );
 
       beforeEach(() => {
-        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+        // Since ENG-6957 a save writes filters only to the survey's own private segment, so that is the
+        // segment these tests save through.
+        prisma.survey.findUnique.mockResolvedValueOnce({
+          ...mockSurveyOutput,
+          status: "draft",
+          segment: ownSegment([]),
+        } as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
         prisma.segment.findUnique.mockResolvedValueOnce({
           workspaceId: updateSurveyInput.workspaceId,
         } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
@@ -1135,7 +1153,7 @@ describe("Tests for updateSurvey", () => {
 
         await expect(save(attributeFilters)).rejects.toThrow(OperationNotAllowedError);
 
-        expect(prisma.segment.update).not.toHaveBeenCalled();
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
         expect(prisma.survey.update).not.toHaveBeenCalled();
       });
 
@@ -1143,14 +1161,14 @@ describe("Tests for updateSurvey", () => {
         await save(attributeFilters);
 
         expect(getIsContactsEnabled).toHaveBeenCalledWith(mockOrganizationOutput.id);
-        expect(prisma.segment.update).toHaveBeenCalled();
+        expect(prisma.segment.updateMany).toHaveBeenCalled();
       });
 
       test("keeps saving without asking for the licence when the filters are empty", async () => {
         await save([]);
 
         expect(getIsContactsEnabled).not.toHaveBeenCalled();
-        expect(prisma.segment.update).toHaveBeenCalled();
+        expect(prisma.segment.updateMany).toHaveBeenCalled();
       });
 
       test("keeps saving unchanged filters after the licence lapsed", async () => {
@@ -1159,23 +1177,13 @@ describe("Tests for updateSurvey", () => {
         prisma.survey.findUnique.mockResolvedValueOnce({
           ...mockSurveyOutput,
           status: "draft",
-          segment: {
-            id: SEGMENT_ID,
-            title: "seg",
-            description: null,
-            isPrivate: false,
-            filters: attributeFilters,
-            workspaceId: updateSurveyInput.workspaceId,
-            surveys: [],
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
+          segment: ownSegment(attributeFilters),
         } as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
 
         await save(attributeFilters);
 
         expect(getIsContactsEnabled).not.toHaveBeenCalled();
-        expect(prisma.segment.update).toHaveBeenCalled();
+        expect(prisma.segment.updateMany).toHaveBeenCalled();
       });
 
       test("refuses a self-reference nested in a group, and one inside filters that fail the schema", async () => {
