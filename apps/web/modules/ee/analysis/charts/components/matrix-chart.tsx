@@ -5,6 +5,12 @@ import { useTranslation } from "react-i18next";
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { cn } from "@/lib/cn";
 import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-empty-state";
+import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
+import {
+  EMPTY_GROUP_VALUE,
+  getNaturalValueOrder,
+  prepareGroupedRows,
+} from "@/modules/ee/analysis/charts/lib/chart-series";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   MATRIX_COLUMN_DIMENSION_ID,
@@ -21,6 +27,7 @@ import {
   resolveMatrixDisplay,
   toMatrixGrid,
 } from "@/modules/ee/analysis/charts/lib/matrix-pivot";
+import { formatMeasureValue } from "@/modules/ee/analysis/charts/lib/measure-format";
 import {
   formatCubeColumnHeader,
   getTranslatedDimensionValueLabel,
@@ -96,7 +103,14 @@ function MatrixSetupChecklist({ issues }: Readonly<{ issues: TMatrixQueryIssue[]
  * Rows and columns come out in survey order when the server resolved the matrix's labels, and any
  * other two groupings render the same way ("country × source").
  */
-export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: Readonly<MatrixChartProps>) {
+export function MatrixChart({
+  data,
+  query,
+  config,
+  optionLabels,
+  fieldLabels,
+  memberLabels,
+}: Readonly<MatrixChartProps>) {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
@@ -116,19 +130,38 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
   };
   const formatterFor = (dimension: string) => {
     const labels = labelMapFor(dimension);
-    return (value: string): string =>
-      labels?.[value] ?? getTranslatedDimensionValueLabel(dimension, value, t) ?? formatCellValue(value);
+    return (value: string): string => {
+      if (value === EMPTY_GROUP_VALUE) {
+        return (
+          getTranslatedDimensionValueLabel(dimension, null, t) ?? t("workspace.analysis.charts.no_value")
+        );
+      }
+      return (
+        labels?.[value] ?? getTranslatedDimensionValueLabel(dimension, value, t) ?? formatCellValue(value)
+      );
+    };
   };
   const rowLabels = labelMapFor(rowKey);
   const columnLabels = labelMapFor(columnKey);
+  // Survey order when the server resolved the question's labels; otherwise a grouping's own scale
+  // (sentiment low → high, NPS bands positive first). Groupings without one go largest first.
+  const orderFor = (dimension: string, labels: Record<string, string> | undefined): string[] | undefined => {
+    if (labels) return Object.keys(labels);
+    const natural = getNaturalValueOrder(dimension, optionLabels);
+    return natural ? [...natural] : undefined;
+  };
+  const { showEmptyValues } = resolveChartDisplay(config);
+  // Same folding as the bar and area charts, so a shown empty group's score is re-weighted, not one
+  // subgroup's value.
+  const rows = prepareGroupedRows(data, [rowKey, columnKey], query.measures ?? [], showEmptyValues);
 
   const pivot = buildMatrixPivot({
-    data,
+    data: rows,
     rowKey,
     columnKey,
     measureKey,
-    rowOrder: rowLabels ? Object.keys(rowLabels) : undefined,
-    columnOrder: columnLabels ? Object.keys(columnLabels) : undefined,
+    rowOrder: orderFor(rowKey, rowLabels),
+    columnOrder: orderFor(columnKey, columnLabels),
     // The server only ships a whole map when the filters named the question, so every key in it is
     // a statement or scale point of this chart — including ones nobody picked yet.
     includeUnansweredRows: Boolean(rowLabels),
@@ -156,7 +189,7 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
 
   const grid = toMatrixGrid(pivot, display.transpose);
   const showTotals = display.showTotals && pivot.isAdditive;
-  const formatValue = (value: number) => value.toLocaleString(locale, { maximumFractionDigits: 2 });
+  const formatValue = (value: number) => formatMeasureValue(measureKey, value, locale);
   const formatShare = (share: number) =>
     new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(share);
 
@@ -179,7 +212,8 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
       return t("workspace.analysis.charts.matrix_statement");
     if (dimension === MATRIX_COLUMN_DIMENSION_ID && optionLabels)
       return t("workspace.analysis.charts.matrix_answer");
-    return getTranslatedFieldLabel(dimension, t);
+    // An imported field reads as its own name (or the workspace's rename), never its member id.
+    return memberLabels?.[dimension] ?? getTranslatedFieldLabel(dimension, t);
   };
   const rowDimensionLabel = describeDimension(display.transpose ? columnKey : rowKey);
 
@@ -189,7 +223,7 @@ export function MatrixChart({ data, query, config, optionLabels, fieldLabels }: 
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">
             {t("workspace.analysis.charts.matrix_caption", {
-              measure: formatCubeColumnHeader(measureKey, t),
+              measure: formatCubeColumnHeader(measureKey, t, memberLabels),
             })}
           </caption>
           <thead className="sticky top-0 z-10 bg-slate-50">

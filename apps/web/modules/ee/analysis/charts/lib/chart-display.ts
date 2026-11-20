@@ -12,11 +12,21 @@ export const DEFAULT_PIE_DISPLAY: TPieDisplay = "pie";
 /** An area chart renders as a filled band unless the saved config says otherwise. */
 export const DEFAULT_AREA_DISPLAY: TAreaDisplay = "filled";
 
-/** Each setting so far belongs to exactly one chart type. */
+/** Several bar series stack into one bar per category unless the saved config says otherwise. */
+export const DEFAULT_STACKED = true;
+/** Groups with no value are left out unless the saved config says otherwise. */
+export const DEFAULT_SHOW_EMPTY_VALUES = false;
+
+/** Most settings belong to exactly one chart type. */
 export const supportsBarOrientation = (chartType: TChartType | undefined): boolean => chartType === "bar";
 export const supportsPieDisplay = (chartType: TChartType | undefined): boolean => chartType === "pie";
 export const supportsAreaDisplay = (chartType: TChartType | undefined): boolean => chartType === "area";
 export const supportsMatrixDisplay = (chartType: TChartType | undefined): boolean => chartType === "matrix";
+/** The stacked / side-by-side switch: only bars put several series in one category. */
+export const supportsBarLayout = (chartType: TChartType | undefined): boolean => chartType === "bar";
+/** Every chart type that draws groups can show or hide the empty one; a big number has no groups. */
+export const supportsEmptyValues = (chartType: TChartType | undefined): boolean =>
+  chartType === "bar" || chartType === "area" || chartType === "pie" || chartType === "matrix";
 
 /**
  * Whether a chart type has any display setting at all. The settings strip under the preview is only
@@ -26,7 +36,8 @@ export const hasChartDisplaySettings = (chartType: TChartType | undefined): bool
   supportsBarOrientation(chartType) ||
   supportsPieDisplay(chartType) ||
   supportsAreaDisplay(chartType) ||
-  supportsMatrixDisplay(chartType);
+  supportsMatrixDisplay(chartType) ||
+  supportsEmptyValues(chartType);
 
 /**
  * Big Number shows a single snapshot value and Pie shows composition at a point in time — bucketing
@@ -49,11 +60,37 @@ export const supportsTimeGrouping = (chartType: TChartType | undefined): boolean
  */
 export const resolveChartDisplay = (
   config: TChartConfig | null | undefined
-): { barOrientation: TBarOrientation; pieDisplay: TPieDisplay; areaDisplay: TAreaDisplay } => ({
+): {
+  barOrientation: TBarOrientation;
+  pieDisplay: TPieDisplay;
+  areaDisplay: TAreaDisplay;
+  stacked: boolean;
+  showEmptyValues: boolean;
+} => ({
   barOrientation: config?.barOrientation ?? DEFAULT_BAR_ORIENTATION,
   pieDisplay: config?.pieDisplay ?? DEFAULT_PIE_DISPLAY,
   areaDisplay: config?.areaDisplay ?? DEFAULT_AREA_DISPLAY,
+  stacked: config?.stacked ?? DEFAULT_STACKED,
+  showEmptyValues: config?.showEmptyValues ?? DEFAULT_SHOW_EMPTY_VALUES,
 });
+
+/** The saved matrix settings, kept only on a matrix. */
+const pickMatrixDisplay = (config: TChartConfig): TChartConfig => {
+  const { matrixCellValue, matrixColorScale, matrixShowTotals, matrixTranspose } = config;
+  return {
+    ...(matrixCellValue ? { matrixCellValue } : {}),
+    ...(matrixColorScale === undefined ? {} : { matrixColorScale }),
+    ...(matrixShowTotals === undefined ? {} : { matrixShowTotals }),
+    ...(matrixTranspose === undefined ? {} : { matrixTranspose }),
+  };
+};
+
+/** Keeps `value` under `key` when the chart type supports it and it is set. */
+const keepIf = <K extends keyof TChartConfig>(
+  supported: boolean,
+  key: K,
+  value: TChartConfig[K]
+): TChartConfig => (supported && value !== undefined ? { [key]: value } : {});
 
 /**
  * Config to persist for a chart type: settings that the type does not support are dropped
@@ -68,22 +105,22 @@ export const sanitizeChartDisplay = (
     barOrientation,
     pieDisplay,
     areaDisplay,
-    matrixCellValue,
-    matrixColorScale,
-    matrixShowTotals,
-    matrixTranspose,
+    matrixCellValue: _matrixCellValue,
+    matrixColorScale: _matrixColorScale,
+    matrixShowTotals: _matrixShowTotals,
+    matrixTranspose: _matrixTranspose,
+    stacked,
+    showEmptyValues,
     ...rest
   } = config ?? {};
-  const isMatrix = supportsMatrixDisplay(chartType);
 
   return {
     ...rest,
-    ...(supportsBarOrientation(chartType) && barOrientation ? { barOrientation } : {}),
-    ...(supportsPieDisplay(chartType) && pieDisplay ? { pieDisplay } : {}),
-    ...(supportsAreaDisplay(chartType) && areaDisplay ? { areaDisplay } : {}),
-    ...(isMatrix && matrixCellValue ? { matrixCellValue } : {}),
-    ...(isMatrix && matrixColorScale !== undefined ? { matrixColorScale } : {}),
-    ...(isMatrix && matrixShowTotals !== undefined ? { matrixShowTotals } : {}),
-    ...(isMatrix && matrixTranspose !== undefined ? { matrixTranspose } : {}),
+    ...keepIf(supportsBarOrientation(chartType), "barOrientation", barOrientation || undefined),
+    ...keepIf(supportsPieDisplay(chartType), "pieDisplay", pieDisplay || undefined),
+    ...keepIf(supportsAreaDisplay(chartType), "areaDisplay", areaDisplay || undefined),
+    ...(supportsMatrixDisplay(chartType) ? pickMatrixDisplay(config ?? {}) : {}),
+    ...keepIf(supportsBarLayout(chartType), "stacked", stacked),
+    ...keepIf(supportsEmptyValues(chartType), "showEmptyValues", showEmptyValues),
   };
 };

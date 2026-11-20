@@ -606,8 +606,13 @@ export const isSentimentValue = (value: string): value is TSentimentValue =>
 export const getSentimentValueForMeasureId = (measureId: string): TSentimentValue | undefined =>
   HUB_SENTIMENT_VALUES.find((value) => measureId === `FeedbackRecords.${toCountMeasureId(value)}Count`);
 
-const isEmotionValue = (value: string): value is TEmotionValue =>
+export const isEmotionValue = (value: string): value is TEmotionValue =>
   (HUB_EMOTION_VALUES as readonly string[]).includes(value);
+
+/** Map an emotion count measure id (e.g. "FeedbackRecords.joyCount") back to its emotion. Charts use
+ * this to give each emotion series its fixed color. Undefined for every other measure. */
+export const getEmotionValueForMeasureId = (measureId: string): TEmotionValue | undefined =>
+  HUB_EMOTION_VALUES.find((value) => measureId === `FeedbackRecords.${value}Count`);
 
 /** Sentiment/emotions are populated by AI enrichment, so their values are empty until a record is
  * enriched. Charts special-case that empty bucket (a "Not enriched" label + neutral gray). */

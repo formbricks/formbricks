@@ -29,10 +29,11 @@ const mergeFields = (
   return {
     fields: [...byName.values()]
       .sort((a, b) => a.key.localeCompare(b.key))
-      .map(({ name, key }) => ({
+      .map(({ name, key, label }) => ({
         name,
         key,
-        label: key,
+        // The workspace's name for the key when it has been renamed, else the key as collected.
+        label: label ?? key,
         type: numericFields.has(name) ? ("number" as const) : ("string" as const),
       })),
   };

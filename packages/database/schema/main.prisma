@@ -807,6 +807,7 @@ model Workspace {
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]
+  embeddedFieldLabels         EmbeddedFieldLabel[]
   creatives                   Creative[]
   attachmentExports           AttachmentExport[]
 
@@ -1764,6 +1765,25 @@ model Chart {
   @@unique([workspaceId, name])
   @@index([workspaceId, createdAt])
   @@index([feedbackDirectoryId])
+}
+
+/// A workspace's display name for an imported (embedded-data) key of its Feedback Datasets, shown in
+/// place of the key in chart legends, headers and the chart builder's field pickers. One per key and
+/// workspace; clearing the name deletes the row, and the key shows as collected again. Built-in fields
+/// are never renamed here: they keep their translated names.
+///
+/// @property key - The embedded-data key exactly as collected, case included
+/// @property label - The name shown for the key across the workspace
+model EmbeddedFieldLabel {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now()) @map(name: "created_at")
+  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  key         String
+  label       String
+
+  @@unique([workspaceId, key])
 }
 
 /// Represents a dashboard containing multiple charts.

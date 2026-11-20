@@ -7,14 +7,18 @@ import {
   AXIS_LABEL_GAP,
   AXIS_LABEL_MAX_LINES,
   AXIS_TICK_GAP,
-  CHART_LEGEND_HEIGHT,
+  ROTATED_LABEL_ANGLE,
   formatCellValue,
   formatXAxisTick,
   getCategoryAxisWidth,
   getCategoryLabelBoxHeight,
   getCategoryLabelLineClamp,
+  getLegendHeight,
+  getRotatedAxisHeight,
   getValueLabelPadding,
+  shouldRotateCategoryLabels,
   truncateLabelToBox,
+  truncateRotatedLabel,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   type TTimeAxisTickLayout,
@@ -72,6 +76,17 @@ export interface CartesianChartProps {
    * thin out to a readable density and use compact, granularity-aware labels (see
    * `getTimeAxisTickLabels`) instead of labelling every bucket with its full date. */
   timeAxis?: { granularity: TimeGranularity; locale: string };
+  /** Formats value-axis ticks (and sizes the flipped value-label gutter) in the measure's format. */
+  valueAxisTickFormatter?: (value: unknown) => string;
+  /** Formats bar value labels; used here only to size the flipped value-label gutter. */
+  valueLabelFormatter?: (dataKey: string, value: unknown) => string;
+  /** Forwarded to the tooltip: labels for synthetic series keys and a per-measure value format. */
+  seriesLabels?: Record<string, string>;
+  tooltipValueFormatter?: (
+    dataKey: string,
+    value: unknown,
+    row: Record<string, unknown> | undefined
+  ) => string;
 }
 
 /** Resolves, for the axis width Recharts measured, which buckets get a label and what each reads. */
@@ -89,6 +104,27 @@ const X_AXIS_TICK_MIN_WIDTH = 32;
  * The box height itself is the shared `AXIS_LABEL_BOX_HEIGHT`: just the clamped text, so on
  * legend-less charts (bars) the box does not overhang the plot below the labels. */
 const X_AXIS_RESERVED_HEIGHT = AXIS_LABEL_BOX_HEIGHT + 24;
+
+/** Height a vertical chart's x-axis reserves: none without categories, the diagonal of the rotated
+ * labels on a crowded axis, else the wrapped label box. */
+const getXAxisHeight = (
+  hasCategoryAxis: boolean,
+  rotated: boolean,
+  rotatedHeight: number
+): number | undefined => {
+  if (!hasCategoryAxis) return undefined;
+  return rotated ? rotatedHeight : X_AXIS_RESERVED_HEIGHT;
+};
+/** Recharts' default chart margin, kept on the sides a rotated axis does not change. */
+const CHART_MARGIN = { top: 5, right: 5, bottom: 5, left: 5 };
+/** Width (px) Recharts gives the value axis by default; a rotated label may overhang it. */
+const VALUE_AXIS_DEFAULT_WIDTH = 60;
+
+/** Left margin (px) that keeps the first rotated labels inside the SVG: whatever of the label's
+ * horizontal run (equal to its vertical one at 45°) the value axis does not already cover. */
+const getRotatedLabelLeftMargin = (rotatedAxisHeight: number): number =>
+  Math.max(CHART_MARGIN.left, rotatedAxisHeight - VALUE_AXIS_DEFAULT_WIDTH);
+
 /** Vertical offset (px) of the label box below the axis line. */
 const X_AXIS_LABEL_TOP_OFFSET = 4;
 
@@ -294,9 +330,70 @@ function WrappingYAxisTick({
   );
 }
 
+/** A category axis label rotated −45°, for an axis too crowded for the wrapping box: one line, cut
+ * from the middle to {@link ROTATED_LABEL_MAX_CHARS}, with the full text on hover. */
+function RotatedXAxisTick({
+  x,
+  y,
+  payload,
+  formatter,
+}: Readonly<{
+  x?: number;
+  y?: number;
+  payload?: { value?: unknown };
+  formatter: (value: unknown) => string;
+}>) {
+  const label = formatter(payload?.value);
+  if (!label) return null;
+  const shown = truncateRotatedLabel(label);
+  return (
+    <g transform={`translate(${x ?? 0},${(y ?? 0) + X_AXIS_LABEL_TOP_OFFSET})`}>
+      <text
+        x={0}
+        y={0}
+        dy={8}
+        textAnchor="end"
+        transform={`rotate(${-ROTATED_LABEL_ANGLE})`}
+        className="fill-muted-foreground"
+        fontSize={12}>
+        <title>{label}</title>
+        {shown}
+      </text>
+    </g>
+  );
+}
+
+/** The vertical chart's x-axis tick: none without categories, a rotated label on a crowded axis, else
+ * the wrapping label box. */
+function renderCategoryTick({
+  hasCategoryAxis,
+  rotated,
+  formatter,
+  pointScale,
+  timeAxisLabels,
+}: {
+  hasCategoryAxis: boolean;
+  rotated: boolean;
+  formatter: (value: unknown) => string;
+  pointScale: boolean;
+  timeAxisLabels?: TTimeAxisLabels;
+}): ReactElement<SVGElement> | false {
+  if (!hasCategoryAxis) return false;
+  if (rotated) return <RotatedXAxisTick formatter={formatter} />;
+  return <WrappingXAxisTick formatter={formatter} pointScale={pointScale} timeAxisLabels={timeAxisLabels} />;
+}
+
 /** What a chart's layout needs from the measured container: the size recharts is about to draw at
  * and the category gutter derived from it. */
-type TMeasuredLayout = { width?: number; height?: number; categoryAxisWidth: number };
+type TMeasuredLayout = {
+  width?: number;
+  height?: number;
+  categoryAxisWidth: number;
+  /** Whether the vertical category axis is too crowded for wrapped labels and rotates them. */
+  rotateCategoryLabels: boolean;
+  /** Height (px) the legend reserves: one row per line its entries wrap onto. */
+  legendHeight: number;
+};
 
 /**
  * Sizes the flipped category gutter from the width the chart is laid out with, in the same render.
@@ -315,16 +412,24 @@ function MeasuredChart({
   width,
   height,
   categoryLabels,
+  verticalCategoryCount,
+  legendLabels,
   children,
 }: Readonly<{
   width?: number;
   height?: number;
   /** Formatted category labels of a flipped chart; empty when there is no category gutter. */
   categoryLabels: string[];
+  /** Categories on a vertical (non-time) category axis; 0 when the axis wraps or thins on its own. */
+  verticalCategoryCount: number;
+  /** Legend entries, to size the legend to the rows they wrap onto. */
+  legendLabels: string[];
   children: (layout: TMeasuredLayout) => ReactElement;
 }>) {
   const categoryAxisWidth = categoryLabels.length > 0 ? getCategoryAxisWidth(categoryLabels, width) : 0;
-  return children({ width, height, categoryAxisWidth });
+  const rotateCategoryLabels = shouldRotateCategoryLabels(verticalCategoryCount, width);
+  const legendHeight = getLegendHeight(legendLabels, width, height);
+  return children({ width, height, categoryAxisWidth, rotateCategoryLabels, legendHeight });
 }
 
 export function CartesianChart({
@@ -346,6 +451,10 @@ export function CartesianChart({
   pointScale = false,
   horizontal = false,
   timeAxis,
+  valueAxisTickFormatter,
+  valueLabelFormatter,
+  seriesLabels,
+  tooltipValueFormatter,
 }: Readonly<CartesianChartProps>) {
   const yScale = yAxisScale ?? computeYAxis(data, dataKeys, zeroBaseline);
   const tickFormatter = xAxisTickFormatter ?? formatXAxisTick;
@@ -379,9 +488,32 @@ export function CartesianChart({
   // solves the same problem with `padding.top`; this is that padding, sized to the widest label.
   const valueLabelPadding = useMemo(() => {
     if (!horizontal) return 0;
-    const labels = data.flatMap((row) => dataKeys.map((key) => formatCellValue(row[key])));
+    const labels = data.flatMap((row) =>
+      dataKeys.map((key) =>
+        valueLabelFormatter ? valueLabelFormatter(key, row[key]) : formatCellValue(row[key])
+      )
+    );
     return getValueLabelPadding(labels);
-  }, [horizontal, data, dataKeys]);
+  }, [horizontal, data, dataKeys, valueLabelFormatter]);
+
+  // A time axis thins its own ticks; only a plain vertical category axis can need rotating.
+  const verticalCategoryCount = !horizontal && hasCategoryAxis && !timeAxisLabels ? data.length : 0;
+  const rotatedAxisHeight = useMemo(
+    () =>
+      verticalCategoryCount > 0 ? getRotatedAxisHeight(data.map((row) => tickFormatter(row[xAxisKey]))) : 0,
+    [verticalCategoryCount, data, tickFormatter, xAxisKey]
+  );
+  const rotatedLeftMargin = getRotatedLabelLeftMargin(rotatedAxisHeight);
+  const legendLabels = useMemo(
+    () =>
+      showLegend
+        ? dataKeys.map((key) => {
+            const label = chartConfig[key]?.label;
+            return typeof label === "string" ? label : key;
+          })
+        : [],
+    [showLegend, dataKeys, chartConfig]
+  );
 
   return (
     // A flipped chart keeps its container's height: every row stays on screen and the labels adapt
@@ -390,13 +522,18 @@ export function CartesianChart({
     // text that a middle-truncated label already distinguishes.
     <div className="h-full min-h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
-        <MeasuredChart categoryLabels={categoryLabels}>
-          {({ width, height, categoryAxisWidth }) => (
+        <MeasuredChart
+          categoryLabels={categoryLabels}
+          verticalCategoryCount={verticalCategoryCount}
+          legendLabels={legendLabels}>
+          {({ width, height, categoryAxisWidth, rotateCategoryLabels, legendHeight }) => (
             <Chart
               data={data}
               width={width}
               height={height}
               {...(horizontal ? { layout: "vertical" as const } : {})}
+              // A rotated label runs left from its tick; the first ones would leave the SVG.
+              {...(rotateCategoryLabels ? { margin: { ...CHART_MARGIN, left: rotatedLeftMargin } } : {})}
               {...chartProps}>
               {/* syncWithTicks: draw a gridline only at each tick. Without it Recharts adds
               extra lines at the plot-area top/bottom edges (revealed by the YAxis padding),
@@ -428,6 +565,7 @@ export function CartesianChart({
                   domain={yScale?.domain}
                   ticks={yScale?.ticks}
                   interval={0}
+                  tickFormatter={valueAxisTickFormatter}
                 />
               ) : (
                 <XAxis
@@ -438,18 +576,14 @@ export function CartesianChart({
                   // Label every data point (default recharts hides overlapping ticks, which dropped
                   // long question labels on area/line charts) and wrap each label within a max-width.
                   interval={hasCategoryAxis ? 0 : undefined}
-                  height={hasCategoryAxis ? X_AXIS_RESERVED_HEIGHT : undefined}
-                  tick={
-                    hasCategoryAxis ? (
-                      <WrappingXAxisTick
-                        formatter={tickFormatter}
-                        pointScale={pointScale}
-                        timeAxisLabels={timeAxisLabels}
-                      />
-                    ) : (
-                      false
-                    )
-                  }
+                  height={getXAxisHeight(hasCategoryAxis, rotateCategoryLabels, rotatedAxisHeight)}
+                  tick={renderCategoryTick({
+                    hasCategoryAxis,
+                    rotated: rotateCategoryLabels,
+                    formatter: tickFormatter,
+                    pointScale,
+                    timeAxisLabels,
+                  })}
                 />
               )}
               {horizontal ? (
@@ -476,6 +610,7 @@ export function CartesianChart({
                   domain={yScale?.domain}
                   ticks={yScale?.ticks}
                   interval={0}
+                  tickFormatter={valueAxisTickFormatter}
                 />
               )}
               <ChartTooltip
@@ -484,6 +619,8 @@ export function CartesianChart({
                     labelFormatter={xAxisTickFormatter}
                     hideLabel={tooltipHideLabel ?? !hasCategoryAxis}
                     responseBaseKey={responseBaseKey}
+                    seriesLabels={seriesLabels}
+                    valueFormatter={tooltipValueFormatter}
                   />
                 }
                 cursor={tooltipCursor}
@@ -496,7 +633,9 @@ export function CartesianChart({
                 <ChartLegend
                   content={<ChartLegendContent />}
                   verticalAlign="bottom"
-                  height={CHART_LEGEND_HEIGHT}
+                  height={legendHeight}
+                  // Entries past the capped height scroll inside the legend instead of covering the plot.
+                  wrapperStyle={{ maxHeight: legendHeight, overflowY: "auto" }}
                 />
               )}
               {children}
