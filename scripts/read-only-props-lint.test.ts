@@ -82,6 +82,17 @@ export const Hello = React.forwardRef<HTMLDivElement, Props>(({ name }: Base, re
   <div ref={ref}>{name}</div>
 ));
 `,
+  "class-props-field.tsx": `import { Component } from "react";
+interface Props {
+  name: string;
+}
+export class Hello extends Component {
+  declare props: Props;
+  render() {
+    return <div>{this.props.name}</div>;
+  }
+}
+`,
   "returns-null.tsx": `interface Props {
   name: string;
 }
@@ -119,6 +130,15 @@ export const Hello = ({ name }: Readonly<Props>) => <div>{name}</div>;
   readonly name: string;
 }
 export const Hello = ({ name }: Props) => <div>{name}</div>;
+`,
+  // The wrapper's type argument wins over the parameter's annotation, as it did in eslint-plugin-react.
+  "forward-ref-named.tsx": `import { forwardRef } from "react";
+interface Props {
+  name: string;
+}
+export const Hello = forwardRef<HTMLDivElement, Readonly<Props>>(function Hello(props: Props, ref) {
+  return <div ref={ref}>{props.name}</div>;
+});
 `,
   // A props type from another file is not looked into, as eslint-plugin-react did not.
   "imported.tsx": `import type { Props } from "./props";

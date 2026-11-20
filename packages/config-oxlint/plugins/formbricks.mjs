@@ -81,7 +81,7 @@ const noInlineLintConfig = {
  *   the anonymous default export. A class extending `Component`/`PureComponent` is one too.
  * - Its props type is a wrapper's type argument (`forwardRef<Ref, Props>`'s second), else the first
  *   parameter's annotation (default value or not), else the `FC<Props>`-style annotation of its
- *   variable; for a class, its first type argument.
+ *   variable; for a class, its first type argument and the annotation of its `props` field.
  * - That type resolves through type literals, intersections, the React generics (`FC`,
  *   `PropsWithChildren`, …) and the interfaces and type aliases declared in the same file. A type
  *   imported from elsewhere, or wrapped in `Readonly<>`, is not looked into, so `Readonly<Props>`
@@ -274,12 +274,15 @@ const preferReadOnlyProps = {
     };
 
     const components = [];
+    // Functions already checked through `addComponent`, whose props type may come from a wrapper.
+    const wrapped = new Set();
 
     // A function component, possibly wrapped: a wrapper's type argument names the props before the
     // parameter's annotation does, then the annotation of the variable it is assigned to.
     const addComponent = (init, annotation) => {
       const { fn, propsType } = unwrap(init);
       if (!fn || !returnsJsx(fn)) return;
+      wrapped.add(fn);
       components.push(() => check(propsType ?? propsOfFunction(fn) ?? annotation));
     };
 
@@ -307,7 +310,10 @@ const preferReadOnlyProps = {
       },
       "FunctionDeclaration, FunctionExpression"(node) {
         if (node.id && PASCAL_CASE.test(node.id.name) && returnsJsx(node)) {
-          components.push(() => check(propsOfFunction(node)));
+          // `forwardRef<Ref, Props>(function Hello(…) {…})` is checked against the wrapper's type.
+          components.push(() => {
+            if (!wrapped.has(node)) check(propsOfFunction(node));
+          });
         }
       },
       VariableDeclarator(node) {
@@ -333,7 +339,14 @@ const preferReadOnlyProps = {
             COMPONENT_CLASSES.has(superClass.property.name));
         if (!isComponent) return;
         const typeArgument = node.superTypeArguments?.params?.[0];
-        components.push(() => check(typeArgument));
+        // `props: Props` or `declare props: Props` in the class body declares the props too.
+        const propsField = node.body.body.find(
+          (member) => member.type === "PropertyDefinition" && !member.static && member.key.name === "props"
+        );
+        components.push(() => {
+          check(typeArgument);
+          check(propsField?.typeAnnotation);
+        });
       },
       // Type declarations may follow the component that uses them, so props resolve at the end.
       "Program:exit"() {
