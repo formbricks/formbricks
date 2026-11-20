@@ -21,6 +21,30 @@ export type TSsoRecoveryAccess = {
   sessionUserId?: string;
 };
 
+/**
+ * The account's address no longer matches the one recovery was started for. Logged, audited and refused,
+ * from the guard and again from inside the linking transaction, so a change that lands in between leaves
+ * the same trace.
+ */
+export const rejectSsoRecoveryUserMismatch = (intent: TSsoRecoveryIntent): never => {
+  getSsoRecoveryLogger("sso_recovery_failed").error(
+    { userId: intent.userId, provider: intent.provider },
+    "SSO recovery failed due to user mismatch"
+  );
+  queueSsoRecoveryAuditEvent({
+    action: "sso_recovery_failed",
+    status: "failure",
+    userId: intent.userId,
+    email: intent.email,
+    provider: intent.provider,
+    callbackUrl: intent.callbackUrl,
+    failureReason: "user_mismatch",
+  });
+  // Past the session check, so this caller IS the intent's user — handing back their own callback
+  // discloses nothing they did not already supply.
+  throw new SsoRecoveryError("rejected", intent.callbackUrl);
+};
+
 export const authorizeSsoRecovery = async ({ stateId, recoveryProof, sessionUserId }: TSsoRecoveryAccess) => {
   // Reads without consuming. The completion URL sits in an email, and mail security gateways fetch
   // every link in a message before the human sees it — burning the intent on read would let a scanner
@@ -137,25 +161,7 @@ export const authorizeSsoRecovery = async ({ stateId, recoveryProof, sessionUser
   });
 
   if (user?.email !== intent.email) {
-    getSsoRecoveryLogger("sso_recovery_failed").error(
-      {
-        userId: intent.userId,
-        provider: intent.provider,
-      },
-      "SSO recovery failed due to user mismatch"
-    );
-    queueSsoRecoveryAuditEvent({
-      action: "sso_recovery_failed",
-      status: "failure",
-      userId: intent.userId,
-      email: intent.email,
-      provider: intent.provider,
-      callbackUrl: intent.callbackUrl,
-      failureReason: "user_mismatch",
-    });
-    // Past the session check, so this caller IS the intent's user — handing back their own callback
-    // discloses nothing they did not already supply.
-    throw new SsoRecoveryError("rejected", intent.callbackUrl);
+    rejectSsoRecoveryUserMismatch(intent);
   }
 
   return { intent, provider, user };

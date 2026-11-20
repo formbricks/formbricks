@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { WEBAPP_URL } from "@/lib/constants";
+import { AUTH_TRUSTED_ORIGINS, WEBAPP_URL } from "@/lib/constants";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import { getSession } from "@/modules/auth/lib/session";
@@ -78,32 +78,52 @@ const getHandler = async (request: Request) => {
   return NextResponse.redirect(getSsoRecoveryConfirmUrl(stateId));
 };
 
-const WEBAPP_ORIGIN = new URL(WEBAPP_URL).origin;
+/**
+ * The origins a confirmation can come from: this app's, and the ones Better Auth already trusts
+ * (`BETTER_AUTH_URL`, `NEXTAUTH_URL`). They differ on a deployment whose public URL is not `WEBAPP_URL`,
+ * such as one behind a TLS proxy, and refusing those would refuse every user there.
+ */
+const ACCEPTED_ORIGINS = new Set([WEBAPP_URL, ...AUTH_TRUSTED_ORIGINS].map((url) => new URL(url).origin));
 
 /**
  * Only a same-origin form submission made by navigating the page acts (ENG-7395).
  *
- * `Origin` must be this app's. Every browser sends it on a form POST, so this holds for browsers that
+ * `Origin` must be one of this app's. Browsers send it on a form POST, so this holds for browsers that
  * predate Fetch Metadata too, and refuses a cookie-keeping client (a link scanner that parses the page)
  * that sends none. When the browser does send Fetch Metadata, the request must also be a same-origin
  * top-level navigation into a document: `Sec-Fetch-Mode: navigate`, `Sec-Fetch-Dest: document`. That
- * stops a background `fetch()` (`cors`/`empty`) and a submission into a frame.
+ * stops a background `fetch()` (`cors`/`empty`) and a submission into a frame. A scripted
+ * `form.submit()` sends no button, so no `action`, and is refused by the form parser below.
  *
  * `Sec-Fetch-User` is not required: Safari sends the other Fetch Metadata headers but never this one
- * (WebKit bug 247697), so requiring it refuses every Safari user. Without it a script on this origin can
- * still `form.submit()` without a click; such a script already acts with the user's full rights.
+ * (WebKit bug 247697), so requiring it refused every Safari user. What that leaves open is a script on
+ * this origin calling the button's `click()`, and such a script already acts with the user's full rights.
  */
 const isDeliberateSubmission = (request: Request): boolean => {
-  if (request.headers.get("origin") !== WEBAPP_ORIGIN) return false;
-
+  const origin = request.headers.get("origin");
   const fetchSite = request.headers.get("sec-fetch-site");
-  if (fetchSite === null) return true;
+  const deliberate =
+    origin !== null &&
+    ACCEPTED_ORIGINS.has(origin) &&
+    (fetchSite === null ||
+      (fetchSite === "same-origin" &&
+        request.headers.get("sec-fetch-mode") === "navigate" &&
+        request.headers.get("sec-fetch-dest") === "document"));
 
-  return (
-    fetchSite === "same-origin" &&
-    request.headers.get("sec-fetch-mode") === "navigate" &&
-    request.headers.get("sec-fetch-dest") === "document"
-  );
+  if (!deliberate) {
+    // Enough to tell a misconfigured public URL from a script or a scanner; none of it is secret.
+    logger.warn(
+      {
+        origin,
+        fetchSite,
+        fetchMode: request.headers.get("sec-fetch-mode"),
+        fetchDest: request.headers.get("sec-fetch-dest"),
+      },
+      "Refused an SSO recovery confirmation that was not a same-origin form submission"
+    );
+  }
+
+  return deliberate;
 };
 
 /** Each button names its action; anything else, including no action at all, is refused rather than linked. */

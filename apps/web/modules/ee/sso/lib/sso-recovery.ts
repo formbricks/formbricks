@@ -15,6 +15,7 @@ import {
   type TSsoRecoveryAccess,
   authorizeSsoRecovery,
   recordLostSsoRecoveryClaim,
+  rejectSsoRecoveryUserMismatch,
 } from "./recovery-authorize";
 import { claimSsoRecoveryIntent, consumeSsoRecoveryIntent, createSsoRecoveryIntent } from "./recovery-intent";
 import {
@@ -146,7 +147,7 @@ export const completeSsoRecovery = async ({
           SELECT "email" FROM "User" WHERE "id" = ${user.id} FOR UPDATE
         `;
         if (locked?.email !== intent.email) {
-          throw new SsoRecoveryError("rejected", intent.callbackUrl);
+          rejectSsoRecoveryUserMismatch(intent);
         }
 
         const outcome = await reclaimUnverifiedLocalAuthIfNeeded({

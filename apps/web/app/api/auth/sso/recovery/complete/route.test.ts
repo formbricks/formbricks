@@ -18,6 +18,12 @@ const WEBAPP_URL = "https://test-webapp-url.com";
 vi.mock("@formbricks/database", () => ({ prisma: {} }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
+// A deployment whose public URL (what the browser sends as Origin) is Better Auth's, not WEBAPP_URL.
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  WEBAPP_URL: "https://test-webapp-url.com",
+  AUTH_TRUSTED_ORIGINS: ["https://public.example.com/"],
+}));
 vi.mock("@/modules/auth/lib/session-revocation", () => ({ revokeSessionByToken: vi.fn() }));
 
 // Only the extraction is stubbed, and only because it verifies Better Auth's HMAC over the cookie —
@@ -173,6 +179,25 @@ describe("/api/auth/sso/recovery/complete", () => {
     await POST(submit("state-id", undefined, noFetchMetadata));
 
     expect(completeSsoRecovery).toHaveBeenCalled();
+  });
+
+  test("accepts the public origin Better Auth trusts, for a deployment behind a TLS proxy", async () => {
+    vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
+
+    await POST(submit("state-id", undefined, { origin: "https://public.example.com" }));
+
+    expect(completeSsoRecovery).toHaveBeenCalled();
+  });
+
+  test("logs what a refused submission carried, so a misconfigured origin can be told from an attack", async () => {
+    await POST(
+      submit("state-id", undefined, { origin: "https://evil.example", "sec-fetch-site": "cross-site" })
+    );
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: "https://evil.example", fetchSite: "cross-site" }),
+      expect.stringContaining("Refused an SSO recovery confirmation")
+    );
   });
 
   /** A cookie-keeping client that parsed the page (a link scanner) sends neither. */

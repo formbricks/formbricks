@@ -1146,6 +1146,10 @@ describe("sso-recovery", () => {
         expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
         expect(txTwoFactorDeleteMany).not.toHaveBeenCalled();
         expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+        // Traced like the same mismatch caught by the guard.
+        expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+          expect.objectContaining({ newObject: expect.objectContaining({ failureReason: "user_mismatch" }) })
+        );
         // Rolled back, so the recovery is free again for a retry.
         expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
       });
