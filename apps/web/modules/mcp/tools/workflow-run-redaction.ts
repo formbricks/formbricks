@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { ZWorkflowRunLogResource, ZWorkflowRunResource } from "@formbricks/workflows";
 import { isRecord } from "./redacted-result";
 
 /** What a caller holds to read a workflow run's respondent-derived fields over MCP. */
@@ -27,3 +29,20 @@ export const withoutRunRespondentData = (run: unknown): unknown =>
           : run.logs,
       }
     : run;
+
+/**
+ * A run as the MCP tools return it, for `outputSchema`: the fields `withoutRunRespondentData` empties
+ * may be null. The SDK checks a result against the tool's `outputSchema`, so the plain run schema would
+ * turn a redacted run into "Output validation error" for every caller without Responses: Read.
+ */
+export const ZMcpWorkflowRunOutput = ZWorkflowRunResource.extend({
+  triggerPayload: ZWorkflowRunResource.shape.triggerPayload.nullable(),
+  data: ZWorkflowRunResource.shape.data.nullable(),
+  steps: ZWorkflowRunResource.shape.steps.nullable(),
+  logs: z.array(
+    ZWorkflowRunLogResource.extend({
+      input: ZWorkflowRunLogResource.shape.input.nullable(),
+      output: ZWorkflowRunLogResource.shape.output.nullable(),
+    })
+  ),
+});

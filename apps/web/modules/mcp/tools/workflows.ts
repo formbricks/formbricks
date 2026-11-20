@@ -260,7 +260,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Get workflow run",
       description:
-        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. A run whose content was deleted after the retention period has `contentDeletedAt` set: its status and timing stay, its payload and step data are empty. Without Responses: Read in the user's grant, triggerPayload, data, error and each log's input, output and error are null: they carry respondents' answers.",
+        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. A run whose content was deleted after the retention period has `contentDeletedAt` set: its status and timing stay, its payload and step data are empty. Without Responses: Read in the user's grant, triggerPayload, data, steps, error and each log's input, output and error are null: they carry respondents' answers.",
       inputSchema: ZMcpGetWorkflowRunInput,
       annotations: {
         readOnlyHint: true,

@@ -3,6 +3,7 @@ import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { startWorkflowTestRun } from "@/app/api/v3/workflows/lib/test-run";
 import type { TToolHandler } from "./test-utils";
+import { withoutRunRespondentData } from "./workflow-run-redaction";
 import { registerWorkflowTestRunTools } from "./workflow-test-run";
 
 vi.mock("@/app/api/v3/workflows/lib/test-run", () => ({ startWorkflowTestRun: vi.fn() }));
@@ -129,6 +130,63 @@ describe("registerWorkflowTestRunTools", () => {
 
       expect(result.structuredContent.data).toEqual(run);
     });
+  });
+
+  test("declares an outputSchema a redacted run passes, as the SDK checks it", () => {
+    const fullRun = {
+      id: "cm9zr4w9d000308l8c5n8xk7e",
+      workflowId: WORKFLOW_ID,
+      workspaceId: WORKSPACE_ID,
+      workflowVersionId: null,
+      status: "completed",
+      isDryRun: true,
+      triggerType: "webhook",
+      surveyId: null,
+      responseId: null,
+      error: null,
+      attempt: 0,
+      createdAt: "2026-11-20T09:30:00.000Z",
+      updatedAt: "2026-11-20T09:30:02.000Z",
+      startedAt: "2026-11-20T09:30:01.000Z",
+      finishedAt: "2026-11-20T09:30:02.000Z",
+      triggerPayload: {
+        type: "webhook",
+        workspaceId: WORKSPACE_ID,
+        workflowId: WORKFLOW_ID,
+        triggeredAt: "2026-11-20T09:30:00.000Z",
+        payload: { email: "ana@example.com" },
+      },
+      data: { steps: [] },
+      logs: [
+        {
+          id: "cm9zr55mj000608l8g7r4cz2k",
+          runId: "cm9zr4w9d000308l8c5n8xk7e",
+          sequence: 0,
+          stepId: "send-email",
+          stepType: "send_email",
+          status: "succeeded",
+          input: {},
+          output: { mocked: true },
+          error: null,
+          startedAt: "2026-11-20T09:30:01.000Z",
+          finishedAt: "2026-11-20T09:30:02.000Z",
+        },
+      ],
+      idempotencyKey: null,
+      nextAttemptAt: null,
+      lastErrorAt: null,
+      callerIp: null,
+      workflowVersionNumber: null,
+      steps: [],
+      contentDeletedAt: null,
+      contentRetentionDays: null,
+    };
+    const outputSchema = createToolServer().get("run_test")!.config.outputSchema as {
+      safeParse: (value: unknown) => { success: boolean; error?: unknown };
+    };
+
+    expect(outputSchema.safeParse({ data: fullRun }).error).toBeUndefined();
+    expect(outputSchema.safeParse({ data: withoutRunRespondentData(fullRun) }).error).toBeUndefined();
   });
 
   test("tells the agent that payload values and responses are untrusted", () => {
