@@ -60,7 +60,7 @@ import { type TAutoSaveFailure } from "../lib/auto-save-badge";
 import { createSaveAttemptOrder } from "../lib/save-attempt-order";
 import {
   type TSharedSegmentEdit,
-  hasUnsavedSharedSegmentEdit,
+  isSaveBlockedBySharedSegmentEdit,
   withSavedSharedSegment,
 } from "../lib/shared-segment-edit";
 import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
@@ -296,7 +296,7 @@ export const SurveyMenuBar = ({
   // ENG-6957: the survey save leaves a shared segment as stored, so a save now would drop the targeting
   // card's unsaved filters while reporting success. They are saved with the card's "Save changes".
   const blockOnUnsavedSharedSegmentEdit = (): boolean => {
-    if (!hasUnsavedSharedSegmentEdit(localSurvey.segment, sharedSegmentEdit)) return false;
+    if (!isSaveBlockedBySharedSegmentEdit(localSurvey, sharedSegmentEdit)) return false;
 
     toast.error(t("workspace.segments.save_segment_changes_before_saving"));
     setActiveId("settings");
@@ -570,10 +570,13 @@ export const SurveyMenuBar = ({
           // The comparison uses refs, so this prevents unnecessary re-saves.
           surveyRef.current = { ...savedData };
           lastSavedSurveyRef.current = structuredClone(savedData);
-          // Only while nothing is left unsaved: the autosave holds back an open shared-segment edit
-          // (ENG-6957) and leaves `localSurvey` as it is, so the effect that retires this flag would not
-          // run, and a reload would discard the edit without the unload warning.
-          isSuccessfullySavedRef.current = !hasUnsavedSurveyChanges(localSurveyRef.current, [savedData]);
+          // Not while a shared-segment edit is unsaved (ENG-6957): the autosave holds it back and leaves
+          // `localSurvey` as it is, so the effect that retires this flag would not run, and a reload would
+          // discard the edit without the unload warning.
+          isSuccessfullySavedRef.current = !isSaveBlockedBySharedSegmentEdit(
+            localSurveyRef.current,
+            sharedSegmentEditRef.current
+          );
           // The refs above follow what the server stored either way; the indicator only follows the
           // newest attempt, so a tick that lands after a newer save failed does not say "saved".
           if (saveAttemptOrder.settle(attempt)) {

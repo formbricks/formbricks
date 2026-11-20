@@ -3,7 +3,9 @@ import type { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import {
   type TSharedSegmentEdit,
   hasUnsavedSharedSegmentEdit,
-  nextSharedSegmentEdit,
+  isSaveBlockedBySharedSegmentEdit,
+  keepSharedSegmentEditFor,
+  startSharedSegmentEdit,
   withSavedSharedSegment,
 } from "./shared-segment-edit";
 
@@ -96,39 +98,47 @@ describe("withSavedSharedSegment", () => {
   });
 });
 
-describe("nextSharedSegmentEdit", () => {
-  test("opening the editor on a shared segment starts an edit with the filters it opened with", () => {
-    expect(nextSharedSegmentEdit(null, shared, true)).toEqual({
+describe("startSharedSegmentEdit", () => {
+  test("Edit segment starts an edit with the filters the segment has now", () => {
+    expect(startSharedSegmentEdit(null, shared)).toEqual({
       segmentId: shared.id,
       savedFilters: shared.filters,
     });
   });
 
-  test("an edit already open for the segment keeps the filters it started from", () => {
-    expect(nextSharedSegmentEdit(edit, shared, true)).toBe(edit);
-    // Closed by a failed Load: still held, so the unsaved filters are not lost.
-    expect(nextSharedSegmentEdit(edit, shared, false)).toBe(edit);
+  test("an edit already open for the segment (editor closed by a failed Load) keeps its filters", () => {
+    expect(startSharedSegmentEdit(edit, shared)).toBe(edit);
   });
 
-  test("a segment loaded while the editor is open replaces the edit with one of its own", () => {
-    const loaded = { ...shared, id: "clloadedsegment000000001", filters: savedFilters };
-    expect(nextSharedSegmentEdit(edit, loaded, true)).toEqual({
-      segmentId: loaded.id,
-      savedFilters,
-    });
+  test("an edit of another segment is replaced", () => {
+    const other = { ...shared, id: "clothersegment0000000001" };
+    expect(startSharedSegmentEdit(edit, other)).toEqual({ segmentId: other.id, savedFilters: other.filters });
+  });
+});
+
+describe("keepSharedSegmentEditFor", () => {
+  test("the edit stays while the survey is on its segment", () => {
+    expect(keepSharedSegmentEditFor(edit, shared.id)).toBe(edit);
   });
 
-  test.each<[string, TSegment | null, boolean]>([
-    ["a closed editor", shared, false],
-    ["a private segment, which the survey save writes", { ...shared, isPrivate: true }, true],
-    ["no segment", null, true],
-  ])("%s starts no edit", (_case, segment, isEditorOpen) => {
-    expect(nextSharedSegmentEdit(null, segment, isEditorOpen)).toBeNull();
+  test("the survey moving to another segment (Load, Clone, Reset) ends the edit", () => {
+    expect(keepSharedSegmentEditFor(edit, "clothersegment0000000001")).toBeNull();
+    expect(keepSharedSegmentEditFor(edit, undefined)).toBeNull();
+  });
+});
+
+describe("isSaveBlockedBySharedSegmentEdit", () => {
+  test("an app survey with an unsaved shared-segment edit is blocked", () => {
+    expect(isSaveBlockedBySharedSegmentEdit({ type: "app", segment: shared }, edit)).toBe(true);
   });
 
-  test("the survey moving to another segment ends the edit", () => {
-    expect(
-      nextSharedSegmentEdit(edit, { ...shared, id: "clothersegment0000000001", isPrivate: true }, true)
-    ).toBeNull();
+  test("a survey switched to link is not: its save leaves the segment, and no card can save it", () => {
+    expect(isSaveBlockedBySharedSegmentEdit({ type: "link", segment: shared }, edit)).toBe(false);
+  });
+
+  test("an app survey without unsaved filters is not", () => {
+    expect(isSaveBlockedBySharedSegmentEdit({ type: "app", segment: { ...shared, filters: [] } }, edit)).toBe(
+      false
+    );
   });
 });

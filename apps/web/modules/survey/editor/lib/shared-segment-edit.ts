@@ -13,21 +13,21 @@ import { isDeepEqual } from "@/lib/utils/object";
 export type TSharedSegmentEdit = Readonly<{ segmentId: string; savedFilters: TBaseFilters }>;
 
 /**
- * The shared-segment edit once the targeting card's segment or editor state changed: an edit of another
- * segment ends (Load, Clone, Reset); the editor open on a shared segment, however it got there ("Edit
- * segment", or a segment loaded while the editor was open), starts one with the filters it opened with;
- * an edit already open for the segment keeps the filters it started from. Returns `edit` itself when
- * nothing changes.
+ * The edit "Edit segment" opens on a shared segment: its filters as they are now, unless an edit of this
+ * segment is already open (the editor closed by a failed Load), which keeps the filters it started from.
+ * Only that button starts one: it shows only for a segment no other survey uses.
  */
-export const nextSharedSegmentEdit = (
+export const startSharedSegmentEdit = (
   edit: TSharedSegmentEdit | null,
-  segment: TSegment | null | undefined,
-  isEditorOpen: boolean
-): TSharedSegmentEdit | null => {
-  const current = edit && edit.segmentId === segment?.id ? edit : null;
-  if (current || !isEditorOpen || !segment || segment.isPrivate) return current;
-  return { segmentId: segment.id, savedFilters: segment.filters };
-};
+  segment: TSegment
+): TSharedSegmentEdit =>
+  edit?.segmentId === segment.id ? edit : { segmentId: segment.id, savedFilters: segment.filters };
+
+/** The edit once the survey is on `segmentId`: an edit of another segment ends (Load, Clone, Reset). */
+export const keepSharedSegmentEditFor = (
+  edit: TSharedSegmentEdit | null,
+  segmentId: string | undefined
+): TSharedSegmentEdit | null => (edit?.segmentId === segmentId ? edit : null);
 
 /** Whether `segment` carries filter changes of the open shared-segment edit that are not saved yet. */
 export const hasUnsavedSharedSegmentEdit = (
@@ -39,6 +39,15 @@ export const hasUnsavedSharedSegmentEdit = (
   !segment.isPrivate &&
   segment.id === edit.segmentId &&
   !isDeepEqual(segment.filters, edit.savedFilters);
+
+/**
+ * Whether Save and Publish stop for an unsaved shared-segment edit: only on an app survey, the one that
+ * keeps its segment. Any other survey leaves the segment on save, and has no targeting card to save it in.
+ */
+export const isSaveBlockedBySharedSegmentEdit = (
+  survey: Readonly<{ type: string; segment: TSegment | null }>,
+  edit: TSharedSegmentEdit | null
+): boolean => survey.type === "app" && hasUnsavedSharedSegmentEdit(survey.segment, edit);
 
 /**
  * The survey the draft autosave sends while a shared-segment edit is open: the segment as stored, which

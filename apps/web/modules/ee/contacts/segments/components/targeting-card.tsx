@@ -28,7 +28,8 @@ import {
 } from "@/modules/ee/contacts/segments/actions";
 import {
   type TSharedSegmentEdit,
-  nextSharedSegmentEdit,
+  keepSharedSegmentEditFor,
+  startSharedSegmentEdit,
 } from "@/modules/survey/editor/lib/shared-segment-edit";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -110,10 +111,10 @@ export function TargetingCard({
     }));
   }, [setLocalSurvey, segment]);
 
-  // The shared-segment edit follows the segment and the editor: the survey save will not write it.
+  // An edit of another segment ends once the survey is on a different one (Load, Clone, Reset).
   useEffect(() => {
-    setSharedSegmentEdit((edit) => nextSharedSegmentEdit(edit, segment, isSegmentEditorOpen));
-  }, [isSegmentEditorOpen, segment, setSharedSegmentEdit]);
+    setSharedSegmentEdit((edit) => keepSharedSegmentEditFor(edit, segment?.id));
+  }, [segment?.id, setSharedSegmentEdit]);
 
   const isSegmentUsedInOtherSurveys = useMemo(
     () => (localSurvey.segment ? localSurvey.segment.surveys.length > 1 : false),
@@ -343,6 +344,7 @@ export function TargetingCard({
             onClick={() => {
               setIsSegmentEditorOpen(true);
               setSegmentEditorViewOnly(false);
+              setSharedSegmentEdit((edit) => startSharedSegmentEdit(edit, segment));
             }}
             size="sm"
             variant={isSegmentUsedInOtherSurveys ? "ghost" : "secondary"}>
