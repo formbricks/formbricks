@@ -41,7 +41,11 @@ These remain review checks until their enforcement handles the repository's exis
   instead of growing it. A change that pushes a file over the limit splits it in the same PR. Generated
   files, locale files and lockfiles are exempt, and an existing file already over the limit is not a
   reason to refactor it unless the change touches it.
-- Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
+- Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings.
+- When stored data contradicts its type (a legacy row, a loosely typed draft), parse it at the DB read
+  boundary so the type holds for every caller. A `?? []` guard at a call site that needs a lint-disable
+  comment, because the type says the value is never missing, is a finding: the fix is the parse, not one
+  guard per call site (formbricks#10107).
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
 - A change that replaces a tool keeps every behaviour the old setup carried (script flags, inline config
@@ -121,6 +125,35 @@ Downloads:
   leading `'`: xlsx keeps the apostrophe as literal text. CSV cells pass through `sanitizeFormulaInjection`
   (`apps/web/lib/utils/file-conversion.ts`).
 
+## Security
+
+Each rule closes a vulnerability class that shipped and needed a patch release. Gates shared by every entry
+point are under "API Design", caps on what a caller sends under "Input Limits", and tenant scoping under
+"Database & Prisma Performance".
+
+- **State changes need a deliberate request.** A `GET`, or any request a link, a prefetch or a mail scanner
+  can send, changes no state. A multi-step flow (recovery, invite, verification, OAuth) binds its completion
+  to the browser that started it and to an explicit user action, so a link opened by a scanner or by anyone
+  it was forwarded to completes nothing. Class: link-triggered account changes and login CSRF (ENG-3264,
+  ENG-7310, ENG-7395).
+- **Every path that creates a session enforces the same second factor.** SSO, account recovery, magic links,
+  OAuth callbacks and impersonation require the second factor password sign-in requires, through the same
+  check. Class: 2FA bypass through an alternate sign-in path (ENG-7266).
+- **A user-supplied regex runs in a linear-time engine or not at all.** A pattern from a survey, a filter or
+  any request runs in RE2 (`apps/web/modules/api/lib/linear-pattern-matcher.ts` on the server) or is not
+  evaluated. A length cap is not ReDoS protection: a 20-character pattern can backtrack for minutes on a short
+  input and block the event loop for every tenant on the process. Class: ReDoS (ENG-7109).
+- **Caller data a library stores for us is bounded in our code.** OAuth state and authorization codes,
+  rate-limit keys and verification records that a library writes to Redis or Postgres from request input
+  have a size, count and lifetime cap enforced by our code before the library call, as any other input under
+  "Input Limits". A library stores what it is given. Class: storage amplification from anonymous or
+  low-privilege requests (ENG-6885, ENG-7396, ENG-7399).
+- **A security setting passed to a dependency is proven once at runtime.** A TLS mode, a cookie flag or a
+  connection-string option is shown to take effect against the real dependency (a refused plaintext
+  connection, the flag in the `Set-Cookie` header), and the PR's Coverage table records that check.
+  Libraries silently ignore values they don't recognise, so a config that reads right proves nothing. Class:
+  silently dropped security settings (ENG-7337).
+
 ## Input Limits
 
 - Every dimension of user input has a hardcoded cap: body and file size, decompressed size and archive
@@ -198,8 +231,9 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
 - `ON DELETE CASCADE` reaches only Postgres. Deleting a survey, response, workspace, organization or account
   also deletes its storage objects (under the `workspaceId` prefix and the legacy `environmentId` one), its
   Hub records and its pending invites, and its test asserts those deletes.
-- Soft Deletion: Check for `isActive` or `deletedAt` fields; use proper filtering.
-- Never use `skip`/`offset` with `prisma.response.count()`; only use `where`.
+- A query on a model with `isActive` or `deletedAt` filters on it, unless it is meant to read inactive or
+  deleted rows.
+- `prisma.response.count()` takes a `where` only, never `skip` or `offset`.
 - Separate count and data queries and run in parallel (`Promise.all`).
 - Prefer cursor pagination for large datasets.
 - When filtering by `createdAt`, include indexed fields (e.g., `surveyId` + `createdAt`).
@@ -263,7 +297,10 @@ Do:
 - A test is done when it goes **red**: flip the line it guards (the permission argument, the tenant filter,
   the fix itself) and watch it fail. A test whose fixture already satisfies the assertion cannot go red: a
   synthetic schema in place of the real one, an input already invalid for another reason, a mock of the
-  module under test, or a call-site argument nobody asserts.
+  module under test, a mocked return value that already is the asserted output, or a call-site argument
+  nobody asserts.
+- A unit test over mocked Prisma proves the decision: that the code rejects or resolves, and which write it
+  sends. That the write persists is an integration test's claim.
 - E2E tests (Playwright): one spec per **feature area**, not per ticket and not per component. Default to
   adding assertions or a `test.step` to that area's existing spec in `apps/web/playwright`; a new
   `*.spec.ts` is for a feature area that has none, and it takes the area's name (`billing.spec.ts`).

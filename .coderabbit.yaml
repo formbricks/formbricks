@@ -130,7 +130,11 @@ reviews:
       instructions: |
         Judge tests by confidence, not coverage (CODING_STANDARDS.md "Testing Guidelines"):
         - Assert on inputs and outputs. Flag tests that lock implementation details, markup, or
-          snapshots, and tests that cannot fail (no meaningful assertion, everything mocked).
+          snapshots, and tests that cannot fail (no meaningful assertion, everything mocked, a mocked
+          return value that already is the asserted output).
+        - A test over mocked Prisma proves the decision: that the code rejects or resolves, and which
+          write it sends. Do not ask it to prove that the write persists; that is an integration test's
+          claim (CODING_STANDARDS.md "Testing Guidelines", the mocked-Prisma line).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
         - Module boundaries are mocked with `vi.mock`; where a shared `__mocks__` module exists
           (e.g. `apps/web/lib/__mocks__/database.ts`) the test reuses it instead of redefining it.

@@ -50,7 +50,7 @@ upgrade requires.
 ## Coding Standards
 
 `CODING_STANDARDS.md` holds the judgement calls: existing patterns, API design, file uploads and downloads,
-input limits, performance, testing levels, caching, dates, Prisma, quality. Read its sections from
+security, input limits, performance, testing levels, caching, dates, Prisma, quality. Read its sections from
 "Existing Patterns" through "Input Limits" before planning a change, its "Database & Prisma Performance"
 section before changing database access, its "Testing Guidelines" before adding or changing a test, its
 "GitHub Actions" section before changing a workflow or shared action, and the whole file when reviewing.
