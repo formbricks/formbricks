@@ -166,9 +166,9 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   `*.integration.test.ts`, or an `e2e` spec for response headers) asserts the effect: the flags in the
   `Set-Cookie` header, a refused plaintext connection. Where that cannot be automated, a one-time check is a
   `manual` row in the PR's Coverage table. An invalid or unrecognised value fails closed (at startup, where
-  it is read from config) rather than falling back to a weaker default. Libraries silently ignore values they don't
-  recognise, so a config that reads right proves nothing. Class: silently dropped security settings
-  (ENG-7337).
+  it is read from config) rather than falling back to a weaker default. Libraries silently ignore values
+  they don't recognise, so a config that reads right proves nothing. Class: silently dropped security
+  settings (ENG-7337).
 
 ## Input Limits
 
