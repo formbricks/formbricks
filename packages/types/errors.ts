@@ -220,6 +220,8 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "RequestBodyTooLargeError",
   // A survey change refused while creatives open the survey (409); defined in apps/web's creatives module.
   "SurveyLinkedCreativesError",
+  // A survey save refused because its segment changed since it was read (409); defined in apps/web's survey service.
+  "SurveySegmentChangedError",
 ]);
 
 /**

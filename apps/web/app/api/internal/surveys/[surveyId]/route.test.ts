@@ -16,6 +16,7 @@ import {
 } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SurveySegmentChangedError } from "@/lib/survey/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { SurveyLinkedCreativesError } from "@/modules/ee/creatives/lib/linked-creatives";
 import { PUT as PUT_DRAFT } from "./draft/route";
@@ -570,6 +571,7 @@ describe.each(ROUTES)("%s refusals", (_name, route, url) => {
         400,
       ],
       ["a taken unique value (409)", new UniqueConstraintError("Survey slug already exists"), 409],
+      ["a segment changed since the save read it (409)", new SurveySegmentChangedError(), 409],
       [
         "a change creatives block (409)",
         new SurveyLinkedCreativesError(

@@ -15,6 +15,7 @@ import { applyRateLimitOrRespond, rateLimitedResponse } from "@/app/api/v3/lib/o
 import { problemBadRequest, problemConflict, successResponse } from "@/app/api/v3/lib/response";
 import { IS_FORMBRICKS_SURVEYS_CONFIGURED, POSTHOG_KEY } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { SurveySegmentChangedError } from "@/lib/survey/service";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -79,7 +80,8 @@ const checkSurveyFollowUpsPermission = async (
  * A refusal raised by the checks or the write, as the problem that keeps the message the editor's toast
  * showed: a gate's reason (403), a write the service can't take (422), a schedule whose dates don't fit
  * (400; the only `ValidationError`s on this path check the caller's survey), a change creatives block
- * (409), a taken unique value (409), and the custom CSS budget (429). `null` for a fault, which the
+ * (409), a taken unique value (409), a segment changed since the save read it (409, ENG-6957), and the
+ * custom CSS budget (429). `null` for a fault, which the
  * wrapper answers with a 500.
  */
 const saveRefusal = (error: unknown, { requestId, instance }: TSaveContext): Response | null => {
@@ -91,7 +93,11 @@ const saveRefusal = (error: unknown, { requestId, instance }: TSaveContext): Res
       invalid_params: [{ name: "body", reason: error.message }],
     });
   }
-  if (error instanceof SurveyLinkedCreativesError || error instanceof UniqueConstraintError) {
+  if (
+    error instanceof SurveyLinkedCreativesError ||
+    error instanceof UniqueConstraintError ||
+    error instanceof SurveySegmentChangedError
+  ) {
     return problemConflict(requestId, error.message, instance);
   }
   if (error instanceof TooManyRequestsError) return rateLimitedResponse(error, { requestId, instance });

@@ -3327,6 +3327,7 @@
       "remove_all_filters": "Verwijder alle filters",
       "reset_all_filters": "Reset alle filters",
       "save_as_new_segment": "Opslaan als nieuw segment",
+      "save_segment_changes_before_saving": "Sla je segmentwijzigingen onder Doelgroep op of annuleer ze voordat je de enquête opslaat.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Sla uw filters op als een segment om deze in andere enquêtes te gebruiken",
       "search_segments": "Segmenten zoeken",
       "segment_created_successfully": "Segment succesvol aangemaakt!",

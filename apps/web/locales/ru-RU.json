@@ -3327,6 +3327,7 @@
       "remove_all_filters": "Удалить все фильтры",
       "reset_all_filters": "Сбросить все фильтры",
       "save_as_new_segment": "Сохранить как новый сегмент",
+      "save_segment_changes_before_saving": "Сохраните или отмените изменения сегмента в разделе «Целевая аудитория», прежде чем сохранять опрос.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Сохраните ваши фильтры как сегмент, чтобы использовать его в других опросах",
       "search_segments": "Поиск сегментов",
       "segment_created_successfully": "Сегмент успешно создан!",
