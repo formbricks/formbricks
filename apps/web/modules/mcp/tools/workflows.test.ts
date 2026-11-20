@@ -301,6 +301,7 @@ describe("registerWorkflowTools", () => {
       error: "550 mailbox a@b.c unavailable",
       triggerPayload: { responseId: "resp_1", answers: { q1: "my email is a@b.c" } },
       data: { q1: "my email is a@b.c" },
+      steps: [{ stepId: "s2", status: "failed", detail: { to: "a@b.c", subject: "Your answer" } }],
       logs: [
         { id: "log_1", stepId: "s1", status: "succeeded", input: { q1: "secret" }, output: { sent: true } },
         {
@@ -318,6 +319,7 @@ describe("registerWorkflowTools", () => {
       error: null,
       triggerPayload: null,
       data: null,
+      steps: null,
       logs: [
         { id: "log_1", stepId: "s1", status: "succeeded", input: null, output: null, error: null },
         { id: "log_2", stepId: "s2", status: "failed", input: null, output: null, error: null },

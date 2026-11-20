@@ -98,6 +98,7 @@ describe("registerWorkflowTestRunTools", () => {
       error: null,
       triggerPayload: { email: "ana@example.com" },
       data: { answer: "Too expensive" },
+      steps: [{ stepId: "n1", status: "succeeded", detail: { to: "ana@example.com" } }],
       logs: [{ nodeId: "n1", input: { to: "ana@example.com" }, output: { sent: false }, error: null }],
     };
     const callWith = async (caller: typeof authInfo) => {
@@ -114,6 +115,7 @@ describe("registerWorkflowTestRunTools", () => {
         ...run,
         triggerPayload: null,
         data: null,
+        steps: null,
         logs: [{ nodeId: "n1", input: null, output: null, error: null }],
       });
       expect(JSON.stringify(result.content)).not.toContain("ana@example.com");
