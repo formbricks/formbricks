@@ -575,6 +575,12 @@ describe("sso-recovery", () => {
 
       await expect(completeRecovery()).resolves.toBe("http://localhost:3000/environments/env_1");
       expect(finalizeSuccessfulSignIn).toHaveBeenCalled();
+      // Logged by name and frames, never the mailer's message.
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "Error", userId: "user_1" }),
+        "Failed to notify the user that SSO recovery removed their local sign-in factors"
+      );
+      expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("smtp down");
     });
   });
 
@@ -670,6 +676,12 @@ describe("sso-recovery", () => {
 
     expect(callbackUrl).toBe("http://localhost:3000/environments/env_1");
     expect(txAccountUpdateMany).toHaveBeenCalledOnce();
+    // Logged by name and frames, never the store's message.
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error", userId: "user_1" }),
+      "Failed to revoke sessions after reclaiming unverified local auth"
+    );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("redis unavailable");
     // A failed sweep must NOT be recorded as "0 sessions revoked" — same number, opposite incident.
     expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
