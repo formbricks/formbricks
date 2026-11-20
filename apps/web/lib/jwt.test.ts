@@ -486,6 +486,40 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       });
     });
 
+    /**
+     * ENG-7310: an SSO recovery link is good for the one recovery it was mailed for. The state rides in
+     * the signed payload, so the unsigned `callbackUrl` beside it cannot point the link at another.
+     */
+    test("carries the SSO recovery state it was minted for", async () => {
+      const token = createToken(mockUser.id, { purpose: "sso_recovery", ssoRecoveryStateId: "state-abc" });
+
+      await expect(verifyToken(token)).resolves.toEqual({
+        id: mockUser.id,
+        email: mockUser.email,
+        purpose: "sso_recovery",
+        ssoRecoveryStateId: "state-abc",
+      });
+    });
+
+    test.each([
+      ["a number", 42],
+      ["an empty string", ""],
+    ])("ignores a recovery state claim that is %s", async (_label, recoveryState) => {
+      // A genuinely minted payload, re-signed with the malformed claim added.
+      const { iat: _iat, ...minted } = jwt.decode(createToken(mockUser.id, { purpose: "sso_recovery" })) as {
+        iat: number;
+      };
+      const token = jwt.sign({ ...minted, ssoRecoveryStateId: recoveryState }, TEST_AUTH_SECRET);
+
+      expect(await verifyToken(token)).not.toHaveProperty("ssoRecoveryStateId");
+    });
+
+    test("reports no recovery state when the token carries none", async () => {
+      const verified = await verifyToken(createToken(mockUser.id, { purpose: "sso_recovery" }));
+
+      expect(verified).not.toHaveProperty("ssoRecoveryStateId");
+    });
+
     test("should throw error if user not found", async () => {
       (prisma.user.findUnique as any).mockResolvedValue(null);
       const token = createToken(mockUser.id);

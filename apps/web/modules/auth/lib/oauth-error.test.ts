@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE,
+  SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE,
+} from "@formbricks/types/errors";
 import { getOAuthErrorVariant } from "./oauth-error";
 import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
 
@@ -84,5 +87,10 @@ describe("getOAuthErrorVariant", () => {
     expect(getOAuthErrorVariant(SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE)).toBe(
       "second_factor_unavailable"
     );
+  });
+
+  /** ENG-7310. Retrying cannot help here; opening the emailed link in this browser can. */
+  test("names the unopened recovery link rather than inviting a retry", () => {
+    expect(getOAuthErrorVariant(SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE)).toBe("recovery_link_not_opened");
   });
 });

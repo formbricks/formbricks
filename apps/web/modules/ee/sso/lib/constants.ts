@@ -1,5 +1,6 @@
 import {
   SSO_RECOVERY_COMPLETION_PATH,
+  SSO_RECOVERY_CONFIRM_PATH,
   SSO_RECOVERY_SIGN_IN_PATH,
   normalizeRoutePathname,
 } from "@/modules/auth/lib/verification-links";
@@ -30,7 +31,11 @@ export const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
 export const isSsoRecoveryInternalCallbackUrl = (callbackUrl: string): boolean => {
   const pathname = normalizeRoutePathname(callbackUrl);
 
-  return pathname === SSO_RECOVERY_COMPLETION_PATH || pathname === SSO_RECOVERY_SIGN_IN_PATH;
+  return (
+    pathname === SSO_RECOVERY_COMPLETION_PATH ||
+    pathname === SSO_RECOVERY_CONFIRM_PATH ||
+    pathname === SSO_RECOVERY_SIGN_IN_PATH
+  );
 };
 
 /**

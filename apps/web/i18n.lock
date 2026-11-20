@@ -62,6 +62,8 @@ checksums:
     auth/login/oauth_generic_error_title: 856d019c86bb17aa739fd9c43cc3ed4f
     auth/login/oauth_misconfigured_description: dec37c5d595b9dc2829e0aafa7c962db
     auth/login/oauth_misconfigured_title: 8262866791438db1d070fe549be49a1a
+    auth/login/oauth_recovery_link_not_opened_description: 6fdf645b418ca8fd4c5cc61d8239b2c7
+    auth/login/oauth_recovery_link_not_opened_title: 78190db9a9ae5aace69ef9042129e565
     auth/login/oauth_second_factor_unavailable_description: fb04828c8886395b15c03aba1929c4e1
     auth/login/oauth_second_factor_unavailable_title: feaba4c3c7933fcafbab42ffe9bcc69c
     auth/login/oauth_signup_not_allowed_description: a03f3faa0668235bcf6f91b861d1df4a
@@ -129,6 +131,11 @@ checksums:
     auth/signup/title: 96addc349f834eaa5d14c786d5478b1c
     auth/signup_without_verification_success/user_successfully_created: e7ee262de26fdbd500023d9fb1982cf9
     auth/signup_without_verification_success/user_successfully_created_info: 0502de5e7ef8594cc65cf890f13f9fcc
+    auth/sso_recovery_confirm/cancel: 2e2a849c2223911717de8caa2c71bade
+    auth/sso_recovery_confirm/confirm: 9f17fccdbc20f0f0f78e841a382c0613
+    auth/sso_recovery_confirm/description: 0ca673fae6e03fb91a164d4cb4befa1f
+    auth/sso_recovery_confirm/title: 707b20825d7f13686eaf96186fe867eb
+    auth/sso_recovery_confirm/warning: 676d09bd588bc417eb9fcfff22ff2f77
     auth/verification-requested/email_not_configured_description: bea45846d6b8bd77c7118bf9cde12021
     auth/verification-requested/email_not_configured_title: 544c22243fe09611f559c33a7d3e105a
     auth/verification-requested/invalid_email_address: b2d9f25626f2d15c7c63e0281bccc247
