@@ -1,19 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { getSession } from "@/modules/auth/lib/session";
 import { SSO_RECOVERY_COMPLETION_PATH } from "@/modules/auth/lib/verification-links";
-import { getSsoProviderDisplayName } from "@/modules/ee/sso/lib/provider-display-name";
+import { resolveSsoRecoveryConfirmView } from "@/modules/ee/sso/lib/recovery-confirm";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
-import {
-  SsoRecoveryError,
-  getSsoRecoveryConfirmation,
-  getSsoRecoveryFailureRedirectUrl,
-  getSsoRecoveryRefusalRedirectUrl,
-} from "@/modules/ee/sso/lib/sso-recovery";
 import { Button } from "@/modules/ui/components/button";
 
 /**
@@ -27,35 +20,24 @@ import { Button } from "@/modules/ui/components/button";
 export const SsoRecoveryConfirmPage = async ({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ state?: string | string[] }> }>) => {
-  const { state } = await searchParams;
-  const stateId = typeof state === "string" && state.length > 0 ? state : null;
+  const [{ state }, session, cookieStore, t] = await Promise.all([
+    searchParams,
+    getSession(),
+    cookies(),
+    getTranslate(),
+  ]);
 
-  if (!stateId) {
-    redirect(getSsoRecoveryFailureRedirectUrl());
+  const view = await resolveSsoRecoveryConfirmView({
+    state,
+    recoveryProof: cookieStore.get(SSO_RECOVERY_PROOF_COOKIE_NAME)?.value,
+    sessionUserId: session?.user.id,
+  });
+
+  if (view.kind === "refused") {
+    redirect(view.redirectUrl);
   }
 
-  const [session, cookieStore, t] = await Promise.all([getSession(), cookies(), getTranslate()]);
-
-  let providerName: string;
-  let email: string;
-  try {
-    const confirmation = await getSsoRecoveryConfirmation({
-      stateId,
-      recoveryProof: cookieStore.get(SSO_RECOVERY_PROOF_COOKIE_NAME)?.value,
-      sessionUserId: session?.user.id,
-    });
-    providerName = getSsoProviderDisplayName(confirmation.provider);
-    email = confirmation.email;
-  } catch (error) {
-    // The guards log and audit their own refusals; anything else is a fault worth a log line.
-    if (!(error instanceof SsoRecoveryError)) {
-      logger.error(error, "Unexpected error showing the SSO recovery confirmation");
-    }
-    // No session teardown here, unlike the completion route: a server component cannot clear cookies,
-    // and the page writes nothing.
-    redirect(getSsoRecoveryRefusalRedirectUrl(error));
-  }
-
+  const { stateId, providerName, email } = view;
   const completionUrl = new URL(SSO_RECOVERY_COMPLETION_PATH, WEBAPP_URL).toString();
 
   return (
