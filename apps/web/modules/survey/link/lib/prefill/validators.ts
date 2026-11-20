@@ -30,7 +30,8 @@ export const validateMultipleChoiceSingle = (
     return invalid(TSurveyElementTypeEnum.MultipleChoiceSingle);
   }
 
-  const hasOther = element.choices.at(-1)?.id === "other";
+  // "Other" need not be last: "None of the above" can follow it (ENG-7377).
+  const hasOther = element.choices.some((choice) => choice.id === "other");
 
   // Try matching by ID, then label, then answer code
   const matchedChoice = matchOption(element.choices, answer, language);
@@ -66,7 +67,7 @@ const sortMultiChoiceAnswers = (
   element: TSurveyMultipleChoiceElement,
   language: string,
   hasOther: boolean,
-  lastChoiceLabel: string | undefined
+  otherChoiceLabel: string | undefined
 ): { matched: string[]; others: string[] } | null => {
   const matched: string[] = [];
   const others: string[] = [];
@@ -84,7 +85,7 @@ const sortMultiChoiceAnswers = (
     }
 
     // Check if it's the "Other" label itself
-    if (ans === lastChoiceLabel) {
+    if (ans === otherChoiceLabel) {
       continue;
     }
 
@@ -117,8 +118,10 @@ export const validateMultipleChoiceMulti = (
     return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
   }
 
-  const hasOther = element.choices.at(-1)?.id === "other";
-  const lastChoiceLabel = hasOther ? element.choices.at(-1)?.label?.[language] : undefined;
+  // "Other" need not be last: "None of the above" can follow it (ENG-7377).
+  const otherChoice = element.choices.find((choice) => choice.id === "other");
+  const hasOther = otherChoice !== undefined;
+  const otherChoiceLabel = otherChoice?.label?.[language];
 
   const answerChoices = parseCommaSeparated(answer);
 
@@ -127,7 +130,7 @@ export const validateMultipleChoiceMulti = (
   }
 
   // Process all answers and collect results
-  const sorted = sortMultiChoiceAnswers(answerChoices, element, language, hasOther, lastChoiceLabel);
+  const sorted = sortMultiChoiceAnswers(answerChoices, element, language, hasOther, otherChoiceLabel);
   if (!sorted) {
     return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
   }

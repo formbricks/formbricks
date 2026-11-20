@@ -646,7 +646,8 @@ const getChoiceAnswerValue = (
   responseValue: TResponseData[string] | undefined,
   selectedLanguage: string
 ) => {
-  const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
+  // "Other" need not be last: "None of the above" can follow it (ENG-7377).
+  const isOthersEnabled = currentElement.choices.some((choice) => choice.id === "other");
 
   // ENG-6943: the label in the response's language first, then in any language of the survey.
   if (typeof responseValue === "string") {
