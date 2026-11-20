@@ -25,6 +25,7 @@ vi.mock("@/modules/auth/lib/auth", () => ({
     },
     api: {},
   },
+  getDeclaredAuthPaths: () => [],
 }));
 vi.mock("@/modules/auth/lib/mcp-dcr-application-type", () => ({
   normalizeDcrRequest: normalizeDcrRequestMock,
