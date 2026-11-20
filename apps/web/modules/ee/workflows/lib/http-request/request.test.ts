@@ -35,6 +35,39 @@ describe("summarizeWorkflowHttpResponse", () => {
     expect(record.body).toBe(`you sent token=${WORKFLOW_SECRET_MASK} ok`);
   });
 
+  test("masks a secret the JSON spells with escapes, which the raw text doesn't contain byte for byte", () => {
+    // PHP's json_encode escapes `/` by default; any JSON may escape a character as \uXXXX.
+    const response: WorkflowHttpResponse = {
+      status: 200,
+      contentType: "application/json",
+      bodyText: String.raw`{"echo":"sk_test\/abc","again":"\u0073k_test/abc","sk_test\/abc":1}`,
+      truncated: false,
+    };
+
+    const { record } = summarizeWorkflowHttpResponse(response, ["sk_test/abc"]);
+
+    expect(record.body).toEqual({
+      echo: WORKFLOW_SECRET_MASK,
+      again: WORKFLOW_SECRET_MASK,
+      [WORKFLOW_SECRET_MASK]: 1,
+    });
+  });
+
+  test("masks a JSON-escaped secret in a body kept as text because it is too large to keep parsed", () => {
+    const response: WorkflowHttpResponse = {
+      status: 200,
+      contentType: "application/json",
+      bodyText: String.raw`{"echo":"sk_test\/abc","pad":"` + "x".repeat(70 * 1024) + '"}',
+      truncated: false,
+    };
+
+    const { record } = summarizeWorkflowHttpResponse(response, ["sk_test/abc"]);
+
+    expect(typeof record.body).toBe("string");
+    expect(record.body).not.toContain("sk_test");
+    expect(record.body).toContain(WORKFLOW_SECRET_MASK);
+  });
+
   test("keeps the body unchanged without secrets", () => {
     const { record } = summarizeWorkflowHttpResponse(echo({ a: 1 }));
     expect(record.body).toEqual({ a: 1 });

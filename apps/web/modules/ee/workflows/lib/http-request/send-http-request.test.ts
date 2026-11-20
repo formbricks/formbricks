@@ -20,6 +20,21 @@ vi.mock("@/lib/constants", () => ({
   },
 }));
 
+const pinnedDispatchers = vi.hoisted(() => [] as unknown[]);
+
+// The real SSRF check and dispatcher, recorded so a test can tell fetch got the pinned one.
+vi.mock("@/lib/utils/validate-webhook-url", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/utils/validate-webhook-url")>();
+  return {
+    ...actual,
+    createPinnedDispatcher: vi.fn((...args: Parameters<typeof actual.createPinnedDispatcher>) => {
+      const dispatcher = actual.createPinnedDispatcher(...args);
+      pinnedDispatchers.push(dispatcher);
+      return dispatcher;
+    }),
+  };
+});
+
 vi.mock("@formbricks/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
@@ -57,6 +72,7 @@ beforeEach(() => {
   flags.allowWebhooksInternal = false;
   flags.allowPlainHttp = false;
   sleep.mockClear();
+  pinnedDispatchers.length = 0;
 });
 
 afterEach(() => {
@@ -75,6 +91,17 @@ describe("sendWorkflowHttpRequest", () => {
       response: { status: 201, contentType: "application/json", bodyText: '{"id":"c_1"}', truncated: false },
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("sends through a dispatcher pinned to the checked address, with a timeout signal", async () => {
+    const fetchMock = stubFetch(response(200));
+
+    await sendWorkflowHttpRequest(call(), { retries: 0, sleep });
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit & { dispatcher?: unknown };
+    expect(pinnedDispatchers).toHaveLength(1);
+    expect(init.dispatcher).toBe(pinnedDispatchers[0]);
+    expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
   test("never follows a redirect: the 3xx is the response", async () => {

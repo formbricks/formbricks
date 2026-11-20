@@ -183,16 +183,19 @@ export const summarizeWorkflowHttpResponse = (
   secretValues: readonly string[] = []
 ): { variables: { status: number; body: unknown }; record: TWorkflowHttpResponseRecord } => {
   const variables = { status: response.status, body: parseBody(response) };
-  const logged = { ...response, bodyText: maskSecretValues(response.bodyText, secretValues) };
-  const body = parseBody(logged);
   const base = { status: response.status, contentType: response.contentType };
-  if (typeof body !== "string") {
+  if (typeof variables.body !== "string") {
+    // Masked after parsing, so a secret the JSON spells with escapes (`\/`, `\u0041`) is caught too.
+    const body = maskSecretsInJson(variables.body, secretValues);
     const serialized = JSON.stringify(body);
     if (new TextEncoder().encode(serialized).length <= WORKFLOW_HTTP_LOGGED_BODY_BYTES) {
       return { variables, record: { ...base, body } };
     }
   }
-  const { text, truncated } = capUtf8(logged.bodyText, WORKFLOW_HTTP_LOGGED_BODY_BYTES);
+  const { text, truncated } = capUtf8(
+    maskSecretValues(response.bodyText, secretValues),
+    WORKFLOW_HTTP_LOGGED_BODY_BYTES
+  );
   return {
     variables,
     record: { ...base, body: text, ...(truncated || response.truncated ? { bodyTruncated: true } : {}) },
@@ -202,10 +205,42 @@ export const summarizeWorkflowHttpResponse = (
 /** Shorter values are left alone: masking them would mangle ordinary text in the body. */
 const MIN_MASKED_SECRET_LENGTH = 4;
 
+/**
+ * Each secret as raw text may spell it: as sent, JSON-escaped, and JSON-escaped with `\/` for `/`
+ * (PHP's default). Other escapes are caught only where the body parses (`maskSecretsInJson`).
+ */
+const secretSpellings = (secretValues: readonly string[]): string[] =>
+  [
+    ...new Set(
+      secretValues.flatMap((secret) => {
+        const escaped = JSON.stringify(secret).slice(1, -1);
+        return [secret, escaped, escaped.replaceAll("/", String.raw`\/`)];
+      })
+    ),
+  ].sort((a, b) => b.length - a.length);
+
+const maskSpellings = (text: string, spellings: readonly string[]): string =>
+  spellings.reduce((masked, spelling) => masked.replaceAll(spelling, WORKFLOW_SECRET_MASK), text);
+
 const maskSecretValues = (text: string, secretValues: readonly string[]): string =>
-  [...secretValues]
-    .sort((a, b) => b.length - a.length)
-    .reduce((masked, secret) => masked.replaceAll(secret, WORKFLOW_SECRET_MASK), text);
+  maskSpellings(text, secretSpellings(secretValues));
+
+/** A parsed JSON body with each secret masked in every string, object keys included. */
+const maskSecretsInJson = (value: unknown, secretValues: readonly string[]): unknown => {
+  if (secretValues.length === 0) return value;
+  const spellings = secretSpellings(secretValues);
+  const walk = (node: unknown): unknown => {
+    if (typeof node === "string") return maskSpellings(node, spellings);
+    if (Array.isArray(node)) return node.map(walk);
+    if (node !== null && typeof node === "object") {
+      return Object.fromEntries(
+        Object.entries(node).map(([key, item]) => [maskSpellings(key, spellings), walk(item)])
+      );
+    }
+    return node;
+  };
+  return walk(value);
+};
 
 /**
  * The secret header values a call sent: the headers its record shows masked. Run detail and samples

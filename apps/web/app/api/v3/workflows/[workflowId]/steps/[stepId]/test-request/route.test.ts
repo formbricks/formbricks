@@ -58,6 +58,7 @@ vi.mock("@formbricks/logger", () => {
 const WORKFLOW_ID = "cm9zr4t2b000208l8h2m1aq3c";
 const WORKSPACE_ID = "cm9zr4mps000008l8btfy1vtz";
 const SECRET = "Bearer sk_live_route";
+const SLASHED_SECRET = "Bearer sk_live/route";
 
 const definition = {
   schemaVersion: 1,
@@ -158,6 +159,28 @@ describe("POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request", () =
       })
     );
     expect(JSON.stringify(mocks.queueAuditEvent.mock.calls)).not.toContain(SECRET);
+  });
+
+  test.each([
+    ["byte for byte", JSON.stringify({ youSent: SLASHED_SECRET })],
+    ["with escaped slashes (PHP's default)", String.raw`{"youSent":"Bearer sk_live\/route"}`],
+  ])("masks a secret the target echoes back %s, in the answer and the kept sample", async (_, bodyText) => {
+    mocks.loadSecrets.mockResolvedValue(
+      new Map([["sec_1", { value: SLASHED_SECRET, boundOrigin: "https://api.example.com" }]])
+    );
+    mocks.send.mockResolvedValue({
+      response: { status: 200, contentType: "application/json", bodyText, truncated: false },
+      error: null,
+      attempts: 1,
+    });
+
+    const response = await post();
+
+    const text = await response.text();
+    expect(text).not.toContain("sk_live/route");
+    expect(JSON.parse(text).data.response.body).toEqual({ youSent: "••••••" });
+    expect(JSON.stringify(mocks.sampleUpsert.mock.calls)).not.toContain("sk_live/route");
+    expect(mocks.sampleUpsert.mock.calls[0][0].update.sample.body).toEqual({ youSent: "••••••" });
   });
 
   test("a value typed in the draft is used for this call only and never stored", async () => {
