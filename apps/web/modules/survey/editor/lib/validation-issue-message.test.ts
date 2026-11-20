@@ -1,6 +1,7 @@
 import { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { SURVEY_VALIDATION_ISSUE_CODES } from "@formbricks/types/surveys/validation-issue-codes";
 import { describeSurveyValidationIssue } from "./validation-issue-message";
 
 // Echoes the key and its interpolation values, so each assertion shows exactly what was asked for.
@@ -129,5 +130,17 @@ describe("describeSurveyValidationIssue", () => {
         t
       )
     ).toContain(`${KEY}.field_must_be_text`);
+  });
+
+  test.each(SURVEY_VALIDATION_ISSUE_CODES)("translates %s into its own message", (issueCode) => {
+    const message = describeSurveyValidationIssue(issue(["questions"], { issueCode }), blocks, t);
+    expect(message).toMatch(new RegExp(`^${KEY}\\.\\w+`));
+  });
+
+  test("gives each code a distinct message, except the two matrix-row codes that share one", () => {
+    const messages = SURVEY_VALIDATION_ISSUE_CODES.map((issueCode) =>
+      describeSurveyValidationIssue(issue(["questions"], { issueCode }), blocks, t)
+    );
+    expect(new Set(messages).size).toBe(SURVEY_VALIDATION_ISSUE_CODES.length - 1);
   });
 });

@@ -11,7 +11,7 @@ import { getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 type TIssue = Pick<z.core.$ZodIssue, "code" | "path"> & { params?: unknown };
 
 /** A label from the rule engine is a word ("Equals") or a symbol ("="); a word reads better in a sentence. */
-const isSymbolLabel = (label: string): boolean => !/[\p{L}]/u.test(label);
+const isSymbolLabel = (label: string): boolean => !/\p{L}/u.test(label);
 
 /** Every condition operator the rule builder offers, by value, in the words the builder shows. */
 const getOperatorLabels = (t: TFunction): Map<string, string> => {
@@ -41,10 +41,11 @@ const getNumberParam = (params: TSurveyValidationIssueParams, key: string): numb
   typeof params[key] === "number" ? params[key] : undefined;
 
 /**
- * What is wrong, translated. Literal `t()` calls, one per code, so the translation scanner sees
- * every key; the location is added by `getIssueLocation`.
+ * What is wrong with a rule condition, translated, or `undefined` for any other code. Literal `t()`
+ * calls, one per code, so the translation scanner sees every key; the location is added by
+ * `getIssueLocation`.
  */
-const getIssueMessage = (params: TSurveyValidationIssueParams, t: TFunction): string => {
+const getConditionIssueMessage = (params: TSurveyValidationIssueParams, t: TFunction): string | undefined => {
   const rawOperator = getStringParam(params, "operator");
   const operator = rawOperator ? (getOperatorLabels(t).get(rawOperator) ?? rawOperator) : "";
   const rawQuestionType = getStringParam(params, "questionType");
@@ -115,6 +116,14 @@ const getIssueMessage = (params: TSurveyValidationIssueParams, t: TFunction): st
       return t("workspace.surveys.edit.validation_issue.matrix_row_not_found");
     case "matrix_column_not_found":
       return t("workspace.surveys.edit.validation_issue.matrix_column_not_found");
+    default:
+      return undefined;
+  }
+};
+
+/** What is wrong with a show-if, rule action, question, ending or follow-up, translated, or `undefined`. */
+const getStructureIssueMessage = (params: TSurveyValidationIssueParams, t: TFunction): string | undefined => {
+  switch (params.issueCode) {
     case "show_if_uses_itself":
       return t("workspace.surveys.edit.validation_issue.show_if_uses_itself");
     case "show_if_uses_later_question":
@@ -171,8 +180,14 @@ const getIssueMessage = (params: TSurveyValidationIssueParams, t: TFunction): st
       return t("workspace.surveys.edit.validation_issue.follow_up_invalid_recipient");
     case "follow_up_no_ending":
       return t("workspace.surveys.edit.validation_issue.follow_up_no_ending");
+    default:
+      return undefined;
   }
 };
+
+/** What is wrong, translated: every code is handled by exactly one of the two lookups. */
+const getIssueMessage = (params: TSurveyValidationIssueParams, t: TFunction): string =>
+  getConditionIssueMessage(params, t) ?? getStructureIssueMessage(params, t) ?? "";
 
 /** Where a question's issue is: its show-if, one option's show-if, or the question itself. */
 const getQuestionLocation = (
