@@ -156,6 +156,7 @@ describe("PATCH /api/internal/members/{userId}", () => {
       expect(response.status).toBe(409);
       expect((await response.json()).detail).toBe("You cannot demote the last owner of the organization");
       expect(mocks.updateMembershipInTransaction).not.toHaveBeenCalled();
+      expect(mocks.projectMembershipRoleChange).not.toHaveBeenCalled();
       expect(mocks.finishRevokedMcpGrants).not.toHaveBeenCalled();
     });
 
