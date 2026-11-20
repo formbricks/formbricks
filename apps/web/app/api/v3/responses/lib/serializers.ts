@@ -1,6 +1,7 @@
 import type { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { buildAnswerPlan, publishedDataValue, serializeAnswers, sumV3DurationSeconds } from "./answers";
 import { buildEmbeddedDataPlan, serializeEmbeddedData } from "./embedded-data";
 import { resolveV3LabelContext } from "./label-resolution";
@@ -103,9 +104,7 @@ export const createV3ResponseSerializer = (): TV3ResponseSerializer => {
     const cached = embeddedPlans.get(survey.id);
     if (cached) return cached;
 
-    const elementIds = (survey.blocks as TSurveyBlock[]).flatMap((block) =>
-      block.elements.map((element) => element.id)
-    );
+    const elementIds = getElementsFromBlocks(survey.blocks as TSurveyBlock[]).map((element) => element.id);
 
     const plan = buildEmbeddedDataPlan(survey.embeddedFields ?? [], elementIds);
     embeddedPlans.set(survey.id, plan);

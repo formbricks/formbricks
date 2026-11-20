@@ -356,7 +356,7 @@ describe("resolveEmbeddedValue", () => {
 
 describe("coerceToEmbeddedDataType", () => {
   // The old switch had no arm for a type outside the enum and returned undefined; it must not throw.
-  test.each(["unknown", "constructor", "toString"])(
+  test.each(["unknown", "constructor", "toString", "__proto__", "hasOwnProperty"])(
     "coerces nothing for an unknown dataType %s",
     (dataType) => {
       expect(coerceToEmbeddedDataType("42", dataType as never)).toBeUndefined();
@@ -1230,6 +1230,21 @@ describe("listReadableFields", () => {
       { key: "email", label: "Email address" },
       { key: "user_id", label: "user_id" },
     ]);
+  });
+
+  // A draft or migrated block can be stored without `elements` (ENG-2497).
+  test("a block with no elements array adds no question fields", () => {
+    const fields = listReadableFields({
+      blocks: [
+        { id: "clx0000000000000000000b0", name: "Legacy" } as unknown as TSurveyBlocks[number],
+        ...blocks,
+      ],
+      embeddedData: [],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.question.map((field) => field.key)).toEqual(["q1", "q2", "q3", "q4", "q5"]);
   });
 
   test("one Embedded Data group carries every source and dataType in the definitions' order", () => {

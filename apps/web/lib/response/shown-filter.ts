@@ -60,6 +60,9 @@ const indexSurvey = (survey: TSurvey): TSurveyIndex => {
   const blocks = new Map<string, TSurvey["blocks"][number]>();
   const elements: TSurveyIndex["elements"] = new Map();
   for (const block of survey.blocks) {
+    // A stored block can lack `elements` (an unvalidated draft or migrated block, ENG-2497). It holds
+    // nothing to filter on, and `getShownFilterTargets` offers no target for it, so it is left out.
+    if (!block.elements) continue;
     blocks.set(block.id, block);
     for (const element of block.elements) elements.set(element.id, { element, blockId: block.id });
   }

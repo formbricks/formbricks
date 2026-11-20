@@ -3,6 +3,7 @@
 import { ArrowUpFromLineIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getDroppedFiles, setDropEffect } from "@formbricks/survey-ui/drag-data";
 import { cn } from "@/lib/cn";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
@@ -55,7 +56,7 @@ export const FileDropZone = ({
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = canDrop ? "copy" : "none";
+    setDropEffect(e, canDrop ? "copy" : "none");
     if (canDrop && !isDragOver) setIsDragOver(true);
   };
 
@@ -70,7 +71,7 @@ export const FileDropZone = ({
     e.stopPropagation();
     setIsDragOver(false);
     if (!canDrop) return;
-    void handleFile(e.dataTransfer.files[0]);
+    void handleFile(getDroppedFiles(e)[0]);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

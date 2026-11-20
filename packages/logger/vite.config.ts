@@ -9,9 +9,13 @@ export default defineConfig({
   },
   build: {
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
+      // loggable-error is its own entry so tests that mock the logger (the main entry) keep the real helper.
+      entry: {
+        index: resolve(__dirname, "src/index.ts"),
+        "loggable-error": resolve(__dirname, "src/loggable-error.ts"),
+      },
       name: "formbricksLogger",
-      fileName: "index",
+      fileName: (format, entryName) => `${entryName}.${format === "es" ? "js" : "cjs"}`,
       formats: ["es", "cjs"],
     },
     rollupOptions: {

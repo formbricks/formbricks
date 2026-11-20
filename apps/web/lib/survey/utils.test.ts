@@ -16,6 +16,7 @@ import {
   anySurveyHasFilters,
   checkForInvalidImagesInQuestions,
   checkForInvalidMediaInBlocks,
+  getElementsFromBlocks,
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
 } from "./utils";
@@ -778,5 +779,19 @@ describe("validateMediaAndPrepareBlocks", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].elements[0]).not.toHaveProperty("isDraft");
+  });
+});
+
+describe("getElementsFromBlocks", () => {
+  // A draft saved through `updateSurveyDraftAction`, or a block written by the raw-SQL questions →
+  // blocks migration, can lack `elements`: neither path validates a block's shape (ENG-2497).
+  test("skips a block with no elements array instead of returning undefined entries", () => {
+    const element = { id: "q1", type: TSurveyElementTypeEnum.OpenText } as unknown as TSurveyElement;
+    const blocks = [
+      { id: "b1", name: "Block 1" },
+      { id: "b2", name: "Block 2", elements: [element] },
+    ] as unknown as TSurveyBlock[];
+
+    expect(getElementsFromBlocks(blocks)).toEqual([element]);
   });
 });
