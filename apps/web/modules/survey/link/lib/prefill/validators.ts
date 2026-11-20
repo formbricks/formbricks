@@ -3,6 +3,7 @@ import {
   TSurveyConsentElement,
   TSurveyCsatElement,
   TSurveyElement,
+  TSurveyElementChoice,
   TSurveyElementTypeEnum,
   TSurveyMultipleChoiceElement,
   TSurveyPictureSelectionElement,
@@ -66,9 +67,9 @@ const sortMultiChoiceAnswers = (
   answerChoices: string[],
   element: TSurveyMultipleChoiceElement,
   language: string,
-  hasOther: boolean,
-  otherChoiceLabel: string | undefined
+  otherChoice: TSurveyElementChoice | undefined
 ): { matched: string[]; others: string[] } | null => {
+  const otherChoiceLabel = otherChoice?.label?.[language];
   const matched: string[] = [];
   const others: string[] = [];
   let freeTextOtherCount = 0;
@@ -90,7 +91,7 @@ const sortMultiChoiceAnswers = (
     }
 
     // It's a free-text "other" value
-    if (hasOther) {
+    if (otherChoice) {
       freeTextOtherCount++;
       if (freeTextOtherCount > 1) {
         return null; // Only one free-text "other" value allowed
@@ -120,8 +121,6 @@ export const validateMultipleChoiceMulti = (
 
   // "Other" need not be last: "None of the above" can follow it (ENG-7377).
   const otherChoice = element.choices.find((choice) => choice.id === "other");
-  const hasOther = otherChoice !== undefined;
-  const otherChoiceLabel = otherChoice?.label?.[language];
 
   const answerChoices = parseCommaSeparated(answer);
 
@@ -130,7 +129,7 @@ export const validateMultipleChoiceMulti = (
   }
 
   // Process all answers and collect results
-  const sorted = sortMultiChoiceAnswers(answerChoices, element, language, hasOther, otherChoiceLabel);
+  const sorted = sortMultiChoiceAnswers(answerChoices, element, language, otherChoice);
   if (!sorted) {
     return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
   }
