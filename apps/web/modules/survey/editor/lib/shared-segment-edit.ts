@@ -24,14 +24,21 @@ export const hasUnsavedSharedSegmentEdit = (
   !isDeepEqual(segment.filters, edit.savedFilters);
 
 /**
- * The survey the draft autosave sends: an unsaved shared-segment edit goes out as its stored filters. The
- * save would not write them anyway, so the survey's other edits keep saving, the autosave does not hand
- * the stored filters back over the card's edit, and the leave-page check still counts it as unsaved.
+ * The survey the draft autosave sends while a shared-segment edit is open: the segment as stored, which
+ * the save leaves as it is anyway. The survey's other edits keep saving, the autosave does not hand the
+ * stored filters back over the card's edit, and an open edit alone does not read as a change to save.
+ * `persistedSegment` is the last saved survey's segment; until it is this one (right after Clone or Load),
+ * only the filters are put back.
  */
-export const withSavedSharedSegmentFilters = <TSurvey extends { segment: TSegment | null }>(
+export const withSavedSharedSegment = <TSurvey extends { segment: TSegment | null }>(
   survey: TSurvey,
-  edit: TSharedSegmentEdit | null
-): TSurvey =>
-  edit && survey.segment && hasUnsavedSharedSegmentEdit(survey.segment, edit)
-    ? { ...survey, segment: { ...survey.segment, filters: edit.savedFilters } }
+  edit: TSharedSegmentEdit | null,
+  persistedSegment: TSegment | null | undefined
+): TSurvey => {
+  const { segment } = survey;
+  if (!edit || !segment || segment.isPrivate || segment.id !== edit.segmentId) return survey;
+  if (persistedSegment?.id === edit.segmentId) return { ...survey, segment: persistedSegment };
+  return hasUnsavedSharedSegmentEdit(segment, edit)
+    ? { ...survey, segment: { ...segment, filters: edit.savedFilters } }
     : survey;
+};

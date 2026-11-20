@@ -109,6 +109,16 @@ export function TargetingCard({
     setSharedSegmentEdit((edit) => (edit && edit.segmentId !== segment?.id ? null : edit));
   }, [setLocalSurvey, setSharedSegmentEdit, segment]);
 
+  // The editor open on a shared segment, however it got there ("Edit segment", or a segment loaded while
+  // the editor was open), is an edit the survey save will not write: record its stored filters once, when
+  // it opens, so a later reopen or edit keeps them.
+  useEffect(() => {
+    if (!isSegmentEditorOpen || !segment || segment.isPrivate) return;
+    setSharedSegmentEdit((edit) =>
+      edit?.segmentId === segment.id ? edit : { segmentId: segment.id, savedFilters: segment.filters }
+    );
+  }, [isSegmentEditorOpen, segment, setSharedSegmentEdit]);
+
   const isSegmentUsedInOtherSurveys = useMemo(
     () => (localSurvey.segment ? localSurvey.segment.surveys.length > 1 : false),
     [localSurvey.segment]
@@ -337,7 +347,6 @@ export function TargetingCard({
             onClick={() => {
               setIsSegmentEditorOpen(true);
               setSegmentEditorViewOnly(false);
-              setSharedSegmentEdit({ segmentId: segment.id, savedFilters: segment.filters });
             }}
             size="sm"
             variant={isSegmentUsedInOtherSurveys ? "ghost" : "secondary"}>

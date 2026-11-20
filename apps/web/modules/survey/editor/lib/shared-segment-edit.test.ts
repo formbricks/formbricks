@@ -3,7 +3,7 @@ import type { TBaseFilters, TSegment } from "@formbricks/types/segment";
 import {
   type TSharedSegmentEdit,
   hasUnsavedSharedSegmentEdit,
-  withSavedSharedSegmentFilters,
+  withSavedSharedSegment,
 } from "./shared-segment-edit";
 
 const savedFilters: TBaseFilters = [];
@@ -53,19 +53,34 @@ describe("hasUnsavedSharedSegmentEdit", () => {
   });
 });
 
-describe("withSavedSharedSegmentFilters", () => {
+describe("withSavedSharedSegment", () => {
   const survey = { name: "Edited", segment: shared };
+  // As stored: no edit, and a shape the card's copy can lack or add to (Clone adds counts).
+  const persisted: TSegment = { ...shared, filters: savedFilters, updatedAt: new Date(1) };
 
-  test("an unsaved edit goes out with its stored filters, and the other edits as they are", () => {
-    expect(withSavedSharedSegmentFilters(survey, edit)).toEqual({
+  test("an open edit goes out as the stored segment, and the other edits as they are", () => {
+    expect(withSavedSharedSegment(survey, edit, persisted)).toEqual({ name: "Edited", segment: persisted });
+  });
+
+  test("an open edit without changes also goes out as stored, so it alone is no change to save", () => {
+    const untouched = { name: "Edited", segment: { ...shared, filters: savedFilters } };
+    expect(withSavedSharedSegment(untouched, edit, persisted).segment).toBe(persisted);
+  });
+
+  test("before the last save knows the segment (right after Clone or Load), only the filters go back", () => {
+    const other = { ...persisted, id: "clothersegment0000000001" };
+    expect(withSavedSharedSegment(survey, edit, other)).toEqual({
       name: "Edited",
       segment: { ...shared, filters: savedFilters },
     });
   });
 
-  test("a survey without an unsaved edit goes out as is", () => {
-    expect(withSavedSharedSegmentFilters(survey, null)).toBe(survey);
-    const segmentless = { name: "Edited", segment: null };
-    expect(withSavedSharedSegmentFilters(segmentless, edit)).toBe(segmentless);
+  test.each<[string, { name: string; segment: TSegment | null }, TSharedSegmentEdit | null]>([
+    ["no open edit", survey, null],
+    ["no segment", { name: "Edited", segment: null }, edit],
+    ["another segment", { name: "Edited", segment: { ...shared, id: "clothersegment0000000001" } }, edit],
+    ["a private segment", { name: "Edited", segment: { ...shared, isPrivate: true } }, edit],
+  ])("%s goes out as is", (_case, workingCopy, openEdit) => {
+    expect(withSavedSharedSegment(workingCopy, openEdit, persisted)).toBe(workingCopy);
   });
 });

@@ -61,7 +61,7 @@ import { createSaveAttemptOrder } from "../lib/save-attempt-order";
 import {
   type TSharedSegmentEdit,
   hasUnsavedSharedSegmentEdit,
-  withSavedSharedSegmentFilters,
+  withSavedSharedSegment,
 } from "../lib/shared-segment-edit";
 import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
@@ -503,15 +503,13 @@ export const SurveyMenuBar = ({
 
       // A Custom CSS draft goes out only once its check has passed; until then the saved CSS stands in
       // for it, so an unchecked or invalid draft cannot fail the survey's other edits.
-      // An unsaved shared-segment edit goes out as its stored filters (ENG-6957), so the autosave neither
+      // An open shared-segment edit goes out as the segment is stored (ENG-6957), so the autosave neither
       // claims it nor hands the stored filters back over it.
-      const currentSurvey = withSavedSharedSegmentFilters(
-        getSurveyToAutosave(
-          localSurveyRef.current,
-          lastSavedSurveyRef.current ?? surveyRef.current,
-          customCssValidationStatusRef.current
-        ),
-        sharedSegmentEditRef.current
+      const lastSaved = lastSavedSurveyRef.current ?? surveyRef.current;
+      const currentSurvey = withSavedSharedSegment(
+        getSurveyToAutosave(localSurveyRef.current, lastSaved, customCssValidationStatusRef.current),
+        sharedSegmentEditRef.current,
+        lastSaved.segment
       );
 
       // Check for changes using refs (avoids re-creating interval on every change), and skip if
@@ -572,7 +570,10 @@ export const SurveyMenuBar = ({
           // The comparison uses refs, so this prevents unnecessary re-saves.
           surveyRef.current = { ...savedData };
           lastSavedSurveyRef.current = structuredClone(savedData);
-          isSuccessfullySavedRef.current = true;
+          // Only while nothing is left unsaved: the autosave holds back an open shared-segment edit
+          // (ENG-6957) and leaves `localSurvey` as it is, so the effect that retires this flag would not
+          // run, and a reload would discard the edit without the unload warning.
+          isSuccessfullySavedRef.current = !hasUnsavedSurveyChanges(localSurveyRef.current, [savedData]);
           // The refs above follow what the server stored either way; the indicator only follows the
           // newest attempt, so a tick that lands after a newer save failed does not say "saved".
           if (saveAttemptOrder.settle(attempt)) {
@@ -884,6 +885,7 @@ export const SurveyMenuBar = ({
   const isReadyToActivate = (): boolean => {
     if (blockOnMissingTrigger(isPublishScheduled ? "paused" : "inProgress")) return false;
     if (blockOnInvalidCustomCss()) return false;
+    if (blockOnUnsavedSharedSegmentEdit()) return false;
     if (!validateSurveyWithZod()) return false;
     return isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
   };
