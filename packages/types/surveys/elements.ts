@@ -77,7 +77,7 @@ export const ZSurveyOpenTextElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.OpenText),
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
-  inputType: ZSurveyOpenTextElementInputType.optional().prefault("text"),
+  inputType: ZSurveyOpenTextElementInputType.prefault("text"),
   insightsEnabled: z.boolean().prefault(false).optional(),
   charLimit: z
     .object({
@@ -184,7 +184,7 @@ export const ZSurveyNPSElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.NPS),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().prefault(false),
+  isColorCodingEnabled: z.boolean().prefault(false),
 });
 
 export type TSurveyNPSElement = z.infer<typeof ZSurveyNPSElement>;
@@ -192,7 +192,7 @@ export type TSurveyNPSElement = z.infer<typeof ZSurveyNPSElement>;
 // CTA Element
 export const ZSurveyCTAElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.CTA),
-  buttonExternal: z.boolean().optional().prefault(false),
+  buttonExternal: z.boolean().prefault(false),
   buttonUrl: z.string().optional(),
   ctaButtonLabel: ZI18nString.optional(),
 }).superRefine((data, ctx) => {
@@ -235,7 +235,7 @@ export const ZSurveyRatingElement = ZSurveyElementBase.extend({
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(6), z.literal(7), z.literal(10)]),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().prefault(false),
+  isColorCodingEnabled: z.boolean().prefault(false),
 });
 
 export type TSurveyRatingElement = z.infer<typeof ZSurveyRatingElement>;
@@ -250,7 +250,7 @@ export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
 
 export const ZSurveyPictureSelectionElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.PictureSelection),
-  allowMulti: z.boolean().optional().prefault(false),
+  allowMulti: z.boolean().prefault(false),
   choices: z.array(ZSurveyPictureChoice).min(2, {
     error: "Picture Selection element must have a minimum of 2 choices",
   }),
@@ -303,7 +303,7 @@ export const ZSurveyMatrixElement = ZSurveyElementBase.extend({
   type: z.literal(TSurveyElementTypeEnum.Matrix),
   rows: z.array(ZSurveyMatrixElementChoice),
   columns: z.array(ZSurveyMatrixElementChoice),
-  shuffleOption: ZShuffleOption.optional().prefault("none"),
+  shuffleOption: ZShuffleOption.prefault("none"),
   validation: ZValidation.optional(),
 });
 
@@ -369,7 +369,7 @@ export const ZSurveyCsatElement = ZSurveyElementBase.extend({
   range: z.literal(5),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().prefault(false),
+  isColorCodingEnabled: z.boolean().prefault(false),
 });
 
 export type TSurveyCsatElement = z.infer<typeof ZSurveyCsatElement>;
@@ -381,7 +381,7 @@ export const ZSurveyCesElement = ZSurveyElementBase.extend({
   range: z.union([z.literal(5), z.literal(7)]),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().prefault(false),
+  isColorCodingEnabled: z.boolean().prefault(false),
 });
 
 export type TSurveyCesElement = z.infer<typeof ZSurveyCesElement>;
