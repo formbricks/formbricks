@@ -621,10 +621,8 @@ const getCalculationOperand = (
     case "hiddenField": {
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && !Number.isNaN(Number(val))) {
-          operandValue = Number(val);
-        }
-        operandValue = val;
+        // A number field takes a numeric answer as a number; anything else keeps its text.
+        operandValue = dataType === "number" && !Number.isNaN(Number(val)) ? Number(val) : val;
       }
       break;
     }
