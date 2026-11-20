@@ -1,8 +1,8 @@
 diff --git a/dist/db/internal-adapter.mjs b/dist/db/internal-adapter.mjs
-index 0f88105d21dea1c2cc9a8f1ab268faede029b47a..c4a61e12810e17d3b2444252448e75155468294e 100644
+index 72a6226fdb46d68ddfa67c87bd402814babe00d0..93b45d5ae2bd1d532feddb4696c746e11f1243dd 100644
 --- a/dist/db/internal-adapter.mjs
 +++ b/dist/db/internal-adapter.mjs
-@@ -321,7 +321,13 @@ const createInternalAdapter = (adapter, ctx) => {
+@@ -320,7 +320,13 @@ const createInternalAdapter = (adapter, ctx) => {
  		},
  		findSession: async (token) => {
  			if (secondaryStorage) {

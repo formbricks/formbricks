@@ -437,7 +437,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.OpenText),
   placeholder: ZI18nString.optional(),
   longAnswer: z.boolean().optional(),
-  inputType: ZSurveyOpenTextQuestionInputType.optional().prefault("text"),
+  inputType: ZSurveyOpenTextQuestionInputType.prefault("text"),
   insightsEnabled: z.boolean().prefault(false).optional(),
   charLimit: z
     .object({
@@ -531,7 +531,7 @@ export const ZSurveyNPSQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.NPS),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().prefault(false),
+  isColorCodingEnabled: z.boolean().prefault(false),
 });
 
 /**
@@ -563,7 +563,7 @@ export const ZSurveyRatingQuestion = ZSurveyQuestionBase.extend({
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(6), z.literal(7), z.literal(10)]),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().prefault(false),
+  isColorCodingEnabled: z.boolean().prefault(false),
 });
 
 /**
@@ -590,7 +590,7 @@ export type TSurveyRatingQuestion = z.infer<typeof ZSurveyRatingQuestion>;
  */
 export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
-  allowMulti: z.boolean().optional().prefault(false),
+  allowMulti: z.boolean().prefault(false),
   choices: z.array(ZSurveyPictureChoice).min(2, {
     error: "Picture Selection question must have atleast 2 choices",
   }),
@@ -646,7 +646,7 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Matrix),
   rows: z.array(ZSurveyMatrixQuestionChoice),
   columns: z.array(ZSurveyMatrixQuestionChoice),
-  shuffleOption: ZShuffleOption.optional().prefault("none"),
+  shuffleOption: ZShuffleOption.prefault("none"),
 });
 
 /**
@@ -728,7 +728,7 @@ export const ZSurveyCsatQuestion = ZSurveyQuestionBase.extend({
   range: z.literal(5),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().prefault(false),
+  isColorCodingEnabled: z.boolean().prefault(false),
 });
 
 /**
@@ -745,7 +745,7 @@ export const ZSurveyCesQuestion = ZSurveyQuestionBase.extend({
   range: z.union([z.literal(5), z.literal(7)]),
   lowerLabel: ZI18nString.optional(),
   upperLabel: ZI18nString.optional(),
-  isColorCodingEnabled: z.boolean().optional().prefault(false),
+  isColorCodingEnabled: z.boolean().prefault(false),
 });
 
 /**
@@ -972,7 +972,7 @@ export const ZSurveyBase = z.object({
   recaptcha: ZSurveyRecaptcha.nullable(),
   isSingleResponsePerEmailEnabled: z.boolean(),
   isBackButtonHidden: z.boolean(),
-  isAutoProgressingEnabled: z.boolean().optional().prefault(false),
+  isAutoProgressingEnabled: z.boolean().prefault(false),
   isCaptureIpEnabled: z.boolean(),
   pin: z
     .string()

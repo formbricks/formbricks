@@ -80,14 +80,13 @@ describe("user password helpers", () => {
     vi.mocked(prisma.account.count).mockResolvedValue(1);
 
     await expect(hasCredentialAccount("user-1")).resolves.toBe(true);
-    // The same four-column predicate Better Auth's `findCredentialAccount` uses. Anything broader would
+    // The same three-column predicate Better Auth's `findCredentialAccount` uses. Anything broader would
     // answer "may reset" for a row `resetPassword` cannot then find, which turns into a unique-constraint
     // collision on its create branch rather than a reset.
     expect(prisma.account.count).toHaveBeenCalledWith({
       where: {
         userId: "user-1",
         provider: "credential",
-        issuer: "local:credential",
         providerAccountId: "user-1",
       },
     });
