@@ -13,10 +13,10 @@ export const getOriginalFileNameFromUrl = (fileURL: string): string => {
       return fileName;
     }
 
-    const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}` || "") : "";
+    const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}`) : "";
     return fileName;
   } catch (error) {
-    console.error(`Error parsing file URL: ${error}`);
+    console.error(`Error parsing file URL: ${String(error)}`);
     return "";
   }
 };

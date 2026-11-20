@@ -46,10 +46,9 @@ const spellingFile = (index: number) => `modules/example/spelling-${index}.ts`;
 
 let results: Record<string, FixtureDiagnostic[]>;
 
-// Severity is part of what is asserted, not incidental: the web lint has no warning budget, so
-// downgrading the rule to "warn" — the treatment still applied to react/set-state-in-effect — would
-// leave the config looking intact while letting every violation through. Matching only errors
-// makes that downgrade fail the suite.
+// Severity is part of what is asserted, not incidental: a rule turned off, or left at "warn" outside
+// the config's `denyWarnings` wrapper, would leave the config looking intact while letting every
+// violation through. Matching only errors makes either fail the suite.
 const lintErrors = (file: string): string[] =>
   results[file].filter((d) => d.ruleId === RULE && d.severity === "error").map((d) => d.message);
 

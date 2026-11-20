@@ -2,7 +2,9 @@ import { createHash, randomBytes } from "node:crypto";
 import { expect } from "vitest";
 import { prisma } from "@formbricks/database";
 import { auth } from "@/modules/auth/lib/auth";
+import { REVOCATION_CLOCK_SKEW_MS, oauthRevocationMarkKey } from "@/modules/auth/lib/oauth-revocation-marker";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
+import { redisSecondaryStorage } from "@/modules/auth/lib/secondary-storage";
 
 /**
  * Drives the real MCP OAuth flow against the real Better Auth instance: DCR, authorize, consent, code
@@ -11,7 +13,7 @@ import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
  */
 export const BASE_URL = "http://localhost:3000";
 export const ORIGIN = BASE_URL;
-const REDIRECT_URI = "http://127.0.0.1:33418/callback";
+export const REDIRECT_URI = "http://127.0.0.1:33418/callback";
 
 const base64Url = (buffer: Buffer): string => buffer.toString("base64url");
 
@@ -108,39 +110,67 @@ export const token = async (
 
 export type TTokens = { access_token: string; refresh_token: string; scope: string };
 
-/** authorize → consent (when asked for) → code exchange, as the signed-in user. */
-export const grant = async (
+/**
+ * `POST /oauth2/consent` for the consent page `target` that `authorize` landed on, as the consent page
+ * sends it: `accept`, the signed `oauth_query`, and whatever else is in `body` (the chosen grant).
+ */
+export const consent = (cookie: string, target: URL, body: Record<string, unknown>): Promise<Response> =>
+  handle("/oauth2/consent", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json", cookie, origin: ORIGIN },
+    body: JSON.stringify({ ...body, oauth_query: target.search.slice(1) }),
+  });
+
+/**
+ * authorize → consent (when asked for), as the signed-in user: the authorization code and its PKCE
+ * verifier, not yet exchanged. `mcpGrant` is what the consent screen's Allow sends with the approval;
+ * without it the grant gets what the scopes give.
+ */
+export const approve = async (
   cookie: string,
   clientId: string,
   scope: string,
-  options: { prompt?: "consent" } = {}
-): Promise<TTokens> => {
+  { mcpGrant, ...options }: { prompt?: "consent"; mcpGrant?: unknown } = {}
+): Promise<{ code: string; verifier: string }> => {
   const { verifier, target: authorizeTarget } = await authorize(cookie, clientId, scope, options);
   let target = authorizeTarget;
   if (!target.searchParams.get("code")) {
     expect(target.pathname).toBe("/account/authorize");
     target = await redirectTarget(
-      await handle("/oauth2/consent", {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json", cookie, origin: ORIGIN },
-        body: JSON.stringify({ accept: true, oauth_query: target.search.slice(1) }),
+      await consent(cookie, target, {
+        accept: true,
+        ...(mcpGrant === undefined ? {} : { mcp_grant: mcpGrant }),
       })
     );
   }
   const code = target.searchParams.get("code");
   expect(code, target.toString()).toBeTruthy();
+  return { code: code as string, verifier };
+};
 
-  const response = await token({
+/** {@link approve}, then the code exchange: the tokens, as the signed-in user. */
+export const grant = async (
+  cookie: string,
+  clientId: string,
+  scope: string,
+  options: { prompt?: "consent"; mcpGrant?: unknown } = {}
+): Promise<TTokens> => {
+  const { code, verifier } = await approve(cookie, clientId, scope, options);
+  const response = await exchangeCode(clientId, code, verifier);
+  expect(response.status, JSON.stringify(response.body)).toBe(200);
+  return response.body as TTokens;
+};
+
+/** The code exchange `grant` ends with, for a test that holds a code before exchanging it. */
+export const exchangeCode = (clientId: string, code: string, verifier: string) =>
+  token({
     grant_type: "authorization_code",
-    code: code as string,
+    code,
     redirect_uri: REDIRECT_URI,
     client_id: clientId,
     code_verifier: verifier,
     resource: getMcpResourceUrl(),
   });
-  expect(response.status, JSON.stringify(response.body)).toBe(200);
-  return response.body as TTokens;
-};
 
 /** A refresh grant; `scope` is sent only when given, as RFC 6749 §6 makes it optional. */
 export const refresh = (clientId: string, refreshToken: string, scope?: string) =>
@@ -150,3 +180,22 @@ export const refresh = (clientId: string, refreshToken: string, scope?: string) 
     client_id: clientId,
     ...(scope ? { scope } : {}),
   });
+
+/**
+ * Clears the user's revocation marks, for a test that ends a user's access and signs them in again in a
+ * loop: each round starts as if the previous round's revocation were long past, without waiting out the
+ * clock skew. A test about the mark itself waits instead ({@link waitPastRevocation}).
+ */
+export const forgetRevocations = async (userId: string, clientId: string): Promise<void> => {
+  await redisSecondaryStorage.delete(oauthRevocationMarkKey(userId));
+  await redisSecondaryStorage.delete(oauthRevocationMarkKey(userId, clientId));
+};
+
+/**
+ * Waits until a sign-in code issued now counts as issued after a revocation just made: past the skew the
+ * exchange allows between pods' clocks (`REVOCATION_CLOCK_SKEW_MS`), and into the next second, since a code
+ * is stamped to the second (`oauth-revocation-marker.ts`). A test that authorizes again right after a
+ * revocation waits this out first, as any real reconnect does.
+ */
+export const waitPastRevocation = (): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, REVOCATION_CLOCK_SKEW_MS + 1_000 - (Date.now() % 1_000) + 5));

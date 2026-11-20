@@ -85,7 +85,8 @@ defaults without a code change:
 The `@timing` test (`security.spec.ts`) runs in its own `chromium-timing` Playwright project, after the main
 suite, so it has the machine to itself. Playwright runs a project's dependencies first and ignores CLI
 filters for them, so `pnpm test:e2e security.spec.ts` or `--project=chromium-timing` runs the whole
-`chromium` project before it; add `--no-deps` to run only the timing test.
+`chromium` project before it. To run only the timing test, use `--project=chromium-timing --no-deps`:
+`--no-deps` alone runs both projects at once, so the timing test shares the machine again.
 
 `step-security/harden-runner` audits outbound calls only on GitHub-hosted runners. On Blacksmith its agent is
 skipped, so that job's egress is not audited (the step is audit-only and blocks nothing). Fork PRs run on

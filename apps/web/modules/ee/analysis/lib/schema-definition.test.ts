@@ -4,14 +4,13 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { createContext, runInContext } from "node:vm";
 import { describe, expect, test } from "vitest";
+import { HUB_EMOTION_VALUES, HUB_SENTIMENT_VALUES } from "@formbricks/types/feedback-source";
 import {
   EMOTION_MEASURE_ORDER,
-  EMOTION_VALUES,
   FEEDBACK_FIELDS,
   MEASURE_GROUP_ORDER,
   SELECTABLE_VALUE_DIMENSION_IDS,
   SENTIMENT_MEASURE_ORDER,
-  SENTIMENT_VALUE_ORDER,
   VALUE_BAND_VALUES,
   formatCubeColumnHeader,
   getFieldById,
@@ -499,8 +498,8 @@ describe("schema-definition", () => {
     });
 
     test("measure display orders cover exactly their vocabularies", () => {
-      expect([...EMOTION_MEASURE_ORDER].sort()).toEqual([...EMOTION_VALUES].sort());
-      expect([...SENTIMENT_MEASURE_ORDER].sort()).toEqual([...SENTIMENT_VALUE_ORDER].sort());
+      expect([...EMOTION_MEASURE_ORDER].sort()).toEqual([...HUB_EMOTION_VALUES].sort());
+      expect([...SENTIMENT_MEASURE_ORDER].sort()).toEqual([...HUB_SENTIMENT_VALUES].sort());
     });
 
     test("maps each sentiment count measure id back to its enum value", () => {
@@ -610,6 +609,19 @@ describe("schema-definition", () => {
       expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", "mixed", t)).toBe(
         "workspace.analysis.charts.sentiment_value_mixed"
       );
+    });
+
+    test("labels every Hub sentiment and emotion value the v3 filters accept", () => {
+      for (const value of HUB_SENTIMENT_VALUES) {
+        expect(getTranslatedDimensionValueLabel("FeedbackRecords.sentiment", value, t)).toBe(
+          `workspace.analysis.charts.sentiment_value_${value}`
+        );
+      }
+      for (const value of HUB_EMOTION_VALUES) {
+        expect(getTranslatedDimensionValueLabel("FeedbackRecords.emotions", value, t)).toBe(
+          `workspace.analysis.charts.emotion_value_${value}`
+        );
+      }
     });
 
     test("translates each token of a comma-separated emotions set", () => {

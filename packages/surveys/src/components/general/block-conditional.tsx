@@ -181,19 +181,16 @@ export function BlockConditional({
       isMountedRef.current = false;
     };
   }, []);
-  // The upload outlives the render that started it, so what runs after it reads this, not its closure. Only
-  // the submit handler is read late; the answers it sends are the ones validated when Next was pressed.
-  const latestRef = useRef({ onSubmit });
-  useEffect(() => {
-    latestRef.current = { onSubmit };
-  });
+  // Keep the handler from the visit that started the upload. Reading the latest handler could submit
+  // these old answers after the respondent leaves and returns to the same block.
+  const pendingSubmitRef = useRef(onSubmit);
   const pendingTtcRef = useRef<TResponseTtc>({});
   const refocusSubmitRef = useRef(false);
   const [submitRunner] = useState(() =>
     createBlockSubmitRunner({
       getContributors: () => submitContributorsRef.current,
       onSubmit: (answers) => {
-        latestRef.current.onSubmit(answers, pendingTtcRef.current);
+        pendingSubmitRef.current(answers, pendingTtcRef.current);
       },
       onFailure: (failedElementId) => {
         // The Next button is locked while the upload runs; once it is free again it takes focus back,
@@ -521,6 +518,7 @@ export function BlockConditional({
     // image) are awaited before the block advances. A failure leaves the card as it is, with the
     // element's own error showing, and pressing Next again retries. What advances is the snapshot that
     // was just validated, never the card's state after the upload.
+    pendingSubmitRef.current = onSubmit;
     pendingTtcRef.current = blockTtc;
     submitRunner.run(collectBlockResponses(answers));
   };

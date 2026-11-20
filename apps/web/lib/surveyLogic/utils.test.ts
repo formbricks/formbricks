@@ -394,6 +394,7 @@ describe("surveyLogic", () => {
   });
 
   test("evaluateLogic reads a Signature answer (one URL string) as signed, and empty or missing as not signed", () => {
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     const surveyWithSignature = {
       ...mockSurvey,
       blocks: [
@@ -658,6 +659,59 @@ describe("surveyLogic", () => {
     const result = performActions(survey, actions, data, {});
     expect(result.calculations.v).toBe("42bar");
     expect(result.calculations.notfound).toBeUndefined();
+  });
+
+  test("performActions assigns a numeric answer or hidden field to a number variable as a number (ENG-7378)", () => {
+    const survey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      embeddedFields: embeddedFieldsFromLegacyInput({
+        variables: [
+          { id: "fromAnswer", name: "from_answer", type: "number", value: 0 },
+          { id: "fromHidden", name: "from_hidden", type: "number", value: 0 },
+        ],
+      }),
+    };
+    const data: TResponseData = { q: "42", f: "2.5" };
+    const actions: TSurveyBlockLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "fromAnswer",
+        operator: "assign",
+        value: { type: "element", value: "q" },
+      },
+      {
+        id: "a2",
+        objective: "calculate",
+        variableId: "fromHidden",
+        operator: "assign",
+        value: { type: "hiddenField", value: "f" },
+      },
+    ];
+    expect(performActions(survey, actions, data, {}).calculations).toEqual({
+      fromAnswer: 42,
+      fromHidden: 2.5,
+    });
+  });
+
+  // `Number("")` is 0, so a blank would read as a real 0 and an `isSkipped` condition would miss it.
+  test("performActions keeps a blank answer blank when assigning to a number variable (ENG-7378)", () => {
+    const survey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      embeddedFields: embeddedFieldsFromLegacyInput({
+        variables: [{ id: "score", name: "score", type: "number", value: 5 }],
+      }),
+    };
+    const actions: TSurveyBlockLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "score",
+        operator: "assign",
+        value: { type: "hiddenField", value: "plan" },
+      },
+    ];
+    expect(performActions(survey, actions, { plan: "" }, {}).calculations).toEqual({ score: "" });
   });
 
   test("getUpdatedActionBody returns same action if objective matches", () => {
@@ -2408,5 +2462,77 @@ describe("conditions on a date field holding a timestamp (ENG-6935)", () => {
 
     expect(calculations[CHECKED_IN]).toBe("2026-11-04T22:30:00.000Z");
     expect(calculations.days).toBe(3);
+  });
+});
+
+/**
+ * ENG-7377: "Other" is on when any choice is the "other" option, not only the last one. The editor
+ * puts "None of the above" after it, and the survey in the browser already checks every choice.
+ */
+describe('choice conditions when "Other" is not the last option (ENG-7377)', () => {
+  const choices = [
+    { id: "a", label: { default: "A" } },
+    { id: "other", label: { default: "Other" } },
+    { id: "none", label: { default: "None of the above" } },
+  ];
+  const choiceSurvey = {
+    id: "survey1",
+    blocks: [
+      {
+        id: "b1",
+        name: "b1",
+        elements: [
+          {
+            id: "single",
+            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            headline: { default: "Single" },
+            required: false,
+            choices,
+          },
+          {
+            id: "multi",
+            type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+            headline: { default: "Multi" },
+            required: false,
+            choices,
+          },
+        ],
+      },
+    ],
+    variables: [],
+    embeddedFields: [],
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const condition = (
+    elementId: string,
+    operator: TSingleCondition["operator"],
+    value: string | string[]
+  ): TConditionGroup => ({
+    id: "g",
+    connector: "and",
+    conditions: [
+      {
+        id: "c",
+        leftOperand: { type: "element", value: elementId },
+        operator,
+        rightOperand: { type: "static", value },
+      },
+    ],
+  });
+
+  test("a typed single-choice answer reads as 'other'", () => {
+    const data: TResponseData = { single: "Something else" };
+
+    expect(evaluateLogic(choiceSurvey, data, {}, condition("single", "equals", "other"), "default")).toBe(
+      true
+    );
+  });
+
+  test("a typed multi-choice answer reads as 'other' beside the options it names", () => {
+    const data: TResponseData = { multi: ["A", "Something else"] };
+
+    expect(
+      evaluateLogic(choiceSurvey, data, {}, condition("multi", "includesAllOf", ["a", "other"]), "default")
+    ).toBe(true);
   });
 });

@@ -73,7 +73,7 @@ describe("walkSurveyTexts", () => {
     const reordered = {
       ...EVERY_TEXT_SURVEY,
       blocks: [...EVERY_TEXT_SURVEY.blocks].reverse(),
-    } as TSurvey;
+    };
 
     const original = walkSurveyTexts(EVERY_TEXT_SURVEY).find(
       (text) => text.key === "element.matrix.row.row-speed.label"

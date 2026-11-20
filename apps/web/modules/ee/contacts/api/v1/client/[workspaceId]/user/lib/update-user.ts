@@ -6,7 +6,8 @@ import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
-import { formatAttributeMessage, updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { formatAttributeMessage } from "@/modules/ee/contacts/lib/attribute-messages";
+import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
 
 /** Message codes whose presence alone reveals whether an identifier is already a contact here. */
@@ -90,24 +91,14 @@ const buildUserStateFromContact = async (
   userId: string,
   device: "phone" | "desktop"
 ) => {
-  // Get segments (only remaining external call)
-  // Ensure segments is always an array to prevent "segments is not iterable" error
-  let segments: string[] = [];
-  try {
-    // The contact's displays/responses are already loaded here, so interaction-only segments can be
-    // evaluated in memory without any additional query (see getPersonSegmentIds).
-    segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device, {
-      displays: contactData.displays,
-      responses: contactData.responses,
-    });
-    // Double-check that segments is actually an array
-    if (!Array.isArray(segments)) {
-      segments = [];
-    }
-  } catch {
-    // If segments fetching fails, use empty array as fallback
-    segments = [];
-  }
+  // A failed segment check fails the request (ENG-3725): an empty list would tell the SDK the contact is
+  // in no segments and hide every segment-targeted survey until the next sync.
+  // The contact's displays/responses are already loaded here, so interaction-only segments can be
+  // evaluated in memory without any additional query (see getPersonSegmentIds).
+  const segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device, {
+    displays: contactData.displays,
+    responses: contactData.responses,
+  });
 
   // Process data efficiently from already-fetched contact
   const displays = contactData.displays.map((display) => ({

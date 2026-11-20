@@ -275,7 +275,7 @@ describe("createLogicRenderer: conditions", () => {
       "hidden field Plan is one of “pro”, “team”",
     ],
   ])("states %s in plain words", (operator, operands, phrase) => {
-    expect(renderCondition({ operator, ...operands } as Omit<TSingleCondition, "id">)).toBe(
+    expect(renderCondition({ operator, ...operands })).toBe(
       `If ${phrase}, then jump to question “Headline of followup”.`
     );
   });

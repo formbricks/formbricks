@@ -36,9 +36,7 @@ const expectedContactAttributes: TContactAttributes = {
 
 describe("getContactByUserId", () => {
   test("should return contact with attributes when found", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(
-      mockContactDbData as unknown as Awaited<ReturnType<typeof prisma.contact.findFirst>>
-    );
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactDbData);
 
     const contact = await getContactByUserId(workspaceId, userId);
 

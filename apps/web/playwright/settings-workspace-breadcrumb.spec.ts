@@ -2,6 +2,7 @@ import { type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import type { UsersFixture } from "./fixtures/users";
 import { test } from "./lib/fixtures";
+import { clickUntilURL } from "./utils/click-until";
 
 // ENG-1705 regression: /organizations/[organizationId]/settings/** and /account/settings/** are
 // workspace-agnostic routes — no workspaceId in the URL — so the top bar must not render the
@@ -160,8 +161,10 @@ test.describe("Settings workspace breadcrumb (ENG-1705)", () => {
 
     await page.goto(`/organizations/${organizationId}/settings/general`, { waitUntil: "domcontentloaded" });
 
-    await settingsSidebar(page).getByRole("button", { name: "Back", exact: true }).click();
-
-    await expect(page).toHaveURL(new RegExp(`/workspaces/${secondWorkspace.id}/surveys`));
+    // Retried: a click that lands before the page hydrates is dropped and the page stays put.
+    await clickUntilURL(
+      settingsSidebar(page).getByRole("button", { name: "Back", exact: true }),
+      new RegExp(`/workspaces/${secondWorkspace.id}/surveys`)
+    );
   });
 });

@@ -310,7 +310,7 @@ const successResponse = ({
     {
       data,
       meta,
-    } as ApiSuccessResponse,
+    },
     {
       status: 200,
       headers,
@@ -338,7 +338,7 @@ export const createdResponse = ({
     {
       data,
       meta,
-    } as ApiSuccessResponse,
+    },
     {
       status: 201,
       headers,
@@ -366,7 +366,7 @@ export const multiStatusResponse = ({
     {
       data,
       meta,
-    } as ApiSuccessResponse,
+    },
     {
       status: 207,
       headers,

@@ -203,6 +203,21 @@ describe("chart queries within budget", () => {
       expect(data.memberLabels).toEqual({ [plan]: "Plan" });
     });
 
+    test("names a renamed embedded-data member with the workspace's name for its key", async () => {
+      const plan = "FeedbackRecords.ed_plan_64879f7d";
+      vi.mocked(loadDatasetChartFields).mockResolvedValueOnce({
+        embeddedFields: [{ name: plan, key: "Plan", label: "Subscription plan" }],
+      });
+
+      const response = await preview({
+        query: { measures: ["FeedbackRecords.count"], dimensions: [plan] },
+      });
+
+      expect(response.status).toBe(200);
+      const { data } = (await response.json()) as { data: { memberLabels: unknown } };
+      expect(data.memberLabels).toEqual({ [plan]: "Subscription plan" });
+    });
+
     test("runs the query in the authorized workspace's tenant and returns rows, labels and the query run", async () => {
       const response = await preview();
 
@@ -379,7 +394,7 @@ describe("chart queries within budget", () => {
   describe("runV3ChartQuery with dashboard picks (C6)", () => {
     const run = (extraFilters: unknown[]) =>
       runV3ChartQuery({
-        access: access as never,
+        access: access,
         datasetId,
         type: "bar",
         query: BY_SOURCE,
@@ -431,13 +446,13 @@ describe("chart queries within budget", () => {
         }));
       const runOver = (saved: number, picks: number) =>
         runV3ChartQuery({
-          access: access as never,
+          access: access,
           datasetId,
           type: "bar",
           query: { ...BY_SOURCE, filters: conditions(saved) },
           dateRange: undefined,
           source: "v3.dashboards.chartData",
-          extraFilters: conditions(picks) as never,
+          extraFilters: conditions(picks),
           context,
         });
 
@@ -474,7 +489,7 @@ describe("chart queries within budget", () => {
       }) as TChartResourceRow;
 
     const read = (query: Record<string, string> = {}) =>
-      getV3ChartData({ chartId, query: query as never, ...context });
+      getV3ChartData({ chartId, query: query, ...context });
 
     const RANGED = {
       measures: ["FeedbackRecords.count"],

@@ -131,7 +131,8 @@ type TSurveySummaryResponseRow = TSurveySummaryResponse & { createdAt: Date };
 
 const getElementIdToBlockIdMap = (survey: TSurvey): Record<string, string> => {
   return survey.blocks.reduce<Record<string, string>>((acc, block) => {
-    block.elements.forEach((element) => {
+    // A stored block can lack `elements` (an unvalidated draft or migrated block, ENG-2497).
+    (block.elements ?? []).forEach((element) => {
       acc[element.id] = block.id;
     });
     return acc;
@@ -143,7 +144,7 @@ const getBlockTimesForResponse = (
   survey: TSurvey
 ): Record<string, number> => {
   return survey.blocks.reduce<Record<string, number>>((acc, block) => {
-    const maxElementTtc = block.elements.reduce((maxTtc, element) => {
+    const maxElementTtc = (block.elements ?? []).reduce((maxTtc, element) => {
       const elementTtc = response.ttc?.[element.id] ?? 0;
       return Math.max(maxTtc, elementTtc);
     }, 0);
@@ -607,20 +608,24 @@ const summarizePictureSelectionElement = (
   };
 };
 
-const summarizeRatingElement = (
-  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Rating }>,
+/** A Rating or CES element: the average, the count of each scale value and the dismissals. */
+const summarizeNumericScaleElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Rating | TSurveyElementTypeEnum.CES }>,
   responses: TSurveySummaryResponse[]
 ): TSurveySummary["summary"][number] | undefined => {
   const stats = computeNumericScaleStats(element.id, element.range, responses);
-
-  return {
-    type: element.type,
-    element,
+  const metrics = {
     average: stats.average,
     responseCount: stats.totalResponseCount,
     choices: stats.choices,
     dismissed: { count: stats.dismissed },
   };
+
+  // Narrowed per type, so the compiler checks each `type` and `element` pair against its own summary.
+  if (element.type === TSurveyElementTypeEnum.CES) {
+    return { type: element.type, element, ...metrics };
+  }
+  return { type: element.type, element, ...metrics };
 };
 
 const summarizeNPSElement = (
@@ -717,22 +722,6 @@ const summarizeCSATElement = (
     choices: stats.choices,
     dismissed: { count: stats.dismissed },
     csat: { satisfiedCount, satisfiedPercentage },
-  };
-};
-
-const summarizeCESElement = (
-  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.CES }>,
-  responses: TSurveySummaryResponse[]
-): TSurveySummary["summary"][number] | undefined => {
-  const stats = computeNumericScaleStats(element.id, element.range, responses);
-
-  return {
-    type: element.type,
-    element,
-    average: stats.average,
-    responseCount: stats.totalResponseCount,
-    choices: stats.choices,
-    dismissed: { count: stats.dismissed },
   };
 };
 
@@ -1167,13 +1156,12 @@ const summarizeElement = (
     case TSurveyElementTypeEnum.PictureSelection:
       return summarizePictureSelectionElement(element, responses);
     case TSurveyElementTypeEnum.Rating:
-      return summarizeRatingElement(element, responses);
+    case TSurveyElementTypeEnum.CES:
+      return summarizeNumericScaleElement(element, responses);
     case TSurveyElementTypeEnum.NPS:
       return summarizeNPSElement(element, responses);
     case TSurveyElementTypeEnum.CSAT:
       return summarizeCSATElement(element, responses);
-    case TSurveyElementTypeEnum.CES:
-      return summarizeCESElement(element, responses);
     case TSurveyElementTypeEnum.CTA:
       return summarizeCTAElement(element, elements, responses, dropOff);
     case TSurveyElementTypeEnum.Consent:
@@ -1371,7 +1359,7 @@ export const getResponsesForSummary = reactCache(
         updatedAt: responsePrisma.updatedAt,
         contact: responsePrisma.contact
           ? {
-              id: responsePrisma.contact.id as string,
+              id: responsePrisma.contact.id,
               userId: responsePrisma.contact.attributes.find(
                 (attribute) => attribute.attributeKey.key === "userId"
               )?.value as string,

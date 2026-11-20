@@ -128,7 +128,7 @@ export const SummaryPage = ({
   useEffect(() => {
     if (tab === "impressions" && !displaysFetchedRef.current) {
       displaysFetchedRef.current = true;
-      loadInitialDisplays();
+      void loadInitialDisplays();
     }
   }, [tab, loadInitialDisplays]);
 
@@ -181,6 +181,7 @@ export const SummaryPage = ({
     // A rule in the URL still waiting for the filter data: the summary would answer for every response.
     if (!filterState.isReady) {
       lastFetchedFiltersKeyRef.current = null;
+      // eslint-disable-next-line react/set-state-in-effect -- fetch effect: the loading flag and summary track the request it starts, deduped by lastFetchedFiltersKeyRef
       setIsLoading(true);
       return;
     }
@@ -220,7 +221,7 @@ export const SummaryPage = ({
       }
     };
 
-    fetchFilteredSummary();
+    void fetchFilteredSummary();
   }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, filterState.isReady, survey, t]);
 
   const surveyMemoized = useMemo(() => {

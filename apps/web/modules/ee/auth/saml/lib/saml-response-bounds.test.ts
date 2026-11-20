@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   SAML_RESPONSE_MARKUP_BUDGET,
   SAML_RESPONSE_MAX_DEPTH,
@@ -399,6 +399,65 @@ describe("checkSamlResponseBounds", () => {
   });
 });
 
+/**
+ * `checkSamlResponseBounds` on `xml`, counting the bytes of the decoded response the measure reads: one per
+ * index read, the span each `indexOf` scans, the source span of each `compare`, and the range of each
+ * `toString`. `Buffer.from` hands the measure a Proxy around the real decoded buffer. Any other access
+ * throws, so a rewrite that reads the buffer some other way fails here instead of reading uncounted.
+ */
+const checkCountingBytesRead = (xml: string) => {
+  const base64 = b64(xml);
+  const decoded = Buffer.from(base64, "base64");
+  let bytesRead = 0;
+  const counted = new Proxy(decoded, {
+    get: (target, key) => {
+      if (typeof key === "string" && /^\d+$/.test(key)) {
+        bytesRead += 1;
+        return target[Number(key)];
+      }
+      switch (key) {
+        case "length":
+          return target.length;
+        case "indexOf":
+          return (value: string | number, byteOffset = 0) => {
+            const at = target.indexOf(value, byteOffset);
+            const width = typeof value === "number" ? 1 : Buffer.byteLength(value);
+            bytesRead += (at === -1 ? target.length : at + width) - byteOffset;
+            return at;
+          };
+        case "compare":
+          return (other: Uint8Array, targetStart: number, targetEnd: number, start: number, end: number) => {
+            bytesRead += end - start;
+            return target.compare(other, targetStart, targetEnd, start, end);
+          };
+        case "toString":
+          return (encoding: BufferEncoding, start: number, end: number) => {
+            bytesRead += Math.min(end, target.length) - start;
+            return target.toString(encoding, start, end);
+          };
+        default:
+          throw new Error(`the measure read the response through ${String(key)}, which this count misses`);
+      }
+    },
+  });
+  const from = vi.spyOn(Buffer, "from").mockImplementationOnce(() => counted);
+  try {
+    const refusal = checkSamlResponseBounds(base64);
+    expect(from).toHaveBeenCalledWith(base64, "base64");
+    return { refusal, bytesRead, decodedLength: decoded.length };
+  } finally {
+    from.mockRestore();
+  }
+};
+
+/**
+ * Most bytes the measure may read per byte of the response. Measured at 7.8 for the `CanonicalizationMethodx` flood
+ * below and 6.5 for the colon-free one: each tag is read by the next-`<` search, its name, the colon search, the
+ * capped-name compares, the attribute count and the self-closing check, each within the tag. A colon search that ran
+ * on into the document reads it once per tag instead: ~10^9 bytes for these floods, against ~2x10^5 here.
+ */
+const BYTES_READ_PER_BYTE = 10;
+
 describe("per-local-name element caps (ENG-6648)", () => {
   const element = (localName: string, times: number) => `<r>${`<${localName}/>`.repeat(times)}</r>`;
 
@@ -425,37 +484,49 @@ describe("per-local-name element caps (ENG-6648)", () => {
     // 8,002 counted tags: inside the markup budget, so only the Issuer cap refuses this shape.
     expect(8_002).toBeLessThanOrEqual(SAML_RESPONSE_MARKUP_BUDGET);
 
-    const started = performance.now();
-    expect(checkSamlResponseBounds(b64(xml))).toMatchObject({
+    const { refusal, bytesRead } = checkCountingBytesRead(xml);
+
+    // The scan stops at the fifth Issuer: it reads the bytes up to that tag, and not the other 3,995.
+    const issuer = "<Issuer>x</Issuer>";
+    const atFifthIssuer = "<samlp:Response>".length + SAML_RESPONSE_MAX_ELEMENTS.Issuer * issuer.length;
+    // ~400 bytes read; one that read past the cap reads all 72,000 several times over.
+    expect(bytesRead).toBeGreaterThanOrEqual(atFifthIssuer);
+    expect(bytesRead).toBeLessThanOrEqual(BYTES_READ_PER_BYTE * (atFifthIssuer + issuer.length));
+    expect(refusal).toMatchObject({
       reason: "elements",
       localName: "Issuer",
       count: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1,
     });
-    expect(performance.now() - started).toBeLessThan(100);
   });
 
   // Each tag's name is read on its own, and the local name is the bytes after its last colon: a search that ran on
-  // into the document before it would rescan the whole response once per tag, ~0.7 s for this one.
+  // into the document before it would rescan the whole response once per tag.
   test("measures a flood of long, unmatched names at the length cap in linear time", () => {
     const xml = "x".repeat(40_000) + "<CanonicalizationMethodx/>".repeat(5_000);
     expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
     expect(elementCounts(xml)).toEqual({});
 
-    const started = performance.now();
-    expect(checkSamlResponseBounds(b64(xml))).toBeNull();
-    expect(performance.now() - started).toBeLessThan(100);
+    const { refusal, bytesRead, decodedLength } = checkCountingBytesRead(xml);
+
+    expect(decodedLength).toBe(xml.length);
+    expect(bytesRead).toBeGreaterThanOrEqual(xml.length);
+    expect(bytesRead).toBeLessThanOrEqual(BYTES_READ_PER_BYTE * xml.length);
+    expect(refusal).toBeNull();
   });
 
   // The same guard for a colon-free flood: names as long as a capped one, after text with no `<` at all, so a colon
-  // search that ran on into the document before it would rescan the whole response once per tag, ~0.7 s for this one.
+  // search that ran on into the document before it would rescan the whole response once per tag.
   test("measures a colon-free flood of Signature-length names at the length cap in linear time", () => {
     const xml = "x".repeat(40_000) + "<aaaaaaaaa/>".repeat(11_990);
     expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
     expect(elementCounts(xml)).toEqual({});
 
-    const started = performance.now();
-    expect(checkSamlResponseBounds(b64(xml))).toBeNull();
-    expect(performance.now() - started).toBeLessThan(100);
+    const { refusal, bytesRead, decodedLength } = checkCountingBytesRead(xml);
+
+    expect(decodedLength).toBe(xml.length);
+    expect(bytesRead).toBeGreaterThanOrEqual(xml.length);
+    expect(bytesRead).toBeLessThanOrEqual(BYTES_READ_PER_BYTE * xml.length);
+    expect(refusal).toBeNull();
   });
 });
 

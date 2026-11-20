@@ -10,7 +10,7 @@ describe("canonical AuthZed schema source", () => {
   });
 
   test("can point a packaged CLI at its release-matched schema asset", async () => {
-    vi.mocked(readFile).mockResolvedValue("definition user {}" as never);
+    vi.mocked(readFile).mockResolvedValue("definition user {}");
 
     configureCanonicalAuthzedSchemaUrl("file:///home/nextjs/authzed-cli/index.mjs", "./schema.zed");
 

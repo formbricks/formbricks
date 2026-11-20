@@ -226,7 +226,7 @@ describe("ActionClass Service", () => {
         noCodeConfig: null,
         workspaceId: codeInput.workspaceId,
       };
-      vi.mocked(prisma.actionClass.create).mockResolvedValue(created as never);
+      vi.mocked(prisma.actionClass.create).mockResolvedValue(created);
 
       const result = await createActionClass(codeInput);
       expect(result).toEqual(created);
@@ -296,19 +296,19 @@ describe("ActionClass Service", () => {
         workspaceId: updateInput.workspaceId,
         surveyTriggers: [],
       };
-      vi.mocked(prisma.actionClass.update).mockResolvedValue(updated as never);
+      vi.mocked(prisma.actionClass.update).mockResolvedValue(updated);
 
-      const result = await updateActionClass(updateInput.workspaceId!, "id-update", updateInput);
+      const result = await updateActionClass(updateInput.workspaceId, "id-update", updateInput);
       expect(result).toEqual(updated);
     });
 
     test("should throw UniqueConstraintError on P2002 with target field", async () => {
       vi.mocked(prisma.actionClass.update).mockRejectedValue(buildPrismaUniqueError(["name"]));
 
-      await expect(updateActionClass(updateInput.workspaceId!, "id-update", updateInput)).rejects.toThrow(
+      await expect(updateActionClass(updateInput.workspaceId, "id-update", updateInput)).rejects.toThrow(
         UniqueConstraintError
       );
-      await expect(updateActionClass(updateInput.workspaceId!, "id-update", updateInput)).rejects.toThrow(
+      await expect(updateActionClass(updateInput.workspaceId, "id-update", updateInput)).rejects.toThrow(
         `Action with name ${updateInput.name} already exists`
       );
     });
@@ -321,7 +321,7 @@ describe("ActionClass Service", () => {
         })
       );
 
-      await expect(updateActionClass(updateInput.workspaceId!, "id-update", updateInput)).rejects.toThrow(
+      await expect(updateActionClass(updateInput.workspaceId, "id-update", updateInput)).rejects.toThrow(
         DatabaseError
       );
     });
@@ -329,7 +329,7 @@ describe("ActionClass Service", () => {
     test("should rethrow unknown errors", async () => {
       vi.mocked(prisma.actionClass.update).mockRejectedValue(new Error("boom"));
 
-      await expect(updateActionClass(updateInput.workspaceId!, "id-update", updateInput)).rejects.toThrow(
+      await expect(updateActionClass(updateInput.workspaceId, "id-update", updateInput)).rejects.toThrow(
         "boom"
       );
     });

@@ -108,7 +108,7 @@ describe("getSurveyListPage", () => {
   });
 
   test("adds the visibility predicate to the filter clauses instead of replacing them (ENG-3282)", async () => {
-    vi.mocked(buildWhereClause).mockReturnValueOnce({ AND: [{ name: { contains: "nps" } }] } as never);
+    vi.mocked(buildWhereClause).mockReturnValueOnce({ AND: [{ name: { contains: "nps" } }] });
     vi.mocked(prisma.survey.findMany).mockResolvedValue([] as never);
     vi.mocked(prisma.response.groupBy).mockResolvedValue([] as never);
 

@@ -9,8 +9,9 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 Use root `package.json` scripts for commands. Run tests and typechecking through the root Turbo tasks
 so their workspace dependencies rebuild first.
 
-Lint after every edit with `pnpm lint:code` (oxlint over the whole repo in seconds; `--quiet` for errors
-only). A bare `oxlint` skips the type-aware rules, which need its `--type-aware` flag.
+Lint after every edit with `pnpm turbo run lint:code`, which first builds the packages whose types the
+lint reads (`-- --quiet` for errors only). A bare `oxlint` skips the type-aware rules, which need its
+`--type-aware` flag.
 
 Read `docs/agents/monorepo-builds.md` before changing workspace packages, shared dependencies, build
 configuration, workspace CSS, adding tests outside a workspace, or running integration tests. Also read
@@ -20,7 +21,7 @@ test command fails after switching branches.
 ## Architecture & Patterns
 
 - Server actions are legacy — do not add new ones. New backend work belongs in an `/api/v3` route consumed from the client with TanStack Query, with server data living in the query cache rather than mirrored into `useState` or Jotai. The existing server actions wrap service calls and return `{ data }` or `{ error }` consistently; keep that contract when changing them.
-- MCP tools (`apps/web/modules/mcp`) are thin adapters over v3 operations, registered only through `registerScopedTool`. Before adding a tool or a scope, read "Adding a tool" in `docs/development/technical-handbook/mcp-server.mdx`.
+- MCP tools (`apps/web/modules/mcp`) are thin adapters over v3 operations, registered only through `registerMcpTool`, declaring the permissions each tool needs. Before adding a tool, a permission or a scope, read "Adding a tool" in `docs/development/technical-handbook/mcp-server.mdx`.
 - Code that calls an LLM or embedding model, or exposes MCP tools to agents, follows `docs/development/technical-handbook/ai-code.mdx`, which sets the checks per kind (generation, embeddings, MCP-only tools). Read it before adding or changing such code. Write the prompt-injection assessment (what is exposed if the text is hostile) in the plan and the PR, and check it again against the finished diff. Generation calls also need hardcoded limits, token tracing, the org gate, and a cheap-model test with an injection fixture.
 
 ## API v3
@@ -43,7 +44,7 @@ upgrade requires.
 - Key naming: use lowercase with dots for nesting (e.g., `common.welcome`).
 - Translations are in `apps/web/locales/`. `en-US.json` is the source of truth.
 - **Only ever add or edit strings in `en-US.json`.** Never hand-write, translate, or edit the other (non-English) locale files yourself — those are machine-generated from en-US by Lingo.dev.
-- After adding or changing an en-US string, run `pnpm i18n` (it needs `LINGO_API_KEY` in `.env`) and commit the generated locale files and the regenerated `apps/web/i18n.lock` and `packages/surveys/i18n.lock` with it. Nothing translates on commit: CI's `Translation Validation` workflow only runs `pnpm scan-translations`, so a PR that changes `en-US.json` alone stays red. Without a key (cloud sessions), commit `en-US.json` and say in the PR that `pnpm i18n` still has to run.
+- After adding or changing an en-US string, run `pnpm i18n` (it needs `LINGO_API_KEY`, from the environment or `.env`) and commit the generated locale files and the regenerated `apps/web/i18n.lock` and `packages/surveys/i18n.lock` with it. Nothing translates on commit: CI's `Translation Validation` workflow only runs `pnpm scan-translations`, so a PR that changes `en-US.json` alone stays red. To tell whether a key is available, run `pnpm i18n`: reading `.env` misleads, because the environment overrides it. Only when that fails for lack of a key, commit `en-US.json` and say in the PR that `pnpm i18n` still has to run.
 - On a merge conflict in `apps/web/locales/`, `packages/surveys/locales/` or their `i18n.lock`, run `pnpm i18n:merge`.
 
 ## Coding Standards
@@ -56,8 +57,11 @@ section before changing database access, its "Testing Guidelines" before adding 
 
 ## Commit & Pull Request Guidelines
 
-Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR: commit
-format, PR template rules, review intake, and independent review passes.
+Open, update or ready a PR with the `pr` skill; for a change to how a UI surface looks, load it before
+the first edit, while the before screenshot is still free.
+
+Read `docs/agents/pull-requests.md` before committing or reviewing a PR, and when a check fails or a test
+is flaky: commit format, review intake, Sonar, CI failure triage and flaky tests.
 
 ## Performance Testing & SigNoz MCP
 

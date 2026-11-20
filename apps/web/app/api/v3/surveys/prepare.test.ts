@@ -605,7 +605,7 @@ describe("v3 survey preparation", () => {
       {
         ...survey,
         status: "inProgress",
-      } as TSurvey,
+      },
       {
         blocks: [
           {
@@ -659,7 +659,7 @@ describe("v3 survey preparation", () => {
           ? { ...entry, language: { ...entry.language, alias: "German" } }
           : entry
       ),
-    } as TSurvey;
+    };
     const resource = JSON.parse(JSON.stringify(serializeV3SurveyResource(withAlias, TEST_VISIBILITY)));
 
     expect(prepareV3SurveyPatchInput(withAlias, resource, { reportedVisibility: resource }).ok).toBe(true);
@@ -1031,9 +1031,12 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
   });
 
   test("accepts a status change on a survey that is already live", () => {
-    const result = prepareV3SurveyPatchInput({ ...storedInvalidSurvey, status: "inProgress" } as TSurvey, {
-      status: "paused",
-    });
+    const result = prepareV3SurveyPatchInput(
+      { ...storedInvalidSurvey, status: "inProgress" },
+      {
+        status: "paused",
+      }
+    );
 
     expect(result.ok).toBe(true);
   });
@@ -1225,7 +1228,7 @@ describe("patch attribution when a new violation lands on an old one's path", ()
         block("clbkmis0000000000000001", "betaq", RECALL),
         block("clbkmis0000000000000002", "targetq", PLAIN),
       ],
-    } as never);
+    });
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -1283,12 +1286,11 @@ describe("prepareV3SurveyPatchInput published lock (ENG-6783)", () => {
     ],
   });
 
-  const storedWith = (status: TSurvey["status"]) =>
-    ({
-      ...survey,
-      status,
-      blocks: ZV3CreateSurveyBody.parse({ ...rawCreateBody, blocks: [lockedBlock()] }).blocks,
-    }) as TSurvey;
+  const storedWith = (status: TSurvey["status"]) => ({
+    ...survey,
+    status,
+    blocks: ZV3CreateSurveyBody.parse({ ...rawCreateBody, blocks: [lockedBlock()] }).blocks,
+  });
 
   const invalidParamsOf = (stored: TSurvey, blocks: unknown[]) => {
     const preparation = prepareV3SurveyPatchInput(stored, { blocks });
@@ -1895,7 +1897,7 @@ describe("Set value expressions through v3 (ENG-6935)", () => {
       },
     ];
 
-    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, { blocks } as never);
+    const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, { blocks });
 
     expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);
   });
@@ -1906,7 +1908,7 @@ describe("Set value expressions through v3 (ENG-6935)", () => {
       (field) => field.storageKey !== SURVEY_FLOW_FIXTURE_IDS.variables.signedUpAt
     );
 
-    const preparation = prepareV3SurveyPatchInput(live, { embeddedFields } as never);
+    const preparation = prepareV3SurveyPatchInput(live, { embeddedFields });
 
     expect(preparation.ok).toBe(false);
     if (preparation.ok) return;
@@ -2079,7 +2081,7 @@ describe("Set value on a true/false field through v3 (ENG-6973)", () => {
   // `variables` cannot carry, as it reads a computed date.
   test("publishing by status alone reads a stored computed true/false field as declared", () => {
     const qualified = "flowvarqualified00000001";
-    const survey = structuredClone(surveyFlowFixture) as TSurvey;
+    const survey = structuredClone<TSurvey>(surveyFlowFixture);
     survey.embeddedFields = [
       ...(survey.embeddedFields ?? []),
       {
@@ -2118,7 +2120,7 @@ describe("Set value on a true/false field through v3 (ENG-6973)", () => {
   // PATCH skips the save's refinement, so the reference validation refuses True or False on a
   // field of another type itself.
   test("a patch refuses True or False on a number field", () => {
-    const survey = structuredClone(surveyFlowFixture) as TSurvey;
+    const survey = structuredClone<TSurvey>(surveyFlowFixture);
     survey.blocks[0].logic = [
       {
         id: "clboolrule1234567890123456",
@@ -2147,7 +2149,7 @@ describe("Set value on a true/false field through v3 (ENG-6973)", () => {
 
   test("a patch refuses copying a computed true/false field into a number field", () => {
     const qualified = "flowvarqualified00000001";
-    const survey = structuredClone(surveyFlowFixture) as TSurvey;
+    const survey = structuredClone<TSurvey>(surveyFlowFixture);
     survey.embeddedFields = [
       ...(survey.embeddedFields ?? []),
       {
@@ -2234,7 +2236,7 @@ describe("Mark as low quality on the v3 survey document (ENG-6933)", () => {
     };
     if (at === "block") body.blocks[lowQualityRule.blockIdx].logic[lowQualityRule.ruleIdx].actions = [action];
     else body.startLogic[0].actions = [action];
-    return prepareV3SurveyPatchInput(surveyFlowFixture, body as never);
+    return prepareV3SurveyPatchInput(surveyFlowFixture, body);
   };
 
   test("GET returns the action, and its output patches back unchanged", () => {

@@ -95,20 +95,22 @@ export const emptyChartData = (query: TChartQuery): TV3ChartData => ({
   optionLabels: {},
   fieldLabels: {},
   memberLabels: {},
-  query: query as TV3ChartData["query"],
+  query: query,
 });
 
 /**
- * The embedded-data members the rows are keyed by, to each key's own name (ENG-6893), so a column or
- * legend reads `Plan` rather than `FeedbackRecords.ed_plan_64879f7d`.
+ * The embedded-data members the rows are keyed by, to the workspace's name for each key, else the key's
+ * own name (ENG-6893), so a column or legend reads `Plan` rather than `FeedbackRecords.ed_plan_64879f7d`.
  */
-const getMemberLabels = (
+export const getMemberLabels = (
   query: unknown,
   dataset: TDatasetChartFields | undefined
 ): Record<string, string> => {
   const named = new Set(collectEmbeddedMemberNames(query));
   return Object.fromEntries(
-    (dataset?.embeddedFields ?? []).filter(({ name }) => named.has(name)).map(({ name, key }) => [name, key])
+    (dataset?.embeddedFields ?? [])
+      .filter(({ name }) => named.has(name))
+      .map(({ name, key, label }) => [name, label ?? key])
   );
 };
 
@@ -227,7 +229,7 @@ export async function runV3ChartQuery({
         optionLabels: run.optionLabels ?? {},
         fieldLabels: run.fieldLabels ?? {},
         memberLabels: getMemberLabels(run.effectiveQuery, dataset),
-        query: run.effectiveQuery as TV3ChartData["query"],
+        query: run.effectiveQuery,
       };
       return successResponse(respond(data), { requestId: context.requestId });
     } catch (error) {

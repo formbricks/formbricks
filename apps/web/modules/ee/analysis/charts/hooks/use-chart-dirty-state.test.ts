@@ -3,7 +3,6 @@
  */
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
-import type { TChartConfig } from "@formbricks/types/analysis";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { useChartDirtyState } from "./use-chart-dirty-state";
 
@@ -25,7 +24,8 @@ const render = (props: Partial<Parameters<typeof useChartDirtyState>[0]> = {}) =
       isSaving: false,
       chartName: "NPS by source",
       chartData: savedChart,
-      chartConfig: {} as TChartConfig,
+      chartConfig: {},
+      hasUnadoptedQueryEdit: false,
       ...props,
       ...overrides,
     })
@@ -87,5 +87,27 @@ describe("useChartDirtyState", () => {
 
     expect(deferred).toHaveBeenCalledTimes(1);
     expect(result.current.isConfirmingDiscard).toBe(false);
+  });
+
+  test("a query edit the preview never adopted still asks before discarding", () => {
+    // ENG-7056: a 6th filter is rejected by the query, so chartData keeps the saved query and the
+    // snapshot alone saw nothing to lose.
+    const { result, rerender } = render();
+    expect(result.current.hasUnsavedChart).toBe(false);
+
+    rerender({ hasUnadoptedQueryEdit: true });
+    expect(result.current.hasUnsavedChart).toBe(true);
+
+    const close = vi.fn();
+    act(() => result.current.confirmDiscard(close));
+
+    expect(close).not.toHaveBeenCalled();
+    expect(result.current.isConfirmingDiscard).toBe(true);
+  });
+
+  test("a query edit asks even before a baseline exists, e.g. when the saved chart's data failed to load", () => {
+    const { result } = render({ isReady: false, chartData: null, hasUnadoptedQueryEdit: true });
+
+    expect(result.current.hasUnsavedChart).toBe(true);
   });
 });

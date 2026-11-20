@@ -5,6 +5,7 @@ import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getDroppedFiles, setDropEffect } from "@formbricks/survey-ui/drag-data";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { cn } from "@/lib/cn";
 import type { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
@@ -114,13 +115,13 @@ export const BulkInviteTab = ({
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = "copy";
+    setDropEffect(e, "copy");
   };
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    handleFileSelected(e.dataTransfer.files[0]);
+    handleFileSelected(getDroppedFiles(e)[0]);
   };
 
   const resetFile = () => {
@@ -328,7 +329,7 @@ export const BulkInviteTab = ({
         </div>
 
         {!isAccessControlAllowed && (
-          <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50" role="status">
+          <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50" alertRole="status">
             <AlertDescription className="ml-2">
               <p className="text-sm">
                 <strong>{t("common.warning")}: </strong>

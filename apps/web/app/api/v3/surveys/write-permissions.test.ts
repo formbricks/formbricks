@@ -14,13 +14,12 @@ vi.mock("@/modules/survey/lib/permission", () => ({
   getExternalUrlsPermission: vi.fn(),
 }));
 
-const endScreen = (buttonLink?: string): TSurveyEnding =>
-  ({
-    id: "clen1234567890123456789012",
-    type: "endScreen",
-    headline: { default: "Thanks" },
-    ...(buttonLink ? { buttonLabel: { default: "Open" }, buttonLink } : {}),
-  }) as TSurveyEnding;
+const endScreen = (buttonLink?: string): TSurveyEnding => ({
+  id: "clen1234567890123456789012",
+  type: "endScreen",
+  headline: { default: "Thanks" },
+  ...(buttonLink ? { buttonLabel: { default: "Open" }, buttonLink } : {}),
+});
 
 describe("assertV3SurveyWritePermissions", () => {
   beforeEach(() => {
@@ -55,5 +54,33 @@ describe("assertV3SurveyWritePermissions", () => {
         "org_1"
       )
     ).rejects.toThrow(V3SurveyWritePermissionError);
+  });
+
+  // The stored survey is not re-validated: a block saved as a draft, or by the raw-SQL questions →
+  // blocks migration, can lack `elements` (ENG-2497).
+  test("checks a survey whose stored version has a block with no elements array", async () => {
+    const cta = {
+      id: "cta1",
+      type: "cta",
+      headline: { default: "Visit us" },
+      required: false,
+      buttonExternal: true,
+      buttonUrl: "https://example.com",
+      ctaButtonLabel: { default: "Go" },
+    };
+    const ctaBlock = { id: "blk2", name: "Block 2", elements: [cta] };
+
+    await expect(
+      assertV3SurveyWritePermissions(
+        {
+          workspaceId: "ws_1",
+          blocks: [ctaBlock] as never,
+          endings: [],
+          previous: { blocks: [{ id: "blk1", name: "Block 1" }, ctaBlock] as never, endings: [] },
+        },
+        "org_1"
+      )
+    ).resolves.toBeUndefined();
+    expect(getExternalUrlsPermission).not.toHaveBeenCalled();
   });
 });

@@ -714,8 +714,10 @@ describe("response language", () => {
     aiTimeoutEnv.multiplier = 1;
   });
 
-  const withLanguages = (survey: TSurvey, languages: TSurvey["languages"]): TSurvey =>
-    ({ ...survey, languages }) as TSurvey;
+  const withLanguages = (survey: TSurvey, languages: TSurvey["languages"]): TSurvey => ({
+    ...survey,
+    languages,
+  });
 
   const language = (code: string, isDefault: boolean, enabled = true) =>
     ({ default: isDefault, enabled, language: { code } }) as unknown as TSurvey["languages"][number];

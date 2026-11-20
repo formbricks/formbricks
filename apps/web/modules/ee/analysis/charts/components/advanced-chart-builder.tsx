@@ -12,6 +12,11 @@ import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
 import { useDatasetChartFields } from "@/modules/ee/analysis/charts/hooks/use-dataset-chart-fields";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
+import {
+  EMPTY_CHART_BUILDER_STATE,
+  toAdoptedQueryJson,
+  toComparableQueryJson,
+} from "@/modules/ee/analysis/charts/lib/builder-query";
 import { namesDatasetField } from "@/modules/ee/analysis/charts/lib/catalog-embedded-fields";
 import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { createDefaultFilterRow } from "@/modules/ee/analysis/charts/lib/filter-conditions";
@@ -34,7 +39,19 @@ export interface ChartQueryState {
   isLoading: boolean;
   error: string | null;
   isPending: boolean;
+  /**
+   * The form differs from the query the preview holds: an edit still waiting to run, running, or run
+   * and rejected. A rejected edit never reaches the preview, so this is the only place it shows.
+   */
+  hasUnadoptedEdit: boolean;
 }
+
+export const IDLE_CHART_QUERY_STATE: ChartQueryState = {
+  isLoading: false,
+  error: null,
+  isPending: false,
+  hasUnadoptedEdit: false,
+};
 
 interface AdvancedChartBuilderProps {
   workspaceId: string;
@@ -69,14 +86,6 @@ type Action =
   | { type: typeof ACTION.SET_TIME_DIMENSION; payload: TimeDimensionConfig | null }
   | { type: typeof ACTION.INIT_FROM_QUERY; payload: Partial<ChartBuilderState> };
 
-const initialState: ChartBuilderState = {
-  selectedMeasures: [],
-  selectedDimensions: [],
-  filters: [],
-  filterLogic: "and",
-  timeDimension: null,
-};
-
 const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBuilderState => {
   switch (action.type) {
     case ACTION.SET_MEASURES:
@@ -96,11 +105,6 @@ const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBui
   }
 };
 
-const toComparableQueryJson = (query: TChartQuery, chartType: TChartType): string =>
-  JSON.stringify(
-    prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parseQueryToState(query) }), chartType)
-  );
-
 export function AdvancedChartBuilder({
   workspaceId,
   chartType,
@@ -115,7 +119,7 @@ export function AdvancedChartBuilder({
 
   const [state, dispatch] = useReducer(
     chartBuilderReducer,
-    initialQuery ? { ...initialState, ...parsedInitial } : initialState
+    initialQuery ? { ...EMPTY_CHART_BUILDER_STATE, ...parsedInitial } : EMPTY_CHART_BUILDER_STATE
   );
 
   const { isLoading, error, runQuery } = useChartQuery(workspaceId, feedbackDirectoryId, initialQuery);
@@ -127,9 +131,8 @@ export function AdvancedChartBuilder({
     chartTypeRef.current = chartType;
   }, [chartType]);
 
-  useEffect(() => {
-    onQueryStateChange?.({ isLoading, error, isPending: isConfigDirty || isLoading });
-  }, [isLoading, error, isConfigDirty, onQueryStateChange]);
+  // The query handed in is the one the preview shows; it is handed in again after every successful run.
+  const [adoptedQueryJson, setAdoptedQueryJson] = useState(() => toAdoptedQueryJson(initialQuery, chartType));
 
   const [dimensionsOpen, setDimensionsOpen] = useState(
     () => (parsedInitial?.selectedDimensions?.length ?? 0) > 0
@@ -158,6 +161,18 @@ export function AdvancedChartBuilder({
     [state, chartType]
   );
   const currentQueryJson = JSON.stringify(currentQuery);
+  const hasUnadoptedEdit = currentQueryJson !== adoptedQueryJson;
+
+  useEffect(() => {
+    onQueryStateChange?.({ isLoading, error, isPending: isConfigDirty || isLoading, hasUnadoptedEdit });
+  }, [isLoading, error, isConfigDirty, hasUnadoptedEdit, onQueryStateChange]);
+
+  // The dialog outlives the builder, so hand it back an idle state rather than this session's last one.
+  const onQueryStateChangeRef = useRef(onQueryStateChange);
+  useEffect(() => {
+    onQueryStateChangeRef.current = onQueryStateChange;
+  }, [onQueryStateChange]);
+  useEffect(() => () => onQueryStateChangeRef.current?.(IDLE_CHART_QUERY_STATE), []);
 
   // The last query that was executed (or arrived pre-executed via initialQuery, e.g. from the
   // AI section or a saved chart). Auto-run only fires when the form drifts away from it.
@@ -176,9 +191,9 @@ export function AdvancedChartBuilder({
     if (appliedInitialQueryRef.current === initialQuery) return;
     appliedInitialQueryRef.current = initialQuery;
     const parsed = parseQueryToState(initialQuery);
-    lastRunQueryJsonRef.current = runInitialQueryRef.current
-      ? null
-      : JSON.stringify(prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parsed }), chartType));
+    const initialQueryJson = toComparableQueryJson(initialQuery, chartType);
+    lastRunQueryJsonRef.current = runInitialQueryRef.current ? null : initialQueryJson;
+    setAdoptedQueryJson(toAdoptedQueryJson(initialQuery, chartType));
     dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
     setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
     // chartType only feeds the baseline above; a later switch is caught by the guard and left to
@@ -226,7 +241,7 @@ export function AdvancedChartBuilder({
   // the question filter — and keeps the date range. The auto-run below then draws it.
   const applyMatrixQuestion = (label: string) => {
     const parsed = parseQueryToState(buildMatrixQuestionQuery(label, currentQuery.timeDimensions));
-    dispatch({ type: ACTION.INIT_FROM_QUERY, payload: { ...initialState, ...parsed } });
+    dispatch({ type: ACTION.INIT_FROM_QUERY, payload: { ...EMPTY_CHART_BUILDER_STATE, ...parsed } });
     setDimensionsOpen(true);
   };
 
@@ -292,6 +307,11 @@ export function AdvancedChartBuilder({
             hideTitle
             isMatrix={isMatrix}
             embeddedFields={datasetFields.embeddedFields}
+            workspaceId={workspaceId}
+            // The preview's legend and headers name a renamed key only once it runs again.
+            onEmbeddedFieldRenamed={() => {
+              if (feedbackDirectoryId && isConfigComplete) executeQueryRef.current();
+            }}
             selectedDimensions={state.selectedDimensions}
             onDimensionsChange={(dimensions) =>
               dispatch({ type: ACTION.SET_DIMENSIONS, payload: dimensions })

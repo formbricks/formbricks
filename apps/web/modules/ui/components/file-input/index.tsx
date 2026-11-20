@@ -5,6 +5,7 @@ import Image from "next/image";
 import { type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getDroppedFiles, setDropEffect } from "@formbricks/survey-ui/drag-data";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { cn } from "@/lib/cn";
 import { isExternalImageSrc } from "@/lib/image-hosts";
@@ -133,15 +134,15 @@ export const FileInput = ({
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = "copy";
+    setDropEffect(e, "copy");
   };
 
   const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const files = Array.from(e.dataTransfer.files);
-    handleUpload(files);
+    const files = getDroppedFiles(e);
+    void handleUpload(files);
   };
 
   const handleRemove = async (idx: number) => {
@@ -154,8 +155,8 @@ export const FileInput = ({
     e.preventDefault();
     e.stopPropagation();
 
-    const files = Array.from(e.dataTransfer.files);
-    handleUploadMore(files);
+    const files = getDroppedFiles(e);
+    void handleUploadMore(files);
   };
 
   const handleUploadMore = async (files: File[]) => {
@@ -258,7 +259,7 @@ export const FileInput = ({
                   className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleRemove(idx);
+                    void handleRemove(idx);
                   }}>
                   <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                 </button>
@@ -279,7 +280,7 @@ export const FileInput = ({
                   className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleRemove(idx);
+                    void handleRemove(idx);
                   }}>
                   <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
                 </button>
@@ -327,7 +328,7 @@ export const FileInput = ({
               className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
               onClick={(e) => {
                 e.preventDefault();
-                handleRemove(0);
+                void handleRemove(0);
               }}>
               <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
             </button>
@@ -348,7 +349,7 @@ export const FileInput = ({
               className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
               onClick={(e) => {
                 e.preventDefault();
-                handleRemove(0);
+                void handleRemove(0);
               }}>
               <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
             </button>

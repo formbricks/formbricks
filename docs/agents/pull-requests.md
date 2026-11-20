@@ -1,6 +1,6 @@
 # Commit & Pull Request Guidelines
 
-Read before committing, or opening, updating, or reviewing a pull request.
+Read before committing or reviewing a pull request.
 
 ## Commits
 
@@ -8,17 +8,7 @@ Use Conventional Commits (`fix:`, `chore:`, `feat:`), keep commits scoped, and r
 
 ## Pull requests
 
-Read `.github/pull_request_template.md` and follow its inline guidance when opening or updating a PR.
-It owns the structure, word budget, ticket syntax, coverage evidence, breaking-change decision, and
-migration/env reporting. Update the description with every scope change or review fix.
-
-Complete QA on the change's PR before requesting review. The author accounts for each changed behavior
-and names unverified behavior under Open gaps; reviewers challenge that evidence. A failure called
-pre-existing, flaky or noise names the run on `main` that shows it; without one it goes under Open gaps. Release review checks
-interactions between changes rather than repeating each PR's QA.
-
-Before opening a PR, run the `code-review` skill against the merge-base. The review is done when every
-Standards and Spec finding is fixed or listed under Open gaps.
+Writing the PR body is the `pr` skill's job (`.agents/skills/pr`); this file covers what surrounds it.
 
 ## Reviews
 
@@ -58,6 +48,24 @@ few hundred. The E2E log is dominated by SpiceDB gRPC output (once a single 2.4 
 log with `grep -v grpc` before reading it. `release/*` branches keep their own workflow copy, where a red
 `PR Check Summary` can come from cancelled jobs of a superseded push; check the job conclusions first.
 
-## Agent attribution
+## Flaky tests
 
-The agent note names the exact model id the vendor serves — `claude-opus-5`, `gpt-5.1-codex` — not the harness it runs in; Claude Code, Codex CLI and Cursor are harnesses, so name one in parentheses only when it adds something (`claude-opus-5 (Claude Code 2.1.237)`). The reasoning level is whatever knob that vendor exposes, in its own units: an effort level (`max`, `high`), a thinking budget (`32k tokens`), or `n/a`. Read both out of the tool, never from memory — Claude Code reports them in `/status` or as the session's `model` and `effort_level`, Codex CLI in `/model` or its startup line. A value you cannot look up is `unknown`, never a guess and never the harness name standing in for the model; one the harness forbids recording is `withheld`.
+A flaky test is a bug, and every PR that runs into it pays for it, so it is filed at once and fixed next.
+A test is flaky when it fails and then passes on a rerun of the same commit, or when the E2E job log's
+Playwright summary counts it as `flaky` (it passed only on Playwright's own retry). The second kind hides
+inside green runs, so read the summary even when the check passed.
+
+1. One rerun is how you find out. Once it shows a flake, rerun nothing more until steps 2–3 are done.
+2. Search Linear, closed issues included, for the test name. When nothing asserted (an action timeout, a
+   hook or fixture that throws), also search for the error and the line it came from: a shared fixture
+   can fail the same way in other tests. Reuse an issue only when it records the same failure: the
+   failing assertion, or that error and line. A different failure is a different flake. An open issue
+   gets the new run ids (or for a local run the command and its output), plus this test's name if it is
+   missing. A Done or Canceled one is reopened with them: its fix did not hold.
+3. Otherwise file one as `docs/agents/issue-tracker.md` describes (no project or milestone needed):
+   priority High, label `bug`, plus `infrastructure` when the cause is CI or the test harness rather than
+   the product. Give the failing test, that failure, and the runs it failed in (or the local command and
+   output), marked "first seen" if this is the first.
+4. Name the issue under the PR's Open gaps, whether or not the PR touches that test. Fix it next, in its
+   own PR, unless the user redirects you. How to fix one is in `CODING_STANDARDS.md`, "Testing
+   Guidelines".

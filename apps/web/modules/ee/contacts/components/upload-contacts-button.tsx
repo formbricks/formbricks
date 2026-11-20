@@ -6,16 +6,18 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getDraggedItems, getDroppedFiles, setDropEffect } from "@formbricks/survey-ui/drag-data";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/strings";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
+import { RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
-  RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
-  isReservedFutureDefaultAttributeKey,
-} from "@/modules/ee/contacts/lib/attribute-key-policy";
+  findUnmappableCsvColumns,
+  matchCsvColumnsToAttributeKeys,
+} from "@/modules/ee/contacts/lib/csv-attribute-mapping";
 import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
 import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
 import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
@@ -109,7 +111,7 @@ export const UploadContactsCSVButton = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target?.files?.[0];
     if (file) {
-      processCSVFile(file);
+      void processCSVFile(file);
     }
   };
 
@@ -261,80 +263,54 @@ export const UploadContactsCSVButton = ({
     setLoading(false);
   };
 
-  useEffect(() => {
-    const matches: Record<string, string> = {};
+  // A new CSV (or a new set of attribute keys) re-runs the column auto-match. Adjusted during render.
+  const [matchedInputs, setMatchedInputs] = useState({ csvColumns, contactAttributeKeys });
+  if (
+    matchedInputs.csvColumns !== csvColumns ||
+    matchedInputs.contactAttributeKeys !== contactAttributeKeys
+  ) {
+    setMatchedInputs({ csvColumns, contactAttributeKeys });
+    setAttributeMap(matchCsvColumnsToAttributeKeys(csvColumns, contactAttributeKeys));
+  }
 
-    for (const columnName of csvColumns) {
-      let matched = false;
-      for (const attributeKey of contactAttributeKeys) {
-        if (isStringMatch(columnName, attributeKey.name ?? attributeKey.key)) {
-          matches[columnName] = attributeKey.id;
-          matched = true;
-          break;
-        }
-      }
-
-      if (!matched) {
-        matches[columnName] = columnName;
-      }
-    }
-
-    setAttributeMap(matches);
-  }, [contactAttributeKeys, csvColumns]);
-
-  useEffect(() => {
-    if (!csvColumns.length || !csvResponse.length) {
-      return;
-    }
-
-    const invalidColumns: string[] = [];
-    const reservedColumns: string[] = [];
-
-    for (const columnName of csvColumns) {
-      const mappedAttribute = attributeMap[columnName];
-      if (!mappedAttribute) {
-        continue;
-      }
-
-      const mapsToExistingAttribute = contactAttributeKeys.some(
-        (attributeKey) => attributeKey.id === mappedAttribute
+  // Every mapping change re-validates the columns and replaces the shown error with the result.
+  // Adjusted during render.
+  const mappingInputs = { attributeMap, contactAttributeKeys, csvColumns, rowCount: csvResponse.length, t };
+  const [validatedInputs, setValidatedInputs] = useState(mappingInputs);
+  if (
+    (Object.keys(mappingInputs) as (keyof typeof mappingInputs)[]).some(
+      (key) => mappingInputs[key] !== validatedInputs[key]
+    )
+  ) {
+    setValidatedInputs(mappingInputs);
+    if (csvColumns.length && csvResponse.length) {
+      const { invalidColumns, reservedColumns } = findUnmappableCsvColumns(
+        csvColumns,
+        attributeMap,
+        contactAttributeKeys
       );
+      const errorMessages: string[] = [];
 
-      if (mapsToExistingAttribute) {
-        continue;
+      if (invalidColumns.length > 0) {
+        errorMessages.push(
+          t("workspace.contacts.invalid_csv_column_names", {
+            columns: invalidColumns.join(", "),
+          })
+        );
       }
 
-      if (!isSafeIdentifier(mappedAttribute)) {
-        invalidColumns.push(columnName);
-        continue;
+      if (reservedColumns.length > 0) {
+        errorMessages.push(
+          t("workspace.contacts.invalid_csv_reserved_column_names", {
+            columns: reservedColumns.join(", "),
+            reservedKeys: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
+          })
+        );
       }
 
-      if (isReservedFutureDefaultAttributeKey(mappedAttribute)) {
-        reservedColumns.push(columnName);
-      }
+      setError(errorMessages.join("\n"));
     }
-
-    const errorMessages: string[] = [];
-
-    if (invalidColumns.length > 0) {
-      errorMessages.push(
-        t("workspace.contacts.invalid_csv_column_names", {
-          columns: invalidColumns.join(", "),
-        })
-      );
-    }
-
-    if (reservedColumns.length > 0) {
-      errorMessages.push(
-        t("workspace.contacts.invalid_csv_reserved_column_names", {
-          columns: reservedColumns.join(", "),
-          reservedKeys: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
-        })
-      );
-    }
-
-    setError(errorMessages.join("\n"));
-  }, [attributeMap, contactAttributeKeys, csvColumns, csvResponse.length, t]);
+  }
 
   useEffect(() => {
     if (error && errorContainerRef.current) {
@@ -417,21 +393,21 @@ export const UploadContactsCSVButton = ({
     e.stopPropagation();
 
     // Only show copy cursor if file is CSV
-    const items = Array.from(e.dataTransfer.items);
+    const items = getDraggedItems(e);
     const isCSV = items.some(
       (item) => item.type === "text/csv" || (item.type === "" && item.kind === "file") // For when type isn't available
     );
 
-    e.dataTransfer.dropEffect = isCSV ? "copy" : "none";
+    setDropEffect(e, isCSV ? "copy" : "none");
   };
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const file = e.dataTransfer.files[0];
+    const file = getDroppedFiles(e)[0];
     if (file) {
-      processCSVFile(file);
+      void processCSVFile(file);
     }
   };
 

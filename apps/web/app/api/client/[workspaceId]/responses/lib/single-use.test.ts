@@ -29,7 +29,7 @@ vi.mock("@/lib/crypto", async (importOriginal: () => Promise<typeof import("@/li
 // mints differently from the one the gate computes, and every rejection below would be vacuous.
 // Mutable so the ENCRYPTION_KEY-missing branch is reachable; it must be a valid string at module
 // load or crypto.ts throws on `.length`.
-const mocks = vi.hoisted(() => ({ constants: { ENCRYPTION_KEY: "test-key" as string | undefined } }));
+const mocks = vi.hoisted(() => ({ constants: { ENCRYPTION_KEY: "test-key" } }));
 vi.mock("@/lib/constants", () => mocks.constants);
 vi.mock("@/lib/env", () => ({ env: { ENCRYPTION_KEY: "test-key" } }));
 

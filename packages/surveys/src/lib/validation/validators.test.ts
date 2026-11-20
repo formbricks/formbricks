@@ -650,7 +650,7 @@ describe("validators", () => {
         { id: "opt2", label: { default: "Option 2" } },
         { id: "opt3", label: { default: "Option 3" } },
       ],
-    } as TSurveyElement;
+    };
 
     test("should return valid true when ranked count >= min", () => {
       const result = validators.minRanked.check(["opt1", "opt2"], { min: 2 }, rankingElement);
@@ -689,7 +689,7 @@ describe("validators", () => {
         { id: "opt2", label: { default: "Option 2" } },
         { id: "opt3", label: { default: "Option 3" } },
       ],
-    } as TSurveyElement;
+    };
 
     test("should return valid true when all options are ranked", () => {
       const result = validators.rankAll.check(["opt1", "opt2", "opt3"], {}, rankingElement);
@@ -733,7 +733,7 @@ describe("validators", () => {
         { id: "col1", label: { default: "Col 1" } },
         { id: "col2", label: { default: "Col 2" } },
       ],
-    } as TSurveyElement;
+    };
 
     test("should return valid true when answered rows >= min", () => {
       const result = validators.minRowsAnswered.check(
@@ -779,7 +779,7 @@ describe("validators", () => {
       headline: { default: "Upload file" },
       required: false,
       allowMultipleFiles: false,
-    } as TSurveyElement;
+    };
 
     test("should return valid true when file extension matches", () => {
       const result = validators.fileExtensionIs.check(
@@ -884,7 +884,7 @@ describe("validators", () => {
       headline: { default: "Upload file" },
       required: false,
       allowMultipleFiles: false,
-    } as TSurveyElement;
+    };
 
     test("should return valid true when file extension does not match", () => {
       const result = validators.fileExtensionIsNot.check(

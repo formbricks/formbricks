@@ -88,6 +88,14 @@ describe("segment schema validation", () => {
     expect(result.error?.issues[0]?.message).toBe("At least one filter is required");
   });
 
+  // ENG-6957: a filters-only save must not turn a shared segment private.
+  test("an update that leaves isPrivate out keeps it out", () => {
+    const result = ZSegmentUpdateInput.safeParse({ filters: validFilters });
+
+    expect(result.success).toBe(true);
+    expect(result.data).not.toHaveProperty("isPrivate");
+  });
+
   test("accepts segment updates with a valid filter", () => {
     const result = ZSegmentUpdateInput.safeParse({
       filters: validFilters,

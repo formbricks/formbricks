@@ -40,7 +40,7 @@ export const TemplateFilters = ({
             <button
               type="button"
               onClick={() => handleFilterSelect(null, index)}
-              disabled={templateSearch && templateSearch.length > 0 ? true : false}
+              disabled={Boolean(templateSearch && templateSearch.length > 0)}
               className={cn(
                 selectedFilter[index] === null
                   ? "bg-slate-800 font-semibold text-white"
@@ -54,7 +54,7 @@ export const TemplateFilters = ({
                 key={filter.value}
                 type="button"
                 onClick={() => handleFilterSelect(filter.value, index)}
-                disabled={templateSearch && templateSearch.length > 0 ? true : false}
+                disabled={Boolean(templateSearch && templateSearch.length > 0)}
                 className={cn(
                   selectedFilter[index] === filter.value
                     ? "bg-slate-800 font-semibold text-white"

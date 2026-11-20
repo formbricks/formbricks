@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogBody,
@@ -38,11 +38,12 @@ export const ModalWithTabs = ({
     setActiveTab(index);
   };
 
-  useEffect(() => {
-    if (!open) {
-      setActiveTab(0);
-    }
-  }, [open]);
+  // Closing returns to the first tab for the next open. Adjusted during render.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) setActiveTab(0);
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

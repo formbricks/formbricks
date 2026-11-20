@@ -215,7 +215,7 @@ export const updateCondition = (
     const item = group.conditions[i];
 
     if (item.id === resourceId && !("connector" in item)) {
-      group.conditions[i] = { ...item, ...condition } as TSingleCondition;
+      group.conditions[i] = { ...item, ...condition };
       return;
     }
 
@@ -577,7 +577,7 @@ const resolveConditionValues = (
     // key carries that raw string past the seam.
     (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
   ) {
-    rightValue = Number(rightValue as string);
+    rightValue = Number(rightValue);
   }
 
   // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
@@ -647,7 +647,8 @@ const getChoiceAnswerValue = (
   responseValue: TResponseData[string] | undefined,
   selectedLanguage: string
 ) => {
-  const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
+  // "Other" need not be last: "None of the above" can follow it (ENG-7377).
+  const isOthersEnabled = currentElement.choices.some((choice) => choice.id === "other");
 
   // ENG-6943: the label in the response's language first, then in any language of the survey.
   if (typeof responseValue === "string") {
@@ -840,6 +841,14 @@ export const performActions = (
   return { jumpTarget, requiredElementIds, calculations };
 };
 
+/**
+ * Whether an answer or hidden field reads as a number. Blank text is not one: `Number("")` is 0, which
+ * would turn an empty field into a real 0 and stop an `isSkipped` condition from seeing it. Same rule
+ * as the survey bundle (packages/surveys/src/lib/logic.ts).
+ */
+const isNumericOperand = (val: string | number): boolean =>
+  typeof val === "number" || (val.trim() !== "" && !Number.isNaN(Number(val)));
+
 /** The value a one-step calculation applies: a static value, a variable, or an answer. */
 const getCalculationOperand = (
   action: TActionCalculate | TBlockActionCalculate,
@@ -863,7 +872,7 @@ const getCalculationOperand = (
     case "hiddenField": {
       const val = data[action.value.value];
       if (typeof val !== "number" && typeof val !== "string") return undefined;
-      return dataType === "number" && !Number.isNaN(Number(val)) ? Number(val) : val;
+      return dataType === "number" && isNumericOperand(val) ? Number(val) : val;
     }
   }
   return undefined;

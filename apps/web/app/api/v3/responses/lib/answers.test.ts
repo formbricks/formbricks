@@ -1,5 +1,4 @@
 import { describe, expect, test, vi } from "vitest";
-import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { buildAnswerPlan, serializeAnswers } from "./answers";
 import type { TV3ResponseAnswer } from "./resources";
@@ -17,10 +16,10 @@ const toggle = (placeholder: string) => ({ show: true, required: false, placehol
 
 /** One block holding every element under test, so positions come out of a real flatten. */
 const planFor = (elements: TSurveyElement[], lookupKey = "default") =>
-  buildAnswerPlan([{ id: "blk", name: "Block", elements } as unknown as TSurveyBlock], lookupKey);
+  buildAnswerPlan([{ id: "blk", name: "Block", elements }], lookupKey);
 
 const only = (elements: TSurveyElement[], data: Record<string, unknown>, ttc?: Record<string, number>) =>
-  serializeAnswers(planFor(elements), data as never, ttc as never);
+  serializeAnswers(planFor(elements), data as never, ttc);
 
 const answer = (elements: TSurveyElement[], data: Record<string, unknown>, ttc?: Record<string, number>) => {
   const { answers, unresolved } = only(elements, data, ttc);
@@ -482,15 +481,11 @@ describe("unreadable values become unresolved rather than throwing or guessing",
    */
   test("a declared hidden field is neither an answer nor an unresolved deletion", () => {
     const plan = buildAnswerPlan(
-      [{ id: "blk", name: "Block", elements: [element({ id: "q1", type: "openText" })] } as never],
+      [{ id: "blk", name: "Block", elements: [element({ id: "q1", type: "openText" })] }],
       "default",
       ["plan"]
     );
-    const { answers, unresolved } = serializeAnswers(
-      plan,
-      { q1: "answered", plan: "enterprise" } as never,
-      undefined
-    );
+    const { answers, unresolved } = serializeAnswers(plan, { q1: "answered", plan: "enterprise" }, undefined);
 
     expect(answers.map((a) => a.elementId)).toEqual(["q1"]);
     expect(unresolved).toEqual([]);
@@ -504,11 +499,11 @@ describe("unreadable values become unresolved rather than throwing or guessing",
    */
   test("a declared field whose name is an element id does not suppress that element's answer", () => {
     const plan = buildAnswerPlan(
-      [{ id: "blk", name: "Block", elements: [element({ id: "plan", type: "openText" })] } as never],
+      [{ id: "blk", name: "Block", elements: [element({ id: "plan", type: "openText" })] }],
       "default",
       ["plan"]
     );
-    const { answers, unresolved } = serializeAnswers(plan, { plan: "answered" } as never, undefined);
+    const { answers, unresolved } = serializeAnswers(plan, { plan: "answered" }, undefined);
 
     expect(answers).toHaveLength(1);
     expect(answers[0]).toMatchObject({ elementId: "plan", valueText: "answered" });
@@ -519,15 +514,11 @@ describe("unreadable values become unresolved rather than throwing or guessing",
   /** Case-sensitive, like the ingest contract: `Plan` and `plan` are different storage slots. */
   test("a declared field differing only by case is still skipped as a hidden field", () => {
     const plan = buildAnswerPlan(
-      [{ id: "blk", name: "Block", elements: [element({ id: "plan", type: "openText" })] } as never],
+      [{ id: "blk", name: "Block", elements: [element({ id: "plan", type: "openText" })] }],
       "default",
       ["Plan"]
     );
-    const { answers, unresolved } = serializeAnswers(
-      plan,
-      { plan: "answered", Plan: "hidden" } as never,
-      undefined
-    );
+    const { answers, unresolved } = serializeAnswers(plan, { plan: "answered", Plan: "hidden" }, undefined);
 
     expect(answers.map((a) => a.elementId)).toEqual(["plan"]);
     expect(unresolved).toEqual([]);
@@ -596,8 +587,8 @@ describe("unreadable values become unresolved rather than throwing or guessing",
     ["an openText holding a boolean", "openText", true],
     ["a nested array", "openText", [["a"]]],
   ])("%s is reported nowhere rather than published", (_label, type, raw) => {
-    const { answers, unresolved } = only([element({ id: "q1", type: type as never })], {
-      q1: raw as never,
+    const { answers, unresolved } = only([element({ id: "q1", type: type })], {
+      q1: raw,
     });
 
     expect(answers).toEqual([]);
@@ -667,7 +658,7 @@ describe("labels resolve in the response's language", () => {
       type: "openText",
       headline: i18n("How satisfied?", { de: "Wie zufrieden?" }),
     });
-    const { answers } = serializeAnswers(planFor([el], "de"), { q1: "sehr" } as never, undefined);
+    const { answers } = serializeAnswers(planFor([el], "de"), { q1: "sehr" }, undefined);
 
     expect(answers[0].elementLabel).toBe("Wie zufrieden?");
   });
@@ -675,7 +666,7 @@ describe("labels resolve in the response's language", () => {
   /** The ENG-2001 fallback: a blank translation must not blank the label. */
   test("an untranslated headline falls back to the default rather than going empty", () => {
     const el = element({ id: "q1", type: "openText", headline: i18n("How satisfied?", { de: "" }) });
-    const { answers } = serializeAnswers(planFor([el], "de"), { q1: "x" } as never, undefined);
+    const { answers } = serializeAnswers(planFor([el], "de"), { q1: "x" }, undefined);
 
     expect(answers[0].elementLabel).toBe("How satisfied?");
   });
@@ -686,7 +677,7 @@ describe("labels resolve in the response's language", () => {
       type: "multipleChoiceSingle",
       choices: [{ id: "c1", label: i18n("Blue", { de: "Blau" }) }],
     });
-    const { answers } = serializeAnswers(planFor([el], "de"), { q1: "Blau" } as never, undefined);
+    const { answers } = serializeAnswers(planFor([el], "de"), { q1: "Blau" }, undefined);
     expect(withSelections(answers[0]).selections[0]).toMatchObject({ optionId: "c1", match: "label" });
   });
 });
@@ -717,5 +708,21 @@ describe("what an orphaned key may publish as rawValue", () => {
     ["a string record", { row: "column" }],
   ])("%s the union declares is still reported", (_label, raw) => {
     expect(orphan(raw)).toEqual([{ key: "orphan", rawValue: raw, reason: "elementNotInSurvey" }]);
+  });
+});
+
+describe("a block with no elements array (ENG-2497)", () => {
+  test("is skipped, and the other blocks' elements keep their positions", () => {
+    const plan = buildAnswerPlan(
+      [
+        { id: "empty", name: "Legacy block" },
+        { id: "blk", name: "Block", elements: [element({ id: "q1", type: "openText" })] },
+      ] as never,
+      "default"
+    );
+
+    expect(serializeAnswers(plan, { q1: "answered" }, undefined).answers).toMatchObject([
+      { elementId: "q1", position: 1, valueText: "answered" },
+    ]);
   });
 });

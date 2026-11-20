@@ -539,7 +539,7 @@ const resolveConditionValues = (
     // reachable from the editor.
     (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
   ) {
-    rightValue = Number(rightValue as string);
+    rightValue = Number(rightValue);
   }
 
   // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
@@ -605,6 +605,13 @@ const withDefaultValue = (
   return value ?? (dataType === "number" ? 0 : "");
 };
 
+/**
+ * Whether an answer or hidden field reads as a number. Blank text is not one: `Number("")` is 0, which
+ * would turn an empty field into a real 0 and stop an `isSkipped` condition from seeing it.
+ */
+const isNumericOperand = (val: string | number): boolean =>
+  typeof val === "number" || (val.trim() !== "" && !Number.isNaN(Number(val)));
+
 /** The value a one-step calculation applies: a static value, a variable, or an answer. */
 const getCalculationOperand = (
   action: TActionCalculate,
@@ -634,10 +641,9 @@ const getCalculationOperand = (
     case "hiddenField": {
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && !Number.isNaN(Number(val))) {
-          operandValue = Number(val);
-        }
-        operandValue = val;
+        // A number field takes a numeric answer or hidden field as a number; anything else, blank
+        // included, keeps its text. Same rule as the server evaluator (apps/web/lib/surveyLogic/utils.ts).
+        operandValue = dataType === "number" && isNumericOperand(val) ? Number(val) : val;
       }
       break;
     }

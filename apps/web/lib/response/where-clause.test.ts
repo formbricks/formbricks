@@ -119,9 +119,7 @@ describe("buildWhereClause: date windows", () => {
 
 describe("buildWhereClause: outcome", () => {
   const conditions = (filter: TResponseFilterCriteria) =>
-    (buildWhereClause(survey, filter).AND as Prisma.ResponseWhereInput[]).filter(
-      (clause) => "outcome" in clause
-    );
+    buildWhereClause(survey, filter).AND.filter((clause) => "outcome" in clause);
 
   test("a filter that selects Low quality keeps only those", () => {
     expect(conditions({ outcome: "lowQuality" })).toEqual([{ outcome: "lowQuality" }]);
@@ -140,8 +138,7 @@ describe("buildWhereClause: outcome", () => {
 });
 
 describe("buildWhereClause: statuses", () => {
-  const clauses = (filter: TResponseFilterCriteria) =>
-    buildWhereClause(survey, filter).AND as Prisma.ResponseWhereInput[];
+  const clauses = (filter: TResponseFilterCriteria) => buildWhereClause(survey, filter).AND;
 
   test("several statuses match a response that is in any of them (ENG-7078)", () => {
     expect(clauses({ statuses: ["complete", "lowQuality"] })).toEqual([

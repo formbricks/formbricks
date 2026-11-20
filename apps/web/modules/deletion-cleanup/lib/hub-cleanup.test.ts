@@ -134,7 +134,7 @@ describe("deleteHubRecords", () => {
     vi.mocked(listFeedbackRecords).mockResolvedValue({
       data: null,
       error: { status: 500, message: "boom", detail: "" },
-    } as never);
+    });
     await expect(deleteHubRecords({ tenantIds: ["dir-a"], surveyId }, budget())).resolves.toEqual({
       status: "failed",
       error: "hubList:500",
@@ -142,7 +142,7 @@ describe("deleteHubRecords", () => {
   });
 
   test("names an unconfigured Hub, so the row waits rather than reading as an outage", async () => {
-    vi.mocked(listFeedbackRecords).mockResolvedValue({ data: null, error: { ...NO_CONFIG_ERROR } } as never);
+    vi.mocked(listFeedbackRecords).mockResolvedValue({ data: null, error: { ...NO_CONFIG_ERROR } });
 
     await expect(deleteHubRecords({ tenantIds: ["dir-a"], surveyId }, budget())).resolves.toEqual({
       status: "failed",

@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  useTransition,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { ActionClass, Language, OrganizationRole } from "@formbricks/database/prisma-browser";
@@ -68,6 +69,7 @@ import {
 } from "@/modules/survey/visibility/lib/state";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
+import type { TSharedSegmentEdit } from "../lib/shared-segment-edit";
 
 // How long the preview trails the editor. Every preview render re-mounts the whole survey bundle, so
 // following each keystroke made typing lag on large surveys (ENG-991).
@@ -206,6 +208,8 @@ export const SurveyEditor = ({
   // Set when a save or publish is blocked by a missing trigger, so the Survey Trigger card can say
   // so (ENG-2581). The card itself stops showing the error once the survey has a trigger.
   const [hasTriggerError, setHasTriggerError] = useState(false);
+  // Held here rather than in the targeting card, which unmounts with the Settings tab (ENG-6957).
+  const [sharedSegmentEdit, setSharedSegmentEdit] = useState<TSharedSegmentEdit | null>(null);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
 
@@ -222,11 +226,14 @@ export const SurveyEditor = ({
   const visibilityGate = isVisibilityTurnedOff
     ? withoutVisibilityControls(surveyVisibilityGate)
     : surveyVisibilityGate;
-  const handleVisibilityChanged = useCallback(() => router.refresh(), [router]);
+  // The menu bar decides from `visibility` whether Activate asks "Who can view this survey?", so it must
+  // not act on the value from before a change: Activate is disabled until the refreshed route commits.
+  const [isVisibilityRefreshing, startVisibilityRefresh] = useTransition();
+  const handleVisibilityChanged = useCallback(() => startVisibilityRefresh(() => router.refresh()), [router]);
   // Stable: the Collaborate modal runs it from an effect.
   const handleVisibilityNotEnabled = useCallback(() => {
     setIsVisibilityTurnedOff(true);
-    router.refresh();
+    startVisibilityRefresh(() => router.refresh());
   }, [router]);
 
   // `isFollowUpsTabVisible` tracks the server `survey` prop, which a manual save refreshes
@@ -378,12 +385,14 @@ export const SurveyEditor = ({
         isStorageConfigured={isStorageConfigured}
         visibilityGate={visibilityGate}
         effectiveVisibility={visibility}
+        isVisibilityRefreshing={isVisibilityRefreshing}
         onVisibilityChanged={handleVisibilityChanged}
         onVisibilityNotEnabled={handleVisibilityNotEnabled}
         surveyAccess={surveyAccess}
         ownerName={ownerName}
         customCssValidationStatus={surveyCustomCssValidation.status}
         isOpenedByCreative={linkedCreatives.length > 0}
+        sharedSegmentEdit={sharedSegmentEdit}
       />
       {showRestrictedBanner({
         enforced: visibilityGate.enforced,
@@ -498,6 +507,8 @@ export const SurveyEditor = ({
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
               hasTriggerError={hasTriggerError}
               linkedCreatives={linkedCreatives}
+              sharedSegmentEdit={sharedSegmentEdit}
+              setSharedSegmentEdit={setSharedSegmentEdit}
             />
           )}
 

@@ -17,6 +17,9 @@ const mocks = vi.hoisted(() => ({
   lockUserActiveState: vi.fn(),
   updateInvite: vi.fn(),
   updateMembership: vi.fn(),
+  updateMembershipInTransaction: vi.fn(),
+  projectMembershipRoleChange: vi.fn(),
+  finishRevokedMcpGrants: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({
@@ -71,6 +74,12 @@ vi.mock("@/modules/ee/role-management/lib/invite", () => ({
 
 vi.mock("@/modules/ee/role-management/lib/membership", () => ({
   updateMembership: mocks.updateMembership,
+  updateMembershipInTransaction: mocks.updateMembershipInTransaction,
+  projectMembershipRoleChange: mocks.projectMembershipRoleChange,
+}));
+
+vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({
+  finishRevokedMcpGrants: mocks.finishRevokedMcpGrants,
 }));
 
 vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({
@@ -119,6 +128,13 @@ describe("updateMembershipAction", () => {
     mocks.updateMembership.mockImplementation(
       async (userId: string, _orgId: string, data: { role: string }) => membership(userId, data.role)
     );
+    mocks.updateMembershipInTransaction.mockImplementation(
+      async (_tx: unknown, userId: string, _orgId: string, data: { role: string }) => ({
+        membership: membership(userId, data.role),
+        grantAudits: [],
+        affectedTeamIds: ["team-1"],
+      })
+    );
   });
 
   test("rejects demoting the last owner of the organization", async () => {
@@ -127,27 +143,84 @@ describe("updateMembershipAction", () => {
     const rejection = callUpdateMembership("member");
     await expect(rejection).rejects.toBeInstanceOf(ValidationError);
     await expect(rejection).rejects.toThrow("You cannot demote the last owner of the organization");
-    expect(mocks.updateMembership).not.toHaveBeenCalled();
+    expect(mocks.updateMembershipInTransaction).not.toHaveBeenCalled();
+    expect(mocks.finishRevokedMcpGrants).not.toHaveBeenCalled();
+    expect(mocks.projectMembershipRoleChange).not.toHaveBeenCalled();
+  });
+
+  test("projects the demotion to SpiceDB after the commit, not through the outbox alone", async () => {
+    let committed = false;
+    mocks.runOwnerGuardedTransaction.mockImplementation(
+      async (_organizationId: string, _userId: string, change: (tx: unknown) => Promise<unknown>) => {
+        const result = await change({ stand: "tx" });
+        committed = true;
+        return result;
+      }
+    );
+    mocks.projectMembershipRoleChange.mockImplementation(async () => {
+      expect(committed).toBe(true);
+    });
+
+    await expect(callUpdateMembership("member")).resolves.toMatchObject({ role: "member" });
+    expect(mocks.projectMembershipRoleChange).toHaveBeenCalledTimes(1);
+    expect(mocks.projectMembershipRoleChange).toHaveBeenCalledWith(organizationId, targetUserId, ["team-1"]);
+  });
+
+  test("projects the demotion before finishing the grants it ended, so a failure there can't skip it", async () => {
+    const failure = new Error("audit down");
+    mocks.finishRevokedMcpGrants.mockRejectedValue(failure);
+
+    await expect(callUpdateMembership("member")).rejects.toBe(failure);
+    expect(mocks.projectMembershipRoleChange).toHaveBeenCalledWith(organizationId, targetUserId, ["team-1"]);
+    expect(mocks.projectMembershipRoleChange.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.finishRevokedMcpGrants.mock.invocationCallOrder[0]
+    );
   });
 
   test("demotes an owner under the owners' lock when the organization has another owner", async () => {
     await expect(callUpdateMembership("member")).resolves.toMatchObject({ role: "member" });
+    // A demotion can end the user's MCP grants, which may wait on a reconciling pass: the Revoke timeout.
     expect(mocks.runOwnerGuardedTransaction).toHaveBeenCalledWith(
       organizationId,
       targetUserId,
-      expect.any(Function)
+      expect.any(Function),
+      { timeout: 35_000 }
     );
-    expect(mocks.updateMembership).toHaveBeenCalledWith(
+    expect(mocks.updateMembershipInTransaction).toHaveBeenCalledWith(
+      { stand: "tx" },
       targetUserId,
       organizationId,
-      { role: "member" },
-      { stand: "tx" }
+      { role: "member" }
     );
     // The user's row first, so a demotion to Dashboard viewer sees a concurrent removal elsewhere.
     expect(mocks.lockUserActiveState).toHaveBeenCalledWith({ stand: "tx" }, targetUserId);
     expect(mocks.lockUserActiveState.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.updateMembership.mock.invocationCallOrder[0]
+      mocks.updateMembershipInTransaction.mock.invocationCallOrder[0]
     );
+  });
+
+  test("audits the grants a demotion ended after the commit, as the user who made it, from the attempt that committed", async () => {
+    const firstAttempt = [{ action: "deleted", before: { id: "grant-first-attempt" }, after: null }];
+    const committedAttempt = [{ action: "deleted", before: { id: "grant-1" }, after: null }];
+    mocks.updateMembershipInTransaction
+      .mockResolvedValueOnce({ membership: membership(targetUserId, "member"), grantAudits: firstAttempt })
+      .mockResolvedValueOnce({
+        membership: membership(targetUserId, "member"),
+        grantAudits: committedAttempt,
+      });
+    // The guard aborts the first attempt (a deadlock) and runs the change again.
+    mocks.runOwnerGuardedTransaction.mockImplementation(
+      async (_organizationId: string, _userId: string, change: (tx: unknown) => Promise<unknown>) => {
+        await change({ stand: "tx" });
+        return change({ stand: "tx" });
+      }
+    );
+
+    await expect(callUpdateMembership("member")).resolves.toMatchObject({ role: "member" });
+    expect(mocks.finishRevokedMcpGrants).toHaveBeenCalledTimes(1);
+    expect(mocks.finishRevokedMcpGrants).toHaveBeenCalledWith(committedAttempt, {
+      actorUserId: currentUserId,
+    });
   });
 
   test("changes a non-owner's role outside any transaction, as before", async () => {
@@ -158,7 +231,12 @@ describe("updateMembershipAction", () => {
     await expect(callUpdateMembership("manager")).resolves.toMatchObject({ role: "manager" });
     expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
     // No transaction client: updateMembership reconciles SpiceDB right away.
-    expect(mocks.updateMembership).toHaveBeenCalledWith(targetUserId, organizationId, { role: "manager" });
+    expect(mocks.updateMembership).toHaveBeenCalledWith(
+      targetUserId,
+      organizationId,
+      { role: "manager" },
+      currentUserId
+    );
   });
 
   test("passes any other failure of the demotion through unchanged", async () => {
@@ -166,6 +244,7 @@ describe("updateMembershipAction", () => {
     mocks.runOwnerGuardedTransaction.mockRejectedValue(failure);
 
     await expect(callUpdateMembership("member")).rejects.toBe(failure);
+    expect(mocks.projectMembershipRoleChange).not.toHaveBeenCalled();
   });
 
   test("allows keeping an owner's role unchanged, outside any transaction", async () => {

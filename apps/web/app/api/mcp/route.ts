@@ -50,7 +50,7 @@ function validateMcpBodySize(request: NextRequest): Response | null {
 
 function jsonRpcIdOf(message: unknown): unknown {
   if (typeof message === "object" && message !== null && !Array.isArray(message) && "id" in message) {
-    return (message as { id: unknown }).id;
+    return message.id;
   }
   return null;
 }

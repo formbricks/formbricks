@@ -77,12 +77,14 @@ export const lockOwnersAndCheckRemoval = async (
  * out of the organization. Pass the member it may remove, or `null` when the change cannot remove an owner:
  * then no lock is taken. Run again when Postgres aborts it over a deadlock (with a path that takes the user
  * row first, such as account deletion), so keep `transaction` idempotent: every attempt re-reads and
- * re-writes from scratch.
+ * re-writes from scratch. `options.timeout` replaces the app client's transaction budget, for a change
+ * that can wait on locks held longer (ending a user's MCP grants: `MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS`).
  */
 export const runOwnerGuardedTransaction = <T>(
   organizationId: string,
   removedUserId: string | null,
-  transaction: (tx: Prisma.TransactionClient) => Promise<T>
+  transaction: (tx: Prisma.TransactionClient) => Promise<T>,
+  options?: { timeout: number }
 ): Promise<T> =>
   retryOnTransactionConflict(() =>
     prisma.$transaction(async (tx) => {
@@ -90,5 +92,5 @@ export const runOwnerGuardedTransaction = <T>(
         throw new LastActiveOwnerError();
       }
       return transaction(tx);
-    })
+    }, options)
   );

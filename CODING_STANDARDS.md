@@ -14,7 +14,7 @@ generated API drift. `packages/config-oxlint/` and each workspace's `oxlint.conf
 and exceptions. A warning is still actionable when CI does not block it.
 
 Static `unstable_cache` imports from `next/cache` are lint errors, and so are React component props that
-are not read-only (`react-js/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
+are not read-only (`formbricks/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
 permission maps (or caller inheritance for workflows triggered only by `workflow_call`) and runner
 hardening first for literal `ubuntu-*` runner labels, including version and architecture pins. Reviewers
 still judge whether requested token permissions are minimal and whether runner choices outside this
@@ -71,6 +71,9 @@ These remain review checks until their enforcement handles the repository's exis
   tool that writes) needs it: it gains its OpenAPI contract and stability promise, and the app moves to the
   public route rather than keeping an internal twin. A feature built for external callers from day one
   starts public, as dashboards did ([ADR-0002](docs/adr/0002-the-app-uses-the-public-dashboard-api.md)).
+- A public `/api/v3` operation ships with its MCP tool in the same PR, so agents can do what API keys can.
+  Exceptions are allowed, such as hard deletes, when the PR names them and says why. "Adding a tool" in
+  `docs/development/technical-handbook/mcp-server.mdx` covers the tool side.
 - The route framework is in `AGENTS.md` under "Architecture & Patterns" and "API v3".
 - Paths name resources, and each response uses the method and status code HTTP defines for the case. Writes
   that can race take the `updatedAt` compare-and-set (409 on mismatch); writes a retry could repeat are
@@ -273,6 +276,9 @@ Do:
   the code they exercise (`utility.test.ts`), and mock at module boundaries with `vi.mock`, reusing a
   shared `__mocks__` module where one exists (`apps/web/lib/__mocks__/database.ts`) rather than
   redefining it inline.
+- A unit test that runs an injected `<script>` under jsdom follows
+  `apps/web/modules/ui/components/survey/load-surveys-script.test.ts`: the script runs on jsdom's own
+  window, not the test's `window`, and its errors fail the run unless the test listens for them.
 - For API v3 changes, check that the spec, generated schemas, and route refinements agree. Review
   contract coverage against real fixtures using `docs/api-v3-reference/contract-tests/README.md`;
   generation and adoption procedures live in
@@ -289,7 +295,9 @@ Do not:
 - Do not write component or UI unit tests for `.tsx` files. **This is not an instruction to write an E2E
   test instead**: the absence of a component unit test creates no coverage obligation. If a component holds
   logic worth proving, lift that logic into a `.ts` module and unit-test it there; the rendering is
-  exercised incidentally by the feature journeys that already cross it.
+  exercised incidentally by the feature journeys that already cross it. When the lift serves a bug fix, make
+  it a commit of its own that keeps the behaviour unchanged, and fix in the next commit: `unit (red on main)`
+  then means red on the lift commit, and the Coverage row names it.
 - Do not E2E a component. A language selector, a breadcrumb, a sidebar's link list, an ARIA attribute on
   one widget, a keystroke inside one editor, a field's validation message, a search box filtering a list —
   none of these justify a browser, a login, and a seeded tenant.
@@ -304,6 +312,16 @@ Do not:
 - Do not create mega or flaky E2E tests; avoid timing hacks (`waitForTimeout`, `slowMo`) and unstable
   dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
   tagging a spec does not make its cost go away.
+- Do not fix a flaky test by hiding it; fix its cause. A race a user could hit gets a product fix and the
+  test stays as it is. A race in the test's own setup waits on a real signal: a response, a URL, an
+  element's state, or `expect(...).toPass()` around an action that is safe to repeat. A timing assertion
+  counts the work or uses a fake clock instead of measuring wall time, unless wall time is itself the
+  property under test (a timing side channel). Such a test is tagged `@timing`, so it runs after the
+  parallel suite in the `chromium-timing` project, and asserts on the medians of many interleaved
+  samples, never on one measurement: the `@timing` test in `security.spec.ts` is the model. That project
+  runs one worker, so `@timing` tests never overlap. Hiding means a sleep, a longer timeout or looser
+  threshold, more `retries` (in `playwright.config.ts` or `test.describe.configure`), or quarantine
+  (`test.skip`, `test.fixme`).
 
 ## Survey Bundles
 

@@ -28,7 +28,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
     handler: async ({ authentication, parsedInput: { query, params } }) => {
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Read
         ))
@@ -39,7 +39,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
         });
       }
 
-      const res = await getTeams(authentication.organizationId, query!);
+      const res = await getTeams(authentication.organizationId, query);
 
       if (!res.ok) {
         return handleApiError(request, res.error);
@@ -61,7 +61,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
     handler: async ({ authentication, parsedInput: { body, params }, auditLog }) => {
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -91,7 +91,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         );
       }
 
-      const createTeamResult = await createTeam(body!, authentication.organizationId);
+      const createTeamResult = await createTeam(body, authentication.organizationId);
       if (!createTeamResult.ok) {
         return handleApiError(request, createTeamResult.error, auditLog);
       }

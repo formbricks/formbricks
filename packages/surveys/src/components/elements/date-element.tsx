@@ -35,7 +35,7 @@ export function DateElement({
   surveyLanguages,
   dir = "auto",
 }: Readonly<DateElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
   const { t } = useTranslation();

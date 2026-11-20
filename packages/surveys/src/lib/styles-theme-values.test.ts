@@ -66,7 +66,7 @@ describe("theme values in generated CSS", () => {
       buttonFontWeight: "600; color: red",
       inputShadow: "0 0 red; background-image: url(https://evil.example/s)",
       progressTrackHeight: "8px</style><script>alert(1)</script>",
-    } as Partial<TWorkspaceStyling>);
+    });
 
     expect(css).not.toMatch(/evil\.example|display: none|position: fixed|<\/style|<script|color: red/);
     // Each unsafe value behaves as if it were unset: the defaults apply and no override rule is emitted.
@@ -85,7 +85,7 @@ describe("theme values in generated CSS", () => {
       allowStyleOverwrite: true,
       brandColor: { light: "#1f5f8b" },
       cardBackgroundColor: { light: "#ffffff", dark: "#000;x:y" },
-    } as TWorkspaceStyling);
+    });
     expect(css).not.toContain("x:y");
     expect(css).toMatch(/--fb-survey-background-color: #[0-9a-f]{6};/);
   });

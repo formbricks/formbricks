@@ -73,7 +73,7 @@ describe("response outcome and the Hub (real Postgres, mocked Hub client)", () =
       const records = transformResponseToFeedbackRecords(
         mapResponsePrismaToResponse(row),
         survey,
-        mappings as never,
+        mappings,
         directoryId
       );
       await reconcileFeedbackRecords(records, directoryId);
@@ -89,9 +89,9 @@ describe("response outcome and the Hub (real Postgres, mocked Hub client)", () =
     vi.clearAllMocks();
     held.clear();
     hubDown = false;
-    vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => ({
+    vi.mocked(createFeedbackRecordsBatch).mockImplementation(async (inputs: unknown[]) => ({
       results: inputs.map(() => (hubDown ? hubError(503) : hubOk({ id: "created" }))),
-    })) as never);
+    }));
     vi.mocked(listFeedbackRecords).mockImplementation((async (params: {
       tenant_id: string;
       source_id: string[];
@@ -112,11 +112,11 @@ describe("response outcome and the Hub (real Postgres, mocked Hub client)", () =
                 submission_id: id.split(":")[0],
               })),
           })) as never);
-    vi.mocked(deleteFeedbackRecord).mockImplementation((async (id: string) => {
+    vi.mocked(deleteFeedbackRecord).mockImplementation(async (id: string) => {
       if (hubDown) return hubError(503);
       held.delete(id);
       return hubOk({ deleted: true });
-    }) as never);
+    });
     vi.mocked(updateFeedbackRecord).mockResolvedValue(hubOk({ id: "existing" }));
     await resetDb();
 
@@ -253,9 +253,9 @@ describe("response outcome and the Hub (real Postgres, mocked Hub client)", () =
     await mark([r1], "lowQuality");
     vi.mocked(listFeedbackRecords).mockClear();
     const logged = vi.spyOn(logger, "error");
-    vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => ({
+    vi.mocked(createFeedbackRecordsBatch).mockImplementation(async (inputs: unknown[]) => ({
       results: inputs.map(() => hubError(409, "tenant_write_conflict")),
-    })) as never);
+    }));
 
     await mark([r1], null);
 

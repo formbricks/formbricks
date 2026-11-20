@@ -26,6 +26,11 @@ import {
   resetSegmentFiltersAction,
   updateSegmentAction,
 } from "@/modules/ee/contacts/segments/actions";
+import {
+  type TSharedSegmentEdit,
+  keepSharedSegmentEditFor,
+  startSharedSegmentEdit,
+} from "@/modules/survey/editor/lib/shared-segment-edit";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -42,7 +47,35 @@ interface TargetingCardProps {
   readonly contactAttributeKeys: TContactAttributeKey[];
   readonly segments: TSegment[];
   readonly initialSegment?: TSegment;
+  /**
+   * The shared-segment edit open in this card (ENG-6957). A survey save does not write a shared segment,
+   * so the editor stops Save and Publish while it holds unsaved filters, until "Save changes" or Cancel.
+   */
+  readonly sharedSegmentEdit: TSharedSegmentEdit | null;
+  readonly setSharedSegmentEdit: React.Dispatch<React.SetStateAction<TSharedSegmentEdit | null>>;
 }
+
+/**
+ * The card's open state, adjusted during render from the first one: a segment with filters expands
+ * it, and a link survey, which cannot target, collapses it.
+ */
+const useTargetingCardOpen = (segment: TSegment | null, surveyType: TSurvey["type"]) => {
+  const [open, setOpen] = useState(false);
+
+  const [seenSegment, setSeenSegment] = useState<TSegment | null | undefined>(undefined);
+  if (segment !== seenSegment) {
+    setSeenSegment(segment);
+    if (segment && segment.filters.length > 0) setOpen(true);
+  }
+
+  const [seenSurveyType, setSeenSurveyType] = useState<TSurvey["type"] | null>(null);
+  if (surveyType !== seenSurveyType) {
+    setSeenSurveyType(surveyType);
+    if (surveyType === "link") setOpen(false);
+  }
+
+  return [open, setOpen] as const;
+};
 
 export function TargetingCard({
   localSurvey,
@@ -50,20 +83,26 @@ export function TargetingCard({
   contactAttributeKeys,
   segments,
   initialSegment,
+  sharedSegmentEdit,
+  setSharedSegmentEdit,
 }: TargetingCardProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
-  const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [saveAsNewSegmentModalOpen, setSaveAsNewSegmentModalOpen] = useState(false);
   const [resetAllFiltersModalOpen, setResetAllFiltersModalOpen] = useState(false);
   const [loadSegmentModalOpen, setLoadSegmentModalOpen] = useState(false);
-  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(Boolean(localSurvey.segment?.isPrivate));
-  const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(true);
+  // A shared-segment edit left open when the Settings tab unmounted the card opens again with it.
+  const isReopeningSharedEdit =
+    !!localSurvey.segment && sharedSegmentEdit?.segmentId === localSurvey.segment.id;
+  const [isSegmentEditorOpen, setIsSegmentEditorOpen] = useState(
+    Boolean(localSurvey.segment?.isPrivate) || isReopeningSharedEdit
+  );
+  const [segmentEditorViewOnly, setSegmentEditorViewOnly] = useState(!isReopeningSharedEdit);
 
   useEffect(() => {
     setLocalSurvey((localSurveyOld) => ({
@@ -71,6 +110,11 @@ export function TargetingCard({
       segment,
     }));
   }, [setLocalSurvey, segment]);
+
+  // An edit of another segment ends once the survey is on a different one (Load, Clone, Reset).
+  useEffect(() => {
+    setSharedSegmentEdit((edit) => keepSharedSegmentEditFor(edit, segment?.id));
+  }, [segment?.id, setSharedSegmentEdit]);
 
   const isSegmentUsedInOtherSurveys = useMemo(
     () => (localSurvey.segment ? localSurvey.segment.surveys.length > 1 : false),
@@ -93,17 +137,7 @@ export function TargetingCard({
     }
   };
 
-  useEffect(() => {
-    if (segment && segment.filters.length > 0) {
-      setOpen(true);
-    }
-  }, [segment, segment?.filters.length]);
-
-  useEffect(() => {
-    if (localSurvey.type === "link") {
-      setOpen(false);
-    }
-  }, [localSurvey.type]);
+  const [open, setOpen] = useTargetingCardOpen(segment, localSurvey.type);
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedSegment = structuredClone(segment);
@@ -144,6 +178,7 @@ export function TargetingCard({
       }
       toast.success(t("workspace.segments.segment_saved_successfully"));
 
+      setSharedSegmentEdit(null);
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
     } catch (err) {
@@ -205,7 +240,7 @@ export function TargetingCard({
         {isSegmentEditorOpen && !segment?.isPrivate ? (
           <Button
             onClick={() => {
-              handleSaveSegment({ filters: segment?.filters ?? [] });
+              void handleSaveSegment({ filters: segment?.filters ?? [] });
             }}
             size="sm"
             variant="secondary">
@@ -220,9 +255,14 @@ export function TargetingCard({
               setIsSegmentEditorOpen(false);
               setSegmentEditorViewOnly(true);
 
-              if (initialSegment) {
+              // Back to the filters as stored when the edit opened or was last saved: `initialSegment`
+              // is the page's copy, which an earlier "Save changes" leaves behind.
+              if (segment && sharedSegmentEdit?.segmentId === segment.id) {
+                setSegment({ ...segment, filters: sharedSegmentEdit.savedFilters });
+              } else if (initialSegment) {
                 setSegment(initialSegment);
               }
+              setSharedSegmentEdit(null);
             }}
             size="sm"
             variant="ghost">
@@ -304,6 +344,7 @@ export function TargetingCard({
             onClick={() => {
               setIsSegmentEditorOpen(true);
               setSegmentEditorViewOnly(false);
+              setSharedSegmentEdit((edit) => startSharedSegmentEdit(edit, segment));
             }}
             size="sm"
             variant={isSegmentUsedInOtherSurveys ? "ghost" : "secondary"}>
@@ -431,7 +472,7 @@ export function TargetingCard({
         </div>
 
         <div>
-          <Alert className="flex items-center rounded-none bg-slate-50" role="status">
+          <Alert className="flex items-center rounded-none bg-slate-50" alertRole="status">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
                 <Trans

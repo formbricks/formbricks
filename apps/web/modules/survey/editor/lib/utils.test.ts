@@ -101,7 +101,7 @@ const survey = (embeddedFields: TLinkedEmbeddedField[] = []): TSurvey =>
 const condition = (
   leftOperand: TSingleCondition["leftOperand"],
   operator: TSingleCondition["operator"] = "equals"
-): TSingleCondition => ({ id: "c1", leftOperand, operator }) as TSingleCondition;
+): TSingleCondition => ({ id: "c1", leftOperand, operator });
 
 const groupLabels = (groups: TComboboxGroupedOption[]): string[] => groups.map((group) => group.label);
 
@@ -942,9 +942,7 @@ describe("ranking conditions in the editor (T21, ENG-6937)", () => {
     expect(operators).toEqual(expect.arrayContaining(["includesOneOf", "includesAllOf"]));
 
     const props = getMatchValueProps(rankedCondition, surveyFlowFixture, t);
-    const values = (props.options as TComboboxGroupedOption[]).flatMap((group) =>
-      group.options.map((option) => option.value)
-    );
+    const values = props.options.flatMap((group) => group.options.map((option) => option.value));
     expect(values).toEqual(["netflix", "disney", "prime"]);
   });
 });

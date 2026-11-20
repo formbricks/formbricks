@@ -40,13 +40,32 @@ import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./bette
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
+import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
+import { revokeOAuthConsentBeforeHandler } from "./mcp-grant-revocation";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
-import { revokeOAuthConsentBeforeHandler } from "./oauth-grant-revocation";
+import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
+import { recordOAuthConsentWrites } from "./oauth-consent-writes";
+import { boundOAuthRecordsBeforeHandler } from "./oauth-record-bounds";
+import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
+import { createTemplateKeyedRateLimitStorage } from "./rate-limit-template-key";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
+
+/**
+ * The path each Better Auth endpoint DECLARES (better-call stamps every endpoint function with it), so
+ * `/reset-password/:token` and not a request's concrete path. Read by the rate limiter's template keys
+ * (ENG-7399) and the Sentry path label.
+ *
+ * Call it only once `auth` exists: the limiter calls it on its first request, which can only be an HTTP one
+ * (Better Auth runs the limiter in its router, never for in-process `auth.api` calls). The explicit return
+ * type keeps TypeScript from inferring `auth`'s type from its own options, which read this. `endpoint?.path`:
+ * a nullish registry entry must not throw and take down every auth request.
+ */
+export const getDeclaredAuthPaths = (): unknown[] =>
+  Object.values(auth.api).map((endpoint) => endpoint?.path);
 
 /**
  * Lifetime of the signed OAuth `state` cookie, matched to the state it binds to this browser (ENG-3314).
@@ -143,7 +162,9 @@ export const auth = betterAuth({
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
-  database: prismaAdapter(prisma, { provider: "postgresql" }),
+  // Consent writes are recorded per request, so the consent hooks can tell their own write from another
+  // request's (`oauth-consent-writes.ts`).
+  database: recordOAuthConsentWrites(prismaAdapter(prisma, { provider: "postgresql" })),
 
   // Sessions, verification records, and rate-limit counters in Redis (existing infra), shared
   // across instances. Sessions also persist to the DB via session.storeSessionInDatabase below.
@@ -371,6 +392,10 @@ export const auth = betterAuth({
   // recovery rather than a credential failure, so skipping the audit is correct.
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // ENG-6885, ENG-7396: bound what a caller can make Better Auth park in Redis (the OAuth state record
+      // an anonymous sign-in writes, the authorization-code record authorize writes) before anything else
+      // runs. See oauth-record-bounds.ts.
+      boundOAuthRecordsBeforeHandler(ctx);
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
@@ -391,13 +416,24 @@ export const auth = betterAuth({
       // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
       // so only a request every gate above let through can write. See credential-issuer-heal.ts.
       await healCredentialAccountIssuerBeforeHandler(ctx);
+      // ENG-7150: an approval carrying the consent screen's grant must carry a valid one, refused before
+      // the provider writes the consent. See mcp-grant-consent.ts.
+      requireValidMcpGrantOnConsentBeforeHandler(ctx);
+      // ENG-7152: an Allow's consent rows as they are before the provider writes it, so an approval whose
+      // grant can't be saved puts them back and changes nothing. Ahead of the viewer trim, which returns
+      // early. See oauth-consent-change.ts.
+      await snapshotConsentBeforeApprovalHandler(ctx);
       // ADR-0025 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
       const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);
       if (viewerConsent) return viewerConsent;
+      // A sign-in code issued before a revocation of its user and client is refused at the exchange, which
+      // would otherwise issue tokens again, and a new grant to a `skipConsent` client. See
+      // oauth-revocation-marker.ts.
+      await refuseCodeIssuedBeforeRevocationBeforeHandler(ctx);
       // ENG-2499: revoking an app deletes its consent AND revokes its tokens, in one transaction. Returns
       // a response only for /oauth2/delete-consent, short-circuiting the upstream delete, which would
-      // leave the tokens live. See oauth-grant-revocation.ts.
+      // leave the tokens live. See mcp-grant-revocation.ts.
       return await revokeOAuthConsentBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),
@@ -409,8 +445,14 @@ export const auth = betterAuth({
     // (the same app-level toggle the legacy limiter used); the integration harness sets it to skip limits.
     enabled: !RATE_LIMITING_DISABLED,
     // Redis-backed so counters are shared across instances (the in-memory default is per-instance
-    // and resets on deploy — unsuitable for multi-instance prod).
-    storage: "secondary-storage",
+    // and resets on deploy — unsuitable for multi-instance prod). Better Auth's own `secondary-storage`
+    // counting, keyed per endpoint template instead of per raw path (ENG-7399): otherwise every distinct
+    // junk path or reset token is a fresh counter, so the limit never trips and each request parks a key
+    // the size of its URL.
+    customStorage: createTemplateKeyedRateLimitStorage({
+      declaredPaths: getDeclaredAuthPaths,
+      increment: redisSecondaryStorage.increment,
+    }),
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
       "/reset-password": { window: 60, max: 5 },

@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
 import { fitCell, toReadableText, toXmlSafeText } from "./cell-text";
 
@@ -31,7 +30,7 @@ describe("toReadableText", () => {
   test("shows a recall token as @Label, with the label in the column's language", () => {
     const text = "<p>You picked #recall:single/fallback:something# today</p>";
     const read = (languageCode: string) =>
-      toReadableText({ text, isRichText: true, survey: EVERY_TEXT_SURVEY as TSurvey, languageCode });
+      toReadableText({ text, isRichText: true, survey: EVERY_TEXT_SURVEY, languageCode });
 
     expect(read("default")).toBe("You picked @Pick one today");
     expect(read("de")).toBe("You picked @Wähle eins today");

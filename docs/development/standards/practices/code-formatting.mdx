@@ -141,26 +141,29 @@ The hook also lints the staged files with oxlint (`scripts/lint-staged-oxlint.mj
 | `@formbricks/config-oxlint/react-hooks` | React packages that only need the hooks rules |
 | `@formbricks/config-oxlint/next` | Next.js applications |
 
-Every tier builds on `@formbricks/config-oxlint/base`, which holds the shared turbo, vitest and unused-vars conventions and the `compose()` helper that merges config fragments. A package with its own rules composes them after the tier:
+Every tier builds on `@formbricks/config-oxlint/base`, which holds the shared turbo, vitest and unused-vars conventions, the `compose()` helper that merges config fragments, and `denyWarnings()`. Every config wraps its export in `denyWarnings()`, which raises each warning to an error, so a warning fails lint and CI. A package with its own rules composes them after the tier:
 
 ```typescript
 // packages/<pkg>/oxlint.config.ts
 import { defineConfig } from "oxlint";
+import { denyWarnings } from "@formbricks/config-oxlint/base";
 import library from "@formbricks/config-oxlint/library";
 
-export default defineConfig(library);
+export default defineConfig(denyWarnings(library));
 ```
 
 ```typescript
 // a workspace with its own rules
 import { defineConfig } from "oxlint";
-import { compose } from "@formbricks/config-oxlint/base";
+import { compose, denyWarnings } from "@formbricks/config-oxlint/base";
 import library from "@formbricks/config-oxlint/library";
 
 export default defineConfig(
-  compose(library, {
-    overrides: [{ files: ["**/*.test.ts"], rules: { "typescript/unbound-method": "off" } }],
-  })
+  denyWarnings(
+    compose(library, {
+      overrides: [{ files: ["**/*.test.ts"], rules: { "typescript/unbound-method": "off" } }],
+    })
+  )
 );
 ```
 

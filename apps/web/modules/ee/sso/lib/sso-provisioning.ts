@@ -323,7 +323,7 @@ export const provisionSsoUserMemberships = async ({
   }
 
   // Best-effort analytics + CRM sync, regardless of org assignment (parity with provisionNewSsoUser).
-  createBrevoCustomer({ id: userId, email });
+  void createBrevoCustomer({ id: userId, email });
   // Identify the person before the sign-up capture so `user_signed_up` lands on an identified
   // PostHog person (fires $identify + sets email/name) — parity with the credentials sign-up path.
   identifyPostHogPerson(userId, { email, name });

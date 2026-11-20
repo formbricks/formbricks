@@ -47,8 +47,9 @@ export default defineConfig({
     : [["html", { outputFolder: "playwright-report", open: "never" }]],
   /* Shared settings for all the workspaces below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:3000",
+    /* Base URL to use in actions like `await page.goto('/')`. PLAYWRIGHT_BASE_URL points a local run at a
+       dev server on another port (the app's WEBAPP_URL must match it); CI leaves it unset. */
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -70,14 +71,16 @@ export default defineConfig({
        machine with the parallel suite: with 4 workers on the app's own vCPUs the measurement is
        noise. Depending on "chromium" makes this project start only once that one has finished.
        Dependency projects ignore CLI file and grep filters, so `pnpm test:e2e security.spec.ts` or
-       `--project=chromium-timing` runs the whole chromium project first; add `--no-deps` to run only
-       the timing test. */
+       `--project=chromium-timing` runs the whole chromium project first. To run only the timing test,
+       use `--project=chromium-timing --no-deps`: `--no-deps` alone puts both projects in one phase.
+       One worker, so two @timing tests never run beside each other either. */
     {
       name: "chromium-timing",
       use: { ...devices["Desktop Chrome"] },
       testMatch: "**/*.spec.ts",
       grep: /@timing/,
       dependencies: ["chromium"],
+      workers: 1,
     },
 
     // Resource hints and CSP enforcement differ by browser; run the SDK journey in Firefox too.

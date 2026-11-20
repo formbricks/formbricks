@@ -593,7 +593,7 @@ describe("shared-conditions-factory", () => {
             leftOperand: { value: "matrix-question", type: "element" },
             operator: "equals",
             rightOperand: { value: "x", type: "static" },
-          } as TSingleCondition,
+          },
         ],
       };
       const updated = updater(structuredClone(initial));

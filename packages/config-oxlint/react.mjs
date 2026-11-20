@@ -1,4 +1,4 @@
-import { base, compose, jsPlugins, reactCompilerRulesOptOut, reactSettings } from "./base.mjs";
+import { base, compose, reactSettings } from "./base.mjs";
 import { typeCheckedBaseline } from "./library.mjs";
 import { jsxA11yRecommended, reactHooksRecommended, reactJsxRuntime, reactRecommended } from "./presets.mjs";
 import { a11yParity, sonarParityTyped } from "./sonar-parity.mjs";
@@ -12,14 +12,14 @@ export const react = compose(
   typeCheckedBaseline,
   {
     plugins: ["react", "jsx-a11y"],
-    jsPlugins: [jsPlugins.reactJs],
     env: { browser: true },
     settings: reactSettings,
     rules: {
       ...reactRecommended,
       ...reactJsxRuntime,
-      // Same rule as the `next` tier: component props are read-only.
-      "react-js/prefer-read-only-props": "error",
+      // Same rules as the `next` tier: component props are read-only, and no deprecated lifecycles.
+      "formbricks/prefer-read-only-props": "error",
+      "react/no-unsafe": ["error", { checkAliases: true }],
       // Accessibility rules (parity with the old @vercel/style-guide/react config).
       ...jsxA11yRecommended,
       ...reactHooksRecommended,
@@ -28,7 +28,6 @@ export const react = compose(
     },
   },
   a11yParity(),
-  reactCompilerRulesOptOut,
   sonarParityTyped()
 );
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarIcon, HashIcon, TagIcon, TrashIcon } from "lucide-react";
+import { CalendarIcon, TagIcon, TrashIcon } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -20,7 +20,7 @@ import {
 } from "@/modules/ui/components/select";
 
 type KeyOption = {
-  icon: typeof CalendarIcon | typeof HashIcon | typeof TagIcon;
+  icon: typeof CalendarIcon;
   label: string;
   value: string;
 };

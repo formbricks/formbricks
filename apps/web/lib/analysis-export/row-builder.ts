@@ -538,7 +538,7 @@ const planMatrix = (
     columns,
     fill: (ctx, answer, put) => {
       if (!answer || typeof answer !== "object" || Array.isArray(answer)) return;
-      const record = answer as Record<string, string>;
+      const record = answer;
       const { rows: rowsNotShown, columns: columnsNotShown } = ctx.notShownOptions;
       element.rows.forEach((row, index) => {
         // ENG-6937: a row the respondent was not shown is blank.
@@ -789,7 +789,7 @@ const projectReserved = (
     updatedAt: response.updatedAt ?? response.createdAt,
     variables: response.variables ?? {},
     ttc: response.ttc ?? {},
-    meta: (response.meta ?? {}) as never,
+    meta: response.meta ?? {},
   });
 };
 

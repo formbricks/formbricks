@@ -73,7 +73,7 @@ describe("processSurveySchedulingJob", () => {
         }),
       ] as never)
       .mockResolvedValueOnce([] as never);
-    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 } as never);
+    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 });
 
     await expect(processSurveySchedulingJob({ scope: "global" }, baseContext)).resolves.toBeUndefined();
 
@@ -119,7 +119,7 @@ describe("processSurveySchedulingJob", () => {
       .mockResolvedValueOnce(secondBatch as never)
       .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([] as never);
-    prisma.survey.updateMany.mockResolvedValue({ count: 1 } as never);
+    prisma.survey.updateMany.mockResolvedValue({ count: 1 });
 
     await expect(processSurveySchedulingJob({ scope: "global" }, baseContext)).resolves.toBeUndefined();
 
@@ -148,7 +148,7 @@ describe("processSurveySchedulingJob", () => {
         status: "inProgress",
       }),
     ] as never);
-    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 } as never);
+    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 });
 
     await expect(processSurveySchedulingJob({ scope: "global" }, baseContext)).resolves.toBeUndefined();
 
@@ -195,9 +195,7 @@ describe("processSurveySchedulingJob", () => {
           status: "inProgress",
         }),
       ] as never);
-    prisma.survey.updateMany
-      .mockResolvedValueOnce({ count: 1 } as never)
-      .mockResolvedValueOnce({ count: 1 } as never);
+    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 1 });
 
     await expect(processSurveySchedulingJob({ scope: "global" }, baseContext)).resolves.toBeUndefined();
 
@@ -234,7 +232,7 @@ describe("processSurveySchedulingJob", () => {
         }),
       ] as never)
       .mockResolvedValueOnce([] as never);
-    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 } as never);
+    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 });
     mockQueueAuditEventWithoutRequest.mockRejectedValueOnce(auditError);
 
     await expect(processSurveySchedulingJob({ scope: "global" }, baseContext)).resolves.toBeUndefined();

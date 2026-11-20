@@ -179,11 +179,27 @@ type BaseRecordFields = Pick<
   metadata?: TRecordMetadata;
 };
 
+/**
+ * The response's language as a real language code. Responses in the survey's default language are
+ * stored as "default"; the Hub only translates a record that names its source language, so that
+ * placeholder is resolved to the survey's default language code. A survey with no default language
+ * has nothing to resolve it to, and the field is left out.
+ */
+const resolveRecordLanguage = (
+  responseLanguage: string | null | undefined,
+  surveyLanguages: TSurvey["languages"] | undefined
+): string | undefined => {
+  if (!responseLanguage) return undefined;
+  if (responseLanguage !== "default") return responseLanguage;
+  return surveyLanguages?.find((surveyLanguage) => surveyLanguage.default)?.language.code;
+};
+
 const buildBaseFields = (
   response: TResponse,
-  survey: Pick<TSurvey, "id" | "name" | "type"> & TEmbeddedFieldsSurvey,
+  survey: Pick<TSurvey, "id" | "name" | "type" | "languages"> & TEmbeddedFieldsSurvey,
   tenantId: string
 ): BaseRecordFields => {
+  const language = resolveRecordLanguage(response.language, survey.languages);
   // Both built once per response and shared by every record of the submission (ENG-1554, ENG-3290).
   const embeddedData = buildEmbeddedDataMetadata(response, survey);
   const metadata: TRecordMetadata = {
@@ -199,7 +215,7 @@ const buildBaseFields = (
     tenant_id: tenantId,
     source_id: survey.id,
     source_name: survey.name,
-    ...(response.language && response.language !== "default" ? { language: response.language } : {}),
+    ...(language ? { language } : {}),
     ...(response.contact?.userId ? { user_id: response.contact.userId } : {}),
     // Omitted rather than sent as {}: Hub stores metadata nullable and compares it byte-wise, so an
     // empty object on a record that has none would count as a change and fire a pointless
@@ -232,11 +248,7 @@ const expandMatrixToRecords = (
 
     // Column labels are localized like the row labels — store the label as submitted and
     // attach the column id as stable cross-language identity (ENG-1673).
-    const matchedColumn = normalizeChoiceValue(
-      element.columns,
-      columnLabel as TResponseDataValue,
-      lookupLanguage
-    );
+    const matchedColumn = normalizeChoiceValue(element.columns, columnLabel, lookupLanguage);
     const valueFields = convertValueToHubFields(matchedColumn.value, mapping.hubFieldType);
 
     records.push({

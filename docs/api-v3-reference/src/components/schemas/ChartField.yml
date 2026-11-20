@@ -33,6 +33,9 @@ properties:
       - boolean
   label:
     type: string
+    description: >-
+      Display text. For an embedded-data field, the name the workspace gave the key, or else the key
+      as collected.
     example: "NPS: Score"
   description:
     type:
