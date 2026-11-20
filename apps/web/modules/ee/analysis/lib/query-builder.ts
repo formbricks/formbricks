@@ -10,6 +10,12 @@ import {
   parseAnswerValue,
   toAnswerBuilderField,
 } from "./answer-filter";
+import {
+  NPS_SEGMENT_OPERATOR,
+  findNpsSegment,
+  getNpsSegmentValueKeys,
+  isNpsSegment,
+} from "./question-filter";
 
 export type TFilterFieldType = "string" | "number" | "time";
 
@@ -70,6 +76,16 @@ export interface ChartBuilderState {
  * name the row's question. "Is any of" is an `equals` with several values.
  */
 function buildAnswerFilter(f: FilterRow, questionId: string): TMemberFilter {
+  // An NPS segment (ENG-7323) is the answer rule for its scale points: detractor = 0…6.
+  if (f.operator === NPS_SEGMENT_OPERATOR) {
+    const segment = f.values?.[0];
+    const valueKeys = isNpsSegment(segment) ? getNpsSegmentValueKeys(segment) : [];
+    return {
+      member: ANSWER_MEMBER,
+      operator: "equals",
+      values: valueKeys.map((valueKey) => formatAnswerValue(questionId, valueKey)),
+    };
+  }
   return {
     member: ANSWER_MEMBER,
     operator: f.operator === ANSWER_IS_ANY_OF_OPERATOR ? "equals" : f.operator,
@@ -358,6 +374,36 @@ export function updateFilterRow(nodes: FilterNode[], id: string, updates: Partia
     }
     return updated;
   });
+}
+
+/**
+ * Rows on an NPS question whose values are exactly one segment's scale points, rewritten as that segment
+ * (ENG-7323). The query stores a segment as a plain answer rule, so a reloaded chart comes back as "is any
+ * of 0…6"; the builder knows which questions are NPS only once the dataset's questions load, so it calls
+ * this then. The rewrite compiles to the same query, so it never changes what a chart shows. Nodes are
+ * returned unchanged (same references) where nothing applies.
+ */
+export function normalizeNpsSegmentRows(
+  nodes: FilterNode[],
+  isNpsQuestion: (questionId: string) => boolean
+): FilterNode[] {
+  let changed = false;
+  const next = nodes.map((node): FilterNode => {
+    if (isFilterGroup(node)) {
+      const children = normalizeNpsSegmentRows(node.children, isNpsQuestion);
+      if (children === node.children) return node;
+      changed = true;
+      return { ...node, children };
+    }
+    const questionId = getAnswerBuilderQuestionId(node.field);
+    if (!questionId || !isNpsQuestion(questionId)) return node;
+    if (node.operator !== ANSWER_IS_ANY_OF_OPERATOR && node.operator !== "equals") return node;
+    const segment = node.values ? findNpsSegment(node.values) : null;
+    if (!segment) return node;
+    changed = true;
+    return { ...node, operator: NPS_SEGMENT_OPERATOR, values: [segment] };
+  });
+  return changed ? next : nodes;
 }
 
 /** Flips the AND/OR of the group with `id`. */

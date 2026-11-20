@@ -12,6 +12,8 @@ import {
   getFilterFieldOptions,
   getFilterFieldType,
   getFilterOperatorLabel,
+  getNpsSegmentOptions,
+  getQuestionValueOptions,
   toConditionGroup,
   toFilterRowUpdates,
 } from "@/modules/ee/analysis/charts/lib/filter-conditions";
@@ -22,11 +24,17 @@ import {
   type FilterRow,
   duplicateFilterNode,
   insertFilterNodeAfter,
+  normalizeNpsSegmentRows,
   removeFilterNode,
   toggleFilterGroupLogic,
   updateFilterRow,
   wrapFilterNodeInGroup,
 } from "@/modules/ee/analysis/lib/query-builder";
+import {
+  NPS_SEGMENT_OPERATOR,
+  QUESTION_ID_MEMBER,
+  isNpsAnswerQuestion,
+} from "@/modules/ee/analysis/lib/question-filter";
 import {
   EMOTIONS_DIMENSION_ID,
   VALUE_BAND_DIMENSION_ID,
@@ -63,6 +71,8 @@ const RANGE_OPERATORS = new Set(["gt", "gte", "lt", "lte"]);
 const isFixedValueBandCondition = (field: string, operator: string): boolean =>
   field === VALUE_BAND_DIMENSION_ID && (operator === "equals" || operator === "notEquals");
 
+const isExactMatchOperator = (operator: string): boolean => operator === "equals" || operator === "notEquals";
+
 /**
  * Chart filters drawn with the same `ConditionsEditor` as survey logic and quotas: connector
  * gutter, per-row menu (add below, remove, duplicate, create group), nested groups. Only the value
@@ -78,6 +88,18 @@ export function FiltersPanel({
   datasetFields = { embeddedFields: [], answerQuestions: [] },
 }: Readonly<FiltersPanelProps>) {
   const { t } = useTranslation();
+  const questions = datasetFields.questions ?? [];
+
+  // A saved NPS segment comes back from the query as "is any of 0…6"; once the dataset's questions say
+  // which are NPS, it is shown — and edited — as the segment again. Same query either way (ENG-7323).
+  const npsQuestionIds = new Set(
+    datasetFields.answerQuestions.filter(isNpsAnswerQuestion).map((question) => question.id)
+  );
+  const shownFilters = normalizeNpsSegmentRows(filters, (questionId) => npsQuestionIds.has(questionId));
+
+  // A question filter picks from the dataset's questions while it tests one exact id (ENG-7323).
+  const isQuestionPick = (field: string, operator: string) =>
+    field === QUESTION_ID_MEMBER && isExactMatchOperator(operator) && questions.length > 0;
 
   const answerQuestionOf = (field: string) => {
     const questionId = getAnswerBuilderQuestionId(field);
@@ -87,7 +109,7 @@ export function FiltersPanel({
   };
 
   const updateRow = (id: string, updates: Partial<FilterRow>) =>
-    onFiltersChange(updateFilterRow(filters, id, updates));
+    onFiltersChange(updateFilterRow(shownFilters, id, updates));
 
   // One option group per fixed-vocabulary dimension, labelled with the dimension's own name.
   const fixedVocabularyGroup = (dimensionId: string, values: readonly string[]) => ({
@@ -122,6 +144,11 @@ export function FiltersPanel({
 
     // An answer rule picks from its question's options in the editor's combobox (`getValueProps`).
     if (getAnswerBuilderQuestionId(field)) {
+      return undefined;
+    }
+
+    // A question filter picks the question by label in the editor's combobox (`getValueProps`).
+    if (isQuestionPick(field, operator)) {
       return undefined;
     }
 
@@ -189,7 +216,26 @@ export function FiltersPanel({
       if (isFixedValueBandCondition(field, condition.operator)) {
         return { show: true, options: [fixedVocabularyGroup(VALUE_BAND_DIMENSION_ID, VALUE_BAND_VALUES)] };
       }
+      if (isQuestionPick(field, condition.operator)) {
+        const current = condition.rightOperand?.value;
+        return {
+          show: true,
+          options: [
+            {
+              label: t("workspace.analysis.charts.question_filter_field"),
+              value: QUESTION_ID_MEMBER,
+              options: getQuestionValueOptions(questions, typeof current === "string" ? current : undefined),
+            },
+          ],
+        };
+      }
       const question = answerQuestionOf(field);
+      if (question && condition.operator === NPS_SEGMENT_OPERATOR) {
+        return {
+          show: true,
+          options: [{ label: question.label, value: question.id, options: getNpsSegmentOptions(t) }],
+        };
+      }
       if (question) {
         return {
           show: true,
@@ -207,16 +253,16 @@ export function FiltersPanel({
 
   const callbacks: TConditionsEditorCallbacks = {
     onAddConditionBelow: (id) =>
-      onFiltersChange(insertFilterNodeAfter(filters, id, createDefaultFilterRow())),
-    onRemoveCondition: (id) => onFiltersChange(removeFilterNode(filters, id)),
-    onDuplicateCondition: (id) => onFiltersChange(duplicateFilterNode(filters, id)),
-    onCreateGroup: (id) => onFiltersChange(wrapFilterNodeInGroup(filters, id, filterLogic)),
+      onFiltersChange(insertFilterNodeAfter(shownFilters, id, createDefaultFilterRow())),
+    onRemoveCondition: (id) => onFiltersChange(removeFilterNode(shownFilters, id)),
+    onDuplicateCondition: (id) => onFiltersChange(duplicateFilterNode(shownFilters, id)),
+    onCreateGroup: (id) => onFiltersChange(wrapFilterNodeInGroup(shownFilters, id, filterLogic)),
     onUpdateCondition: (id, updates) => updateRow(id, toFilterRowUpdates(updates)),
     onToggleGroupConnector: (groupId) => {
       if (groupId === CHART_FILTER_ROOT_ID) {
         onFilterLogicChange(filterLogic === "and" ? "or" : "and");
       } else {
-        onFiltersChange(toggleFilterGroupLogic(filters, groupId));
+        onFiltersChange(toggleFilterGroupLogic(shownFilters, groupId));
       }
     },
   };
@@ -224,7 +270,7 @@ export function FiltersPanel({
   return (
     <div className="w-full">
       <ConditionsEditor
-        conditions={toConditionGroup(filters, filterLogic)}
+        conditions={toConditionGroup(shownFilters, filterLogic)}
         config={config}
         callbacks={callbacks}
       />

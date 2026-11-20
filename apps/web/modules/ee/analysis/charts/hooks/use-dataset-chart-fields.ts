@@ -6,6 +6,7 @@ import { toBuilderAnswerQuestions } from "@/modules/ee/analysis/charts/lib/catal
 import { mergeEmbeddedFields } from "@/modules/ee/analysis/charts/lib/catalog-embedded-fields";
 import type { TAnswerQuestion } from "@/modules/ee/analysis/lib/answer-filter";
 import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
+import type { TDatasetQuestion } from "@/modules/ee/analysis/lib/question-filter";
 import { type TDatasetFieldsStatus, chartFieldCatalogQuery } from "./chart-field-catalog-query";
 
 export type TDatasetBuilderFields = TDatasetFieldsStatus & {
@@ -13,6 +14,8 @@ export type TDatasetBuilderFields = TDatasetFieldsStatus & {
   embeddedFields: TEmbeddedChartField[];
   /** The questions an answer filter may name. */
   answerQuestions: TAnswerQuestion[];
+  /** The questions a question filter (`FeedbackRecords.fieldId`) may name, picked by label (ENG-7323). */
+  questions: TDatasetQuestion[];
 };
 
 /**
@@ -32,11 +35,13 @@ export const useDatasetChartFields = (
     () => toBuilderAnswerQuestions(catalog.data?.answerQuestions),
     [catalog.data]
   );
+  const questions = useMemo(() => catalog.data?.questions ?? [], [catalog.data]);
   const { refetch } = catalog;
 
   return {
     embeddedFields,
     answerQuestions,
+    questions,
     isLoading: catalog.isLoading,
     error: catalog.error,
     retry: () => {

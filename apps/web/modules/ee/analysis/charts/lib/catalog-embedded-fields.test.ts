@@ -13,7 +13,7 @@ describe("toEmbeddedFields", () => {
   test("names each key by the catalog's `key`, falling back to its label (C16)", () => {
     expect(
       toEmbeddedFields([
-        { name: PLAN, label: "Plan (embedded)", key: "Plan" },
+        { name: PLAN, label: "Plan", key: "Plan" },
         { name: TIER, label: "Tier" },
       ])
     ).toEqual([
@@ -21,9 +21,26 @@ describe("toEmbeddedFields", () => {
       { name: TIER, key: "Tier" },
     ]);
   });
+
+  test("carries a label other than the key as the workspace's name for it", () => {
+    expect(toEmbeddedFields([{ name: PLAN, label: "Subscription plan", key: "Plan" }])).toEqual([
+      { name: PLAN, key: "Plan", label: "Subscription plan" },
+    ]);
+  });
 });
 
 describe("mergeEmbeddedFields", () => {
+  test("orders renamed keys by the name shown", () => {
+    expect(
+      mergeEmbeddedFields([
+        [
+          { name: PLAN, label: "Zebra", key: "Plan" },
+          { name: TIER, label: "Tier", key: "Tier" },
+        ],
+      ]).map(({ name }) => name)
+    ).toEqual([TIER, PLAN]);
+  });
+
   test("has none for no datasets, or datasets without keys", () => {
     expect(mergeEmbeddedFields([])).toEqual([]);
     expect(mergeEmbeddedFields([[{ name: "FeedbackRecords.sourceName", label: "Source" }]])).toEqual([]);
