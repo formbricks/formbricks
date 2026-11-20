@@ -28,8 +28,10 @@ import {
  * Every change to the definition is recorded, whatever made it: a form field, the canvas, Discard
  * changes. Undoing writes the older definition back through the normal editor state, so autosave
  * saves it like any edit. The history lives in this page only and resets when another workflow loads.
+ * The keyboard shortcuts work only while `shortcutsEnabled` (the Editor tab): on Runs nothing shows
+ * the draft, so a shortcut there would change it unseen.
  */
-export const useWorkflowHistory = () => {
+export const useWorkflowHistory = ({ shortcutsEnabled }: { shortcutsEnabled: boolean }) => {
   const definition = useAtomValue(workflowDefinitionAtom);
   const workflowId = useAtomValue(workflowAtom)?.id ?? null;
   const canEdit = useAtomValue(canEditWorkflowDefinitionAtom);
@@ -109,6 +111,7 @@ export const useWorkflowHistory = () => {
   }, [undo, undoesTo, setUndoForToasts]);
 
   useEffect(() => {
+    if (!shortcutsEnabled) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (!(event.metaKey || event.ctrlKey) || event.altKey || isTypingTarget(event.target)) return;
       const key = event.key.toLowerCase();
@@ -121,7 +124,7 @@ export const useWorkflowHistory = () => {
     };
     globalThis.addEventListener("keydown", onKeyDown);
     return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [undo, redo]);
+  }, [shortcutsEnabled, undo, redo]);
 
   return {
     undo,

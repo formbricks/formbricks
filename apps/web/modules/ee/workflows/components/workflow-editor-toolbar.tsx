@@ -25,10 +25,10 @@ export const WorkflowEditorToolbar = ({ isReadOnly }: Readonly<{ isReadOnly: boo
   const workflow = useAtomValue(workflowAtom);
   const canEditDefinition = useAtomValue(canEditWorkflowDefinitionAtom);
   const hasSaveFailed = useAtomValue(hasWorkflowSaveFailedAtom);
-  const history = useWorkflowHistory();
+  const isEditTab = segment === null;
+  const history = useWorkflowHistory({ shortcutsEnabled: isEditTab });
 
   if (!workflow) return null;
-  const isEditTab = segment === null;
 
   // The definition is the workflow's real content: while it can't change (enabled, archived, or a
   // read-only member) say so instead of advertising an autosave with nothing to act on. A save
