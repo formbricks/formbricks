@@ -6,17 +6,13 @@ const resolvePackage = (specifier) => fileURLToPath(import.meta.resolve(specifie
  * JS plugins: ESLint plugins oxlint runs through its ESLint-compatible plugin API, for the rules it
  * does not implement natively. They resolve relative to the config file that declares them, and the
  * tiers are declared here but consumed from every workspace, so each one is passed as an absolute
- * path. The names `react` and `unicorn` are taken by oxlint's native plugins, hence the `react-js`
- * and `unicorn-js` aliases for the plugins' own versions of rules oxlint lacks or implements narrower.
+ * path. The name `unicorn` is taken by oxlint's native plugin, hence the `unicorn-js` alias for the
+ * plugin's own version of a rule oxlint implements narrower.
  */
 export const jsPlugins = {
   formbricks: {
     name: "formbricks",
     specifier: fileURLToPath(new URL("./plugins/formbricks.mjs", import.meta.url)),
-  },
-  reactJs: {
-    name: "react-js",
-    specifier: fileURLToPath(new URL("./plugins/react-js.mjs", import.meta.url)),
   },
   sonarjs: { name: "sonarjs", specifier: resolvePackage("eslint-plugin-sonarjs") },
   turbo: { name: "turbo", specifier: resolvePackage("eslint-plugin-turbo") },

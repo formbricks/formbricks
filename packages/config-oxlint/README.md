@@ -36,14 +36,17 @@ Notes:
   keeps the tier's setting. The category rules that clash with repo conventions or still have a backlog
   are `off` in `base.mjs`, each with its count and reason (ENG-7329).
 - **JS plugins** run the ESLint plugins oxlint does not implement natively, through its ESLint-compatible
-  plugin API: `eslint-plugin-turbo`, `eslint-plugin-react` (as `react-js`, for `prefer-read-only-props`,
-  `prop-types` and `no-deprecated`), `eslint-plugin-sonarjs` and `eslint-plugin-unicorn` (as `unicorn-js`,
-  Sonar parity only) and `eslint-plugin-storybook` (apps/storybook). `plugins/react-js.mjs` loads the three eslint-plugin-react rules and drops `prefer-read-only-props`'s autofix, which writes `readonly` members instead of the `Readonly<Props>` wrapper. `plugins/formbricks.mjs` is the
+  plugin API: `eslint-plugin-turbo`, `eslint-plugin-sonarjs` and `eslint-plugin-unicorn` (as `unicorn-js`,
+  Sonar parity only) and `eslint-plugin-storybook` (apps/storybook). `plugins/formbricks.mjs` is the
   repo's own: oxlint has no `no-restricted-syntax`, so `formbricks/restricted-syntax` takes the same
-  selector options, and `formbricks/no-inline-lint-config` (on in every tier) fails on ESLint's inline
+  selector options; `formbricks/no-inline-lint-config` (on in every tier) fails on ESLint's inline
   config comments (`/* eslint <rule>: … */`, `/* eslint-env */`, `/* global */`, `/* exported */`), which
-  oxlint ignores.
-  JS plugins are slower than native rules; `react-js` costs most of apps/web's run.
+  oxlint ignores; and `formbricks/prefer-read-only-props` (the `next` and `react` tiers) ports
+  eslint-plugin-react's rule without its autofix, which wrote `readonly` members instead of the
+  `Readonly<Props>` wrapper.
+  JS plugins are slower than native rules. eslint-plugin-react, the slowest, was dropped (ENG-7401): its
+  `prop-types` is left to TypeScript, and its `no-deprecated` to React 19's types and `react/no-unsafe`
+  with `checkAliases`.
 - **Type-aware rules** run through `oxlint-tsgolint` (TypeScript 7) when oxlint gets `--type-aware`, which
   `pnpm lint:code` and the pre-commit hook pass. Every linted `.ts`/`.tsx` file must belong to its
   package's tsconfig, and the tsconfig must be valid for TypeScript 7 (no `baseUrl`, no

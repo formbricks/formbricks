@@ -2,7 +2,7 @@ import type { ExternalPluginEntry, OxlintConfig } from "oxlint";
 import type { ConfigFragment } from "./types.mjs";
 
 export declare const jsPlugins: Record<
-  "formbricks" | "reactJs" | "sonarjs" | "turbo" | "unicornJs",
+  "formbricks" | "sonarjs" | "turbo" | "unicornJs",
   ExternalPluginEntry
 >;
 export declare function compose(

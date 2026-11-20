@@ -1,29 +1,167 @@
 import { fileURLToPath } from "node:url";
-import { describe, expect, test } from "vitest";
-import { fixFixtures, lintFixtures } from "@formbricks/config-oxlint/testing";
+import { beforeAll, describe, expect, test } from "vitest";
+import { type FixtureDiagnostic, fixFixtures, lintFixtures } from "@formbricks/config-oxlint/testing";
 
 /*
- * `react-js/prefer-read-only-props` reports mutable props but must never autofix them: its fixer
- * writes `readonly` members, while CODING_STANDARDS.md asks for the `Readonly<Props>` wrapper, so
- * `pnpm lint:fix` would rewrite components in the wrong style (packages/config-oxlint/plugins/react-js.mjs).
+ * `formbricks/prefer-read-only-props` (packages/config-oxlint/plugins/formbricks.mjs) replaced
+ * eslint-plugin-react's rule, which ran as the `react-js` JS plugin and cost about half of apps/web's
+ * lint run (ENG-7401). It must report what the old rule reported: one fixture per way a component
+ * declares its props, linted through the `next` and `react` tiers. It must never autofix, because
+ * CODING_STANDARDS.md asks for the `Readonly<Props>` wrapper rather than `readonly` members.
  */
 
-const webDir = fileURLToPath(new URL("../apps/web/", import.meta.url));
-const FILE = "modules/read-only-props/hello.tsx";
-const SOURCE = `interface Props {
+const dirOf = (path: string) => fileURLToPath(new URL(path, import.meta.url));
+const RULE = "formbricks/prefer-read-only-props";
+
+const tiers = { next: dirOf("../apps/web/"), react: dirOf("../packages/survey-ui/") };
+
+// Each reports `name` as mutable.
+const mutable: Record<string, string> = {
+  "interface.tsx": `interface Props {
   name: string;
 }
 export const Hello = ({ name }: Props) => <div>{name}</div>;
-`;
+`,
+  "type-literal.tsx": `export function Hello({ name }: { name: string }) {
+  return <div>{name}</div>;
+}
+`,
+  "declared-after.tsx": `export const Hello = (props: Props) => <div>{props.name}</div>;
+type Props = { name: string };
+`,
+  "intersection.tsx": `import type { ComponentProps } from "react";
+interface Own {
+  name: string;
+}
+export const Hello = ({ name }: ComponentProps<"div"> & Own) => <div>{name}</div>;
+`,
+  "extends.tsx": `interface Base {
+  name: string;
+}
+interface Props extends Base {
+  readonly id: string;
+}
+export const Hello = ({ name, id }: Props) => <div id={id}>{name}</div>;
+`,
+  "fc.tsx": `import type { FC } from "react";
+interface Props {
+  name: string;
+}
+export const Hello: FC<Props> = ({ name }) => <div>{name}</div>;
+`,
+  "forward-ref.tsx": `import { forwardRef, memo } from "react";
+interface Props {
+  name: string;
+}
+export const Hello = memo(forwardRef<HTMLDivElement, Props>(({ name }, ref) => <div ref={ref}>{name}</div>));
+`,
+  "returns-null.tsx": `interface Props {
+  name: string;
+}
+// A component that renders nothing, like the analytics identifiers.
+export function Hello({ name }: Props) {
+  console.info(name);
+  return null;
+}
+`,
+  "async.tsx": `interface Props {
+  name: Promise<string>;
+}
+export const Hello = async ({ name }: Props) => <div>{await name}</div>;
+`,
+  "class.tsx": `import { Component } from "react";
+interface Props {
+  name: string;
+}
+export class Hello extends Component<Props> {
+  render() {
+    return <div>{this.props.name}</div>;
+  }
+}
+`,
+};
 
-describe("react-js/prefer-read-only-props in apps/web", () => {
-  test("reports a mutable prop as an error", () => {
-    expect(lintFixtures(webDir, { [FILE]: SOURCE })[FILE]).toContainEqual(
-      expect.objectContaining({ ruleId: "react-js/prefer-read-only-props", severity: "error" })
-    );
-  }, 30_000);
+// None of these reports.
+const clean: Record<string, string> = {
+  "readonly-wrapper.tsx": `interface Props {
+  name: string;
+}
+export const Hello = ({ name }: Readonly<Props>) => <div>{name}</div>;
+`,
+  "readonly-members.tsx": `interface Props {
+  readonly name: string;
+}
+export const Hello = ({ name }: Props) => <div>{name}</div>;
+`,
+  // A props type from another file is not looked into, as eslint-plugin-react did not.
+  "imported.tsx": `import type { Props } from "./props";
+export const Hello = ({ name }: Props) => <div>{name}</div>;
+`,
+  // Not components: camelCase, or a PascalCase function that returns no JSX.
+  "not-components.tsx": `interface Options {
+  name: string;
+}
+export const renderHello = ({ name }: Options) => <div>{name}</div>;
+export function GET({ name }: Options) {
+  return new Response(name);
+}
+`,
+};
+
+const withDir = (files: Record<string, string>) =>
+  Object.fromEntries(
+    Object.entries(files).map(([file, source]) => [`modules/read-only-props/${file}`, source])
+  );
+
+const results = new Map<string, Record<string, FixtureDiagnostic[]>>();
+const reports = (tier: string, file: string) =>
+  results.get(tier)![`modules/read-only-props/${file}`].filter((d) => d.ruleId === RULE);
+
+describe("formbricks/prefer-read-only-props", () => {
+  beforeAll(() => {
+    for (const [tier, dir] of Object.entries(tiers)) {
+      results.set(tier, lintFixtures(dir, withDir({ ...mutable, ...clean })));
+    }
+  }, 60_000);
+
+  describe.each(Object.keys(tiers))("%s tier", (tier) => {
+    test.each(Object.keys(mutable))("reports the mutable prop in %s as an error", (file) => {
+      expect(reports(tier, file)).toEqual([
+        expect.objectContaining({ severity: "error", message: expect.stringContaining("'name'") }),
+      ]);
+    });
+
+    test.each(Object.keys(clean))("reports nothing in %s", (file) => {
+      expect(reports(tier, file)).toEqual([]);
+    });
+  });
 
   test("leaves the component untouched under --fix", () => {
-    expect(fixFixtures(webDir, { [FILE]: SOURCE })[FILE]).toBe(SOURCE);
+    const file = "modules/read-only-props/interface.tsx";
+    expect(fixFixtures(tiers.next, { [file]: mutable["interface.tsx"] })[file]).toBe(
+      mutable["interface.tsx"]
+    );
   }, 30_000);
+});
+
+describe("react/no-unsafe covers the deprecated lifecycles eslint-plugin-react's no-deprecated did", () => {
+  const file = "modules/read-only-props/lifecycle.tsx";
+  const source = `import { Component } from "react";
+export class Hello extends Component<Readonly<{ name: string }>> {
+  componentWillMount() {}
+  render() {
+    return <div>{this.props.name}</div>;
+  }
+}
+`;
+
+  test.each(Object.keys(tiers))(
+    "%s tier",
+    (tier) => {
+      expect(lintFixtures(tiers[tier as keyof typeof tiers], { [file]: source })[file]).toContainEqual(
+        expect.objectContaining({ ruleId: "react/no-unsafe", severity: "error" })
+      );
+    },
+    30_000
+  );
 });
