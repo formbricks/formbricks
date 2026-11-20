@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import type { JobHandler, TWorkflowHttpRequestDeliveryJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import {
@@ -113,9 +114,14 @@ const failureMessage = (result: WorkflowHttpCallResult): string | null => {
  * checks and 3 retries as a waiting step, and records the outcome on the step's log row only. A
  * failure shows on the step and never fails the run.
  *
- * At most once: only a row still `running` with `delivery: "sending"` is sent, and the final write is
- * guarded on `running`, so a redelivered job or a row the hourly cleanup already failed is left alone.
- * Tenant-scoped by the job's workspace.
+ * At most once: the job claims the row before it sends, by stamping `deliveryStartedAt` on a row still
+ * `running` with `delivery: "sending"` and no stamp, in one guarded write, and sends only when that
+ * write took the row. A redelivered job (a stalled worker's job run again, or a duplicate) finds the
+ * stamp and leaves the row alone: the call may already have gone out, so it is never sent again. If
+ * the claiming worker died mid-send, the row stays `sending` and the hourly cleanup marks it failed
+ * ("may or may not have reached its target"), which beats sending it twice. The final write is guarded
+ * on `running`, so a row the cleanup already failed keeps that outcome. Tenant-scoped by the job's
+ * workspace.
  */
 export const createWorkflowHttpRequestDeliveryJobHandler =
   ({
@@ -154,6 +160,10 @@ export const createWorkflowHttpRequestDeliveryJobHandler =
       logger.info(logContext, "Workflow HTTP request is no longer sending; skipping delivery");
       return;
     }
+    if (output.deliveryStartedAt !== undefined) {
+      logger.warn(logContext, "Workflow HTTP request was already picked up by its job; not sending it again");
+      return;
+    }
     const request = output.request;
 
     const finish = async (
@@ -190,6 +200,25 @@ export const createWorkflowHttpRequestDeliveryJobHandler =
     const rebuilt = rebuildCall(request, node, secretValues);
     if ("error" in rebuilt) {
       await finish("failed", rebuilt.error, null);
+      return;
+    }
+
+    // The claim: only one delivery of this job can take a row without a stamp. `#> '{deliveryStartedAt}'
+    // IS NULL` also matches the missing key. The stamp stays until the final write replaces the output.
+    const claimed = await prisma.workflowRunLog.updateMany({
+      where: {
+        runId: data.workflowRunId,
+        stepId: data.stepId,
+        status: "running",
+        AND: [
+          { output: { path: ["delivery"], equals: "sending" } },
+          { output: { path: ["deliveryStartedAt"], equals: Prisma.DbNull } },
+        ],
+      },
+      data: { output: { ...output, deliveryStartedAt: new Date().toISOString() } },
+    });
+    if (claimed.count === 0) {
+      logger.warn(logContext, "Workflow HTTP request was already picked up by its job; not sending it again");
       return;
     }
 

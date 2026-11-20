@@ -204,7 +204,9 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
     // enqueue reported an error): only a row still `running` is ours. A Test run sets no `delivery`.
     const written = await prisma.workflowRunLog.updateMany({
       where: { runId: step.runId, stepId: step.node.id, status: "running" },
-      data: { status, output, error, finishedAt },
+      // Still sending: `saveOutput` already stored this output, and the job may have claimed the row
+      // since (it stamps `deliveryStartedAt` on it). Writing the output again would erase that claim.
+      data: status === "running" ? { status, error, finishedAt } : { status, output, error, finishedAt },
     });
     if (written.count === 0) {
       // The job got there first: the run mirrors what its log row says, not this step's own result.

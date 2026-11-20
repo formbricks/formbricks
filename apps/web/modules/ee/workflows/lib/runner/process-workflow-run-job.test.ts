@@ -1384,6 +1384,12 @@ describe("HTTP request steps in a run (ENG-7179)", () => {
     expect(effects.enqueueHttpRequestDelivery).toHaveBeenCalledTimes(1);
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
     expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+    // The hand-off write leaves the row's output alone, so it never erases a claim the job already stamped.
+    const handOff = mockWorkflowRunLogUpdateMany.mock.calls
+      .map((call) => call[0] as { where: { stepId: string; status?: unknown }; data: object })
+      .find((args) => args.where.stepId === "call" && args.where.status === "running");
+    expect(handOff?.data).toEqual(expect.objectContaining({ status: "running" }));
+    expect(handOff?.data).not.toHaveProperty("output");
   });
 
   test("a call that failed fails the run at once: the queue never sends it again", async () => {
