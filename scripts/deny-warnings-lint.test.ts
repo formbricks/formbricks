@@ -1,39 +1,38 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import type { OxlintConfig } from "oxlint";
 import { describe, expect, test } from "vitest";
-import { denyWarnings as raiseWarnings } from "../packages/config-oxlint/compose.mjs";
-import { STAGED_LINES_RULE_IDS } from "../packages/config-oxlint/sonar-parity.mjs";
+import { STAGED_LINES_RULE_IDS } from "@formbricks/config-oxlint/sonar-parity";
+// Not a package export: the workspaces use the `base.mjs` wrapper, which fixes `except`.
+import { raiseWarnings } from "../packages/config-oxlint/compose.mjs";
 
 /*
  * oxlint runs once for the whole repo, and a warning does not fail the run. Every workspace config
  * therefore wraps its export in `denyWarnings` (packages/config-oxlint/base.mjs), so a warning fails
- * `pnpm lint:code` and CI like an error (ENG-7401). This reads each config as oxlint loads it and
- * fails on any rule left at "warn", so a new workspace or a new "warn" outside the wrapper is caught.
+ * `pnpm lint:code` and CI like an error (ENG-7401). This imports each `oxlint.config.ts` and fails on
+ * any category or rule its default export leaves at "warn", so a new workspace or a new "warn" outside
+ * the wrapper is caught. The staged-lines Sonar-parity rules are the exception the wrapper keeps.
  */
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const staged = new Set(STAGED_LINES_RULE_IDS);
 
-type Entry = unknown;
-interface Config {
-  categories?: Record<string, Entry>;
-  rules?: Record<string, Entry>;
-  overrides?: { files: string[]; rules?: Record<string, Entry> }[];
-}
+type Rules = OxlintConfig["rules"];
 
-const severityOf = (entry: Entry) => (Array.isArray(entry) ? entry[0] : entry);
+const isWarn = (entry: unknown) => (Array.isArray(entry) ? entry[0] : entry) === "warn";
 
-const warnings = (config: Config) => [
+const warnRules = (rules: Rules = {}) =>
+  Object.entries(rules)
+    .filter(([id, entry]) => isWarn(entry) && !staged.has(id))
+    .map(([id]) => id);
+
+const warnings = (config: OxlintConfig) => [
   ...Object.entries(config.categories ?? {})
-    .filter(([, severity]) => severity === "warn")
+    .filter(([, severity]) => isWarn(severity))
     .map(([name]) => `category ${name}`),
-  ...Object.entries(config.rules ?? {})
-    .filter(([id, entry]) => severityOf(entry) === "warn" && !staged.has(id))
-    .map(([id]) => id),
+  ...warnRules(config.rules),
   ...(config.overrides ?? []).flatMap((override) =>
-    Object.entries(override.rules ?? {})
-      .filter(([id, entry]) => severityOf(entry) === "warn" && !staged.has(id))
-      .map(([id]) => `${id} (override for ${override.files.join(", ")})`)
+    warnRules(override.rules).map((id) => `${id} (override for ${override.files.join(", ")})`)
   ),
 ];
 
@@ -56,16 +55,16 @@ describe("no workspace lints with a warning", () => {
   });
 
   test.each(configPaths)(
-    "%s sets no rule to warn",
+    "%s sets nothing to warn",
     async (configPath) => {
-      const { default: config } = (await import(`${root}${configPath}`)) as { default: Config };
+      const { default: config } = (await import(`${root}${configPath}`)) as { default: OxlintConfig };
       expect(warnings(config)).toEqual([]);
     },
     30_000
   );
 });
 
-describe("denyWarnings", () => {
+describe("raiseWarnings", () => {
   test("raises warn to error in categories, rules and overrides, keeping options", () => {
     const config = raiseWarnings({
       categories: { correctness: "error", pedantic: "warn" },

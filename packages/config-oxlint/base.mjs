@@ -1,4 +1,4 @@
-import { compose, jsPlugins, denyWarnings as raiseWarnings } from "./compose.mjs";
+import { compose, jsPlugins, raiseWarnings } from "./compose.mjs";
 import { STAGED_LINES_RULE_IDS, sonarParity } from "./sonar-parity.mjs";
 
 /*

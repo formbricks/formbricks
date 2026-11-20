@@ -79,7 +79,7 @@ export function compose(...fragments) {
  * `--max-warnings 0`) makes its warnings errors instead. The rules in `except` keep their "warn": base.mjs passes the
  * Sonar-parity rules the pre-commit hook holds only to the staged lines, which it reads as warnings.
  */
-export const denyWarnings = (config, { except = [] } = {}) => {
+export const raiseWarnings = (config, { except = [] } = {}) => {
   const kept = new Set(except);
   const raise = (rules = {}) =>
     Object.fromEntries(
