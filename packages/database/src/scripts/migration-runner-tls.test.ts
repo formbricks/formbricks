@@ -51,7 +51,8 @@ afterEach(() => {
 
 describe("migration runner TLS wiring", () => {
   test("applies schema migrations through runPrismaCli with the migration database URL", async () => {
-    // A fresh database: nothing applied, no data migration recorded, so one deploy applies the schema.
+    // A fresh database: nothing applied, no data migration recorded, so one deploy applies the schema. This loads
+    // the real migration/ folder, and the fresh path needs at least one data migration in it (there are dozens).
     queryRaw.mockResolvedValueOnce([]).mockResolvedValueOnce([{ count: 0n }]);
     executeRaw.mockResolvedValue(0);
 
