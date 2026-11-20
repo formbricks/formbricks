@@ -158,10 +158,19 @@ export const WorkflowEmailActionForm = ({
     onChange(latestNodeRef.current);
   };
 
-  // What the editor reports is already on screen, so it never re-seeds the editor.
+  // The editor reports its text on every update: typing, but also its seed and a selection change.
+  // What it reports is already on screen, so it never re-seeds the editor.
   const updateBody = (nextBody: string) => {
+    // A read-only step keeps its body. Taking the editor's spelling of it as shown would re-seed the
+    // editor on the next render, which reports again, without end.
+    if (!isEditable) return;
     setEditorBody(nextBody);
-    updateConfig(followSurveyLinkChip(latestNodeRef.current.config, nextBody));
+    const latest = latestNodeRef.current.config;
+    const patch = followSurveyLinkChip(latest, nextBody);
+    // Nothing changed (the seed after Undo, a selection change): writing would record an edit and
+    // clear Redo.
+    if (patch.body === latest.body && !("surveyLink" in patch)) return;
+    updateConfig(patch);
   };
 
   const invalidFields = new Set(
