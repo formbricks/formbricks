@@ -24,12 +24,12 @@ vi.mock("./lib/update-user", () => ({ updateUser: mocks.updateUser }));
 
 const WORKSPACE_ID = "clws00000000000000000001";
 
-const identify = (attributes: unknown) =>
+const identify = (attributes: unknown, userId = "user-1") =>
   (POST as unknown as (input: unknown) => Promise<{ response: Response }>)({
     req: new Request(`http://localhost/api/v1/client/${WORKSPACE_ID}/user`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ userId: "user-1", attributes }),
+      body: JSON.stringify({ userId, attributes }),
     }),
     props: { params: Promise.resolve({ workspaceId: WORKSPACE_ID }) },
   });
@@ -67,6 +67,49 @@ describe("POST /api/v1/client/[workspaceId]/user attribute cap", () => {
 
     expect(response.status).toBe(400);
     expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+});
+
+// ENG-4019: Postgres `text` cannot hold U+0000, so a NULL byte that reaches the contact upsert fails the
+// whole write with 22021 and the identify call answers 500. It is refused at the boundary instead.
+describe("POST /api/v1/client/[workspaceId]/user NULL bytes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId: WORKSPACE_ID });
+    mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org-1");
+    mocks.getIsContactsEnabled.mockResolvedValue(true);
+    mocks.updateUser.mockResolvedValue({ state: {}, messages: [], errors: [] });
+  });
+
+  const expectRefused = async (response: Response) => {
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(await response.json())).toContain("must not contain NULL bytes");
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  };
+
+  test("refuses an attribute value with a NULL byte", async () => {
+    const { response } = await identify({ plan: "pro\u0000" });
+
+    await expectRefused(response);
+  });
+
+  test("refuses an attribute key with a NULL byte", async () => {
+    const { response } = await identify({ "pl\u0000an": "pro" });
+
+    await expectRefused(response);
+  });
+
+  test("refuses a userId with a NULL byte", async () => {
+    const { response } = await identify({ plan: "pro" }, "user\u00001");
+
+    await expectRefused(response);
+  });
+
+  test("passes the same attributes without the NULL byte", async () => {
+    const { response } = await identify({ plan: "pro", seats: 3, active: true });
+
+    expect(response.status).toBe(200);
+    expect(mocks.updateUser).toHaveBeenCalledOnce();
   });
 });
 

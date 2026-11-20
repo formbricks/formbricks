@@ -9,6 +9,7 @@ import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { NULL_BYTE_REASON, hasNullByte } from "@/lib/utils/postgres-text";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
@@ -57,7 +58,19 @@ const readUserRequestBody = async (
   }
 };
 
-/** Why the attributes are rejected (array, too many keys, malformed email), or null when they pass. */
+/**
+ * The first attribute whose key or string value holds a NULL byte. Postgres `text` refuses U+0000, so
+ * one such attribute would fail the whole contact upsert with a 500 (ENG-4019).
+ */
+const findNullByteAttribute = (attributes: Record<string, unknown>): string | undefined =>
+  Object.entries(attributes).find(
+    ([key, value]) => hasNullByte(key) || (typeof value === "string" && hasNullByte(value))
+  )?.[0];
+
+/**
+ * Why the attributes are rejected (array, too many keys, a NULL byte, malformed email), or null when
+ * they pass.
+ */
 const getAttributesError = (attributes: Record<string, unknown> | undefined): string | null => {
   if (Array.isArray(attributes)) {
     return "attributes must be an object";
@@ -65,6 +78,11 @@ const getAttributesError = (attributes: Record<string, unknown> | undefined): st
 
   if (attributes && Object.keys(attributes).length > MAX_CONTACT_ATTRIBUTES_PER_REQUEST) {
     return `A request may set at most ${MAX_CONTACT_ATTRIBUTES_PER_REQUEST} attributes`;
+  }
+
+  const nullByteAttribute = attributes ? findNullByteAttribute(attributes) : undefined;
+  if (nullByteAttribute !== undefined) {
+    return `Attribute ${JSON.stringify(nullByteAttribute)} ${NULL_BYTE_REASON}`;
   }
 
   if (attributes && Object.hasOwn(attributes, "email")) {
@@ -97,6 +115,10 @@ const parseUserRequestBody = async (
     return {
       response: responses.badRequestResponse("userId is required and must be a string", undefined, true),
     };
+  }
+
+  if (hasNullByte(jsonInput.userId)) {
+    return { response: responses.badRequestResponse(`userId ${NULL_BYTE_REASON}`, undefined, true) };
   }
 
   // Simple email validation if present (avoid Zod)

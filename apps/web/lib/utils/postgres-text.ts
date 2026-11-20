@@ -5,9 +5,12 @@ import { z } from "zod";
  * package keeps its own copy (`packages/workflows/src/contracts/postgres-text.ts`); the tests on both
  * sides pin this exact literal, so the two cannot drift apart unnoticed.
  */
-const NULL_BYTE_REASON = "must not contain NULL bytes";
+export const NULL_BYTE_REASON = "must not contain NULL bytes";
 
 const NULL_BYTE = "\u0000";
+
+/** Whether `value` holds a U+0000, which no Postgres `text` column can store. */
+export const hasNullByte = (value: string): boolean => value.includes(NULL_BYTE);
 
 /**
  * A string PostgreSQL can bind.
@@ -19,4 +22,4 @@ const NULL_BYTE = "\u0000";
  *
  * Nothing legitimate is lost by refusing it: no stored value can contain one either.
  */
-export const zPostgresText = () => z.string().refine((value) => !value.includes(NULL_BYTE), NULL_BYTE_REASON);
+export const zPostgresText = () => z.string().refine((value) => !hasNullByte(value), NULL_BYTE_REASON);
