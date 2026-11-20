@@ -14,7 +14,7 @@ generated API drift. `packages/config-oxlint/` and each workspace's `oxlint.conf
 and exceptions. A warning is still actionable when CI does not block it.
 
 Static `unstable_cache` imports from `next/cache` are lint errors, and so are React component props that
-are not read-only (`react-js/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
+are not read-only (`formbricks/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
 permission maps (or caller inheritance for workflows triggered only by `workflow_call`) and runner
 hardening first for literal `ubuntu-*` runner labels, including version and architecture pins. Reviewers
 still judge whether requested token permissions are minimal and whether runner choices outside this

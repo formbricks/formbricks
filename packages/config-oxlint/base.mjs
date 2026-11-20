@@ -41,7 +41,7 @@ export const unusedVarsOptions = {
 };
 
 /*
- * React settings shared by oxlint's native react rules and the `react-js` JS plugin. oxlint takes no
+ * React settings for oxlint's native react rules. oxlint takes no
  * `"detect"`, so the version is the pnpm catalog's `react` major.minor; bump it with the catalog.
  */
 export const reactSettings = { react: { version: "19.2" } };

@@ -3,7 +3,6 @@ import {
   TYPESCRIPT_FILES,
   base,
   compose,
-  jsPlugins,
   reactSettings,
   unusedVarsOptions,
 } from "./base.mjs";
@@ -48,7 +47,6 @@ export const next = compose(
   base,
   {
     plugins: ["typescript", "react", "jsx-a11y", "nextjs", "import"],
-    jsPlugins: [jsPlugins.reactJs],
     env: { browser: true, node: true },
     settings: reactSettings,
     rules: {
@@ -61,8 +59,11 @@ export const next = compose(
       "nextjs/no-html-link-for-pages": "off",
       "react/jsx-key": "off",
       // Props are read-only: CODING_STANDARDS listed this as a review check, and CodeRabbit raised it
-      // by hand on almost every UI PR.
-      "react-js/prefer-read-only-props": "error",
+      // by hand on almost every UI PR. The repo's own port of eslint-plugin-react's rule (ENG-7401).
+      "formbricks/prefer-read-only-props": "error",
+      // The lifecycles React deprecated, `UNSAFE_` or not; eslint-plugin-react's `no-deprecated` covered
+      // the unprefixed ones until the plugin was dropped (ENG-7401).
+      "react/no-unsafe": ["error", { checkAliases: true }],
       "no-restricted-imports": ["error", { paths: [nextCacheRestriction] }],
       // eslint-config-next enables only six jsx-a11y rules; this adds the rest of the recommended
       // set, the floor the react/react-hooks tiers already enforce. Severities below the upstream
