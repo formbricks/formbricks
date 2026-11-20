@@ -355,6 +355,18 @@ describe("POST /api/internal/invites/{inviteId}/emails", () => {
     expect(mocks.sendInviteMemberEmail).not.toHaveBeenCalled();
   });
 
+  test("answers an email cap with 429 carrying its own message and retry time", async () => {
+    mocks.sendInviteMemberEmail.mockRejectedValue(
+      new TooManyRequestsError("Too many emails to this recipient. Try again in an hour.", 3600)
+    );
+
+    const response = await resend();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("3600");
+    expect((await response.json()).detail).toBe("Too many emails to this recipient. Try again in an hour.");
+  });
+
   test("keeps the recipient spent and fails the request when the email can't be sent", async () => {
     mocks.sendInviteMemberEmail.mockRejectedValue(new Error("smtp unavailable"));
 

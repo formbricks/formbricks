@@ -285,14 +285,20 @@ export async function resendInviteOperation({
     auditLog.oldObject = { ...invite };
     auditLog.newObject = updatedInvite;
   }
-  await sendInviteMemberEmail(
-    inviteId,
-    updatedInvite.email,
-    invite?.creator?.name ?? "",
-    updatedInvite.name ?? "",
-    organizationId,
-    access.userId
-  );
+  try {
+    await sendInviteMemberEmail(
+      inviteId,
+      updatedInvite.email,
+      invite?.creator?.name ?? "",
+      updatedInvite.name ?? "",
+      organizationId,
+      access.userId
+    );
+  } catch (error) {
+    // The organization's, sender's or recipient's email cap: its own message says when to try again.
+    if (error instanceof TooManyRequestsError) return rateLimitedResponse(error, { requestId, instance });
+    throw error;
+  }
 
   return noContentResponse({ requestId });
 }
