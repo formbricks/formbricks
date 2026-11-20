@@ -137,12 +137,16 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   ENG-7310, ENG-7395).
   - An OAuth, OIDC or SSO callback, and any flow that links an identity or creates a session in the browser
     that started it, binds its completion to that browser (`state`, PKCE, a cookie set at the start).
-  - An emailed link (verification, recovery, invite) is single-use and short-lived, and completes only
-    through a `POST` from a confirmation page, so a scanner's `GET` does nothing. It may be opened on another
-    device than the one that asked for it.
+  - An emailed link (verification, recovery, invite) is short-lived. Opening it may prove the mailbox, set
+    a proof cookie, or start a session no stronger than the next rule allows. The step that changes the
+    account (link an identity, reset a password, accept an invite, change an email) is single-use and runs
+    only through a `POST` from a confirmation page, so a scanner's `GET` changes nothing. The link may be
+    opened on another device than the one that asked for it.
 - **No path creates a session weaker than the account requires.** Local paths (password, magic link, account
-  recovery) go through the app's 2FA check. SSO relies on the IdP's MFA, verified from `acr` / `amr` where
-  the IdP sends them. Recovery never bypasses enabled MFA, and an emailed link counts as one factor at most.
+  recovery) go through the app's 2FA check. SSO relies on the IdP's MFA; a new SSO sign-in path verifies it
+  from `acr` / `amr` where the IdP sends them (the existing providers do not check them yet). An emailed link
+  counts as one factor at most, so recovery sends an account that keeps its 2FA through the 2FA check; the
+  one exception is an unverified account, whose local factors completing recovery removes (ENG-2557).
   Class: 2FA bypass through an alternate sign-in path (ENG-7266).
 - **A user-supplied regex on a shared process runs in a linear-time engine or not at all.** On the server,
   in workers and in jobs, a pattern from a survey, a filter or any request runs in RE2 with a program-size
@@ -158,10 +162,11 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   as for any other input under "Input Limits". A library stores what it is given. Class: storage
   amplification from anonymous or low-privilege requests (ENG-6885, ENG-7396, ENG-7399).
 - **A security setting passed to a dependency is tested against the real dependency.** For a TLS mode, a
-  cookie flag, a CSP or an auth option, a regression test asserts the effect against the real dependency
-  (the flags in the `Set-Cookie` header, a refused plaintext connection). Where that cannot be automated, a
-  one-time check is a `manual` row in the PR's Coverage table. An invalid or unrecognised value fails closed
-  at startup rather than falling back to a weaker default. Libraries silently ignore values they don't
+  cookie flag, a CSP or an auth option, a regression test against the real dependency (a
+  `*.integration.test.ts`, or an `e2e` spec for response headers) asserts the effect: the flags in the
+  `Set-Cookie` header, a refused plaintext connection. Where that cannot be automated, a one-time check is a
+  `manual` row in the PR's Coverage table. An invalid or unrecognised value fails closed (at startup, where
+  it is read from config) rather than falling back to a weaker default. Libraries silently ignore values they don't
   recognise, so a config that reads right proves nothing. Class: silently dropped security settings
   (ENG-7337).
 
