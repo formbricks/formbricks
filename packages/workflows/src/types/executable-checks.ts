@@ -94,8 +94,10 @@ const countRecallTokens = (text: string): number => text.split(RECALL_TOKEN_STAR
  * The fixed-body rule (ENG-7169): when a Variable picks the recipient, the caller picks who gets the
  * email, so nothing the caller sends may decide what it says. Subject and body take no recall token
  * at all (a Variable or a survey answer) and no response data is attached. Only the survey link's
- * Embedded Data may carry Variables. Without it, a leaked Webhook Secret URL would let anyone send
- * any text, links included, from the customer's sender domain.
+ * Embedded Data may carry Variables, and never a step's output (`steps.`): that is data the caller
+ * didn't send (a CRM record an HTTP request fetched), and the caller picks who receives it. Without
+ * this, a leaked Webhook Secret URL would let anyone send any text, links included, from the
+ * customer's sender domain, or have a workflow's fetched data mailed to them.
  */
 const checkFixedContent = (
   node: TWorkflowSendEmailActionNode,
@@ -120,6 +122,18 @@ const checkFixedContent = (
       "config",
       "attachResponseData",
     ]);
+  }
+  for (const [index, { value }] of (node.config.surveyLink?.embeddedData ?? []).entries()) {
+    const readsStepOutput = findWorkflowRecallTokens(value).some((token) => {
+      const parsed = parseWorkflowVariablePath(token.path);
+      return parsed.ok && parsed.source === "steps";
+    });
+    if (readsStepOutput) {
+      context.addIssue(
+        `send_email node ${node.id} survey link Embedded Data may not insert a step's output (steps.): ${reason}`,
+        ["config", "surveyLink", "embeddedData", index, "value"]
+      );
+    }
   }
 };
 

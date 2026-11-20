@@ -183,6 +183,38 @@ describe("fixed body for a Variable recipient", () => {
     ).toEqual([]);
   });
 
+  test("Enable refuses a step's output in the survey link's Embedded Data", () => {
+    // trigger → first (an email) → email: the second email's link would carry the first step's output
+    // to an address the caller picked.
+    const definition = {
+      ...definitionWith({}),
+      nodes: [
+        { id: "first", type: "action", actionType: "send_email", config: baseConfig },
+        {
+          id: "email",
+          type: "action",
+          actionType: "send_email",
+          config: {
+            ...baseConfig,
+            to: variableRecipient,
+            body: `<p>Thanks for calling. ${WORKFLOW_SURVEY_LINK_TOKEN}</p>`,
+            surveyLink: {
+              surveyId: linkSurveyId,
+              embeddedData: [{ key: "crm", value: "#recall:steps.first.status/fallback:#" }],
+            },
+          },
+        },
+      ],
+      edges: [
+        { id: "trigger-first", source: "trigger", target: "first" },
+        { id: "first-email", source: "first", target: "email" },
+      ],
+    };
+    const result = ZWorkflowExecutableDefinition.safeParse(definition);
+    const messages = result.success ? [] : result.error.issues.map((issue) => issue.message);
+    expect(messages.join(" ")).toMatch(/may not insert a step's output/);
+  });
+
   test("a literal recipient may still use Variables in the body", () => {
     expect(
       executableIssues({ ...baseConfig, body: "<p>Hi #recall:response.name/fallback:there#</p>" })

@@ -56,10 +56,11 @@ stores `customer_id` and `channel` as Embedded Data.
 Whoever calls the Webhook Secret URL chooses the recipient. If they could also choose the text, a leaked URL would
 let anyone send any message, links included, from your sender address. So when the recipient comes from a
 Variable, the payload decides who gets the email but never what it says. Only the survey link's Embedded Data can
-use Variables, and their values are URL-encoded into the link.
+use Variables, and their values are URL-encoded into the link. They can't use an earlier step's output, such as an
+HTTP request's response, so data the workflow fetched never goes to an address the caller picked.
 
-Enabling the workflow fails while the subject or body inserts a Variable or a survey answer, or while **Attach
-response data** is on.
+Enabling the workflow fails while the subject or body inserts a Variable or a survey answer, while an Embedded Data
+value inserts a step's output, or while **Attach response data** is on.
 
 ### Survey link rules
 
