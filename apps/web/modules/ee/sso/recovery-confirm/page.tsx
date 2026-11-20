@@ -20,23 +20,24 @@ import { Button } from "@/modules/ui/components/button";
 export const SsoRecoveryConfirmPage = async ({
   searchParams,
 }: Readonly<{ searchParams: Promise<{ state?: string | string[] }> }>) => {
-  const [{ state }, session, cookieStore, t] = await Promise.all([
-    searchParams,
-    getSession(),
-    cookies(),
-    getTranslate(),
-  ]);
+  const { state } = await searchParams;
 
   const view = await resolveSsoRecoveryConfirmView({
     state,
-    recoveryProof: cookieStore.get(SSO_RECOVERY_PROOF_COOKIE_NAME)?.value,
-    sessionUserId: session?.user.id,
+    readBrowser: async () => {
+      const [session, cookieStore] = await Promise.all([getSession(), cookies()]);
+      return {
+        recoveryProof: cookieStore.get(SSO_RECOVERY_PROOF_COOKIE_NAME)?.value,
+        sessionUserId: session?.user.id,
+      };
+    },
   });
 
   if (view.kind === "refused") {
     redirect(view.redirectUrl);
   }
 
+  const t = await getTranslate();
   const { stateId, providerName, email } = view;
   const completionUrl = new URL(SSO_RECOVERY_COMPLETION_PATH, WEBAPP_URL).toString();
 

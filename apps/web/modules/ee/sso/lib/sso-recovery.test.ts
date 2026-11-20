@@ -1059,7 +1059,7 @@ describe("sso-recovery", () => {
         expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
       });
 
-      test("a cancel that cannot claim the recovery spends nothing and records nothing", async () => {
+      test("a cancel that cannot claim the recovery spends nothing and records no cancellation", async () => {
         mocks.claimSsoRecoveryIntent.mockResolvedValue(null);
 
         const outcome = cancelSsoRecovery(proven());
@@ -1068,7 +1068,16 @@ describe("sso-recovery", () => {
           "intent_unusable"
         );
         expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
-        expect(mocks.queueAuditEventBackground).not.toHaveBeenCalled();
+        expect(mocks.queueAuditEventBackground).not.toHaveBeenCalledWith(
+          expect.objectContaining({
+            newObject: expect.objectContaining({ failureReason: "cancelled_by_user" }),
+          })
+        );
+        expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+          expect.objectContaining({
+            newObject: expect.objectContaining({ failureReason: "claimed_by_another_request" }),
+          })
+        );
       });
 
       test("a link holds its claim until the intent is spent, then gives it back", async () => {
@@ -1084,6 +1093,35 @@ describe("sso-recovery", () => {
         await completeSsoRecovery(proven());
 
         expect(order).toEqual(["consume", "release"]);
+      });
+
+      test("a browser the guards refuse never takes the claim, so it cannot hold the recovery up", async () => {
+        const unproven = { stateId: "test-state", sessionUserId: "user_1" };
+
+        await expect(completeSsoRecovery(unproven)).rejects.toThrow("OAuthAccountNotLinked");
+        await expect(cancelSsoRecovery(unproven)).rejects.toThrow("OAuthAccountNotLinked");
+        expect(mocks.claimSsoRecoveryIntent).not.toHaveBeenCalled();
+      });
+
+      test("a lost claim leaves a trace", async () => {
+        mocks.claimSsoRecoveryIntent.mockResolvedValue(null);
+
+        await expect(completeSsoRecovery(proven())).rejects.toThrow("OAuthAccountNotLinked");
+        expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+          expect.objectContaining({
+            action: "sso_recovery_failed",
+            newObject: expect.objectContaining({ failureReason: "claimed_by_another_request" }),
+          })
+        );
+      });
+
+      test("a link whose intent could not be spent keeps the claim, so no cancel can follow it", async () => {
+        mocks.consumeSsoRecoveryIntent.mockResolvedValue(false);
+
+        await completeSsoRecovery(proven());
+
+        expect(syncSsoIdentityForUser).toHaveBeenCalled();
+        expect(mocks.releaseClaim).not.toHaveBeenCalled();
       });
 
       test("a link that rolls back gives its claim back, so the recovery can be retried", async () => {

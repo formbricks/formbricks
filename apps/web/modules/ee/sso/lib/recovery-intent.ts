@@ -139,34 +139,38 @@ export const claimSsoRecoveryIntent = async (stateId: string): Promise<TSsoRecov
   const stateIdHash = hashStateId(stateId);
   const claimKey = getClaimCacheKey(stateIdHash);
   const token = crypto.randomUUID();
+  const release = async () => {
+    try {
+      await cache.runRedisOperation((client) =>
+        client.eval(RELEASE_CLAIM_SCRIPT, { keys: [claimKey], arguments: [token] })
+      );
+    } catch (error) {
+      // It expires on its own; only a retry within that window is held up.
+      logger.error({ error, stateIdHash }, "Failed to release the SSO recovery claim");
+    }
+  };
+  // The cache's deadline stops the wait, not the command: a claim that missed it can still land, and
+  // would then hold the recovery for its whole TTL with no one to give it back.
+  let pendingClaim: Promise<unknown> | undefined;
 
   try {
-    const claimed = await cache.runRedisOperation((client) =>
-      client.eval(CLAIM_IF_LIVE_SCRIPT, {
+    const claimed = await cache.runRedisOperation((client) => {
+      pendingClaim = client.eval(CLAIM_IF_LIVE_SCRIPT, {
         keys: [getIntentCacheKey(stateIdHash), claimKey],
         arguments: [token, String(CLAIM_TTL_MS)],
-      })
-    );
+      });
+      return pendingClaim;
+    });
     if (claimed !== 1) {
       return null;
     }
   } catch (error) {
     logger.error({ error, stateIdHash }, "Failed to claim the SSO recovery intent");
+    void pendingClaim?.then((claimed) => (claimed === 1 ? release() : undefined)).catch(() => undefined);
     return null;
   }
 
-  return {
-    release: async () => {
-      try {
-        await cache.runRedisOperation((client) =>
-          client.eval(RELEASE_CLAIM_SCRIPT, { keys: [claimKey], arguments: [token] })
-        );
-      } catch (error) {
-        // It expires on its own; only a retry within that window is held up.
-        logger.error({ error, stateIdHash }, "Failed to release the SSO recovery claim");
-      }
-    },
-  };
+  return { release };
 };
 
 /**

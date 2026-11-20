@@ -129,7 +129,8 @@ const clearProofCookie = (response: NextResponse) => {
  * which the confirmation page uses too, so both send a refusal to the same place.
  *
  * `intent_unusable` and `unproven` leave the session alone. The first covers five situations the store
- * cannot tell apart (expired, already consumed, never issued, Redis unreadable, malformed), and the
+ * cannot tell apart (expired, already consumed, never issued, Redis unreadable, malformed), plus a live
+ * intent another Link or Cancel is acting on (a double click), and the
  * ordinary ones must not be punished: the emailed link is replayable for its window, so a second open
  * that finds the intent consumed would otherwise sign the user out right after linking succeeded. The
  * second is a browser that never opened the emailed link, so its session was not minted by the link,

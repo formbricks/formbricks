@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { cache } from "@/lib/cache";
 import {
   type TSsoRecoveryIntent,
@@ -233,6 +234,30 @@ describe("SSO recovery intent", () => {
       await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
     });
 
+    test("gives back a claim that lands after the cache stopped waiting for it", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      const redis = await mockCache.getRedisClient();
+      let landed!: () => void;
+      const lateClaim = new Promise<number>((resolve) => {
+        landed = () => resolve(1);
+      });
+      vi.mocked(redis!.eval).mockImplementationOnce(() => lateClaim);
+      // The cache's deadline fires before Redis answers.
+      mockCache.runRedisOperation.mockImplementationOnce(async (operation) => {
+        void operation(redis!);
+        throw new Error("Redis operation timed out");
+      });
+
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+      landed();
+      await vi.waitFor(() =>
+        expect(redis!.eval).toHaveBeenLastCalledWith(
+          expect.stringContaining("'GET'"),
+          expect.objectContaining({ keys: [expect.stringContaining(":claim:")] })
+        )
+      );
+    });
+
     test("does not act when Redis cannot answer, and never throws", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       mockCache.runRedisOperation.mockRejectedValue(new Error("Redis unavailable"));
@@ -245,8 +270,9 @@ describe("SSO recovery intent", () => {
       await claimSsoRecoveryIntent(stateId);
 
       const claim = [...store.entries()].find(([key]) => key.includes(":claim:"));
-      // Longer than the linking transaction's 35 s ceiling, so it cannot lapse under a running link.
-      expect(claim?.[1].ttlMs).toBe(120_000);
+      // Outlives the linking transaction's ceiling with room to spare, so it cannot lapse under a link.
+      expect(claim?.[1].ttlMs).toBeGreaterThan(2 * MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS);
+      expect(claim?.[1].ttlMs).toBeLessThanOrEqual(5 * 60 * 1000);
     });
   });
 

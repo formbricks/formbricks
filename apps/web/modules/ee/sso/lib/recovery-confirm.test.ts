@@ -20,6 +20,8 @@ vi.mock("./sso-recovery", async (importOriginal) => ({
   getSsoRecoveryConfirmation: vi.fn(),
 }));
 
+const anonymous = async () => ({});
+
 describe("resolveSsoRecoveryConfirmView (ENG-7395)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -33,8 +35,7 @@ describe("resolveSsoRecoveryConfirmView (ENG-7395)", () => {
 
     const view = await resolveSsoRecoveryConfirmView({
       state: "state-id",
-      recoveryProof: "proof-value",
-      sessionUserId: "user_1",
+      readBrowser: async () => ({ recoveryProof: "proof-value", sessionUserId: "user_1" }),
     });
 
     expect(getSsoRecoveryConfirmation).toHaveBeenCalledWith({
@@ -53,7 +54,9 @@ describe("resolveSsoRecoveryConfirmView (ENG-7395)", () => {
   test("shows nothing to a browser that never opened the emailed link", async () => {
     vi.mocked(getSsoRecoveryConfirmation).mockRejectedValue(new SsoRecoveryError("unproven"));
 
-    await expect(resolveSsoRecoveryConfirmView({ state: "state-id" })).resolves.toEqual({
+    await expect(
+      resolveSsoRecoveryConfirmView({ state: "state-id", readBrowser: anonymous })
+    ).resolves.toEqual({
       kind: "refused",
       redirectUrl: "http://localhost:3000/auth/login?error=sso_recovery_link_not_opened",
     });
@@ -63,7 +66,10 @@ describe("resolveSsoRecoveryConfirmView (ENG-7395)", () => {
   test("sends any other refusal to the ordinary failure page, without the intent's callback", async () => {
     vi.mocked(getSsoRecoveryConfirmation).mockRejectedValue(new SsoRecoveryError("rejected"));
 
-    const view = await resolveSsoRecoveryConfirmView({ state: "state-id", sessionUserId: "user_1" });
+    const view = await resolveSsoRecoveryConfirmView({
+      state: "state-id",
+      readBrowser: async () => ({ sessionUserId: "user_1" }),
+    });
 
     expect(view).toMatchObject({ kind: "refused" });
     expect(view.kind === "refused" && view.redirectUrl).toContain("error=OAuthAccountNotLinked");
@@ -73,7 +79,9 @@ describe("resolveSsoRecoveryConfirmView (ENG-7395)", () => {
   test("logs a failure that is not a guard's refusal", async () => {
     vi.mocked(getSsoRecoveryConfirmation).mockRejectedValue(new Error("redis exploded"));
 
-    await expect(resolveSsoRecoveryConfirmView({ state: "state-id" })).resolves.toMatchObject({
+    await expect(
+      resolveSsoRecoveryConfirmView({ state: "state-id", readBrowser: anonymous })
+    ).resolves.toMatchObject({
       kind: "refused",
     });
     expect(logger.error).toHaveBeenCalledWith(
@@ -87,9 +95,13 @@ describe("resolveSsoRecoveryConfirmView (ENG-7395)", () => {
     ["an empty state", ""],
     ["a repeated state", ["a", "b"]],
   ])("refuses %s before reading anything", async (_label, state) => {
-    const view = await resolveSsoRecoveryConfirmView({ state });
+    const readBrowser = vi.fn(anonymous);
+
+    const view = await resolveSsoRecoveryConfirmView({ state, readBrowser });
 
     expect(view.kind === "refused" && view.redirectUrl).toContain("error=OAuthAccountNotLinked");
+    // Not even the session: a stateless hit costs no lookup and cannot fail on one.
+    expect(readBrowser).not.toHaveBeenCalled();
     expect(getSsoRecoveryConfirmation).not.toHaveBeenCalled();
   });
 });

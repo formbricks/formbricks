@@ -33,6 +33,7 @@ import {
 import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, isSsoRecoveryInternalCallbackUrl } from "./constants";
 import { type TSsoIdentityProvider, normalizeSsoProvider } from "./provider-normalization";
 import {
+  type TSsoRecoveryIntent,
   claimSsoRecoveryIntent,
   consumeSsoRecoveryIntent,
   createSsoRecoveryIntent,
@@ -386,7 +387,9 @@ export class SsoRecoveryError extends Error {
    * cause: it answers `null` for **five** situations and its own doc says so — the record expired, a
    * completion already consumed it, the state id never named one, Redis could not be read (an outage,
    * or the cache facade's timeout), or the stored value failed validation. An earlier version of this
-   * comment claimed two, which is the sort of drift the next reader inherits as fact.
+   * comment claimed two, which is the sort of drift the next reader inherits as fact. A sixth reaches
+   * here from `claimSsoRecoveryIntent` (ENG-7395): the intent is live but another Link or Cancel holds it,
+   * which is an ordinary double click and must not tear down the winner's session either.
    *
    * All five skip the teardown, deliberately. The route's failure response revokes the session token
    * off the CALLER'S OWN cookie (`route.ts` → `buildFailedRecoveryResponse`), so skipping it can never
@@ -795,6 +798,23 @@ export const getSsoRecoveryConfirmation = async (args: {
   return { provider, email: user.email };
 };
 
+/** Leaves a trace of a Link or Cancel that lost the recovery to a concurrent one (ENG-7395). */
+const recordLostSsoRecoveryClaim = (intent: TSsoRecoveryIntent, provider: TSsoIdentityProvider) => {
+  getSsoRecoveryLogger("sso_recovery_failed").info(
+    { userId: intent.userId, provider },
+    "SSO recovery is being acted on by another request"
+  );
+  queueSsoRecoveryAuditEvent({
+    action: "sso_recovery_failed",
+    status: "failure",
+    userId: intent.userId,
+    email: intent.email,
+    provider,
+    callbackUrl: intent.callbackUrl,
+    failureReason: "claimed_by_another_request",
+  });
+};
+
 /**
  * The account holder declined on the confirmation page (ENG-7395). Spends the intent so the link can no
  * longer complete anything, from this browser or any other, and records why. Runs the same guards as a
@@ -808,9 +828,10 @@ export const cancelSsoRecovery = async (args: {
   const { intent, provider } = await authorizeSsoRecovery(args);
 
   // A Link in flight holds the claim, and a spent intent cannot be claimed: either way this cancel did
-  // not happen, so nothing is recorded.
+  // not happen, so no cancellation is recorded.
   const claim = await claimSsoRecoveryIntent(args.stateId);
   if (!claim) {
+    recordLostSsoRecoveryClaim(intent, provider);
     throw new SsoRecoveryError("intent_unusable");
   }
 
@@ -864,9 +885,13 @@ export const completeSsoRecovery = async ({
   // intent, stops this link before it writes anything.
   const claim = await claimSsoRecoveryIntent(stateId);
   if (!claim) {
+    recordLostSsoRecoveryClaim(intent, provider);
     throw new SsoRecoveryError("intent_unusable");
   }
 
+  // Kept when the link committed but the intent could not be spent: released, it would let a later
+  // Cancel claim the still-live intent and record a cancellation for an identity that is linked.
+  let keepClaim = false;
   let reclaimed: Awaited<ReturnType<typeof reclaimUnverifiedLocalAuthIfNeeded>>;
   try {
     reclaimed = await prisma.$transaction(
@@ -899,10 +924,10 @@ export const completeSsoRecovery = async ({
     // has done its job and a replay would only redo work. Not on read — see the note above the read.
     // Best-effort inside the helper: the account is already linked, and a Redis hiccup here must not turn
     // a completed recovery into a failure. The record expires on its own.
-    await consumeSsoRecoveryIntent(stateId);
+    keepClaim = !(await consumeSsoRecoveryIntent(stateId));
   } finally {
     // After a rollback this frees the recovery for a retry; after a link the intent is already gone.
-    await claim.release();
+    if (!keepClaim) await claim.release();
   }
 
   // Only when factors were actually stripped: this is the account changing hands, so any session the

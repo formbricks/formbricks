@@ -22,12 +22,11 @@ export type TSsoRecoveryConfirmView =
  */
 export const resolveSsoRecoveryConfirmView = async ({
   state,
-  recoveryProof,
-  sessionUserId,
+  readBrowser,
 }: {
   state: string | string[] | undefined;
-  recoveryProof?: string;
-  sessionUserId?: string;
+  /** The proof cookie and session, read only once there is a state to check them against. */
+  readBrowser: () => Promise<{ recoveryProof?: string; sessionUserId?: string }>;
 }): Promise<TSsoRecoveryConfirmView> => {
   const stateId = typeof state === "string" && state.length > 0 ? state : null;
 
@@ -36,7 +35,7 @@ export const resolveSsoRecoveryConfirmView = async ({
   }
 
   try {
-    const confirmation = await getSsoRecoveryConfirmation({ stateId, recoveryProof, sessionUserId });
+    const confirmation = await getSsoRecoveryConfirmation({ stateId, ...(await readBrowser()) });
 
     return {
       kind: "confirm",
