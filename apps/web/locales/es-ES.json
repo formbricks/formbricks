@@ -959,6 +959,8 @@
     "scheduled": "Esta encuesta se abrirá pronto.",
     "survey_already_answered_heading": "La encuesta ya ha sido respondida.",
     "survey_already_answered_subheading": "Solo puedes usar este enlace una vez.",
+    "survey_not_found": "Encuesta no encontrada.",
+    "survey_not_found_description": "No existe ninguna encuesta con este ID.",
     "survey_sent_to": "Encuesta enviada a {email}",
     "verify_email": "Verificar correo electrónico.",
     "verify_email_before_submission": "Verifica tu correo electrónico para responder",

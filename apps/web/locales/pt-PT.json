@@ -959,6 +959,8 @@
     "scheduled": "Este inquérito abre em breve.",
     "survey_already_answered_heading": "O inquérito já foi respondido.",
     "survey_already_answered_subheading": "Só pode usar este link uma vez.",
+    "survey_not_found": "Inquérito não encontrado.",
+    "survey_not_found_description": "Não existe nenhum inquérito com este ID.",
     "survey_sent_to": "Inquérito enviado para {email}",
     "verify_email": "Verificar email.",
     "verify_email_before_submission": "Verifique o seu email para responder",

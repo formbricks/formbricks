@@ -959,6 +959,8 @@
     "scheduled": "Ce sondage ouvre bientôt.",
     "survey_already_answered_heading": "L'enquête a déjà été répondue.",
     "survey_already_answered_subheading": "Vous ne pouvez utiliser ce lien qu'une seule fois.",
+    "survey_not_found": "Sondage introuvable.",
+    "survey_not_found_description": "Aucun sondage n'existe avec cet ID.",
     "survey_sent_to": "Enquête envoyée à {email}",
     "verify_email": "Vérifiez l'email.",
     "verify_email_before_submission": "Vérifiez votre email pour répondre.",

@@ -959,6 +959,8 @@
     "scheduled": "Den här enkäten öppnar snart.",
     "survey_already_answered_heading": "Enkäten har redan besvarats.",
     "survey_already_answered_subheading": "Du kan endast använda denna länk en gång.",
+    "survey_not_found": "Enkäten hittades inte.",
+    "survey_not_found_description": "Det finns ingen enkät med det här ID:t.",
     "survey_sent_to": "Enkät skickad till {email}",
     "verify_email": "Verifiera e-post.",
     "verify_email_before_submission": "Verifiera din e-post för att svara",

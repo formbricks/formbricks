@@ -959,6 +959,8 @@
     "scheduled": "Bu anket yakında açılacak.",
     "survey_already_answered_heading": "Survey zaten yanıtlandı.",
     "survey_already_answered_subheading": "Bu bağlantıyı yalnızca bir kez kullanabilirsiniz.",
+    "survey_not_found": "Anket bulunamadı.",
+    "survey_not_found_description": "Bu kimliğe sahip bir anket yok.",
     "survey_sent_to": "Survey şu adrese gönderildi: {email}",
     "verify_email": "Email doğrulayın.",
     "verify_email_before_submission": "Yanıtlamak için email adresinizi doğrulayın",

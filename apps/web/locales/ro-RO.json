@@ -959,6 +959,8 @@
     "scheduled": "Acest sondaj se deschide în curând.",
     "survey_already_answered_heading": "Sondajul a fost deja completat.",
     "survey_already_answered_subheading": "Puteți folosi acest link doar o dată.",
+    "survey_not_found": "Chestionarul nu a fost găsit.",
+    "survey_not_found_description": "Nu există niciun chestionar cu acest ID.",
     "survey_sent_to": "Chestionar trimis către {email}",
     "verify_email": "Verifică emailul",
     "verify_email_before_submission": "Verificați-vă emailul pentru a răspunde",

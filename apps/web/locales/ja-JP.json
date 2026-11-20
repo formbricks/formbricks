@@ -959,6 +959,8 @@
     "scheduled": "このアンケートはまもなく開始されます。",
     "survey_already_answered_heading": "このアンケートはすでに回答されています。",
     "survey_already_answered_subheading": "このリンクは一度だけしか使用できません。",
+    "survey_not_found": "アンケートが見つかりません。",
+    "survey_not_found_description": "このIDのアンケートは存在しません。",
     "survey_sent_to": "{email} にアンケートを送信しました",
     "verify_email": "メールアドレスを認証。",
     "verify_email_before_submission": "回答するにはメールアドレスを認証してください",

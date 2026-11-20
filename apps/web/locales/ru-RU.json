@@ -959,6 +959,8 @@
     "scheduled": "Этот опрос скоро откроется.",
     "survey_already_answered_heading": "Опрос уже был пройден.",
     "survey_already_answered_subheading": "Вы можете использовать эту ссылку только один раз.",
+    "survey_not_found": "Опрос не найден.",
+    "survey_not_found_description": "Опроса с таким ID не существует.",
     "survey_sent_to": "Опрос отправлен на {email}",
     "verify_email": "Подтвердите email.",
     "verify_email_before_submission": "Подтвердите свой email, чтобы ответить",

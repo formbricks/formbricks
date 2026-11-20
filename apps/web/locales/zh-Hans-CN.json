@@ -959,6 +959,8 @@
     "scheduled": "此问卷即将开放。",
     "survey_already_answered_heading": "调查 已经 被 回答",
     "survey_already_answered_subheading": "此 链接 只能 使用 一次。",
+    "survey_not_found": "未找到问卷。",
+    "survey_not_found_description": "没有找到此 ID 对应的问卷。",
     "survey_sent_to": "问卷 已发送至 {email}",
     "verify_email": "验证 电子邮件。",
     "verify_email_before_submission": "验证 您的 邮件 以 响应",
