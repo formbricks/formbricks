@@ -135,9 +135,22 @@ const checkTimeOnPage = (actionClasses: TWorkspaceStateActionClass[]): void => {
   }
 };
 
+/**
+ * The workspace's action classes, or `null` while there is no config. The no-code listeners outlive it:
+ * `resetConfig()` clears the config while they stay attached, and `get()` throws then, which out of a DOM
+ * listener is an unhandled rejection on the host page (ENG-6775). With no config there is nothing to match.
+ */
+const getActionClasses = (): TWorkspaceStateActionClass[] | null => {
+  try {
+    return Config.getInstance().get().workspace.data.actionClasses;
+  } catch (error) {
+    Logger.getInstance().debug(`Skipping the no-code action check: ${String(error)}`);
+    return null;
+  }
+};
+
 export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   const queue = CommandQueue.getInstance();
-  const appConfig = Config.getInstance();
   const logger = Logger.getInstance();
 
   logger.debug(`Checking page url: ${window.location.href}`);
@@ -146,7 +159,8 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   // any page-view action is tracked.
   reconcileCreatives();
 
-  const actionClasses = appConfig.get().workspace.data.actionClasses;
+  const actionClasses = getActionClasses();
+  if (!actionClasses) return { ok: true, data: undefined };
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
@@ -219,11 +233,9 @@ let isClickEventListenerAdded = false;
 
 const checkClickMatch = async (event: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
-  const appConfig = Config.getInstance();
 
-  const { workspace } = appConfig.get();
-
-  const { actionClasses = [] } = workspace.data;
+  const actionClasses = getActionClasses();
+  if (!actionClasses) return;
 
   const noCodeClickActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
@@ -259,10 +271,9 @@ let isExitIntentListenerAdded = false;
 
 const checkExitIntent = async (e: MouseEvent): Promise<void> => {
   const queue = CommandQueue.getInstance();
-  const appConfig = Config.getInstance();
 
-  const { workspace } = appConfig.get();
-  const { actionClasses = [] } = workspace.data;
+  const actionClasses = getActionClasses();
+  if (!actionClasses) return;
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
@@ -307,7 +318,6 @@ let scrollDepthTriggered = false;
 
 const checkScrollDepth = async (): Promise<void> => {
   const queue = CommandQueue.getInstance();
-  const appConfig = Config.getInstance();
 
   const scrollPosition = window.scrollY;
   const windowSize = window.innerHeight;
@@ -320,8 +330,8 @@ const checkScrollDepth = async (): Promise<void> => {
   if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
 
-    const { workspace } = appConfig.get();
-    const { actionClasses = [] } = workspace.data;
+    const actionClasses = getActionClasses();
+    if (!actionClasses) return;
 
     const noCodefiftyPercentScrollActionClasses = actionClasses.filter(
       (action) => action.type === "noCode" && action.noCodeConfig?.type === "fiftyPercentScroll"
