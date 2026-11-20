@@ -17,6 +17,7 @@ import {
   WORKFLOW_TRIGGER_VARIABLE_SOURCES,
 } from "./executable-checks";
 import { WORKFLOW_LIMITS } from "./limits";
+import { MAX_WORKFLOW_NODE_ID_LENGTH } from "./node-ids";
 import { validateWorkflowDefinitionSaveRules } from "./save-rules";
 import { getWorkflowStepType } from "./steps";
 import { ZWorkflowTriggerNode } from "./triggers";
@@ -295,7 +296,7 @@ export const ZWorkflowDefinitionInput = ZWorkflowDefinition.superRefine((definit
   validateBranchesNeverJoin(definition, ctx);
   validateWorkflowDefinitionSaveRules(definition, ctx);
 }).describe(
-  `Workflow definition with graph references validated. At most ${WORKFLOW_LIMITS.maxSteps} steps, ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else or filter and ${WORKFLOW_LIMITS.minSwitchCases} to ${WORKFLOW_LIMITS.maxSwitchCases} cases per switch; branches never join; Variable paths start with payload., steps. or response.`
+  `Workflow definition with graph references validated. Node ids use letters, digits, _ and - (at most ${MAX_WORKFLOW_NODE_ID_LENGTH} characters), and a step id can't be trigger or start with trigger_. At most ${WORKFLOW_LIMITS.maxSteps} steps, ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else or filter and ${WORKFLOW_LIMITS.minSwitchCases} to ${WORKFLOW_LIMITS.maxSwitchCases} cases per switch; branches never join; Variable paths start with payload., steps. or response.`
 );
 
 // Executable workflows are the enable-time subset: the trigger (and with it the entry point)

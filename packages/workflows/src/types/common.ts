@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_WORKFLOW_VARIABLE_PATH_LENGTH } from "../variables/paths";
+import { MAX_WORKFLOW_NODE_ID_LENGTH } from "./node-ids";
 
 export const ZWorkflowStatus = z
   .enum(["draft", "enabled", "disabled", "archived"])
@@ -68,8 +69,17 @@ export const ZWorkflowDataRef = z
 
 export type TWorkflowDataRef = z.infer<typeof ZWorkflowDataRef>;
 
+/**
+ * The id grammar and reserved names are checked on save and enable (`getWorkflowNodeIdProblem`), not
+ * here: this schema also reads stored definitions, and one saved before the rule could hold any id.
+ */
 export const ZWorkflowNodeBase = z.object({
-  id: z.string().min(1),
+  id: z
+    .string()
+    .min(1)
+    .describe(
+      `Node id, unique in the definition: letters, digits, _ and - only, at most ${MAX_WORKFLOW_NODE_ID_LENGTH} characters. A step's id can't be trigger, start with trigger_, or be __proto__, prototype or constructor.`
+    ),
   type: ZWorkflowNodeType,
   label: z.string().min(1).max(120).optional(),
   ui: ZWorkflowNodeUi.optional(),

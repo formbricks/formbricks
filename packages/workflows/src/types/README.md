@@ -107,7 +107,10 @@ condition-specific fields.
 
 Properties:
 
-- `id`: Stable node id inside the workflow definition. Edges use this value.
+- `id`: Stable node id inside the workflow definition. Edges use this value. On save it may use only letters,
+  digits, `_` and `-` (at most 64 characters), and a step's id can't be `trigger`, start with `trigger_` or be
+  `__proto__`, `prototype` or `constructor` (`getWorkflowNodeIdProblem`): a step id is a Variable path segment,
+  part of a BullMQ job id, and an HTTP request step's sample source, beside the trigger's `trigger_*` sources.
 - `type`: Node kind. Current values are `trigger`, `action`, `if_else` and `switch`.
 - `label`: Optional human-readable node label.
 - `ui`: Optional builder-only metadata.
@@ -219,7 +222,8 @@ where the trigger has more than one outgoing edge (a trigger-only draft with no 
 the executable definition requires the edge), and a definition that mixes survey and legacy operator names.
 
 `ZWorkflowDefinitionInput`, used by create, patch and duplicate, also rejects a node with more than one
-incoming edge (branches never join), a Variable path outside the grammar, and the save-time limits
+incoming edge (branches never join), a node id outside the id grammar or a reserved step id, a Variable path
+outside the grammar, and the save-time limits
 (`WORKFLOW_LIMITS`: 25 steps, 20 conditions per `if_else`, 2–10 cases per `switch` with unique ids other than
 `default`). Output schemas use `ZWorkflowDefinition`, so a
 stored definition that predates those rules still reads.

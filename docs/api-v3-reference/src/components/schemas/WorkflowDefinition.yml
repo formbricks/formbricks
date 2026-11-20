@@ -9,7 +9,9 @@ description: >
 
 
   Rules enforced on every write (**400** with `invalid_params` on violation): node ids are unique
-  across `trigger` and `nodes`; every edge references existing node ids; the trigger has at most
+  across `trigger` and `nodes` and use only letters, digits, `_` and `-` (at most 64 characters);
+  no step id is `trigger`, starts with `trigger_` (the Webhook trigger's samples use those names),
+  or is `__proto__`, `prototype` or `constructor`; every edge references existing node ids; the trigger has at most
   one outgoing edge; `entryNodeId` equals `trigger.id`; only `if_else` edges use the `then` / `else`
   handles, at most one each; `switch` edges use one of its case ids or `default`, at most one
   each; no node has more than one incoming edge (branches never join);

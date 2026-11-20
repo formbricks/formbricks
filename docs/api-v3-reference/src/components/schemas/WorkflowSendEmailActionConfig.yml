@@ -12,7 +12,8 @@ description: >-
 
   With a Variable recipient (`to: {type: "variable", ref}`), the email must be fixed: `subject` and
   `body` may not contain recall tokens and `attachResponseData` must be false. Only the survey
-  link's Embedded Data values may carry Variables. Enabling a workflow that breaks this returns
+  link's Embedded Data values may carry Variables, and never a step's output (`steps.`), so data a
+  workflow fetched never goes to an address the caller picked. Enabling a workflow that breaks this returns
   **422** `workflow_not_executable`.
 required:
   - to

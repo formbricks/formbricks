@@ -2,8 +2,11 @@ import { describe, expect, test } from "vitest";
 import {
   type TWorkflowDefinition,
   type TWorkflowSwitchNode,
+  WORKFLOW_TRIGGERS,
   ZWorkflowDefinitionInput,
+  getWorkflowNodeIdProblem,
 } from "@formbricks/workflows";
+import { createDefaultTrigger } from "./default-workflow";
 import {
   countStepsOnBranches,
   countStepsOnSwitchCase,
@@ -170,5 +173,20 @@ describe("getBranchLegOffset", () => {
   test("is null for a step without branches or an unknown branch", () => {
     expect(getBranchLegOffset(routing(), email("e"), "then")).toBeNull();
     expect(getBranchLegOffset(routing(), route, "missing")).toBeNull();
+  });
+});
+
+describe("generated node ids", () => {
+  // Saving refuses an id outside letters, digits, _ and - or a reserved step id; the editor's must never be one.
+  test.each(["if_else", "filter", "switch", "send_email", "http_request"] as const)(
+    "a new %s step gets an id saving accepts",
+    (stepType) => {
+      const { id } = createDefaultWorkflowStep(stepType, { x: 0, y: 0 });
+      expect(getWorkflowNodeIdProblem(id, "step")).toBeNull();
+    }
+  );
+
+  test.each(Object.values(WORKFLOW_TRIGGERS))("a new %s trigger gets an id saving accepts", (triggerType) => {
+    expect(getWorkflowNodeIdProblem(createDefaultTrigger(triggerType).id, "trigger")).toBeNull();
   });
 });

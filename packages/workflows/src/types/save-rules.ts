@@ -17,6 +17,7 @@ import {
 } from "./conditions/switch";
 import type { TWorkflowDefinitionBase } from "./document";
 import { WORKFLOW_LIMITS } from "./limits";
+import { getWorkflowNodeIdProblem } from "./node-ids";
 
 type TPath = (string | number)[];
 
@@ -154,16 +155,29 @@ const checkSaveLimits = (definition: TWorkflowDefinitionBase, ctx: z.RefinementC
   }
 };
 
+/** Every node id fits the id grammar, and no step takes a reserved id (`getWorkflowNodeIdProblem`). */
+const checkNodeIds = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  if (definition.trigger) {
+    const problem = getWorkflowNodeIdProblem(definition.trigger.id, "trigger");
+    if (problem) ctx.addIssue({ code: "custom", message: problem, path: ["trigger", "id"] });
+  }
+  for (const [index, node] of definition.nodes.entries()) {
+    const problem = getWorkflowNodeIdProblem(node.id, "step");
+    if (problem) ctx.addIssue({ code: "custom", message: problem, path: ["nodes", index, "id"] });
+  }
+};
+
 /**
  * Rules a definition must meet when it is written (create, patch, duplicate) or enabled, but not when
  * a stored one is read or run: a definition saved before a rule existed must keep loading and running
- * (spec §10). Covers the save-time limits and the Variable path grammar.
+ * (spec §10). Covers the save-time limits, the node id grammar and the Variable path grammar.
  */
 export const validateWorkflowDefinitionSaveRules = (
   definition: TWorkflowDefinitionBase,
   ctx: z.RefinementCtx
 ): void => {
   checkSaveLimits(definition, ctx);
+  checkNodeIds(definition, ctx);
 
   for (const [index, node] of definition.nodes.entries()) {
     const nodePath = ["nodes", index, "config"];
