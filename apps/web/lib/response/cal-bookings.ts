@@ -43,7 +43,7 @@ export const extractCalBookings = (
   const bookings = Object.create(null) as TCalBookingsByQuestionId;
   let found = false;
 
-  for (const element of getElementsFromBlocks(survey.blocks as TSurvey["blocks"])) {
+  for (const element of getElementsFromBlocks(survey.blocks)) {
     if (element.type !== TSurveyElementTypeEnum.Cal) continue;
     const booking = sanitizeCalBooking(data[element.id]);
     if (!booking) continue;
