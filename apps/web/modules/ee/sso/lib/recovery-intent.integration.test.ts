@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { beforeEach, describe, expect, test } from "vitest";
 import { cache } from "@/lib/cache";
 import {
+  claimSsoRecoveryIntent,
   consumeSsoRecoveryIntent,
   createSsoRecoveryIntent,
   getSsoRecoveryPairedTtlSeconds,
@@ -105,5 +106,36 @@ describe("SSO recovery intent store (real Redis)", () => {
 
     await expect(readSsoRecoveryIntent(first)).resolves.toBeNull();
     await expect(readSsoRecoveryIntent(second)).resolves.toMatchObject({ userId: "other-user" });
+  });
+
+  /** The claim's Lua against real Redis: one owner at a time, none once spent, freed only by its owner. */
+  test("a recovery is claimed by one request at a time, and not at all once spent", async () => {
+    const stateId = await createSsoRecoveryIntent(intentInput);
+
+    const first = await claimSsoRecoveryIntent(stateId);
+    expect(first).not.toBeNull();
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+
+    await first!.release();
+    const second = await claimSsoRecoveryIntent(stateId);
+    expect(second).not.toBeNull();
+    await second!.release();
+
+    await consumeSsoRecoveryIntent(stateId);
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+  });
+
+  test("a claim that lapsed and was retaken is not freed by its first owner", async () => {
+    const stateId = await createSsoRecoveryIntent(intentInput);
+    const first = await claimSsoRecoveryIntent(stateId);
+    // The first claim's TTL runs out, and another request takes the recovery.
+    await (await redisClient()).del(keyFor(stateId).replace(":intent:", ":claim:"));
+    const second = await claimSsoRecoveryIntent(stateId);
+    expect(second).not.toBeNull();
+
+    await first!.release();
+
+    // Still the second request's: a third cannot claim.
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
   });
 });

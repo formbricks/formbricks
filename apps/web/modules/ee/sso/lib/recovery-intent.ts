@@ -90,6 +90,85 @@ const hashStateId = (stateId: string) => crypto.createHash("sha256").update(stat
 const getIntentCacheKey = (stateIdHash: string) =>
   createCacheKey.custom("sso_recovery", "intent", stateIdHash);
 
+const getClaimCacheKey = (stateIdHash: string) => createCacheKey.custom("sso_recovery", "claim", stateIdHash);
+
+/**
+ * How long a claim holds when its owner never releases it (a crashed request). Longer than anything a
+ * completion does while holding it, the linking transaction's 35-second ceiling included, so a claim
+ * cannot lapse under a completion that is still running.
+ */
+const CLAIM_TTL_MS = 2 * 60 * 1000;
+
+// Claims only while the intent still exists, in one step: a Link that lost to a Cancel, which spent the
+// intent, cannot claim afterwards, and no request can claim between the existence check and the claim.
+const CLAIM_IF_LIVE_SCRIPT = `
+  if redis.call('EXISTS', KEYS[1]) == 0 then
+    return 0
+  end
+  if redis.call('SET', KEYS[2], ARGV[1], 'NX', 'PX', ARGV[2]) then
+    return 1
+  end
+  return 0
+`;
+
+// Deletes the claim only while it is still this request's, so a release that runs after the claim
+// expired and someone else took it cannot free theirs.
+const RELEASE_CLAIM_SCRIPT = `
+  if redis.call('GET', KEYS[1]) == ARGV[1] then
+    return redis.call('DEL', KEYS[1])
+  end
+  return 0
+`;
+
+export type TSsoRecoveryClaim = { release: () => Promise<void> };
+
+/**
+ * Takes the right to act on a live recovery: link it or cancel it. Completion and cancellation each
+ * authorize first and write after, so without this a Cancel and a Link clicked together could both
+ * succeed, the identity linked while the cancellation was recorded (ENG-7395 review). The one that claims
+ * acts; the other is told the recovery is no longer usable.
+ *
+ * Returns null when the intent is gone, another request holds the claim, or Redis cannot answer: every
+ * one of those means "do not act now". Never throws.
+ */
+export const claimSsoRecoveryIntent = async (stateId: string): Promise<TSsoRecoveryClaim | null> => {
+  if (!STATE_ID_REGEX.test(stateId)) {
+    return null;
+  }
+
+  const stateIdHash = hashStateId(stateId);
+  const claimKey = getClaimCacheKey(stateIdHash);
+  const token = crypto.randomUUID();
+
+  try {
+    const claimed = await cache.runRedisOperation((client) =>
+      client.eval(CLAIM_IF_LIVE_SCRIPT, {
+        keys: [getIntentCacheKey(stateIdHash), claimKey],
+        arguments: [token, String(CLAIM_TTL_MS)],
+      })
+    );
+    if (claimed !== 1) {
+      return null;
+    }
+  } catch (error) {
+    logger.error({ error, stateIdHash }, "Failed to claim the SSO recovery intent");
+    return null;
+  }
+
+  return {
+    release: async () => {
+      try {
+        await cache.runRedisOperation((client) =>
+          client.eval(RELEASE_CLAIM_SCRIPT, { keys: [claimKey], arguments: [token] })
+        );
+      } catch (error) {
+        // It expires on its own; only a retry within that window is held up.
+        logger.error({ error, stateIdHash }, "Failed to release the SSO recovery claim");
+      }
+    },
+  };
+};
+
 /**
  * Store an intent and return the opaque id that stands for it in the URL.
  *

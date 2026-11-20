@@ -32,7 +32,12 @@ import {
 } from "./account-linking";
 import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, isSsoRecoveryInternalCallbackUrl } from "./constants";
 import { type TSsoIdentityProvider, normalizeSsoProvider } from "./provider-normalization";
-import { consumeSsoRecoveryIntent, createSsoRecoveryIntent, readSsoRecoveryIntent } from "./recovery-intent";
+import {
+  claimSsoRecoveryIntent,
+  consumeSsoRecoveryIntent,
+  createSsoRecoveryIntent,
+  readSsoRecoveryIntent,
+} from "./recovery-intent";
 import { isValidSsoRecoveryProof } from "./recovery-proof";
 
 const getSsoRecoveryLogger = (
@@ -802,11 +807,20 @@ export const cancelSsoRecovery = async (args: {
 }): Promise<void> => {
   const { intent, provider } = await authorizeSsoRecovery(args);
 
-  // Nothing to record when another request (the Link button, a second Cancel) spent it first: the
-  // recovery was not cancelled by this call, and it may have been linked. A Redis failure on the delete
-  // lands here too; the intent then lives until it expires, and the user is told it is unusable.
-  if (!(await consumeSsoRecoveryIntent(args.stateId))) {
+  // A Link in flight holds the claim, and a spent intent cannot be claimed: either way this cancel did
+  // not happen, so nothing is recorded.
+  const claim = await claimSsoRecoveryIntent(args.stateId);
+  if (!claim) {
     throw new SsoRecoveryError("intent_unusable");
+  }
+
+  try {
+    // A Redis failure on the delete leaves the intent until it expires; the user is told it is unusable.
+    if (!(await consumeSsoRecoveryIntent(args.stateId))) {
+      throw new SsoRecoveryError("intent_unusable");
+    }
+  } finally {
+    await claim.release();
   }
 
   getSsoRecoveryLogger("sso_recovery_failed").info(
@@ -846,37 +860,50 @@ export const completeSsoRecovery = async ({
 }): Promise<string> => {
   const { intent, provider, user } = await authorizeSsoRecovery({ stateId, recoveryProof, sessionUserId });
 
-  const reclaimed = await prisma.$transaction(
-    async (tx) => {
-      const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
-        tx,
-        user,
-      });
+  // Only one request acts on a recovery: a Cancel holding the claim, or one that already spent the
+  // intent, stops this link before it writes anything.
+  const claim = await claimSsoRecoveryIntent(stateId);
+  if (!claim) {
+    throw new SsoRecoveryError("intent_unusable");
+  }
 
-      const recoveryAccount: TSsoAccountLinkInput = {
-        type: "oauth",
-        provider,
-        providerAccountId: intent.providerAccountId,
-      };
+  let reclaimed: Awaited<ReturnType<typeof reclaimUnverifiedLocalAuthIfNeeded>>;
+  try {
+    reclaimed = await prisma.$transaction(
+      async (tx) => {
+        const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
+          tx,
+          user,
+        });
 
-      await syncSsoIdentityForUser({
-        userId: user.id,
-        provider,
-        account: recoveryAccount,
-        tx,
-      });
+        const recoveryAccount: TSsoAccountLinkInput = {
+          type: "oauth",
+          provider,
+          providerAccountId: intent.providerAccountId,
+        };
 
-      return outcome;
-    },
-    // It may end the user's MCP grants, whose rows a reconciling pass can hold: the Revoke timeout.
-    { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
-  );
+        await syncSsoIdentityForUser({
+          userId: user.id,
+          provider,
+          account: recoveryAccount,
+          tx,
+        });
 
-  // Single use, applied at the only point where it is safe to: the link has committed, so the intent
-  // has done its job and a replay would only redo work. Not on read — see the note above the read.
-  // Best-effort inside the helper: the account is already linked, and a Redis hiccup here must not turn
-  // a completed recovery into a failure. The record expires on its own.
-  await consumeSsoRecoveryIntent(stateId);
+        return outcome;
+      },
+      // It may end the user's MCP grants, whose rows a reconciling pass can hold: the Revoke timeout.
+      { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+    );
+
+    // Single use, applied at the only point where it is safe to: the link has committed, so the intent
+    // has done its job and a replay would only redo work. Not on read — see the note above the read.
+    // Best-effort inside the helper: the account is already linked, and a Redis hiccup here must not turn
+    // a completed recovery into a failure. The record expires on its own.
+    await consumeSsoRecoveryIntent(stateId);
+  } finally {
+    // After a rollback this frees the recovery for a retry; after a link the intent is already gone.
+    await claim.release();
+  }
 
   // Only when factors were actually stripped: this is the account changing hands, so any session the
   // squatter still holds has to go. Reachable in practice because `signUpEmail` writes

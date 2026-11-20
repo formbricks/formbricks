@@ -27,6 +27,8 @@ const mocks = vi.hoisted(() => ({
   createSsoRecoveryIntent: vi.fn(),
   readSsoRecoveryIntent: vi.fn(),
   consumeSsoRecoveryIntent: vi.fn(),
+  claimSsoRecoveryIntent: vi.fn(),
+  releaseClaim: vi.fn(),
   queueAuditEventBackground: vi.fn(),
 }));
 
@@ -62,6 +64,7 @@ vi.mock("./recovery-intent", () => ({
   createSsoRecoveryIntent: mocks.createSsoRecoveryIntent,
   readSsoRecoveryIntent: mocks.readSsoRecoveryIntent,
   consumeSsoRecoveryIntent: mocks.consumeSsoRecoveryIntent,
+  claimSsoRecoveryIntent: mocks.claimSsoRecoveryIntent,
 }));
 
 // Ending the user's OAuth grants marks their pending sign-in codes in Redis, which the unit run has none of.
@@ -210,6 +213,8 @@ describe("sso-recovery", () => {
       consumedAfterCommit = transactionCommitted;
       return true;
     });
+    mocks.releaseClaim.mockResolvedValue(undefined);
+    mocks.claimSsoRecoveryIntent.mockResolvedValue({ release: mocks.releaseClaim });
     vi.mocked(buildVerificationRequestedPath).mockReturnValue(
       "/auth/verification-requested?token=email-token&purpose=sso_recovery"
     );
@@ -1023,6 +1028,78 @@ describe("sso-recovery", () => {
       await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe("unproven");
       // Someone holding just the state id cannot burn the account holder's recovery.
       expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Link and Cancel each authorize, then write. Clicked together, both used to pass the guards and both
+     * acted: the identity linked while the cancellation was recorded. Now each takes a claim first, and
+     * the one that loses it writes nothing.
+     */
+    describe("link and cancel take turns", () => {
+      const proven = () => ({
+        stateId: "test-state",
+        recoveryProof: createSsoRecoveryProof("user_1", "test-state"),
+        sessionUserId: "user_1",
+      });
+
+      beforeEach(() => {
+        vi.mocked(prisma.user.findUnique).mockResolvedValue(verifiedUser as never);
+      });
+
+      test("a link that cannot claim the recovery writes nothing", async () => {
+        mocks.claimSsoRecoveryIntent.mockResolvedValue(null);
+
+        const outcome = completeSsoRecovery(proven());
+
+        await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe(
+          "intent_unusable"
+        );
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+        expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+        expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+      });
+
+      test("a cancel that cannot claim the recovery spends nothing and records nothing", async () => {
+        mocks.claimSsoRecoveryIntent.mockResolvedValue(null);
+
+        const outcome = cancelSsoRecovery(proven());
+
+        await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe(
+          "intent_unusable"
+        );
+        expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+        expect(mocks.queueAuditEventBackground).not.toHaveBeenCalled();
+      });
+
+      test("a link holds its claim until the intent is spent, then gives it back", async () => {
+        const order: string[] = [];
+        mocks.consumeSsoRecoveryIntent.mockImplementation(async () => {
+          order.push("consume");
+          return true;
+        });
+        mocks.releaseClaim.mockImplementation(async () => {
+          order.push("release");
+        });
+
+        await completeSsoRecovery(proven());
+
+        expect(order).toEqual(["consume", "release"]);
+      });
+
+      test("a link that rolls back gives its claim back, so the recovery can be retried", async () => {
+        vi.mocked(prisma.$transaction).mockRejectedValue(new Error("rolled back"));
+
+        await expect(completeSsoRecovery(proven())).rejects.toThrow("rolled back");
+        expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
+        expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+      });
+
+      test("a cancel gives its claim back after spending the intent", async () => {
+        await cancelSsoRecovery(proven());
+
+        expect(mocks.consumeSsoRecoveryIntent).toHaveBeenCalledWith("test-state");
+        expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
+      });
     });
 
     test("points at the confirmation page for a state", () => {

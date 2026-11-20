@@ -8,7 +8,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { getSession } from "@/modules/auth/lib/session";
 import { ssoRecoveryAfterHandler } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
-import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
+import { cancelSsoRecovery, completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { captureSsoIdentity, runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 import { cookieHeaderFrom, proofCookieOf } from "@/modules/ee/sso/lib/tests/recovery-cookies";
 
@@ -292,5 +292,28 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
     expect(confirmed.headers.get("location")).toBe(destination);
     const account = await prisma.account.findFirst({ where: { userId: user.id, provider: "google" } });
     expect(account?.providerAccountId).toBe("google-sub-route");
+  });
+
+  /**
+   * Link and Cancel clicked together, against real Postgres and Redis. Exactly one acts: either the
+   * identity is linked and the cancel is refused, or the cancel spends the recovery and nothing links.
+   * Never both, which is what authorizing first and writing after used to allow.
+   */
+  test("a Link and a Cancel racing on one recovery: exactly one acts", async () => {
+    for (let round = 0; round < 5; round++) {
+      await resetDb();
+      const user = await seedUser();
+      const verificationRequestedUrl = await runOneRecoveryAttempt(WEBAPP_URL, `google-sub-race-${round}`);
+      const completionUrl = new URL(verificationRequestedUrl).searchParams.get("callbackUrl")!;
+      const stateId = new URL(completionUrl).searchParams.get("state")!;
+      const recoveryProof = proofCookieOf(await openEmailedRecoveryLink(user.id, completionUrl)) ?? undefined;
+      const args = { stateId, recoveryProof, sessionUserId: user.id };
+
+      const [link, cancel] = await Promise.allSettled([completeSsoRecovery(args), cancelSsoRecovery(args)]);
+      const linked = await prisma.account.count({ where: { userId: user.id, provider: "google" } });
+
+      expect([link.status, cancel.status].filter((status) => status === "fulfilled")).toHaveLength(1);
+      expect(linked).toBe(link.status === "fulfilled" ? 1 : 0);
+    }
   });
 });

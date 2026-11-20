@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { cache } from "@/lib/cache";
 import {
   type TSsoRecoveryIntent,
+  claimSsoRecoveryIntent,
   consumeSsoRecoveryIntent,
   createSsoRecoveryIntent,
   getSsoRecoveryPairedTtlSeconds,
@@ -75,6 +76,21 @@ describe("SSO recovery intent", () => {
       }),
       // Real DEL semantics: the number of keys removed, 0 when it was already gone.
       del: vi.fn(async (key: string) => (store.delete(key) ? 1 : 0)),
+      // The two claim scripts, with the semantics their Lua gives them in Redis.
+      eval: vi.fn(
+        async (script: string, { keys, arguments: args }: { keys: string[]; arguments: string[] }) => {
+          if (script.includes("EXISTS")) {
+            const [intentKey, claimKey] = keys;
+            if (!store.has(intentKey) || store.has(claimKey)) return 0;
+            store.set(claimKey, { value: args[0], ttlMs: Number(args[1]) });
+            return 1;
+          }
+          const [claimKey] = keys;
+          if (store.get(claimKey)?.value !== args[0]) return 0;
+          store.delete(claimKey);
+          return 1;
+        }
+      ),
     } as never);
     mockCache.runRedisOperation.mockImplementation(async (operation) => {
       const redis = await mockCache.getRedisClient();
@@ -182,6 +198,55 @@ describe("SSO recovery intent", () => {
       store.set(key, { value: stored });
 
       await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();
+    });
+  });
+
+  describe("claim", () => {
+    test("one request at a time may act on a live recovery", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+
+      const first = await claimSsoRecoveryIntent(stateId);
+      expect(first).not.toBeNull();
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+
+      await first!.release();
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.not.toBeNull();
+    });
+
+    test("a spent recovery cannot be claimed", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      await consumeSsoRecoveryIntent(stateId);
+
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+    });
+
+    test("a claim that lapsed and was retaken is not freed by its first owner", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      const first = await claimSsoRecoveryIntent(stateId);
+      // The first claim's TTL ran out and another request claimed.
+      for (const key of [...store.keys()]) if (key.includes(":claim:")) store.delete(key);
+      const second = await claimSsoRecoveryIntent(stateId);
+
+      await first!.release();
+
+      expect(second).not.toBeNull();
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+    });
+
+    test("does not act when Redis cannot answer, and never throws", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      mockCache.runRedisOperation.mockRejectedValue(new Error("Redis unavailable"));
+
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+    });
+
+    test("expires on its own if never released", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      await claimSsoRecoveryIntent(stateId);
+
+      const claim = [...store.entries()].find(([key]) => key.includes(":claim:"));
+      // Longer than the linking transaction's 35 s ceiling, so it cannot lapse under a running link.
+      expect(claim?.[1].ttlMs).toBe(120_000);
     });
   });
 
