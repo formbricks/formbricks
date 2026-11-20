@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   buildSignupWithoutVerificationSuccessPath,
   buildVerificationLinks,
+  buildVerificationRequestedLoginHref,
   buildVerificationRequestedPath,
 } from "./verification-links";
 
@@ -120,5 +121,28 @@ describe("verification link helpers", () => {
       verifyLink:
         "http://localhost:3000/api/auth/sso-recovery/sign-in?token=abc123&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest%3Ffoo%3Dbar",
     });
+  });
+});
+
+describe("buildVerificationRequestedLoginHref", () => {
+  test("carries an ordinary callback, so an invited visitor lands back on the invite", () => {
+    expect(buildVerificationRequestedLoginHref(`${WEBAPP_URL}/invite?token=abc`)).toBe(
+      `/auth/login?callbackUrl=${encodeURIComponent(`${WEBAPP_URL}/invite?token=abc`)}`
+    );
+  });
+
+  test("plain log-in when there is no callback", () => {
+    expect(buildVerificationRequestedLoginHref(null)).toBe("/auth/login");
+  });
+
+  /**
+   * ENG-7310. Only the browser that opened the emailed link can finish SSO recovery, so a log-in from
+   * this page that followed the completion URL would land on an error.
+   */
+  test.each([
+    `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=abc`,
+    `${WEBAPP_URL}/api//auth/sso/recovery///complete?state=abc`,
+  ])("drops an SSO recovery completion callback: %s", (callbackUrl) => {
+    expect(buildVerificationRequestedLoginHref(callbackUrl)).toBe("/auth/login");
   });
 });

@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { cache } from "@/lib/cache";
 import {
+  type TSsoRecoveryClaim,
   type TSsoRecoveryIntent,
+  claimSsoRecoveryIntent,
   consumeSsoRecoveryIntent,
   createSsoRecoveryIntent,
   getSsoRecoveryPairedTtlSeconds,
@@ -73,6 +75,24 @@ describe("SSO recovery intent", () => {
         store.set(key, { ...entry, ttlMs: seconds * 1000 });
         return 1;
       }),
+      // Real DEL semantics: the number of keys removed, 0 when it was already gone.
+      del: vi.fn(async (key: string) => (store.delete(key) ? 1 : 0)),
+      // The two claim scripts, with the semantics their Lua gives them in Redis.
+      eval: vi.fn(
+        async (script: string, { keys, arguments: args }: { keys: string[]; arguments: string[] }) => {
+          if (script.includes("EXISTS")) {
+            const [intentKey, claimKey] = keys;
+            if (!store.has(intentKey)) return 0;
+            if (store.has(claimKey)) return 2;
+            store.set(claimKey, { value: args[0], ttlMs: Number(args[1]) });
+            return 1;
+          }
+          const [claimKey] = keys;
+          if (store.get(claimKey)?.value !== args[0]) return 0;
+          store.delete(claimKey);
+          return 1;
+        }
+      ),
     } as never);
   });
 
@@ -105,7 +125,20 @@ describe("SSO recovery intent", () => {
       const [key] = [...store.keys()];
 
       expect(key).not.toContain(stateId);
-      expect(key).toMatch(/^fb:sso_recovery:intent:[0-9a-f]{64}$/);
+      expect(key).toMatch(/^fb:sso_recovery:\{[0-9a-f]{64}\}:intent$/);
+    });
+
+    test("puts the intent and its claim in one Redis Cluster hash slot", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      await claimSsoRecoveryIntent(stateId);
+
+      // The claim script names both keys in one EVAL; Redis Cluster hashes only the `{...}` part.
+      const redis = await mockCache.getRedisClient();
+      const [, { keys }] = vi.mocked(redis!.eval).mock.calls.at(-1) as [string, { keys: string[] }];
+      const hashTags = keys.map((key) => /\{([^}]+)\}/.exec(key)?.[1]);
+      expect(hashTags).toHaveLength(2);
+      expect(new Set(hashTags).size).toBe(1);
+      expect(hashTags[0]).toMatch(/^[0-9a-f]{64}$/);
     });
 
     test("stores nothing the URL used to carry in the clear", async () => {
@@ -178,6 +211,61 @@ describe("SSO recovery intent", () => {
     });
   });
 
+  describe("claim", () => {
+    const claimed = (claim: TSsoRecoveryClaim) => {
+      expect(claim.kind).toBe("claimed");
+      return claim as Extract<TSsoRecoveryClaim, { kind: "claimed" }>;
+    };
+
+    test("one request at a time may act on a live recovery", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+
+      const first = claimed(await claimSsoRecoveryIntent(stateId));
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
+
+      await first.release();
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toMatchObject({ kind: "claimed" });
+    });
+
+    test("a spent recovery cannot be claimed, and says so rather than blaming another request", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      await consumeSsoRecoveryIntent(stateId);
+
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "spent" });
+    });
+
+    test("a claim that lapsed and was retaken is not freed by its first owner", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      const first = claimed(await claimSsoRecoveryIntent(stateId));
+      // The first claim's TTL ran out and another request claimed.
+      for (const key of [...store.keys()]) if (key.endsWith(":claim")) store.delete(key);
+      claimed(await claimSsoRecoveryIntent(stateId));
+
+      await first.release();
+
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
+    });
+
+    test("does not act when Redis cannot answer, and never throws", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      mockCache.getRedisClient.mockRejectedValue(new Error("Redis unavailable"));
+
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "unavailable" });
+    });
+
+    test("expires on its own if never released", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      await claimSsoRecoveryIntent(stateId);
+
+      const claim = [...store.entries()].find(([key]) => key.endsWith(":claim"));
+      // Outlives the linking transaction's ceiling with room to spare, so it cannot lapse under a link.
+      // Prisma's default interactive-transaction timeout, which the linking transaction runs under.
+      const linkTransactionTimeoutMs = 5_000;
+      expect(claim?.[1].ttlMs).toBeGreaterThan(2 * linkTransactionTimeoutMs);
+      expect(claim?.[1].ttlMs).toBeLessThanOrEqual(5 * 60 * 1000);
+    });
+  });
+
   describe("consume", () => {
     test("removes the record, so a completed recovery cannot be replayed", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
@@ -187,11 +275,18 @@ describe("SSO recovery intent", () => {
       await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();
     });
 
+    test("says whether this call removed it, so a race has exactly one winner", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+
+      await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(true);
+      await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(false);
+    });
+
     test("never throws when the delete fails — the account link has already committed", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
-      mockCache.del.mockResolvedValue({ ok: false, error: { code: "RedisConnectionError" } });
+      mockCache.getRedisClient.mockRejectedValue(new Error("Redis unavailable"));
 
-      await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBeUndefined();
+      await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(false);
     });
   });
 

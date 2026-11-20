@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { VERIFICATION_LINK_TTL_SECONDS } from "@/modules/auth/lib/verification-links";
 
 /**
@@ -87,8 +88,103 @@ const toBase64Url = (buffer: Buffer) =>
  */
 const hashStateId = (stateId: string) => crypto.createHash("sha256").update(stateId).digest("hex");
 
+type TRedisClient = NonNullable<Awaited<ReturnType<typeof cache.getRedisClient>>>;
+
+/** Runs one Redis command, throwing when Redis is not configured or not reachable. */
+const withRedis = async <T>(operation: (client: TRedisClient) => Promise<T>): Promise<T> => {
+  const redis = await cache.getRedisClient();
+  if (!redis) throw new Error("Redis is unavailable");
+  return operation(redis);
+};
+
+// Redis Cluster (ElastiCache Serverless on Cloud) runs a Lua call only when all its keys share a hash slot,
+// and the claim script reads the intent and writes the claim in one call. The braces make both keys hash on
+// the state hash alone, so they land in the same slot.
 const getIntentCacheKey = (stateIdHash: string) =>
-  createCacheKey.custom("sso_recovery", "intent", stateIdHash);
+  createCacheKey.custom("sso_recovery", `{${stateIdHash}}`, "intent");
+
+const getClaimCacheKey = (stateIdHash: string) =>
+  createCacheKey.custom("sso_recovery", `{${stateIdHash}}`, "claim");
+
+/**
+ * How long a claim holds when its owner never releases it (a crashed request). Longer than anything a
+ * completion does while holding it, the linking transaction's 5-second Prisma default included, so a claim
+ * cannot lapse under a completion that is still running.
+ */
+const CLAIM_TTL_MS = 2 * 60 * 1000;
+
+// Claims only while the intent still exists, in one step: a Link that lost to a Cancel, which spent the
+// intent, cannot claim afterwards, and no request can claim between the existence check and the claim.
+const CLAIM_IF_LIVE_SCRIPT = `
+  if redis.call('EXISTS', KEYS[1]) == 0 then
+    return 0
+  end
+  if redis.call('SET', KEYS[2], ARGV[1], 'NX', 'PX', ARGV[2]) then
+    return 1
+  end
+  return 2
+`;
+
+// Deletes the claim only while it is still this request's, so a release that runs after the claim
+// expired and someone else took it cannot free theirs.
+const RELEASE_CLAIM_SCRIPT = `
+  if redis.call('GET', KEYS[1]) == ARGV[1] then
+    return redis.call('DEL', KEYS[1])
+  end
+  return 0
+`;
+
+/**
+ * `claimed` may act and must release. The rest may not act, for different reasons the audit keeps apart:
+ * `held` is another Link or Cancel in flight, `spent` is a recovery already linked, cancelled or expired,
+ * and `unavailable` is Redis not answering, which says nothing about other requests.
+ */
+export type TSsoRecoveryClaim =
+  | { kind: "claimed"; release: () => Promise<void> }
+  | { kind: "held" | "spent" | "unavailable" };
+
+/**
+ * Takes the right to act on a live recovery: link it or cancel it. Completion and cancellation each
+ * authorize first and write after, so without this a Cancel and a Link clicked together could both
+ * succeed, the identity linked while the cancellation was recorded (ENG-7395 review). The one that claims
+ * acts; the other is told the recovery is no longer usable.
+ *
+ * Anything but `claimed` means "do not act now". Never throws.
+ */
+export const claimSsoRecoveryIntent = async (stateId: string): Promise<TSsoRecoveryClaim> => {
+  if (!STATE_ID_REGEX.test(stateId)) {
+    return { kind: "spent" };
+  }
+
+  const stateIdHash = hashStateId(stateId);
+  const claimKey = getClaimCacheKey(stateIdHash);
+  const token = crypto.randomUUID();
+  const release = async () => {
+    try {
+      await withRedis((client) =>
+        client.eval(RELEASE_CLAIM_SCRIPT, { keys: [claimKey], arguments: [token] })
+      );
+    } catch (error) {
+      // It expires on its own; only a retry within that window is held up.
+      logger.error({ ...loggableError(error), stateIdHash }, "Failed to release the SSO recovery claim");
+    }
+  };
+  try {
+    const claimed = await withRedis((client) =>
+      client.eval(CLAIM_IF_LIVE_SCRIPT, {
+        keys: [getIntentCacheKey(stateIdHash), claimKey],
+        arguments: [token, String(CLAIM_TTL_MS)],
+      })
+    );
+    if (claimed === 0) return { kind: "spent" };
+    if (claimed !== 1) return { kind: "held" };
+  } catch (error) {
+    logger.error({ ...loggableError(error), stateIdHash }, "Failed to claim the SSO recovery intent");
+    return { kind: "unavailable" };
+  }
+
+  return { kind: "claimed", release };
+};
 
 /**
  * Store an intent and return the opaque id that stands for it in the URL.
@@ -179,21 +275,29 @@ export const readSsoRecoveryIntent = async (
 };
 
 /**
- * Single-use, applied at the only moment it is safe to: after the account link has committed.
+ * Single-use, applied at the only moment it is safe to: after the account link has committed, or when
+ * the account holder cancels.
  *
- * Best-effort, never throws. The link already happened, so failing here must not turn a completed
- * recovery into an error — the record expires on its own.
+ * Answers whether THIS call removed the record. A raw `DEL` rather than `cache.del`, for its count: a
+ * cancel racing a completion must not record a cancellation for a recovery the other request already
+ * linked and spent. `false` covers "already gone" and "Redis failed" alike.
+ *
+ * Best-effort, never throws. After a link the account is already linked, so failing here must not turn a
+ * completed recovery into an error; the record expires on its own.
  */
-export const consumeSsoRecoveryIntent = async (stateId: string): Promise<void> => {
+export const consumeSsoRecoveryIntent = async (stateId: string): Promise<boolean> => {
   if (!STATE_ID_REGEX.test(stateId)) {
-    return;
+    return false;
   }
 
   const stateIdHash = hashStateId(stateId);
-  const result = await cache.del([getIntentCacheKey(stateIdHash)]);
 
-  if (!result.ok) {
-    logger.error({ error: result.error, stateIdHash }, "Failed to consume the SSO recovery intent");
+  try {
+    const removed = await withRedis((client) => client.del(getIntentCacheKey(stateIdHash)));
+    return removed > 0;
+  } catch (error) {
+    logger.error({ ...loggableError(error), stateIdHash }, "Failed to consume the SSO recovery intent");
+    return false;
   }
 };
 
