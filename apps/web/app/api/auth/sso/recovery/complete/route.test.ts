@@ -414,7 +414,12 @@ describe("/api/auth/sso/recovery/complete", () => {
     expect(location(response)).toContain("error=OAuthAccountNotLinked");
     expect(location(response)).not.toContain("callbackUrl=");
     // Not one of ours, so nothing upstream logged it.
-    expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "Unexpected error completing SSO recovery");
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error" }),
+      "Unexpected error completing SSO recovery"
+    );
+    // Through loggableError: never the message, which can carry what the request held.
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("redis exploded");
   });
 
   test("clears the session cookies and revokes the session it was given on a rejected recovery", async () => {

@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getSsoProviderDisplayName } from "./provider-display-name";
 import {
   SsoRecoveryError,
@@ -46,7 +47,7 @@ export const resolveSsoRecoveryConfirmView = async ({
   } catch (error) {
     // The guards log and audit their own refusals; anything else is a fault worth a log line.
     if (!(error instanceof SsoRecoveryError)) {
-      logger.error(error, "Unexpected error showing the SSO recovery confirmation");
+      logger.error({ ...loggableError(error) }, "Unexpected error showing the SSO recovery confirmation");
     }
 
     return { kind: "refused", redirectUrl: getSsoRecoveryRefusal(error).redirectUrl };

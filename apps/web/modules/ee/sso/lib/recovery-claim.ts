@@ -3,6 +3,7 @@ import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { SSO_RELINK_INTENT_TTL_SECONDS } from "@/lib/sso-relink-intent-ttl";
+import { loggableError } from "@/lib/utils/loggable-error";
 
 /**
  * One request at a time acts on a recovery, and none after it has been linked or cancelled (ENG-7395).
@@ -80,7 +81,7 @@ export const claimSsoRecovery = async (stateId: string): Promise<TSsoRecoveryCla
       await redis.eval(RELEASE_CLAIM_SCRIPT, { keys: [claimKey], arguments: [token] });
     } catch (error) {
       // It expires on its own; only a retry within that window is held up.
-      logger.error({ error, stateId }, "Failed to release the SSO recovery claim");
+      logger.error({ ...loggableError(error), stateId }, "Failed to release the SSO recovery claim");
     }
   };
 
@@ -93,7 +94,7 @@ export const claimSsoRecovery = async (stateId: string): Promise<TSsoRecoveryCla
     if (claimed === 0) return { kind: "spent" };
     if (claimed !== 1) return { kind: "held" };
   } catch (error) {
-    logger.error({ error, stateId }, "Failed to claim the SSO recovery");
+    logger.error({ ...loggableError(error), stateId }, "Failed to claim the SSO recovery");
     return { kind: "unavailable" };
   }
 
@@ -111,7 +112,7 @@ export const markSsoRecoverySpent = async (stateId: string): Promise<boolean> =>
     await redis.set(getSpentCacheKey(stateId), "1", { PX: SPENT_TTL_MS });
     return true;
   } catch (error) {
-    logger.error({ error, stateId }, "Failed to mark the SSO recovery spent");
+    logger.error({ ...loggableError(error), stateId }, "Failed to mark the SSO recovery spent");
     return false;
   }
 };
