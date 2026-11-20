@@ -61,6 +61,39 @@ beforeEach(() => {
 });
 
 describe("GET /api/internal/workflows/{workflowId}/published-version", () => {
+  test("never returns a stored secret header's id", async () => {
+    mocks.versionFindFirst.mockResolvedValue({
+      version: 3,
+      publishedAt: new Date("2026-11-13T09:00:00.000Z"),
+      definition: {
+        entryNodeId: "trigger",
+        nodes: [
+          {
+            id: "call",
+            type: "action",
+            actionType: "http_request",
+            config: { headers: [{ name: "Authorization", secret: true, secretId: "sec_1" }] },
+          },
+        ],
+      },
+    });
+
+    const body = await (await get()).json();
+
+    expect(JSON.stringify(body)).not.toContain("sec_1");
+    expect(body.data.definition).toEqual({
+      entryNodeId: "trigger",
+      nodes: [
+        {
+          id: "call",
+          type: "action",
+          actionType: "http_request",
+          config: { headers: [{ name: "Authorization", secret: true, isSet: true }] },
+        },
+      ],
+    });
+  });
+
   test("returns the latest enabled version of this workflow", async () => {
     const response = await get();
 

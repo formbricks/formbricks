@@ -10,6 +10,7 @@ import { WorkflowForbiddenError, loadAndAuthorize, toProblemResponse } from "@fo
 import { successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { buildWorkflowApiContext, workflowsService } from "@/app/api/v3/workflows/lib/context";
+import { maskStoredDefinition } from "./mask-stored-definition";
 
 /** The route's params: the workflow and one of its runs. */
 export const ZWorkflowRunDefinitionParams = ZWorkflowIdInput.extend(ZWorkflowRunIdInput.shape);
@@ -61,10 +62,10 @@ export const getWorkflowRunDefinition = async ({
       data = {
         source: "version",
         versionNumber: run.workflowVersion.version,
-        definition: run.workflowVersion.definition,
+        definition: maskStoredDefinition(run.workflowVersion.definition),
       };
     } else if (run.testRunDefinition) {
-      data = { source: "test_run", definition: run.testRunDefinition };
+      data = { source: "test_run", definition: maskStoredDefinition(run.testRunDefinition) };
     } else {
       data = { source: "unknown", definition: null };
     }

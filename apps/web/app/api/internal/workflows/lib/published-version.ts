@@ -5,6 +5,7 @@ import { loadAndAuthorize, toProblemResponse } from "@formbricks/workflows/serve
 import { successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { buildWorkflowApiContext, workflowsService } from "@/app/api/v3/workflows/lib/context";
+import { maskStoredDefinition } from "./mask-stored-definition";
 
 export type TPublishedWorkflowVersion = {
   version: number;
@@ -43,7 +44,7 @@ export const getPublishedWorkflowVersion = async ({
       ? {
           version: latest.version,
           publishedAt: latest.publishedAt.toISOString(),
-          definition: latest.definition,
+          definition: maskStoredDefinition(latest.definition),
         }
       : null;
     return successResponse(data, { requestId });

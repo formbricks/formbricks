@@ -96,6 +96,39 @@ describe("GET /api/internal/workflows/{workflowId}/runs/{runId}/definition", () 
     });
   });
 
+  test("never returns a stored secret header's id, for a version or a Test run's draft", async () => {
+    const definition = {
+      entryNodeId: "trigger",
+      nodes: [
+        {
+          id: "call",
+          type: "action",
+          actionType: "http_request",
+          config: { headers: [{ name: "Authorization", secret: true, secretId: "sec_1" }] },
+        },
+      ],
+    };
+    for (const run of [
+      { testRunDefinition: null, workflowVersion: { version: 4, definition } },
+      { testRunDefinition: definition, workflowVersion: null },
+    ]) {
+      mocks.runFindFirst.mockResolvedValue(run);
+      const body = await (await get()).json();
+      expect(JSON.stringify(body)).not.toContain("sec_1");
+      expect(body.data.definition).toEqual({
+        entryNodeId: "trigger",
+        nodes: [
+          {
+            id: "call",
+            type: "action",
+            actionType: "http_request",
+            config: { headers: [{ name: "Authorization", secret: true, isSet: true }] },
+          },
+        ],
+      });
+    }
+  });
+
   test("answers unknown for a run with neither a version nor a saved draft", async () => {
     mocks.runFindFirst.mockResolvedValue({ testRunDefinition: null, workflowVersion: null });
 
