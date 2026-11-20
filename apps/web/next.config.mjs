@@ -262,6 +262,22 @@ const nextConfig = {
         ],
       },
       {
+        // The SSO recovery confirmation (ENG-7395) is a one-click account change, so it may not be framed
+        // at all, same origin included: a page on this origin that framed it could steer the click.
+        // After the catch-all above, so these values replace its SAMEORIGIN and `frame-ancestors 'self'`.
+        source: "/sso-recovery/:path*",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: `${cspBase}; frame-ancestors 'none'`,
+          },
+        ],
+      },
+      {
         // Uploaded files (ENG-7108). A stored file must never act as a page of the app: should one be
         // rendered as a document anyway, `sandbox` gives it an opaque origin and no scripts. These rules
         // have to come after the one above, because a route handler cannot set this header itself: the

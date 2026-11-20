@@ -109,6 +109,11 @@ export const LoginForm = ({
           title: t("auth.login.oauth_second_factor_unavailable_title"),
           description: t("auth.login.oauth_second_factor_unavailable_description"),
         };
+      case "recovery_link_not_opened":
+        return {
+          title: t("auth.login.oauth_recovery_link_not_opened_title"),
+          description: t("auth.login.oauth_recovery_link_not_opened_description"),
+        };
       case "generic":
         return {
           title: t("auth.login.oauth_generic_error_title"),

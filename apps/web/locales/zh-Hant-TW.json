@@ -76,6 +76,8 @@
       "oauth_generic_error_title": "登入失敗",
       "oauth_misconfigured_description": "你的身分提供者已成功驗證,但這個 Formbricks 實例缺少部分單一登入配置。重試也無法解決 - 請聯絡管理員。",
       "oauth_misconfigured_title": "單一登入尚未完全配置",
+      "oauth_recovery_link_not_opened_description": "只有在你自行將單一登入連結到 Formbricks 帳號時，才需要開啟我們寄給你的電子郵件中的連結。如果不是你本人操作，請忽略那封郵件：開啟連結可能會讓他人取得你帳號的存取權。如果是你本人操作，請在此瀏覽器中開啟連結以完成設定。",
+      "oauth_recovery_link_not_opened_title": "無法在此瀏覽器中完成這次登入",
       "oauth_second_factor_unavailable_description": "你的電子郵件地址已通過驗證,但此帳號已啟用雙重驗證,而這個 Formbricks 執行個體已關閉電子郵件與密碼登入,因此無法在此輸入第二重驗證。請使用已連結至此帳號的單一登入 (SSO) 供應商登入以完成操作,或聯絡管理員。",
       "oauth_second_factor_unavailable_title": "無法在此完成兩步驟驗證登入",
       "oauth_signup_not_allowed_description": "你的身分提供者已成功驗證,但這個 Formbricks 實例未設定以此方式建立新帳號。請要求管理員邀請你,然後再試一次。",
@@ -151,6 +153,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "使用者建立成功",
       "user_successfully_created_info": "我們已檢查與 {email} 相關聯的帳戶。如果不存在，我們已為您建立一個。如果帳戶已存在，則未進行任何更改。請在下方登入以繼續。"
+    },
+    "sso_recovery_confirm": {
+      "cancel": "取消",
+      "confirm": "連結 {provider}",
+      "description": "完成後,你就可以使用 {provider} 登入 Formbricks 帳號 {email}。",
+      "title": "要將 {provider} 連結到你的帳號嗎?",
+      "warning": "只有在你本人要求使用 {provider} 登入 Formbricks 時才繼續。如果不是,請取消:可能有其他人正試圖進入你的帳號。"
     },
     "verification-requested": {
       "email_not_configured_description": "此 Formbricks 實例未設定電子郵件伺服器，因此無法發送驗證連結。請聯絡您的管理員。",
