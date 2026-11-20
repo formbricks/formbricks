@@ -852,6 +852,43 @@ paths:
                             headline:
                               en-US: What should we improve?
                             required: true
+              trueFalseSetValueValidation:
+                summary: Validate a calculated true/false field and its Set value
+                value:
+                  operation: create
+                  data:
+                    workspaceId: clxx1234567890123456789012
+                    name: Qualification Survey
+                    defaultLanguage: en-US
+                    embeddedFields:
+                      - storageKey: clqf1234567890123456789012
+                        name: qualified
+                        source: computed
+                        dataType: boolean
+                        defaultValue: false
+                    blocks:
+                      - id: clbk1234567890123456789012
+                        name: Main Block
+                        elements:
+                          - id: budget
+                            type: openText
+                            headline:
+                              en-US: What is your budget?
+                            required: true
+                        logic:
+                          - id: cllg1234567890123456789012
+                            conditions:
+                              id: clgp1234567890123456789012
+                              connector: and
+                              conditions: []
+                            actions:
+                              - id: clac1234567890123456789012
+                                objective: calculate
+                                variableId: clqf1234567890123456789012
+                                operator: assign
+                                value:
+                                  type: static
+                                  value: true
               customCssValidation:
                 summary: Validate custom CSS for a live preview
                 value:
