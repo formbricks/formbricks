@@ -144,7 +144,8 @@ overrides:
   # GHSA-qxc2-j82w-r537: pin the affected transitive dependency to a patched release.
   "@faker-js/faker": 10.5.0
   # GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g: pin the affected transitive dependency to a patched release.
-  "qs": 6.16.0
+  # GHSA-6pq8-jhm2-2vcw: stringify with arrayFormat "comma" throws on an element without a callable toString; patched in 6.16.1.
+  "qs": 6.16.1
   # GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g: pin the affected transitive dependency to a patched release.
   "browserslist": 4.28.7
   # GHSA-3f6p-5ww8-9rcr, GHSA-rgwj-5xj2-c3m3: pin the affected transitive dependency to a patched release.
@@ -178,7 +179,8 @@ overrides:
   # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
   "@opentelemetry/instrumentation-cassandra-driver": 0.66.0
   # GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c: pin the affected transitive dependency to a patched release.
-  "follow-redirects": 1.16.1
+  # GHSA-mrwp-f3q8-3g9p (ENG-6922): 1.16.0-1.16.1 discard a cross-realm sensitiveHeaders array; 1.16.2 closes all three.
+  "follow-redirects": 1.16.2
   # ENG-1324 / GHSA-5375-pq7m-f5r2, ENG-1325 / GHSA-99f4-grh7-6pcq:
   # @grpc/grpc-js is patched in 1.14.4 against malformed-request and malformed-compressed-message crashes.
   # load-bearing: @boxyhq/metrics resolves 1.14.3.
@@ -199,7 +201,8 @@ overrides:
   # ENG-2320 / GHSA-79qm-7rj5-m7r9 (CVE-2026-71849): Proxy Helper forwards response headers named in
   # the origin's Connection header instead of stripping them. All four patched in 4.12.34.
   # load-bearing: @hono/node-server resolves 4.x via @modelcontextprotocol/sdk and @prisma/dev (dev/MCP-only).
-  hono: 4.13.11
+  # GHSA-46wx-v44x-9hh2, GHSA-4h7h-rv7c-7m2v, GHSA-4m76-xfj5-7975, GHSA-h7mg-cq63-vhpq, GHSA-3gg2-335m-rxc6: patched in 4.13.16.
+  hono: 4.13.16
   # OpenTelemetry / protobuf chains.
   # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
   # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
@@ -219,7 +222,8 @@ overrides:
   "@xmldom/xmldom": 0.9.12 # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both vulnerable (GHSA-2v35-w6hq-6mfw + 4 more); 0.9.12 patches 9 further High advisories (ENG-3989)
   axios: 1.20.0 # ENG-1958 / GHSA-gcfj-64vw-6mp9: <1.18.0 Node HTTP adapter can use an inherited proxy after interceptor config cloning; patched in 1.18.0. load-bearing: @boxyhq/saml-jackson pins 1.13.5.
   lodash: 4.18.1 # GHSA-r5fr-rjxr-66jc + GHSA-f23m-r3pf-42rh: <=4.17.23 vulnerable, patched in 4.17.24. load-bearing: @boxyhq/saml-jackson and @microsoft/api-extractor resolve 4.17.23.
-  node-forge: 1.4.0 # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
+  # ENG-6908-ENG-6918 and ENG-7102-ENG-7105: every node-forge advisory through 1.4.2 is patched in 1.4.3.
+  node-forge: 1.4.3 # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
   # Webpack / linting / schema validation chains.
   minimatch@10: 10.2.5 # GHSA-7r86-cg39-jmmj + GHSA-23c5-xmqv-rm74: 10.0.0–10.2.2 vulnerable, patched in 10.2.3. load-bearing: @microsoft/api-extractor pins 10.2.1.
   # GHSA-r28c-9q8g-f849 and GHSA-fxqj-rqcc-2cmp: postcss path traversal and parser
@@ -229,8 +233,11 @@ overrides:
   # SDK and runtime transitive security pins.
   # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
   # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
-  dompurify: 3.4.16
-  fast-xml-parser: 5.7.0 # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
+  # GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr, GHSA-c6gr-qvv4-5v3f (ENG-6676): patched in 3.4.17.
+  dompurify: 3.4.17
+  # 5.7.0 and 5.7.1 reject entity names starting with "#", which @aws-sdk/xml-builder registers (ENG-3263).
+  # ENG-7106 / GHSA-474x-hrwr-fgx4: quadratic stop-node scan, patched in 5.12.0, which also clears the 5.7.0 regression.
+  fast-xml-parser: 5.12.0 # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
   # GHSA-22jq-vg5j-6vgg, GHSA-4xrf-jv44-h6hh and GHSA-mwp4-54f8-5fhr: ip-address parsing
   # vulnerabilities are all patched in 10.3.1.
   # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
