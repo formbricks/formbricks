@@ -20,12 +20,18 @@ Usage in a package:
 ```ts
 // oxlint.config.ts
 import { defineConfig } from "oxlint";
+import { denyWarnings } from "@formbricks/config-oxlint/base";
 import library from "@formbricks/config-oxlint/library";
 
-export default defineConfig(library);
+export default defineConfig(denyWarnings(library));
 ```
 
-Local rules compose after the tier: `defineConfig(compose(library, { rules: {…}, overrides: […] }))`.
+Local rules compose after the tier: `defineConfig(denyWarnings(compose(library, { rules: {…}, overrides: […] })))`.
+
+Every workspace config wraps its export in `denyWarnings`, which raises each `warn` to `error`, so a
+warning fails `pnpm lint:code` and CI (ENG-7401). A rule is either on at `error` or `off`. The one
+exception is the staged-lines Sonar-parity rules (below), which the pre-commit hook runs as warnings.
+`scripts/deny-warnings-lint.test.ts` fails when a workspace config resolves any other rule to `warn`.
 
 Notes:
 
@@ -53,7 +59,8 @@ Notes:
   (ENG-7329).
 - The React Compiler-era react-hooks rules are implemented natively by oxlint under `react/`, at the
   preset's severity in the `react` and `react-hooks` tiers. `apps/web/oxlint.config.ts` sets them
-  separately for the `next` tier, where only `incompatible-library` stays at `warn`.
+  separately for the `next` tier, where `incompatible-library` is `off`: the app does not run the compiler,
+  and its sites are react-hook-form's `watch()` and TanStack Table, used on purpose.
 - `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
   (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `no-nested-functions`,
   `no-nested-conditional`, `no-nested-template-literals`, `prefer-string-raw`, `prefer-optional-chain`,

@@ -74,14 +74,17 @@ export function compose(...fragments) {
 }
 
 /*
- * Returns `config` with every "warn" raised to "error", in its rules and its overrides. oxlint runs
- * once for the whole repo, so a workspace that must stay warning-free (ESLint's `--max-warnings 0`)
- * makes its warnings errors instead.
+ * Returns `config` with every "warn" raised to "error", in its categories, rules and overrides. oxlint
+ * runs once for the whole repo, so a workspace that must stay warning-free (ESLint's
+ * `--max-warnings 0`) makes its warnings errors instead. The rules in `except` keep their "warn": base.mjs passes the
+ * Sonar-parity rules the pre-commit hook holds only to the staged lines, which it reads as warnings.
  */
-export const denyWarnings = (config) => {
+export const raiseWarnings = (config, { except = [] } = {}) => {
+  const kept = new Set(except);
   const raise = (rules = {}) =>
     Object.fromEntries(
       Object.entries(rules).map(([id, entry]) => {
+        if (kept.has(id)) return [id, entry];
         if (Array.isArray(entry)) {
           const [severity, ...options] = entry;
           return [id, severity === "warn" ? ["error", ...options] : entry];
@@ -89,8 +92,15 @@ export const denyWarnings = (config) => {
         return [id, entry === "warn" ? "error" : entry];
       })
     );
+  const categories = Object.fromEntries(
+    Object.entries(config.categories ?? {}).map(([name, severity]) => [
+      name,
+      severity === "warn" ? "error" : severity,
+    ])
+  );
   return {
     ...config,
+    ...(config.categories ? { categories } : {}),
     rules: raise(config.rules),
     overrides: (config.overrides ?? []).map((override) => ({ ...override, rules: raise(override.rules) })),
   };

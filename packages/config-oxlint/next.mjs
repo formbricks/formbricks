@@ -24,7 +24,8 @@ import { a11yParity } from "./sonar-parity.mjs";
  *
  * The eslint/typescript-eslint recommended baselines run at their upstream "error" (ENG-2264,
  * ENG-7329). apps/web was never linted against them, so they started as warnings and were promoted as
- * each backlog reached zero; a rule that still has one is listed at "warn" below, with its count.
+ * each backlog reached zero. The upstream "warn" entries of eslint-config-next are kept as written;
+ * apps/web's `denyWarnings` raises them to "error".
  * The type-aware half of `recommendedTypeChecked` runs at "error" on TypeScript files as in the
  * library/react tiers; apps/web turns off the rules that still have a backlog, with their counts.
  */
