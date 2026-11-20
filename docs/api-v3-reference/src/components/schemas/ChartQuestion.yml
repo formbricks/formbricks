@@ -1,0 +1,16 @@
+type: object
+description: >-
+  A question of the Feedback Dataset a question filter (`FeedbackRecords.fieldId`) may name.
+required:
+  - id
+  - label
+properties:
+  id:
+    type: string
+    description: The question's id, the value to filter `FeedbackRecords.fieldId` by.
+    example: q_delivery
+  label:
+    type: string
+    description: The question as respondents read it, in the survey's default language.
+    example: How was the delivery?
+additionalProperties: false

@@ -14232,6 +14232,10 @@ components:
             - right
         stacked:
           type: boolean
+          description: Bar charts with several series of counts. Stacks them into one bar per category (default true); false places them side by side. Series that cannot be added up (scores, averages) are always side by side.
+        showEmptyValues:
+          type: boolean
+          description: 'Charts with a grouping. Shows records that have no value for a grouping (including "Not enriched" sentiment and "Unspecified" language) as their own group. Default false: those records are left out.'
         showGrid:
           type: boolean
         showValues:
@@ -14390,6 +14394,7 @@ components:
             - boolean
         label:
           type: string
+          description: Display text. For an embedded-data field, the name the workspace gave the key, or else the key as collected.
           example: 'NPS: Score'
         description:
           type:
@@ -14481,6 +14486,22 @@ components:
                 example: Late
             additionalProperties: false
       additionalProperties: false
+    ChartQuestion:
+      type: object
+      description: A question of the Feedback Dataset a question filter (`FeedbackRecords.fieldId`) may name.
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: string
+          description: The question's id, the value to filter `FeedbackRecords.fieldId` by.
+          example: q_delivery
+        label:
+          type: string
+          description: The question as respondents read it, in the survey's default language.
+          example: How was the delivery?
+      additionalProperties: false
     ChartFieldCatalog:
       type: object
       description: 'The field catalog: the fields a chart query may use, and the named date ranges it may use on `FeedbackRecords.collectedAt` and other time dimensions. The chart query validator checks against this same list, so the catalog is the contract.'
@@ -14488,6 +14509,7 @@ components:
         - fields
         - datePresets
         - answerQuestions
+        - questions
       properties:
         fields:
           type: array
@@ -14508,6 +14530,11 @@ components:
           description: The questions of the Feedback Dataset an answer rule (`FeedbackRecords.answer`) may name, with the operators and values each takes. Empty for a dataset without such questions.
           items:
             $ref: '#/components/schemas/ChartAnswerQuestion'
+        questions:
+          type: array
+          description: 'The questions of the Feedback Dataset a question filter may name: filter `FeedbackRecords.fieldId` with `equals` and a question''s `id` to keep that question''s records, however its text is later edited or translated. Multi-select, matrix and ranking questions are not listed: their records carry a per-option id. Empty for a dataset without surveys.'
+          items:
+            $ref: '#/components/schemas/ChartQuestion'
       additionalProperties: false
     ChartPreviewRequest:
       type: object
@@ -14578,7 +14605,7 @@ components:
         type: string
     ChartDataMemberLabels:
       type: object
-      description: Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own name as collected, so a column or legend can read `Plan` rather than the field name. Empty when the query names no embedded-data field.
+      description: 'Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the name the workspace gave the embedded-data key, or else the key''s own name as collected, so a column or legend can read `Plan` rather than the field name. Display text only: read the key from the field catalog''s `key`. Empty when the query names no embedded-data field.'
       additionalProperties:
         type: string
       example:

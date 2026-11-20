@@ -202,4 +202,78 @@ describe("writeData", () => {
 
     expect(completed).toEqual(["update", "append"]);
   });
+
+  /**
+   * ENG-4050: a minimal model of the Sheets API. `update` writes cells at the range's top-left cell;
+   * `append` follows Google's documented rule — find the table at the range and write below its last
+   * row — and, like Google, writes AT the range when no cell there holds a value. Driven through
+   * `writeData`, it shows whether consecutive responses survive as separate rows.
+   */
+  const createFakeSheet = () => {
+    const rows: string[][] = [];
+    const parseRange = (range: string) => {
+      const [, startColumn, startRow, endColumn = startColumn] =
+        /^([A-Z]+)(\d+)(?::([A-Z]+)\d+)?$/.exec(range) ?? [];
+      const toIndex = (letters: string) =>
+        [...letters].reduce((acc, ch) => acc * 26 + ch.charCodeAt(0) - 64, 0) - 1;
+      return { row: Number(startRow) - 1, firstColumn: toIndex(startColumn), lastColumn: toIndex(endColumn) };
+    };
+    const rowHasValue = (row: number, from = 0, to = Infinity) =>
+      (rows[row] ?? []).some((cell, column) => column >= from && column <= to && cell !== "");
+    const writeRow = (row: number, values: string[]) => {
+      rows[row] = values;
+    };
+
+    sheetsMock.update.mockImplementation(
+      (params: { range: string; requestBody: { values: string[][] } }, callback: (err: null) => void) => {
+        writeRow(parseRange(params.range).row, params.requestBody.values[0]);
+        setTimeout(() => callback(null), 0);
+      }
+    );
+    sheetsMock.append.mockImplementation(
+      (params: { range: string; requestBody: { values: string[][] } }, callback: (err: null) => void) => {
+        const { row, firstColumn, lastColumn } = parseRange(params.range);
+        let target = row;
+        if (rowHasValue(row, firstColumn, lastColumn)) {
+          while (rowHasValue(target)) target++;
+        }
+        writeRow(target, params.requestBody.values[0]);
+        setTimeout(() => callback(null), 0);
+      }
+    );
+
+    return rows;
+  };
+
+  test("keeps every response as its own row when the first answer is empty", async () => {
+    const rows = createFakeSheet();
+    const header = ["Welcome (CTA)", "How did you hear about us?", "Rating"];
+
+    await writeData(authorizedIntegration, "sheet1", ["", "Friend", "5"], header);
+    await writeData(authorizedIntegration, "sheet1", ["", "Search", "3"], header);
+    await writeData(authorizedIntegration, "sheet1", ["", "Ad", "4"], header);
+
+    expect(rows).toEqual([header, ["", "Friend", "5"], ["", "Search", "3"], ["", "Ad", "4"]]);
+  });
+
+  test("keeps appending below earlier rows when only some responses start empty", async () => {
+    const rows = createFakeSheet();
+    const header = ["Question 1", "Question 2"];
+
+    await writeData(authorizedIntegration, "sheet1", ["a", "b"], header);
+    await writeData(authorizedIntegration, "sheet1", ["", "c"], header);
+    await writeData(authorizedIntegration, "sheet1", ["d", "e"], header);
+
+    expect(rows).toEqual([header, ["a", "b"], ["", "c"], ["d", "e"]]);
+  });
+
+  test("anchors the append on the header row the integration writes", async () => {
+    createFakeSheet();
+    const header = Array.from({ length: 28 }, (_, index) => `Column ${index + 1}`);
+
+    await writeData(authorizedIntegration, "sheet1", Array(28).fill("x"), header);
+
+    expect(sheetsMock.update.mock.calls[0][0]).toMatchObject({ range: "A1" });
+    expect(sheetsMock.append.mock.calls[0][0]).toMatchObject({ range: "A1:AB1" });
+  });
 });

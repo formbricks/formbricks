@@ -47,6 +47,19 @@ const runSheetsWrite = (invoke: (callback: (err: Error | null) => void) => void)
     });
   });
 
+/** A, B, ... Z, AA, AB ... for a zero-based column index. */
+const columnLetters = (index: number): string => {
+  let letters = "";
+  for (let n = index + 1; n > 0; n = Math.floor((n - 1) / 26)) {
+    letters = String.fromCodePoint(65 + ((n - 1) % 26)) + letters;
+  }
+  return letters;
+};
+
+/** The header row the integration writes at `A1`, e.g. `A1:E1` for five columns. */
+const getHeaderRowRange = (columnCount: number): string =>
+  `A1:${columnLetters(Math.max(columnCount, 1) - 1)}1`;
+
 export const writeData = async (
   integrationData: TIntegrationGoogleSheets,
   spreadsheetId: string,
@@ -86,11 +99,15 @@ export const writeData = async (
       )
     );
 
+    // ENG-4050: `append` looks for the "table" at `range` and writes below its last row. Anchored on
+    // `A2`, a response whose first answer was empty (e.g. a Statement / CTA first) left `A2` blank, so
+    // the next append found no table there and wrote over row 2 — the sheet only ever kept the latest
+    // response. The header row, just written above, always carries the table, so anchor on it.
     await runSheetsWrite((callback) =>
       sheets.spreadsheets.values.append(
         {
           spreadsheetId: spreadsheetId,
-          range: "A2",
+          range: getHeaderRowRange(elements.length),
           valueInputOption: "RAW",
           requestBody: responsesMapped,
         },

@@ -547,3 +547,24 @@ export const generateChart = async ({
     timeoutMs: null,
     signal,
   });
+
+/**
+ * Name an imported (embedded-data) key across the workspace, or clear its name with an empty `label`.
+ * Resolves to the stored name, `null` when the key shows as collected again.
+ */
+export const setEmbeddedFieldLabel = async ({
+  workspaceId,
+  key,
+  label,
+  expectedLabel,
+}: {
+  workspaceId: string;
+  key: string;
+  label: string;
+  /** The name the editor saw (`null`: none); the server refuses with 409 if it changed since. */
+  expectedLabel: string | null;
+}): Promise<{ key: string; label: string | null }> =>
+  sendApiRequest<{ key: string; label: string | null }>("/api/internal/embedded-field-labels", {
+    method: "PUT",
+    body: { workspaceId, key, label, expectedLabel },
+  });

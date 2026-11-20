@@ -173,3 +173,30 @@ describe("prefill validators: answer codes", () => {
     expect(result.isValid).toBe(false);
   });
 });
+
+// ENG-7377: "None of the above" sits after "Other", so "Other" is not the last choice.
+describe('prefill validators: "Other" followed by another option (ENG-7377)', () => {
+  const otherNotLast = [
+    { id: "a", label: { default: "Red" } },
+    { id: "other", label: { default: "Other" } },
+    { id: "none", label: { default: "None of the above" } },
+  ];
+
+  test("single select accepts free text as the Other value", () => {
+    const result = validateMultipleChoiceSingle(
+      choiceElement(TSurveyElementTypeEnum.MultipleChoiceSingle, otherNotLast),
+      "hello",
+      "default"
+    );
+    expect(result).toMatchObject({ isValid: true, matchedChoice: null });
+  });
+
+  test("multi select accepts free text as the Other value beside a matched option", () => {
+    const result = validateMultipleChoiceMulti(
+      choiceElement(TSurveyElementTypeEnum.MultipleChoiceMulti, otherNotLast),
+      "Red,hello",
+      "default"
+    );
+    expect(result).toMatchObject({ isValid: true, matched: ["Red"], others: ["hello"] });
+  });
+});

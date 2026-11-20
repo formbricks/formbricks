@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { HUB_SENTIMENT_VALUES } from "@formbricks/types/feedback-source";
+import { EMPTY_GROUP_VALUE } from "@/modules/ee/analysis/charts/lib/chart-series";
 import {
   AXIS_LABEL_GAP,
   AXIS_LABEL_LINE_HEIGHT,
@@ -7,6 +8,7 @@ import {
   CATEGORY_AXIS_MAX_SHARE,
   CATEGORY_AXIS_MIN_CEILING,
   CATEGORY_AXIS_MIN_WIDTH,
+  CHART_EMOTION_COLORS,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
   CHART_SENTIMENT_COLORS,
@@ -26,6 +28,8 @@ import {
   getCategoryAxisWidth,
   getCategoryLabelBoxHeight,
   getCategoryLabelLineClamp,
+  getLegendHeight,
+  getRotatedAxisHeight,
   getSemanticDimensionColor,
   getSemanticMeasureColor,
   getSentimentMeasureColor,
@@ -34,7 +38,9 @@ import {
   prepareMeasureSliceData,
   preparePieData,
   resolveChartType,
+  shouldRotateCategoryLabels,
   truncateLabelToBox,
+  truncateRotatedLabel,
 } from "./chart-utils";
 
 describe("chart-utils", () => {
@@ -349,9 +355,40 @@ describe("chart-utils", () => {
 
     test("returns undefined for unknown tokens and non-sentiment dimensions", () => {
       expect(getSemanticDimensionColor(sentimentDim, "unexpected_token")).toBeUndefined();
-      // emotions keep the generic palette (only their empty bucket is semantic)
-      expect(getSemanticDimensionColor("FeedbackRecords.emotions", "joy")).toBeUndefined();
+      // a combination of emotions is a group of its own and takes the palette
+      expect(getSemanticDimensionColor("FeedbackRecords.emotions", "joy, fear")).toBeUndefined();
       expect(getSemanticDimensionColor("FeedbackRecords.language", "positive")).toBeUndefined();
+    });
+  });
+
+  test("the shown empty group is gray on every chart type, pies included", () => {
+    expect(getSemanticDimensionColor("FeedbackRecords.sourceName", EMPTY_GROUP_VALUE)).toBe(
+      CHART_NOT_ENRICHED_COLOR
+    );
+    expect(getSemanticDimensionColor("FeedbackRecords.sentiment", EMPTY_GROUP_VALUE)).toBe(
+      CHART_NOT_ENRICHED_COLOR
+    );
+  });
+
+  describe("emotion colors", () => {
+    test("each emotion keeps one fixed color as a dimension value and as a count measure", () => {
+      for (const emotion of ["joy", "surprise", "anger", "sadness", "fear", "disgust"] as const) {
+        expect(getSemanticDimensionColor("FeedbackRecords.emotions", emotion)).toBe(
+          CHART_EMOTION_COLORS[emotion]
+        );
+        expect(getSemanticMeasureColor(`FeedbackRecords.${emotion}Count`)).toBe(
+          CHART_EMOTION_COLORS[emotion]
+        );
+      }
+      expect(new Set(Object.values(CHART_EMOTION_COLORS)).size).toBe(6);
+    });
+  });
+
+  describe("red → green scales", () => {
+    test("NPS bands and sentiment share the traffic-light steps", () => {
+      expect(CHART_VALUE_BAND_COLORS.negative).toBe(CHART_SENTIMENT_COLORS.very_negative);
+      expect(CHART_VALUE_BAND_COLORS.neutral).toBe(CHART_SENTIMENT_COLORS.neutral);
+      expect(CHART_VALUE_BAND_COLORS.positive).toBe(CHART_SENTIMENT_COLORS.very_positive);
     });
   });
 
@@ -724,5 +761,38 @@ describe("formatPercentShare", () => {
     const de = formatPercentShare(0.125, "de-DE");
     expect(de).toContain("12,5");
     expect(de).not.toContain("12.5");
+  });
+});
+
+describe("crowded category axis", () => {
+  test("wraps while each label keeps its minimum box, rotates below it", () => {
+    expect(shouldRotateCategoryLabels(5, 800)).toBe(false);
+    expect(shouldRotateCategoryLabels(25, 800)).toBe(true);
+    expect(shouldRotateCategoryLabels(25, undefined)).toBe(false);
+    expect(shouldRotateCategoryLabels(1, 50)).toBe(false);
+  });
+
+  test("rotated labels are cut from the middle and reserve their diagonal", () => {
+    const long = "How satisfied are you with the onboarding checklist?";
+    const cut = truncateRotatedLabel(long);
+    expect(cut.length).toBeLessThanOrEqual(24);
+    expect(cut).toContain("…");
+    expect(cut.endsWith("checklist?")).toBe(true);
+    expect(truncateRotatedLabel("Short")).toBe("Short");
+    expect(getRotatedAxisHeight(["Short"])).toBeLessThan(getRotatedAxisHeight([long]));
+  });
+});
+
+describe("getLegendHeight", () => {
+  test("one row for a few entries, more rows as entries wrap", () => {
+    expect(getLegendHeight(["A", "B"], 800)).toBe(36);
+    const many = Array.from({ length: 30 }, (_, i) => `Source number ${i}`);
+    expect(getLegendHeight(many, 800)).toBeGreaterThan(36);
+  });
+
+  test("never reserves more than its share of the chart height", () => {
+    const many = Array.from({ length: 40 }, (_, i) => `Source number ${i}`);
+    expect(getLegendHeight(many, 400, 300)).toBe(90);
+    expect(getLegendHeight(["A"], 400, 300)).toBe(36);
   });
 });
