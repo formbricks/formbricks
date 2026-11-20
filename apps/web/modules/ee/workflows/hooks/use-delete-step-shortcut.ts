@@ -51,6 +51,10 @@ export const useDeleteStepShortcut = (canvasRef: RefObject<HTMLElement | null>) 
       if (event.key !== "Backspace" && event.key !== "Delete") return;
       if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return;
       if (!isCanvasActiveRef.current) return;
+      // Tabbing from a card into the step panel keeps the canvas armed; a key pressed on a panel control
+      // (a select, a button) is meant for that control, never for the step.
+      const isPageTarget = event.target === document.body || event.target === document.documentElement;
+      if (!isPageTarget && !isInside(canvasRef.current, event.target)) return;
       const highlighted = store.get(workflowFlowNodesAtom).find((node) => node.selected);
       const previous = store.get(workflowDefinitionAtom);
       const step = previous?.nodes.find((node) => node.id === highlighted?.id);

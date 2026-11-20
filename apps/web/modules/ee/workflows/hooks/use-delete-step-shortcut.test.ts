@@ -138,6 +138,15 @@ describe("useDeleteStepShortcut", () => {
     expect(showUndoToast).not.toHaveBeenCalled();
   });
 
+  test("leaves a panel control alone when it is tabbed to from the canvas", () => {
+    const { store, panel } = render("email-1");
+    const methodSelect = panel.appendChild(document.createElement("button"));
+    methodSelect.focus();
+    press("Backspace", methodSelect);
+    expect(stepIds(store)).toHaveLength(3);
+    expect(showUndoToast).not.toHaveBeenCalled();
+  });
+
   test("works again once a card on the canvas is clicked or tabbed to", () => {
     const { store, panel, card } = render("email-1");
     pointerDown(panel);
