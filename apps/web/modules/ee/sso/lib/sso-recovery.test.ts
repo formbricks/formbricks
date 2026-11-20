@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
@@ -461,6 +462,12 @@ describe("sso-recovery", () => {
 
     expect(callbackUrl).toBe("http://localhost:3000/environments/env_1");
     expect(txAccountUpdateMany).toHaveBeenCalledOnce();
+    // Logged by name and frames, never the store's message.
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error", userId: "user_1" }),
+      "Failed to revoke sessions after reclaiming unverified local auth"
+    );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("redis unavailable");
     // A failed sweep must NOT be recorded as "0 sessions revoked" — same number, opposite incident.
     expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
