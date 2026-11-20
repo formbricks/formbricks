@@ -6,7 +6,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getComputedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyBlockLogicAction, TSurveyBlockLogicActionObjective } from "@formbricks/types/surveys/blocks";
-import type { TExpression } from "@formbricks/types/surveys/expressions";
 import {
   TActionNumberVariableCalculateOperator,
   TActionTextVariableCalculateOperator,
@@ -19,10 +18,7 @@ import {
 } from "@/lib/surveyLogic/utils";
 import { CalculatedFieldPicker } from "@/modules/survey/editor/components/calculated-field-picker";
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
-import {
-  getBooleanSetValueSelection,
-  toBooleanSetValue,
-} from "@/modules/survey/editor/lib/boolean-set-value";
+import { SetValueOneStepValue } from "@/modules/survey/editor/components/set-value-one-step-value";
 import { formulaToOneStep, oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
 import { isOneStepDateExpression } from "@/modules/survey/editor/lib/fixed-date-expression";
 import { getNextActionObjective, getObjectivesForAction } from "@/modules/survey/editor/lib/rule-list";
@@ -31,7 +27,6 @@ import {
   getActionObjectiveOptions,
   getActionOperatorOptions,
   getActionTargetOptions,
-  getActionValueOptions,
   getActionVariableOptions,
   isComputedBooleanField,
   isComputedDateField,
@@ -72,10 +67,6 @@ interface LogicEditorActionsProps {
   /** Opens the Embedded Data card to add a Calculated field, from Set value's empty field picker. */
   readonly onAddCalculatedField?: () => void;
 }
-
-/** What a date field's one-step row shows: the day, or the answer or field it copies. */
-const getOneStepDateValue = (expression: TExpression): string | number =>
-  expression.type === "call" ? "" : expression.value;
 
 export function LogicEditorActions({
   localSurvey,
@@ -255,22 +246,6 @@ export function LogicEditorActions({
     handleValuesChange(actionIdx, { variableId, value: { type: "static", value: "" } });
   };
 
-  /** What a one-step row's value box shows as picked or typed. */
-  const getCalculateValueSelection = (action: TSurveyBlockLogicAction): string | number => {
-    if (action.objective !== "calculate") return "";
-    if (isBooleanAction(action)) return getBooleanSetValueSelection(action.value);
-    // A date field's one step is the expression's leaf (P38).
-    if (action.value.type === "expression") return getOneStepDateValue(action.value.value);
-    const { value } = action.value;
-    return typeof value === "boolean" ? String(value) : value;
-  };
-
-  /** The HTML input type of a one-step row's free-text box; a true/false row has none. */
-  const getCalculateInputType = (storageKey: string): "text" | "number" | "date" => {
-    const fieldType = getCalculateFieldType(storageKey);
-    return fieldType === undefined || fieldType === "boolean" ? "text" : fieldType;
-  };
-
   // Before the first question a rule may not require an answer (ENG-6932); a rule jumps once and
   // marks Low quality once (ENG-6933).
   const objectiveOptions = getActionObjectiveOptions(t);
@@ -441,69 +416,15 @@ export function LogicEditorActions({
                           </div>
 
                           <div className="min-w-28 flex-1">
-                            <InputCombobox
+                            <SetValueOneStepValue
                               id={`action-${idx}-value`}
                               key={`value-${action.id}`}
-                              // ENG-6973: a true/false field picks from the dropdown only, no free text.
-                              withInput={!isBooleanAction(action)}
-                              // Clearing has no stored value to go back to on a true/false row.
-                              clearable={!isBooleanAction(action)}
-                              placeholder={
-                                isBooleanAction(action)
-                                  ? t("workspace.surveys.edit.flow.value_placeholder")
-                                  : undefined
-                              }
-                              aria-label={t("workspace.surveys.edit.flow.value_placeholder")}
-                              value={getCalculateValueSelection(action)}
-                              inputProps={{
-                                placeholder: t("workspace.surveys.edit.flow.value_placeholder"),
-                                type: getCalculateInputType(action.variableId),
-                              }}
-                              groupedOptions={getActionValueOptions(
-                                action.variableId,
-                                localSurvey,
-                                scopeBlockIdx,
-                                t
-                              )}
-                              onChangeValue={(val, option, fromInput) => {
-                                const fieldType = option?.meta?.type as
-                                  | "static"
-                                  | "variable"
-                                  | "hiddenField"
-                                  | "element";
-
-                                if (isBooleanAction(action)) {
-                                  const next = toBooleanSetValue(val, fieldType);
-                                  if (next) {
-                                    handleValuesChange(idx, {
-                                      operator: "assign",
-                                      value: next,
-                                    } as Partial<TSurveyBlockLogicAction>);
-                                  }
-                                  return;
-                                }
-                                if (!fromInput && fieldType === "static") return;
-                                if (isDateOneStep(action)) {
-                                  // Stored as the expression's leaf (P38).
-                                  const leaf: TExpression = {
-                                    type: fromInput ? "static" : fieldType,
-                                    value: val as string,
-                                  };
-                                  handleValuesChange(idx, {
-                                    operator: "assign",
-                                    value: { type: "expression", value: leaf },
-                                  });
-                                } else if (fromInput) {
-                                  handleValuesChange(idx, {
-                                    value: { type: "static", value: val as string },
-                                  });
-                                } else if (fieldType !== "static") {
-                                  handleValuesChange(idx, {
-                                    value: { type: fieldType, value: val as string },
-                                  });
-                                }
-                              }}
-                              comboboxClasses="grow shrink-0"
+                              action={action}
+                              localSurvey={localSurvey}
+                              scopeBlockIdx={scopeBlockIdx}
+                              fieldType={getCalculateFieldType(action.variableId)}
+                              isDateOneStep={isDateOneStep(action)}
+                              onChange={(values) => handleValuesChange(idx, values)}
                             />
                           </div>
                         </>

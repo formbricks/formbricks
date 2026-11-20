@@ -33,7 +33,12 @@ import {
   ZSurveyBlocks,
 } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
-import { BOOLEAN_ASSIGN_MESSAGE, isValidBooleanAssign } from "./boolean-assign";
+import {
+  BOOLEAN_ASSIGN_MESSAGE,
+  BOOLEAN_VALUE_TARGET_MESSAGE,
+  isStaticBooleanValue,
+  isValidBooleanAssign,
+} from "./boolean-assign";
 import { validateSurveyCodes } from "./codes";
 import { getCopiedOptionsIssues } from "./copied-options";
 import {
@@ -4096,10 +4101,10 @@ const validateBlockCalculateAction = (
   }
 
   // True and False are values of a true/false field only.
-  if (action.value.type === "static" && typeof action.value.value === "boolean") {
+  if (isStaticBooleanValue(action.value)) {
     return {
       code: "custom",
-      message: `Conditional Logic: True or False can only be set on a true/false field in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      message: `Conditional Logic: ${BOOLEAN_VALUE_TARGET_MESSAGE} in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value"],
     };
   }

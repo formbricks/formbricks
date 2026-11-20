@@ -1052,21 +1052,28 @@ export const getActionTargetOptions = (
  * `meta.variableType` rather than `meta.type`: this option feeds `getActionOperatorOptions`, which
  * asks what kind of value it is assigning, not what kind of reference it is.
  */
+/** Whether a storage key is one of the survey's computed fields of the given type. */
+const isComputedFieldOfType = (
+  localSurvey: TSurvey,
+  storageKey: string,
+  dataType: TEmbeddedDataType
+): boolean =>
+  getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)?.field
+    .dataType === dataType;
+
 /**
  * Whether Set value writes a computed date field. Its one-step row only assigns, and is stored as an
  * expression either way (P38), see `isOneStepDateExpression`.
  */
 export const isComputedDateField = (localSurvey: TSurvey, storageKey: string): boolean =>
-  getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)?.field
-    .dataType === "date";
+  isComputedFieldOfType(localSurvey, storageKey, "date");
 
 /**
  * Whether Set value writes a computed true/false field (ENG-6973): one step only, assigning True,
  * False or another true/false field, with no Expression switch.
  */
 export const isComputedBooleanField = (localSurvey: TSurvey, storageKey: string): boolean =>
-  getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)?.field
-    .dataType === "boolean";
+  isComputedFieldOfType(localSurvey, storageKey, "boolean");
 
 export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] =>
   getComputedEmbeddedFields(localSurvey).map((embeddedField) => ({

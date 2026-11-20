@@ -68,3 +68,13 @@ export const isValidBooleanAssign = (
 };
 
 export const BOOLEAN_ASSIGN_MESSAGE = "A true/false field is set to True, False or another true/false field";
+
+/**
+ * Whether a Set value is a static True or False, which only a true/false field takes. Shared by the
+ * same three checks as {@link isValidBooleanAssign}, which refuse it on a field of any other type
+ * with {@link BOOLEAN_VALUE_TARGET_MESSAGE}.
+ */
+export const isStaticBooleanValue = (value: TBooleanAssignAction["value"]): boolean =>
+  value.type === "static" && typeof value.value === "boolean";
+
+export const BOOLEAN_VALUE_TARGET_MESSAGE = "True or False can only be set on a true/false field";

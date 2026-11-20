@@ -2,7 +2,12 @@ import type { z } from "zod";
 import type { TEmbeddedDataType } from "../embedded-data";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
 import type { TActionCalculate, TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
-import { BOOLEAN_ASSIGN_MESSAGE, isValidBooleanAssign } from "./boolean-assign";
+import {
+  BOOLEAN_ASSIGN_MESSAGE,
+  BOOLEAN_VALUE_TARGET_MESSAGE,
+  isStaticBooleanValue,
+  isValidBooleanAssign,
+} from "./boolean-assign";
 import { getSetValueExpressionIssues } from "./expression-types";
 import { type TExpression, isExpressionOverLimits } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
@@ -260,10 +265,10 @@ const validateOneStepCalculation = (
     };
   }
   // True and False are values of a true/false field only.
-  if (action.value.type === "static" && typeof action.value.value === "boolean") {
+  if (isStaticBooleanValue(action.value)) {
     return {
       code: "custom",
-      message: `Conditional Logic: True or False can only be set on a true/false field in ${ruleLabel(ruleIdx)}`,
+      message: `Conditional Logic: ${BOOLEAN_VALUE_TARGET_MESSAGE} in ${ruleLabel(ruleIdx)}`,
       path: [...path, "value"],
     };
   }
