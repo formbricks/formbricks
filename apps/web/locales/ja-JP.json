@@ -65,6 +65,8 @@
       "new_to_formbricks": "Formbricksを初めてご利用ですか？",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_recovery_link_not_opened_description": "シングルサインオンをご自身でFormbricksアカウントに連携した場合にのみ、お送りしたメール内のリンクを開いてください。心当たりがない場合は、そのメールを無視してください。開くと、他の人があなたのアカウントにアクセスできてしまう可能性があります。ご自身で連携した場合は、このブラウザでリンクを開いて完了してください。",
+      "oauth_recovery_link_not_opened_title": "このブラウザではサインインを完了できません",
       "oauth_second_factor_unavailable_description": "メールアドレスは確認済みですが、このアカウントでは2要素認証が有効になっており、この Formbricks インスタンスではメールアドレスとパスワードによるサインインがオフになっているため、ここでは第2要素を入力できません。サインインを完了するには、このアカウントに連携済みのシングルサインオン(SSO)プロバイダーを使用するか、管理者にお問い合わせください。",
       "oauth_second_factor_unavailable_title": "ここでは2要素認証によるサインインを完了できません",
       "please_verify_your_email_to_continue": "メールアドレスを確認してください。確認リンクをお送りしました。",
@@ -128,6 +130,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "ユーザーの作成に成功しました",
       "user_successfully_created_info": "入力されたメールアドレス ({email}) に関連するアカウントをチェックしました。アカウントが存在しない場合、作成されました。すでに存在する場合、変更はありません。続行するには、以下のログインフォームからログインしてください。"
+    },
+    "sso_recovery_confirm": {
+      "cancel": "キャンセル",
+      "confirm": "{provider}を連携",
+      "description": "この後、{provider}でFormbricksアカウント({email})にサインインできるようになります。",
+      "title": "{provider}をアカウントに連携しますか?",
+      "warning": "ご自身で{provider}を使ってFormbricksにサインインしようとした場合のみ、続行してください。心当たりがない場合は、キャンセルしてください。他の誰かがあなたのアカウントにアクセスしようとしている可能性があります。"
     },
     "verification-requested": {
       "email_not_configured_description": "この Formbricks インスタンスにはメールサーバーが設定されていないため、確認リンクを送信できませんでした。管理者にお問い合わせください。",

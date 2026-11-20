@@ -6,14 +6,54 @@ import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { sendVerificationEmail } from "@/modules/email";
 import { syncSsoIdentityForUser } from "./account-linking";
-import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl, startSsoRecovery } from "./sso-recovery";
+import { createSsoRecoveryProof, getSsoRecoveryStateId } from "./recovery-proof";
+import {
+  SsoRecoveryError,
+  cancelSsoRecovery,
+  completeSsoRecovery,
+  getSsoRecoveryConfirmUrl,
+  getSsoRecoveryConfirmation,
+  getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoveryRefusal,
+  startSsoRecovery,
+} from "./sso-recovery";
 
 const mocks = vi.hoisted(() => ({
   createEmailToken: vi.fn(),
   createSsoRelinkIntent: vi.fn(),
   verifySsoRelinkIntent: vi.fn(),
   queueAuditEventBackground: vi.fn(),
+  claimSsoRecovery: vi.fn(),
+  markSsoRecoverySpent: vi.fn(),
+  releaseClaim: vi.fn(),
 }));
+
+vi.mock("./recovery-claim", () => ({
+  claimSsoRecovery: mocks.claimSsoRecovery,
+  markSsoRecoverySpent: mocks.markSsoRecoverySpent,
+}));
+
+/** The address and verification state the linking transaction finds on the user row it locks. */
+const lockedUserEmail = { value: "john.doe@example.com" };
+/** Set to make the locked row disagree with the guards' read of `emailVerified`. */
+const lockedEmailVerified: { value: boolean | undefined } = { value: undefined };
+
+/**
+ * Completion from the browser that opened the emailed link, i.e. carrying a valid proof cookie for the
+ * intent's user and this recovery (ENG-7310). Most cases below are about what happens past that gate.
+ */
+const completeWithValidProof = (args: Parameters<typeof completeSsoRecovery>[0]) => {
+  let userId = "user_1";
+  try {
+    userId = mocks.verifySsoRelinkIntent(args.intentToken).userId;
+  } catch {
+    // An intent that does not verify is refused before the proof is read.
+  }
+  return completeSsoRecovery({
+    recoveryProof: createSsoRecoveryProof(userId, getSsoRecoveryStateId(args.intentToken)),
+    ...args,
+  });
+};
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -29,6 +69,8 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   return {
     ...actual,
     WEBAPP_URL: "http://localhost:3000",
+    // The proof is an HMAC under this secret (ENG-7310).
+    NEXTAUTH_SECRET: "test-nextauth-secret",
   };
 });
 
@@ -95,6 +137,21 @@ describe("sso-recovery", () => {
   // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
   // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
+    // The user row is locked to re-check its address before the link. The locked row answers with the
+    // user the guards read, unless a test changes it under the lock.
+    $queryRaw: async (strings: TemplateStringsArray) => {
+      if (!strings.join("").includes('FROM "User"')) return [];
+      const read = (await vi.mocked(prisma.user.findUnique).mock.results.at(-1)?.value) as
+        | { emailVerified: boolean }
+        | null
+        | undefined;
+      return [
+        {
+          email: lockedUserEmail.value,
+          emailVerified: lockedEmailVerified.value ?? read?.emailVerified ?? false,
+        },
+      ];
+    },
     user: {
       update: txUserUpdate,
     },
@@ -131,6 +188,11 @@ describe("sso-recovery", () => {
       "/auth/verification-requested?token=email-token&purpose=sso_recovery"
     );
     mocks.createEmailToken.mockReturnValue("email-token");
+    lockedUserEmail.value = "john.doe@example.com";
+    lockedEmailVerified.value = undefined;
+    mocks.releaseClaim.mockResolvedValue(undefined);
+    mocks.claimSsoRecovery.mockResolvedValue({ kind: "claimed", release: mocks.releaseClaim });
+    mocks.markSsoRecoverySpent.mockResolvedValue(true);
     mocks.createSsoRelinkIntent.mockReturnValue("intent-token");
     mocks.verifySsoRelinkIntent.mockReturnValue({
       userId: "user_1",
@@ -169,6 +231,8 @@ describe("sso-recovery", () => {
       locale: "en-US",
       callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=intent-token",
       purpose: "sso_recovery",
+      // The mailed link is bound to this recovery (ENG-7310).
+      ssoRecoveryStateId: getSsoRecoveryStateId("intent-token"),
     });
     expect(buildVerificationRequestedPath).toHaveBeenCalledWith({
       token: "email-token",
@@ -226,7 +290,7 @@ describe("sso-recovery", () => {
       identityProviderAccountId: null,
     } as any);
 
-    const callbackUrl = await completeSsoRecovery({
+    const callbackUrl = await completeWithValidProof({
       intentToken: "test-intent",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
@@ -318,7 +382,7 @@ describe("sso-recovery", () => {
       identityProviderAccountId: null,
     } as any);
 
-    await completeSsoRecovery({
+    await completeWithValidProof({
       intentToken: "test-intent",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
@@ -359,7 +423,7 @@ describe("sso-recovery", () => {
       identityProviderAccountId: "provider-account-1",
     } as any);
 
-    await completeSsoRecovery({
+    await completeWithValidProof({
       intentToken: "test-intent",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
@@ -389,7 +453,7 @@ describe("sso-recovery", () => {
     } as any);
     vi.mocked(revokeUserSessionsExcept).mockRejectedValue(new Error("redis unavailable"));
 
-    const callbackUrl = await completeSsoRecovery({
+    const callbackUrl = await completeWithValidProof({
       intentToken: "test-intent",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
@@ -420,7 +484,7 @@ describe("sso-recovery", () => {
 
   test("rejects recovery when the signed-in user does not match the intent owner", async () => {
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         intentToken: "test-intent",
         sessionUserId: "user_2",
       })
@@ -442,7 +506,7 @@ describe("sso-recovery", () => {
 
   test("rejects recovery when there is no signed-in session", async () => {
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         intentToken: "test-intent",
       })
     ).rejects.toThrow("OAuthAccountNotLinked");
@@ -471,7 +535,7 @@ describe("sso-recovery", () => {
     });
 
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         intentToken: "test-intent",
         sessionUserId: "user_1",
       })
@@ -497,7 +561,7 @@ describe("sso-recovery", () => {
     });
 
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         intentToken: "expired-intent",
         sessionUserId: "user_1",
       })
@@ -533,7 +597,7 @@ describe("sso-recovery", () => {
     } as any);
 
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         intentToken: "test-intent",
         sessionUserId: "user_1",
       })
@@ -569,7 +633,7 @@ describe("sso-recovery", () => {
     vi.mocked(finalizeSuccessfulSignIn).mockRejectedValue(new Error("tracking unavailable"));
 
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         intentToken: "test-intent",
         sessionUserId: "user_1",
       })
@@ -585,5 +649,178 @@ describe("sso-recovery", () => {
     expect(getSsoRecoveryFailureRedirectUrl("https://evil.example/phish")).toBe(
       "http://localhost:3000/auth/login?error=OAuthAccountNotLinked"
     );
+  });
+
+  describe("only the browser that opened the emailed link, and only once (ENG-7310, ENG-7395)", () => {
+    const verifiedUser = {
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: true,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    };
+    const stateId = getSsoRecoveryStateId("test-intent");
+    const proven = () => ({
+      intentToken: "test-intent",
+      recoveryProof: createSsoRecoveryProof("user_1", stateId),
+      sessionUserId: "user_1",
+    });
+    const failureOf = (promise: Promise<unknown>) =>
+      promise.then(
+        () => "resolved",
+        (error: SsoRecoveryError) => error.failure
+      );
+
+    beforeEach(() => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(verifiedUser as never);
+    });
+
+    test("a signed-in browser without the proof is refused before anything is read or written", async () => {
+      await expect(
+        failureOf(completeSsoRecovery({ intentToken: "test-intent", sessionUserId: "user_1" }))
+      ).resolves.toBe("unproven");
+
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      expect(mocks.claimSsoRecovery).not.toHaveBeenCalled();
+      expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({
+          newObject: expect.objectContaining({ failureReason: "missing_recovery_proof" }),
+        })
+      );
+    });
+
+    test("a proof for another recovery, or for another user, does not open this one", async () => {
+      for (const recoveryProof of [
+        // A literal id: vitestSetup fakes `createHash`, so hashing two intents here would give one id.
+        createSsoRecoveryProof("user_1", "another-recovery-id"),
+        createSsoRecoveryProof("user_2", stateId),
+      ]) {
+        await expect(failureOf(completeSsoRecovery({ ...proven(), recoveryProof }))).resolves.toBe(
+          "unproven"
+        );
+      }
+      expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+    });
+
+    test("links, then marks the recovery spent and gives the claim back", async () => {
+      await completeSsoRecovery(proven());
+
+      expect(mocks.claimSsoRecovery).toHaveBeenCalledWith(stateId);
+      expect(syncSsoIdentityForUser).toHaveBeenCalled();
+      expect(mocks.markSsoRecoverySpent).toHaveBeenCalledWith(stateId);
+      expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
+    });
+
+    test.each(["held", "spent", "unavailable"] as const)(
+      "a link that cannot claim the recovery (%s) writes nothing",
+      async (kind) => {
+        mocks.claimSsoRecovery.mockResolvedValue({ kind });
+
+        await expect(failureOf(completeSsoRecovery(proven()))).resolves.toBe("intent_unusable");
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+        expect(mocks.markSsoRecoverySpent).not.toHaveBeenCalled();
+      }
+    );
+
+    test("a link whose recovery could not be marked spent keeps the claim, so no cancel can follow it", async () => {
+      mocks.markSsoRecoverySpent.mockResolvedValue(false);
+
+      await completeSsoRecovery(proven());
+
+      expect(syncSsoIdentityForUser).toHaveBeenCalled();
+      expect(mocks.releaseClaim).not.toHaveBeenCalled();
+    });
+
+    test("a link that rolls back gives its claim back, so the recovery can be retried", async () => {
+      vi.mocked(prisma.$transaction).mockRejectedValue(new Error("rolled back"));
+
+      await expect(completeSsoRecovery(proven())).rejects.toThrow("rolled back");
+      expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
+      expect(mocks.markSsoRecoverySpent).not.toHaveBeenCalled();
+    });
+
+    test("an address that changed after the guards ran stops the link inside its transaction", async () => {
+      lockedUserEmail.value = "changed@example.com";
+
+      await expect(failureOf(completeSsoRecovery(proven()))).resolves.toBe("rejected");
+      expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+      expect(mocks.markSsoRecoverySpent).not.toHaveBeenCalled();
+      expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
+    });
+
+    test("an address verified by a concurrent recovery is not reclaimed a second time", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ ...verifiedUser, emailVerified: false } as never);
+      lockedEmailVerified.value = true;
+
+      await completeSsoRecovery({ ...proven(), sessionToken: "kept-token" });
+
+      expect(syncSsoIdentityForUser).toHaveBeenCalled();
+      expect(txTwoFactorDeleteMany).not.toHaveBeenCalled();
+      expect(revokeUserSessionsExcept).not.toHaveBeenCalled();
+    });
+
+    test("the confirmation page runs the guards and writes nothing", async () => {
+      await expect(getSsoRecoveryConfirmation(proven())).resolves.toEqual({
+        provider: "google",
+        email: "john.doe@example.com",
+      });
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(mocks.claimSsoRecovery).not.toHaveBeenCalled();
+
+      await expect(
+        failureOf(getSsoRecoveryConfirmation({ intentToken: "test-intent", sessionUserId: "user_1" }))
+      ).resolves.toBe("unproven");
+    });
+
+    test("a cancel marks the recovery spent, gives its claim back and is recorded", async () => {
+      await cancelSsoRecovery(proven());
+
+      expect(mocks.markSsoRecoverySpent).toHaveBeenCalledWith(stateId);
+      expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
+      expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+      expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({
+          newObject: expect.objectContaining({ failureReason: "cancelled_by_user" }),
+        })
+      );
+    });
+
+    test("only the browser that could link can cancel", async () => {
+      await expect(
+        failureOf(cancelSsoRecovery({ intentToken: "test-intent", sessionUserId: "user_1" }))
+      ).resolves.toBe("unproven");
+      expect(mocks.markSsoRecoverySpent).not.toHaveBeenCalled();
+    });
+
+    test("a cancel that loses the claim records no cancellation", async () => {
+      mocks.claimSsoRecovery.mockResolvedValue({ kind: "held" });
+
+      await expect(failureOf(cancelSsoRecovery(proven()))).resolves.toBe("intent_unusable");
+      expect(mocks.markSsoRecoverySpent).not.toHaveBeenCalled();
+      expect(mocks.queueAuditEventBackground).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          newObject: expect.objectContaining({ failureReason: "cancelled_by_user" }),
+        })
+      );
+    });
+
+    test("maps each refusal to its redirect and its session cost", () => {
+      expect(getSsoRecoveryRefusal(new SsoRecoveryError("unproven"))).toEqual({
+        redirectUrl: "http://localhost:3000/auth/login?error=sso_recovery_link_not_opened",
+        revokesSession: false,
+      });
+      expect(getSsoRecoveryRefusal(new SsoRecoveryError("intent_unusable"))).toEqual({
+        redirectUrl: "http://localhost:3000/auth/login?error=OAuthAccountNotLinked",
+        revokesSession: false,
+      });
+      expect(getSsoRecoveryRefusal(new SsoRecoveryError("rejected")).revokesSession).toBe(true);
+      expect(getSsoRecoveryRefusal(new Error("boom")).revokesSession).toBe(true);
+    });
+
+    test("points at the confirmation page for an intent", () => {
+      expect(getSsoRecoveryConfirmUrl("abc")).toBe("http://localhost:3000/sso-recovery/confirm?intent=abc");
+    });
   });
 });

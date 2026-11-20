@@ -15,6 +15,7 @@ import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { SSO_RECOVERY_COMPLETION_PATH } from "@/modules/ee/sso/lib/constants";
+import { getSsoRecoveryStateIdFromCompletionUrl } from "@/modules/ee/sso/lib/recovery-proof";
 import { sendVerificationEmail } from "@/modules/email";
 
 const ZResendVerificationEmailAction = z.object({
@@ -80,6 +81,9 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
         locale: user.locale,
         callbackUrl: validatedCallbackUrl,
         purpose,
+        // The same recovery the first link was bound to (ENG-7310).
+        ssoRecoveryStateId:
+          getSsoRecoveryStateIdFromCompletionUrl(validatedCallbackUrl, WEBAPP_URL) ?? undefined,
       });
     } else {
       // Email verification is Better Auth-native (ENG-1054 decommission): BA mints its own verification

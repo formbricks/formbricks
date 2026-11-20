@@ -6,6 +6,12 @@ import type * as ConstantsModule from "@/lib/constants";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createToken } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
+import {
+  SSO_RECOVERY_PROOF_COOKIE_NAME,
+  getSsoRecoveryStateId,
+  isValidSsoRecoveryProof,
+} from "@/modules/ee/sso/lib/recovery-proof";
+import { proofCookieOf } from "@/modules/ee/sso/lib/tests/recovery-cookies";
 
 const constants = vi.hoisted(() => ({ emailAuthEnabled: { value: true } }));
 
@@ -34,6 +40,101 @@ beforeEach(async () => {
 });
 
 describe("SSO recovery sign-in (real Postgres)", () => {
+  /**
+   * ENG-7310. Opening the emailed link is the only step that proves the mailbox, so it is where the
+   * browser gets the proof the completion route demands. Both branches complete in this browser: the
+   * session one directly, the 2FA one after the login page.
+   */
+  const intentToken = "proof-intent";
+  const stateId = getSsoRecoveryStateId(intentToken);
+  const completionUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?intent=${intentToken}`;
+
+  test.each([
+    ["the session path", { emailVerified: true, twoFactorEnabled: false }],
+    ["the 2FA path", { emailVerified: true, twoFactorEnabled: true }],
+  ])("sets a proof bound to this user and recovery on %s", async (_label, flags) => {
+    const user = await prisma.user.create({ data: { email: "proof@example.com", name: "Proof", ...flags } });
+    const token = createToken(user.id, { purpose: "sso_recovery", ssoRecoveryStateId: stateId });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: completionUrl },
+      asResponse: true,
+    });
+
+    expect(isValidSsoRecoveryProof(proofCookieOf(res), user.id, stateId)).toBe(true);
+    const setCookie = res.headers
+      .getSetCookie()
+      .find((c) => c.startsWith(`${SSO_RECOVERY_PROOF_COOKIE_NAME}=`));
+    expect(setCookie).toMatch(/HttpOnly/i);
+    expect(setCookie).toMatch(/SameSite=Lax/i);
+  });
+
+  /**
+   * The token is signed and the `callbackUrl` beside it is not, so the proof follows the recovery the
+   * token was mailed for. A link minted before the binding existed earns no proof: the user gets the
+   * "open the emailed link" message and starts again.
+   */
+  test.each([
+    ["a token bound to another recovery", { ssoRecoveryStateId: "another-recovery-id" }],
+    ["a token bound to no recovery", {}],
+  ])("sets no proof for %s", async (_label, binding) => {
+    const user = await prisma.user.create({ data: { email: "unbound@example.com", name: "Unbound" } });
+    const token = createToken(user.id, { purpose: "sso_recovery", ...binding });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: completionUrl },
+      asResponse: true,
+    });
+
+    expect(proofCookieOf(res)).toBeNull();
+    // Only the proof is withheld; the link still signs the mailbox owner in as before.
+    expect(res.headers.get("location")).toBe(completionUrl);
+  });
+
+  /**
+   * The binding new to this release line: a recovery is named by a hash of its signed intent. With the
+   * real hash (unit tests fake it), two intents must name two recoveries, so a proof minted for one never
+   * opens the other.
+   */
+  test("names each intent's recovery apart, so a proof for one does not open another", async () => {
+    const otherStateId = getSsoRecoveryStateId("another-intent");
+    expect(otherStateId).not.toBe(stateId);
+
+    const user = await prisma.user.create({ data: { email: "apart@example.com", name: "Apart" } });
+    const token = createToken(user.id, { purpose: "sso_recovery", ssoRecoveryStateId: stateId });
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: completionUrl },
+      asResponse: true,
+    });
+
+    expect(isValidSsoRecoveryProof(proofCookieOf(res), user.id, stateId)).toBe(true);
+    expect(isValidSsoRecoveryProof(proofCookieOf(res), user.id, otherStateId)).toBe(false);
+  });
+
+  test("sets no proof when the callback is not a recovery completion", async () => {
+    const user = await prisma.user.create({ data: { email: "noproof@example.com", name: "No Proof" } });
+    const token = createToken(user.id, { purpose: "sso_recovery", ssoRecoveryStateId: stateId });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: `${WEBAPP_URL}/environments/env_1?intent=${intentToken}` },
+      asResponse: true,
+    });
+
+    expect(proofCookieOf(res)).toBeNull();
+  });
+
+  test("sets no proof for a token that is not an SSO recovery token", async () => {
+    const user = await prisma.user.create({ data: { email: "wrongpurpose@example.com", name: "Wrong" } });
+    const token = createToken(user.id, { ssoRecoveryStateId: stateId });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: completionUrl },
+      asResponse: true,
+    });
+
+    expect(proofCookieOf(res)).toBeNull();
+  });
+
   test("a valid sso_recovery token establishes a session and redirects to the callback", async () => {
     const user = await prisma.user.create({
       data: { email: "recover@example.com", name: "Recover", emailVerified: true },

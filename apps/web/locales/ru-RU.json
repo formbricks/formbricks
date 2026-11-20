@@ -65,6 +65,8 @@
       "new_to_formbricks": "Впервые на Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_recovery_link_not_opened_description": "Открывайте ссылку из отправленного нами письма, только если вы сами решили привязать единый вход (SSO) к своему аккаунту Formbricks. Если это были не вы, проигнорируйте письмо: переход по ссылке может дать другому человеку доступ к вашему аккаунту. Если это были вы, откройте ссылку в этом браузере, чтобы завершить привязку.",
+      "oauth_recovery_link_not_opened_title": "Этот вход нельзя завершить в этом браузере",
       "oauth_second_factor_unavailable_description": "Ваш адрес электронной почты подтверждён, но для этой учётной записи включена двухфакторная аутентификация, а в этом экземпляре Formbricks отключён вход по электронной почте и паролю, поэтому ввести второй фактор здесь невозможно. Чтобы завершить вход, воспользуйтесь поставщиком единого входа (SSO), который уже привязан к этой учётной записи, или обратитесь к администратору.",
       "oauth_second_factor_unavailable_title": "Здесь не получится завершить двухфакторный вход",
       "please_verify_your_email_to_continue": "Пожалуйста, подтвердите свой адрес электронной почты. Мы отправили вам ссылку для подтверждения.",
@@ -128,6 +130,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "Пользователь успешно создан",
       "user_successfully_created_info": "Мы проверили наличие аккаунта, связанного с {email}. Если его не было, мы создали новый. Если аккаунт уже существовал, изменений не внесено. Пожалуйста, войдите ниже, чтобы продолжить."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Отмена",
+      "confirm": "Привязать {provider}",
+      "description": "После этого ты сможешь войти в аккаунт Formbricks {email} через {provider}.",
+      "title": "Привязать {provider} к твоему аккаунту?",
+      "warning": "Продолжай, только если ты сам(а) хотел(а) войти в Formbricks через {provider}. Если нет, отмени действие: возможно, кто-то другой пытается получить доступ к твоему аккаунту."
     },
     "verification-requested": {
       "email_not_configured_description": "Для этого экземпляра Formbricks не настроен почтовый сервер, поэтому ссылку для подтверждения отправить не удалось. Обратитесь к своему администратору.",

@@ -8,6 +8,7 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
 import { VerificationMessage } from "@/modules/auth/verification-requested/components/verification-message";
+import { getSsoRecoveryIntentFromCompletionUrl } from "@/modules/ee/sso/lib/constants";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 
 export const VerificationRequestedPage = async ({
@@ -38,9 +39,13 @@ export const VerificationRequestedPage = async ({
   // visitor who already has an account can log in and land straight back on the invite. Present for
   // every invited visitor, not just those with an account — the link must not vary with that
   // (ENG-2099), which is why it isn't conditional on anything.
-  const loginHref = resolvedCallbackUrl
-    ? `/auth/login?callbackUrl=${encodeURIComponent(resolvedCallbackUrl)}`
-    : "/auth/login";
+  // Except an SSO recovery completion (ENG-7310): only the browser that opens the emailed link can finish
+  // recovery, so logging in here and following that callback would only land on an error. The resend
+  // button below still gets the callback, since it needs the recovery it refers to.
+  const loginHref =
+    resolvedCallbackUrl && !getSsoRecoveryIntentFromCompletionUrl(resolvedCallbackUrl)
+      ? `/auth/login?callbackUrl=${encodeURIComponent(resolvedCallbackUrl)}`
+      : "/auth/login";
   try {
     const email = getEmailFromEmailToken(token);
     const parsedEmail = ZUserEmail.safeParse(email);

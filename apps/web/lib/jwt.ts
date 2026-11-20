@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { constantTimeEqual, symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { SSO_RELINK_INTENT_TTL_SECONDS } from "@/lib/sso-relink-intent-ttl";
 import { TGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "@/modules/gateway-auth/lib/service";
 
 const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
@@ -40,10 +41,18 @@ export type TVerifyTokenPayload = JwtPayload & {
   id: string;
   email: string;
   purpose: TVerificationTokenPurpose;
+  /** The SSO recovery an `sso_recovery` link was mailed for, when it was minted bound to one (ENG-7310). */
+  ssoRecoveryStateId?: string;
 };
 
 type TVerificationTokenOptions = SignOptions & {
   purpose?: TVerificationTokenPurpose;
+  /**
+   * Binds an `sso_recovery` link to the one recovery it is mailed for (ENG-7310). The recovery's intent
+   * also travels in the link's `callbackUrl`, but that parameter is unsigned; this claim is what the
+   * sign-in endpoint checks it against before handing out the recovery proof.
+   */
+  ssoRecoveryStateId?: string;
 };
 
 type TSsoRelinkIntentPayload = {
@@ -74,9 +83,13 @@ export const createToken = (userId: string, options: TVerificationTokenOptions =
   }
 
   const encryptedUserId = symmetricEncrypt(userId, ENCRYPTION_KEY);
-  const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ...jwtOptions } = options;
+  const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ssoRecoveryStateId, ...jwtOptions } = options;
 
-  return jwt.sign({ id: encryptedUserId, purpose }, NEXTAUTH_SECRET, jwtOptions);
+  return jwt.sign(
+    { id: encryptedUserId, purpose, ...(ssoRecoveryStateId ? { ssoRecoveryStateId } : {}) },
+    NEXTAUTH_SECRET,
+    jwtOptions
+  );
 };
 
 export const createGatewayServiceToken = (
@@ -455,7 +468,7 @@ const getUserEmailForLegacyVerification = async (
 };
 
 const DEFAULT_SSO_RELINK_INTENT_OPTIONS: SignOptions = {
-  expiresIn: "15m",
+  expiresIn: SSO_RELINK_INTENT_TTL_SECONDS,
 };
 
 export const createSsoRelinkIntent = (
@@ -558,10 +571,15 @@ export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> =
   // Get user email if we don't have it yet
   userData ??= await getUserEmailForLegacyVerification(token, payload.id);
 
+  const signedStateId: unknown = (payload as { ssoRecoveryStateId?: unknown }).ssoRecoveryStateId;
+
   return {
     id: userData.userId,
     email: userData.userEmail,
     purpose: getVerificationTokenPurpose(payload.purpose),
+    ...(typeof signedStateId === "string" && signedStateId.length > 0
+      ? { ssoRecoveryStateId: signedStateId }
+      : {}),
   };
 };
 
