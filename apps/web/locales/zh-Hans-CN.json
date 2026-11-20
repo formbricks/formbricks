@@ -3235,6 +3235,7 @@
       "remove_all_filters": "清除 所有 筛选器",
       "reset_all_filters": "重置 所有 筛选器",
       "save_as_new_segment": "保存为新段落",
+      "save_segment_changes_before_saving": "保存调查问卷前，请先保存或取消“目标受众”下的细分更改。",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "将 你的 过滤器 保存为 一个 分段 以便 在 其他 调查 中 使用",
       "search_segments": "搜索细分",
       "segment_created_successfully": "片段 创建 成功",

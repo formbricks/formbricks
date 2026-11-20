@@ -3121,6 +3121,7 @@ checksums:
     workspace/segments/remove_all_filters: 115828cbda8a4733df1e9e2661bf7e55
     workspace/segments/reset_all_filters: 0de0d7962a1179fac358cb1cf9546df3
     workspace/segments/save_as_new_segment: d9d42bdeabf936d4ec97325dbdca0012
+    workspace/segments/save_segment_changes_before_saving: e8db73db39e21cbcef4c99a314649e0e
     workspace/segments/save_your_filters_as_a_segment_to_use_it_in_other_surveys: cc40e9b2a5ab59684f075bcb2f55f18d
     workspace/segments/search_segments: 2d59e7e5e11d8ed41047eb62e3b7f534
     workspace/segments/segment_created_successfully: 7dfaf11a929000b387c0d5f6dc18e81a

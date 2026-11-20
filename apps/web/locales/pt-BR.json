@@ -3235,6 +3235,7 @@
       "remove_all_filters": "Remover todos os filtros",
       "reset_all_filters": "Redefinir todos os filtros",
       "save_as_new_segment": "Salvar como novo segmento",
+      "save_segment_changes_before_saving": "Salve ou cancele as alterações do seu segmento em Público-alvo antes de salvar a pesquisa.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Salve seus filtros como um Segmento para usar em outras pesquisas",
       "search_segments": "Pesquisar segmentos",
       "segment_created_successfully": "Segmento criado com sucesso!",

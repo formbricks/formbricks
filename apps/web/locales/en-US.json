@@ -3235,6 +3235,7 @@
       "remove_all_filters": "Remove all filters",
       "reset_all_filters": "Reset all filters",
       "save_as_new_segment": "Save as new segment",
+      "save_segment_changes_before_saving": "Save or cancel your segment changes under Target Audience before saving the survey.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Save your filters as a Segment to use it in other surveys",
       "search_segments": "Search segments",
       "segment_created_successfully": "Segment created successfully",

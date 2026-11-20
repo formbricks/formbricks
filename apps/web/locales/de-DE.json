@@ -3235,6 +3235,7 @@
       "remove_all_filters": "Alle Filter entfernen",
       "reset_all_filters": "Alle Filter zurücksetzen",
       "save_as_new_segment": "Als neues Segment speichern",
+      "save_segment_changes_before_saving": "Speichere oder verwirf Deine Änderungen am Segment unter „Zielgruppe“, bevor Du die Umfrage speicherst.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Speichere deine Filter als Segment, um sie in anderen Umfragen zu verwenden",
       "search_segments": "Segmente durchsuchen",
       "segment_created_successfully": "Segment erfolgreich erstellt",

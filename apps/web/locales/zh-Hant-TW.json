@@ -3235,6 +3235,7 @@
       "remove_all_filters": "移除所有篩選器",
       "reset_all_filters": "重設所有篩選器",
       "save_as_new_segment": "另存為新區隔",
+      "save_segment_changes_before_saving": "在儲存問卷之前，請先儲存或取消「目標受眾」下的區隔變更。",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "將您的篩選器儲存為區隔，以便在其他問卷中使用",
       "search_segments": "搜尋區隔",
       "segment_created_successfully": "區隔已成功建立！",
