@@ -179,7 +179,7 @@ const preferReadOnlyProps = {
     const reactGenericOf = (name) => {
       if (name?.type === "Identifier") return reactGenerics.get(name.name);
       if (name?.type === "TSQualifiedName" && reactNamespaces.has(name.left?.name)) {
-        return name.right.name in PROPS_TYPE_ARGUMENT ? name.right.name : undefined;
+        return Object.hasOwn(PROPS_TYPE_ARGUMENT, name.right.name) ? name.right.name : undefined;
       }
       return undefined;
     };
@@ -254,7 +254,7 @@ const preferReadOnlyProps = {
       return (
         callee.type === "MemberExpression" &&
         reactNamespaces.has(callee.object.name) &&
-        callee.property.name in WRAPPERS
+        Object.hasOwn(WRAPPERS, callee.property.name)
       );
     };
 
@@ -295,8 +295,8 @@ const preferReadOnlyProps = {
             continue;
           }
           const imported = specifier.imported.name ?? specifier.imported.value;
-          if (imported in PROPS_TYPE_ARGUMENT) reactGenerics.set(specifier.local.name, imported);
-          if (imported in WRAPPERS) reactWrappers.set(specifier.local.name, imported);
+          if (Object.hasOwn(PROPS_TYPE_ARGUMENT, imported)) reactGenerics.set(specifier.local.name, imported);
+          if (Object.hasOwn(WRAPPERS, imported)) reactWrappers.set(specifier.local.name, imported);
           if (COMPONENT_CLASSES.has(imported)) reactClasses.add(specifier.local.name);
         }
       },

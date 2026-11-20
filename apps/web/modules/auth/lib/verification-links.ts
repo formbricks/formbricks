@@ -15,6 +15,12 @@ const RELATIVE_URL_BASE = "http://localhost";
  */
 export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
 
+/**
+ * The page that asks the account holder to confirm the link (ENG-7395). A GET on the completion path
+ * only forwards here; the page's POST back to the completion path is what links.
+ */
+export const SSO_RECOVERY_CONFIRM_PATH = "/sso-recovery/confirm";
+
 /** Better Auth's recovery magic-link endpoint, mounted by `ssoRecoverySignInPlugin` under `/api/auth`. */
 export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
 
@@ -125,6 +131,21 @@ export const buildSignupWithoutVerificationSuccessPath = ({
   }
 
   return `${successUrl.pathname}${successUrl.search}`;
+};
+
+/**
+ * The log-in link on the verification-requested page, carrying the callback so a visitor who already has
+ * an account lands back where they were going (ENG-2091).
+ *
+ * Except an SSO recovery completion (ENG-7310): only the browser that opens the emailed link can finish
+ * recovery, so logging in here and following that callback would only land on an error.
+ */
+export const buildVerificationRequestedLoginHref = (callbackUrl: string | null | undefined): string => {
+  if (!callbackUrl || normalizeRoutePathname(callbackUrl) === SSO_RECOVERY_COMPLETION_PATH) {
+    return "/auth/login";
+  }
+
+  return `/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
 };
 
 export const buildVerificationLinks = ({

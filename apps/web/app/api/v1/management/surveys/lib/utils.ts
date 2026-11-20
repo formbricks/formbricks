@@ -2,6 +2,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TSurvey, TSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
+import { addsRichTextLink } from "@/lib/survey/rich-text-links";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -82,6 +83,13 @@ export const checkFeaturePermissions = async (
   if (addsExternalCtaUrl(surveyData, oldSurvey)) {
     return responses.forbiddenResponse(
       "External URLs are not enabled for this organization. Upgrade to use external CTA buttons."
+    );
+  }
+
+  // Check rich text (headlines, subheaders, welcome and ending cards) for new links (ENG-3891)
+  if (addsRichTextLink(surveyData, oldSurvey)) {
+    return responses.forbiddenResponse(
+      "External URLs are not enabled for this organization. Upgrade to use links in survey text."
     );
   }
 

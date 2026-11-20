@@ -54,6 +54,11 @@ describe("@formbricks/cache cacheKeys", () => {
         expect(key).toBe("fb:org:org-123:billing-sync-lock");
       });
 
+      test("should create monthly-response-count key scoped to the org and usage cycle", () => {
+        const key = createCacheKey.organization.monthlyResponseCount("org-123", "1793491200000");
+        expect(key).toBe("fb:org:org-123:monthly-response-count:1793491200000");
+      });
+
       test("should handle complex organization IDs", () => {
         const key = createCacheKey.organization.billing("org-enterprise-team_123");
         expect(key).toBe("fb:org:org-enterprise-team_123:billing");

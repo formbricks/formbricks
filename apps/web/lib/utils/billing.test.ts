@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getBillingUsageCycleWindow, getMonthlyUsageCycleWindow } from "./billing";
+import { getBillingUsageCycleWindow, getMonthlyUsageCycleWindow, needsMonthlyResponseCount } from "./billing";
 
 describe("getMonthlyUsageCycleWindow", () => {
   test("derives the current monthly window from a regular anchor day", () => {
@@ -127,5 +127,30 @@ describe("getBillingUsageCycleWindow", () => {
       start: new Date("2026-10-23T10:00:00.000Z"),
       end: new Date("2026-11-23T10:00:00.000Z"),
     });
+  });
+});
+
+describe("needsMonthlyResponseCount", () => {
+  const unlimited = { limits: { workspaces: null, monthly: { responses: null, workflowRuns: null } } };
+
+  test("counts when the plan has a response limit, which the limits banner compares against", () => {
+    expect(
+      needsMonthlyResponseCount({
+        limits: { workspaces: 3, monthly: { responses: 250, workflowRuns: null } },
+      })
+    ).toBe(true);
+  });
+
+  test("skips the count for a plan with no response limit", () => {
+    expect(needsMonthlyResponseCount(unlimited)).toBe(false);
+    expect(needsMonthlyResponseCount(null)).toBe(false);
+  });
+
+  // The Hobby warnings use fixed 200/250 thresholds and the trial card shows the count, whatever the limit.
+  test.each([
+    ["Hobby", { plan: "hobby" }],
+    ["trialing", { subscriptionStatus: "trialing" }],
+  ] as const)("still counts for a %s organization without a response limit", (_, stripe) => {
+    expect(needsMonthlyResponseCount({ ...unlimited, stripe })).toBe(true);
   });
 });

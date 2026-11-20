@@ -102,3 +102,15 @@ export const getBillingUsageCycleWindow = (billing: TBillingInput, now = new Dat
 
   return window;
 };
+
+/**
+ * Whether the app shell reads the Cloud monthly response count: the limits banner needs a response limit,
+ * and the Hobby warnings and the trial sidebar card show the count. Any other plan skips the count, which
+ * scans every response the organization collected this cycle (ENG-3789).
+ */
+export const needsMonthlyResponseCount = (
+  billing: Pick<TOrganizationBilling, "limits" | "stripe"> | null | undefined
+): boolean =>
+  billing?.limits?.monthly?.responses != null ||
+  billing?.stripe?.plan === "hobby" ||
+  billing?.stripe?.subscriptionStatus === "trialing";
