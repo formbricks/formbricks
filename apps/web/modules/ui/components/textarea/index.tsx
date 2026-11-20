@@ -16,6 +16,7 @@ export const Textarea = ({ className, isInvalid, ref, ...props }: TextareaProps)
         className,
         isInvalid && "border border-red-500 focus:border-red-500"
       )}
+      aria-invalid={isInvalid ? true : undefined}
       {...props}
     />
   );

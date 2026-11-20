@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { GripIcon, PencilIcon } from "lucide-react";
+import { AlertCircleIcon, GripIcon, PencilIcon } from "lucide-react";
 import { type Dispatch, type KeyboardEvent, type SetStateAction, memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -29,6 +29,7 @@ import { CSATElementForm } from "@/modules/survey/editor/components/csat-element
 import { CTAElementForm } from "@/modules/survey/editor/components/cta-element-form";
 import { DateElementForm } from "@/modules/survey/editor/components/date-element-form";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
+import { useEditorIssues } from "@/modules/survey/editor/components/editor-issues-context";
 import { FileUploadElementForm } from "@/modules/survey/editor/components/file-upload-element-form";
 import { MatrixElementForm } from "@/modules/survey/editor/components/matrix-element-form";
 import { MultipleChoiceElementForm } from "@/modules/survey/editor/components/multiple-choice-element-form";
@@ -47,7 +48,9 @@ import { getElementCodeIssues } from "@/modules/survey/editor/lib/element-codes"
 import { setOptionHiddenById } from "@/modules/survey/editor/lib/option-hide-toggle";
 import { getElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
+import { isInlineIssueField } from "@/modules/survey/editor/lib/validation-issues";
 import { getElementIconMap, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
+import { FieldError } from "@/modules/ui/components/field-error";
 import { Input } from "@/modules/ui/components/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 
@@ -130,6 +133,9 @@ const BlockCardComponent = ({
   });
   const { t } = useTranslation();
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
+  const issues = useEditorIssues();
+  const blockNameIssue = issues.find((issue) => issue.targetId === block.id && issue.field === "name");
+  const blockNameErrorId = `${block.id}-name-error`;
 
   // The question codes of the block, in order: the names an export and a webhook know its questions by.
   const blockCodes = block.elements
@@ -328,6 +334,7 @@ const BlockCardComponent = ({
                       aria-label={t("workspace.surveys.edit.block_name")}
                       maxLength={BLOCK_NAME_MAX_LENGTH}
                       isInvalid={hasInvalidName}
+                      aria-describedby={blockNameIssue ? blockNameErrorId : undefined}
                       onChange={(e) => updateBlockName(blockIdx, e.target.value)}
                       onKeyDown={handleNameKeyDown}
                       // The whole header row is the collapse trigger, so a click meant for the
@@ -358,11 +365,18 @@ const BlockCardComponent = ({
                       className="pointer-events-none absolute top-1 right-2 size-3.5 text-slate-400 opacity-0 transition-opacity group-focus-within/name:opacity-0 group-hover/name:opacity-100"
                     />
                     <div className="flex min-w-0 items-center gap-2">
-                      <p className="shrink-0 text-xs text-slate-500">
-                        {[t("common.count_questions", { count: block.elements.length }), blockCodes]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
+                      {blockNameIssue ? (
+                        <p id={blockNameErrorId} className="flex items-center gap-1 text-xs text-error">
+                          <AlertCircleIcon aria-hidden="true" className="size-3.5 shrink-0" />
+                          {blockNameIssue.message}
+                        </p>
+                      ) : (
+                        <p className="shrink-0 text-xs text-slate-500">
+                          {[t("common.count_questions", { count: block.elements.length }), blockCodes]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      )}
                       <ShowIfBadge localSurvey={localSurvey} target={{ type: "block", blockIdx }} />
                     </div>
                   </div>
@@ -404,6 +418,13 @@ const BlockCardComponent = ({
                     elementIdx += elementIndex;
 
                     const isOpen = activeElementId === element.id;
+                    const elementIssues = issues.filter(
+                      (issue) => issue.tab === "elements" && issue.targetId === element.id
+                    );
+                    // Problems about the whole question, or about a field that has no input of its own to sit next to.
+                    const cardIssues = elementIssues.filter(
+                      (issue) => issue.level === "question" || !isInlineIssueField(issue.field)
+                    );
 
                     return (
                       <div
@@ -468,6 +489,14 @@ const BlockCardComponent = ({
                                         localSurvey={localSurvey}
                                         target={{ type: "element", blockIdx, elementIdx: elementIndex }}
                                       />
+                                      {!isOpen && elementIssues.length > 0 && (
+                                        <p className="flex shrink-0 items-center gap-1 text-xs text-error">
+                                          <AlertCircleIcon aria-hidden="true" className="size-3.5 shrink-0" />
+                                          {t("workspace.surveys.edit.issue_card_problems", {
+                                            count: elementIssues.length,
+                                          })}
+                                        </p>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -503,6 +532,14 @@ const BlockCardComponent = ({
                           </Collapsible.CollapsibleTrigger>
                           <Collapsible.CollapsibleContent
                             className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
+                            {cardIssues.map((issue) => (
+                              <FieldError
+                                key={issue.key}
+                                id={`${element.id}-${issue.field ?? "question"}-error`}
+                                message={issue.message}
+                                className="pt-2"
+                              />
+                            ))}
                             <QuestionTabs
                               content={renderElementForm(element, elementIdx)}
                               hasSettingsIssue={codeIssues.has(element.id)}

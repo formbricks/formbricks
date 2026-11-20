@@ -19,6 +19,8 @@ interface LocalizedEditorProps {
   value: TI18nString | undefined;
   localSurvey: TSurvey;
   isInvalid: boolean;
+  /** Id of the inline error message, so the editor announces it. */
+  errorId?: string;
   /** Writes the field of an element; used unless `isCard`. */
   updateElement?: (elementIdx: number, data: Partial<TSurveyElement>) => void;
   /** Writes the field of the welcome or ending card; used when `isCard`. */
@@ -42,6 +44,8 @@ export function LocalizedEditor({
   id,
   value,
   localSurvey,
+  isInvalid,
+  errorId,
   updateElement,
   updateCard,
   selectedLanguageCode = "default",
@@ -62,6 +66,8 @@ export function LocalizedEditor({
     <div className="relative w-full">
       <Editor
         id={id}
+        isInvalid={isInvalid}
+        ariaDescribedBy={isInvalid ? errorId : undefined}
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}

@@ -61,6 +61,7 @@ export const BlockSettings = ({
           label={t("workspace.surveys.edit.button_label")}
           localSurvey={localSurvey}
           elementIdx={blockIndex}
+          issueTargetId={block.id}
           isInvalid={false}
           labelClassName="mt-0"
           updateElement={(_, updatedAttributes) => {
@@ -106,6 +107,7 @@ export const BlockSettings = ({
             label={t("workspace.surveys.edit.back_button_label")}
             localSurvey={localSurvey}
             elementIdx={blockIndex}
+            issueTargetId={block.id}
             isInvalid={false}
             labelClassName="mt-0"
             updateElement={(_, updatedAttributes) => {

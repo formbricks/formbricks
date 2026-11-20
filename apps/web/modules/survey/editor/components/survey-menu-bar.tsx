@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { z } from "zod";
-import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
 import {
@@ -18,7 +16,6 @@ import {
   TSurveyEditorTabs,
   TSurveyStatus,
   TSurveyVisibility,
-  ZSurvey,
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
@@ -29,18 +26,14 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TCustomCssValidationStatus } from "@/modules/custom-css/components/lib/validation";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
-import { describeCodeIssueAtPath, describeLockRefusal } from "@/modules/survey/editor/lib/code-messages";
+import { describeLockRefusal } from "@/modules/survey/editor/lib/code-messages";
 import {
   getSurveyToAutosave,
   isCustomCssBlockingManualSave,
 } from "@/modules/survey/editor/lib/custom-css-autosave";
-import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
-import { getInvalidSurveyTargets, isFlowTabIssue } from "@/modules/survey/editor/lib/invalid-survey-targets";
-import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
-import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { ActivateDialog } from "@/modules/survey/visibility/components/activate-dialog";
 import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
@@ -64,7 +57,7 @@ import {
   isSaveBlockedBySharedSegmentEdit,
   withSavedSharedSegment,
 } from "../lib/shared-segment-edit";
-import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
+import { type TEditorIssue, collectEditorIssues, getCustomCssIssue } from "../lib/validation-issues";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
 interface SurveyMenuBarProps {
@@ -74,8 +67,12 @@ interface SurveyMenuBarProps {
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
-  setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
-  setHasTriggerError: React.Dispatch<React.SetStateAction<boolean>>;
+  /** What stopped a save or publish: the editor lists it and marks the cards that carry it. */
+  onIssuesFound: (issues: TEditorIssue[], targetStatus: TSurveyStatus) => void;
+  /** A save or publish went ahead, so nothing is in the way any more. */
+  onIssuesCleared: () => void;
+  /** A save or publish that failed for a reason outside the survey's content; `null` clears it. */
+  onSystemError: (message: string | null) => void;
   workspace: TWorkspaceWithoutCustomCss;
   responseCount: number;
   finishedResponseCount: number;
@@ -127,8 +124,9 @@ export const SurveyMenuBar = ({
   setLocalSurvey,
   activeId,
   setActiveId,
-  setInvalidElements,
-  setHasTriggerError,
+  onIssuesFound,
+  onIssuesCleared,
+  onSystemError,
   workspace,
   responseCount,
   finishedResponseCount,
@@ -276,30 +274,39 @@ export const SurveyMenuBar = ({
   };
 
   /**
-   * A missing trigger used to disable Save / Save & Close / Publish outright, which left the user
-   * with a greyed-out button and no reason for it (ENG-2581). The buttons now stay clickable and the
-   * click reports the problem: the trigger-required toast, plus the Survey Trigger card marked
-   * invalid on the Settings tab, where it can be fixed. The rule itself is unchanged and still
-   * enforced server-side.
+   * Whether the survey can be saved at `targetStatus`. When it cannot, the editor lists everything in the
+   * way, not just the first problem: a missing trigger (ENG-2581), Custom CSS errors, the schema's
+   * objections, and the survey-level rules. The server still enforces all of it.
    */
-  const blockOnMissingTrigger = (targetStatus: TSurveyStatus): boolean => {
-    if (!isMissingRequiredTrigger(localSurvey, targetStatus, isOpenedByCreative)) return false;
+  const checkSurvey = (targetStatus: TSurveyStatus): boolean => {
+    const found = collectEditorIssues(
+      {
+        survey: localSurvey,
+        selectedLanguageCode,
+        finishedResponseCount,
+        targetStatus,
+        isOpenedByCreative,
+        isCustomCssBlocking: isCustomCssBlockingManualSave(customCssValidationStatus),
+        locale,
+      },
+      t
+    );
 
-    toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
-    setHasTriggerError(true);
-    setActiveId("settings");
+    if (found.length > 0) {
+      onIssuesFound(found, targetStatus);
+      return false;
+    }
+
+    onIssuesCleared();
     return true;
   };
 
-  // The server re-validates Custom CSS on every save and keeps the previous revision when it fails,
-  // so this only spares the author a round trip and points them at the errors.
-  const blockOnInvalidCustomCss = (): boolean => {
-    if (!isCustomCssBlockingManualSave(customCssValidationStatus)) return false;
-
-    toast.error(t("workspace.custom_css.fix_errors_before_saving"));
-    setActiveId("styling");
-    return true;
-  };
+  // The wording for a failure that is not about the survey's content, picked by whether the browser says
+  // it is online.
+  const getSystemErrorMessage = (): string =>
+    typeof navigator !== "undefined" && !navigator.onLine
+      ? t("workspace.surveys.edit.issue_offline")
+      : t("workspace.surveys.edit.issue_something_went_wrong");
 
   // ENG-6957: the survey save leaves a shared segment as stored, so a save now would drop the targeting
   // card's unsaved filters while reporting success. They are saved with the card's "Save changes".
@@ -382,119 +389,6 @@ export const SurveyMenuBar = ({
     }
 
     return localSurvey.segment;
-  };
-
-  /** A language-code issue names the languages and opens their tab; any other points at the Flow tab. */
-  const reportCustomIssue = (firstError: z.core.$ZodIssueCustom) => {
-    const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
-    if (params.invalidLanguageCodes?.length) {
-      const invalidLanguageLabels = params.invalidLanguageCodes.map(
-        (invalidLanguage: string) => getLanguageLabel(invalidLanguage, locale) ?? invalidLanguage
-      );
-
-      const messageSplit = firstError.message.split("-fLang-")[0];
-
-      toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
-      setActiveId("language");
-    } else {
-      toast.error(toFlowTabMessage(firstError.message, t("workspace.surveys.edit.flow.tab")), {
-        className: "w-fit max-w-md!",
-      });
-    }
-  };
-
-  /** Tells the author what the first validation issue is, and opens the tab that holds it. */
-  const reportFirstIssue = (firstError: z.core.$ZodIssue) => {
-    // A show condition still missing its value: the schema's own message is technical English, so
-    // say where to look instead, and open the tab that holds the Survey Trigger card.
-    if (firstError.path[0] === "showConditions") {
-      toast.error(t("workspace.surveys.edit.show_conditions.invalid"));
-      setActiveId("settings");
-      return;
-    }
-
-    // The schema can only say "Block name is required"; it has no idea which block. Name it,
-    // so the message matches the card that just turned red.
-    if (firstError.path[0] === "blocks" && firstError.path[2] === "name") {
-      toast.error(
-        t("workspace.surveys.edit.block_name_required_for", {
-          blockNumber: (firstError.path[1] as number) + 1,
-        })
-      );
-      return;
-    }
-
-    const logicDestinationMessage = getLogicDestinationErrorMessage(firstError, localSurvey.blocks, t);
-    if (logicDestinationMessage) {
-      toast.error(logicDestinationMessage, { className: "w-fit max-w-md!" });
-      return;
-    }
-
-    const codeMessage = describeCodeIssueAtPath(
-      localSurvey,
-      firstError.path.filter((part): part is string | number => typeof part !== "symbol"),
-      t
-    );
-    if (codeMessage) {
-      toast.error(codeMessage, { className: "w-fit max-w-md!" });
-      setActiveId("elements");
-      return;
-    }
-
-    if (firstError.code === "custom") {
-      reportCustomIssue(firstError);
-      return;
-    }
-
-    // Anything else reaches here with a raw Zod default ("Invalid input", "Invalid input: expected
-    // string, received undefined") that names no field. The issue path does, so build the message from it.
-    const elementIssue = describeElementIssue(firstError, t, locale);
-
-    if (elementIssue) {
-      toast.error(elementIssue.message, { className: "w-fit max-w-md!" });
-      if (elementIssue.languageCode && elementIssue.languageCode !== "default") {
-        setActiveId("language");
-      }
-      return;
-    }
-
-    toast.error(toFlowTabMessage(firstError.message, t("workspace.surveys.edit.flow.tab")));
-  };
-
-  const validateSurveyWithZod = (): boolean => {
-    const localSurveyValidation = ZSurvey.safeParse(withPageDates(localSurvey));
-    if (!localSurveyValidation.success) {
-      const issues = localSurveyValidation.error.issues;
-      const { invalidIds: newInvalidIds, firstInvalidScrollId } = getInvalidSurveyTargets(
-        localSurvey,
-        issues
-      );
-
-      if (newInvalidIds.length > 0) {
-        // This pass's flags first, in issue order: the Flow tab opens the first flagged rule, which
-        // is the one the toast below names.
-        setInvalidElements((prev) => [
-          ...newInvalidIds,
-          ...(prev ?? []).filter((id) => !newInvalidIds.includes(id)),
-        ]);
-      }
-
-      if (firstInvalidScrollId) {
-        scrollElementCardIntoView(firstInvalidScrollId, "start");
-      }
-
-      const firstError = issues[0];
-
-      // Rules and fallbacks live on the Flow tab (ENG-6929): open it, so the flagged row is on screen.
-      if (isFlowTabIssue(firstError.path)) {
-        setActiveId("flow");
-      }
-
-      reportFirstIssue(firstError);
-      return false;
-    }
-
-    return true;
   };
 
   // Interval-based auto-save for draft surveys (every 10 seconds)
@@ -626,29 +520,30 @@ export const SurveyMenuBar = ({
   const reportSaveException = (e: unknown) => {
     if (reportStaleServerActionError(e)) return;
     console.error(e);
-    toast.error(t("workspace.surveys.edit.error_saving_changes"));
+    onSystemError(getSystemErrorMessage());
   };
 
   // ENG-6783: the server refused an edit to a locked field; say why, with its details.
-  const toastSaveRefusal = (errorMessage: string) => {
+  const describeSaveRefusal = (errorMessage: string): string => {
     const lockDetails = parsePublishedLockErrorMessage(errorMessage);
-    if (lockDetails === null) {
-      toast.error(errorMessage);
-      return;
-    }
+    if (lockDetails === null) return errorMessage;
     // The same comparison the server made, rendered with the editor's translated explanations; the server's
     // own sentence (English, with internal IDs) is the fallback when this one finds nothing.
     const violations = getPublishedLockViolations(survey, localSurvey);
-    toast.error(
-      t("workspace.surveys.edit.published_survey_locked", {
-        details: violations.length > 0 ? describeLockRefusal(violations, localSurvey, t) : lockDetails,
-      })
-    );
+    return t("workspace.surveys.edit.published_survey_locked", {
+      details: violations.length > 0 ? describeLockRefusal(violations, localSurvey, t) : lockDetails,
+    });
   };
 
   const handleSurveySaveDraft = async (): Promise<boolean> => {
-    if (blockOnInvalidCustomCss()) return false;
+    // A draft is not checked against the schema, but the server keeps the previous Custom CSS when the draft's
+    // fails, so say so up front.
+    if (isCustomCssBlockingManualSave(customCssValidationStatus)) {
+      onIssuesFound([getCustomCssIssue(t)], "draft");
+      return false;
+    }
     if (blockOnUnsavedSharedSegmentEdit()) return false;
+    onSystemError(null);
 
     setIsSurveySaving(true);
     const attempt = saveAttemptOrder.begin();
@@ -671,8 +566,7 @@ export const SurveyMenuBar = ({
       } else {
         // Recorded so an older tick that lands afterwards cannot report this draft as saved.
         saveAttemptOrder.settle(attempt);
-        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
-        toast.error(errorMessage);
+        onSystemError(getFormattedErrorMessage(updatedSurveyResponse));
         return false;
       }
       return true;
@@ -686,28 +580,14 @@ export const SurveyMenuBar = ({
 
   const handleSurveySave = async (): Promise<boolean> => {
     // Ahead of the spinner: a click that cannot go through should report why, not appear to work.
-    if (blockOnMissingTrigger(localSurvey.status)) return false;
-    if (blockOnInvalidCustomCss()) return false;
+    if (!checkSurvey(localSurvey.status)) return false;
     if (blockOnUnsavedSharedSegmentEdit()) return false;
 
     setIsSurveySaving(true);
     // Begun only once the request is about to go out: a save stopped by validation never raced anything.
     let attempt: number | undefined;
 
-    const isSurveyValidatedWithZod = validateSurveyWithZod();
-
-    if (!isSurveyValidatedWithZod) {
-      setIsSurveySaving(false);
-      return false;
-    }
-
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
-      if (!isSurveyValidResult) {
-        setIsSurveySaving(false);
-        return false;
-      }
-
       // A copy without draft flags or legacy questions; the editor's survey is not mutated.
       const surveyToSave = buildSurveySavePayload(localSurvey);
 
@@ -731,7 +611,7 @@ export const SurveyMenuBar = ({
         // carries the re-rendered page. Refreshing too rendered the editor twice per save.
       } else {
         saveAttemptOrder.settle(attempt);
-        toastSaveRefusal(getFormattedErrorMessage(updatedSurveyResponse));
+        onSystemError(describeSaveRefusal(getFormattedErrorMessage(updatedSurveyResponse)));
         return false;
       }
 
@@ -747,49 +627,37 @@ export const SurveyMenuBar = ({
   const handleSaveAndGoBack = async () => {
     const isSurveySaved =
       localSurvey.status === "draft" ? await handleSurveySaveDraft() : await handleSurveySave();
-    if (isSurveySaved) {
-      // Navigate explicitly rather than router.back(): the editor is often reached without an
-      // in-app history entry behind it (new tab, pasted/bookmarked URL, hard reload), and back()
-      // silently no-ops there — the survey saves but the editor never closes. The publish path
-      // already navigates to the summary this way.
-      //
-      // Both branches navigate, but not to the same place, because the two callers arrive here from
-      // different pages. The "Save & Close" button renders only for a non-draft, and its editor is
-      // reached from the summary. A draft gets here only through the unsaved-changes dialog, opened
-      // by the back arrow, and its editor is reached from the survey list — the list deliberately
-      // never links a draft to /summary (see `linkHref` in `survey/list/components/survey-card.tsx`),
-      // since a draft has no responses to summarise. So a draft closes to the list.
-      router.push(
-        localSurvey.status === "draft"
-          ? `${workspaceBasePath}/surveys`
-          : `${workspaceBasePath}/surveys/${localSurvey.id}/summary`
-      );
+    if (!isSurveySaved) {
+      // The error shows in the bar behind the dialog; close the dialog (edits stay) so the author can reach it.
+      setConfirmDialogOpen(false);
+      return;
     }
+    // Navigate explicitly rather than router.back(): the editor is often reached without an
+    // in-app history entry behind it (new tab, pasted/bookmarked URL, hard reload), and back()
+    // silently no-ops there — the survey saves but the editor never closes. The publish path
+    // already navigates to the summary this way.
+    //
+    // Both branches navigate, but not to the same place, because the two callers arrive here from
+    // different pages. The "Save & Close" button renders only for a non-draft, and its editor is
+    // reached from the summary. A draft gets here only through the unsaved-changes dialog, opened
+    // by the back arrow, and its editor is reached from the survey list — the list deliberately
+    // never links a draft to /summary (see `linkHref` in `survey/list/components/survey-card.tsx`),
+    // since a draft has no responses to summarise. So a draft closes to the list.
+    router.push(
+      localSurvey.status === "draft"
+        ? `${workspaceBasePath}/surveys`
+        : `${workspaceBasePath}/surveys/${localSurvey.id}/summary`
+    );
   };
 
   const handleSurveyPublish = async () => {
-    if (blockOnMissingTrigger("inProgress")) return;
-    if (blockOnInvalidCustomCss()) return;
+    if (!checkSurvey("inProgress")) return;
     if (blockOnUnsavedSharedSegmentEdit()) return;
 
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
-    const isSurveyValidatedWithZod = validateSurveyWithZod();
-
-    if (!isSurveyValidatedWithZod) {
-      isSurveyPublishingRef.current = false;
-      setIsSurveyPublishing(false);
-      return;
-    }
-
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
-      if (!isSurveyValidResult) {
-        isSurveyPublishingRef.current = false;
-        setIsSurveyPublishing(false);
-        return;
-      }
       const status = "inProgress";
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
@@ -797,8 +665,7 @@ export const SurveyMenuBar = ({
       const publishResult = await updateSurveyAction(withPageDates({ ...localSurvey, status, segment }));
 
       if (!publishResult?.data) {
-        const errorMessage = getFormattedErrorMessage(publishResult);
-        toast.error(errorMessage);
+        onSystemError(getFormattedErrorMessage(publishResult));
         isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
@@ -825,34 +692,19 @@ export const SurveyMenuBar = ({
         return;
       }
       console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
+      onSystemError(getSystemErrorMessage());
     }
   };
 
   const handleSurveySchedule = async () => {
     // Scheduling lands on "paused", which is live enough to need a trigger.
-    if (blockOnMissingTrigger("paused")) return;
-    if (blockOnInvalidCustomCss()) return;
+    if (!checkSurvey("paused")) return;
     if (blockOnUnsavedSharedSegmentEdit()) return;
 
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
-    const isSurveyValidatedWithZod = validateSurveyWithZod();
-
-    if (!isSurveyValidatedWithZod) {
-      isSurveyPublishingRef.current = false;
-      setIsSurveyPublishing(false);
-      return;
-    }
-
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
-      if (!isSurveyValidResult) {
-        isSurveyPublishingRef.current = false;
-        setIsSurveyPublishing(false);
-        return;
-      }
       const status = "paused";
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
@@ -860,8 +712,7 @@ export const SurveyMenuBar = ({
       const scheduleResult = await updateSurveyAction(withPageDates({ ...localSurvey, status, segment }));
 
       if (!scheduleResult?.data) {
-        const errorMessage = getFormattedErrorMessage(scheduleResult);
-        toast.error(errorMessage);
+        onSystemError(getFormattedErrorMessage(scheduleResult));
         isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
@@ -877,7 +728,7 @@ export const SurveyMenuBar = ({
         return;
       }
       console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
+      onSystemError(getSystemErrorMessage());
     }
   };
 
@@ -886,11 +737,8 @@ export const SurveyMenuBar = ({
   // The same checks the activate path runs, done up front so the dialog never opens for a survey
   // that could not be activated anyway.
   const isReadyToActivate = (): boolean => {
-    if (blockOnMissingTrigger(isPublishScheduled ? "paused" : "inProgress")) return false;
-    if (blockOnInvalidCustomCss()) return false;
-    if (blockOnUnsavedSharedSegmentEdit()) return false;
-    if (!validateSurveyWithZod()) return false;
-    return isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
+    if (!checkSurvey(isPublishScheduled ? "paused" : "inProgress")) return false;
+    return !blockOnUnsavedSharedSegmentEdit();
   };
 
   const handleActivateClick = () => {
