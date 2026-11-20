@@ -110,6 +110,24 @@ describe("assertV3SurveyWritePermissions", () => {
       ).rejects.toThrow(V3SurveyWritePermissionError);
     });
 
+    test("rejects a text variable whose new value is a link its headline recalls", async () => {
+      const variableId = "clvar1234567890123456789012";
+      const blocks = blockWithHeadline(`<p>#recall:${variableId}/fallback:x#</p>`);
+      const variable = (value: string) => [{ id: variableId, name: "v1", type: "text" as const, value }];
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks,
+            endings: [],
+            variables: variable(LINKED),
+            previous: { blocks, endings: [], variables: variable("friend") },
+          },
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+    });
+
     test("rejects a welcome card that gains a link", async () => {
       const welcomeCard = {
         enabled: true,

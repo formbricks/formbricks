@@ -2,7 +2,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { removeStyleAttributes, sanitizeSurveyHtml, stripInlineStyles } from "@formbricks/survey-ui/sanitize";
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import type { TSurveyEnding, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import type { TSurveyEnding, TSurveyVariable, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 
 /** The parts of a survey whose texts the editor stores as rich text (HTML). */
@@ -10,6 +10,8 @@ export type TRichTextSurveyContent = {
   blocks?: TSurveyBlock[] | null;
   endings?: TSurveyEnding[] | null;
   welcomeCard?: TSurveyWelcomeCard | null;
+  /** Read for the values `#recall:` tokens resolve to. */
+  variables?: TSurveyVariable[] | null;
 };
 
 /** Attribute names are never entity-decoded, so a string naming neither holds no link. */
@@ -27,42 +29,90 @@ const getLinkTarget = (element: Element, attribute: Attr): string | undefined =>
   return isLink ? attribute.value.trim() || undefined : undefined;
 };
 
-const collectLinks = (field: TI18nString | undefined, links: Set<string>): void => {
+const collectLinksFromRendered = (html: string, links: Set<string>): void => {
+  // The renderer removes style attributes from the raw string before it parses, which can join the
+  // text around one into `href` (`<a hr style="x"ef=…>`), so the cheap check reads the stripped string.
+  if (!MAY_HOLD_LINK.test(removeStyleAttributes(html))) return;
+  // Check what respondents get, not what is stored: the same pipeline as the survey's headline and
+  // subheader components. Then parse it, since `<a/href=…>` or a quoted `>` defeats a regex.
+  const rendered = sanitizeSurveyHtml(stripInlineStyles(html));
+  const fragment = DOMPurify.sanitize(rendered, { RETURN_DOM_FRAGMENT: true });
+  for (const element of fragment.querySelectorAll("*")) {
+    for (const attribute of element.attributes) {
+      const target = getLinkTarget(element, attribute);
+      if (target) links.add(target);
+    }
+  }
+};
+
+// `replaceRecallInfo` in `@formbricks/surveys` resolves these before the text is parsed: a variable's
+// value, else the respondent's answer or hidden field, else the fallback (`nbsp` read as a space).
+const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/;
+// The renderer loops until no token is left, so a value may itself hold one; this bounds a cycle.
+const MAX_RECALL_PASSES = 100;
+// One opening tag, a quoted value consumed whole (the pattern survey-ui strips styles with).
+const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
+
+const resolveRecall = (html: string, resolve: (id: string, fallback: string) => string): string => {
+  let text = html;
+  for (let pass = 0; pass < MAX_RECALL_PASSES; pass++) {
+    const match = RECALL_TOKEN.exec(text);
+    if (!match) break;
+    const fallback = match[2].replaceAll("nbsp", " ").trim();
+    text = text.replace(match[0], () => resolve(match[1], fallback));
+  }
+  return text;
+};
+
+const collectLinks = (
+  field: TI18nString | undefined,
+  links: Set<string>,
+  recallValues: ReadonlyMap<string, string>
+): void => {
   for (const html of Object.values(field ?? {})) {
-    // The renderer removes style attributes from the raw string before it parses, which can join the
-    // text around one into `href` (`<a hr style="x"ef=…>`), so the cheap check reads the stripped string.
-    if (typeof html !== "string" || !MAY_HOLD_LINK.test(removeStyleAttributes(html))) continue;
-    // Check what respondents get, not what is stored: the same pipeline as the survey's headline and
-    // subheader components. Then parse it, since `<a/href=…>` or a quoted `>` defeats a regex.
-    const rendered = sanitizeSurveyHtml(stripInlineStyles(html));
-    const fragment = DOMPurify.sanitize(rendered, { RETURN_DOM_FRAGMENT: true });
-    for (const element of fragment.querySelectorAll("*")) {
-      for (const attribute of element.attributes) {
-        const target = getLinkTarget(element, attribute);
-        if (target) links.add(target);
-      }
+    if (typeof html !== "string") continue;
+    if (!RECALL_TOKEN.test(html)) {
+      collectLinksFromRendered(html, links);
+      continue;
+    }
+    // A token inside a tag becomes markup once a respondent's answer or a hidden field fills it, which
+    // no check can see in advance, so it counts as a link of its own.
+    for (const tag of removeStyleAttributes(html).match(OPENING_TAG) ?? []) {
+      const token = RECALL_TOKEN.exec(tag);
+      if (token) links.add(`recall in a tag: ${token[0]}`);
+    }
+    // What the survey shows when each token resolves to nothing, to its fallback, or to the variable's
+    // value the survey defines.
+    for (const resolved of new Set([
+      resolveRecall(html, () => ""),
+      resolveRecall(html, (_id, fallback) => fallback),
+      resolveRecall(html, (id, fallback) => recallValues.get(id) || fallback),
+    ])) {
+      collectLinksFromRendered(resolved, links);
     }
   }
 };
 
 /**
  * Every link target in the survey's rich text: element headlines, subheaders and html, the welcome
- * card, and ending cards, in every language. The editor offers these links only on plans that allow
- * external URLs (ENG-3891).
+ * card, and ending cards, in every language, as the survey shows them once `#recall:` tokens resolve.
+ * The editor offers these links only on plans that allow external URLs (ENG-3891).
  */
 export const getRichTextLinks = (survey: TRichTextSurveyContent): Set<string> => {
   const links = new Set<string>();
+  const recallValues = new Map((survey.variables ?? []).map(({ id, value }) => [id, String(value)]));
+  const collect = (field: TI18nString | undefined) => collectLinks(field, links, recallValues);
   for (const element of getElementsFromBlocks(survey.blocks ?? [])) {
-    collectLinks(element.headline, links);
-    collectLinks(element.subheader, links);
-    if ("html" in element) collectLinks(element.html, links);
+    collect(element.headline);
+    collect(element.subheader);
+    if ("html" in element) collect(element.html);
   }
-  collectLinks(survey.welcomeCard?.headline, links);
-  collectLinks(survey.welcomeCard?.subheader, links);
+  collect(survey.welcomeCard?.headline);
+  collect(survey.welcomeCard?.subheader);
   for (const ending of survey.endings ?? []) {
     if (ending.type !== "endScreen") continue;
-    collectLinks(ending.headline, links);
-    collectLinks(ending.subheader, links);
+    collect(ending.headline);
+    collect(ending.subheader);
   }
   return links;
 };

@@ -124,6 +124,53 @@ describe("getRichTextLinks", () => {
   });
 });
 
+// The survey resolves `#recall:ID/fallback:TEXT#` before it parses (`replaceRecallInfo`): a text
+// variable's value, else the respondent's answer or hidden field, else the fallback.
+describe("getRichTextLinks with recall", () => {
+  const VARIABLE_ID = "clvar1234567890123456789012";
+  const withVariable = (html: string, value: string): TRichTextSurveyContent => ({
+    ...withHeadline(html),
+    variables: [{ id: VARIABLE_ID, name: "v1", type: "text", value }],
+  });
+
+  test("finds an href joined when a token with an empty fallback resolves to nothing", () => {
+    const html = '<p><a hr#recall:q9/fallback:#ef="https://example.com/a">go</a></p>';
+    expect(getRichTextLinks(withHeadline(html))).toContain("https://example.com/a");
+  });
+
+  test("finds an href a text variable's value completes", () => {
+    const html = `<p><a h#recall:${VARIABLE_ID}/fallback:x#="https://example.com/a">go</a></p>`;
+    expect(getRichTextLinks(withVariable(html, "ref"))).toContain("https://example.com/a");
+  });
+
+  test("finds a link that is a text variable's whole value", () => {
+    const html = `<p>#recall:${VARIABLE_ID}/fallback:x#</p>`;
+    expect(getRichTextLinks(withVariable(html, '<a href="https://example.com/a">y</a>'))).toContain(
+      "https://example.com/a"
+    );
+  });
+
+  test("finds a link that is a token's fallback", () => {
+    const html = '<p>#recall:q9/fallback:<a href="https://example.com/a">y</a>#</p>';
+    expect(getRichTextLinks(withHeadline(html))).toContain("https://example.com/a");
+  });
+
+  test("counts a token inside an opening tag, whose runtime value could make it a link", () => {
+    const html = "<p><a #recall:q9/fallback:x#>go</a></p>";
+    expect(getRichTextLinks(withHeadline(html)).size).toBe(1);
+  });
+
+  test("finds no link in a plain recall token", () => {
+    const html = `<p>Hi #recall:q9/fallback:there#, and #recall:${VARIABLE_ID}/fallback:x#</p>`;
+    expect(getRichTextLinks(withVariable(html, "friend")).size).toBe(0);
+  });
+
+  test("grandfathers a token in a tag the previous version already had", () => {
+    const html = "<p><a #recall:q9/fallback:x#>go</a></p>";
+    expect(addsRichTextLink(withHeadline(html), withHeadline(html))).toBe(false);
+  });
+});
+
 describe("addsRichTextLink", () => {
   const linkTo = (href: string) => withHeadline(`<p><a href="${href}">x</a></p>`);
 

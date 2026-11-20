@@ -1,6 +1,11 @@
 import "server-only";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import type { TSurvey, TSurveyEnding, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import type {
+  TSurvey,
+  TSurveyEnding,
+  TSurveyVariable,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
 import { addsRichTextLink } from "@/lib/survey/rich-text-links";
@@ -18,10 +23,12 @@ type TV3SurveyWritePermissionInput = {
   blocks: TSurveyBlock[];
   endings: TSurveyEnding[];
   welcomeCard?: TSurveyWelcomeCard;
+  variables?: TSurveyVariable[];
   previous?: {
     blocks: TSurveyBlock[];
     endings: TSurveyEnding[];
     welcomeCard?: TSurveyWelcomeCard;
+    variables?: TSurveyVariable[];
   };
 };
 
