@@ -705,6 +705,10 @@ const EMBEDDED_DATA_COERCERS: Record<
   date: coerceToDate,
 };
 
+// Looked up through a Map, so only the four data types have a coercer and a prototype key has none.
+// Not `Object.hasOwn`: this package compiles against ES2021.
+const EMBEDDED_DATA_COERCER_MAP = new Map(Object.entries(EMBEDDED_DATA_COERCERS));
+
 /**
  * Coerces a raw stored value to a field's `dataType`, returning `undefined` when the value cannot
  * honestly represent one. This is the single vocabulary of read-side coercion — every tier of
@@ -738,9 +742,8 @@ export const coerceToEmbeddedDataType = (
   dataType: TEmbeddedDataType
 ): TResolvedEmbeddedValue | undefined => {
   if (value === null || value === undefined) return undefined;
-  // An unknown `dataType` coerces nothing, as the old switch's missing arm did.
-  if (!Object.prototype.hasOwnProperty.call(EMBEDDED_DATA_COERCERS, dataType)) return undefined;
-  return EMBEDDED_DATA_COERCERS[dataType](value);
+  // An unknown `dataType` (a prototype key included) coerces nothing, as the old switch's missing arm did.
+  return EMBEDDED_DATA_COERCER_MAP.get(dataType)?.(value);
 };
 
 /**
