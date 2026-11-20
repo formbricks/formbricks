@@ -4834,11 +4834,13 @@ checksums:
     workspace/surveys/edit/validation_issue/follow_up_no_ending: ea8ae1a5ca564f3b277556bd6610391a
     workspace/surveys/edit/validation_issue/jump_to_own_block: 3fe6ff68efbe7d9c752d095385d0ad80
     workspace/surveys/edit/validation_issue/location_block_show_if: f65b9963ebdcf06b77bf3538370d5085
+    workspace/surveys/edit/validation_issue/location_column_show_if: fc4af1525d5225b249eb6bf9a70a51be
     workspace/surveys/edit/validation_issue/location_ending: 3337efccf0eb7ee744883b8b3e7236dc
     workspace/surveys/edit/validation_issue/location_follow_up: fb01b5770b22ce8c167a0a10ebaf1f42
     workspace/surveys/edit/validation_issue/location_option_show_if: 4724194d593eed8b2e1122da3a87548b
     workspace/surveys/edit/validation_issue/location_question: e9924987358f057ae82fadd5f82b88a8
     workspace/surveys/edit/validation_issue/location_question_show_if: 6253bdfba4ada381dfe5412144258507
+    workspace/surveys/edit/validation_issue/location_row_show_if: 82d6b88b47ee099bd9c5335808e36a14
     workspace/surveys/edit/validation_issue/location_rule: 946f85f9d0a5c899ed7b0b2aa4641ab8
     workspace/surveys/edit/validation_issue/matrix_column_not_found: c1b09c43178787e53306f5cf79a39946
     workspace/surveys/edit/validation_issue/matrix_operator_not_allowed: 7b68545abf92c35a03d5736805ef6ecf

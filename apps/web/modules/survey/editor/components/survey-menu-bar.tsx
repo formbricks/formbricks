@@ -41,7 +41,10 @@ import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
-import { describeSurveyValidationIssue } from "@/modules/survey/editor/lib/validation-issue-message";
+import {
+  describeSurveyValidationIssue,
+  pickReportedIssue,
+} from "@/modules/survey/editor/lib/validation-issue-message";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { ActivateDialog } from "@/modules/survey/visibility/components/activate-dialog";
 import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
@@ -491,7 +494,7 @@ export const SurveyMenuBar = ({
         scrollElementCardIntoView(firstInvalidScrollId, "start");
       }
 
-      const firstError = issues[0];
+      const firstError = pickReportedIssue(issues);
 
       // Rules and fallbacks live on the Flow tab (ENG-6929): open it, so the flagged row is on screen.
       if (isFlowTabIssue(firstError.path)) {

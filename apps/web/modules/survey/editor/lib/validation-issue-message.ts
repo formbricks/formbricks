@@ -203,8 +203,23 @@ const getQuestionLocation = (
     });
   }
   if (typeof optionIndex === "number" && optionField === "showIf") {
+    const itemNumber = optionIndex + 1;
+    if (field === "rows") {
+      return t("workspace.surveys.edit.validation_issue.location_row_show_if", {
+        rowNumber: itemNumber,
+        questionNumber,
+        blockName,
+      });
+    }
+    if (field === "columns") {
+      return t("workspace.surveys.edit.validation_issue.location_column_show_if", {
+        columnNumber: itemNumber,
+        questionNumber,
+        blockName,
+      });
+    }
     return t("workspace.surveys.edit.validation_issue.location_option_show_if", {
-      optionNumber: optionIndex + 1,
+      optionNumber: itemNumber,
       questionNumber,
       blockName,
     });
@@ -262,6 +277,22 @@ const getIssueLocation = (
     return getBlockLocation(index, rest, params, blocks, t);
   }
   return null;
+};
+
+/**
+ * The issue the publish toast reports: the first one, unless a later issue at the same path carries a
+ * semantic code. A field schema (an ending's URL) can add its own English issue before the survey's
+ * coded one for the same field; the coded one says the same thing in the author's language.
+ */
+export const pickReportedIssue = <T extends TIssue>(issues: readonly T[]): T => {
+  const [first] = issues;
+  if (getSurveyValidationIssueParams(first)) return first;
+  const firstPath = JSON.stringify(first.path.map(String));
+  return (
+    issues.find(
+      (issue) => JSON.stringify(issue.path.map(String)) === firstPath && getSurveyValidationIssueParams(issue)
+    ) ?? first
+  );
 };
 
 /**

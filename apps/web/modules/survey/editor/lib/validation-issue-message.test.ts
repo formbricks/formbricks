@@ -2,7 +2,7 @@ import { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { SURVEY_VALIDATION_ISSUE_CODES } from "@formbricks/types/surveys/validation-issue-codes";
-import { describeSurveyValidationIssue } from "./validation-issue-message";
+import { describeSurveyValidationIssue, pickReportedIssue } from "./validation-issue-message";
 
 // Echoes the key and its interpolation values, so each assertion shows exactly what was asked for.
 const t = ((key: string, values?: Record<string, unknown>) =>
@@ -142,5 +142,40 @@ describe("describeSurveyValidationIssue", () => {
       describeSurveyValidationIssue(issue(["questions"], { issueCode }), blocks, t)
     );
     expect(new Set(messages).size).toBe(SURVEY_VALIDATION_ISSUE_CODES.length - 1);
+  });
+
+  test("tells a matrix row's show-if from a column's and an option's", () => {
+    const at = (field: string) =>
+      describeSurveyValidationIssue(
+        issue(["blocks", 0, "elements", 2, field, 1, "showIf", "conditions", 0], {
+          issueCode: "show_if_uses_itself",
+        }),
+        blocks,
+        t
+      );
+    expect(at("rows")).toContain(`${KEY}.location_row_show_if {\\"rowNumber\\":2,\\"questionNumber\\":3`);
+    expect(at("columns")).toContain(
+      `${KEY}.location_column_show_if {\\"columnNumber\\":2,\\"questionNumber\\":3`
+    );
+    expect(at("choices")).toContain(`${KEY}.location_option_show_if`);
+  });
+});
+
+describe("pickReportedIssue", () => {
+  const uncoded = {
+    code: "custom" as const,
+    path: ["endings", 0, "url"],
+    message: "URL must start with http",
+  };
+  const coded = { ...uncoded, params: { issueCode: "redirect_url_invalid" } };
+  const elsewhere = { ...coded, path: ["endings", 1, "url"] };
+
+  test("reports a coded issue at the same path instead of the field schema's English one", () => {
+    expect(pickReportedIssue([uncoded, elsewhere, coded])).toBe(coded);
+  });
+
+  test("keeps the first issue when no coded issue shares its path", () => {
+    expect(pickReportedIssue([uncoded, elsewhere])).toBe(uncoded);
+    expect(pickReportedIssue([elsewhere, uncoded])).toBe(elsewhere);
   });
 });
