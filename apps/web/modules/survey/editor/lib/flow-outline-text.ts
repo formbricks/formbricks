@@ -306,7 +306,10 @@ const describeCalculateParts = (
   // A step just added has no value until one is picked or typed, as an empty formula reads.
   else if (action.value.value === "") value = [text("…")];
   else if (typeof action.value.value === "number") value = [text(String(action.value.value))];
-  else if (isDateField(survey, action.variableId)) {
+  // ENG-6973: a true/false field reads True or False, as its Set value row shows it.
+  else if (typeof action.value.value === "boolean") {
+    value = [text(t(action.value.value ? "common.true" : "common.false"))];
+  } else if (isDateField(survey, action.variableId)) {
     value = [text(describeDateValue(action.value.value, format))];
   } else value = [text(quote(action.value.value))];
   // Appending text reads as words: a "+" would read as adding numbers (review of ENG-6969).

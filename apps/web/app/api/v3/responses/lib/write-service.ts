@@ -33,6 +33,7 @@ import {
 } from "./outcome-write";
 import { narrowToPublishableValue } from "./resources";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
+import type { TV3VariableWrites } from "./write-plan";
 
 /**
  * The database half of the v3 response writes.
@@ -421,7 +422,7 @@ export type TV3CreateResponsePersist = {
   survey: TV3WriteSurveyRow;
   finished: boolean;
   data: TResponseData;
-  variables: Record<string, TResponseDataValue>;
+  variables: TV3VariableWrites;
   ttc: TResponseTtc;
   meta: TResponseMeta | undefined;
   tagIds: string[];
@@ -547,7 +548,7 @@ export type TV3UpdateResponsePersist = {
     /** `null` restores — see `ResponseOutcome`. */
     outcome?: TResponseOutcome | null;
     data?: TResponseData;
-    variables?: Record<string, TResponseDataValue>;
+    variables?: TV3VariableWrites;
     tagIds?: string[];
     /**
      * Server-derived, never caller-supplied: `ttc` is create-only for a caller, but `_total` is a

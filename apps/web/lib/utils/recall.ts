@@ -356,12 +356,15 @@ const formatRecalledAnswer = (
     return value;
   }
   if (Array.isArray(value)) {
-    return value.filter((item) => item).join(", ");
+    return value.filter(Boolean).join(", ");
   }
   return value;
 };
 
-/** The value a recall id names: a variable first, then an answer formatted for display. */
+/**
+ * The value a recall id names: a variable first (a true/false field, ENG-6973, reads `true` /
+ * `false`), then an answer formatted for display.
+ */
 const getRecalledValue = (
   recallItemId: string,
   responseData: TResponseData | undefined,
@@ -371,7 +374,8 @@ const getRecalledValue = (
 ): TResponseDataValue | undefined => {
   // First check if it matches a variable
   if (variables && Object.keys(variables).includes(recallItemId)) {
-    return variables[recallItemId];
+    const variableValue = variables[recallItemId];
+    return typeof variableValue === "boolean" ? String(variableValue) : variableValue;
   }
   // Then check if it matches response data
   if (responseData && Object.keys(responseData).includes(recallItemId)) {

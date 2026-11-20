@@ -29,4 +29,14 @@ describe("ZResponseUpdateSchema", () => {
     expect(parsed.success).toBe(true);
     expect(parsed.data).not.toHaveProperty("outcome");
   });
+
+  test("round-trips a calculated true/false field's boolean value (ENG-6973)", () => {
+    const parsed = ZResponseUpdateSchema.safeParse({
+      ...legacyBody,
+      variables: { qualified: true, rejected: false },
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.variables).toEqual({ qualified: true, rejected: false });
+  });
 });

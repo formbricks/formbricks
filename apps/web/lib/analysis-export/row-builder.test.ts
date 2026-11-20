@@ -528,6 +528,22 @@ describe("Embedded Data", () => {
     expect(byName).toMatchObject({ checked_in_at: "2026-11-04T10:12:30.000Z", signup_date: "2026-11-01" });
     expect(builder.columns.find((c) => c.name === "checked_in_at")?.embedded).toMatchObject({ type: "date" });
   });
+
+  test("a calculated true/false field exports true / false (ENG-6973)", () => {
+    const embeddedFields = [
+      field("qualified", "boolean", "computed", "k7"),
+      field("rejected", "boolean", "computed", "k8"),
+    ] as unknown as TAnalysisSurvey["embeddedFields"];
+    const builder = createAnalysisRowBuilder({
+      survey: surveyWith([colors], { embeddedFields }),
+      answers: "codes",
+      fields: { embeddedData: true },
+    });
+    const row = builder.buildRow(response({}, { variables: { k7: true, k8: false } }), () => {});
+    const byName = Object.fromEntries(builder.columns.map((c, i) => [c.name, row.codes?.[i]]));
+    expect(byName).toMatchObject({ qualified: "true", rejected: "false" });
+    expect(builder.columns.find((c) => c.name === "qualified")?.embedded).toMatchObject({ type: "boolean" });
+  });
 });
 
 describe("column names", () => {

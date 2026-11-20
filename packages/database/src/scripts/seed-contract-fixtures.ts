@@ -49,6 +49,8 @@ const CONTRACT_IDS = {
   EMBEDDED_DATA_LIBRARY: "clctembeddeddatalib00001",
   EMBEDDED_DATA_LOCAL: "clctembeddeddatalocal001",
   EMBEDDED_DATA_LOCAL_KEY: "clctembeddeddatascore001",
+  EMBEDDED_DATA_BOOLEAN: "clctembeddeddatabool0001",
+  EMBEDDED_DATA_BOOLEAN_KEY: "clctembeddeddataqualif01",
   WORKFLOW_PATCH: "clctworkflowpatch0000001",
   WORKFLOW_DELETE: "clctworkflowdelete000001",
   WORKFLOW_DUPLICATE: "clctworkflowduplicate001",
@@ -186,7 +188,10 @@ async function seedResponse(id: string, surveyId: string): Promise<void> {
     data: { [elementId]: "Contract fixture answer" },
     ttc: { [elementId]: 1500, _total: 1500 },
     meta: { source: "link" },
-    variables: {},
+    // ENG-6973: a calculated true/false field's stored boolean, so the read returns a boolean
+    // `embeddedData` value and the contract checks it. Both fixture responses are on the read survey,
+    // which declares the field.
+    variables: { [CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN_KEY]: true },
   };
 
   await prisma.response.upsert({
@@ -248,7 +253,9 @@ async function seedSurvey(
 /**
  * Typed Embedded Data on the read survey (ENG-6930): a workspace library field it links by key and a
  * computed field of its own, so `GET /api/v3/surveys/{surveyId}` returns a populated `embeddedFields`
- * (and the legacy pair derived from it) and the contract checks both entry shapes. The library key is
+ * (and the legacy pair derived from it) and the contract checks both entry shapes. A second computed
+ * field is true/false (ENG-6973), with a Set value step that assigns it True, so the read also returns
+ * that type and the step's boolean value. The library key is
  * the one the `linkLibraryField` example of `PATCH /api/v3/surveys/{surveyId}` names, so that example
  * links a field that exists instead of answering its documented 400.
  */
@@ -273,6 +280,16 @@ async function seedEmbeddedData(surveyId: string): Promise<void> {
     surveyId,
     workspaceId: SEED_IDS.WORKSPACE,
   };
+  const trueFalse = {
+    key: null,
+    name: "qualified",
+    source: "computed" as const,
+    dataType: "boolean" as const,
+    defaultValue: false,
+    locked: false,
+    surveyId,
+    workspaceId: SEED_IDS.WORKSPACE,
+  };
 
   await prisma.embeddedData.upsert({
     where: { id: CONTRACT_IDS.EMBEDDED_DATA_LIBRARY },
@@ -284,6 +301,11 @@ async function seedEmbeddedData(surveyId: string): Promise<void> {
     update: local,
     create: { id: CONTRACT_IDS.EMBEDDED_DATA_LOCAL, ...local },
   });
+  await prisma.embeddedData.upsert({
+    where: { id: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN },
+    update: trueFalse,
+    create: { id: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN, ...trueFalse },
+  });
 
   const links = [
     { embeddedDataId: CONTRACT_IDS.EMBEDDED_DATA_LIBRARY, storageKey: "plan_tier", order: 0 },
@@ -293,6 +315,11 @@ async function seedEmbeddedData(surveyId: string): Promise<void> {
       storageKey: CONTRACT_IDS.EMBEDDED_DATA_LOCAL_KEY,
       order: 1,
     },
+    {
+      embeddedDataId: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN,
+      storageKey: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN_KEY,
+      order: 2,
+    },
   ];
   for (const link of links) {
     await prisma.surveyEmbeddedData.upsert({
@@ -301,6 +328,32 @@ async function seedEmbeddedData(surveyId: string): Promise<void> {
       create: { surveyId, workspaceId: SEED_IDS.WORKSPACE, ...link },
     });
   }
+
+  // The Set value step. No condition, so it runs for every respondent.
+  const { blocks } = await prisma.survey.findUniqueOrThrow({
+    where: { id: surveyId },
+    select: { blocks: true },
+  });
+  const [firstBlock, ...otherBlocks] = blocks;
+  const logic: TSurveyBlocks[number]["logic"] = [
+    {
+      id: `${surveyId}logic`,
+      conditions: { id: `${surveyId}group`, connector: "and", conditions: [] },
+      actions: [
+        {
+          id: `${surveyId}action`,
+          objective: "calculate",
+          variableId: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN_KEY,
+          operator: "assign",
+          value: { type: "static", value: true },
+        },
+      ],
+    },
+  ];
+  await prisma.survey.update({
+    where: { id: surveyId },
+    data: { blocks: [{ ...firstBlock, logic }, ...otherBlocks], updatedAt: CONTRACT_FIXTURE_UPDATED_AT },
+  });
 }
 
 /**
