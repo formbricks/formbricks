@@ -13,6 +13,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { needsMonthlyResponseCount } from "@/lib/utils/billing";
 import { validateInputs } from "@/lib/utils/validate";
 import { canUserNavigateWorkspace } from "@/lib/workspace/auth";
 import { getWorkspace } from "@/lib/workspace/service";
@@ -391,20 +392,19 @@ const resolveWorkspaceLayoutData = async (
     return notFound();
   }
 
-  const [isAccessControlAllowed, workspacePermission, license] = await Promise.all([
-    getAccessControlPermission(organization.id),
-    getWorkspacePermissionByUserId(userId, workspace.id),
-    getEnterpriseLicense(),
-  ]);
-
   // A Dashboard viewer sees dashboards and nothing of the organization's plan: no Stripe ids, usage cycle
   // or limits, and no Cloud response count, which the layout would otherwise ship to its browser.
   const isDashboardViewer = membership.role === "dashboard_viewer";
 
-  let responseCount = 0;
-  if (IS_FORMBRICKS_CLOUD && !isDashboardViewer) {
-    responseCount = await getMonthlyOrganizationResponseCount(organization.id);
-  }
+  const needsResponseCount =
+    IS_FORMBRICKS_CLOUD && !isDashboardViewer && needsMonthlyResponseCount(organization.billing);
+
+  const [isAccessControlAllowed, workspacePermission, license, responseCount] = await Promise.all([
+    getAccessControlPermission(organization.id),
+    getWorkspacePermissionByUserId(userId, workspace.id),
+    getEnterpriseLicense(),
+    needsResponseCount ? getMonthlyOrganizationResponseCount(organization.id) : 0,
+  ]);
 
   return {
     session,
