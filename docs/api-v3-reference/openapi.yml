@@ -12356,7 +12356,7 @@ components:
               required:
                 - status
               additionalProperties: false
-              description: 'What Cal.com reported when the respondent booked. Present only when the response carries details, so a response recorded before they were kept, or by an older survey renderer, has none. The booking is reported by the respondent''s browser and is not verified: check `uid` with Cal.com before acting on it. Each field is present only when Cal.com sent it.'
+              description: 'What Cal.com reported when the respondent booked. Present only when `booked` is true and the response carries details, so a response recorded before they were kept, or by an older survey renderer, has none. The respondent''s browser reports these values and nothing verifies them: check `uid` with Cal.com before acting on one. Each field is present only when it was sent or derived, and a value longer than 2000 characters is cut.'
               properties:
                 status:
                   type: string
@@ -12374,7 +12374,7 @@ components:
                   description: When the meeting starts, as Cal.com reported it (ISO 8601).
                 endTime:
                   type: string
-                  description: When the meeting ends, as Cal.com reported it (ISO 8601).
+                  description: When the meeting ends (ISO 8601). Derived from the start time and duration when Cal.com sends no end time.
                 eventTypeId:
                   type: string
                   description: Cal.com's identifier for the event type, as a string.
@@ -12383,10 +12383,10 @@ components:
                   description: Cal.com's own state of the booking, such as `ACCEPTED` or `PENDING`.
                 paymentRequired:
                   type: string
-                  description: '`"true"` or `"false"`, as a string.'
+                  description: A string, normally `"true"` or `"false"`; other text is not rejected.
                 isRecurring:
                   type: string
-                  description: '`"true"` or `"false"`, as a string. A recurring booking holds its first occurrence.'
+                  description: A string, normally `"true"` or `"false"`; other text is not rejected. A recurring booking holds its first occurrence.
                 videoCallUrl:
                   type: string
                   description: The link to join the meeting.

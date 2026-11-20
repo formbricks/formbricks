@@ -93,11 +93,17 @@ const getContactsDisabledResponse = async (
 const validateResponseSubmission = async (
   workspaceId: string,
   responseInputData: TResponseInputV2,
-  survey: TResponseSurvey
+  survey: TResponseSurvey,
+  invalidCalElementId: string | undefined
 ): Promise<Response | null> => {
   const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInputData);
   if (surveyCheckResult) {
     return surveyCheckResult;
+  }
+
+  // After the PIN and workspace checks, so a caller without access learns nothing about its input.
+  if (invalidCalElementId) {
+    return responses.badRequestResponse("Invalid booking details", { elementId: invalidCalElementId }, true);
   }
 
   if (
@@ -270,15 +276,13 @@ export const POST = async (request: Request, context: Context): Promise<Response
     // The same step splits a Cal element's booking record out of `data` (the stored answer stays the
     // string "booked").
     const ingestResult = applyIngestContractToResponseInput(survey, responseInputData);
-    if (ingestResult.invalidCalElementId) {
-      return responses.badRequestResponse(
-        "Invalid booking details",
-        { elementId: ingestResult.invalidCalElementId },
-        true
-      );
-    }
 
-    const validationResponse = await validateResponseSubmission(workspaceId, responseInputData, survey);
+    const validationResponse = await validateResponseSubmission(
+      workspaceId,
+      responseInputData,
+      survey,
+      ingestResult.invalidCalElementId
+    );
     if (validationResponse) {
       return validationResponse;
     }
@@ -291,7 +295,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       contactId: responseInputData.contactId,
       data: responseInputData.data,
       finished: responseInputData.finished,
-      hasCalBookings: responseInputData.calBookings !== undefined,
+      calBookings: responseInputData.calBookings,
     });
     if (duplicate) {
       logger.info({ surveyId: survey.id, responseId: duplicate.id }, "Folded duplicate response submission");

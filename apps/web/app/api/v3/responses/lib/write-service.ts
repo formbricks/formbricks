@@ -17,6 +17,7 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { calBookingsForAnswers } from "@/lib/response/cal-bookings";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import {
@@ -593,7 +594,7 @@ export async function updateScopedResponse({
           ? null
           : await tx.response.findFirst({
               where: { id: responseId, survey: { workspaceId } },
-              select: { data: true },
+              select: { data: true, calBookings: true },
             });
 
       // Read in the transaction that writes it, so the change the cleanup follows is the change made here.
@@ -603,9 +604,19 @@ export async function updateScopedResponse({
 
       // Scoped `where`, never a bare id — a response outside the workspace matches nothing and
       // Prisma raises P2025, which the operation renders as the same 403 as a pre-flight rejection.
+      // `data` replaces the stored data, so a booking whose answer is no longer "booked" goes with it.
+      const keptCalBookings =
+        previous?.calBookings && patch.data
+          ? calBookingsForAnswers(previous.calBookings, patch.data)
+          : undefined;
+      const calBookingsPruned =
+        keptCalBookings !== undefined &&
+        Object.keys(keptCalBookings).length !== Object.keys(previous?.calBookings ?? {}).length;
+
       const updated = await tx.response.update({
         where: { id: responseId, survey: { workspaceId } },
         data: {
+          ...(calBookingsPruned && { calBookings: keptCalBookings }),
           ...(patch.finished === undefined ? {} : { finished: patch.finished }),
           ...(patch.endingId === undefined ? {} : { endingId: patch.endingId }),
           ...(patch.language === undefined ? {} : { language: patch.language }),

@@ -270,7 +270,6 @@ describe("POST /api/v2/client/[workspaceId]/responses — duplicate submissions 
       contactId,
       data: { q1: 5 },
       finished: true,
-      hasCalBookings: false,
     });
     expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
     expect(mocks.sendToPipeline).not.toHaveBeenCalled();
@@ -395,12 +394,20 @@ describe("POST /api/v2/client/[workspaceId]/responses — Cal booking details", 
     expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
   });
 
-  test("does not fold a submission that carries a booking into an earlier response", async () => {
+  test("hands the booking to the duplicate lookup, which folds only a replay of the same one", async () => {
     await postRawBody({ cal1: booking }, { finished: true });
 
     expect(mocks.findRecentDuplicateResponse).toHaveBeenCalledWith(
-      expect.objectContaining({ hasCalBookings: true })
+      expect.objectContaining({ calBookings: { cal1: booking } })
     );
+  });
+
+  test("answers the survey check (PIN, workspace) before the booking error", async () => {
+    mocks.checkSurveyValidity.mockResolvedValue(new Response(null, { status: 403 }));
+
+    const result = await postRawBody({ cal1: { ...booking, title: "Intro\u0000call" } });
+
+    expect(result.status).toBe(403);
   });
 
   test("ignores a calBookings key the client sends itself", async () => {

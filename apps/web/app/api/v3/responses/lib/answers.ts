@@ -697,7 +697,10 @@ const serializeStoredValue = (
 
   // Read back through the same sanitizer the write used, so a row that was edited by hand can never
   // produce a body the published schema rejects.
-  const booking = result.answer.elementType === "cal" ? sanitizeCalBooking(calBookings?.[key]) : null;
+  const booking =
+    result.answer.elementType === "cal" && result.answer.booked
+      ? sanitizeCalBooking(calBookings?.[key])
+      : null;
   return {
     answer: booking && result.answer.elementType === "cal" ? { ...result.answer, booking } : result.answer,
   };

@@ -646,7 +646,7 @@ describe("updateScopedResponse — replaced Signature images (ENG-6810)", () => 
     // Read scoped by workspace, never by id alone.
     expect(tx.response.findFirst).toHaveBeenCalledWith({
       where: { id: "clrs1", survey: { workspaceId: survey.workspaceId } },
-      select: { data: true },
+      select: { data: true, calBookings: true },
     });
     expect(mockEnqueueReplacedSignatures).toHaveBeenCalledExactlyOnceWith(
       tx,
@@ -656,6 +656,41 @@ describe("updateScopedResponse — replaced Signature images (ENG-6810)", () => 
     expect(tx.response.update.mock.invocationCallOrder[0]).toBeLessThan(
       mockEnqueueReplacedSignatures.mock.invocationCallOrder[0]
     );
+  });
+
+  describe("Cal booking details", () => {
+    const stored = { sig: { status: "booked", uid: "bk_1" }, other: { status: "booked", uid: "bk_2" } };
+    const patchWith = async (data: Record<string, string>) => {
+      const tx = runTx(
+        txStub({
+          response: {
+            findFirst: vi
+              .fn()
+              .mockResolvedValue({ data: { sig: "booked", other: "booked" }, calBookings: stored }),
+            update: vi.fn().mockResolvedValue({ id: "clrs1", finished: false, data, variables: {} }),
+          },
+        })
+      );
+      await updateScopedResponse({
+        responseId: "clrs1",
+        workspaceId: survey.workspaceId,
+        survey,
+        patch: { data },
+      });
+      return tx.response.update.mock.calls[0][0].data;
+    };
+
+    test("a patch that changes a Cal answer away from booked drops its booking", async () => {
+      const written = await patchWith({ sig: "", other: "booked" });
+
+      expect(written.calBookings).toEqual({ other: stored.other });
+    });
+
+    test("a patch that leaves every booking in place does not write the column", async () => {
+      const written = await patchWith({ sig: "booked", other: "booked" });
+
+      expect(written).not.toHaveProperty("calBookings");
+    });
   });
 
   test("queues nothing when the update fails", async () => {

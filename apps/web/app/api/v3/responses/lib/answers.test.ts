@@ -139,6 +139,11 @@ describe("serializeAnswers — one branch per element type", () => {
       });
     });
 
+    test("a stored booking is not published for an answer that is no longer booked", () => {
+      expect(serialize(calEl, { q1: "" }, { q1: booking })).toMatchObject({ booked: false });
+      expect(serialize(calEl, { q1: "" }, { q1: booking })).not.toHaveProperty("booking");
+    });
+
     test("an answer without stored details has no booking key", () => {
       expect(serialize(calEl, { q1: "booked" }, undefined)).not.toHaveProperty("booking");
       expect(serialize(calEl, { q1: "booked" }, null)).not.toHaveProperty("booking");

@@ -141,6 +141,10 @@ describe("calBookingsForAnswers", () => {
     expect(calBookingsForAnswers({ cal1: b, cal2: b }, { cal2: "booked" })).toEqual({ cal2: b });
   });
 
+  test('drops a booking whose answer is no longer "booked"', () => {
+    expect(calBookingsForAnswers({ cal1: b, cal2: b }, { cal1: "", cal2: "booked" })).toEqual({ cal2: b });
+  });
+
   test("returns an empty set for no bookings", () => {
     expect(calBookingsForAnswers(null, { cal1: "booked" })).toEqual({});
   });

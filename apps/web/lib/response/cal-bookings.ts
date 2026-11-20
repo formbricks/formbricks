@@ -76,11 +76,14 @@ export const splitCalBookingsFromInput = (
 };
 
 /**
- * The bookings that still have an answer in `data`. Run after the not-shown filter removed the answers of
- * questions the respondent was not shown, so a booking never outlives the answer it belongs to.
+ * The bookings whose answer in `data` is still the string "booked". Run after the not-shown filter removed
+ * the answers of questions the respondent was not shown, and on every write that replaces `data`, so a
+ * booking never outlives the answer it belongs to.
  */
 export const calBookingsForAnswers = (
   calBookings: TCalBookingsByQuestionId | null | undefined,
   data: TResponseData
 ): TCalBookingsByQuestionId =>
-  Object.fromEntries(Object.entries(calBookings ?? {}).filter(([elementId]) => elementId in data));
+  Object.fromEntries(
+    Object.entries(calBookings ?? {}).filter(([elementId]) => data[elementId] === CAL_BOOKED_STATUS)
+  );

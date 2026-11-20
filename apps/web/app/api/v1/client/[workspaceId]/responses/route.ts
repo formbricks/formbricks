@@ -237,7 +237,7 @@ const findFoldableDuplicate = async (
     contactId: contact?.id,
     data: responseInputData.data,
     finished: responseInputData.finished,
-    hasCalBookings: responseInputData.calBookings !== undefined,
+    calBookings: responseInputData.calBookings,
   });
 };
 

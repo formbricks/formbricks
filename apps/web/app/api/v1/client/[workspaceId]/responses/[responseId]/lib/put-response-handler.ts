@@ -132,7 +132,8 @@ const validateUpdateRequest = (
   survey: TSurvey,
   responseUpdateInput: TClientResponseUpdateInput,
   workspaceId: string,
-  notShown: TResponseNotShown | null
+  notShown: TResponseNotShown | null,
+  invalidCalElementId: string | undefined
 ): TRouteResult | undefined => {
   // Mirror the POST endpoint: a closed survey accepts no submissions, including finalizing a partial
   // response created while it was open (ENG-1654).
@@ -148,6 +149,17 @@ const validateUpdateRequest = (
   // updateResponseWithQuotaEvaluation, since the response can be finished after this read.
   if (existingResponse.finished) {
     return responseAlreadyFinished();
+  }
+
+  // After the two refusals above, so a closed survey or a finished response answers as it always did.
+  if (invalidCalElementId) {
+    return {
+      response: responses.badRequestResponse(
+        "Invalid booking details",
+        { elementId: invalidCalElementId },
+        true
+      ),
+    };
   }
 
   if (
@@ -274,15 +286,6 @@ export const putResponseHandler = async ({
   // The same step splits a Cal element's booking record out of `data` (the stored answer stays the string
   // "booked"); on an update the details are merged into what is stored, by Question ID.
   const ingestResult = applyIngestContractToResponseInput(survey, responseUpdateInput);
-  if (ingestResult.invalidCalElementId) {
-    return {
-      response: responses.badRequestResponse(
-        "Invalid booking details",
-        { elementId: ingestResult.invalidCalElementId },
-        true
-      ),
-    };
-  }
 
   const notShownResult = await getNotShownForValidation(responseId, responseUpdateInput);
   if ("response" in notShownResult) {
@@ -294,7 +297,8 @@ export const putResponseHandler = async ({
     survey,
     responseUpdateInput,
     workspaceId,
-    notShownResult.notShown
+    notShownResult.notShown,
+    ingestResult.invalidCalElementId
   );
   if (validationResult) {
     return validationResult;

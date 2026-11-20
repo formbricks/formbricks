@@ -806,6 +806,33 @@ describe("putResponseHandler", () => {
       expect(persistedInput().calBookings).toEqual({ cal1: booking });
     });
 
+    test("a closed survey still answers 403, and a finished response its own code, before the booking error", async () => {
+      const bad = { cal1: { ...booking, title: "Intro\u0000call" } };
+
+      mocks.getSurvey.mockResolvedValue({ ...surveyWithCal(), status: "completed" });
+      putData(bad);
+      expect((await putResponseHandler(createHandlerParams())).response.status).toBe(403);
+
+      mocks.getSurvey.mockResolvedValue(surveyWithCal());
+      mocks.getResponse.mockResolvedValue({ ...getBaseExistingResponse(), finished: true });
+      putData(bad);
+      const finished = await putResponseHandler(createHandlerParams());
+      expect(finished.response.status).toBe(400);
+      expect((await finished.response.json()).details).toEqual({
+        code: RESPONSE_ALREADY_FINISHED_ERROR_CODE,
+      });
+    });
+
+    test("answers 400 for a booking with a NUL byte once the response can be updated", async () => {
+      mocks.getSurvey.mockResolvedValue(surveyWithCal());
+      putData({ cal1: { ...booking, title: "Intro\u0000call" } });
+
+      const result = await putResponseHandler(createHandlerParams());
+
+      expect(result.response.status).toBe(400);
+      expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+    });
+
     test("a renderer that sends only the string leaves calBookings unset", async () => {
       mocks.getSurvey.mockResolvedValue(surveyWithCal());
       putData({ cal1: "booked" });
