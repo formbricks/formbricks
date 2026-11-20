@@ -3,6 +3,24 @@ import type { TCloudBillingInterval } from "@formbricks/types/organizations";
 import { STRIPE_API_VERSION } from "@/lib/constants";
 import { env } from "@/lib/env";
 
+// Stripe API version 2026-09-30.endive removed `payment_method_types` from Checkout Session creation
+// and replaced it with `allowed_payment_method_types`.
+// https://docs.stripe.com/changelog/endive/2026-09-30/remove-payment-method-types-checkout-sessions
+const STRIPE_ALLOWED_PAYMENT_METHOD_TYPES_SINCE = "2026-09-30";
+
+type TCardOnlyPaymentMethodParams =
+  | { payment_method_types: ["card"] }
+  | { allowed_payment_method_types: ["card"] };
+
+/**
+ * Restricts a Checkout Session to cards with the parameter the given Stripe API version accepts.
+ * API versions are `YYYY-MM-DD.<release>`, so the date prefix orders them.
+ */
+export const getCardOnlyPaymentMethodParams = (apiVersion: string): TCardOnlyPaymentMethodParams =>
+  apiVersion.slice(0, 10) >= STRIPE_ALLOWED_PAYMENT_METHOD_TYPES_SINCE
+    ? { allowed_payment_method_types: ["card"] }
+    : { payment_method_types: ["card"] };
+
 type TSetupCheckoutUpgradeIntent = {
   targetPlan: "pro" | "scale";
   targetInterval: TCloudBillingInterval;
@@ -43,7 +61,7 @@ export const createSetupCheckoutSession = async (
     // The upgrade that follows is confirmed with stripe.confirmCardPayment and may replace a legacy EUR
     // subscription with a USD one (ENG-3370), so only a card can pay it: a method offered for the
     // session's currency (e.g. SEPA for EUR) could be saved and then fail to pay the upgrade.
-    ...(upgradeIntent ? { payment_method_types: ["card"] } : {}),
+    ...(upgradeIntent ? getCardOnlyPaymentMethodParams(STRIPE_API_VERSION) : {}),
     billing_address_collection: "required",
     tax_id_collection: {
       enabled: true,
