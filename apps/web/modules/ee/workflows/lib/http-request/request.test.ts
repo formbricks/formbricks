@@ -91,6 +91,41 @@ describe("collectSentSecretValues", () => {
     expect(values).toEqual(["sk-live-123456"]);
   });
 
+  const sentWith = (value: string) =>
+    collectSentSecretValues(
+      { method: "GET", url: "https://x.test", headers: { Authorization: value } },
+      {
+        method: "GET",
+        url: "https://x.test",
+        headers: [{ name: "Authorization", value: WORKFLOW_SECRET_MASK }],
+      }
+    );
+
+  test("adds the token after a known scheme, so an echo of the token alone is masked too", () => {
+    expect(sentWith("Bearer sk_live_123456")).toEqual(["Bearer sk_live_123456", "sk_live_123456"]);
+    expect(sentWith("token ghp_abcdef")).toEqual(["token ghp_abcdef", "ghp_abcdef"]);
+
+    const { variables } = summarizeWorkflowHttpResponse(
+      echo({ authenticated: true, token: "sk_live_123456" }),
+      sentWith("Bearer sk_live_123456")
+    );
+    expect(variables.body).toEqual({ authenticated: true, token: WORKFLOW_SECRET_MASK });
+  });
+
+  test("adds a Basic credential's decoded user:password and the password", () => {
+    const encoded = Buffer.from("jane:s3cret-pass").toString("base64");
+    expect(sentWith(`Basic ${encoded}`)).toEqual([
+      `Basic ${encoded}`,
+      encoded,
+      "jane:s3cret-pass",
+      "s3cret-pass",
+    ]);
+  });
+
+  test("leaves a two-word value alone unless its first word is an auth scheme", () => {
+    expect(sentWith("hello world")).toEqual(["hello world"]);
+  });
+
   test("skips values too short to mask without mangling the body", () => {
     const values = collectSentSecretValues(
       { method: "GET", url: "https://x.test", headers: { "X-Pin": "1" } },

@@ -251,20 +251,43 @@ const maskSecretsInJson = (value: unknown, secretValues: readonly string[]): unk
   return walk(value);
 };
 
+/** Authorization schemes whose credential an endpoint may echo without the scheme (`/bearer`, introspection). */
+const AUTH_SCHEMES = new Set(["bearer", "token", "basic", "bot", "apikey"]);
+const SCHEME_AND_CREDENTIAL = /^([A-Za-z][\w-]*)\s+(\S+)$/;
+const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+
 /**
- * The secret header values a call sent: the headers its record shows masked. Run detail and samples
- * are readable by people who may never see a secret (ADR 0043), so a response that echoes one back
- * must not carry it into storage.
+ * A secret header value and the credential inside it: after a known scheme, the token alone, and for
+ * `Basic` the decoded `user:password` and the password. An endpoint that echoes only the token would
+ * otherwise hand it to later steps in plain text, past the secret's host binding (ADR 0051).
+ */
+const secretValueForms = (value: string): string[] => {
+  const match = SCHEME_AND_CREDENTIAL.exec(value.trim());
+  if (!match || !AUTH_SCHEMES.has(match[1].toLowerCase())) return [value];
+  const credential = match[2];
+  if (match[1].toLowerCase() !== "basic" || !BASE64.test(credential)) return [value, credential];
+  const decoded = Buffer.from(credential, "base64").toString("utf8");
+  const password = decoded.slice(decoded.indexOf(":") + 1);
+  return [value, credential, decoded, ...(decoded.includes(":") ? [password] : [])];
+};
+
+/**
+ * The secret header values a call sent (the headers its record shows masked), with the credential
+ * inside each. Run detail and samples are readable by people who may never see a secret (ADR 0043),
+ * so a response that echoes one back must not carry it into storage.
  */
 export const collectSentSecretValues = (
   call: WorkflowHttpCall,
   record: TWorkflowHttpRequestRecord
 ): string[] => {
   const sent = new Map(Object.entries(call.headers).map(([name, value]) => [name.toLowerCase(), value]));
-  return record.headers
+  const values = record.headers
     .filter((header) => header.value === WORKFLOW_SECRET_MASK)
     .map((header) => sent.get(header.name.toLowerCase()))
-    .filter((value): value is string => value !== undefined && value.length >= MIN_MASKED_SECRET_LENGTH);
+    .filter((value): value is string => value !== undefined)
+    .flatMap(secretValueForms)
+    .filter((value) => value.length >= MIN_MASKED_SECRET_LENGTH);
+  return [...new Set(values)];
 };
 
 /** An answer the step counts as an error: 4xx and 5xx. A 3xx is the response, since redirects aren't followed. */
