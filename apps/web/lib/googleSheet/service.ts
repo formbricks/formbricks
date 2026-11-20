@@ -46,6 +46,68 @@ const runSheetsWrite = (invoke: (callback: (err: Error | null) => void) => void)
     });
   });
 
+/** Reads the header row (row 1) of the integration's sheet, with the same callback wrapping as the writes. */
+const readHeaderRow = (
+  invoke: (
+    callback: (err: Error | null, res?: { data?: { values?: unknown[][] | null } } | null) => void
+  ) => void
+): Promise<string[]> =>
+  new Promise((resolve, reject) => {
+    invoke((err, res) => {
+      if (err) {
+        reject(new UnknownError(`Error while reading the header row: ${err.message}`));
+        return;
+      }
+      const firstRow = res?.data?.values?.[0] ?? [];
+      resolve(firstRow.map((cell) => (cell === null || cell === undefined ? "" : String(cell))));
+    });
+  });
+
+/**
+ * ENG-3907: the elements a response carries differ between responses (each contact's own attribute set,
+ * computed variables a response never captured), so writing them positionally under a header rewritten
+ * from the latest response relabels every earlier row. Instead the sheet's existing header row is kept as
+ * is, labels it does not have yet are appended to its end, and each value is placed under its own label.
+ * A label that occurs more than once (e.g. two questions with the same headline) is matched by occurrence:
+ * the second "Name" in this response goes under the second "Name" column.
+ */
+export const alignRowToHeaders = (
+  existingHeaders: string[],
+  elements: string[],
+  responses: string[]
+): { headers: string[]; row: string[]; headersChanged: boolean } => {
+  const headers = [...existingHeaders];
+  const columnsByLabel = new Map<string, number[]>();
+  headers.forEach((label, index) => {
+    const columns = columnsByLabel.get(label) ?? [];
+    columns.push(index);
+    columnsByLabel.set(label, columns);
+  });
+
+  const occurrences = new Map<string, number>();
+  const placements: { column: number; value: string }[] = [];
+  elements.forEach((label, index) => {
+    const occurrence = occurrences.get(label) ?? 0;
+    occurrences.set(label, occurrence + 1);
+    const columns = columnsByLabel.get(label) ?? [];
+    let column = columns[occurrence];
+    if (column === undefined) {
+      column = headers.length;
+      headers.push(label);
+      columns.push(column);
+      columnsByLabel.set(label, columns);
+    }
+    placements.push({ column, value: responses[index] ?? "" });
+  });
+
+  const row: string[] = new Array(headers.length).fill("");
+  placements.forEach(({ column, value }) => {
+    row[column] = value;
+  });
+
+  return { headers, row, headersChanged: headers.length !== existingHeaders.length };
+};
+
 export const writeData = async (
   integrationData: TIntegrationGoogleSheets,
   spreadsheetId: string,
@@ -62,28 +124,30 @@ export const writeData = async (
   try {
     const authClient = await authorize(integrationData);
     const sheets = google.sheets({ version: "v4", auth: authClient });
-    const responsesMapped = {
-      values: [
-        responses.map((response) =>
-          response.length > GOOGLE_SHEET_MESSAGE_LIMIT
-            ? truncateText(response, GOOGLE_SHEET_MESSAGE_LIMIT)
-            : response
-        ),
-      ],
-    };
-
-    const element = { values: [elements] };
-    await runSheetsWrite((callback) =>
-      sheets.spreadsheets.values.update(
-        {
-          spreadsheetId: spreadsheetId,
-          range: "A1",
-          valueInputOption: "RAW",
-          requestBody: element,
-        },
-        callback
-      )
+    const truncatedResponses = responses.map((response) =>
+      response.length > GOOGLE_SHEET_MESSAGE_LIMIT
+        ? truncateText(response, GOOGLE_SHEET_MESSAGE_LIMIT)
+        : response
     );
+
+    const existingHeaders = await readHeaderRow((callback) =>
+      sheets.spreadsheets.values.get({ spreadsheetId, range: "1:1" }, callback)
+    );
+    const { headers, row, headersChanged } = alignRowToHeaders(existingHeaders, elements, truncatedResponses);
+
+    if (headersChanged) {
+      await runSheetsWrite((callback) =>
+        sheets.spreadsheets.values.update(
+          {
+            spreadsheetId: spreadsheetId,
+            range: "A1",
+            valueInputOption: "RAW",
+            requestBody: { values: [headers] },
+          },
+          callback
+        )
+      );
+    }
 
     await runSheetsWrite((callback) =>
       sheets.spreadsheets.values.append(
@@ -91,7 +155,7 @@ export const writeData = async (
           spreadsheetId: spreadsheetId,
           range: "A2",
           valueInputOption: "RAW",
-          requestBody: responsesMapped,
+          requestBody: { values: [row] },
         },
         callback
       )

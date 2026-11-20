@@ -17,6 +17,7 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 const sheetsMock = vi.hoisted(() => ({
+  get: vi.fn(),
   update: vi.fn(),
   append: vi.fn(),
 }));
@@ -34,7 +35,7 @@ vi.mock("googleapis", () => ({
   },
 }));
 
-const { getSpreadsheetNameById, writeData } = await import("@/lib/googleSheet/service");
+const { alignRowToHeaders, getSpreadsheetNameById, writeData } = await import("@/lib/googleSheet/service");
 
 /**
  * The shape the integration has once ENG-2078's redaction has blanked `config.key`: schema-valid,
@@ -146,9 +147,19 @@ describe("writeData", () => {
       }, 0);
     };
 
+  /** An empty sheet: the header row read returns no values. */
+  const emptyHeaderRow = (
+    _params: unknown,
+    callback: (err: Error | null, res?: { data: { values?: string[][] } }) => void
+  ) => {
+    setTimeout(() => callback(null, { data: {} }), 0);
+  };
+
   beforeEach(() => {
+    sheetsMock.get.mockReset();
     sheetsMock.update.mockReset();
     sheetsMock.append.mockReset();
+    sheetsMock.get.mockImplementation(emptyHeaderRow);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
   });
 
@@ -182,5 +193,158 @@ describe("writeData", () => {
     await writeData(authorizedIntegration, "sheet1", ["answer"], ["question"]);
 
     expect(completed).toEqual(["update", "append"]);
+  });
+
+  test("rejects with an UnknownError when reading the header row fails, without writing", async () => {
+    sheetsMock.get.mockImplementation((_params: unknown, callback: (err: Error | null) => void) => {
+      setTimeout(() => callback(new Error("Requested entity was not found")), 0);
+    });
+
+    await expect(writeData(authorizedIntegration, "sheet1", ["answer"], ["question"])).rejects.toThrow(
+      new UnknownError("Error while reading the header row: Requested entity was not found")
+    );
+    expect(sheetsMock.update).not.toHaveBeenCalled();
+    expect(sheetsMock.append).not.toHaveBeenCalled();
+  });
+
+  // ENG-3907: each response used to rewrite row 1 with its own labels and append its values by position,
+  // so a later contact with a different attribute set relabelled every earlier row.
+  describe("keeps every row aligned with its column headers", () => {
+    /** An in-memory spreadsheet behind the get/update/append mocks. */
+    const useFakeSheet = () => {
+      const sheet: string[][] = [];
+      sheetsMock.get.mockImplementation(
+        (
+          _params: unknown,
+          callback: (err: Error | null, res?: { data: { values?: string[][] } }) => void
+        ) => {
+          setTimeout(() => callback(null, { data: sheet[0] ? { values: [[...sheet[0]]] } : {} }), 0);
+        }
+      );
+      sheetsMock.update.mockImplementation(
+        (params: { requestBody: { values: string[][] } }, callback: (err: Error | null) => void) => {
+          setTimeout(() => {
+            sheet[0] = [...params.requestBody.values[0]];
+            callback(null);
+          }, 0);
+        }
+      );
+      sheetsMock.append.mockImplementation(
+        (params: { requestBody: { values: string[][] } }, callback: (err: Error | null) => void) => {
+          setTimeout(() => {
+            if (sheet.length === 0) sheet.push([]);
+            sheet.push([...params.requestBody.values[0]]);
+            callback(null);
+          }, 0);
+        }
+      );
+      return sheet;
+    };
+
+    /** Reads the sheet back as one label → value record per response row. */
+    const asRecords = (sheet: string[][]) =>
+      sheet
+        .slice(1)
+        .map((row) =>
+          Object.fromEntries(
+            sheet[0].map((label, index) => [label, row[index] ?? ""]).filter(([, value]) => value !== "")
+          )
+        );
+
+    test("two contacts with different attribute sets and order keep their own values", async () => {
+      const sheet = useFakeSheet();
+
+      await writeData(
+        authorizedIntegration,
+        "sheet1",
+        ["Great", "pro", "a@example.com"],
+        ["How was it?", "person.plan", "person.email"]
+      );
+      await writeData(
+        authorizedIntegration,
+        "sheet1",
+        ["Okay", "b@example.com", "Acme", "free"],
+        ["How was it?", "person.email", "person.company", "person.plan"]
+      );
+
+      expect(sheet[0]).toEqual(["How was it?", "person.plan", "person.email", "person.company"]);
+      expect(asRecords(sheet)).toEqual([
+        { "How was it?": "Great", "person.plan": "pro", "person.email": "a@example.com" },
+        {
+          "How was it?": "Okay",
+          "person.plan": "free",
+          "person.email": "b@example.com",
+          "person.company": "Acme",
+        },
+      ]);
+    });
+
+    test("a response missing a computed variable or attributes leaves those cells empty", async () => {
+      const sheet = useFakeSheet();
+
+      await writeData(
+        authorizedIntegration,
+        "sheet1",
+        ["Great", "42", "2026-01-01", "a@example.com"],
+        ["How was it?", "score", "Created At", "person.email"]
+      );
+      // An anonymous, API-created response: no captured `score`, no contact attributes.
+      await writeData(authorizedIntegration, "sheet1", ["Bad", "2026-01-02"], ["How was it?", "Created At"]);
+
+      expect(sheet[0]).toEqual(["How was it?", "score", "Created At", "person.email"]);
+      expect(sheet[2]).toEqual(["Bad", "", "2026-01-02", ""]);
+      expect(asRecords(sheet)[0]).toEqual({
+        "How was it?": "Great",
+        score: "42",
+        "Created At": "2026-01-01",
+        "person.email": "a@example.com",
+      });
+    });
+
+    test("does not rewrite the header row when it already covers every label", async () => {
+      sheetsMock.get.mockImplementation(
+        (
+          _params: unknown,
+          callback: (err: Error | null, res?: { data: { values?: string[][] } }) => void
+        ) => {
+          setTimeout(() => callback(null, { data: { values: [["Q1", "Q2"]] } }), 0);
+        }
+      );
+      sheetsMock.append.mockImplementation(respondAsync(null));
+
+      await writeData(authorizedIntegration, "sheet1", ["b", "a"], ["Q2", "Q1"]);
+
+      expect(sheetsMock.update).not.toHaveBeenCalled();
+      expect(sheetsMock.append).toHaveBeenCalledWith(
+        expect.objectContaining({ requestBody: { values: [["a", "b"]] } }),
+        expect.any(Function)
+      );
+    });
+  });
+});
+
+describe("alignRowToHeaders", () => {
+  test("matches a repeated label by occurrence", () => {
+    expect(alignRowToHeaders(["Name", "Name"], ["Name", "Name"], ["first", "second"])).toEqual({
+      headers: ["Name", "Name"],
+      row: ["first", "second"],
+      headersChanged: false,
+    });
+  });
+
+  test("appends a further occurrence of a known label as a new column", () => {
+    expect(alignRowToHeaders(["Name"], ["Name", "Name"], ["first", "second"])).toEqual({
+      headers: ["Name", "Name"],
+      row: ["first", "second"],
+      headersChanged: true,
+    });
+  });
+
+  test("writes the response's own labels as the header on an empty sheet", () => {
+    expect(alignRowToHeaders([], ["Q1", "Q2"], ["a", "b"])).toEqual({
+      headers: ["Q1", "Q2"],
+      row: ["a", "b"],
+      headersChanged: true,
+    });
   });
 });
