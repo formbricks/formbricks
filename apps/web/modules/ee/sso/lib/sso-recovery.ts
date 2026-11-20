@@ -8,6 +8,7 @@ import {
 } from "@formbricks/types/errors";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken, createSsoRelinkIntent, verifySsoRelinkIntent } from "@/lib/jwt";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
@@ -497,7 +498,7 @@ const settleReclaimedCredentials = async ({
     } catch (error) {
       sessionsRevoked = null;
       logger.error(
-        { error, userId: user.id },
+        { ...loggableError(error), userId: user.id },
         "Failed to revoke sessions after reclaiming unverified local auth"
       );
     }

@@ -97,6 +97,12 @@ describe("SSO recovery claim (ENG-7395)", () => {
     await expect(claimSsoRecovery("recovery-1")).resolves.toEqual({ kind: "unavailable" });
     await expect(markSsoRecoverySpent("recovery-1")).resolves.toBe(false);
     // Through loggableError: the name, never the message, which can carry a connection string.
+    for (const message of ["Failed to claim the SSO recovery", "Failed to mark the SSO recovery spent"]) {
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "Error", stateId: "recovery-1" }),
+        message
+      );
+    }
     expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret");
   });
 });
