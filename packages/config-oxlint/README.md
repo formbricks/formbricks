@@ -50,6 +50,11 @@ Notes:
   oxlint ignores; and `formbricks/prefer-read-only-props` (the `next` and `react` tiers) ports
   eslint-plugin-react's rule without its autofix, which wrote `readonly` members instead of the
   `Readonly<Props>` wrapper.
+  Three more run in every tier (ENG-7450). `formbricks/no-loose-schema-prisma-write` (ENG-7127) and
+  `formbricks/no-request-regexp` (ENG-7109) follow a value inside one file only, so they stay precise
+  but miss a source and a sink in different files; a safe line disables them with its reason.
+  `formbricks/no-tsx-unit-test` fails a `*.test.tsx`/`*.spec.tsx` file (CODING_STANDARDS.md, Testing
+  Guidelines), except those in `TSX_UNIT_TEST_ALLOWLIST` (`base.mjs`), which only shrinks.
   JS plugins are slower than native rules. eslint-plugin-react, the slowest, was dropped (ENG-7401): its
   `prop-types` is left to TypeScript, and its `no-deprecated` to React 19's types and `react/no-unsafe`
   with `checkAliases`.

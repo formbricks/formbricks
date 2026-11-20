@@ -117,6 +117,17 @@ const categoryRulesOff = {
 };
 
 /*
+ * The `.tsx` unit tests that predate `formbricks/no-tsx-unit-test` (CODING_STANDARDS.md, Testing
+ * Guidelines), by repo-relative path. Remove an entry when its test goes; don't add one.
+ */
+export const TSX_UNIT_TEST_ALLOWLIST = [
+  "apps/web/modules/auth/hooks/use-sign-out.test.tsx",
+  "apps/web/modules/ee/analysis/charts/components/embedded-field-rename-button.test.tsx",
+  "packages/surveys/src/components/general/survey.test.tsx",
+  "packages/surveys/src/lib/use-focus-trap.test.tsx",
+];
+
+/*
  * Turbo checks + test conventions + oxlint's correctness and suspicious categories + Sonar parity.
  * Every tier composes this first.
  */
@@ -131,6 +142,14 @@ export const base = compose(
       "turbo/no-undeclared-env-vars": "error",
       // oxlint ignores ESLint's inline config comments; configuration belongs in oxlint.config.ts.
       "formbricks/no-inline-lint-config": "error",
+      // The November 2026 vulnerability classes, as far as one file shows them (ENG-7450): a loose zod
+      // schema's output in a Prisma write (ENG-7127), a regex compiled from request input (ENG-7109).
+      // A safe line disables the rule with its reason:
+      //   // oxlint-disable-next-line formbricks/no-request-regexp -- <reason>
+      "formbricks/no-loose-schema-prisma-write": "error",
+      "formbricks/no-request-regexp": "error",
+      // CODING_STANDARDS.md, Testing Guidelines: no component or UI unit tests in `.tsx`.
+      "formbricks/no-tsx-unit-test": ["error", { allow: TSX_UNIT_TEST_ALLOWLIST }],
       "vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
       // The correctness category's no-unused-vars, with the repo's leading-underscore convention.
       "no-unused-vars": ["error", unusedVarsOptions],
