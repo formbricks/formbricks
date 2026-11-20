@@ -286,6 +286,8 @@ Two more keys are new in the response object:
   Both keys are additive. If your receiver validates the payload against a strict schema, allow unknown keys, or add `dataByQuestionCode` and `outcome` to the schema. A webhook that was queued before an update can arrive without `dataByQuestionCode`.
 </Warning>
 
+`data.variables` holds the calculated fields. A text field's value is a string and a number field's is a number. A true/false field's value is a JSON boolean, `true` or `false`, so a receiver that validates `variables` against a strict schema must allow booleans.
+
 <Note>
   Zapier, Make, n8n and Activepieces show the fields of the last sample they received. After you update Formbricks or add questions, re-test the trigger to see the new fields.
 </Note>
