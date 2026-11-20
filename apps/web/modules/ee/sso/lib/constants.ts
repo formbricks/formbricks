@@ -32,15 +32,15 @@ export const ssoAccountIssuer = (providerId: string): string =>
  * unmatched at sign-in". One deliberate asymmetry: the SQL `ELSE` concatenates the raw provider id
  * while this helper percent-encodes it. Identity for every provider id in use (all encoding-neutral,
  * per that migration's own comment); a provider id ever needing escaping must get an explicit `CASE`
- * arm in SQL, and `constants.test.ts` documents the divergence so it reads as known, not an
- * oversight. Three sites must agree and cannot import each other:
+ * arm in SQL. The divergence is documented here so it reads as known, not an oversight. Three sites
+ * must agree and cannot import each other:
  *
  * 1. `account-linking.ts` — the rows SSO recovery writes.
  * 2. `migration/20260812110000_…` — the backfill, as a SQL literal.
  * 3. `migration/20260821…_repair_account_issuer` — the repair for rows (1) got wrong.
  *
- * `constants.test.ts` pins this function against every SQL copy in both migrations (the backfill's one,
- * the repair's two), so any one copy drifting fails `pnpm test` rather than production sign-in.
+ * No test on this release line pins this function against the SQL copies in both migrations (the
+ * backfill's one, the repair's two), so keep them in step by hand.
  *
  * Keyed on `Account.provider`, NOT `IdentityProvider`: the credential row's provider is `"credential"`,
  * a value that enum does not contain.

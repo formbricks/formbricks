@@ -145,8 +145,8 @@ const syncSsoIdentityForUserWithTx = async ({
         // pushed back through recovery on the NEXT sign-in, forever. The migration cannot save them
         // either — it runs once, before this row exists. NOT `ssoAccountIssuer`: google's canonical issuer
         // is the one 1.7.0 declared upstream, not the synthetic form, which is exactly the bug that
-        // shipped here (ENG-2555). `canonicalAccountIssuer` mirrors the backfill's CASE and is pinned
-        // against the SQL in constants.test.ts, so the sites cannot drift.
+        // shipped here (ENG-2555). `canonicalAccountIssuer` mirrors the backfill's CASE;
+        // keep the two in step.
         issuer: canonicalAccountIssuer(provider),
         ...getAccountTokenUpdate(account),
       },
