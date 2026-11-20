@@ -93,10 +93,13 @@ describe("POST /api/v1/client/[workspaceId]/user NULL bytes", () => {
     await expectRefused(response);
   });
 
-  test("refuses an attribute key with a NULL byte", async () => {
+  // A key with a NULL byte never reaches Postgres: the key format check skips it and reports it, so the
+  // rest of the request still goes through.
+  test("leaves an attribute key with a NULL byte to the key format check", async () => {
     const { response } = await identify({ "pl\u0000an": "pro" });
 
-    await expectRefused(response);
+    expect(response.status).toBe(200);
+    expect(mocks.updateUser).toHaveBeenCalledOnce();
   });
 
   test("refuses a userId with a NULL byte", async () => {
