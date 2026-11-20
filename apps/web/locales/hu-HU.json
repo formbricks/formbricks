@@ -959,6 +959,8 @@
     "scheduled": "Ez a felmérés hamarosan megnyílik.",
     "survey_already_answered_heading": "A kérdőív már meg lett válaszolva.",
     "survey_already_answered_subheading": "Ezt a hivatkozást csak egyszer használhatja.",
+    "survey_not_found": "A felmérés nem található.",
+    "survey_not_found_description": "Ezzel az azonosítóval nem létezik felmérés.",
     "survey_sent_to": "A kérdőív elküldve a(z) {email} e-mail-címre",
     "verify_email": "E-mail-cím ellenőrzése.",
     "verify_email_before_submission": "Ellenőrizze az e-mail-címét a válaszadáshoz",

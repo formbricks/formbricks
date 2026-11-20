@@ -959,6 +959,8 @@
     "scheduled": "Deze enquête gaat binnenkort open.",
     "survey_already_answered_heading": "De enquête is al beantwoord.",
     "survey_already_answered_subheading": "U kunt deze link slechts één keer gebruiken.",
+    "survey_not_found": "Enquête niet gevonden.",
+    "survey_not_found_description": "Er bestaat geen enquête met dit ID.",
     "survey_sent_to": "Enquête verzonden naar {email}",
     "verify_email": "E-mail verifiëren.",
     "verify_email_before_submission": "Verifieer uw e-mailadres om te reageren",

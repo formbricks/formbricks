@@ -959,6 +959,8 @@
     "scheduled": "此問卷即將開放。",
     "survey_already_answered_heading": "問卷已回答。",
     "survey_already_answered_subheading": "您只能使用此連結一次。",
+    "survey_not_found": "找不到問卷。",
+    "survey_not_found_description": "沒有這個 ID 的問卷。",
     "survey_sent_to": "問卷已發送至 {email}",
     "verify_email": "驗證電子郵件。",
     "verify_email_before_submission": "驗證您的電子郵件以回應",

@@ -959,6 +959,8 @@
     "scheduled": "Esta pesquisa abre em breve.",
     "survey_already_answered_heading": "A pesquisa já foi respondida.",
     "survey_already_answered_subheading": "Você só pode usar esse link uma vez.",
+    "survey_not_found": "Pesquisa não encontrada.",
+    "survey_not_found_description": "Não há nenhuma pesquisa com este ID.",
     "survey_sent_to": "Pesquisa enviada para {email}",
     "verify_email": "Verifique o e-mail.",
     "verify_email_before_submission": "Verifique seu e-mail para responder",
