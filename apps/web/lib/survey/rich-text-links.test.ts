@@ -165,6 +165,24 @@ describe("getRichTextLinks with recall", () => {
     expect(getRichTextLinks(withVariable(html, "friend")).size).toBe(0);
   });
 
+  test("resolves a token that follows more than a hundred others", () => {
+    const linkVariableId = "clvar1234567890123456789099";
+    const html = `<p>${`#recall:${VARIABLE_ID}/fallback:x# `.repeat(150)}#recall:${linkVariableId}/fallback:x#</p>`;
+    const survey: TRichTextSurveyContent = {
+      ...withHeadline(html),
+      variables: [
+        { id: VARIABLE_ID, name: "v1", type: "text", value: "friend" },
+        { id: linkVariableId, name: "v2", type: "text", value: '<a href="https://example.com/a">y</a>' },
+      ],
+    };
+    expect(getRichTextLinks(survey)).toContain("https://example.com/a");
+  });
+
+  test("counts a variable that recalls itself as a link instead of passing it", () => {
+    const token = `#recall:${VARIABLE_ID}/fallback:x#`;
+    expect(getRichTextLinks(withVariable(`<p>${token}</p>`, `a ${token}`)).size).toBe(1);
+  });
+
   test("grandfathers a token in a tag the previous version already had", () => {
     const html = "<p><a #recall:q9/fallback:x#>go</a></p>";
     expect(addsRichTextLink(withHeadline(html), withHeadline(html))).toBe(false);

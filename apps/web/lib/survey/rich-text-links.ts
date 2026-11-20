@@ -48,20 +48,47 @@ const collectLinksFromRendered = (html: string, links: Set<string>): void => {
 // `replaceRecallInfo` in `@formbricks/surveys` resolves these before the text is parsed: a variable's
 // value, else the respondent's answer or hidden field, else the fallback (`nbsp` read as a space).
 const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/;
-// The renderer loops until no token is left, so a value may itself hold one; this bounds a cycle.
-const MAX_RECALL_PASSES = 100;
+// The renderer loops until no token is left, so a value may itself hold one. Each pass resolves every
+// token, so the bound is on that nesting, not on how many tokens the text has.
+const MAX_RECALL_DEPTH = 10;
+const RECALL_TOKENS = new RegExp(RECALL_TOKEN.source, "g");
 // One opening tag, a quoted value consumed whole (the pattern survey-ui strips styles with).
 const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
 
-const resolveRecall = (html: string, resolve: (id: string, fallback: string) => string): string => {
+/** The text with its tokens resolved, or `null` when values keep nesting tokens past the bound. */
+const resolveRecall = (html: string, resolve: (id: string, fallback: string) => string): string | null => {
   let text = html;
-  for (let pass = 0; pass < MAX_RECALL_PASSES; pass++) {
-    const match = RECALL_TOKEN.exec(text);
-    if (!match) break;
-    const fallback = match[2].replaceAll("nbsp", " ").trim();
-    text = text.replace(match[0], () => resolve(match[1], fallback));
+  for (let depth = 0; depth < MAX_RECALL_DEPTH && RECALL_TOKEN.test(text); depth++) {
+    text = text.replaceAll(RECALL_TOKENS, (_token, id: string, fallback: string) =>
+      resolve(id, fallback.replaceAll("nbsp", " ").trim())
+    );
   }
-  return text;
+  return RECALL_TOKEN.test(text) ? null : text;
+};
+
+/** Links in text that holds `#recall:` tokens, which the survey resolves before it parses. */
+const collectRecallLinks = (
+  html: string,
+  links: Set<string>,
+  recallValues: ReadonlyMap<string, string>
+): void => {
+  // A token inside a tag becomes markup once a respondent's answer or a hidden field fills it, which
+  // no check can see in advance, so it counts as a link of its own.
+  for (const tag of removeStyleAttributes(html).match(OPENING_TAG) ?? []) {
+    const token = RECALL_TOKEN.exec(tag);
+    if (token) links.add(`recall in a tag: ${token[0]}`);
+  }
+  // What the survey shows when each token resolves to nothing, to its fallback, or to the variable's
+  // value the survey defines.
+  for (const resolved of new Set([
+    resolveRecall(html, () => ""),
+    resolveRecall(html, (_id, fallback) => fallback),
+    resolveRecall(html, (id, fallback) => recallValues.get(id) || fallback),
+  ])) {
+    // A value that keeps recalling itself never settles, so what it shows cannot be checked: count it.
+    if (resolved === null) links.add(`recall that does not resolve: ${html}`);
+    else collectLinksFromRendered(resolved, links);
+  }
 };
 
 const collectLinks = (
@@ -71,25 +98,8 @@ const collectLinks = (
 ): void => {
   for (const html of Object.values(field ?? {})) {
     if (typeof html !== "string") continue;
-    if (!RECALL_TOKEN.test(html)) {
-      collectLinksFromRendered(html, links);
-      continue;
-    }
-    // A token inside a tag becomes markup once a respondent's answer or a hidden field fills it, which
-    // no check can see in advance, so it counts as a link of its own.
-    for (const tag of removeStyleAttributes(html).match(OPENING_TAG) ?? []) {
-      const token = RECALL_TOKEN.exec(tag);
-      if (token) links.add(`recall in a tag: ${token[0]}`);
-    }
-    // What the survey shows when each token resolves to nothing, to its fallback, or to the variable's
-    // value the survey defines.
-    for (const resolved of new Set([
-      resolveRecall(html, () => ""),
-      resolveRecall(html, (_id, fallback) => fallback),
-      resolveRecall(html, (id, fallback) => recallValues.get(id) || fallback),
-    ])) {
-      collectLinksFromRendered(resolved, links);
-    }
+    if (RECALL_TOKEN.test(html)) collectRecallLinks(html, links, recallValues);
+    else collectLinksFromRendered(html, links);
   }
 };
 
