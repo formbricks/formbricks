@@ -95,11 +95,9 @@ reviews:
   path_instructions:
     - path: "**/*.test.tsx"
       instructions: |
-        CODING_STANDARDS.md forbids React component unit tests in this repo. If this file is newly added, say
-        so and ask for the logic under test to move into a `.ts` module with a unit test. Do not ask
-        for a Playwright spec instead: deleting a `.test.tsx` creates no E2E obligation, and a
-        component is not an E2E subject. Do not raise this on edits to the handful of `.test.tsx`
-        files that already exist.
+        `formbricks/no-tsx-unit-test` (lint) already fails a new `.test.tsx`; do not repeat it. When
+        the logic under test moves into a `.ts` module, do not ask for a Playwright spec instead:
+        deleting a `.test.tsx` creates no E2E obligation, and a component is not an E2E subject.
 
     - path: "**/*.tsx"
       instructions: |

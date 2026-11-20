@@ -50,13 +50,14 @@ Notes:
   oxlint ignores; and `formbricks/prefer-read-only-props` (the `next` and `react` tiers) ports
   eslint-plugin-react's rule without its autofix, which wrote `readonly` members instead of the
   `Readonly<Props>` wrapper.
-  Three more run in every tier (ENG-7450). `formbricks/no-loose-schema-prisma-write` (ENG-7127) and
-  `formbricks/no-request-regexp` (ENG-7109) follow a value inside one file only (one function and its
-  closures, for `no-request-regexp`), so they stay precise but miss a source and a sink in different
-  places; `no-request-regexp` also takes only request input as a source, not a pattern loaded from
-  storage. A safe line disables them with its reason.
+  Three more run in every tier (ENG-7450). `formbricks/no-loose-schema` (ENG-7127) fails a zod schema
+  that keeps unknown keys where it is declared, outside the files in `LOOSE_SCHEMA_ALLOWLIST`
+  (`base.mjs`), each listed with the reason its schemas never reach a Prisma write.
+  `formbricks/no-request-regexp` (ENG-7109) follows request input inside one file, through variables,
+  closures and the file's own functions, to `new RegExp`, `.match`, `.matchAll` or `.search`; a pattern
+  loaded from storage is not a source. A safe line disables it with its reason.
   `formbricks/no-tsx-unit-test` fails a `*.test.tsx`/`*.spec.tsx` file (CODING_STANDARDS.md, Testing
-  Guidelines), except those in `TSX_UNIT_TEST_ALLOWLIST` (`base.mjs`), which only shrinks.
+  Guidelines), except those in `TSX_UNIT_TEST_ALLOWLIST` (`base.mjs`). Both allowlists only shrink.
   JS plugins are slower than native rules. eslint-plugin-react, the slowest, was dropped (ENG-7401): its
   `prop-types` is left to TypeScript, and its `no-deprecated` to React 19's types and `react/no-unsafe`
   with `checkAliases`.

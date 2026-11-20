@@ -56,7 +56,17 @@ describe(RULE, () => {
     }
   );
 
-  // The allowlist only shrinks: an entry whose test is gone is removed with it.
+  // The allowlist only shrinks: adding a file means changing this snapshot, which a reviewer sees.
+  test("the allowlist is frozen", () => {
+    expect(TSX_UNIT_TEST_ALLOWLIST.toSorted()).toEqual([
+      "apps/web/modules/auth/hooks/use-sign-out.test.tsx",
+      "apps/web/modules/ee/analysis/charts/components/embedded-field-rename-button.test.tsx",
+      "packages/surveys/src/components/general/survey.test.tsx",
+      "packages/surveys/src/lib/use-focus-trap.test.tsx",
+    ]);
+  });
+
+  // An entry whose test is gone is removed with it.
   test.each(TSX_UNIT_TEST_ALLOWLIST)("the allowlisted %s exists", (file) => {
     expect(existsSync(`${root}${file}`)).toBe(true);
   });

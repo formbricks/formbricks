@@ -20,12 +20,12 @@ hardening first for literal `ubuntu-*` runner labels, including version and arch
 still judge whether requested token permissions are minimal and whether runner choices outside this
 check need hardening.
 
-`formbricks/no-tsx-unit-test` enforces the `.tsx` unit-test ban (its allowlist only shrinks).
-`formbricks/no-loose-schema-prisma-write` and `formbricks/no-request-regexp` report a loose schema's output
-reaching a Prisma write, and request input reaching `new RegExp`, only when source and sink share a file
-(for `no-request-regexp`, one function and its closures). Green lint does not clear either class: a flow
-across functions or files, or a pattern loaded from a stored survey or filter, is still a review check
-under "Security".
+`formbricks/no-tsx-unit-test` fails a `*.test.tsx` / `*.spec.tsx` file, and `formbricks/no-loose-schema`
+fails a zod schema that keeps unknown keys (`.loose()`, `.passthrough()`, `z.looseObject()`, `.catchall()`
+without `z.never()`). Each allowlist in `packages/config-oxlint/base.mjs` only shrinks, and an entry in
+`LOOSE_SCHEMA_ALLOWLIST` carries the reason its schemas never reach a write. `formbricks/no-request-regexp`
+reports request input compiled into a regex only inside one file: a pattern loaded from a stored survey or
+filter, or one that crosses files, is still a review check under "Security".
 
 ## Conventions Awaiting Automated Enforcement
 
@@ -49,10 +49,6 @@ These remain review checks until their enforcement handles the repository's exis
   files, locale files and lockfiles are exempt, and an existing file already over the limit is not a
   reason to refactor it unless the change touches it.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings.
-- When stored data contradicts its type (a legacy row, a loosely typed draft), parse it at the DB read
-  boundary so the type holds for every caller. A `?? []` guard at a call site that needs a lint-disable
-  comment, because the type says the value is never missing, is a finding: the fix is the parse, not one
-  guard per call site (formbricks#10107).
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
 - A change that replaces a tool keeps every behaviour the old setup carried (script flags, inline config
@@ -144,11 +140,14 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   ENG-7310, ENG-7395).
   - An OAuth, OIDC or SSO callback, and any flow that links an identity or creates a session in the browser
     that started it, binds its completion to that browser (`state`, PKCE, a cookie set at the start).
-  - An emailed link (verification, recovery, invite) is short-lived. Opening it may prove the mailbox, set
-    a proof cookie, or start a session no stronger than the next rule allows. The step that changes the
-    account (link an identity, reset a password, accept an invite, change an email) is single-use and runs
-    only through a `POST` from a confirmation page, so a scanner's `GET` changes nothing. The link may be
-    opened on another device than the one that asked for it.
+  - An emailed link (verification, recovery, invite) is short-lived and may be opened on another device
+    than the one that asked for it. Opening it may prove the mailbox or set a proof cookie. The step that
+    changes the account (link an identity, reset a password, accept an invite, change an email) is
+    single-use and runs only through a `POST` from a confirmation page, so a scanner's `GET` changes
+    nothing. A new emailed link creates no session on `GET`. The one that does, the SSO-recovery sign-in
+    link (`apps/web/modules/ee/sso/lib/better-auth-recovery-signin.ts`), is the accepted exception: it
+    stays usable until it expires so a scanner cannot spend it, signs in only an account without 2FA, and
+    the identity link it leads to still needs the `POST` and the proof cookie.
 - **No path creates a session weaker than the account requires.** Local paths (password, magic link, account
   recovery) go through the app's 2FA check. SSO relies on the IdP's MFA; a new SSO sign-in path verifies it
   from `acr` / `amr` where the IdP sends them (the existing providers do not check them yet). An emailed link
@@ -169,13 +168,13 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   as for any other input under "Input Limits". A library stores what it is given. Class: storage
   amplification from anonymous or low-privilege requests (ENG-6885, ENG-7396, ENG-7399).
 - **A security setting passed to a dependency is tested against the real dependency.** For a TLS mode, a
-  cookie flag, a CSP or an auth option, a regression test against the real dependency (a
-  `*.integration.test.ts`, or a step in `apps/web/playwright/api/auth/security.spec.ts` for response
-  headers) asserts the effect: the flags in the `Set-Cookie` header, a refused plaintext connection. Where that cannot be automated, a one-time check is a
-  `manual` row in the PR's Coverage table. An invalid or unrecognised value fails closed (at startup, where
-  it is read from config) rather than falling back to a weaker default. Libraries silently ignore values
-  they don't recognise, so a config that reads right proves nothing. Class: silently dropped security
-  settings (ENG-7337).
+  cookie flag, a CSP or an auth option, a regression test against the real dependency (an `integration`
+  row, or an `e2e` step in `apps/web/playwright/api/auth/security.spec.ts` for response headers) asserts
+  the effect: the flags in the `Set-Cookie` header, a refused plaintext connection. Where that cannot be
+  automated, a one-time check is a `manual` row in the PR's Coverage table. An invalid or unrecognised
+  value fails closed (at startup, where it is read from config) rather than falling back to a weaker
+  default. Libraries silently ignore values they don't recognise, so a config that reads right proves
+  nothing. Class: silently dropped security settings (ENG-7337).
 
 ## Input Limits
 
@@ -245,8 +244,10 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
   for: `where: { id, workspaceId }`, `connect: { id_workspaceId }`. Authorizing the parent is not enough:
   most cross-tenant fixes shipped this year authorized the URL's workspace and then loaded a nested id
   alone. Columns the server owns (`archivedAt`, `organizationId`, `createdBy`) are omitted from create and
-  update input. For a write body with several references, the model is the reference manifest in
-  `apps/web/app/api/v3/responses/lib/reference-manifest.ts` (ENG-2861).
+  update input, and a write's `data` never takes the output of a zod schema that keeps unknown keys: those
+  keys become relation writes and foreign keys (mass assignment, ENG-7127). `formbricks/no-loose-schema`
+  flags such a schema where it is declared. For a write body with several references, the model is the
+  reference manifest in `apps/web/app/api/v3/responses/lib/reference-manifest.ts` (ENG-2861).
 - A check that guards a write (a limit, a status, ownership, `finished`, "first user") runs in the same
   transaction as the write, either on a row read `FOR UPDATE` or as the write's own `WHERE`
   (`DELETE … WHERE "archivedAt" IS NOT NULL`). A check read before the transaction is a race. Snapshots for
@@ -257,6 +258,10 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
 - A query on a model with an `isActive` or `deletedAt` column filters on that column, unless it is meant to
   read inactive or deleted rows.
 - `prisma.response.count()` takes a `where` only, never `skip` or `offset`.
+- When stored data contradicts its type (a legacy row, a loosely typed draft), parse it where it is read
+  from the database, with the read schema ("Input Limits"), so the type holds for every caller. A `?? []`
+  guard at a call site that needs a lint-disable comment, because the type says the value is never
+  missing, is a finding: the fix is the parse, not one guard per call site (formbricks#10107).
 - Separate count and data queries and run in parallel (`Promise.all`).
 - Prefer cursor pagination for large datasets.
 - When filtering by `createdAt`, include indexed fields (e.g., `surveyId` + `createdAt`).
@@ -301,11 +306,12 @@ where the behavior only exists once browser, survey bundle, and server are wired
 The spec filenames in `apps/web/playwright/` are the inventory of covered areas — check there before
 concluding an area has no spec.
 
-The PR's Coverage table names each row's level with one of five words, and the first three are claims a
+The PR's Coverage table names each row's level with one of six words, and the first three are claims a
 reviewer can check: `unit (red on main)` fails against the old code, so it proves the bug existed;
 `unit (mutation)` only fails if you break the fix, because the code under test is new; `unit (guard)`
-passes either way, protecting against a future regression; `e2e` and `manual` say where the check ran. Every
-`unit` and `e2e` row names the test or spec it rests on, in the row or in a `Rerun:` line that names
+passes either way, protecting against a future regression; `integration` (a `*.integration.test.ts` against
+a real database or dependency), `e2e` and `manual` say where the check ran. Every `unit`, `integration` and
+`e2e` row names the test or spec it rests on, in the row or in a `Rerun:` line that names
 it — a bare `pnpm test` names nothing. A `unit (red on main)` row is rerunnable from the
 `Rerun:` command, or names its own where that differs; a `unit (mutation)` row names the mutated
 `file:line` a reviewer edits to turn it red.
@@ -323,8 +329,7 @@ Do:
   module under test, a mocked return value that already is the asserted output, or a call-site argument
   nobody asserts.
 - A unit test over mocked Prisma proves the decision: that the code rejects or resolves, and which write it
-  sends. That the write persists is claimed by a `*.integration.test.ts` against a real database, not by
-  more mocks.
+  sends. That the write persists is an `integration` row's claim, not more mocks.
 - E2E tests (Playwright): one spec per **feature area**, not per ticket and not per component. Default to
   adding assertions or a `test.step` to that area's existing spec in `apps/web/playwright`; a new
   `*.spec.ts` is for a feature area that has none, and it takes the area's name (`billing.spec.ts`).
@@ -353,7 +358,9 @@ Do:
 
 Do not:
 
-- Do not write component or UI unit tests for `.tsx` files. **This is not an instruction to write an E2E
+- Do not write component or UI unit tests for `.tsx` files. Mechanically, a unit test is a `*.test.ts`:
+  `formbricks/no-tsx-unit-test` fails a `*.test.tsx` / `*.spec.tsx`, and a component test written in `.ts`
+  is still a review finding. **This is not an instruction to write an E2E
   test instead**: the absence of a component unit test creates no coverage obligation. If a component holds
   logic worth proving, lift that logic into a `.ts` module and unit-test it there; the rendering is
   exercised incidentally by the feature journeys that already cross it. When the lift serves a bug fix, make
