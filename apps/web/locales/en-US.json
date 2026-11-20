@@ -71,6 +71,8 @@
       "oauth_generic_error_title": "Sign-in failed",
       "oauth_misconfigured_description": "Your identity provider signed you in, but this Formbricks instance is missing part of its single sign-on configuration. Retrying will not help - please contact an administrator.",
       "oauth_misconfigured_title": "Single sign-on is not fully configured",
+      "oauth_recovery_link_not_opened_description": "Only open the link in the email we sent you if you chose to link single sign-on to your Formbricks account yourself. If you did not, ignore that email: opening it could give someone else access to your account. If you did, open the link in this browser to finish.",
+      "oauth_recovery_link_not_opened_title": "This sign-in cannot be finished in this browser",
       "oauth_second_factor_unavailable_description": "Your email address is verified, but this account has two-factor authentication and this Formbricks instance has email and password sign-in turned off, so the second factor cannot be entered here. Sign in with a single sign-on provider already linked to this account to finish, or contact an administrator.",
       "oauth_second_factor_unavailable_title": "Two-factor sign-in cannot be completed here",
       "oauth_signup_not_allowed_description": "Your identity provider signed you in, but this Formbricks instance is not set up to create new accounts this way. Ask an administrator to invite you, then try again.",
@@ -139,6 +141,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "User created successfully",
       "user_successfully_created_info": "We have checked for an account associated with {email}. If none existed, we have created one for you. If an account already existed, no changes were made. Please log in below to continue."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Cancel",
+      "confirm": "Link {provider}",
+      "description": "After this, you can sign in to the Formbricks account {email} with {provider}.",
+      "title": "Link {provider} to your account?",
+      "warning": "Only continue if you yourself asked to sign in to Formbricks with {provider}. If you did not, cancel: someone else may be trying to get into your account."
     },
     "verification-requested": {
       "email_not_configured_description": "This Formbricks instance has no email server set up, so no verification link could be sent. Please contact your administrator.",

@@ -71,6 +71,8 @@
       "oauth_generic_error_title": "Falha no login",
       "oauth_misconfigured_description": "Seu provedor de identidade fez seu login, mas esta instância do Formbricks está com parte da configuração de login único faltando. Tentar novamente não vai ajudar - por favor, entre em contato com um administrador.",
       "oauth_misconfigured_title": "O login único não está totalmente configurado",
+      "oauth_recovery_link_not_opened_description": "Só abra o link do e-mail que enviamos se você mesmo(a) tiver optado por vincular o login único (SSO) à sua conta do Formbricks. Se não foi você, ignore esse e-mail: abri-lo pode dar a outra pessoa acesso à sua conta. Se foi você, abra o link neste navegador para concluir.",
+      "oauth_recovery_link_not_opened_title": "Não é possível concluir este login neste navegador",
       "oauth_second_factor_unavailable_description": "Seu endereço de e-mail foi verificado, mas esta conta tem autenticação de dois fatores e esta instância do Formbricks está com o login por e-mail e senha desativado, então não é possível informar o segundo fator aqui. Para concluir, entre com um provedor de login único (SSO) já vinculado a esta conta ou entre em contato com um administrador.",
       "oauth_second_factor_unavailable_title": "Não é possível concluir o login de dois fatores aqui",
       "oauth_signup_not_allowed_description": "Seu provedor de identidade fez seu login, mas esta instância do Formbricks não está configurada para criar novas contas dessa forma. Peça a um administrador para te convidar e então tente novamente.",
@@ -139,6 +141,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "Usuário criado com sucesso",
       "user_successfully_created_info": "Verificamos se há uma conta associada a {email}. Se não existia, criamos uma para você. Se uma conta já existia, nenhuma alteração foi feita. Por favor, faça login abaixo para continuar."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Cancelar",
+      "confirm": "Vincular {provider}",
+      "description": "Depois disso, você poderá entrar na conta do Formbricks {email} com {provider}.",
+      "title": "Vincular {provider} à sua conta?",
+      "warning": "Só continue se foi você mesmo quem pediu para entrar no Formbricks com {provider}. Se não foi, cancele: outra pessoa pode estar tentando acessar sua conta."
     },
     "verification-requested": {
       "email_not_configured_description": "Esta instância do Formbricks não tem um servidor de e-mail configurado, por isso nenhum link de verificação pôde ser enviado. Entre em contato com seu administrador.",
