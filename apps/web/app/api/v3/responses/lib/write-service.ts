@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import type { TCalBookingsByQuestionId } from "@formbricks/types/cal-booking";
 import type { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type {
@@ -17,6 +18,7 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { calBookingsForAnswers } from "@/lib/response/cal-bookings";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import {
@@ -594,7 +596,7 @@ export async function updateScopedResponse({
           ? null
           : await tx.response.findFirst({
               where: { id: responseId, survey: { workspaceId } },
-              select: { data: true },
+              select: { data: true, calBookings: true },
             });
 
       // Read in the transaction that writes it, so the change the cleanup follows is the change made here.
@@ -604,9 +606,13 @@ export async function updateScopedResponse({
 
       // Scoped `where`, never a bare id — a response outside the workspace matches nothing and
       // Prisma raises P2025, which the operation renders as the same 403 as a pre-flight rejection.
+      // `data` replaces the stored data, so a booking whose answer is no longer "booked" goes with it.
+      const prunedCalBookings = calBookingsAfterReplace(previous?.calBookings, patch.data);
+
       const updated = await tx.response.update({
         where: { id: responseId, survey: { workspaceId } },
         data: {
+          ...(prunedCalBookings && { calBookings: prunedCalBookings }),
           ...(patch.finished === undefined ? {} : { finished: patch.finished }),
           ...(patch.endingId === undefined ? {} : { endingId: patch.endingId }),
           ...(patch.language === undefined ? {} : { language: patch.language }),
@@ -673,6 +679,19 @@ export async function updateScopedResponse({
     throw error;
   }
 }
+
+/**
+ * The stored Cal bookings left once `data` replaces the stored data, or `undefined` when none is dropped (so
+ * the column is not written). A booking whose answer is no longer "booked" goes with it.
+ */
+const calBookingsAfterReplace = (
+  stored: TCalBookingsByQuestionId | null | undefined,
+  data: TResponseData | undefined
+): TCalBookingsByQuestionId | undefined => {
+  if (!stored || !data) return undefined;
+  const kept = calBookingsForAnswers(stored, data);
+  return Object.keys(kept).length === Object.keys(stored).length ? undefined : kept;
+};
 
 const readStoredOutcome = async (
   tx: Prisma.TransactionClient,

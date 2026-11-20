@@ -290,6 +290,25 @@ Two more keys are new in the response object:
   Zapier, Make, n8n and Activepieces show the fields of the last sample they received. After you update Formbricks or add questions, re-test the trigger to see the new fields.
 </Note>
 
+## Cal.com booking details
+
+The answer to a [Schedule a meeting](/surveys/question-type/schedule-a-meeting) question stays the string `booked` in `data.data` and `data.dataByQuestionCode`. When the respondent booked, the response object also carries `calBookingsByQuestionId`, keyed by **Question ID**, with the details Cal.com reported:
+
+```json
+"calBookingsByQuestionId": {
+  "cm9k2v7q00004": {
+    "status": "booked",
+    "startTime": "2026-11-05T10:00:00.000Z",
+    "endTime": "2026-11-05T10:30:00.000Z",
+    "title": "Intro call between Alex and Sam",
+    "uid": "mWd8k2xYpQ",
+    "videoCallUrl": "https://app.cal.com/video/mWd8k2xYpQ"
+  }
+}
+```
+
+The key is only there when the response holds a booking, so no other webhook changes. It is additive: if your receiver validates the payload against a strict schema, allow unknown keys. The details are reported by the respondent's browser and are not verified.
+
 ## Example Webhook Payloads
 
 We provide the following webhook payloads, `responseCreated`, `responseUpdated`, and `responseFinished`.
