@@ -621,7 +621,8 @@ const getCalculationOperand = (
     case "hiddenField": {
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
-        // A number field takes a numeric answer as a number; anything else keeps its text.
+        // A number field takes a numeric answer or hidden field as a number; anything else keeps its
+        // text. Same rule as the server evaluator (apps/web/lib/surveyLogic/utils.ts).
         operandValue = dataType === "number" && !Number.isNaN(Number(val)) ? Number(val) : val;
       }
       break;
