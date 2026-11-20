@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { getSsoRecoveryConfirmation } from "./recovery-authorize";
 import { resolveSsoRecoveryConfirmView } from "./recovery-confirm";
-import { SsoRecoveryError, getSsoRecoveryConfirmation } from "./sso-recovery";
+import { SsoRecoveryError } from "./recovery-outcomes";
 
 vi.mock("@formbricks/logger", () => {
   const log = { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() };
@@ -14,11 +15,9 @@ vi.mock("@/lib/constants", async (importOriginal) => ({
 }));
 
 // The guards themselves are tested in sso-recovery.test.ts; this file pins what the page does with their
-// answer. The redirect mapping stays real so a refusal lands where the completion route would send it.
-vi.mock("./sso-recovery", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./sso-recovery")>()),
-  getSsoRecoveryConfirmation: vi.fn(),
-}));
+// answer. The redirect mapping (`recovery-outcomes`) stays real so a refusal lands where the completion
+// route would send it.
+vi.mock("./recovery-authorize", () => ({ getSsoRecoveryConfirmation: vi.fn() }));
 
 const anonymous = async () => ({});
 

@@ -2,8 +2,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { getSession } from "@/modules/auth/lib/session";
 import { revokeSessionByToken } from "@/modules/auth/lib/session-revocation";
+import { cancelSsoRecovery } from "@/modules/ee/sso/lib/recovery-authorize";
+import { SsoRecoveryError } from "@/modules/ee/sso/lib/recovery-outcomes";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
-import { SsoRecoveryError, cancelSsoRecovery, completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
+import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { GET, POST } from "./route";
 
 /**
@@ -28,14 +30,10 @@ vi.mock("@/modules/auth/lib/session-cookie", async (importOriginal) => ({
   ),
 }));
 
-// `SsoRecoveryError` and the redirect helpers (`getSsoRecoveryFailureRedirectUrl`,
-// `getSsoRecoveryLinkNotOpenedRedirectUrl`) stay real — the route branches on `instanceof` and builds its
-// redirects from the helpers, so stubbing any of them would test the stub.
-vi.mock("@/modules/ee/sso/lib/sso-recovery", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/modules/ee/sso/lib/sso-recovery")>()),
-  completeSsoRecovery: vi.fn(),
-  cancelSsoRecovery: vi.fn(),
-}));
+// `SsoRecoveryError` and the redirect helpers in `recovery-outcomes` stay real — the route branches on
+// `instanceof` and builds its redirects from the helpers, so stubbing any of them would test the stub.
+vi.mock("@/modules/ee/sso/lib/sso-recovery", () => ({ completeSsoRecovery: vi.fn() }));
+vi.mock("@/modules/ee/sso/lib/recovery-authorize", () => ({ cancelSsoRecovery: vi.fn() }));
 
 const request = (url: string, cookie?: string) =>
   new Request(url, cookie ? { headers: { cookie } } : undefined);

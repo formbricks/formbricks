@@ -7,8 +7,9 @@ import { createToken } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
 import { getSession } from "@/modules/auth/lib/session";
 import { ssoRecoveryAfterHandler } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { cancelSsoRecovery } from "@/modules/ee/sso/lib/recovery-authorize";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
-import { cancelSsoRecovery, completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
+import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { captureSsoIdentity, runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 import { cookieHeaderFrom, proofCookieOf } from "@/modules/ee/sso/lib/tests/recovery-cookies";
 

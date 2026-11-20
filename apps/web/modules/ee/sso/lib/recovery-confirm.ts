@@ -1,12 +1,12 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { getSsoProviderDisplayName } from "./provider-display-name";
+import { getSsoRecoveryConfirmation } from "./recovery-authorize";
 import {
   SsoRecoveryError,
-  getSsoRecoveryConfirmation,
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoveryRefusalRedirectUrl,
-} from "./sso-recovery";
+} from "./recovery-outcomes";
 
 /** What the confirmation page shows, or where it sends a browser it may show nothing to (ENG-7395). */
 export type TSsoRecoveryConfirmView =

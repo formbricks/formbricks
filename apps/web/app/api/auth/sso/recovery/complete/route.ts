@@ -9,18 +9,18 @@ import {
   getSessionTokenFromCookieHeader,
 } from "@/modules/auth/lib/session-cookie";
 import { revokeSessionByToken } from "@/modules/auth/lib/session-revocation";
+import { cancelSsoRecovery } from "@/modules/ee/sso/lib/recovery-authorize";
+import {
+  SsoRecoveryError,
+  getSsoRecoveryConfirmUrl,
+  getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoveryRefusalRedirectUrl,
+} from "@/modules/ee/sso/lib/recovery-outcomes";
 import {
   SSO_RECOVERY_PROOF_COOKIE_NAME,
   SSO_RECOVERY_PROOF_COOKIE_OPTIONS,
 } from "@/modules/ee/sso/lib/recovery-proof";
-import {
-  SsoRecoveryError,
-  cancelSsoRecovery,
-  completeSsoRecovery,
-  getSsoRecoveryConfirmUrl,
-  getSsoRecoveryFailureRedirectUrl,
-  getSsoRecoveryRefusalRedirectUrl,
-} from "@/modules/ee/sso/lib/sso-recovery";
+import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 
 const clearSessionCookies = (response: NextResponse) => {
   for (const cookieName of BETTER_AUTH_SESSION_COOKIE_NAMES) {

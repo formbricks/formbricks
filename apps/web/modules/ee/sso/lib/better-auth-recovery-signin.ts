@@ -9,16 +9,16 @@ import { EMAIL_AUTH_ENABLED, WEBAPP_URL } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import {
+  getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoverySecondFactorRedirectUrl,
+  getSsoRecoverySecondFactorUnavailableRedirectUrl,
+} from "@/modules/ee/sso/lib/recovery-outcomes";
+import {
   SSO_RECOVERY_PROOF_COOKIE_NAME,
   SSO_RECOVERY_PROOF_COOKIE_OPTIONS,
   createSsoRecoveryProof,
   getSsoRecoveryStateIdFromCompletionUrl,
 } from "@/modules/ee/sso/lib/recovery-proof";
-import {
-  getSsoRecoveryFailureRedirectUrl,
-  getSsoRecoverySecondFactorRedirectUrl,
-  getSsoRecoverySecondFactorUnavailableRedirectUrl,
-} from "@/modules/ee/sso/lib/sso-recovery";
 
 /**
  * SSO-recovery magic-link sign-in (ENG-1054, Phase 7) — the Better Auth replacement for the NextAuth

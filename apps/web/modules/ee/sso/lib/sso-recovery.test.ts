@@ -8,19 +8,17 @@ import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
 import { syncSsoIdentityForUser } from "./account-linking";
-import { createSsoRecoveryProof } from "./recovery-proof";
+import { cancelSsoRecovery, getSsoRecoveryConfirmation } from "./recovery-authorize";
 import {
   SsoRecoveryError,
-  cancelSsoRecovery,
-  completeSsoRecovery,
   getSsoRecoveryConfirmUrl,
-  getSsoRecoveryConfirmation,
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoveryRefusalRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
   getSsoRecoverySecondFactorUnavailableRedirectUrl,
-  startSsoRecovery,
-} from "./sso-recovery";
+} from "./recovery-outcomes";
+import { createSsoRecoveryProof } from "./recovery-proof";
+import { completeSsoRecovery, startSsoRecovery } from "./sso-recovery";
 
 const mocks = vi.hoisted(() => ({
   createEmailToken: vi.fn(),
