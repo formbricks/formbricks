@@ -25,6 +25,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./loggable-error": {
+      "types": "./dist/loggable-error.d.ts",
+      "import": "./dist/loggable-error.js",
+      "require": "./dist/loggable-error.cjs"
     }
   },
   "scripts": {
