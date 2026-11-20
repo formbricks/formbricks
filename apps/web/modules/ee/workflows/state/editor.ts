@@ -17,7 +17,11 @@ import {
   getCanvasDirection,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { createDefaultTrigger } from "@/modules/ee/workflows/lib/default-workflow";
-import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/workflows/lib/http-request-panel";
+import {
+  settleSentSecretValues,
+  settleUnstoredSecrets,
+  withSecretIdsForCheck,
+} from "@/modules/ee/workflows/lib/http-request-panel";
 import {
   type TPasteTarget,
   type TStepClipboard,
@@ -262,25 +266,31 @@ export const lastSecretSettleAtom = atom<{ sent: TWorkflowDefinition; result: TW
 
 // After a save, the secret header values it sent are stored server-side: keep them out of the draft
 // (and out of the saved snapshot, so this is no edit) or the next autosave would send them again.
-export const settleSentSecretHeaderValuesAtom = atom(null, (get, set, sent: TWorkflowDefinition) => {
-  const state = get(workflowEditorAtom);
-  const definition = state.definition ? settleSentSecretValues(state.definition, sent) : null;
-  const savedDefinition = state.lastSavedDraft?.definition
-    ? settleSentSecretValues(state.lastSavedDraft.definition, sent)
-    : null;
-  if (definition === state.definition && savedDefinition === (state.lastSavedDraft?.definition ?? null)) {
-    return;
+// A secret the draft shows as set but the save stored no value for (see settleUnstoredSecrets) is unset.
+export const settleSentSecretHeaderValuesAtom = atom(
+  null,
+  (get, set, { sent, saved }: { sent: TWorkflowDefinition; saved: TWorkflowDefinition | null }) => {
+    const state = get(workflowEditorAtom);
+    const settle = (definition: TWorkflowDefinition) => {
+      const swapped = settleSentSecretValues(definition, sent);
+      return saved ? settleUnstoredSecrets(swapped, saved) : swapped;
+    };
+    const definition = state.definition ? settle(state.definition) : null;
+    const savedDefinition = state.lastSavedDraft?.definition ? settle(state.lastSavedDraft.definition) : null;
+    if (definition === state.definition && savedDefinition === (state.lastSavedDraft?.definition ?? null)) {
+      return;
+    }
+    set(
+      workflowEditorAtom,
+      produce(state, (draft) => {
+        draft.definition = definition;
+        if (draft.lastSavedDraft) draft.lastSavedDraft.definition = savedDefinition;
+      })
+    );
+    if (definition)
+      set(lastSecretSettleAtom, { sent, result: get(workflowEditorAtom).definition ?? definition });
   }
-  set(
-    workflowEditorAtom,
-    produce(state, (draft) => {
-      draft.definition = definition;
-      if (draft.lastSavedDraft) draft.lastSavedDraft.definition = savedDefinition;
-    })
-  );
-  if (definition)
-    set(lastSecretSettleAtom, { sent, result: get(workflowEditorAtom).definition ?? definition });
-});
+);
 
 // True while the editable draft (name, description, definition) differs from what was last
 // persisted. Trimmed comparison so trailing whitespace the save flow strips anyway never counts.

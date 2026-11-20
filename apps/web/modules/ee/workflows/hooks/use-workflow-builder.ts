@@ -277,7 +277,7 @@ export const useWorkflowBuilder = ({
           definition: currentDefinition,
         });
         // The secret header values just sent are stored now; never send them again (ADR 0043).
-        settleSentSecretHeaderValues(currentDefinition);
+        settleSentSecretHeaderValues({ sent: currentDefinition, saved: savedWorkflow.definition ?? null });
         // Re-run the server loaders so server-resolved props (e.g. the email authoring context,
         // which resolves the trigger's bound survey) catch up with the just-saved definition.
         // Client state (atoms, form drafts) survives a refresh.

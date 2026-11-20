@@ -301,3 +301,39 @@ export const settleSentSecretValues = (
   });
   return changed ? { ...draft, nodes } : draft;
 };
+
+/**
+ * After a save, a secret header the draft shows as set but that the save stored no value for (Undo
+ * brought back a header whose step was deleted and saved, so its stored secret is gone) takes the
+ * saved shape: not set. Without this the panel says "set" while the server has nothing to send.
+ */
+export const settleUnstoredSecrets = (
+  draft: TWorkflowDefinition,
+  saved: TWorkflowDefinition
+): TWorkflowDefinition => {
+  const storedHeaders = new Set<string>();
+  for (const node of saved.nodes) {
+    if (node.type !== "action" || node.actionType !== "http_request") continue;
+    for (const header of node.config.headers) {
+      if (header.secret === true && header.isSet === true) {
+        storedHeaders.add(`${node.id}\u0000${header.name.toLowerCase()}`);
+      }
+    }
+  }
+
+  let changed = false;
+  const nodes = draft.nodes.map((node) => {
+    if (node.type !== "action" || node.actionType !== "http_request") return node;
+    let nodeChanged = false;
+    const headers = node.config.headers.map((header) => {
+      const claimsStored = header.secret === true && header.isSet === true && !header.value;
+      if (!claimsStored || storedHeaders.has(`${node.id}\u0000${header.name.toLowerCase()}`)) return header;
+      nodeChanged = true;
+      return { name: header.name, secret: true as const, isSet: false };
+    });
+    if (!nodeChanged) return node;
+    changed = true;
+    return { ...node, config: { ...node.config, headers } };
+  });
+  return changed ? { ...draft, nodes } : draft;
+};

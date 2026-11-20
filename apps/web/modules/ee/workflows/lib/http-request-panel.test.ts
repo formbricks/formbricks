@@ -16,6 +16,7 @@ import {
   methodSendsBody,
   renameHeader,
   settleSentSecretValues,
+  settleUnstoredSecrets,
   shouldWarnSecretGoesLive,
   startReplacingSecret,
   toStoredBody,
@@ -339,5 +340,38 @@ describe("settleSentSecretValues", () => {
     const draft = withHeaders([{ name: "Authorization", secret: true, value: "Bearer ne" }]);
 
     expect(settleSentSecretValues(draft, sent)).toBe(draft);
+  });
+});
+
+describe("settleUnstoredSecrets", () => {
+  const withHeaders = (headers: unknown[]) =>
+    ({
+      nodes: [
+        {
+          id: "call",
+          type: "action",
+          actionType: "http_request",
+          config: { method: "GET", url: "https://a.example", queryParameters: [], headers },
+        },
+      ],
+    }) as unknown as TWorkflowDefinition;
+  const headersOf = (definition: TWorkflowDefinition) =>
+    (definition.nodes[0] as { config: { headers: unknown[] } }).config.headers;
+
+  test("unsets a secret Undo brought back after its stored value was deleted", () => {
+    const draft = withHeaders([{ name: "Authorization", secret: true, isSet: true }]);
+    const saved = withHeaders([{ name: "Authorization", secret: true, isSet: false }]);
+
+    expect(headersOf(settleUnstoredSecrets(draft, saved))).toEqual([
+      { name: "Authorization", secret: true, isSet: false },
+    ]);
+  });
+
+  test("keeps a secret the save stored, and one with a value still to send", () => {
+    const stored = withHeaders([{ name: "Authorization", secret: true, isSet: true }]);
+    expect(settleUnstoredSecrets(stored, stored)).toBe(stored);
+
+    const typed = withHeaders([{ name: "Authorization", secret: true, value: "Bearer new" }]);
+    expect(settleUnstoredSecrets(typed, withHeaders([]))).toBe(typed);
   });
 });
