@@ -20,7 +20,7 @@ interface InvitePageProps {
   searchParams: Promise<{ token: string }>;
 }
 
-export const InvitePage = async (props: InvitePageProps) => {
+export const InvitePage = async (props: Readonly<InvitePageProps>) => {
   const searchParams = await props.searchParams;
   const t = await getTranslate();
   const session = await getSession();

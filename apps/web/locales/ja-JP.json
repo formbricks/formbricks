@@ -81,6 +81,8 @@
       "oauth_generic_error_title": "サインインに失敗しました",
       "oauth_misconfigured_description": "IDプロバイダーによるサインインは成功しましたが、このFormbricksインスタンスではシングルサインオンの設定が不完全です。再試行しても解決しません。管理者にお問い合わせください。",
       "oauth_misconfigured_title": "シングルサインオンが完全に設定されていません",
+      "oauth_recovery_link_not_opened_description": "シングルサインオンをご自身でFormbricksアカウントに連携した場合にのみ、お送りしたメール内のリンクを開いてください。心当たりがない場合は、そのメールを無視してください。開くと、他の人があなたのアカウントにアクセスできてしまう可能性があります。ご自身で連携した場合は、このブラウザでリンクを開いて完了してください。",
+      "oauth_recovery_link_not_opened_title": "このブラウザではサインインを完了できません",
       "oauth_second_factor_unavailable_description": "メールアドレスは確認済みですが、このアカウントでは2要素認証が有効になっており、この Formbricks インスタンスではメールアドレスとパスワードによるサインインがオフになっているため、ここでは第2要素を入力できません。サインインを完了するには、このアカウントに連携済みのシングルサインオン(SSO)プロバイダーを使用するか、管理者にお問い合わせください。",
       "oauth_second_factor_unavailable_title": "ここでは2要素認証によるサインインを完了できません",
       "oauth_signup_not_allowed_description": "IDプロバイダーによるサインインは成功しましたが、このFormbricksインスタンスではこの方法で新しいアカウントを作成できない設定になっています。管理者に招待を依頼してから、もう一度お試しください。",
@@ -227,6 +229,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "ユーザーの作成に成功しました",
       "user_successfully_created_info": "入力されたメールアドレス ({email}) に関連するアカウントをチェックしました。アカウントが存在しない場合、作成されました。すでに存在する場合、変更はありません。続行するには、以下のログインフォームからログインしてください。"
+    },
+    "sso_recovery_confirm": {
+      "cancel": "キャンセル",
+      "confirm": "{provider}を連携",
+      "description": "この後、{provider}でFormbricksアカウント({email})にサインインできるようになります。",
+      "title": "{provider}をアカウントに連携しますか?",
+      "warning": "ご自身で{provider}を使ってFormbricksにサインインしようとした場合のみ、続行してください。心当たりがない場合は、キャンセルしてください。他の誰かがあなたのアカウントにアクセスしようとしている可能性があります。"
     },
     "verification-requested": {
       "email_not_configured_description": "この Formbricks インスタンスにはメールサーバーが設定されていないため、確認リンクを送信できませんでした。管理者にお問い合わせください。",
@@ -964,6 +973,8 @@
     "scheduled": "このアンケートはまもなく開始されます。",
     "survey_already_answered_heading": "このアンケートはすでに回答されています。",
     "survey_already_answered_subheading": "このリンクは一度だけしか使用できません。",
+    "survey_not_found": "アンケートが見つかりません。",
+    "survey_not_found_description": "このIDのアンケートは存在しません。",
     "survey_sent_to": "{email} にアンケートを送信しました",
     "verify_email": "メールアドレスを認証。",
     "verify_email_before_submission": "回答するにはメールアドレスを認証してください",

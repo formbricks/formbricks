@@ -81,6 +81,8 @@
       "oauth_generic_error_title": "Anmeldung fehlgeschlagen",
       "oauth_misconfigured_description": "Dein Identity Provider hat dich angemeldet, aber dieser Formbricks-Instanz fehlt ein Teil der Single Sign-On-Konfiguration. Ein erneuter Versuch wird nicht helfen – bitte wende dich an einen Administrator.",
       "oauth_misconfigured_title": "Single Sign-On ist nicht vollständig konfiguriert",
+      "oauth_recovery_link_not_opened_description": "Öffne den Link in der E-Mail, die wir dir geschickt haben, nur dann, wenn du die Single-Sign-on-Verknüpfung mit deinem Formbricks-Konto selbst eingerichtet hast. Falls nicht, ignoriere diese E-Mail: Wenn du den Link öffnest, könnte jemand anderes Zugriff auf dein Konto erhalten. Falls doch, öffne den Link in diesem Browser, um den Vorgang abzuschließen.",
+      "oauth_recovery_link_not_opened_title": "Diese Anmeldung kann in diesem Browser nicht abgeschlossen werden",
       "oauth_second_factor_unavailable_description": "Deine E-Mail-Adresse ist bestätigt, aber für dieses Konto ist die Zwei-Faktor-Authentifizierung aktiviert und bei dieser Formbricks-Instanz ist die Anmeldung per E-Mail und Passwort deaktiviert. Daher kann der zweite Faktor hier nicht eingegeben werden. Melde Dich zum Abschließen über einen Single-Sign-On-Anbieter an, der bereits mit diesem Konto verknüpft ist, oder wende Dich an einen Administrator.",
       "oauth_second_factor_unavailable_title": "Die Zwei-Faktor-Anmeldung kann hier nicht abgeschlossen werden",
       "oauth_signup_not_allowed_description": "Dein Identity Provider hat dich angemeldet, aber diese Formbricks-Instanz ist nicht so eingerichtet, dass neue Konten auf diesem Weg erstellt werden können. Bitte einen Administrator, dich einzuladen, und versuche es dann erneut.",
@@ -227,6 +229,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "Nutzer erfolgreich erstellt",
       "user_successfully_created_info": "Wir haben nach einem Konto gesucht, das mit {email} verknüpft ist. Falls keines existierte, haben wir eines für dich erstellt. Falls bereits ein Konto vorhanden war, wurden keine Änderungen vorgenommen. Bitte melde dich unten an, um fortzufahren."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Abbrechen",
+      "confirm": "{provider} verknüpfen",
+      "description": "Danach kannst Du Dich mit {provider} beim Formbricks-Konto {email} anmelden.",
+      "title": "{provider} mit Deinem Konto verknüpfen?",
+      "warning": "Fahre nur fort, wenn Du selbst darum gebeten hast, Dich mit {provider} bei Formbricks anzumelden. Falls nicht, brich den Vorgang ab: Möglicherweise versucht jemand anderes, Zugriff auf Dein Konto zu bekommen."
     },
     "verification-requested": {
       "email_not_configured_description": "Für diese Formbricks-Instanz ist kein E-Mail-Server eingerichtet, daher konnte kein Bestätigungslink gesendet werden. Bitte wende dich an deinen Administrator.",
@@ -964,6 +973,8 @@
     "scheduled": "Diese Umfrage öffnet bald.",
     "survey_already_answered_heading": "Die Umfrage wurde bereits beantwortet.",
     "survey_already_answered_subheading": "Du kannst diesen Link nur einmal verwenden.",
+    "survey_not_found": "Umfrage nicht gefunden.",
+    "survey_not_found_description": "Es gibt keine Umfrage mit dieser ID.",
     "survey_sent_to": "Umfrage gesendet an {email}",
     "verify_email": "E-Mail verifizieren.",
     "verify_email_before_submission": "Verifiziere deine E-Mail, um zu antworten",

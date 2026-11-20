@@ -126,6 +126,8 @@ const resendSsoRecoveryEmail = async (
     callbackUrl: validatedCallbackUrl,
     purpose: "sso_recovery",
     linkTtlSeconds: pairedTtlSeconds,
+    // The same recovery the first link was bound to (ENG-7310).
+    ssoRecoveryStateId: recovery.stateId,
   });
 
   // Best-effort: the mail has gone out, so a failure here costs the pairing, not the resend.

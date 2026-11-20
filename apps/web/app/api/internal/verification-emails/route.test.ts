@@ -236,6 +236,8 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
       callbackUrl: RECOVERY_CALLBACK,
       purpose: "sso_recovery",
       linkTtlSeconds: 777,
+      // The resent link is bound to the same recovery as the first (ENG-7310).
+      ssoRecoveryStateId: "test-state",
     });
     expect(response.status).toBe(204);
   });

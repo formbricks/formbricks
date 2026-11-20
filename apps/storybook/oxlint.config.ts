@@ -27,8 +27,7 @@ const storybookRecommended = {
   main: { "storybook/no-uninstalled-addons": "error" },
 } as const;
 
-// Storybook stays warning-free (its ESLint script ran with `--max-warnings 0`). Its warnings are raised
-// to errors here, so the repo-wide `pnpm lint:code` fails on them too.
+// Every workspace raises its warnings to errors, so the repo-wide `pnpm lint:code` fails on them.
 export default defineConfig(
   denyWarnings(
     compose({ ignorePatterns: ["storybook-static/**"] }, react, {

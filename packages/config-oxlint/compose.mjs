@@ -6,17 +6,13 @@ const resolvePackage = (specifier) => fileURLToPath(import.meta.resolve(specifie
  * JS plugins: ESLint plugins oxlint runs through its ESLint-compatible plugin API, for the rules it
  * does not implement natively. They resolve relative to the config file that declares them, and the
  * tiers are declared here but consumed from every workspace, so each one is passed as an absolute
- * path. The names `react` and `unicorn` are taken by oxlint's native plugins, hence the `react-js`
- * and `unicorn-js` aliases for the plugins' own versions of rules oxlint lacks or implements narrower.
+ * path. The name `unicorn` is taken by oxlint's native plugin, hence the `unicorn-js` alias for the
+ * plugin's own version of a rule oxlint implements narrower.
  */
 export const jsPlugins = {
   formbricks: {
     name: "formbricks",
     specifier: fileURLToPath(new URL("./plugins/formbricks.mjs", import.meta.url)),
-  },
-  reactJs: {
-    name: "react-js",
-    specifier: fileURLToPath(new URL("./plugins/react-js.mjs", import.meta.url)),
   },
   sonarjs: { name: "sonarjs", specifier: resolvePackage("eslint-plugin-sonarjs") },
   turbo: { name: "turbo", specifier: resolvePackage("eslint-plugin-turbo") },
@@ -74,14 +70,16 @@ export function compose(...fragments) {
 }
 
 /*
- * Returns `config` with every "warn" raised to "error", in its rules and its overrides. oxlint runs
- * once for the whole repo, so a workspace that must stay warning-free (ESLint's `--max-warnings 0`)
- * makes its warnings errors instead.
+ * Returns `config` with every "warn" raised to "error", in its categories, rules and overrides, since a
+ * warning does not fail an oxlint run. The rules in `except` keep their "warn" (see `denyWarnings` in
+ * base.mjs).
  */
-export const denyWarnings = (config) => {
+export const raiseWarnings = (config, { except = [] } = {}) => {
+  const kept = new Set(except);
   const raise = (rules = {}) =>
     Object.fromEntries(
       Object.entries(rules).map(([id, entry]) => {
+        if (kept.has(id)) return [id, entry];
         if (Array.isArray(entry)) {
           const [severity, ...options] = entry;
           return [id, severity === "warn" ? ["error", ...options] : entry];
@@ -89,8 +87,15 @@ export const denyWarnings = (config) => {
         return [id, entry === "warn" ? "error" : entry];
       })
     );
+  const categories = Object.fromEntries(
+    Object.entries(config.categories ?? {}).map(([name, severity]) => [
+      name,
+      severity === "warn" ? "error" : severity,
+    ])
+  );
   return {
     ...config,
+    ...(config.categories ? { categories } : {}),
     rules: raise(config.rules),
     overrides: (config.overrides ?? []).map((override) => ({ ...override, rules: raise(override.rules) })),
   };

@@ -45,6 +45,7 @@ export const ZOrganizationBilling = z.object({
       lastStripeEventCreatedAt: z.string().nullable().optional(),
       lastSyncedAt: z.string().nullable().optional(),
       lastSyncedEventId: z.string().nullable().optional(),
+      trialStart: z.string().nullable().optional(),
       trialEnd: z.string().nullable().optional(),
       trialEndsOnHobby: z.boolean().optional(),
       pendingChange: z

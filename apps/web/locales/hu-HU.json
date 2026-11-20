@@ -81,6 +81,8 @@
       "oauth_generic_error_title": "A bejelentkezés sikertelen",
       "oauth_misconfigured_description": "A személyazonosság-szolgáltatója bejelentkeztette Önt, de ebből a Formbricks-példányból hiányzik az egyszeri bejelentkezés beállításának egy része. Az újbóli próbálkozás nem fog segíteni. Vegye fel a kapcsolatot egy adminisztrátorral.",
       "oauth_misconfigured_title": "Az egyszeri bejelentkezés nincs teljesen beállítva",
+      "oauth_recovery_link_not_opened_description": "Kérjük, kizárólag abban az esetben nyissa meg az Önnek elküldött e-mailben található hivatkozást, ha az egyszeri bejelentkezést (single sign-on) Ön maga kapcsolta össze Formbricks-fiókjával. Amennyiben nem Ön kezdeményezte, kérjük, hagyja figyelmen kívül az említett e-mailt, mivel a hivatkozás megnyitásával egy harmadik fél hozzáférhet az Ön fiókjához. Amennyiben Ön kezdeményezte, a folyamat befejezéséhez kérjük, nyissa meg a hivatkozást ebben a böngészőben.",
+      "oauth_recovery_link_not_opened_title": "Ez a bejelentkezés ebben a böngészőben nem fejezhető be",
       "oauth_second_factor_unavailable_description": "Az Ön e-mail-címe ellenőrzésre került, azonban ehhez a fiókhoz kétlépcsős hitelesítés tartozik, a jelen Formbricks-példányon pedig az e-mail-címmel és jelszóval történő bejelentkezés ki van kapcsolva, ezért a második lépcsőt itt nem lehet megadni. A művelet befejezéséhez kérjük, jelentkezzen be egy, a fiókhoz már társított egyszeri bejelentkezési (SSO) szolgáltatóval, vagy forduljon a rendszergazdához.",
       "oauth_second_factor_unavailable_title": "A kétlépcsős bejelentkezés itt nem fejezhető be",
       "oauth_signup_not_allowed_description": "A személyazonosság-szolgáltatója bejelentkeztette Önt, de ez a Formbricks-példány nem úgy van beállítva, hogy ilyen módon új fiókokat hozzon létre. Kérjen meg egy adminisztrátort, hogy hívja meg Önt, majd próbálja meg újra.",
@@ -227,6 +229,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "A felhasználó sikeresen létrehozva",
       "user_successfully_created_info": "Ellenőriztük, hogy létezik-e a(z) {email} címhez rendelt fiók. Ha nem létezett, akkor létrehoztunk egyet Önnek. Ha a fiók már létezett, akkor nem történt változtatás. Jelentkezzen be lent a folytatáshoz."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Mégse",
+      "confirm": "{provider} összekapcsolása",
+      "description": "Ezt követően be tud jelentkezni a(z) {email} e-mail-címhez tartozó Formbricks-fiókjába a(z) {provider} segítségével.",
+      "title": "Összekapcsolja a(z) {provider} szolgáltatást a fiókjával?",
+      "warning": "Kizárólag abban az esetben folytassa, ha Ön személyesen kezdeményezte a Formbricks-be történő bejelentkezést a(z) {provider} használatával. Amennyiben nem Ön kezdeményezte, kérjük, szakítsa meg a folyamatot: előfordulhat, hogy valaki más próbál hozzáférni az Ön fiókjához."
     },
     "verification-requested": {
       "email_not_configured_description": "Ez a Formbricks-példány nem rendelkezik beállított e-mail-kiszolgálóval, ezért nem sikerült elküldeni az ellenőrzési hivatkozást. Vegye fel a kapcsolatot az adminisztrátorral.",
@@ -964,6 +973,8 @@
     "scheduled": "Ez a felmérés hamarosan megnyílik.",
     "survey_already_answered_heading": "A kérdőív már meg lett válaszolva.",
     "survey_already_answered_subheading": "Ezt a hivatkozást csak egyszer használhatja.",
+    "survey_not_found": "A felmérés nem található.",
+    "survey_not_found_description": "Ezzel az azonosítóval nem létezik felmérés.",
     "survey_sent_to": "A kérdőív elküldve a(z) {email} e-mail-címre",
     "verify_email": "E-mail-cím ellenőrzése.",
     "verify_email_before_submission": "Ellenőrizze az e-mail-címét a válaszadáshoz",

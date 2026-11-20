@@ -81,6 +81,8 @@
       "oauth_generic_error_title": "Oturum açma başarısız oldu",
       "oauth_misconfigured_description": "Kimlik sağlayıcın seni oturum açtırdı, ancak bu Formbricks örneğinde tek oturum açma yapılandırmasının bir kısmı eksik. Tekrar denemek yardımcı olmayacak - lütfen bir yönetici ile iletişime geç.",
       "oauth_misconfigured_title": "Tek oturum açma tam olarak yapılandırılmamış",
+      "oauth_recovery_link_not_opened_description": "Size gönderdiğimiz e-postadaki bağlantıyı yalnızca tek oturum açmayı (SSO) Formbricks hesabınıza kendiniz bağlamayı seçtiyseniz açın. Seçmediyseniz o e-postayı dikkate almayın: Açmanız, başka birinin hesabınıza erişmesine neden olabilir. Seçtiyseniz, işlemi tamamlamak için bağlantıyı bu tarayıcıda açın.",
+      "oauth_recovery_link_not_opened_title": "Bu oturum açma işlemi bu tarayıcıda tamamlanamıyor",
       "oauth_second_factor_unavailable_description": "E-posta adresin doğrulandı, ancak bu hesapta iki faktörlü kimlik doğrulama etkin ve bu Formbricks örneğinde e-posta ve parola ile giriş kapalı olduğundan ikinci faktör burada girilemiyor. İşlemi tamamlamak için bu hesaba bağlı bir çoklu oturum açma (SSO) sağlayıcısıyla giriş yap veya bir yöneticiyle iletişime geç.",
       "oauth_second_factor_unavailable_title": "İki aşamalı giriş burada tamamlanamıyor",
       "oauth_signup_not_allowed_description": "Kimlik sağlayıcın seni oturum açtırdı, ancak bu Formbricks örneği bu şekilde yeni hesap oluşturacak şekilde ayarlanmamış. Bir yöneticiden seni davet etmesini iste, ardından tekrar dene.",
@@ -227,6 +229,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "User başarıyla oluşturuldu",
       "user_successfully_created_info": "{email} ile ilişkili bir hesap kontrol ettik. Yoksa sizin için bir tane oluşturduk. Zaten bir hesap varsa, herhangi bir değişiklik yapılmadı. Devam etmek için lütfen aşağıdan giriş yapın."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "İptal",
+      "confirm": "{provider} hesabını bağla",
+      "description": "Bundan sonra {email} Formbricks hesabına {provider} ile giriş yapabilirsin.",
+      "title": "{provider} hesabı hesabına bağlansın mı?",
+      "warning": "Yalnızca Formbricks'e {provider} ile giriş yapmayı bizzat sen istediysen devam et. İstemediysen iptal et: başka biri hesabına girmeye çalışıyor olabilir."
     },
     "verification-requested": {
       "email_not_configured_description": "Bu Formbricks örneğinde yapılandırılmış bir email sunucusu yok, bu nedenle doğrulama bağlantısı gönderilemedi. Lütfen yöneticinizle iletişime geçin.",
@@ -964,6 +973,8 @@
     "scheduled": "Bu anket yakında açılacak.",
     "survey_already_answered_heading": "Survey zaten yanıtlandı.",
     "survey_already_answered_subheading": "Bu bağlantıyı yalnızca bir kez kullanabilirsiniz.",
+    "survey_not_found": "Anket bulunamadı.",
+    "survey_not_found_description": "Bu kimliğe sahip bir anket yok.",
     "survey_sent_to": "Survey şu adrese gönderildi: {email}",
     "verify_email": "Email doğrulayın.",
     "verify_email_before_submission": "Yanıtlamak için email adresinizi doğrulayın",

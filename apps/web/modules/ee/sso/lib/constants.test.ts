@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import {
   SSO_RECOVERY_COMPLETION_PATH,
+  SSO_RECOVERY_CONFIRM_PATH,
   SSO_RECOVERY_SIGN_IN_PATH,
 } from "@/modules/auth/lib/verification-links";
 import { canonicalAccountIssuer, isSsoRecoveryInternalCallbackUrl, ssoAccountIssuer } from "./constants";
@@ -80,6 +81,8 @@ describe("isSsoRecoveryInternalCallbackUrl", () => {
   test.each([
     ["the completion path", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}?state=abc`],
     ["the recovery sign-in path", `${WEBAPP_URL}${SSO_RECOVERY_SIGN_IN_PATH}?token=abc`],
+    // ENG-7395: the GET on the completion path forwards here, so it is part of the loop too.
+    ["the confirmation page", `${WEBAPP_URL}${SSO_RECOVERY_CONFIRM_PATH}?state=abc`],
     ["a single trailing slash", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}/`],
     ["many trailing slashes", `${WEBAPP_URL}${SSO_RECOVERY_COMPLETION_PATH}/////`],
     // Next's `normalizeRepeatedSlashes` collapses interior repeats and backslashes before routing, so
