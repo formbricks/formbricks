@@ -2124,6 +2124,17 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
         ).toEqual({ [STORAGE_KEY]: "gold" });
       });
 
+      test("assign stores a blank hidden field as 0, as the server evaluator does", () => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("number", 5)),
+            fromOperand("assign", { type: "hiddenField", value: "plan" }),
+            { plan: "" },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: 0 });
+      });
+
       test("a text field keeps a numeric text as text", () => {
         expect(
           calculate(
