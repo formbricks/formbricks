@@ -64,6 +64,8 @@ export const WorkflowValidationProblemsDialog = ({
     step_not_executable: t("workspace.workflows.validation_problem_step_not_executable"),
     step_incomplete: t("workspace.workflows.validation_problem_step_incomplete"),
     step_needs_setup: t("workspace.workflows.validation_problem_step_needs_setup"),
+    survey_link_not_placed: t("workspace.workflows.validation_problem_survey_link_not_placed"),
+    survey_link_without_survey: t("workspace.workflows.validation_problem_survey_link_without_survey"),
     definition_invalid: t("workspace.workflows.validation_problem_generic"),
   };
 

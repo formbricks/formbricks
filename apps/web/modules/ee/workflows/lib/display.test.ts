@@ -163,6 +163,36 @@ describe("problem field paths stay shared between producer and consumer", () => 
     });
   });
 
+  test("a survey link the body doesn't place sends the user to the body", () => {
+    const [email] = definition.nodes as unknown as { config: Record<string, unknown> }[];
+    const withUnplacedLink = {
+      ...definition,
+      nodes: [
+        {
+          ...email,
+          config: {
+            ...email.config,
+            to: "jane@example.com",
+            subject: "Thanks",
+            body: "<p>Thanks</p>",
+            surveyLink: { surveyId: "cm9zr4mps000008l8btfy1vtz", embeddedData: [] },
+          },
+        },
+      ],
+    } as unknown as TWorkflowDefinition;
+    const { problems } = deriveWorkflowValidation({
+      workflowName: "wf",
+      definition: withUnplacedLink,
+      hasBoundTriggerSurvey: true,
+    });
+    const linkProblem = problems.find((p) => p.code === "survey_link_not_placed");
+    expect(linkProblem).toBeDefined();
+    expect(getWorkflowValidationProblemFocusTarget(linkProblem!, withUnplacedLink)).toEqual({
+      nodeId: "email-1",
+      field: "body",
+    });
+  });
+
   test("an unbound-survey problem the producer emitted resolves to the survey picker", () => {
     const { problems } = deriveWorkflowValidation({
       workflowName: "wf",

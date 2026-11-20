@@ -32,6 +32,23 @@ export const withoutSurveyLink = (
   body: removeSurveyLinkToken(config.body),
 });
 
+/** A survey link that is set but not in the body, so the email would go out without it. */
+export const hasUnplacedSurveyLink = (config: Pick<TWorkflowSendEmailActionConfig, "surveyLink" | "body">) =>
+  config.surveyLink !== undefined && !hasSurveyLinkToken(config.body);
+
+/**
+ * A body edit, with the survey link following its chip: deleting the chip as text removes the link,
+ * as the chip's Remove does (the editor's Undo brings both back). A link already set without a chip
+ * (from the API) is left alone, so the problem shows instead of the link vanishing unseen.
+ */
+export const followSurveyLinkChip = (
+  config: Pick<TWorkflowSendEmailActionConfig, "surveyLink" | "body">,
+  nextBody: string
+): Pick<TWorkflowSendEmailActionConfig, "body" | "surveyLink"> => {
+  const deletesChip = hasSurveyLinkToken(config.body) && !hasSurveyLinkToken(nextBody);
+  return deletesChip && config.surveyLink ? { body: nextBody, surveyLink: undefined } : { body: nextBody };
+};
+
 /**
  * Sets the value one Embedded Data field gets from the run. A blank value takes the field off the
  * link (the key would otherwise go out empty), so the list only ever holds fields that pass data.

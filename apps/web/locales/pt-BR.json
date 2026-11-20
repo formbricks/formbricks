@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Preencha o destinatário, assunto e corpo da etapa de e-mail.",
       "validation_problem_step_needs_setup": "Conclua a configuração desta etapa.",
       "validation_problem_step_not_executable": "Este tipo de etapa ainda não pode ser executado. Remova-o antes de ativar o fluxo de trabalho.",
+      "validation_problem_survey_link_not_placed": "O link da pesquisa não está no corpo do e-mail. Coloque-o de volta usando Link da pesquisa na barra de ferramentas do corpo ou remova-o de lá.",
+      "validation_problem_survey_link_without_survey": "O corpo do e-mail tem um Link da pesquisa sem nenhuma pesquisa escolhida. Escolha uma em Link da pesquisa ou exclua o link do corpo.",
       "validation_problem_trigger_ending_not_found": "Um encerramento selecionado não existe mais na pesquisa conectada.",
       "validation_problem_trigger_missing": "Adicione um gatilho para iniciar o fluxo de trabalho.",
       "validation_problem_trigger_not_connected": "Conecte uma etapa após o gatilho.",

@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "填写邮件步骤的收件人、主题和正文。",
       "validation_problem_step_needs_setup": "请先完成此步骤的设置。",
       "validation_problem_step_not_executable": "此步骤类型暂时无法运行。请在启用工作流之前移除它。",
+      "validation_problem_survey_link_not_placed": "邮件正文中没有调查问卷链接。请通过正文工具栏中的“调查问卷链接”将其重新插入，或在工具栏中将其移除。",
+      "validation_problem_survey_link_without_survey": "邮件正文中有调查问卷链接，但尚未选择调查问卷。请通过“调查问卷链接”选择一份问卷，或从正文中删除该链接。",
       "validation_problem_trigger_ending_not_found": "所选结束页在关联的问卷中已不存在。",
       "validation_problem_trigger_missing": "添加触发器以启动工作流。",
       "validation_problem_trigger_not_connected": "在触发器后连接一个步骤。",

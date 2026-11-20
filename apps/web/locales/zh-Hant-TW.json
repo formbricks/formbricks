@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "請填寫電子郵件步驟的收件人、主旨和內容。",
       "validation_problem_step_needs_setup": "請完成此步驟的設定。",
       "validation_problem_step_not_executable": "此步驟類型尚無法執行。請在啟用工作流程前將其移除。",
+      "validation_problem_survey_link_not_placed": "電子郵件內文中沒有問卷連結。請使用內文工具列中的「問卷連結」將它放回去，或在那裡將它移除。",
+      "validation_problem_survey_link_without_survey": "電子郵件內文中有「問卷連結」，但尚未選擇問卷。請透過「問卷連結」選擇一份問卷，或將它從內文中刪除。",
       "validation_problem_trigger_ending_not_found": "所選的結尾在已連接的問卷中已不存在。",
       "validation_problem_trigger_missing": "請新增觸發條件以啟動工作流程。",
       "validation_problem_trigger_not_connected": "請在觸發條件後連接步驟。",

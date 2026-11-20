@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "メールステップの宛先、件名、本文を入力してください。",
       "validation_problem_step_needs_setup": "このステップの設定を完了してください。",
       "validation_problem_step_not_executable": "このステップタイプはまだ実行できません。ワークフローを有効にする前に削除してください。",
+      "validation_problem_survey_link_not_placed": "アンケートリンクがメール本文にありません。本文のツールバーにある「アンケートリンク」で元に戻すか、そこから削除してください。",
+      "validation_problem_survey_link_without_survey": "メール本文にアンケートリンクがありますが、アンケートが選択されていません。「アンケートリンク」でアンケートを選択するか、本文から削除してください。",
       "validation_problem_trigger_ending_not_found": "選択された終了条件が、接続されたアンケートに存在しなくなりました。",
       "validation_problem_trigger_missing": "ワークフローを開始するトリガーを追加してください。",
       "validation_problem_trigger_not_connected": "トリガーの後にステップを接続してください。",

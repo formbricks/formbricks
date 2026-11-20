@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Rellena el destinatario, asunto y cuerpo del paso de correo electrónico.",
       "validation_problem_step_needs_setup": "Termina de configurar este paso.",
       "validation_problem_step_not_executable": "Este tipo de paso aún no puede ejecutarse. Elimínalo antes de activar el flujo de trabajo.",
+      "validation_problem_survey_link_not_placed": "El enlace a la encuesta no está en el cuerpo del correo. Vuelve a añadirlo con Enlace a la encuesta en la barra de herramientas del cuerpo, o elimínalo de ahí.",
+      "validation_problem_survey_link_without_survey": "El cuerpo del correo tiene un enlace a la encuesta sin ninguna encuesta elegida. Elige una con Enlace a la encuesta o elimina el enlace del cuerpo.",
       "validation_problem_trigger_ending_not_found": "Un final seleccionado ya no existe en la encuesta conectada.",
       "validation_problem_trigger_missing": "Añade un desencadenador para iniciar el flujo de trabajo.",
       "validation_problem_trigger_not_connected": "Conecta un paso después del desencadenador.",

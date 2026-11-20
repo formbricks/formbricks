@@ -7,6 +7,7 @@ import {
   type TWorkflowTriggerType,
   getBlankSendEmailContentFields,
 } from "@formbricks/workflows";
+import { hasUnplacedSurveyLink } from "@/modules/ee/workflows/lib/email-survey-link";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
   type TWorkflowNodeFieldFocusRequest,
@@ -122,13 +123,17 @@ const TRIGGER_CONFIG_FIELD_TARGETS: Record<string, string> = {
 };
 
 /**
- * The field an unfinished step's problem lands on: the email step's first blank required field, an
+ * The field an unfinished step's problem lands on: the email step's first blank required field (or
+ * its body, when the body doesn't place its survey link), an
  * HTTP request's URL while it has none, otherwise the step's panel itself (an If/else or Switch
  * condition, or a field the step can't name), which opens with nothing focused.
  */
 const getStepProblemField = (node: TWorkflowDefinition["nodes"][number]): string => {
   if (node.type === "action" && node.actionType === "send_email") {
-    return getBlankSendEmailContentFields(node.config)[0] ?? WORKFLOW_STEP_PANEL_FIELD;
+    const blankField = getBlankSendEmailContentFields(node.config)[0];
+    if (blankField) return blankField;
+    // A survey link with no place in the body is fixed from the body's Survey link button.
+    return hasUnplacedSurveyLink(node.config) ? "body" : WORKFLOW_STEP_PANEL_FIELD;
   }
   if (node.type === "action" && node.actionType === "http_request" && !node.config.url.trim()) {
     return "url";

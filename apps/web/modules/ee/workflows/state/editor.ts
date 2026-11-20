@@ -9,6 +9,7 @@ import {
   type TWorkflowTriggerType,
   WORKFLOW_LIMITS,
   ZWorkflowEnableDefinition,
+  getBlankSendEmailContentFields,
   isResponseCompletedTrigger,
 } from "@formbricks/workflows";
 import {
@@ -17,6 +18,7 @@ import {
   getCanvasDirection,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { createDefaultTrigger } from "@/modules/ee/workflows/lib/default-workflow";
+import { hasUnplacedSurveyLink } from "@/modules/ee/workflows/lib/email-survey-link";
 import {
   settleSentSecretValues,
   settleUnstoredSecrets,
@@ -359,6 +361,8 @@ export type TWorkflowValidationProblemCode =
   | "step_not_executable"
   | "step_incomplete"
   | "step_needs_setup"
+  | "survey_link_not_placed"
+  | "survey_link_without_survey"
   | "definition_invalid";
 
 export type TWorkflowValidationProblem = {
@@ -389,6 +393,24 @@ export const workflowProblemFields = {
   },
 } as const;
 
+/**
+ * An email step's problem by the config path it is at: a blank recipient, subject or body; a survey
+ * link the body doesn't place, or a Survey link chip with no link; else a general one (a fixed-text
+ * rule, an Embedded Data value), never "fill in" fields that are filled in.
+ */
+const getEmailStepProblemCode = (
+  configPath: string[],
+  config: Extract<TWorkflowDefinition["nodes"][number], { actionType: "send_email" }>["config"]
+): TWorkflowValidationProblemCode => {
+  const [configField] = configPath;
+  if ((getBlankSendEmailContentFields(config) as string[]).includes(configField)) return "step_incomplete";
+  if (configField === "body" && hasUnplacedSurveyLink(config)) return "survey_link_not_placed";
+  if (configField === "surveyLink" && configPath.length === 1 && !config.surveyLink) {
+    return "survey_link_without_survey";
+  }
+  return "step_needs_setup";
+};
+
 // The `nodes…` part of categorizeDefinitionIssue; null for a path it doesn't bucket.
 const categorizeNodeIssue = (
   path: string[],
@@ -404,15 +426,14 @@ const categorizeNodeIssue = (
     return { code: "step_not_executable", field };
   }
   if (third === "config") {
-    // Missing required content. Grouped per step, not per empty field, so the badge count matches
-    // what the user perceives as one unfinished step. The email step's message names its fields;
-    // any other step (an HTTP request without a URL, an If/else on a Variable it can't see) gets a
-    // general one.
+    // Grouped per step, not per field, so the badge count matches what the user perceives as one
+    // unfinished step. An email step says which of its problems it has; any other step (an HTTP
+    // request without a URL, an If/else on a Variable it can't see) gets a general message.
     const nodeIndex = Number(path[1]);
     const node = definition.nodes[nodeIndex];
     const isEmail = node?.type === "action" && node.actionType === "send_email";
     return {
-      code: isEmail ? "step_incomplete" : "step_needs_setup",
+      code: isEmail ? getEmailStepProblemCode(path.slice(3), node.config) : "step_needs_setup",
       field: workflowProblemFields.nodeConfig(nodeIndex),
     };
   }

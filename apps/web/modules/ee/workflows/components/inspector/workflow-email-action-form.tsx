@@ -31,6 +31,7 @@ import {
   getRecipientVariableOptions,
   toRecipientSelectValue,
 } from "@/modules/ee/workflows/lib/email-recipient";
+import { followSurveyLinkChip, hasUnplacedSurveyLink } from "@/modules/ee/workflows/lib/email-survey-link";
 import {
   getSendEmailBodyRecall,
   withWorkflowVariableItems,
@@ -106,8 +107,16 @@ export const WorkflowEmailActionForm = ({
   const definition = useAtomValue(workflowDefinitionAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const [firstRender, setFirstRender] = useState(true);
-  // Bumped to re-seed the body editor after the form changes the body itself (the survey link).
+  // Bumped to re-seed the body editor when the body changes outside it.
   const [bodyEditorKey, setBodyEditorKey] = useState(0);
+  // The body the editor shows. One that differs came from outside it (Undo, Redo, the survey link's
+  // Remove), and the editor only reads its text when seeded, so it is re-seeded to show it.
+  const [editorBody, setEditorBody] = useState(node.config.body);
+  if (node.config.body !== editorBody) {
+    setEditorBody(node.config.body);
+    setFirstRender(true);
+    setBodyEditorKey((key) => key + 1);
+  }
 
   // Which required fields may show their error. A freshly added node stays clean until the user
   // has actually engaged with a field and left it empty (or arrived here from the problems
@@ -149,9 +158,21 @@ export const WorkflowEmailActionForm = ({
     onChange(latestNodeRef.current);
   };
 
+  // What the editor reports is already on screen, so it never re-seeds the editor.
+  const updateBody = (nextBody: string) => {
+    setEditorBody(nextBody);
+    updateConfig(followSurveyLinkChip(latestNodeRef.current.config, nextBody));
+  };
+
   const invalidFields = new Set(
     getBlankSendEmailContentFields(node.config).filter((field) => touchedFields[field])
   );
+  // A blank body says so first; a survey link the body doesn't place is the other way it fails.
+  let bodyError: string | null = null;
+  if (invalidFields.has("body")) bodyError = t("workspace.workflows.email_body_required");
+  else if (hasUnplacedSurveyLink(node.config)) {
+    bodyError = t("workspace.workflows.validation_problem_survey_link_not_placed");
+  }
 
   // Arriving from the validation problems dialog: reveal every missing field on this node (the
   // point of the jump is to answer "which field is wrong") and focus the one it pointed at.
@@ -202,12 +223,8 @@ export const WorkflowEmailActionForm = ({
     return undefined;
   }, [bodyRecall, survey, node.id, variablePicker.recallSource, variablePicker.groups]);
 
-  // The body only changes from outside the editor here; re-seed it so it shows the new text.
-  const replaceBody = (next: Partial<TWorkflowSendEmailActionNode["config"]>) => {
-    updateConfig(next);
-    setFirstRender(true);
-    setBodyEditorKey((key) => key + 1);
-  };
+  // A body written from outside the editor; the editor re-seeds once it differs from what it shows.
+  const replaceBody = (next: Partial<TWorkflowSendEmailActionNode["config"]>) => updateConfig(next);
   const surveyLinkControls = useWorkflowEmailSurveyLink({
     config: node.config,
     isEditable,
@@ -353,7 +370,7 @@ export const WorkflowEmailActionForm = ({
         {/* The editor defaults to a 2-line min-height (48px); a 4-line body (24px line-height)
           better matches the amount of content an email body usually holds. */}
         <div className="flex flex-col gap-2 [--editor-min-height:96px]" ref={bodyWrapperRef}>
-          <WorkflowFieldLabel id="workflow-email-body-label" isRequired isInvalid={invalidFields.has("body")}>
+          <WorkflowFieldLabel id="workflow-email-body-label" isRequired isInvalid={bodyError !== null}>
             {t("workspace.workflows.email_body_label")}
           </WorkflowFieldLabel>
           <Editor
@@ -364,13 +381,13 @@ export const WorkflowEmailActionForm = ({
             // No @ button when the body takes no recall (a Variable recipient: the email must be fixed).
             excludedToolbarItems={bodyRecallSource ? ["blockType"] : ["blockType", "recall"]}
             getText={() => toEditorHtml(node.config.body)}
-            setText={(value: string) => updateConfig({ body: value })}
+            setText={updateBody}
             // The editor is the authority on its own emptiness: its serialized value keeps the
             // enclosing `<p>` even when blank, so "had content at some point" is the only reliable
             // signal that the user has engaged with this field.
             onEmptyChange={handleBodyEmptyChange}
-            isInvalid={invalidFields.has("body")}
-            ariaDescribedBy={invalidFields.has("body") ? "workflow-email-body-error" : undefined}
+            isInvalid={bodyError !== null}
+            ariaDescribedBy={bodyError ? "workflow-email-body-error" : undefined}
             firstRender={firstRender}
             setFirstRender={setFirstRender}
             editable={isEditable}
@@ -380,10 +397,8 @@ export const WorkflowEmailActionForm = ({
             renderTokenChip={surveyLinkControls.renderTokenChip}
             renderToolbarExtras={surveyLinkControls.renderToolbarExtras}
           />
-          {invalidFields.has("body") ? (
-            <WorkflowFieldError id="workflow-email-body-error">
-              {t("workspace.workflows.email_body_required")}
-            </WorkflowFieldError>
+          {bodyError ? (
+            <WorkflowFieldError id="workflow-email-body-error">{bodyError}</WorkflowFieldError>
           ) : null}
         </div>
       </InspectorCard>

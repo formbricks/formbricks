@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Заполни получателя, тему и текст для шага отправки email.",
       "validation_problem_step_needs_setup": "Завершите настройку этого шага.",
       "validation_problem_step_not_executable": "Этот тип шага пока не может выполняться. Удали его перед включением рабочего процесса.",
+      "validation_problem_survey_link_not_placed": "Ссылки на опрос нет в тексте письма. Верните её с помощью кнопки «Ссылка на опрос» на панели инструментов текста письма или удалите её оттуда.",
+      "validation_problem_survey_link_without_survey": "В тексте письма есть ссылка на опрос, но сам опрос не выбран. Выберите его через «Ссылка на опрос» или удалите ссылку из текста.",
       "validation_problem_trigger_ending_not_found": "Выбранное окончание больше не существует в подключенном опросе.",
       "validation_problem_trigger_missing": "Добавь триггер для запуска рабочего процесса.",
       "validation_problem_trigger_not_connected": "Подключи шаг после триггера.",

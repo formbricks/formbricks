@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Completează destinatarul, subiectul și corpul mesajului pentru pasul de email.",
       "validation_problem_step_needs_setup": "Termină configurarea acestui pas.",
       "validation_problem_step_not_executable": "Acest tip de pas nu poate fi executat încă. Elimină-l înainte de a activa fluxul de lucru.",
+      "validation_problem_survey_link_not_placed": "Linkul către sondaj nu se află în corpul e-mailului. Adaugă-l la loc cu Link sondaj din bara de instrumente a corpului e-mailului sau elimină-l de acolo.",
+      "validation_problem_survey_link_without_survey": "Corpul e-mailului conține un Link sondaj fără un sondaj selectat. Alege un sondaj cu Link sondaj sau șterge linkul din corpul e-mailului.",
       "validation_problem_trigger_ending_not_found": "Un final selectat nu mai există în sondajul conectat.",
       "validation_problem_trigger_missing": "Adaugă un declanșator pentru a porni fluxul de lucru.",
       "validation_problem_trigger_not_connected": "Conectează un pas după declanșator.",

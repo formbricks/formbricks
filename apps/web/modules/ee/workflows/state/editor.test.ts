@@ -975,6 +975,51 @@ describe("workflowValidationProblemsAtom", () => {
     ]);
   });
 
+  test("a survey link the body doesn't place says so, not that fields are empty", () => {
+    const store = createStore();
+    const email = executableEmailNode();
+    email.config = {
+      ...email.config,
+      body: "<p>Thanks</p>",
+      surveyLink: { surveyId: "cm9zr4mps000008l8btfy1vtz", embeddedData: [] },
+    } as typeof email.config;
+    hydrate(store, executableDefinition({ nodes: [email] } as Partial<TWorkflowDefinition>));
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([
+      { code: "survey_link_not_placed", field: "nodes.0.config" },
+    ]);
+  });
+
+  test("a Survey link chip with no link says so", () => {
+    const store = createStore();
+    const email = executableEmailNode();
+    email.config = {
+      ...email.config,
+      body: "<p>Answer here: #survey-link#</p>",
+      surveyLink: undefined,
+    } as typeof email.config;
+    hydrate(store, executableDefinition({ nodes: [email] } as Partial<TWorkflowDefinition>));
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([
+      { code: "survey_link_without_survey", field: "nodes.0.config" },
+    ]);
+  });
+
+  test("an empty body with an unplaced survey link is one step_incomplete", () => {
+    const store = createStore();
+    const email = executableEmailNode();
+    email.config = {
+      ...email.config,
+      body: "",
+      surveyLink: { surveyId: "cm9zr4mps000008l8btfy1vtz", embeddedData: [] },
+    } as typeof email.config;
+    hydrate(store, executableDefinition({ nodes: [email] } as Partial<TWorkflowDefinition>));
+
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([
+      { code: "step_incomplete", field: "nodes.0.config" },
+    ]);
+  });
+
   test("a cycle yields flow_invalid", () => {
     const store = createStore();
     const secondEmail = { ...executableEmailNode(), id: "email-2" };

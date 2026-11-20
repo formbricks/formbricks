@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Remplis le destinataire, l'objet et le corps de l'étape d'e-mail.",
       "validation_problem_step_needs_setup": "Termine la configuration de cette étape.",
       "validation_problem_step_not_executable": "Ce type d'étape ne peut pas encore s'exécuter. Supprime-le avant d'activer le workflow.",
+      "validation_problem_survey_link_not_placed": "Le lien du sondage n’est pas dans le corps de l’e-mail. Remets-le avec « Lien du sondage » dans la barre d’outils du corps, ou supprime-le.",
+      "validation_problem_survey_link_without_survey": "Le corps de l’e-mail contient un lien de sondage, mais aucun sondage n’est sélectionné. Choisis-en un avec « Lien du sondage », ou supprime le lien du corps.",
       "validation_problem_trigger_ending_not_found": "Une fin sélectionnée n'existe plus dans le questionnaire connecté.",
       "validation_problem_trigger_missing": "Ajoute un déclencheur pour lancer le workflow.",
       "validation_problem_trigger_not_connected": "Connecte une étape après le déclencheur.",

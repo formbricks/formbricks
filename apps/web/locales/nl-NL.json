@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Vul de ontvanger, onderwerp en tekst van de e-mailstap in.",
       "validation_problem_step_needs_setup": "Rond het instellen van deze stap af.",
       "validation_problem_step_not_executable": "Dit staptype kan nog niet worden uitgevoerd. Verwijder het voordat je de workflow activeert.",
+      "validation_problem_survey_link_not_placed": "De link naar de enquête staat niet in de e-mailtekst. Plaats hem terug met Enquêtelink in de werkbalk van de tekst, of verwijder hem daar.",
+      "validation_problem_survey_link_without_survey": "In de e-mailtekst staat een enquêtelink zonder gekozen enquête. Kies er een met Enquêtelink, of verwijder de link uit de tekst.",
       "validation_problem_trigger_ending_not_found": "Een geselecteerd einde bestaat niet meer in de gekoppelde enquête.",
       "validation_problem_trigger_missing": "Voeg een trigger toe om de workflow te starten.",
       "validation_problem_trigger_not_connected": "Verbind een stap na de trigger.",

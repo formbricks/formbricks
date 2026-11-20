@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Töltse ki az e-mail lépésének címzettjét, tárgyát és törzsét.",
       "validation_problem_step_needs_setup": "Kérjük, fejezze be a lépés beállítását.",
       "validation_problem_step_not_executable": "Ez a lépéstípust még nem lehet futtatni. Távolítsa el a munkafolyamat engedélyezése előtt.",
+      "validation_problem_survey_link_not_placed": "A kérdőívhivatkozás nem szerepel az e-mail törzsében. Kérjük, helyezze vissza a törzs eszköztárában található Kérdőívhivatkozás funkcióval, vagy távolítsa el onnan.",
+      "validation_problem_survey_link_without_survey": "Az e-mail törzsében található kérdőívhivatkozáshoz nincs kérdőív kiválasztva. Kérjük, válasszon ki egyet a Kérdőívhivatkozás funkcióval, vagy törölje a hivatkozást a törzsből.",
       "validation_problem_trigger_ending_not_found": "Egy kiválasztott befejezés többé már nem létezik a csatlakoztatott kérdőívnél.",
       "validation_problem_trigger_missing": "Aktiváló hozzáadása a munkafolyamat indításához.",
       "validation_problem_trigger_not_connected": "Lépés csatlakoztatása az aktiváló után.",

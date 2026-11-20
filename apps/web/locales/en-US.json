@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Fill in the email step’s recipient, subject, and body.",
       "validation_problem_step_needs_setup": "Finish setting up this step.",
       "validation_problem_step_not_executable": "This step type cannot run yet. Remove it before enabling the workflow.",
+      "validation_problem_survey_link_not_placed": "The survey link isn’t in the email body. Put it back with Survey link in the body’s toolbar, or remove it there.",
+      "validation_problem_survey_link_without_survey": "The email body has a Survey link with no survey chosen. Choose one with Survey link, or delete it from the body.",
       "validation_problem_trigger_ending_not_found": "A selected ending no longer exists on the connected survey.",
       "validation_problem_trigger_missing": "Add a trigger to start the workflow.",
       "validation_problem_trigger_not_connected": "Connect a step after the trigger.",

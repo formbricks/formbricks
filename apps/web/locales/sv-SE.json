@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Fyll i e-poststegets mottagare, ämne och brödtext.",
       "validation_problem_step_needs_setup": "Slutför konfigurationen av det här steget.",
       "validation_problem_step_not_executable": "Den här steptypen kan inte köras än. Ta bort den innan du aktiverar arbetsflödet.",
+      "validation_problem_survey_link_not_placed": "Enkätlänken finns inte i mejlets brödtext. Lägg tillbaka den med Enkätlänk i brödtextens verktygsfält, eller ta bort den där.",
+      "validation_problem_survey_link_without_survey": "Mejlets brödtext innehåller en enkätlänk utan vald enkät. Välj en med Enkätlänk, eller ta bort länken från brödtexten.",
       "validation_problem_trigger_ending_not_found": "Ett valt avslut finns inte längre i den anslutna enkäten.",
       "validation_problem_trigger_missing": "Lägg till en utlösare för att starta arbetsflödet.",
       "validation_problem_trigger_not_connected": "Koppla ett steg efter utlösaren.",

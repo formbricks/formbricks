@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "E-posta adımının alıcısını, konusunu ve içeriğini doldur.",
       "validation_problem_step_needs_setup": "Bu adımın kurulumunu tamamla.",
       "validation_problem_step_not_executable": "Bu adım türü henüz çalıştırılamıyor. İş akışını etkinleştirmeden önce kaldır.",
+      "validation_problem_survey_link_not_placed": "Anket bağlantısı e-posta gövdesinde yok. Gövde araç çubuğundaki Anket bağlantısı ile geri ekle ya da oradan kaldır.",
+      "validation_problem_survey_link_without_survey": "E-posta gövdesinde anket seçilmemiş bir Anket bağlantısı var. Anket bağlantısı ile bir anket seç ya da bağlantıyı gövdeden sil.",
       "validation_problem_trigger_ending_not_found": "Seçilen son, bağlı ankette artık mevcut değil.",
       "validation_problem_trigger_missing": "İş akışını başlatmak için bir tetikleyici ekle.",
       "validation_problem_trigger_not_connected": "Tetikleyiciden sonra bir adım bağla.",

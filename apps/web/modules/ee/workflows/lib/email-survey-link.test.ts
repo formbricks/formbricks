@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 import type { TWorkflowSendEmailActionConfig } from "@formbricks/workflows";
 import {
+  followSurveyLinkChip,
   getSurveyLinkMappingRows,
+  hasUnplacedSurveyLink,
   removeSurveyLinkToken,
   setEmbeddedDataValue,
   suggestVariableForField,
@@ -45,6 +47,36 @@ describe("survey link token", () => {
         surveyLink: { surveyId: "s1", embeddedData: [] },
       })
     ).toEqual({ surveyLink: undefined, body: "<p>Hi</p>" });
+  });
+});
+
+describe("followSurveyLinkChip", () => {
+  const link = { surveyId: "s1", embeddedData: [{ key: "plan", value: "#recall:payload.plan/fallback:#" }] };
+  const withChip = "<p>Hi</p><p>#survey-link#</p>";
+
+  test("deleting the chip as text removes the link with it", () => {
+    const patch = followSurveyLinkChip({ body: withChip, surveyLink: link }, "<p>Hi</p>");
+
+    expect(patch).toEqual({ body: "<p>Hi</p>", surveyLink: undefined });
+    expect(hasUnplacedSurveyLink(patch)).toBe(false);
+  });
+
+  test("typing elsewhere changes only the body", () => {
+    expect(
+      followSurveyLinkChip({ body: withChip, surveyLink: link }, "<p>Hi there</p><p>#survey-link#</p>")
+    ).toEqual({ body: "<p>Hi there</p><p>#survey-link#</p>" });
+  });
+
+  test("inserting a new link's chip keeps the link set just before it", () => {
+    expect(followSurveyLinkChip({ body: "<p>Hi</p>", surveyLink: link }, withChip)).toEqual({
+      body: withChip,
+    });
+  });
+
+  test("leaves a link that was never in the body for the problem to point out", () => {
+    const config = { body: "<p>Hi</p>", surveyLink: link };
+    expect(followSurveyLinkChip(config, "<p>Hi!</p>")).toEqual({ body: "<p>Hi!</p>" });
+    expect(hasUnplacedSurveyLink(config)).toBe(true);
   });
 });
 

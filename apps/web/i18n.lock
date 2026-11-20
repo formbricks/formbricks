@@ -6314,6 +6314,8 @@ checksums:
     workspace/workflows/validation_problem_step_incomplete: 07e724021a37da0d8d0614efac0e7b20
     workspace/workflows/validation_problem_step_needs_setup: 900ee50e5050a41be0f67dea2953ce96
     workspace/workflows/validation_problem_step_not_executable: 9cb186f12b28ad34935788b4b990497b
+    workspace/workflows/validation_problem_survey_link_not_placed: 08e984949a44c86559b76d21291fca5b
+    workspace/workflows/validation_problem_survey_link_without_survey: 03cdd636c4843d326a01ef7d94efec7c
     workspace/workflows/validation_problem_trigger_ending_not_found: 2a288324d1a1c0c96dfb24ec7df1111b
     workspace/workflows/validation_problem_trigger_missing: 7a9243dac736efe6023063de872b716f
     workspace/workflows/validation_problem_trigger_not_connected: 69a851839a4179bb9c2e995140b2ba93

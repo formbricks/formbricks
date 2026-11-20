@@ -6550,6 +6550,8 @@
       "validation_problem_step_incomplete": "Füll den Empfänger, Betreff und Text des E-Mail-Schritts aus.",
       "validation_problem_step_needs_setup": "Schließe die Einrichtung dieses Schritts ab.",
       "validation_problem_step_not_executable": "Dieser Schritttyp kann noch nicht ausgeführt werden. Entferne ihn, bevor du den Workflow aktivierst.",
+      "validation_problem_survey_link_not_placed": "Der Umfragelink fehlt im E-Mail-Text. Füge ihn mit „Umfragelink“ in der Symbolleiste des Textfelds wieder ein oder entferne ihn dort.",
+      "validation_problem_survey_link_without_survey": "Der E-Mail-Text enthält einen Umfragelink, aber es ist keine Umfrage ausgewählt. Wähle mit „Umfragelink“ eine Umfrage aus oder lösche den Link aus dem Text.",
       "validation_problem_trigger_ending_not_found": "Ein ausgewähltes Ende existiert nicht mehr in der verbundenen Umfrage.",
       "validation_problem_trigger_missing": "Füge einen Trigger hinzu, um den Workflow zu starten.",
       "validation_problem_trigger_not_connected": "Verbinde einen Schritt nach dem Trigger.",
