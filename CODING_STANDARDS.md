@@ -131,19 +131,25 @@ Each rule closes a vulnerability class that shipped and had to be fixed. Gates s
 are under "API Design", caps on what a caller sends under "Input Limits", and tenant scoping under
 "Database & Prisma Performance".
 
-- **State changes need a deliberate request.** A `GET`, or any request a link, a prefetch or a mail scanner
-  can send, changes no state. A multi-step flow (recovery, invite, verification, OAuth) binds its completion
-  to the browser that started it and to an explicit user action, so a link opened by a scanner or by anyone
-  it was forwarded to completes nothing. Class: link-triggered account changes and login CSRF (ENG-3264,
+- **A link changes nothing the user is accountable for.** A `GET`, or any request a link, a prefetch or a
+  mail scanner can send, changes no state the user is accountable for (logging it is fine). How a multi-step
+  flow completes depends on its kind. Class: link-triggered account changes and login CSRF (ENG-3264,
   ENG-7310, ENG-7395).
-- **Every path that creates a session enforces the same second factor.** SSO, account recovery, magic links,
-  OAuth callbacks and impersonation require the second factor password sign-in requires, through the same
-  check. Class: 2FA bypass through an alternate sign-in path (ENG-7266).
+  - An OAuth, OIDC or SSO callback, and any flow that links an identity or creates a session in the browser
+    that started it, binds its completion to that browser (`state`, PKCE, a cookie set at the start).
+  - An emailed link (verification, recovery, invite) is single-use and short-lived, and completes only
+    through a `POST` from a confirmation page, so a scanner's `GET` does nothing. It may be opened on another
+    device than the one that asked for it.
+- **No path creates a session weaker than the account requires.** Local paths (password, magic link, account
+  recovery) go through the app's 2FA check. SSO relies on the IdP's MFA, verified from `acr` / `amr` where
+  the IdP sends them. Recovery never bypasses enabled MFA, and an emailed link counts as one factor at most.
+  Class: 2FA bypass through an alternate sign-in path (ENG-7266).
 - **A user-supplied regex on a shared process runs in a linear-time engine or not at all.** On the server,
-  in workers and in jobs, a pattern from a survey, a filter or any request runs in RE2
-  (`apps/web/modules/api/lib/linear-pattern-matcher.ts`) or is not evaluated. A length cap is not ReDoS
-  protection: a 20-character pattern can backtrack for minutes on a short input and block the event loop for
-  every tenant on the process. Code that runs only in the end user's own tab may use native `RegExp`, as
+  in workers and in jobs, a pattern from a survey, a filter or any request runs in RE2 with a program-size
+  cap and a per-run work budget (`apps/web/modules/api/lib/linear-pattern-matcher.ts`), or is not evaluated:
+  RE2 is linear in program size times input length, not free. A length cap is not ReDoS protection: a
+  20-character pattern can backtrack for minutes on a short input and block the event loop for every tenant
+  on the process. Code that runs only in the end user's own tab may use native `RegExp`, as
   `matchPatternWithRegExp` in `packages/surveys/src/lib/validation/validators.ts` does. Class: ReDoS
   (ENG-7109).
 - **Caller data a library stores for us is bounded in our code.** OAuth state and authorization codes,
@@ -151,11 +157,13 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   have a size, count and lifetime cap set in our code (checked before the call, or a TTL we pass and verify),
   as for any other input under "Input Limits". A library stores what it is given. Class: storage
   amplification from anonymous or low-privilege requests (ENG-6885, ENG-7396, ENG-7399).
-- **A security setting passed to a dependency is proven once at runtime.** A TLS mode, a cookie flag, a CSP
-  or an auth option is shown to take effect against the real dependency (a refused plaintext connection, the
-  flag in the `Set-Cookie` header), and the PR's Coverage table records that check.
-  Libraries silently ignore values they don't recognise, so a config that reads right proves nothing. Class:
-  silently dropped security settings (ENG-7337).
+- **A security setting passed to a dependency is tested against the real dependency.** For a TLS mode, a
+  cookie flag, a CSP or an auth option, a regression test asserts the effect against the real dependency
+  (the flags in the `Set-Cookie` header, a refused plaintext connection). Where that cannot be automated, a
+  one-time check is a `manual` row in the PR's Coverage table. An invalid or unrecognised value fails closed
+  at startup rather than falling back to a weaker default. Libraries silently ignore values they don't
+  recognise, so a config that reads right proves nothing. Class: silently dropped security settings
+  (ENG-7337).
 
 ## Input Limits
 
@@ -303,7 +311,8 @@ Do:
   module under test, a mocked return value that already is the asserted output, or a call-site argument
   nobody asserts.
 - A unit test over mocked Prisma proves the decision: that the code rejects or resolves, and which write it
-  sends. That the write persists is an integration test's claim.
+  sends. That the write persists is claimed by a `*.integration.test.ts` against a real database, not by
+  more mocks.
 - E2E tests (Playwright): one spec per **feature area**, not per ticket and not per component. Default to
   adding assertions or a `test.step` to that area's existing spec in `apps/web/playwright`; a new
   `*.spec.ts` is for a feature area that has none, and it takes the area's name (`billing.spec.ts`).
