@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   lockUserActiveState: vi.fn(),
   updateMembership: vi.fn(),
   updateMembershipInTransaction: vi.fn(),
+  projectMembershipRoleChange: vi.fn(),
   finishRevokedMcpGrants: vi.fn(),
   checkRoleManagementPermission: vi.fn(),
   getIsDashboardViewerRoleEnabled: vi.fn(),
@@ -44,6 +45,7 @@ vi.mock("@/lib/user/reactivation", () => ({ lockUserActiveState: mocks.lockUserA
 vi.mock("@/modules/ee/role-management/lib/membership", () => ({
   updateMembership: mocks.updateMembership,
   updateMembershipInTransaction: mocks.updateMembershipInTransaction,
+  projectMembershipRoleChange: mocks.projectMembershipRoleChange,
 }));
 vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({
   finishRevokedMcpGrants: mocks.finishRevokedMcpGrants,
@@ -138,8 +140,10 @@ beforeEach(() => {
     async (_tx: unknown, userId: string, _orgId: string, data: { role: string }) => ({
       membership: membership(userId, data.role),
       grantAudits: GRANT_AUDITS,
+      affectedTeamIds: ["team-1"],
     })
   );
+  mocks.projectMembershipRoleChange.mockResolvedValue(undefined);
   mocks.finishRevokedMcpGrants.mockResolvedValue(undefined);
 });
 
@@ -196,6 +200,25 @@ describe("PATCH /api/internal/members/{userId}", () => {
       });
     });
 
+    test("projects the demotion to SpiceDB after the commit, before the ended grants are finished", async () => {
+      let committed = false;
+      mocks.runOwnerGuardedTransaction.mockImplementation(
+        async (_orgId: string, _userId: string | null, callback: (tx: unknown) => unknown) => {
+          const result = await callback(TX);
+          committed = true;
+          return result;
+        }
+      );
+      mocks.projectMembershipRoleChange.mockImplementation(async () => {
+        expect(committed).toBe(true);
+        expect(mocks.finishRevokedMcpGrants).not.toHaveBeenCalled();
+      });
+
+      expect((await setRole("member")).status).toBe(200);
+      expect(mocks.projectMembershipRoleChange).toHaveBeenCalledTimes(1);
+      expect(mocks.projectMembershipRoleChange).toHaveBeenCalledWith(ORG_ID, TARGET_USER_ID, ["team-1"]);
+    });
+
     test("audits only the grants of the attempt that committed when the guard retries the demotion", async () => {
       const firstAttempt = [{ grantId: "grant-first-attempt" }];
       const committedAttempt = [{ grantId: "grant-committed" }];
@@ -203,10 +226,12 @@ describe("PATCH /api/internal/members/{userId}", () => {
         .mockResolvedValueOnce({
           membership: membership(TARGET_USER_ID, "member"),
           grantAudits: firstAttempt,
+          affectedTeamIds: [],
         })
         .mockResolvedValueOnce({
           membership: membership(TARGET_USER_ID, "member"),
           grantAudits: committedAttempt,
+          affectedTeamIds: [],
         });
       // The guard aborts the first attempt (a serialization conflict) and runs the change again.
       mocks.runOwnerGuardedTransaction.mockImplementation(

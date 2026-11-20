@@ -25,7 +25,11 @@ import {
   refuseRoleAssignment,
   requireRoleManagementEntitlement,
 } from "@/modules/ee/role-management/lib/api-access";
-import { updateMembership, updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
+import {
+  projectMembershipRoleChange,
+  updateMembership,
+  updateMembershipInTransaction,
+} from "@/modules/ee/role-management/lib/membership";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
 import {
   LastActiveOwnerError,
@@ -60,7 +64,7 @@ const applyRoleChange = async (
   }
 
   try {
-    const { membership, grantAudits } = await runOwnerGuardedTransaction(
+    const { membership, grantAudits, affectedTeamIds } = await runOwnerGuardedTransaction(
       organizationId,
       userId,
       async (tx) => {
@@ -71,6 +75,10 @@ const applyRoleChange = async (
       // Ending the user's MCP grants can wait on a reconciling pass.
       { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
     );
+    // The new role reaches SpiceDB right after the commit, as in every other role change: left to the outbox,
+    // the demoted user would keep the owner's permissions until it delivers (ENG-7282). The role first, as it
+    // is what the demoted user could still act on; the projection logs its own failures and never throws.
+    await projectMembershipRoleChange(organizationId, userId, affectedTeamIds);
     await finishRevokedMcpGrants(grantAudits, { actorUserId });
     return membership;
   } catch (error) {
