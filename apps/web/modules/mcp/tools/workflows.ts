@@ -7,6 +7,7 @@ import { responseToMcpToolResult } from "../errors";
 import { registerMcpTool } from "./guard-permissions";
 import { isRecord, redactToolResultData, redactUnlessCallerHolds } from "./redacted-result";
 import { runMcpMutation } from "./run-mcp-mutation";
+import { RESPONSES_READ, withoutRunRespondentData } from "./workflow-run-redaction";
 import {
   type TMcpCreateWorkflowInput,
   type TMcpDuplicateWorkflowInput,
@@ -27,6 +28,9 @@ import {
   ZMcpTestWorkflowInput,
   ZMcpWorkflowIdInput,
 } from "./workflow-schemas";
+import { registerWorkflowTestRequestTools } from "./workflow-test-request";
+import { registerWorkflowTestRunTools } from "./workflow-test-run";
+import { registerWorkflowWebhookTools } from "./workflow-webhook";
 
 type WorkflowApiContext = ReturnType<typeof buildWorkflowApiContext>;
 
@@ -133,31 +137,6 @@ async function runWorkflowMutation(
   );
   return redactUnlessCallerHolds(getMcpToolAuthInfo(mcpCtx), RESPONSES_READ, result, withoutLastRunError);
 }
-
-const RESPONSES_READ = [{ permission: "responses", level: "read" }] as const;
-
-/**
- * A `get_workflow_run` result without what is derived from respondents' answers: the trigger payload,
- * the run's data, and each step's input and output, set to `null`. The run's and each step's error text
- * go too: a failed step's error can quote what it sent, such as an SMTP rejection naming the respondent's
- * address. For a caller without Responses: Read, whom the run's other fields (status, timing, step
- * order) don't tell anything a response says; a failed run still shows as failed. An error result passes
- * through.
- */
-const withoutRunRespondentData = (run: unknown): unknown =>
-  isRecord(run)
-    ? {
-        ...run,
-        error: null,
-        triggerPayload: null,
-        data: null,
-        logs: Array.isArray(run.logs)
-          ? run.logs.map((log: unknown) =>
-              isRecord(log) ? { ...log, input: null, output: null, error: null } : log
-            )
-          : run.logs,
-      }
-    : run;
 
 export const withoutRespondentData = (result: CallToolResult): CallToolResult =>
   redactToolResultData(result, withoutRunRespondentData);
@@ -281,7 +260,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Get workflow run",
       description:
-        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. Without Responses: Read in the user's grant, triggerPayload, data, error and each log's input, output and error are null: they carry respondents' answers.",
+        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. A run whose content was deleted after the retention period has `contentDeletedAt` set: its status and timing stay, its payload and step data are empty. Without Responses: Read in the user's grant, triggerPayload, data, steps, error and each log's input, output and error are null: they carry respondents' answers.",
       inputSchema: ZMcpGetWorkflowRunInput,
       annotations: {
         readOnlyHint: true,
@@ -311,8 +290,9 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Test workflow (dry-run)",
       description: [
         "Dry-run a Formbricks workflow using the v3 Workflows API contract:",
-        "validate its live definition would execute, resolve the trigger's survey + ending cards, and confirm every literal send_email recipient is an organization member.",
-        "No run is persisted and no side effects occur; the response reports { ok, problems }.",
+        "validate its live definition would execute, resolve the trigger's survey + ending cards, confirm every literal send_email recipient is an organization member,",
+        "and check every send_email survey link points to a link survey in the workspace.",
+        "No run is persisted and no side effects occur; the response reports { ok, problems, warnings }, where warnings (such as survey link Embedded Data keys the survey drops) never make ok false.",
       ].join(" "),
       annotations: {
         // Dry-run: validates the definition and resolves its trigger references. Nothing is
@@ -533,4 +513,9 @@ export function registerWorkflowTools(server: McpServer): void {
         workflowsHandlers.unarchive({ ctx, params: { workflowId: input.workflowId } })
       )
   );
+
+  // Part 2 tools (ENG-7171): Secret URL, sample, Send test request, Test run.
+  registerWorkflowWebhookTools(server);
+  registerWorkflowTestRequestTools(server);
+  registerWorkflowTestRunTools(server);
 }

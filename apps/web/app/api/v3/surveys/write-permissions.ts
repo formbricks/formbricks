@@ -1,8 +1,14 @@
 import "server-only";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import type { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
+import type {
+  TSurvey,
+  TSurveyEnding,
+  TSurveyVariable,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
+import { addsRichTextLink } from "@/lib/survey/rich-text-links";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TV3SurveyDocument } from "./schemas";
@@ -16,9 +22,13 @@ type TV3SurveyWritePermissionInput = {
   workspaceId: string;
   blocks: TSurveyBlock[];
   endings: TSurveyEnding[];
+  welcomeCard?: TSurveyWelcomeCard;
+  variables?: TSurveyVariable[];
   previous?: {
     blocks: TSurveyBlock[];
     endings: TSurveyEnding[];
+    welcomeCard?: TSurveyWelcomeCard;
+    variables?: TSurveyVariable[];
   };
 };
 
@@ -75,7 +85,8 @@ function hasNewOrChangedExternalUrlReferences(input: TV3SurveyWritePermissionInp
     }
   }
 
-  return false;
+  // A link in rich text is an external URL too: the editor offers one only on plans that allow them.
+  return addsRichTextLink(input, input.previous);
 }
 
 export async function assertV3SurveyWritePermissions(

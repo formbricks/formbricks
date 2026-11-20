@@ -41,7 +41,7 @@ export const ZResponse = z.object({
     })
     .describe("The data of the response"),
   variables: z
-    .record(z.string(), z.union([z.string(), z.number()]))
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
     .meta({
       example: {
         variable1: "answer1",

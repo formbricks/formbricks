@@ -10,15 +10,22 @@ import {
 import { getV3AuthorizationActor, getV3SessionUserId, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemWorkflowsNotEntitled } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { ENCRYPTION_KEY } from "@/lib/constants";
+import { ENCRYPTION_KEY, WEBAPP_URL } from "@/lib/constants";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { workflowSecretStore } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
+import { getWorkflowSurveyLinkSurveys } from "@/modules/ee/workflows/lib/survey-link-surveys";
+import { webhookTokenIssuer } from "@/modules/ee/workflows/lib/webhook/token";
 import { buildRecordAnalytics } from "./analytics";
+import { buildRecordSecretHeaderChanges } from "./secret-audit";
+import { type TIsSurveyHidden, loadTestRunResponse } from "./test-run-response";
+import { toWorkflowsLogger } from "./workflows-logger";
 
 /**
  * Adapter glue between the Next.js v3 routes and the framework-agnostic `@formbricks/workflows`
@@ -27,10 +34,10 @@ import { buildRecordAnalytics } from "./analytics";
  * authenticated request. The real Prisma client structurally satisfies the package's narrow
  * `WorkflowsDb` port, so no cast is needed; the package never imports `@formbricks/database`.
  */
-const service = createWorkflowsService({ prisma });
+export const workflowsService = createWorkflowsService({ prisma, webhookTokens: webhookTokenIssuer });
 
 /** Singleton handlers; they are stateless and only close over the injected service. */
-export const workflowsHandlers = createWorkflowsHandlers(service);
+export const workflowsHandlers = createWorkflowsHandlers(workflowsService);
 
 /**
  * Confirm a workflow trigger's referenced survey + ending cards exist in the workspace. Injected so
@@ -83,6 +90,22 @@ const buildListUnreadableSurveyIds =
   };
 
 /**
+ * Whether this caller may not read one survey of the workspace (ENG-3282): a Test run against one of
+ * its responses, and the list the Test run picker shows, both show its answers.
+ */
+export const buildIsSurveyHidden =
+  (authentication: TV3Authentication): TIsSurveyHidden =>
+  async ({ workspaceId, surveyId }) => {
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    const hidden = await buildListUnreadableSurveyIds(authentication)({
+      workspaceId,
+      organizationId,
+      surveyIds: [surveyId],
+    });
+    return hidden.includes(surveyId);
+  };
+
+/**
  * Bind the framework-agnostic audit sink to this request's audit log. The handlers call it once,
  * post-mutation, with the affected workflow id + workspace id + before/after snapshots; we copy
  * those onto `auditLog` (target id, old/new object) so the v3 wrapper queues a complete Enterprise
@@ -112,7 +135,7 @@ const buildRecordAudit =
         auditLog.organizationId = await getOrganizationIdFromWorkspaceId(detail.workspaceId);
       }
     } catch (error) {
-      logger.withContext({ requestId }).error({ error }, "Failed to record workflow audit detail");
+      logger.withContext({ requestId }).error(loggableError(error), "Failed to record workflow audit detail");
     }
   };
 
@@ -143,10 +166,14 @@ export const buildWorkflowApiContext = (
   userId: getV3SessionUserId(authentication),
   requestId,
   instance,
-  logger: logger.withContext({ requestId }),
+  // Turns the errors the package logs into name and frames (`loggableError`).
+  logger: toWorkflowsLogger(logger.withContext({ requestId })),
   // HMAC key for redacting PII markers in audit snapshots; reuses the app's audit/encryption secret
   // so markers aren't offline-guessable. Injected as data to keep `@formbricks/workflows` agnostic.
   auditRedactionKey: ENCRYPTION_KEY,
+  // The Webhook Secret URL lives under `/api/v3`, which is served on the app's own URL (with
+  // PUBLIC_URL set, `/api/v3` stays admin-domain only), so it is built on WEBAPP_URL.
+  webhookBaseUrl: WEBAPP_URL,
   // Workspace access first, then the workflows entitlement (Cloud plan / self-hosted EE license)
   // for the resolved organization. Every v3 route handler and MCP tool authorizes through this
   // capability, so this is the single enforcement point for both surfaces; the returned problem
@@ -171,6 +198,17 @@ export const buildWorkflowApiContext = (
   verifyTriggerSurvey,
   verifyRecipientsAllowed,
   listUnreadableSurveyIds: buildListUnreadableSurveyIds(authentication),
+  // Secret header values are stored encrypted beside the workflow (ENG-7179, ADR 0043); writes record
+  // "secret set / replaced" with the header name only.
+  secrets: workflowSecretStore,
+  recordSecretHeaderChanges: buildRecordSecretHeaderChanges(authentication, requestId, instance),
+  verifySurveyLinkSurveys: getWorkflowSurveyLinkSurveys,
+  // Test runs (ENG-7181, ADR 0049): the real runner with fake effects, inside the request. Loaded on use,
+  // so the runner and the email renderer stay out of every other workflow route.
+  runTest: async (run) =>
+    (await import("@/modules/ee/workflows/lib/runner/run-test")).executeWorkflowTestRun(run),
+  // A Response completed Test run's response: of the trigger's survey, in this workspace, readable.
+  loadTestRunResponse: (input) => loadTestRunResponse(input, buildIsSurveyHidden(authentication)),
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
   // Product analytics (ENG-2851): always bound, unlike the audit sink, because it no-ops on its own
   // when POSTHOG_KEY is unset and there is no per-request switch to respect.

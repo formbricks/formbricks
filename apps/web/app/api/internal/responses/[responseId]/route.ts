@@ -4,7 +4,7 @@ import { deleteResponseOperation, getResponseOperation } from "../lib/operations
 import { ZDeleteResponseQuery, ZResponseParams } from "../schemas";
 
 /*
- * Not a twin of the public `/api/v3/responses/{responseId}` (ADR-0043): the card reads the response it
+ * Not a twin of the public `/api/v3/responses/{responseId}` (ADR-0059): the card reads the response it
  * renders (`TResponseWithQuotas`, with its screened-in quotas), which v3 does not serve, and the delete takes
  * the card's `decrementQuotas` opt-in, which v3 leaves out on purpose (`app/api/v3/responses/lib/service.ts`).
  * The card moves to v3 once v3 serves both.

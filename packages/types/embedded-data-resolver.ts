@@ -949,6 +949,10 @@ export const getComputedFieldDataType = (
  * (quotas, summaries, follow-up conditions), which are near-copies of each other. It lives here so
  * the rule has one definition rather than two that can drift apart — the engines evaluating the same
  * survey differently is its own bug class.
+ *
+ * A true/false field (ENG-6973) reads as `"true"` / `"false"`, the spelling conditions compare it with
+ * and an ingested true/false field is stored as, and as `""` while unset: a stored `false` must not
+ * collapse into "unset" the way the text arm's `|| ""` would.
  */
 export const getLogicVariableValue = (
   computedFields: readonly TLinkedEmbeddedField[],
@@ -958,7 +962,16 @@ export const getLogicVariableValue = (
   const field = findComputedEmbeddedField(computedFields, storageKey);
   if (!field) return undefined;
   const variableValue = variablesData[storageKey];
-  return field.field.dataType === "number" ? Number(variableValue) || 0 : variableValue || "";
+  if (field.field.dataType === "boolean") {
+    const coerced = coerceToEmbeddedDataType(variableValue, "boolean");
+    return coerced === undefined ? "" : String(coerced);
+  }
+  // A stored boolean (a field changed from true/false to number) is not a number: `Number(true)` would
+  // read as `1`, while `"true"` reads as `0`.
+  if (field.field.dataType === "number") {
+    return typeof variableValue === "boolean" ? 0 : Number(variableValue) || 0;
+  }
+  return typeof variableValue === "boolean" ? String(variableValue) : variableValue || "";
 };
 
 /**

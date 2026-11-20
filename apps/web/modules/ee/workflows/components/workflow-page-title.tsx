@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { usePathname, useRouter, useSearchParams, useSelectedLayoutSegment } from "next/navigation";
-import { type ClipboardEvent, type KeyboardEvent, useEffect, useId, useLayoutEffect, useRef } from "react";
+import { type ClipboardEvent, type KeyboardEvent, useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { WorkflowStatusPill } from "@/modules/ee/workflows/components/workflow-status-pill";
@@ -22,13 +22,12 @@ interface WorkflowPageTitleProps {
 // value the API would reject. Keep in sync with ZPatchWorkflowInput in packages/workflows.
 const WORKFLOW_NAME_MAX_LENGTH = 120;
 
-// The layout renders PageHeader server-side while the workflow is still being fetched client-side.
-// Without a placeholder the h1 collapses to an empty row, so the title area reads as blank and the
-// tabs below jump once the name arrives. h-9 matches the text-3xl line box the name will occupy.
+// The header bar renders server-side while the workflow is still being fetched client-side. Without
+// a placeholder the name slot collapses, so the bar reads as blank and the pill jumps in later.
 const WorkflowPageTitleSkeleton = () => (
   <span className="flex h-9 items-center gap-x-3">
-    <Skeleton className="h-7 w-64 rounded-md" />
-    <Skeleton className="h-7 w-24 rounded-full" />
+    <Skeleton className="h-6 w-56 rounded-md" />
+    <Skeleton className="h-5 w-16 rounded-full" />
   </span>
 );
 
@@ -85,21 +84,8 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   // Enter commits the rename instead of doing nothing: the field blurs so the title reads as
   // settled, and the draft is flushed right away rather than waiting out the autosave debounce,
   // which turns the header's "All changes saved" pill into the confirmation.
-  // A textarea rather than an input so a long name wraps onto more lines instead of being cut off.
-  // field-sizing grows it with the text; where that's unsupported (Firefox), fit the height to the
-  // wrapped content by hand, re-measuring when the header width changes.
-  useLayoutEffect(() => {
-    const field = inputRef.current;
-    if (!field || CSS.supports("field-sizing", "content")) return;
-    const fitHeight = () => {
-      field.style.height = "auto";
-      field.style.height = `${field.scrollHeight}px`;
-    };
-    fitHeight();
-    const observer = new ResizeObserver(fitHeight);
-    observer.observe(field);
-    return () => observer.disconnect();
-  }, [workflowName, isEditable]);
+  // The field stays one line in the header bar (fixed height, no wrapping); field-sizing grows its
+  // width with the text where supported, `cols` approximates it elsewhere.
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     // An IME (Japanese/Chinese/Korean) uses Enter to accept the highlighted candidate, so
@@ -143,9 +129,9 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
   const showNameError = isEditable && workflowName.trim().length === 0;
 
   return (
-    <span className="flex min-w-0 flex-col gap-y-1">
-      {/* flex-wrap keeps the badge inline next to the name and pushes it below on narrow widths. */}
-      <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+    // One line inside the editor's h-14 header bar (ED8): name, status pill, and the empty-name error.
+    <span className="flex min-w-0 items-center gap-x-3">
+      <span className="flex min-w-0 items-center gap-x-2">
         {isEditable ? (
           <textarea
             ref={inputRef}
@@ -164,11 +150,11 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
             // Approximates content width where field-sizing is unsupported (Firefox).
             cols={Math.max(workflowName.length, 12)}
             className={cn(
-              "-mx-2 -my-1 min-w-0 rounded-md bg-transparent px-2 py-1",
-              "text-3xl font-bold text-slate-800 placeholder:text-slate-400",
-              // Sizes to its content where supported, up to the full width the header row leaves beside
-              // the CTA; a longer name wraps onto the next line instead of pushing the CTA out.
-              "[field-sizing:content] max-w-full resize-none overflow-hidden break-words",
+              "h-9 min-w-0 rounded-md bg-transparent px-2 py-1.5 leading-6",
+              "text-base font-semibold text-slate-900 placeholder:font-normal placeholder:text-slate-400",
+              // Sizes to its content where supported, up to the room the header bar leaves beside the
+              // controls; a longer name is cut off rather than wrapping out of the bar.
+              "[field-sizing:content] max-w-72 resize-none overflow-hidden whitespace-nowrap lg:max-w-md",
               // Dashed hover/focus box, matching the dashboard's editable title
               // (see dashboard-page-header.tsx): slate while hovered, brand while editing.
               "border border-dashed border-transparent transition-colors",
@@ -183,12 +169,14 @@ export const WorkflowPageTitle = ({ workflowId, isReadOnly }: Readonly<WorkflowP
             )}
           />
         ) : (
-          <span className="min-w-0">{resolved.name}</span>
+          <span className="min-w-0 truncate px-2 text-base font-semibold text-slate-900">
+            {resolved.name}
+          </span>
         )}
-        <WorkflowStatusPill status={resolved.status} size="large" />
+        <WorkflowStatusPill status={resolved.status} size="normal" />
       </span>
       {showNameError ? (
-        <span id={nameErrorId} role="alert" className="text-xs font-medium text-red-600">
+        <span id={nameErrorId} role="alert" className="truncate text-xs font-medium text-red-600">
           {t("workspace.workflows.validation_problem_name_missing")}
         </span>
       ) : null}

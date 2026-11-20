@@ -75,7 +75,7 @@ export const getAuthorableSources = (): TEmbeddedDataSource[] =>
     .filter((source) => getDataTypesForSource(source).length > 0)
     .sort((a, b) => sourceDisplayRank(a) - sourceDisplayRank(b));
 
-/** The data types a source may take. Narrows to text and number for a calculated field. */
+/** The data types a source may take: what `ZEmbeddedData` accepts for it (every type since ENG-6973). */
 export const getDataTypesForSource = (source: TEmbeddedDataSource): TEmbeddedDataType[] =>
   ZEmbeddedDataType.options.filter((dataType) => acceptsField({ source, dataType }));
 

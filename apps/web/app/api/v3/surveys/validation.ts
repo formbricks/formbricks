@@ -1,3 +1,4 @@
+import { isLegacySayableComputedType } from "@formbricks/types/embedded-data-mapping";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { type TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
 import { validateStartLogic } from "@formbricks/types/surveys/start-logic-validation";
@@ -358,9 +359,17 @@ function toCodeInvalidParam(issue: TCodeIssue): InvalidParam {
  * block or ending that does not exist is a `dangling_reference` on the action's `target`, like a
  * block rule's; the rest (an action other than a jump or Set value, an answer read before anything is
  * answered, an unknown field) is reported by its reason at the exact path.
+ *
+ * A document without `embeddedFields` is judged against the stored typed rows, as the reference check
+ * is: its legacy `variables` cannot carry a computed date or true/false field, so a rule that sets one
+ * would read as naming a field that does not exist.
  */
-export function getV3SurveyStartLogicInvalidParams(document: TV3SurveyDocument): InvalidParam[] {
-  return validateStartLogic(document).map((issue) => {
+export function getV3SurveyStartLogicInvalidParams(
+  document: TV3SurveyDocument,
+  storedEmbeddedFields?: readonly TV3TypedEmbeddedField[]
+): InvalidParam[] {
+  const embeddedFields = getDocumentTypedFields(document, storedEmbeddedFields);
+  return validateStartLogic({ ...document, embeddedFields }).map((issue) => {
     const name = issue.path.join(".");
     const target = getStartLogicJumpTarget(document, issue.path);
     if (issue.code === "custom" && issue.params?.missingLogicDestination === "jump" && target) {
@@ -389,8 +398,9 @@ type TV3TypedEmbeddedField = NonNullable<TV3SurveyDocument["embeddedFields"]>[nu
 /**
  * The typed fields the reference check reads for a document without `embeddedFields` — a PATCH that
  * sent only `status`, `blocks` or the legacy keys. Its legacy `variables` cannot carry a computed date
- * (ENG-6935), so the stored survey's typed rows fill it in: the document's `variables` with their
- * types, the stored computed dates they leave out, and its hidden fields typed as stored.
+ * (ENG-6935) or true/false (ENG-6973), so the stored survey's typed rows fill it in: the document's
+ * `variables` with their types, the stored computed fields they leave out, and its hidden fields typed
+ * as stored.
  */
 function getDocumentTypedFields(
   document: TV3SurveyDocument,
@@ -418,7 +428,8 @@ function getDocumentTypedFields(
     ...storedEmbeddedFields.filter(
       (field) =>
         field.source === "computed" &&
-        field.dataType === "date" &&
+        field.dataType !== undefined &&
+        !isLegacySayableComputedType(field.dataType) &&
         field.storageKey !== undefined &&
         !variableIds.has(field.storageKey)
     ),
@@ -487,7 +498,7 @@ export function validateV3SurveyDocument(
   invalidParams.push(
     ...getV3SurveyCyclicLogicInvalidParams(document.blocks, precedence),
     ...getV3SurveyCodeInvalidParams(document),
-    ...getV3SurveyStartLogicInvalidParams(document)
+    ...getV3SurveyStartLogicInvalidParams(document, storedEmbeddedFields)
   );
 
   if (invalidParams.length > 0) {

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowResponseCompletedTriggerNode } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
+import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import {
   WorkflowFieldError,
   WorkflowFieldLabel,
@@ -204,7 +205,10 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   };
 
   return (
-    <div className="flex flex-col gap-4 px-1">
+    // Both fields answer one question, which responses start a run, so they share one card.
+    <InspectorCard
+      title={t("workspace.workflows.trigger_which_responses")}
+      description={t("workspace.workflows.trigger_survey_description")}>
       <div className="flex flex-col gap-2">
         <WorkflowFieldLabel htmlFor="workflow-trigger-survey" isRequired isInvalid={isSurveyInvalid}>
           {t("workspace.workflows.trigger_survey_label")}
@@ -249,7 +253,6 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
         {isSurveyInvalid ? (
           <WorkflowFieldError id="workflow-trigger-survey-error">{surveyErrorMessage}</WorkflowFieldError>
         ) : null}
-        <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_survey_description")}</p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -258,6 +261,6 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
         </Label>
         {renderEndingChoices()}
       </div>
-    </div>
+    </InspectorCard>
   );
 };

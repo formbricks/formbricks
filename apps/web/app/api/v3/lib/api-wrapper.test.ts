@@ -768,6 +768,25 @@ describe("cross-origin protection (ENG-3380, ENG-3984)", () => {
   const write = (headers: Record<string, string>, method = "POST") =>
     new NextRequest("http://localhost/api/internal/things", { method, headers });
 
+  test("lets a server call an allowCrossOrigin pre-login route with no Origin, as a webhook sender does", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "none", allowCrossOrigin: true, rateLimit: false, handler });
+
+    const response = await wrapped(write({}), {});
+
+    expect(response.status).toBe(200);
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  test.each(["session", "apiKey", "both"] as const)(
+    "refuses allowCrossOrigin on an auth: %s route when the module loads",
+    (auth) => {
+      expect(() =>
+        withV3ApiWrapper({ auth, allowCrossOrigin: true, handler: async () => Response.json({}) })
+      ).toThrow("allowCrossOrigin is only for auth");
+    }
+  );
+
   test("refuses a cross-site pre-login write before reading its body, however large", async () => {
     const handler = vi.fn(async () => Response.json({ ok: true }));
     let bodyRead = false;

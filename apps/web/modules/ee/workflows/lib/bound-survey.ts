@@ -1,5 +1,5 @@
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import type { TWorkflowDefinition } from "@formbricks/workflows";
+import { type TWorkflowDefinition, getTriggerSurveyId } from "@formbricks/workflows";
 import type { TWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/types/email-authoring-context";
 
 /**
@@ -14,7 +14,7 @@ export const resolveBoundTriggerSurvey = (
   authoringContext: TWorkflowEmailAuthoringContext | null,
   definition: TWorkflowDefinition | null
 ): TSurvey | null => {
-  const triggerSurveyId = definition?.trigger?.type === "trigger" ? definition.trigger.config.surveyId : null;
+  const triggerSurveyId = getTriggerSurveyId(definition?.trigger);
   const survey = authoringContext?.survey ?? null;
   return survey?.id === triggerSurveyId ? survey : null;
 };

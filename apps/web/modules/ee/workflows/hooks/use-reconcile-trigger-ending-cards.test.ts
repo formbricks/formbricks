@@ -6,7 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { Provider, createStore, useAtomValue } from "jotai";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { TWorkflowDefinition } from "@formbricks/workflows";
+import { type TWorkflowDefinition, getTriggerEndingCardIds } from "@formbricks/workflows";
 import {
   prunedTriggerEndingCardIdsAtom,
   setWorkflowDefinitionAtom,
@@ -66,7 +66,7 @@ const renderReconcile = ({
       const current = useAtomValue(workflowDefinitionAtom);
       useReconcileTriggerEndingCards({ definition: current, isEditable });
       return {
-        endingCardIds: current?.trigger?.config.endingCardIds,
+        endingCardIds: getTriggerEndingCardIds(current?.trigger),
         pruned: useAtomValue(prunedTriggerEndingCardIdsAtom),
       };
     },

@@ -58,5 +58,8 @@ export const createSurveyFromImportDraft = async ({
   // No transaction of its own: the create commits by itself and throws `SurveyWriteAfterCommitError`
   // when only the work after its commit failed. Holding one here would hold a pool connection through
   // the create's checks, which read through another.
-  return createV3Survey(parsed.data, authentication, requestId, organizationId);
+  // Imported headlines keep their links on every plan (ENG-3607).
+  return createV3Survey(parsed.data, authentication, requestId, organizationId, {
+    skipRichTextLinkPermissionCheck: true,
+  });
 };

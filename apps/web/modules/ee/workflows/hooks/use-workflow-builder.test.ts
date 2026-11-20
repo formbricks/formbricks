@@ -67,8 +67,9 @@ vi.mock("@/modules/ee/workflows/lib/analytics", () => ({
 // safeParse mimics real zod normalization: it returns a REBUILT object (defaults applied, keys in
 // schema order), never the input reference. The autosave dirty-tracking must stay immune to that —
 // see "a normalizing schema parse..." below.
-vi.mock("@formbricks/workflows", () => ({
-  ZWorkflowDefinition: {
+vi.mock("@formbricks/workflows", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@formbricks/workflows")>()),
+  ZWorkflowDefinitionInput: {
     safeParse: (value: unknown) => ({
       success: true,
       data: { schemaVersion: 1, ...(value as Record<string, unknown>) },

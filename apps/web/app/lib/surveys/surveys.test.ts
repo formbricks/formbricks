@@ -271,6 +271,53 @@ describe("surveys", () => {
       ]);
     });
 
+    test("a calculated true/false field filters by True or False (ENG-6973)", () => {
+      const survey = {
+        id: "survey1",
+        name: "Test Survey",
+        blocks: [],
+        questions: [],
+        embeddedFields: [
+          {
+            field: {
+              key: null,
+              name: "qualified",
+              source: "computed",
+              dataType: "boolean",
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: "var_qualified" },
+          },
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: "draft",
+      } as unknown as TSurvey;
+
+      // Not through `asRead`: a true/false field is declared only in the typed rows.
+      const result = generateElementAndFilterOptions({
+        survey,
+        environmentTags: undefined,
+        attributes: {},
+        reservedValues: {},
+        hiddenFields: {},
+        variableValues: {},
+        quotas: [],
+        t,
+      });
+
+      const variablesHeader = result.elementOptions.find((opt) => opt.header === OptionsType.VARIABLES);
+      expect(variablesHeader?.option).toEqual([
+        { label: "qualified", type: OptionsType.VARIABLES, id: "var_qualified" },
+      ]);
+      const qualified = result.elementFilterOptions.find(
+        (o) => o.type === "Variables" && o.id === "var_qualified"
+      );
+      expect(qualified?.filterOptions).toEqual(["Equals", "Not equals", "Is set", "Is not set"]);
+      expect(qualified?.filterComboBoxOptions).toEqual(["true", "false"]);
+    });
+
     test("lists Hidden Fields and Variables above Meta in the filter picker", () => {
       const survey = {
         id: "survey1",

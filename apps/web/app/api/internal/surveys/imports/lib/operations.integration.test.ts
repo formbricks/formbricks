@@ -501,6 +501,41 @@ describe("a Formbricks file imported into another organization", () => {
     expect(links[VARIABLE_ID]).toEqual({ key: null, surveyId });
   });
 
+  test("keeps a link in a headline on a plan without external URLs (ENG-3891)", async () => {
+    // A workspace of its own, so the import does not take a name the tests after it number against.
+    const organization = await prisma.workspace.findUniqueOrThrow({
+      where: { id: fixture.foreignWorkspaceId },
+      select: { organizationId: true },
+    });
+    const target = (
+      await prisma.workspace.create({
+        data: { name: "Linked headlines", organizationId: organization.organizationId },
+      })
+    ).id;
+    await synchronizeAuthzedIntegrationFixture();
+    const done = await previewDone(target, exportedFile);
+    const payload = structuredClone(done.payload) as typeof done.payload & {
+      blocks: { elements: { headline: Record<string, string> }[] }[];
+    };
+    const element = payload.blocks[0].elements[0];
+    element.headline = Object.fromEntries(
+      Object.keys(element.headline).map((code) => [
+        code,
+        '<p><a href="https://example.com/more">More</a></p>',
+      ])
+    );
+    entitlements.externalUrls = false;
+
+    const response = await commit({ workspaceId: target, payload, references: done.references });
+
+    expect(response.status).toBe(201);
+    const created = await prisma.survey.findUniqueOrThrow({
+      where: { id: surveyIdOf(response) },
+      select: { blocks: true },
+    });
+    expect(JSON.stringify(created.blocks)).toContain('href=\\"https://example.com/more\\"');
+  });
+
   test("matches the references a workspace already has, and numbers the next import of the same survey", async () => {
     const target = fixture.foreignWorkspaceId;
     const before = await countReferences(target);
@@ -781,6 +816,25 @@ describe("a reviewed draft that carries no references (Qualtrics, Word, Excel, C
     expect(first.status).toBe(201);
     expect(repeat.headers.get("Location")).toBe(first.headers.get("Location"));
     expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before + 1);
+  });
+
+  // ENG-3607 keeps links in imported headlines; ENG-3891 gates them in the v3 create on plans
+  // without external URLs. The import stays exempt from that half of the gate.
+  test("keeps a link in a headline on a plan without external URLs", async () => {
+    entitlements.externalUrls = false;
+    const target = fixture.otherWorkspaceId;
+    const payload = documentDraft(target);
+    const linked = '<p>Read the <a href="https://example.com/visit">visit notes</a></p>';
+    payload.blocks[0].elements[0].headline = { "en-US": linked };
+
+    const response = await commit({ workspaceId: target, payload });
+
+    expect(response.status).toBe(201);
+    const created = await prisma.survey.findUniqueOrThrow({
+      where: { id: surveyIdOf(response) },
+      select: { blocks: true },
+    });
+    expect(JSON.stringify(created.blocks)).toContain('href=\\"https://example.com/visit\\"');
   });
 
   test("refuses a draft the create would refuse, naming the field, and creates nothing", async () => {

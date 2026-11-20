@@ -136,6 +136,11 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/webhooks` | POST | session | dashboard | `/api/internal` | `app/api/internal/webhooks/route.ts` |
 | `/api/internal/webhooks/{webhookId}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/webhooks/[webhookId]/route.ts` |
 | `/api/internal/webhooks/test-deliveries` | POST | session | dashboard | `/api/internal` | `app/api/internal/webhooks/test-deliveries/route.ts` |
+| `/api/internal/workflows/{workflowId}/published-version` | GET | session | dashboard | `/api/internal` | `app/api/internal/workflows/[workflowId]/published-version/route.ts` |
+| `/api/internal/workflows/{workflowId}/runs/{runId}/definition` | GET | session | dashboard | `/api/internal` | `app/api/internal/workflows/[workflowId]/runs/[runId]/definition/route.ts` |
+| `/api/internal/workflows/{workflowId}/samples` | GET | session | dashboard | `/api/internal` | `app/api/internal/workflows/[workflowId]/samples/route.ts` |
+| `/api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}` | PUT | session | dashboard | `/api/internal` | `app/api/internal/workflows/[workflowId]/steps/[stepId]/secret-headers/[headerName]/route.ts` |
+| `/api/internal/workflows/{workflowId}/test-responses` | GET | session | dashboard | `/api/internal` | `app/api/internal/workflows/[workflowId]/test-responses/route.ts` |
 | `/api/internal/workspaces` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/workspaces/route.ts` |
 | `/api/internal/workspaces/{workspaceId}` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/route.ts` |
 | `/api/internal/workspaces/{workspaceId}/branding` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/workspaces/[workspaceId]/branding/route.ts` |

@@ -108,6 +108,20 @@ export const ZWorkflowRunJobData = z.object({
 
 export type TWorkflowRunJobData = z.infer<typeof ZWorkflowRunJobData>;
 
+/**
+ * One "Don't wait" HTTP request call of a workflow run (ENG-7179). Ids only: the handler reads the rendered
+ * request from the step's run log and the secret header values from the database at send time, so no
+ * payload data or secret ever sits in Redis.
+ */
+export const ZWorkflowHttpRequestDeliveryJobData = z.object({
+  workflowRunId: z.cuid2(),
+  workflowId: z.cuid2(),
+  workspaceId: z.cuid2(),
+  stepId: z.string().min(1),
+});
+
+export type TWorkflowHttpRequestDeliveryJobData = z.infer<typeof ZWorkflowHttpRequestDeliveryJobData>;
+
 // The reconciler is a global periodic sweep, not a per-run job — it carries no run identifiers.
 export const ZWorkflowRunReconcileJobData = ZGlobalScopeJobData;
 

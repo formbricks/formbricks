@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { TWorkflowDefinition } from "@formbricks/workflows";
+import { type TWorkflowDefinition, getTriggerEndingCardIds } from "@formbricks/workflows";
 import { reconcileDefinitionEndingCardIds, reconcileEndingCardIds } from "./trigger-ending-cards";
 
 const buildDefinition = (endingCardIds: string[]): TWorkflowDefinition =>
@@ -69,15 +69,15 @@ describe("reconcileDefinitionEndingCardIds", () => {
     const result = reconcileDefinitionEndingCardIds(definition, ["end_1"]);
 
     expect(result?.removedEndingCardIds).toEqual(["deleted_1"]);
-    expect(result?.definition.trigger?.config.endingCardIds).toEqual(["end_1"]);
+    expect(getTriggerEndingCardIds(result?.definition.trigger)).toEqual(["end_1"]);
     expect(result?.definition).not.toBe(definition);
-    expect(definition.trigger?.config.endingCardIds).toEqual(["deleted_1", "end_1"]);
+    expect(getTriggerEndingCardIds(definition.trigger)).toEqual(["deleted_1", "end_1"]);
   });
 
   test("reports a change for duplicate-only drift even though nothing is missing", () => {
     const result = reconcileDefinitionEndingCardIds(buildDefinition(["end_1", "end_1"]), ["end_1"]);
 
-    expect(result?.definition.trigger?.config.endingCardIds).toEqual(["end_1"]);
+    expect(getTriggerEndingCardIds(result?.definition.trigger)).toEqual(["end_1"]);
     expect(result?.removedEndingCardIds).toEqual([]);
   });
 });

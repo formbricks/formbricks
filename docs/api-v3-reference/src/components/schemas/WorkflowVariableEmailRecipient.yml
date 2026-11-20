@@ -1,0 +1,24 @@
+type: object
+description: >
+  Recipient read from a Variable when the step runs, such as `payload.customer.email`. The step's
+  subject and body must then be fixed (no recall tokens, no attached response data): the caller
+  picks who gets the email, not what it says. The address is not allowlist-checked. It is capped at
+  50 emails an hour per workflow on top of the organization's email caps, and an empty or invalid
+  address, or a spent cap, fails the step and the run with the reason in run detail (no retry).
+required:
+  - type
+  - ref
+properties:
+  type:
+    type: string
+    enum:
+      - variable
+  ref:
+    type: string
+    minLength: 1
+    maxLength: 512
+    description: >
+      Variable path holding the address: `payload.<path>`, `steps.<stepId>.<path>` or
+      `response.<questionId>`. Segments `__proto__`, `prototype` and `constructor` are refused.
+    example: payload.customer.email
+additionalProperties: false

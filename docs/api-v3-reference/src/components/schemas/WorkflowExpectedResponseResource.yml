@@ -1,0 +1,30 @@
+type: object
+description: >
+  An HTTP request step's expected response body — the body its API answers with — and
+  the Variables inferred from it, which later steps use as
+  `steps.<stepId>.body.*`. Only editors and API or MCP clients set it; a Test
+  request never changes it.
+required:
+  - workflowId
+  - stepId
+  - body
+  - variables
+  - updatedAt
+properties:
+  workflowId:
+    type: string
+    format: cuid2
+  stepId:
+    type: string
+    minLength: 1
+    description: The HTTP request step's id.
+  body:
+    type: object
+    additionalProperties: true
+    description: The expected response body, a JSON object.
+  variables:
+    $ref: ./WorkflowSampleVariables.yml
+  updatedAt:
+    type: string
+    format: date-time
+additionalProperties: false

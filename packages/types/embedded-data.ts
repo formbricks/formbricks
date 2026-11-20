@@ -90,8 +90,15 @@ const DEFAULT_VALUE_TYPE_BY_DATA_TYPE = {
  * v3 survey document (`apps/web/app/api/v3/surveys/embedded-fields.ts`) and every other writer read
  * it. ENG-6935 added `date`: Set value computes dates (`now()`), stored in `response.variables` as
  * ISO 8601 UTC strings, and the legacy `variables` projection leaves them out (json-shapes §6).
+ * ENG-6973 added `boolean`: Set value assigns True, False or another true/false field in one step,
+ * stored in `response.variables` as a real boolean, and left out of the legacy projection like dates.
  */
-export const COMPUTED_EMBEDDED_DATA_TYPES: readonly TEmbeddedDataType[] = ["string", "number", "date"];
+export const COMPUTED_EMBEDDED_DATA_TYPES: readonly TEmbeddedDataType[] = [
+  "string",
+  "number",
+  "date",
+  "boolean",
+];
 
 /** One broken definition rule, keyed by the field it is about. */
 export interface TEmbeddedFieldDefinitionIssue {

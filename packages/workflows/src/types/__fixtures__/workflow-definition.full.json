@@ -83,7 +83,7 @@
                   "operator": "equals",
                   "right": {
                     "fallback": "free",
-                    "path": "contact.plan"
+                    "path": "response.accountPlan"
                   }
                 },
                 {

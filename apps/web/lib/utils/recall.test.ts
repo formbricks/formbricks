@@ -5,6 +5,7 @@ import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   checkForEmptyFallBackValue,
+  createRecallTokenPattern,
   extractCompleteRecallIds,
   extractFallbackValue,
   extractId,
@@ -105,6 +106,19 @@ describe("recall utility functions", () => {
     });
   });
 
+  describe("createRecallTokenPattern", () => {
+    test("splits a text at its complete tokens, workflow Variable paths included", () => {
+      const text = "Hi #recall:q1/fallback:a# from #recall:payload.customer.tier/fallback:# #recall:open";
+      const pattern = createRecallTokenPattern();
+
+      expect(text.match(pattern)).toEqual([
+        "#recall:q1/fallback:a#",
+        "#recall:payload.customer.tier/fallback:#",
+      ]);
+      expect(text.split(pattern)).toEqual(["Hi ", " from ", " #recall:open"]);
+    });
+  });
+
   describe("extractCompleteRecallIds", () => {
     test("extracts the ids of complete recall tokens", () => {
       const text = "Text #recall:id1/fallback:a# and #recall:id2/fallback:#";
@@ -163,6 +177,32 @@ describe("recall utility functions", () => {
       const text = "This has #recall:id1/fallback:default1# and #recall:id2/fallback:default2#";
       const result = extractRecallInfo(text, "id2");
       expect(result).toBe("#recall:id2/fallback:default2#");
+    });
+  });
+
+  describe("workflow Variable paths (ENG-7165)", () => {
+    const text =
+      "Hi #recall:payload.customer.name/fallback:there# from #recall:steps.http-1.body.id/fallback:#";
+
+    test("a token holding a payload, steps or response path is one recall id", () => {
+      expect(extractId(text)).toBe("payload.customer.name");
+      expect(extractIds(text)).toEqual(["payload.customer.name", "steps.http-1.body.id"]);
+      expect(extractCompleteRecallIds(text)).toEqual(["payload.customer.name", "steps.http-1.body.id"]);
+      expect(extractRecallInfo(text)).toBe("#recall:payload.customer.name/fallback:there#");
+      expect(getFallbackValues(text)).toEqual({
+        "payload.customer.name": "there",
+        "steps.http-1.body.id": "",
+      });
+    });
+
+    test("other dotted ids are not paths, so survey recall reads them as before", () => {
+      expect(extractId("#recall:q1.x/fallback:a#")).toBe("q1");
+      expect(extractRecallInfo("#recall:q1.x/fallback:a#")).toBeNull();
+      expect(extractId("#recall:payload/fallback:a#")).toBe("payload");
+    });
+
+    test("parseRecallInfo uses the fallback for a path, since a response has no such answer", () => {
+      expect(parseRecallInfo("Hi #recall:payload.name/fallback:there#", { name: "Ana" })).toBe("Hi there");
     });
   });
 

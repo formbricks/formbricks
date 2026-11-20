@@ -263,8 +263,10 @@ export const buildDateFieldCondition = (op: string, value: string): TTypedFieldF
  * the obvious reading of its dataType. A number field must send a real number, because a
  * string-typed `equals` never matches a jsonb number. A boolean field must send the *string*
  * `"true"` / `"false"`, because that is what the ingest contract writes: `ZResponseDataValue` has no
- * boolean member, so nothing under `data`, `variables` or `meta` is ever a jsonb boolean and a real
- * boolean here matched no row at all (ENG-3231). The picker below already offers a boolean field
+ * boolean member, so nothing under `data` or `meta` is ever a jsonb boolean and a real boolean here
+ * matched no row at all (ENG-3231). A computed true/false field (ENG-6973) does store a real boolean
+ * under `variables`; the where clause matches both spellings for it (`buildBooleanVariableCondition`),
+ * so the condition still carries the string. The picker below already offers a boolean field
  * exactly those two spellings as its options, so the value reaches this function in its stored form
  * and all this has to do is stop converting it. A date field is the one whose *value* decides its
  * condition rather than only its operator, because the picker is day-granular and the column is

@@ -83,7 +83,7 @@ export const AutoSaveIndicator = ({
             <button
               type="button"
               className={cn(
-                "focus-visible:ring-ring inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors duration-300 focus-visible:ring-1 focus-visible:outline-hidden",
+                "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors duration-300 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden",
                 toneClassName[badge.tone]
               )}>
               {label}

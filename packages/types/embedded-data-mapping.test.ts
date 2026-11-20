@@ -301,17 +301,11 @@ describe("toLegacyEmbeddedFields", () => {
   describe("the derived variables always satisfy ZSurveyVariable", () => {
     // `defaultValue` is a `string | number | boolean | null`, but the schema's `number` arm demands a
     // number and its `text` arm a string, so a mismatch would write a column that fails to parse the
-    // next time the survey is read. The last two rows are types `ZEmbeddedData` refuses on a computed
-    // row — covered anyway, because this derivation is what a malformed payload would reach first.
+    // next time the survey is read.
     test.each([
       ["a number field with no default", computed({ defaultValue: null }), 0],
-      ["a number field defaulted to a string", computed({ defaultValue: "7" }), 0],
+      ["a number field defaulted to a string", computed({ dataType: "number", defaultValue: "7" }), 0],
       ["a text field with no default", computed({ dataType: "string", defaultValue: null }), ""],
-      [
-        "a boolean field, whose default no variable arm accepts",
-        computed({ dataType: "boolean", defaultValue: true }),
-        "",
-      ],
     ])("%s", (_label, field, expectedValue) => {
       const [variable] = toLegacyEmbeddedFields([field]).variables;
 
@@ -330,6 +324,21 @@ describe("toLegacyEmbeddedFields", () => {
         name: "signup",
         dataType: "date",
         defaultValue: null,
+      }),
+    ]);
+
+    expect(derived.variables.map((variable) => variable.name)).toEqual(["score"]);
+  });
+
+  test("leaves a computed true/false field out of the legacy variables (ENG-6973)", () => {
+    // Like a date: a variable is a number or text, and a boolean default fits neither arm.
+    const derived = toLegacyEmbeddedFields([
+      computed(),
+      computed({
+        storageKey: "clx000000000000000000003",
+        name: "qualified",
+        dataType: "boolean",
+        defaultValue: true,
       }),
     ]);
 

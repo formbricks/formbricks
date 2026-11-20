@@ -129,7 +129,7 @@ const getSurveyColumns = ({
       return state?.href ? (
         <Link
           href={state.href}
-          className="focus-visible:ring-ring flex min-w-0 items-center gap-1 font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+          className="flex min-w-0 items-center gap-1 font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden">
           {nameCell}
         </Link>
       ) : (

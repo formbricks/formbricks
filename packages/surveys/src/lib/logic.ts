@@ -8,13 +8,10 @@ import {
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { evaluateBooleanAssign } from "@formbricks/types/surveys/boolean-assign";
+import { compareConditionValues } from "@formbricks/types/surveys/condition-comparison";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import {
-  compareDateValues,
-  isDateAfter,
-  isDateBefore,
-  isDateFieldOperand,
-} from "@formbricks/types/surveys/date-comparison";
+import { compareDateValues, isDateFieldOperand } from "@formbricks/types/surveys/date-comparison";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
 import { findByLocalizedLabel, findMatrixRowKey } from "@formbricks/types/surveys/localized-label";
@@ -325,179 +322,6 @@ const getOperandField = (
   return "";
 };
 
-/** Whether the left operand is a date element and both sides are strings. */
-const isDateElementComparison = ({
-  condition,
-  leftField,
-  leftValue,
-  rightValue,
-}: TConditionValues): boolean =>
-  condition.leftOperand.type === "element" &&
-  (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
-  typeof leftValue === "string" &&
-  typeof rightValue === "string";
-
-const isSameTime = (left: unknown, right: unknown): boolean =>
-  new Date(left as string).getTime() === new Date(right as string).getTime();
-
-/**
- * When left value is of openText, hiddenField, variable and right value is of multichoice (or a
- * date): whether the two are equal (`!== negate`), or `undefined` when the right element is neither.
- */
-const compareWithRightElement = (
-  { condition, rightField, leftValue, rightValue }: TConditionValues,
-  negate: boolean
-): boolean | undefined => {
-  if (condition.rightOperand?.type !== "element") return undefined;
-  const rightType = (rightField as TSurveyElement).type;
-  if (rightType === TSurveyElementTypeEnum.MultipleChoiceMulti) {
-    if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
-      return rightValue.includes(leftValue) !== negate;
-    }
-    return false;
-  }
-  if (
-    rightType === TSurveyElementTypeEnum.Date &&
-    typeof leftValue === "string" &&
-    typeof rightValue === "string"
-  ) {
-    return isSameTime(leftValue, rightValue) !== negate;
-  }
-  return undefined;
-};
-
-const evaluateEquals = (values: TConditionValues): boolean => {
-  const { dateOrder, leftValue, rightValue } = values;
-  if (dateOrder !== undefined) return dateOrder === 0;
-  // when left value is of date question and right value is string
-  if (isDateElementComparison(values)) return isSameTime(leftValue, rightValue);
-
-  const rightElementResult = compareWithRightElement(values, false);
-  if (rightElementResult !== undefined) return rightElementResult;
-
-  return (
-    (Array.isArray(leftValue) &&
-      leftValue.length === 1 &&
-      typeof rightValue === "string" &&
-      leftValue.includes(rightValue)) ||
-    leftValue === rightValue
-  );
-};
-
-const evaluateDoesNotEqual = (values: TConditionValues): boolean => {
-  const { condition, dateOrder, leftField, leftValue, rightValue } = values;
-  if (dateOrder !== undefined) return dateOrder !== 0;
-  // when left value is of picture selection question and right value is its option
-  if (
-    condition.leftOperand.type === "element" &&
-    (leftField as TSurveyElement).type === TSurveyElementTypeEnum.PictureSelection &&
-    Array.isArray(leftValue) &&
-    leftValue.length > 0 &&
-    typeof rightValue === "string"
-  ) {
-    return !leftValue.includes(rightValue);
-  }
-
-  // when left value is of date question and right value is string
-  if (isDateElementComparison(values)) return !isSameTime(leftValue, rightValue);
-
-  const rightElementResult = compareWithRightElement(values, true);
-  if (rightElementResult !== undefined) return rightElementResult;
-
-  // decide inside the guard: OR-ing past it would fall through to `leftValue !== rightValue`,
-  // which is always true for an array vs. a string (a matching single selection included)
-  if (Array.isArray(leftValue) && leftValue.length === 1 && typeof rightValue === "string") {
-    return !leftValue.includes(rightValue);
-  }
-
-  return leftValue !== rightValue;
-};
-
-const evaluateIsSubmitted = ({ condition, leftField, leftValue }: TConditionValues): boolean => {
-  if (typeof leftValue === "string") {
-    if (
-      condition.leftOperand.type === "element" &&
-      (leftField as TSurveyElement).type === TSurveyElementTypeEnum.FileUpload &&
-      leftValue
-    ) {
-      return leftValue !== "skipped";
-    }
-    return leftValue !== "" && leftValue !== null;
-  } else if (Array.isArray(leftValue)) {
-    return leftValue.length > 0;
-  } else if (typeof leftValue === "number") {
-    return leftValue !== null;
-  }
-  return false;
-};
-
-const evaluateIsSkipped = ({ leftValue }: TConditionValues): boolean =>
-  (Array.isArray(leftValue) && leftValue.length === 0) ||
-  leftValue === "" ||
-  leftValue === null ||
-  leftValue === undefined ||
-  (typeof leftValue === "object" && Object.entries(leftValue).length === 0);
-
-/** Both sides are lists, and `test` holds of the right list against the left one. */
-const compareLists =
-  (test: (left: unknown[], right: unknown[]) => boolean) =>
-  ({ leftValue, rightValue }: TConditionValues): boolean =>
-    Array.isArray(leftValue) && Array.isArray(rightValue) && test(leftValue, rightValue);
-
-const isSet = ({ leftValue }: TConditionValues): boolean =>
-  leftValue !== undefined && leftValue !== null && leftValue !== "";
-
-/** How each operator compares a condition's resolved operands. An operator not listed is false. */
-const OPERATOR_EVALUATORS: Partial<
-  Record<TSingleCondition["operator"], (values: TConditionValues) => boolean>
-> = {
-  equals: evaluateEquals,
-  doesNotEqual: evaluateDoesNotEqual,
-  contains: ({ leftValue, rightValue }) => String(leftValue).includes(String(rightValue)),
-  doesNotContain: ({ leftValue, rightValue }) => !String(leftValue).includes(String(rightValue)),
-  startsWith: ({ leftValue, rightValue }) => String(leftValue).startsWith(String(rightValue)),
-  doesNotStartWith: ({ leftValue, rightValue }) => !String(leftValue).startsWith(String(rightValue)),
-  endsWith: ({ leftValue, rightValue }) => String(leftValue).endsWith(String(rightValue)),
-  doesNotEndWith: ({ leftValue, rightValue }) => !String(leftValue).endsWith(String(rightValue)),
-  isSubmitted: evaluateIsSubmitted,
-  isSkipped: evaluateIsSkipped,
-  isGreaterThan: ({ leftValue, rightValue }) => Number(leftValue) > Number(rightValue),
-  isLessThan: ({ leftValue, rightValue }) => Number(leftValue) < Number(rightValue),
-  isGreaterThanOrEqual: ({ leftValue, rightValue }) => Number(leftValue) >= Number(rightValue),
-  isLessThanOrEqual: ({ leftValue, rightValue }) => Number(leftValue) <= Number(rightValue),
-  equalsOneOf: ({ leftValue, rightValue }) =>
-    Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.includes(leftValue),
-  includesAllOf: compareLists((left, right) => right.every((v) => left.includes(v))),
-  includesOneOf: compareLists((left, right) => right.some((v) => left.includes(v))),
-  doesNotIncludeAllOf: compareLists((left, right) => !right.every((v) => left.includes(v))),
-  doesNotIncludeOneOf: compareLists((left, right) => !right.some((v) => left.includes(v))),
-  isAccepted: ({ leftValue }) => leftValue === "accepted",
-  isClicked: ({ leftValue }) => leftValue === "clicked",
-  isNotClicked: ({ leftValue }) => leftValue !== "clicked",
-  isAfter: ({ leftValue, rightValue }) => isDateAfter(leftValue, rightValue),
-  isBefore: ({ leftValue, rightValue }) => isDateBefore(leftValue, rightValue),
-  isBooked: ({ leftValue }) => leftValue === "booked" || !!(leftValue && leftValue !== ""),
-  isPartiallySubmitted: ({ leftValue }) =>
-    typeof leftValue === "object" && Object.values(leftValue as object).includes(""),
-  isCompletelySubmitted: ({ leftValue }) => {
-    if (typeof leftValue !== "object") return false;
-    const values: unknown[] = Object.values(leftValue as object);
-    return values.length > 0 && !values.includes("");
-  },
-  isSet,
-  isNotEmpty: isSet,
-  isNotSet: ({ leftValue }) => leftValue === undefined || leftValue === null || leftValue === "",
-  isEmpty: ({ leftValue }) => leftValue === "",
-  isAnyOf: ({ leftValue, rightValue }) =>
-    Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.includes(leftValue),
-};
-
-/** The evaluator of a known operator; an unknown one (a prototype key included) has none, so it is false. */
-const getOperatorEvaluator = (operator: string): ((values: TConditionValues) => boolean) | undefined =>
-  Object.hasOwn(OPERATOR_EVALUATORS, operator)
-    ? OPERATOR_EVALUATORS[operator as TSingleCondition["operator"]]
-    : undefined;
-
 /**
  * Resolves a condition's operands for comparison, or `undefined` when it can never match: a matrix
  * row condition naming a row or column id the matrix doesn't have (P48), negated operators included.
@@ -583,15 +407,31 @@ const evaluateSingleCondition = (
       embeddedValues
     );
     if (!values) return false;
-    return getOperatorEvaluator(condition.operator)?.(values) ?? false;
+    // ADR 0046: the comparison survey logic and workflow conditions share.
+    return compareConditionValues(condition.operator, values.leftValue, values.rightValue, {
+      leftElementType: typeof values.leftField === "object" ? values.leftField.type : undefined,
+      rightElementType: typeof values.rightField === "object" ? values.rightField.type : undefined,
+      dateOrder: values.dateOrder,
+    });
   } catch {
     return false;
   }
 };
 
-/** A variable's value, or the one-step operators' starting value when it has none yet. */
-const withDefaultValue = (value: number | string | undefined, dataType: string): number | string =>
-  value ?? (dataType === "number" ? 0 : "");
+/** A value the one-step operators read or write. */
+type TCalculationValue = number | string;
+
+/**
+ * A variable's value, or the one-step operators' starting value when it has none yet. A stored
+ * true/false is not a number, so a number field starts from 0 rather than `Number("true")` (NaN).
+ */
+const withDefaultValue = (
+  value: TResponseVariables[string] | undefined,
+  dataType: string
+): TCalculationValue => {
+  if (typeof value === "boolean") return dataType === "number" ? 0 : String(value);
+  return value ?? (dataType === "number" ? 0 : "");
+};
 
 /**
  * Whether an answer or hidden field reads as a number. Blank text is not one: `Number("")` is 0, which
@@ -604,15 +444,16 @@ const isNumericOperand = (val: string | number): boolean =>
 const getCalculationOperand = (
   action: TActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>,
+  calculations: TResponseVariables,
   dataType: string
-): string | number | undefined => {
-  let operandValue: string | number | undefined;
+): TCalculationValue | undefined => {
+  let operandValue: TCalculationValue | undefined;
 
   // Determine the operand value based on the action.value type
   switch (action.value.type) {
     case "static":
-      operandValue = action.value.value;
+      // True and False belong to a true/false field, handled in performCalculation.
+      if (typeof action.value.value !== "boolean") operandValue = action.value.value;
       break;
     case "variable": {
       const value = calculations[action.value.value];
@@ -641,9 +482,9 @@ const getCalculationOperand = (
 /** Applies a one-step operator; `undefined` for a division by zero. */
 const applyCalculationOperator = (
   operator: TActionCalculate["operator"],
-  currentValue: number | string,
-  operandValue: number | string
-): number | string | undefined => {
+  currentValue: TCalculationValue,
+  operandValue: TCalculationValue
+): TCalculationValue | undefined => {
   switch (operator) {
     case "add":
       return Number(currentValue) + Number(operandValue);
@@ -665,14 +506,17 @@ const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>,
+  calculations: TResponseVariables,
   context: TPerformActionsContext
-): number | string | undefined => {
+): TResponseVariables[string] | undefined => {
   const computedField = findComputedEmbeddedField(getComputedEmbeddedFields(survey), action.variableId);
 
   if (!computedField) return undefined;
 
   const { dataType } = computedField.field;
+
+  // ENG-6973: a true/false field is assigned True, False or another true/false field, as a real boolean.
+  if (dataType === "boolean") return evaluateBooleanAssign(action, data, calculations);
 
   // Set value (ENG-6935): the shared evaluator, "empty in, empty out". An empty result is written as
   // "" so it clears the field; the one-step operators below keep "empty counts as 0".
@@ -687,7 +531,6 @@ const performCalculation = (
   }
 
   const currentValue = withDefaultValue(calculations[action.variableId], dataType);
-
   const operandValue = getCalculationOperand(action, data, calculations, dataType);
   if (operandValue === undefined || operandValue === null) return undefined;
 

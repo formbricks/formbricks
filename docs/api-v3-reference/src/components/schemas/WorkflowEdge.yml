@@ -19,8 +19,9 @@ properties:
     type: string
     minLength: 1
     description: >-
-      Builder handle identifier on the source node. Reserved for branch nodes
-      (`then`/`else`) in future scopes.
+      Builder handle identifier on the source node. `then` and `else` mark the
+      two branches of an `if_else` node; an edge leaving a `switch` node uses one of its case
+      ids, or `default` for its Default branch. No other node uses `then` or `else`.
   targetHandle:
     type: string
     minLength: 1

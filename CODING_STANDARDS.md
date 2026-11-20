@@ -64,7 +64,7 @@ These remain review checks until their enforcement handles the repository's exis
 
 ## API Design
 
-- New endpoints start internal ([ADR-0043](docs/adr/0043-internal-endpoints-live-outside-v3.md)):
+- New endpoints start internal ([ADR-0059](docs/adr/0059-internal-endpoints-live-outside-v3.md)):
   `/api/internal/<resource>`, session auth, no OpenAPI entry and no stability promise. Internal routes are
   v3 in everything but the contract, so they can change freely while the shape settles.
 - An endpoint is promoted to public `/api/v3` once an external caller (an API key, an integration, an MCP

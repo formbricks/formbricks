@@ -192,7 +192,7 @@ const getRecordColumns = ({
         <button
           type="button"
           onClick={() => onOpenRecord(row.original.id)}
-          className="focus-visible:ring-ring block min-w-0 truncate text-left font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+          className="block min-w-0 truncate text-left font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden">
           {row.original.field_label ?? row.original.field_id}
         </button>
       ),

@@ -4,7 +4,6 @@ import { logger } from "@formbricks/logger";
 import type { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import type {
   TResponseData,
-  TResponseDataValue,
   TResponseMeta,
   TResponseTtc,
   TResponseVariables,
@@ -13,6 +12,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
 import { screenResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import type { TV3ResponseRow } from "./service";
+import type { TV3VariableWrites } from "./write-plan";
 import type { TV3WriteSurveyRow } from "./write-service";
 
 /**
@@ -51,7 +51,7 @@ const asQuotaScreeningResponse = ({
   variables,
   ...row
 }: Omit<TEmbeddedValueResponse, "variables"> & {
-  variables: Record<string, TResponseDataValue>;
+  variables: TV3VariableWrites;
 }): TEmbeddedValueResponse => ({
   ...row,
   // The plan carries the write's own composition type, which is wider than what a response stores:
@@ -187,7 +187,7 @@ export async function createEffects({
   finished: boolean;
   language: string | null;
   data: TResponseData;
-  variables: Record<string, TResponseDataValue>;
+  variables: TV3VariableWrites;
   ttc: TResponseTtc;
   meta: TResponseMeta;
   contactId?: string;
@@ -245,7 +245,7 @@ export async function patchEffects({
   finished: boolean;
   language: string | null;
   data: TResponseData;
-  variables: Record<string, TResponseDataValue>;
+  variables: TV3VariableWrites;
   ttc: TResponseTtc;
   tagsToApply: string[];
 }): Promise<TV3ResponseValidationEffects> {
