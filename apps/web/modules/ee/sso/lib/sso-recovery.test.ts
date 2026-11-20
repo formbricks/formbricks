@@ -126,6 +126,8 @@ const completeWithValidProof = (args: Parameters<typeof completeSsoRecovery>[0])
 
 /** The address the linking transaction finds on the user row it locks. */
 const lockedUserEmail = { value: "john.doe@example.com" };
+/** Set to make the locked row disagree with the guards' read of `emailVerified`. */
+const lockedEmailVerified: { value: boolean | undefined } = { value: undefined };
 
 describe("sso-recovery", () => {
   let transactionCommitted = false;
@@ -148,8 +150,20 @@ describe("sso-recovery", () => {
   const tx = {
     // The consent rows are locked in id order before they are deleted; the user row is locked to re-check
     // its address before the link.
-    $queryRaw: async (strings: TemplateStringsArray) =>
-      strings.join("").includes('FROM "User"') ? [{ email: lockedUserEmail.value }] : [],
+    // The locked row answers with the user the guards read, unless a test changes it under the lock.
+    $queryRaw: async (strings: TemplateStringsArray) => {
+      if (!strings.join("").includes('FROM "User"')) return [];
+      const read = (await vi.mocked(prisma.user.findUnique).mock.results.at(-1)?.value) as
+        | { emailVerified: boolean }
+        | null
+        | undefined;
+      return [
+        {
+          email: lockedUserEmail.value,
+          emailVerified: lockedEmailVerified.value ?? read?.emailVerified ?? false,
+        },
+      ];
+    },
     user: {
       update: txUserUpdate,
       updateMany: txUserUpdateMany,
@@ -219,6 +233,7 @@ describe("sso-recovery", () => {
     mocks.releaseClaim.mockResolvedValue(undefined);
     mocks.claimSsoRecoveryIntent.mockResolvedValue({ kind: "claimed", release: mocks.releaseClaim });
     lockedUserEmail.value = "john.doe@example.com";
+    lockedEmailVerified.value = undefined;
     vi.mocked(buildVerificationRequestedPath).mockReturnValue(
       "/auth/verification-requested?token=email-token&purpose=sso_recovery"
     );
@@ -701,7 +716,9 @@ describe("sso-recovery", () => {
       identityProviderAccountId: null,
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
-    // First completion: the account is unproven, so this is the one that strips and sweeps.
+    // First completion: the account is unproven, so this is the one that strips and sweeps. Its delete
+    // fails, so the record stays readable and claimable for the second.
+    mocks.consumeSsoRecoveryIntent.mockResolvedValue(false);
     await completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" });
     expect(txUserUpdate).toHaveBeenCalled();
     expect(revokeUserSessionsExcept).toHaveBeenCalled();
@@ -728,6 +745,32 @@ describe("sso-recovery", () => {
     expect(syncSsoIdentityForUser).toHaveBeenCalledOnce(); // an upsert, so no second identity
     expect(txUserUpdate).not.toHaveBeenCalled(); // nothing left to strip
     expect(revokeUserSessionsExcept).not.toHaveBeenCalled(); // and so no second session sweep
+  });
+
+  test("a deleted intent refuses a second open before it writes", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "user_1",
+      email: "john.doe@example.com",
+      locale: "en-US",
+      emailVerified: true,
+      isActive: true,
+      identityProvider: "email",
+      identityProviderAccountId: null,
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    // The first completion deletes the record, so a later open reads nothing and stops at the read. The
+    // claim gate, which also answers `spent` here, is pinned by the claim table below.
+    mocks.consumeSsoRecoveryIntent.mockImplementation(async () => {
+      mocks.readSsoRecoveryIntent.mockResolvedValue(null);
+      mocks.claimSsoRecoveryIntent.mockResolvedValue({ kind: "spent" });
+      return true;
+    });
+    await completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" });
+    vi.mocked(prisma.$transaction).mockClear();
+
+    const replay = completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" });
+
+    await expect(replay.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe("intent_unusable");
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   test("does not clear local auth material for already verified users", async () => {
@@ -1152,6 +1195,26 @@ describe("sso-recovery", () => {
         );
         // Rolled back, so the recovery is free again for a retry.
         expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
+      });
+
+      /**
+       * Two recoveries for one user hold different intents, so both pass the guards on an unverified
+       * address. The second waits on the row lock while the first verifies it, and must then decide the
+       * reclaim from the locked row: stripping again would sweep the sessions the first one kept.
+       */
+      test("an address verified by a concurrent recovery is not reclaimed a second time", async () => {
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+          ...verifiedUser,
+          emailVerified: false,
+        } as never);
+        lockedEmailVerified.value = true;
+
+        await completeSsoRecovery({ ...proven(), sessionToken: "kept-token" });
+
+        expect(syncSsoIdentityForUser).toHaveBeenCalled();
+        expect(txTwoFactorDeleteMany).not.toHaveBeenCalled();
+        expect(revokeUserSessionsExcept).not.toHaveBeenCalled();
+        expect(sendSsoRecoveryFactorsRemovedEmail).not.toHaveBeenCalled();
       });
 
       test("a link that rolls back gives its claim back, so the recovery can be retried", async () => {

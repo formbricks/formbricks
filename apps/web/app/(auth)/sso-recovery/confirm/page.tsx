@@ -1,3 +1,1 @@
-import { SsoRecoveryConfirmPage } from "@/modules/ee/sso/recovery-confirm/page";
-
-export default SsoRecoveryConfirmPage;
+export { SsoRecoveryConfirmPage as default } from "@/modules/ee/sso/recovery-confirm/page";

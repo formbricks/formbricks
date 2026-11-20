@@ -143,8 +143,13 @@ export const completeSsoRecovery = async ({
         // The address was checked against the intent before the claim; check it again here, holding the
         // user row, so an email change cannot commit between that check and the link. FOR UPDATE makes a
         // concurrent change wait for this transaction instead of slipping in after a plain read.
-        const [locked] = await tx.$queryRaw<{ email: string }[]>`
-          SELECT "email" FROM "User" WHERE "id" = ${user.id} FOR UPDATE
+        //
+        // `emailVerified` is re-read under the same lock because it decides the reclaim. Two recoveries for
+        // one user hold different intents, so both can pass the guards; the second then waits here while
+        // the first verifies the address. Deciding from the read taken before the lock, it would strip
+        // again and sweep the sessions the first recovery kept.
+        const [locked] = await tx.$queryRaw<{ email: string; emailVerified: boolean }[]>`
+          SELECT "email", "email_verified" AS "emailVerified" FROM "User" WHERE "id" = ${user.id} FOR UPDATE
         `;
         if (locked?.email !== intent.email) {
           throw rejectSsoRecoveryUserMismatch(intent);
@@ -152,7 +157,7 @@ export const completeSsoRecovery = async ({
 
         const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
           tx,
-          user,
+          user: { ...user, emailVerified: locked.emailVerified },
         });
 
         const recoveryAccount: TSsoAccountLinkInput = {

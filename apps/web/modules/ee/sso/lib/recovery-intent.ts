@@ -88,10 +88,14 @@ const toBase64Url = (buffer: Buffer) =>
  */
 const hashStateId = (stateId: string) => crypto.createHash("sha256").update(stateId).digest("hex");
 
+// Redis Cluster (ElastiCache Serverless on Cloud) runs a Lua call only when all its keys share a hash slot,
+// and the claim script reads the intent and writes the claim in one call. The braces make both keys hash on
+// the state hash alone, so they land in the same slot.
 const getIntentCacheKey = (stateIdHash: string) =>
-  createCacheKey.custom("sso_recovery", "intent", stateIdHash);
+  createCacheKey.custom("sso_recovery", `{${stateIdHash}}`, "intent");
 
-const getClaimCacheKey = (stateIdHash: string) => createCacheKey.custom("sso_recovery", "claim", stateIdHash);
+const getClaimCacheKey = (stateIdHash: string) =>
+  createCacheKey.custom("sso_recovery", `{${stateIdHash}}`, "claim");
 
 /**
  * How long a claim holds when its owner never releases it (a crashed request). Longer than anything a

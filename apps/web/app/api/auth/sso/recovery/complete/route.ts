@@ -66,7 +66,7 @@ const buildFailedRecoveryResponse = async (request: Request, redirectUrl: string
  * to link. The completion URL keeps its shape, so links already sent and the 2FA path (the login page
  * follows this URL as its callback) both land on the page.
  */
-const getHandler = async (request: Request) => {
+const getHandler = (request: Request) => {
   // An opaque id standing for a server-side record, not a payload (ENG-2783). The intent used to ride
   // here as a JWT, which is what let each retry nest the previous attempt's whole URL inside the next.
   const stateId = new URL(request.url).searchParams.get("state");

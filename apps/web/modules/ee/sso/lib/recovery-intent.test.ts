@@ -131,7 +131,20 @@ describe("SSO recovery intent", () => {
       const [key] = [...store.keys()];
 
       expect(key).not.toContain(stateId);
-      expect(key).toMatch(/^fb:sso_recovery:intent:[0-9a-f]{64}$/);
+      expect(key).toMatch(/^fb:sso_recovery:\{[0-9a-f]{64}\}:intent$/);
+    });
+
+    test("puts the intent and its claim in one Redis Cluster hash slot", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+      await claimSsoRecoveryIntent(stateId);
+
+      // The claim script names both keys in one EVAL; Redis Cluster hashes only the `{...}` part.
+      const redis = await mockCache.getRedisClient();
+      const [, { keys }] = vi.mocked(redis!.eval).mock.calls.at(-1) as [string, { keys: string[] }];
+      const hashTags = keys.map((key) => /\{([^}]+)\}/.exec(key)?.[1]);
+      expect(hashTags).toHaveLength(2);
+      expect(new Set(hashTags).size).toBe(1);
+      expect(hashTags[0]).toMatch(/^[0-9a-f]{64}$/);
     });
 
     test("stores nothing the URL used to carry in the clear", async () => {
@@ -231,7 +244,7 @@ describe("SSO recovery intent", () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       const first = claimed(await claimSsoRecoveryIntent(stateId));
       // The first claim's TTL ran out and another request claimed.
-      for (const key of [...store.keys()]) if (key.includes(":claim:")) store.delete(key);
+      for (const key of [...store.keys()]) if (key.endsWith(":claim")) store.delete(key);
       claimed(await claimSsoRecoveryIntent(stateId));
 
       await first.release();
@@ -276,7 +289,7 @@ describe("SSO recovery intent", () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       await claimSsoRecoveryIntent(stateId);
 
-      const claim = [...store.entries()].find(([key]) => key.includes(":claim:"));
+      const claim = [...store.entries()].find(([key]) => key.endsWith(":claim"));
       // Outlives the linking transaction's ceiling with room to spare, so it cannot lapse under a link.
       expect(claim?.[1].ttlMs).toBeGreaterThan(2 * MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS);
       expect(claim?.[1].ttlMs).toBeLessThanOrEqual(5 * 60 * 1000);

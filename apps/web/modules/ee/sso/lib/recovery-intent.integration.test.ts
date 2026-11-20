@@ -32,8 +32,8 @@ const intentInput = {
   callbackUrl: "http://localhost:3000/organizations/org_1/workspaces/ws_1/surveys",
 };
 
-const keyFor = (stateId: string) =>
-  `fb:sso_recovery:intent:${crypto.createHash("sha256").update(stateId).digest("hex")}`;
+const keyFor = (stateId: string, kind: "intent" | "claim" = "intent") =>
+  `fb:sso_recovery:{${crypto.createHash("sha256").update(stateId).digest("hex")}}:${kind}`;
 
 const redisClient = async () => {
   const redis = await cache.getRedisClient();
@@ -115,7 +115,7 @@ describe("SSO recovery intent store (real Redis)", () => {
     const first = await claimSsoRecoveryIntent(stateId);
     expect(first.kind).toBe("claimed");
     // The claim must expire on its own, or a crashed holder would block the recovery.
-    const claimTtl = await (await redisClient()).ttl(keyFor(stateId).replace(":intent:", ":claim:"));
+    const claimTtl = await (await redisClient()).ttl(keyFor(stateId, "claim"));
     expect(claimTtl).toBeGreaterThan(0);
     expect(claimTtl).toBeLessThanOrEqual(5 * 60);
     await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
@@ -133,7 +133,7 @@ describe("SSO recovery intent store (real Redis)", () => {
     const stateId = await createSsoRecoveryIntent(intentInput);
     const first = await claimSsoRecoveryIntent(stateId);
     // The first claim's TTL runs out, and another request takes the recovery.
-    await (await redisClient()).del(keyFor(stateId).replace(":intent:", ":claim:"));
+    await (await redisClient()).del(keyFor(stateId, "claim"));
     const second = await claimSsoRecoveryIntent(stateId);
     expect(second.kind).toBe("claimed");
 

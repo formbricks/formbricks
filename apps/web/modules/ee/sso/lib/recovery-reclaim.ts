@@ -3,6 +3,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { sendSsoRecoveryFactorsRemovedEmail } from "@/modules/email";
@@ -213,7 +214,10 @@ export const settleReclaimedCredentials = async (
     sessionsRevoked = await revokeUserSessionsExcept({ userId, keepSessionToken });
   } catch (error) {
     sessionsRevoked = null;
-    logger.error({ error, userId }, "Failed to revoke sessions after reclaiming unverified local auth");
+    logger.error(
+      { ...loggableError(error), userId },
+      "Failed to revoke sessions after reclaiming unverified local auth"
+    );
   }
   // The keys are already gone from Postgres, which is what ends their access — the API auth path looks
   // a key up by hash and now finds nothing. SpiceDB keeps their relationships until the outbox worker
@@ -271,7 +275,7 @@ export const notifyRemovedFactors = async (
       }
     } catch (error) {
       logger.error(
-        { error, userId: user.id },
+        { ...loggableError(error), userId: user.id },
         "Failed to notify the user that SSO recovery removed their local sign-in factors"
       );
     }
