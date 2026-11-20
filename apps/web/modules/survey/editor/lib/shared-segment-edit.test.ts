@@ -110,6 +110,10 @@ describe("startSharedSegmentEdit", () => {
     expect(startSharedSegmentEdit(edit, shared)).toBe(edit);
   });
 
+  test("a private segment, which the survey save writes, starts none", () => {
+    expect(startSharedSegmentEdit(null, { ...shared, isPrivate: true })).toBeNull();
+  });
+
   test("an edit of another segment is replaced", () => {
     const other = { ...shared, id: "clothersegment0000000001" };
     expect(startSharedSegmentEdit(edit, other)).toEqual({ segmentId: other.id, savedFilters: other.filters });

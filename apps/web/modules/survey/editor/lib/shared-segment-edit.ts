@@ -15,13 +15,16 @@ export type TSharedSegmentEdit = Readonly<{ segmentId: string; savedFilters: TBa
 /**
  * The edit "Edit segment" opens on a shared segment: its filters as they are now, unless an edit of this
  * segment is already open (the editor closed by a failed Load), which keeps the filters it started from.
- * Only that button starts one: it shows only for a segment no other survey uses.
+ * Only that button starts one: it shows only for a segment no other survey uses. A private segment (shown
+ * with the button after a failed Load closed its editor) starts none: the survey save writes it.
  */
 export const startSharedSegmentEdit = (
   edit: TSharedSegmentEdit | null,
   segment: TSegment
-): TSharedSegmentEdit =>
-  edit?.segmentId === segment.id ? edit : { segmentId: segment.id, savedFilters: segment.filters };
+): TSharedSegmentEdit | null => {
+  if (segment.isPrivate) return edit;
+  return edit?.segmentId === segment.id ? edit : { segmentId: segment.id, savedFilters: segment.filters };
+};
 
 /** The edit once the survey is on `segmentId`: an edit of another segment ends (Load, Clone, Reset). */
 export const keepSharedSegmentEditFor = (
