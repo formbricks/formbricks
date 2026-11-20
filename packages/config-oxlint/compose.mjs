@@ -70,10 +70,9 @@ export function compose(...fragments) {
 }
 
 /*
- * Returns `config` with every "warn" raised to "error", in its categories, rules and overrides. oxlint
- * runs once for the whole repo, so a workspace that must stay warning-free (ESLint's
- * `--max-warnings 0`) makes its warnings errors instead. The rules in `except` keep their "warn": base.mjs passes the
- * Sonar-parity rules the pre-commit hook holds only to the staged lines, which it reads as warnings.
+ * Returns `config` with every "warn" raised to "error", in its categories, rules and overrides, since a
+ * warning does not fail an oxlint run. The rules in `except` keep their "warn" (see `denyWarnings` in
+ * base.mjs).
  */
 export const raiseWarnings = (config, { except = [] } = {}) => {
   const kept = new Set(except);

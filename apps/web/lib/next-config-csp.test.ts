@@ -129,3 +129,32 @@ describe("CSP for uploaded files (ENG-7108)", () => {
     expect(isScriptless((await effectiveCsp("/workspaces/ws1/surveys")) ?? "")).toBe(false);
   });
 });
+
+describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
+  /** The value the last matching rule sets, which is the one Next sends. */
+  const effectiveHeader = async (pathname: string, key: string): Promise<string | undefined> => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    let value: string | undefined;
+    for (const rule of rules) {
+      const matches = getPathMatch(rule.source, {
+        strict: true,
+        removeUnnamedParams: true,
+        sensitive: false,
+      });
+      const header = rule.headers.find((h) => h.key === key);
+      if (header && matches(pathname) !== false) value = header.value;
+    }
+    return value;
+  };
+
+  test("refuses every frame, same origin included", async () => {
+    expect(await effectiveHeader("/sso-recovery/confirm", "X-Frame-Options")).toBe("DENY");
+    expect(await effectiveHeader("/sso-recovery/confirm", "Content-Security-Policy")).toMatch(
+      /frame-ancestors 'none'$/
+    );
+  });
+
+  test("leaves other app pages framable by their own origin", async () => {
+    expect(await effectiveHeader("/auth/login", "X-Frame-Options")).toBe("SAMEORIGIN");
+  });
+});

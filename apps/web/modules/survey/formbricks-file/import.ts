@@ -258,6 +258,8 @@ export const createSurveyFromFormbricksFile = async ({
 
     const survey = await createV3Survey(parsed.data, authentication, requestId, organizationId, {
       transaction,
+      // Imported headlines keep their links on every plan, as in the QSF import (ENG-3607).
+      skipRichTextLinkPermissionCheck: true,
       ...(embeddedFields ? { surveyCreateInputOverrides: { embeddedFields } } : {}),
     });
     return { survey, createdReferences: created };
