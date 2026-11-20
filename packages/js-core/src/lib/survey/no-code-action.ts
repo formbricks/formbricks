@@ -6,7 +6,7 @@ import { evaluateNoCodeConfigClick, handleUrlFilters } from "@/lib/common/utils"
 import { reconcileCreatives } from "@/lib/creatives/creatives";
 import { trackNoCodeAction } from "@/lib/survey/action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
-import { type TWorkspaceStateActionClass } from "@/types/config";
+import { type TConfig, type TWorkspaceStateActionClass } from "@/types/config";
 import { type Result } from "@/types/error";
 
 // Factory for creating context-specific tracking handlers
@@ -141,12 +141,15 @@ const checkTimeOnPage = (actionClasses: TWorkspaceStateActionClass[]): void => {
  * listener is an unhandled rejection on the host page (ENG-6775). With no config there is nothing to match.
  */
 const getActionClasses = (): TWorkspaceStateActionClass[] | null => {
+  let config: TConfig;
   try {
-    return Config.getInstance().get().workspace.data.actionClasses;
+    // `get()` throws only when there is no config.
+    config = Config.getInstance().get();
   } catch (error) {
     Logger.getInstance().debug(`Skipping the no-code action check: ${String(error)}`);
     return null;
   }
+  return config.workspace.data.actionClasses;
 };
 
 export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
