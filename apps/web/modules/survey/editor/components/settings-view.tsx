@@ -19,6 +19,7 @@ import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-p
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
+import type { TSharedSegmentEdit } from "../lib/shared-segment-edit";
 
 interface SettingsViewProps {
   localSurvey: TSurvey;
@@ -45,6 +46,9 @@ interface SettingsViewProps {
   dataRetention?: TSurveyDataRetentionContext;
   /** The creatives that open this survey (the editor reads them once for every card). */
   linkedCreatives: TSurveyLinkedCreative[];
+  /** The shared-segment edit open in the targeting card (ENG-6957). */
+  sharedSegmentEdit: TSharedSegmentEdit | null;
+  setSharedSegmentEdit: Dispatch<SetStateAction<TSharedSegmentEdit | null>>;
 }
 
 export const SettingsView = ({
@@ -69,6 +73,8 @@ export const SettingsView = ({
   hasTriggerError = false,
   dataRetention = null,
   linkedCreatives,
+  sharedSegmentEdit,
+  setSharedSegmentEdit,
 }: Readonly<SettingsViewProps>) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -92,6 +98,8 @@ export const SettingsView = ({
                   contactAttributeKeys={contactAttributeKeys}
                   segments={segments}
                   initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
+                  sharedSegmentEdit={sharedSegmentEdit}
+                  setSharedSegmentEdit={setSharedSegmentEdit}
                 />
               </div>
             </div>

@@ -85,7 +85,8 @@ const OPTION_LIST_KEYS = ["choices", "rows", "columns"] as const satisfies reado
 export const getOptionListKeyOfNoun = (noun: TOptionItemNoun): TOptionListKey | undefined =>
   OPTION_LIST_KEYS.find((listKey) => OPTION_LIST_NAMES[listKey].noun === noun);
 
-type TBlockLike = { id: string; elements: readonly { id: string }[] };
+/** `elements` is optional: a stored block can lack it (an unvalidated draft or migrated block, ENG-2497). */
+type TBlockLike = { id: string; elements?: readonly { id: string }[] };
 
 /**
  * The elements a record says the respondent was not shown: those it lists, plus every element of the
@@ -107,7 +108,7 @@ export const getNotShownElementIds = (
 
   for (const block of blocks) {
     const wholeBlock = listedBlocks.has(block.id);
-    for (const element of block.elements) {
+    for (const element of block.elements ?? []) {
       if (wholeBlock || listedElements.has(element.id)) notShown.add(element.id);
     }
   }

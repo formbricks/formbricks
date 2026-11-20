@@ -41,6 +41,8 @@ export default defineConfig(async (): Promise<ViteUserConfig> => {
     resolve: {
       alias: {
         "@": resolve(__dirname, "src"),
+        // Before the package alias: the first matching prefix wins.
+        "@formbricks/logger/loggable-error": resolve(__dirname, "../logger/src/loggable-error.ts"),
         "@formbricks/logger": resolve(__dirname, "../logger/src/index.ts"),
       },
     },
@@ -95,6 +97,8 @@ export default defineConfig(async (): Promise<ViteUserConfig> => {
         include: [
           "src/index.ts",
           "src/scripts/upgrade-session.ts",
+          // upgrade-session's published types re-export its session type from here.
+          "src/scripts/advisory-lock-session.ts",
           "src/client.ts",
           "src/json-types.ts",
           "src/prisma.ts",

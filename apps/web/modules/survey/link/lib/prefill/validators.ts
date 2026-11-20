@@ -3,6 +3,7 @@ import {
   TSurveyConsentElement,
   TSurveyCsatElement,
   TSurveyElement,
+  TSurveyElementChoice,
   TSurveyElementTypeEnum,
   TSurveyMultipleChoiceElement,
   TSurveyPictureSelectionElement,
@@ -30,7 +31,8 @@ export const validateMultipleChoiceSingle = (
     return invalid(TSurveyElementTypeEnum.MultipleChoiceSingle);
   }
 
-  const hasOther = element.choices.at(-1)?.id === "other";
+  // "Other" need not be last: "None of the above" can follow it (ENG-7377).
+  const hasOther = element.choices.some((choice) => choice.id === "other");
 
   // Try matching by ID, then label, then answer code
   const matchedChoice = matchOption(element.choices, answer, language);
@@ -65,9 +67,9 @@ const sortMultiChoiceAnswers = (
   answerChoices: string[],
   element: TSurveyMultipleChoiceElement,
   language: string,
-  hasOther: boolean,
-  lastChoiceLabel: string | undefined
+  otherChoice: TSurveyElementChoice | undefined
 ): { matched: string[]; others: string[] } | null => {
+  const otherChoiceLabel = otherChoice?.label?.[language];
   const matched: string[] = [];
   const others: string[] = [];
   let freeTextOtherCount = 0;
@@ -84,12 +86,12 @@ const sortMultiChoiceAnswers = (
     }
 
     // Check if it's the "Other" label itself
-    if (ans === lastChoiceLabel) {
+    if (ans === otherChoiceLabel) {
       continue;
     }
 
     // It's a free-text "other" value
-    if (hasOther) {
+    if (otherChoice) {
       freeTextOtherCount++;
       if (freeTextOtherCount > 1) {
         return null; // Only one free-text "other" value allowed
@@ -117,8 +119,8 @@ export const validateMultipleChoiceMulti = (
     return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
   }
 
-  const hasOther = element.choices.at(-1)?.id === "other";
-  const lastChoiceLabel = hasOther ? element.choices.at(-1)?.label?.[language] : undefined;
+  // "Other" need not be last: "None of the above" can follow it (ENG-7377).
+  const otherChoice = element.choices.find((choice) => choice.id === "other");
 
   const answerChoices = parseCommaSeparated(answer);
 
@@ -127,7 +129,7 @@ export const validateMultipleChoiceMulti = (
   }
 
   // Process all answers and collect results
-  const sorted = sortMultiChoiceAnswers(answerChoices, element, language, hasOther, lastChoiceLabel);
+  const sorted = sortMultiChoiceAnswers(answerChoices, element, language, otherChoice);
   if (!sorted) {
     return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
   }

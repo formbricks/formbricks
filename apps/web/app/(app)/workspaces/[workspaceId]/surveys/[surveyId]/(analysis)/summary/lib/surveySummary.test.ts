@@ -1310,6 +1310,31 @@ describe("getSurveySummary", () => {
     expect(getDisplayCountBySurveyId).toHaveBeenCalled();
   });
 
+  // A draft or migrated block can be stored without `elements` (ENG-2497).
+  test("summarizes a survey that has a block with no elements array", async () => {
+    const openText = {
+      id: "q1",
+      type: TSurveyElementTypeEnum.OpenText,
+      headline: { default: "Tell us more" },
+      required: false,
+      inputType: "text",
+      charLimit: { enabled: false },
+    } as unknown as TSurveyElement;
+    vi.mocked(getSurvey).mockResolvedValue({
+      ...mockBaseSurvey,
+      blocks: [
+        { id: "legacy", name: "Legacy block" },
+        { id: "blk", name: "Block", elements: [openText] },
+      ] as unknown as TSurvey["blocks"],
+    });
+
+    const summary = await getSurveySummary(mockSurveyId);
+
+    expect(summary.dropOff.map((entry) => entry.elementId)).toEqual(["q1"]);
+    expect(summary.summary).toHaveLength(1);
+    expect(summary.summary[0]).toMatchObject({ element: { id: "q1" } });
+  });
+
   test("throws ResourceNotFoundError if survey not found", async () => {
     vi.mocked(getSurvey).mockResolvedValue(null);
     await expect(getSurveySummary(mockSurveyId)).rejects.toThrow(ResourceNotFoundError);

@@ -94,6 +94,7 @@ import {
 import { type TErrorSummaryGroup, type TErrorSummaryItem } from "@/modules/ui/components/error-summary";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
+import type { TSharedSegmentEdit } from "../lib/shared-segment-edit";
 
 // How long the preview trails the editor. Every preview render re-mounts the whole survey bundle, so
 // following each keystroke made typing lag on large surveys (ENG-991).
@@ -248,6 +249,8 @@ export const SurveyEditor = ({
   const [flowExpandedBlockIds, setFlowExpandedBlockIds] = useState<Set<string>>(() => new Set());
   const flowHandledInvalidRef = useRef<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
+  // Held here rather than in the targeting card, which unmounts with the Settings tab (ENG-6957).
+  const [sharedSegmentEdit, setSharedSegmentEdit] = useState<TSharedSegmentEdit | null>(null);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
 
@@ -568,6 +571,7 @@ export const SurveyEditor = ({
         ownerName={ownerName}
         customCssValidationStatus={surveyCustomCssValidation.status}
         isOpenedByCreative={linkedCreatives.length > 0}
+        sharedSegmentEdit={sharedSegmentEdit}
       />
       {showRestrictedBanner({
         enforced: visibilityGate.enforced,
@@ -691,6 +695,8 @@ export const SurveyEditor = ({
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
               hasTriggerError={hasTriggerError}
               linkedCreatives={linkedCreatives}
+              sharedSegmentEdit={sharedSegmentEdit}
+              setSharedSegmentEdit={setSharedSegmentEdit}
             />
           )}
 

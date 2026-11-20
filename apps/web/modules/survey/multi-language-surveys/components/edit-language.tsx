@@ -2,13 +2,13 @@
 
 import { TFunction } from "i18next";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { isSurveyRuntimeLanguage } from "@formbricks/i18n-utils/survey-runtime-languages";
-import { getLanguageLabel, iso639Languages } from "@formbricks/i18n-utils/utils";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
@@ -31,6 +31,7 @@ import {
   getSurveysUsingGivenLanguageAction,
   updateLanguageAction,
 } from "../lib/actions";
+import { type TLanguagesValidationError, getLanguagesValidationError } from "../lib/validate-languages";
 import { AddLanguageButton } from "./add-language-button";
 import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
@@ -41,49 +42,24 @@ interface EditLanguageProps {
   readonly isReadOnly: boolean;
 }
 
-const checkIfDuplicateExists = (arr: string[]) => {
-  return new Set(arr).size !== arr.length;
-};
-
-const validateLanguages = (languages: Language[], t: TFunction) => {
-  const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
-  const languageAliases = languages
-    .filter((language) => language.alias)
-    .map((language) => language.alias!.toLowerCase().trim());
-
-  if (languageCodes.includes("")) {
-    toast.error(t("workspace.languages.please_select_a_language"), { duration: 2000 });
-    return false;
-  }
-
-  // Check for duplicates within the languageCodes and languageAliases
-  if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageCodes)) {
-    toast.error(t("workspace.languages.duplicate_language_or_language_id"), { duration: 4000 });
-    return false;
-  }
-
-  // Check if any alias matches the identifier of any added languages
-  if (languageCodes.some((code) => languageAliases.includes(code))) {
-    toast.error(t("workspace.languages.conflict_between_identifier_and_alias"), {
-      duration: 6000,
-    });
-    return false;
-  }
-
-  // Prevent choosing an alias that clashes with the ISO code of some other
-  // language. Without this guard users could create ambiguous language entries
-  // (e.g. alias "nl" pointing to a non-Dutch language) which later breaks the
-  // dropdowns that rely on ISO identifiers.
-  for (const alias of languageAliases) {
-    if (iso639Languages.some((language) => language.code === alias && !languageCodes.includes(alias))) {
-      toast.error(t("workspace.languages.conflict_between_selected_alias_and_another_language"), {
+/** The toast for each problem; the longer messages stay up longer. */
+const getValidationToast = (
+  error: TLanguagesValidationError,
+  t: TFunction
+): { message: string; duration: number } => {
+  switch (error) {
+    case "missing_language":
+      return { message: t("workspace.languages.please_select_a_language"), duration: 2000 };
+    case "duplicate_language_or_alias":
+      return { message: t("workspace.languages.duplicate_language_or_language_id"), duration: 4000 };
+    case "alias_matches_a_code":
+      return { message: t("workspace.languages.conflict_between_identifier_and_alias"), duration: 6000 };
+    case "alias_matches_another_language":
+      return {
+        message: t("workspace.languages.conflict_between_selected_alias_and_another_language"),
         duration: 6000,
-      });
-      return false;
-    }
+      };
   }
-
-  return true;
 };
 
 export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProps) {
@@ -232,8 +208,29 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     setIsEditing(false);
   };
 
+  // One save at a time: a second click while the first is in flight would create the same new languages
+  // again, and the loser of that race fails on the workspace's unique language code (ENG-3602).
+  const isSavingRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
   const handleSaveChanges = async () => {
-    if (!validateLanguages(languages, t)) return;
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
+    setIsSaving(true);
+    try {
+      await saveChanges();
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
+    }
+  };
+
+  const saveChanges = async () => {
+    const validationError = getLanguagesValidationError(languages);
+    if (validationError) {
+      const { message, duration } = getValidationToast(validationError, t);
+      toast.error(message, { duration });
+      return;
+    }
     const results = await Promise.all(
       languages.map((lang) => {
         return lang.id === "new"
@@ -251,6 +248,11 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     const errorResult = results.find((result) => result?.serverError);
     if (errorResult) {
       toast.error(getFormattedErrorMessage(errorResult));
+      // The other rows of this save may have landed: re-read them so the form shows what was stored.
+      // The re-read brings back rows staged for removal too, so drop the staged removals with it: the
+      // next Save must not delete a row the form shows again.
+      setDeletedLanguageIds([]);
+      router.refresh();
       return;
     }
 
@@ -364,6 +366,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         isEditing={isEditing}
         onCancel={handleCancelChanges}
         disabled={isReadOnly}
+        isSaving={isSaving}
         onEdit={() => {
           setIsEditing(true);
         }}
@@ -394,15 +397,16 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
 const EditSaveButtons: React.FC<{
   disabled: boolean;
+  isSaving: boolean;
   isEditing: boolean;
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
   t: TFunction;
-}> = ({ isEditing, onEdit, onSave, onCancel, disabled, t }) =>
+}> = ({ isEditing, onEdit, onSave, onCancel, disabled, isSaving, t }) =>
   isEditing ? (
     <div className="flex gap-4">
-      <Button onClick={onSave} size="sm" disabled={disabled}>
+      <Button onClick={onSave} size="sm" disabled={disabled || isSaving} loading={isSaving}>
         {t("common.save_changes")}
       </Button>
       <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled}>

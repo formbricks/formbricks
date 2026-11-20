@@ -34,6 +34,9 @@ export {
 } from "@/components/elements/single-select";
 export { Matrix, type MatrixProps, type MatrixOption } from "@/components/elements/matrix";
 export { DateElement, type DateElementProps } from "@/components/elements/date";
+// Also published on the ./drag-data subpath for the app's drop targets; exporting it here keeps the
+// build from tree-shaking the helpers only the app uses.
+export { getDraggedItems, getDroppedFileList, getDroppedFiles, setDropEffect } from "@/lib/drag-data";
 export { getDateFnsLocale } from "@/lib/locale";
 export { FB_PART, FB_PART_ATTRIBUTE, FB_PARTS, type TFbPart } from "@/lib/parts";
 export { SurveyPortalContainerContext } from "@/lib/portal-container";

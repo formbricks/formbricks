@@ -276,6 +276,9 @@ Do:
   the code they exercise (`utility.test.ts`), and mock at module boundaries with `vi.mock`, reusing a
   shared `__mocks__` module where one exists (`apps/web/lib/__mocks__/database.ts`) rather than
   redefining it inline.
+- A unit test that runs an injected `<script>` under jsdom follows
+  `apps/web/modules/ui/components/survey/load-surveys-script.test.ts`: the script runs on jsdom's own
+  window, not the test's `window`, and its errors fail the run unless the test listens for them.
 - For API v3 changes, check that the spec, generated schemas, and route refinements agree. Review
   contract coverage against real fixtures using `docs/api-v3-reference/contract-tests/README.md`;
   generation and adoption procedures live in
@@ -309,6 +312,16 @@ Do not:
 - Do not create mega or flaky E2E tests; avoid timing hacks (`waitForTimeout`, `slowMo`) and unstable
   dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
   tagging a spec does not make its cost go away.
+- Do not fix a flaky test by hiding it; fix its cause. A race a user could hit gets a product fix and the
+  test stays as it is. A race in the test's own setup waits on a real signal: a response, a URL, an
+  element's state, or `expect(...).toPass()` around an action that is safe to repeat. A timing assertion
+  counts the work or uses a fake clock instead of measuring wall time, unless wall time is itself the
+  property under test (a timing side channel). Such a test is tagged `@timing`, so it runs after the
+  parallel suite in the `chromium-timing` project, and asserts on the medians of many interleaved
+  samples, never on one measurement: the `@timing` test in `security.spec.ts` is the model. That project
+  runs one worker, so `@timing` tests never overlap. Hiding means a sleep, a longer timeout or looser
+  threshold, more `retries` (in `playwright.config.ts` or `test.describe.configure`), or quarantine
+  (`test.skip`, `test.fixme`).
 
 ## Survey Bundles
 

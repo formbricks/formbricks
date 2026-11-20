@@ -52,6 +52,11 @@ import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
 import { type TAutoSaveFailure } from "../lib/auto-save-badge";
 import { createSaveAttemptOrder } from "../lib/save-attempt-order";
+import {
+  type TSharedSegmentEdit,
+  isSaveBlockedBySharedSegmentEdit,
+  withSavedSharedSegment,
+} from "../lib/shared-segment-edit";
 import { type TEditorIssue, collectEditorIssues, getCustomCssIssue } from "../lib/validation-issues";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
@@ -105,6 +110,12 @@ interface SurveyMenuBarProps {
   customCssValidationStatus?: TCustomCssValidationStatus;
   /** A non-archived creative opens this survey, so it publishes without a trigger of its own. */
   isOpenedByCreative: boolean;
+  /**
+   * The shared-segment edit open in the targeting card (ENG-6957). A survey save does not write a shared
+   * segment, so Save and Publish stop while it holds unsaved filters, and the autosave sends its stored
+   * filters, so other edits still save.
+   */
+  sharedSegmentEdit?: TSharedSegmentEdit | null;
 }
 
 export const SurveyMenuBar = ({
@@ -133,6 +144,7 @@ export const SurveyMenuBar = ({
   ownerName,
   customCssValidationStatus = "empty",
   isOpenedByCreative,
+  sharedSegmentEdit = null,
 }: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -198,6 +210,11 @@ export const SurveyMenuBar = ({
   useEffect(() => {
     customCssValidationStatusRef.current = customCssValidationStatus;
   }, [customCssValidationStatus]);
+
+  const sharedSegmentEditRef = useRef(sharedSegmentEdit);
+  useEffect(() => {
+    sharedSegmentEditRef.current = sharedSegmentEdit;
+  }, [sharedSegmentEdit]);
 
   useEffect(() => {
     isSurveySavingRef.current = isSurveySaving;
@@ -291,6 +308,16 @@ export const SurveyMenuBar = ({
       ? t("workspace.surveys.edit.issue_offline")
       : t("workspace.surveys.edit.issue_something_went_wrong");
 
+  // ENG-6957: the survey save leaves a shared segment as stored, so a save now would drop the targeting
+  // card's unsaved filters while reporting success. They are saved with the card's "Save changes".
+  const blockOnUnsavedSharedSegmentEdit = (): boolean => {
+    if (!isSaveBlockedBySharedSegmentEdit(localSurvey, sharedSegmentEdit)) return false;
+
+    toast.error(t("workspace.segments.save_segment_changes_before_saving"));
+    setActiveId("settings");
+    return true;
+  };
+
   const isPublishScheduled = localSurvey.status === "draft" && localSurvey.publishOn !== null;
   const draftSaveLabel = isPublishScheduled ? t("common.save_without_scheduling") : t("common.save_as_draft");
   let draftPrimaryLabel = t("workspace.surveys.edit.publish");
@@ -378,10 +405,13 @@ export const SurveyMenuBar = ({
 
       // A Custom CSS draft goes out only once its check has passed; until then the saved CSS stands in
       // for it, so an unchecked or invalid draft cannot fail the survey's other edits.
-      const currentSurvey = getSurveyToAutosave(
-        localSurveyRef.current,
-        lastSavedSurveyRef.current ?? surveyRef.current,
-        customCssValidationStatusRef.current
+      // An open shared-segment edit goes out as the segment is stored (ENG-6957), so the autosave neither
+      // claims it nor hands the stored filters back over it.
+      const lastSaved = lastSavedSurveyRef.current ?? surveyRef.current;
+      const currentSurvey = withSavedSharedSegment(
+        getSurveyToAutosave(localSurveyRef.current, lastSaved, customCssValidationStatusRef.current),
+        sharedSegmentEditRef.current,
+        lastSaved.segment
       );
 
       // Check for changes using refs (avoids re-creating interval on every change), and skip if
@@ -442,7 +472,13 @@ export const SurveyMenuBar = ({
           // The comparison uses refs, so this prevents unnecessary re-saves.
           surveyRef.current = { ...savedData };
           lastSavedSurveyRef.current = structuredClone(savedData);
-          isSuccessfullySavedRef.current = true;
+          // Not while a shared-segment edit is unsaved (ENG-6957): the autosave holds it back and leaves
+          // `localSurvey` as it is, so the effect that retires this flag would not run, and a reload would
+          // discard the edit without the unload warning.
+          isSuccessfullySavedRef.current = !isSaveBlockedBySharedSegmentEdit(
+            localSurveyRef.current,
+            sharedSegmentEditRef.current
+          );
           // The refs above follow what the server stored either way; the indicator only follows the
           // newest attempt, so a tick that lands after a newer save failed does not say "saved".
           if (saveAttemptOrder.settle(attempt)) {
@@ -506,6 +542,7 @@ export const SurveyMenuBar = ({
       onIssuesFound([getCustomCssIssue(t)], "draft");
       return false;
     }
+    if (blockOnUnsavedSharedSegmentEdit()) return false;
     onSystemError(null);
 
     setIsSurveySaving(true);
@@ -544,6 +581,7 @@ export const SurveyMenuBar = ({
   const handleSurveySave = async (): Promise<boolean> => {
     // Ahead of the spinner: a click that cannot go through should report why, not appear to work.
     if (!checkSurvey(localSurvey.status)) return false;
+    if (blockOnUnsavedSharedSegmentEdit()) return false;
 
     setIsSurveySaving(true);
     // Begun only once the request is about to go out: a save stopped by validation never raced anything.
@@ -614,6 +652,7 @@ export const SurveyMenuBar = ({
 
   const handleSurveyPublish = async () => {
     if (!checkSurvey("inProgress")) return;
+    if (blockOnUnsavedSharedSegmentEdit()) return;
 
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
@@ -660,6 +699,7 @@ export const SurveyMenuBar = ({
   const handleSurveySchedule = async () => {
     // Scheduling lands on "paused", which is live enough to need a trigger.
     if (!checkSurvey("paused")) return;
+    if (blockOnUnsavedSharedSegmentEdit()) return;
 
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
@@ -696,7 +736,10 @@ export const SurveyMenuBar = ({
 
   // The same checks the activate path runs, done up front so the dialog never opens for a survey
   // that could not be activated anyway.
-  const isReadyToActivate = (): boolean => checkSurvey(isPublishScheduled ? "paused" : "inProgress");
+  const isReadyToActivate = (): boolean => {
+    if (!checkSurvey(isPublishScheduled ? "paused" : "inProgress")) return false;
+    return !blockOnUnsavedSharedSegmentEdit();
+  };
 
   const handleActivateClick = () => {
     if (

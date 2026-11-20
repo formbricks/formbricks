@@ -129,6 +129,12 @@ const evaluateInMemory = (
   }
 };
 
+/**
+ * The ids of the workspace's segments the contact belongs to. A failed segment or membership query throws
+ * (ENG-3725): an empty result would read as "this contact is in no segments" and silently stop every
+ * segment-targeted survey until the SDK's next sync, while a failed request answers 500 and reaches Sentry.
+ * A segment whose filter segmentFilterToPrismaQuery cannot build is still skipped, whatever the cause.
+ */
 export const getPersonSegmentIds = async (
   workspaceId: string,
   contactId: string,
@@ -210,7 +216,9 @@ export const getPersonSegmentIds = async (
 
     return [...alwaysMatchIds, ...inMemoryMatchIds, ...dbMatchedIds];
   } catch (error) {
-    logger.warn({ workspaceId, contactId, error }, "Failed to get person segment IDs, returning empty array");
-    return [];
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 };
