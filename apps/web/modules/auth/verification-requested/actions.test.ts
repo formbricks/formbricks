@@ -358,6 +358,8 @@ describe("resendVerificationEmailAction", () => {
         callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state",
         purpose: "sso_recovery",
         linkTtlSeconds: 777,
+        // The resent link is bound to the same recovery as the first (ENG-7310).
+        ssoRecoveryStateId: "test-state",
       });
       expect(result).toEqual({ success: true });
     });
