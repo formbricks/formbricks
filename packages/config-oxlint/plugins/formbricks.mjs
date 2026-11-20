@@ -356,10 +356,570 @@ const preferReadOnlyProps = {
   },
 };
 
+/*
+ * Same-function taint tracking, for the two security rules below (ENG-7450). A JS plugin sees one file
+ * at a time, so a value is followed only inside the file: through variables, destructuring, object
+ * spreads and the closures of the function that produced it, never into a function it is passed to.
+ * That keeps the rules precise, at the cost of recall: a source in one file and a sink in another (as
+ * in ENG-7127, where the schema, the action and the Prisma write sat in three files) is not reported.
+ *
+ * A label says what is tainted: `false` (nothing), `true` (the whole value) or an object whose keys
+ * label the value's properties (`{ parsedInput: true }` for a server action's first argument).
+ */
+const EXPRESSION_WRAPPERS = new Set([
+  "ChainExpression",
+  "ParenthesizedExpression",
+  "TSAsExpression",
+  "TSNonNullExpression",
+  "TSSatisfiesExpression",
+  "TSTypeAssertion",
+]);
+const BLOCK_SCOPES = new Set([
+  "BlockStatement",
+  "CatchClause",
+  "ForStatement",
+  "StaticBlock",
+  "SwitchStatement",
+]);
+// Type positions hold no values; skipping them keeps the walk cheap.
+const TYPE_KEYS = new Set(["parent", "returnType", "typeAnnotation", "typeArguments", "typeParameters"]);
+
+const unwrapExpression = (node) => {
+  let current = node;
+  while (current && EXPRESSION_WRAPPERS.has(current.type)) current = current.expression;
+  return current;
+};
+
+const keyOf = (node) => {
+  if (!node.computed) return node.key?.name ?? node.property?.name ?? node.key?.value;
+  const key = node.key ?? node.property;
+  return key?.type === "Literal" ? key.value : undefined;
+};
+
+const union = (a, b) => {
+  if (a === true || b === true) return true;
+  if (!a) return b;
+  if (!b) return a;
+  return { ...a, ...b };
+};
+
+const memberLabel = (label, key, deep) => {
+  if (label === true) return deep;
+  if (label && key !== undefined) return label[key] ?? false;
+  return false;
+};
+
+/*
+ * Walks `program` once and calls `policy.sink(node, labelOf)` on every call and `new` expression.
+ * `policy` decides what is a source:
+ * - `deep`: a property of a tainted value is tainted (a request field), or not (the keys of a loose
+ *   object are what is tainted, not its declared fields).
+ * - `strings`: a template, a concatenation or a string method carries the taint of its operands.
+ * - `callLabel(node, labelOf)`: the label of a call's result, for sources (`req.json()`) and
+ *   pass-throughs (`schema.parse(tainted)`).
+ * - `paramLabels(fn)`: the labels of a function's parameters, unless a call site set them.
+ * - `callbackLabels(node, labelOf, setParams)`: for a call or object expression, the labels of the
+ *   parameters of a function among its arguments (a `.map` callback, an action's handler).
+ */
+function walkTaint(program, policy) {
+  const scopes = [new Map()];
+  const presetParams = new Map();
+  const setParams = (fn, labels) => {
+    if (fn && (fn.type === "ArrowFunctionExpression" || fn.type === "FunctionExpression")) {
+      presetParams.set(fn, labels);
+    }
+  };
+
+  const lookup = (name) => {
+    for (let index = scopes.length - 1; index >= 0; index -= 1) {
+      if (scopes[index].has(name)) return scopes[index].get(name);
+    }
+    return false;
+  };
+  const assign = (name, label) => {
+    for (let index = scopes.length - 1; index >= 0; index -= 1) {
+      if (scopes[index].has(name)) {
+        scopes[index].set(name, label);
+        return;
+      }
+    }
+  };
+
+  const labelOf = (expression) => {
+    const node = unwrapExpression(expression);
+    switch (node?.type) {
+      case "Identifier":
+        return lookup(node.name);
+      case "MemberExpression":
+        return memberLabel(labelOf(node.object), keyOf(node), policy.deep);
+      case "AwaitExpression":
+        return labelOf(node.argument);
+      case "AssignmentExpression":
+        return labelOf(node.right);
+      case "SequenceExpression":
+        return labelOf(node.expressions.at(-1));
+      case "ConditionalExpression":
+        return union(labelOf(node.consequent), labelOf(node.alternate));
+      case "LogicalExpression":
+        return union(labelOf(node.left), labelOf(node.right));
+      case "ObjectExpression": {
+        let label = false;
+        for (const property of node.properties) {
+          if (property.type === "SpreadElement") {
+            label = union(label, labelOf(property.argument));
+            continue;
+          }
+          const value = labelOf(property.value);
+          const key = keyOf(property);
+          if (value && key !== undefined && label !== true) label = union(label, { [key]: value });
+        }
+        return label;
+      }
+      case "TemplateLiteral":
+        return policy.strings && node.expressions.some((part) => labelOf(part) === true);
+      case "BinaryExpression":
+        return (
+          policy.strings &&
+          node.operator === "+" &&
+          (labelOf(node.left) === true || labelOf(node.right) === true)
+        );
+      case "ArrayExpression":
+        return (
+          policy.deep &&
+          node.elements.some((element) => element && labelOf(element.argument ?? element) === true)
+        );
+      case "CallExpression":
+        return policy.callLabel(node, labelOf) || false;
+      default:
+        return false;
+    }
+  };
+
+  const bind = (pattern, label) => {
+    switch (pattern?.type) {
+      case "Identifier":
+        scopes.at(-1).set(pattern.name, label);
+        return;
+      case "ObjectPattern":
+        for (const property of pattern.properties) {
+          if (property.type === "RestElement") bind(property.argument, label);
+          else bind(property.value, memberLabel(label, keyOf(property), policy.deep));
+        }
+        return;
+      case "ArrayPattern":
+        pattern.elements.forEach((element, index) => {
+          if (element?.type === "RestElement") bind(element.argument, label === true ? policy.deep : false);
+          else bind(element, memberLabel(label, index, policy.deep));
+        });
+        return;
+      case "AssignmentPattern":
+        bind(pattern.left, union(label, labelOf(pattern.right)));
+        return;
+      case "RestElement":
+        bind(pattern.argument, label);
+        return;
+      case "TSParameterProperty":
+        bind(pattern.parameter, label);
+        return;
+      default:
+    }
+  };
+
+  const visitChildren = (node) => {
+    for (const key of Object.keys(node)) {
+      if (TYPE_KEYS.has(key)) continue;
+      const child = node[key];
+      if (Array.isArray(child)) for (const item of child) visit(item);
+      else if (child && typeof child.type === "string") visit(child);
+    }
+  };
+
+  const visitFunction = (fn) => {
+    const labels = presetParams.get(fn) ?? policy.paramLabels?.(fn) ?? [];
+    scopes.push(new Map());
+    fn.params.forEach((param, index) => {
+      if (param.type === "AssignmentPattern") visit(param.right);
+      bind(param, labels[index] ?? false);
+    });
+    visit(fn.body);
+    scopes.pop();
+  };
+
+  const visitLoop = (node) => {
+    visit(node.right);
+    scopes.push(new Map());
+    const label = labelOf(node.right);
+    // `for (const x of tainted)` yields its elements; `for (const k in tainted)` its keys.
+    const element = label === true ? policy.deep : false;
+    const target = node.left.type === "VariableDeclaration" ? node.left.declarations[0].id : null;
+    if (target) bind(target, element);
+    else if (node.left.type === "Identifier") assign(node.left.name, element);
+    visit(node.body);
+    scopes.pop();
+  };
+
+  function visit(node) {
+    if (!node || typeof node.type !== "string") return;
+    switch (node.type) {
+      case "ArrowFunctionExpression":
+      case "FunctionExpression":
+      case "FunctionDeclaration":
+        visitFunction(node);
+        return;
+      case "VariableDeclarator":
+        visit(node.init);
+        bind(node.id, labelOf(node.init));
+        return;
+      case "AssignmentExpression":
+        visit(node.right);
+        if (node.left.type === "Identifier") {
+          const right = labelOf(node.right);
+          assign(node.left.name, node.operator === "=" ? right : union(lookup(node.left.name), right));
+        } else {
+          visit(node.left);
+        }
+        return;
+      case "ForOfStatement":
+      case "ForInStatement":
+        visitLoop(node);
+        return;
+      case "CallExpression":
+      case "NewExpression":
+      case "ObjectExpression":
+        policy.callbackLabels?.(node, labelOf, setParams);
+        visitChildren(node);
+        if (node.type !== "ObjectExpression") policy.sink(node, labelOf);
+        return;
+      default:
+    }
+    const scoped = BLOCK_SCOPES.has(node.type);
+    if (scoped) scopes.push(new Map());
+    visitChildren(node);
+    if (scoped) scopes.pop();
+  }
+
+  visit(program);
+}
+
+const calleeName = (node) => {
+  const callee = unwrapExpression(node.callee);
+  if (callee?.type === "Identifier") return callee.name;
+  return callee?.type === "MemberExpression" ? keyOf(callee) : undefined;
+};
+
+const propertyNamed = (object, key) =>
+  object.properties.find((candidate) => candidate.type === "Property" && keyOf(candidate) === key);
+
+const calleeObject = (node) => {
+  const callee = unwrapExpression(node.callee);
+  return callee?.type === "MemberExpression" ? callee.object : undefined;
+};
+
+/*
+ * `no-loose-schema-prisma-write` (ENG-7127): the output of a loose zod schema (`z.looseObject`,
+ * `.loose()`, `.passthrough()`, `.catchall()`) keeps every key the caller sent. Spread or passed whole
+ * into a Prisma write's `data`, those keys become relation writes (`workspace: { connect }`) and
+ * foreign keys (`segmentId`) the caller should never set. Pick the columns, or parse with a strict
+ * schema. Reported inside one file: a loose schema declared at the top level of the file or inline,
+ * whose output (`.parse()`, `.safeParse().data`, the `parsedInput` of an action or a v3 handler using
+ * it as its input schema) reaches `data`, `create` or `update` of a `<client>.<model>.create|update|…`
+ * call, directly or through variables, rest destructuring and object spreads.
+ */
+const LOOSE_METHODS = new Set(["loose", "passthrough"]);
+// Methods whose result keeps the unknown keys of the schema they are called on.
+const SCHEMA_KEEPERS = new Set([
+  "brand",
+  "catch",
+  "check",
+  "default",
+  "describe",
+  "extend",
+  "meta",
+  "nullable",
+  "nullish",
+  "omit",
+  "optional",
+  "partial",
+  "pick",
+  "readonly",
+  "refine",
+  "required",
+  "safeExtend",
+  "superRefine",
+]);
+const PRISMA_WRITES = new Set([
+  "create",
+  "createMany",
+  "createManyAndReturn",
+  "update",
+  "updateMany",
+  "updateManyAndReturn",
+  "upsert",
+]);
+const WRITE_KEYS = new Set(["data", "create", "update"]);
+const LOOSE_SOURCE_TEXT = /\b(?:looseObject|loose|passthrough|catchall)\s*\(/;
+
+const noLooseSchemaPrismaWrite = {
+  meta: {
+    type: "problem",
+    docs: { description: "Disallow the output of a loose zod schema in a Prisma write's data." },
+    schema: [],
+  },
+  create(context) {
+    return {
+      Program(program) {
+        if (!LOOSE_SOURCE_TEXT.test(context.sourceCode.text)) return;
+
+        const looseNames = new Set();
+        const isLoose = (expression) => {
+          const node = unwrapExpression(expression);
+          if (node?.type === "Identifier") return looseNames.has(node.name);
+          if (node?.type !== "CallExpression") return false;
+          const name = calleeName(node);
+          const object = calleeObject(node);
+          if (!object) return false;
+          if (name === "looseObject") return true;
+          if (LOOSE_METHODS.has(name)) return true;
+          // `.catchall(z.never())` rejects unknown keys, like `.strict()`.
+          if (name === "catchall") return calleeName(node.arguments[0] ?? {}) !== "never";
+          return SCHEMA_KEEPERS.has(name) && isLoose(object);
+        };
+
+        // Top-level schemas, in any order: `const B = A.extend({…})` may follow or precede `A`.
+        const declarators = program.body
+          .map((statement) =>
+            statement.type === "ExportNamedDeclaration" ? statement.declaration : statement
+          )
+          .filter((statement) => statement?.type === "VariableDeclaration")
+          .flatMap((statement) => statement.declarations)
+          .filter((declarator) => declarator.id.type === "Identifier" && declarator.init);
+        let grew = true;
+        while (grew) {
+          grew = false;
+          for (const declarator of declarators) {
+            if (!looseNames.has(declarator.id.name) && isLoose(declarator.init)) {
+              looseNames.add(declarator.id.name);
+              grew = true;
+            }
+          }
+        }
+
+        // The `.inputSchema(S)` (or older `.schema(S)`) of an action client chain ending in `.action(fn)`.
+        const actionSchemaOf = (call) => {
+          for (let node = calleeObject(call); node?.type === "CallExpression"; node = calleeObject(node)) {
+            const name = calleeName(node);
+            if (name === "inputSchema" || name === "schema") return node.arguments[0];
+          }
+          return undefined;
+        };
+
+        walkTaint(program, {
+          deep: false,
+          strings: false,
+          callLabel(node) {
+            const name = calleeName(node);
+            const object = calleeObject(node);
+            if (!object || !isLoose(object)) return false;
+            if (name === "parse" || name === "parseAsync") return true;
+            if (name === "safeParse" || name === "safeParseAsync") return { data: true };
+            return false;
+          },
+          callbackLabels(node, _labelOf, setParams) {
+            if (node.type === "CallExpression" && calleeName(node) === "action") {
+              const schema = actionSchemaOf(node);
+              if (schema && isLoose(schema)) setParams(node.arguments[0], [{ parsedInput: true }]);
+              return;
+            }
+            if (node.type !== "ObjectExpression") return;
+            // `withV3ApiWrapper({ schemas: { body: S }, handler: ({ parsedInput }) => … })`.
+            const handler = propertyNamed(node, "handler")?.value;
+            const schemas = unwrapExpression(propertyNamed(node, "schemas")?.value);
+            if (!handler || schemas?.type !== "ObjectExpression") return;
+            const parsedInput = {};
+            for (const entry of schemas.properties) {
+              if (entry.type === "Property" && isLoose(entry.value)) parsedInput[keyOf(entry)] = true;
+            }
+            if (Object.keys(parsedInput).length > 0) setParams(handler, [{ parsedInput }]);
+          },
+          sink(node, labelOf) {
+            if (node.type !== "CallExpression" || !PRISMA_WRITES.has(calleeName(node))) return;
+            // `<client>.<model>.<write>(…)`: `prisma.survey.update`, `tx.survey.update`.
+            if (unwrapExpression(calleeObject(node))?.type !== "MemberExpression") return;
+            const args = unwrapExpression(node.arguments[0]);
+            if (args?.type !== "ObjectExpression") return;
+            for (const property of args.properties) {
+              if (property.type !== "Property" || !WRITE_KEYS.has(keyOf(property))) continue;
+              if (labelOf(property.value) !== true) continue;
+              context.report({
+                node: property.value,
+                message:
+                  "This Prisma write takes the output of a loose zod schema, which keeps every key the caller sent: unknown keys become relation writes and foreign keys (ENG-7127). Write the columns by name, or parse with a strict schema.",
+              });
+            }
+          },
+        });
+      },
+    };
+  },
+};
+
+/*
+ * `no-request-regexp` (ENG-7109): a pattern the caller sends, compiled with `new RegExp`, can take the
+ * event loop for seconds (ReDoS); a length cap does not prevent it. Run such patterns in a linear-time
+ * engine (apps/web/modules/api/lib/linear-pattern-matcher.ts) or not at all. Reported inside one
+ * function and its closures: the request sources are the `parsedInput` of a server action or v3
+ * handler, `req.json()`/`.formData()`/`.text()` on a parameter named `req` or `request`, and
+ * `.searchParams.get()`. A `new RegExp(x)` whose result is discarded only checks the syntax, which
+ * runs nothing, and is not reported.
+ */
+const STRING_METHODS = new Set([
+  "at",
+  "concat",
+  "get",
+  "getAll",
+  "join",
+  "normalize",
+  "padEnd",
+  "padStart",
+  "repeat",
+  "replace",
+  "replaceAll",
+  "slice",
+  "split",
+  "substr",
+  "substring",
+  "toLocaleLowerCase",
+  "toLocaleUpperCase",
+  "toLowerCase",
+  "toString",
+  "toUpperCase",
+  "trim",
+  "trimEnd",
+  "trimStart",
+  "valueOf",
+]);
+const ELEMENT_CALLBACKS = new Set([
+  "every",
+  "filter",
+  "find",
+  "findIndex",
+  "findLast",
+  "flatMap",
+  "forEach",
+  "map",
+  "some",
+]);
+const REQUEST_BODY_READERS = new Set(["formData", "json", "text"]);
+const REQUEST_NAMES = new Set(["req", "request"]);
+
+const isRequestRead = (node) => {
+  const object = unwrapExpression(calleeObject(node));
+  const name = calleeName(node);
+  if (REQUEST_BODY_READERS.has(name)) return object?.type === "Identifier" && REQUEST_NAMES.has(object.name);
+  if (name !== "get" && name !== "getAll") return false;
+  if (object?.type === "Identifier") return object.name === "searchParams";
+  return object?.type === "MemberExpression" && keyOf(object) === "searchParams";
+};
+
+const noRequestRegexp = {
+  meta: {
+    type: "problem",
+    docs: { description: "Disallow compiling a regular expression from request input." },
+    schema: [],
+  },
+  create(context) {
+    return {
+      Program(program) {
+        if (!context.sourceCode.text.includes("RegExp")) return;
+        walkTaint(program, {
+          deep: true,
+          strings: true,
+          paramLabels: () => [{ parsedInput: true }],
+          callLabel(node, labelOf) {
+            const name = calleeName(node);
+            const object = calleeObject(node);
+            if (isRequestRead(node)) return true;
+            const firstArgument = node.arguments[0];
+            if (!object) return name === "String" && labelOf(firstArgument) === true;
+            if (name === "parse" || name === "parseAsync") return labelOf(firstArgument) && true;
+            if (name === "safeParse" || name === "safeParseAsync")
+              return labelOf(firstArgument) && { data: true };
+            if (unwrapExpression(object).type === "Identifier" && unwrapExpression(object).name === "JSON") {
+              return name === "parse" && labelOf(firstArgument) === true;
+            }
+            if (
+              unwrapExpression(object).type === "Identifier" &&
+              unwrapExpression(object).name === "Object"
+            ) {
+              return ["entries", "values", "keys"].includes(name) && labelOf(firstArgument) === true;
+            }
+            return STRING_METHODS.has(name) && labelOf(object) === true;
+          },
+          callbackLabels(node, labelOf, setParams) {
+            if (node.type !== "CallExpression" || !ELEMENT_CALLBACKS.has(calleeName(node))) return;
+            const object = calleeObject(node);
+            if (object && labelOf(object) === true) setParams(node.arguments[0], [true]);
+          },
+          sink(node, labelOf) {
+            if (calleeName(node) !== "RegExp" || unwrapExpression(node.callee).type !== "Identifier") return;
+            if (node.parent?.type === "ExpressionStatement") return;
+            if (labelOf(node.arguments[0]) !== true) return;
+            context.report({
+              node,
+              message:
+                "This regular expression is compiled from request input, which can block the event loop (ReDoS); a length cap does not prevent it (ENG-7109). Match it in a linear-time engine (modules/api/lib/linear-pattern-matcher.ts), escape it, or don't run it.",
+            });
+          },
+        });
+      },
+    };
+  },
+};
+
+/*
+ * `no-tsx-unit-test`: CODING_STANDARDS.md, Testing Guidelines: "Do not write component or UI unit tests
+ * for `.tsx` files." A test file that needs JSX (`*.test.tsx`, `*.spec.tsx`) is one. Lift the logic into
+ * a `.ts` module and test it there. The `allow` option lists the repo-relative paths of the tests that
+ * predate the check.
+ */
+const TSX_TEST = /\.(?:test|spec)\.[jt]sx$/;
+
+const noTsxUnitTest = {
+  meta: {
+    type: "problem",
+    docs: { description: "Disallow component and UI unit tests in .tsx/.jsx test files." },
+    schema: [
+      {
+        type: "object",
+        properties: { allow: { type: "array", items: { type: "string" }, uniqueItems: true } },
+        additionalProperties: false,
+      },
+    ],
+  },
+  create(context) {
+    const filename = context.filename.replaceAll("\\", "/");
+    if (!TSX_TEST.test(filename)) return {};
+    const allow = context.options[0]?.allow ?? [];
+    if (allow.some((entry) => filename.endsWith(`/${entry}`))) return {};
+    return {
+      Program(node) {
+        context.report({
+          node,
+          message:
+            "Component and UI unit tests in `.tsx` are not written here (CODING_STANDARDS.md, Testing Guidelines). Lift the logic into a `.ts` module and test it there; the feature journeys cover the rendering.",
+        });
+      },
+    };
+  },
+};
+
 export default {
   meta: { name: "formbricks" },
   rules: {
     "no-inline-lint-config": noInlineLintConfig,
+    "no-loose-schema-prisma-write": noLooseSchemaPrismaWrite,
+    "no-request-regexp": noRequestRegexp,
+    "no-tsx-unit-test": noTsxUnitTest,
     "prefer-read-only-props": preferReadOnlyProps,
     "restricted-syntax": restrictedSyntax,
   },
