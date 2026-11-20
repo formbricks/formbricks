@@ -141,10 +141,11 @@ const checkTimeOnPage = (actionClasses: TWorkspaceStateActionClass[]): void => {
  * listener is an unhandled rejection on the host page (ENG-6775). With no config there is nothing to match.
  */
 const getActionClasses = (): TWorkspaceStateActionClass[] | null => {
+  const appConfig = Config.getInstance();
   let config: TConfig;
   try {
     // `get()` throws only when there is no config.
-    config = Config.getInstance().get();
+    config = appConfig.get();
   } catch (error) {
     Logger.getInstance().debug(`Skipping the no-code action check: ${String(error)}`);
     return null;
