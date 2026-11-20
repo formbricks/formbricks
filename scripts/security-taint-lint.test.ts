@@ -101,6 +101,15 @@ const ZInput = z.looseObject({ name: z.string() });
 export const log = (input: unknown) => logger.info({ ...ZInput.parse(input) });
 export const read = (input: unknown) => prisma.tag.findMany({ where: { ...ZInput.parse(input) } });
 `,
+  // An inner binding of the same name is another schema.
+  "loose-shadowed.ts": `${header}
+const schema = z.looseObject({ name: z.string() });
+export const save = (input: unknown) => {
+  const schema = z.object({ name: z.string() });
+  return prisma.tag.create({ data: schema.parse(input) });
+};
+export const keep = schema;
+`,
   "loose-allowlisted.ts": `${header}
 const ZInput = z.looseObject({ name: z.string() });
 export const save = (input: unknown) =>
@@ -173,6 +182,29 @@ export const run = ({ parsedInput }: any) => new RegExp(\`#recall:(\${ID})\`, "g
   "regexp-plain-parameter.ts": `export const compile = (pattern: string) => new RegExp(pattern);
 `,
   "regexp-response-json.ts": `export const load = async (res: Response) => new RegExp((await res.json()).pattern);
+`,
+  // Parsing a function's first argument is not request input unless it holds \`parsedInput\`.
+  "regexp-parsed-parameter.ts": `declare const S: { parse: (v: unknown) => any; safeParse: (v: unknown) => any };
+export const one = (input: unknown) => new RegExp(S.parse(input).pattern);
+export const many = (rows: unknown[]) => rows.map((row) => new RegExp(S.parse(row).pattern));
+export function checked(config: unknown) {
+  const result = S.safeParse(config);
+  return result.success ? new RegExp(result.data.pattern) : null;
+}
+export const json = (text: string) => new RegExp(JSON.parse(text).pattern);
+export const inherited = (o: object) => new RegExp(S.parse(o.constructor).pattern);
+`,
+  // A catch parameter, or a destructuring assignment, rebinds the name it shares with request input.
+  "regexp-rebound.ts": `export async function POST(req: Request) {
+  let e = await req.json();
+  let pattern = e.pattern;
+  ({ pattern } = { pattern: "^[a-z]+$" });
+  try {
+    return new RegExp(pattern).test("x");
+  } catch (e) {
+    return new RegExp((e as Error).message).test("x");
+  }
+}
 `,
   "regexp-allowlisted.ts": `export const run = ({ parsedInput }: any) =>
   // oxlint-disable-next-line formbricks/no-request-regexp -- fixture: the allowlist

@@ -374,13 +374,7 @@ const EXPRESSION_WRAPPERS = new Set([
   "TSSatisfiesExpression",
   "TSTypeAssertion",
 ]);
-const BLOCK_SCOPES = new Set([
-  "BlockStatement",
-  "CatchClause",
-  "ForStatement",
-  "StaticBlock",
-  "SwitchStatement",
-]);
+const BLOCK_SCOPES = new Set(["BlockStatement", "ForStatement", "StaticBlock", "SwitchStatement"]);
 // Type positions hold no values; skipping them keeps the walk cheap.
 const TYPE_KEYS = new Set(["parent", "returnType", "typeAnnotation", "typeArguments", "typeParameters"]);
 
@@ -405,7 +399,7 @@ const union = (a, b) => {
 
 const memberLabel = (label, key, deep) => {
   if (label === true) return deep;
-  if (label && key !== undefined) return label[key] ?? false;
+  if (label && key !== undefined && Object.hasOwn(label, key)) return label[key];
   return false;
 };
 
@@ -415,10 +409,10 @@ const memberLabel = (label, key, deep) => {
  * - `deep`: a property of a tainted value is tainted (a request field), or not (the keys of a loose
  *   object are what is tainted, not its declared fields).
  * - `strings`: a template, a concatenation or a string method carries the taint of its operands.
- * - `callLabel(node, labelOf)`: the label of a call's result, for sources (`req.json()`) and
+ * - `callLabel(node, labelOf, shadowed)`: the label of a call's result, for sources (`req.json()`) and
  *   pass-throughs (`schema.parse(tainted)`).
  * - `paramLabels(fn)`: the labels of a function's parameters, unless a call site set them.
- * - `callbackLabels(node, labelOf, setParams)`: for a call or object expression, the labels of the
+ * - `callbackLabels(node, labelOf, setParams, shadowed)`: for a call or object expression, the labels of the
  *   parameters of a function among its arguments (a `.map` callback, an action's handler).
  */
 function walkTaint(program, policy) {
@@ -436,6 +430,8 @@ function walkTaint(program, policy) {
     }
     return false;
   };
+  // Whether `name` is declared below the module scope, so it no longer names a top-level binding.
+  const shadowed = (name) => scopes.slice(1).some((scope) => scope.has(name));
   const assign = (name, label) => {
     for (let index = scopes.length - 1; index >= 0; index -= 1) {
       if (scopes[index].has(name)) {
@@ -489,37 +485,41 @@ function walkTaint(program, policy) {
           node.elements.some((element) => element && labelOf(element.argument ?? element) === true)
         );
       case "CallExpression":
-        return policy.callLabel(node, labelOf) || false;
+        return policy.callLabel(node, labelOf, shadowed) || false;
       default:
         return false;
     }
   };
 
-  const bind = (pattern, label) => {
+  // Declares the names in `pattern` in the current scope, or, with `set = assign`, updates them where
+  // they are declared (a destructuring assignment).
+  const declare = (name, label) => scopes.at(-1).set(name, label);
+  const bind = (pattern, label, set = declare) => {
     switch (pattern?.type) {
       case "Identifier":
-        scopes.at(-1).set(pattern.name, label);
+        set(pattern.name, label);
         return;
       case "ObjectPattern":
         for (const property of pattern.properties) {
-          if (property.type === "RestElement") bind(property.argument, label);
-          else bind(property.value, memberLabel(label, keyOf(property), policy.deep));
+          if (property.type === "RestElement") bind(property.argument, label, set);
+          else bind(property.value, memberLabel(label, keyOf(property), policy.deep), set);
         }
         return;
       case "ArrayPattern":
         pattern.elements.forEach((element, index) => {
-          if (element?.type === "RestElement") bind(element.argument, label === true ? policy.deep : false);
-          else bind(element, memberLabel(label, index, policy.deep));
+          if (element?.type === "RestElement")
+            bind(element.argument, label === true ? policy.deep : false, set);
+          else bind(element, memberLabel(label, index, policy.deep), set);
         });
         return;
       case "AssignmentPattern":
-        bind(pattern.left, union(label, labelOf(pattern.right)));
+        bind(pattern.left, union(label, labelOf(pattern.right)), set);
         return;
       case "RestElement":
-        bind(pattern.argument, label);
+        bind(pattern.argument, label, set);
         return;
       case "TSParameterProperty":
-        bind(pattern.parameter, label);
+        bind(pattern.parameter, label, set);
         return;
       default:
     }
@@ -575,9 +575,17 @@ function walkTaint(program, policy) {
         if (node.left.type === "Identifier") {
           const right = labelOf(node.right);
           assign(node.left.name, node.operator === "=" ? right : union(lookup(node.left.name), right));
+        } else if (node.left.type === "ObjectPattern" || node.left.type === "ArrayPattern") {
+          bind(node.left, labelOf(node.right), assign);
         } else {
           visit(node.left);
         }
+        return;
+      case "CatchClause":
+        scopes.push(new Map());
+        bind(node.param, false);
+        visit(node.body);
+        scopes.pop();
         return;
       case "ForOfStatement":
       case "ForInStatement":
@@ -586,7 +594,7 @@ function walkTaint(program, policy) {
       case "CallExpression":
       case "NewExpression":
       case "ObjectExpression":
-        policy.callbackLabels?.(node, labelOf, setParams);
+        policy.callbackLabels?.(node, labelOf, setParams, shadowed);
         visitChildren(node);
         if (node.type !== "ObjectExpression") policy.sink(node, labelOf);
         return;
@@ -671,9 +679,10 @@ const noLooseSchemaPrismaWrite = {
         if (!LOOSE_SOURCE_TEXT.test(context.sourceCode.text)) return;
 
         const looseNames = new Set();
-        const isLoose = (expression) => {
+        // `shadowed(name)`: whether the scope being walked redeclares a top-level name.
+        const isLoose = (expression, shadowed = () => false) => {
           const node = unwrapExpression(expression);
-          if (node?.type === "Identifier") return looseNames.has(node.name);
+          if (node?.type === "Identifier") return looseNames.has(node.name) && !shadowed(node.name);
           if (node?.type !== "CallExpression") return false;
           const name = calleeName(node);
           const object = calleeObject(node);
@@ -682,7 +691,7 @@ const noLooseSchemaPrismaWrite = {
           if (LOOSE_METHODS.has(name)) return true;
           // `.catchall(z.never())` rejects unknown keys, like `.strict()`.
           if (name === "catchall") return calleeName(node.arguments[0] ?? {}) !== "never";
-          return SCHEMA_KEEPERS.has(name) && isLoose(object);
+          return SCHEMA_KEEPERS.has(name) && isLoose(object, shadowed);
         };
 
         // Top-level schemas, in any order: `const B = A.extend({…})` may follow or precede `A`.
@@ -716,18 +725,18 @@ const noLooseSchemaPrismaWrite = {
         walkTaint(program, {
           deep: false,
           strings: false,
-          callLabel(node) {
+          callLabel(node, _labelOf, shadowed) {
             const name = calleeName(node);
             const object = calleeObject(node);
-            if (!object || !isLoose(object)) return false;
+            if (!object || !isLoose(object, shadowed)) return false;
             if (name === "parse" || name === "parseAsync") return true;
             if (name === "safeParse" || name === "safeParseAsync") return { data: true };
             return false;
           },
-          callbackLabels(node, _labelOf, setParams) {
+          callbackLabels(node, _labelOf, setParams, shadowed) {
             if (node.type === "CallExpression" && calleeName(node) === "action") {
               const schema = actionSchemaOf(node);
-              if (schema && isLoose(schema)) setParams(node.arguments[0], [{ parsedInput: true }]);
+              if (schema && isLoose(schema, shadowed)) setParams(node.arguments[0], [{ parsedInput: true }]);
               return;
             }
             if (node.type !== "ObjectExpression") return;
@@ -737,7 +746,8 @@ const noLooseSchemaPrismaWrite = {
             if (!handler || schemas?.type !== "ObjectExpression") return;
             const parsedInput = {};
             for (const entry of schemas.properties) {
-              if (entry.type === "Property" && isLoose(entry.value)) parsedInput[keyOf(entry)] = true;
+              if (entry.type === "Property" && isLoose(entry.value, shadowed))
+                parsedInput[keyOf(entry)] = true;
             }
             if (Object.keys(parsedInput).length > 0) setParams(handler, [{ parsedInput }]);
           },
@@ -841,17 +851,19 @@ const noRequestRegexp = {
             if (isRequestRead(node)) return true;
             const firstArgument = node.arguments[0];
             if (!object) return name === "String" && labelOf(firstArgument) === true;
-            if (name === "parse" || name === "parseAsync") return labelOf(firstArgument) && true;
-            if (name === "safeParse" || name === "safeParseAsync")
-              return labelOf(firstArgument) && { data: true };
-            if (unwrapExpression(object).type === "Identifier" && unwrapExpression(object).name === "JSON") {
+            const receiver = unwrapExpression(object);
+            if (receiver.type === "Identifier" && receiver.name === "JSON") {
               return name === "parse" && labelOf(firstArgument) === true;
             }
-            if (
-              unwrapExpression(object).type === "Identifier" &&
-              unwrapExpression(object).name === "Object"
-            ) {
+            if (receiver.type === "Identifier" && receiver.name === "Object") {
               return ["entries", "values", "keys"].includes(name) && labelOf(firstArgument) === true;
+            }
+            // A schema's output carries the label of what it parsed, no more: parsing an object that
+            // holds request input under some keys (a handler's first argument) taints those keys only.
+            if (name === "parse" || name === "parseAsync") return labelOf(firstArgument);
+            if (name === "safeParse" || name === "safeParseAsync") {
+              const parsed = labelOf(firstArgument);
+              return parsed && { data: parsed };
             }
             return STRING_METHODS.has(name) && labelOf(object) === true;
           },
