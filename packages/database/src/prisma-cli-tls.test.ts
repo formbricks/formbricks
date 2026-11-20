@@ -58,6 +58,12 @@ describe("resolvePrismaCliTls", () => {
       verifiesServerCertificate: true,
       rootCertFile: caFile,
     });
+    // A URL sslrootcert wins over PGSSLROOTCERT and keeps the broad rule.
+    expect(resolve(`${base}?sslmode=prefer&sslrootcert=${caFile}`, { PGSSLROOTCERT: "/other.pem" })).toEqual({
+      databaseUrl: strictUrl(),
+      verifiesServerCertificate: true,
+      rootCertFile: caFile,
+    });
   });
 
   test("does not verify a root certificate under sslmode=disable or no-verify", () => {
