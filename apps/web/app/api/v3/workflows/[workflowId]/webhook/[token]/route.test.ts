@@ -449,7 +449,40 @@ describe("limits", () => {
       return { allowed: true };
     });
 
-  test("100 calls a minute per workflow answer 429 with Retry-After, before the database is read", async () => {
+  /** A Redis-free fixed window: counts per namespace and identifier, like the real limiter. */
+  const countCalls = () => {
+    const counts = new Map<string, number>();
+    mocks.applyRateLimit.mockImplementation(
+      async (config: { namespace: string; allowedPerInterval: number }, identifier: string) => {
+        const key = `${config.namespace}|${identifier}`;
+        const count = (counts.get(key) ?? 0) + 1;
+        counts.set(key, count);
+        if (count > config.allowedPerInterval) throw new TooManyRequests(60);
+        return { allowed: true };
+      }
+    );
+  };
+
+  test("100 calls a minute per token answer 429 with Retry-After, before the database is read", async () => {
+    limitBy("api:v3:workflow-webhook:token");
+
+    const response = await call();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("42");
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        namespace: "api:v3:workflow-webhook:token",
+        allowedPerInterval: 100,
+        interval: 60,
+      }),
+      `${WORKFLOW_ID}:${tokenHash(TOKEN).slice(0, 16)}`
+    );
+    expect(JSON.stringify(mocks.applyRateLimit.mock.calls)).not.toContain(TOKEN);
+    expect(mocks.workflowFindUnique).not.toHaveBeenCalled();
+  });
+
+  test("100 calls a minute per workflow answer 429 once the token matched", async () => {
     limitBy("api:v3:workflow-webhook");
 
     const response = await call();
@@ -464,6 +497,69 @@ describe("limits", () => {
       }),
       WORKFLOW_ID
     );
+    expect(mocks.runCreate).not.toHaveBeenCalled();
+  });
+
+  test("a wrong token never spends the workflow's limit, and answers the 404 an unknown id does", async () => {
+    limitBy("api:v3:workflow-webhook");
+
+    const response = await call({ token: OTHER_TOKEN });
+
+    expect(response.status).toBe(404);
+    expect(mocks.applyRateLimit).not.toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "api:v3:workflow-webhook" }),
+      expect.anything()
+    );
+  });
+
+  test("a flood of wrong tokens to a known id does not lock the real caller out", async () => {
+    countCalls();
+
+    // One wrong token repeated (its own bucket runs out), then a new wrong token on every call.
+    for (let i = 0; i < 105; i++) {
+      expect([404, 429]).toContain((await call({ token: OTHER_TOKEN })).status);
+    }
+    for (let i = 0; i < 105; i++) {
+      expect((await call({ token: `${OTHER_TOKEN}${i}` })).status).toBe(404);
+    }
+
+    expect((await call()).status).toBe(202);
+  });
+
+  test("a wrong token repeated past the limit gets the 429 an unknown id gets, before the database", async () => {
+    countCalls();
+    const unknownId = "cm9zr4unknown0008l8abcdefg";
+    mocks.workflowFindUnique.mockImplementation(async ({ where }: { where: { id: string } }) =>
+      where.id === WORKFLOW_ID ? webhookWorkflow() : null
+    );
+    for (let i = 0; i < 100; i++) {
+      await call({ token: OTHER_TOKEN });
+      await call({ token: OTHER_TOKEN, workflowId: unknownId });
+    }
+    mocks.workflowFindUnique.mockClear();
+
+    const wrongToken = await call({ token: OTHER_TOKEN });
+    const unknownWorkflow = await call({ token: OTHER_TOKEN, workflowId: unknownId });
+
+    expect(wrongToken.status).toBe(429);
+    expect(unknownWorkflow.status).toBe(429);
+    expect({ ...(await problem(wrongToken)), instance: undefined }).toEqual({
+      ...(await problem(unknownWorkflow)),
+      instance: undefined,
+    });
+    expect(mocks.workflowFindUnique).not.toHaveBeenCalled();
+  });
+
+  test("the real caller past 100 calls a minute is refused before the database is read", async () => {
+    countCalls();
+    for (let i = 0; i < 100; i++) {
+      expect((await call()).status).toBe(202);
+    }
+    mocks.workflowFindUnique.mockClear();
+
+    const response = await call();
+
+    expect(response.status).toBe(429);
     expect(mocks.workflowFindUnique).not.toHaveBeenCalled();
   });
 

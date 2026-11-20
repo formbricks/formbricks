@@ -58,8 +58,11 @@ describe("rateLimitConfigs", () => {
     mockGetRedisClient.mockResolvedValue(mockRedisClient);
   });
 
-  test("the Webhook per-workflow limit is the number the trigger panel shows", () => {
+  test("the Webhook per-workflow and per-token limits are the number the trigger panel shows", () => {
     expect(rateLimitConfigs.api.v3WorkflowWebhook.allowedPerInterval).toBe(
+      WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW
+    );
+    expect(rateLimitConfigs.api.v3WorkflowWebhookToken.allowedPerInterval).toBe(
       WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW
     );
   });
@@ -130,6 +133,7 @@ describe("rateLimitConfigs", () => {
         "v3StateMutation",
         "mcpAuth",
         "v3WorkflowWebhook",
+        "v3WorkflowWebhookToken",
         "v3WorkflowTestRequests",
         "v3WorkflowTestRuns",
         "v3SurveyGenerate",

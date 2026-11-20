@@ -24,6 +24,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/api/request-body";
 import { ALLOW_WORKFLOW_PLAIN_HTTP } from "@/lib/constants";
+import { hashSha256 } from "@/lib/crypto";
 import { UNTRUSTED_CLIENT_IP, getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
@@ -41,9 +42,13 @@ import { isWebhookTokenMatch } from "./token";
  * A call to a Webhook Secret URL (ENG-7166 / ED2, ENG-7167 / ED3). The checks run in the order spec §3
  * fixes, so each answer reveals no more than the checks before it allow:
  *
- * per-workflow rate limit by id (no database read) → token hash, constant time → HTTPS → plan →
- * organization calls and daily runs → content type, size and shape → idempotency → sample and run
- * written together.
+ * rate limit by id and token hash (no database read) → token hash, constant time → per-workflow rate
+ * limit → HTTPS → plan → organization calls and daily runs → content type, size and shape → idempotency →
+ * sample and run written together.
+ *
+ * Only a call whose token matched counts toward the workflow's and the organization's limits: workflow
+ * ids show in app URLs, so a limit keyed by id alone would let anyone who saw one lock the real caller
+ * out with wrong tokens, and Regenerate keeps the id.
  *
  * Unknown workflow, archived workflow, a wrong or regenerated token, and a workflow whose trigger is not
  * a Webhook trigger all answer the same 404. No answer and no log line carries the token or the payload.
@@ -64,6 +69,21 @@ const ZWorkflowId = z.cuid2();
 
 /** A hash no token can match, so a call with no stored hash still pays for one comparison. */
 const NO_TOKEN_HASH = "0".repeat(64);
+
+/**
+ * Hex characters of the token's SHA-256 hash in the pre-database bucket key: 64 bits, so no guessed
+ * token lands in the real token's bucket, and a prefix of a hash of a 128-bit random token, so Redis
+ * never holds the token or anything that helps recover it.
+ */
+const TOKEN_BUCKET_HASH_CHARS = 16;
+
+/**
+ * The pre-database bucket of one Secret URL. Each distinct token gets its own key, which expires with
+ * its one-minute window: a flood of random tokens adds at most one short-lived key per call, as a flood
+ * of random workflow ids does.
+ */
+const tokenBucketKey = (workflowId: string, token: string): string =>
+  `${workflowId}:${hashSha256(token).slice(0, TOKEN_BUCKET_HASH_CHARS)}`;
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
 
@@ -306,14 +326,22 @@ const startRun = async (
 const admitCall = async (ctx: WebhookCallInput): Promise<TLoadedWorkflow | Response> => {
   const notFound = () => problemNotFound(ctx.requestId, "Webhook", null, ctx.instance);
 
-  // 1. Per-workflow limit, keyed by the id from the path, before anything touches the database.
+  // 1. Limit keyed by the id and the token's hash, before anything touches the database. A wrong token
+  //    spends its own bucket, never the real caller's, and gets the same answers an unknown id does.
   if (!ZWorkflowId.safeParse(ctx.workflowId).success) return notFound();
-  const perWorkflow = await refuseOverLimit(rateLimitConfigs.api.v3WorkflowWebhook, ctx.workflowId, ctx);
-  if (perWorkflow) return perWorkflow;
+  const perToken = await refuseOverLimit(
+    rateLimitConfigs.api.v3WorkflowWebhookToken,
+    tokenBucketKey(ctx.workflowId, ctx.token),
+    ctx
+  );
+  if (perToken) return perToken;
 
-  // 2. Token: constant-time hash compare; every way of not matching is the same 404.
+  // 2. Token: constant-time hash compare; every way of not matching is the same 404. Then the
+  //    per-workflow limit, which only calls holding the Secret URL can spend.
   const workflow = await loadWorkflow(ctx.workflowId);
   if (!isCallable(workflow, ctx.token)) return notFound();
+  const perWorkflow = await refuseOverLimit(rateLimitConfigs.api.v3WorkflowWebhook, workflow.id, ctx);
+  if (perWorkflow) return perWorkflow;
 
   // 3. HTTPS.
   if (!isSecureWebhookCall(ctx.req, ALLOW_WORKFLOW_PLAIN_HTTP)) {

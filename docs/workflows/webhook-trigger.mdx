@@ -141,7 +141,9 @@ payload or the token.
 The daily limit counts every call to an enabled workflow that gets past the plan check, not only the calls that
 start a run: a call refused afterwards for its size, content type or shape, and a call that repeats an
 `Idempotency-Key`, count too. Calls to a draft or disabled workflow count toward the per-minute limits but not
-the daily limit. All limits are listed on [Limits](/workflows/limits).
+the daily limit. Calls with a wrong or old token count toward none of the workflow's or organization's limits,
+so someone who knows a workflow's ID but not its URL can't use them up. All limits are listed on
+[Limits](/workflows/limits).
 
 ## Next steps
 

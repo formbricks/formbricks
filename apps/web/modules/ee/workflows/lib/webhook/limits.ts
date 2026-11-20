@@ -4,8 +4,9 @@ import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limi
 
 /**
  * The two Webhook trigger quotas self-hosters can raise without a release (ENG-7167). The fixed
- * per-workflow limit is `rateLimitConfigs.api.v3WorkflowWebhook`; payload caps are in
- * `@formbricks/workflows` (`webhook/limits.ts`).
+ * per-workflow limits are `rateLimitConfigs.api.v3WorkflowWebhookToken` (before the database, keyed by
+ * id and token hash) and `rateLimitConfigs.api.v3WorkflowWebhook` (after the token matched); payload
+ * caps are in `@formbricks/workflows` (`webhook/limits.ts`).
  */
 
 /** Calls per minute across one organization's Webhook workflows, keyed by organization id. */
