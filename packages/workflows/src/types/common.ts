@@ -21,6 +21,7 @@ export const ZWorkflowNodePosition = z.object({
 });
 export type TWorkflowNodePosition = z.infer<typeof ZWorkflowNodePosition>;
 
+// oxlint-disable-next-line formbricks/no-loose-schema -- builder UI metadata, stored inside the definition's JSON value.
 export const ZWorkflowNodeUi = z
   .object({
     position: ZWorkflowNodePosition.optional(),
@@ -35,6 +36,7 @@ export const ZWorkflowCanvasDirection = z
   .describe("Which way the builder's canvas reads: top to bottom (the default) or left to right.");
 export type TWorkflowCanvasDirection = z.infer<typeof ZWorkflowCanvasDirection>;
 
+// oxlint-disable-next-line formbricks/no-loose-schema -- builder UI metadata, stored inside the definition's JSON value.
 export const ZWorkflowDefinitionUi = z
   .object({
     direction: ZWorkflowCanvasDirection.optional(),

@@ -117,6 +117,39 @@ const categoryRulesOff = {
 };
 
 /*
+ * Files whose zod schemas keep unknown keys (`formbricks/no-loose-schema`, ENG-7127), each with the
+ * reason its open schemas never reach a Prisma write's data. Only files whose every schema qualifies go
+ * here; in a shared types file, the one schema carries a disable comment with its reason instead, so a
+ * new open schema beside it still fails. The list only shrinks.
+ */
+export const LOOSE_SCHEMA_ALLOWLIST = {
+  "apps/web/app/api/v3/lib/bounded-parse.test.ts": "Test fixtures for the bounded parser; no write.",
+  "apps/web/modules/custom-css/lib/service.ts":
+    "Reads only each entry's `source` from a survey payload; the other keys are dropped.",
+  "apps/web/modules/mcp/tools/output-schemas.ts":
+    "MCP tool output schemas: describe what a tool returns, never parse input.",
+  "apps/web/modules/mcp/tools/response-schemas.ts":
+    "MCP tool output schemas: describe what a tool returns, never parse input.",
+  "apps/web/modules/mcp/tools/survey-output-schemas.ts":
+    "MCP tool output schemas: describe what a tool returns, never parse input.",
+  "apps/web/modules/mcp/tools/tag-output-schemas.ts":
+    "MCP tool output schemas: describe what a tool returns, never parse input.",
+  "packages/workflows/src/handlers/run-detail.ts":
+    "Reads stored run logs for display and picks named fields.",
+};
+
+/*
+ * The `.tsx` unit tests that predate `formbricks/no-tsx-unit-test` (CODING_STANDARDS.md, Testing
+ * Guidelines), by repo-relative path. Remove an entry when its test goes; don't add one.
+ */
+export const TSX_UNIT_TEST_ALLOWLIST = [
+  "apps/web/modules/auth/hooks/use-sign-out.test.tsx",
+  "apps/web/modules/ee/analysis/charts/components/embedded-field-rename-button.test.tsx",
+  "packages/surveys/src/components/general/survey.test.tsx",
+  "packages/surveys/src/lib/use-focus-trap.test.tsx",
+];
+
+/*
  * Turbo checks + test conventions + oxlint's correctness and suspicious categories + Sonar parity.
  * Every tier composes this first.
  */
@@ -131,6 +164,15 @@ export const base = compose(
       "turbo/no-undeclared-env-vars": "error",
       // oxlint ignores ESLint's inline config comments; configuration belongs in oxlint.config.ts.
       "formbricks/no-inline-lint-config": "error",
+      // The November 2026 vulnerability classes (ENG-7450). A zod schema that keeps unknown keys
+      // (ENG-7127), outside the files in LOOSE_SCHEMA_ALLOWLIST.
+      "formbricks/no-loose-schema": ["error", { allow: Object.keys(LOOSE_SCHEMA_ALLOWLIST) }],
+      // A regex compiled from request input in the same file (ENG-7109's class); a pattern loaded from
+      // storage is not a source and stays a review check. A safe line disables it with its reason:
+      //   // oxlint-disable-next-line formbricks/no-request-regexp -- <reason>
+      "formbricks/no-request-regexp": "error",
+      // CODING_STANDARDS.md, Testing Guidelines: no component or UI unit tests in `.tsx`.
+      "formbricks/no-tsx-unit-test": ["error", { allow: TSX_UNIT_TEST_ALLOWLIST }],
       "vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
       // The correctness category's no-unused-vars, with the repo's leading-underscore convention.
       "no-unused-vars": ["error", unusedVarsOptions],

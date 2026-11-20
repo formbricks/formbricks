@@ -37,6 +37,8 @@ const sonarRules = {
   "sonarjs/no-nested-functions": ["error", { threshold: 4 }],
   // S3358.
   "sonarjs/no-nested-conditional": "error",
+  // S1479. Sonar's default threshold: a switch with more than 30 cases.
+  "sonarjs/max-switch-cases": ["error", 30],
   // S4624.
   "sonarjs/no-nested-template-literals": "error",
   // S7780. eslint-plugin-unicorn's own rule: oxlint's native one skips template literals that hold

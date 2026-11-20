@@ -8,4 +8,6 @@ export declare const PLAIN_JS_FILES: string[];
 export declare const unusedVarsOptions: Record<string, string>;
 export declare const commonIgnores: ConfigFragment;
 export declare const base: ConfigFragment;
+export declare const LOOSE_SCHEMA_ALLOWLIST: Record<string, string>;
+export declare const TSX_UNIT_TEST_ALLOWLIST: string[];
 export declare const reactSettings: { react: { version: string } };

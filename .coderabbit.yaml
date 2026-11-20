@@ -95,11 +95,9 @@ reviews:
   path_instructions:
     - path: "**/*.test.tsx"
       instructions: |
-        CODING_STANDARDS.md forbids React component unit tests in this repo. If this file is newly added, say
-        so and ask for the logic under test to move into a `.ts` module with a unit test. Do not ask
-        for a Playwright spec instead: deleting a `.test.tsx` creates no E2E obligation, and a
-        component is not an E2E subject. Do not raise this on edits to the handful of `.test.tsx`
-        files that already exist.
+        `formbricks/no-tsx-unit-test` (lint) already fails a new `.test.tsx`; do not repeat it. When
+        the logic under test moves into a `.ts` module, do not ask for a Playwright spec instead:
+        deleting a `.test.tsx` creates no E2E obligation, and a component is not an E2E subject.
 
     - path: "**/*.tsx"
       instructions: |
@@ -130,7 +128,12 @@ reviews:
       instructions: |
         Judge tests by confidence, not coverage (CODING_STANDARDS.md "Testing Guidelines"):
         - Assert on inputs and outputs. Flag tests that lock implementation details, markup, or
-          snapshots, and tests that cannot fail (no meaningful assertion, everything mocked).
+          snapshots, and tests that cannot fail (no meaningful assertion, everything mocked, a mocked
+          return value that already is the asserted output).
+        - A test over mocked Prisma proves the decision: that the code rejects or resolves, and which
+          write it sends. Do not ask it to prove that the write persists: a `*.integration.test.ts`
+          against a real database claims that (CODING_STANDARDS.md "Testing Guidelines", the
+          mocked-Prisma line).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
         - Module boundaries are mocked with `vi.mock`; where a shared `__mocks__` module exists
           (e.g. `apps/web/lib/__mocks__/database.ts`) the test reuses it instead of redefining it.
@@ -181,7 +184,8 @@ reviews:
         Data-access layer. Check that:
         - Every query is scoped by organization/workspace — this is a multi-tenant product and an
           unscoped `where` is a cross-tenant data leak, not a style issue.
-        - Soft deletion is respected (`deletedAt` / `isActive` filters) where the model has it.
+        - A query on a model with an `isActive` or `deletedAt` column filters on that column, unless it
+          is meant to read inactive or deleted rows.
         - `skip`/`offset` is never passed to a `count()` call; only `where` is.
         - Count and data queries run in parallel via `Promise.all`, not sequentially.
         - Large datasets use cursor pagination rather than offset pagination.
@@ -487,7 +491,7 @@ reviews:
             "Open gaps".
           - A row names a behaviour with no verification method, or a method with no observed
             outcome.
-          - A `unit` or `e2e` row names no test or spec. The name may sit in the row or in the
+          - A `unit`, `integration` or `e2e` row names no test or spec. The name may sit in the row or in the
             `Rerun:` line above the table, which carries it once for every row — but a bare suite
             command such as `pnpm test` names nothing, so those rows name their own. A `manual` row
             has no test to name and passes without one.

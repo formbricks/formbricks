@@ -50,6 +50,15 @@ Notes:
   oxlint ignores; and `formbricks/prefer-read-only-props` (the `next` and `react` tiers) ports
   eslint-plugin-react's rule without its autofix, which wrote `readonly` members instead of the
   `Readonly<Props>` wrapper.
+  Three more run in every tier (ENG-7450). `formbricks/no-loose-schema` (ENG-7127) fails a zod schema
+  that keeps unknown keys where it is declared, outside the files in `LOOSE_SCHEMA_ALLOWLIST`
+  (`base.mjs`), each listed with the reason its schemas never reach a Prisma write's `data` as columns or
+  relations (a shared types file disables it on the one schema instead, with the reason).
+  `formbricks/no-request-regexp` (ENG-7109) follows request input inside one file, through variables,
+  closures and into the parameters of the file's own functions, to `new RegExp`, `.match`, `.matchAll` or
+  `.search`; a pattern loaded from storage is not a source. A safe line disables it with its reason.
+  `formbricks/no-tsx-unit-test` fails a `*.test.tsx`/`*.spec.tsx` file (CODING_STANDARDS.md, Testing
+  Guidelines), except those in `TSX_UNIT_TEST_ALLOWLIST` (`base.mjs`). Both allowlists only shrink.
   JS plugins are slower than native rules. eslint-plugin-react, the slowest, was dropped (ENG-7401): its
   `prop-types` is left to TypeScript, and its `no-deprecated` to React 19's types and `react/no-unsafe`
   with `checkAliases`.
@@ -65,7 +74,7 @@ Notes:
   separately for the `next` tier, where `incompatible-library` is `off`: the app does not run the compiler,
   and its sites are react-hook-form's `watch()` and TanStack Table, used on purpose.
 - `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
-  (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `no-nested-functions`,
+  (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `max-switch-cases` at 30, `no-nested-functions`,
   `no-nested-conditional`, `no-nested-template-literals`, `prefer-string-raw`, `prefer-optional-chain`,
   `no-deprecated`, `prefer-nullish-coalescing`, and `vitest/prefer-to-have-length` for tests). They are
   all errors in `pnpm lint` and CI. An exception takes an inline disable with its reason, or, for an

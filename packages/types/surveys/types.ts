@@ -349,6 +349,7 @@ export const ZSurveyRecaptcha = z
 
 export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
 
+// oxlint-disable-next-line formbricks/no-loose-schema -- extra keys stay inside the `metadata` JSON value, never write data.
 export const ZSurveyMetadata = z
   .object({
     title: ZI18nString.optional(),
