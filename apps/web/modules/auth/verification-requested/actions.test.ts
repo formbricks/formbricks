@@ -1,16 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  ResourceNotFoundError,
-  SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE,
-  TooManyRequestsError,
-} from "@formbricks/types/errors";
+import { SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE, TooManyRequestsError } from "@formbricks/types/errors";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { sendVerificationEmail } from "@/modules/email";
-import { resendVerificationEmailAction } from "./actions";
+import { resendVerificationEmailAction as resendVerificationEmailActionHandler } from "./actions";
 
 // Mock dependencies
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -26,6 +22,24 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
     },
   },
 }));
+
+// `after()` only works inside a request. Here it runs the callback at once and keeps the promise, so a
+// test can wait for the work the action deferred (ENG-7092) before asserting on it.
+const afterTasks = vi.hoisted(() => [] as Promise<unknown>[]);
+vi.mock("next/server", () => ({
+  after: vi.fn((task: () => Promise<unknown>) => {
+    afterTasks.push(Promise.resolve().then(task));
+  }),
+}));
+
+/** The action, then everything it handed to `after()`. */
+const resendVerificationEmailAction = async (
+  args: Parameters<typeof resendVerificationEmailActionHandler>[0]
+) => {
+  const result = await resendVerificationEmailActionHandler(args);
+  await Promise.all(afterTasks.splice(0));
+  return result;
+};
 
 vi.mock("@/modules/auth/lib/user", () => ({
   getUserByEmail: vi.fn(),
@@ -189,17 +203,18 @@ describe("resendVerificationEmailAction", () => {
       expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmailPerAccount, mockUser.id);
     });
 
-    test("sends nothing once the account's resends are spent", async () => {
+    // Redis being down is not a TooManyRequestsError, and the limit fails closed: nothing is sent. The
+    // answer is the same quiet success, because an error here would tell anyone which addresses are
+    // unverified accounts; the failure is logged instead (ENG-7092).
+    test("sends nothing, and still answers success, when the per-account limit itself fails", async () => {
       vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
-      vi.mocked(applyRateLimit).mockRejectedValue(
-        new Error("Maximum number of requests reached. Please try again later.")
-      );
+      vi.mocked(applyRateLimit).mockRejectedValue(new Error("Redis unavailable"));
 
       await expect(
         resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as unknown as Parameters<
           typeof resendVerificationEmailAction
         >[0])
-      ).rejects.toThrow("Maximum number of requests reached. Please try again later.");
+      ).resolves.toEqual({ success: true });
 
       expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
       expect(sendVerificationEmail).not.toHaveBeenCalled();
@@ -231,7 +246,7 @@ describe("resendVerificationEmailAction", () => {
           ctx: mockCtx,
           parsedInput: validInput,
         } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
-      ).rejects.toThrow(ResourceNotFoundError);
+      ).resolves.toEqual({ success: true });
 
       expect(applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmail);
     });
@@ -515,7 +530,9 @@ describe("resendVerificationEmailAction", () => {
       });
     });
 
-    test("should throw ResourceNotFoundError when user doesn't exist", async () => {
+    // ENG-7092: this used to throw ResourceNotFoundError, whose message `handleServerError` returned to the
+    // caller — including the address — so one request answered "is this address registered?".
+    test("answers success, and sends nothing, when the user doesn't exist", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
@@ -524,10 +541,12 @@ describe("resendVerificationEmailAction", () => {
           ctx: mockCtx,
           parsedInput: validInput,
         } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
-      ).rejects.toThrow(ResourceNotFoundError);
+      ).resolves.toEqual({ success: true });
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
+      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
       expect(sendVerificationEmail).not.toHaveBeenCalled();
     });
   });
@@ -551,6 +570,20 @@ describe("resendVerificationEmailAction", () => {
 
       // The userId should be set in the audit context
       expect(testCtx.auditLoggingCtx.userId).toBe(mockUser.id);
+    });
+
+    // No account, nothing sent: a `verificationEmailSent` record would claim a send that did not happen.
+    test("suppresses the audit event for an unknown address", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+      const testCtx = { auditLoggingCtx: { organizationId: "", userId: "", suppressEvent: false } };
+
+      await resendVerificationEmailAction({ ctx: testCtx, parsedInput: validInput } as unknown as Parameters<
+        typeof resendVerificationEmailAction
+      >[0]);
+
+      expect(testCtx.auditLoggingCtx.suppressEvent).toBe(true);
+      expect(testCtx.auditLoggingCtx.userId).toBe("");
     });
 
     test("should not set audit context userId when email is already verified", async () => {
@@ -601,7 +634,9 @@ describe("resendVerificationEmailAction", () => {
       expect(applyIPRateLimit).toHaveBeenCalled();
     });
 
-    test("should handle email sending errors after rate limiting", async () => {
+    // The send runs after the answer (ENG-7092), so its failure cannot reach the caller — and must not
+    // become an unhandled rejection either: it is logged.
+    test("should not surface email sending errors to the caller", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
       vi.mocked(auth.api.sendVerificationEmail).mockRejectedValue(new Error("Email service error"));
@@ -611,7 +646,7 @@ describe("resendVerificationEmailAction", () => {
           ctx: mockCtx,
           parsedInput: validInput,
         } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
-      ).rejects.toThrow("Email service error");
+      ).resolves.toEqual({ success: true });
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalled();
@@ -632,7 +667,7 @@ describe("resendVerificationEmailAction", () => {
           ctx: mockCtx,
           parsedInput: invalidInput,
         } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
-      ).rejects.toThrow(ResourceNotFoundError);
+      ).resolves.toEqual({ success: true });
     });
 
     test("should handle malformed email input", async () => {
@@ -648,7 +683,7 @@ describe("resendVerificationEmailAction", () => {
           ctx: mockCtx,
           parsedInput: invalidInput,
         } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
-      ).rejects.toThrow(ResourceNotFoundError);
+      ).resolves.toEqual({ success: true });
     });
   });
 
@@ -656,35 +691,87 @@ describe("resendVerificationEmailAction", () => {
     test("should always apply rate limiting regardless of user existence", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
-      await expect(
-        resendVerificationEmailAction({
-          ctx: mockCtx,
-          parsedInput: validInput,
-        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
-      ).rejects.toThrow(ResourceNotFoundError);
+      await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as unknown as Parameters<
+        typeof resendVerificationEmailAction
+      >[0]);
 
       expect(applyIPRateLimit).toHaveBeenCalled();
     });
 
-    test("should not leak information about user existence through different error messages", async () => {
+    // ENG-7092: the one assertion that matters. Unknown, verified, unverified and budget-spent all
+    // answer the same, so the response is not a lookup.
+    test("answers identically for an unknown, a verified, an unverified and a throttled address", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(null);
+      const answers = [];
 
-      // Both non-existent users should throw the same ResourceNotFoundError
-      await expect(
-        resendVerificationEmailAction({
+      vi.mocked(getUserByEmail).mockResolvedValueOnce(null);
+      answers.push(
+        await resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: validInput,
         } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
-      ).rejects.toThrow(ResourceNotFoundError);
+      );
 
-      const anotherEmail = { email: "another@example.com" };
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValueOnce(mockVerifiedUser);
+      answers.push(
+        await resendVerificationEmailAction({
+          ctx: mockCtx,
+          parsedInput: validInput,
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
+      );
+
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValueOnce(mockUser);
+      answers.push(
+        await resendVerificationEmailAction({
+          ctx: mockCtx,
+          parsedInput: validInput,
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
+      );
+
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValueOnce(mockUser);
+      vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("spent"));
+      answers.push(
+        await resendVerificationEmailAction({
+          ctx: mockCtx,
+          parsedInput: validInput,
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
+      );
+
+      expect(new Set(answers.map((a) => JSON.stringify(a)))).toEqual(new Set(['{"success":true}']));
+    });
+
+    // The answer must not wait on the account's budget or the SMTP round trip, whatever the account is.
+    test("answers before the per-account limit and the send have run", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
+
+      const result = await resendVerificationEmailActionHandler({
+        ctx: mockCtx,
+        parsedInput: validInput,
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
+
+      expect(result).toEqual({ success: true });
+      expect(afterTasks).toHaveLength(1);
+      await Promise.all(afterTasks.splice(0));
+      expect(auth.api.sendVerificationEmail).toHaveBeenCalled();
+    });
+
+    // The expired-link answer comes from the state id alone, before any lookup, so it is the same for a
+    // registered and an unregistered address.
+    test("reports an expired recovery link the same way for an unknown address", async () => {
+      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+
       await expect(
         resendVerificationEmailAction({
           ctx: mockCtx,
-          parsedInput: anotherEmail,
+          parsedInput: {
+            ...validInput,
+            callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=forged-state",
+          },
         } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
-      ).rejects.toThrow(ResourceNotFoundError);
+      ).rejects.toThrow(SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE);
+      expect(getUserByEmail).not.toHaveBeenCalled();
     });
   });
 });

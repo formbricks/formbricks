@@ -119,6 +119,31 @@ export const updateWebhookAction = authenticatedActionClient.inputSchema(ZUpdate
   })
 );
 
+const ZGetWebhookSecretAction = z.object({
+  webhookId: ZId,
+});
+
+// The signing secret is never part of the webhook list; a workspace writer reveals it here on demand.
+export const getWebhookSecretAction = authenticatedActionClient
+  .inputSchema(ZGetWebhookSecretAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromWebhookId(parsedInput.webhookId);
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
+    // Per user and its own budget: a reveal is a read, and keying it on the workspace let any writer spend the
+    // workspace's settings-write budget (and be spent by it).
+    await applyRateLimit(rateLimitConfigs.actions.webhookSecretReveal, ctx.user.id);
+
+    const webhookResult = await getWebhookWithSecret(parsedInput.webhookId);
+    if (!webhookResult.ok || webhookResult.data.secret === null) {
+      throw new ResourceNotFoundError("Webhook secret", parsedInput.webhookId);
+    }
+
+    return { secret: webhookResult.data.secret };
+  });
+
 const ZTestEndpointAction = z.object({
   url: z.string(),
   webhookId: ZId.optional(),
@@ -132,31 +157,34 @@ const ZTestEndpointAction = z.object({
 export const testEndpointAction = authenticatedActionClient
   .inputSchema(ZTestEndpointAction)
   .action(async ({ ctx, parsedInput }) => {
-    let secret: string | undefined;
+    let workspaceId = parsedInput.workspaceId;
+    if (parsedInput.webhookId) {
+      workspaceId = await getWorkspaceIdFromWebhookId(parsedInput.webhookId);
+    }
+
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
+    await applyRateLimit(rateLimitConfigs.actions.webhookTest, ctx.user.id);
 
     if (parsedInput.webhookId) {
-      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-        type: "workspace",
-        id: await getWorkspaceIdFromWebhookId(parsedInput.webhookId),
-      });
-
       const webhookResult = await getWebhookWithSecret(parsedInput.webhookId);
       if (!webhookResult.ok) {
         throw new ResourceNotFoundError("Webhook", parsedInput.webhookId);
       }
 
-      secret = webhookResult.data.secret ?? undefined;
-    } else {
-      // No webhook yet: authorize against the workspace the webhook is being created in.
-      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-        type: "workspace",
-        id: parsedInput.workspaceId,
-      });
-
-      // New webhook, use the provided secret or generate a new one
-      secret = parsedInput.secret ?? generateWebhookSecret();
+      // The stored secret signs a request to the stored URL only. An edited URL that is not saved yet is
+      // still testable, but under a throwaway secret, so a caller cannot aim the stored secret at a URL
+      // of their choosing. The secret of an existing webhook is never returned here.
+      const urlUnchanged = parsedInput.url === webhookResult.data.url;
+      const secret = urlUnchanged ? (webhookResult.data.secret ?? undefined) : generateWebhookSecret();
+      await testEndpoint(parsedInput.url, secret);
+      return { success: true };
     }
 
+    // New webhook: use the provided secret or generate one, and hand it back so the form can save it.
+    const secret = parsedInput.secret ?? generateWebhookSecret();
     await testEndpoint(parsedInput.url, secret);
     return { success: true, secret };
   });

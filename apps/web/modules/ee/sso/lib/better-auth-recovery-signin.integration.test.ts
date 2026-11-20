@@ -127,6 +127,42 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     }
   });
 
+  test("a 2FA account with a hostile callback is sent to a bare login page", async () => {
+    const user = await prisma.user.create({
+      data: { email: "twofa-evil@example.com", name: "TwoFa", emailVerified: true, twoFactorEnabled: true },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: "https://evil.example/phish" },
+      asResponse: true,
+    });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+    expect(res.headers.get("location")).toBe(`${WEBAPP_URL}/auth/login`);
+  });
+
+  test("an inactive 2FA account is refused with the recovery failure redirect", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "twofa-inactive@example.com",
+        name: "TwoFa",
+        emailVerified: true,
+        twoFactorEnabled: true,
+        isActive: false,
+      },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state` },
+      asResponse: true,
+    });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+    expect(new URL(res.headers.get("location") ?? "").searchParams.get("error")).not.toBeNull();
+  });
+
   test("a token with a non-recovery purpose creates no session", async () => {
     const user = await prisma.user.create({
       data: { email: "wrongpurpose@example.com", name: "Wrong", emailVerified: true },

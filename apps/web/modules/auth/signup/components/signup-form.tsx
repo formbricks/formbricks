@@ -27,7 +27,6 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
 const ZSignupInput = z.object({
@@ -167,16 +166,7 @@ export const SignupForm = ({
         return;
       }
 
-      const emailTokenActionResponse = await createEmailTokenAction({ email: normalizedEmail });
-      const token = emailTokenActionResponse?.data;
-
-      if (!token) {
-        resetTurnstileIfConfigured();
-
-        const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-        toast.error(errorMessage);
-        return;
-      }
+      const token = createUserResponse.data.emailDisplayToken;
 
       // Both branches carry the invite callback. The verification-disabled branch is the default for
       // self-hosted, so omitting it there left invited users with an existing account unable to reach

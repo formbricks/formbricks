@@ -97,6 +97,7 @@ export namespace Prisma {
     GlobalOmitOptions = {},
   > = PrismaNamespaceTypes.TypeMap<ExtArgs, GlobalOmitOptions>;
   export type ActionClassSelect = PrismaModelTypes.ActionClassSelect;
+  export type ApiKeySelect = PrismaModelTypes.ApiKeySelect;
   export type AttachmentExportGetPayload<
     S extends boolean | null | undefined | PrismaModelTypes.AttachmentExportDefaultArgs,
   > = PrismaModelTypes.AttachmentExportGetPayload<S>;
@@ -182,6 +183,7 @@ export namespace Prisma {
   export type SurveyWhereInput = PrismaModelTypes.SurveyWhereInput;
   export type TeamFindManyArgs = PrismaModelTypes.TeamFindManyArgs;
   export type TeamUpdateInput = PrismaModelTypes.TeamUpdateInput;
+  export type TeamUserFindManyArgs = PrismaModelTypes.TeamUserFindManyArgs;
   export type UserCreateInput = PrismaModelTypes.UserCreateInput;
   export type UserFindManyArgs = PrismaModelTypes.UserFindManyArgs;
   export type UserGetPayload<S extends boolean | null | undefined | PrismaModelTypes.UserDefaultArgs> =

@@ -82,4 +82,35 @@ describe("getMcpOauthProviderOptions", () => {
     expect(getMcpOauthProviderOptions().codeExpiresIn).toBe(MCP_OAUTH_CODE_EXPIRES_IN_SECONDS);
     expect(MCP_OAUTH_CODE_EXPIRES_IN_SECONDS).toBe(600);
   });
+
+  // ENG-7314: the JWT is readable by the client, so identity claims must follow the approved scopes.
+  describe("customAccessTokenClaims", () => {
+    const claims = (scopes: string[]) =>
+      getMcpOauthProviderOptions().customAccessTokenClaims?.({
+        user: { email: "ada@example.com", name: "Ada" },
+        scopes,
+      } as never);
+
+    test("a token granted only a resource scope carries neither email nor name", async () => {
+      expect(await claims(["surveys:read"])).toEqual({});
+    });
+
+    test("email follows the email scope and name follows the profile scope, independently", async () => {
+      expect(await claims(["email"])).toEqual({ email: "ada@example.com" });
+      expect(await claims(["profile"])).toEqual({ name: "Ada" });
+      expect(await claims(["openid", "profile", "email"])).toEqual({
+        email: "ada@example.com",
+        name: "Ada",
+      });
+    });
+
+    test("omits a claim the user has no value for", async () => {
+      const result = await getMcpOauthProviderOptions().customAccessTokenClaims?.({
+        user: { email: "ada@example.com", name: "" },
+        scopes: ["email", "profile"],
+      } as never);
+
+      expect(result).toEqual({ email: "ada@example.com" });
+    });
+  });
 });

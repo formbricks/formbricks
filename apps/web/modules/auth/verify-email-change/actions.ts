@@ -32,6 +32,7 @@ export const verifyEmailChangeAction = actionClient.inputSchema(z.object({ token
     ctx.auditLoggingCtx.newObject = user;
 
     await updateBrevoCustomer({ id: user.id, email: user.email });
-    return user;
+    // Not the user record: this is unauthenticated, and the client only needs to know it worked.
+    return { success: true };
   })
 );

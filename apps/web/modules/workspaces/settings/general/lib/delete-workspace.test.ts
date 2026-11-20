@@ -109,6 +109,17 @@ describe("deleteWorkspaceWithConfirmation", () => {
     });
   });
 
+  test("authorizes before comparing the confirmation name", async () => {
+    mocks.assertCan.mockRejectedValueOnce(new AuthorizationError("Not authorized"));
+
+    // A wrong name must not be reported to a caller who may not manage the organization: the
+    // authorization error surfaces, not the name mismatch.
+    const attempt = callDeleteWorkspaceWithConfirmation({ confirmationName: "wrong" });
+    await expect(attempt).rejects.toBeInstanceOf(AuthorizationError);
+    await expect(attempt).rejects.not.toThrow(WORKSPACE_DELETE_CONFIRMATION_ERROR);
+    expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
+  });
+
   test("resolves the destination after the deletion, from the surviving workspaces", async () => {
     await callDeleteWorkspaceWithConfirmation();
 
@@ -207,7 +218,8 @@ describe("deleteWorkspaceWithConfirmation", () => {
     await expect(deleteAttempt).rejects.toThrow(InvalidInputError);
     await expect(deleteAttempt).rejects.toThrow(WORKSPACE_DELETE_CONFIRMATION_ERROR);
 
-    expect(mocks.assertCan).not.toHaveBeenCalled();
+    // Authorization runs first; the name is only compared for a caller allowed to manage the organization.
+    expect(mocks.assertCan).toHaveBeenCalled();
     expect(mocks.deleteWorkspaceIfNotLast).not.toHaveBeenCalled();
   });
 

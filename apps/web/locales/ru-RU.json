@@ -207,7 +207,7 @@
       "log_in": "Войти",
       "password_requirements": "Требования к паролю",
       "password_validation_contain_at_least_1_number": "Содержит как минимум 1 цифру",
-      "password_validation_minimum_8_and_maximum_128_characters": "От 8 до 128 символов",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "Минимум 8 символов и максимум 72 байта",
       "password_validation_uppercase_and_lowercase": "Сочетание заглавных и строчных букв",
       "please_verify_captcha": "Пожалуйста, подтвердите reCAPTCHA",
       "privacy_policy": "Политика конфиденциальности",

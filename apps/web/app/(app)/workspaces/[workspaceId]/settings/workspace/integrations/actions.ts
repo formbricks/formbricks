@@ -8,7 +8,7 @@ import { withStoredIntegrationKey } from "@/lib/integration/redact-credentials";
 import {
   createOrUpdateIntegration,
   deleteIntegration,
-  getIntegrationByType,
+  getStoredIntegrationConfig,
 } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -51,7 +51,8 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
       // wrappers only test `config.key` for presence. The stored value is the sole source of truth on
       // this path; credentials are written only by the OAuth callbacks, which call
       // createOrUpdateIntegration directly rather than through this action.
-      const storedIntegration = await getIntegrationByType(
+      // Read raw, not decrypted: a token that no longer decrypts must be written back as its ciphertext.
+      const storedIntegration = await getStoredIntegrationConfig(
         parsedInput.workspaceId,
         parsedInput.integrationData.type
       );

@@ -21,6 +21,7 @@ import {
   revokeMcpClient,
   revokeOAuthConsentBeforeHandler,
   revokeOAuthConsentGrant,
+  revokeOAuthGrantsAfterPasswordReset,
 } from "./mcp-grant-revocation";
 import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
 import { readConsentPreimages } from "./oauth-consent-writes";
@@ -1656,5 +1657,42 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
         "Reconciling an MCP grant after a failed approval failed"
       );
     });
+  });
+});
+
+describe("revokeOAuthGrantsAfterPasswordReset (ENG-7364)", () => {
+  test("ends the user's grants, consents and tokens, then settles the deleted grants as the system", async () => {
+    mocks.grantRows = [ORG_GRANT];
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+
+    await revokeOAuthGrantsAfterPasswordReset("user-1");
+
+    expect(markOAuthRevocation).toHaveBeenCalledWith({ userId: "user-1" });
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({ where: { userId: "user-1" } });
+    expect(mocks.tx.oauthRefreshToken.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: "user-1", revoked: null } })
+    );
+    expect(mocks.tx.oauthAccessToken.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: "user-1", revoked: null } })
+    );
+    // After the commit: the deleted grant loses its relationships and is audited by the system.
+    expect(removeDeletedMcpGrantRelationships).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "grant-1" }),
+    ]);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "system", organizationId: "org-1", action: "deleted" })
+    );
+  });
+
+  test("logs a failure instead of failing the completed reset", async () => {
+    const boom = new Error("db down");
+    mocks.tx.oauthRefreshToken.updateMany.mockRejectedValueOnce(boom);
+
+    await expect(revokeOAuthGrantsAfterPasswordReset("user-1")).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1", err: expect.anything() }),
+      "Failed to revoke OAuth grants after password reset"
+    );
   });
 });

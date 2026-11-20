@@ -1,4 +1,5 @@
 import "server-only";
+import { isDeepStrictEqual } from "node:util";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma, type Survey as TPrismaSurveyRow } from "@formbricks/database/prisma";
@@ -51,6 +52,7 @@ import {
 } from "@/lib/embedded-data/reconcile";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -72,6 +74,7 @@ import {
 import {
   assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
+  checkForRecursiveSegmentFilter,
   getAddedSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import {
@@ -79,7 +82,7 @@ import {
   getDestinationSettingTurnedOn,
 } from "@/modules/ee/creatives/lib/linked-creatives";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
-import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasMatrixElement, syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
@@ -628,6 +631,56 @@ const getIsQuotasEnabledForWorkspace = async (workspaceId: string): Promise<bool
   return organization ? getIsQuotasEnabled(organization.id) : false;
 };
 
+/** Every segment id named by a (possibly half-built) filter tree, read without assuming its shape. */
+const collectReferencedSegmentIds = (node: unknown, found: Set<string> = new Set()): Set<string> => {
+  if (Array.isArray(node)) {
+    for (const child of node) collectReferencedSegmentIds(child, found);
+  } else if (node && typeof node === "object") {
+    const { root, resource } = node as { root?: { type?: unknown; segmentId?: unknown }; resource?: unknown };
+    if (root?.type === "segment" && typeof root.segmentId === "string") found.add(root.segmentId);
+    if (resource) collectReferencedSegmentIds(resource, found);
+  }
+  return found;
+};
+
+const assertContactsLicence = async (workspaceId: string): Promise<void> => {
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
+  if (!organization) throw new ResourceNotFoundError("Workspace", workspaceId);
+  if (!(await getIsContactsEnabled(organization.id))) {
+    throw new OperationNotAllowedError("Advanced targeting is not allowed for this organization");
+  }
+};
+
+/**
+ * ENG-7267: the segment endpoints and the v3 survey writes refuse advanced targeting without the
+ * Contacts licence and filters that name their own segment; a survey save applies targeting too, so it
+ * holds the same rules on what `saveAppSurveySegment` will actually apply (ENG-6957):
+ * - the survey's own private segment: the raw filter tree it writes (a draft save skips the schema, so a
+ *   tree that fails it must not slip past). The licence is asked only when the filters change, so a
+ *   survey keeps saving after its organization's licence lapses;
+ * - linking another segment: checked in `saveAppSurveySegment`'s link branch, on that segment's stored
+ *   filters, which the survey takes on whatever filters the client sent;
+ * - anything else writes no targeting, so it is not checked.
+ */
+const assertAppTargetingFiltersAllowed = async (
+  currentSurvey: Pick<TSurvey, "id" | "workspaceId" | "segment">,
+  segment: { id?: string | null; filters?: unknown } | null | undefined
+): Promise<void> => {
+  if (!segment?.id) return;
+
+  if (isOwnPrivateSegment(currentSurvey, segment.id)) {
+    const filters = segment.filters;
+    if (!Array.isArray(filters) || filters.length === 0) return;
+    if (collectReferencedSegmentIds(filters).has(segment.id)) {
+      throw new InvalidInputError("Recursive segment filter is not allowed");
+    }
+    const parsed = ZSegmentFilters.safeParse(filters);
+    if (parsed.success) await checkForRecursiveSegmentFilter(parsed.data, segment.id);
+    if (isDeepStrictEqual(filters, currentSurvey.segment.filters ?? [])) return;
+    await assertContactsLicence(currentSurvey.workspaceId);
+  }
+};
+
 /** Archived surveys are read-only, and a published one keeps its locked parts (ENG-6783). */
 const assertSurveyIsEditable = (currentSurvey: TSurvey, updatedSurvey: TSurvey): void => {
   // Archived surveys are read-only. This covers every write path that flows through here
@@ -1060,6 +1113,9 @@ export const updateSurveyInternal = async (
     // create path guard. Any other save ignores segment.id and unlinks the stored segment (ENG-6957).
     if (updatedSurvey.type === "app") {
       await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
+      // ENG-7267: an app save may not add attribute filters without the contacts licence, nor a
+      // self-referencing segment.
+      await assertAppTargetingFiltersAllowed(currentSurvey, segment);
     }
 
     // ENG-1749 sibling: the languages block below links languages by language.id. Ensure every
@@ -1254,6 +1310,22 @@ export const updateSurvey = async (
 // Draft update without validation
 export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   return updateSurveyInternal(updatedSurvey, true);
+};
+
+/**
+ * `createdBy` is attribution, but it is written as a relation to any user id and then gets the survey
+ * added to that user's notification settings. A caller could therefore attribute a survey to someone
+ * from another organization (leaking their name in the survey list), so it has to be a member of the
+ * organization the survey is created in.
+ */
+const assertSurveyCreatorIsOrganizationMember = async (
+  createdBy: string,
+  organizationId: string,
+  tx?: Prisma.TransactionClient
+): Promise<void> => {
+  if (!(await getMembershipByUserIdOrganizationId(createdBy, organizationId, tx))) {
+    throw new InvalidInputError("createdBy must be a member of this organization");
+  }
 };
 
 const attachSurveyCreatorToCreateData = (
@@ -1471,6 +1543,11 @@ const saveAppSurveySegment = async (
   if (!target) throw new ResourceNotFoundError("Segment", segment.id);
   if (target.isPrivate) {
     throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
+  }
+  // ENG-7267: the survey takes on the segment's stored filters, so attribute targeting needs the Contacts
+  // licence here, whatever filters the client sent with the link.
+  if (Array.isArray(target.filters) && target.filters.length > 0) {
+    await assertContactsLicence(survey.workspaceId);
   }
   await assertTargetingAddsNoHiddenSurvey(
     survey.workspaceId,
@@ -1764,6 +1841,10 @@ export const createSurvey = async (
     const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
+    }
+
+    if (createdBy) {
+      await assertSurveyCreatorIsOrganizationMember(createdBy, organization.id, transaction?.tx);
     }
 
     // Create the survey and — for app surveys — its private targeting segment atomically. The survey,

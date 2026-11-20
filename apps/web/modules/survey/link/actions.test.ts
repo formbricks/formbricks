@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
 import { actionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
+import { reserveRateLimitUsage, settleRateLimitUsage } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { sendLinkSurveyEmailAction, validateSurveyPinAction } from "./actions";
@@ -34,9 +36,15 @@ vi.mock("@/lib/utils/action-client", () => ({
   },
 }));
 
-vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: vi.fn() }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyIPRateLimit: vi.fn(),
+  reserveRateLimitUsage: vi.fn(),
+  settleRateLimitUsage: vi.fn(),
+}));
 vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
-  rateLimitConfigs: { actions: { sendLinkSurveyEmail: {}, validateSurveyPin: {} } },
+  rateLimitConfigs: {
+    actions: { sendLinkSurveyEmail: {}, validateSurveyPin: {}, validateSurveyPinFailuresPerSurvey: {} },
+  },
 }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromSurveyId: vi.fn().mockResolvedValue("org-1") }));
 vi.mock("@/modules/ee/whitelabel/email-customization/lib/organization", () => ({
@@ -179,6 +187,76 @@ describe("validateSurveyPinAction", () => {
     const result = await validatePin("1234");
 
     expect(result).toMatchObject({ survey: { id: surveyId, pin: null } });
+  });
+
+  // SEC-18 (ENG-7095): a 4-character PIN has 10,000 values, so the per-IP limit alone lets a proxy pool
+  // exhaust it. Each wrong guess is charged to the survey, whichever IP it comes from.
+  describe("per-survey failure budget", () => {
+    const reservation = { settled: false } as never;
+
+    beforeEach(() => {
+      vi.mocked(reserveRateLimitUsage).mockResolvedValue(reservation);
+    });
+
+    test("reserves one attempt on the survey before comparing the PIN", async () => {
+      mockSurvey({ pin: "1234" });
+
+      await expect(validatePin("0000")).rejects.toThrow("INVALID_PIN");
+
+      expect(reserveRateLimitUsage).toHaveBeenCalledWith(
+        rateLimitConfigs.actions.validateSurveyPinFailuresPerSurvey,
+        surveyId
+      );
+    });
+
+    test("keeps a wrong guess charged", async () => {
+      mockSurvey({ pin: "1234" });
+
+      await expect(validatePin("0000")).rejects.toThrow("INVALID_PIN");
+
+      expect(settleRateLimitUsage).not.toHaveBeenCalledWith(reservation, 0);
+    });
+
+    test("refunds the attempt when the PIN is right, so respondents never spend the budget", async () => {
+      mockSurvey({ pin: "1234" });
+
+      await validatePin("1234");
+
+      expect(settleRateLimitUsage).toHaveBeenCalledWith(reservation, 0);
+    });
+
+    test("refuses every guess, the right one included, once the survey's budget is spent", async () => {
+      mockSurvey({ pin: "1234" });
+      vi.mocked(reserveRateLimitUsage).mockRejectedValue(
+        new TooManyRequestsError("Maximum number of requests")
+      );
+
+      await expect(validatePin("1234")).rejects.toBeInstanceOf(TooManyRequestsError);
+      expect(createLinkSurveyPinToken).not.toHaveBeenCalled();
+    });
+
+    test("a survey without a PIN spends no budget", async () => {
+      mockSurvey({ pin: null });
+
+      await validatePin();
+
+      expect(reserveRateLimitUsage).not.toHaveBeenCalled();
+    });
+
+    test("a survey that is not open does not spend budget either", async () => {
+      mockSurvey({ status: "draft", pin: "1234" });
+
+      await expectSurveyGone(validatePin("0000"));
+
+      expect(reserveRateLimitUsage).not.toHaveBeenCalled();
+    });
+
+    test("compares a PIN of the wrong length as wrong, not as an error", async () => {
+      mockSurvey({ pin: "1234" });
+
+      await expect(validatePin("12345")).rejects.toThrow("INVALID_PIN");
+      await expect(validatePin("")).rejects.toThrow("INVALID_PIN");
+    });
   });
 });
 

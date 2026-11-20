@@ -97,14 +97,16 @@ export const deleteWorkspaceWithConfirmation = async ({
     throw new ResourceNotFoundError("workspace", workspaceId);
   }
 
-  assertMatchingWorkspaceDeleteConfirmation(confirmationName, workspace.name);
-
   const organizationId = workspace.organizationId;
 
+  // Authorize before the name is compared, so a caller outside the organization cannot use the
+  // confirmation check to test guesses of the workspace name.
   await assertCan({ type: "user", id: userId }, "organization.manage", {
     type: "organization",
     id: organizationId,
   });
+
+  assertMatchingWorkspaceDeleteConfirmation(confirmationName, workspace.name);
 
   auditLoggingCtx.organizationId = organizationId;
   auditLoggingCtx.workspaceId = workspaceId;

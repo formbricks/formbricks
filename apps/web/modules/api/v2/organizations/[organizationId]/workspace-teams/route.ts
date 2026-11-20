@@ -11,7 +11,10 @@ import {
   addLegacyProjectIdToList,
   normaliseProjectIdToWorkspaceId,
 } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/backwards-compat";
-import { checkAuthenticationAndAccess } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/utils";
+import {
+  checkApiKeyCreatorCanManageWorkspaceTeams,
+  checkAuthenticationAndAccess,
+} from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/utils";
 import {
   createWorkspaceTeam,
   deleteWorkspaceTeam,
@@ -101,6 +104,12 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
           },
           auditLog
         );
+      }
+
+      const creatorCheck = await checkApiKeyCreatorCanManageWorkspaceTeams(authentication);
+
+      if (!creatorCheck.ok) {
+        return handleApiError(request, creatorCheck.error, auditLog);
       }
 
       const hasAccess = await checkAuthenticationAndAccess(teamId, workspaceId, authentication);
@@ -194,6 +203,12 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
         );
       }
 
+      const creatorCheck = await checkApiKeyCreatorCanManageWorkspaceTeams(authentication);
+
+      if (!creatorCheck.ok) {
+        return handleApiError(request, creatorCheck.error, auditLog);
+      }
+
       const hasAccess = await checkAuthenticationAndAccess(teamId, workspaceId, authentication);
 
       if (!hasAccess.ok) {
@@ -279,6 +294,12 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
           },
           auditLog
         );
+      }
+
+      const creatorCheck = await checkApiKeyCreatorCanManageWorkspaceTeams(authentication);
+
+      if (!creatorCheck.ok) {
+        return handleApiError(request, creatorCheck.error, auditLog);
       }
 
       const hasAccess = await checkAuthenticationAndAccess(teamId, workspaceId, authentication);

@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
 const ZConvertHeicToJpegInput = z.object({
   file: z.instanceof(File),
@@ -9,8 +11,10 @@ const ZConvertHeicToJpegInput = z.object({
 
 export const convertHeicToJpegAction = authenticatedActionClient
   .inputSchema(ZConvertHeicToJpegInput)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ ctx, parsedInput }) => {
     if (!parsedInput.file || !parsedInput.file.name.endsWith(".heic")) return parsedInput.file;
+
+    await applyRateLimit(rateLimitConfigs.actions.heicConvert, ctx.user.id);
 
     const convert = (await import("heic-convert")).default;
 

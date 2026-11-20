@@ -31,7 +31,7 @@ export const deleteApiKeyAction = authenticatedActionClient.inputSchema(ZDeleteA
     ctx.auditLoggingCtx.apiKeyId = parsedInput.id;
 
     const result = await deleteApiKey(parsedInput.id);
-    ctx.auditLoggingCtx.oldObject = result;
+    ctx.auditLoggingCtx.oldObject = result ? { ...result } : result;
     return result;
   })
 );

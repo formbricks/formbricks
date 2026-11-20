@@ -30,6 +30,7 @@ import {
   ZV3SurveyCustomCss,
 } from "@/app/api/v3/surveys/schemas";
 import { ZV3WorkspaceCustomCssPatchBody } from "@/app/api/v3/workspaces/lib/custom-css-schemas";
+import { confirmArgument } from "./confirm-argument";
 
 /**
  * Every array argument is declared through `lengthBoundedArray`, never a bare `z.array().max()`: the
@@ -367,7 +368,7 @@ const ZMcpSurveyWriteConfirm = z
   .boolean()
   .optional()
   .describe(
-    "Set true only after the user agreed. Required to change or delete a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
+    "Set true only after the user agreed. Required to change a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
   );
 
 export const ZMcpCreateSurveyInput = z
@@ -523,7 +524,7 @@ export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.e
 export const ZMcpDeleteSurveyInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID to delete."),
-    confirm: ZMcpSurveyWriteConfirm,
+    confirm: confirmArgument,
   })
   .strict();
 
@@ -625,6 +626,7 @@ export const ZMcpDeleteFeedbackRecordInput = z
     workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
     feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to delete permanently."),
     datasetId: datasetIdField,
+    confirm: confirmArgument,
   })
   .strict();
 

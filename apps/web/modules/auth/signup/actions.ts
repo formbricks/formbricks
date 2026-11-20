@@ -13,7 +13,7 @@ import {
 } from "@formbricks/types/errors";
 import { ZUser, ZUserLocale } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
-import { verifyInviteToken } from "@/lib/jwt";
+import { createEmailToken, verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
 import {
@@ -383,6 +383,12 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     await applyIPRateLimit(rateLimitConfigs.auth.signup);
     await verifyTurnstileIfConfigured(parsedInput.turnstileToken);
 
+    // The display token the "check your inbox" screen echoes the address from (ENG-7093). Minted from
+    // the submitted address, never from a database row, so a new and an already-registered address get
+    // it by the same code path and the response stays identical. Minted before the account is created:
+    // it throws without ENCRYPTION_KEY, and failing after the insert would orphan an unverified user.
+    const emailDisplayToken = createEmailToken(parsedInput.email.toLowerCase());
+
     // Normalized once, up front, and used for every downstream decision. The sign-up form always sends
     // this field as `inviteToken ?? ""`, so an ordinary uninvited sign-up arrives with an empty string —
     // anything blank has to mean "no invite" everywhere, or the checks below disagree with
@@ -509,10 +515,12 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
 
     // Deliberately invariant: the response never varies with whether the address already had an
     // account, nor with what happened to the verification email. Both would make it a lookup
-    // (ENG-2099). The verification-requested screen the form lands on is phrased conditionally and
+    // (ENG-2099). The token is signed over the submitted address, so it is the same kind of value
+    // either way. The verification-requested screen the form lands on is phrased conditionally and
     // carries a log-in link, so the existing-account visitor still has a way out.
     return {
       success: true,
+      emailDisplayToken,
     };
   })
 );

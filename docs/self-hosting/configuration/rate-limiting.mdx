@@ -13,9 +13,10 @@ Starting with Formbricks v5, rate limiting is split across two layers:
   not currently cover
 
 <Warning>
-  Formbricks v5 removes application-level rate limiting for several routes that are now expected to be
-  protected by Envoy Gateway. If you self-host Formbricks without Envoy or an equivalent edge rate limiter,
-  those routes will no longer be throttled by the application server after upgrading.
+  Formbricks v5 moves rate limiting for several routes to Envoy Gateway. The application skips its own limiter
+  for them only when `ENVOY_RATE_LIMITING_ENABLED=1`. If you use an edge rate limiter other than the bundled
+  Envoy policies, set that variable yourself once it covers the routes below; without it the application keeps
+  limiting them.
 </Warning>
 
 <Info>
@@ -46,7 +47,12 @@ configuration and the [v5 migration guide](/self-hosting/advanced/migration#v5).
 
 ## Envoy-Managed Limits
 
-These limits are expected to be enforced at the gateway layer in Formbricks v5 and later:
+These limits are enforced at the gateway layer in Formbricks v5 and later. The application skips its own limiter for
+these routes only when `ENVOY_RATE_LIMITING_ENABLED=1` is set. The Helm chart sets it when `envoy.enabled` and the Envoy
+policies are on, and clears it again if the v1 management, webhook or client route or policy is turned off. Without it,
+the application applies its own limit (`api.v1`: 100 requests per minute per API key) to API-key
+`/api/v1/management/*` and `/api/v1/webhooks/*` requests and its client limits to the v1 client routes.
+
 
 | **Route Group**                                                          | **Limit**    | **Window** | **Identifier** |
 | ------------------------------------------------------------------------ | ------------ | ---------- | -------------- |
@@ -96,6 +102,9 @@ These are the limits that still run inside the Formbricks application server:
 | `actions.surveyFollowUp`      | 50 requests  | 60 minutes | Organization ID               | Survey follow-up email processing                                                                                                                         |
 | `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | Link survey email send action                                                                                                                             |
 | `actions.licenseRecheck`      | 5 requests   | 1 minute   | User ID                       | Enterprise license recheck action                                                                                                                         |
+| `auth.loginFailuresPerAccount` | 10 failures | 15 minutes | Hash of the email address | Wrong passwords at password sign-in, however many IPs they come from. A correct password never spends it; once spent, password sign-in for that address is refused until the window passes (SSO and password reset are unaffected) |
+| `actions.validateSurveyPinFailuresPerSurvey` | 20 failures | 15 minutes | Survey ID | Wrong PINs on a PIN-protected link survey, on top of the per-IP limit. A right PIN never spends it; once spent, every PIN attempt on that survey is refused until the window passes |
+| `actions.twoFactorManage`     | 10 requests  | 60 minutes | User ID                       | Setting up, enabling and disabling two-factor authentication (each checks a password or a code) |
 
 Invite limits count successfully created or refreshed invites. A bulk request for 25 people consumes 25 units
 only when all 25 invites are created; recipients who are already members, already invited, or otherwise fail do
@@ -213,7 +222,7 @@ This setting disables only the **application-level** limiter. It does **not** di
 - Redis/Valkey is required for the application-level limiter (`REDIS_URL`).
 - If you deploy Envoy rate limiting, use a dedicated Redis/Valkey backend for Envoy instead of sharing the app cache.
 - If application Redis is unavailable at runtime, abuse limits **fail closed** and every other limit **fails open**:
-  - **Refused until Redis is back:** sign-up, resending the verification email, organization creation, invites, forgot-password, and the email-change, password-reset and account-deletion requests in account settings, plus the brute-force guards (survey PIN, password-reset and email-change links, the email-token check, failed MCP authentication). These fail with the usual rate-limit error ("Maximum number of requests reached").
+  - **Refused until Redis is back:** sign-up, resending the verification email, organization creation, invites, forgot-password, and the email-change, password-reset and account-deletion requests in account settings, plus the brute-force guards (survey PIN, password sign-in per account, two-factor setup, password-reset and email-change links, failed MCP authentication). These fail with the usual rate-limit error ("Maximum number of requests reached").
   - **Every counted outbound email** is also refused before it reaches your SMTP server. Email sent in the background, such as survey follow-ups and workflow emails, is skipped and logged rather than shown to anyone.
   - **Allowed without enforcement:** API throughput, other settings changes, storage, AI features and SAML sign-in, so the app and your surveys keep working.
 - Every rate-limit check that cannot reach Redis is logged at error level (`Redis unavailable` or `Rate limit check failed`) and counted in the `formbricks_rate_limiter_unavailable_total` metric, with `fail_mode` (`open` / `closed`) and `reason` (`no_client` / `error`) labels. The metric is exported when `PROMETHEUS_ENABLED` or `OTEL_EXPORTER_OTLP_ENDPOINT` is set. To be paged on a Redis outage, alert when it keeps increasing, for example `sum(rate(formbricks_rate_limiter_unavailable_total[5m])) > 0` for 5 minutes. The metric only moves when Redis refuses or drops the connection: a Redis that accepts connections but stops answering stalls those requests instead, with nothing logged or counted, so keep a separate health check on Redis itself.

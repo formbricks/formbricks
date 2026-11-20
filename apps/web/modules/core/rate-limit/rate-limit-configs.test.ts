@@ -68,14 +68,13 @@ describe("rateLimitConfigs", () => {
     test("should have all auth configurations", () => {
       const authConfigs = Object.keys(rateLimitConfigs.auth);
       expect(authConfigs).toEqual([
-        "login",
+        "loginFailuresPerAccount",
         "signup",
         "forgotPassword",
         "forgotPasswordPerAccount",
         "resetPassword",
         "verifyEmail",
         "verifyEmailPerAccount",
-        "emailToken",
         "samlCallback",
       ]);
       expect(rateLimitConfigs.auth.resetPassword).toEqual({
@@ -96,14 +95,6 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 3,
         namespace: "auth:verify:account",
-        failClosed: true,
-      });
-      // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
-      // reveals whether an address is registered, so a loosened quota is a security regression.
-      expect(rateLimitConfigs.auth.emailToken).toEqual({
-        interval: 3600,
-        allowedPerInterval: 10,
-        namespace: "auth:email-token",
         failClosed: true,
       });
       // How often one IP can make the SAML callback parse an anonymous XML document (ENG-3973).
@@ -131,6 +122,7 @@ describe("rateLimitConfigs", () => {
         "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",
+        "internalFeedbackCsvImport",
         "client",
         "clientEnvironment",
         "clientCreativeEvents",
@@ -188,12 +180,18 @@ describe("rateLimitConfigs", () => {
         "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",
+        "validateSurveyPinFailuresPerSurvey",
         "validateSurveyPin",
+        "twoFactorManage",
+        "webhookTest",
+        "webhookSecretReveal",
+        "heicConvert",
         "licenseRecheck",
         "unsplash",
         "inviteMember",
         "inviteMemberPerUser",
         "createOrganization",
+        "aiTranslation",
         "generateExampleResponses",
         "integrationMutation",
         "feedbackSourceMutation",
@@ -293,7 +291,6 @@ describe("rateLimitConfigs", () => {
         auth.resetPassword,
         auth.verifyEmail,
         auth.verifyEmailPerAccount,
-        auth.emailToken,
         api.mcpAuth,
         actions.emailUpdate,
         actions.passwordResetRequest,
@@ -327,7 +324,7 @@ describe("rateLimitConfigs", () => {
     test("should work with checkRateLimit function", async () => {
       mockEval.mockResolvedValue([1, 1]);
 
-      const config = rateLimitConfigs.auth.login;
+      const config = rateLimitConfigs.auth.loginFailuresPerAccount;
       const result = await checkRateLimit(config, "test-identifier");
 
       expect(result.ok).toBe(true);
@@ -345,7 +342,7 @@ describe("rateLimitConfigs", () => {
 
     test("should enforce limits correctly for each config type", async () => {
       const testCases = [
-        { config: rateLimitConfigs.auth.login, identifier: "user-login" },
+        { config: rateLimitConfigs.auth.loginFailuresPerAccount, identifier: "user-login" },
         { config: rateLimitConfigs.auth.signup, identifier: "user-signup" },
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },

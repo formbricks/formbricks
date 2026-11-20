@@ -4,10 +4,15 @@ import { z } from "zod";
 import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { constantTimeEqual } from "@/lib/crypto";
 import { actionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { SINGLE_USE_ID_MAX_LENGTH, SINGLE_USE_TOKEN_MAX_LENGTH } from "@/lib/utils/single-use-surveys";
-import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import {
+  applyIPRateLimit,
+  reserveRateLimitUsage,
+  settleRateLimitUsage,
+} from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
@@ -154,11 +159,20 @@ export const validateSurveyPinAction = actionClient
       surface: "link_pin_action",
     });
 
-    const surveyPin = survey.pin;
-    const originalPin = surveyPin?.toString();
+    const originalPin = survey.pin?.toString();
 
-    if (originalPin && originalPin !== parsedInput.pin) {
-      throw new InvalidInputError("INVALID_PIN");
+    if (originalPin) {
+      // Per-survey budget of wrong guesses, on top of the per-IP limit (ENG-7095). Reserved before the
+      // compare so concurrent guesses cannot all slip past a counter that is only read; a right PIN gives
+      // its unit back, a wrong one keeps it.
+      const attempt = await reserveRateLimitUsage(
+        rateLimitConfigs.actions.validateSurveyPinFailuresPerSurvey,
+        survey.id
+      );
+      if (!constantTimeEqual(originalPin, parsedInput.pin)) {
+        throw new InvalidInputError("INVALID_PIN");
+      }
+      await settleRateLimitUsage(attempt, 0);
     }
 
     // The survey goes to the respondent's browser: without its stored custom CSS (editable source),

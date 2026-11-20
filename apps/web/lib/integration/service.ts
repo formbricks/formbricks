@@ -11,6 +11,7 @@ import {
   TIntegrationInput,
   ZIntegrationType,
 } from "@formbricks/types/integration";
+import { decryptIntegrationConfig, encryptIntegrationConfig } from "@/lib/integration/credentials";
 import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -26,10 +27,22 @@ const getIntegrationSurveyIds = (config: unknown): string[] => {
 };
 
 const transformIntegration = (integration: TIntegration): TIntegration => {
+  // Every read of a stored integration passes through here, so callers always get usable tokens. A token that
+  // no longer decrypts reads as "" (reconnect) for this integration only; the others of the workspace still load.
+  let undecryptable = false;
+  const config = decryptIntegrationConfig(integration.type, integration.config, () => {
+    undecryptable = true;
+  });
+  if (undecryptable) {
+    logger.warn(
+      { integrationId: integration.id, workspaceId: integration.workspaceId, type: integration.type },
+      "Integration credentials no longer decrypt with ENCRYPTION_KEY; the integration needs reconnecting"
+    );
+  }
   return {
     ...integration,
     config: {
-      ...integration.config,
+      ...config,
       data: integration.config.data.map((data) => ({
         ...data,
         createdAt: new Date(data.createdAt),
@@ -57,6 +70,12 @@ export const createOrUpdateIntegration = async (
   );
 
   try {
+    // ENG-7311: tokens are encrypted before they reach the database. The returned row is the stored
+    // one (ciphertext), which is what the audit log should see; read it back through the getters.
+    const storedData = {
+      ...integrationData,
+      config: encryptIntegrationConfig(integrationData.type, integrationData.config),
+    } as TIntegrationInput;
     const integration = await prisma.integration.upsert({
       where: {
         type_workspaceId: {
@@ -65,11 +84,11 @@ export const createOrUpdateIntegration = async (
         },
       },
       update: {
-        ...integrationData,
+        ...storedData,
         workspace: { connect: { id: workspaceId } },
       },
       create: {
-        ...integrationData,
+        ...storedData,
         workspace: { connect: { id: workspaceId } },
       },
     });
@@ -144,6 +163,29 @@ export const getIntegrationByType = reactCache(
     }
   }
 );
+
+/**
+ * The stored `config` exactly as persisted, credentials still encrypted. For the settings save path only: it
+ * copies the stored `key` back over the redacted one the client echoes, and must copy the ciphertext, not
+ * {@link transformIntegration}'s decrypted view. That view blanks a token that no longer decrypts to "", and
+ * writing "" back would erase the ciphertext for good, so fixing a wrong `ENCRYPTION_KEY` could not recover
+ * it. Ciphertext passes through `encryptIntegrationConfig` unchanged, so the save is lossless.
+ */
+export const getStoredIntegrationConfig = async (
+  workspaceId: string,
+  type: TIntegrationInput["type"]
+): Promise<{ config: TIntegration["config"] } | null> => {
+  validateInputs([workspaceId, ZId], [type, ZIntegrationType]);
+
+  try {
+    return await prisma.integration.findFirst({ where: { workspaceId, type }, select: { config: true } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
 
 export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
   validateInputs([integrationId, ZString]);
