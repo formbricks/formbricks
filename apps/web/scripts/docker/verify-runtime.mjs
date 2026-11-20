@@ -30,7 +30,7 @@ assert.equal(
 );
 assert.ok(atLeast(process.versions.openssl, "3.5.9"), "Node must use patched OpenSSL");
 assert.equal(process.versions.undici.split(".")[0], "7", "Recheck fixes before changing Undici majors");
-assert.ok(atLeast(process.versions.undici, "7.29.1"), "Node's built-in fetch must use patched Undici");
+assert.ok(atLeast(process.versions.undici, "7.30.1"), "Node's built-in fetch must use patched Undici");
 assert.equal(process.versions.modules, "137", "Native addons must retain the Node 24 ABI");
 assert.deepEqual(Intl.DateTimeFormat.supportedLocalesOf(["de", "es", "ja"]), ["de", "es", "ja"]);
 
