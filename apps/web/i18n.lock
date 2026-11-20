@@ -902,6 +902,8 @@ checksums:
     s/scheduled: 1d912a272198b9bca259991eb5a9130a
     s/survey_already_answered_heading: 4783c9c36ad0d4f8eec5dfeb14a04545
     s/survey_already_answered_subheading: 40cfe7e8680cd4fbb7318a05d3491c78
+    s/survey_not_found: 1d35af27e36a75e9a59a85223f8e84dd
+    s/survey_not_found_description: 9ffccb5adb2eeed5c8cb3d98cf4cb1cf
     s/survey_sent_to: 192c2b0d27e01c35953b851d3875722e
     s/verify_email: f5ef78c2ac771d81846cfc33ccc5ccc1
     s/verify_email_before_submission: 7dd154506492656ae48316de7c2cc62d
@@ -1850,6 +1852,9 @@ checksums:
     workspace/analysis/charts/area_display_filled: 8a5591fe0fffc8cce37cb422c0a8cf78
     workspace/analysis/charts/area_display_line: b2083b10c8f7d21284e2892b97a5e8f1
     workspace/analysis/charts/bar_direction: d78ce3e340da83ec3904a31a4e01b5cb
+    workspace/analysis/charts/bar_layout: ec70706f2227790ba26da3aeae2662ad
+    workspace/analysis/charts/bar_layout_side_by_side: e365117ea19941e47bfde59a8b905036
+    workspace/analysis/charts/bar_layout_stacked: 8c57df4f8e8011c0de9573331c8285dd
     workspace/analysis/charts/blank_chart: 77c22d50956ad49359f00d0c2eece43a
     workspace/analysis/charts/blank_chart_hint: 64e9228a9bfcf6a8f37c640e16fd7118
     workspace/analysis/charts/chart: 6f4d9c56e45ceb8fc22d2f74454cd813
@@ -2066,10 +2071,15 @@ checksums:
     workspace/analysis/charts/no_data_returned: 73949b8732604b9e2d22d046cc4a6ef9
     workspace/analysis/charts/no_data_source_available: 0b247d065eaf2d0fc1c8ec558eebfba6
     workspace/analysis/charts/no_grouping: e3a6943e61407600cae057e0833a482d
+    workspace/analysis/charts/no_value: eff58c215a62dcced0c0016106fcb956
     workspace/analysis/charts/no_values_found: c86fa6b3d7f7e255525cd2f9330a9295
     workspace/analysis/charts/not_contains: 5894f5474271b8902d7892e43500d227
     workspace/analysis/charts/not_enriched: a120747f948eea14c99c0ff98720e0b9
     workspace/analysis/charts/not_equals: 427715f1ea349965c36f5c628784eb08
+    workspace/analysis/charts/nps_segment_detractor: b24a6a8c59e6817b22cb734a0725eabf
+    workspace/analysis/charts/nps_segment_is: df374aec84146b055c40da85b88f17f6
+    workspace/analysis/charts/nps_segment_passive: d45b04e3900b5c828766907438ae5da0
+    workspace/analysis/charts/nps_segment_promoter: bb4611e99abe61b465245811e57ab0ec
     workspace/analysis/charts/open_chart: 729a54bbc4bcb3f431865af5e5a50dd4
     workspace/analysis/charts/open_options: 2c6a35fec9b9d008e41728594bcd07d7
     workspace/analysis/charts/pie_display: eb53ad78765ddc4050d898a70f2fac68
@@ -2087,6 +2097,13 @@ checksums:
     workspace/analysis/charts/preset_nps_breakdown_name: 6023fb49ba780cec57670dd4c4a50f73
     workspace/analysis/charts/preset_nps_over_time_description: c2666f3e30fe07592e8e7caaf9bf0460
     workspace/analysis/charts/preset_nps_over_time_name: d980676b5286898e2a34ff9d984a199a
+    workspace/analysis/charts/question_filter_field: 0576462ce60d4263d7c482463fcc9547
+    workspace/analysis/charts/rename_field: 2e71576dd91f518812e9d0465a385cb9
+    workspace/analysis/charts/rename_field_description: 4d98f63d8fdc347e95cb68efe6eee5d0
+    workspace/analysis/charts/rename_field_failed: 1188a9d1db64eae1a50353f9e8557bfb
+    workspace/analysis/charts/rename_field_name: a5c71bf158481233f8215dbd38cc196b
+    workspace/analysis/charts/rename_field_reset: 5d87eaf4cd529639ba728c2f63106838
+    workspace/analysis/charts/rename_field_success: 4c1244c03caccf65ba909f27f4d79ba1
     workspace/analysis/charts/response_base_ces: b19788e420e054497bf825969b685c76
     workspace/analysis/charts/response_base_csat: 7758042a66ad795ba460b4136d666c76
     workspace/analysis/charts/response_base_nps: f79fde6e68c08cacaf148a63c05d54e3
@@ -2107,6 +2124,7 @@ checksums:
     workspace/analysis/charts/sentiment_value_positive: c0c37bed1a06b7e8cdc72607e56487de
     workspace/analysis/charts/sentiment_value_very_negative: d8fc168ac8dee517c9d5960bfdd2c1d0
     workspace/analysis/charts/sentiment_value_very_positive: 0b5952d9b44604c77b74bb1d3eeb29eb
+    workspace/analysis/charts/show_empty_values: 9207744ee06cdfd218063eeb7ee8da3c
     workspace/analysis/charts/showing_first_n_of: e9c1e76a46d0635f775a5b86bddbe1c3
     workspace/analysis/charts/start_from_metric: e6ce730dda40bac144512558cbb61ae1
     workspace/analysis/charts/start_from_metric_hint: 09bd111d936a1eb83f9e20072727b9bf
@@ -3184,6 +3202,7 @@ checksums:
     workspace/segments/remove_all_filters: 115828cbda8a4733df1e9e2661bf7e55
     workspace/segments/reset_all_filters: 0de0d7962a1179fac358cb1cf9546df3
     workspace/segments/save_as_new_segment: d9d42bdeabf936d4ec97325dbdca0012
+    workspace/segments/save_segment_changes_before_saving: e8db73db39e21cbcef4c99a314649e0e
     workspace/segments/save_your_filters_as_a_segment_to_use_it_in_other_surveys: cc40e9b2a5ab59684f075bcb2f55f18d
     workspace/segments/search_segments: 2d59e7e5e11d8ed41047eb62e3b7f534
     workspace/segments/segment_created_successfully: 7dfaf11a929000b387c0d5f6dc18e81a

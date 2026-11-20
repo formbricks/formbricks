@@ -149,7 +149,7 @@ describe("createAuthPathLabeller — labelling rules", () => {
   });
 
   test("ignores declared entries that are not usable paths", () => {
-    const tolerant = createAuthPathLabeller(["/get-session", "", "no-leading-slash", undefined as never]);
+    const tolerant = createAuthPathLabeller(["/get-session", "", "no-leading-slash", undefined]);
 
     expect(tolerant("https://app.formbricks.com/api/auth/get-session")).toBe("/get-session");
     expect(tolerant("https://app.formbricks.com/api/auth/no-leading-slash")).toBe(UNKNOWN_AUTH_PATH_LABEL);

@@ -77,6 +77,67 @@ affect zero rows on an empty table). **Never seed essential/default data from a
 data migration** — it would be silently skipped on fresh installs. Seed base
 data via the seed script (`src/seed.ts`, `pnpm db:seed`) instead.
 
+### High-volume backfills: `transactional: false`
+
+By default the runner runs a data migration's `run()` inside one transaction with a 30-minute limit, and
+holds every lock it takes until `run()` returns. For a backfill that walks a large table in committed chunks
+(`Response`, `ContactAttribute`), set `transactional: false` on the exported migration:
+
+```ts
+export const backfillSomething: AutocommitDataMigrationScript = {
+  type: "data",
+  id: "…",
+  name: "…",
+  transactional: false,
+  run: async ({ prisma }) => {
+    // commit in chunks through the autocommit client
+  },
+};
+```
+
+The runner then opens no transaction and gives `run()` the autocommit `prisma` client and a `signal` (no
+`tx`). Such a migration must also set an `id`. Because nothing rolls back its writes, `run()` must be **safe
+to re-run from the top**: a failed or interrupted run starts again on the next deploy. Write it to skip work
+that is already done (for example `WHERE "directoryId" IS NULL`), so a retry carries on where the last run
+stopped. A chunk the killed process had already sent can still commit after the next run starts, so a chunk
+must also be safe to overlap with the next run's first one.
+
+While `run()` works, the runner holds a Postgres advisory lock for that migration on a connection of its own.
+The `DataMigration` row is committed as `pending` before `run()` starts, then set to `applied` or `failed`:
+
+- A runner that finds the migration `applied` skips it without touching the lock.
+- A second runner that finds the lock taken waits for it, checking every 5 seconds for up to 30 minutes (the
+  default path's limit). It skips the migration once the first runner finishes it, or takes over if the lock
+  frees without that.
+- If the process is killed mid-run (a pod restart, Docker's migration timeout), Postgres drops the lock with the
+  connection. The next run finds the row `pending` with nobody holding the lock, and resumes it on its own.
+- If the lock connection drops while the process lives on, `signal` aborts and the runner records nothing,
+  because another runner may already have taken over. Check `signal.aborted` between chunks and stop.
+
+A session advisory lock needs the direct or session-pooled connection the runner already requires (see
+[Migration safety checks](#migration-safety-checks)). Keep the default for anything small; it rolls back
+cleanly.
+
+**Deployment time limits still apply.** Opting out removes the runner's 30-minute transaction, not the limits
+around the whole migration step:
+
+| Deployment                                                                                        | Limit on the migration step         |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Docker Compose (`formbricks-migrate`) and the app container's startup migration (`next-start.sh`) | 300 seconds                         |
+| Helm online upgrade (`apps/web/lib/upgrade/online/runtime.ts`; only 6.0.x → 6.1 today)            | 30 minutes                          |
+| Helm maintenance upgrade (migration Job)                                                          | none; the Job retries up to 3 times |
+
+A run cut off by one of these resumes on the next deploy, but that deploy has failed first. On Docker the update
+stops until someone runs `docker compose up` again, and the Hub waits for the migration until then.
+
+Database size and hardware vary, so no instance can be assumed small enough. **Before the first migration that
+opts out ships**, its release must do one of these:
+
+- time it against Docker's 300-second limit on a large dataset and on modest hardware, and show it fits, or
+- change the Docker migration workflow in the same release (the limit or the retry), so a longer run completes.
+
+Check Cloud's deployment path the same way.
+
 ### Directory Structure Example
 
 ```

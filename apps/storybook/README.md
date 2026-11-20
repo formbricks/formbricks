@@ -7,5 +7,5 @@ pnpm storybook
 ```
 
 Lint runs from the repo root (`pnpm lint:code`). This app composes the shared `react` tier from
-`@formbricks/config-oxlint` in `oxlint.config.ts`, adds the Storybook plugin's rules for story files, and
-raises every warning to an error, so it stays warning-free.
+`@formbricks/config-oxlint` in `oxlint.config.ts` and adds the Storybook plugin's rules for story files.
+Like every workspace, it raises each warning to an error.

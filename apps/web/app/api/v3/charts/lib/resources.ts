@@ -34,11 +34,15 @@ export const ZV3ChartAnswerQuestion = z
   })
   .strict();
 
+/** A question a `FeedbackRecords.fieldId` filter may name (ENG-7323): the id to filter by, the label to show. */
+export const ZV3ChartQuestion = z.object({ id: z.string(), label: z.string() }).strict();
+
 export const ZV3ChartFieldCatalog = z
   .object({
     fields: z.array(ZV3ChartField),
     datePresets: z.array(z.string()),
     answerQuestions: z.array(ZV3ChartAnswerQuestion),
+    questions: z.array(ZV3ChartQuestion),
   })
   .strict();
 

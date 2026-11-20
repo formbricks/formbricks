@@ -164,13 +164,14 @@ export const deleteMembership = async (
         { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
       );
 
-    await finishRevokedMcpGrants(revokedMcpGrantAudits, { actorUserId });
+    // The membership first, as in a role change: it is what the removed user could still act on.
     await reconcileOrganizationMembership(organizationId, userId);
     await runPostCommitProjection("organization_membership_team_cleanup", () =>
       reconcileTeamWorkspaceRelationships({
         teamMemberships: deletedTeamMemberships.map(({ teamId }) => ({ teamId, userId })),
       })
     );
+    await finishRevokedMcpGrants(revokedMcpGrantAudits, { actorUserId });
 
     return deletedTeamMemberships;
   } catch (error) {

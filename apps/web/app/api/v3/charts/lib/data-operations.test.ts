@@ -203,6 +203,21 @@ describe("chart queries within budget", () => {
       expect(data.memberLabels).toEqual({ [plan]: "Plan" });
     });
 
+    test("names a renamed embedded-data member with the workspace's name for its key", async () => {
+      const plan = "FeedbackRecords.ed_plan_64879f7d";
+      vi.mocked(loadDatasetChartFields).mockResolvedValueOnce({
+        embeddedFields: [{ name: plan, key: "Plan", label: "Subscription plan" }],
+      });
+
+      const response = await preview({
+        query: { measures: ["FeedbackRecords.count"], dimensions: [plan] },
+      });
+
+      expect(response.status).toBe(200);
+      const { data } = (await response.json()) as { data: { memberLabels: unknown } };
+      expect(data.memberLabels).toEqual({ [plan]: "Subscription plan" });
+    });
+
     test("runs the query in the authorized workspace's tenant and returns rows, labels and the query run", async () => {
       const response = await preview();
 

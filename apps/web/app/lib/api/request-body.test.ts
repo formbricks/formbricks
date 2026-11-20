@@ -120,6 +120,24 @@ describe("readRequestBytesWithLimit", () => {
     // Five 1 KiB chunks cross a 4 KiB limit; an unbounded reader would never return from this source.
     expect(pulls).toBeLessThanOrEqual(6);
   });
+
+  // ENG-6948: cancelling one branch of a tee'd body settles only once the other branch is cancelled or
+  // the source ends, so the refusal must not wait on it. A hang must fail here, not stall the suite.
+  test("refuses a cloned stream past the limit while the source and the other branch stay open", async () => {
+    const original = new Request("http://localhost/api/test", {
+      method: "POST",
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array(4097));
+        },
+      }),
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    await expect(readRequestBytesWithLimit(original.clone(), 4096)).rejects.toBeInstanceOf(
+      RequestBodyTooLargeError
+    );
+  }, 2000);
 });
 
 describe("parseFormDataWithLimit", () => {

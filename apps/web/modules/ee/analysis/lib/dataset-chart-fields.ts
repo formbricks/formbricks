@@ -8,6 +8,7 @@ import {
   resolveEmbeddedMemberKeys,
 } from "./dataset-embedded-keys";
 import { collectEmbeddedMemberNames } from "./embedded-data-fields";
+import { getEmbeddedFieldLabels } from "./embedded-field-labels";
 import { getEmbeddedMemberName } from "./embedded-member-name";
 import type { TChartField, TDatasetChartFields } from "./field-catalog";
 import { getChartFieldCatalog } from "./field-catalog";
@@ -15,7 +16,8 @@ import { getChartFieldCatalog } from "./field-catalog";
 /**
  * What a Feedback Dataset adds to the field catalog (`getChartFieldCatalog`): its embedded-data keys,
  * always (the top keys, plus any key `query` names outside them), and its answerable questions when `withAnswerQuestions` is set or `query` holds an answer rule —
- * they cost two database reads, which a query without answer rules does not need.
+ * they cost two database reads, which a query without answer rules does not need. A key the workspace
+ * renamed carries that name as its `label`; the key itself is unchanged, so queries keep naming its member.
  */
 export const getDatasetChartFields = async (
   scope: TEmbeddedKeysScope,
@@ -41,8 +43,17 @@ export const getDatasetChartFields = async (
     }
   }
 
+  const labels = await getEmbeddedFieldLabels(
+    scope.workspaceId,
+    embeddedFields.map(({ key }) => key)
+  );
+  const labelled = embeddedFields.map((field) => {
+    const label = labels.get(field.key);
+    return label === undefined ? field : { ...field, label };
+  });
+
   return {
-    embeddedFields,
+    embeddedFields: labelled,
     ...(answerQuestions ? { answerQuestions } : {}),
   };
 };

@@ -45,7 +45,12 @@ export const useDashboardEmbeddedFields = ({
     enabled: enabled && dashboardId.length > 0 && uniqueIds.length > 0,
     staleTime: FILTER_FIELDS_STALE_MS,
     select: (data): TSelectedFields => ({
-      embeddedFields: data.fields.map(({ name, key }) => ({ name, key })),
+      // A label equal to the key carries no rename; keep it off so the key stays the fallback.
+      embeddedFields: data.fields.map(({ name, key, label }) => ({
+        name,
+        key,
+        ...(label && label !== key ? { label } : {}),
+      })),
       numericFields: new Set(data.fields.flatMap(({ name, type }) => (type === "number" ? [name] : []))),
     }),
   });
