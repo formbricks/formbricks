@@ -9,6 +9,7 @@ import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { NULL_BYTE_REASON, hasNullByte } from "@/lib/utils/postgres-text";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
@@ -97,6 +98,10 @@ const parseUserRequestBody = async (
     return {
       response: responses.badRequestResponse("userId is required and must be a string", undefined, true),
     };
+  }
+
+  if (hasNullByte(jsonInput.userId)) {
+    return { response: responses.badRequestResponse(`userId ${NULL_BYTE_REASON}`, undefined, true) };
   }
 
   // Simple email validation if present (avoid Zod)
