@@ -643,34 +643,41 @@ const collectReferencedSegmentIds = (node: unknown, found: Set<string> = new Set
   return found;
 };
 
+const assertContactsLicence = async (workspaceId: string): Promise<void> => {
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
+  if (!organization) throw new ResourceNotFoundError("Workspace", workspaceId);
+  if (!(await getIsContactsEnabled(organization.id))) {
+    throw new OperationNotAllowedError("Advanced targeting is not allowed for this organization");
+  }
+};
+
 /**
  * ENG-7267: the segment endpoints and the v3 survey writes refuse advanced targeting without the
- * Contacts licence and filters that name their own segment; a survey save writes filters too, so it
- * holds the same two rules, on the raw tree it is about to write (a draft save skips the schema, so a
- * tree that fails it must not slip past). The licence is asked only when the save changes the stored
- * filters, so a survey keeps saving after its organization's licence lapses.
+ * Contacts licence and filters that name their own segment; a survey save applies targeting too, so it
+ * holds the same rules on what `saveAppSurveySegment` will actually apply (ENG-6957):
+ * - the survey's own private segment: the raw filter tree it writes (a draft save skips the schema, so a
+ *   tree that fails it must not slip past). The licence is asked only when the filters change, so a
+ *   survey keeps saving after its organization's licence lapses;
+ * - linking another segment: checked in `saveAppSurveySegment`'s link branch, on that segment's stored
+ *   filters, which the survey takes on whatever filters the client sent;
+ * - anything else writes no targeting, so it is not checked.
  */
 const assertAppTargetingFiltersAllowed = async (
-  currentSurvey: Pick<TSurvey, "workspaceId" | "segment">,
+  currentSurvey: Pick<TSurvey, "id" | "workspaceId" | "segment">,
   segment: { id?: string | null; filters?: unknown } | null | undefined
 ): Promise<void> => {
-  const filters = segment?.filters;
-  if (!segment || !Array.isArray(filters) || filters.length === 0) return;
+  if (!segment?.id) return;
 
-  if (segment.id) {
+  if (isOwnPrivateSegment(currentSurvey, segment.id)) {
+    const filters = segment.filters;
+    if (!Array.isArray(filters) || filters.length === 0) return;
     if (collectReferencedSegmentIds(filters).has(segment.id)) {
       throw new InvalidInputError("Recursive segment filter is not allowed");
     }
     const parsed = ZSegmentFilters.safeParse(filters);
     if (parsed.success) await checkForRecursiveSegmentFilter(parsed.data, segment.id);
-  }
-
-  const storedFilters = segment.id === currentSurvey.segment?.id ? currentSurvey.segment?.filters : [];
-  if (isDeepStrictEqual(filters, storedFilters ?? [])) return;
-  const organization = await getOrganizationByWorkspaceId(currentSurvey.workspaceId);
-  if (!organization) throw new ResourceNotFoundError("Workspace", currentSurvey.workspaceId);
-  if (!(await getIsContactsEnabled(organization.id))) {
-    throw new OperationNotAllowedError("Advanced targeting is not allowed for this organization");
+    if (isDeepStrictEqual(filters, currentSurvey.segment.filters ?? [])) return;
+    await assertContactsLicence(currentSurvey.workspaceId);
   }
 };
 
@@ -1536,6 +1543,11 @@ const saveAppSurveySegment = async (
   if (!target) throw new ResourceNotFoundError("Segment", segment.id);
   if (target.isPrivate) {
     throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
+  }
+  // ENG-7267: the survey takes on the segment's stored filters, so attribute targeting needs the Contacts
+  // licence here, whatever filters the client sent with the link.
+  if (Array.isArray(target.filters) && target.filters.length > 0) {
+    await assertContactsLicence(survey.workspaceId);
   }
   await assertTargetingAddsNoHiddenSurvey(
     survey.workspaceId,

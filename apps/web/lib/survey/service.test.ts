@@ -1101,6 +1101,7 @@ describe("Tests for updateSurvey", () => {
           },
         },
       ];
+      const SHARED_SEGMENT_ID = createId();
       // The stored survey's own private segment, as `getSurvey` reads it (connected surveys as `{ id }`).
       const ownSegment = (filters: unknown) => ({
         id: SEGMENT_ID,
@@ -1190,7 +1191,11 @@ describe("Tests for updateSurvey", () => {
         const nested = [{ id: createId(), connector: null, resource: selfReferencingFilters }];
         await expect(save(nested)).rejects.toThrow("Recursive segment filter is not allowed");
 
-        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+        prisma.survey.findUnique.mockResolvedValueOnce({
+          ...mockSurveyOutput,
+          status: "draft",
+          segment: ownSegment([]),
+        } as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
         prisma.segment.findUnique.mockResolvedValueOnce({
           workspaceId: updateSurveyInput.workspaceId,
         } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
@@ -1199,7 +1204,7 @@ describe("Tests for updateSurvey", () => {
           { id: "junk", resource: { root: { type: "attribute" } } },
         ];
         await expect(save(malformed)).rejects.toThrow("Recursive segment filter is not allowed");
-        expect(prisma.segment.update).not.toHaveBeenCalled();
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       });
 
       test("asks for the licence when half-built draft filters change", async () => {
@@ -1207,13 +1212,46 @@ describe("Tests for updateSurvey", () => {
         const halfBuilt = [{ id: "f1", connector: null, resource: { root: { type: "attribute" } } }];
 
         await expect(save(halfBuilt)).rejects.toThrow(OperationNotAllowedError);
-        expect(prisma.segment.update).not.toHaveBeenCalled();
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      // Since ENG-6957, linking another segment makes the survey take on that segment's stored filters,
+      // whatever filters the client sends with it, so the licence is asked on those.
+      test("refuses linking a shared segment with stored filters without the licence, whatever filters are sent", async () => {
+        vi.mocked(getIsContactsEnabled).mockResolvedValueOnce(false);
+        prisma.segment.findFirst.mockResolvedValue({
+          isPrivate: false,
+          filters: attributeFilters,
+        } as unknown as Awaited<ReturnType<typeof prisma.segment.findFirst>>);
+
+        const link = updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            status: "draft",
+            type: "app",
+            segment: {
+              id: SHARED_SEGMENT_ID,
+              title: "shared",
+              description: null,
+              isPrivate: false,
+              filters: [],
+              workspaceId: updateSurveyInput.workspaceId,
+              surveys: [updateSurveyInput.id],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          },
+          true
+        );
+
+        await expect(link).rejects.toThrow(OperationNotAllowedError);
+        expect(prisma.survey.update).not.toHaveBeenCalled();
       });
 
       test("refuses filters that name their own segment", async () => {
         await expect(save(selfReferencingFilters)).rejects.toThrow("Recursive segment filter is not allowed");
 
-        expect(prisma.segment.update).not.toHaveBeenCalled();
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
         expect(prisma.survey.update).not.toHaveBeenCalled();
       });
     });
