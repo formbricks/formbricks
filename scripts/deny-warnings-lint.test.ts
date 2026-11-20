@@ -16,6 +16,7 @@ const staged = new Set(STAGED_LINES_RULE_IDS);
 
 type Entry = unknown;
 interface Config {
+  categories?: Record<string, Entry>;
   rules?: Record<string, Entry>;
   overrides?: { files: string[]; rules?: Record<string, Entry> }[];
 }
@@ -23,6 +24,9 @@ interface Config {
 const severityOf = (entry: Entry) => (Array.isArray(entry) ? entry[0] : entry);
 
 const warnings = (config: Config) => [
+  ...Object.entries(config.categories ?? {})
+    .filter(([, severity]) => severity === "warn")
+    .map(([name]) => `category ${name}`),
   ...Object.entries(config.rules ?? {})
     .filter(([id, entry]) => severityOf(entry) === "warn" && !staged.has(id))
     .map(([id]) => id),
@@ -62,11 +66,13 @@ describe("no workspace lints with a warning", () => {
 });
 
 describe("denyWarnings", () => {
-  test("raises warn to error in rules and overrides, keeping options", () => {
+  test("raises warn to error in categories, rules and overrides, keeping options", () => {
     const config = raiseWarnings({
+      categories: { correctness: "error", pedantic: "warn" },
       rules: { a: "warn", b: ["warn", { max: 1 }], c: "off", d: "error" },
       overrides: [{ files: ["*.ts"], rules: { e: "warn" } }],
     });
+    expect(config.categories).toEqual({ correctness: "error", pedantic: "error" });
     expect(config.rules).toEqual({ a: "error", b: ["error", { max: 1 }], c: "off", d: "error" });
     expect(config.overrides).toEqual([{ files: ["*.ts"], rules: { e: "error" } }]);
   });
