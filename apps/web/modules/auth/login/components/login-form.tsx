@@ -8,7 +8,10 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE,
+  SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE,
+} from "@formbricks/types/errors";
 import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
@@ -81,6 +84,8 @@ export const LoginForm = ({
   // Accept both so the "not linked" alert survives the cutover.
   const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
   const ssoRecoverySecondFactorUnavailable = oauthError === SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE;
+  // ENG-7310: recovery reached its completion in a browser that never opened the emailed link.
+  const ssoRecoveryLinkNotOpened = oauthError === SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE;
   const { t } = useTranslation();
 
   const signupHref = useMemo(() => {
@@ -199,6 +204,14 @@ export const LoginForm = ({
             <AlertTitle>{t("auth.login.oauth_second_factor_unavailable_title")}</AlertTitle>
             <AlertDescription>
               <p>{t("auth.login.oauth_second_factor_unavailable_description")}</p>
+            </AlertDescription>
+          </Alert>
+        )}
+        {ssoRecoveryLinkNotOpened && (
+          <Alert variant="error" className="mb-4 text-left" role="status">
+            <AlertTitle>{t("auth.login.oauth_recovery_link_not_opened_title")}</AlertTitle>
+            <AlertDescription>
+              <p>{t("auth.login.oauth_recovery_link_not_opened_description")}</p>
             </AlertDescription>
           </Alert>
         )}

@@ -65,6 +65,8 @@
       "new_to_formbricks": "Nou în Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_recovery_link_not_opened_description": "Deschide linkul din e-mailul pe care ți l-am trimis doar dacă tu ai ales să asociezi autentificarea unică (single sign-on) cu contul tău Formbricks. Dacă nu ai făcut-o, ignoră acel e-mail: deschiderea lui ar putea oferi altcuiva acces la contul tău. Dacă ai făcut-o, deschide linkul în acest browser pentru a finaliza.",
+      "oauth_recovery_link_not_opened_title": "Această autentificare nu poate fi finalizată în acest browser",
       "oauth_second_factor_unavailable_description": "Adresa ta de e-mail este verificată, dar acest cont are activată autentificarea în doi pași, iar această instanță Formbricks are dezactivată conectarea cu e-mail și parolă, așa că al doilea factor nu poate fi introdus aici. Pentru a finaliza, conectează-te cu un furnizor de conectare unică (SSO) deja asociat acestui cont sau contactează un administrator.",
       "oauth_second_factor_unavailable_title": "Autentificarea în doi pași nu poate fi finalizată aici",
       "please_verify_your_email_to_continue": "Te rugăm să îți verifici adresa de e-mail. Ți-am trimis un link de verificare.",
@@ -128,6 +130,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "Utilizator creat cu succes",
       "user_successfully_created_info": "Am verificat pentru un cont asociat cu {email}. Dacă nu a existat niciunul, am creat unul pentru tine. Dacă un cont deja exista, nu s-au făcut modificări. Vă rugăm să vă conectați mai jos pentru a continua."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Anulează",
+      "confirm": "Asociază {provider}",
+      "description": "După aceasta, te poți autentifica în contul Formbricks {email} folosind {provider}.",
+      "title": "Asociezi {provider} cu contul tău?",
+      "warning": "Continuă doar dacă tu ai cerut să te conectezi la Formbricks cu {provider}. Dacă nu, anulează: este posibil ca altcineva să încerce să îți acceseze contul."
     },
     "verification-requested": {
       "email_not_configured_description": "Această instanță Formbricks nu are un server de email configurat, așa că nu a putut fi trimis niciun link de verificare. Vă rugăm să contactați administratorul.",

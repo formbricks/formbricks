@@ -2,6 +2,24 @@ export const OAUTH_ACCOUNT_NOT_LINKED_ERROR = "OAuthAccountNotLinked";
 export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
 
 /**
+ * The page that asks the account holder to confirm the link (ENG-7395). A GET on the completion path
+ * only forwards here; the page's POST back to the completion path is what links.
+ */
+export const SSO_RECOVERY_CONFIRM_PATH = "/sso-recovery/confirm";
+
+/**
+ * The recovery intent a completion URL carries, or null when `validatedCallbackUrl` is not one. Callers
+ * pass a URL already validated against the app's origin.
+ */
+export const getSsoRecoveryIntentFromCompletionUrl = (validatedCallbackUrl: string | null | undefined) => {
+  if (!validatedCallbackUrl) return null;
+  // A base for the relative form a resolved callback can take; only the path and query are read.
+  const url = new URL(validatedCallbackUrl, "http://localhost");
+  if (url.pathname !== SSO_RECOVERY_COMPLETION_PATH) return null;
+  return url.searchParams.get("intent") || null;
+};
+
+/**
  * The synthetic `Account.issuer` for the providers we configure ourselves (ENG-2343): azuread / openid /
  * saml, and the fallback for any provider without a declared one.
  *

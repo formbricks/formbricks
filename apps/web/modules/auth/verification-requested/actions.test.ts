@@ -7,6 +7,7 @@ import { getUserByEmail } from "@/modules/auth/lib/user";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getSsoRecoveryStateId } from "@/modules/ee/sso/lib/recovery-proof";
 import { sendVerificationEmail } from "@/modules/email";
 import { resendVerificationEmailAction } from "./actions";
 
@@ -260,6 +261,8 @@ describe("resendVerificationEmailAction", () => {
         locale: "en-US",
         callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent",
         purpose: "sso_recovery",
+        // The resent link stays bound to the same recovery (ENG-7310).
+        ssoRecoveryStateId: getSsoRecoveryStateId("test-intent"),
       });
       expect(result).toEqual({ success: true });
     });

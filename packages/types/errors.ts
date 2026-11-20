@@ -14,6 +14,14 @@ export const INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE = "ERR_INVALID_PASSWORD_RES
  */
 export const SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE = "sso_recovery_second_factor_unavailable";
 
+/**
+ * The login `?error=` code for a recovery completion reached by a browser that never opened the emailed
+ * recovery link (ENG-7310). Only the browser that opened the link can finish recovery, so the copy points
+ * at the email. It also says to ignore the email when the reader did not start a sign-in, because the
+ * same redirect is where an attacker's link lands the account holder.
+ */
+export const SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE = "sso_recovery_link_not_opened";
+
 class ResourceNotFoundError extends Error {
   statusCode = 404;
   resourceId: string | null;

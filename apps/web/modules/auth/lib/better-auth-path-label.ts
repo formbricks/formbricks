@@ -42,7 +42,7 @@ export const UNKNOWN_AUTH_PATH_LABEL = "unknown";
 
 const getFirstSegment = (path: string): string | undefined => path.split("/")[1] || undefined;
 
-export const createAuthPathLabeller = (declaredPaths: Iterable<string>): ((url: string) => string) => {
+export const createAuthPathLabeller = (declaredPaths: Iterable<unknown>): ((url: string) => string) => {
   // Only parameter-free declared paths may be emitted verbatim. Patterns still contribute their first
   // segment, so `/reset-password/<token>` degrades to a recognized `/reset-password/*` rather than to
   // `unknown` — the endpoint is still named, just not the secret in it.
