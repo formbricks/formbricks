@@ -21,6 +21,16 @@ describe("getRichTextLinks", () => {
     ["a slash instead of a space", '<p><a/href="https://example.com/a">this</a></p>'],
     ["a > inside a quoted attribute", '<p><a title=">" href="https://example.com/a">this</a></p>'],
     ["an unquoted href", "<p><a href=https://example.com/a>this</a></p>"],
+    // The renderer's DOMPurify keeps SVG and MathML, where a link is not an HTML <a href>.
+    ["an SVG xlink:href", '<svg><a xlink:href="https://example.com/a"><text y="9">x</text></a></svg>'],
+    ["an SVG href", '<svg><a href="https://example.com/a"><text y="9">x</text></a></svg>'],
+    ["a MathML href on <math>", '<math href="https://example.com/a"><mi>x</mi></math>'],
+    ["a MathML href on a child", '<math><mi href="https://example.com/a">x</mi></math>'],
+    [
+      "an image-map area",
+      '<map name="m"><area href="https://example.com/a" shape="rect" coords="0,0,9,9"></map>',
+    ],
+    ["a form action", '<form action="https://example.com/a"><button>go</button></form>'],
   ])("finds %s", (_case, html) => {
     expect(getRichTextLinks(withHeadline(html))).toEqual(new Set(["https://example.com/a"]));
   });
@@ -32,6 +42,8 @@ describe("getRichTextLinks", () => {
     ["an escaped link the editor shows as text", '<p>&lt;a href="https://example.com/a"&gt;</p>'],
     ["a script URL the renderer strips", '<p><a href="javascript:alert(1)">x</a></p>'],
     ["the word href in text", "<p>Type href to see it</p>"],
+    ["a formaction the renderer strips", '<button formaction="https://example.com/a">go</button>'],
+    ["an SVG <use> the renderer strips", '<svg><use href="https://example.com/a.svg#x"></use></svg>'],
   ])("finds no link in %s", (_case, html) => {
     expect(getRichTextLinks(withHeadline(html)).size).toBe(0);
   });

@@ -11,8 +11,20 @@ export type TRichTextSurveyContent = {
   welcomeCard?: TSurveyWelcomeCard | null;
 };
 
-/** An anchor's `href` attribute name is never entity-decoded, so a string without it holds no link. */
-const MAY_HOLD_LINK = /href/i;
+/** Attribute names are never entity-decoded, so a string naming neither holds no link. */
+const MAY_HOLD_LINK = /href|action/i;
+
+/**
+ * The URL an attribute navigates to, if it is one. The renderer's DOMPurify keeps SVG and MathML, so a
+ * link is any `href` in any namespace (`<a href>`, `<area href>`, SVG `xlink:href`, MathML `href` on
+ * any element), plus a `<form action>`, which its submit button follows.
+ */
+const getLinkTarget = (element: Element, attribute: Attr): string | undefined => {
+  const isLink =
+    attribute.localName.toLowerCase() === "href" ||
+    (element.localName.toLowerCase() === "form" && attribute.localName.toLowerCase() === "action");
+  return isLink ? attribute.value.trim() || undefined : undefined;
+};
 
 const collectLinks = (field: TI18nString | undefined, links: Set<string>): void => {
   for (const html of Object.values(field ?? {})) {
@@ -20,9 +32,11 @@ const collectLinks = (field: TI18nString | undefined, links: Set<string>): void 
     // Parsed rather than matched: the survey renders this text through DOMPurify, and an HTML parser
     // reads `<a/href=…>` or a `>` inside a quoted attribute as a link where a regex would not.
     const fragment = DOMPurify.sanitize(html, { RETURN_DOM_FRAGMENT: true });
-    for (const anchor of fragment.querySelectorAll("a[href]")) {
-      const href = anchor.getAttribute("href")?.trim();
-      if (href) links.add(href);
+    for (const element of fragment.querySelectorAll("*")) {
+      for (const attribute of element.attributes) {
+        const target = getLinkTarget(element, attribute);
+        if (target) links.add(target);
+      }
     }
   }
 };
