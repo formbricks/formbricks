@@ -127,8 +127,8 @@ Downloads:
 
 ## Security
 
-Each rule closes a vulnerability class that shipped and needed a patch release. Gates shared by every entry
-point are under "API Design", caps on what a caller sends under "Input Limits", and tenant scoping under
+Each rule closes a vulnerability class that shipped and had to be fixed. Gates shared by every entry point
+are under "API Design", caps on what a caller sends under "Input Limits", and tenant scoping under
 "Database & Prisma Performance".
 
 - **State changes need a deliberate request.** A `GET`, or any request a link, a prefetch or a mail scanner
@@ -139,18 +139,21 @@ point are under "API Design", caps on what a caller sends under "Input Limits", 
 - **Every path that creates a session enforces the same second factor.** SSO, account recovery, magic links,
   OAuth callbacks and impersonation require the second factor password sign-in requires, through the same
   check. Class: 2FA bypass through an alternate sign-in path (ENG-7266).
-- **A user-supplied regex runs in a linear-time engine or not at all.** A pattern from a survey, a filter or
-  any request runs in RE2 (`apps/web/modules/api/lib/linear-pattern-matcher.ts` on the server) or is not
-  evaluated. A length cap is not ReDoS protection: a 20-character pattern can backtrack for minutes on a short
-  input and block the event loop for every tenant on the process. Class: ReDoS (ENG-7109).
+- **A user-supplied regex on a shared process runs in a linear-time engine or not at all.** On the server,
+  in workers and in jobs, a pattern from a survey, a filter or any request runs in RE2
+  (`apps/web/modules/api/lib/linear-pattern-matcher.ts`) or is not evaluated. A length cap is not ReDoS
+  protection: a 20-character pattern can backtrack for minutes on a short input and block the event loop for
+  every tenant on the process. Code that runs only in the end user's own tab may use native `RegExp`, as
+  `matchPatternWithRegExp` in `packages/surveys/src/lib/validation/validators.ts` does. Class: ReDoS
+  (ENG-7109).
 - **Caller data a library stores for us is bounded in our code.** OAuth state and authorization codes,
   rate-limit keys and verification records that a library writes to Redis or Postgres from request input
-  have a size, count and lifetime cap enforced by our code before the library call, as any other input under
-  "Input Limits". A library stores what it is given. Class: storage amplification from anonymous or
-  low-privilege requests (ENG-6885, ENG-7396, ENG-7399).
-- **A security setting passed to a dependency is proven once at runtime.** A TLS mode, a cookie flag or a
-  connection-string option is shown to take effect against the real dependency (a refused plaintext
-  connection, the flag in the `Set-Cookie` header), and the PR's Coverage table records that check.
+  have a size, count and lifetime cap set in our code (checked before the call, or a TTL we pass and verify),
+  as for any other input under "Input Limits". A library stores what it is given. Class: storage
+  amplification from anonymous or low-privilege requests (ENG-6885, ENG-7396, ENG-7399).
+- **A security setting passed to a dependency is proven once at runtime.** A TLS mode, a cookie flag, a CSP
+  or an auth option is shown to take effect against the real dependency (a refused plaintext connection, the
+  flag in the `Set-Cookie` header), and the PR's Coverage table records that check.
   Libraries silently ignore values they don't recognise, so a config that reads right proves nothing. Class:
   silently dropped security settings (ENG-7337).
 
@@ -231,8 +234,8 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
 - `ON DELETE CASCADE` reaches only Postgres. Deleting a survey, response, workspace, organization or account
   also deletes its storage objects (under the `workspaceId` prefix and the legacy `environmentId` one), its
   Hub records and its pending invites, and its test asserts those deletes.
-- A query on a model with `isActive` or `deletedAt` filters on it, unless it is meant to read inactive or
-  deleted rows.
+- A query on a model with an `isActive` or `deletedAt` column filters on that column, unless it is meant to
+  read inactive or deleted rows.
 - `prisma.response.count()` takes a `where` only, never `skip` or `offset`.
 - Separate count and data queries and run in parallel (`Promise.all`).
 - Prefer cursor pagination for large datasets.
