@@ -231,6 +231,7 @@ describe.runIf(canRun)("Prisma CLI TLS verification", () => {
         ["", { PGSSLMODE: "require" }],
         ["sslmode=prefer", {}],
         ["sslaccept=strict", { PGSSLMODE: "disable" }],
+        [`sslrootcert=${caFile}`, {}],
       ];
       for (const [query, env] of cases) {
         const cli = await preparePrismaCliEnvironment(declinerUrl(query), env);
@@ -243,6 +244,45 @@ describe.runIf(canRun)("Prisma CLI TLS verification", () => {
       expect(decliner.plaintextStartups()).toBe(before);
     } finally {
       await decliner.close();
+    }
+  }, 180_000);
+
+  test("Prisma trusts sslcert as a root; the translated URL never lets it widen the pinned CA", async () => {
+    // The server is signed by caFile. Raw, Prisma's strict mode accepts it through sslcert alone.
+    const raw = await migrate({
+      ...process.env,
+      DATABASE_URL: url(`sslmode=require&sslaccept=strict&sslcert=${caFile}`),
+    });
+    // If this starts failing, Prisma no longer reads sslcert as a root: revisit prisma-cli-tls.
+    expect(raw.completed).toBeGreaterThan(0);
+
+    for (const query of [
+      `sslmode=verify-full&sslrootcert=${otherCaFile}&sslcert=${caFile}`,
+      `sslaccept=strict&sslrootcert=${otherCaFile}&sslcert=${caFile}`,
+    ]) {
+      const cli = await preparePrismaCliEnvironment(url(query), {});
+      try {
+        const result = await migrate({ ...process.env, ...cli.env });
+        expect(result.attempted).toBeGreaterThan(0);
+        expect(result.completed).toBe(0);
+      } finally {
+        await cli.cleanup();
+      }
+    }
+  }, 180_000);
+
+  test("sslrootcert alone verifies against that CA", async () => {
+    for (const [ca, accepted] of [
+      [otherCaFile, false],
+      [caFile, true],
+    ] as const) {
+      const cli = await preparePrismaCliEnvironment(url(`sslrootcert=${ca}`), {});
+      try {
+        const result = await migrate({ ...process.env, ...cli.env });
+        expect(result.completed > 0).toBe(accepted);
+      } finally {
+        await cli.cleanup();
+      }
     }
   }, 180_000);
 

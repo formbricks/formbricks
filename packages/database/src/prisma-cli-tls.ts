@@ -30,6 +30,7 @@ import { joinConnectionUrl, lastParam, splitConnectionUrl } from "./connection-u
 const REQUIRE = "require";
 const VERIFY_CA = "verify-ca";
 const VERIFY_FULL = "verify-full";
+const NO_VERIFY = "no-verify";
 const SSL_MODES = new Set([
   "disable",
   "allow",
@@ -38,7 +39,7 @@ const SSL_MODES = new Set([
   VERIFY_CA,
   VERIFY_FULL,
   // node-postgres' own alias for an unverified connection, which the app's runtime connections accept.
-  "no-verify",
+  NO_VERIFY,
 ]);
 const SYSTEM_ROOT_CERT = "system";
 const ACCEPT_INVALID_CERTS = "accept_invalid_certs";
@@ -104,11 +105,12 @@ const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRe
  */
 const toPrismaSslMode = (sslMode: string): string => (sslMode === "disable" ? "disable" : REQUIRE);
 
+// A root certificate asks for verification under every mode that uses TLS and checks certificates: node-postgres
+// 8, the app's driver, verifies against it for allow, prefer and require too (libpq does for require).
 const requestsVerification = ({ sslMode, sslRootCert }: TTlsRequest): boolean =>
   sslMode === VERIFY_CA ||
   sslMode === VERIFY_FULL ||
-  sslRootCert === SYSTEM_ROOT_CERT ||
-  (sslMode === REQUIRE && sslRootCert !== undefined);
+  (sslRootCert !== undefined && sslMode !== "disable" && sslMode !== NO_VERIFY);
 
 const resolveRootCertFile = (
   sslRootCert: string | undefined,
@@ -165,6 +167,10 @@ export const resolvePrismaCliTls = (
   }
 
   const rootCertFile = resolveRootCertFile(request.sslRootCert, fileExists);
+  // Prisma adds sslcert as a trusted root, but in a libpq URL it is the client certificate. Drop it so trust
+  // stays with the pinned CA or the OS store, unless the operator speaks Prisma's dialect (an explicit sslaccept
+  // and no sslrootcert), where sslcert is the CA they chose.
+  if (sslAccept === null || rootCertFile !== undefined) parts.params.delete("sslcert");
   // An explicit sslaccept other than accept_invalid_certs is strict to Prisma too, so keep the operator's.
   if (sslAccept === null) parts.params.set("sslaccept", "strict");
 

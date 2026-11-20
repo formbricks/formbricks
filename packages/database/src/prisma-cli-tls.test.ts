@@ -34,6 +34,50 @@ describe("resolvePrismaCliTls", () => {
     });
   });
 
+  test.each(["", "sslmode=prefer&", "sslmode=allow&"])(
+    "treats a root certificate as verifying with %s, as the app's pg does",
+    (prefix) => {
+      expect(resolve(`${base}?${prefix}sslrootcert=${caFile}`)).toEqual({
+        databaseUrl: strictUrl(),
+        verifiesServerCertificate: true,
+        rootCertFile: caFile,
+      });
+    }
+  );
+
+  test("does not verify a root certificate under sslmode=disable or no-verify", () => {
+    const disabled = `${base}?sslmode=disable&sslrootcert=${caFile}`;
+    expect(resolve(disabled)).toEqual({ databaseUrl: disabled, verifiesServerCertificate: false });
+    expect(resolve(`${base}?sslmode=no-verify&sslrootcert=${caFile}`)).toEqual({
+      databaseUrl: `${base}?sslmode=require&sslrootcert=${encodeURIComponent(caFile)}`,
+      verifiesServerCertificate: false,
+    });
+  });
+
+  test("pins the root certificate when an explicit sslaccept=strict asks for verification", () => {
+    expect(resolve(`${base}?sslaccept=strict&sslrootcert=${caFile}`)).toEqual({
+      databaseUrl: `${base}?sslaccept=strict&sslmode=require`,
+      verifiesServerCertificate: true,
+      rootCertFile: caFile,
+    });
+  });
+
+  test.each([
+    [
+      "a libpq client certificate next to a pinned CA",
+      `sslmode=verify-full&sslrootcert=${caFile}&sslcert=/c.pem`,
+    ],
+    ["a libpq client certificate with the OS store", "sslmode=verify-full&sslcert=/c.pem"],
+    ["Prisma's CA next to a pinned CA", `sslaccept=strict&sslrootcert=${caFile}&sslcert=/c.pem`],
+  ])("drops sslcert, which Prisma would trust as a root, for %s", (_name, query) => {
+    expect(new URL(resolve(`${base}?${query}`).databaseUrl).searchParams.has("sslcert")).toBe(false);
+  });
+
+  test("keeps sslcert as the CA when the URL speaks Prisma's dialect without sslrootcert", () => {
+    const url = `${base}?sslmode=verify-full&sslaccept=strict&sslcert=%2Fca.pem`;
+    expect(resolve(url).databaseUrl).toBe(`${base}?sslmode=require&sslaccept=strict&sslcert=%2Fca.pem`);
+  });
+
   test("treats require with a root certificate as verifying, as libpq does", () => {
     expect(resolve(`${base}?sslmode=require&sslrootcert=${caFile}`)).toMatchObject({
       databaseUrl: strictUrl(),
