@@ -6,6 +6,7 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
   DatabaseError,
+  InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
   ValidationError,
@@ -35,6 +36,7 @@ import {
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
+import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
@@ -247,6 +249,93 @@ export const getExistingWorkspaceSurveyIds = reactCache(
   }
 );
 
+/**
+ * ENG-6956: a survey's private targeting segment is stored under the survey's id as its title, and the
+ * survey save finds (or connects to) it by that title. A segment a caller titles freely must therefore
+ * never take a survey's id, or it would be picked up as that survey's targeting.
+ */
+const assertTitleIsNotSurveyId = async (workspaceId: string, title: string): Promise<void> => {
+  const survey = await prisma.survey.findFirst({ where: { id: title, workspaceId }, select: { id: true } });
+  if (survey) {
+    throw new InvalidInputError("A segment cannot be titled with the id of a survey");
+  }
+};
+
+const isRename = (data: TSegmentUpdateInput, current: TSegment): boolean =>
+  data.title !== undefined && data.title !== current.title;
+
+/**
+ * A segment that stays private keeps its survey's id as title: the survey save finds it by that title, so
+ * a renamed one would be left behind and a new one created (ENG-6956). Turning it shared may rename it.
+ */
+const assertPrivateSegmentKeepsTitle = (data: TSegmentUpdateInput, current: TSegment): void => {
+  const staysPrivate = current.isPrivate && data.isPrivate !== false;
+  if (staysPrivate && isRename(data, current)) {
+    throw new InvalidInputError("A private segment keeps the id of its survey as title");
+  }
+};
+
+/**
+ * A rename, or a private segment turned shared while it keeps its survey's id as title, stores a title
+ * the caller chose for a segment the survey save may later pick up by that title (ENG-6956).
+ */
+const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSegment): boolean => {
+  const becomesShared = current.isPrivate && data.isPrivate === false;
+  return isRename(data, current) || becomesShared;
+};
+
+/**
+ * Titles are unique per workspace, so a create or rename onto a title another segment holds (a survey's
+ * private segment included) is the caller's input error, not a database fault.
+ */
+const throwSegmentTitleTaken = (error: unknown): void => {
+  if (isUniqueConstraintError(error)) {
+    throw new InvalidInputError("A segment with this title already exists");
+  }
+};
+
+/**
+ * A survey's private targeting segment: created on its first save, updated on later ones (auto-save may
+ * already have made it). ENG-6956: keyed by the survey's id, chosen here (see ZSegmentCreateInput); the
+ * caller authorizes `survey.write` on `surveyId`. The update reaches only a private segment no other
+ * survey uses. Prisma runs this upsert as a read then a write, so two first saves can race; the one that
+ * loses finds the row on its second try. A second clash means another segment holds the title.
+ */
+const upsertPrivateSegment = async ({
+  workspaceId,
+  surveyId,
+  description,
+  filters,
+}: Pick<TSegmentCreateInput, "workspaceId" | "surveyId" | "description" | "filters">) => {
+  const upsert = () =>
+    prisma.segment.upsert({
+      // A shared segment holding the title, or a private one other surveys also use (only possible
+      // through older bugs), is not this survey's to rewrite: the create clashes and the save is refused.
+      where: {
+        workspaceId_title: { workspaceId, title: surveyId },
+        isPrivate: true,
+        surveys: { every: { id: surveyId } },
+      },
+      create: {
+        workspaceId,
+        title: surveyId,
+        description,
+        isPrivate: true,
+        filters,
+        surveys: { connect: { id: surveyId } },
+      },
+      update: { description, filters, surveys: { connect: { id: surveyId } } },
+      select: selectSegment,
+    });
+
+  try {
+    return await upsert();
+  } catch (error) {
+    if (!isUniqueConstraintError(error)) throw error;
+    return await upsert();
+  }
+};
+
 export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Promise<TSegment> => {
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 
@@ -255,35 +344,11 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
   const surveyConnect = surveyId ? { surveys: { connect: { id: surveyId } } } : {};
 
   try {
-    // Private segments use upsert because auto-save may have already created a
-    // default (empty-filter) segment via connectOrCreate before the user publishes.
-    // Without upsert the second create hits the (workspaceId, title) unique constraint.
     if (isPrivate) {
-      const segment = await prisma.segment.upsert({
-        where: {
-          workspaceId_title: {
-            workspaceId,
-            title,
-          },
-        },
-        create: {
-          workspaceId,
-          title,
-          description,
-          isPrivate,
-          filters,
-          ...surveyConnect,
-        },
-        update: {
-          description,
-          filters,
-          ...surveyConnect,
-        },
-        select: selectSegment,
-      });
-
-      return transformPrismaSegment(segment);
+      return transformPrismaSegment(await upsertPrivateSegment(segmentCreateInput));
     }
+
+    await assertTitleIsNotSurveyId(workspaceId, title);
 
     const segment = await prisma.segment.create({
       data: {
@@ -299,6 +364,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 
     return transformPrismaSegment(segment);
   } catch (error) {
+    throwSegmentTitleTaken(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -529,6 +595,11 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
+    assertPrivateSegmentKeepsTitle(data, currentSegment);
+    if (needsSurveyIdTitleCheck(data, currentSegment)) {
+      await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title ?? currentSegment.title);
+    }
+
     const segment = await prisma.segment.update({
       where: {
         id: segmentId,
@@ -539,6 +610,7 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
 
     return transformPrismaSegment(segment);
   } catch (error) {
+    throwSegmentTitleTaken(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
