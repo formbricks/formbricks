@@ -157,18 +157,22 @@ export const sendVerificationEmail = async ({
   locale,
   callbackUrl,
   purpose = "email_verification",
+  ssoRecoveryStateId,
 }: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
   callbackUrl?: string;
   purpose?: TVerificationRequestPurpose;
+  /** The SSO recovery the link is for, signed into its token so it cannot be pointed at another (ENG-7310). */
+  ssoRecoveryStateId?: string;
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
       expiresIn: "1d",
       purpose,
+      ...(ssoRecoveryStateId ? { ssoRecoveryStateId } : {}),
     });
     const { verifyLink, verificationRequestLink } = buildVerificationLinks({
       token,

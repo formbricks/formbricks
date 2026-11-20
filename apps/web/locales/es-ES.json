@@ -71,6 +71,8 @@
       "oauth_generic_error_title": "Error al iniciar sesión",
       "oauth_misconfigured_description": "Tu proveedor de identidad te autenticó correctamente, pero a esta instancia de Formbricks le falta parte de su configuración de inicio de sesión único. Reintentar no ayudará; por favor, contacta con un administrador.",
       "oauth_misconfigured_title": "El inicio de sesión único no está completamente configurado",
+      "oauth_recovery_link_not_opened_description": "Abre el enlace del correo que te enviamos solo si has vinculado tú mismo el inicio de sesión único a tu cuenta de Formbricks. Si no lo has hecho, ignora ese correo: abrirlo podría dar acceso a tu cuenta a otra persona. Si lo has hecho, abre el enlace en este navegador para terminar.",
+      "oauth_recovery_link_not_opened_title": "No se puede completar este inicio de sesión en este navegador",
       "oauth_second_factor_unavailable_description": "Tu dirección de correo electrónico está verificada, pero esta cuenta tiene activada la autenticación en dos pasos y esta instancia de Formbricks tiene desactivado el inicio de sesión con correo electrónico y contraseña, por lo que no es posible introducir aquí el segundo factor. Para terminar, inicia sesión con un proveedor de inicio de sesión único que ya esté vinculado a esta cuenta o ponte en contacto con un administrador.",
       "oauth_second_factor_unavailable_title": "No se puede completar aquí el inicio de sesión en dos pasos",
       "oauth_signup_not_allowed_description": "Tu proveedor de identidad te autenticó correctamente, pero esta instancia de Formbricks no está configurada para crear nuevas cuentas de esta manera. Pide a un administrador que te invite y luego inténtalo de nuevo.",
@@ -139,6 +141,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "Usuario creado con éxito",
       "user_successfully_created_info": "Hemos comprobado si existe una cuenta asociada con {email}. Si no existía ninguna, hemos creado una para ti. Si ya existía una cuenta, no se realizaron cambios. Por favor, inicia sesión a continuación para continuar."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Cancelar",
+      "confirm": "Vincular {provider}",
+      "description": "Después de esto, podrás iniciar sesión en la cuenta de Formbricks {email} con {provider}.",
+      "title": "¿Quieres vincular {provider} a tu cuenta?",
+      "warning": "Continúa solo si has sido tú quien ha solicitado iniciar sesión en Formbricks con {provider}. Si no es así, cancela: es posible que otra persona esté intentando acceder a tu cuenta."
     },
     "verification-requested": {
       "email_not_configured_description": "Esta instancia de Formbricks no tiene un servidor de correo configurado, por lo que no se pudo enviar ningún enlace de verificación. Ponte en contacto con tu administrador.",
