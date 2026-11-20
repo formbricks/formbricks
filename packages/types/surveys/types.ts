@@ -83,6 +83,7 @@ import {
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "./validation";
+import { type TSurveyValidationIssueCode, issueParams } from "./validation-issue-codes";
 
 const ZSurveyEndingBase = z.object({
   id: z.cuid2(),
@@ -1224,14 +1225,25 @@ const urlFieldIssue = (
   schema: z.ZodType,
   label: string,
   emptyMessage: string,
-  path: (string | number)[]
+  path: (string | number)[],
+  issueCodes: { empty: TSurveyValidationIssueCode; invalid: TSurveyValidationIssueCode }
 ): TRefinementIssue | null => {
   if (!url || url.trim() === "") {
-    return { code: "custom", message: `${label}: ${emptyMessage}`, path };
+    return {
+      code: "custom",
+      message: `${label}: ${emptyMessage}`,
+      path,
+      params: issueParams(issueCodes.empty),
+    };
   }
   const parsedUrl = schema.safeParse(url);
   if (parsedUrl.success) return null;
-  return { code: "custom", message: `${label}: ${parsedUrl.error.issues[0].message}`, path };
+  return {
+    code: "custom",
+    message: `${label}: ${parsedUrl.error.issues[0].message}`,
+    path,
+    params: issueParams(issueCodes.invalid),
+  };
 };
 
 // --- Embedded Data, model and codes ---
@@ -1471,7 +1483,8 @@ const validateCtaElement = (
       getZSafeUrl,
       `Element ${String(loc.elementIndex + 1)} in block ${String(loc.blockIndex + 1)}`,
       "Button URL is required when external button is enabled",
-      elementPath(loc, "buttonUrl")
+      elementPath(loc, "buttonUrl"),
+      { empty: "button_url_required", invalid: "button_url_invalid" }
     )
   );
 };
@@ -1533,6 +1546,7 @@ const validateElementSubfields = (
       code: "custom",
       message: `At least one field must be shown in the ${elementName} question ${String(loc.elementIndex + 1)} in block ${String(loc.blockIndex + 1)}`,
       path: elementPath(loc),
+      params: issueParams("subfields_all_hidden"),
     });
   }
   fields.forEach((field) => {
@@ -1576,6 +1590,7 @@ const validateElementByType = (element: TSurveyElement, loc: TElementLocation): 
           code: "custom",
           message: `${where} must have atleast one allowed file extension`,
           path: elementPath(loc, "allowedFileExtensions"),
+          params: issueParams("file_upload_no_extensions"),
         });
       }
       break;
@@ -1585,6 +1600,7 @@ const validateElementByType = (element: TSurveyElement, loc: TElementLocation): 
           code: "custom",
           message: `${where} must have a valid host name`,
           path: elementPath(loc, "calHost"),
+          params: issueParams("cal_host_invalid"),
         });
       }
       break;
@@ -1688,6 +1704,7 @@ const validateBlocks = (survey: TSurveyInput, ctx: z.RefinementCtx): void => {
         code: "custom",
         message: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
         path: ["blocks", blockIndex, "logic"],
+        params: issueParams("cyclic_logic"),
       });
     }
   });
@@ -1713,6 +1730,7 @@ const validateEndScreenButton = (
       code: "custom",
       message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
       path: ["endings", index, "buttonLabel"],
+      params: issueParams("ending_button_label_required"),
     });
   }
 
@@ -1723,7 +1741,8 @@ const validateEndScreenButton = (
       ZEndingCardButtonLink,
       `Ending card ${String(index + 1)}`,
       "Button link cannot be empty",
-      ["endings", index, "buttonLink"]
+      ["endings", index, "buttonLink"],
+      { empty: "ending_button_link_required", invalid: "ending_button_link_invalid" }
     )
   );
 };
@@ -1767,6 +1786,7 @@ const validateRedirectEnding = (
       code: "custom",
       message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
       path: ["endings", index, "label"],
+      params: issueParams("redirect_label_required"),
     });
   }
 
@@ -1778,7 +1798,8 @@ const validateRedirectEnding = (
       ZEndingCardUrl,
       `Ending card ${String(index + 1)}`,
       "Redirect URL cannot be empty",
-      ["endings", index, "url"]
+      ["endings", index, "url"],
+      { empty: "redirect_url_required", invalid: "redirect_url_invalid" }
     )
   );
 };
@@ -1834,6 +1855,7 @@ const validateFollowUps = (survey: TSurveyInput, ctx: z.RefinementCtx): void => 
           code: "custom",
           message: `The action in follow up ${String(index + 1)} has an invalid email field`,
           path: ["followUps"],
+          params: issueParams("follow_up_invalid_recipient", { followUpNumber: index + 1 }),
         });
       }
 
@@ -1843,6 +1865,7 @@ const validateFollowUps = (survey: TSurveyInput, ctx: z.RefinementCtx): void => 
           code: "custom",
           message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
           path: ["followUps"],
+          params: issueParams("follow_up_no_ending", { followUpNumber: index + 1 }),
         });
       }
     });
@@ -3401,8 +3424,11 @@ interface TConditionCheck {
   survey: TSurvey;
   allElements: TElementPositions;
   scope: TConditionScope;
-  /** Adds an issue at the group's path; `message` follows the "Conditional Logic: " prefix. */
-  report: (message: string) => void;
+  /**
+   * Adds an issue at the group's path; `message` follows the "Conditional Logic: " prefix. `code` and
+   * `values` let the editor translate it (see `validation-issue-codes`).
+   */
+  report: (message: string, code: TSurveyValidationIssueCode, values?: Record<string, unknown>) => void;
 }
 
 type TStaticRightOperand = Extract<NonNullable<TSingleCondition["rightOperand"]>, { type: "static" }>;
@@ -3436,9 +3462,13 @@ const checkVariableOperand = (
 ): void => {
   const variable = findLogicComputedField(check.survey, variableId);
   if (!variable) {
-    check.report(`Variable ID ${variableId} does not exist in ${check.scope.where}`);
+    check.report(`Variable ID ${variableId} does not exist in ${check.scope.where}`, "field_not_found", {
+      id: variableId,
+    });
   } else if (expectedType && variable.type !== expectedType) {
-    check.report(`Variable type should be ${expectedType} in ${check.scope.where}`);
+    check.report(`Variable type should be ${expectedType} in ${check.scope.where}`, "field_type_mismatch", {
+      expectedType,
+    });
   }
 };
 
@@ -3450,9 +3480,15 @@ const checkElementOperand = (
 ): void => {
   const elem = check.allElements.get(elementId);
   if (!elem) {
-    check.report(`Element ID ${elementId} does not exist in ${check.scope.where}`);
+    check.report(`Element ID ${elementId} does not exist in ${check.scope.where}`, "question_not_found", {
+      id: elementId,
+    });
   } else if (!validTypes.includes(elem.data.type)) {
-    check.report(`Invalid element type "${elem.data.type}" for right operand in ${check.scope.where}`);
+    check.report(
+      `Invalid element type "${elem.data.type}" for right operand in ${check.scope.where}`,
+      "right_operand_question_type_invalid",
+      { questionType: elem.data.type }
+    );
   }
 };
 
@@ -3488,12 +3524,14 @@ const validateOpenTextElementCondition = (
       break;
     case "hiddenField":
       if (!check.survey.hiddenFields.fieldIds?.find((id) => id === rightOperand.value)) {
-        check.report(`Hidden field ID ${rightOperand.value} does not exist in ${where}`);
+        check.report(`Hidden field ID ${rightOperand.value} does not exist in ${where}`, "field_not_found", {
+          id: rightOperand.value,
+        });
       }
       break;
     case "static":
       if (rightOperand.value === "") {
-        check.report(`Static value is required in ${where}`);
+        check.report(`Static value is required in ${where}`, "static_value_required");
       }
       break;
     default:
@@ -3521,11 +3559,16 @@ const validateChoiceElementOperand = (
   const { where } = check.scope;
   if (operator === "equals" || operator === "doesNotEqual") {
     if (typeof rightOperand.value !== "string") {
-      check.report(`Right operand should be a string for "${operator}" in ${where}`);
+      check.report(
+        `Right operand should be a string for "${operator}" in ${where}`,
+        "right_operand_must_be_text",
+        { operator }
+      );
     } else if (!element.choices.find((c) => c.id === rightOperand.value)) {
       // Validate that the choice ID exists in the element's choices
       check.report(
-        `Choice "${rightOperand.value}" does not exist in element ${String(elementPosition.element + 1)} of block ${String(elementPosition.block + 1)}`
+        `Choice "${rightOperand.value}" does not exist in element ${String(elementPosition.element + 1)} of block ${String(elementPosition.block + 1)}`,
+        "choice_not_found"
       );
     }
     return;
@@ -3534,20 +3577,31 @@ const validateChoiceElementOperand = (
   if (!allowArrays || !ELEMENT_ARRAY_CHOICE_OPERATORS.includes(operator)) return;
 
   if (!Array.isArray(rightOperand.value)) {
-    check.report(`Right operand should be an array for "${operator}" in ${where}`);
+    check.report(
+      `Right operand should be an array for "${operator}" in ${where}`,
+      "right_operand_must_be_list",
+      { operator }
+    );
     return;
   }
 
   rightOperand.value.forEach((value) => {
     if (typeof value !== "string") {
-      check.report(`Each value in the right operand should be a string for "${operator}" in ${where}`);
+      check.report(
+        `Each value in the right operand should be a string for "${operator}" in ${where}`,
+        "right_operand_must_be_list",
+        { operator }
+      );
     }
   });
 
   // Validate that all choice IDs exist in the element's choices
   const choiceIds = element.choices.map((c) => c.id);
   if (rightOperand.value.some((value) => !choiceIds.includes(value))) {
-    check.report(`One or more choices selected in right operand do not exist in the element in ${where}`);
+    check.report(
+      `One or more choices selected in right operand do not exist in the element in ${where}`,
+      "selected_choices_not_found"
+    );
   }
 };
 
@@ -3563,19 +3617,32 @@ const validateRatingElementCondition = (
     return;
   }
   if (rightOperand?.type !== "static") {
-    check.report(`Right operand should be a variable or a static value for "${operator}" in ${where}`);
+    check.report(
+      `Right operand should be a variable or a static value for "${operator}" in ${where}`,
+      "right_operand_must_be_static_or_field",
+      { operator }
+    );
     return;
   }
 
   if (typeof rightOperand.value !== "number") {
-    check.report(`Right operand should be a number for "${operator}" in ${where}`);
+    check.report(
+      `Right operand should be a number for "${operator}" in ${where}`,
+      "right_operand_must_be_number",
+      { operator }
+    );
   } else if (element.type === TSurveyElementTypeEnum.NPS) {
     if (rightOperand.value < 0 || rightOperand.value > 10) {
-      check.report(`NPS score should be between 0 and 10 for "${operator}" in ${where}`);
+      check.report(
+        `NPS score should be between 0 and 10 for "${operator}" in ${where}`,
+        "nps_value_out_of_range"
+      );
     }
   } else if (rightOperand.value < 1 || rightOperand.value > element.range) {
     check.report(
-      `Rating value should be between 1 and ${String(element.range)} for "${operator}" in ${where}`
+      `Rating value should be between 1 and ${String(element.range)} for "${operator}" in ${where}`,
+      "rating_value_out_of_range",
+      { max: element.range }
     );
   }
 };
@@ -3595,16 +3662,18 @@ const validateDateElementCondition = (condition: TSingleCondition, check: TCondi
       break;
     case "hiddenField":
       if (!check.survey.hiddenFields.fieldIds?.includes(rightOperand.value)) {
-        check.report(`Hidden field ID ${rightOperand.value} does not exist in ${where}`);
+        check.report(`Hidden field ID ${rightOperand.value} does not exist in ${where}`, "field_not_found", {
+          id: rightOperand.value,
+        });
       }
       break;
     case "static": {
       const date = rightOperand.value as string;
 
       if (!date) {
-        check.report(`Please select a date value in ${where}`);
+        check.report(`Please select a date value in ${where}`, "date_value_required");
       } else if (isNaN(new Date(date).getTime())) {
-        check.report(`Invalid date format for right operand in ${where}`);
+        check.report(`Invalid date format for right operand in ${where}`, "date_value_invalid");
       }
       break;
     }
@@ -3624,26 +3693,40 @@ const validateMatrixElementCondition = (
   // ENG-6934: the id form alone is a row condition too; the write path fills the position.
   if (!isMatrixRowCondition(meta)) {
     if (rightOperand?.value !== undefined) {
-      check.report(`Right operand is not allowed in matrix element in ${where}`);
+      check.report(
+        `Right operand is not allowed in matrix element in ${where}`,
+        "right_operand_not_allowed",
+        { operator }
+      );
     }
     if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
-      check.report(`Operator "${operator}" is not allowed in matrix element in ${where}`);
+      check.report(
+        `Operator "${operator}" is not allowed in matrix element in ${where}`,
+        "matrix_operator_not_allowed",
+        { operator }
+      );
     }
     return;
   }
 
   if (rightOperand === undefined) {
-    check.report(`Right operand is required in matrix element in ${where}`);
+    check.report(`Right operand is required in matrix element in ${where}`, "right_operand_required", {
+      operator,
+    });
     return;
   }
   if (rightOperand.type !== "static") {
-    check.report(`Right operand should be a static value in matrix element in ${where}`);
+    check.report(
+      `Right operand should be a static value in matrix element in ${where}`,
+      "right_operand_must_be_static",
+      { operator }
+    );
   }
   // With a row id, the id decides the row (and is checked on its own); the position is
   // only the previous release's reading, rewritten from the id on every write.
   const rowIndex = Number(meta?.row);
   if (meta?.rowId === undefined && (rowIndex < 0 || rowIndex >= element.rows.length)) {
-    check.report(`Invalid row index in matrix element in ${where}`);
+    check.report(`Invalid row index in matrix element in ${where}`, "matrix_row_invalid");
   }
 };
 
@@ -3673,7 +3756,11 @@ const validateElementRightOperand = (
           check
         );
       } else {
-        check.report(`Right operand should be a static value for "${operator}" in ${check.scope.where}`);
+        check.report(
+          `Right operand should be a static value for "${operator}" in ${check.scope.where}`,
+          "right_operand_must_be_static",
+          { operator }
+        );
       }
       break;
     case TSurveyElementTypeEnum.NPS:
@@ -3702,12 +3789,16 @@ const validateElementCondition = (
   const elementInfo = check.allElements.get(elementId);
 
   if (!elementInfo) {
-    check.report(`Element Id ${elementId} does not exist in ${scope.where}`);
+    check.report(`Element Id ${elementId} does not exist in ${scope.where}`, "question_not_found", {
+      id: elementId,
+    });
     return;
   }
   if (scope.checkLaterBlock && blockIndex < elementInfo.block) {
     check.report(
-      `Block ${String(blockIndex + 1)} cannot refer to an element in block ${String(elementInfo.block + 1)} that appears later in the survey`
+      `Block ${String(blockIndex + 1)} cannot refer to an element in block ${String(elementInfo.block + 1)} that appears later in the survey`,
+      "question_in_later_block",
+      { blockNumber: elementInfo.block + 1 }
     );
     return;
   }
@@ -3716,13 +3807,18 @@ const validateElementCondition = (
 
   // Validate operator based on element type
   if (isInvalidOperatorsForElementType(element, operator)) {
-    check.report(`Invalid operator "${operator}" for element type "${element.type}" in ${scope.where}`);
+    check.report(
+      `Invalid operator "${operator}" for element type "${element.type}" in ${scope.where}`,
+      "operator_invalid_for_question_type",
+      { operator, questionType: element.type }
+    );
   }
 
   // Validate CTA elements: CTAs without external buttons cannot be used in logic
   if (element.type === TSurveyElementTypeEnum.CTA && !element.buttonExternal) {
     check.report(
-      `CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in ${scope.where}`
+      `CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in ${scope.where}`,
+      "cta_without_external_button"
     );
     return;
   }
@@ -3730,7 +3826,11 @@ const validateElementCondition = (
   // Validate right operand
   if (ELEMENT_OPERATORS_WITHOUT_RIGHT_OPERAND.includes(operator)) {
     if (rightOperand !== undefined) {
-      check.report(`Right operand should not be defined for operator "${operator}" in ${scope.where}`);
+      check.report(
+        `Right operand should not be defined for operator "${operator}" in ${scope.where}`,
+        "right_operand_not_allowed",
+        { operator }
+      );
     }
     return;
   }
@@ -3744,14 +3844,20 @@ const validateVariableCondition = (
   check: TConditionCheck
 ): void => {
   if (!findLogicComputedField(check.survey, variableId)) {
-    check.report(`Variable ID ${variableId} does not exist in ${check.scope.where}`);
+    check.report(`Variable ID ${variableId} does not exist in ${check.scope.where}`, "field_not_found", {
+      id: variableId,
+    });
     return;
   }
 
   if (condition.rightOperand?.type === "variable") {
     const rightVariableId = condition.rightOperand.value;
     if (!findLogicComputedField(check.survey, rightVariableId)) {
-      check.report(`Variable ID ${rightVariableId} does not exist in ${check.scope.where}`);
+      check.report(
+        `Variable ID ${rightVariableId} does not exist in ${check.scope.where}`,
+        "field_not_found",
+        { id: rightVariableId }
+      );
     }
   }
 };
@@ -3772,8 +3878,13 @@ const validateConditionGroupOperands = (
     survey,
     allElements,
     scope,
-    report: (message) => {
-      issues.push({ code: "custom", message: `Conditional Logic: ${message}`, path: scope.path });
+    report: (message, code, values) => {
+      issues.push({
+        code: "custom",
+        message: `Conditional Logic: ${message}`,
+        path: scope.path,
+        params: issueParams(code, values),
+      });
     },
   };
 
@@ -3818,6 +3929,7 @@ const validateConditionGroupOperands = (
           code: "custom",
           message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in ${scope.where}`,
           path: scope.path,
+          params: issueParams("field_not_found", { id: fieldId }),
         });
       }
     } else {
@@ -3849,7 +3961,14 @@ const validateConditionGroupOperands = (
     return element?.type === TSurveyElementTypeEnum.Matrix ? element : undefined;
   };
   for (const issue of findUnknownMatrixIds(conditions, findMatrix, scope.path)) {
-    issues.push({ code: "custom", message: `${issue.message} in ${scope.where}`, path: issue.path });
+    issues.push({
+      code: "custom",
+      message: `${issue.message} in ${scope.where}`,
+      path: issue.path,
+      params: issueParams(issue.path.includes("rowId") ? "matrix_row_not_found" : "matrix_column_not_found", {
+        id: issue.id,
+      }),
+    });
   }
   return issues;
 };
@@ -3907,13 +4026,14 @@ const validateShowIf = (
         const target = allElements.get(operand.value);
         // An element that doesn't exist is reported by the operand checks.
         if (!target || canUse(target)) continue;
+        const usesItself = operand.value === ownerElementId;
         issues.push({
           code: "custom",
-          message:
-            operand.value === ownerElementId
-              ? `Show-if: The show-if of ${owner} cannot use the question itself`
-              : `Show-if: The show-if of ${owner} cannot use question "${operand.value}", which is not above it. A block's show-if can use earlier blocks only; a question's show-if can use earlier blocks and questions above it on the same page`,
+          message: usesItself
+            ? `Show-if: The show-if of ${owner} cannot use the question itself`
+            : `Show-if: The show-if of ${owner} cannot use question "${operand.value}", which is not above it. A block's show-if can use earlier blocks only; a question's show-if can use earlier blocks and questions above it on the same page`,
           path: conditionPath,
+          params: issueParams(usesItself ? "show_if_uses_itself" : "show_if_uses_later_question"),
         });
         // One issue per condition is enough to point at it.
         break;
@@ -4023,6 +4143,7 @@ const validateCalculationElementSource = (
       code: "custom",
       message: `Conditional Logic: Invalid element type for text variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+      params: issueParams("set_value_question_type_invalid"),
     };
   }
 
@@ -4036,6 +4157,7 @@ const validateCalculationElementSource = (
       code: "custom",
       message: `Conditional Logic: Invalid element type for number variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+      params: issueParams("set_value_question_type_invalid"),
     };
   }
   return undefined;
@@ -4059,6 +4181,7 @@ const validateBlockCalculateAction = (
       code: "custom",
       message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+      params: issueParams("set_value_field_not_found", { id: action.variableId }),
     };
   }
 
@@ -4082,6 +4205,7 @@ const validateBlockCalculateAction = (
       code: "custom",
       message: `Conditional Logic: A date field is set with an expression in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value"],
+      params: issueParams("set_value_date_needs_expression"),
     };
   }
 
@@ -4093,6 +4217,7 @@ const validateBlockCalculateAction = (
         code: "custom",
         message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
         path: ["blocks", blockIndex, "logic", logicIndex],
+        params: issueParams("set_value_type_mismatch"),
       };
     }
   }
@@ -4116,6 +4241,7 @@ const validateBlockRequireAnswerAction = (
       code: "custom",
       message: `Conditional Logic: Element ID ${targetElementId} does not exist for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+      params: issueParams("require_answer_question_not_found", { id: targetElementId }),
     };
   }
 
@@ -4125,6 +4251,7 @@ const validateBlockRequireAnswerAction = (
       code: "custom",
       message: `Conditional Logic: Element ${targetElementId} cannot be in the current block for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}. RequireAnswer must target elements in other blocks.`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+      params: issueParams("require_answer_same_block"),
     };
   }
 
@@ -4134,6 +4261,7 @@ const validateBlockRequireAnswerAction = (
       code: "custom",
       message: `Conditional Logic: Element ${targetElementId} is in a previous block (block ${String(targetElementInfo.block + 1)}). RequireAnswer should target elements in future blocks after block ${String(blockIndex + 1)}.`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+      params: issueParams("require_answer_earlier_block"),
     };
   }
 
@@ -4143,6 +4271,7 @@ const validateBlockRequireAnswerAction = (
       code: "custom",
       message: `Conditional Logic: Element ${targetElementId} in block ${String(targetElementInfo.block + 1)} is already required in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+      params: issueParams("require_answer_already_required"),
     };
   }
   return undefined;
@@ -4173,6 +4302,7 @@ const validateBlockJumpAction = (
       code: "custom",
       message: `Conditional Logic: Cannot jump to the current block in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+      params: issueParams("jump_to_own_block"),
     };
   }
   return undefined;
@@ -4209,6 +4339,8 @@ const validateBlockActions = (
       code: "custom",
       message: `Conditional Logic: Multiple jump actions are not allowed in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic"],
+      // The path stops at the rule list, so the rule's number travels with the code.
+      params: issueParams("multiple_jumps", { ruleNumber: logicIndex + 1 }),
     });
   }
 
@@ -4271,6 +4403,7 @@ const validateBlockLogicFallback = (
         code: "custom",
         message: `Conditional Logic: Fallback logic is defined without any logic in block ${String(blockIndex + 1)}`,
         path: ["blocks", blockIndex],
+        params: issueParams("fallback_without_rules"),
       },
     ];
   } else if (block.id === block.logicFallback) {
@@ -4279,6 +4412,7 @@ const validateBlockLogicFallback = (
         code: "custom",
         message: `Conditional Logic: Fallback logic is defined with the same block in block ${String(blockIndex + 1)}`,
         path: ["blocks", blockIndex],
+        params: issueParams("fallback_to_own_block"),
       },
     ];
   }

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "../common";
+import { issueParams } from "./validation-issue-codes";
 
 // Logic operators
 export const ZSurveyLogicConditionsOperator = z.enum([
@@ -186,18 +187,21 @@ export const ZSingleCondition = z
         ctx.addIssue({
           code: "custom",
           message: `Conditional Logic: right operand is required for operator "${val.operator}"`,
+          params: issueParams("right_operand_required", { operator: val.operator }),
           path: ["rightOperand"],
         });
       } else if (val.rightOperand.type === "static" && val.rightOperand.value === "") {
         ctx.addIssue({
           code: "custom",
           message: `Conditional Logic: right operand value cannot be empty for operator "${val.operator}"`,
+          params: issueParams("right_operand_empty", { operator: val.operator }),
         });
       }
     } else if (val.rightOperand !== undefined) {
       ctx.addIssue({
         code: "custom",
         message: `Conditional Logic: right operand should not be present for operator "${val.operator}"`,
+        params: issueParams("right_operand_not_allowed", { operator: val.operator }),
         path: ["rightOperand"],
       });
     }
@@ -226,18 +230,21 @@ export const ZSingleConditionDeprecated = z
         ctx.addIssue({
           code: "custom",
           message: `Conditional Logic: right operand is required for operator "${val.operator}"`,
+          params: issueParams("right_operand_required", { operator: val.operator }),
           path: ["rightOperand"],
         });
       } else if (val.rightOperand.type === "static" && val.rightOperand.value === "") {
         ctx.addIssue({
           code: "custom",
           message: `Conditional Logic: right operand value cannot be empty for operator "${val.operator}"`,
+          params: issueParams("right_operand_empty", { operator: val.operator }),
         });
       }
     } else if (val.rightOperand !== undefined) {
       ctx.addIssue({
         code: "custom",
         message: `Conditional Logic: right operand should not be present for operator "${val.operator}"`,
+        params: issueParams("right_operand_not_allowed", { operator: val.operator }),
         path: ["rightOperand"],
       });
     }

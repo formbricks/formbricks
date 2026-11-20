@@ -41,6 +41,7 @@ import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
+import { describeSurveyValidationIssue } from "@/modules/survey/editor/lib/validation-issue-message";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { ActivateDialog } from "@/modules/survey/visibility/components/activate-dialog";
 import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
@@ -438,6 +439,13 @@ export const SurveyMenuBar = ({
     if (codeMessage) {
       toast.error(codeMessage, { className: "w-fit max-w-md!" });
       setActiveId("elements");
+      return;
+    }
+
+    // The schema's own checks carry a semantic code (ENG-629): say it in the author's language.
+    const codedMessage = describeSurveyValidationIssue(firstError, localSurvey.blocks, t);
+    if (codedMessage) {
+      toast.error(codedMessage, { className: "w-fit max-w-md!" });
       return;
     }
 
