@@ -165,7 +165,7 @@ DATABASE_URL=postgresql://formbricks:<password>@db.example.com:5432/formbricks?s
   `verify-ca`, and no certificate check for `prefer`. Migrations verify either way, so use `sslmode=verify-full`
   to keep both consistent.
 - Migrations use TLS whenever the app's connections do: with any `sslmode` other than `disable`, or with
-  `sslaccept`. They never fall back to an unencrypted connection.
+  `sslaccept` when no `sslmode` is set. They never fall back to an unencrypted connection.
 
 If the migrations stop with Prisma error `P1011` while the app connects fine, the migration tool could not verify
 the server where the app could (a CA added only through `NODE_EXTRA_CA_CERTS`, or an IP host without an IP entry in
