@@ -2,7 +2,15 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { GET, POST } from "@/app/api/auth/[...all]/route";
-import { REDIRECT_URI, consent, createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
+import {
+  ORIGIN,
+  REDIRECT_URI,
+  createUser,
+  grant,
+  handle,
+  registerClient,
+  signIn,
+} from "@/integration/oauth-flow";
 import { createRedisBytesWritten } from "@/integration/redis-bytes-written";
 import { resetDb } from "@/integration/reset-db";
 import { OAUTH_AUTHORIZE_PARAMS_MAX_BYTES } from "./oauth-record-bounds";
@@ -186,7 +194,11 @@ describe("authorization code record size (ENG-7396)", () => {
     const consentPage = new URL(url ?? "", BASE);
     expect(consentPage.pathname, `status ${started.status}`).toBe("/account/authorize");
 
-    const approved = await consent(cookie, consentPage, { accept: true });
+    const approved = await handle("/oauth2/consent", {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json", cookie, origin: ORIGIN },
+      body: JSON.stringify({ accept: true, oauth_query: consentPage.search.slice(1) }),
+    });
     const { url: redirect } = (await approved.json()) as { url?: string };
     expect(approved.status).toBe(200);
     expect(new URL(redirect ?? "", BASE).searchParams.get("code")).toBeTruthy();
