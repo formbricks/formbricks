@@ -45,12 +45,27 @@ import { revokeOAuthConsentBeforeHandler } from "./mcp-grant-revocation";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
 import { recordOAuthConsentWrites } from "./oauth-consent-writes";
+import { boundOAuthRecordsBeforeHandler } from "./oauth-record-bounds";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
+import { createTemplateKeyedRateLimitStorage } from "./rate-limit-template-key";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
+
+/**
+ * The path each Better Auth endpoint DECLARES (better-call stamps every endpoint function with it), so
+ * `/reset-password/:token` and not a request's concrete path. Read by the rate limiter's template keys
+ * (ENG-7399) and the Sentry path label.
+ *
+ * Call it only once `auth` exists: the limiter calls it on its first request, which can only be an HTTP one
+ * (Better Auth runs the limiter in its router, never for in-process `auth.api` calls). The explicit return
+ * type keeps TypeScript from inferring `auth`'s type from its own options, which read this. `endpoint?.path`:
+ * a nullish registry entry must not throw and take down every auth request.
+ */
+export const getDeclaredAuthPaths = (): unknown[] =>
+  Object.values(auth.api).map((endpoint) => endpoint?.path);
 
 /**
  * Lifetime of the signed OAuth `state` cookie, matched to the state it binds to this browser (ENG-3314).
@@ -377,6 +392,10 @@ export const auth = betterAuth({
   // recovery rather than a credential failure, so skipping the audit is correct.
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // ENG-6885, ENG-7396: bound what a caller can make Better Auth park in Redis (the OAuth state record
+      // an anonymous sign-in writes, the authorization-code record authorize writes) before anything else
+      // runs. See oauth-record-bounds.ts.
+      boundOAuthRecordsBeforeHandler(ctx);
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
@@ -426,8 +445,14 @@ export const auth = betterAuth({
     // (the same app-level toggle the legacy limiter used); the integration harness sets it to skip limits.
     enabled: !RATE_LIMITING_DISABLED,
     // Redis-backed so counters are shared across instances (the in-memory default is per-instance
-    // and resets on deploy — unsuitable for multi-instance prod).
-    storage: "secondary-storage",
+    // and resets on deploy — unsuitable for multi-instance prod). Better Auth's own `secondary-storage`
+    // counting, keyed per endpoint template instead of per raw path (ENG-7399): otherwise every distinct
+    // junk path or reset token is a fresh counter, so the limit never trips and each request parks a key
+    // the size of its URL.
+    customStorage: createTemplateKeyedRateLimitStorage({
+      declaredPaths: getDeclaredAuthPaths,
+      increment: redisSecondaryStorage.increment,
+    }),
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
       "/reset-password": { window: 60, max: 5 },
