@@ -846,8 +846,8 @@ const isRequestRead = (node) => {
 // metacharacter, each match prefixed with a backslash, so the result matches only itself.
 const REGEXP_METACHARACTERS = [...String.raw`\^$.*+?()[]{}|`];
 const ESCAPE_CLASS = /[\dA-Za-z]/;
-// The literal characters a character class body matches, or null when it holds a range (`a-z`) or an
-// escape class (`\d`), whose members a lint rule should not guess.
+// The literal characters a character class body matches, or null when it holds a range (`a-z`), an
+// escape class (`\d`) or an unescaped `]` (which closes the class: `[a]|[^b]` is two classes).
 const classMembers = (body) => {
   const members = new Set();
   for (let index = 0; index < body.length; index += 1) {
@@ -856,7 +856,7 @@ const classMembers = (body) => {
       index += 1;
       character = body[index];
       if (character === undefined || ESCAPE_CLASS.test(character)) return null;
-    } else if (character === "-" && index > 0 && index < body.length - 1) {
+    } else if (character === "]" || (character === "-" && index > 0 && index < body.length - 1)) {
       return null;
     }
     members.add(character);
@@ -870,7 +870,8 @@ const isRegExpEscape = (node) => {
   return (
     /^\[[^^].*\]$/.test(source) &&
     REGEXP_METACHARACTERS.every((character) => classMembers(source.slice(1, -1))?.has(character)) &&
-    pattern.regex.flags.includes("g") &&
+    // `g` escapes every match; `y` stops at the first non-match; `v` reads `[`, `&&`, `--` as set syntax.
+    /^[^vy]*g[^vy]*$/.test(pattern.regex.flags) &&
     replacement?.type === "Literal" &&
     replacement.value === String.raw`\$&`
   );

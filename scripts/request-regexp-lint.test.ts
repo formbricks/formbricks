@@ -102,6 +102,18 @@ export const run = ({ parsedInput }: any) => parsedInput.patterns.map(compile);
   "escape-without-backslash.ts": `export const run = ({ parsedInput }: any) =>
   new RegExp(parsedInput.search.replace(/[.*+?^\${}()|[\\]]/g, "\\\\$&")).test("x");
 `,
+  // Two classes joined by "|": the second escapes nothing it should.
+  "escape-two-classes.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[d]|[^\\\\^$.*+?()[\\]{}|]/g, "\\\\$&")).test("x");
+`,
+  // Under the v flag, && intersects the classes, so only ")" is escaped.
+  "escape-set-operation.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[[\\\\\\^\\$\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|]&&[\\)]]/gv, "\\\\$&")).test("x");
+`,
+  // The y flag stops at the first character that is not a metacharacter.
+  "escape-sticky.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[\\\\^$.*+?()[\\]{}|]/gy, "\\\\$&")).test("x");
+`,
   // Two call sites pass the value at different depths; the whole-value one still counts.
   "helper-two-call-sites.ts": `export async function POST(req: Request) {
   const body = await req.json();

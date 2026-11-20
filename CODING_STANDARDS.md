@@ -149,8 +149,8 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
     nothing. A new emailed link creates no session on `GET`. The one that does, the SSO-recovery sign-in
     link (`apps/web/modules/ee/sso/lib/better-auth-recovery-signin.ts`), is the accepted exception: it
     stays usable until it expires so a scanner cannot spend it, signs in only an account without both a
-    verified email and 2FA (completing recovery strips an unverified account's local factors, ENG-2557), and the identity
-    link it leads to still needs the `POST` and the proof cookie.
+    verified email and 2FA (completing recovery strips an unverified account's local factors, ENG-2557),
+    and the identity link it leads to still needs the `POST` and the proof cookie.
 - **No path creates a session weaker than the account requires.** Local paths (password, magic link, account
   recovery) go through the app's 2FA check. SSO relies on the IdP's MFA; a new SSO sign-in path verifies it
   from `acr` / `amr` where the IdP sends them (the existing providers do not check them yet). An emailed link
