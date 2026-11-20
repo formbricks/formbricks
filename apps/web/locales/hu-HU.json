@@ -3322,6 +3322,7 @@
       "remove_all_filters": "Összes szűrő eltávolítása",
       "reset_all_filters": "Összes szűrő visszaállítása",
       "save_as_new_segment": "Mentés új szegmensként",
+      "save_segment_changes_before_saving": "Kérjük, a kérdőív mentése előtt mentse vagy vesse el a Célközönség alatt végzett szegmensmódosításokat.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "A szűrők mentése szegmensként más kérdőívekben való használathoz",
       "search_segments": "Szegmensek keresése",
       "segment_created_successfully": "A szegmens sikeresen létrehozva",

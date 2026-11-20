@@ -3322,6 +3322,7 @@
       "remove_all_filters": "Eliminar todos los filtros",
       "reset_all_filters": "Restablecer todos los filtros",
       "save_as_new_segment": "Guardar como nuevo segmento",
+      "save_segment_changes_before_saving": "Guarda o cancela los cambios del segmento en Público objetivo antes de guardar la encuesta.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Guarda tus filtros como un segmento para usarlo en otras encuestas",
       "search_segments": "Buscar segmentos",
       "segment_created_successfully": "¡Segmento creado con éxito!",

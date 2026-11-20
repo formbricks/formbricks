@@ -3322,6 +3322,7 @@
       "remove_all_filters": "Eliminați toate filtrele",
       "reset_all_filters": "Resetați toate filtrele",
       "save_as_new_segment": "Salvează ca segment nou",
+      "save_segment_changes_before_saving": "Salvează sau anulează modificările segmentului din secțiunea Public țintă înainte de a salva sondajul.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Salvați filtrele dvs. ca Segment pentru a le utiliza în alte sondaje",
       "search_segments": "Caută segmente",
       "segment_created_successfully": "Segment creat cu succes!",

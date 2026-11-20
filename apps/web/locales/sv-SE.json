@@ -3322,6 +3322,7 @@
       "remove_all_filters": "Ta bort alla filter",
       "reset_all_filters": "Återställ alla filter",
       "save_as_new_segment": "Spara som nytt segment",
+      "save_segment_changes_before_saving": "Spara eller avbryt ändringarna i ditt segment under Målgrupp innan du sparar enkäten.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Spara dina filter som ett segment för att använda det i andra enkäter",
       "search_segments": "Sök segment",
       "segment_created_successfully": "Segment skapat!",

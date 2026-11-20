@@ -3322,6 +3322,7 @@
       "remove_all_filters": "Tüm filtreleri kaldır",
       "reset_all_filters": "Tüm filtreleri sıfırla",
       "save_as_new_segment": "Yeni segment olarak kaydet",
+      "save_segment_changes_before_saving": "Anketi kaydetmeden önce, Hedef Kitle bölümündeki segment değişikliklerini kaydet veya iptal et.",
       "save_your_filters_as_a_segment_to_use_it_in_other_surveys": "Filtrelerini diğer anketlerde kullanmak için Segment olarak kaydet",
       "search_segments": "Segmentlerde ara",
       "segment_created_successfully": "Segment başarıyla oluşturuldu",
