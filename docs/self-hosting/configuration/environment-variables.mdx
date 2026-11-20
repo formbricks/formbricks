@@ -144,6 +144,36 @@ For the `AI_*` variables, see [AI Features](/self-hosting/configuration/ai-featu
 See [Job Runner](/self-hosting/configuration/job-runner) for BullMQ architecture, scaling, and
 troubleshooting guidance.
 
+#### Database TLS
+
+To have Formbricks verify an external PostgreSQL server, add TLS settings to `DATABASE_URL`, and to
+`MIGRATE_DATABASE_URL` if you set it:
+
+```sh
+DATABASE_URL=postgresql://formbricks:<password>@db.example.com:5432/formbricks?sslmode=verify-full&sslrootcert=/etc/ssl/postgres/ca.pem
+```
+
+- `sslmode=verify-full` checks that the server certificate chains to a trusted CA and matches the host name in
+  the URL. Use it for any database you reach over a network.
+- `sslrootcert` names the CA file that signed the server certificate, such as your cloud provider's bundle.
+  Bundles with several certificates work. Mount the file read-only into the containers that run the app and the
+  migrations. Without `sslrootcert`, the certificate must chain to a publicly trusted CA, or to a CA you add with
+  `NODE_EXTRA_CA_CERTS` for the app and `SSL_CERT_FILE` for the migrations.
+- Migrations treat `sslmode=verify-ca` like `verify-full`: the host name must match too. With `sslrootcert` and any
+  `sslmode` other than `disable` or `no-verify`, they verify against that CA too. The app's connections behave the
+  same way unless the URL sets `uselibpqcompat=true`, which makes them follow libpq: no host name check for
+  `verify-ca`, and no certificate check for `prefer`. Migrations verify either way, so use `sslmode=verify-full`
+  to keep both consistent.
+- Migrations use TLS whenever the app's connections do: with any `sslmode` other than `disable`, or with
+  `sslaccept` when no `sslmode` is set. They never fall back to an unencrypted connection.
+
+If the migrations stop with Prisma error `P1011` while the app connects fine, the migration tool could not verify
+the server where the app could (a CA added only through `NODE_EXTRA_CA_CERTS`, or an IP host without an IP entry in
+the certificate). Fix the CA file or the host name. As a last resort, set `MIGRATE_DATABASE_URL` to the same URL
+with `sslaccept=accept_invalid_certs`: schema migrations still require TLS but skip the certificate check, while the
+app's connections, which use `DATABASE_URL`, keep whatever verification that URL sets. This does not help when the app's connections reject the certificate
+too: the migration runner opens the same kind of connection, so fix the certificate setup first.
+
 #### In-app surveys inside Formbricks
 
 Formbricks includes its JavaScript SDK in the authenticated app so you can show surveys to your own

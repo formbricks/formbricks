@@ -96,7 +96,7 @@ configuration values. Unexpected errors, including malformed JSON, retain a gene
 
 Node trusts the Mozilla root list compiled into its official binary (the default
 `--use-bundled-ca`), not the OS CA store. The OS bundle (Debian's `ca-certificates`) is
-there for Prisma's schema engine, which runs the migrations and verifies database TLS with it.
+there for Prisma's schema engine, which runs the migrations (see the end of this section).
 TLS and CA fixes therefore arrive as Node security releases: the eMudhra incident (ENG-4065)
 was fixed upstream in Node 24.22.1 and 26.12.1, which drop the affected emSign roots and
 block the compromised intermediates' keys. Moving `.nvmrc` to a new Node release is how such a
@@ -121,10 +121,14 @@ The live check depends on hosts we do not run, so it is not a PR gate. Node keep
 `NODE_EXTRA_CA_CERTS` on top of the bundled list, which is how a deployment adds a private CA
 for the app. By default `SSL_CERT_FILE` and `SSL_CERT_DIR` have no effect on Node.
 
-Prisma's schema engine, which runs the migrations, verifies database TLS against the OS bundle
-instead: Debian's `ca-certificates` with every emSign root deselected, which the image build
-checks. A database certificate from a private CA therefore needs both settings: `NODE_EXTRA_CA_CERTS`
-for the app's connections and `SSL_CERT_FILE` for the migrations.
+Prisma's schema engine, which runs the migrations, uses OpenSSL and ignores libpq's
+`verify-ca`, `verify-full` and `sslrootcert`. The migration runner translates them before starting it
+(`packages/database/src/prisma-cli-tls.ts`): with `sslrootcert`, the engine trusts only that file
+(`SSL_CERT_FILE`, with `SSL_CERT_DIR` pointed at an empty directory); without it, the OS bundle, which is
+Debian's `ca-certificates` with every emSign root deselected, as the image build checks. For a database
+certificate from a private CA, set `sslmode=verify-full` and point `sslrootcert` at the CA in `DATABASE_URL`:
+the app's `pg` connections read the same file. The runner drops `sslcert` from the engine's URL, because the
+engine would trust it as a root while libpq means a client certificate.
 
 ## Repair and recovery
 
