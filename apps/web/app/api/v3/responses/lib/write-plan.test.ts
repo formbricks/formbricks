@@ -202,6 +202,23 @@ describe("planEmbeddedDataWrite — names in, storage keys out", () => {
     expect(plan.dataWrites).toEqual({});
   });
 
+  // ENG-6973: the shape Set value stores, whatever spelling the caller sent. A passed-in true/false
+  // field keeps the text the ingest contract normalizes to.
+  test("a true/false variable is stored as a real boolean, a hidden field as its text", () => {
+    const fields = [
+      declared("qualified", "computed", { dataType: "boolean", storageKey: "clvr0001" }),
+      declared("is_pro", "ingested", { dataType: "boolean" }),
+    ];
+
+    expect(planEmbedded(fields, { qualified: true }).variableWrites).toEqual({ clvr0001: true });
+    expect(planEmbedded(fields, { qualified: "false" }).variableWrites).toEqual({ clvr0001: false });
+    expect(planEmbedded(fields, { qualified: "yes" }).variableWrites).toEqual({ clvr0001: true });
+    expect(planEmbedded(fields, { is_pro: true }).dataWrites).toEqual({ is_pro: "true" });
+    expect(planEmbedded(fields, { qualified: "maybe" }).issues).toEqual([
+      expect.objectContaining({ name: "qualified", referenceType: "variable" }),
+    ]);
+  });
+
   /** Omission and `null` are the two halves of a merge; conflating them makes deletion unexpressible. */
   test("null clears and omission leaves alone", () => {
     const fields = [
