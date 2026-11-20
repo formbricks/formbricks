@@ -11,6 +11,7 @@ import {
   WEBHOOK_PAYLOAD_MAX_BYTES,
 } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
+import { WorkflowAlert } from "@/modules/ee/workflows/components/workflow-alert";
 import {
   WorkflowPanelCollapseButton,
   WorkflowPanelPill,
@@ -27,7 +28,6 @@ import {
   isTestFormShownAtom,
   testFormFocusRequestAtom,
 } from "@/modules/ee/workflows/state/test-run";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { Skeleton } from "@/modules/ui/components/skeleton";
@@ -207,9 +207,7 @@ const TestDraftCard = ({
         </>
       ) : null}
       {testRun.failure ? (
-        <Alert variant="error" size="small">
-          <AlertDescription>{describeFailure(testRun.failure, testRun.error, t)}</AlertDescription>
-        </Alert>
+        <WorkflowAlert variant="error">{describeFailure(testRun.failure, testRun.error, t)}</WorkflowAlert>
       ) : null}
     </section>
   );

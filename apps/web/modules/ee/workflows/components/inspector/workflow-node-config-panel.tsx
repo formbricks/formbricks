@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode, TWorkflowResource } from "@formbricks/workflows";
 import { getWorkflowNodeConcreteType, isConditionStepNode } from "@formbricks/workflows";
 import { WorkflowNodeChip } from "@/modules/ee/workflows/components/canvas/workflow-node-card";
+import { WorkflowAlert } from "@/modules/ee/workflows/components/workflow-alert";
 import { WorkflowPanelCollapseButton } from "@/modules/ee/workflows/components/workflow-side-panel";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
@@ -21,7 +22,6 @@ import {
   workflowDefinitionAtom,
   workflowStatusAtom,
 } from "@/modules/ee/workflows/state/editor";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 
 interface WorkflowNodeConfigPanelProps {
   isEditable: boolean;
@@ -164,11 +164,7 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
       </header>
       <div className="scroll-bar min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 px-3 pt-3 pb-4">
-          {blockedReason && (
-            <Alert variant="info" size="small">
-              <AlertDescription>{blockedReason}</AlertDescription>
-            </Alert>
-          )}
+          {blockedReason && <WorkflowAlert variant="info">{blockedReason}</WorkflowAlert>}
           {ConfigForm ? (
             // Keyed by node id so switching nodes remounts the form with fresh local UI state
             // (e.g. the email editor's firstRender flag) instead of reconciling across shapes.

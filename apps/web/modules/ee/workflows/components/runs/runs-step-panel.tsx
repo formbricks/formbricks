@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { WorkflowNodeChip } from "@/modules/ee/workflows/components/canvas/workflow-node-card";
+import { WorkflowAlert } from "@/modules/ee/workflows/components/workflow-alert";
 import {
   WorkflowPanelCollapseButton,
   WorkflowPanelPill,
@@ -14,7 +15,6 @@ import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import type { TRunDetailBadge, TRunDetailRow } from "@/modules/ee/workflows/lib/run-detail-rows";
 import { formatRunTime } from "@/modules/ee/workflows/lib/runs-view";
 import type { TWorkflowRunDetail } from "@/modules/ee/workflows/types";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { RunDetailRow } from "./run-detail-steps";
 import { RunStepsBody } from "./run-steps-body";
@@ -107,9 +107,9 @@ export const RunsStepPanel = (props: Readonly<RunsStepPanelProps>) => {
           <p className="text-sm text-slate-500">{t("workspace.workflows.runs_none_selected")}</p>
         ) : null}
         {props.isDrawnOnCurrentDraft ? (
-          <Alert variant="warning" size="small">
-            <AlertDescription>{t("workspace.workflows.runs_drawn_on_current_draft")}</AlertDescription>
-          </Alert>
+          <WorkflowAlert variant="warning">
+            {t("workspace.workflows.runs_drawn_on_current_draft")}
+          </WorkflowAlert>
         ) : null}
         {node ? (
           <SelectedStepResult
