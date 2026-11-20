@@ -2,6 +2,8 @@
 
 `POST /workflows/{id}/test-runs` runs the editor's current draft inside the request, with the same graph walk as a real run but with fake effects: Send email records whom it would email, an HTTP request records what it would call and, in "Wait and use it" mode, returns that step's last Test request response (ENG-7170). The result is saved as a run with `isDryRun = true` and no version, so it appears under Runs with a Test label, is never billed (usage counts and cleanup jobs already skip dry runs), and is deleted after 7 days (ADR 0044). The only real outbound call while testing is "Send test request" on one HTTP request, which is not a run.
 
+> Amended by ADR 0054: in "Wait and use it" mode an HTTP request returns the step's expected response body, which editors set. A Test request's answer no longer replaces it; it is kept as `<step id>:last_test` and is only offered to the editor.
+
 ## What a Test run runs with
 
 A Webhook workflow runs with a test payload: the one sent, else the workflow's expected payload. A Response completed workflow runs against an existing response of its trigger's survey, picked in the editor and sent as `responseId`. The run's trigger payload is built from that response as a real run builds it (answers, ending), and the run records the response and survey like a real run, so the runs list's survey visibility applies to it. The response must belong to the trigger's survey, in the workflow's workspace, and the caller must be able to read that survey; anything else is refused like an unknown id. A partial response, or one that reached an ending the trigger skips, can still be tested: the editor says a real run would skip it, because the point is to see what the steps do with real answers.

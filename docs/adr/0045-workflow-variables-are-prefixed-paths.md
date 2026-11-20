@@ -13,4 +13,4 @@ A workflow names every value a run can use with one dot path whose first segment
 - Path segments `__proto__`, `prototype` and `constructor` are refused everywhere.
 - A path can't go into or end at a list in a payload or an HTTP response until loops exist (ENG-7173); survey answers that are lists keep what recall already does with them.
 - Keys that contain a dot can't be reached.
-- How a value is inserted depends on where: URL-encoded in query parameters, line breaks stripped in headers, typed when a token is a whole JSON value and escaped inside a JSON string. The HTTP request URL takes none (ADR 0042).
+- How a value is inserted depends on where: URL-encoded in query parameters, line breaks stripped in headers, typed when a token is a whole JSON value and escaped inside a JSON string. The HTTP request URL takes Variables in its path only (ADR 0053).

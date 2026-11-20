@@ -164,12 +164,14 @@ such as `Idempotency-Key: @payload.ticket.id`.
 Select **Send test request** to make one real call with the step's current settings, even before you save them,
 so you can see what the API answers.
 
-- Variables are filled from the **expected payload** and from the last test responses of other HTTP request steps.
+- Variables are filled from the **expected payload** and from the expected response bodies of other HTTP request
+  steps.
 - A secret value you just typed is used for this call. Otherwise the saved value is used, but only for the host
   it was entered for: if you changed the URL to another host, type the value again.
 - The call waits up to 10 seconds and isn't retried.
-- The answer is saved as the step's test response (up to 64 KB). The `@` picker offers its values as Variables, and
-  [Test runs](/workflows/test-runs) use it as this step's response.
+- The answer is kept as the step's last test response (up to 64 KB). It doesn't change the step's Variables: select
+  **Use as expected response body** to make it the step's expected response body, which the `@` picker offers as
+  Variables and [Test runs](/workflows/test-runs) answer with.
 - Each test request is recorded in the audit log with its host and status, never its headers or body.
 
 A test request is a real call: it can create records in the API you call. It isn't a run and isn't billed. You can

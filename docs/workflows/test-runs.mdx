@@ -24,9 +24,10 @@ emailed. Save to /images/platform/workflows/test-run-result.webp and replace thi
     a call to its URL and select **Use as expected payload**.
   </Step>
 
-  <Step title="Get test responses for HTTP requests">
-    For each HTTP request set to **Wait and use it**, select **Send test request** once. A Test run uses that
-    response as the step's answer.
+  <Step title="Set the expected response body for HTTP requests">
+    For each HTTP request set to **Wait and use it**, fill its **Expected response body** card: write or paste the
+    JSON its API answers with, or select **Send test request** and then **Use as expected response body**. A Test
+    run answers with that body.
   </Step>
 
   <Step title="Run the test">
@@ -41,8 +42,9 @@ emailed. Save to /images/platform/workflows/test-run-result.webp and replace thi
     The survey needs at least one response. To test a new workflow, fill out the survey once yourself.
   </Step>
 
-  <Step title="Get test responses for HTTP requests">
-    As for a Webhook trigger, select **Send test request** once on each HTTP request set to **Wait and use it**.
+  <Step title="Set the expected response body for HTTP requests">
+    As for a Webhook trigger, fill the **Expected response body** card of each HTTP request set to **Wait and use
+    it**.
   </Step>
 
   <Step title="Pick the response">
