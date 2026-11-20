@@ -29,6 +29,19 @@ describe("getAITranslationErrorMessage", () => {
     );
   });
 
+  test("reads the body schema's too-long field as the field-too-long message", () => {
+    const error = new V3ApiError({
+      status: 400,
+      detail: "Invalid request body",
+      code: "bad_request",
+      invalid_params: [{ name: "fields.0.text", reason: "ai_translation_field_exceeds_20000_characters" }],
+    });
+
+    expect(getAITranslationErrorMessage(error, t)).toBe(
+      "workspace.surveys.edit.ai_translation_field_too_long"
+    );
+  });
+
   test.each([
     ["a provider failure", apiError(502, "bad_gateway")],
     ["a network failure", new V3ApiError({ status: 0, detail: "", code: "network_error" })],

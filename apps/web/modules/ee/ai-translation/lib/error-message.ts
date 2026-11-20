@@ -24,11 +24,16 @@ export const getAITranslationErrorCodeMessage = (code: string | undefined, t: TT
 
 /**
  * The sentence a failed AI translation request shows. Any 429 — the provider's quota or the route's own
- * request budget — is "try again shortly"; otherwise the problem's code picks it. A dropped connection or
+ * request budget — is "try again shortly"; a field the body schema refuses as too long says so; otherwise
+ * the problem's code picks it. A dropped connection or
  * anything that is not a problem response is the generic failure.
  */
 export const getAITranslationErrorMessage = (error: unknown, t: TTranslate): string => {
   if (!(error instanceof V3ApiError)) return t("workspace.surveys.edit.ai_translation_failed");
   if (error.status === 429) return t("workspace.surveys.edit.ai_translation_quota_exceeded");
+  // The route's body schema refuses a field over the cap with that code as the field's reason.
+  if (error.invalid_params?.some((param) => param.reason === AI_TRANSLATION_FIELD_TOO_LONG)) {
+    return t("workspace.surveys.edit.ai_translation_field_too_long");
+  }
   return getAITranslationErrorCodeMessage(error.code, t);
 };

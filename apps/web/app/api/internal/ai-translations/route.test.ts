@@ -104,7 +104,12 @@ const translate = (body: unknown = BODY, workspaceId = WORKSPACE_ID, { headers }
   );
 
 const actor = { type: "user", id: USER_ID };
-const problem = async (response: Response) => (await response.json()) as { code?: string; detail?: string };
+const problem = async (response: Response) =>
+  (await response.json()) as {
+    code?: string;
+    detail?: string;
+    invalid_params?: { name: string; reason: string }[];
+  };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -296,6 +301,10 @@ describe("POST /api/internal/ai-translations", () => {
     for (const body of [tooMany, tooLong]) {
       expect((await translate(body)).status).toBe(400);
     }
+    // The client reads this reason to say which cap the field broke.
+    expect((await problem(await translate(tooLong))).invalid_params).toEqual([
+      expect.objectContaining({ reason: "ai_translation_field_exceeds_20000_characters" }),
+    ]);
     expect(mocks.translateFields).not.toHaveBeenCalled();
     const atCaps = { ...BODY, fields: Array.from({ length: 256 }, (_, i) => ({ ...field, path: `p${i}` })) };
     expect((await translate(atCaps)).status).toBe(200);
