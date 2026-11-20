@@ -55,6 +55,33 @@ interface Props {
 }
 export const Hello = memo(forwardRef<HTMLDivElement, Props>(({ name }, ref) => <div ref={ref}>{name}</div>));
 `,
+  "default-export.tsx": `interface Props {
+  name: string;
+}
+export default function ({ name }: Props) {
+  return <div>{name}</div>;
+}
+`,
+  "default-value.tsx": `interface Props {
+  name: string;
+}
+export const Hello = ({ name }: Props = { name: "" }) => <div>{name}</div>;
+`,
+  "object-key.tsx": `interface Props {
+  name: string;
+}
+export const components = { Hello: ({ name }: Props) => <div>{name}</div> };
+`,
+  "namespace-forward-ref.tsx": `import * as React from "react";
+import type { Base } from "./base";
+interface Props {
+  name: string;
+}
+// The type argument names the props even where the parameter carries its own annotation.
+export const Hello = React.forwardRef<HTMLDivElement, Props>(({ name }: Base, ref) => (
+  <div ref={ref}>{name}</div>
+));
+`,
   "returns-null.tsx": `interface Props {
   name: string;
 }

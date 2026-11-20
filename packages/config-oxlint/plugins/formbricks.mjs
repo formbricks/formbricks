@@ -76,15 +76,18 @@ const noInlineLintConfig = {
 /*
  * `prefer-read-only-props`: every prop a component declares is read-only. It resolves props as
  * eslint-plugin-react 7.37 did, without its component detection:
- * - A component is a PascalCase function (declared, named, or assigned to a variable, optionally
- *   through `memo`/`forwardRef`) that returns JSX or `null`, or a class extending
- *   `Component`/`PureComponent`.
- * - Its props type is the first parameter's annotation, the `FC<Props>`-style annotation of its
- *   variable, `forwardRef<Ref, Props>`'s second type argument, or the class's first type argument.
+ * - A component is a function that returns JSX or `null`, optionally through `memo`/`forwardRef`:
+ *   named in PascalCase (declared, a named function expression, a variable or an object key), or
+ *   the anonymous default export. A class extending `Component`/`PureComponent` is one too.
+ * - Its props type is a wrapper's type argument (`forwardRef<Ref, Props>`'s second), else the first
+ *   parameter's annotation (default value or not), else the `FC<Props>`-style annotation of its
+ *   variable; for a class, its first type argument.
  * - That type resolves through type literals, intersections, the React generics (`FC`,
  *   `PropsWithChildren`, …) and the interfaces and type aliases declared in the same file. A type
  *   imported from elsewhere, or wrapped in `Readonly<>`, is not looked into, so `Readonly<Props>`
  *   passes.
+ * - Unlike eslint-plugin-react, it does not follow a returned variable (`const el = <div />;
+ *   return el;`) to see that the function returns JSX.
  * Each property signature found without `readonly` is reported. There is no autofix:
  * CODING_STANDARDS.md asks for the `Readonly<Props>` wrapper, not `readonly` members.
  */
@@ -166,7 +169,8 @@ const preferReadOnlyProps = {
     // Names that refer to React: namespace/default imports, and `FC`-style generics under their local name.
     const reactNamespaces = new Set();
     const reactGenerics = new Map();
-    const reactWrappers = new Set();
+    // Local name → imported name, so `forwardRef as fwd` still reads its second type argument.
+    const reactWrappers = new Map();
     const reactClasses = new Set();
     const declarations = new Map();
     const reported = new Set();
@@ -237,7 +241,11 @@ const preferReadOnlyProps = {
       }
     };
 
-    const propsOfFunction = (fn) => fn.params[0]?.typeAnnotation;
+    // `({ a }: Props)`, `(props: Props)`, or either with a default value (`… = {}`).
+    const propsOfFunction = (fn) => {
+      const param = fn.params[0];
+      return (param?.type === "AssignmentPattern" ? param.left : param)?.typeAnnotation;
+    };
 
     const isWrapperCall = (node) => {
       if (node?.type !== "CallExpression") return false;
@@ -256,7 +264,8 @@ const preferReadOnlyProps = {
       let propsType;
       let current = node;
       while (isWrapperCall(current)) {
-        const name = current.callee.name ?? current.callee.property.name;
+        const { callee } = current;
+        const name = callee.type === "Identifier" ? reactWrappers.get(callee.name) : callee.property.name;
         const typeArgument = typeArgumentsOf(current)[WRAPPERS[name]];
         propsType ??= typeArgument;
         current = current.arguments[0];
@@ -265,6 +274,14 @@ const preferReadOnlyProps = {
     };
 
     const components = [];
+
+    // A function component, possibly wrapped: a wrapper's type argument names the props before the
+    // parameter's annotation does, then the annotation of the variable it is assigned to.
+    const addComponent = (init, annotation) => {
+      const { fn, propsType } = unwrap(init);
+      if (!fn || !returnsJsx(fn)) return;
+      components.push(() => check(propsType ?? propsOfFunction(fn) ?? annotation));
+    };
 
     return {
       ImportDeclaration(node) {
@@ -276,7 +293,7 @@ const preferReadOnlyProps = {
           }
           const imported = specifier.imported.name ?? specifier.imported.value;
           if (imported in PROPS_TYPE_ARGUMENT) reactGenerics.set(specifier.local.name, imported);
-          if (imported in WRAPPERS) reactWrappers.add(specifier.local.name);
+          if (imported in WRAPPERS) reactWrappers.set(specifier.local.name, imported);
           if (COMPONENT_CLASSES.has(imported)) reactClasses.add(specifier.local.name);
         }
       },
@@ -295,10 +312,17 @@ const preferReadOnlyProps = {
       },
       VariableDeclarator(node) {
         if (node.id.type !== "Identifier" || !PASCAL_CASE.test(node.id.name)) return;
-        const { fn, propsType } = unwrap(node.init);
-        if (!fn || !returnsJsx(fn)) return;
-        const annotation = node.id.typeAnnotation;
-        components.push(() => check(propsOfFunction(fn) ?? propsType ?? annotation));
+        addComponent(node.init, node.id.typeAnnotation);
+      },
+      // `export default function ({ a }: Props)`, `export default (props: Props) => …`.
+      ExportDefaultDeclaration(node) {
+        const { declaration } = node;
+        if (declaration.type !== "FunctionDeclaration" || !declaration.id) addComponent(declaration);
+      },
+      // `{ Heading: ({ a }: Props) => <h1>{a}</h1> }`.
+      Property(node) {
+        const name = node.key.type === "Identifier" ? node.key.name : node.key.value;
+        if (!node.computed && typeof name === "string" && PASCAL_CASE.test(name)) addComponent(node.value);
       },
       "ClassDeclaration, ClassExpression"(node) {
         const superClass = node.superClass;
