@@ -2333,3 +2333,75 @@ describe("conditions on a date field holding a timestamp (ENG-6935)", () => {
     expect(calculations.days).toBe(3);
   });
 });
+
+/**
+ * ENG-7377: "Other" is on when any choice is the "other" option, not only the last one. The editor
+ * puts "None of the above" after it, and the survey in the browser already checks every choice.
+ */
+describe('choice conditions when "Other" is not the last option (ENG-7377)', () => {
+  const choices = [
+    { id: "a", label: { default: "A" } },
+    { id: "other", label: { default: "Other" } },
+    { id: "none", label: { default: "None of the above" } },
+  ];
+  const choiceSurvey = {
+    id: "survey1",
+    blocks: [
+      {
+        id: "b1",
+        name: "b1",
+        elements: [
+          {
+            id: "single",
+            type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+            headline: { default: "Single" },
+            required: false,
+            choices,
+          },
+          {
+            id: "multi",
+            type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+            headline: { default: "Multi" },
+            required: false,
+            choices,
+          },
+        ],
+      },
+    ],
+    variables: [],
+    embeddedFields: [],
+  } as unknown as TJsWorkspaceStateSurvey;
+
+  const condition = (
+    elementId: string,
+    operator: TSingleCondition["operator"],
+    value: string | string[]
+  ): TConditionGroup => ({
+    id: "g",
+    connector: "and",
+    conditions: [
+      {
+        id: "c",
+        leftOperand: { type: "element", value: elementId },
+        operator,
+        rightOperand: { type: "static", value },
+      },
+    ],
+  });
+
+  test("a typed single-choice answer reads as 'other'", () => {
+    const data: TResponseData = { single: "Something else" };
+
+    expect(evaluateLogic(choiceSurvey, data, {}, condition("single", "equals", "other"), "default")).toBe(
+      true
+    );
+  });
+
+  test("a typed multi-choice answer reads as 'other' beside the options it names", () => {
+    const data: TResponseData = { multi: ["A", "Something else"] };
+
+    expect(
+      evaluateLogic(choiceSurvey, data, {}, condition("multi", "includesAllOf", ["a", "other"]), "default")
+    ).toBe(true);
+  });
+});
