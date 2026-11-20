@@ -1,5 +1,5 @@
-import { compose, jsPlugins } from "./compose.mjs";
-import { sonarParity } from "./sonar-parity.mjs";
+import { compose, jsPlugins, denyWarnings as raiseWarnings } from "./compose.mjs";
+import { STAGED_LINES_RULE_IDS, sonarParity } from "./sonar-parity.mjs";
 
 /*
  * Shared plumbing for every Formbricks oxlint config:
@@ -15,7 +15,14 @@ import { sonarParity } from "./sonar-parity.mjs";
  * nothing here replaces `eslint-config-prettier`.
  */
 
-export { compose, denyWarnings, jsPlugins } from "./compose.mjs";
+export { compose, jsPlugins } from "./compose.mjs";
+
+/*
+ * Every workspace config wraps its export in this, so a warning fails lint like an error (ENG-7401).
+ * The staged-lines Sonar-parity rules are the exception: the pre-commit hook turns them on as
+ * warnings and fails a commit on one only inside the lines it stages (sonar-parity.mjs).
+ */
+export const denyWarnings = (config) => raiseWarnings(config, { except: STAGED_LINES_RULE_IDS });
 
 export const TYPESCRIPT_FILES = ["**/*.{ts,tsx,mts,cts}"];
 export const PLAIN_JS_FILES = ["**/*.{js,cjs,mjs}"];

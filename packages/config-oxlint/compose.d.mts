@@ -8,4 +8,7 @@ export declare const jsPlugins: Record<
 export declare function compose(
   ...fragments: (ConfigFragment | ConfigFragment[] | undefined)[]
 ): OxlintConfig;
-export declare function denyWarnings<T extends OxlintConfig>(config: T): T;
+export declare function denyWarnings<T extends OxlintConfig>(
+  config: T,
+  options?: { except?: readonly string[] }
+): T;
