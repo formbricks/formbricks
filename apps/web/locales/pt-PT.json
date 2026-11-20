@@ -65,6 +65,8 @@
       "new_to_formbricks": "Novo no Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_recovery_link_not_opened_description": "Só deves abrir a ligação no e-mail que te enviámos se tiveres sido tu a associar o início de sessão único (SSO) à tua conta Formbricks. Se não foste tu, ignora esse e-mail: abri-lo poderia dar a outra pessoa acesso à tua conta. Se foste tu, abre a ligação neste navegador para concluir.",
+      "oauth_recovery_link_not_opened_title": "Não é possível concluir este início de sessão neste navegador",
       "oauth_second_factor_unavailable_description": "O teu endereço de email foi verificado, mas esta conta tem autenticação de dois fatores e esta instância do Formbricks tem o início de sessão com email e palavra-passe desativado, pelo que não é possível introduzir aqui o segundo fator. Para concluíres, inicia sessão com um fornecedor de início de sessão único já associado a esta conta ou contacta um administrador.",
       "oauth_second_factor_unavailable_title": "Não é possível concluir aqui o início de sessão com dois fatores",
       "please_verify_your_email_to_continue": "Verifique o seu endereço de e-mail. Enviámos-lhe um link de verificação.",
@@ -128,6 +130,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "Utilizador criado com sucesso",
       "user_successfully_created_info": "Verificámos a existência de uma conta associada a {email}. Se não existia, criámos uma para si. Se já existia uma conta, não foram feitas alterações. Por favor, inicie sessão abaixo para continuar."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Cancelar",
+      "confirm": "Associar {provider}",
+      "description": "Depois disto, podes iniciar sessão na conta Formbricks {email} com {provider}.",
+      "title": "Associar {provider} à tua conta?",
+      "warning": "Só deves continuar se foste tu a pedir para iniciar sessão no Formbricks com {provider}. Caso contrário, cancela: alguém pode estar a tentar aceder à tua conta."
     },
     "verification-requested": {
       "email_not_configured_description": "Esta instância do Formbricks não tem um servidor de email configurado, pelo que não foi possível enviar qualquer link de verificação. Por favor, contacte o seu administrador.",

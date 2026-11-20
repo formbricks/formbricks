@@ -65,6 +65,8 @@
       "new_to_formbricks": "Ny på Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_recovery_link_not_opened_description": "Öppna bara länken i mejlet vi skickade till dig om du själv valde att koppla enkel inloggning (SSO) till ditt Formbricks-konto. Om du inte gjorde det kan du ignorera mejlet: om du öppnar det kan någon annan få tillgång till ditt konto. Om du gjorde det, öppna länken i den här webbläsaren för att slutföra.",
+      "oauth_recovery_link_not_opened_title": "Den här inloggningen kan inte slutföras i den här webbläsaren",
       "oauth_second_factor_unavailable_description": "Din e-postadress är verifierad, men det här kontot har tvåfaktorsautentisering och inloggning med e-post och lösenord är avstängd i den här Formbricks-instansen, så den andra faktorn kan inte anges här. Logga in med en leverantör för enkel inloggning (SSO) som redan är kopplad till kontot för att slutföra inloggningen, eller kontakta en administratör.",
       "oauth_second_factor_unavailable_title": "Inloggning med tvåfaktorsautentisering kan inte slutföras här",
       "please_verify_your_email_to_continue": "Verifiera din e-postadress. Vi har skickat en verifieringslänk till dig.",
@@ -128,6 +130,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "Användare skapades",
       "user_successfully_created_info": "Vi har kontrollerat om det finns ett konto kopplat till {email}. Om inget fanns har vi skapat ett åt dig. Om ett konto redan fanns gjordes inga ändringar. Vänligen logga in nedan för att fortsätta."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Avbryt",
+      "confirm": "Länka {provider}",
+      "description": "Efter detta kan du logga in på Formbricks-kontot {email} med {provider}.",
+      "title": "Vill du länka {provider} till ditt konto?",
+      "warning": "Fortsätt bara om du själv har begärt att logga in på Formbricks med {provider}. Om du inte har gjort det, avbryt: någon annan kan försöka ta sig in på ditt konto."
     },
     "verification-requested": {
       "email_not_configured_description": "Den här Formbricks-instansen har ingen e-postserver konfigurerad, så ingen verifieringslänk kunde skickas. Kontakta din administratör.",

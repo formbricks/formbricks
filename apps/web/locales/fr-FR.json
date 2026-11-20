@@ -65,6 +65,8 @@
       "new_to_formbricks": "Nouveau sur Formbricks ?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_recovery_link_not_opened_description": "N'ouvre le lien de l'e-mail que nous t'avons envoyé que si tu as toi-même choisi de associer l'authentification unique à ton compte Formbricks. Si ce n'est pas le cas, ignore cet e-mail : l'ouvrir pourrait donner à quelqu'un d'autre l'accès à ton compte. Si c'est bien toi, ouvre le lien dans ce navigateur pour terminer.",
+      "oauth_recovery_link_not_opened_title": "Cette connexion ne peut pas être finalisée dans ce navigateur",
       "oauth_second_factor_unavailable_description": "Ton adresse e-mail est vérifiée, mais ce compte est protégé par l'authentification à deux facteurs et la connexion par e-mail et mot de passe est désactivée sur cette instance de Formbricks. Il est donc impossible de saisir le second facteur ici. Pour terminer, connecte-toi avec un fournisseur d'authentification unique (SSO) déjà associé à ce compte, ou contacte un administrateur.",
       "oauth_second_factor_unavailable_title": "Impossible de terminer la connexion à deux facteurs ici",
       "please_verify_your_email_to_continue": "Veuillez vérifier votre adresse e-mail. Nous vous avons envoyé un lien de vérification.",
@@ -128,6 +130,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "Utilisateur créé avec succès",
       "user_successfully_created_info": "Nous avons vérifié s'il existait un compte associé à {email}. Si aucun n'existait, nous en avons créé un pour vous. Si un compte existait déjà, aucune modification n'a été apportée. Veuillez vous connecter ci-dessous pour continuer."
+    },
+    "sso_recovery_confirm": {
+      "cancel": "Annuler",
+      "confirm": "Associer {provider}",
+      "description": "Après cela, tu pourras te connecter au compte Formbricks {email} avec {provider}.",
+      "title": "Associer {provider} à ton compte ?",
+      "warning": "Ne continue que si c'est bien toi qui as demandé à te connecter à Formbricks avec {provider}. Si ce n'est pas le cas, annule : quelqu'un d'autre essaie peut-être d'accéder à ton compte."
     },
     "verification-requested": {
       "email_not_configured_description": "Cette instance Formbricks n'a pas de serveur email configuré, aucun lien de vérification n'a donc pu être envoyé. Veuillez contacter votre administrateur.",
