@@ -65,7 +65,6 @@ const USE_SECURE_COOKIES = (env.BETTER_AUTH_URL ?? env.NEXTAUTH_URL ?? env.WEBAP
 export const getDeclaredAuthPaths = (): unknown[] =>
   Object.values(auth.api).map((endpoint) => endpoint?.path);
 
-
 /** Resolve a user's locale for transactional emails (Better Auth's callback user omits it). */
 export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
