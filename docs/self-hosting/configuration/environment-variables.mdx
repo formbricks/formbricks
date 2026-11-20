@@ -160,7 +160,7 @@ DATABASE_URL=postgresql://formbricks:<password>@db.example.com:5432/formbricks?s
   migrations. Without `sslrootcert`, the certificate must chain to a publicly trusted CA, or to a CA you add with
   `NODE_EXTRA_CA_CERTS` for the app and `SSL_CERT_FILE` for the migrations.
 - Migrations treat `sslmode=verify-ca` like `verify-full`, as the app's connections do: the host name must match too. With
-  `sslrootcert` and any `sslmode` other than `disable`, they verify against that CA too, as the app does. Use
+  `sslrootcert` and any `sslmode` other than `disable` or `no-verify`, they verify against that CA too, as the app does. Use
   `sslmode=verify-full` with it all the same, so the intent is explicit.
 - Migrations use TLS whenever the app's connections do: with any `sslmode` other than `disable`, or with
   `sslaccept`. They never fall back to an unencrypted connection.

@@ -76,12 +76,15 @@ interface TTlsRequest {
   sslAccept: string | null;
   sslMode?: string;
   sslRootCert?: string;
+  /** Whether sslrootcert came from the URL, which the app's pg reads, rather than PGSSLROOTCERT, which it does not. */
+  rootCertInUrl: boolean;
 }
 
 /** Reads the URL's (or the environment's) TLS settings and rejects ones the CLI cannot honour. */
 const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRequest => {
   const sslMode = nonEmpty(lastParam(params, "sslmode")) ?? nonEmpty(env.PGSSLMODE);
-  const sslRootCert = nonEmpty(lastParam(params, "sslrootcert")) ?? nonEmpty(env.PGSSLROOTCERT);
+  const urlRootCert = nonEmpty(lastParam(params, "sslrootcert"));
+  const sslRootCert = urlRootCert ?? nonEmpty(env.PGSSLROOTCERT);
 
   if (sslMode !== undefined && !SSL_MODES.has(sslMode)) {
     throw new PrismaCliTlsConfigError(
@@ -95,7 +98,12 @@ const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRe
     );
   }
 
-  return { sslAccept: lastParam(params, "sslaccept"), sslMode, sslRootCert };
+  return {
+    sslAccept: lastParam(params, "sslaccept"),
+    sslMode,
+    sslRootCert,
+    rootCertInUrl: urlRootCert !== undefined,
+  };
 };
 
 /**
@@ -105,12 +113,14 @@ const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRe
  */
 const toPrismaSslMode = (sslMode: string): string => (sslMode === "disable" ? "disable" : REQUIRE);
 
-// A root certificate asks for verification under every mode that uses TLS and checks certificates: node-postgres
-// 8, the app's driver, verifies against it for allow, prefer and require too (libpq does for require).
-const requestsVerification = ({ sslMode, sslRootCert }: TTlsRequest): boolean =>
-  sslMode === VERIFY_CA ||
-  sslMode === VERIFY_FULL ||
-  (sslRootCert !== undefined && sslMode !== "disable" && sslMode !== NO_VERIFY);
+// A root certificate in the URL asks for verification under every mode that uses TLS and checks certificates:
+// node-postgres 8, the app's driver, verifies against it for allow, prefer and require too. PGSSLROOTCERT, which
+// pg does not read, keeps libpq's rule: it verifies only with require (and verify-ca/verify-full, or system).
+const requestsVerification = ({ sslMode, sslRootCert, rootCertInUrl }: TTlsRequest): boolean => {
+  if (sslMode === VERIFY_CA || sslMode === VERIFY_FULL || sslRootCert === SYSTEM_ROOT_CERT) return true;
+  if (sslRootCert === undefined) return false;
+  return rootCertInUrl ? sslMode !== "disable" && sslMode !== NO_VERIFY : sslMode === REQUIRE;
+};
 
 const resolveRootCertFile = (
   sslRootCert: string | undefined,

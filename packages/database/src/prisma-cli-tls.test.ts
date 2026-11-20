@@ -45,6 +45,21 @@ describe("resolvePrismaCliTls", () => {
     }
   );
 
+  test("keeps libpq's rule for PGSSLROOTCERT, which the app's pg does not read", () => {
+    expect(resolve(base, { PGSSLROOTCERT: caFile })).toEqual({
+      databaseUrl: base,
+      verifiesServerCertificate: false,
+    });
+    expect(resolve(`${base}?sslmode=prefer`, { PGSSLROOTCERT: caFile })).toEqual({
+      databaseUrl: `${base}?sslmode=require`,
+      verifiesServerCertificate: false,
+    });
+    expect(resolve(`${base}?sslmode=require`, { PGSSLROOTCERT: caFile })).toMatchObject({
+      verifiesServerCertificate: true,
+      rootCertFile: caFile,
+    });
+  });
+
   test("does not verify a root certificate under sslmode=disable or no-verify", () => {
     const disabled = `${base}?sslmode=disable&sslrootcert=${caFile}`;
     expect(resolve(disabled)).toEqual({ databaseUrl: disabled, verifiesServerCertificate: false });
