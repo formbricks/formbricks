@@ -182,7 +182,7 @@ const orderKeys = (
 /**
  * Pivot a two-grouping query result into a grid.
  *
- * Columns follow `columnOrder` (the survey's scale order), falling back to alphabetical by label.
+ * Columns follow `columnOrder` (the survey's scale order), falling back to the largest column first.
  * Rows follow `rowOrder` (the survey's statement order), falling back to the largest row first.
  * Cells with no records are 0, never blank. Shares are always of the row — the first grouping — so
  * for a matrix question each statement's cells add up to 100%, whichever way the grid is displayed.
@@ -218,8 +218,18 @@ export const buildMatrixPivot = ({
     columnKeys.add(c);
   }
 
-  const orderedColumns = orderKeys([...columnKeys], columnOrder, includeUnansweredColumns, (a, b) =>
-    formatColumnLabel(a).localeCompare(formatColumnLabel(b))
+  const columnWeights = new Map<string, number>();
+  for (const rowValues of values.values()) {
+    for (const [c, value] of rowValues) columnWeights.set(c, (columnWeights.get(c) ?? 0) + value);
+  }
+  // Columns without a natural order go largest first, like rows and like the bars of a bar chart.
+  const orderedColumns = orderKeys(
+    [...columnKeys],
+    columnOrder,
+    includeUnansweredColumns,
+    (a, b) =>
+      (columnWeights.get(b) ?? 0) - (columnWeights.get(a) ?? 0) ||
+      formatColumnLabel(a).localeCompare(formatColumnLabel(b))
   );
   const orderedRows = orderKeys(
     [...values.keys()],
