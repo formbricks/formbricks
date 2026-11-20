@@ -117,13 +117,10 @@ const categoryRulesOff = {
 };
 
 /*
- * The `.tsx` unit tests that predate `formbricks/no-tsx-unit-test` (CODING_STANDARDS.md, Testing
- * Guidelines), by repo-relative path. Remove an entry when its test goes; don't add one.
- */
-/*
  * Files whose zod schemas keep unknown keys (`formbricks/no-loose-schema`, ENG-7127), each with the
- * reason its open schemas never reach a Prisma write's data. The list only shrinks: a new open schema
- * needs a reason a reviewer accepts, added here in the same PR.
+ * reason its open schemas never reach a Prisma write's data. Only files whose every schema qualifies go
+ * here; in a shared types file, the one schema carries a disable comment with its reason instead, so a
+ * new open schema beside it still fails. The list only shrinks.
  */
 export const LOOSE_SCHEMA_ALLOWLIST = {
   "apps/web/app/api/v3/lib/bounded-parse.test.ts": "Test fixtures for the bounded parser; no write.",
@@ -137,16 +134,14 @@ export const LOOSE_SCHEMA_ALLOWLIST = {
     "MCP tool output schemas: describe what a tool returns, never parse input.",
   "apps/web/modules/mcp/tools/tag-output-schemas.ts":
     "MCP tool output schemas: describe what a tool returns, never parse input.",
-  "packages/types/surveys/types.ts":
-    "`ZSurveyMetadata`: extra keys are stored inside the `metadata` JSON value, not as write data.",
   "packages/workflows/src/handlers/run-detail.ts":
     "Reads stored run logs for display and picks named fields.",
-  "packages/workflows/src/types/common.ts":
-    "Builder UI metadata stored inside the workflow definition's JSON value, not as write data.",
-  "packages/workflows/src/types/runs.ts": "`ZWorkflowRunData`: run data the server writes as one JSON value.",
-  "packages/workflows/src/types/triggers/response-completed.ts":
-    "Trigger payload the server builds, kept inside the run data's JSON value.",
 };
+
+/*
+ * The `.tsx` unit tests that predate `formbricks/no-tsx-unit-test` (CODING_STANDARDS.md, Testing
+ * Guidelines), by repo-relative path. Remove an entry when its test goes; don't add one.
+ */
 
 export const TSX_UNIT_TEST_ALLOWLIST = [
   "apps/web/modules/auth/hooks/use-sign-out.test.tsx",

@@ -392,11 +392,14 @@ const keyOf = (node) => {
   return key?.type === "Literal" ? key.value : undefined;
 };
 
+// Merges per key at every depth, so a wider taint from one call site never hides behind a narrower one.
 const union = (a, b) => {
   if (a === true || b === true) return true;
   if (!a) return b;
   if (!b) return a;
-  return { ...a, ...b };
+  const merged = { ...a };
+  for (const [key, value] of Object.entries(b)) merged[key] = union(merged[key], value);
+  return merged;
 };
 
 const memberLabel = (label, key, deep) => {
@@ -839,14 +842,16 @@ const isRequestRead = (node) => {
   return object?.type === "MemberExpression" && keyOf(object) === "searchParams";
 };
 
-// `value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")`: a global character class whose every match is
-// prefixed with a backslash escapes the metacharacters, so the result matches only itself.
+// `value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")`: a global character class holding every
+// metacharacter, each match prefixed with a backslash, so the result matches only itself.
+const REGEXP_METACHARACTERS = [...String.raw`\^$.*+?()[]{}|`];
 const isRegExpEscape = (node) => {
   if (calleeName(node) !== "replace" && calleeName(node) !== "replaceAll") return false;
   const [pattern, replacement] = node.arguments.map(unwrapExpression);
+  const source = pattern?.type === "Literal" ? (pattern.regex?.pattern ?? "") : "";
   return (
-    pattern?.type === "Literal" &&
-    /^\[.*\]$/.test(pattern.regex?.pattern ?? "") &&
+    /^\[[^^].*\]$/.test(source) &&
+    REGEXP_METACHARACTERS.every((character) => source.includes(character)) &&
     pattern.regex.flags.includes("g") &&
     replacement?.type === "Literal" &&
     replacement.value === String.raw`\$&`
@@ -902,7 +907,9 @@ const noRequestRegexp = {
             } else if (
               node.type !== "CallExpression" ||
               !IMPLICIT_REGEXP_METHODS.has(name) ||
-              !calleeObject(node)
+              !calleeObject(node) ||
+              // The String methods take one argument; query-key factories and search clients often more.
+              node.arguments.length !== 1
             ) {
               return;
             }

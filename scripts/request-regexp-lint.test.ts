@@ -94,6 +94,18 @@ export const run = ({ parsedInput }: any) => parsedInput.patterns.map(compile);
 `,
   "string-search.ts": `export const run = ({ parsedInput }: any) => parsedInput.text.search(parsedInput.pattern);
 `,
+  // A class without every metacharacter leaves the others live.
+  "partial-escape.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[.]/g, "\\\\$&")).test("x");
+`,
+  // Two call sites pass the value at different depths; the whole-value one still counts.
+  "helper-two-call-sites.ts": `export async function POST(req: Request) {
+  const body = await req.json();
+  use({ p: body.pattern });
+  use({ p: { x: body.other } });
+}
+const use = (input: { p: any }) => new RegExp(input.p).test("x");
+`,
 };
 
 const allowed: Record<string, string> = {
@@ -104,6 +116,13 @@ export const run = ({ parsedInput }: any) => new RegExp(escapeRegExp(parsedInput
   const escaped = parsedInput.search.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
   return new RegExp(escaped, "i").test(parsedInput.text);
 };
+`,
+  "regexp-escape-builtin.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp((RegExp as any).escape(parsedInput.search)).test("x");
+`,
+  // A two-argument search() is not the String method (a query-key factory, a search client).
+  "two-argument-search.ts": `declare const keys: { search: (q: string, page: number) => unknown };
+export const run = ({ parsedInput }: any) => keys.search(parsedInput.q, 1);
 `,
   "length-only.ts": `export const run = ({ parsedInput }: any) => new RegExp(\`^.{\${parsedInput.name.length}}$\`);
 `,

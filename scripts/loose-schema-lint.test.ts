@@ -55,11 +55,7 @@ describe(RULE, () => {
       "apps/web/modules/mcp/tools/response-schemas.ts",
       "apps/web/modules/mcp/tools/survey-output-schemas.ts",
       "apps/web/modules/mcp/tools/tag-output-schemas.ts",
-      "packages/types/surveys/types.ts",
       "packages/workflows/src/handlers/run-detail.ts",
-      "packages/workflows/src/types/common.ts",
-      "packages/workflows/src/types/runs.ts",
-      "packages/workflows/src/types/triggers/response-completed.ts",
     ]);
   });
 

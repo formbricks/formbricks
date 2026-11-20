@@ -46,6 +46,7 @@ export const ZWorkflowRunNotTakenStep = z.object({
 });
 export type TWorkflowRunNotTakenStep = z.infer<typeof ZWorkflowRunNotTakenStep>;
 
+// oxlint-disable-next-line formbricks/no-loose-schema -- run data the server writes as one JSON value.
 export const ZWorkflowRunData = z
   .object({
     trigger: ZWorkflowTriggerRunPayload.optional(),
