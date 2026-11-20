@@ -1,7 +1,7 @@
 "use client";
 
 import { CopyIcon, InboxIcon, PencilIcon } from "lucide-react";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowWebhookResource } from "@formbricks/workflows";
@@ -15,19 +15,18 @@ import {
 } from "@/modules/ee/workflows/components/inspector/webhook-trigger-labels";
 import { WorkflowFieldError } from "@/modules/ee/workflows/components/inspector/workflow-field";
 import { JsonEditor } from "@/modules/ee/workflows/components/json-editor/json-editor";
+import { useJsonSampleDraft } from "@/modules/ee/workflows/hooks/use-json-sample-draft";
 import { useStoredTestPayload } from "@/modules/ee/workflows/hooks/use-stored-test-payload";
 import { useWorkflowWebhookMutations } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { formatCallerIp } from "@/modules/ee/workflows/lib/caller-ip";
 import {
   formatPayload,
   maskWebhookSecretUrl,
-  parsePastedSample,
   toVariableListRows,
 } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 
-const SAVE_DELAY_MS = 800;
 const EXAMPLE_BODY = '{"customer":{"email":"jane@example.com"}}';
 
 export type TPayloadView = "variables" | "json";
@@ -244,45 +243,22 @@ const WaitingForCall = ({
   );
 };
 
-/**
- * The expected payload's JSON editor. Saves a valid object a moment after typing stops, and clears the
- * Test run drawer's browser copy so Test run sends what was saved.
- */
+/** The expected payload's editor. A save clears the Test run drawer's browser copy, so Test run sends it. */
 const usePayloadEditor = (workflowId: string) => {
   const { t } = useTranslation();
   const { setSample } = useWorkflowWebhookMutations(workflowId);
   const [, setStoredTestPayload] = useStoredTestPayload(workflowId);
-  const [draft, setDraft] = useState<string | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    },
-    []
-  );
-
-  const save = (payload: Record<string, unknown>, onSaved?: () => void) =>
+  const editor = useJsonSampleDraft((payload, { onSuccess }) =>
     setSample.mutate(payload, {
       onSuccess: () => {
-        setDraft(null);
         setStoredTestPayload(null);
-        onSaved?.();
+        onSuccess();
       },
       onError: (error) =>
         toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.webhook_payload_save_failed"))),
-    });
-
-  const edit = (next: string, onSaved?: () => void) => {
-    setDraft(next);
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    const check = next.trim() === "" ? null : parsePastedSample(next);
-    if (!check?.ok) return;
-    saveTimer.current = setTimeout(() => save(check.payload, onSaved), SAVE_DELAY_MS);
-  };
-
-  const parsed = draft === null || draft.trim() === "" ? null : parsePastedSample(draft);
-  return { draft, setDraft, parsed, edit, save, isPending: setSample.isPending };
+    })
+  );
+  return { ...editor, isPending: setSample.isPending };
 };
 
 type TEditor = ReturnType<typeof usePayloadEditor>;
@@ -292,12 +268,10 @@ const PayloadJsonEditor = ({
   editor,
   sample,
   canSetSample,
-  onSaved,
 }: Readonly<{
   editor: TEditor;
   sample: TExpectedPayload | null;
   canSetSample: boolean;
-  onSaved: () => void;
 }>) => {
   const { t } = useTranslation();
   const pasteErrorMessage = usePasteErrorMessage();
@@ -308,7 +282,7 @@ const PayloadJsonEditor = ({
         id="workflow-webhook-payload"
         label={t("workspace.workflows.webhook_expected_payload")}
         value={editor.draft ?? (sample ? formatPayload(sample.payload) : "")}
-        onChange={canSetSample ? (next) => editor.edit(next, onSaved) : undefined}
+        onChange={canSetSample ? editor.edit : undefined}
         allowEmpty
         placeholder='{ "customer": { "email": "jane@example.com" } }'
       />
@@ -325,28 +299,16 @@ const PayloadJsonEditor = ({
 /** No expected payload and nothing received yet: write one, or send a test call. */
 const NoPayloadCard = ({
   url,
-  editor,
   canSetSample,
-  isWriting,
   onWrite,
-  onSaved,
 }: Readonly<{
   url: string;
-  editor: TEditor;
   canSetSample: boolean;
-  isWriting: boolean;
   onWrite: () => void;
-  onSaved: () => void;
 }>) => (
   <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
     <PayloadHeader aside={<RequiredTag />} />
-    {isWriting ? (
-      <div className="border-t border-slate-100 p-3">
-        <PayloadJsonEditor editor={editor} sample={null} canSetSample={canSetSample} onSaved={onSaved} />
-      </div>
-    ) : (
-      <WaitingForCall url={url} canSetSample={canSetSample} onWrite={onWrite} />
-    )}
+    <WaitingForCall url={url} canSetSample={canSetSample} onWrite={onWrite} />
   </section>
 );
 
@@ -442,32 +404,34 @@ const NewerCallNotice = ({
   );
 };
 
-/** An expected payload is set. A newer call with different fields is offered, never applied on its own. */
-const SetPayloadCard = ({
+/**
+ * The expected payload being written, or set. One card for both, so the JSON editor stays mounted, with
+ * its focus and cursor, when the first save sets the payload. A newer call with different fields is
+ * offered, never applied on its own.
+ */
+const ExpectedPayloadCard = ({
   sample,
   lastCall,
   editor,
   canSetSample,
 }: Readonly<{
-  sample: TExpectedPayload;
+  sample: TExpectedPayload | null;
   lastCall: TLastCall | null;
   editor: TEditor;
   canSetSample: boolean;
 }>) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
-  const [view, setView] = useState<TPayloadView>("variables");
+  // Opened to write the first payload: the JSON view, so the editor is still there once it saves.
+  const [view, setView] = useState<TPayloadView>(sample ? "variables" : "json");
   const [isReviewing, setIsReviewing] = useState(false);
   const [dismissedCallAt, setDismissedCallAt] = useState<string | null>(null);
-  const newerCall = isNewerDifferentCall(lastCall, sample, dismissedCallAt) ? lastCall : null;
-  const footer =
-    editor.draft !== null && editor.parsed?.ok === true
-      ? t("workspace.workflows.webhook_payload_saving")
-      : t("workspace.workflows.webhook_expected_payload_owned", { time: relativeTime(sample.updatedAt) });
+  const newerCall = sample && isNewerDifferentCall(lastCall, sample, dismissedCallAt) ? lastCall : null;
+  const reviewedCall = isReviewing ? newerCall : null;
 
   return (
     <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <PayloadHeader aside={<ViewSwitch value={view} onChange={setView} />} />
+      <PayloadHeader aside={sample ? <ViewSwitch value={view} onChange={setView} /> : <RequiredTag />} />
       {newerCall ? (
         <NewerCallNotice
           call={newerCall}
@@ -482,23 +446,23 @@ const SetPayloadCard = ({
         />
       ) : null}
       <div className="border-t border-slate-100">
-        <ExpectedPayloadBody
-          sample={sample}
-          view={view}
-          reviewedCall={isReviewing ? newerCall : null}
-          jsonEditor={
-            <PayloadJsonEditor
-              editor={editor}
-              sample={sample}
-              canSetSample={canSetSample}
-              onSaved={() => {}}
-            />
-          }
-        />
+        {!sample || (view === "json" && !reviewedCall) ? (
+          <div className="p-3">
+            <PayloadJsonEditor editor={editor} sample={sample} canSetSample={canSetSample} />
+          </div>
+        ) : (
+          <ExpectedPayloadBody sample={sample} view={view} reviewedCall={reviewedCall} />
+        )}
       </div>
-      <footer className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        {footer}
-      </footer>
+      {sample ? (
+        <footer className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          {editor.hasUnsavedEdit
+            ? t("workspace.workflows.webhook_payload_saving")
+            : t("workspace.workflows.webhook_expected_payload_owned", {
+                time: relativeTime(sample.updatedAt),
+              })}
+        </footer>
+      ) : null}
     </section>
   );
 };
@@ -529,10 +493,13 @@ export const WebhookPayloadSection = ({
     editor.setDraft(initial);
   };
 
-  if (sample) {
-    return <SetPayloadCard sample={sample} lastCall={lastCall} editor={editor} canSetSample={canSetSample} />;
+  // Stays on the same card when the first save sets the payload, so typing carries on uninterrupted.
+  if (sample || isWriting) {
+    return (
+      <ExpectedPayloadCard sample={sample} lastCall={lastCall} editor={editor} canSetSample={canSetSample} />
+    );
   }
-  if (lastCall && !isWriting) {
+  if (lastCall) {
     return (
       <ReceivedCallCard
         lastCall={lastCall}
@@ -542,29 +509,18 @@ export const WebhookPayloadSection = ({
       />
     );
   }
-  return (
-    <NoPayloadCard
-      url={url}
-      editor={editor}
-      canSetSample={canSetSample}
-      isWriting={isWriting}
-      onWrite={() => startWriting("")}
-      onSaved={() => setIsWriting(false)}
-    />
-  );
+  return <NoPayloadCard url={url} canSetSample={canSetSample} onWrite={() => startWriting("")} />;
 };
 
-/** The set expected payload: the call under review, the JSON editor, or the Variables. */
+/** The set expected payload when the editor isn't shown: the call under review, or the Variables. */
 const ExpectedPayloadBody = ({
   sample,
   view,
   reviewedCall,
-  jsonEditor,
 }: Readonly<{
   sample: TExpectedPayload;
   view: TPayloadView;
   reviewedCall: TLastCall | null;
-  jsonEditor: ReactNode;
 }>) => {
   const { t } = useTranslation();
   if (reviewedCall) {
@@ -577,7 +533,6 @@ const ExpectedPayloadBody = ({
       </>
     );
   }
-  if (view === "json") return <div className="p-3">{jsonEditor}</div>;
   return (
     <>
       <VariableRows variables={sample.variables} />

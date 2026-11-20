@@ -1,7 +1,7 @@
 "use client";
 
 import { PencilIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type TWorkflowSampleListItem, detectWebhookVariables } from "@formbricks/workflows";
@@ -18,11 +18,10 @@ import {
 } from "@/modules/ee/workflows/components/inspector/webhook-trigger-labels";
 import { WorkflowFieldError } from "@/modules/ee/workflows/components/inspector/workflow-field";
 import { JsonEditor } from "@/modules/ee/workflows/components/json-editor/json-editor";
+import { useJsonSampleDraft } from "@/modules/ee/workflows/hooks/use-json-sample-draft";
 import { useSetExpectedResponse } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
-import { formatPayload, parsePastedSample } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
+import { formatPayload } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 import { Button } from "@/modules/ui/components/button";
-
-const SAVE_DELAY_MS = 800;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -37,35 +36,14 @@ const getObjectBody = (entry: TWorkflowSampleListItem | null): Record<string, un
 const useResponseEditor = (workflowId: string, stepId: string) => {
   const { t } = useTranslation();
   const mutation = useSetExpectedResponse(workflowId, stepId);
-  const [draft, setDraft] = useState<string | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    },
-    []
-  );
-
-  const save = (body: Record<string, unknown>, onSaved?: () => void) =>
+  const editor = useJsonSampleDraft((body, { onSuccess }) =>
     mutation.mutate(body, {
-      onSuccess: () => {
-        setDraft(null);
-        onSaved?.();
-      },
+      onSuccess,
       onError: (error) =>
         toast.error(getV3ApiErrorMessage(error, t("workspace.workflows.http_response_fields_save_failed"))),
-    });
-
-  const edit = (next: string) => {
-    setDraft(next);
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    const check = next.trim() === "" ? null : parsePastedSample(next);
-    if (!check?.ok) return;
-    saveTimer.current = setTimeout(() => save(check.payload), SAVE_DELAY_MS);
-  };
-
-  const parsed = draft === null || draft.trim() === "" ? null : parsePastedSample(draft);
-  return { draft, setDraft, parsed, edit, save, isPending: mutation.isPending };
+    })
+  );
+  return { ...editor, isPending: mutation.isPending };
 };
 
 type TResponseEditor = ReturnType<typeof useResponseEditor>;
@@ -94,7 +72,7 @@ const ResponseBody = ({
           id={`workflow-http-response-fields-${stepId}`}
           label={t("workspace.workflows.http_response_fields")}
           value={editor?.draft ?? (body ? formatPayload(body) : "")}
-          onChange={editor && isEditable ? (next) => editor.edit(next) : undefined}
+          onChange={editor && isEditable ? editor.edit : undefined}
           allowEmpty
           placeholder='{ "id": "tk_123", "status": "open" }'
         />
@@ -296,7 +274,7 @@ export const HttpResponseFieldsCard = ({
       )}
       {expected ? (
         <footer className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-          {editor.draft !== null && editor.parsed?.ok === true
+          {editor.hasUnsavedEdit
             ? t("workspace.workflows.webhook_payload_saving")
             : t("workspace.workflows.http_response_fields_owned", {
                 time: relativeTime(expected.updatedAt),
