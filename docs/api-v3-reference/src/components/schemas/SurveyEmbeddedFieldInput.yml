@@ -16,9 +16,9 @@ description: >
 
 
   Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string`,
-  `number`, `date` or `boolean` (a computed date is stored as an ISO 8601 UTC string; survey logic
-  stores a computed boolean as a JSON `true` / `false`, while a v3 response write can store it as the
-  string `"true"` / `"false"`; both are left out of the survey definition's legacy `variables`, not out
+  `number`, `date` or `boolean` (a computed date is stored as an ISO 8601 UTC string; a computed
+  boolean is stored as a JSON `true` / `false`, by survey logic and by a v3 response write alike;
+  both are left out of the survey definition's legacy `variables`, not out
   of a response's `variables` map); `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also
   be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for
   `hiddenFields.fieldIds`). No text value may contain a NULL byte (`\u0000`).
