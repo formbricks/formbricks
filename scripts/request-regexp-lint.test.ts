@@ -106,9 +106,9 @@ export const run = ({ parsedInput }: any) => parsedInput.patterns.map(compile);
   "escape-two-classes.ts": `export const run = ({ parsedInput }: any) =>
   new RegExp(parsedInput.search.replace(/[d]|[^\\\\^$.*+?()[\\]{}|]/g, "\\\\$&")).test("x");
 `,
-  // Under the v flag, && intersects the classes, so only ")" is escaped.
+  // Under the v flag, && intersects every member down to nothing, so nothing is escaped.
   "escape-set-operation.ts": `export const run = ({ parsedInput }: any) =>
-  new RegExp(parsedInput.search.replace(/[[\\\\\\^\\$\\.\\*\\+\\?\\(\\)\\[\\]\\{\\}\\|]&&[\\)]]/gv, "\\\\$&")).test("x");
+  new RegExp(parsedInput.search.replace(/[\\\\&&\\^&&\\$&&\\.&&\\*&&\\+&&\\?&&\\(&&\\)&&\\[&&\\]&&\\{&&\\}&&\\|]/gv, "\\\\$&")).test("x");
 `,
   // The y flag stops at the first character that is not a metacharacter.
   "escape-sticky.ts": `export const run = ({ parsedInput }: any) =>
