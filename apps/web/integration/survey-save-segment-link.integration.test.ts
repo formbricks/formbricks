@@ -276,23 +276,6 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
     expect(await segmentIdOf(ids.R)).toBe(ids.shared);
   });
 
-  // The targeting card's "Edit segment" after "Clone & edit": a shared segment no other survey uses, whose
-  // edits ride the editor's Save and the draft autosave.
-  test("a save writes the filters of a shared segment only this survey uses", async () => {
-    await prisma.survey.update({ where: { id: ids.W }, data: { segmentId: ids.shared } });
-    const w = await loadSurvey(ids.W);
-
-    await updateSurvey(
-      { ...w, segment: { ...w.segment!, filters: EMAIL_FILTER } as never },
-      { targetingActor: member() }
-    );
-
-    expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.shared } })).filters).toEqual(
-      EMAIL_FILTER
-    );
-    expect(await segmentIdOf(ids.R)).toBe(ids.segmentR);
-  });
-
   test("surveys already on the segment stay on it", async () => {
     await prisma.survey.update({ where: { id: ids.R }, data: { segmentId: ids.shared } });
     await prisma.survey.update({ where: { id: ids.W }, data: { segmentId: ids.shared } });

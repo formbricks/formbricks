@@ -856,7 +856,7 @@ const ensureAppSurveySegment = async (currentSurvey: TSurvey, surveyId: string):
 };
 
 /**
- * ENG-6957: the save changes this survey's targeting only. An app survey writes the segment it alone uses
+ * ENG-6957: the save changes this survey's targeting only. An app survey writes its own private segment
  * or links itself to a shared one; any other survey leaves its stored segment, and its private segment is
  * deleted unless another survey still uses it.
  */
@@ -1396,27 +1396,27 @@ export class SurveySegmentChangedError extends Error {
 }
 
 /**
- * ENG-6957: whether `segment` is the segment only this survey uses: the one it is targeted with, and
- * connected to no other survey. It is the only segment a survey save writes: its private segment, or a
- * shared one no other survey uses yet (the targeting card's "Edit segment", after "Clone & edit"), whose
- * edits also ride the save. A segment other surveys use changes their targeting too, so it is edited
- * through the segment endpoints, which hold `workspace.write` and check each survey (`updateSegmentAction`).
+ * ENG-6957: whether `segment` is the survey's own private segment: the one it is targeted with, private,
+ * and used by no other survey. It is the only segment a survey save writes. A shared segment changes the
+ * targeting of every survey that uses it, so it is edited through the segment endpoints, which hold
+ * `workspace.write` and check each survey (`updateSegmentAction`).
  */
-const isSegmentOnlyThisSurveyUses = (
+const isOwnPrivateSegment = (
   survey: Pick<TSurvey, "id" | "segment">,
   segmentId: string
 ): survey is Pick<TSurvey, "id"> & { segment: NonNullable<TSurvey["segment"]> } =>
   !!survey.segment &&
   survey.segment.id === segmentId &&
+  survey.segment.isPrivate &&
   survey.segment.surveys.every((connectedId) => connectedId === survey.id);
 
 /**
  * ENG-6957: an app survey's save, applied to targeting. `segment` comes from the client, so the stored
  * survey decides what it may do, and only this survey's targeting changes:
- * - the segment only it uses (`isSegmentOnlyThisSurveyUses`), private or shared: the filters are written;
+ * - its own private segment (`isOwnPrivateSegment`): the filters are written;
  * - another segment of the workspace that `segment.surveys` names this survey on: the survey is linked
  *   to it as stored. A private segment belongs to its own survey and is refused;
- * - anything else, a current segment other surveys use included: nothing is written.
+ * - anything else, its current shared segment included: nothing is written.
  * The other ids in `segment.surveys` are ignored: connecting them would re-point surveys the saver may
  * not write or see. `assertSurveySegmentBelongsToWorkspace` has already checked `segment.id`'s workspace.
  */
@@ -1428,7 +1428,7 @@ const saveAppSurveySegment = async (
   // A segment without an id names no stored segment: there is nothing to write or link.
   if (!segment.id) return;
 
-  if (isSegmentOnlyThisSurveyUses(survey, segment.id)) {
+  if (isOwnPrivateSegment(survey, segment.id)) {
     await assertTargetingAddsNoHiddenSurvey(
       survey.workspaceId,
       segment.filters,
@@ -1438,14 +1438,14 @@ const saveAppSurveySegment = async (
     );
     let written: { count: number };
     try {
-      // Only the filters: a private segment's title names the survey (`connectOrCreate` finds the segment
-      // by it), and a segment is renamed or made shared through the segment endpoints. The `where` repeats
-      // the read: a segment another survey joined, or made shared or private, since is left alone.
+      // Only the filters: the title names the survey (`connectOrCreate` finds the segment by it), and a
+      // segment is made shared through the segment endpoints. The `where` repeats the ownership check,
+      // so a segment shared since the survey was read is left alone.
       written = await prisma.segment.updateMany({
         where: {
           id: segment.id,
           workspaceId: survey.workspaceId,
-          isPrivate: survey.segment.isPrivate,
+          isPrivate: true,
           surveys: { some: { id: survey.id }, every: { id: survey.id } },
           // The filters the visibility check compared against: a segment changed since is left alone.
           filters: { equals: survey.segment.filters as unknown as Prisma.InputJsonValue },

@@ -785,56 +785,10 @@ describe("Tests for updateSurvey", () => {
       );
     });
 
-    // The targeting card's "Edit segment" on a shared segment no other survey uses (after "Clone &
-    // edit") rides the survey save, autosave included: its filters are written as a private segment's.
-    test("writes the filters of a shared segment only this survey uses", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment({ isPrivate: false }));
-      prisma.segment.findUnique.mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
-      } as never);
-      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
-      const filters = [
-        {
-          id: "clfilter0000000000000001",
-          connector: null,
-          resource: {
-            id: "clfilterres0000000000001",
-            root: { type: "attribute", contactAttributeKey: "email" },
-            qualifier: { operator: "equals" },
-            value: "a@b.co",
-          },
-        },
-      ];
-
-      await updateSurveyInternal(
-        {
-          ...updateSurveyInput,
-          status: "draft",
-          type: "app",
-          segment: { ...OWN_PRIVATE_SEGMENT, isPrivate: false, filters },
-        } as never,
-        true
-      );
-
-      expect(prisma.segment.updateMany).toHaveBeenCalledWith({
-        where: {
-          id: OWN_PRIVATE_SEGMENT.id,
-          workspaceId: updateSurveyInput.workspaceId,
-          isPrivate: false,
-          surveys: { some: { id: updateSurveyInput.id }, every: { id: updateSurveyInput.id } },
-          filters: { equals: [] },
-        },
-        data: { filters },
-      });
-    });
-
     // ENG-6957: a segment other surveys use is edited through the segment endpoints, which hold
     // `workspace.write`; nor does a save write a segment the survey is not on.
     test.each([
-      [
-        "a shared segment another survey also uses",
-        { isPrivate: false, surveys: [{ id: updateSurveyInput.id }, { id: "clothersurvey00000000001" }] },
-      ],
+      ["a shared segment the survey is on", { isPrivate: false }],
       [
         "a private segment another survey also uses",
         { surveys: [{ id: updateSurveyInput.id }, { id: "clothersurvey00000000001" }] },
