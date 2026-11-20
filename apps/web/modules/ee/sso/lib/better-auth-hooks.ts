@@ -15,6 +15,7 @@ import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
+import { canonicalAccountIssuer } from "./constants";
 import { resolveSsoEmailVerifiedForCreate } from "./email-verification-policy";
 import { type TSsoIdentityProvider, normalizeSsoProvider } from "./provider-normalization";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
@@ -330,6 +331,12 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
   },
   account: {
     create: {
+      // Better Auth 1.7.7 no longer writes `Account.issuer`, but a 1.7.0 pod (a rolling deploy or a
+      // rollback) still finds accounts by it and cannot see a row without one. Stamp the value 1.7.0
+      // would have written, credential rows included. Remove once a rollback to 1.7.0 is off
+      // the table.
+      before: (account) =>
+        Promise.resolve({ data: { ...account, issuer: canonicalAccountIssuer(account.providerId) } }),
       after: async (account, context) => {
         if (!context || account.providerId === "credential") return; // email/password, not SSO
         const identityProvider = normalizeSsoProvider(account.providerId);
