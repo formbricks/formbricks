@@ -2112,6 +2112,9 @@ describe("Set value on a true/false field through v3 (ENG-6973)", () => {
       },
     ];
 
+    // The same step before the first question: start rules read the stored field too.
+    survey.startLogic = structuredClone(survey.blocks[0].logic);
+
     const preparation = prepareV3SurveyPatchInput(survey, { status: "inProgress" });
 
     expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);

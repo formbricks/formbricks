@@ -359,9 +359,17 @@ function toCodeInvalidParam(issue: TCodeIssue): InvalidParam {
  * block or ending that does not exist is a `dangling_reference` on the action's `target`, like a
  * block rule's; the rest (an action other than a jump or Set value, an answer read before anything is
  * answered, an unknown field) is reported by its reason at the exact path.
+ *
+ * A document without `embeddedFields` is judged against the stored typed rows, as the reference check
+ * is: its legacy `variables` cannot carry a computed date or true/false field, so a rule that sets one
+ * would read as naming a field that does not exist.
  */
-export function getV3SurveyStartLogicInvalidParams(document: TV3SurveyDocument): InvalidParam[] {
-  return validateStartLogic(document).map((issue) => {
+export function getV3SurveyStartLogicInvalidParams(
+  document: TV3SurveyDocument,
+  storedEmbeddedFields?: readonly TV3TypedEmbeddedField[]
+): InvalidParam[] {
+  const embeddedFields = getDocumentTypedFields(document, storedEmbeddedFields);
+  return validateStartLogic({ ...document, embeddedFields }).map((issue) => {
     const name = issue.path.join(".");
     const target = getStartLogicJumpTarget(document, issue.path);
     if (issue.code === "custom" && issue.params?.missingLogicDestination === "jump" && target) {
@@ -490,7 +498,7 @@ export function validateV3SurveyDocument(
   invalidParams.push(
     ...getV3SurveyCyclicLogicInvalidParams(document.blocks, precedence),
     ...getV3SurveyCodeInvalidParams(document),
-    ...getV3SurveyStartLogicInvalidParams(document)
+    ...getV3SurveyStartLogicInvalidParams(document, storedEmbeddedFields)
   );
 
   if (invalidParams.length > 0) {
