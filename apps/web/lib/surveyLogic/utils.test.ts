@@ -661,6 +661,59 @@ describe("surveyLogic", () => {
     expect(result.calculations.notfound).toBeUndefined();
   });
 
+  test("performActions assigns a numeric answer or hidden field to a number variable as a number (ENG-7378)", () => {
+    const survey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      embeddedFields: embeddedFieldsFromLegacyInput({
+        variables: [
+          { id: "fromAnswer", name: "from_answer", type: "number", value: 0 },
+          { id: "fromHidden", name: "from_hidden", type: "number", value: 0 },
+        ],
+      }),
+    };
+    const data: TResponseData = { q: "42", f: "2.5" };
+    const actions: TSurveyBlockLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "fromAnswer",
+        operator: "assign",
+        value: { type: "element", value: "q" },
+      },
+      {
+        id: "a2",
+        objective: "calculate",
+        variableId: "fromHidden",
+        operator: "assign",
+        value: { type: "hiddenField", value: "f" },
+      },
+    ];
+    expect(performActions(survey, actions, data, {}).calculations).toEqual({
+      fromAnswer: 42,
+      fromHidden: 2.5,
+    });
+  });
+
+  // `Number("")` is 0, so a blank would read as a real 0 and an `isSkipped` condition would miss it.
+  test("performActions keeps a blank answer blank when assigning to a number variable (ENG-7378)", () => {
+    const survey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      embeddedFields: embeddedFieldsFromLegacyInput({
+        variables: [{ id: "score", name: "score", type: "number", value: 5 }],
+      }),
+    };
+    const actions: TSurveyBlockLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "score",
+        operator: "assign",
+        value: { type: "hiddenField", value: "plan" },
+      },
+    ];
+    expect(performActions(survey, actions, { plan: "" }, {}).calculations).toEqual({ score: "" });
+  });
+
   test("getUpdatedActionBody returns same action if objective matches", () => {
     const base: TSurveyLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     expect(getUpdatedActionBody(base, "requireAnswer")).toBe(base);

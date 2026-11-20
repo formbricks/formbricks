@@ -669,6 +669,14 @@ export const performActions = (
   return { jumpTarget, requiredElementIds, calculations };
 };
 
+/**
+ * Whether an answer or hidden field reads as a number. Blank text is not one: `Number("")` is 0, which
+ * would turn an empty field into a real 0 and stop an `isSkipped` condition from seeing it. Same rule
+ * as the survey bundle (packages/surveys/src/lib/logic.ts).
+ */
+const isNumericOperand = (val: string | number): boolean =>
+  typeof val === "number" || (val.trim() !== "" && !Number.isNaN(Number(val)));
+
 /** The value a one-step calculation applies: a static value, a variable, or an answer. */
 const getCalculationOperand = (
   action: TActionCalculate | TBlockActionCalculate,
@@ -697,7 +705,7 @@ const getCalculationOperand = (
     case "hiddenField": {
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && !Number.isNaN(Number(val))) {
+        if (dataType === "number" && isNumericOperand(val)) {
           operandValue = Number(val);
         } else {
           operandValue = val;
