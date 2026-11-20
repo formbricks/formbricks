@@ -70,10 +70,8 @@ describe("loggableError", () => {
   test("logs an error by name and frames, never its message", () => {
     const logged = loggableError(new RangeError(SECRET));
 
-    expect(logged).toMatchObject({
-      errName: "RangeError",
-      errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
-    });
+    expect(logged).toMatchObject({ errName: "RangeError" });
+    expect((logged as { errStack?: string }).errStack).toMatch(/^ +at \S.*(?:\n +at \S.*)*$/);
     expect(JSON.stringify(logged)).not.toContain(SECRET);
   });
 

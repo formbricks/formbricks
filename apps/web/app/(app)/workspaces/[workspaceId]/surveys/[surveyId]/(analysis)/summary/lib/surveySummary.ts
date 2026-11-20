@@ -608,20 +608,24 @@ const summarizePictureSelectionElement = (
   };
 };
 
-const summarizeRatingElement = (
-  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Rating }>,
+/** A Rating or CES element: the average, the count of each scale value and the dismissals. */
+const summarizeNumericScaleElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Rating | TSurveyElementTypeEnum.CES }>,
   responses: TSurveySummaryResponse[]
 ): TSurveySummary["summary"][number] | undefined => {
   const stats = computeNumericScaleStats(element.id, element.range, responses);
-
-  return {
-    type: element.type,
-    element,
+  const metrics = {
     average: stats.average,
     responseCount: stats.totalResponseCount,
     choices: stats.choices,
     dismissed: { count: stats.dismissed },
   };
+
+  // Narrowed per type, so the compiler checks each `type` and `element` pair against its own summary.
+  if (element.type === TSurveyElementTypeEnum.CES) {
+    return { type: element.type, element, ...metrics };
+  }
+  return { type: element.type, element, ...metrics };
 };
 
 const summarizeNPSElement = (
@@ -718,22 +722,6 @@ const summarizeCSATElement = (
     choices: stats.choices,
     dismissed: { count: stats.dismissed },
     csat: { satisfiedCount, satisfiedPercentage },
-  };
-};
-
-const summarizeCESElement = (
-  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.CES }>,
-  responses: TSurveySummaryResponse[]
-): TSurveySummary["summary"][number] | undefined => {
-  const stats = computeNumericScaleStats(element.id, element.range, responses);
-
-  return {
-    type: element.type,
-    element,
-    average: stats.average,
-    responseCount: stats.totalResponseCount,
-    choices: stats.choices,
-    dismissed: { count: stats.dismissed },
   };
 };
 
@@ -1168,13 +1156,12 @@ const summarizeElement = (
     case TSurveyElementTypeEnum.PictureSelection:
       return summarizePictureSelectionElement(element, responses);
     case TSurveyElementTypeEnum.Rating:
-      return summarizeRatingElement(element, responses);
+    case TSurveyElementTypeEnum.CES:
+      return summarizeNumericScaleElement(element, responses);
     case TSurveyElementTypeEnum.NPS:
       return summarizeNPSElement(element, responses);
     case TSurveyElementTypeEnum.CSAT:
       return summarizeCSATElement(element, responses);
-    case TSurveyElementTypeEnum.CES:
-      return summarizeCESElement(element, responses);
     case TSurveyElementTypeEnum.CTA:
       return summarizeCTAElement(element, elements, responses, dropOff);
     case TSurveyElementTypeEnum.Consent:

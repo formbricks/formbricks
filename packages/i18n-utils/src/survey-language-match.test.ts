@@ -3,6 +3,7 @@ import {
   DEFAULT_SURVEY_LANGUAGE_KEY,
   MAX_BROWSER_LANGUAGE_CANDIDATES,
   type TMatchableSurveyLanguage,
+  getLatinAmericanSpanishRequests,
   matchSurveyLanguage,
   resolveSurveyLanguage,
 } from "./survey-language-match";
@@ -30,6 +31,15 @@ describe("matchSurveyLanguage — worked examples", () => {
     ["en-GB", ["en-US"], "en-US"],
     ["zh-TW", ["zh-Hans-CN"], null],
     ["zh-TW", ["zh-Hans-CN", "zh-Hant-TW"], "zh-Hant-TW"],
+    // ENG-3894: Latin American Spanish prefers es-419 over the es-ES base default.
+    ["es-MX", ["es-ES", "es-419"], "es-419"],
+    ["es-AR", ["es-419", "es-ES"], "es-419"],
+    ["es_co", ["es-ES", "es-419"], "es-419"],
+    ["es-US", ["es-ES", "es-419"], "es-419"],
+    ["es-MX", ["es-ES"], "es-ES"],
+    ["es", ["es-419", "es-ES"], "es-ES"],
+    ["es-GQ", ["es-419", "es-ES"], "es-ES"],
+    ["es-ES", ["es-419"], "es-419"],
   ])("%s on a survey with %j resolves to %s", (requested, codes, expected) => {
     expect(matchSurveyLanguage(withDefault(...codes.map((code) => language(code))), requested)).toBe(
       expected
@@ -119,6 +129,26 @@ describe("matchSurveyLanguage — tiers", () => {
     expect(matchSurveyLanguage(languages, "!!")).toBeNull();
     expect(matchSurveyLanguage(languages, "xx")).toBeNull();
     expect(matchSurveyLanguage([], "de")).toBeNull();
+  });
+});
+
+describe("matchSurveyLanguage — Latin American Spanish needs a plain regional tag", () => {
+  test("a tag with a script, variant or extension keeps the es-ES base default", () => {
+    const spanish = withDefault(language("es-ES"), language("es-419"));
+    expect(matchSurveyLanguage(spanish, "es-MX-u-nu-latn")).toBe("es-ES");
+    expect(matchSurveyLanguage(spanish, "es-MX-fonipa")).toBe("es-ES");
+    expect(matchSurveyLanguage(spanish, "es-AR-x-test")).toBe("es-ES");
+  });
+});
+
+describe("getLatinAmericanSpanishRequests", () => {
+  test("lists the Latin American Spanish tags only for a survey with an enabled es-419", () => {
+    expect(getLatinAmericanSpanishRequests(withDefault(language("es_419")))).toEqual(
+      expect.arrayContaining(["es-MX", "es-AR", "es-US", "es-419"])
+    );
+    expect(getLatinAmericanSpanishRequests(withDefault(language("es-419")))).not.toContain("es-ES");
+    expect(getLatinAmericanSpanishRequests(withDefault(language("es-419", { enabled: false })))).toEqual([]);
+    expect(getLatinAmericanSpanishRequests(withDefault(language("es-ES"), language("es-MX")))).toEqual([]);
   });
 });
 
