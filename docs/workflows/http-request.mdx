@@ -54,8 +54,11 @@ Run detail, Test run results and **Send test request** show the final URL, with 
 limit applies to that final URL.
 
 The URL must use HTTPS and point to a public address. Self-hosted instances can allow plain HTTP with
-`DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP` and internal addresses with `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS`;
-neither applies on Formbricks Cloud. See [Environment variables](/self-hosting/configuration/environment-variables).
+`DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP` and internal addresses with `DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS`;
+neither applies on Formbricks Cloud. The Webhooks integration's `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS` doesn't
+open internal addresses to workflows, because **Send test request** shows the response body: with internal
+addresses allowed, anyone who can edit a workflow can read your internal services. See
+[Environment variables](/self-hosting/configuration/environment-variables).
 
 Redirects are never followed, so a redirect can't send your headers to another host. A `3xx` answer is the
 response the step gets.

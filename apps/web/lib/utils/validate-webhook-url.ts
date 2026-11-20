@@ -219,7 +219,8 @@ const resolveHostnameOrThrow = async (hostname: string): Promise<ResolvedAddress
  * where DNS could rebind between this validation and the subsequent HTTP request.
  *
  * `allowInternalUrls` defaults to `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS` (the Webhooks integration);
- * workflow HTTP requests pass their own switch, which Formbricks Cloud ignores.
+ * workflow HTTP requests pass `WORKFLOW_ALLOW_INTERNAL_URLS` (`DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS`, which
+ * Formbricks Cloud ignores), never the webhook switch.
  *
  * @throws {InvalidInputError} when the URL fails any validation check
  */

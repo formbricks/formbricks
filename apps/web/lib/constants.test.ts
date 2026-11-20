@@ -167,20 +167,36 @@ describe("self-hosted DANGEROUSLY_* switches on Formbricks Cloud", () => {
     return constants;
   };
 
-  test("the Webhooks integration keeps its internal-URL switch on Cloud; workflows ignore it there", async () => {
+  test("the Webhooks integration keeps its internal-URL switch on Cloud; the workflow switch stays off", async () => {
     const constants = await loadWithEnv({
       IS_FORMBRICKS_CLOUD: "1",
       DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: "1",
+      DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS: "1",
     });
 
     expect(constants.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS).toBe(true);
     expect(constants.WORKFLOW_ALLOW_INTERNAL_URLS).toBe(false);
   });
 
-  test("workflows follow the internal-URL switch on a self-hosted instance", async () => {
+  test("the webhook switch does not open internal addresses to workflows on a self-hosted instance", async () => {
+    // Send test request shows the response body, so the Webhooks integration's switch must not carry over.
     const constants = await loadWithEnv({ DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: "1" });
 
+    expect(constants.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS).toBe(true);
+    expect(constants.WORKFLOW_ALLOW_INTERNAL_URLS).toBe(false);
+  });
+
+  test("workflows follow only their own internal-URL switch on a self-hosted instance", async () => {
+    const constants = await loadWithEnv({ DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS: "1" });
+
     expect(constants.WORKFLOW_ALLOW_INTERNAL_URLS).toBe(true);
+    expect(constants.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS).toBe(false);
+  });
+
+  test.each(["0", undefined])("the workflow internal-URL switch is off when set to %s", async (value) => {
+    const constants = await loadWithEnv({ DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS: value });
+
+    expect(constants.WORKFLOW_ALLOW_INTERNAL_URLS).toBe(false);
   });
 
   test("plain HTTP for workflows stays off on Cloud even when the switch is set", async () => {

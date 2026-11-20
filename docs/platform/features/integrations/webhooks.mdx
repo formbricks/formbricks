@@ -78,6 +78,9 @@ By default, Formbricks blocks webhook URLs that point to private or internal IP 
 DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1
 ```
 
+This switch applies to the Webhooks integration only. Workflow HTTP request steps have their own,
+`DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS`.
+
 <Warning>
   Only enable this on trusted, self-hosted environments. Enabling this on a publicly accessible instance exposes your server to SSRF risks.
 </Warning>

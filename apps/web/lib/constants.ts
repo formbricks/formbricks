@@ -29,10 +29,11 @@ export const IMPRINT_URL = env.IMPRINT_URL;
 export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
 export const DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS = env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS === "1";
-// The same switch for workflow HTTP requests, ignored on Formbricks Cloud (hard guard, ENG-7179). The
-// Webhooks integration keeps reading DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS unchanged.
+// Workflow HTTP requests have their own switch, ignored on Formbricks Cloud (hard guard, ENG-7179). A
+// webhook only sees a status code, but Send test request shows up to 64 KB of the response body, so the
+// Webhooks integration's DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS must not open internal hosts to workflows.
 export const WORKFLOW_ALLOW_INTERNAL_URLS = isSelfHostedSwitchOn(
-  env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
+  env.DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS,
   {
     isCloud: IS_FORMBRICKS_CLOUD,
   }

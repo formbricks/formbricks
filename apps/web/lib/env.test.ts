@@ -210,6 +210,7 @@ describe("env", () => {
       WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: undefined,
       WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: undefined,
       DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: undefined,
+      DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS: undefined,
     });
 
     const { env } = await import("./env");
@@ -217,6 +218,7 @@ describe("env", () => {
     expect(env.WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT).toBe(10_000);
     expect(env.WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE).toBe(300);
     expect(env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP).toBeUndefined();
+    expect(env.DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS).toBeUndefined();
   });
 
   test("raises the Webhook trigger quotas when configured", async () => {

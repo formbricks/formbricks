@@ -716,6 +716,10 @@ const parsedEnv = createEnv({
     // Workflows Webhook trigger (ENG-7177). The plain-HTTP switch is hard-ignored on Formbricks Cloud
     // (see `ALLOW_WORKFLOW_PLAIN_HTTP` in constants.ts).
     DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: z.enum(["1", "0"]).optional(),
+    // Workflow HTTP request steps reaching private and internal addresses, separate from the Webhooks
+    // integration's switch because Send test request shows the response body. Hard-ignored on Cloud
+    // (see `WORKFLOW_ALLOW_INTERNAL_URLS` in constants.ts).
+    DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
     WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: z.coerce.number().int().min(1).optional().default(10_000),
     WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: z.coerce.number().int().min(1).optional().default(300),
     // Workflow run data retention (ENG-7186, ADR 0044): days after a run finished that its content is
@@ -959,6 +963,7 @@ const parsedEnv = createEnv({
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     INVITE_RATE_LIMIT_PER_24_HOURS: process.env.INVITE_RATE_LIMIT_PER_24_HOURS,
     DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: process.env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP,
+    DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS,
     WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: process.env.WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT,
     WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: process.env.WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE,
     WORKFLOW_RUN_DATA_RETENTION_DAYS: process.env.WORKFLOW_RUN_DATA_RETENTION_DAYS,

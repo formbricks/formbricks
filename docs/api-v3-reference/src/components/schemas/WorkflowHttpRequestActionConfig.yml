@@ -8,7 +8,7 @@ description: >-
 
 
   Sending: HTTPS only, unless a self-hosted instance sets `DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP=1`;
-  private and internal addresses only with `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1` (both ignored
+  private and internal addresses only with `DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS=1` (both ignored
   on Formbricks Cloud). Redirects are not followed: a 3xx is the response. 10 s timeout, at most 1 MB
   of response read; timeouts, network errors, 429 and 5xx are retried 3 times with backoff. A 4xx or
   5xx answer, or none, fails the step and the run unless `continueOnError` is true.

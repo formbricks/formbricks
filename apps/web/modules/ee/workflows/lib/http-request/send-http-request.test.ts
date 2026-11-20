@@ -8,7 +8,7 @@ const flags = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/constants", () => ({
-  // The Webhooks integration's switch, which Cloud keeps; workflows read their own.
+  // The Webhooks integration's switch; workflows read only their own (DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS).
   get DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS() {
     return flags.allowWebhooksInternal;
   },
@@ -173,7 +173,8 @@ describe("sendWorkflowHttpRequest", () => {
   });
 
   test("the Webhooks integration's switch alone does not open private addresses to workflows", async () => {
-    // On Cloud the Webhooks integration may still allow internal URLs; workflows never follow it there.
+    // DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS on, DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS off: workflows
+    // read only their own switch, on Cloud and self-hosted alike.
     const fetchMock = stubFetch(response(200));
     flags.allowWebhooksInternal = true;
 

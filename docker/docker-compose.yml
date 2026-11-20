@@ -127,6 +127,10 @@ x-environment: &environment
     # private network; the Secret URL is a credential)
     # DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP:
 
+    # Workflow HTTP request steps: allow internal/private addresses (set to 1 only if every workflow editor
+    # may read your internal services; Send test request shows the response body)
+    # DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS:
+
     # Calls one enabled workflow's Webhook Secret URL may take per day (UTC), counted after the plan check
     # WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: 10000
 

@@ -102,9 +102,8 @@ const attempt = async (call: WorkflowHttpCall, timeoutMs: number): Promise<Attem
   let address: Awaited<ReturnType<typeof validateAndResolveWebhookUrl>>;
   try {
     assertAllowedScheme(call.url);
-    // The Webhooks integration's SSRF check: private addresses only behind
-    // DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS, which workflows ignore on Cloud, and the IP it checked is
-    // the one used.
+    // The Webhooks integration's SSRF check with the workflows' own switch: private addresses only behind
+    // DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS (ignored on Cloud), and the IP it checked is the one used.
     address = await validateAndResolveWebhookUrl(call.url, {
       allowInternalUrls: WORKFLOW_ALLOW_INTERNAL_URLS,
     });
