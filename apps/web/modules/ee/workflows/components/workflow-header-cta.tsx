@@ -131,121 +131,119 @@ export const WorkflowHeaderCta = ({
     <div className="flex shrink-0 items-center gap-3">
       {/* Lifecycle as a status dropdown (same shape as the surveys list "New survey" menu): the
           button reads the current state, the menu holds the transitions available from it. */}
-      <>
-        {/* Secondary on purpose: the status menu stays the one primary control (ED8). Test shows or
+      {/* Secondary on purpose: the status menu stays the one primary control (ED8). Test shows or
             hides the Runs view's test form and runs nothing itself; read-only members may not test. */}
-        <Button
-          variant="secondary"
-          size="sm"
-          className={cn(isTestActive && "bg-slate-200 hover:bg-slate-200")}
-          aria-pressed={isTestActive}
-          disabled={!onTest || isReadOnly || isDeleting}
-          onClick={onTest}>
-          <FlaskConicalIcon />
-          {t("workspace.workflows.test")}
-        </Button>
-        <DropdownMenu onOpenChange={handleStatusMenuOpenChange}>
-          {/* `disabled` must sit on the trigger, not only the child Button: Radix's open guard
+      <Button
+        variant="secondary"
+        size="sm"
+        className={cn(isTestActive && "bg-slate-200 hover:bg-slate-200")}
+        aria-pressed={isTestActive}
+        disabled={!onTest || isReadOnly || isDeleting}
+        onClick={onTest}>
+        <FlaskConicalIcon />
+        {t("workspace.workflows.test")}
+      </Button>
+      <DropdownMenu onOpenChange={handleStatusMenuOpenChange}>
+        {/* `disabled` must sit on the trigger, not only the child Button: Radix's open guard
                 reads the trigger's own prop, so a value passed solely to the Button leaves the menu
                 openable (the DOM attribute and the JS guard disagree). Belt-and-suspenders, the
                 content is also withheld from read-only members, so a bypassed trigger has nothing
                 to select — the list page hides its actions the same way. */}
-          <DropdownMenuTrigger asChild disabled={isReadOnly || isTransitioning || isDeleting}>
-            <Button
-              size="sm"
-              loading={builder.isTransitioning}
-              disabled={isReadOnly || isTransitioning || isDeleting}>
-              {getWorkflowStatusBadge(workflow.status, t).label}
-              <ChevronDownIcon />
-            </Button>
-          </DropdownMenuTrigger>
-          {!isReadOnly && (
-            <DropdownMenuContent align="end" className="w-52">
-              {isArchived ? (
-                <>
+        <DropdownMenuTrigger asChild disabled={isReadOnly || isTransitioning || isDeleting}>
+          <Button
+            size="sm"
+            loading={builder.isTransitioning}
+            disabled={isReadOnly || isTransitioning || isDeleting}>
+            {getWorkflowStatusBadge(workflow.status, t).label}
+            <ChevronDownIcon />
+          </Button>
+        </DropdownMenuTrigger>
+        {!isReadOnly && (
+          <DropdownMenuContent align="end" className="w-52">
+            {isArchived ? (
+              <>
+                <DropdownMenuItem
+                  icon={<ArchiveRestoreIcon className="size-4" />}
+                  onSelect={() => void builder.unarchive()}>
+                  {t("common.unarchive")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  icon={<TrashIcon className="size-4" />}
+                  className="text-red-600 focus:text-red-600"
+                  onSelect={() => setIsDeleteDialogOpen(true)}>
+                  {t("common.delete")}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                {isActive ? (
                   <DropdownMenuItem
-                    icon={<ArchiveRestoreIcon className="size-4" />}
-                    onSelect={() => void builder.unarchive()}>
-                    {t("common.unarchive")}
+                    icon={<CirclePauseIcon className="size-4" />}
+                    onSelect={() => void builder.disable()}>
+                    {t("common.disable")}
                   </DropdownMenuItem>
+                ) : (
+                  // Enabling requires a workflow the server would accept; the readiness hint next
+                  // to the Save button says what is still missing.
                   <DropdownMenuItem
-                    icon={<TrashIcon className="size-4" />}
-                    className="text-red-600 focus:text-red-600"
-                    onSelect={() => setIsDeleteDialogOpen(true)}>
-                    {t("common.delete")}
+                    icon={<CirclePlayIcon className="size-4" />}
+                    disabled={!validity.isReady}
+                    onSelect={() => void builder.enable()}>
+                    {t("common.enable")}
                   </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  {isActive ? (
-                    <DropdownMenuItem
-                      icon={<CirclePauseIcon className="size-4" />}
-                      onSelect={() => void builder.disable()}>
-                      {t("common.disable")}
-                    </DropdownMenuItem>
-                  ) : (
-                    // Enabling requires a workflow the server would accept; the readiness hint next
-                    // to the Save button says what is still missing.
-                    <DropdownMenuItem
-                      icon={<CirclePlayIcon className="size-4" />}
-                      disabled={!validity.isReady}
-                      onSelect={() => void builder.enable()}>
-                      {t("common.enable")}
-                    </DropdownMenuItem>
-                  )}
-                  {published ? (
-                    <DropdownMenuItem
-                      icon={<Undo2Icon className="size-4" />}
-                      disabled={!hasChangesSincePublished}
-                      onSelect={() => setIsDiscardModalOpen(true)}>
-                      {t("workspace.workflows.discard_changes")}
-                    </DropdownMenuItem>
-                  ) : null}
+                )}
+                {published ? (
                   <DropdownMenuItem
-                    icon={<ArchiveIcon className="size-4" />}
-                    onSelect={() => setIsArchiveModalOpen(true)}>
-                    {t("common.archive")}
+                    icon={<Undo2Icon className="size-4" />}
+                    disabled={!hasChangesSincePublished}
+                    onSelect={() => setIsDiscardModalOpen(true)}>
+                    {t("workspace.workflows.discard_changes")}
                   </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          )}
-        </DropdownMenu>
+                ) : null}
+                <DropdownMenuItem
+                  icon={<ArchiveIcon className="size-4" />}
+                  onSelect={() => setIsArchiveModalOpen(true)}>
+                  {t("common.archive")}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        )}
+      </DropdownMenu>
 
-        <ConfirmationModal
-          open={isArchiveModalOpen}
-          setOpen={setIsArchiveModalOpen}
-          title={t("workspace.workflows.archive_confirm_title")}
-          body={t("workspace.workflows.archive_confirm_body")}
-          buttonText={t("common.archive")}
-          buttonVariant="destructive"
-          buttonLoading={builder.isTransitioning}
-          isButtonDisabled={isReadOnly || builder.isTransitioning}
-          onConfirm={handleArchiveConfirm}
-          Icon={ArchiveIcon}
-        />
-        <ConfirmationModal
-          open={isDiscardModalOpen}
-          setOpen={setIsDiscardModalOpen}
-          title={t("workspace.workflows.discard_changes_title")}
-          // The dialog's default subtitle says the action can't be undone; this one can.
-          description={t("workspace.workflows.discard_changes_undoable")}
-          body={t("workspace.workflows.discard_changes_body", { version: published?.version ?? 0 })}
-          buttonText={t("workspace.workflows.discard_changes")}
-          buttonVariant="destructive"
-          isButtonDisabled={!published}
-          onConfirm={handleDiscardConfirm}
-          Icon={Undo2Icon}
-        />
-        <DeleteDialog
-          open={isDeleteDialogOpen}
-          setOpen={setIsDeleteDialogOpen}
-          deleteWhat={workflow.name}
-          onDelete={() => void handleDelete()}
-          isDeleting={isDeleting}
-          text={t("workspace.workflows.delete_workflow_confirmation", { name: workflow.name })}
-        />
-      </>
+      <ConfirmationModal
+        open={isArchiveModalOpen}
+        setOpen={setIsArchiveModalOpen}
+        title={t("workspace.workflows.archive_confirm_title")}
+        body={t("workspace.workflows.archive_confirm_body")}
+        buttonText={t("common.archive")}
+        buttonVariant="destructive"
+        buttonLoading={builder.isTransitioning}
+        isButtonDisabled={isReadOnly || builder.isTransitioning}
+        onConfirm={handleArchiveConfirm}
+        Icon={ArchiveIcon}
+      />
+      <ConfirmationModal
+        open={isDiscardModalOpen}
+        setOpen={setIsDiscardModalOpen}
+        title={t("workspace.workflows.discard_changes_title")}
+        // The dialog's default subtitle says the action can't be undone; this one can.
+        description={t("workspace.workflows.discard_changes_undoable")}
+        body={t("workspace.workflows.discard_changes_body", { version: published?.version ?? 0 })}
+        buttonText={t("workspace.workflows.discard_changes")}
+        buttonVariant="destructive"
+        isButtonDisabled={!published}
+        onConfirm={handleDiscardConfirm}
+        Icon={Undo2Icon}
+      />
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        setOpen={setIsDeleteDialogOpen}
+        deleteWhat={workflow.name}
+        onDelete={() => void handleDelete()}
+        isDeleting={isDeleting}
+        text={t("workspace.workflows.delete_workflow_confirmation", { name: workflow.name })}
+      />
     </div>
   );
 };

@@ -298,7 +298,7 @@ export const withBranchLegOffsets = <TNode extends Node<TWorkflowNodeData>>(
   // Left to right, the legs spread down: offsets are along y.
   const axis = direction === "horizontal" ? "y" : "x";
   const coordinateOf = (node: TNode) =>
-    frozen && node.id === frozen.id ? frozen.position[axis] : node.position[axis];
+    frozen?.id === node.id ? frozen.position[axis] : node.position[axis];
   const coordinateById = new Map(nodes.map((node) => [node.id, coordinateOf(node)]));
   return nodes.map((node) => {
     if (node.data.branches.length === 0) return node;
