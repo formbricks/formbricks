@@ -26,7 +26,7 @@ export type TSsoRecoveryAccess = {
  * from the guard and again from inside the linking transaction, so a change that lands in between leaves
  * the same trace.
  */
-export const rejectSsoRecoveryUserMismatch = (intent: TSsoRecoveryIntent): never => {
+export const rejectSsoRecoveryUserMismatch = (intent: TSsoRecoveryIntent): SsoRecoveryError => {
   getSsoRecoveryLogger("sso_recovery_failed").error(
     { userId: intent.userId, provider: intent.provider },
     "SSO recovery failed due to user mismatch"
@@ -42,7 +42,7 @@ export const rejectSsoRecoveryUserMismatch = (intent: TSsoRecoveryIntent): never
   });
   // Past the session check, so this caller IS the intent's user — handing back their own callback
   // discloses nothing they did not already supply.
-  throw new SsoRecoveryError("rejected", intent.callbackUrl);
+  return new SsoRecoveryError("rejected", intent.callbackUrl);
 };
 
 export const authorizeSsoRecovery = async ({ stateId, recoveryProof, sessionUserId }: TSsoRecoveryAccess) => {
@@ -161,7 +161,7 @@ export const authorizeSsoRecovery = async ({ stateId, recoveryProof, sessionUser
   });
 
   if (user?.email !== intent.email) {
-    rejectSsoRecoveryUserMismatch(intent);
+    throw rejectSsoRecoveryUserMismatch(intent);
   }
 
   return { intent, provider, user };

@@ -147,7 +147,7 @@ export const completeSsoRecovery = async ({
           SELECT "email" FROM "User" WHERE "id" = ${user.id} FOR UPDATE
         `;
         if (locked?.email !== intent.email) {
-          rejectSsoRecoveryUserMismatch(intent);
+          throw rejectSsoRecoveryUserMismatch(intent);
         }
 
         const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
