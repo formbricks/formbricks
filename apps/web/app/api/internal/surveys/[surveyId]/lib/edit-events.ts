@@ -1,6 +1,7 @@
 import "server-only";
 import type { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getLanguageAddedEvents } from "@/modules/survey/editor/lib/language-added-events";
 
 type SurveyEditDiffContext = {
   userId: string;
@@ -50,17 +51,9 @@ const captureVariablesCreated = (oldSurvey: TSurvey, newSurvey: TSurvey, capture
  * `survey_language_added` for every other, each with how many languages the survey had before it.
  */
 const captureLanguagesAdded = (oldSurvey: TSurvey, newSurvey: TSurvey, capture: TCapture): void => {
-  const oldLanguages = oldSurvey.languages ?? [];
-  const oldLanguageCodes = new Set(oldLanguages.map((l) => l.language.code));
-  const addedLanguages = (newSurvey.languages ?? []).filter((l) => !oldLanguageCodes.has(l.language.code));
-  const wasMultiLangBefore = oldLanguages.length > 1;
-
-  addedLanguages.forEach((lang, index) => {
-    capture(index === 0 && !wasMultiLangBefore ? "survey_language_enabled" : "survey_language_added", {
-      language_code: lang.language.code,
-      existing_language_count: oldLanguages.length + index,
-    });
-  });
+  for (const { event, languageCode, existingLanguageCount } of getLanguageAddedEvents(oldSurvey, newSurvey)) {
+    capture(event, { language_code: languageCode, existing_language_count: existingLanguageCount });
+  }
 };
 
 /** `follow_up_added`, per new follow-up that is not being deleted. */
