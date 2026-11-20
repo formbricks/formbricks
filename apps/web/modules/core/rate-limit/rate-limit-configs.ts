@@ -73,11 +73,13 @@ export const rateLimitConfigs = {
       namespace: "api:v3:workflow-webhook:token",
     }, // 100 per minute per workflow and token
     // "Send test request" on a workflow HTTP request step (ENG-7179): each one is a real outbound call,
-    // so a principal gets 30 a minute, REST and MCP together.
+    // so a principal gets 30 a minute, REST and MCP together. An outbound-abuse limit: it refuses while
+    // Redis is down rather than letting unlimited calls out (ADR 0016).
     v3WorkflowTestRequests: {
       interval: 60,
       allowedPerInterval: 30,
       namespace: "api:v3:workflow-test-request",
+      failClosed: true,
     }, // 30 per minute per user or API key
     // A Test run of a workflow's draft (ENG-7181): it sends nothing, but each one saves a run and walks
     // the whole workflow inside the request, so a principal gets 30 a minute, REST and MCP together.

@@ -318,6 +318,7 @@ describe("rateLimitConfigs", () => {
         actions.inviteMember,
         actions.inviteMemberPerUser,
         actions.createOrganization,
+        api.v3WorkflowTestRequests,
       ];
       const throughputLimits = [
         api.v1,
