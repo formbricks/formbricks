@@ -14,6 +14,7 @@ import { PUT as attachSurveySegment } from "@/app/api/internal/surveys/[surveyId
 import { GET as listFilterSurveys } from "@/app/api/internal/workspaces/[workspaceId]/segment-filter-surveys/route";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import { POST as copySegment } from "./[segmentId]/copies/route";
 import { DELETE, PATCH } from "./[segmentId]/route";
 import { POST } from "./route";
@@ -25,7 +26,6 @@ import {
 } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
-  countSegments: vi.fn(),
   can: vi.fn(),
   getSession: vi.fn(),
   applyRateLimit: vi.fn(),
@@ -59,7 +59,6 @@ const mocks = vi.hoisted(() => ({
   checkForRecursiveSegmentFilter: vi.fn(),
 }));
 
-vi.mock("@formbricks/database", () => ({ prisma: { segment: { count: mocks.countSegments } } }));
 vi.mock("@/lib/authorization", () => ({ can: mocks.can, assertCan: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromSegmentId: mocks.getOrganizationIdFromSegmentId,
@@ -221,7 +220,6 @@ const actAs = (surveyAllowed: boolean) =>
   );
 
 beforeEach(() => {
-  mocks.countSegments.mockResolvedValue(0);
   vi.clearAllMocks();
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
   mocks.can.mockResolvedValue(true);
@@ -380,10 +378,15 @@ describe("POST /api/internal/segments", () => {
     );
   });
 
-  test("makes a segment private unless told otherwise, and with no survey connects none", async () => {
-    const { isPrivate: _isPrivate, ...body } = createBody();
-    await create(body);
-    expect(mocks.createSegment).toHaveBeenCalledWith({ ...body, isPrivate: true, surveyId: "" });
+  test("makes a segment private unless told otherwise, titled with its survey's id", async () => {
+    const { isPrivate: _isPrivate, ...body } = createBody({ title: SURVEY_ID, surveyId: SURVEY_ID });
+    expect((await create(body)).status).toBe(201);
+    expect(mocks.createSegment).toHaveBeenCalledWith({ ...body, isPrivate: true });
+  });
+
+  test("connects no survey to a shared segment made without one", async () => {
+    await create(createBody());
+    expect(mocks.createSegment).toHaveBeenCalledWith({ ...createBody(), surveyId: "" });
   });
 
   test("refuses a survey from another workspace with 422, once the caller may write to both", async () => {
@@ -398,17 +401,28 @@ describe("POST /api/internal/segments", () => {
   });
 
   test("answers 409 when the workspace already has a segment with that title", async () => {
-    mocks.createSegment.mockRejectedValue(
-      new DatabaseError("Unique constraint failed on the fields: (`workspaceId`,`title`)")
-    );
-    mocks.countSegments.mockResolvedValue(1);
+    mocks.createSegment.mockRejectedValue(new InvalidInputError(SEGMENT_TITLE_TAKEN_ERROR_MESSAGE));
 
     const response = await create(createBody());
-    const body = await response.json();
 
     expect(response.status).toBe(409);
-    expect(body.detail).toBe("A segment with this title already exists in this workspace.");
-    expect(JSON.stringify(body)).not.toContain("Unique constraint");
+    expect((await response.json()).detail).toBe(
+      "A segment with this title already exists in this workspace."
+    );
+  });
+
+  test("refuses a private segment that isn't titled with its survey's id as a 400, writing nothing", async () => {
+    for (const body of [
+      createBody({ isPrivate: true }),
+      createBody({ isPrivate: true, surveyId: SURVEY_ID }),
+      (({ isPrivate: _isPrivate, ...rest }) => rest)(createBody()),
+    ]) {
+      const response = await create(body);
+
+      expect(response.status).toBe(400);
+      expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: "title" })]);
+    }
+    expect(mocks.createSegment).not.toHaveBeenCalled();
   });
 
   test("lets any other database failure through as a 500", async () => {
@@ -578,8 +592,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
   });
 
   test("answers 409 to a rename onto another segment's title", async () => {
-    mocks.updateSegment.mockRejectedValue(new DatabaseError("Unique constraint failed"));
-    mocks.countSegments.mockResolvedValue(1);
+    mocks.updateSegment.mockRejectedValue(new InvalidInputError(SEGMENT_TITLE_TAKEN_ERROR_MESSAGE));
 
     const response = await update({ title: "Taken" });
 
@@ -589,17 +602,10 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     );
   });
 
-  test("lets a failed update through as a 500 when only the segment itself holds the title", async () => {
+  test("lets a failed update through as a 500", async () => {
     mocks.updateSegment.mockRejectedValue(new DatabaseError("connection reset"));
-    // Counts the segment itself unless the rename check excludes it.
-    mocks.countSegments.mockImplementation(async ({ where }: { where: { id?: { not: string } } }) =>
-      where.id?.not === SEGMENT_ID ? 0 : 1
-    );
 
     expect((await update({ title: "Renamed" })).status).toBe(500);
-    expect(mocks.countSegments).toHaveBeenCalledWith({
-      where: { workspaceId: WORKSPACE_ID, title: "Renamed", id: { not: SEGMENT_ID } },
-    });
   });
 
   test("answers 422 with the reason for a filter that refers to the segment itself", async () => {

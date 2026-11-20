@@ -122,7 +122,13 @@ export const ZSegmentCreateBody = z
     surveyId: ZId.optional(),
   })
   .strict()
-  .superRefine((body, ctx) => checkSegmentFilters(body.filters, ctx));
+  .superRefine((body, ctx) => checkSegmentFilters(body.filters, ctx))
+  // `ZSegmentCreateInput`'s rule (ENG-6956), here so a body breaking it is a 400 and not the service's 500:
+  // a private segment is a survey's targeting segment, titled with that survey's id.
+  .refine((body) => !body.isPrivate || (body.surveyId !== undefined && body.title === body.surveyId), {
+    message: "A private segment is titled with the id of its survey",
+    path: ["title"],
+  });
 
 export type TSegmentCreateBody = z.infer<typeof ZSegmentCreateBody>;
 
