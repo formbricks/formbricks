@@ -17,10 +17,10 @@ import {
   ZSurveyQuotaInput,
 } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
-import { createQuotaAction, updateQuotaAction } from "@/modules/ee/quotas/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EndingCardSelector } from "@/modules/ee/quotas/components/ending-card-selector";
+import { createQuota, updateQuota } from "@/modules/ee/quotas/lib/api-client";
 import { getDefaultOperatorForElement } from "@/modules/survey/editor/lib/utils";
 import { replaceEndingCardHeadlineRecall } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -153,16 +153,13 @@ export const QuotaModal = ({
 
   const handleCreateQuota = useCallback(
     async (quota: TSurveyQuotaInput) => {
-      const createQuotaActionResult = await createQuotaAction({
-        quota: quota,
-      });
-      if (createQuotaActionResult?.data) {
+      try {
+        await createQuota(quota);
         toast.success(t("workspace.surveys.edit.quotas.quota_created_successfull_toast"));
         router.refresh();
         onClose();
-      } else {
-        const errorMessage = getFormattedErrorMessage(createQuotaActionResult);
-        toast.error(errorMessage);
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       }
     },
     [t, router, onClose]
@@ -170,17 +167,13 @@ export const QuotaModal = ({
 
   const handleUpdateQuota = useCallback(
     async (updatedQuota: TSurveyQuotaInput, quotaId: string) => {
-      const updateQuotaActionResult = await updateQuotaAction({
-        quotaId,
-        quota: updatedQuota,
-      });
-      if (updateQuotaActionResult?.data) {
+      try {
+        await updateQuota(quotaId, updatedQuota);
         toast.success(t("workspace.surveys.edit.quotas.quota_updated_successfull_toast"));
         router.refresh();
         onClose();
-      } else {
-        const errorMessage = getFormattedErrorMessage(updateQuotaActionResult);
-        toast.error(errorMessage);
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       }
       setOpenConfirmChangesInInclusionCriteria(false);
     },

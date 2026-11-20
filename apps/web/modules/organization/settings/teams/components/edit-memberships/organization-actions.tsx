@@ -9,14 +9,14 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
-import {
-  bulkInviteUsersAction,
-  inviteUserAction,
-  leaveOrganizationAction,
-} from "@/modules/organization/settings/teams/actions";
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
+import {
+  inviteMember,
+  inviteMembers,
+  leaveOrganization,
+} from "@/modules/organization/settings/teams/lib/api-client";
 import {
   formatInviteFailureMessage,
   formatInviteFailureMessages,
@@ -87,19 +87,14 @@ export const OrganizationActions = ({
   const handleLeaveOrganization = async () => {
     setLoading(true);
     try {
-      const result = await leaveOrganizationAction({ organizationId: organization.id });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        setLoading(false);
-        return;
-      }
+      await leaveOrganization(organization.id);
       toast.success(t("workspace.settings.general.member_deleted_successfully"));
       router.refresh();
       setLoading(false);
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       router.push("/");
     } catch (err) {
-      toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
+      toast.error(getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again")));
       setLoading(false);
     }
   };
@@ -109,44 +104,49 @@ export const OrganizationActions = ({
 
     try {
       if (data.length === 1) {
-        const inviteUserActionResult = await inviteUserAction({
-          organizationId: organization.id,
-          email: data[0].email.toLowerCase(),
-          name: data[0].name,
-          role: data[0].role,
-          teamIds: data[0].teamIds,
-        });
-
-        if (inviteUserActionResult?.data) {
-          router.refresh();
-          toast.success(t("workspace.settings.general.member_invited_successfully"), {
-            id: toastId,
+        try {
+          await inviteMember({
+            organizationId: organization.id,
+            body: {
+              email: data[0].email.toLowerCase(),
+              name: data[0].name,
+              role: data[0].role,
+              teamIds: data[0].teamIds,
+            },
           });
-          return true;
+        } catch (error) {
+          // A refusal the form knows ("Invite already exists") gets its own message; any other shows its reason.
+          const errorMessage = getV3ApiErrorMessage(error, "");
+          const failureReason = getInviteFailureReasonFromMessage(errorMessage);
+          toast.error(
+            failureReason === "unknown" && errorMessage
+              ? errorMessage
+              : formatInviteFailureMessage(t, { email: data[0].email, failureReason }),
+            { id: toastId }
+          );
+          return false;
         }
 
-        const errorMessage = getFormattedErrorMessage(inviteUserActionResult);
-        const failureReason = getInviteFailureReasonFromMessage(errorMessage);
-        toast.error(
-          failureReason === "unknown" && errorMessage
-            ? errorMessage
-            : formatInviteFailureMessage(t, { email: data[0].email, failureReason }),
-          { id: toastId }
-        );
+        router.refresh();
+        toast.success(t("workspace.settings.general.member_invited_successfully"), {
+          id: toastId,
+        });
+        return true;
+      }
+
+      let inviteResults: Awaited<ReturnType<typeof inviteMembers>>;
+      try {
+        inviteResults = await inviteMembers({
+          organizationId: organization.id,
+          body: { invitees: data.map((invitee) => ({ ...invitee, email: invitee.email.toLowerCase() })) },
+        });
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")), {
+          id: toastId,
+        });
         return false;
       }
 
-      const bulkInviteResult = await bulkInviteUsersAction({
-        organizationId: organization.id,
-        invitees: data.map((invitee) => ({ ...invitee, email: invitee.email.toLowerCase() })),
-      });
-
-      if (!bulkInviteResult?.data) {
-        toast.error(getFormattedErrorMessage(bulkInviteResult), { id: toastId });
-        return false;
-      }
-
-      const inviteResults = bulkInviteResult.data;
       router.refresh();
 
       const failedInvites = inviteResults

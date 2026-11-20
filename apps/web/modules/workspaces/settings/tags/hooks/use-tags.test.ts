@@ -61,4 +61,13 @@ describe("useTags", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.data).toBeUndefined();
   });
+
+  test("reads nothing until it is enabled", () => {
+    const { result } = renderHook(() => useTags("ws_1", { enabled: false }), {
+      wrapper: wrapper(newQueryClient()),
+    });
+
+    expect(result.current.fetchStatus).toBe("idle");
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
 });

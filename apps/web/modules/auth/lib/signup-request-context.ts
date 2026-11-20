@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 interface SignupRequestStore {
   /**
-   * Set by `createUserAction` once its personal-email domain policy (Cloud gate + invite exemption)
+   * Set by the sign-up route (`POST /api/internal/signups`) once its personal-email domain policy (Cloud gate + invite exemption)
    * has passed, immediately before it calls `auth.api.signUpEmail`. `user.create.before` reads it to
    * know the credential sign-up already went through the action; its ABSENCE means some other caller
    * reached Better Auth's native `/sign-up/email`, so the hook re-enforces the block there. Since
@@ -11,7 +11,7 @@ interface SignupRequestStore {
    */
   domainAllowed?: boolean;
   /**
-   * Set by `createUserAction` when the instance policy admitted this sign-up *because the instance was
+   * Set by the sign-up route (`POST /api/internal/signups`) when the instance policy admitted this sign-up *because the instance was
    * empty* — the initial administrator, who has no invite to present (ENG-2247). `user.create.before`
    * reads it to stamp the bootstrap marker on the row it is about to insert.
    *

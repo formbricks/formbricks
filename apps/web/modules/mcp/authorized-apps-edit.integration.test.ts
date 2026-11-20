@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PATCH } from "@/app/api/internal/mcp-grants/[clientId]/route";
 import { GET } from "@/app/api/internal/mcp-grants/route";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import {
   type TMcpToolCallOutcome,
@@ -115,13 +116,16 @@ const openedVersion = async (clientId: string): Promise<string> => {
   return (grant?.updatedAt ?? new Date(0)).toISOString();
 };
 
+/** The origin check's refusal, which a 403 from the grant's own checks must not be. */
+const CROSS_ORIGIN_DETAIL = "Cross-origin requests are not allowed.";
+
 /** Edit's Save, sent with the version Edit opened: the grant as saved now, unless `opened` is given. */
 const editGrant = async (clientId: string, permissions: Record<string, string>, opened?: string) => {
   const expectedUpdatedAt = opened ?? (await openedVersion(clientId));
   const response = await PATCH(
     new NextRequest(`http://localhost:3000/api/internal/mcp-grants/${clientId}`, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "content-type": "application/json" },
       body: JSON.stringify({ permissions, expectedUpdatedAt }),
     }),
     { params: Promise.resolve({ clientId }) }
@@ -321,6 +325,8 @@ describe("Authorized apps' Edit", () => {
 
     expect(listed.body.data.clients).toEqual([]);
     expect(edited.status).toBe(403);
+    // Refused by the grant's ownership, not by the origin check every session write passes first.
+    expect(edited.body.detail).not.toBe(CROSS_ORIGIN_DETAIL);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toEqual(before);
   });
 
@@ -334,7 +340,9 @@ describe("Authorized apps' Edit", () => {
       headers: new Headers({ cookie: setup.cookie }),
     });
 
-    expect((await editGrant(setup.clientId, { surveys: "read" })).status).toBe(403);
+    const edited = await editGrant(setup.clientId, { surveys: "read" });
+    expect(edited.status).toBe(403);
+    expect(edited.body.detail).not.toBe(CROSS_ORIGIN_DETAIL);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
     expect((await listClients()).body.data.clients).toEqual([]);
   });

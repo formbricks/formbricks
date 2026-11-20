@@ -13,6 +13,10 @@ const PUBLIC_ROUTES = {
   // API routes accessible from public domain
   API_ROUTES: [
     /^\/api\/v[12]\/client\//, // /api/v1/client/** and /api/v2/client/**
+    // The link-survey page's two unauthenticated gate calls, by exact path: the rest of `/api/internal` is
+    // the dashboard's and stays off the survey domain.
+    /^\/api\/internal\/link-survey-verification-emails$/,
+    /^\/api\/internal\/link-survey-pin-verifications$/,
   ],
 } as const;
 

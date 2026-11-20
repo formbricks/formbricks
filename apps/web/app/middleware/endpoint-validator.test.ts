@@ -443,6 +443,42 @@ describe("endpoint-validator", () => {
       });
     });
 
+    describe("the link-survey gate routes under /api/internal", () => {
+      const gateRoutes = [
+        "/api/internal/link-survey-verification-emails",
+        "/api/internal/link-survey-pin-verifications",
+      ];
+
+      test("are served on the public domain, where the link-survey page calls them", () => {
+        for (const route of gateRoutes) {
+          expect(isRouteAllowedForDomain(route, true)).toBe(true);
+        }
+      });
+
+      test("are the only /api/internal paths the public domain serves", () => {
+        for (const route of [
+          "/api/internal",
+          "/api/internal/",
+          "/api/internal/signups",
+          "/api/internal/verification-emails",
+          "/api/internal/invites/acceptances",
+          "/api/internal/surveys/survey123/copies",
+          "/api/internal/link-survey-verification-emails/extra",
+          "/api/internal/link-survey-pin-verifications/extra",
+          "/api/internal/link-survey-pin-verifications-other",
+          "/api/internal/x/api/internal/link-survey-pin-verifications",
+        ]) {
+          expect(isRouteAllowedForDomain(route, true)).toBe(false);
+        }
+      });
+
+      test("stay off the admin domain, like the rest of the public-only routes", () => {
+        for (const route of gateRoutes) {
+          expect(isRouteAllowedForDomain(route, false)).toBe(false);
+        }
+      });
+    });
+
     describe("admin domain routing", () => {
       test("should allow admin routes on admin domain", () => {
         expect(isRouteAllowedForDomain("/", false)).toBe(true);

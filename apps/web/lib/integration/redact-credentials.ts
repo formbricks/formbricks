@@ -58,31 +58,3 @@ export const redactIntegrationCredentials = <T extends TIntegrationWithConfig>(
     config: { ...integration.config, key: redactedKey },
   };
 };
-
-/**
- * The inbound counterpart to {@link redactIntegrationCredentials}: replaces a client-supplied
- * `config.key` with the stored one.
- *
- * Because the settings pages redact credentials on the way out, and the mapping UI echoes the whole
- * integration object back when a link is added, edited or removed, an unguarded save writes the blanked
- * tokens over the real ones — disconnecting the integration while the UI still shows it as connected,
- * since the wrappers only test `config.key` for presence. Credentials therefore never come from the
- * request on that path; they are written only by the OAuth callbacks, which reach
- * `createOrUpdateIntegration` directly.
- *
- * With no stored integration there is nothing to preserve and the input passes through unchanged: that
- * is the first-connect case, which only the callbacks perform.
- */
-export const withStoredIntegrationKey = <T extends TIntegrationWithConfig>(
-  incoming: T,
-  stored: TIntegrationWithConfig | null | undefined
-): T => {
-  if (!stored?.config?.key || !incoming.config) {
-    return incoming;
-  }
-
-  return {
-    ...incoming,
-    config: { ...incoming.config, key: stored.config.key },
-  };
-};

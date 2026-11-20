@@ -4,14 +4,18 @@ import * as Sentry from "@sentry/nextjs";
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { createAuthMiddleware, isAPIError } from "better-auth/api";
 import { logger } from "@formbricks/logger";
-import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import {
+  UNKNOWN_AUDIT_REQUEST_METADATA,
+  getAuditRequestMetadata,
+} from "@/modules/ee/audit-logs/lib/request-metadata";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { getBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
-import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
+import { logAuthAttempt, logSignOut, shouldLogAuthFailure } from "./utils";
 
 /**
  * Observability parity for the Better Auth cutover (ENG-1054) — re-expresses the audit + Sentry
@@ -172,6 +176,37 @@ export const signInAuditPlugin = {
     ],
   },
 } satisfies BetterAuthPlugin;
+
+type SessionDatabaseHooks = NonNullable<NonNullable<BetterAuthOptions["databaseHooks"]>["session"]>;
+type SessionDeleteAfter = NonNullable<NonNullable<SessionDatabaseHooks["delete"]>["after"]>;
+
+/**
+ * `databaseHooks.session.delete.after`: record the `userSignedOut` audit event when a sign-out ends a
+ * session. Server-side, so the actor is the deleted session's own `userId` and the IP and user agent are
+ * the sign-out request's, never anything the client reports.
+ *
+ * Only for `/sign-out`. Better Auth deletes sessions on other paths too, none of them a sign-out: the
+ * two-factor plugin withdraws the password step's session until the second factor is verified, SSO
+ * recovery revokes sessions by token, `revokeSessionsOnPasswordReset` sweeps them on a reset, and
+ * delete-user removes them all. A sign-out without a session deletes nothing, so Better Auth calls no
+ * hook and nothing is recorded.
+ *
+ * Never throws: recording must not fail a sign-out that otherwise succeeded.
+ */
+export const auditSignOutOnSessionDelete: SessionDeleteAfter = async (session, ctx) => {
+  if (ctx?.path !== "/sign-out") return;
+  const userId = (session as { userId?: unknown }).userId;
+  if (typeof userId !== "string") return;
+
+  try {
+    const requestMetadata = AUDIT_LOG_ENABLED
+      ? await getAuditRequestMetadata(ctx.headers)
+      : UNKNOWN_AUDIT_REQUEST_METADATA;
+    await logSignOut(userId, requestMetadata);
+  } catch {
+    logger.withContext({ source: "better-auth" }).error("Failed to queue userSignedOut audit event");
+  }
+};
 
 /**
  * Better Auth embeds user email addresses in some log messages — `sign-up.mjs` logs
