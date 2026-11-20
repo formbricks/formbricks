@@ -4,6 +4,7 @@ import { jwt } from "better-auth/plugins/jwt";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 import { describe, expect, test } from "vitest";
 
 /**
@@ -23,8 +24,8 @@ import { describe, expect, test } from "vitest";
  * So these read each plugin's own declaration rather than restating a field list, and the next field
  * upstream adds fails at `pnpm test` instead of in production.
  *
- * The same drift is possible on the CORE tables, and there it has already bitten us twice: 1.7 keys
- * accounts on `(issuer, accountId)`, and `Account.issuer` is a core field no plugin declares — so the
+ * The same drift is possible on the CORE tables, and there it has already bitten us twice: 1.7.0 keyed
+ * accounts on `(issuer, accountId)`, and `Account.issuer` was a core field no plugin declares — so the
  * plugin-only pass below would not have caught a missing column. `getAuthTables` is upstream's own
  * resolver for the merged core+plugin schema, so the core assertions track whatever the installed
  * version declares, exactly like the plugin ones.
@@ -54,6 +55,49 @@ const prismaModelFields = (source: string, model: string): string[] => {
 const prismaSchema = readFileSync(prismaSchemaPath, "utf8");
 
 /**
+ * The object literal at `path` inside the `betterAuth({...})` call in auth.ts, as property name → source
+ * text. Parsed rather than grepped, so a comment or another object that happens to hold the same text
+ * cannot stand in for the real option, and auth.ts is never imported (that would boot the instance).
+ */
+const betterAuthOptionEntry = (path: string[]): Record<string, string> => {
+  const fileName = join(dirname(fileURLToPath(import.meta.url)), "auth.ts");
+  const source = ts.createSourceFile(fileName, readFileSync(fileName, "utf8"), ts.ScriptTarget.Latest, true);
+
+  let options: ts.ObjectLiteralExpression | undefined;
+  const findCall = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "betterAuth" &&
+      node.arguments[0] &&
+      ts.isObjectLiteralExpression(node.arguments[0])
+    ) {
+      options = node.arguments[0];
+      return;
+    }
+    ts.forEachChild(node, findCall);
+  };
+  findCall(source);
+  if (!options) throw new Error("betterAuth({...}) call not found in auth.ts");
+
+  const entry = path.reduce<ts.ObjectLiteralExpression>((object, key) => {
+    const property = object.properties.find(
+      (p): p is ts.PropertyAssignment => ts.isPropertyAssignment(p) && p.name.getText(source) === key
+    );
+    if (!property || !ts.isObjectLiteralExpression(property.initializer)) {
+      throw new Error(`betterAuth option ${path.join(".")} is missing or not an object literal in auth.ts`);
+    }
+    return property.initializer;
+  }, options);
+
+  return Object.fromEntries(
+    entry.properties
+      .filter(ts.isPropertyAssignment)
+      .map((p) => [p.name.getText(source), p.initializer.getText(source)])
+  );
+};
+
+/**
  * Both plugins expose their merged schema on the instance, so this tracks whatever the installed
  * version declares. `oauthProvider` needs its two mandatory options to construct.
  */
@@ -78,9 +122,14 @@ const CORE_FIELD_MAPPING = {
   },
 } as const;
 
+/** Our own additional account fields, mirrored from `auth.ts` and guarded the same way. */
+const ACCOUNT_ADDITIONAL_FIELDS = {
+  issuer: { type: "string", required: false, input: false, returned: false },
+} as const;
+
 const coreTables = getAuthTables({
   session: { fields: { ...CORE_FIELD_MAPPING.session } },
-  account: { fields: { ...CORE_FIELD_MAPPING.account } },
+  account: { fields: { ...CORE_FIELD_MAPPING.account }, additionalFields: { ...ACCOUNT_ADDITIONAL_FIELDS } },
 });
 
 /**
@@ -144,10 +193,18 @@ describe("Better Auth ↔ Prisma schema contract", () => {
       expect(source).toContain(strips);
     });
 
-    // The field this whole file exists for: 1.7 filters account lookups on it, and it is ours to keep.
-    test("account.issuer is declared by Better Auth and present on our model", () => {
+    // Better Auth 1.7.3 dropped `account.issuer` from its core model and keys accounts on
+    // `(providerId, accountId)`. A 1.7.0 pod still filters on it, so we declare it ourselves and write it
+    // on every account create: the superset test above then covers the column like any core field.
+    test("account.issuer is ours, not Better Auth's, and the auth.ts declaration is still there", () => {
+      expect(Object.keys(getAuthTables({}).account.fields)).not.toContain("issuer");
       expect(Object.keys(coreTables.account.fields)).toContain("issuer");
-      expect(prismaModelFields(prismaSchema, "Account")).toContain("issuer");
+      expect(betterAuthOptionEntry(["account", "additionalFields", "issuer"])).toEqual({
+        type: '"string"',
+        required: "false",
+        input: "false",
+        returned: "false",
+      });
     });
   });
 
