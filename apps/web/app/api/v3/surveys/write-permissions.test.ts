@@ -158,6 +158,24 @@ describe("assertV3SurveyWritePermissions", () => {
       ).rejects.toThrow(V3SurveyWritePermissionError);
     });
 
+    test("rejects a variable whose new value builds a link with a $` replacement pattern", async () => {
+      const variableId = "clvar1234567890123456789012";
+      const blocks = blockWithHeadline(`ef="https://example.com/a">x</a> #recall:${variableId}/fallback:x#`);
+      const variable = (value: string) => [{ id: variableId, name: "v1", type: "text" as const, value }];
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks,
+            endings: [],
+            variables: variable("<a hr$`"),
+            previous: { blocks, endings: [], variables: variable("friend") },
+          },
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+    });
+
     test("rejects a welcome card that gains a link", async () => {
       const welcomeCard = {
         enabled: true,

@@ -218,6 +218,23 @@ describe("getRichTextLinks with recall", () => {
     );
   });
 
+  // The renderer swaps a token with `String.prototype.replace` and a string, so `$'`, `` $` `` and `$&`
+  // in the value expand to the text after the token, before it, and the token itself.
+  test("finds a link a $' in a fallback builds from the text after the token", () => {
+    const html = `<p>#recall:q9/fallback:<a hr$'#ef="https://example.com/a">x</a></p>`;
+    expect(getRichTextLinks(withHeadline(html))).toContain("https://example.com/a");
+  });
+
+  test("finds a link a $` in a variable's value builds from the text before the token", () => {
+    const html = `ef="https://example.com/a">x</a> #recall:${VARIABLE_ID}/fallback:x#`;
+    expect(getRichTextLinks(withVariable(html, "<a hr$`"))).toContain("https://example.com/a");
+  });
+
+  test("counts a $& that makes the renderer resolve the same token forever as a link", () => {
+    expect(getRichTextLinks(withHeadline("<p>#recall:q9/fallback:$&#</p>")).size).toBe(1);
+    expect(getRichTextLinks(withVariable(`<p>#recall:${VARIABLE_ID}/fallback:x#</p>`, "$&")).size).toBe(1);
+  });
+
   test("grandfathers a token in a tag the previous version already had", () => {
     const html = "<p><a #recall:q9/fallback:x#>go</a></p>";
     expect(addsRichTextLink(withHeadline(html), withHeadline(html))).toBe(false);
