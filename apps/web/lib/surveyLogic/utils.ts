@@ -21,6 +21,7 @@ import {
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
+import { evaluateBooleanAssign } from "@formbricks/types/surveys/boolean-assign";
 import {
   compareDateValues,
   isDateAfter,
@@ -852,22 +853,17 @@ const isNumericOperand = (val: string | number): boolean =>
 const getCalculationOperand = (
   action: TActionCalculate | TBlockActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>,
+  calculations: TResponseVariables,
   dataType: string
 ): string | number | undefined => {
-  let operandValue: string | number | undefined;
-
   // Determine the operand value based on the action.value type
   switch (action.value.type) {
     case "static":
-      operandValue = action.value.value;
-      break;
+      // True and False belong to a true/false field, handled in performCalculation.
+      return typeof action.value.value === "boolean" ? undefined : action.value.value;
     case "variable": {
       const value = calculations[action.value.value];
-      if (typeof value === "number" || typeof value === "string") {
-        operandValue = value;
-      }
-      break;
+      return typeof value === "number" || typeof value === "string" ? value : undefined;
     }
     // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
     // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
@@ -875,17 +871,25 @@ const getCalculationOperand = (
     case "element":
     case "hiddenField": {
       const val = data[action.value.value];
-      if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && isNumericOperand(val)) {
-          operandValue = Number(val);
-        } else {
-          operandValue = val;
-        }
-      }
-      break;
+      if (typeof val !== "number" && typeof val !== "string") return undefined;
+      return dataType === "number" && isNumericOperand(val) ? Number(val) : val;
     }
   }
-  return operandValue;
+  return undefined;
+};
+
+/**
+ * A field's value as a one-step operator starts from: `0` / `""` when unset. A stored true/false is
+ * not a number, so a number field starts from 0 rather than `Number("true")` (NaN); a text field
+ * reads it as its text. Same rule as the survey bundle's `withDefaultValue`
+ * (packages/surveys/src/lib/logic.ts).
+ */
+const getOneStepCurrentValue = (
+  storedValue: TResponseVariables[string] | undefined,
+  dataType: string
+): string | number => {
+  if (typeof storedValue === "boolean") return dataType === "number" ? 0 : String(storedValue);
+  return storedValue ?? (dataType === "number" ? 0 : "");
 };
 
 /** Applies a one-step operator; `undefined` for a division by zero. */
@@ -915,14 +919,18 @@ const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate | TBlockActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>,
+  calculations: TResponseVariables,
   context: TPerformActionsContext
-): number | string | undefined => {
+): TResponseVariables[string] | undefined => {
   const computedField = findComputedEmbeddedField(getComputedEmbeddedFields(survey), action.variableId);
 
   if (!computedField) return undefined;
 
   const { dataType } = computedField.field;
+
+  // ENG-6973: a true/false field is assigned True, False or another true/false field, as a real
+  // boolean, by the same rule as the survey bundle.
+  if (dataType === "boolean") return evaluateBooleanAssign(action, data, calculations);
 
   // Set value (ENG-6935): the shared evaluator, as in the survey bundle, "empty in, empty out". An
   // empty result is written as "" so it clears the field; the one-step operators below keep "empty
@@ -937,11 +945,7 @@ const performCalculation = (
     });
   }
 
-  let currentValue = calculations[action.variableId];
-  if (currentValue === undefined) {
-    currentValue = dataType === "number" ? 0 : "";
-  }
-
+  const currentValue = getOneStepCurrentValue(calculations[action.variableId], dataType);
   const operandValue = getCalculationOperand(action, data, calculations, dataType);
   if (operandValue === undefined || operandValue === null) return undefined;
 
