@@ -70,7 +70,7 @@ Notes:
   separately for the `next` tier, where `incompatible-library` is `off`: the app does not run the compiler,
   and its sites are react-hook-form's `watch()` and TanStack Table, used on purpose.
 - `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
-  (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `no-nested-functions`,
+  (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `max-switch-cases` at 30, `no-nested-functions`,
   `no-nested-conditional`, `no-nested-template-literals`, `prefer-string-raw`, `prefer-optional-chain`,
   `no-deprecated`, `prefer-nullish-coalescing`, and `vitest/prefer-to-have-length` for tests). They are
   all errors in `pnpm lint` and CI. An exception takes an inline disable with its reason, or, for an
