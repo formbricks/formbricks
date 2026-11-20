@@ -342,6 +342,42 @@ describe("POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request", () =
     expect(mocks.send).not.toHaveBeenCalled();
   });
 
+  // The checks run in order: write access, then archived, then the step. Each pair below would answer
+  // differently if the two swapped.
+  test("checks write access before saying the workflow is archived", async () => {
+    mocks.workflowFindUnique.mockResolvedValue({
+      id: WORKFLOW_ID,
+      workspaceId: WORKSPACE_ID,
+      status: "archived",
+      definition,
+    });
+    mocks.requireV3WorkspaceAccess.mockResolvedValue(
+      Response.json(
+        { code: "forbidden" },
+        { status: 403, headers: { "Content-Type": "application/problem+json" } }
+      )
+    );
+
+    expect((await post()).status).toBe(403);
+  });
+
+  test("says the workflow is archived before looking for the step", async () => {
+    mocks.workflowFindUnique.mockResolvedValue({
+      id: WORKFLOW_ID,
+      workspaceId: WORKSPACE_ID,
+      status: "archived",
+      definition,
+    });
+
+    expect((await post("nope")).status).toBe(422);
+  });
+
+  test("looks for the step before building the call", async () => {
+    mocks.loadSecrets.mockResolvedValue(new Map());
+
+    expect((await post("nope")).status).toBe(404);
+  });
+
   test("a target that answers with an error is still a 200, and no answer saves no sample", async () => {
     mocks.send.mockResolvedValue({ response: null, error: "The request timed out after 10 s", attempts: 1 });
 

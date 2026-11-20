@@ -174,6 +174,24 @@ describe("walkWorkflowSteps", () => {
     await expect(walk(cyclic, () => ({ next: "continue" }))).rejects.toThrow(/acyclic/);
   });
 
+  test("refuses an edge to a step that doesn't exist, before visiting it", async () => {
+    const dangling = definition(
+      [sendEmailNode("a")],
+      [
+        { id: "e1", source: "trigger", target: "a" },
+        { id: "e2", source: "a", target: "ghost" },
+      ]
+    );
+    const visited: string[] = [];
+    await expect(
+      walkWorkflowSteps(dangling, (node) => {
+        visited.push(node.id);
+        return Promise.resolve({ next: "continue" });
+      })
+    ).rejects.toThrow(WorkflowWalkError);
+    expect(visited).toEqual(["a"]);
+  });
+
   test("refuses fan-out from a step that is not an If/else", async () => {
     const fanOut = definition(
       [sendEmailNode("a"), sendEmailNode("b"), sendEmailNode("c")],
