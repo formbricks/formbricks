@@ -6,6 +6,7 @@ import { symmetricEncrypt } from "@/lib/crypto";
 import { createSsoRelinkIntent } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
 import { getSessionTokenFromCookieHeader } from "@/modules/auth/lib/session-cookie";
+import { createSsoRecoveryProof, getSsoRecoveryStateId } from "@/modules/ee/sso/lib/recovery-proof";
 import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
 
@@ -109,18 +110,23 @@ const createRecoverySession = async (userId: string): Promise<string> => {
   return session.token;
 };
 
-const runRecovery = (user: { id: string; email: string }, sessionToken: string) =>
-  completeSsoRecovery({
-    intentToken: createSsoRelinkIntent({
-      userId: user.id,
-      email: user.email,
-      provider: "google",
-      providerAccountId: "google-sub-recovery-1",
-      callbackUrl: WEBAPP_URL,
-    }),
+const runRecovery = (user: { id: string; email: string }, sessionToken: string) => {
+  const intentToken = createSsoRelinkIntent({
+    userId: user.id,
+    email: user.email,
+    provider: "google",
+    providerAccountId: "google-sub-recovery-1",
+    callbackUrl: WEBAPP_URL,
+  });
+
+  return completeSsoRecovery({
+    intentToken,
+    // From the browser that opened the emailed link (ENG-7310).
+    recoveryProof: createSsoRecoveryProof(user.id, getSsoRecoveryStateId(intentToken)),
     sessionUserId: user.id,
     sessionToken,
   });
+};
 
 beforeEach(async () => {
   await resetDb();

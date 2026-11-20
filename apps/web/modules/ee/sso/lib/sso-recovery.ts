@@ -2,9 +2,13 @@ import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
-import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE,
+  SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE,
+} from "@formbricks/types/errors";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken, createSsoRelinkIntent, verifySsoRelinkIntent } from "@/lib/jwt";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
@@ -18,8 +22,16 @@ import {
   TSsoLookupUser,
   syncSsoIdentityForUser,
 } from "./account-linking";
-import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, SSO_RECOVERY_COMPLETION_PATH } from "./constants";
-import { normalizeSsoProvider } from "./provider-normalization";
+import {
+  OAUTH_ACCOUNT_NOT_LINKED_ERROR,
+  SSO_RECOVERY_COMPLETION_PATH,
+  SSO_RECOVERY_CONFIRM_PATH,
+} from "./constants";
+import { type TSsoIdentityProvider, normalizeSsoProvider } from "./provider-normalization";
+import { claimSsoRecovery, markSsoRecoverySpent } from "./recovery-claim";
+import { getSsoRecoveryStateId, isValidSsoRecoveryProof } from "./recovery-proof";
+
+type TSsoRecoveryIntent = ReturnType<typeof verifySsoRelinkIntent>;
 
 const getSsoRecoveryLogger = (
   event: "sso_recovery_started" | "sso_recovery_completed" | "sso_recovery_failed"
@@ -332,6 +344,84 @@ export const getSsoRecoverySecondFactorRedirectUrl = (callbackUrl?: string): str
 export const getSsoRecoverySecondFactorUnavailableRedirectUrl = (callbackUrl?: string): string =>
   buildSsoRecoveryLoginUrl(callbackUrl, SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE);
 
+/**
+ * `unproven` is a valid intent reached by a browser that never opened the emailed link (ENG-7310). It
+ * says nothing against the caller's session: the session was not minted by the link, since opening the
+ * link is what sets the proof. So, like `intent_unusable`, it skips the teardown. Tearing down here
+ * would also let anyone holding a completion URL sign a victim out by sending them to it.
+ */
+export type TSsoRecoveryFailure = "intent_unusable" | "unproven" | "rejected";
+
+/**
+ * A refused recovery, sometimes carrying the callback the caller should bounce back to. `callbackUrl` is
+ * set only once the caller has proven to be the intent's own user (the `user_mismatch` branch), so the
+ * failure redirect never hands a stranger the place the account holder was headed.
+ *
+ * `intent_unusable` means there is nothing to act on: the intent did not verify (expired, malformed,
+ * forged), it was already linked or cancelled, or another Link or Cancel holds it. `unproven` means this
+ * browser never opened the emailed link. `rejected` means a later guard turned a usable intent down.
+ */
+export class SsoRecoveryError extends Error {
+  readonly failure: TSsoRecoveryFailure;
+  readonly callbackUrl?: string;
+
+  constructor(failure: TSsoRecoveryFailure, callbackUrl?: string) {
+    super(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+    this.name = "SsoRecoveryError";
+    this.failure = failure;
+    this.callbackUrl = callbackUrl;
+  }
+}
+
+/**
+ * Where a completion goes when this browser never opened the emailed link (ENG-7310). Never carries a
+ * callback: the caller has not proven anything, and the intent's callback would tell them where the
+ * account holder was headed.
+ */
+export const getSsoRecoveryLinkNotOpenedRedirectUrl = (): string =>
+  buildSsoRecoveryLoginUrl(undefined, SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE);
+
+/** Where a refused recovery sends the browser, and whether the completion route revokes its session. */
+export type TSsoRecoveryRefusal = { redirectUrl: string; revokesSession: boolean };
+
+/**
+ * Every way a recovery can be refused, in one place, so the confirmation page and the completion route
+ * cannot disagree about where a refusal goes or whether it costs the caller their session.
+ *
+ * `intent_unusable` and `unproven` leave the session alone. The emailed link can be opened again after a
+ * link succeeded, and that must not sign the user out; and a browser that never opened the link holds a
+ * session the link did not mint. Skipping the teardown is safe because it only revokes the caller's own
+ * token, and the link itself already failed closed before any write.
+ *
+ * `rejected`, and any unexpected throw, keep the ENG-2557 teardown. Only the completion route can apply
+ * it: the page is a server component and cannot clear cookies.
+ */
+const SSO_RECOVERY_REFUSALS: Record<
+  TSsoRecoveryFailure | "unexpected",
+  (callbackUrl?: string) => TSsoRecoveryRefusal
+> = {
+  intent_unusable: () => ({ redirectUrl: getSsoRecoveryFailureRedirectUrl(), revokesSession: false }),
+  unproven: () => ({ redirectUrl: getSsoRecoveryLinkNotOpenedRedirectUrl(), revokesSession: false }),
+  rejected: (callbackUrl) => ({
+    redirectUrl: getSsoRecoveryFailureRedirectUrl(callbackUrl),
+    revokesSession: true,
+  }),
+  unexpected: () => ({ redirectUrl: getSsoRecoveryFailureRedirectUrl(), revokesSession: true }),
+};
+
+export const getSsoRecoveryRefusal = (error: unknown): TSsoRecoveryRefusal =>
+  error instanceof SsoRecoveryError
+    ? SSO_RECOVERY_REFUSALS[error.failure](error.callbackUrl)
+    : SSO_RECOVERY_REFUSALS.unexpected();
+
+/** The confirmation page for a recovery (ENG-7395). */
+export const getSsoRecoveryConfirmUrl = (intentToken: string): string => {
+  const confirmUrl = new URL(SSO_RECOVERY_CONFIRM_PATH, WEBAPP_URL);
+  confirmUrl.searchParams.set("intent", intentToken);
+
+  return confirmUrl.toString();
+};
+
 export const startSsoRecovery = async ({
   existingUser,
   provider,
@@ -361,6 +451,8 @@ export const startSsoRecovery = async ({
       locale: existingUser.locale,
       callbackUrl: completionUrl,
       purpose: "sso_recovery",
+      // Signed into the mailed token, so the link mints its proof only for this recovery (ENG-7310).
+      ssoRecoveryStateId: getSsoRecoveryStateId(recoveryIntent),
     });
 
     getSsoRecoveryLogger("sso_recovery_started").info(
@@ -408,147 +500,20 @@ export const startSsoRecovery = async ({
   }
 };
 
-export const completeSsoRecovery = async ({
-  intentToken,
-  sessionUserId,
+/**
+ * The after-commit half of a reclaim: sweep the squatter's sessions and tell the account holder what was
+ * removed. Each step is best-effort, because the strip has committed. Returns how many sessions were
+ * revoked, or null when the sweep failed.
+ */
+const settleReclaimedCredentials = async ({
+  reclaimed,
+  user,
   sessionToken,
 }: {
-  intentToken: string;
-  sessionUserId?: string;
-  /**
-   * The recovering user's own session token, so the post-commit revocation can spare it. Everything else
-   * the account accrued while its address was unproven is swept.
-   */
-  sessionToken?: string;
-}): Promise<string> => {
-  let intent: ReturnType<typeof verifySsoRelinkIntent>;
-
-  try {
-    intent = verifySsoRelinkIntent(intentToken);
-  } catch (error) {
-    getSsoRecoveryLogger("sso_recovery_failed").error({ error }, "Invalid or expired SSO recovery intent");
-    queueSsoRecoveryAuditEvent({
-      action: "sso_recovery_failed",
-      status: "failure",
-      userId: UNKNOWN_DATA,
-      email: UNKNOWN_DATA,
-      provider: "unknown",
-      failureReason: "invalid_or_expired_intent",
-    });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
-  }
-
-  const provider = normalizeSsoProvider(intent.provider);
-
-  if (!provider) {
-    getSsoRecoveryLogger("sso_recovery_failed").error(
-      {
-        provider: intent.provider,
-      },
-      "SSO recovery failed due to an invalid provider"
-    );
-    queueSsoRecoveryAuditEvent({
-      action: "sso_recovery_failed",
-      status: "failure",
-      userId: intent.userId,
-      email: intent.email,
-      provider: intent.provider,
-      callbackUrl: intent.callbackUrl,
-      failureReason: "invalid_provider",
-    });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
-  }
-
-  if (!sessionUserId) {
-    getSsoRecoveryLogger("sso_recovery_failed").error(
-      {
-        userId: intent.userId,
-        provider,
-      },
-      "SSO recovery failed because there is no signed-in session"
-    );
-    queueSsoRecoveryAuditEvent({
-      action: "sso_recovery_failed",
-      status: "failure",
-      userId: intent.userId,
-      email: intent.email,
-      provider,
-      callbackUrl: intent.callbackUrl,
-      failureReason: "missing_session",
-    });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
-  }
-
-  if (sessionUserId !== intent.userId) {
-    getSsoRecoveryLogger("sso_recovery_failed").error(
-      {
-        userId: intent.userId,
-        provider,
-        sessionUserId,
-      },
-      "SSO recovery failed because the signed-in user does not match the recovery intent"
-    );
-    queueSsoRecoveryAuditEvent({
-      action: "sso_recovery_failed",
-      status: "failure",
-      userId: intent.userId,
-      email: intent.email,
-      provider,
-      callbackUrl: intent.callbackUrl,
-      failureReason: "session_user_mismatch",
-    });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
-  }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      id: intent.userId,
-    },
-    select: LINKED_SSO_LOOKUP_SELECT,
-  });
-
-  if (user?.email !== intent.email) {
-    getSsoRecoveryLogger("sso_recovery_failed").error(
-      {
-        userId: intent.userId,
-        provider: intent.provider,
-      },
-      "SSO recovery failed due to user mismatch"
-    );
-    queueSsoRecoveryAuditEvent({
-      action: "sso_recovery_failed",
-      status: "failure",
-      userId: intent.userId,
-      email: intent.email,
-      provider: intent.provider,
-      callbackUrl: intent.callbackUrl,
-      failureReason: "user_mismatch",
-    });
-    throw new Error(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
-  }
-
-  const reclaimed = await prisma.$transaction(async (tx) => {
-    const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
-      tx,
-      user,
-    });
-
-    const recoveryAccount: TSsoAccountLinkInput = {
-      type: "oauth",
-      provider,
-      providerAccountId: intent.providerAccountId,
-    };
-
-    await syncSsoIdentityForUser({
-      userId: user.id,
-      provider,
-      account: recoveryAccount,
-      tx,
-    });
-
-    return outcome;
-  });
-
+  reclaimed: Awaited<ReturnType<typeof reclaimUnverifiedLocalAuthIfNeeded>>;
+  user: TSsoLookupUser;
+  sessionToken: string | undefined;
+}): Promise<number | null> => {
   // Only when factors were actually stripped: this is the account changing hands, so any session the
   // squatter still holds has to go. Reachable in practice because `signUpEmail` writes
   // `emailVerified: false` regardless of `requireEmailVerification`, so on an instance with
@@ -568,7 +533,7 @@ export const completeSsoRecovery = async ({
     } catch (error) {
       sessionsRevoked = null;
       logger.error(
-        { error, userId: user.id },
+        { ...loggableError(error), userId: user.id },
         "Failed to revoke sessions after reclaiming unverified local auth"
       );
     }
@@ -606,11 +571,329 @@ export const completeSsoRecovery = async ({
       }
     } catch (error) {
       logger.error(
-        { error, userId: user.id },
+        { ...loggableError(error), userId: user.id },
         "Failed to notify the user that SSO recovery removed their local sign-in factors"
       );
     }
   }
+
+  return sessionsRevoked;
+};
+
+/** What a browser brings to act on a recovery: which one, and the proof and session it holds. */
+export type TSsoRecoveryAccess = {
+  intentToken: string;
+  /** The proof cookie set when this browser opened the emailed link (`recovery-proof.ts`). */
+  recoveryProof?: string;
+  sessionUserId?: string;
+};
+
+/**
+ * The account's address no longer matches the one recovery was started for. Logged, audited and refused,
+ * from the guard and again from inside the linking transaction, so a change that lands in between leaves
+ * the same trace.
+ */
+const rejectSsoRecoveryUserMismatch = (intent: TSsoRecoveryIntent): SsoRecoveryError => {
+  getSsoRecoveryLogger("sso_recovery_failed").error(
+    { userId: intent.userId, provider: intent.provider },
+    "SSO recovery failed due to user mismatch"
+  );
+  queueSsoRecoveryAuditEvent({
+    action: "sso_recovery_failed",
+    status: "failure",
+    userId: intent.userId,
+    email: intent.email,
+    provider: intent.provider,
+    callbackUrl: intent.callbackUrl,
+    failureReason: "user_mismatch",
+  });
+  // Past the session check, so this caller IS the intent's user — handing back their own callback
+  // discloses nothing they did not already supply.
+  return new SsoRecoveryError("rejected", intent.callbackUrl);
+};
+
+/** Every guard a Link, a Cancel and the confirmation page share. Writes nothing. */
+const authorizeSsoRecovery = async ({ intentToken, recoveryProof, sessionUserId }: TSsoRecoveryAccess) => {
+  let intent: TSsoRecoveryIntent;
+
+  try {
+    intent = verifySsoRelinkIntent(intentToken);
+  } catch (error) {
+    getSsoRecoveryLogger("sso_recovery_failed").error({ error }, "Invalid or expired SSO recovery intent");
+    queueSsoRecoveryAuditEvent({
+      action: "sso_recovery_failed",
+      status: "failure",
+      userId: UNKNOWN_DATA,
+      email: UNKNOWN_DATA,
+      provider: "unknown",
+      failureReason: "invalid_or_expired_intent",
+    });
+    throw new SsoRecoveryError("intent_unusable");
+  }
+
+  const provider = normalizeSsoProvider(intent.provider);
+
+  if (!provider) {
+    getSsoRecoveryLogger("sso_recovery_failed").error(
+      {
+        provider: intent.provider,
+      },
+      "SSO recovery failed due to an invalid provider"
+    );
+    queueSsoRecoveryAuditEvent({
+      action: "sso_recovery_failed",
+      status: "failure",
+      userId: intent.userId,
+      email: intent.email,
+      provider: intent.provider,
+      callbackUrl: intent.callbackUrl,
+      failureReason: "invalid_provider",
+    });
+    throw new SsoRecoveryError("rejected");
+  }
+
+  const stateId = getSsoRecoveryStateId(intentToken);
+
+  // Before any session check (ENG-7310). The completion URL also reaches the browser that STARTED
+  // recovery, and that may be an attacker whose IdP identity claims this address. A session for the
+  // intent's user proves nothing either: any page can navigate the user's own signed-in browser here.
+  // Only the browser that opened the link mailed to the account carries this proof.
+  if (!isValidSsoRecoveryProof(recoveryProof, intent.userId, stateId)) {
+    getSsoRecoveryLogger("sso_recovery_failed").error(
+      {
+        userId: intent.userId,
+        provider,
+      },
+      "SSO recovery failed because this browser did not open the recovery link"
+    );
+    queueSsoRecoveryAuditEvent({
+      action: "sso_recovery_failed",
+      status: "failure",
+      userId: intent.userId,
+      email: intent.email,
+      provider,
+      callbackUrl: intent.callbackUrl,
+      failureReason: "missing_recovery_proof",
+    });
+    throw new SsoRecoveryError("unproven");
+  }
+
+  if (!sessionUserId) {
+    getSsoRecoveryLogger("sso_recovery_failed").error(
+      {
+        userId: intent.userId,
+        provider,
+      },
+      "SSO recovery failed because there is no signed-in session"
+    );
+    queueSsoRecoveryAuditEvent({
+      action: "sso_recovery_failed",
+      status: "failure",
+      userId: intent.userId,
+      email: intent.email,
+      provider,
+      callbackUrl: intent.callbackUrl,
+      failureReason: "missing_session",
+    });
+    throw new SsoRecoveryError("rejected");
+  }
+
+  if (sessionUserId !== intent.userId) {
+    getSsoRecoveryLogger("sso_recovery_failed").error(
+      {
+        userId: intent.userId,
+        provider,
+        sessionUserId,
+      },
+      "SSO recovery failed because the signed-in user does not match the recovery intent"
+    );
+    queueSsoRecoveryAuditEvent({
+      action: "sso_recovery_failed",
+      status: "failure",
+      userId: intent.userId,
+      email: intent.email,
+      provider,
+      callbackUrl: intent.callbackUrl,
+      failureReason: "session_user_mismatch",
+    });
+    throw new SsoRecoveryError("rejected");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: intent.userId,
+    },
+    select: LINKED_SSO_LOOKUP_SELECT,
+  });
+
+  if (user?.email !== intent.email) {
+    throw rejectSsoRecoveryUserMismatch(intent);
+  }
+
+  return { intent, provider, user, stateId };
+};
+
+/**
+ * What the confirmation page shows before the account holder chooses to link (ENG-7395): the provider
+ * that would be linked and the account it changes. Runs every completion guard and writes nothing, so a
+ * page view cannot link, strip or spend anything, and a browser the POST would refuse is refused here.
+ */
+export const getSsoRecoveryConfirmation = async (
+  args: TSsoRecoveryAccess
+): Promise<{ provider: TSsoIdentityProvider; email: string }> => {
+  const { provider, user } = await authorizeSsoRecovery(args);
+  return { provider, email: user.email };
+};
+
+const LOST_CLAIM_REASONS = {
+  held: "claimed_by_another_request",
+  spent: "intent_already_spent",
+  unavailable: "claim_unavailable",
+} as const;
+
+/** Leaves a trace of a Link or Cancel that could not claim the recovery, and why (ENG-7395). */
+const recordLostSsoRecoveryClaim = (
+  intent: TSsoRecoveryIntent,
+  provider: TSsoIdentityProvider,
+  outcome: keyof typeof LOST_CLAIM_REASONS
+) => {
+  getSsoRecoveryLogger("sso_recovery_failed").info(
+    { userId: intent.userId, provider, outcome },
+    "SSO recovery could not be claimed"
+  );
+  queueSsoRecoveryAuditEvent({
+    action: "sso_recovery_failed",
+    status: "failure",
+    userId: intent.userId,
+    email: intent.email,
+    provider,
+    callbackUrl: intent.callbackUrl,
+    failureReason: LOST_CLAIM_REASONS[outcome],
+  });
+};
+
+/**
+ * The account holder declined on the confirmation page (ENG-7395). Marks the recovery spent so the link
+ * can no longer complete anything, from this browser or any other, and records why. Runs the same guards
+ * as a completion, so only the browser that could have linked can cancel.
+ */
+export const cancelSsoRecovery = async (args: TSsoRecoveryAccess): Promise<void> => {
+  const { intent, provider, stateId } = await authorizeSsoRecovery(args);
+
+  // A Link in flight holds the claim, and a spent recovery cannot be claimed: either way this cancel did
+  // not happen, so no cancellation is recorded.
+  const claim = await claimSsoRecovery(stateId);
+  if (claim.kind !== "claimed") {
+    recordLostSsoRecoveryClaim(intent, provider, claim.kind);
+    throw new SsoRecoveryError("intent_unusable");
+  }
+
+  try {
+    // Unmarked, the link would stay usable until the intent expires; the user is told it is unusable.
+    if (!(await markSsoRecoverySpent(stateId))) {
+      throw new SsoRecoveryError("intent_unusable");
+    }
+  } finally {
+    await claim.release();
+  }
+
+  getSsoRecoveryLogger("sso_recovery_failed").info(
+    { userId: intent.userId, provider },
+    "SSO recovery cancelled by the account holder"
+  );
+  queueSsoRecoveryAuditEvent({
+    action: "sso_recovery_failed",
+    status: "failure",
+    userId: intent.userId,
+    email: intent.email,
+    provider,
+    callbackUrl: intent.callbackUrl,
+    failureReason: "cancelled_by_user",
+  });
+};
+
+/**
+ * Links the pending SSO identity. Reached only by the POST from the confirmation page (ENG-7395): a GET
+ * can be issued by a mail scanner or by a page the account holder never meant to act on.
+ */
+export const completeSsoRecovery = async ({
+  intentToken,
+  recoveryProof,
+  sessionUserId,
+  sessionToken,
+}: TSsoRecoveryAccess & {
+  /**
+   * The recovering user's own session token, so the post-commit revocation can spare it. Everything else
+   * the account accrued while its address was unproven is swept.
+   */
+  sessionToken?: string;
+}): Promise<string> => {
+  const { intent, provider, user, stateId } = await authorizeSsoRecovery({
+    intentToken,
+    recoveryProof,
+    sessionUserId,
+  });
+
+  // Only one request acts on a recovery: a Cancel holding the claim, or a recovery already linked or
+  // cancelled, stops this link before it writes anything.
+  const claim = await claimSsoRecovery(stateId);
+  if (claim.kind !== "claimed") {
+    recordLostSsoRecoveryClaim(intent, provider, claim.kind);
+    throw new SsoRecoveryError("intent_unusable");
+  }
+
+  // Kept when the link committed but the recovery could not be marked spent: released, it would let a
+  // later Cancel claim it and record a cancellation for an identity that is linked.
+  let keepClaim = false;
+  let reclaimed: Awaited<ReturnType<typeof reclaimUnverifiedLocalAuthIfNeeded>>;
+  try {
+    reclaimed = await prisma.$transaction(async (tx) => {
+      // The address was checked against the intent before the claim; check it again here, holding the
+      // user row, so an email change cannot commit between that check and the link. FOR UPDATE makes a
+      // concurrent change wait for this transaction instead of slipping in after a plain read.
+      //
+      // `emailVerified` is re-read under the same lock because it decides the reclaim. Two recoveries
+      // for one user hold different intents, so both can pass the guards; the second then waits here
+      // while the first verifies the address. Deciding from the read taken before the lock, it would
+      // strip again and sweep the sessions the first recovery kept.
+      const [locked] = await tx.$queryRaw<{ email: string; emailVerified: boolean }[]>`
+        SELECT "email", "email_verified" AS "emailVerified" FROM "User" WHERE "id" = ${user.id} FOR UPDATE
+      `;
+      if (locked?.email !== intent.email) {
+        throw rejectSsoRecoveryUserMismatch(intent);
+      }
+
+      const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
+        tx,
+        user: { ...user, emailVerified: locked.emailVerified },
+      });
+
+      const recoveryAccount: TSsoAccountLinkInput = {
+        type: "oauth",
+        provider,
+        providerAccountId: intent.providerAccountId,
+      };
+
+      await syncSsoIdentityForUser({
+        userId: user.id,
+        provider,
+        account: recoveryAccount,
+        tx,
+      });
+
+      return outcome;
+    });
+
+    // Single use, applied once the link has committed: the emailed link cannot link or cancel again.
+    // Best-effort inside the helper: the account is already linked, and a Redis hiccup here must not turn
+    // a completed recovery into a failure.
+    keepClaim = !(await markSsoRecoverySpent(stateId));
+  } finally {
+    // After a rollback this frees the recovery for a retry; after a link the recovery is already spent.
+    if (!keepClaim) await claim.release();
+  }
+
+  const sessionsRevoked = await settleReclaimedCredentials({ reclaimed, user, sessionToken });
 
   try {
     await finalizeSuccessfulSignIn({

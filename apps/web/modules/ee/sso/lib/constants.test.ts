@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
-import { canonicalAccountIssuer, ssoAccountIssuer } from "./constants";
+import { canonicalAccountIssuer, getSsoRecoveryIntentFromCompletionUrl, ssoAccountIssuer } from "./constants";
 
 /**
  * `Account.issuer` is spelled in three places that cannot import each other, and ENG-2555 happened
@@ -139,5 +139,23 @@ describe("ssoAccountIssuer", () => {
 
   test("percent-encodes a provider id that needs it", () => {
     expect(ssoAccountIssuer("team/github")).toBe("local:oauth:team%2Fgithub");
+  });
+});
+
+describe("getSsoRecoveryIntentFromCompletionUrl (ENG-7310)", () => {
+  test("reads the intent from a completion URL, absolute or relative", () => {
+    expect(
+      getSsoRecoveryIntentFromCompletionUrl("http://localhost:3000/api/auth/sso/recovery/complete?intent=abc")
+    ).toBe("abc");
+    expect(getSsoRecoveryIntentFromCompletionUrl("/api/auth/sso/recovery/complete?intent=abc")).toBe("abc");
+  });
+
+  test.each([
+    ["no callback", undefined],
+    ["another path", "/invite?token=abc&intent=abc"],
+    ["no intent", "/api/auth/sso/recovery/complete"],
+    ["an empty intent", "/api/auth/sso/recovery/complete?intent="],
+  ])("returns null for %s", (_label, callbackUrl) => {
+    expect(getSsoRecoveryIntentFromCompletionUrl(callbackUrl)).toBeNull();
   });
 });
