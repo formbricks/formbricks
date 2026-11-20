@@ -13,6 +13,7 @@ import {
   isCompilableEmbeddedKey,
   selectEmbeddedKeys,
 } from "./embedded-data-fields";
+import { EmbeddedKeysNotReadyError, RareEmbeddedKeysConflictError } from "./embedded-keys-errors";
 import { getEmbeddedMemberName } from "./embedded-member-name";
 
 /**
@@ -58,7 +59,16 @@ const RESOLUTION_ROW_LIMIT = 2000;
 
 export const EMBEDDED_DATA_KEY_DIMENSION = "FeedbackRecords.embeddedDataKey";
 
-type TCachedEmbeddedKeys = { keys: string[]; refreshedAt: number };
+/** `failed` marks the brief "no keys" a failed scan leaves, apart from a dataset that has none. */
+type TCachedEmbeddedKeys = { keys: string[]; refreshedAt: number; failed?: true };
+
+/**
+ * The top keys as read, and whether they are the dataset's: `unavailable` when Valkey cannot be read or
+ * the last scan failed, so its empty list says nothing about the dataset.
+ */
+type TEmbeddedKeyCatalog =
+  | { status: "ready"; keys: string[]; refreshedAt: number }
+  | { status: "unavailable"; keys: string[] };
 type TCachedKeyResolution = { members: Record<string, string>; scannedAt: number };
 
 export type TEmbeddedKeysScope = {
@@ -170,38 +180,47 @@ const discoverAndStore = (scope: TEmbeddedKeysScope, previous?: readonly string[
   });
 
 /**
- * The dataset's top keys, most frequent first. A failed first discovery answers no keys rather than
- * failing the chart: every chart without an embedded field still runs.
+ * The dataset's top keys, most frequent first, and whether they could be read at all. A failed first
+ * discovery answers no keys rather than failing the chart: every chart without an embedded field still
+ * runs.
  */
-export const getDatasetEmbeddedKeys = async (scope: TEmbeddedKeysScope): Promise<string[]> => {
+const readEmbeddedKeyCatalog = async (scope: TEmbeddedKeysScope): Promise<TEmbeddedKeyCatalog> => {
   const cached = await cache.get<unknown>(keysCacheKey(scope.datasetId));
   // Without Valkey every request would rescan the dataset; charts without embedded fields still run.
   if (!cached.ok) {
     logger.warn({ datasetId: scope.datasetId }, "Cache unavailable; embedded keys are not offered");
-    return [];
+    return { status: "unavailable", keys: [] };
   }
   if (isCachedEmbeddedKeys(cached.data)) {
-    if (Date.now() - cached.data.refreshedAt > EMBEDDED_KEYS_STALE_MS) {
+    // A failed scan is retried once its short-lived entry expires, not refreshed in the background.
+    if (cached.data.failed) return { status: "unavailable", keys: [] };
+    const { refreshedAt } = cached.data;
+    if (Date.now() - refreshedAt > EMBEDDED_KEYS_STALE_MS) {
       const previous = cached.data.keys;
       refreshInBackground(keysLockKey(scope.datasetId), scope.datasetId, () =>
         discoverAndStore(scope, previous)
       );
     }
-    return selectEmbeddedKeys(cached.data.keys);
+    return { status: "ready", keys: selectEmbeddedKeys(cached.data.keys), refreshedAt };
   }
 
   try {
-    return await discoverAndStore(scope);
+    const keys = await discoverAndStore(scope);
+    return { status: "ready", keys, refreshedAt: Date.now() };
   } catch (error) {
     logger.warn({ ...loggableError(error), datasetId: scope.datasetId }, "Embedded-key discovery failed");
-    const failed: TCachedEmbeddedKeys = { keys: [], refreshedAt: Date.now() };
+    const failed: TCachedEmbeddedKeys = { keys: [], refreshedAt: Date.now(), failed: true };
     await storeOrWarn(keysCacheKey(scope.datasetId), failed, FAILED_SCAN_RETRY_MS, scope.datasetId);
-    return [];
+    return { status: "unavailable", keys: [] };
   }
 };
 
+/** The dataset's top keys, most frequent first; none when they cannot be read. */
+export const getDatasetEmbeddedKeys = async (scope: TEmbeddedKeysScope): Promise<string[]> =>
+  (await readEmbeddedKeyCatalog(scope)).keys;
+
 /** Every key of the dataset (up to `RESOLUTION_ROW_LIMIT`), by the member it compiles to. */
-const scanAndStoreMembers = (scope: TEmbeddedKeysScope): Promise<Record<string, string>> =>
+const scanAndStoreMembers = (scope: TEmbeddedKeysScope): Promise<TCachedKeyResolution> =>
   runOnce(membersCacheKey(scope.datasetId), async () => {
     const members: Record<string, string> = {};
     for (const key of await scanRankedKeys(scope, RESOLUTION_ROW_LIMIT)) {
@@ -209,18 +228,18 @@ const scanAndStoreMembers = (scope: TEmbeddedKeysScope): Promise<Record<string, 
     }
     const stored: TCachedKeyResolution = { members, scannedAt: Date.now() };
     await storeOrWarn(membersCacheKey(scope.datasetId), stored, EMBEDDED_KEYS_TTL_MS, scope.datasetId);
-    return members;
+    return stored;
   });
 
 /**
- * Every key of the dataset by member, from the cached scan. A member the scan does not know is looked
- * for again in the background once the scan is stale; this request answers without it. `undefined`
- * when there is no scan to read (Valkey down, or the first scan failed).
+ * Every key of the dataset by member, from the cached scan, with when it was taken. A member the scan
+ * does not know is looked for again in the background once the scan is stale; this request answers
+ * without it. `undefined` when there is no scan to read (Valkey down, or the first scan failed).
  */
 const loadKeyMembers = async (
   scope: TEmbeddedKeysScope,
   wanted: readonly string[]
-): Promise<Record<string, string> | undefined> => {
+): Promise<TCachedKeyResolution | undefined> => {
   const cached = await cache.get<unknown>(membersCacheKey(scope.datasetId));
   // Without Valkey every request would rescan, so nothing past the top keys resolves, as no key does then.
   if (!cached.ok) return undefined;
@@ -230,7 +249,7 @@ const loadKeyMembers = async (
     if (missing && Date.now() - scannedAt > EMBEDDED_KEYS_STALE_MS) {
       refreshInBackground(membersLockKey(scope.datasetId), scope.datasetId, () => scanAndStoreMembers(scope));
     }
-    return members;
+    return cached.data;
   }
 
   try {
@@ -262,7 +281,7 @@ export const resolveEmbeddedMemberKeys = async (
   if (resolved.size === wanted.size) return resolved;
 
   const outside = [...wanted].filter((member) => !resolved.has(member));
-  const members = await loadKeyMembers(scope, outside);
+  const members = (await loadKeyMembers(scope, outside))?.members;
   for (const member of outside) {
     const key = members?.[member];
     if (key !== undefined) resolved.set(member, key);
@@ -325,18 +344,23 @@ export const groupRareEmbeddedKeys = (rareKeys: readonly string[]): string[][] =
 };
 
 /**
- * A query names rarer embedded keys of more than one bucket. One token carries one bucket: carrying the
- * union would compile a model per combination of buckets, which dashboard picks could multiply at will.
- * The message names no key.
+ * The keys a token carries given `topKeys` and the query's members `outside` them, resolved through
+ * `members`; `undefined` when those name rarer keys of more than one bucket.
  */
-export class RareEmbeddedKeysConflictError extends Error {
-  constructor() {
-    super(
-      "The query uses rarely used embedded-data fields that cannot be combined in one chart. Remove one of them."
-    );
-    this.name = "RareEmbeddedKeysConflictError";
-  }
-}
+const pickTokenKeys = (
+  topKeys: readonly string[],
+  outside: readonly string[],
+  members: Record<string, string>
+): string[] | undefined => {
+  const top = new Set(topKeys);
+  const named = new Set(outside.flatMap((member) => members[member] ?? []).filter((key) => !top.has(key)));
+  if (named.size === 0) return canonicalOrder(topKeys);
+
+  const buckets = groupRareEmbeddedKeys(Object.values(members).filter((key) => !top.has(key)));
+  const chosen = buckets.filter((bucket) => bucket.some((key) => named.has(key)));
+  if (chosen.length > 1) return undefined;
+  return canonicalOrder([...topKeys, ...(chosen[0] ?? [])]);
+};
 
 /**
  * The keys a Cube token carries for `query`, in canonical order. Cube compiles one model per dataset and
@@ -344,25 +368,41 @@ export class RareEmbeddedKeysConflictError extends Error {
  * and — when the query names a rarer key (a saved chart whose key grew rarer, or a dashboard filter on
  * one) — that key's whole fixed bucket, so every query naming a key of the bucket shares one model. A
  * query naming rarer keys of several buckets is refused with `RareEmbeddedKeysConflictError`.
+ *
+ * Keys only look rare against top keys scanned before them: records with new keys imported since the
+ * last scan, or a scan that failed. Before refusing, a catalog older than the scan that found the keys is
+ * refreshed once, awaited; if that refresh fails the keys are refused as not ready, never as conflicting.
+ * The refreshed catalog is as new as the scan, so a genuine conflict costs no second refresh.
  */
 export const getEmbeddedKeysForQuery = async (
   scope: TEmbeddedKeysScope,
   query: unknown
 ): Promise<string[]> => {
-  const topKeys = await getDatasetEmbeddedKeys(scope);
-  const topMembers = new Set(topKeys.map(getEmbeddedMemberName));
+  const catalog = await readEmbeddedKeyCatalog(scope);
+  const topMembers = new Set(catalog.keys.map(getEmbeddedMemberName));
   const outside = collectEmbeddedMemberNames(query).filter((member) => !topMembers.has(member));
-  if (outside.length === 0) return canonicalOrder(topKeys);
+  if (outside.length === 0) return canonicalOrder(catalog.keys);
 
-  const members = await loadKeyMembers(scope, outside);
-  if (!members) return canonicalOrder(topKeys);
+  const resolution = await loadKeyMembers(scope, outside);
+  if (!resolution) return canonicalOrder(catalog.keys);
 
-  const top = new Set(topKeys);
-  const named = new Set(outside.flatMap((member) => members[member] ?? []).filter((key) => !top.has(key)));
-  if (named.size === 0) return canonicalOrder(topKeys);
+  const picked = pickTokenKeys(catalog.keys, outside, resolution.members);
+  if (picked) return picked;
+  if (catalog.status === "ready" && catalog.refreshedAt >= resolution.scannedAt) {
+    throw new RareEmbeddedKeysConflictError();
+  }
 
-  const buckets = groupRareEmbeddedKeys(Object.values(members).filter((key) => !top.has(key)));
-  const chosen = buckets.filter((bucket) => bucket.some((key) => named.has(key)));
-  if (chosen.length > 1) throw new RareEmbeddedKeysConflictError();
-  return canonicalOrder([...topKeys, ...(chosen[0] ?? [])]);
+  let refreshed: string[];
+  try {
+    refreshed = await discoverAndStore(scope, catalog.status === "ready" ? catalog.keys : undefined);
+  } catch (error) {
+    logger.warn({ ...loggableError(error), datasetId: scope.datasetId }, "Embedded-key discovery failed");
+    throw new EmbeddedKeysNotReadyError();
+  }
+  // Recheck every member the query names: the refresh can also push an old top key out of the top keys.
+  const refreshedMembers = new Set(refreshed.map(getEmbeddedMemberName));
+  const stillOutside = collectEmbeddedMemberNames(query).filter((member) => !refreshedMembers.has(member));
+  const retried = pickTokenKeys(refreshed, stillOutside, resolution.members);
+  if (retried) return retried;
+  throw new RareEmbeddedKeysConflictError();
 };

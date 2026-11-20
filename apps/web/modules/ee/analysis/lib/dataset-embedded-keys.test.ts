@@ -6,7 +6,6 @@ import {
   EMBEDDED_KEYS_STALE_MS,
   FAILED_SCAN_RETRY_MS,
   RARE_EMBEDDED_KEY_CLASSES,
-  RareEmbeddedKeysConflictError,
   getDatasetEmbeddedKeys,
   getEmbeddedKeysForQuery,
   getRareEmbeddedKeyClass,
@@ -20,6 +19,7 @@ import {
   MAX_RARE_EMBEDDED_KEYS_BYTES,
   MAX_TOKEN_EMBEDDED_KEYS,
 } from "./embedded-data-fields";
+import { EmbeddedKeysNotReadyError, RareEmbeddedKeysConflictError } from "./embedded-keys-errors";
 import { getEmbeddedMemberName } from "./embedded-member-name";
 
 const { mockCache, mockExecute } = vi.hoisted(() => ({
@@ -149,7 +149,7 @@ describe("getDatasetEmbeddedKeys", () => {
     await getDatasetEmbeddedKeys(scope);
     expect(mockCache.set).toHaveBeenCalledWith(
       "fb:analytics:frd-1:embedded-keys",
-      { keys: [], refreshedAt: Date.now() },
+      { keys: [], refreshedAt: Date.now(), failed: true },
       FAILED_SCAN_RETRY_MS
     );
   });
@@ -484,6 +484,78 @@ describe("a saved query's keys outside the top keys", () => {
       const tokens = new Set<string>();
       for (const key of rare) tokens.add(JSON.stringify(await keysFor(key)));
       expect(tokens.size).toBe(buckets.length);
+    });
+  });
+
+  describe("keys new since the top keys were scanned", () => {
+    // Two keys of different classes: as rare keys they would fall in different buckets.
+    const candidates = ["destination", "touchpoint", "visa_type", "segment", "channel", "region"];
+    const groupBy = candidates[0];
+    const filterOn =
+      candidates.find((key) => getRareEmbeddedKeyClass(key) !== getRareEmbeddedKeyClass(groupBy)) ?? "";
+    const query = {
+      measures: ["FeedbackRecords.count"],
+      dimensions: [member(groupBy)],
+      filters: [{ member: member(filterOn), operator: "equals", values: ["x"] }],
+    };
+
+    test("a chart grouped by one and filtered on another refreshes the catalog and runs", async () => {
+      expect(filterOn).not.toBe("");
+      // The catalog was scanned while the dataset had no keys, and is not stale yet.
+      stored[KEYS_KEY] = { keys: [], refreshedAt: Date.now() - 60_000 };
+      mockExecute.mockResolvedValue(rows(groupBy, filterOn));
+
+      await expect(getEmbeddedKeysForQuery(scope, query)).resolves.toEqual([groupBy, filterOn].sort());
+      expect(stored[KEYS_KEY]).toEqual({ keys: [groupBy, filterOn], refreshedAt: Date.now() });
+    });
+
+    test("after a failed scan, refreshes the catalog rather than calling the new keys rare", async () => {
+      stored[KEYS_KEY] = { keys: [], refreshedAt: Date.now(), failed: true };
+      mockExecute.mockResolvedValue(rows(groupBy, filterOn));
+
+      await expect(getEmbeddedKeysForQuery(scope, query)).resolves.toEqual([groupBy, filterOn].sort());
+    });
+
+    test("says the fields are not available yet when the refresh fails, never that they conflict", async () => {
+      stored[KEYS_KEY] = { keys: [], refreshedAt: Date.now() - 60_000 };
+      mockExecute
+        .mockResolvedValueOnce(rows(groupBy, filterOn))
+        .mockRejectedValueOnce(new Error("cube down"));
+
+      await expect(getEmbeddedKeysForQuery(scope, query)).rejects.toBeInstanceOf(EmbeddedKeysNotReadyError);
+    });
+
+    test("keeps a named key the refresh pushes out of the top keys", async () => {
+      const full = Array.from({ length: MAX_EMBEDDED_KEYS }, (_, index) => `top_${index}`);
+      stored[KEYS_KEY] = { keys: full, refreshedAt: Date.now() - 60_000 };
+      // The newcomers reach the material shift, so the fresh ranking replaces the set and drops the last top key.
+      const newcomers = Array.from({ length: EMBEDDED_KEYS_MATERIAL_SHIFT }, (_, index) => `new_${index}`);
+      const pushedOut = full[MAX_EMBEDDED_KEYS - 1];
+      mockExecute.mockResolvedValue(rows(groupBy, filterOn, ...newcomers, ...full));
+      const naming = { ...query, dimensions: [member(groupBy), member(pushedOut)] };
+
+      const keys = await getEmbeddedKeysForQuery(scope, naming);
+
+      expect(keys).toEqual(expect.arrayContaining([groupBy, filterOn, pushedOut]));
+    });
+
+    test("still refuses keys that stay rare once the catalog is fresh, without widening the token", async () => {
+      const full = Array.from({ length: MAX_EMBEDDED_KEYS }, (_, index) => `top_${index}`);
+      stored[KEYS_KEY] = { keys: full, refreshedAt: Date.now() - 60_000 };
+      // Two newcomers are fewer than the material shift: the full top set is kept and they stay rare.
+      mockExecute.mockResolvedValue(rows(...full, groupBy, filterOn));
+
+      await expect(getEmbeddedKeysForQuery(scope, query)).rejects.toBeInstanceOf(
+        RareEmbeddedKeysConflictError
+      );
+      expect(mockExecute).toHaveBeenCalledTimes(2);
+
+      // The catalog is now as fresh as the scan, so the next refusal costs no rescan.
+      mockExecute.mockClear();
+      await expect(getEmbeddedKeysForQuery(scope, query)).rejects.toBeInstanceOf(
+        RareEmbeddedKeysConflictError
+      );
+      expect(mockExecute).not.toHaveBeenCalled();
     });
   });
 });
