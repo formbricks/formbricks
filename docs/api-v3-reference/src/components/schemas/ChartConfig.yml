@@ -47,6 +47,14 @@ properties:
     enum: [top, bottom, left, right]
   stacked:
     type: boolean
+    description: >-
+      Bar charts with several series of counts. Stacks them into one bar per category (default true);
+      false places them side by side. Series that cannot be added up (scores, averages) are always side by side.
+  showEmptyValues:
+    type: boolean
+    description: >-
+      Charts with a grouping. Shows records that have no value for a grouping (including "Not enriched"
+      sentiment and "Unspecified" language) as their own group. Default false: those records are left out.
   showGrid:
     type: boolean
   showValues:

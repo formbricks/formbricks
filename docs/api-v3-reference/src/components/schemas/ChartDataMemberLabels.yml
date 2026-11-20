@@ -1,8 +1,9 @@
 type: object
 description: >-
-  Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own
-  name as collected, so a column or legend can read `Plan` rather than the field name. Empty when
-  the query names no embedded-data field.
+  Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the name the workspace gave
+  the embedded-data key, or else the key's own name as collected, so a column or legend can read
+  `Plan` rather than the field name. Display text only: read the key from the field catalog's `key`.
+  Empty when the query names no embedded-data field.
 additionalProperties:
   type: string
 example:

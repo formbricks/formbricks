@@ -27,6 +27,10 @@ interface RechartsTooltipProps {
   hideLabel?: boolean;
   /** Response base column on the hovered row, printed as "n = …" under the values. */
   responseBaseKey?: string;
+  /** Display label per data key, for series whose key is synthetic (one series per group value). */
+  seriesLabels?: Record<string, string>;
+  /** Formats a hovered value by the measure it belongs to (NPS whole, CSAT percent, …). */
+  valueFormatter?: (dataKey: string, value: unknown, row: Record<string, unknown> | undefined) => string;
 }
 
 export const PolishedChartTooltip = ({
@@ -36,6 +40,8 @@ export const PolishedChartTooltip = ({
   labelFormatter,
   hideLabel = false,
   responseBaseKey,
+  seriesLabels,
+  valueFormatter,
 }: Readonly<RechartsTooltipProps>) => {
   const { t } = useTranslation();
   if (!active || !payload?.length) return null;
@@ -58,7 +64,8 @@ export const PolishedChartTooltip = ({
           const key = item.dataKey ?? String(item.name ?? "");
           // Rows pivoted from measures (see pivotMeasuresToCategories) carry their translated
           // label on the row itself; otherwise the dataKey is a Cube column we can format.
-          const rowLabel = item.payload?.tooltipLabel ?? formatCubeColumnHeader(key, t);
+          const rowLabel =
+            item.payload?.tooltipLabel ?? seriesLabels?.[key] ?? formatCubeColumnHeader(key, t);
           // payload.fill (per-row data.fill / pie <Cell>) wins over the Bar's series fallback.
           const indicatorColor = item.payload?.fill ?? item.color ?? CHART_BRAND_DARK;
           return (
@@ -68,7 +75,7 @@ export const PolishedChartTooltip = ({
                 <span className="text-muted-foreground text-sm break-words">{rowLabel}</span>
               </div>
               <span className="text-foreground shrink-0 text-sm font-medium tabular-nums">
-                {formatCellValue(item.value)}
+                {valueFormatter ? valueFormatter(key, item.value, item.payload) : formatCellValue(item.value)}
               </span>
             </div>
           );

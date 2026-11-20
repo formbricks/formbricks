@@ -8,6 +8,7 @@ import {
   hasIncompleteFilterRow,
   insertFilterNodeAfter,
   isFilterGroup,
+  normalizeNpsSegmentRows,
   parseQueryToState,
   removeFilterNode,
   toggleFilterGroupLogic,
@@ -726,5 +727,98 @@ describe("answer rules in the builder (ENG-6637)", () => {
       buildCubeQuery({ ...base, selectedMeasures: ["FeedbackRecords.count"], ...parseQueryToState(query) })
         .filters
     ).toEqual(query.filters);
+  });
+});
+
+describe("NPS segment rules in the builder (ENG-7323)", () => {
+  const base: ChartBuilderState = {
+    selectedMeasures: ["FeedbackRecords.count"],
+    selectedDimensions: [],
+    filters: [],
+    filterLogic: "and",
+    timeDimension: null,
+  };
+  const segmentRow = (segment: string) => ({
+    id: "r1",
+    field: "FeedbackRecords.answer:q_nps",
+    operator: "npsSegment",
+    values: [segment],
+  });
+
+  test("writes a detractor segment as the answer rule on the question's points 0…6", () => {
+    expect(buildCubeQuery({ ...base, filters: [segmentRow("detractor")] }).filters).toEqual([
+      {
+        member: "FeedbackRecords.answer",
+        operator: "equals",
+        values: ["0", "1", "2", "3", "4", "5", "6"].map((point) => `q_nps:${point}`),
+      },
+    ]);
+  });
+
+  test("writes promoter as 9 and 10", () => {
+    expect(buildCubeQuery({ ...base, filters: [segmentRow("promoter")] }).filters).toEqual([
+      { member: "FeedbackRecords.answer", operator: "equals", values: ["q_nps:9", "q_nps:10"] },
+    ]);
+  });
+
+  test("reads the saved rule back as the segment once the question is known to be NPS", () => {
+    const saved = buildCubeQuery({
+      ...base,
+      filters: [segmentRow("promoter"), { logic: "or", id: "g", children: [segmentRow("passive")] }],
+    });
+    const parsed = parseQueryToState(saved).filters ?? [];
+    const normalized = normalizeNpsSegmentRows(parsed, (id) => id === "q_nps");
+
+    expect(normalized).toEqual([
+      expect.objectContaining({ operator: "npsSegment", values: ["promoter"] }),
+      expect.objectContaining({
+        children: [expect.objectContaining({ operator: "npsSegment", values: ["passive"] })],
+      }),
+    ]);
+    expect(buildCubeQuery({ ...base, filters: normalized }).filters).toEqual(saved.filters);
+  });
+
+  test("leaves rules alone on a question that is not NPS, or with values that are no segment", () => {
+    const rows: FilterNode[] = [
+      { id: "a", field: "FeedbackRecords.answer:q_rating", operator: "isAnyOf", values: ["9", "10"] },
+      { id: "b", field: "FeedbackRecords.answer:q_nps", operator: "isAnyOf", values: ["8", "9", "10"] },
+      { id: "c", field: "FeedbackRecords.answer:q_nps", operator: "notEquals", values: ["7", "8"] },
+    ];
+    expect(normalizeNpsSegmentRows(rows, (id) => id === "q_nps")).toBe(rows);
+  });
+});
+
+describe("question filters by id (ENG-7323)", () => {
+  test("round-trips a question filter as a plain fieldId condition", () => {
+    const query: TChartQuery = {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.fieldId", operator: "equals", values: ["q_nps"] }],
+    };
+    const state = parseQueryToState(query);
+    expect(
+      buildCubeQuery({
+        selectedMeasures: ["FeedbackRecords.count"],
+        selectedDimensions: [],
+        filters: state.filters ?? [],
+        filterLogic: "and",
+        timeDimension: null,
+      }).filters
+    ).toEqual(query.filters);
+  });
+
+  test("leaves an older question-label filter as it was", () => {
+    const query: TChartQuery = {
+      measures: ["FeedbackRecords.count"],
+      filters: [
+        { member: "FeedbackRecords.fieldLabel", operator: "equals", values: ["Wie wahrscheinlich …?"] },
+      ],
+    };
+    expect(parseQueryToState(query).filters).toEqual([
+      expect.objectContaining({
+        field: "FeedbackRecords.fieldLabel",
+        operator: "equals",
+        values: ["Wie wahrscheinlich …?"],
+      }),
+    ]);
   });
 });

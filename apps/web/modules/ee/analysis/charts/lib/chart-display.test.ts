@@ -11,7 +11,13 @@ import {
 
 describe("resolveChartDisplay", () => {
   test("falls back to vertical bars for charts saved before these settings existed", () => {
-    const defaults = { barOrientation: "vertical", pieDisplay: "pie", areaDisplay: "filled" };
+    const defaults = {
+      barOrientation: "vertical",
+      pieDisplay: "pie",
+      areaDisplay: "filled",
+      stacked: true,
+      showEmptyValues: false,
+    };
     expect(resolveChartDisplay({})).toEqual(defaults);
     expect(resolveChartDisplay(undefined)).toEqual(defaults);
     expect(resolveChartDisplay(null)).toEqual(defaults);
@@ -22,6 +28,12 @@ describe("resolveChartDisplay", () => {
       barOrientation: "horizontal",
       pieDisplay: "pie",
       areaDisplay: "filled",
+      stacked: true,
+      showEmptyValues: false,
+    });
+    expect(resolveChartDisplay({ stacked: false, showEmptyValues: true })).toMatchObject({
+      stacked: false,
+      showEmptyValues: true,
     });
   });
 });

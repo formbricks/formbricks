@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { ValidationError } from "@formbricks/types/errors";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
   getContactAttributes,
@@ -506,6 +507,60 @@ describe("updateAttributes", () => {
     const transactionCall = vi.mocked(prisma.$transaction).mock.calls[0][0];
     // Both name (coerced from boolean) and email should be upserted
     expect(transactionCall).toHaveLength(2);
+  });
+
+  // ENG-4019: Postgres `text` cannot hold U+0000. A value that would reach it is refused before any write;
+  // a value under a key that is skipped anyway leaves the rest of the request to go through, as before.
+  describe("NULL bytes (ENG-4019)", () => {
+    const expectRefused = async (attributes: Record<string, string>, key: string) => {
+      const update = updateAttributes(contactId, userId, workspaceId, attributes, true);
+
+      await expect(update).rejects.toThrow(ValidationError);
+      await expect(update).rejects.toThrow(`Attribute "${key}" must not contain NULL bytes`);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
+    };
+
+    beforeEach(() => {
+      vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
+      vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    });
+
+    test("refuses a NULL byte in a value written to an existing key", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+
+      await expectRefused({ email: "jane@example.com", name: "Jo\u0000hn" }, "name");
+    });
+
+    test("refuses a NULL byte in a value that would create a key", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[1]]);
+
+      await expectRefused({ email: "jane@example.com", plan: "pro\u0000" }, "plan");
+    });
+
+    test("refuses a NULL byte in the email before looking it up", async () => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+
+      await expectRefused({ email: "jane@example.com\u0000" }, "email");
+      expect(hasEmailAttribute).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["an invalid key", [attributeKeys[1]], { "Bad Key!": "x\u0000" }],
+      ["a reserved key", [attributeKeys[1]], { user_id: "x\u0000" }],
+      ["a key over the attribute limit", attributeKeys, { plan: "x\u0000" }],
+    ])("lets the rest through when the value sits under %s", async (_, keys, skipped) => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue(keys);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, {
+        email: "john@example.com",
+        ...skipped,
+      });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledOnce();
+      expect(prisma.contactAttributeKey.createManyAndReturn).not.toHaveBeenCalled();
+    });
   });
 
   describe("concurrent-identify deadlock protection (ENG-2252)", () => {
