@@ -365,6 +365,10 @@ describe("POST /api/internal/invites/{inviteId}/emails", () => {
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("3600");
     expect((await response.json()).detail).toBe("Too many emails to this recipient. Try again in an hour.");
+    // The invite was refreshed before the cap refused the email, as the action did: the recipient stays
+    // spent and the attempt is audited as a failure.
+    expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(RESERVATION, 1);
+    expect(lastAudit()).toEqual(expect.objectContaining({ status: "failure", organizationId: ORG_ID }));
   });
 
   test("keeps the recipient spent and fails the request when the email can't be sent", async () => {
