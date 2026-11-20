@@ -1,7 +1,7 @@
 -- Workflows Part 2, HTTP request (ENG-7179, ADR 0043). Additive only: a new "WorkflowSecret" table for
--- encrypted secret header values, and an index on "WorkflowRunLog" ("status", "startedAt") so the
--- reconciler can find "Don't wait" calls still sending after an hour without scanning every step log.
--- Previous-release pods never read either, so a rolling upgrade is safe. Every statement is guarded so
+-- encrypted secret header values. The "WorkflowRunLog" ("status", "startedAt") index the reconciler needs
+-- is built concurrently in the next migration, 20261113130001_workflows_p2_run_log_status_index.
+-- Previous-release pods never read the table, so a rolling upgrade is safe. Every statement is guarded so
 -- the file reruns on a database built with `db:push`.
 BEGIN;
 SET LOCAL lock_timeout = '5s';
@@ -33,9 +33,3 @@ BEGIN
 END $$;
 
 COMMIT;
-
--- Prisma migrate deploy runs migrations in a transaction, so CREATE INDEX CONCURRENTLY is not available.
--- Step log writes wait for the build (SHARE lock); the table holds one row per workflow step run, far
--- smaller than the Response tables earlier plain index builds were accepted on.
--- squawk-ignore require-concurrent-index-creation
-CREATE INDEX IF NOT EXISTS "WorkflowRunLog_status_startedAt_idx" ON "WorkflowRunLog"("status", "startedAt");
