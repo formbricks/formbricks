@@ -17,6 +17,7 @@ import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/us
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { WorkflowListActions } from "../components/workflow-list-actions";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
+import { WorkflowTriggerTypeIcon } from "../components/workflow-trigger-type-icon";
 import { WorkflowsEmptyState } from "../components/workflows-empty-state";
 import { useTrackWorkflowListFilters } from "../hooks/use-track-workflow-list-filters";
 import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
@@ -64,11 +65,14 @@ const getWorkflowColumns = ({
     header: t("common.name"),
     size: 300,
     cell: ({ row }) => (
-      <Link
-        href={`/workspaces/${workspaceId}/workflows/${row.original.id}`}
-        className="focus-visible:ring-ring min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
-        {row.original.name}
-      </Link>
+      <div className="flex min-w-0 items-center gap-2">
+        <WorkflowTriggerTypeIcon triggerType={row.original.triggerType} />
+        <Link
+          href={`/workspaces/${workspaceId}/workflows/${row.original.id}`}
+          className="min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden">
+          {row.original.name}
+        </Link>
+      </div>
     ),
   },
   {

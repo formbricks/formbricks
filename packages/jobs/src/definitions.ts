@@ -4,6 +4,7 @@ import { processAttachmentExportJob } from "@/src/processors/attachment-export";
 import { processResponsePipelineJob } from "@/src/processors/response-pipeline";
 import { processTestLogJob } from "@/src/processors/test-log";
 import { processWebhookDeliveryJob } from "@/src/processors/webhook-delivery";
+import { processWorkflowHttpRequestDeliveryJob } from "@/src/processors/workflow-http-request-delivery";
 import { processWorkflowRunJob } from "@/src/processors/workflow-run";
 import { recurringJobDefinitions } from "@/src/recurring";
 import {
@@ -11,6 +12,7 @@ import {
   ZResponsePipelineJobData,
   ZTestLogJobData,
   ZWebhookDeliveryJobData,
+  ZWorkflowHttpRequestDeliveryJobData,
   ZWorkflowRunJobData,
 } from "@/src/types";
 
@@ -46,6 +48,11 @@ export const backgroundJobDefinitions: Record<string, AnyBackgroundJobDefinition
     handle: processWorkflowRunJob,
     name: JOB_NAMES.workflowRun,
     schema: ZWorkflowRunJobData,
+  }),
+  [JOB_NAMES.workflowHttpRequestDelivery]: toAnyBackgroundJobDefinition({
+    handle: processWorkflowHttpRequestDeliveryJob,
+    name: JOB_NAMES.workflowHttpRequestDelivery,
+    schema: ZWorkflowHttpRequestDeliveryJobData,
   }),
 };
 

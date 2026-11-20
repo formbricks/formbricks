@@ -38,14 +38,23 @@ properties:
   status:
     $ref: ./WorkflowStatus.yml
   triggerType:
-    type: string
+    type:
+      - string
+      - "null"
     enum:
       - response.completed
-    description: Derived from `definition.trigger.triggerType`.
+      - webhook
+      - null
+    description: >-
+      Derived from `definition.trigger.triggerType`. `null` while the draft has no trigger.
   surveyId:
-    type: string
+    type:
+      - string
+      - "null"
     format: cuid2
-    description: Derived from `definition.trigger.config.surveyId`.
+    description: >-
+      Derived from `definition.trigger.config.surveyId`. `null` for a Webhook trigger, or while the
+      draft has no trigger.
   createdBy:
     type:
       - string
@@ -81,4 +90,4 @@ properties:
   runCount:
     type: integer
     minimum: 0
-    description: Total number of runs (dry runs included) for this workflow.
+    description: Number of real runs for this workflow; Test runs (dry runs) are not counted.

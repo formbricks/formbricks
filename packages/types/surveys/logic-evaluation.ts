@@ -1,6 +1,20 @@
 import type { TConditionGroup, TSingleCondition } from "./logic";
 
 /**
+ * A group of conditions joined by `and` / `or`, nested to any depth. Survey logic's
+ * `TConditionGroup` is one; a workflow If/else's condition group (ADR 0046) is another.
+ */
+export interface TConditionGroupOf<TCondition> {
+  id: string;
+  connector: TConditionGroup["connector"];
+  conditions: (TCondition | TConditionGroupOf<TCondition>)[];
+}
+
+const isConditionGroupOf = <TCondition extends object>(
+  condition: TCondition | TConditionGroupOf<TCondition>
+): condition is TConditionGroupOf<TCondition> => "conditions" in condition;
+
+/**
  * Evaluates a condition group: recurse into nested groups, delegate leaf conditions to the caller,
  * then combine with the group's connector (`or` → any, otherwise → all).
  *
@@ -17,13 +31,13 @@ import type { TConditionGroup, TSingleCondition } from "./logic";
  * An empty group is true whatever its connector: the editor shows it as "Always", so an empty `or`
  * group runs like an empty `and` group instead of never (ADR 0031).
  */
-export const evaluateConditionGroup = (
-  group: TConditionGroup,
-  evaluateCondition: (condition: TSingleCondition) => boolean
+export const evaluateConditionGroup = <TCondition extends object = TSingleCondition>(
+  group: TConditionGroupOf<NoInfer<TCondition>>,
+  evaluateCondition: (condition: TCondition) => boolean
 ): boolean => {
   if (group.conditions.length === 0) return true;
   const results = group.conditions.map((condition) =>
-    "conditions" in condition
+    isConditionGroupOf(condition)
       ? evaluateConditionGroup(condition, evaluateCondition)
       : evaluateCondition(condition)
   );

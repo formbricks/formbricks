@@ -53,6 +53,7 @@ properties:
     type: string
     enum:
       - response.completed
+      - webhook
   surveyId:
     type:
       - string

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW } from "@formbricks/workflows";
 import { ZRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
@@ -55,6 +56,15 @@ describe("rateLimitConfigs", () => {
     vi.clearAllMocks();
     // Reset the mock to return our mock client (async)
     mockGetRedisClient.mockResolvedValue(mockRedisClient);
+  });
+
+  test("the Webhook per-workflow and per-token limits are the number the trigger panel shows", () => {
+    expect(rateLimitConfigs.api.v3WorkflowWebhook.allowedPerInterval).toBe(
+      WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW
+    );
+    expect(rateLimitConfigs.api.v3WorkflowWebhookToken.allowedPerInterval).toBe(
+      WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW
+    );
   });
 
   describe("Configuration Structure", () => {
@@ -122,6 +132,10 @@ describe("rateLimitConfigs", () => {
         "v3",
         "v3StateMutation",
         "mcpAuth",
+        "v3WorkflowWebhook",
+        "v3WorkflowWebhookToken",
+        "v3WorkflowTestRequests",
+        "v3WorkflowTestRuns",
         "v3SurveyGenerate",
         "v3SurveyVisibility",
         "v3SurveysFullList",
@@ -304,6 +318,7 @@ describe("rateLimitConfigs", () => {
         actions.inviteMember,
         actions.inviteMemberPerUser,
         actions.createOrganization,
+        api.v3WorkflowTestRequests,
       ];
       const throughputLimits = [
         api.v1,

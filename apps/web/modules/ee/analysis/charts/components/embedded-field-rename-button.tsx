@@ -74,7 +74,7 @@ export function EmbeddedFieldRenameButton({
         <button
           type="button"
           aria-label={t("workspace.analysis.charts.rename_field", { field: shownName })}
-          className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
+          className="ring-offset-background ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
           // The chip list's command root cancels every Enter before it can click this trigger, so open on
           // Enter here, as the chip's remove button handles Enter itself.
           onKeyDown={(event) => {

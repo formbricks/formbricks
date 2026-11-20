@@ -2,7 +2,7 @@
 
 import { useSetAtom } from "jotai";
 import { useEffect } from "react";
-import type { TWorkflowDefinition } from "@formbricks/workflows";
+import { type TWorkflowDefinition, isResponseCompletedTrigger } from "@formbricks/workflows";
 import { useWorkflowSurveyEndings } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { reconcileDefinitionEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
 import {
@@ -30,7 +30,7 @@ export const useReconcileTriggerEndingCards = ({
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setPrunedEndingCardIds = useSetAtom(prunedTriggerEndingCardIdsAtom);
 
-  const trigger = definition?.trigger ?? null;
+  const trigger = isResponseCompletedTrigger(definition?.trigger) ? definition.trigger : null;
   const surveyId = trigger?.config.surveyId ?? null;
   const hasEndingCardIds = (trigger?.config.endingCardIds.length ?? 0) > 0;
 

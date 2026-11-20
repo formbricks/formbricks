@@ -16,10 +16,19 @@ import {
 } from "lexical";
 import { useCallback, useEffect, useState } from "react";
 import { logger } from "@formbricks/logger";
-import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { getFallbackValues, getRecallItemLabel, getRecallItems } from "@/lib/utils/recall";
-import { RecallItemSelect } from "@/modules/survey/components/element-form-input/components/recall-item-select";
+import { TSurveyRecallItem } from "@formbricks/types/surveys/types";
+import { createRecallTokenPattern, getFallbackValues } from "@/lib/utils/recall";
 import { $createRecallNode, RecallNode } from "./recall-node";
+import type { TEditorRecallSource } from "./recall-source";
+
+/** The paragraph's text before `offset` in `node`, recall chips read as their tokens. */
+const $getTextBefore = (node: LexicalNode, offset: number): string => {
+  let text = node.getTextContent().slice(0, offset);
+  for (let sibling = node.getPreviousSibling(); sibling; sibling = sibling.getPreviousSibling()) {
+    text = sibling.getTextContent() + text;
+  }
+  return text;
+};
 
 // Helper function to find all RecallNodes recursively
 const findAllRecallNodes = (node: LexicalNode): RecallNode[] => {
@@ -49,9 +58,7 @@ const findAllRecallNodes = (node: LexicalNode): RecallNode[] => {
 };
 
 interface RecallPluginProps {
-  readonly localSurvey: TSurvey;
-  readonly elementId: string;
-  readonly selectedLanguageCode: string;
+  readonly recallSource: TEditorRecallSource;
   readonly recallItems: TSurveyRecallItem[];
   readonly setRecallItems: (recallItems: TSurveyRecallItem[]) => void;
   readonly fallbacks: { [id: string]: string };
@@ -63,9 +70,7 @@ interface RecallPluginProps {
 }
 
 export const RecallPlugin = ({
-  localSurvey,
-  elementId,
-  selectedLanguageCode,
+  recallSource,
   recallItems,
   setRecallItems,
   fallbacks,
@@ -115,7 +120,7 @@ export const RecallPlugin = ({
 
         if (i < matches.length) {
           const matchText = matches[i];
-          const items = getRecallItems(matchText, localSurvey, selectedLanguageCode);
+          const items = recallSource.getRecallItems(matchText);
           const fallbackValues = getFallbackValues(matchText);
 
           if (items.length > 0) {
@@ -133,7 +138,7 @@ export const RecallPlugin = ({
 
       return newNodes;
     },
-    [localSurvey, selectedLanguageCode]
+    [recallSource]
   );
 
   // Helper function to replace text node with new nodes
@@ -159,7 +164,8 @@ export const RecallPlugin = ({
   const convertTextToRecallNodes = useCallback(() => {
     const root = $getRoot();
     const allTextNodes = collectTextNodes(root);
-    const recallPattern = /#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/g;
+    // Workflow Variable paths carry dots (ADR 0045), so this is the shared token pattern.
+    const recallPattern = createRecallTokenPattern();
 
     for (const node of allTextNodes) {
       const textContent = node.getTextContent();
@@ -196,7 +202,7 @@ export const RecallPlugin = ({
 
         // Check for recall patterns in full text (for raw text that needs conversion)
         if (fullText.includes("#recall:")) {
-          const items = getRecallItems(fullText, localSurvey, selectedLanguageCode);
+          const items = recallSource.getRecallItems(fullText);
           const fallbackValues = getFallbackValues(fullText);
 
           // Merge with existing RecallNodes
@@ -226,7 +232,7 @@ export const RecallPlugin = ({
         }
       });
     },
-    [localSurvey, selectedLanguageCode, setRecallItems, setFallbacks, editor, convertTextToRecallNodes]
+    [recallSource, setRecallItems, setFallbacks, editor, convertTextToRecallNodes]
   );
 
   // Handle @ key press for recall trigger
@@ -246,8 +252,12 @@ export const RecallPlugin = ({
               if ($isTextNode(anchorNode)) {
                 const nodeText = anchorNode.getTextContent();
 
-                // Check if there's an @ at the current cursor position (just typed)
-                if (nodeText[anchorOffset - 1] === "@") {
+                // Check if there's an @ at the current cursor position (just typed), where the source
+                // takes a recall item
+                if (
+                  nodeText[anchorOffset - 1] === "@" &&
+                  (recallSource.canInsertAt?.($getTextBefore(anchorNode, anchorOffset - 1)) ?? true)
+                ) {
                   // Store the position of the @ symbol
                   setAtSymbolPosition({
                     node: anchorNode,
@@ -263,7 +273,7 @@ export const RecallPlugin = ({
       }
       return false;
     },
-    [editor, setShowRecallItemSelect]
+    [editor, recallSource, setShowRecallItemSelect]
   );
 
   // Close dropdown when clicking outside
@@ -296,7 +306,7 @@ export const RecallPlugin = ({
     });
   }, [editor, convertTextToRecallNodes]);
 
-  // Sync recall node labels when the survey data changes (e.g. headline edited in translations modal)
+  // Sync recall node labels when the source's data changes (e.g. headline edited in translations modal)
   useEffect(() => {
     // Check if any labels actually need updating before calling editor.update().
     // This avoids unnecessary updates that steal focus and trigger cascading re-renders.
@@ -306,8 +316,7 @@ export const RecallPlugin = ({
       const allRecallNodes = findAllRecallNodes(root);
       for (const recallNode of allRecallNodes) {
         const recallItem = recallNode.getRecallItem();
-        const currentLabel =
-          getRecallItemLabel(recallItem.id, localSurvey, selectedLanguageCode) ?? recallItem.label;
+        const currentLabel = recallSource.getRecallItemLabel(recallItem.id) ?? recallItem.label;
         if (currentLabel !== recallItem.label) {
           needsUpdate = true;
           break;
@@ -331,8 +340,7 @@ export const RecallPlugin = ({
         const allRecallNodes = findAllRecallNodes(root);
         for (const recallNode of allRecallNodes) {
           const recallItem = recallNode.getRecallItem();
-          const currentLabel =
-            getRecallItemLabel(recallItem.id, localSurvey, selectedLanguageCode) ?? recallItem.label;
+          const currentLabel = recallSource.getRecallItemLabel(recallItem.id) ?? recallItem.label;
           if (currentLabel !== recallItem.label) {
             recallNode.setRecallItemLabel(currentLabel);
           }
@@ -351,7 +359,7 @@ export const RecallPlugin = ({
         },
       }
     );
-  }, [editor, localSurvey, selectedLanguageCode]);
+  }, [editor, recallSource]);
 
   useEffect(() => {
     const removeUpdateListener = editor.registerUpdateListener(handleEditorUpdate);
@@ -482,16 +490,8 @@ export const RecallPlugin = ({
   return (
     <>
       {/* Recall Item Select Modal */}
-      {showRecallItemSelect && (
-        <RecallItemSelect
-          localSurvey={localSurvey}
-          elementId={elementId}
-          addRecallItem={addRecallItem}
-          setShowRecallItemSelect={setShowRecallItemSelect}
-          recallItems={recallItems}
-          selectedLanguageCode={selectedLanguageCode}
-        />
-      )}
+      {showRecallItemSelect &&
+        recallSource.renderPicker({ recallItems, addRecallItem, setShowRecallItemSelect })}
     </>
   );
 };

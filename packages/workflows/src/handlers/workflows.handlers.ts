@@ -6,6 +6,7 @@ import {
   type TWorkflowIdInput,
   type TWorkflowRunIdInput,
   type TWorkflowTestProblem,
+  type TWorkflowWarning,
   ZCreateWorkflowInput,
   ZDuplicateWorkflowInput,
   ZPatchWorkflowInput,
@@ -19,7 +20,6 @@ import {
 } from "../contracts";
 import {
   WorkflowForbiddenError,
-  WorkflowInvalidInputError,
   type WorkflowInvalidParam,
   WorkflowInvalidStateError,
   WorkflowNotExecutableError,
@@ -28,19 +28,29 @@ import {
 } from "../errors";
 import { isLiteralEmailRecipient } from "../recipients";
 import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
+import { findWorkflowSecretHostMismatches } from "../secret-headers/binding";
+import {
+  applyWorkflowSecretHeaderWrites,
+  assertWorkflowSecretHeaderValuesBindable,
+  collectWorkflowSecretIds,
+  dropWorkflowSecretIds,
+  hasWorkflowSecretHeaderValues,
+  withoutWorkflowSecretHeaderValues,
+} from "../secret-headers/headers";
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
 import {
   type TWorkflowDefinition,
   type TWorkflowExecutableDefinition,
-  ZWorkflowExecutableDefinition,
+  ZWorkflowDefinitionInput,
+  ZWorkflowEnableDefinition,
 } from "../types/document";
-import { redactWorkflowDefinitionPII } from "./audit-redaction";
+import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 import type {
+  TWorkflowSecretHeaderChange,
   TriggerSurveyCheck,
   WorkflowAnalyticsDetail,
   WorkflowAnalyticsOperation,
-  WorkflowApiAccess,
   WorkflowApiContext,
 } from "./context";
 import { parseListWorkflowRunsQuery, parseListWorkflowsQuery } from "./parse-list-query";
@@ -50,89 +60,84 @@ import {
   toWorkflowRunListItem,
   toWorkflowRunResource,
 } from "./serializers";
-
-// Matches the v3 API's default request-body limit (apps/web `request-body.ts`) for consistency.
-const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
+import { loadAndAuthorize, readJsonBody, recordAuditSafely, toAuditSnapshot } from "./shared";
+import { checkWorkflowSurveyLinks } from "./survey-link-checks";
+import { type TestRunHandlers, createTestRunHandlers } from "./test-run.handlers";
+import { type WebhookHandlers, createWebhookHandlers } from "./webhook.handlers";
 
 const ZWorkflowListPage = zWorkflowListPage(ZWorkflowListItem);
 const ZWorkflowRunListPage = zCursorPage(ZWorkflowRunListItem);
 
-const readJsonBody = async (req: Request, options?: { allowEmpty?: boolean }): Promise<unknown> => {
-  // Reject oversized payloads up front via Content-Length so we never buffer them into memory.
-  const contentLength = req.headers.get("content-length");
-  if (contentLength && Number(contentLength) > MAX_REQUEST_BODY_BYTES) {
-    throw new WorkflowInvalidInputError("Request body is too large.");
+/** Refuses up front a write whose secret values could only be kept by storing them in the definition. */
+const assertSecretStoreFor = (ctx: WorkflowApiContext, definition: TWorkflowDefinition): void => {
+  if (!ctx.secrets && hasWorkflowSecretHeaderValues(definition)) {
+    throw new Error("Secret header values can't be stored: no secret store is configured");
   }
-
-  const text = await req.text();
-  // Defense in depth: Content-Length may be absent (chunked) or understated.
-  if (Buffer.byteLength(text, "utf8") > MAX_REQUEST_BODY_BYTES) {
-    throw new WorkflowInvalidInputError("Request body is too large.");
-  }
-
-  // Optional-body operations (e.g. duplicate) treat an empty body as `{}`.
-  if (text.trim() === "") {
-    if (options?.allowEmpty) return {};
-    throw new WorkflowInvalidInputError("Malformed JSON body.");
-  }
-
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    throw new WorkflowInvalidInputError("Malformed JSON body.");
-  }
+  assertWorkflowSecretHeaderValuesBindable(definition);
 };
 
-/**
- * Load a workflow by id and authorize the caller against its workspace. Returns the row on success,
- * or a ready-to-return denial `Response`; throws `WorkflowForbiddenError` (→ 403) for unknown ids so
- * existence is never leaked. Shared by every by-id operation (get, patch, duplicate, delete,
- * archive, unarchive) — load once, authorize once, no double round-trip.
- */
-const loadAndAuthorize = async (
-  service: WorkflowsService,
+/** "Secret set" / "secret replaced" audit events, header names only; never fails the write. */
+const recordSecretHeaderChangesSafely = async (
   ctx: WorkflowApiContext,
-  workflowId: string,
-  access: WorkflowApiAccess
-): Promise<WorkflowRowWithLastRun | Response> => {
-  const row = await service.getWorkflowById(workflowId);
-  if (!row) throw new WorkflowForbiddenError();
-
-  const authorized = await ctx.authorize(row.workspaceId, access);
-  if (authorized instanceof Response) return authorized;
-
-  return row;
-};
-
-/**
- * Plain before/after snapshot for the audit sink. Reuses the serialized resource shape (the same
- * plain object the response carries), so the adapter's diff surfaces `name` / `description` /
- * `definition` and the `status` transition. Returned as a `Record` because the audit port's
- * snapshots are intentionally untyped, app-agnostic plain objects.
- *
- * The definition's `send_email` PII (recipient/sender addresses, subject, body) is redacted here —
- * the shared audit redactor keys off field names it does not recognize on the workflow definition,
- * so masking at this seam guarantees those values never reach the audit `changes`.
- */
-const toAuditSnapshot = (row: WorkflowRowWithLastRun, redactionKey?: string): Record<string, unknown> => {
-  const resource = toWorkflowResource(row);
-  return { ...resource, definition: redactWorkflowDefinitionPII(resource.definition, redactionKey) };
-};
-
-/**
- * Invoke the injected audit sink, swallowing any rejection. The handlers call this only AFTER the
- * mutation has already succeeded, so an audit problem must never turn a successful mutation into an
- * error response — the package guarantees this regardless of how the adapter implements the port.
- */
-const recordAuditSafely = async (
-  ctx: WorkflowApiContext,
-  detail: Parameters<NonNullable<WorkflowApiContext["recordAudit"]>>[0]
+  scope: { workflowId: string; workspaceId: string },
+  changes: TWorkflowSecretHeaderChange[]
 ): Promise<void> => {
+  if (changes.length === 0 || !ctx.recordSecretHeaderChanges) return;
   try {
-    await ctx.recordAudit?.(detail);
+    await ctx.recordSecretHeaderChanges({ ...scope, changes });
   } catch (error) {
-    ctx.logger.error({ error }, "Failed to record workflow audit detail");
+    ctx.logger.error({ error, workflowId: scope.workflowId }, "Failed to record workflow secret audit");
   }
+};
+
+/**
+ * After Enable, deletes the workflow's secret rows that nothing references any more. Best effort: a
+ * left-over row is harmless (unreachable and encrypted), so a failure here never fails the Enable.
+ */
+const deleteUnreferencedSecretsSafely = async (
+  ctx: WorkflowApiContext,
+  row: WorkflowRowWithLastRun,
+  definition: TWorkflowExecutableDefinition
+): Promise<void> => {
+  if (!ctx.secrets) return;
+  try {
+    await ctx.secrets.deleteUnreferenced({
+      workflowId: row.id,
+      workspaceId: row.workspaceId,
+      referencedSecretIds: collectWorkflowSecretIds(definition),
+    });
+  } catch (error) {
+    ctx.logger.warn({ error, workflowId: row.id }, "Failed to delete unreferenced workflow secrets");
+  }
+};
+
+/**
+ * Enable refuses while a stored secret header value was set for another host than its step's URL now
+ * points at (ADR 0051): a run would refuse to send it, so the author enters it again first. A value
+ * set before host binding is held to the step's URL at run time and does not block.
+ */
+const assertSecretHeadersOnTheirHosts = async (
+  ctx: WorkflowApiContext,
+  row: { id: string; workspaceId: string },
+  definition: TWorkflowExecutableDefinition
+): Promise<void> => {
+  const secretIds = collectWorkflowSecretIds(definition);
+  if (secretIds.length === 0) return;
+  if (!ctx.secrets) {
+    throw new Error("Secret headers can't be checked: no secret store is configured");
+  }
+  const boundOrigins = await ctx.secrets.readBoundOrigins({
+    workflowId: row.id,
+    workspaceId: row.workspaceId,
+    secretIds,
+  });
+  const mismatches = findWorkflowSecretHostMismatches(definition, boundOrigins);
+  if (mismatches.length === 0) return;
+  // An explicit `detail`: the editor shows only `detail`, and it has to name the header and the host.
+  throw new WorkflowNotExecutableError(
+    mismatches.map((mismatch) => ({ name: mismatch.path.join("."), reason: mismatch.message })),
+    mismatches.map((mismatch) => mismatch.message).join(". ")
+  );
 };
 
 /** Same contract as `recordAuditSafely`, for the product-analytics sink. */
@@ -175,11 +180,9 @@ const toAnalyticsDetail = (
 const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition): string[] => {
   const emails = new Set<string>();
   for (const node of definition.nodes) {
-    // `send_email` is the only action type today, so `type === "action"` already narrows to its
-    // config (which carries `to`); revisit this guard if another action type is added.
-    if (node.type === "action") {
+    if (node.type === "action" && node.actionType === "send_email") {
       const { to } = node.config;
-      if (isLiteralEmailRecipient(to)) {
+      if (typeof to === "string" && isLiteralEmailRecipient(to)) {
         emails.add(to);
       }
     }
@@ -191,11 +194,29 @@ const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition
 const DISALLOWED_RECIPIENT_FIELD = "definition.nodes.config.to";
 
 /** Short 422 `detail` for a recipient-allowlist failure, so UI surfacing only `detail` still names the cause. */
+const EXPECTED_PAYLOAD_REQUIRED_DETAIL =
+  "Add the Webhook trigger's expected payload before enabling: write or paste it, or use a received call.";
+
+/**
+ * A Webhook trigger needs its expected payload (ADR 0052): the Variables the steps use are inferred
+ * from it, and Test runs send it. Only editors set it, so enabling can rely on it.
+ */
+const assertExpectedPayload = async (service: WorkflowsService, workflowId: string): Promise<void> => {
+  if (await service.getTriggerSample(workflowId)) return;
+  throw new WorkflowNotExecutableError(
+    [{ name: "trigger.expectedPayload", reason: EXPECTED_PAYLOAD_REQUIRED_DETAIL }],
+    EXPECTED_PAYLOAD_REQUIRED_DETAIL
+  );
+};
+
 const DISALLOWED_RECIPIENT_DETAIL = "A send_email recipient cannot access this workspace.";
 
 /** Per-recipient explanation, shared so enable's `invalid_params` and test's `problems` never diverge. */
 const disallowedRecipientMessage = (email: string): string =>
   `Recipient ${email} cannot access this workspace. A send_email action may only address someone with access to this workspace or a respondent field.`;
+
+/** Short 422 `detail` for a survey link that can't be built, so UI surfacing only `detail` names the cause. */
+const SURVEY_LINK_DETAIL = "A send_email survey link does not point to a link survey in this workspace.";
 
 const buildDisallowedRecipientParams = (disallowedEmails: string[]): WorkflowInvalidParam[] =>
   disallowedEmails.map((email) => ({
@@ -266,9 +287,7 @@ const collectTriggerProblems = async (
   workspaceId: string,
   definition: TWorkflowExecutableDefinition
 ): Promise<TWorkflowTestProblem[]> => {
-  const { surveyId, endingCardIds } = definition.trigger.config;
-  const surveyCheck = await ctx.verifyTriggerSurvey({ workspaceId, surveyId, endingCardIds });
-  const problems = buildSurveyTestProblems(surveyCheck);
+  const problems = await collectTriggerSurveyProblems(ctx, workspaceId, definition);
 
   // Recipient allowlist (ENG-2029): the same gate `enable` enforces, collected here as a
   // problem instead of thrown. The dry run exists to surface exactly this before going live —
@@ -291,6 +310,28 @@ const collectTriggerProblems = async (
 };
 
 /**
+ * The dry run's trigger-reference problems: the bound survey and ending cards of a Response completed
+ * trigger. A Webhook trigger references nothing, so it has none.
+ */
+const collectTriggerSurveyProblems = async (
+  ctx: WorkflowApiContext,
+  workspaceId: string,
+  definition: TWorkflowExecutableDefinition
+): Promise<TWorkflowTestProblem[]> => {
+  const { trigger } = definition;
+  if (trigger.triggerType !== WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) return [];
+
+  const { surveyId, endingCardIds } = trigger.config;
+  return buildSurveyTestProblems(await ctx.verifyTriggerSurvey({ workspaceId, surveyId, endingCardIds }));
+};
+
+/** The survey a Response completed trigger is bound to; a Webhook trigger (or none) has no survey. */
+const getTriggerSurveyId = (definition?: TWorkflowDefinition): string | undefined =>
+  definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED
+    ? definition.trigger.config.surveyId
+    : undefined;
+
+/**
  * Attach-time guard (ENG-3283): a workflow forwards its trigger survey's responses out of the app, so it
  * may only be bound to a survey the whole workspace can see. Checked when a binding is created — create,
  * duplicate, and a patch that points the trigger at another survey — so the refusal is immediate; enable
@@ -303,8 +344,8 @@ const assertTriggerSurveyAttachable = async (
   definition: TWorkflowDefinition,
   previous?: TWorkflowDefinition
 ): Promise<void> => {
-  const surveyId = definition.trigger?.config.surveyId;
-  if (!surveyId || surveyId === previous?.trigger?.config.surveyId) return;
+  const surveyId = getTriggerSurveyId(definition);
+  if (!surveyId || surveyId === getTriggerSurveyId(previous)) return;
 
   const check = await ctx.verifyTriggerSurvey({ workspaceId, surveyId, endingCardIds: [] });
   if (check.surveyNotWorkspaceVisible) {
@@ -337,7 +378,7 @@ interface WorkflowRunResourceArgs {
   params: TWorkflowRunIdInput;
 }
 
-export interface WorkflowsHandlers {
+export interface WorkflowsHandlers extends WebhookHandlers, TestRunHandlers {
   list: (args: WorkflowRequestArgs) => Promise<Response>;
   create: (args: WorkflowRequestArgs) => Promise<Response>;
   get: (args: WorkflowResourceArgs) => Promise<Response>;
@@ -361,6 +402,9 @@ export interface WorkflowsHandlers {
  * `toProblemResponse`, so handlers never leak or swallow.
  */
 export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHandlers => ({
+  ...createWebhookHandlers(service),
+  ...createTestRunHandlers(service),
+
   async list({ req, ctx }) {
     try {
       const input = parseListWorkflowsQuery(new URL(req.url).searchParams);
@@ -392,11 +436,30 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const authorized = await ctx.authorize(input.workspaceId, "readWrite");
       if (authorized instanceof Response) return authorized;
       await assertTriggerSurveyAttachable(ctx, authorized.workspaceId, input.definition);
+      assertSecretStoreFor(ctx, input.definition);
 
-      const created = await service.createWorkflow(
-        { ...input, workspaceId: authorized.workspaceId },
+      // A secret value needs the workflow's id to be stored, so the workflow is created without its
+      // secret values first, then pointed at the stored rows. If that second write fails, the copy
+      // that exists just has unset secret headers, which block Enable.
+      let created = await service.createWorkflow(
+        {
+          ...input,
+          workspaceId: authorized.workspaceId,
+          definition: withoutWorkflowSecretHeaderValues(input.definition),
+        },
         { createdBy: ctx.userId }
       );
+      if (hasWorkflowSecretHeaderValues(input.definition)) {
+        const scope = { workflowId: created.id, workspaceId: created.workspaceId };
+        const secrets = await applyWorkflowSecretHeaderWrites({
+          definition: input.definition,
+          stored: null,
+          store: ctx.secrets,
+          ...scope,
+        });
+        created = await service.updateWorkflow(scope, { definition: secrets.definition });
+        await recordSecretHeaderChangesSafely(ctx, scope, secrets.changes);
+      }
 
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
 
@@ -441,12 +504,29 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       }
       if (input.definition !== undefined) {
         await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, input.definition, loaded.definition);
+        assertSecretStoreFor(ctx, input.definition);
       }
 
-      const updated = await service.updateWorkflow(
-        { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
-        input
-      );
+      const scope = { workflowId: params.workflowId, workspaceId: loaded.workspaceId };
+      const secrets =
+        input.definition === undefined
+          ? null
+          : await applyWorkflowSecretHeaderWrites({
+              definition: input.definition,
+              stored: loaded.definition,
+              store: ctx.secrets,
+              ...scope,
+            });
+      // The Secret URL token is created on the first save of a Webhook trigger and kept afterwards,
+      // even if the trigger changes, so switching back keeps the same URL.
+      const issueWebhookToken =
+        input.definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.WEBHOOK && !loaded.webhookTokenHash;
+      const updated = await service.updateWorkflow(scope, {
+        ...input,
+        ...(secrets ? { definition: secrets.definition } : {}),
+        issueWebhookToken,
+      });
+      if (secrets) await recordSecretHeaderChangesSafely(ctx, scope, secrets.changes);
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,
@@ -467,9 +547,16 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       if (loaded instanceof Response) return loaded;
 
       const input = ZDuplicateWorkflowInput.parse(await readJsonBody(req, { allowEmpty: true }));
+      // The copy is a new save, so it meets the save-time rules a stored original may predate.
+      ZWorkflowDefinitionInput.parse(loaded.definition);
       // The copy is a new binding of the same survey, so it is refused like a new workflow would be.
       await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, loaded.definition);
-      const created = await service.duplicateWorkflow(loaded, { name: input.name, createdBy: ctx.userId });
+      // The copy keeps its secret headers' names but not their values (ADR 0043): sharing the rows
+      // would let a Replace on the copy change the original's secret.
+      const created = await service.duplicateWorkflow(
+        { ...loaded, definition: dropWorkflowSecretIds(loaded.definition) },
+        { name: input.name, createdBy: ctx.userId }
+      );
 
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
 
@@ -580,22 +667,28 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       // safeParse (not parse): a non-executable definition is a 422 workflow_not_executable,
       // not the generic 400 a thrown ZodError would map to.
-      const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
+      const executable = ZWorkflowEnableDefinition.safeParse(loaded.definition);
       if (!executable.success) throw WorkflowNotExecutableError.fromZodError(executable.error);
 
-      const { surveyId, endingCardIds } = executable.data.trigger.config;
-      const surveyCheck = await ctx.verifyTriggerSurvey({
-        workspaceId: loaded.workspaceId,
-        surveyId,
-        endingCardIds,
-      });
-      if (
-        !surveyCheck.surveyExists ||
-        surveyCheck.surveyNotWorkspaceVisible ||
-        surveyCheck.missingEndingCardIds.length > 0
-      ) {
-        throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
+      // Only a Response completed trigger references a survey; a Webhook trigger has nothing to resolve.
+      const { trigger } = executable.data;
+      if (trigger.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) {
+        const { surveyId, endingCardIds } = trigger.config;
+        const surveyCheck = await ctx.verifyTriggerSurvey({
+          workspaceId: loaded.workspaceId,
+          surveyId,
+          endingCardIds,
+        });
+        if (
+          !surveyCheck.surveyExists ||
+          surveyCheck.surveyNotWorkspaceVisible ||
+          surveyCheck.missingEndingCardIds.length > 0
+        ) {
+          throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
+        }
       }
+
+      if (trigger.triggerType === WORKFLOW_TRIGGERS.WEBHOOK) await assertExpectedPayload(service, loaded.id);
 
       // Recipient allowlist: a send_email action addressing a literal email may only target someone
       // who can access this workspace — otherwise enabling the workflow would let it forward response
@@ -618,10 +711,23 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         }
       }
 
+      // Survey links (ENG-7180): a linked survey must be a link survey in this workspace; Embedded
+      // Data keys it doesn't accept only warn, since the link simply leaves them off.
+      const surveyLinks = await checkWorkflowSurveyLinks(executable.data, loaded.workspaceId, ctx);
+      if (surveyLinks.problems.length > 0) {
+        throw new WorkflowNotExecutableError(
+          surveyLinks.problems.map((problem) => ({ name: problem.field, reason: problem.message })),
+          SURVEY_LINK_DETAIL
+        );
+      }
+
+      await assertSecretHeadersOnTheirHosts(ctx, loaded, executable.data);
+
       const updated = await service.enableWorkflow(
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
         { definition: executable.data, publishedBy: ctx.userId }
       );
+      await deleteUnreferencedSecretsSafely(ctx, updated, executable.data);
 
       await recordAuditSafely(ctx, {
         targetId: updated.id,
@@ -634,7 +740,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         toAnalyticsDetail("enabled", updated, { previousStatus: loaded.status })
       );
 
-      return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+      return dataResponse(
+        validateOutput(ZWorkflowResource, toWorkflowResource(updated)),
+        ctx.requestId,
+        surveyLinks.warnings.length > 0 ? { warnings: surveyLinks.warnings } : undefined
+      );
     } catch (error) {
       return toProblemResponse(error, ctx);
     }
@@ -695,9 +805,10 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       }
 
       const problems: TWorkflowTestProblem[] = [];
+      const warnings: TWorkflowWarning[] = [];
 
       // safeParse + collect every issue, rather than throwing on the first (as enable does).
-      const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
+      const executable = ZWorkflowEnableDefinition.safeParse(loaded.definition);
       if (!executable.success) {
         for (const issue of executable.error.issues) {
           problems.push({
@@ -716,12 +827,17 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         for (const problem of await collectTriggerProblems(ctx, loaded.workspaceId, executable.data)) {
           problems.push(problem);
         }
+
+        const surveyLinks = await checkWorkflowSurveyLinks(executable.data, loaded.workspaceId, ctx);
+        problems.push(...surveyLinks.problems);
+        warnings.push(...surveyLinks.warnings);
       }
 
       const result = validateOutput(ZWorkflowTestResult, {
         workflowId: params.workflowId,
         ok: problems.length === 0,
         problems,
+        warnings,
       });
 
       await recordAnalyticsSafely(ctx, toAnalyticsDetail("tested", loaded, { testOk: result.ok }));

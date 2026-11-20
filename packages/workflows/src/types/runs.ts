@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZWorkflowExecutableDefinition } from "./document";
-import { ZWorkflowTriggerPayload } from "./triggers";
+import { ZWorkflowResponseCompletedTriggerPayload, ZWorkflowWebhookTriggerPayload } from "./triggers";
 
 const ZIsoDateTime = z.iso.datetime({ offset: true });
 
@@ -10,9 +10,15 @@ export type TWorkflowRunStatus = z.infer<typeof ZWorkflowRunStatus>;
 export const ZWorkflowRunLogStatus = z.enum(["pending", "running", "succeeded", "failed", "skipped"]);
 export type TWorkflowRunLogStatus = z.infer<typeof ZWorkflowRunLogStatus>;
 
-export const ZWorkflowTriggerRunPayload = ZWorkflowTriggerPayload.extend({
-  triggeredAt: ZIsoDateTime,
-}).describe("Trigger payload snapshot stored with a workflow run.");
+const ZTriggeredAt = { triggeredAt: ZIsoDateTime };
+
+/** `ZWorkflowTriggerPayload` with the time the trigger fired; one member per trigger type. */
+export const ZWorkflowTriggerRunPayload = z
+  .discriminatedUnion("type", [
+    ZWorkflowResponseCompletedTriggerPayload.extend(ZTriggeredAt),
+    ZWorkflowWebhookTriggerPayload.extend(ZTriggeredAt),
+  ])
+  .describe("Trigger payload snapshot stored with a workflow run.");
 export type TWorkflowTriggerRunPayload = z.infer<typeof ZWorkflowTriggerRunPayload>;
 
 export const ZWorkflowRunLogInput = z.record(z.string(), z.unknown());
@@ -33,10 +39,18 @@ export const ZWorkflowStepResult = z.object({
 });
 export type TWorkflowStepResult = z.infer<typeof ZWorkflowStepResult>;
 
+/** A step on an If/else branch the run did not take, shown as "Not taken" in run detail (ENG-7170). */
+export const ZWorkflowRunNotTakenStep = z.object({
+  stepId: z.string().min(1),
+  stepType: z.string().min(1),
+});
+export type TWorkflowRunNotTakenStep = z.infer<typeof ZWorkflowRunNotTakenStep>;
+
 export const ZWorkflowRunData = z
   .object({
     trigger: ZWorkflowTriggerRunPayload.optional(),
     steps: z.array(ZWorkflowStepResult).default([]),
+    notTaken: z.array(ZWorkflowRunNotTakenStep).optional(),
   })
   .catchall(z.unknown());
 export type TWorkflowRunData = z.infer<typeof ZWorkflowRunData>;
