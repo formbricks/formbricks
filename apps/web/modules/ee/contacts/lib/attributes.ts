@@ -4,8 +4,10 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { ValidationError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { NULL_BYTE_REASON, hasNullByte } from "@/lib/utils/postgres-text";
 import { retryOnDeadlock } from "@/lib/utils/prisma-deadlock";
 import { validateInputs } from "@/lib/utils/validate";
 import {
@@ -255,22 +257,23 @@ const upsertAttributeValue = (
   });
 };
 
-/** Creates the new attribute keys (with this contact's values) that are safe, unreserved and within the limit. */
-const createNewAttributes = async ({
-  contactId,
+/**
+ * The new attribute keys that will be created: safe, unreserved and within the limit. The rest are
+ * skipped and reported in `errors` or `messages`.
+ */
+const selectNewAttributesToCreate = ({
   workspaceId,
   newAttributes,
   existingKeyCount,
   messages,
   errors,
 }: {
-  contactId: string;
   workspaceId: string;
   newAttributes: TNewAttributeWrite[];
   existingKeyCount: number;
   messages: TAttributeUpdateMessage[];
   errors: TAttributeUpdateMessage[];
-}): Promise<void> => {
+}): TNewAttributeWrite[] => {
   // Validate that new attribute keys are safe identifiers
   const validNewAttributes: typeof newAttributes = [];
   const invalidKeys: string[] = [];
@@ -306,11 +309,9 @@ const createNewAttributes = async ({
     );
   }
 
-  if (validNewAttributes.length === 0) return;
+  if (validNewAttributes.length === 0) return [];
 
-  const totalAttributeClassesLength = existingKeyCount + validNewAttributes.length;
-
-  if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+  if (existingKeyCount + validNewAttributes.length > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
     // Add warning to details about skipped attributes
     messages.push({
       code: "attribute_limit_exceeded",
@@ -319,13 +320,21 @@ const createNewAttributes = async ({
         limit: MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT.toString(),
       },
     });
-  } else {
-    await createAttributeKeysAndValues({
-      contactId,
-      workspaceId,
-      newAttributes: validNewAttributes,
-      messages,
-    });
+    return [];
+  }
+
+  return validNewAttributes;
+};
+
+/**
+ * Refuses a value that holds a NULL byte (ENG-4019): Postgres `text` cannot store U+0000, so it would
+ * fail the write with 22021 and a 500. Called only on values that would reach Postgres, so a value
+ * under a key that is skipped anyway (invalid, reserved, over the limit, wrong type, dropped) still
+ * leaves the rest of the request to go through, as it did before.
+ */
+const assertNoNullByte = (key: string, value: unknown): void => {
+  if (typeof value === "string" && hasNullByte(value)) {
+    throw new ValidationError(`Attribute ${JSON.stringify(key)} ${NULL_BYTE_REASON}`);
   }
 };
 
@@ -463,6 +472,10 @@ export const updateAttributes = async (
   const emailValue = toOptionalString(contactAttributesParam.email);
   const userIdValue = toOptionalString(contactAttributesParam.userId);
 
+  // Both are looked up below, and a NULL byte fails the lookup itself.
+  assertNoNullByte("email", emailValue);
+  assertNoNullByte("userId", userIdValue);
+
   // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
   const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
     await Promise.all([
@@ -488,13 +501,6 @@ export const updateAttributes = async (
     messages,
   });
 
-  // Delete attributes that were removed (only when explicitly requested)
-  // This is used by UI forms where all attributes are submitted
-  // For API calls, we want merge behavior by default (only update passed attributes)
-  if (deleteRemovedAttributes) {
-    await deleteAttributes(contactId, currentAttributes, contactAttributesParam, contactAttributeKeys);
-  }
-
   // Create lookup map for attribute keys
   const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
 
@@ -504,6 +510,25 @@ export const updateAttributes = async (
     contactAttributeKeyMap,
     messages
   );
+
+  const newAttributesToCreate = selectNewAttributesToCreate({
+    workspaceId,
+    newAttributes,
+    existingKeyCount: contactAttributeKeys.length,
+    messages,
+    errors,
+  });
+
+  // Checked before any write, so a refused request changes nothing.
+  for (const { key, columns } of existingAttributes) assertNoNullByte(key, columns.value);
+  for (const { key, value } of newAttributesToCreate) assertNoNullByte(key, value);
+
+  // Delete attributes that were removed (only when explicitly requested)
+  // This is used by UI forms where all attributes are submitted
+  // For API calls, we want merge behavior by default (only update passed attributes)
+  if (deleteRemovedAttributes) {
+    await deleteAttributes(contactId, currentAttributes, contactAttributesParam, contactAttributeKeys);
+  }
 
   if (emailExists) {
     messages.push({ code: "email_already_exists", params: {} });
@@ -527,15 +552,13 @@ export const updateAttributes = async (
     await upsertExistingAttributes(contactId, workspaceId, existingAttributes);
   }
 
-  // Then, try to create new attributes if any exist
-  if (newAttributes.length > 0) {
-    await createNewAttributes({
+  // Then create the new attributes, if any survived the checks
+  if (newAttributesToCreate.length > 0) {
+    await createAttributeKeysAndValues({
       contactId,
       workspaceId,
-      newAttributes,
-      existingKeyCount: contactAttributeKeys.length,
+      newAttributes: newAttributesToCreate,
       messages,
-      errors,
     });
   }
 

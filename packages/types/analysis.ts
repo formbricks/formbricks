@@ -73,7 +73,10 @@ export const ZChartConfig = z.object({
   yAxisLabel: z.string().optional(),
   showLegend: z.boolean().optional(),
   legendPosition: z.enum(["top", "bottom", "left", "right"]).optional(),
+  /** Bar charts with several series: stack them into one bar per category (default true) or place them side by side. */
   stacked: z.boolean().optional(),
+  /** Grouped charts: show records with no value for a grouping as their own "(no value)" group (default false, hidden). */
+  showEmptyValues: z.boolean().optional(),
   showGrid: z.boolean().optional(),
   showValues: z.boolean().optional(),
   numberFormat: z.string().optional(),

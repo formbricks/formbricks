@@ -2,6 +2,7 @@ import { type TLanguageMatch, toLanguageBase, toLanguageKey } from "@formbricks/
 import { LANGUAGE_CANONICAL_MAP, normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import {
   type TMatchableSurveyLanguage,
+  getLatinAmericanSpanishRequests,
   matchSurveyLanguage,
 } from "@formbricks/i18n-utils/survey-language-match";
 
@@ -30,6 +31,8 @@ export const buildLanguageMatch = (languages: readonly TMatchableSurveyLanguage[
   const requests = [
     ...candidates.flatMap(({ language }) => [language.code, language.alias ?? ""]),
     ...Object.keys(LANGUAGE_CANONICAL_MAP).filter((code) => canonicalCodes.has(LANGUAGE_CANONICAL_MAP[code])),
+    // An `es-419` language takes Latin American Spanish from the `es` base answer (ENG-3894).
+    ...getLatinAmericanSpanishRequests(candidates),
   ];
   for (const request of requests) {
     const key = toLanguageKey(request);

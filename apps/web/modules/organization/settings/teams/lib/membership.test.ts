@@ -137,6 +137,17 @@ describe("deleteMembership", () => {
       teamMemberships: [{ teamId, userId }],
     });
   });
+  test("projects the removal to SpiceDB before finishing the grants it ended", async () => {
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
+
+    await deleteMembership(userId, organizationId, ACTOR_ID);
+
+    const finishedAt = vi.mocked(finishRevokedMcpGrants).mock.invocationCallOrder[0];
+    expect(vi.mocked(reconcileOrganizationMembership).mock.invocationCallOrder[0]).toBeLessThan(finishedAt);
+    expect(vi.mocked(reconcileTeamWorkspaceRelationships).mock.invocationCallOrder[0]).toBeLessThan(
+      finishedAt
+    );
+  });
   test.each([
     ["the last non-viewer membership goes and only viewer ones remain", "member", ["dashboard_viewer"], true],
     ["another non-viewer membership remains", "member", ["dashboard_viewer", "owner"], false],

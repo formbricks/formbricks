@@ -1,8 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
-import { authClient } from "@/modules/auth/lib/auth-client";
+import { startSsoSignIn } from "@/modules/ee/sso/lib/start-sso-sign-in";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { GithubIcon } from "@/modules/ui/components/icons";
@@ -22,16 +21,12 @@ export const GithubButton = ({
 }: Readonly<GithubButtonProps>) => {
   const { t } = useTranslation();
   const handleLogin = async () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Github");
-    }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
-    await authClient.signIn.social({
+    await startSsoSignIn({
       provider: "github",
       callbackURL: returnToUrlWithSource,
-      // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
-      errorCallbackURL: "/auth/login",
+      errorMessage: t("common.something_went_wrong"),
     });
   };
 

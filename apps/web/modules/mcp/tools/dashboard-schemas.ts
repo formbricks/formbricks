@@ -143,7 +143,7 @@ export const ZMcpGetChartDataOutput = mcpToolOutput(
 );
 
 const ZMcpChartConfig = ZV3ChartConfig.describe(
-  "Display settings, separate from the query: e.g. showLegend, stacked, barOrientation (vertical|horizontal), pieDisplay (pie|breakdown), areaDisplay (filled|line), colors, axis labels."
+  "Display settings, separate from the query: e.g. showLegend, stacked (bars, default true), showEmptyValues (default false), barOrientation (vertical|horizontal), pieDisplay (pie|breakdown), areaDisplay (filled|line), colors, axis labels."
 );
 
 export const ZMcpCreateChartInput = z

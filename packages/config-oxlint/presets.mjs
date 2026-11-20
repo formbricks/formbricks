@@ -229,7 +229,7 @@ export const typeAwareOff = {
   "typescript/use-unknown-in-catch-callback-variable": "off",
 };
 
-/** eslint-plugin-react 7.37 `flat.recommended`. oxlint implements most of it natively; `prop-types` and `no-deprecated` run from the plugin itself as the `react-js` JS plugin. `jsx-uses-react` and `jsx-uses-vars` are left out: they only mark variables as used for ESLint's `no-unused-vars`, and oxlint's understands JSX. */
+/** eslint-plugin-react 7.37 `flat.recommended`, which oxlint implements natively except for two rules the repo dropped with the plugin (ENG-7401): `prop-types` (TypeScript checks props) and `no-deprecated` (React 19's types no longer declare the removed APIs it flags, and the tiers set `react/no-unsafe` for the deprecated lifecycles). `jsx-uses-react` and `jsx-uses-vars` are left out: they only mark variables as used for ESLint's `no-unused-vars`, and oxlint's understands JSX. */
 export const reactRecommended = {
   "react/display-name": "error",
   "react/jsx-key": "error",
@@ -239,7 +239,6 @@ export const reactRecommended = {
   "react/jsx-no-undef": "error",
   "react/no-children-prop": "error",
   "react/no-danger-with-children": "error",
-  "react-js/no-deprecated": "error",
   "react/no-direct-mutation-state": "error",
   "react/no-find-dom-node": "error",
   "react/no-is-mounted": "error",
@@ -247,7 +246,6 @@ export const reactRecommended = {
   "react/no-string-refs": "error",
   "react/no-unescaped-entities": "error",
   "react/no-unknown-property": "error",
-  "react-js/prop-types": "error",
   "react/react-in-jsx-scope": "error",
   "react/require-render-return": "error",
 };
@@ -373,7 +371,6 @@ export const next = {
   "react/jsx-no-undef": "error",
   "react/no-children-prop": "error",
   "react/no-danger-with-children": "error",
-  "react-js/no-deprecated": "error",
   "react/no-direct-mutation-state": "error",
   "react/no-find-dom-node": "error",
   "react/no-is-mounted": "error",
@@ -382,7 +379,6 @@ export const next = {
   "react/no-unescaped-entities": "error",
   "react/no-unknown-property": "off",
   "react/no-unsafe": "off",
-  "react-js/prop-types": "off",
   "react/react-in-jsx-scope": "off",
   "react/require-render-return": "error",
   "react/rules-of-hooks": "error",

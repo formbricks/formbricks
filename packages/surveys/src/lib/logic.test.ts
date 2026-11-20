@@ -2070,6 +2070,84 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
       ).toEqual({});
     });
 
+    describe("a number field reading an answer or hidden field (ENG-7378)", () => {
+      const fromOperand = (
+        operator: "assign" | "add",
+        value: { type: "element" | "hiddenField"; value: string }
+      ): TSurveyBlockLogicAction => ({
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator,
+        value,
+      });
+
+      test.each([
+        ["an answer", { type: "element" as const, value: "q1" }, { q1: "42" }],
+        ["a hidden field", { type: "hiddenField" as const, value: "plan" }, { plan: "42" }],
+      ])("assign stores %s holding a numeric text as a number", (_label, operand, data) => {
+        expect(
+          calculate(buildSurvey([], computedRow("number", 0)), fromOperand("assign", operand), data, {})
+        ).toEqual({ [STORAGE_KEY]: 42 });
+      });
+
+      test.each([
+        ["an answer", { type: "element" as const, value: "q1" }, { q1: "2.5" }],
+        ["a hidden field", { type: "hiddenField" as const, value: "plan" }, { plan: "2.5" }],
+      ])("add sums %s holding a numeric text into the field", (_label, operand, data) => {
+        expect(
+          calculate(buildSurvey([], computedRow("number", 0)), fromOperand("add", operand), data, {
+            [STORAGE_KEY]: 10,
+          })
+        ).toEqual({ [STORAGE_KEY]: 12.5 });
+      });
+
+      test("assign keeps a number answer a number", () => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("number", 0)),
+            fromOperand("assign", { type: "element", value: "q1" }),
+            { q1: 7 },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: 7 });
+      });
+
+      test("assign keeps a text that is not a number as text", () => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("number", 0)),
+            fromOperand("assign", { type: "hiddenField", value: "plan" }),
+            { plan: "gold" },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: "gold" });
+      });
+
+      // `Number("")` is 0, so a blank would read as a real 0 and an `isSkipped` condition would miss it.
+      test.each(["", "   "])("assign keeps a blank hidden field (%j) blank", (blank) => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("number", 5)),
+            fromOperand("assign", { type: "hiddenField", value: "plan" }),
+            { plan: blank },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: blank });
+      });
+
+      test("a text field keeps a numeric text as text", () => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("string", "")),
+            fromOperand("assign", { type: "hiddenField", value: "plan" }),
+            { plan: "42" },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: "42" });
+      });
+    });
+
     test('a legacy "question" operand stays unresolved', () => {
       expect(
         calculate(

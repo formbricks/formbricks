@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { HUB_EMOTION_VALUES } from "@formbricks/types/feedback-source";
 import { zPostgresText } from "@/lib/utils/postgres-text";
 import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import {
@@ -9,7 +10,6 @@ import {
 } from "@/modules/ee/analysis/lib/field-catalog";
 import {
   EMOTIONS_DIMENSION_ID,
-  EMOTION_VALUES,
   type FilterOperator,
   isLabelledValueDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
@@ -203,7 +203,7 @@ export const isListDashboardFilter = (filter: Pick<TDashboardFilter, "field" | "
  * surprise and disgust are not; a label added to the list must keep that true.
  */
 const MULTI_LABEL_FIELDS: ReadonlyMap<string, readonly string[]> = new Map([
-  [EMOTIONS_DIMENSION_ID, EMOTION_VALUES],
+  [EMOTIONS_DIMENSION_ID, HUB_EMOTION_VALUES],
 ]);
 
 /** The labels a multi-label field picks from, or `undefined` for any other field. */

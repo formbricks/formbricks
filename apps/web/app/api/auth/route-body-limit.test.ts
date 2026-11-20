@@ -25,6 +25,7 @@ vi.mock("@/modules/auth/lib/auth", () => ({
     },
     api: {},
   },
+  getDeclaredAuthPaths: () => [],
 }));
 vi.mock("@/modules/auth/lib/mcp-dcr-application-type", () => ({ prepareDcrRequest: prepareDcrRequestMock }));
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));

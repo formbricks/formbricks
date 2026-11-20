@@ -21,6 +21,8 @@ interface TOption<T> {
   groupIcon?: React.ReactNode;
   disabled?: boolean;
   icon?: React.ReactNode;
+  /** Optional control shown inside the option's chip once chosen, before its remove button (e.g. rename). */
+  badgeAction?: React.ReactNode;
 }
 
 interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
@@ -241,33 +243,37 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
           containerClassName ?? ""
         )}>
         <div className="flex flex-wrap gap-1">
-          {selected.map((option) => (
-            <Badge
-              key={option.value}
-              className="max-w-full rounded-md"
-              title={option.description ?? option.label}>
-              {option.icon ? (
-                <span className="mr-1 inline-flex shrink-0 items-center">{option.icon}</span>
-              ) : null}
-              <span className="truncate">{option.label}</span>
-              <button
-                type="button"
-                aria-label={t("common.remove_item", { item: option.label })}
-                className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleUnselect(option);
-                  }
-                }}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                onClick={() => handleUnselect(option)}>
-                <X className="text-muted-foreground hover:text-foreground size-3" />
-              </button>
-            </Badge>
-          ))}
+          {/* Each chip reads its option as currently passed, so a renamed label shows without reselecting. */}
+          {selected
+            .map((chosen) => options.find((o) => o.value === chosen.value) ?? chosen)
+            .map((option) => (
+              <Badge
+                key={option.value}
+                className="max-w-full rounded-md"
+                title={option.description ?? option.label}>
+                {option.icon ? (
+                  <span className="mr-1 inline-flex shrink-0 items-center">{option.icon}</span>
+                ) : null}
+                <span className="truncate">{option.label}</span>
+                {disabled ? null : option.badgeAction}
+                <button
+                  type="button"
+                  aria-label={t("common.remove_item", { item: option.label })}
+                  className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleUnselect(option);
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onClick={() => handleUnselect(option)}>
+                  <X className="text-muted-foreground hover:text-foreground size-3" />
+                </button>
+              </Badge>
+            ))}
           <CommandPrimitive.Input
             ref={inputRef}
             value={inputValue}

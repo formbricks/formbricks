@@ -1,14 +1,13 @@
 import type { TFunction } from "i18next";
+import { HUB_EMOTION_VALUES, HUB_SENTIMENT_VALUES } from "@formbricks/types/feedback-source";
 import { getFilterFieldOptions } from "@/modules/ee/analysis/charts/lib/filter-conditions";
 import type { TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client";
 import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import {
   EMOTIONS_DIMENSION_ID,
-  EMOTION_VALUES,
   LANGUAGE_DIMENSION_ID,
   SENTIMENT_DIMENSION_ID,
-  SENTIMENT_VALUE_ORDER,
   VALUE_BAND_DIMENSION_ID,
   VALUE_BAND_VALUES,
   getTranslatedDimensionValueLabel,
@@ -72,9 +71,9 @@ const RECORD_LEVEL_FIELDS: ReadonlySet<string> = new Set([
 const getFixedValueOptions = (field: string, t: TFunction): TFilterOption[] | undefined => {
   const translated = (values: readonly string[]) =>
     values.map((value) => ({ value, label: getTranslatedDimensionValueLabel(field, value, t) ?? value }));
-  if (field === SENTIMENT_DIMENSION_ID) return translated(SENTIMENT_VALUE_ORDER);
+  if (field === SENTIMENT_DIMENSION_ID) return translated(HUB_SENTIMENT_VALUES);
   if (field === VALUE_BAND_DIMENSION_ID) return translated(VALUE_BAND_VALUES);
-  if (field === EMOTIONS_DIMENSION_ID) return translated(EMOTION_VALUES);
+  if (field === EMOTIONS_DIMENSION_ID) return translated(HUB_EMOTION_VALUES);
   if (getDashboardFilterField(field)?.type === "boolean") {
     return [
       { value: "true", label: t("common.yes") },

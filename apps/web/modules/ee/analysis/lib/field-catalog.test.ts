@@ -104,6 +104,14 @@ describe("a dataset's field catalog (ENG-6893)", () => {
     );
   });
 
+  test("labels a renamed key with the workspace's name for it, keeping the key as collected", () => {
+    const [field] = getChartFieldCatalog({
+      embeddedFields: [{ name: "FeedbackRecords.ed_plan_64879f7d", key: "plan", label: "Subscription plan" }],
+    }).slice(CHART_FIELD_CATALOG.length);
+
+    expect(field).toMatchObject({ label: "Subscription plan", key: "plan" });
+  });
+
   test("names each embedded field's key as its own property, not only as its label (C16)", () => {
     const catalog = getChartFieldCatalog(dataset);
 
