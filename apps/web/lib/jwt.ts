@@ -94,7 +94,7 @@ export const createToken = (userId: string, options: TVerificationTokenOptions =
   const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ssoRecoveryStateId, ...jwtOptions } = options;
 
   return jwt.sign(
-    { id: encryptedUserId, purpose, ...(ssoRecoveryStateId ? { recoveryState: ssoRecoveryStateId } : {}) },
+    { id: encryptedUserId, purpose, ...(ssoRecoveryStateId ? { ssoRecoveryStateId } : {}) },
     authSecret,
     jwtOptions
   );
@@ -495,14 +495,14 @@ export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> =
   // Get user email if we don't have it yet
   userData ??= await getUserEmailForLegacyVerification(token, payload.id);
 
-  const recoveryState: unknown = (payload as { recoveryState?: unknown }).recoveryState;
+  const signedStateId: unknown = (payload as { ssoRecoveryStateId?: unknown }).ssoRecoveryStateId;
 
   return {
     id: userData.userId,
     email: userData.userEmail,
     purpose: getVerificationTokenPurpose(payload.purpose),
-    ...(typeof recoveryState === "string" && recoveryState.length > 0
-      ? { ssoRecoveryStateId: recoveryState }
+    ...(typeof signedStateId === "string" && signedStateId.length > 0
+      ? { ssoRecoveryStateId: signedStateId }
       : {}),
   };
 };

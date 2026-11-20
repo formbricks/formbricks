@@ -272,8 +272,9 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
             "sec-fetch-mode": "navigate",
             "sec-fetch-dest": "document",
             "sec-fetch-user": "?1",
+            origin: new URL(WEBAPP_URL).origin,
           },
-          body: new URLSearchParams({ state: stateId }).toString(),
+          body: new URLSearchParams({ state: stateId, action: "link" }).toString(),
         })
       );
     };

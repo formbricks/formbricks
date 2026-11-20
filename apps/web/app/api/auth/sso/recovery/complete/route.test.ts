@@ -40,8 +40,9 @@ const request = (url: string, cookie?: string) =>
 
 const location = (response: Response) => response.headers.get("location");
 
-/** The Fetch Metadata a browser sends when the user clicks a same-origin form's submit button. */
+/** What a browser sends when the user clicks a same-origin form's submit button. */
 const CLICKED_FORM = {
+  origin: WEBAPP_URL,
   "sec-fetch-site": "same-origin",
   "sec-fetch-mode": "navigate",
   "sec-fetch-dest": "document",
@@ -66,7 +67,7 @@ const submit = (
         ...headers,
       }).filter(([, value]) => value !== "")
     ),
-    body: new URLSearchParams({ state: stateId, ...fields }).toString(),
+    body: new URLSearchParams({ state: stateId, action: "link", ...fields }).toString(),
   });
 
 describe("/api/auth/sso/recovery/complete", () => {
@@ -131,15 +132,15 @@ describe("/api/auth/sso/recovery/complete", () => {
   );
 
   /**
-   * A same-origin script (a self-hosted link survey's custom head script) must not be able to submit on
-   * the account holder's behalf. `fetch()` sends `cors`/`empty`; a scripted `form.submit()` navigates
-   * but carries no user activation, so no `Sec-Fetch-User`.
+   * A background request from a script on this origin must not act for the account holder: `fetch()`
+   * sends `cors`/`empty`, and a submission into a frame has `iframe` as its destination.
    */
   test.each([
     ["a same-origin fetch()", { "sec-fetch-mode": "cors", "sec-fetch-dest": "empty", "sec-fetch-user": "" }],
-    ["a scripted form.submit()", { "sec-fetch-user": "" }],
     ["a submission into a frame", { "sec-fetch-dest": "iframe" }],
     ["a request that is not a navigation", { "sec-fetch-mode": "cors" }],
+    ["a foreign Origin", { origin: "https://evil.example" }],
+    ["no Origin at all", { origin: "" }],
   ])("refuses %s", async (_label, headers) => {
     const response = await POST(submit("state-id", "formbricks.session_token=token-abc.signature", headers));
 
@@ -149,13 +150,49 @@ describe("/api/auth/sso/recovery/complete", () => {
     expect(location(response)).toContain("error=OAuthAccountNotLinked");
   });
 
-  test("still accepts a browser that sends no Fetch Metadata at all, leaving SameSite=Lax as the guard", async () => {
+  /**
+   * Safari sends Fetch Metadata but never `Sec-Fetch-User` (WebKit bug 247697). Requiring it refused every
+   * Safari user at the confirmation step.
+   */
+  test("accepts Safari's click, which carries no Sec-Fetch-User", async () => {
     vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
-    const noFetchMetadata = Object.fromEntries(Object.keys(CLICKED_FORM).map((name) => [name, ""]));
+
+    await POST(submit("state-id", undefined, { "sec-fetch-user": "" }));
+
+    expect(completeSsoRecovery).toHaveBeenCalled();
+  });
+
+  test("accepts a browser without Fetch Metadata when its Origin is this app's", async () => {
+    vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
+    const noFetchMetadata = Object.fromEntries(
+      Object.keys(CLICKED_FORM)
+        .filter((name) => name !== "origin")
+        .map((name) => [name, ""])
+    );
 
     await POST(submit("state-id", undefined, noFetchMetadata));
 
     expect(completeSsoRecovery).toHaveBeenCalled();
+  });
+
+  /** A cookie-keeping client that parsed the page (a link scanner) sends neither. */
+  test("refuses a POST with neither Fetch Metadata nor an Origin", async () => {
+    const bare = Object.fromEntries(Object.keys(CLICKED_FORM).map((name) => [name, ""]));
+
+    await POST(submit("state-id", "formbricks.session_token=token-abc.signature", bare));
+
+    expect(completeSsoRecovery).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["no action", { action: "" }],
+    ["an unknown action", { action: "lnk" }],
+  ])("refuses %s rather than linking", async (_label, fields) => {
+    const response = await POST(submit("state-id", undefined, {}, fields));
+
+    expect(completeSsoRecovery).not.toHaveBeenCalled();
+    expect(cancelSsoRecovery).not.toHaveBeenCalled();
+    expect(location(response)).toContain("error=OAuthAccountNotLinked");
   });
 
   describe("cancel", () => {
@@ -357,7 +394,12 @@ describe("/api/auth/sso/recovery/complete", () => {
     expect(location(response)).toContain("error=OAuthAccountNotLinked");
     expect(location(response)).not.toContain("callbackUrl=");
     // Not one of ours, so nothing upstream logged it.
-    expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "Unexpected error completing SSO recovery");
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error" }),
+      "Unexpected error completing SSO recovery"
+    );
+    // Through loggableError: never the message, which can carry what the request held.
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("redis exploded");
   });
 
   test("clears the session cookies and revokes the session it was given on a rejected recovery", async () => {

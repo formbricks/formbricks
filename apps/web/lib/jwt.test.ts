@@ -515,7 +515,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       const { iat: _iat, ...minted } = jwt.decode(createToken(mockUser.id, { purpose: "sso_recovery" })) as {
         iat: number;
       };
-      const token = jwt.sign({ ...minted, recoveryState }, TEST_AUTH_SECRET);
+      const token = jwt.sign({ ...minted, ssoRecoveryStateId: recoveryState }, TEST_AUTH_SECRET);
 
       expect(await verifyToken(token)).not.toHaveProperty("ssoRecoveryStateId");
     });

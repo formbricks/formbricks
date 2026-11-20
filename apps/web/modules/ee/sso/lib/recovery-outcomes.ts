@@ -147,19 +147,44 @@ export const getSsoRecoverySecondFactorUnavailableRedirectUrl = (callbackUrl?: s
 export const getSsoRecoveryLinkNotOpenedRedirectUrl = (): string =>
   buildSsoRecoveryLoginUrl(undefined, SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE);
 
-/**
- * Where a refused recovery sends the browser, for the confirmation page and the completion route alike.
- * The route adds the ENG-2557 session teardown for a `rejected` failure on top. The page cannot: it is a
- * server component and cannot clear cookies, so a refusal there leaves the session the emailed link
- * created. That session belongs to whoever proved the mailbox, so it is not one that should not exist.
- */
-export const getSsoRecoveryRefusalRedirectUrl = (error: unknown): string => {
-  const recoveryError = error instanceof SsoRecoveryError ? error : null;
+/** Where a refused recovery sends the browser, and whether the completion route revokes its session. */
+export type TSsoRecoveryRefusal = { redirectUrl: string; revokesSession: boolean };
 
-  if (recoveryError?.failure === "unproven") return getSsoRecoveryLinkNotOpenedRedirectUrl();
-  if (recoveryError?.failure === "intent_unusable") return getSsoRecoveryFailureRedirectUrl();
-  return getSsoRecoveryFailureRedirectUrl(recoveryError?.callbackUrl);
+/**
+ * Every way a recovery can be refused, in one place, so the confirmation page and the completion route
+ * cannot disagree about where a refusal goes or whether it costs the caller their session.
+ *
+ * `intent_unusable` and `unproven` leave the session alone. The first covers five situations the store
+ * cannot tell apart (expired, already consumed, never issued, Redis unreadable, malformed) plus a live
+ * intent another Link or Cancel is acting on, and the ordinary ones must not be punished: the emailed link
+ * is replayable for its window, so a second open that finds the intent consumed would otherwise sign the
+ * user out right after linking succeeded. The second is a browser that never opened the emailed link, so
+ * its session was not minted by the link, and revoking it would let anyone holding a state id sign the
+ * account holder out. Skipping the teardown is safe because it only revokes the caller's own token; the
+ * link itself already failed closed before any write.
+ *
+ * `rejected`, a guard that read an intent and turned it down, and any unexpected throw keep the ENG-2557
+ * teardown. Only the completion route can apply it: the page is a server component and cannot clear
+ * cookies, so a refusal there leaves the session the emailed link created, which belongs to whoever proved
+ * the mailbox.
+ */
+const SSO_RECOVERY_REFUSALS: Record<
+  TSsoRecoveryFailure | "unexpected",
+  (callbackUrl?: string) => TSsoRecoveryRefusal
+> = {
+  intent_unusable: () => ({ redirectUrl: getSsoRecoveryFailureRedirectUrl(), revokesSession: false }),
+  unproven: () => ({ redirectUrl: getSsoRecoveryLinkNotOpenedRedirectUrl(), revokesSession: false }),
+  rejected: (callbackUrl) => ({
+    redirectUrl: getSsoRecoveryFailureRedirectUrl(callbackUrl),
+    revokesSession: true,
+  }),
+  unexpected: () => ({ redirectUrl: getSsoRecoveryFailureRedirectUrl(), revokesSession: true }),
 };
+
+export const getSsoRecoveryRefusal = (error: unknown): TSsoRecoveryRefusal =>
+  error instanceof SsoRecoveryError
+    ? SSO_RECOVERY_REFUSALS[error.failure](error.callbackUrl)
+    : SSO_RECOVERY_REFUSALS.unexpected();
 
 /** The confirmation page for a recovery (ENG-7395). */
 export const getSsoRecoveryConfirmUrl = (stateId: string): string => {

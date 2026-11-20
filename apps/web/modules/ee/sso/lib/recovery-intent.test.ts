@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { cache } from "@/lib/cache";
 import {
+  type TSsoRecoveryClaim,
   type TSsoRecoveryIntent,
   claimSsoRecoveryIntent,
   consumeSsoRecoveryIntent,
@@ -82,7 +83,8 @@ describe("SSO recovery intent", () => {
         async (script: string, { keys, arguments: args }: { keys: string[]; arguments: string[] }) => {
           if (script.includes("EXISTS")) {
             const [intentKey, claimKey] = keys;
-            if (!store.has(intentKey) || store.has(claimKey)) return 0;
+            if (!store.has(intentKey)) return 0;
+            if (store.has(claimKey)) return 2;
             store.set(claimKey, { value: args[0], ttlMs: Number(args[1]) });
             return 1;
           }
@@ -203,66 +205,71 @@ describe("SSO recovery intent", () => {
   });
 
   describe("claim", () => {
+    const claimed = (claim: TSsoRecoveryClaim) => {
+      expect(claim.kind).toBe("claimed");
+      return claim as Extract<TSsoRecoveryClaim, { kind: "claimed" }>;
+    };
+
     test("one request at a time may act on a live recovery", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
 
-      const first = await claimSsoRecoveryIntent(stateId);
-      expect(first).not.toBeNull();
-      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+      const first = claimed(await claimSsoRecoveryIntent(stateId));
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
 
-      await first!.release();
-      await expect(claimSsoRecoveryIntent(stateId)).resolves.not.toBeNull();
+      await first.release();
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toMatchObject({ kind: "claimed" });
     });
 
-    test("a spent recovery cannot be claimed", async () => {
+    test("a spent recovery cannot be claimed, and says so rather than blaming another request", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       await consumeSsoRecoveryIntent(stateId);
 
-      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "spent" });
     });
 
     test("a claim that lapsed and was retaken is not freed by its first owner", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
-      const first = await claimSsoRecoveryIntent(stateId);
+      const first = claimed(await claimSsoRecoveryIntent(stateId));
       // The first claim's TTL ran out and another request claimed.
       for (const key of [...store.keys()]) if (key.includes(":claim:")) store.delete(key);
-      const second = await claimSsoRecoveryIntent(stateId);
+      claimed(await claimSsoRecoveryIntent(stateId));
 
-      await first!.release();
+      await first.release();
 
-      expect(second).not.toBeNull();
-      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
     });
 
     test("gives back a claim that lands after the cache stopped waiting for it", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       const redis = await mockCache.getRedisClient();
-      let landed!: () => void;
-      const lateClaim = new Promise<number>((resolve) => {
-        landed = () => resolve(1);
-      });
-      vi.mocked(redis!.eval).mockImplementationOnce(() => lateClaim);
-      // The cache's deadline fires before Redis answers.
+      const realEval = vi.mocked(redis!.eval).getMockImplementation()!;
+      let land!: () => void;
+      // Redis takes the claim, but only after the cache's deadline has given up on it.
+      vi.mocked(redis!.eval).mockImplementationOnce(
+        (...args) =>
+          new Promise((resolve) => {
+            land = () => resolve(realEval(...args));
+          })
+      );
       mockCache.runRedisOperation.mockImplementationOnce(async (operation) => {
         void operation(redis!);
         throw new Error("Redis operation timed out");
       });
 
-      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
-      landed();
-      await vi.waitFor(() =>
-        expect(redis!.eval).toHaveBeenLastCalledWith(
-          expect.stringContaining("'GET'"),
-          expect.objectContaining({ keys: [expect.stringContaining(":claim:")] })
-        )
-      );
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "unavailable" });
+      land();
+
+      // The late claim is given back, so the recovery is claimable again rather than blocked for its TTL.
+      await vi.waitFor(async () => {
+        await expect(claimSsoRecoveryIntent(stateId)).resolves.toMatchObject({ kind: "claimed" });
+      });
     });
 
     test("does not act when Redis cannot answer, and never throws", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
       mockCache.runRedisOperation.mockRejectedValue(new Error("Redis unavailable"));
 
-      await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+      await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "unavailable" });
     });
 
     test("expires on its own if never released", async () => {

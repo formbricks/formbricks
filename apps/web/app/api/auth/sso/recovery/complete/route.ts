@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import { getSession } from "@/modules/auth/lib/session";
 import {
@@ -14,7 +16,7 @@ import {
   SsoRecoveryError,
   getSsoRecoveryConfirmUrl,
   getSsoRecoveryFailureRedirectUrl,
-  getSsoRecoveryRefusalRedirectUrl,
+  getSsoRecoveryRefusal,
 } from "@/modules/ee/sso/lib/recovery-outcomes";
 import {
   SSO_RECOVERY_PROOF_COOKIE_NAME,
@@ -34,8 +36,8 @@ const clearSessionCookies = (response: NextResponse) => {
   }
 };
 
-const buildFailedRecoveryResponse = async (request: Request, error: unknown, status: number) => {
-  const response = NextResponse.redirect(getSsoRecoveryRefusalRedirectUrl(error), status);
+const buildFailedRecoveryResponse = async (request: Request, redirectUrl: string) => {
+  const response = NextResponse.redirect(redirectUrl, 303);
   clearSessionCookies(response);
 
   const sessionToken = getSessionTokenFromCookieHeader(request.headers.get("cookie"));
@@ -48,7 +50,10 @@ const buildFailedRecoveryResponse = async (request: Request, error: unknown, sta
     // DB-only delete would leave this one resolvable by `getSession` until its TTL (ENG-2557).
     await revokeSessionByToken(sessionToken);
   } catch (error) {
-    logger.error(error, "Failed to delete SSO recovery session after recovery completion error");
+    logger.error(
+      { ...loggableError(error) },
+      "Failed to delete SSO recovery session after recovery completion error"
+    );
   }
 
   return response;
@@ -73,39 +78,47 @@ const getHandler = async (request: Request) => {
   return NextResponse.redirect(getSsoRecoveryConfirmUrl(stateId));
 };
 
+const WEBAPP_ORIGIN = new URL(WEBAPP_URL).origin;
+
 /**
- * Only a user-activated, same-origin form submission acts (ENG-7395).
+ * Only a same-origin form submission made by navigating the page acts (ENG-7395).
  *
- * Session and proof cookies are SameSite=Lax, so a cross-site POST arrives without them and is refused
- * anyway; `Sec-Fetch-Site` says so outright. When the browser sends Fetch Metadata at all, the request
- * must also be a top-level navigation with user activation: `Sec-Fetch-Mode: navigate`, `Sec-Fetch-Dest:
- * document`, `Sec-Fetch-User: ?1`. That stops a background `fetch()` (`cors`/`empty`) and a scripted
- * `form.submit()` with no click behind it (no `Sec-Fetch-User`). It does not stop a malicious script on
- * this origin from riding a real click the user makes on its own page; a script there already acts with
- * the user's full rights, so this check only takes away the zero-click path. A browser without Fetch
- * Metadata still has the Lax refusal.
+ * `Origin` must be this app's. Every browser sends it on a form POST, so this holds for browsers that
+ * predate Fetch Metadata too, and refuses a cookie-keeping client (a link scanner that parses the page)
+ * that sends none. When the browser does send Fetch Metadata, the request must also be a same-origin
+ * top-level navigation into a document: `Sec-Fetch-Mode: navigate`, `Sec-Fetch-Dest: document`. That
+ * stops a background `fetch()` (`cors`/`empty`) and a submission into a frame.
+ *
+ * `Sec-Fetch-User` is not required: Safari sends the other Fetch Metadata headers but never this one
+ * (WebKit bug 247697), so requiring it refuses every Safari user. Without it a script on this origin can
+ * still `form.submit()` without a click; such a script already acts with the user's full rights.
  */
 const isDeliberateSubmission = (request: Request): boolean => {
+  if (request.headers.get("origin") !== WEBAPP_ORIGIN) return false;
+
   const fetchSite = request.headers.get("sec-fetch-site");
   if (fetchSite === null) return true;
 
   return (
     fetchSite === "same-origin" &&
     request.headers.get("sec-fetch-mode") === "navigate" &&
-    request.headers.get("sec-fetch-dest") === "document" &&
-    request.headers.get("sec-fetch-user") === "?1"
+    request.headers.get("sec-fetch-dest") === "document"
   );
 };
 
-type TSubmission = { stateId: string; action: "link" | "cancel" };
+/** Each button names its action; anything else, including no action at all, is refused rather than linked. */
+const ZSubmission = z.object({
+  state: z.string().min(1),
+  action: z.enum(["link", "cancel"]),
+});
+
+type TSubmission = z.infer<typeof ZSubmission>;
 
 const readSubmission = async (request: Request): Promise<TSubmission | null> => {
   try {
     const form = await request.formData();
-    const stateId = form.get("state");
-    if (typeof stateId !== "string" || stateId.length === 0) return null;
-
-    return { stateId, action: form.get("action") === "cancel" ? "cancel" : "link" };
+    const parsed = ZSubmission.safeParse({ state: form.get("state"), action: form.get("action") });
+    return parsed.success ? parsed.data : null;
   } catch (error) {
     // `formData()` rejects with a TypeError for a body that is not form data; that is a bad request,
     // not a fault. Anything else is unexpected and propagates.
@@ -124,34 +137,18 @@ const clearProofCookie = (response: NextResponse) => {
   });
 };
 
-/**
- * The response to a refused link or cancel. Redirects go through `getSsoRecoveryRefusalRedirectUrl`,
- * which the confirmation page uses too, so both send a refusal to the same place.
- *
- * `intent_unusable` and `unproven` leave the session alone. The first covers five situations the store
- * cannot tell apart (expired, already consumed, never issued, Redis unreadable, malformed), plus a live
- * intent another Link or Cancel is acting on (a double click), and the
- * ordinary ones must not be punished: the emailed link is replayable for its window, so a second open
- * that finds the intent consumed would otherwise sign the user out right after linking succeeded. The
- * second is a browser that never opened the emailed link, so its session was not minted by the link,
- * and tearing it down would let anyone holding a state id sign the account holder out. Skipping the
- * teardown is safe because it only revokes the token off the caller's own cookie; the link itself
- * already failed closed before any write.
- *
- * Everything else, a guard that read an intent and turned it down or an unexpected throw, keeps the
- * ENG-2557 teardown.
- */
+/** The response to a refused link or cancel; `getSsoRecoveryRefusal` decides where and at what cost. */
 const buildRefusalResponse = async (request: Request, error: unknown) => {
   if (!(error instanceof SsoRecoveryError)) {
-    logger.error(error, "Unexpected error completing SSO recovery");
+    logger.error({ ...loggableError(error) }, "Unexpected error completing SSO recovery");
   }
 
-  const failure = error instanceof SsoRecoveryError ? error.failure : null;
-  if (failure === "intent_unusable" || failure === "unproven") {
-    return NextResponse.redirect(getSsoRecoveryRefusalRedirectUrl(error), 303);
+  const refusal = getSsoRecoveryRefusal(error);
+  if (!refusal.revokesSession) {
+    return NextResponse.redirect(refusal.redirectUrl, 303);
   }
 
-  return await buildFailedRecoveryResponse(request, error, 303);
+  return await buildFailedRecoveryResponse(request, refusal.redirectUrl);
 };
 
 const postHandler = async (request: Request) => {
@@ -174,7 +171,7 @@ const postHandler = async (request: Request) => {
 
     if (submission.action === "cancel") {
       await cancelSsoRecovery({
-        stateId: submission.stateId,
+        stateId: submission.state,
         recoveryProof,
         sessionUserId: session?.user.id,
       });
@@ -184,7 +181,7 @@ const postHandler = async (request: Request) => {
     }
 
     const callbackUrl = await completeSsoRecovery({
-      stateId: submission.stateId,
+      stateId: submission.state,
       // Set when this browser opened the emailed link (ENG-7310).
       recoveryProof,
       sessionUserId: session?.user.id,

@@ -113,16 +113,20 @@ describe("SSO recovery intent store (real Redis)", () => {
     const stateId = await createSsoRecoveryIntent(intentInput);
 
     const first = await claimSsoRecoveryIntent(stateId);
-    expect(first).not.toBeNull();
-    await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+    expect(first.kind).toBe("claimed");
+    // The claim must expire on its own, or a crashed holder would block the recovery.
+    const claimTtl = await (await redisClient()).ttl(keyFor(stateId).replace(":intent:", ":claim:"));
+    expect(claimTtl).toBeGreaterThan(0);
+    expect(claimTtl).toBeLessThanOrEqual(5 * 60);
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
 
-    await first!.release();
+    if (first.kind === "claimed") await first.release();
     const second = await claimSsoRecoveryIntent(stateId);
-    expect(second).not.toBeNull();
-    await second!.release();
+    expect(second.kind).toBe("claimed");
+    if (second.kind === "claimed") await second.release();
 
     await consumeSsoRecoveryIntent(stateId);
-    await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "spent" });
   });
 
   test("a claim that lapsed and was retaken is not freed by its first owner", async () => {
@@ -131,11 +135,11 @@ describe("SSO recovery intent store (real Redis)", () => {
     // The first claim's TTL runs out, and another request takes the recovery.
     await (await redisClient()).del(keyFor(stateId).replace(":intent:", ":claim:"));
     const second = await claimSsoRecoveryIntent(stateId);
-    expect(second).not.toBeNull();
+    expect(second.kind).toBe("claimed");
 
-    await first!.release();
+    if (first.kind === "claimed") await first.release();
 
     // Still the second request's: a third cannot claim.
-    await expect(claimSsoRecoveryIntent(stateId)).resolves.toBeNull();
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
   });
 });

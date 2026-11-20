@@ -54,7 +54,7 @@ export const SsoRecoveryConfirmPage = async ({
       </p>
       <form method="post" action={completionUrl} className="space-y-2">
         <input type="hidden" name="state" value={stateId} />
-        <Button type="submit" className="h-11 w-full justify-center sm:h-9">
+        <Button type="submit" name="action" value="link" className="h-11 w-full justify-center sm:h-9">
           {t("auth.sso_recovery_confirm.confirm", { provider: providerName })}
         </Button>
         {/* A POST too, not a link: cancelling spends the intent and the proof, so the emailed link can no

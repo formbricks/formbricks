@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { VERIFICATION_LINK_TTL_SECONDS } from "@/modules/auth/lib/verification-links";
 
 /**
@@ -108,7 +109,7 @@ const CLAIM_IF_LIVE_SCRIPT = `
   if redis.call('SET', KEYS[2], ARGV[1], 'NX', 'PX', ARGV[2]) then
     return 1
   end
-  return 0
+  return 2
 `;
 
 // Deletes the claim only while it is still this request's, so a release that runs after the claim
@@ -120,7 +121,14 @@ const RELEASE_CLAIM_SCRIPT = `
   return 0
 `;
 
-export type TSsoRecoveryClaim = { release: () => Promise<void> };
+/**
+ * `claimed` may act and must release. The rest may not act, for different reasons the audit keeps apart:
+ * `held` is another Link or Cancel in flight, `spent` is a recovery already linked, cancelled or expired,
+ * and `unavailable` is Redis not answering, which says nothing about other requests.
+ */
+export type TSsoRecoveryClaim =
+  | { kind: "claimed"; release: () => Promise<void> }
+  | { kind: "held" | "spent" | "unavailable" };
 
 /**
  * Takes the right to act on a live recovery: link it or cancel it. Completion and cancellation each
@@ -128,12 +136,11 @@ export type TSsoRecoveryClaim = { release: () => Promise<void> };
  * succeed, the identity linked while the cancellation was recorded (ENG-7395 review). The one that claims
  * acts; the other is told the recovery is no longer usable.
  *
- * Returns null when the intent is gone, another request holds the claim, or Redis cannot answer: every
- * one of those means "do not act now". Never throws.
+ * Anything but `claimed` means "do not act now". Never throws.
  */
-export const claimSsoRecoveryIntent = async (stateId: string): Promise<TSsoRecoveryClaim | null> => {
+export const claimSsoRecoveryIntent = async (stateId: string): Promise<TSsoRecoveryClaim> => {
   if (!STATE_ID_REGEX.test(stateId)) {
-    return null;
+    return { kind: "spent" };
   }
 
   const stateIdHash = hashStateId(stateId);
@@ -146,7 +153,7 @@ export const claimSsoRecoveryIntent = async (stateId: string): Promise<TSsoRecov
       );
     } catch (error) {
       // It expires on its own; only a retry within that window is held up.
-      logger.error({ error, stateIdHash }, "Failed to release the SSO recovery claim");
+      logger.error({ ...loggableError(error), stateIdHash }, "Failed to release the SSO recovery claim");
     }
   };
   // The cache's deadline stops the wait, not the command: a claim that missed it can still land, and
@@ -161,16 +168,15 @@ export const claimSsoRecoveryIntent = async (stateId: string): Promise<TSsoRecov
       });
       return pendingClaim;
     });
-    if (claimed !== 1) {
-      return null;
-    }
+    if (claimed === 0) return { kind: "spent" };
+    if (claimed !== 1) return { kind: "held" };
   } catch (error) {
-    logger.error({ error, stateIdHash }, "Failed to claim the SSO recovery intent");
+    logger.error({ ...loggableError(error), stateIdHash }, "Failed to claim the SSO recovery intent");
     void pendingClaim?.then((claimed) => (claimed === 1 ? release() : undefined)).catch(() => undefined);
-    return null;
+    return { kind: "unavailable" };
   }
 
-  return { release };
+  return { kind: "claimed", release };
 };
 
 /**
@@ -283,7 +289,7 @@ export const consumeSsoRecoveryIntent = async (stateId: string): Promise<boolean
     const removed = await cache.runRedisOperation((client) => client.del(getIntentCacheKey(stateIdHash)));
     return removed > 0;
   } catch (error) {
-    logger.error({ error, stateIdHash }, "Failed to consume the SSO recovery intent");
+    logger.error({ ...loggableError(error), stateIdHash }, "Failed to consume the SSO recovery intent");
     return false;
   }
 };

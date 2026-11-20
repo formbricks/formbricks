@@ -83,10 +83,12 @@ describe("resolveSsoRecoveryConfirmView (ENG-7395)", () => {
     ).resolves.toMatchObject({
       kind: "refused",
     });
+    // Through loggableError: name and frames, never the message.
     expect(logger.error).toHaveBeenCalledWith(
-      expect.any(Error),
+      expect.objectContaining({ errName: "Error" }),
       "Unexpected error showing the SSO recovery confirmation"
     );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("redis exploded");
   });
 
   test.each([

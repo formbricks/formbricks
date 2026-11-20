@@ -13,7 +13,7 @@ import {
   SsoRecoveryError,
   getSsoRecoveryConfirmUrl,
   getSsoRecoveryFailureRedirectUrl,
-  getSsoRecoveryRefusalRedirectUrl,
+  getSsoRecoveryRefusal,
   getSsoRecoverySecondFactorRedirectUrl,
   getSsoRecoverySecondFactorUnavailableRedirectUrl,
 } from "./recovery-outcomes";
@@ -124,6 +124,9 @@ vi.mock("./account-linking", () => ({
 const completeWithValidProof = (args: Parameters<typeof completeSsoRecovery>[0]) =>
   completeSsoRecovery({ recoveryProof: createSsoRecoveryProof("user_1", args.stateId), ...args });
 
+/** The address the linking transaction finds on the user row it locks. */
+const lockedUserEmail = { value: "john.doe@example.com" };
+
 describe("sso-recovery", () => {
   let transactionCommitted = false;
   let consumedAfterCommit: boolean | null = null;
@@ -143,8 +146,10 @@ describe("sso-recovery", () => {
   // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
   // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
-    // The consent rows are locked in id order before they are deleted.
-    $queryRaw: async () => [],
+    // The consent rows are locked in id order before they are deleted; the user row is locked to re-check
+    // its address before the link.
+    $queryRaw: async (strings: TemplateStringsArray) =>
+      strings.join("").includes('FROM "User"') ? [{ email: lockedUserEmail.value }] : [],
     user: {
       update: txUserUpdate,
       updateMany: txUserUpdateMany,
@@ -212,7 +217,8 @@ describe("sso-recovery", () => {
       return true;
     });
     mocks.releaseClaim.mockResolvedValue(undefined);
-    mocks.claimSsoRecoveryIntent.mockResolvedValue({ release: mocks.releaseClaim });
+    mocks.claimSsoRecoveryIntent.mockResolvedValue({ kind: "claimed", release: mocks.releaseClaim });
+    lockedUserEmail.value = "john.doe@example.com";
     vi.mocked(buildVerificationRequestedPath).mockReturnValue(
       "/auth/verification-requested?token=email-token&purpose=sso_recovery"
     );
@@ -1045,7 +1051,7 @@ describe("sso-recovery", () => {
       });
 
       test("a link that cannot claim the recovery writes nothing", async () => {
-        mocks.claimSsoRecoveryIntent.mockResolvedValue(null);
+        mocks.claimSsoRecoveryIntent.mockResolvedValue({ kind: "held" });
 
         const outcome = completeSsoRecovery(proven());
 
@@ -1058,7 +1064,7 @@ describe("sso-recovery", () => {
       });
 
       test("a cancel that cannot claim the recovery spends nothing and records no cancellation", async () => {
-        mocks.claimSsoRecoveryIntent.mockResolvedValue(null);
+        mocks.claimSsoRecoveryIntent.mockResolvedValue({ kind: "held" });
 
         const outcome = cancelSsoRecovery(proven());
 
@@ -1101,14 +1107,19 @@ describe("sso-recovery", () => {
         expect(mocks.claimSsoRecoveryIntent).not.toHaveBeenCalled();
       });
 
-      test("a lost claim leaves a trace", async () => {
-        mocks.claimSsoRecoveryIntent.mockResolvedValue(null);
+      /** Why the claim was lost decides the audit reason: a Redis outage is not another request. */
+      test.each([
+        ["held", "claimed_by_another_request"],
+        ["spent", "intent_already_spent"],
+        ["unavailable", "claim_unavailable"],
+      ] as const)("a claim lost as %s is audited as %s", async (kind, failureReason) => {
+        mocks.claimSsoRecoveryIntent.mockResolvedValue({ kind });
 
         await expect(completeSsoRecovery(proven())).rejects.toThrow("OAuthAccountNotLinked");
         expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
           expect.objectContaining({
             action: "sso_recovery_failed",
-            newObject: expect.objectContaining({ failureReason: "claimed_by_another_request" }),
+            newObject: expect.objectContaining({ failureReason }),
           })
         );
       });
@@ -1120,6 +1131,23 @@ describe("sso-recovery", () => {
 
         expect(syncSsoIdentityForUser).toHaveBeenCalled();
         expect(mocks.releaseClaim).not.toHaveBeenCalled();
+      });
+
+      /**
+       * The address is checked before the claim; an email change that commits after that check must not
+       * get linked anyway. The transaction re-reads it holding the user row, and refuses on a mismatch.
+       */
+      test("an address that changed after the guards ran stops the link inside its transaction", async () => {
+        lockedUserEmail.value = "changed@example.com";
+
+        const outcome = completeSsoRecovery(proven());
+
+        await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe("rejected");
+        expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+        expect(txTwoFactorDeleteMany).not.toHaveBeenCalled();
+        expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+        // Rolled back, so the recovery is free again for a retry.
+        expect(mocks.releaseClaim).toHaveBeenCalledTimes(1);
       });
 
       test("a link that rolls back gives its claim back, so the recovery can be retried", async () => {
@@ -1148,11 +1176,13 @@ describe("sso-recovery", () => {
         new SsoRecoveryError("unproven", "http://localhost:3000/secret"),
         "error=sso_recovery_link_not_opened",
         false,
+        false,
       ],
       [
         "intent_unusable",
         new SsoRecoveryError("intent_unusable", "http://localhost:3000/secret"),
         "error=OAuthAccountNotLinked",
+        false,
         false,
       ],
       [
@@ -1160,14 +1190,19 @@ describe("sso-recovery", () => {
         new SsoRecoveryError("rejected", "http://localhost:3000/secret"),
         "error=OAuthAccountNotLinked",
         true,
+        true,
       ],
-      ["an unexpected error", new Error("boom"), "error=OAuthAccountNotLinked", false],
-    ])("maps %s to its login redirect", (_label, error, code, carriesCallback) => {
-      const url = getSsoRecoveryRefusalRedirectUrl(error);
+      ["an unexpected error", new Error("boom"), "error=OAuthAccountNotLinked", false, true],
+    ])(
+      "maps %s to its redirect and its session cost",
+      (_label, error, code, carriesCallback, revokesSession) => {
+        const refusal = getSsoRecoveryRefusal(error);
 
-      expect(url).toContain(code);
-      expect(url.includes("callbackUrl=")).toBe(carriesCallback);
-    });
+        expect(refusal.redirectUrl).toContain(code);
+        expect(refusal.redirectUrl.includes("callbackUrl=")).toBe(carriesCallback);
+        expect(refusal.revokesSession).toBe(revokesSession);
+      }
+    );
   });
 
   test("rejects recovery when the signed-in user does not match the intent owner", async () => {

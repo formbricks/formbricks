@@ -11,7 +11,11 @@ import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-
 import { sendVerificationEmail } from "@/modules/email";
 import { TSsoAccountLinkInput, TSsoLookupUser, syncSsoIdentityForUser } from "./account-linking";
 import { getSsoRecoveryLogger, queueSsoRecoveryAuditEvent } from "./recovery-audit";
-import { authorizeSsoRecovery, recordLostSsoRecoveryClaim } from "./recovery-authorize";
+import {
+  type TSsoRecoveryAccess,
+  authorizeSsoRecovery,
+  recordLostSsoRecoveryClaim,
+} from "./recovery-authorize";
 import { claimSsoRecoveryIntent, consumeSsoRecoveryIntent, createSsoRecoveryIntent } from "./recovery-intent";
 import {
   SsoRecoveryError,
@@ -111,11 +115,7 @@ export const completeSsoRecovery = async ({
   recoveryProof,
   sessionUserId,
   sessionToken,
-}: {
-  stateId: string;
-  /** The proof cookie set when this browser opened the emailed link (`recovery-proof.ts`). */
-  recoveryProof?: string;
-  sessionUserId?: string;
+}: TSsoRecoveryAccess & {
   /**
    * The recovering user's own session token, so the post-commit revocation can spare it. Everything else
    * the account accrued while its address was unproven is swept.
@@ -127,8 +127,8 @@ export const completeSsoRecovery = async ({
   // Only one request acts on a recovery: a Cancel holding the claim, or one that already spent the
   // intent, stops this link before it writes anything.
   const claim = await claimSsoRecoveryIntent(stateId);
-  if (!claim) {
-    recordLostSsoRecoveryClaim(intent, provider);
+  if (claim.kind !== "claimed") {
+    recordLostSsoRecoveryClaim(intent, provider, claim.kind);
     throw new SsoRecoveryError("intent_unusable");
   }
 
@@ -139,6 +139,16 @@ export const completeSsoRecovery = async ({
   try {
     reclaimed = await prisma.$transaction(
       async (tx) => {
+        // The address was checked against the intent before the claim; check it again here, holding the
+        // user row, so an email change cannot commit between that check and the link. FOR UPDATE makes a
+        // concurrent change wait for this transaction instead of slipping in after a plain read.
+        const [locked] = await tx.$queryRaw<{ email: string }[]>`
+          SELECT "email" FROM "User" WHERE "id" = ${user.id} FOR UPDATE
+        `;
+        if (locked?.email !== intent.email) {
+          throw new SsoRecoveryError("rejected", intent.callbackUrl);
+        }
+
         const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
           tx,
           user,

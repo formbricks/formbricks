@@ -13,16 +13,15 @@ import {
 import { SsoRecoveryError } from "./recovery-outcomes";
 import { isValidSsoRecoveryProof } from "./recovery-proof";
 
-export const authorizeSsoRecovery = async ({
-  stateId,
-  recoveryProof,
-  sessionUserId,
-}: {
+/** What a browser brings to act on a recovery: which one, and the proof and session it holds. */
+export type TSsoRecoveryAccess = {
   stateId: string;
   /** The proof cookie set when this browser opened the emailed link (`recovery-proof.ts`). */
   recoveryProof?: string;
   sessionUserId?: string;
-}) => {
+};
+
+export const authorizeSsoRecovery = async ({ stateId, recoveryProof, sessionUserId }: TSsoRecoveryAccess) => {
   // Reads without consuming. The completion URL sits in an email, and mail security gateways fetch
   // every link in a message before the human sees it — burning the intent on read would let a scanner
   // spend it and lock the real user out. It is consumed after the link commits instead.
@@ -167,11 +166,9 @@ export const authorizeSsoRecovery = async ({
  * that would be linked. Runs every completion guard and writes nothing, so a page view cannot link,
  * strip or consume anything, and a browser the POST would refuse is refused here first.
  */
-export const getSsoRecoveryConfirmation = async (args: {
-  stateId: string;
-  recoveryProof?: string;
-  sessionUserId?: string;
-}): Promise<{ provider: TSsoIdentityProvider; email: string }> => {
+export const getSsoRecoveryConfirmation = async (
+  args: TSsoRecoveryAccess
+): Promise<{ provider: TSsoIdentityProvider; email: string }> => {
   const { provider, user } = await authorizeSsoRecovery(args);
   // The account's own address, so the reader can tell whose account they are about to change. A browser
   // signed in to someone else's account (planted by that someone's own recovery link) shows their
@@ -179,11 +176,21 @@ export const getSsoRecoveryConfirmation = async (args: {
   return { provider, email: user.email };
 };
 
-/** Leaves a trace of a Link or Cancel that lost the recovery to a concurrent one (ENG-7395). */
-export const recordLostSsoRecoveryClaim = (intent: TSsoRecoveryIntent, provider: TSsoIdentityProvider) => {
+const LOST_CLAIM_REASONS = {
+  held: "claimed_by_another_request",
+  spent: "intent_already_spent",
+  unavailable: "claim_unavailable",
+} as const;
+
+/** Leaves a trace of a Link or Cancel that could not claim the recovery, and why (ENG-7395). */
+export const recordLostSsoRecoveryClaim = (
+  intent: TSsoRecoveryIntent,
+  provider: TSsoIdentityProvider,
+  outcome: keyof typeof LOST_CLAIM_REASONS
+) => {
   getSsoRecoveryLogger("sso_recovery_failed").info(
-    { userId: intent.userId, provider },
-    "SSO recovery is being acted on by another request"
+    { userId: intent.userId, provider, outcome },
+    "SSO recovery could not be claimed"
   );
   queueSsoRecoveryAuditEvent({
     action: "sso_recovery_failed",
@@ -192,7 +199,7 @@ export const recordLostSsoRecoveryClaim = (intent: TSsoRecoveryIntent, provider:
     email: intent.email,
     provider,
     callbackUrl: intent.callbackUrl,
-    failureReason: "claimed_by_another_request",
+    failureReason: LOST_CLAIM_REASONS[outcome],
   });
 };
 
@@ -201,18 +208,14 @@ export const recordLostSsoRecoveryClaim = (intent: TSsoRecoveryIntent, provider:
  * longer complete anything, from this browser or any other, and records why. Runs the same guards as a
  * completion, so only the browser that could have linked can cancel.
  */
-export const cancelSsoRecovery = async (args: {
-  stateId: string;
-  recoveryProof?: string;
-  sessionUserId?: string;
-}): Promise<void> => {
+export const cancelSsoRecovery = async (args: TSsoRecoveryAccess): Promise<void> => {
   const { intent, provider } = await authorizeSsoRecovery(args);
 
   // A Link in flight holds the claim, and a spent intent cannot be claimed: either way this cancel did
   // not happen, so no cancellation is recorded.
   const claim = await claimSsoRecoveryIntent(args.stateId);
-  if (!claim) {
-    recordLostSsoRecoveryClaim(intent, provider);
+  if (claim.kind !== "claimed") {
+    recordLostSsoRecoveryClaim(intent, provider, claim.kind);
     throw new SsoRecoveryError("intent_unusable");
   }
 
