@@ -89,6 +89,7 @@ export const sendVerificationEmail = async ({
   callbackUrl,
   purpose = "email_verification",
   linkTtlSeconds = VERIFICATION_LINK_TTL_SECONDS,
+  ssoRecoveryStateId,
 }: {
   id: string;
   email: TUserEmail;
@@ -100,12 +101,15 @@ export const sendVerificationEmail = async ({
    * it points at — see `getSsoRecoveryPairedTtlSeconds`. Everything else gets the full window.
    */
   linkTtlSeconds?: number;
+  /** The SSO recovery the link is for, signed into its token so it cannot be pointed at another (ENG-7310). */
+  ssoRecoveryStateId?: string;
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
       expiresIn: linkTtlSeconds,
       purpose,
+      ...(ssoRecoveryStateId ? { ssoRecoveryStateId } : {}),
     });
     const { verifyLink, verificationRequestLink } = buildVerificationLinks({
       token,

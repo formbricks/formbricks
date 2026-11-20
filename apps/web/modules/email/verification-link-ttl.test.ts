@@ -72,6 +72,23 @@ describe("the emailed verification link's lifetime", () => {
     expect(createToken).toHaveBeenCalledWith("user_1", { expiresIn: 90, purpose: "sso_recovery" });
   });
 
+  test("binds a recovery link to the recovery it was sent for (ENG-7310)", async () => {
+    await sendVerificationEmail({
+      id: "user_1",
+      email: "someone@example.com",
+      locale: "en-US",
+      callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=state-abc",
+      purpose: "sso_recovery",
+      ssoRecoveryStateId: "state-abc",
+    });
+
+    expect(createToken).toHaveBeenCalledWith("user_1", {
+      expiresIn: VERIFICATION_LINK_TTL_SECONDS,
+      purpose: "sso_recovery",
+      ssoRecoveryStateId: "state-abc",
+    });
+  });
+
   /**
    * Fifteen minutes, and pinned because it is a security window rather than a tuning knob: completing
    * recovery clears the password and deletes the second factor, and the link stays replayable for its
