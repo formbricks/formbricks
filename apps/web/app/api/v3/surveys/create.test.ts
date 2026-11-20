@@ -445,6 +445,15 @@ describe("createV3Survey", () => {
         }),
       ],
       [
+        "an href the renderer joins by removing a style attribute",
+        withElement({
+          headline: {
+            "en-US": '<p><a hr style="x"ef="https://example.com">x</a></p>',
+            "de-DE": "Bedingungen",
+          },
+        }),
+      ],
+      [
         "a date element's html",
         withElement({ type: "date", format: "M-d-y", html: { "en-US": LINK, "de-DE": LINK } }),
       ],

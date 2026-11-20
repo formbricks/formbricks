@@ -1,4 +1,5 @@
 import DOMPurify from "isomorphic-dompurify";
+import { removeStyleAttributes, sanitizeSurveyHtml, stripInlineStyles } from "@formbricks/survey-ui/sanitize";
 import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyEnding, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
@@ -28,10 +29,13 @@ const getLinkTarget = (element: Element, attribute: Attr): string | undefined =>
 
 const collectLinks = (field: TI18nString | undefined, links: Set<string>): void => {
   for (const html of Object.values(field ?? {})) {
-    if (typeof html !== "string" || !MAY_HOLD_LINK.test(html)) continue;
-    // Parsed rather than matched: the survey renders this text through DOMPurify, and an HTML parser
-    // reads `<a/href=…>` or a `>` inside a quoted attribute as a link where a regex would not.
-    const fragment = DOMPurify.sanitize(html, { RETURN_DOM_FRAGMENT: true });
+    // The renderer removes style attributes from the raw string before it parses, which can join the
+    // text around one into `href` (`<a hr style="x"ef=…>`), so the cheap check reads the stripped string.
+    if (typeof html !== "string" || !MAY_HOLD_LINK.test(removeStyleAttributes(html))) continue;
+    // Check what respondents get, not what is stored: the same pipeline as the survey's headline and
+    // subheader components. Then parse it, since `<a/href=…>` or a quoted `>` defeats a regex.
+    const rendered = sanitizeSurveyHtml(stripInlineStyles(html));
+    const fragment = DOMPurify.sanitize(rendered, { RETURN_DOM_FRAGMENT: true });
     for (const element of fragment.querySelectorAll("*")) {
       for (const attribute of element.attributes) {
         const target = getLinkTarget(element, attribute);

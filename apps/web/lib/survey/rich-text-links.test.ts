@@ -31,6 +31,23 @@ describe("getRichTextLinks", () => {
       '<map name="m"><area href="https://example.com/a" shape="rect" coords="0,0,9,9"></map>',
     ],
     ["a form action", '<form action="https://example.com/a"><button>go</button></form>'],
+    // The renderer strips style attributes from the raw string before it parses, which can join the
+    // text around one into a link attribute.
+    ["an href joined by removing a style", '<p><a hr style="x"ef="https://example.com/a">go</a></p>'],
+    ["an href joined across single quotes", "<p><a hr style='x'ef='https://example.com/a'>go</a></p>"],
+    ["an href joined before an unquoted value", '<p><a h style="x"ref=https://example.com/a>go</a></p>'],
+    [
+      "an SVG xlink:href joined by removing a style",
+      '<svg><a xlink:hr style="x"ef="https://example.com/a"><text y="9">x</text></a></svg>',
+    ],
+    [
+      "a MathML href joined by removing a style",
+      '<math hr style="x"ef="https://example.com/a"><mi>x</mi></math>',
+    ],
+    [
+      "a form action joined by removing a style",
+      '<form acti style="x"on="https://example.com/a"><button>go</button></form>',
+    ],
   ])("finds %s", (_case, html) => {
     expect(getRichTextLinks(withHeadline(html))).toEqual(new Set(["https://example.com/a"]));
   });
@@ -42,6 +59,7 @@ describe("getRichTextLinks", () => {
     ["an escaped link the editor shows as text", '<p>&lt;a href="https://example.com/a"&gt;</p>'],
     ["a script URL the renderer strips", '<p><a href="javascript:alert(1)">x</a></p>'],
     ["the word href in text", "<p>Type href to see it</p>"],
+    ["split attributes the renderer leaves apart", '<p><a hr style=x ef="https://example.com/a">go</a></p>'],
     ["a formaction the renderer strips", '<button formaction="https://example.com/a">go</button>'],
     ["an SVG <use> the renderer strips", '<svg><use href="https://example.com/a.svg#x"></use></svg>'],
   ])("finds no link in %s", (_case, html) => {
