@@ -60,8 +60,8 @@ section before changing database access, its "Testing Guidelines" before adding 
 Open, update or ready a PR with the `pr` skill; for a change to how a UI surface looks, load it before
 the first edit, while the before screenshot is still free.
 
-Read `docs/agents/pull-requests.md` before committing or reviewing a PR: commit format, review intake,
-Sonar, and CI failure triage.
+Read `docs/agents/pull-requests.md` before committing or reviewing a PR, and when a check fails or a test
+is flaky: commit format, review intake, Sonar, CI failure triage and flaky tests.
 
 ## Performance Testing & SigNoz MCP
 

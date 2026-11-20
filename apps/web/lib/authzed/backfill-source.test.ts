@@ -105,11 +105,13 @@ describe("readOrganizationSource", () => {
     expect(prisma.membership.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         select: { role: true, userId: true },
-        where: { organizationId: ORGANIZATION_ID },
+        where: { organizationId: ORGANIZATION_ID, user: { isActive: true } },
       })
     );
     expect(prisma.teamUser.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { team: { organizationId: ORGANIZATION_ID } } })
+      expect.objectContaining({
+        where: { team: { organizationId: ORGANIZATION_ID }, user: { isActive: true } },
+      })
     );
     expect(prisma.apiKeyWorkspace.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { apiKey: { organizationId: ORGANIZATION_ID } } })

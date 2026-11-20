@@ -12,8 +12,8 @@ import {
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   convertOperatorToText,
-  updateOperatorInFilter,
   updateSurveyInteractionValueInFilter,
+  withFilterOperator,
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
@@ -65,11 +65,7 @@ export function SurveyInteractionFilter({
   };
 
   const updateOperatorInSegment = (newOperator: TSurveyInteractionOperator) => {
-    const updatedSegment = structuredClone(segment);
-    if (updatedSegment.filters) {
-      updateOperatorInFilter(updatedSegment.filters, resource.id, newOperator);
-    }
-    setSegment(updatedSegment);
+    setSegment(withFilterOperator(segment, resource.id, newOperator));
   };
 
   const operatorArr = SURVEY_INTERACTION_OPERATORS.map((operator) => ({

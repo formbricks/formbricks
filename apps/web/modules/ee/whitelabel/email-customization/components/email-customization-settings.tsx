@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import React, { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getDroppedFiles, setDropEffect } from "@formbricks/survey-ui/drag-data";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
@@ -84,7 +85,7 @@ export const EmailCustomizationSettings = ({
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = "copy";
+    setDropEffect(e, "copy");
   };
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -96,7 +97,7 @@ export const EmailCustomizationSettings = ({
       return;
     }
 
-    const files = Array.from(e.dataTransfer.files);
+    const files = getDroppedFiles(e);
     const file = files[0];
     if (!file) return;
 
