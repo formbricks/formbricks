@@ -878,13 +878,18 @@ const getCalculationOperand = (
   return undefined;
 };
 
-/** A field's value as a one-step operator starts from: `0` / `""` when unset, a boolean as its text. */
+/**
+ * A field's value as a one-step operator starts from: `0` / `""` when unset. A stored true/false is
+ * not a number, so a number field starts from 0 rather than `Number("true")` (NaN); a text field
+ * reads it as its text. Same rule as the survey bundle's `withDefaultValue`
+ * (packages/surveys/src/lib/logic.ts).
+ */
 const getOneStepCurrentValue = (
   storedValue: TResponseVariables[string] | undefined,
   dataType: string
 ): string | number => {
-  if (storedValue === undefined) return dataType === "number" ? 0 : "";
-  return typeof storedValue === "boolean" ? String(storedValue) : storedValue;
+  if (typeof storedValue === "boolean") return dataType === "number" ? 0 : String(storedValue);
+  return storedValue ?? (dataType === "number" ? 0 : "");
 };
 
 /** Applies a one-step operator; `undefined` for a division by zero. */

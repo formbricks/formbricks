@@ -2033,6 +2033,37 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
       expect(evaluateLogic(survey, {}, { [STORAGE_KEY]: false }, equals("false"), "default")).toBe(true);
       expect(evaluateLogic(survey, {}, { [STORAGE_KEY]: false }, equals("true"), "default")).toBe(false);
     });
+
+    // A field retyped from true/false to number keeps its stored boolean, as in the survey bundle.
+    test("a stored true/false on a number field counts as 0, not NaN", () => {
+      const add: TSurveyBlockLogicAction = {
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator: "add",
+        value: { type: "static", value: 3 },
+      };
+      for (const stored of [true, false]) {
+        expect(
+          performActions(buildSurvey([], computedRow("number", 0)), [add], {}, { [STORAGE_KEY]: stored })
+            .calculations
+        ).toEqual({ [STORAGE_KEY]: 3 });
+      }
+    });
+
+    test("a stored true/false on a text field reads as its text", () => {
+      const concat: TSurveyBlockLogicAction = {
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator: "concat",
+        value: { type: "static", value: "!" },
+      };
+      expect(
+        performActions(buildSurvey([], computedRow("string", "")), [concat], {}, { [STORAGE_KEY]: true })
+          .calculations
+      ).toEqual({ [STORAGE_KEY]: "true!" });
+    });
   });
 });
 
