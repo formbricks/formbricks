@@ -10,6 +10,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_ORGANIZATION_ID, DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
+import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
@@ -46,6 +47,12 @@ export type TSsoProvisioningDecision =
        * creates carries the single-use bootstrap marker. Absent on every other provision path.
        */
       isBootstrapAdmin?: boolean;
+      /**
+       * ENG-7097: the role of the invite whose token the callback URL carried, when that token is valid,
+       * matches the sign-up's email and belongs to `organizationId`. Absent otherwise: a role is never
+       * granted on an email match alone, since that email may be one the IdP does not vouch for.
+       */
+      inviteRole?: TOrganizationRole;
     };
 
 /**
@@ -82,6 +89,48 @@ const validateSsoInviteToken = async (
     default:
       return "invite_token_validation_error"; // "missing" | "verification_error"
   }
+};
+
+/**
+ * ENG-7097: the role of the invite named by the token on the callback URL, or undefined.
+ *
+ * The invite page keeps an existing member's role, so a membership provisioned here has to carry the
+ * invite's role already. Only a token proves the sign-up came from that invite's link, which was
+ * mailed to the invited address; an email match alone does not, because on the
+ * `DEFAULT_ORGANIZATION_ID` and `SKIP_INVITE_FOR_SSO` paths the IdP's email may be unverified.
+ *
+ * Never rejects: any failure keeps the default role, and the invite page still adds the invite's teams.
+ */
+const getSsoInviteRole = async (
+  email: string,
+  callbackUrl: string,
+  organizationId: string
+): Promise<TOrganizationRole | undefined> => {
+  try {
+    const inviteToken = new URL(callbackUrl, WEBAPP_URL).searchParams.get("token");
+    if (!inviteToken) return undefined;
+    const { inviteId, email: invitedEmail } = verifyInviteToken(inviteToken);
+    if (invitedEmail.trim().toLowerCase() !== email.trim().toLowerCase()) return undefined;
+    const invite = await prisma.invite.findUnique({
+      where: { id: inviteId },
+      select: { role: true, organizationId: true, expiresAt: true },
+    });
+    if (invite?.organizationId !== organizationId || invite.expiresAt < new Date()) return undefined;
+    return invite.role;
+  } catch (error) {
+    logger.warn(error, "SSO provisioning: could not read the role of the sign-up's invite");
+    return undefined;
+  }
+};
+
+/** Spread into a provision decision so the field is absent, not `undefined`, without an invite role. */
+const withInviteRole = async (
+  email: string,
+  callbackUrl: string,
+  organizationId: string
+): Promise<{ inviteRole?: TOrganizationRole }> => {
+  const inviteRole = await getSsoInviteRole(email, callbackUrl, organizationId);
+  return inviteRole ? { inviteRole } : {};
 };
 
 /**
@@ -152,6 +201,8 @@ export const gateSsoProvisioning = async ({
       assignToDefaultTeam: false,
       signupSource,
       useDefaultOrganization: true,
+      // No invite is required here, but one the sign-up did arrive with still sets the role.
+      ...(await withInviteRole(email, callbackUrl, DEFAULT_ORGANIZATION_ID)),
     };
   }
 
@@ -198,6 +249,7 @@ export const gateSsoProvisioning = async ({
     organizationId: organization.id,
     assignToDefaultTeam: Boolean(SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID),
     signupSource,
+    ...(await withInviteRole(email, callbackUrl, organization.id)),
   };
 };
 
@@ -273,33 +325,33 @@ const assignSsoUserToOrganization = async ({
   }
 };
 
+// Restricted roles rank below `member`: they see less of the organization, not more.
+const ORGANIZATION_ROLE_RANK: Record<TOrganizationRole, number> = {
+  owner: 4,
+  manager: 3,
+  member: 2,
+  billing: 1,
+  dashboard_viewer: 0,
+};
+
 /**
- * The role of the newest unexpired invite for `email` in the organization, or null when there is none.
+ * ENG-7097: the role a new SSO member gets, given the gate's token-validated invite role.
  *
- * An SSO sign-up from an invite link lands on the invite page right after provisioning. That page
- * keeps an existing member's role (ENG-7097), so the membership created here has to carry the
- * invite's role already; the page then adds the invite's teams and deletes the invite.
+ * On the legacy path the assignment's `member` is a placeholder, so the invite's role replaces it, a
+ * restricted one included. On the `DEFAULT_ORGANIZATION_ID` path the assignment's role is the
+ * operator's configured one (or `owner` for the sign-up that created the org), and an invite may only
+ * raise it: a lower invite must not demote below what the operator configured.
  */
-const getPendingInviteRole = async (
-  email: string,
-  organizationId: string
-): Promise<TOrganizationRole | null> => {
-  try {
-    const invite = await prisma.invite.findFirst({
-      where: {
-        email: { equals: email, mode: "insensitive" },
-        organizationId,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: "desc" },
-      select: { role: true },
-    });
-    return invite?.role ?? null;
-  } catch (error) {
-    // Like the membership writes, a lookup failure must not break an otherwise successful sign-in.
-    logger.error(error, "SSO provisioning: failed to look up a pending invite");
-    return null;
-  }
+const resolveSsoMembershipRole = (
+  assignmentRole: TOrganizationRole,
+  inviteRole: TOrganizationRole | undefined,
+  useDefaultOrganization: boolean
+): TOrganizationRole => {
+  if (!inviteRole) return assignmentRole;
+  if (!useDefaultOrganization) return inviteRole;
+  return ORGANIZATION_ROLE_RANK[inviteRole] > ORGANIZATION_ROLE_RANK[assignmentRole]
+    ? inviteRole
+    : assignmentRole;
 };
 
 /**
@@ -318,6 +370,7 @@ export const provisionSsoUserMemberships = async ({
   assignToDefaultTeam,
   signupSource,
   useDefaultOrganization = false,
+  inviteRole,
   attributionProperties = {},
 }: {
   userId: string;
@@ -329,6 +382,8 @@ export const provisionSsoUserMemberships = async ({
   signupSource: "invite" | "direct";
   /** See `TSsoProvisioningDecision`: find-or-create `organizationId` and derive the role from that. */
   useDefaultOrganization?: boolean;
+  /** See `TSsoProvisioningDecision`: set only when the gate validated the sign-up's invite token. */
+  inviteRole?: TOrganizationRole;
   /** Marketing attribution read from the request cookie in `user.create.before`. */
   attributionProperties?: Record<string, string>;
 }): Promise<void> => {
@@ -346,7 +401,7 @@ export const provisionSsoUserMemberships = async ({
     await assignSsoUserToOrganization({
       userId,
       organizationId: assignment.organizationId,
-      role: (await getPendingInviteRole(email, assignment.organizationId)) ?? assignment.role,
+      role: resolveSsoMembershipRole(assignment.role, inviteRole, useDefaultOrganization),
       assignToDefaultTeam,
     });
   }
