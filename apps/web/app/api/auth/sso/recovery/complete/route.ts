@@ -3,6 +3,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { env } from "@/lib/env";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import { getSession } from "@/modules/auth/lib/session";
 import {
@@ -50,7 +51,10 @@ const buildFailedRecoveryResponse = async (request: Request, redirectUrl: string
     // DB-only delete would leave this one resolvable by `getSession` until its TTL (ENG-2557).
     await revokeSessionByToken(sessionToken);
   } catch (error) {
-    logger.error(error, "Failed to delete SSO recovery session after recovery completion error");
+    logger.error(
+      { ...loggableError(error) },
+      "Failed to delete SSO recovery session after recovery completion error"
+    );
   }
 
   return response;
@@ -159,7 +163,7 @@ const clearProofCookie = (response: NextResponse) => {
 /** The response to a refused link or cancel; `getSsoRecoveryRefusal` decides where and at what cost. */
 const buildRefusalResponse = async (request: Request, error: unknown) => {
   if (!(error instanceof SsoRecoveryError)) {
-    logger.error(error, "Unexpected error completing SSO recovery");
+    logger.error({ ...loggableError(error) }, "Unexpected error completing SSO recovery");
   }
 
   const refusal = getSsoRecoveryRefusal(error);

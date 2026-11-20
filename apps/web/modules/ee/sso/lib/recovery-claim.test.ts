@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { claimSsoRecovery, markSsoRecoverySpent } from "./recovery-claim";
 
@@ -92,8 +93,10 @@ describe("SSO recovery claim (ENG-7395)", () => {
     await expect(claimSsoRecovery("recovery-1")).resolves.toEqual({ kind: "unavailable" });
     await expect(markSsoRecoverySpent("recovery-1")).resolves.toBe(false);
 
-    mockCache.getRedisClient.mockRejectedValue(new Error("down"));
+    mockCache.getRedisClient.mockRejectedValue(new Error("down at redis://user:secret@host"));
     await expect(claimSsoRecovery("recovery-1")).resolves.toEqual({ kind: "unavailable" });
     await expect(markSsoRecoverySpent("recovery-1")).resolves.toBe(false);
+    // Through loggableError: the name, never the message, which can carry a connection string.
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret");
   });
 });
