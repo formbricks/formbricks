@@ -694,6 +694,26 @@ describe("surveyLogic", () => {
     });
   });
 
+  // `Number("")` is 0, so a blank would read as a real 0 and an `isSkipped` condition would miss it.
+  test("performActions keeps a blank answer blank when assigning to a number variable (ENG-7378)", () => {
+    const survey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      embeddedFields: embeddedFieldsFromLegacyInput({
+        variables: [{ id: "score", name: "score", type: "number", value: 5 }],
+      }),
+    };
+    const actions: TSurveyBlockLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "score",
+        operator: "assign",
+        value: { type: "hiddenField", value: "plan" },
+      },
+    ];
+    expect(performActions(survey, actions, { plan: "" }, {}).calculations).toEqual({ score: "" });
+  });
+
   test("getUpdatedActionBody returns same action if objective matches", () => {
     const base: TSurveyLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     expect(getUpdatedActionBody(base, "requireAnswer")).toBe(base);

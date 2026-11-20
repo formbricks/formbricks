@@ -2124,15 +2124,16 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
         ).toEqual({ [STORAGE_KEY]: "gold" });
       });
 
-      test("assign stores a blank hidden field as 0, as the server evaluator does", () => {
+      // `Number("")` is 0, so a blank would read as a real 0 and an `isSkipped` condition would miss it.
+      test.each(["", "   "])("assign keeps a blank hidden field (%j) blank", (blank) => {
         expect(
           calculate(
             buildSurvey([], computedRow("number", 5)),
             fromOperand("assign", { type: "hiddenField", value: "plan" }),
-            { plan: "" },
+            { plan: blank },
             {}
           )
-        ).toEqual({ [STORAGE_KEY]: 0 });
+        ).toEqual({ [STORAGE_KEY]: blank });
       });
 
       test("a text field keeps a numeric text as text", () => {
