@@ -51,9 +51,10 @@ Notes:
   eslint-plugin-react's rule without its autofix, which wrote `readonly` members instead of the
   `Readonly<Props>` wrapper.
   Three more run in every tier (ENG-7450). `formbricks/no-loose-schema-prisma-write` (ENG-7127) and
-  `formbricks/no-request-regexp` (ENG-7109) follow a value inside one file only, so they stay precise
-  but miss a source and a sink in different files; `no-request-regexp` also takes only request input as
-  a source, not a pattern loaded from storage. A safe line disables them with its reason.
+  `formbricks/no-request-regexp` (ENG-7109) follow a value inside one file only (one function and its
+  closures, for `no-request-regexp`), so they stay precise but miss a source and a sink in different
+  places; `no-request-regexp` also takes only request input as a source, not a pattern loaded from
+  storage. A safe line disables them with its reason.
   `formbricks/no-tsx-unit-test` fails a `*.test.tsx`/`*.spec.tsx` file (CODING_STANDARDS.md, Testing
   Guidelines), except those in `TSX_UNIT_TEST_ALLOWLIST` (`base.mjs`), which only shrinks.
   JS plugins are slower than native rules. eslint-plugin-react, the slowest, was dropped (ENG-7401): its

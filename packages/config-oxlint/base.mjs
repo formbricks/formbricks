@@ -143,8 +143,8 @@ export const base = compose(
       // oxlint ignores ESLint's inline config comments; configuration belongs in oxlint.config.ts.
       "formbricks/no-inline-lint-config": "error",
       // The November 2026 vulnerability classes, as far as one file shows them (ENG-7450): a loose zod
-      // schema's output in a Prisma write (ENG-7127), a regex compiled from request input (ENG-7109;
-      // a stored pattern is not a source, so that half stays a review check).
+      // schema's output in a Prisma write (ENG-7127), a regex compiled from request input (ENG-7109);
+      // a pattern loaded from storage is not a source and stays a review check.
       // A safe line disables the rule with its reason:
       //   // oxlint-disable-next-line formbricks/no-request-regexp -- <reason>
       "formbricks/no-loose-schema-prisma-write": "error",
