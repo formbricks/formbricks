@@ -108,6 +108,16 @@ describe("PostgreSQL connection TLS configuration", () => {
     expect(new Client(config).ssl).toEqual(expected);
   });
 
+  test.each([
+    ["accept_invalid_certs&sslaccept=strict", { rejectUnauthorized: true }],
+    ["strict&sslaccept=accept_invalid_certs", { rejectUnauthorized: false }],
+  ])("reads the last of repeated sslaccept=%s, as Prisma does", (query, ssl) => {
+    expect(getPgConnectionConfig(`${databaseUrl}?sslaccept=${query}`)).toEqual({
+      connectionString: databaseUrl,
+      ssl,
+    });
+  });
+
   test("preserves the fragment when sslaccept is the only query parameter", () => {
     const config = getPgConnectionConfig(`${databaseUrl}?sslaccept=strict#keep`);
 
