@@ -20,6 +20,12 @@ hardening first for literal `ubuntu-*` runner labels, including version and arch
 still judge whether requested token permissions are minimal and whether runner choices outside this
 check need hardening.
 
+`formbricks/no-tsx-unit-test` enforces the `.tsx` unit-test ban (its allowlist only shrinks).
+`formbricks/no-loose-schema-prisma-write` and `formbricks/no-request-regexp` report a loose schema's output
+reaching a Prisma write, and request input reaching `new RegExp`, only when source and sink share a file.
+Green lint does not clear either class: a flow across files, or a pattern loaded from a stored survey or
+filter, is still a review check under "Security".
+
 ## Conventions Awaiting Automated Enforcement
 
 These remain review checks until their enforcement handles the repository's existing patterns:
@@ -146,7 +152,7 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   recovery) go through the app's 2FA check. SSO relies on the IdP's MFA; a new SSO sign-in path verifies it
   from `acr` / `amr` where the IdP sends them (the existing providers do not check them yet). An emailed link
   counts as one factor at most, so recovery sends an account that keeps its 2FA through the 2FA check; the
-  one exception is an unverified account, whose local factors completing recovery removes (ENG-2557).
+  one exception is an unverified account: completing recovery removes its local factors (ENG-2557).
   Class: 2FA bypass through an alternate sign-in path (ENG-7266).
 - **A user-supplied regex on a shared process runs in a linear-time engine or not at all.** On the server,
   in workers and in jobs, a pattern from a survey, a filter or any request runs in RE2 with a program-size
@@ -163,7 +169,7 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   amplification from anonymous or low-privilege requests (ENG-6885, ENG-7396, ENG-7399).
 - **A security setting passed to a dependency is tested against the real dependency.** For a TLS mode, a
   cookie flag, a CSP or an auth option, a regression test against the real dependency (a
-  `*.integration.test.ts`, or an `e2e` spec for response headers) asserts the effect: the flags in the
+  `*.integration.test.ts`, or a step in `security.spec.ts` for response headers) asserts the effect: the flags in the
   `Set-Cookie` header, a refused plaintext connection. Where that cannot be automated, a one-time check is a
   `manual` row in the PR's Coverage table. An invalid or unrecognised value fails closed (at startup, where
   it is read from config) rather than falling back to a weaker default. Libraries silently ignore values

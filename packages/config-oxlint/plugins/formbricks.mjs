@@ -780,7 +780,8 @@ const noLooseSchemaPrismaWrite = {
  * function and its closures: the request sources are the `parsedInput` of a server action or v3
  * handler, `req.json()`/`.formData()`/`.text()` on a parameter named `req` or `request`, and
  * `.searchParams.get()`. A `new RegExp(x)` whose result is discarded only checks the syntax, which
- * runs nothing, and is not reported.
+ * runs nothing, and is not reported. Patterns loaded from storage (a survey's validation rules, the
+ * shipped ENG-7109 case) are not sources here: they stay a review check (CODING_STANDARDS.md, Security).
  */
 const STRING_METHODS = new Set([
   "at",
