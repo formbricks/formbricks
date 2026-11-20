@@ -11,7 +11,7 @@ import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
  */
 export const BASE_URL = "http://localhost:3000";
 export const ORIGIN = BASE_URL;
-const REDIRECT_URI = "http://127.0.0.1:33418/callback";
+export const REDIRECT_URI = "http://127.0.0.1:33418/callback";
 
 const base64Url = (buffer: Buffer): string => buffer.toString("base64url");
 
