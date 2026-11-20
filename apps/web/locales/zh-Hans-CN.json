@@ -76,6 +76,8 @@
       "oauth_generic_error_title": "登录失败",
       "oauth_misconfigured_description": "你的身份提供商已为你登录,但此 Formbricks 实例缺少部分单点登录配置。重试无济于事——请联系管理员。",
       "oauth_misconfigured_title": "单点登录配置不完整",
+      "oauth_recovery_link_not_opened_description": "只有在你亲自将单点登录关联到 Formbricks 账户时，才需要打开我们发给你的邮件中的链接。如果不是你本人操作，请忽略该邮件：打开链接可能会让他人获得你账户的访问权限。如果是你本人操作，请在此浏览器中打开链接以完成关联。",
+      "oauth_recovery_link_not_opened_title": "无法在此浏览器中完成此次登录",
       "oauth_second_factor_unavailable_description": "你的邮箱地址已通过验证，但此账户启用了双重身份验证，而当前的 Formbricks 实例已关闭邮箱和密码登录，因此无法在此处输入第二重验证。请使用已关联到此账户的单点登录服务商完成登录，或联系管理员。",
       "oauth_second_factor_unavailable_title": "无法在此完成双重验证登录",
       "oauth_signup_not_allowed_description": "你的身份提供商已为你登录,但此 Formbricks 实例未设置为通过此方式创建新账户。请让管理员邀请你,然后重试。",
@@ -146,6 +148,13 @@
     "signup_without_verification_success": {
       "user_successfully_created": "用户已成功创建",
       "user_successfully_created_info": "我们已检查与 {email} 相关联的账户。如果没有，我们已为您创建一个。如果已有账户，则未作任何更改。请在下面登录以继续。"
+    },
+    "sso_recovery_confirm": {
+      "cancel": "取消",
+      "confirm": "关联 {provider}",
+      "description": "完成后，您就可以使用{provider}登录 Formbricks 账户 {email}了。",
+      "title": "要将 {provider} 关联到你的账户吗?",
+      "warning": "只有在你本人想要使用 {provider} 登录 Formbricks 时才可继续。如果不是,请取消:可能有其他人正试图进入你的账户。"
     },
     "verification-requested": {
       "email_not_configured_description": "此 Formbricks 实例未配置邮件服务器，因此无法发送验证链接。请联系您的管理员。",
