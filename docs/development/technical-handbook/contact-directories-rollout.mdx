@@ -1,0 +1,214 @@
+---
+title: "Contact Directories Rollout"
+description: "Timing check, Cloud deploy order, QA list and the follow-up cleanup for shipping contact directories"
+icon: "rocket"
+---
+
+## Context
+
+Contact directories move contacts, attribute keys and segments from the workspace to an organization-level directory. The migration touches every contact, so it needs a timing check on a Cloud-size database before it ships. This page is the release checklist. What users see is in [Contact directories](/platform/features/contact-directories); what self-hosters need to know is in the [upgrade note](/self-hosting/upgrade/versions/contact-directories).
+
+## What Ships Where
+
+All of it ships in one release, run in this order by the migration runner:
+
+| Step | File | What it does |
+| --- | --- | --- |
+| Schema | `packages/database/migration/20261123120000_add_contact_directories/migration.sql` | Adds `ContactDirectory`, the nullable `directoryId` columns, the rollout trigger `contact_directory_from_workspace` and the two workspace-delete triggers. One transaction, `lock_timeout` 5 s. |
+| Directories | `20261123120001_create_contact_directories/migration.ts` | One directory per workspace, in chunks of 5,000 workspaces (`CHUNK_SIZE`). Moves attribute keys and segments. Runs in the runner's transaction. |
+| Contact backfill | `20261123120002_backfill_contact_directories/migration.ts` | Sets `Contact.directoryId` in batches of `BATCH_SIZE` contacts by id, each batch committing on its own (`transactional: false`). Two passes: every workspace except the three largest, then everything left. Ends with a counts-only report. |
+| Foreign keys | `20261123120003_validate_contact_directory_foreign_keys/migration.sql` | Validates the foreign keys added `NOT VALID`. Scans each table under a lock that lets reads and writes through. |
+| Indexes | `packages/database/src/scripts/online-indexes.ts` | Builds `Contact_directoryId_idx`, `ContactAttributeKey_directoryId_key_key`, `Segment_directoryId_title_key` and `Workspace_contactDirectoryId_idx` with `CREATE INDEX CONCURRENTLY` after every migration. |
+
+The v2 bulk contact route upserts keys with `ON CONFLICT ("directoryId", "key")`, so it fails until `ContactAttributeKey_directoryId_key_key` exists and is valid.
+
+## Cloud Deploy Order
+
+The app reads contacts only by `directoryId` and has no fallback for a contact without one. So a new pod must not take traffic before the backfill has finished. Docker is safe (`next-start.sh` exits on a failed or timed-out migration), and so is Helm under Argo CD, where the migration Job is a sync hook in wave -1. A plain `helm upgrade` has no such order.
+
+**Open question for the Cloud deploy owner:** does Cloud deploy the chart through Argo CD, so the migration Job finishes before the new web pods roll?
+
+- **Yes:** nothing to build.
+- **No:** add a readiness gate. In `apps/web/app/health/ready/route.ts`, report not ready until the `DataMigration` row named `20261123120002_backfill_contact_directories` has status `applied`, and throw a named reason such as `contact_directory_backfill_pending`. The route already checks `User_isBootstrapAdmin_key` the same way; consider checking `ContactAttributeKey_directoryId_key_key` there too. Extend `app/health/ready/route.test.ts`. Old pods keep serving meanwhile.
+
+## Timing Check On A Cloud-Size Clone
+
+Do this on a clone of the production database at the 6.2 schema, never on production. Turn on `log_lock_waits` on the clone so any lock wait longer than `deadlock_timeout` (1 s by default) lands in the PostgreSQL log.
+
+### 1. Run the migrations
+
+Build the database package from the release branch and run the runner against the clone. Keep its output: the log lines carry timestamps.
+
+```bash
+pnpm --filter @formbricks/database build
+DATABASE_URL="<clone url>" node packages/database/dist/scripts/apply-migrations.js 2>&1 | tee migrate.log
+```
+
+The backfill logs `Contact directory backfill: starting` (with `contactsToBackfill`), a `progress` line every 100 batches, `contacts done`, and a final `report`. The runner then builds the online indexes.
+
+While it runs, watch for waits in a second session:
+
+```sql
+SELECT pid, wait_event_type, wait_event, now() - query_start AS running, left(query, 80) AS query
+FROM pg_stat_activity
+WHERE datname = current_database() AND state <> 'idle' AND pid <> pg_backend_pid();
+
+SELECT phase, blocks_done, blocks_total, tuples_done, tuples_total
+FROM pg_stat_progress_create_index;
+```
+
+To see how a writer of the previous release fares, keep a 6.2 app or a simple insert loop writing contacts to the clone during the run. Deadlocks are retried three times per batch and logged as `batch deadlocked, retrying`.
+
+### 2. Read the timings
+
+```sql
+-- Data migrations
+SELECT name, status, finished_at - started_at AS took
+FROM "DataMigration"
+WHERE name LIKE '20261123120%'
+ORDER BY started_at;
+
+-- Schema migrations
+SELECT migration_name, finished_at - started_at AS took
+FROM "_prisma_migrations"
+WHERE migration_name LIKE '20261123120%'
+ORDER BY started_at;
+
+-- Nothing left behind: expect 0
+SELECT count(*) FROM "Contact" WHERE "directoryId" IS NULL;
+SELECT count(*) FROM "Workspace" WHERE "contactDirectoryId" IS NULL;
+
+-- The new indexes exist and are valid
+SELECT i.relname, x.indisvalid, pg_size_pretty(pg_relation_size(i.oid)) AS size
+FROM pg_index x JOIN pg_class i ON i.oid = x.indexrelid
+WHERE i.relname IN ('Contact_directoryId_idx', 'ContactAttributeKey_directoryId_key_key',
+                    'Segment_directoryId_title_key', 'Workspace_contactDirectoryId_idx');
+```
+
+Time per batch is the gap between two `progress` lines divided by 100. Note it for each pass: the first pass walks the whole table but writes only the smaller workspaces, the second walks it again and writes the three largest.
+
+The runner doesn't log each index build. Read it from the gap between the last migration line and the end of the run, or rebuild one index by hand with `\timing on`: `DROP INDEX CONCURRENTLY "Contact_directoryId_idx";` then the `CREATE INDEX CONCURRENTLY` statement from `createOnlineIndexSql`.
+
+### 3. Check the query plans
+
+Pick the largest directories (on Cloud, three workspaces hold two thirds of all contacts) and a real value in each:
+
+```sql
+SELECT "directoryId", count(*) FROM "Contact" GROUP BY 1 ORDER BY 2 DESC LIMIT 3;
+
+\set dir '<directoryId>'
+SELECT ca."value" FROM "ContactAttribute" ca
+JOIN "ContactAttributeKey" k ON k."id" = ca."attributeKeyId"
+WHERE k."directoryId" = :'dir' AND k."key" = 'userId' LIMIT 1;
+\set uid '<userId>'
+```
+
+The statements below have the shape of the app's queries. Prisma's own SQL differs in form; to capture it, set `log_min_duration_statement = 0` on the clone and call the code path from a dev app pointed at it.
+
+**Identify** (`update-user.ts`, `getContactWithFullData`). Expect index scans on `ContactAttributeKey_directoryId_key_key`, `ContactAttribute_attributeKeyId_value_idx` and `Contact_pkey`, and a few milliseconds. A scan over all of `Contact_directoryId_idx` or a sequential scan on `Contact` is a blocker.
+
+```sql
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT c."id" FROM "Contact" c
+WHERE c."directoryId" = :'dir'
+  AND c."id" IN (
+    SELECT ca."contactId" FROM "ContactAttribute" ca
+    WHERE ca."value" = :'uid'
+      AND ca."attributeKeyId" IN (
+        SELECT k."id" FROM "ContactAttributeKey" k
+        WHERE k."directoryId" = :'dir' AND k."key" = 'userId'))
+LIMIT 1;
+```
+
+Repeat with `k."key" = 'email'` and an email value for the CSV and v2 bulk identity lookup.
+
+**Segment evaluation** (`segments/lib/filter/prisma-query.ts`). Attribute filters name the key by string only and rely on `Contact.directoryId` for the scope, so the planner may start from every key with that name across all directories. Check that it stays bounded for a common key name:
+
+```sql
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT count(*) FROM "Contact" c
+WHERE c."directoryId" = :'dir'
+  AND EXISTS (
+    SELECT 1 FROM "ContactAttribute" ca
+    JOIN "ContactAttributeKey" k ON k."id" = ca."attributeKeyId"
+    WHERE ca."contactId" = c."id" AND k."key" = 'email' AND ca."value" LIKE '%@example.com');
+```
+
+And the number filter's raw SQL, as the app runs it:
+
+```sql
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT DISTINCT ca."contactId"
+FROM "ContactAttribute" ca
+JOIN "ContactAttributeKey" cak ON ca."attributeKeyId" = cak.id
+WHERE cak.key = '<number key>' AND cak."directoryId" = :'dir' AND cak."dataType" = 'number'
+  AND ca."valueNumber" IS NULL AND ca.value ~ '^-?[0-9]+(\.[0-9]+)?$' AND ca.value::double precision > 10;
+```
+
+**Contacts count on the settings page** (`directory-service.ts`, one `groupBy` per page). Expect `Contact_directoryId_idx`:
+
+```sql
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT "directoryId", count(*) FROM "Contact" WHERE "directoryId" = ANY(ARRAY[:'dir']) GROUP BY 1;
+```
+
+### 4. Tune the batch size
+
+The batch size is `BATCH_SIZE` in `packages/database/migration/20261123120002_backfill_contact_directories/migration.ts` (10,000 to start). No test pins it.
+
+- Each batch holds row locks on its contacts until it commits. A writer of the previous release that updates one of them waits that long. Keep a batch well under a second.
+- If batches take tens of milliseconds and the total time is long, raise it. If they take more than a second or `log_lock_waits` shows waits on `Contact`, lower it.
+- `PROGRESS_EVERY_BATCHES` (100) sets how often the progress line appears. Adjust it with the batch size so a line still comes every million contacts or so.
+
+Write the measured total time into the upgrade note for the release, and the batch size you settled on into this page.
+
+## QA List
+
+Run on a Cloud-size clone or staging, as noted.
+
+**Migration (clone)**
+- Every workspace has a directory, with no name and matching key `email`.
+- `SELECT count(*) FROM "Contact" WHERE "directoryId" IS NULL` returns 0, and the `report` log line matches the counts per directory.
+- The four new indexes are valid.
+
+**Existing workspace (staging)**
+- SDK identify, `setAttributes`, CSV upload, v2 create and v2 bulk work as before.
+- Segments list, evaluate and target as before.
+- The Contacts page shows the same contacts, with no directory line.
+
+**Shared directory (staging)**
+- Create a named directory for two workspaces. The same `userId` from both apps is one contact.
+- A public segment made in one workspace is listed and editable in the other. A filter on the other workspace's survey shows "Survey in another workspace".
+- Deleting a contact is refused on the Contacts page and with `DELETE /api/v1/management/contacts/{id}` (`403`).
+- A contact's page shows only the current workspace's responses.
+- Deleting one of the two workspaces keeps the contacts and segments for the other.
+
+**No directory (staging)**
+- A new workspace shows **No contact directory linked**: a button for owners and managers, the "ask an owner or manager" text for members, **Upload CSV** disabled.
+- SDK identify and the v1, v2 and v3 contact APIs answer `403` with the no-directory message and create nothing.
+- After assigning a directory, identify works right away.
+
+**Settings (staging)**
+- Create with email and with external ID. The default keys appear, plus `externalId` for external ID.
+- A name is required from two workspaces on, and must be unique.
+- A workspace with contacts is greyed out in the picker with "Uses ... A workspace uses one directory."
+- A contact that arrives while a workspace moves makes the move fail instead of losing the contact.
+
+**CSV in an external ID directory (staging)**
+- An `externalId` column is required. A row matching two contacts updates the one with the same `userId`, or else the oldest, and the upload message counts it.
+
+**Rolling deploy (CI)**
+- The "Check 6.2 writes get a contact directory" step in `docker-build-validation.yml` is green.
+
+The e2e specs that cover parts of this are in `apps/web/playwright/`: `cross-tenant-contact-access.spec.ts`, `segments.spec.ts`, `js.spec.ts` and `api/management/contacts.spec.ts`.
+
+## One Release Later: Drop The Rollout Trigger
+
+The trigger `contact_directory_from_workspace` only exists for pods of the previous release that write during a rolling deploy. Remove it in the release after contact directories ship, and remove its test with it, in one PR:
+
+- A new migration that drops the trigger from `Contact`, `ContactAttributeKey` and `Segment`, then the function `contact_directory_from_workspace()`.
+- The step "Check 6.2 writes get a contact directory" in `.github/workflows/docker-build-validation.yml`.
+- `docker/contact-directory-compat-smoke.sh`.
+- Its two fixtures: `docker/fixtures/contact-directory-compat.sql` and `docker/fixtures/contact-directory-compat-check.sql`.
+
+Keep `contact_directory_delete_unused` and `contact_directory_delete_workspace_rows`: they handle workspace deletes and are not part of the rollout. The old unique indexes on `(key, workspaceId)` and `(workspaceId, title)` stay until 7.0.

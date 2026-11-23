@@ -1,0 +1,56 @@
+---
+title: "Unreleased: Contact directories"
+description: "What the move of contacts into contact directories changes when you upgrade, and the one case that needs a step from you."
+icon: "address-card"
+---
+
+**Applies to:** the first release after 6.2. This change is on `main` and not in 6.2 or any earlier patch.
+**Downtime:** none beyond your usual upgrade. **Applies to:** all editions; contacts need an Enterprise licence.
+
+## What changes
+
+Contacts, their attribute keys and segments move from the workspace into a
+[contact directory](/platform/features/contact-directories) at the organization level. Several workspaces can
+share one directory, and then they share their contacts.
+
+The upgrade gives every existing workspace a directory of its own, so existing workspaces keep working exactly as
+before. This isn't a breaking change.
+
+**A workspace created after the upgrade has no contact directory until one is set up** in **Organization
+settings → Contact directories**. Until then, `setUserId` in the SDK and the contact APIs answer `403` with "A
+contact directory needs to be set up for this workspace before contacts are available.", and nothing is created.
+If a script of yours creates a workspace and calls `setUserId` or the contact APIs straight away, it gets this
+error. Create or assign a directory for the new workspace in the app first. Directories have no public API, so a
+script can't do this step.
+
+## Before you upgrade
+
+| Who | What to do |
+| --- | --- |
+| Everyone | The migration writes the directory onto every contact, in batches. On a large contacts table this takes a while, so allow extra time. |
+| Docker Compose and one-click | The migration service stops after 300 seconds. If you have many contacts, run the migrations once without that limit: `docker compose run --rm --no-deps formbricks-migrate "node packages/database/dist/scripts/apply-migrations.js"`. An interrupted run carries on where it stopped. |
+| Kubernetes with `upgrade.mode: online` | Online mode only accepts a 6.0 source. From 6.2, set `upgrade.mode: maintenance`. |
+| Scripts that create workspaces | Set up a directory for each new workspace before the script identifies anyone, as described above. |
+
+## During a rolling upgrade
+
+Containers of the previous version keep writing contacts, attribute keys and segments without a directory. A
+database trigger gives each of these rows the directory of its workspace, so nothing is lost.
+
+A workspace that a container of the previous version creates during the rollout has no directory. Its contacts
+join the directory you give it in **Organization settings → Contact directories**.
+
+## Check it worked
+
+- **Organization settings → Contact directories** lists a directory for each workspace. Directories made by the
+  upgrade have no name and show their workspace's name.
+- The migration log has a `Contact directory backfill: report` line with `contactsWithoutDirectory: 0`. Any
+  other number means contacts of a workspace made during a rolling upgrade, which get a directory once you
+  assign one.
+- Identifying a user from your app works as before, and the Contacts page lists the same contacts.
+
+## If something goes wrong
+
+A failed or interrupted migration carries on where it stopped on the next run. See
+[data migrations](/self-hosting/upgrade/troubleshooting#data-migrations). To go back to 6.2, restore the database
+from your backup; see [backup and restore](/self-hosting/operate/backup-restore).
