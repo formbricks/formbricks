@@ -438,13 +438,42 @@ mismatched parent.
   the row never counts as "not set": a process that last saw it set keeps enforcing, and one that has no
   successful read fails the request instead of deciding.
 
+## Dashboard and page projection
+
+ADR-0059 projects dashboards, their pages and team dashboard limits, so SpiceDB decides which dashboards and
+pages a Dashboard Viewer can open. PostgreSQL is the durable source. `apps/web/lib/authzed/dashboard.ts` writes
+exactly the edges a dashboard or page row implies, and the team reconciler (`team-workspace.ts`), which owns
+every edge on a `team`, writes the team's limit marker:
+
+| Fact                                                         | Edge                                   |
+| ------------------------------------------------------------ | -------------------------------------- |
+| always                                                       | `dashboard#workspace@workspace:W`      |
+| `TeamDashboard(T, D)` while T holds a grant on D's workspace | `dashboard#selected_by_team@team:T`    |
+| always                                                       | `dashboard_page#dashboard@dashboard:D` |
+| the page has no `DashboardPageTeam` row                      | `dashboard_page#open_on@dashboard:D`   |
+| `DashboardPageTeam(P, T)`                                    | `dashboard_page#limited_team@team:T`   |
+| the team has a `TeamDashboard` row                           | `team:T#dashboard_limited@team:T`      |
+
+- **Outbox.** Triggers on `Dashboard`, `DashboardPage`, `DashboardPageTeam` and `TeamDashboard` queue
+  `dashboard`, `dashboard_page` and `team` events. A `workspace_team` event also re-projects the dashboards
+  its team selected in that workspace. Adding a page limit or a team's dashboard selection is a revocation
+  (either can narrow); removing a page limit is a revocation while another limit stays on the page;
+  removing a selection is a revocation for the dashboard and a grant for the team; deleting a dashboard or
+  page is hygiene, like deleting a survey. The trigger migration documents each case.
+- **Decisions.** `dashboard.read` and `dashboardPage.read` ask the workspace `read` and the projected node in
+  one request, either allowing, so Owners, Managers, Members and API keys never wait for the projection and a
+  Dashboard Viewer is closed out until it lands. `dashboard.manage_access` is the workspace's `administer`.
+- **Repair scope.** Dashboards and pages are part of the organization and workspace scopes, so `--scope=all`
+  and the six-hourly audit cover them. A dashboard's `#workspace` and a page's `#dashboard` and `#open_on`
+  edges are checked as parents.
+
 ## Resource parent resolution during the current-model migration
 
 The initial migration deliberately does not project one relationship for every
-dashboard and response (surveys are projected — see above). ENG-1738's restricted evaluator uses
+response (surveys, dashboards and pages are projected — see above). ENG-1738's restricted evaluator uses
 the existing server-only PostgreSQL resolvers to map:
 
-- a survey or dashboard to its workspace;
+- a survey, dashboard or page to its workspace;
 - a response to its survey, then to its workspace.
 
 It then checks the equivalent workspace permission in SpiceDB. This preserves
@@ -453,10 +482,10 @@ the current authorization boundary and avoids adding a high-cardinality
 Resolver database failures remain operational errors and missing resources
 remain denials, preserving the current authorization contract.
 
-The `dashboard#workspace` and `response#survey` relations
-remain in the schema for later resource-level sharing. They must not be queried
+The `response#survey` relation
+remains in the schema for later resource-level sharing. It must not be queried
 directly until a future projector and matching backfill scope cover those edges;
-the backfill classifies them as ignored today and never prunes them.
+the backfill classifies it as ignored today and never prunes it.
 Phase 2 direct resource grants must add that projection and repair scope before
 enforcement.
 
@@ -490,19 +519,21 @@ contract](https://linear.app/formbricks/document/direct-authzed-cutover-and-roll
 
 Resource permissions preserve the operation-specific gates that exist today:
 
-| Current application operation                                    | Schema permission                              | Required access                                         |
-| ---------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------- |
-| Read organization teams and workspace-team assignments           | `organization.read_access`, `team.read`        | organization membership or `accessControl.read`/`write` |
-| Rename teams or manage team membership                           | `organization.manage_access`, `team.manage`    | team admin or `accessControl.write`                     |
-| Delete a team                                                    | `team.delete`                                  | owner/manager or `accessControl.write`                  |
-| Read or edit a survey                                            | `survey.read`, `survey.write`                  | workspace `read` or `readWrite`                         |
-| Delete a survey through the web application or V3 API            | `survey.delete`                                | workspace `readWrite`                                   |
-| Manage survey languages or delete through legacy management APIs | `survey.manage`                                | workspace `manage`                                      |
-| Read or mutate a dashboard, including deletion                   | `dashboard.read`, `dashboard.write`            | workspace `dashboard_read` or `readWrite`               |
-| Read a saved chart's data or a filter's values on a dashboard    | `feedback_directory_assignment.dashboard_read` | dataset `read`, or a Dashboard viewer of the workspace  |
-| Read/export a response                                           | `response.read`, `response.export`             | workspace `read`                                        |
-| Update, tag, or delete a response through the web application    | `response.write`                               | workspace `readWrite`                                   |
-| Delete a response through legacy management APIs                 | `response.manage`                              | workspace `manage`                                      |
+| Current application operation                                    | Schema permission                              | Required access                                          |
+| ---------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------- |
+| Read organization teams and workspace-team assignments           | `organization.read_access`, `team.read`        | organization membership or `accessControl.read`/`write`  |
+| Rename teams or manage team membership                           | `organization.manage_access`, `team.manage`    | team admin or `accessControl.write`                      |
+| Delete a team                                                    | `team.delete`                                  | owner/manager or `accessControl.write`                   |
+| Read or edit a survey                                            | `survey.read`, `survey.write`                  | workspace `read` or `readWrite`                          |
+| Delete a survey through the web application or V3 API            | `survey.delete`                                | workspace `readWrite`                                    |
+| Manage survey languages or delete through legacy management APIs | `survey.manage`                                | workspace `manage`                                       |
+| Read a dashboard or one of its pages                             | `dashboard.read`, `dashboardPage.read`         | workspace `read`, or the team and page limits (ADR-0059) |
+| Mutate a dashboard, including deletion                           | `dashboard.write`                              | workspace `readWrite`                                    |
+| Change who opens a dashboard's pages                             | `dashboard.manage_access`                      | organization owner or manager                            |
+| Read a saved chart's data or a filter's values on a dashboard    | `feedback_directory_assignment.dashboard_read` | dataset `read`, or a Dashboard viewer of the workspace   |
+| Read/export a response                                           | `response.read`, `response.export`             | workspace `read`                                         |
+| Update, tag, or delete a response through the web application    | `response.write`                               | workspace `readWrite`                                    |
+| Delete a response through legacy management APIs                 | `response.manage`                              | workspace `manage`                                       |
 
 Behavioral sources of truth in the application (referenced from the schema's
 doc comments):
@@ -666,7 +697,7 @@ Guards on the destructive path:
   cap aborts before the first delete rather than part-way through. A large orphan
   count is a symptom — wrong endpoint, wrong database, a restore in progress — not
   a big cleanup job;
-- `survey`, `dashboard`, and `response` relationships are classified ignored, and
+- `response` relationships are classified ignored, and
   anything outside the vocabulary is reported but never touched.
 
 Two limits worth knowing before relying on a run:
