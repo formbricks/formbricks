@@ -4,7 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
-import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   type TV3SurveyWriteReport,
@@ -865,7 +865,14 @@ async function runV3SurveyLifecycleMutation(
       auditLog.oldObject = survey;
     }
 
+    const wasArchived = Boolean(survey.archivedAt);
     const mutatedSurvey = await mutate(surveyId, authentication);
+
+    // Both lifecycle operations are idempotent. When the survey was already in the requested state the
+    // service wrote nothing, so keep the no-op out of the audit trail instead of logging a change.
+    if (wasArchived === (operation === "archive")) {
+      skipV3AuditLog(auditLog);
+    }
 
     if (auditLog) {
       auditLog.newObject = mutatedSurvey;

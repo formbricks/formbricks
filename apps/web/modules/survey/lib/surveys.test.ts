@@ -396,23 +396,27 @@ describe("deleteSurvey", () => {
 });
 
 describe("archiveSurvey", () => {
+  const archiveTx = (locked: { id: string; status: string; archivedAt: Date | null } | undefined) => {
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue(locked ? [locked] : []),
+      survey: { update: vi.fn() },
+    };
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(tx as never));
+    return tx;
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("should archive an inProgress survey by pausing it, preserving publishOn", async () => {
-    const findUniqueMock = vi
-      .fn()
-      .mockResolvedValue({ id: surveyId, status: "inProgress", archivedAt: null });
-    const updateMock = vi.fn().mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
-
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      callback({ survey: { findUnique: findUniqueMock, update: updateMock } } as never)
-    );
+  test("should archive an inProgress survey by pausing it, preserving publishOn, with the row locked", async () => {
+    const tx = archiveTx({ id: surveyId, status: "inProgress", archivedAt: null });
+    tx.survey.update.mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
 
     await archiveSurvey(surveyId);
 
-    expect(updateMock).toHaveBeenCalledWith({
+    expect(String(tx.$queryRaw.mock.calls[0][0].join("?"))).toContain("FOR UPDATE");
+    expect(tx.survey.update).toHaveBeenCalledWith({
       where: { id: surveyId },
       data: { archivedAt: expect.any(Date), status: "paused" },
       select: { id: true, status: true, archivedAt: true },
@@ -420,16 +424,12 @@ describe("archiveSurvey", () => {
   });
 
   test("should archive a paused survey without changing its status or publishOn", async () => {
-    const findUniqueMock = vi.fn().mockResolvedValue({ id: surveyId, status: "paused", archivedAt: null });
-    const updateMock = vi.fn().mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
-
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      callback({ survey: { findUnique: findUniqueMock, update: updateMock } } as never)
-    );
+    const tx = archiveTx({ id: surveyId, status: "paused", archivedAt: null });
+    tx.survey.update.mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
 
     await archiveSurvey(surveyId);
 
-    expect(updateMock).toHaveBeenCalledWith({
+    expect(tx.survey.update).toHaveBeenCalledWith({
       where: { id: surveyId },
       data: { archivedAt: expect.any(Date) },
       select: { id: true, status: true, archivedAt: true },
@@ -438,31 +438,22 @@ describe("archiveSurvey", () => {
 
   test("should be a no-op when the survey is already archived", async () => {
     const alreadyArchived = { id: surveyId, status: "paused", archivedAt: new Date() };
-    const findUniqueMock = vi.fn().mockResolvedValue(alreadyArchived);
-    const updateMock = vi.fn();
-
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      callback({ survey: { findUnique: findUniqueMock, update: updateMock } } as never)
-    );
+    const tx = archiveTx(alreadyArchived);
 
     const result = await archiveSurvey(surveyId);
 
-    expect(updateMock).not.toHaveBeenCalled();
+    expect(tx.survey.update).not.toHaveBeenCalled();
     expect(result).toEqual(alreadyArchived);
   });
 
   test("should throw ResourceNotFoundError when the survey does not exist", async () => {
-    const findUniqueMock = vi.fn().mockResolvedValue(null);
-
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      callback({ survey: { findUnique: findUniqueMock, update: vi.fn() } } as never)
-    );
+    archiveTx(undefined);
 
     await expect(archiveSurvey(surveyId)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("should map Prisma P2025 during archive to ResourceNotFoundError", async () => {
-    // A concurrent delete between findUnique and update raises P2025; match restoreSurvey's contract.
+    // A row deleted mid-transaction still raises P2025; match restoreSurvey's contract.
     const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
       code: "P2025",
       clientVersion: "4.0.0",

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { problemConflict, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import { mcpOutsideGrantResult, responseToMcpToolResult } from "./errors";
+import { ZMcpToolError } from "./tools/output-schemas";
 
 describe("responseToMcpToolResult", () => {
   test("returns structured success content with the resolved requestId", async () => {
@@ -34,6 +35,9 @@ describe("responseToMcpToolResult", () => {
         },
       },
     });
+    // The advertised error schema knows the field too, so a client typing `tools/list` can read it.
+    const error = (result.structuredContent as { error: unknown }).error;
+    expect(ZMcpToolError.safeParse(error).success).toBe(true);
   });
 
   test("omits details when the problem has none, and still forwards invalid_params", async () => {

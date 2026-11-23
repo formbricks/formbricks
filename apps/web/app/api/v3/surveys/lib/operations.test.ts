@@ -7,7 +7,7 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { V3CustomCssInvalidError, V3CustomCssPlanRequiredError } from "@/app/api/v3/lib/custom-css";
 import { problemForbidden } from "@/app/api/v3/lib/response";
@@ -101,7 +101,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/app/api/v3/lib/audit", () => ({ queueV3AuditLog: vi.fn() }));
+vi.mock("@/app/api/v3/lib/audit", () => ({ queueV3AuditLog: vi.fn(), skipV3AuditLog: vi.fn() }));
 vi.mock("@/modules/survey/lib/surveys", () => ({
   deleteSurvey: vi.fn(),
   archiveSurvey: vi.fn(),
@@ -239,12 +239,16 @@ const sessionAuthentication = {
   expires: "2026-05-01",
 } as TV3Authentication;
 const authResult = { workspaceId, organizationId: "org_1" };
-const survey: Pick<TSurvey, "id" | "workspaceId" | "name" | "status" | "type" | "updatedAt" | "questions"> = {
+const survey: Pick<
+  TSurvey,
+  "id" | "workspaceId" | "name" | "status" | "type" | "updatedAt" | "questions" | "archivedAt"
+> = {
   id: "survey_1",
   workspaceId,
   name: "Customer Survey",
   status: "draft",
   type: "link",
+  archivedAt: null,
   // Every stored survey carries one, and the precondition check reads it on both the write and the
   // no-write path, so a fixture without it hides a 409 behind a TypeError.
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -1587,7 +1591,31 @@ describe("archiveV3Survey", () => {
       instance,
     });
     expect(vi.mocked(archiveSurvey)).toHaveBeenCalledWith("survey_1");
+    expect(skipV3AuditLog).not.toHaveBeenCalled();
     expect(auditLog).toMatchObject({ organizationId: "org_1", targetId: "survey_1", oldObject: survey });
+  });
+
+  test("keeps a no-op archive out of the audit trail", async () => {
+    const auditLog = {} as TV3AuditLog;
+    const archivedAt = new Date("2026-01-01T00:00:00.000Z");
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
+      survey: { ...survey, archivedAt },
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    });
+    vi.mocked(archiveSurvey).mockResolvedValue({ id: "survey_1", status: "paused", archivedAt });
+
+    const response = await archiveV3Survey({
+      surveyId: "survey_1",
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+    expect(response.status).toBe(200);
+    expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
   });
 
   test("returns authorization responses from survey access", async () => {
@@ -1617,10 +1645,11 @@ describe("archiveV3Survey", () => {
 });
 
 describe("restoreV3Survey", () => {
+  const archivedSurvey = { ...survey, archivedAt: new Date("2026-01-01T00:00:00.000Z") };
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
-      survey,
+      survey: archivedSurvey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
@@ -1648,7 +1677,33 @@ describe("restoreV3Survey", () => {
     expect(vi.mocked(restoreSurvey)).toHaveBeenCalledWith("survey_1", { restoredById: null });
     // No exemption made, no exemption event.
     expect(vi.mocked(queueV3AuditLog)).not.toHaveBeenCalled();
-    expect(auditLog).toMatchObject({ organizationId: "org_1", targetId: "survey_1", oldObject: survey });
+    expect(skipV3AuditLog).not.toHaveBeenCalled();
+    expect(auditLog).toMatchObject({
+      organizationId: "org_1",
+      targetId: "survey_1",
+      oldObject: archivedSurvey,
+    });
+  });
+
+  test("keeps a no-op restore out of the audit trail", async () => {
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    });
+    const auditLog = {} as TV3AuditLog;
+
+    const response = await restoreV3Survey({
+      surveyId: "survey_1",
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+    expect(response.status).toBe(200);
+    expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
   });
 
   test("records the signed-in user as the restorer, and the retention exemption in the audit log", async () => {

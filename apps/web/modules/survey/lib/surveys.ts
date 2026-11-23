@@ -189,10 +189,14 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
   validateInputs([surveyId, ZId]);
 
   const archive = async (tx: Prisma.TransactionClient) => {
-    const survey = await tx.survey.findUnique({
-      where: { id: surveyId },
-      select: { id: true, status: true, archivedAt: true },
-    });
+    // Lock the row like restoreSurvey does, so two concurrent archives cannot each write an
+    // archivedAt: the second waits, then sees the first one's timestamp and becomes a no-op.
+    const [survey] = await tx.$queryRaw<{ id: string; status: SurveyStatus; archivedAt: Date | null }[]>`
+      SELECT "id", "status", "archivedAt"
+      FROM "Survey"
+      WHERE "id" = ${surveyId}
+      FOR UPDATE
+    `;
 
     if (!survey) {
       throw new ResourceNotFoundError("Survey", surveyId);
