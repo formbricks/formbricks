@@ -15,7 +15,6 @@ import {
 const mockContactId = "clqnj99r9000008lebgf8734j";
 const mockWorkspaceId = "clqkr8dlv000308jybb08evgz";
 const mockResponseId = "clqnfg59i000208i426pb4wcv";
-const mockResponseIds = ["clqnfg59i000208i426pb4wcv", "clqnfg59i000208i426pb4wcw"];
 
 const mockDisplaysForContact = [
   {
@@ -69,7 +68,7 @@ describe("getDisplayCountBySurveyId", () => {
       });
     });
 
-    test("combines createdAt and responseIds filters", async () => {
+    test("counts displays by date range when no response IDs are supplied", async () => {
       const createdAt = {
         min: new Date("2024-01-01T00:00:00.000Z"),
         max: new Date("2024-01-31T23:59:59.999Z"),
@@ -78,7 +77,6 @@ describe("getDisplayCountBySurveyId", () => {
 
       const result = await getDisplayCountBySurveyId(mockSurveyId, {
         createdAt,
-        responseIds: mockResponseIds,
       });
 
       expect(result).toBe(2);
@@ -89,13 +87,6 @@ describe("getDisplayCountBySurveyId", () => {
             gte: createdAt.min,
             lte: createdAt.max,
           },
-          response: {
-            is: {
-              id: {
-                in: mockResponseIds,
-              },
-            },
-          },
         },
       });
     });
@@ -105,6 +96,7 @@ describe("getDisplayCountBySurveyId", () => {
 
       expect(result).toBe(0);
       expect(prisma.display.count).not.toHaveBeenCalled();
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
     });
   });
 
