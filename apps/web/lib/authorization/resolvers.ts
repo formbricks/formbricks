@@ -222,6 +222,28 @@ export const getDashboardAuthorizationWorkspaceScope = reactCache(
   }
 );
 
+/** The workspace and organization a dashboard page's dashboard belongs to (ADR-0059). */
+export const getDashboardPageAuthorizationWorkspaceScope = reactCache(
+  async (pageId: string): Promise<TAuthorizationWorkspaceScope | null> => {
+    try {
+      const page = await prisma.dashboardPage.findUnique({
+        where: { id: pageId },
+        select: {
+          dashboard: { select: { workspaceId: true, workspace: { select: { organizationId: true } } } },
+        },
+      });
+      return page
+        ? {
+            organizationId: page.dashboard.workspace.organizationId,
+            workspaceId: page.dashboard.workspaceId,
+          }
+        : null;
+    } catch (error) {
+      return rethrowAsDatabaseError(error);
+    }
+  }
+);
+
 /** The workspace and organization a response's survey belongs to. */
 export const getResponseAuthorizationWorkspaceScope = reactCache(
   async (responseId: string): Promise<TAuthorizationWorkspaceScope | null> => {

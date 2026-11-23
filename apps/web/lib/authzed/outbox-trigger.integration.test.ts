@@ -31,6 +31,8 @@ const migration = readMigration("20260818120000_add_authzed_projection_outbox");
 const surveyMigration = readMigration("20261002120002_add_survey_projection_trigger");
 // ENG-7153: the three MCP grant triggers, on the functions above unchanged.
 const mcpGrantMigration = readMigration("20261112140000_add_mcp_grant_projection_trigger");
+// ADR-0059: the seven dashboard, page and team-limit triggers, and the functions re-declared again.
+const dashboardMigration = readMigration("20261123120001_dashboard_access_control_projection");
 
 /**
  * The durable outbox against a real PostgreSQL (ENG-2408).
@@ -79,6 +81,7 @@ describe("AuthZed projection outbox triggers", () => {
       await prisma.$executeRawUnsafe(migration);
       await prisma.$executeRawUnsafe(surveyMigration);
       await prisma.$executeRawUnsafe(mcpGrantMigration);
+      await prisma.$executeRawUnsafe(dashboardMigration);
     }
 
     const [catalog] = await prisma.$queryRaw<Array<{ indexes: bigint; triggers: bigint }>>`
@@ -91,7 +94,7 @@ describe("AuthZed projection outbox triggers", () => {
            AND NOT tgisinternal) AS triggers
     `;
     expect(Number(catalog?.indexes)).toBe(3);
-    expect(Number(catalog?.triggers)).toBe(16);
+    expect(Number(catalog?.triggers)).toBe(23);
   });
 
   test("does not classify an accepted invite as a revocation", async () => {

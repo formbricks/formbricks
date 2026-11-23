@@ -12,6 +12,7 @@ import {
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
   getDashboardAuthorizationWorkspaceScope,
+  getDashboardPageAuthorizationWorkspaceScope,
   getFeedbackDirectoryAssignmentAuthorizationScope,
   getFeedbackDirectoryAuthorizationScope,
   getResponseSurveyId,
@@ -49,12 +50,18 @@ export type TResolvedAuthorizationScope = Readonly<{
   organizationId: string;
   permissionResource: TResolvedPermissionResource;
   policy?: TPendingPrivateSurveyPolicy;
+  /**
+   * A dashboard's or page's own graph node (ADR-0059), decided on beside the workspace node: see
+   * `PROJECTED_NODE_ACTIONS` in the evaluator.
+   */
+  projectedNode?: TResolvedPermissionResource;
 }>;
 
 type TResourceScope = Readonly<{
   organizationId: string;
   permissionResource: TResolvedPermissionResource;
   policy?: TPendingPrivateSurveyPolicy;
+  projectedNode?: TResolvedPermissionResource;
 }>;
 
 const resolveWorkspaceScope = async (workspaceId: string): Promise<TResourceScope | null> => {
@@ -111,6 +118,23 @@ const resolveSurveyScope = async (surveyId: string): Promise<TResourceScope | nu
   return toSurveyResourceScope(row, graphReady);
 };
 
+/**
+ * A dashboard or page (ADR-0059): resolved to its workspace like before, carrying its projected node
+ * beside it. The workspace answers everything but a Dashboard Viewer's reads, without waiting for the
+ * projection; the node answers the viewer, with its team dashboard limits and page team limits.
+ */
+const resolveDashboardScope = async (
+  type: "dashboard" | "dashboardPage",
+  id: string
+): Promise<TResourceScope | null> => {
+  const scope = toWorkspaceResourceScope(
+    type === "dashboard"
+      ? await getDashboardAuthorizationWorkspaceScope(id)
+      : await getDashboardPageAuthorizationWorkspaceScope(id)
+  );
+  return scope ? { ...scope, projectedNode: { type, id } } : null;
+};
+
 /** Responses follow the same policy as their survey. */
 const resolveResponseScope = async (responseId: string): Promise<TResourceScope | null> => {
   const surveyId = await getResponseSurveyId(responseId);
@@ -141,9 +165,9 @@ const resolveResourceScope = async (resource: TAuthorizationResource): Promise<T
     }
     case "survey":
       return resolveSurveyScope(resource.id);
-    case "dashboard": {
-      return toWorkspaceResourceScope(await getDashboardAuthorizationWorkspaceScope(resource.id));
-    }
+    case "dashboard":
+    case "dashboardPage":
+      return resolveDashboardScope(resource.type, resource.id);
     case "response":
       return resolveResponseScope(resource.id);
     case "feedbackDirectory": {

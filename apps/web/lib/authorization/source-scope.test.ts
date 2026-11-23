@@ -3,6 +3,8 @@ import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import {
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
+  getDashboardAuthorizationWorkspaceScope,
+  getDashboardPageAuthorizationWorkspaceScope,
   getFeedbackDirectoryAssignmentAuthorizationScope,
   getFeedbackDirectoryAuthorizationScope,
   getResponseAuthorizationWorkspaceScope,
@@ -19,6 +21,7 @@ vi.mock("./resolvers", () => ({
   getApiKeyOrganizationId: vi.fn(),
   getAuthorizationOrganizationId: vi.fn(),
   getDashboardAuthorizationWorkspaceScope: vi.fn(),
+  getDashboardPageAuthorizationWorkspaceScope: vi.fn(),
   getFeedbackDirectoryAssignmentAuthorizationScope: vi.fn(),
   getFeedbackDirectoryAuthorizationScope: vi.fn(),
   getResponseAuthorizationWorkspaceScope: vi.fn(),
@@ -53,6 +56,32 @@ describe("resolveAuthorizationScope", () => {
       organizationId: "org-1",
       permissionResource: { type: resourceType, id: "resource-1" },
     });
+  });
+
+  // ADR-0059: decided on the workspace, with the projected node beside it for a Dashboard Viewer's reads.
+  test.each([
+    ["dashboard", getDashboardAuthorizationWorkspaceScope],
+    ["dashboardPage", getDashboardPageAuthorizationWorkspaceScope],
+  ] as const)("resolves a %s to its workspace and carries its projected node", async (type, resolver) => {
+    vi.mocked(resolver).mockResolvedValue({ organizationId: "org-1", workspaceId: "workspace-1" });
+
+    await expect(
+      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type, id: "node-1" })
+    ).resolves.toEqual({
+      actorValid: true,
+      organizationId: "org-1",
+      permissionResource: { type: "workspace", id: "workspace-1" },
+      projectedNode: { type, id: "node-1" },
+    });
+    expect(resolver).toHaveBeenCalledWith("node-1");
+  });
+
+  test("denies a dashboard page with no row before asking SpiceDB", async () => {
+    vi.mocked(getDashboardPageAuthorizationWorkspaceScope).mockResolvedValue(null);
+
+    await expect(
+      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "dashboardPage", id: "page-gone" })
+    ).resolves.toBeNull();
   });
 
   test("resolves surveys and their responses from stored policy before the graph is ready", async () => {

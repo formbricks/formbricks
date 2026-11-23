@@ -8,6 +8,16 @@ import {
   AUTHZED_PROJECTED_USER,
   AUTHZED_TARGET_CHUNK_SIZE,
 } from "./constants";
+import {
+  expectedDashboardPageRelationships,
+  expectedDashboardRelationships,
+  teamDashboardLimitedRelationship,
+} from "./dashboard-relationships";
+import {
+  readDashboardLimitedTeamIds,
+  readDashboardPageProjectionRows,
+  readDashboardProjectionRows,
+} from "./dashboard-source";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
 import {
   MCP_GRANT_RELATION,
@@ -30,8 +40,9 @@ import { expectedSurveyRelationships } from "./survey-relationships";
  * check of its own, because it runs as an operator with the AuthZed system credential. Reachable from
  * an HTTP surface it would let a caller rewrite any tenant's permission graph by ID.
  *
- * This is the only file in the backfill that touches `prisma`, which keeps "what does the tooling read
- * from the database?" a single-file audit. Every query names its columns explicitly and reads only
+ * This is the only file in the backfill that touches `prisma` (with `./dashboard-source`, whose
+ * dashboard reads it shares with the projector), which keeps "what does the tooling read from the
+ * database?" a short audit. Every query names its columns explicitly and reads only
  * identifiers, roles, permissions, and API-key organization access — never plaintext keys, key hashes,
  * lookup hashes, creator metadata, or usage timestamps.
  *
@@ -64,6 +75,10 @@ export type TAuthzedFeedbackDirectoryAssignmentTarget = Readonly<{
 export type TAuthzedOrganizationSource = Readonly<{
   apiKeyIds: ReadonlyArray<string>;
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  /** The dashboards of the organization's workspaces (ADR-0059), observed and reconciled with it. */
+  dashboardIds: ReadonlyArray<string>;
+  /** The pages of those dashboards. */
+  dashboardPageIds: ReadonlyArray<string>;
   /** Exact managed relationship set derived from the same maps as the projectors. */
   expectedRelationships: ReadonlyArray<TAuthzedRelationship>;
   /** All valid pairs to observe/reconcile; archived pairs are targets but contribute no expected edges. */
@@ -95,6 +110,10 @@ export type TAuthzedOrganizationSource = Readonly<{
 /** The grants attached to one workspace, for the narrower workspace repair scope. */
 export type TAuthzedWorkspaceSource = Readonly<{
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  /** The workspace's dashboards (ADR-0059), observed and reconciled with it. */
+  dashboardIds: ReadonlyArray<string>;
+  /** The pages of those dashboards. */
+  dashboardPageIds: ReadonlyArray<string>;
   /** Exact managed relationship set for this workspace and its valid grants. */
   expectedRelationships: ReadonlyArray<TAuthzedRelationship>;
   /** All valid pairs to observe/reconcile; archived pairs are targets but contribute no expected edges. */
@@ -363,47 +382,57 @@ export const organizationExists = async (organizationId: string): Promise<boolea
  * organization ID is not needed to reach them, because the caller supplies the workspace ID directly.
  */
 export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzedWorkspaceSource> => {
-  const [workspace, workspaceTeams, apiKeyWorkspaces, directoryAssignments, surveys, mcpGrantSelections] =
-    await Promise.all([
-      prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
-      prisma.workspaceTeam.findMany({
-        where: { workspaceId },
-        // The principal's organization is read so a cross-organization grant can be partitioned out
-        // rather than projected, matching what the organization scope already does.
-        select: {
-          permission: true,
-          team: { select: { organizationId: true } },
-          teamId: true,
-          workspaceId: true,
-        },
-        orderBy: { teamId: "asc" },
-      }),
-      prisma.apiKeyWorkspace.findMany({
-        where: { workspaceId },
-        select: {
-          apiKey: { select: { organizationId: true } },
-          apiKeyId: true,
-          permission: true,
-          workspaceId: true,
-        },
-        orderBy: { apiKeyId: "asc" },
-      }),
-      prisma.feedbackDirectoryWorkspace.findMany({
-        where: { workspaceId },
-        select: {
-          feedbackDirectory: { select: { isArchived: true, organizationId: true } },
-          feedbackDirectoryId: true,
-          workspaceId: true,
-        },
-        orderBy: { feedbackDirectoryId: "asc" },
-      }),
-      prisma.survey.findMany({
-        where: { workspaceId },
-        select: surveyProjectionSelect,
-        orderBy: { id: "asc" },
-      }),
-      readMcpGrantWorkspaceSelections({ workspaceId }),
-    ]);
+  const [
+    workspace,
+    workspaceTeams,
+    apiKeyWorkspaces,
+    directoryAssignments,
+    surveys,
+    mcpGrantSelections,
+    dashboards,
+    dashboardPages,
+  ] = await Promise.all([
+    prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
+    prisma.workspaceTeam.findMany({
+      where: { workspaceId },
+      // The principal's organization is read so a cross-organization grant can be partitioned out
+      // rather than projected, matching what the organization scope already does.
+      select: {
+        permission: true,
+        team: { select: { organizationId: true } },
+        teamId: true,
+        workspaceId: true,
+      },
+      orderBy: { teamId: "asc" },
+    }),
+    prisma.apiKeyWorkspace.findMany({
+      where: { workspaceId },
+      select: {
+        apiKey: { select: { organizationId: true } },
+        apiKeyId: true,
+        permission: true,
+        workspaceId: true,
+      },
+      orderBy: { apiKeyId: "asc" },
+    }),
+    prisma.feedbackDirectoryWorkspace.findMany({
+      where: { workspaceId },
+      select: {
+        feedbackDirectory: { select: { isArchived: true, organizationId: true } },
+        feedbackDirectoryId: true,
+        workspaceId: true,
+      },
+      orderBy: { feedbackDirectoryId: "asc" },
+    }),
+    prisma.survey.findMany({
+      where: { workspaceId },
+      select: surveyProjectionSelect,
+      orderBy: { id: "asc" },
+    }),
+    readMcpGrantWorkspaceSelections({ workspaceId }),
+    readDashboardProjectionRows({ workspaceId }),
+    readDashboardPageProjectionRows({ dashboard: { workspaceId } }),
+  ]);
 
   const organizationId = workspace?.organizationId ?? null;
 
@@ -482,12 +511,16 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
   if (organizationId !== null) {
     expectedRelationships.push(
       ...surveys.flatMap(expectedSurveyRelationships),
-      ...mcpGrantSelections.map(toMcpGrantSelectionRelationship)
+      ...mcpGrantSelections.map(toMcpGrantSelectionRelationship),
+      ...dashboards.flatMap(expectedDashboardRelationships),
+      ...dashboardPages.flatMap(expectedDashboardPageRelationships)
     );
   }
 
   return {
     apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
+    dashboardIds: dashboards.map(({ id }) => id),
+    dashboardPageIds: dashboardPages.map(({ id }) => id),
     expectedRelationships,
     feedbackDirectoryAssignments,
     invalidApiKeyWorkspaceGrants: keyGrants.invalid.map(toApiKeyWorkspaceTarget),
@@ -519,6 +552,8 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     feedbackDirectories,
     mcpGrantOrganizationSelections,
     mcpGrantWorkspaceSelections,
+    dashboards,
+    dashboardPages,
   ] = await Promise.all([
     prisma.membership.findMany({
       where: { organizationId, user: AUTHZED_PROJECTED_USER },
@@ -588,7 +623,10 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       orderBy: { grantId: "asc" },
     }),
     readMcpGrantWorkspaceSelections({ workspace: { organizationId } }),
+    readDashboardProjectionRows({ workspace: { organizationId } }),
+    readDashboardPageProjectionRows({ dashboard: { workspace: { organizationId } } }),
   ]);
+  const dashboardLimitedTeamIds = await readDashboardLimitedTeamIds(teams.map(({ id }) => id));
 
   const mcpGrantSelections: TAuthzedMcpGrantSelectionTarget[] = [
     ...mcpGrantOrganizationSelections.map(({ grantId }) => ({
@@ -627,6 +665,9 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       resource: { objectId: id, objectType: "team" },
       subject: { objectId: teamOrganizationId, objectType: "organization" },
     })),
+    ...teams
+      .filter(({ id }) => dashboardLimitedTeamIds.has(id))
+      .map(({ id }) => teamDashboardLimitedRelationship(id)),
     ...teamMemberships.map(({ role, teamId, userId }) => ({
       relation: TEAM_RELATIONS[role],
       resource: { objectId: teamId, objectType: "team" },
@@ -650,11 +691,15 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     })),
     ...directorySource.relationships,
     ...mcpGrantSelections.map(toMcpGrantSelectionRelationship),
+    ...dashboards.flatMap(expectedDashboardRelationships),
+    ...dashboardPages.flatMap(expectedDashboardPageRelationships),
   ];
 
   return {
     apiKeyIds: apiKeys.map(({ id }) => id),
     apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
+    dashboardIds: dashboards.map(({ id }) => id),
+    dashboardPageIds: dashboardPages.map(({ id }) => id),
     expectedRelationships,
     feedbackDirectoryAssignments: directorySource.assignments,
     feedbackDirectoryIds: feedbackDirectories.map(({ id }) => id),
@@ -716,39 +761,54 @@ export const findMismatchedParentEdges = async (
   const apiKeyIds = idsFor("api_key");
   const feedbackDirectoryIds = idsFor("feedback_directory");
   const surveyIds = idsFor("survey");
+  const dashboardIds = idsFor("dashboard");
+  const dashboardPageIds = idsFor("dashboard_page");
 
-  const [teams, workspaces, apiKeys, feedbackDirectories, surveys] = await Promise.all([
-    teamIds.length === 0
-      ? []
-      : prisma.team.findMany({
-          where: { id: { in: [...teamIds] } },
-          select: { id: true, organizationId: true },
-        }),
-    workspaceIds.length === 0
-      ? []
-      : prisma.workspace.findMany({
-          where: { id: { in: [...workspaceIds] } },
-          select: { id: true, organizationId: true },
-        }),
-    apiKeyIds.length === 0
-      ? []
-      : prisma.apiKey.findMany({
-          where: { id: { in: [...apiKeyIds] } },
-          select: { id: true, organizationId: true },
-        }),
-    feedbackDirectoryIds.length === 0
-      ? []
-      : prisma.feedbackDirectory.findMany({
-          where: { id: { in: [...feedbackDirectoryIds] } },
-          select: { id: true, organizationId: true },
-        }),
-    surveyIds.length === 0
-      ? []
-      : prisma.survey.findMany({
-          where: { id: { in: [...surveyIds] } },
-          select: { id: true, workspaceId: true },
-        }),
-  ]);
+  const [teams, workspaces, apiKeys, feedbackDirectories, surveys, dashboards, dashboardPages] =
+    await Promise.all([
+      teamIds.length === 0
+        ? []
+        : prisma.team.findMany({
+            where: { id: { in: [...teamIds] } },
+            select: { id: true, organizationId: true },
+          }),
+      workspaceIds.length === 0
+        ? []
+        : prisma.workspace.findMany({
+            where: { id: { in: [...workspaceIds] } },
+            select: { id: true, organizationId: true },
+          }),
+      apiKeyIds.length === 0
+        ? []
+        : prisma.apiKey.findMany({
+            where: { id: { in: [...apiKeyIds] } },
+            select: { id: true, organizationId: true },
+          }),
+      feedbackDirectoryIds.length === 0
+        ? []
+        : prisma.feedbackDirectory.findMany({
+            where: { id: { in: [...feedbackDirectoryIds] } },
+            select: { id: true, organizationId: true },
+          }),
+      surveyIds.length === 0
+        ? []
+        : prisma.survey.findMany({
+            where: { id: { in: [...surveyIds] } },
+            select: { id: true, workspaceId: true },
+          }),
+      dashboardIds.length === 0
+        ? []
+        : prisma.dashboard.findMany({
+            where: { id: { in: [...dashboardIds] } },
+            select: { id: true, workspaceId: true },
+          }),
+      dashboardPageIds.length === 0
+        ? []
+        : prisma.dashboardPage.findMany({
+            where: { id: { in: [...dashboardPageIds] } },
+            select: { dashboardId: true, id: true },
+          }),
+    ]);
 
   const trueParents = new Map<string, string>([
     ...teams.map(({ id, organizationId }): [string, string] => [`team:${id}`, organizationId]),
@@ -759,16 +819,29 @@ export const findMismatchedParentEdges = async (
       organizationId,
     ]),
     ...surveys.map(({ id, workspaceId }): [string, string] => [`survey:${id}`, workspaceId]),
+    ...dashboards.map(({ id, workspaceId }): [string, string] => [`dashboard:${id}`, workspaceId]),
+    ...dashboardPages.map(({ dashboardId, id }): [string, string] => [`dashboard_page:${id}`, dashboardId]),
   ]);
 
   // A resource with no row at all is not reported here — that is an orphan, handled by the existence
   // check, and it has a working repair path. This is only about a resource that exists under a different
-  // organization (or, for a survey, workspace) than the edge claims.
+  // organization (or, for a survey or dashboard, workspace, and for a page, dashboard) than the edge claims.
   return edges.filter((edge) => {
     const trueParent = trueParents.get(`${edge.childType}:${edge.childId}`);
-    const claimedParent = edge.childType === "survey" ? edge.workspaceId : edge.organizationId;
-    return trueParent !== undefined && trueParent !== claimedParent;
+    return trueParent !== undefined && trueParent !== claimedParentOf(edge);
   });
+};
+
+const claimedParentOf = (edge: TAuthzedParentEdge): string => {
+  switch (edge.childType) {
+    case "dashboard":
+    case "survey":
+      return edge.workspaceId;
+    case "dashboard_page":
+      return edge.dashboardId;
+    default:
+      return edge.organizationId;
+  }
 };
 
 const byKind = <TKind extends TAuthzedSourceRef["kind"]>(
@@ -807,6 +880,8 @@ export const findMissingSourceRefs = async (
   const feedbackDirectoryRefs = byKind(refs, "feedbackDirectory");
   const feedbackDirectoryAssignmentRefs = byKind(refs, "feedbackDirectoryAssignment");
   const surveyRefs = byKind(refs, "survey");
+  const dashboardRefs = byKind(refs, "dashboard");
+  const dashboardPageRefs = byKind(refs, "dashboardPage");
   const mcpGrantSelectionRefs = byKind(refs, "mcpGrantSelection");
   const mcpGrantOrganizationRefs = mcpGrantSelectionRefs.filter(
     ({ resourceType }) => resourceType === "organization"
@@ -828,6 +903,8 @@ export const findMissingSourceRefs = async (
     surveys,
     mcpGrantOrganizations,
     mcpGrantWorkspaces,
+    dashboards,
+    dashboardPages,
   ] = await Promise.all([
     apiKeyRefs.length === 0
       ? []
@@ -931,6 +1008,18 @@ export const findMissingSourceRefs = async (
           },
           select: { grantId: true, workspaceId: true },
         }),
+    dashboardRefs.length === 0
+      ? []
+      : prisma.dashboard.findMany({
+          where: { id: { in: dashboardRefs.map(({ dashboardId }) => dashboardId) } },
+          select: { id: true },
+        }),
+    dashboardPageRefs.length === 0
+      ? []
+      : prisma.dashboardPage.findMany({
+          where: { id: { in: dashboardPageRefs.map(({ pageId }) => pageId) } },
+          select: { id: true },
+        }),
   ]);
 
   const existingApiKeyIds = new Set(apiKeys.map(({ id }) => id));
@@ -950,6 +1039,8 @@ export const findMissingSourceRefs = async (
   );
   const existingFeedbackDirectoryIds = new Set(feedbackDirectories.map(({ id }) => id));
   const existingSurveyIds = new Set(surveys.map(({ id }) => id));
+  const existingDashboardIds = new Set(dashboards.map(({ id }) => id));
+  const existingDashboardPageIds = new Set(dashboardPages.map(({ id }) => id));
   const existingMcpGrantSelections = new Set([
     ...mcpGrantOrganizations.map(({ grantId, organizationId }) =>
       pairKey(grantId, `organization:${organizationId}`)
@@ -968,6 +1059,10 @@ export const findMissingSourceRefs = async (
         return existingApiKeyIds.has(ref.apiKeyId);
       case "apiKeyWorkspaceGrant":
         return existingApiKeyWorkspaces.has(pairKey(ref.apiKeyId, ref.workspaceId));
+      case "dashboard":
+        return existingDashboardIds.has(ref.dashboardId);
+      case "dashboardPage":
+        return existingDashboardPageIds.has(ref.pageId);
       case "feedbackDirectory":
         return existingFeedbackDirectoryIds.has(ref.feedbackDirectoryId);
       case "feedbackDirectoryAssignment":

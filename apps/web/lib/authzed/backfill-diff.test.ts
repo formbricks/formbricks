@@ -198,6 +198,8 @@ describe("toSourceRef", () => {
 describe("resource type classification", () => {
   test.each([
     "api_key",
+    "dashboard",
+    "dashboard_page",
     "feedback_directory",
     "feedback_directory_assignment",
     "organization",
@@ -209,20 +211,19 @@ describe("resource type classification", () => {
     expect(isUnprojectedResourceType(resourceType)).toBe(false);
   });
 
-  test.each(["dashboard", "response"])(
-    "treats %s as deliberately unprojected, not managed",
-    (resourceType) => {
-      // These exist in the schema for later resource-level sharing. Pruning them would delete
-      // relationships a future projector is expected to own.
-      // No type may be both: managed means the sweep reads it and may prune what it finds.
-      expect(isUnprojectedResourceType(resourceType)).toBe(true);
-      expect(getManagedResourceTypes()).not.toContain(resourceType);
-    }
-  );
+  test.each(["response"])("treats %s as deliberately unprojected, not managed", (resourceType) => {
+    // These exist in the schema for later resource-level sharing. Pruning them would delete
+    // relationships a future projector is expected to own.
+    // No type may be both: managed means the sweep reads it and may prune what it finds.
+    expect(isUnprojectedResourceType(resourceType)).toBe(true);
+    expect(getManagedResourceTypes()).not.toContain(resourceType);
+  });
 
   test("exposes the managed types for a resource-type sweep", () => {
     expect([...getManagedResourceTypes()].sort()).toEqual([
       "api_key",
+      "dashboard",
+      "dashboard_page",
       "feedback_directory",
       "feedback_directory_assignment",
       "organization",
@@ -328,13 +329,10 @@ describe("summarizeObservation", () => {
   });
 
   test("counts unprojected resource types as ignored without naming a record", () => {
-    const summary = summarizeObservation([
-      tuple("dashboard", "dash-1", "workspace", "workspace", "ws-1"),
-      tuple("response", "resp-1", "survey", "survey", "survey-1"),
-    ]);
+    const summary = summarizeObservation([tuple("response", "resp-1", "survey", "survey", "survey-1")]);
 
     expect(summary).toEqual({
-      ignored: 2,
+      ignored: 1,
       managedRelationships: [],
       parentEdges: [],
       sourceRefs: [],
@@ -557,5 +555,107 @@ describe("survey relationships (ENG-3282)", () => {
         tuple("survey", "survey-1", "private_owner", "user", "user-1"),
       ])
     ).toEqual([]);
+  });
+});
+
+describe("dashboards, pages and team dashboard limits (ADR-0059)", () => {
+  test.each([
+    [
+      tuple("dashboard", "dash-1", "workspace", "workspace", "ws-1"),
+      { dashboardId: "dash-1", kind: "dashboard" },
+    ],
+    [
+      tuple("dashboard", "dash-1", "selected_by_team", "team", "team-1"),
+      { dashboardId: "dash-1", kind: "dashboard" },
+    ],
+    [
+      tuple("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
+      { kind: "dashboardPage", pageId: "page-1" },
+    ],
+    [
+      tuple("dashboard_page", "page-1", "open_on", "dashboard", "dash-1"),
+      { kind: "dashboardPage", pageId: "page-1" },
+    ],
+    [
+      tuple("dashboard_page", "page-1", "limited_team", "team", "team-1"),
+      { kind: "dashboardPage", pageId: "page-1" },
+    ],
+    [tuple("team", "team-1", "dashboard_limited", "team", "team-1"), { kind: "team", teamId: "team-1" }],
+  ])("names the source record of %o", (relationship, expected) => {
+    expect(toSourceRef(relationship)).toEqual(expected);
+  });
+
+  test.each([
+    // A marker naming another team would strip that team's viewers from this one: never this team's fact.
+    tuple("team", "team-1", "dashboard_limited", "team", "team-2"),
+    tuple("dashboard", "dash-1", "workspace", "team", "team-1"),
+    tuple("dashboard_page", "page-1", "open_on", "team", "team-1"),
+    tuple("dashboard_page", "page-1", "limited_team", "dashboard", "dash-1"),
+  ])("leaves %o outside the vocabulary", (relationship) => {
+    expect(toSourceRef(relationship)).toBeNull();
+    expect(summarizeObservation([relationship]).unmanaged).toHaveLength(1);
+  });
+
+  test("verifies a dashboard's workspace and a page's dashboard and open_on edges as parents", () => {
+    const summary = summarizeObservation([
+      tuple("dashboard", "dash-1", "workspace", "workspace", "ws-1"),
+      tuple("dashboard", "dash-1", "selected_by_team", "team", "team-1"),
+      tuple("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
+      tuple("dashboard_page", "page-1", "open_on", "dashboard", "dash-1"),
+      tuple("dashboard_page", "page-1", "limited_team", "team", "team-1"),
+    ]);
+
+    expect(summary.parentEdges).toEqual(
+      expect.arrayContaining([
+        { childId: "dash-1", childType: "dashboard", relation: "workspace", workspaceId: "ws-1" },
+        { childId: "page-1", childType: "dashboard_page", dashboardId: "dash-1", relation: "dashboard" },
+        { childId: "page-1", childType: "dashboard_page", dashboardId: "dash-1", relation: "open_on" },
+      ])
+    );
+    expect(summary.parentEdges).toHaveLength(3);
+    expect(summary.sourceRefs).toEqual([
+      { dashboardId: "dash-1", kind: "dashboard" },
+      { kind: "dashboardPage", pageId: "page-1" },
+    ]);
+  });
+
+  // A page whose limit drifted must show up: `open_on` and `limited_team` are compared, the parent is not.
+  test("reports a page still open in SpiceDB after PostgreSQL limited it", () => {
+    expect(
+      findMismatchedPermissionRelations(
+        [
+          tuple("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
+          tuple("dashboard_page", "page-1", "limited_team", "team", "team-1"),
+        ],
+        [
+          tuple("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
+          tuple("dashboard_page", "page-1", "open_on", "dashboard", "dash-1"),
+        ]
+      )
+    ).toEqual([
+      {
+        expectedRelations: ["limited_team"],
+        observedRelations: ["open_on"],
+        source: { kind: "dashboardPage", pageId: "page-1" },
+      },
+    ]);
+  });
+
+  test("reports a team whose dashboard limit marker is missing", () => {
+    expect(
+      findMismatchedPermissionRelations(
+        [
+          tuple("team", "team-1", "organization", "organization", "org-1"),
+          tuple("team", "team-1", "dashboard_limited", "team", "team-1"),
+        ],
+        [tuple("team", "team-1", "organization", "organization", "org-1")]
+      )
+    ).toEqual([
+      {
+        expectedRelations: ["dashboard_limited"],
+        observedRelations: [],
+        source: { kind: "team", teamId: "team-1" },
+      },
+    ]);
   });
 });

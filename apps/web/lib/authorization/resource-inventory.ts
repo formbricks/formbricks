@@ -40,6 +40,10 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   CreativeLanguage: "parent_derived_or_data_integrity",
   CreativeTrigger: "parent_derived_or_data_integrity",
   Dashboard: "direct_authorization_resource",
+  // A Dashboard page is projected into SpiceDB with its team limits (ADR-0059); `DashboardPageTeam` and
+  // `TeamDashboard` are the limits it is projected from.
+  DashboardPage: "direct_authorization_resource",
+  DashboardPageTeam: "relationship_or_grant_source",
   DashboardWidget: "parent_derived_or_data_integrity",
   DataMigration: "public_or_out_of_scope",
   // A system queue of cleanup work (Hub records, storage files) left by deletes; no user reads it.
@@ -91,6 +95,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Tag: "workspace_inherited_resource",
   TagsOnResponses: "parent_derived_or_data_integrity",
   Team: "direct_authorization_resource",
+  TeamDashboard: "relationship_or_grant_source",
   TeamUser: "relationship_or_grant_source",
   TwoFactor: "authentication_or_application",
   User: "authentication_or_application",

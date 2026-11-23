@@ -1,11 +1,14 @@
 import "server-only";
 import type { TAuthzedRelationship } from "./client";
 import {
+  DASHBOARD_PAGE_RELATIONS,
+  DASHBOARD_RELATIONS,
   MCP_GRANT_RELATION,
   MCP_GRANT_SUBJECT_TYPE,
   ORGANIZATION_ACCESS_RELATIONS,
   ORGANIZATION_RELATIONS,
   SURVEY_RELATIONS,
+  TEAM_DASHBOARD_LIMITED_RELATION,
   TEAM_RELATIONS,
   WORKSPACE_API_KEY_RELATIONS,
   WORKSPACE_TEAM_RELATIONS,
@@ -30,9 +33,10 @@ import {
  * Deliberately unprojected during the current-model migration: resource-level access is resolved
  * through PostgreSQL parent lookups instead. Reconciliation must classify these as ignored rather
  * than orphaned — pruning them would delete relationships a future projector is expected to own.
- * `survey` left this list with ENG-3282, when `./survey` began projecting it.
+ * `survey` left this list with ENG-3282, when `./survey` began projecting it, and `dashboard` with
+ * ADR-0059, when `./dashboard` began projecting dashboards and their pages.
  */
-const UNPROJECTED_RESOURCE_TYPES = ["dashboard", "response"] as const;
+const UNPROJECTED_RESOURCE_TYPES = ["response"] as const;
 
 export type TAuthzedRelationshipRef = Readonly<{
   objectId: string;
@@ -49,6 +53,8 @@ export type TAuthzedRelationshipRef = Readonly<{
 export type TAuthzedSourceRef =
   | Readonly<{ apiKeyId: string; kind: "apiKey" }>
   | Readonly<{ apiKeyId: string; kind: "apiKeyWorkspaceGrant"; workspaceId: string }>
+  | Readonly<{ dashboardId: string; kind: "dashboard" }>
+  | Readonly<{ kind: "dashboardPage"; pageId: string }>
   | Readonly<{ feedbackDirectoryId: string; kind: "feedbackDirectory" }>
   | Readonly<{
       assignmentId: string;
@@ -141,6 +147,16 @@ const toTeamSourceRef: TSourceRefResolver = ({ relation, resource, subject }) =>
   if (subject.objectType === "organization" && relation === PARENT_RELATION) {
     return { kind: "team", teamId: resource.objectId };
   }
+  // The dashboard limit marker (ADR-0059) is the team's own fact, and only ever names the team itself.
+  // A marker naming another team is outside the vocabulary: it would strip that team's viewers from this
+  // one, so it is reported as unmanaged rather than read as this team's.
+  if (
+    relation === TEAM_DASHBOARD_LIMITED_RELATION &&
+    subject.objectType === "team" &&
+    subject.objectId === resource.objectId
+  ) {
+    return { kind: "team", teamId: resource.objectId };
+  }
   if (subject.objectType === "user" && TEAM_ROLE_RELATIONS.has(relation)) {
     return { kind: "teamMembership", teamId: resource.objectId, userId: subject.objectId };
   }
@@ -223,6 +239,38 @@ const toSurveySourceRef: TSourceRefResolver = ({ relation, resource, subject }) 
 };
 
 /**
+ * A dashboard's edges (ADR-0059): its workspace, and the teams whose dashboard limit selects it. Both are
+ * sourced by the dashboard's row, which the projector reconciles as a whole.
+ */
+const toDashboardSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (
+    (relation === DASHBOARD_RELATIONS.workspace && subject.objectType === "workspace") ||
+    (relation === DASHBOARD_RELATIONS.selectedByTeam && subject.objectType === "team")
+  ) {
+    return { dashboardId: resource.objectId, kind: "dashboard" };
+  }
+
+  return null;
+};
+
+const DASHBOARD_PAGE_DASHBOARD_RELATIONS = new Set<string>([
+  DASHBOARD_PAGE_RELATIONS.dashboard,
+  DASHBOARD_PAGE_RELATIONS.openOn,
+]);
+
+/** A page's edges (ADR-0059): its dashboard, `open_on` while it has no team limit, and its limit teams. */
+const toDashboardPageSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (
+    (DASHBOARD_PAGE_DASHBOARD_RELATIONS.has(relation) && subject.objectType === "dashboard") ||
+    (relation === DASHBOARD_PAGE_RELATIONS.limitedTeam && subject.objectType === "team")
+  ) {
+    return { kind: "dashboardPage", pageId: resource.objectId };
+  }
+
+  return null;
+};
+
+/**
  * The vocabulary in one table: which resource types imply a source record, and how.
  *
  * `MANAGED_RESOURCE_TYPES` is derived from these keys rather than listed separately, so a resource
@@ -234,6 +282,8 @@ const toSurveySourceRef: TSourceRefResolver = ({ relation, resource, subject }) 
  */
 const SOURCE_REF_RESOLVERS = {
   api_key: toApiKeySourceRef,
+  dashboard: toDashboardSourceRef,
+  dashboard_page: toDashboardPageSourceRef,
   feedback_directory: toFeedbackDirectorySourceRef,
   feedback_directory_assignment: toFeedbackDirectoryAssignmentSourceRef,
   organization: toOrganizationSourceRef,
@@ -301,7 +351,10 @@ export const toSourceRef = (relationship: TAuthzedRelationship): TAuthzedSourceR
  * hands every owner and manager of that organization full access to another tenant's workspace, with
  * nothing in PostgreSQL to show for it.
  */
-export type TAuthzedParentEdge = TAuthzedOrganizationParentEdge | TAuthzedSurveyWorkspaceEdge;
+export type TAuthzedParentEdge =
+  | TAuthzedOrganizationParentEdge
+  | TAuthzedSurveyWorkspaceEdge
+  | TAuthzedDashboardPageParentEdge;
 
 export type TAuthzedOrganizationParentEdge = Readonly<{
   childId: string;
@@ -331,9 +384,22 @@ export type TAuthzedOrganizationParentEdge = Readonly<{
  */
 export type TAuthzedSurveyWorkspaceEdge = Readonly<{
   childId: string;
-  childType: "survey";
+  /** `dashboard` (ADR-0059): `dashboard:D#workspace@workspace:W`, checked the same way. */
+  childType: "dashboard" | "survey";
   relation: string;
   workspaceId: string;
+}>;
+
+/**
+ * A page claiming a dashboard (ADR-0059): `dashboard_page:P#dashboard@dashboard:D`, and the `#open_on`
+ * edge that opens the page to that dashboard's readers. `open_on` naming another dashboard would hand the
+ * page to that dashboard's readers, so both are checked against `DashboardPage.dashboardId`.
+ */
+export type TAuthzedDashboardPageParentEdge = Readonly<{
+  childId: string;
+  childType: "dashboard_page";
+  dashboardId: string;
+  relation: string;
 }>;
 
 /** Stable identity for deduplication and ordering. Field order is fixed by the union's key order. */
@@ -382,6 +448,27 @@ const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | 
     SURVEY_WORKSPACE_RELATIONS.has(relation)
   ) {
     return { childId: resource.objectId, childType: "survey", relation, workspaceId: subject.objectId };
+  }
+
+  if (
+    resource.objectType === "dashboard" &&
+    subject.objectType === "workspace" &&
+    relation === DASHBOARD_RELATIONS.workspace
+  ) {
+    return { childId: resource.objectId, childType: "dashboard", relation, workspaceId: subject.objectId };
+  }
+
+  if (
+    resource.objectType === "dashboard_page" &&
+    subject.objectType === "dashboard" &&
+    DASHBOARD_PAGE_DASHBOARD_RELATIONS.has(relation)
+  ) {
+    return {
+      childId: resource.objectId,
+      childType: "dashboard_page",
+      dashboardId: subject.objectId,
+      relation,
+    };
   }
 
   if (relation !== PARENT_RELATION || subject.objectType !== "organization") {
@@ -445,12 +532,15 @@ const relationNames = (relationships: ReadonlyArray<TAuthzedRelationship>): Read
 
 /**
  * Whether a relationship only asserts ownership, which `findMismatchedParentEdges` verifies instead:
- * every `#organization` parent edge, and a survey's `#workspace` edge. Not `#shared_workspace` — that
- * one encodes visibility, so a survey whose visibility drifted must show up as a permission mismatch.
+ * every `#organization` parent edge, a survey's or dashboard's `#workspace` edge, and a page's
+ * `#dashboard` edge. Not `#shared_workspace` or `#open_on` — those encode visibility and page limits, so
+ * a survey or page whose access drifted must show up as a permission mismatch.
  */
 const isParentRelationship = ({ relation, resource }: TAuthzedRelationship): boolean =>
   relation === PARENT_RELATION ||
-  (resource.objectType === "survey" && relation === SURVEY_RELATIONS.workspace);
+  (resource.objectType === "survey" && relation === SURVEY_RELATIONS.workspace) ||
+  (resource.objectType === "dashboard" && relation === DASHBOARD_RELATIONS.workspace) ||
+  (resource.objectType === "dashboard_page" && relation === DASHBOARD_PAGE_RELATIONS.dashboard);
 
 /**
  * Find source records that exist on both sides but carry a different exact permission relation set.

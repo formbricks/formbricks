@@ -5,6 +5,7 @@ type TAuthorizationObjectType = TAuthorizationActor["type"] | TAuthorizationReso
 
 const SPICEDB_OBJECT_TYPE_MAP = {
   apiKey: "api_key",
+  dashboardPage: "dashboard_page",
   feedbackDirectory: "feedback_directory",
   feedbackDirectoryAssignment: "feedback_directory_assignment",
 } as const satisfies Partial<Record<TAuthorizationObjectType, string>>;
