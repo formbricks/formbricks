@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   applyRateLimit: vi.fn(),
   getMembershipByUserIdOrganizationId: vi.fn(),
   runOwnerGuardedTransaction: vi.fn(),
+  queryRaw: vi.fn(),
   lockUserActiveState: vi.fn(),
   updateMembership: vi.fn(),
   updateMembershipInTransaction: vi.fn(),
@@ -80,7 +81,8 @@ const OTHER_ORG_ID = "cm9gptbhg0003192zceq9ayuf";
 const CURRENT_USER_ID = "cm9gptbhg0001192zceq9ayud";
 const TARGET_USER_ID = "cm9gptbhg0002192zceq9ayue";
 const GRANT_AUDITS = [{ grantId: "grant-1" }];
-const TX = { stand: "in" };
+// The guarded transaction's stand-in; `$queryRaw` answers the locked read of the member's role.
+const TX = { stand: "in", $queryRaw: mocks.queryRaw };
 
 const membership = (userId: string, role: string) => ({
   userId,
@@ -128,6 +130,7 @@ beforeEach(() => {
   allow("organization.manage_access", "organization.manage");
   roles({ caller: "owner", target: "owner" });
   mocks.checkRoleManagementPermission.mockResolvedValue(undefined);
+  mocks.queryRaw.mockResolvedValue([{ role: "member" }]);
   // The last-owner guard runs the change in its own transaction; the fake runs the
   // callback with a stand-in tx so both still reach the mocks.
   mocks.runOwnerGuardedTransaction.mockImplementation(
@@ -279,6 +282,32 @@ describe("PATCH /api/internal/members/{userId}", () => {
       expect(response.status).toBe(409);
       expect((await response.json()).detail).toBe("You cannot demote the last owner of the organization");
       expect(mocks.updateMembership).not.toHaveBeenCalled();
+    });
+
+    test("refuses a manager whose target became an owner after the lookup, and writes nothing", async () => {
+      roles({ caller: "manager", target: "member" });
+      mocks.queryRaw.mockResolvedValue([{ role: "owner" }]);
+      const response = await setRole("member");
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe("Only owners can change the role of an owner");
+      expect(mocks.updateMembershipInTransaction).not.toHaveBeenCalled();
+      expect(mocks.projectMembershipRoleChange).not.toHaveBeenCalled();
+    });
+
+    test("lets a manager change a member the locked read still finds a non-owner", async () => {
+      roles({ caller: "manager", target: "member" });
+
+      expect((await setRole("member")).status).toBe(200);
+      expect(mocks.queryRaw).toHaveBeenCalledOnce();
+      expect(mocks.updateMembershipInTransaction).toHaveBeenCalledOnce();
+    });
+
+    test("doesn't re-read the role under the lock for an owner, whom the rule doesn't limit", async () => {
+      roles({ caller: "owner", target: "member" });
+
+      expect((await setRole("manager")).status).toBe(200);
+      expect(mocks.queryRaw).not.toHaveBeenCalled();
     });
 
     test("makes a member an owner without counting owners", async () => {
