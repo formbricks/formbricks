@@ -1,12 +1,11 @@
 import { z } from "zod";
-import type { TResponseFilterCriteria } from "@formbricks/types/responses";
+import { type TResponseFilterCriteria, ZResponseFilterCriteriaFromJson } from "@formbricks/types/responses";
 import {
   FILTER_TEXT_MAX_LENGTH,
   IDENTIFIER_MAX_LENGTH,
   PICKED_ITEMS_MAX,
 } from "@/app/api/internal/lib/limits";
 import { checkEntriesMax, checkStringMax, isPlainRecord } from "@/app/api/internal/lib/value-bounds";
-import { ZResponseFilterCriteriaJson } from "@/lib/response/filter-criteria-json";
 
 type TPath = (string | number)[];
 
@@ -77,6 +76,6 @@ const checkResponseFilterCriteria = (criteria: TResponseFilterCriteria, ctx: z.R
   if (criteria.tags) checkConditionText(criteria.tags, ["tags"], ctx);
 };
 
-/** A response filter read from a JSON body (`ZResponseFilterCriteriaJson`), its keys and values bounded. */
+/** A response filter read from a JSON body (`ZResponseFilterCriteriaFromJson`), its keys and values bounded. */
 export const ZResponseFilterCriteriaBody =
-  ZResponseFilterCriteriaJson.superRefine(checkResponseFilterCriteria);
+  ZResponseFilterCriteriaFromJson.superRefine(checkResponseFilterCriteria);

@@ -5,8 +5,7 @@
  */
 import type { TFunction } from "i18next";
 import { z } from "zod";
-import { ZResponseFilterCriteria } from "@formbricks/types/responses";
-import { reviveFilterDates } from "@/lib/response/filter-criteria-json";
+import { ZResponseFilterCriteriaFromJson } from "@formbricks/types/responses";
 import type { TAnswerDisplay, TMultiSelectLayout } from "./types";
 
 export type TExportFormat = "csv" | "xlsx";
@@ -85,7 +84,7 @@ export const ZExportRequest = z
      */
     includeLowQuality: z.boolean().optional(),
     /** The Responses filter, or `{ responseIds }` for a selection of rows. */
-    filter: z.preprocess(reviveFilterDates, ZResponseFilterCriteria.optional()),
+    filter: ZResponseFilterCriteriaFromJson.optional(),
   })
   .strict()
   .superRefine((request, ctx) => {
