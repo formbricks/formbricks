@@ -1,5 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import type { TCubeQueryActor } from "@/modules/ee/analysis/api/lib/cube-config";
+import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { getMemberAttributeValuesByKey } from "@/modules/ee/member-attributes/lib/service";
 import {
   type TCubeViewerAccessClaim,
@@ -82,12 +84,53 @@ export const getViewerAccessClaimForDataset = async (
   return buildViewerAccessClaim(resolved.get(datasetId) ?? null);
 };
 
-/** The summary of `reader`'s access to the datasets a dashboard's visible pages read. */
+/** Where a summary's record probe runs: the workspace the dashboard reads from, as the caller. */
+export type TViewerAccessProbeScope = { workspaceId: string; actor: TCubeQueryActor };
+
+/**
+ * Whether `reader` sees at least one record of `datasetId` under their access: one count query carrying
+ * the same claim every chart read carries, so "matches nothing" means exactly what the charts would show.
+ */
+const hasMatchingRecord = async (
+  reader: NonNullable<TViewerAccessReader>,
+  datasetId: string,
+  resolved: TResolvedViewerAccess,
+  scope: TViewerAccessProbeScope
+): Promise<boolean> => {
+  const viewerAccess = buildViewerAccessClaim(resolved);
+  if (!viewerAccess) return true;
+  const { rows } = await runChartQuery({
+    query: { measures: ["FeedbackRecords.count"] },
+    datasetId,
+    workspaceId: scope.workspaceId,
+    organizationId: reader.organizationId,
+    actor: scope.actor,
+    source: "v3.dashboards.chartData",
+    viewerAccess,
+  });
+  return rows.some((row) => Number(row["FeedbackRecords.count"] ?? 0) > 0);
+};
+
+/**
+ * The summary of `reader`'s access to the datasets a dashboard's visible pages read. With a probe scope,
+ * a viewer whose values exist but match no record in any restricted dataset (a misspelt "Swedn") is
+ * `unmatched` too, so they see "Your access hasn't been set up" rather than a page of empty charts.
+ */
 export const getViewerAccessSummary = async (
   reader: TViewerAccessReader,
-  datasetIds: readonly string[]
+  datasetIds: readonly string[],
+  probe?: TViewerAccessProbeScope
 ): Promise<TViewerAccessSummary> => {
   if (!reader || datasetIds.length === 0) return UNRESTRICTED_VIEWER_ACCESS;
   const resolved = await resolveViewerAccessForDatasets(reader.organizationId, reader.userId, datasetIds);
-  return summarizeViewerAccess([...resolved.values()]);
+  const summary = summarizeViewerAccess([...resolved.values()]);
+  if (summary.status !== "restricted" || !probe) return summary;
+
+  const restricted = [...resolved.entries()].filter(
+    (entry): entry is [string, TResolvedViewerAccess] => entry[1] !== null
+  );
+  const matches = await Promise.all(
+    restricted.map(([datasetId, access]) => hasMatchingRecord(reader, datasetId, access, probe))
+  );
+  return matches.some(Boolean) ? summary : { ...summary, status: "unmatched" };
 };

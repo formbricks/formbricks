@@ -188,7 +188,12 @@ export async function getV3Dashboard({
       widgets: row.widgets.filter(({ pageId }) => readable.has(pageId)),
     };
     const datasetIds = visible.widgets.flatMap(({ chart }) => (chart ? [chart.feedbackDirectoryId] : []));
-    const viewerAccess = await getViewerAccessSummary(getViewerAccessReader(access), datasetIds);
+    const actor = getV3AuthorizationActor(context.authentication);
+    const viewerAccess = await getViewerAccessSummary(
+      getViewerAccessReader(access),
+      datasetIds,
+      actor ? { workspaceId: access.workspaceId, actor } : undefined
+    );
     await queueViewedAsAudit(access, row.id);
 
     return successResponse(
