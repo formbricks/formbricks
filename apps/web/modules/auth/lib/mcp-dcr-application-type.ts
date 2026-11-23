@@ -55,21 +55,26 @@ export const isDcrRegistration = (request: Request): boolean => {
   }
 };
 
+/** The registration body as a JSON object, or `null` when it is not one (upstream's to reject). */
+const parseClientMetadata = (body: string): Record<string, unknown> | null => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return null;
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  return parsed as Record<string, unknown>;
+};
+
 /**
  * The registration body with `application_type: "native"` filled in when it was absent and at least one
  * redirect URI is an http loopback. Returns the input unchanged in every other case, including a body
  * that is not JSON or not an object — this must never be the reason a registration fails.
  */
 export const withInferredApplicationType = (body: string): string => {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(body);
-  } catch {
-    return body;
-  }
-  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return body;
-
-  const client = parsed as Record<string, unknown>;
+  const client = parseClientMetadata(body);
+  if (!client) return body;
   if (client.application_type !== undefined) return body;
 
   const redirectUris = client.redirect_uris;
@@ -91,20 +96,16 @@ const DCR_REFUSED_METADATA_FIELDS = [
   "backchannel_logout_session_required",
 ] as const;
 
+type TRefusedDcrMetadataField = (typeof DCR_REFUSED_METADATA_FIELDS)[number];
+
 /**
  * The first refused metadata field a DCR body sets, or `null`. A body that is not a JSON object is
  * upstream's to reject, like in `findDisallowedRedirectUri`.
  */
-export const findRefusedDcrMetadataField = (body: string): string | null => {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(body);
-  } catch {
-    return null;
-  }
-  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-
-  return DCR_REFUSED_METADATA_FIELDS.find((field) => Object.hasOwn(parsed, field)) ?? null;
+export const findRefusedDcrMetadataField = (body: string): TRefusedDcrMetadataField | null => {
+  const client = parseClientMetadata(body);
+  if (!client) return null;
+  return DCR_REFUSED_METADATA_FIELDS.find((field) => Object.hasOwn(client, field)) ?? null;
 };
 
 /**

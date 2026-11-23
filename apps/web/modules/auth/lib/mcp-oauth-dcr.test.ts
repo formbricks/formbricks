@@ -1,11 +1,16 @@
-import { oauthProvider } from "@better-auth/oauth-provider";
-import { betterAuth } from "better-auth";
-import { memoryAdapter } from "better-auth/adapters/memory";
-import { jwt } from "better-auth/plugins";
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
 import { GET as getProtectedResourceMetadata } from "@/app/.well-known/oauth-protected-resource/[[...resource]]/route";
 import { prepareDcrRequest, withInferredApplicationType } from "./mcp-dcr-application-type";
+import {
+  BASE_URL,
+  LOOPBACK_REGISTRATION,
+  REDIRECT_URI,
+  REGISTER_PATH,
+  createAuthInstance,
+  registrationRequest,
+  throughRoute,
+} from "./mcp-oauth-dcr-test-utils";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl, getOAuthUserInfoUrl } from "./oauth-urls";
 
@@ -24,23 +29,6 @@ vi.mock("@/lib/env", () => ({
   },
 }));
 
-const BASE_URL = "http://localhost:3000";
-const REDIRECT_URI = "http://127.0.0.1:33418/callback";
-
-/**
- * A registration exactly as an MCP client sends it: a loopback callback and no `application_type`.
- * Shared by the two suites below, which read it from opposite ends — one asks what upstream does with
- * it, the other that our own gate lets it through untouched.
- */
-const LOOPBACK_REGISTRATION = JSON.stringify({
-  client_name: "MCP DCR client that omits application_type",
-  redirect_uris: [REDIRECT_URI],
-  grant_types: ["authorization_code", "refresh_token"],
-  response_types: ["code"],
-  token_endpoint_auth_method: "none",
-  scope: "surveys:read",
-});
-
 /**
  * Regression suite for the MCP OAuth handshake as REAL clients drive it (Claude Code, MCP
  * Inspector): they read `scopes_supported` from the RFC 9728 protected-resource metadata, do
@@ -50,40 +38,6 @@ const LOOPBACK_REGISTRATION = JSON.stringify({
  * how the missing offline_access advertisement broke every MCP-client login. A pre-seeded
  * full-scope client would mask that bug, so this suite must register via DCR only.
  */
-const createAuthInstance = ({ withEmailPassword = false }: { withEmailPassword?: boolean } = {}) => {
-  // memoryAdapter needs every model it will touch declared up front — it does not create them
-  // lazily. Better Auth 1.7 added the resource tables, and without them the plugin's boot-time
-  // resource seeding logs `Model oauthResource not found in the DB` and every authorize fails.
-  const db: Record<string, unknown[]> = {
-    user: [],
-    session: [],
-    account: [],
-    verification: [],
-    jwks: [],
-    oauthClient: [],
-    oauthAccessToken: [],
-    oauthRefreshToken: [],
-    oauthConsent: [],
-    oauthResource: [],
-    oauthClientResource: [],
-    oauthClientAssertion: [],
-  };
-  return betterAuth({
-    baseURL: BASE_URL,
-    secret: "mcp-oauth-dcr-test-secret",
-    database: memoryAdapter(db),
-    // Only the end-to-end flow below needs a signed-in user; everything else stops at the login redirect.
-    ...(withEmailPassword ? { emailAndPassword: { enabled: true } } : {}),
-    // jwt is a hard dependency of oauthProvider; configured as in production auth.ts.
-    plugins: [
-      jwt({
-        disableSettingJwtHeader: true,
-        jwt: { issuer: getAuthIssuerUrl(), audience: getMcpResourceUrl() },
-      }),
-      oauthProvider(getMcpOauthProviderOptions()),
-    ],
-  });
-};
 
 const fetchAdvertisedScopes = async (): Promise<string[]> => {
   const response = await getProtectedResourceMetadata(
@@ -378,21 +332,6 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
   });
 });
 
-const REGISTER_PATH = "/api/auth/oauth2/register";
-
-const registrationRequest = (path: string, body: string, contentType = "application/json") =>
-  new Request(`${BASE_URL}${path}`, {
-    method: "POST",
-    headers: { "content-type": contentType },
-    body,
-  });
-
-/** The route's real pipeline: the gate first, then Better Auth for whatever it lets through. */
-const throughRoute = async (auth: ReturnType<typeof createAuthInstance>, request: Request) => {
-  const prepared = await prepareDcrRequest(request);
-  return prepared instanceof Response ? prepared : auth.handler(prepared);
-};
-
 /**
  * The DCR redirect-URI allowlist (ENG-3086) against the REAL plugin, which is the only place its two
  * load-bearing assumptions can be checked. The allowlist is a pre-handler gate keyed on the request
@@ -494,63 +433,6 @@ describe("DCR redirect-URI allowlist vs. the real plugin (ENG-3086)", () => {
     );
 
     expect(response.status).toBe(415);
-  });
-});
-
-/**
- * ENG-3533. A registered `backchannel_logout_uri` is a URL the Formbricks server itself POSTs a signed
- * `logout_token` to when a user who authorized the client signs out. Upstream only checks the literal
- * hostname, so a DNS name resolving to an internal address passes, and anyone can trigger the request
- * with their own account. No MCP client uses back-channel logout, so the anonymous gate refuses both
- * back-channel fields outright.
- */
-describe("DCR back-channel logout vs. the real plugin (ENG-3533)", () => {
-  const BACKCHANNEL_LOGOUT_URI = "https://internal-name.attacker.example.org/logout";
-  // Declared native, so upstream alone accepts the loopback callback without the gate's inference.
-  const withField = (field: Record<string, unknown>) =>
-    JSON.stringify({
-      ...(JSON.parse(LOOPBACK_REGISTRATION) as Record<string, unknown>),
-      application_type: "native",
-      ...field,
-    });
-
-  test("upstream alone registers a client with a back-channel logout URI", async () => {
-    const response = await createAuthInstance().handler(
-      registrationRequest(REGISTER_PATH, withField({ backchannel_logout_uri: BACKCHANNEL_LOGOUT_URI }))
-    );
-    const body = (await response.json()) as { client_id?: string; backchannel_logout_uri?: string };
-
-    // What the gate is measured against: the jwt plugin is on, so upstream stores the URI.
-    expect(response.status).toBe(201);
-    expect(body.backchannel_logout_uri).toBe(BACKCHANNEL_LOGOUT_URI);
-  });
-
-  test.each([
-    ["backchannel_logout_uri", { backchannel_logout_uri: BACKCHANNEL_LOGOUT_URI }],
-    ["backchannel_logout_session_required", { backchannel_logout_session_required: true }],
-    [
-      "both back-channel fields",
-      { backchannel_logout_uri: BACKCHANNEL_LOGOUT_URI, backchannel_logout_session_required: false },
-    ],
-  ])("the gate rejects a registration that sets %s", async (_label, field) => {
-    const response = await throughRoute(
-      createAuthInstance(),
-      registrationRequest(REGISTER_PATH, withField(field))
-    );
-    const body = (await response.json()) as { error?: string; client_id?: string };
-
-    expect(response.status).toBe(400);
-    expect(body.error).toBe("invalid_client_metadata");
-    expect(body.client_id).toBeUndefined();
-  });
-
-  test("a registration without back-channel fields still registers", async () => {
-    const response = await throughRoute(
-      createAuthInstance(),
-      registrationRequest(REGISTER_PATH, LOOPBACK_REGISTRATION)
-    );
-
-    expect(response.status).toBe(201);
   });
 });
 
