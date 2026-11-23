@@ -77,25 +77,32 @@ These are the limits that still run inside the Formbricks application server:
 
 | **Config**                    | **Limit**    | **Window** | **Identifier**                | **Used For**                                                                                                                                              |
 | ----------------------------- | ------------ | ---------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth.signup`                 | 30 requests  | 60 minutes | IP hash                       | Signup server action                                                                                                                                      |
-| `auth.forgotPassword`         | 5 requests   | 60 minutes | IP hash                       | Forgot password server action                                                                                                                             |
+| `auth.signup`                 | 30 requests  | 60 minutes | IP hash                       | `POST /api/internal/signups` |
+| `auth.forgotPassword`         | 5 requests   | 60 minutes | IP hash                       | `POST /api/internal/password-reset-requests` |
 | `auth.forgotPasswordPerAccount` | 3 emails | 60 minutes | User ID | Password-reset and SSO sign-in-hint emails to one account, however many IPs ask; once spent, further requests get the same answer but no email |
-| `auth.verifyEmail`            | 10 requests  | 60 minutes | IP hash                       | Resend verification server action                                                                                                                         |
+| `auth.verifyEmail`            | 10 requests  | 60 minutes | IP hash                       | `POST /api/internal/verification-emails` and `POST /api/internal/email-change-verifications` |
 | `api.v1`                      | 100 requests | 1 minute   | Session user ID               | Session-authenticated v1 management routes, `/api/v1/management/me`, and `/api/v1/integrations/*`                                                         |
 | `api.v2`                      | 100 requests | 1 minute   | API key ID                    | Authenticated v2 API wrapper outside the Envoy-managed `/api/v2/client/*` subset                                                                          |
-| `api.v3`                      | 100 requests | 1 minute   | API key ID or session user ID | v3 API wrapper                                                                                                                                            |
+| `api.v3`                      | 100 requests | 1 minute   | API key ID or session user ID | `/api/v3` routes, including those the dashboard calls                                                                                                                                            |
+| `api.internal` | 600 requests | 1 minute | Session user ID | The dashboard's `/api/internal` routes; writes also count against `actions.stateMutation` |
 | `api.client`                  | 100 requests | 1 minute   | IP hash                       | Uncovered client routes such as `GET /api/v1/client/og`, `GET /api/v2/client/[workspaceId]/environment`, and `POST /api/v2/client/[workspaceId]/user` |
 | `api.clientCreativeEvents`    | 600 requests | 1 minute   | IP hash                       | `POST /api/v2/client/[workspaceId]/creatives/events`, the SDK's creative Impressions and Clicks; a request over the limit still gets 204, uncounted |
+| `api.v3WorkflowWebhookToken`  | 100 requests | 1 minute   | Workflow ID and token hash prefix | Calls to one workflow's [Webhook Secret URL](/workflows/webhook-trigger), checked before the database is read. Each wrong token counts on its own, so it cannot use up the real caller's limit |
+| `api.v3WorkflowWebhook`       | 100 requests | 1 minute   | Workflow ID                   | Calls to one workflow's [Webhook Secret URL](/workflows/webhook-trigger) whose token matched                                                             |
+| Workflow webhook, organization | 300 requests | 1 minute  | Organization ID               | Webhook Secret URL calls across one organization's workflows. Change it with `WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE`                                  |
+| Workflow webhook, daily runs  | 10000 calls  | 1 day (UTC) | Workflow ID                 | Calls to one enabled workflow's Webhook Secret URL that pass the plan check, whether or not they start a run. Change it with `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`. Refuses runs while Redis is unavailable            |
+| `api.v3WorkflowTestRequests`  | 30 requests  | 1 minute   | API key ID or session user ID | "Send test request" on a workflow's HTTP request step                                                                                                     |
+| `api.v3WorkflowTestRuns`      | 30 requests  | 1 minute   | API key ID or session user ID | Workflow Test runs                                                                                                                                        |
 | `storage.upload`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `POST /api/v1/management/storage`                                                                                                   |
 | `storage.delete`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `DELETE /storage/[workspaceId]/[accessType]/[fileName]`                                                                           |
-| `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Profile email update action                                                                                                                               |
+| `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Changing the email in profile settings (`PATCH /api/internal/users/me`) |
 | `actions.passwordResetRequest` | 3 requests | 60 minutes | User ID                     | "Reset password" from the signed-in profile settings                                                                                                    |
-| `actions.inviteMember`        | 50 recipients | 24 hours  | Organization ID               | Single, bulk, onboarding, and resend invite actions                                                                                                       |
-| `actions.inviteMemberPerUser` | 50 recipients | 24 hours  | User ID                       | The same invite actions, counted for the inviting user across all of their organizations                                                                  |
-| `actions.createOrganization`  | 5 requests    | 24 hours  | User ID                       | Organization creation actions (onboarding and the organization switcher)                                                                                  |
+| `actions.inviteMember`        | 50 recipients | 24 hours  | Organization ID               | Single, bulk, onboarding and resend invites (`/api/internal/invites`, `/invites/batches`, `/onboarding-invites`, `/invites/{id}/emails`) |
+| `actions.inviteMemberPerUser` | 50 recipients | 24 hours  | User ID                       | The same invite routes, counted for the inviting user across all of their organizations |
+| `actions.createOrganization`  | 5 requests    | 24 hours  | User ID                       | `POST /api/internal/organizations` (onboarding and the organization switcher) |
 | `actions.surveyFollowUp`      | 50 requests  | 60 minutes | Organization ID               | Survey follow-up email processing                                                                                                                         |
-| `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | Link survey email send action                                                                                                                             |
-| `actions.licenseRecheck`      | 5 requests   | 1 minute   | User ID                       | Enterprise license recheck action                                                                                                                         |
+| `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | `POST /api/internal/link-survey-verification-emails` |
+| `actions.licenseRecheck`      | 5 requests   | 1 minute   | User ID                       | `POST /api/internal/license-checks` |
 
 Invite limits count successfully created or refreshed invites. A bulk request for 25 people consumes 25 units
 only when all 25 invites are created; recipients who are already members, already invited, or otherwise fail do
@@ -149,8 +156,10 @@ What happens when an email is capped depends on the flow:
   sign-in hint** look the same as a sent email, so a capped email cannot reveal whether an account or address
   exists. The verification resend and the signed-in reset also have their own per-account limit of 3 an hour,
   which does show an error.
-- **Follow-ups, workflow emails and response notifications** are skipped, and a workflow step is recorded as
-  failed.
+- **Follow-ups, workflow emails and response notifications** are skipped. A workflow email step is recorded as
+  skipped, except an email to an address from a workflow Variable, such as a Webhook payload: that step and its
+  run fail at once. Those emails also have a cap of 50 per hour per workflow, which
+  `EMAIL_RATE_LIMIT_MULTIPLIER` doesn't change.
 
 An email is charged before it is sent, so one the SMTP server then refuses still counts. Every capped email is
 logged as `Outbound email suppressed: rate limit reached` with the email type and the limit that was spent, never
@@ -213,7 +222,7 @@ This setting disables only the **application-level** limiter. It does **not** di
 - Redis/Valkey is required for the application-level limiter (`REDIS_URL`).
 - If you deploy Envoy rate limiting, use a dedicated Redis/Valkey backend for Envoy instead of sharing the app cache.
 - If application Redis is unavailable at runtime, abuse limits **fail closed** and every other limit **fails open**:
-  - **Refused until Redis is back:** sign-up, resending the verification email, organization creation, invites, forgot-password, and the email-change, password-reset and account-deletion requests in account settings, plus the brute-force guards (survey PIN, password-reset and email-change links, the email-token check, failed MCP authentication). These fail with the usual rate-limit error ("Maximum number of requests reached").
+  - **Refused until Redis is back:** sign-up, resending the verification email, organization creation, invites, forgot-password, and the email-change, password-reset and account-deletion requests in account settings, plus the brute-force guards (survey PIN, password-reset and email-change links, failed MCP authentication). These fail with the usual rate-limit error ("Maximum number of requests reached").
   - **Every counted outbound email** is also refused before it reaches your SMTP server. Email sent in the background, such as survey follow-ups and workflow emails, is skipped and logged rather than shown to anyone.
   - **Allowed without enforcement:** API throughput, other settings changes, storage, AI features and SAML sign-in, so the app and your surveys keep working.
 - Every rate-limit check that cannot reach Redis is logged at error level (`Redis unavailable` or `Rate limit check failed`) and counted in the `formbricks_rate_limiter_unavailable_total` metric, with `fail_mode` (`open` / `closed`) and `reason` (`no_client` / `error`) labels. The metric is exported when `PROMETHEUS_ENABLED` or `OTEL_EXPORTER_OTLP_ENDPOINT` is set. To be paged on a Redis outage, alert when it keeps increasing, for example `sum(rate(formbricks_rate_limiter_unavailable_total[5m])) > 0` for 5 minutes. The metric only moves when Redis refuses or drops the connection: a Redis that accepts connections but stops answering stalls those requests instead, with nothing logged or counted, so keep a separate health check on Redis itself.

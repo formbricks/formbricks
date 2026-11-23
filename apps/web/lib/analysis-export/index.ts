@@ -117,7 +117,7 @@ type TAnalysisSelected = {
   contact?: { id: string; attributes: { value: string }[] } | null;
   contactAttributes?: Record<string, unknown> | null;
   quotaLinks?: { quota: { name: string } }[];
-  variables?: Record<string, string | number>;
+  variables?: Record<string, string | number | boolean>;
   meta?: Record<string, unknown>;
   ttc?: Record<string, number>;
   surveyId?: string;

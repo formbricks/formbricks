@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthenticationError, OperationNotAllowedError, UnknownError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  UnknownError,
+} from "@formbricks/types/errors";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION,
@@ -118,6 +123,20 @@ describe("getSpreadsheetNameById", () => {
 
       await expect(getSpreadsheetNameById(authorizedIntegration, "sheet1")).rejects.toThrow(
         new OperationNotAllowedError(GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION)
+      );
+    });
+
+    // A mistyped or deleted spreadsheet is the caller's to fix, not a Google failure.
+    test("rejects with a ResourceNotFoundError when Google answers 404", async () => {
+      spreadsheetsGetMock.mockImplementation((_params, callback: (err: Error | null) => void) => {
+        setTimeout(
+          () => callback(Object.assign(new Error("Requested entity was not found."), { status: 404 })),
+          0
+        );
+      });
+
+      await expect(getSpreadsheetNameById(authorizedIntegration, "missing-sheet")).rejects.toThrow(
+        new ResourceNotFoundError("Spreadsheet", "missing-sheet")
       );
     });
 

@@ -26,6 +26,11 @@ export type TEmailRateLimitContext = {
    * in. Only such email counts against the limits respondents can drive.
    */
   externalRecipient?: boolean;
+  /**
+   * The workflow sending to an address it read from the run (a Webhook payload), never a value a request body
+   * sets. Set only for such email; it is then also counted per workflow (ENG-7169).
+   */
+  workflowId?: string;
 };
 
 type TLimit = { allowedPerInterval: number; interval: number };
@@ -35,8 +40,14 @@ type TEmailRateLimit = {
   deployment?: TLimit;
   organization?: TLimit;
   actor?: TLimit;
-  // The three above count volume and are scaled by `EMAIL_RATE_LIMIT_MULTIPLIER`, for deployments that
-  // legitimately send more. Recipient caps protect a person's inbox and never are.
+  /**
+   * One workflow's email to addresses it read from the run (`context.workflowId`). Anyone holding a leaked
+   * Webhook Secret URL can choose those addresses, so this keeps one workflow from spending the whole
+   * organization's budget. Not scaled: it bounds abuse through one URL, not a deployment's volume.
+   */
+  workflow?: TLimit;
+  // The three above `workflow` count volume and are scaled by `EMAIL_RATE_LIMIT_MULTIPLIER`, for deployments
+  // that legitimately send more. Recipient caps protect a person's inbox and never are.
   recipient?: {
     /** One address, from one organization. */
     inOrganization?: TLimit;
@@ -128,10 +139,12 @@ export const emailRateLimits: Record<TEmailType, TEmailRateLimit> = {
   customization_preview: { actor: limit(10) },
   verified_survey_link: visitorRequestedSurveyLink,
   survey_follow_up: externalSurveyEmail,
-  workflow_email: externalSurveyEmail,
+  // Plus 50 an hour per workflow for email to an address read from the run (ENG-7169).
+  workflow_email: { ...externalSurveyEmail, workflow: limit(50) },
 };
 
 type TEmailRateLimitScope =
+  | "workflow"
   | "deployment"
   | "organization"
   | "actor"
@@ -238,6 +251,9 @@ const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitC
   }
   if (limits.deployment) {
     charge("deployment", scaled(limits.deployment), "all");
+  }
+  if (limits.workflow && context.workflowId) {
+    charge("workflow", limits.workflow, context.workflowId);
   }
   return charges;
 };

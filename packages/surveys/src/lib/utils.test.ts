@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TJsWorkspaceStateSurvey } from "../../../types/js";
-import { type TAllowedFileExtension, mimeTypes } from "../../../types/storage";
+import { type TAllowedFileExtension, ZAllowedFileExtension, mimeTypes } from "../../../types/storage";
 import type { TSurveyLanguage } from "../../../types/surveys/types";
 import {
   cn,
@@ -12,10 +12,12 @@ import {
   getShuffledChoicesIds,
   getShuffledRowIndices,
   getSurveyLanguageTag,
+  isFileTypeAllowed,
   isRTL,
   isRTLLanguage,
   mirrorPlacementForDir,
   resolveSelectedLanguageCode,
+  mimeTypes as uploadMimeTypes,
 } from "./utils";
 
 // Mock crypto.getRandomValues for deterministic shuffle tests
@@ -30,6 +32,43 @@ describe("getMimeType", () => {
     test(`should return "${expectedMimeType}" for extension "${extension}"`, () => {
       expect(getMimeType(extension as TAllowedFileExtension)).toBe(expectedMimeType);
     });
+  });
+});
+
+describe("isFileTypeAllowed", () => {
+  test("takes a file whose extension the question allows, in any case", () => {
+    expect(isFileTypeAllowed("photo.png", ["png", "pdf"])).toBe(true);
+    expect(isFileTypeAllowed("Report.PDF", ["png", "pdf"])).toBe(true);
+  });
+
+  test("refuses a file whose extension the question does not allow", () => {
+    expect(isFileTypeAllowed("report.pdf", ["png"])).toBe(false);
+  });
+
+  test("without a restriction, takes every extension the storage API allows, in any case", () => {
+    for (const extension of ZAllowedFileExtension.options) {
+      expect(isFileTypeAllowed(`file.${extension}`)).toBe(true);
+      expect(isFileTypeAllowed(`file.${extension.toUpperCase()}`, [])).toBe(true);
+    }
+  });
+
+  test.each(["report.bin", "setup.exe", "photo.png.bin"])(
+    "without a restriction, refuses %s, which the storage API refuses",
+    (fileName) => {
+      expect(isFileTypeAllowed(fileName)).toBe(false);
+    }
+  );
+
+  test.each(["README", "png", "file."])(
+    "refuses %s, which has no extension, as the storage API does",
+    (fileName) => {
+      expect(isFileTypeAllowed(fileName)).toBe(false);
+      expect(isFileTypeAllowed(fileName, ["png"])).toBe(false);
+    }
+  );
+
+  test("checks against exactly the storage API's allowlist", () => {
+    expect(Object.keys(uploadMimeTypes).sort()).toEqual([...ZAllowedFileExtension.options].sort());
   });
 });
 

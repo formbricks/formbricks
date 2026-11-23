@@ -1,0 +1,33 @@
+type: object
+description: >-
+  A Filter step's result. `passed` false means the conditions didn't hold and the run ended here,
+  completed; run detail shows each condition as "(matched)" or "(not matched)".
+required:
+  - kind
+  - passed
+  - conditions
+properties:
+  kind:
+    type: string
+    enum:
+      - filter
+  passed:
+    type:
+      - boolean
+      - "null"
+    description: Whether the run went on past the Filter; null until decided.
+  conditions:
+    type: array
+    description: Each condition, in order.
+    items:
+      type: object
+      required:
+        - id
+        - matched
+      properties:
+        id:
+          type: string
+        matched:
+          type: boolean
+      additionalProperties: false
+additionalProperties: false

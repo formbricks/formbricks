@@ -1,0 +1,35 @@
+type: object
+description: An If/else step's result. Run detail shows each condition as "(matched)" or "(not matched)".
+required:
+  - kind
+  - branch
+  - conditions
+properties:
+  kind:
+    type: string
+    enum:
+      - if_else
+  branch:
+    type:
+      - string
+      - "null"
+    enum:
+      - then
+      - else
+      - null
+    description: The branch the run took; null until decided.
+  conditions:
+    type: array
+    description: Each condition, in order.
+    items:
+      type: object
+      required:
+        - id
+        - matched
+      properties:
+        id:
+          type: string
+        matched:
+          type: boolean
+      additionalProperties: false
+additionalProperties: false

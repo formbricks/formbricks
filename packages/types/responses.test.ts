@@ -8,6 +8,7 @@ import {
   ZClientResponseInput,
   ZClientResponseUpdateInput,
   ZResponseFilterCriteria,
+  ZResponseFilterCriteriaFromJson,
   ZResponseInput,
   ZResponseMeta,
   ZResponseUpdate,
@@ -140,6 +141,31 @@ describe("ZResponseUpdate.meta", () => {
   });
 });
 
+describe("variables: a true/false field set by Set value (ENG-6973)", () => {
+  const variables = { qualified00000000000001: true, rejected000000000000001: false };
+
+  test("the client create and update inputs keep real booleans", () => {
+    const created = ZClientResponseInput.parse({
+      workspaceId: "clx0000000000000000000w1",
+      surveyId: "clx0000000000000000000s2",
+      finished: false,
+      data: {},
+      variables,
+    });
+    const updated = ZClientResponseUpdateInput.parse({ finished: false, data: {}, variables });
+
+    expect(created.variables).toStrictEqual(variables);
+    expect(updated.variables).toStrictEqual(variables);
+  });
+
+  test("the stored response keeps them, and still refuses a value of another shape", () => {
+    expect(ZResponseUpdate.parse({ finished: true, data: {}, variables }).variables).toStrictEqual(variables);
+    expect(
+      ZClientResponseUpdateInput.safeParse({ finished: false, data: {}, variables: { a: null } }).success
+    ).toBe(false);
+  });
+});
+
 describe("variables: a date field set by now() (ENG-6935)", () => {
   // The renderer stores now() as a full UTC timestamp. No boundary may read a date variable as a
   // calendar day and refuse or cut the time off.
@@ -201,6 +227,47 @@ describe("ZResponseFilterCriteria.data", () => {
   test.each(["equals", "notEquals"] as const)("rejects a jsonb boolean under %s", (op) => {
     expect(parse({ op, value: true }).success).toBe(false);
     expect(parse({ op, value: "true" }).success).toBe(true);
+  });
+});
+
+describe("ZResponseFilterCriteriaFromJson", () => {
+  const min = new Date("2026-11-06T00:00:00.000Z");
+  const max = new Date("2026-11-10T23:59:59.999Z");
+  const overJson = (value: unknown): unknown => JSON.parse(JSON.stringify(value));
+
+  test("takes back the Created at range a JSON round trip turned into ISO text", () => {
+    const filter = { finished: true, createdAt: { min, max } };
+
+    expect(ZResponseFilterCriteria.safeParse(overJson(filter)).success).toBe(false);
+    expect(ZResponseFilterCriteriaFromJson.parse(overJson(filter))).toEqual(filter);
+  });
+
+  test("keeps a one-sided range one-sided", () => {
+    expect(ZResponseFilterCriteriaFromJson.parse(overJson({ createdAt: { min } }))).toEqual({
+      createdAt: { min },
+    });
+    expect(ZResponseFilterCriteriaFromJson.parse(overJson({ createdAt: { max } }))).toEqual({
+      createdAt: { max },
+    });
+  });
+
+  test("still takes Dates, and a filter without a range, unchanged", () => {
+    expect(ZResponseFilterCriteriaFromJson.parse({ createdAt: { min, max } })).toEqual({
+      createdAt: { min, max },
+    });
+    expect(ZResponseFilterCriteriaFromJson.parse({ finished: false })).toEqual({ finished: false });
+  });
+
+  test("refuses a bound that is not a date", () => {
+    expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: { min: "not a date" } }).success).toBe(
+      false
+    );
+    expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: { max: 42 } }).success).toBe(false);
+    expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: "2026-11-06" }).success).toBe(false);
+    expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: [] }).success).toBe(false);
+    expect(
+      ZResponseFilterCriteriaFromJson.safeParse({ createdAt: ["2026-11-06T00:00:00.000Z"] }).success
+    ).toBe(false);
   });
 });
 
@@ -362,7 +429,7 @@ describe("response input caps", () => {
     ["data", null, ["data", "k0"]],
     ["data", { row: 1 }, ["data", "k0"]],
     ["ttc", "not a number", ["ttc", "k0"]],
-    ["variables", true, ["variables", "k0"]],
+    ["variables", null, ["variables", "k0"]],
   ])("refuses %s full of wrong values (%j) with one issue at the first", (field, value, path) => {
     const count = field === "variables" ? MAX_RESPONSE_VARIABLE_KEYS : MAX_RESPONSE_DATA_KEYS;
     const issues = issuesOf(create({ [field]: keyed(count, () => value) }));

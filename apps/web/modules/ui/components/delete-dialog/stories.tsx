@@ -11,7 +11,7 @@ interface StoryOptions {
   childrenContent: string;
 }
 
-type StoryProps = React.ComponentProps<typeof DeleteDialog> & StoryOptions;
+type StoryProps = Readonly<React.ComponentProps<typeof DeleteDialog> & StoryOptions>;
 
 const meta: Meta<StoryProps> = {
   title: "UI/DeleteDialog",

@@ -1,9 +1,9 @@
 # Coding Standards
 
 Read at review time: the `code-review` skill's Standards pass and every reviewer apply this file to a diff.
-The design sections, "Existing Patterns" through "Input Limits", are also read when planning a change, so
-plans are built to the same calls reviews check. It holds judgement calls. What an implementer needs before
-the first line stays in `AGENTS.md`, and task process lives under `docs/agents/`. Where an ADR in
+It holds judgement calls. The design sections, "Existing Patterns" through "Input Limits", are also read
+when planning a change, so a plan meets the same judgement calls a review checks. What an implementer needs
+before the first line stays in `AGENTS.md`, and task process lives under `docs/agents/`. Where an ADR in
 `docs/adr/` decides otherwise for its area, the ADR wins.
 
 ## Tooling and Review Scope
@@ -14,7 +14,7 @@ generated API drift. `packages/config-oxlint/` and each workspace's `oxlint.conf
 and exceptions. A warning is still actionable when CI does not block it.
 
 Static `unstable_cache` imports from `next/cache` are lint errors, and so are React component props that
-are not read-only (`react-js/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
+are not read-only (`formbricks/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
 permission maps (or caller inheritance for workflows triggered only by `workflow_call`) and runner
 hardening first for literal `ubuntu-*` runner labels, including version and architecture pins. Reviewers
 still judge whether requested token permissions are minimal and whether runner choices outside this
@@ -64,9 +64,9 @@ These remain review checks until their enforcement handles the repository's exis
 
 ## API Design
 
-- New endpoints start internal: `/api/internal/<resource>`, session auth, no OpenAPI entry and no stability
-  promise. Internal routes are v3 in everything but the contract, so they can change freely while the shape
-  settles.
+- New endpoints start internal ([ADR-0059](docs/adr/0059-internal-endpoints-live-outside-v3.md)):
+  `/api/internal/<resource>`, session auth, no OpenAPI entry and no stability promise. Internal routes are
+  v3 in everything but the contract, so they can change freely while the shape settles.
 - An endpoint is promoted to public `/api/v3` once an external caller (an API key, an integration, an MCP
   tool that writes) needs it: it gains its OpenAPI contract and stability promise, and the app moves to the
   public route rather than keeping an internal twin. A feature built for external callers from day one

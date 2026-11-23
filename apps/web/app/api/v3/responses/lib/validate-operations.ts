@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
+import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -23,7 +23,7 @@ import {
 import { getResponseWorkspaceId, getScopedV3Response } from "./service";
 import { type TV3ResponseValidationEffects, createEffects, patchEffects } from "./validate-effects";
 import { refuseUnlessV3SurveyVisible } from "./visibility";
-import { normalizeV3Ttc, totalStoredV3Ttc } from "./write-plan";
+import { type TV3VariableWrites, normalizeV3Ttc, totalStoredV3Ttc } from "./write-plan";
 import { collectReferenceIssues, getSurveyForV3Write } from "./write-service";
 
 type TValidateParams = {
@@ -298,7 +298,7 @@ async function validatePatch({
         : ((stored.ttc ?? {}) as TResponseTtc),
     language: planned.effectiveLanguage,
     data: planned.composed.data ?? (stored.data as TResponseData) ?? {},
-    variables: planned.composed.variables ?? (stored.variables as Record<string, TResponseDataValue>) ?? {},
+    variables: planned.composed.variables ?? (stored.variables as TV3VariableWrites) ?? {},
     // A patch that omits `tags` leaves the stored set alone; one that carries it replaces the set,
     // deduplicated exactly as the write deduplicates before writing the join rows.
     tagsToApply: [...new Set(parsed.data.tags ?? stored.tags.map(({ tag }) => tag.id))],

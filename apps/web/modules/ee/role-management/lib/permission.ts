@@ -32,7 +32,8 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
  *   and only when a viewer is being given — and never through the management API (`channel`), which
  *   cannot enforce the role's rules (no team admin, team-granted workspaces).
  *
- * Team admins invite Members through `inviteUserAction`'s own rule and never reach this.
+ * Team admins invite Members through the single invite's own rule (`POST /api/internal/invites`) and
+ * never reach this.
  */
 export const assertCanAssignRole = async ({
   organizationId,

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW } from "@formbricks/workflows";
 import { ZRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
@@ -57,6 +58,15 @@ describe("rateLimitConfigs", () => {
     mockGetRedisClient.mockResolvedValue(mockRedisClient);
   });
 
+  test("the Webhook per-workflow and per-token limits are the number the trigger panel shows", () => {
+    expect(rateLimitConfigs.api.v3WorkflowWebhook.allowedPerInterval).toBe(
+      WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW
+    );
+    expect(rateLimitConfigs.api.v3WorkflowWebhookToken.allowedPerInterval).toBe(
+      WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW
+    );
+  });
+
   describe("Configuration Structure", () => {
     test("should have all required config groups", () => {
       expect(rateLimitConfigs).toHaveProperty("auth");
@@ -75,7 +85,6 @@ describe("rateLimitConfigs", () => {
         "resetPassword",
         "verifyEmail",
         "verifyEmailPerAccount",
-        "emailToken",
         "samlCallback",
       ]);
       expect(rateLimitConfigs.auth.resetPassword).toEqual({
@@ -98,14 +107,9 @@ describe("rateLimitConfigs", () => {
         namespace: "auth:verify:account",
         failClosed: true,
       });
-      // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
-      // reveals whether an address is registered, so a loosened quota is a security regression.
-      expect(rateLimitConfigs.auth.emailToken).toEqual({
-        interval: 3600,
-        allowedPerInterval: 10,
-        namespace: "auth:email-token",
-        failClosed: true,
-      });
+      // The email-token endpoint is gone (the sign-up answer carries the display token), and its bucket
+      // with it.
+      expect(rateLimitConfigs.auth).not.toHaveProperty("emailToken");
       // How often one IP can make the SAML callback parse an anonymous XML document (ENG-3973).
       expect(rateLimitConfigs.auth.samlCallback).toEqual({
         interval: 60,
@@ -120,9 +124,15 @@ describe("rateLimitConfigs", () => {
         "v1",
         "v2",
         "v3",
+        "internal",
         "v3StateMutation",
         "mcpAuth",
+        "v3WorkflowWebhook",
+        "v3WorkflowWebhookToken",
+        "v3WorkflowTestRequests",
+        "v3WorkflowTestRuns",
         "v3SurveyGenerate",
+        "internalAiTranslate",
         "v3SurveyVisibility",
         "v3SurveysFullList",
         "v3CustomCss",
@@ -131,6 +141,7 @@ describe("rateLimitConfigs", () => {
         "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",
+        "internalHeicConversion",
         "client",
         "clientEnvironment",
         "clientCreativeEvents",
@@ -177,6 +188,18 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 10,
         namespace: "api:internal:retention-runs:export",
+      });
+      // Every conversion decodes a whole photo on the server, so a loosened quota is a CPU regression.
+      expect(rateLimitConfigs.api.internalHeicConversion).toEqual({
+        interval: 60,
+        allowedPerInterval: 20,
+        namespace: "api:internal:heic-conversions",
+      });
+      // One call per target language, each up to 8192 output tokens: a loosened quota is a cost regression.
+      expect(rateLimitConfigs.api.internalAiTranslate).toEqual({
+        interval: 60,
+        allowedPerInterval: 20,
+        namespace: "api:internal:ai-translations",
       });
     });
 
@@ -293,7 +316,6 @@ describe("rateLimitConfigs", () => {
         auth.resetPassword,
         auth.verifyEmail,
         auth.verifyEmailPerAccount,
-        auth.emailToken,
         api.mcpAuth,
         actions.emailUpdate,
         actions.passwordResetRequest,
@@ -304,6 +326,7 @@ describe("rateLimitConfigs", () => {
         actions.inviteMember,
         actions.inviteMemberPerUser,
         actions.createOrganization,
+        api.v3WorkflowTestRequests,
       ];
       const throughputLimits = [
         api.v1,

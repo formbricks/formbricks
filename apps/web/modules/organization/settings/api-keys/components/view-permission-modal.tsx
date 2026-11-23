@@ -4,11 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { TOrganizationAccess } from "@formbricks/types/api-key";
+import type { TApiKeyResource } from "@/app/api/internal/api-keys/serializers";
 import { type TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import {
   type TApiKeyUpdateInput,
-  type TApiKeyWithEnvironmentPermission,
   ZApiKeyUpdateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
@@ -29,7 +28,7 @@ interface ViewPermissionModalProps {
   readonly open: boolean;
   readonly setOpen: (v: boolean) => void;
   readonly onSubmit: (data: TApiKeyUpdateInput) => Promise<void>;
-  readonly apiKey: TApiKeyWithEnvironmentPermission;
+  readonly apiKey: TApiKeyResource;
   readonly workspaces: TOrganizationWorkspace[];
   readonly isUpdating: boolean;
 }
@@ -65,7 +64,7 @@ export const ViewPermissionModal = ({
   };
 
   const { t } = useTranslation();
-  const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
+  const organizationAccess = apiKey.organizationAccess;
   const workspacePermissions = apiKey.apiKeyWorkspaces ?? [];
 
   const getWorkspaceName = (workspaceId: string) => {
@@ -93,6 +92,7 @@ export const ViewPermissionModal = ({
                 <Label>{t("workspace.api_keys.api_key_label")}</Label>
                 <Input
                   placeholder="e.g. GitHub, PostHog, Slack"
+                  maxLength={255}
                   data-testid="api-key-label"
                   {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
                 />

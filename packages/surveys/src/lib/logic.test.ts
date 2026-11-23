@@ -2053,6 +2053,23 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
       ).toEqual({ [STORAGE_KEY]: "x" });
     });
 
+    test("a stored true/false on a number field counts as 0, not NaN", () => {
+      expect(
+        calculate(
+          buildSurvey([], computedRow("number", 0)),
+          {
+            id: "a1",
+            objective: "calculate",
+            variableId: STORAGE_KEY,
+            operator: "add",
+            value: { type: "static", value: 3 },
+          },
+          {},
+          { [STORAGE_KEY]: false }
+        )
+      ).toEqual({ [STORAGE_KEY]: 3 });
+    });
+
     test("a calculation on a field the survey does not declare is skipped", () => {
       expect(
         calculate(
@@ -2068,6 +2085,84 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
           {}
         )
       ).toEqual({});
+    });
+
+    describe("a number field reading an answer or hidden field (ENG-7378)", () => {
+      const fromOperand = (
+        operator: "assign" | "add",
+        value: { type: "element" | "hiddenField"; value: string }
+      ): TSurveyBlockLogicAction => ({
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator,
+        value,
+      });
+
+      test.each([
+        ["an answer", { type: "element" as const, value: "q1" }, { q1: "42" }],
+        ["a hidden field", { type: "hiddenField" as const, value: "plan" }, { plan: "42" }],
+      ])("assign stores %s holding a numeric text as a number", (_label, operand, data) => {
+        expect(
+          calculate(buildSurvey([], computedRow("number", 0)), fromOperand("assign", operand), data, {})
+        ).toEqual({ [STORAGE_KEY]: 42 });
+      });
+
+      test.each([
+        ["an answer", { type: "element" as const, value: "q1" }, { q1: "2.5" }],
+        ["a hidden field", { type: "hiddenField" as const, value: "plan" }, { plan: "2.5" }],
+      ])("add sums %s holding a numeric text into the field", (_label, operand, data) => {
+        expect(
+          calculate(buildSurvey([], computedRow("number", 0)), fromOperand("add", operand), data, {
+            [STORAGE_KEY]: 10,
+          })
+        ).toEqual({ [STORAGE_KEY]: 12.5 });
+      });
+
+      test("assign keeps a number answer a number", () => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("number", 0)),
+            fromOperand("assign", { type: "element", value: "q1" }),
+            { q1: 7 },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: 7 });
+      });
+
+      test("assign keeps a text that is not a number as text", () => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("number", 0)),
+            fromOperand("assign", { type: "hiddenField", value: "plan" }),
+            { plan: "gold" },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: "gold" });
+      });
+
+      // `Number("")` is 0, so a blank would read as a real 0 and an `isSkipped` condition would miss it.
+      test.each(["", "   "])("assign keeps a blank hidden field (%j) blank", (blank) => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("number", 5)),
+            fromOperand("assign", { type: "hiddenField", value: "plan" }),
+            { plan: blank },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: blank });
+      });
+
+      test("a text field keeps a numeric text as text", () => {
+        expect(
+          calculate(
+            buildSurvey([], computedRow("string", "")),
+            fromOperand("assign", { type: "hiddenField", value: "plan" }),
+            { plan: "42" },
+            {}
+          )
+        ).toEqual({ [STORAGE_KEY]: "42" });
+      });
     });
 
     test('a legacy "question" operand stays unresolved', () => {
@@ -2087,6 +2182,85 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
           {}
         )
       ).toEqual({});
+    });
+  });
+
+  describe("Set value on a true/false field (ENG-6973)", () => {
+    const booleanRow = (storageKey: string, source: "computed" | "ingested") => ({
+      field: {
+        name: storageKey,
+        key: null,
+        source,
+        dataType: "boolean" as const,
+        defaultValue: null,
+        locked: false,
+      },
+      link: { storageKey },
+    });
+    const survey = buildSurvey(
+      [],
+      [
+        booleanRow(STORAGE_KEY, "computed"),
+        booleanRow("source_flag", "computed"),
+        booleanRow("is_pro", "ingested"),
+      ]
+    );
+    const assign = (value: unknown): TSurveyBlockLogicAction =>
+      ({
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator: "assign",
+        value,
+      }) as TSurveyBlockLogicAction;
+    const run = (value: unknown, data: TResponseData = {}, calculations: TResponseVariables = {}) =>
+      performActions(survey, [assign(value)], data, calculations).calculations;
+
+    test("stores a static True or False as a real boolean", () => {
+      expect(run({ type: "static", value: true })).toEqual({ [STORAGE_KEY]: true });
+      expect(run({ type: "static", value: false }, {}, { [STORAGE_KEY]: true })).toEqual({
+        [STORAGE_KEY]: false,
+      });
+    });
+
+    test('copies a passed-in "true" as the boolean true', () => {
+      expect(run({ type: "hiddenField", value: "is_pro" }, { is_pro: "true" })).toEqual({
+        [STORAGE_KEY]: true,
+      });
+    });
+
+    test("copies another calculated true/false field", () => {
+      expect(run({ type: "variable", value: "source_flag" }, {}, { source_flag: false })).toEqual({
+        source_flag: false,
+        [STORAGE_KEY]: false,
+      });
+    });
+
+    test("an unset source leaves the target unset", () => {
+      expect(run({ type: "hiddenField", value: "is_pro" })).toEqual({});
+      expect(run({ type: "variable", value: "source_flag" }, {}, { [STORAGE_KEY]: true })).toEqual({
+        [STORAGE_KEY]: true,
+      });
+    });
+
+    test("a condition reads the stored boolean as True or False", () => {
+      const equals = (value: string): TConditionGroup => ({
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "equals",
+            leftOperand: { type: "variable", value: STORAGE_KEY },
+            rightOperand: { type: "static", value },
+          },
+        ],
+      });
+
+      expect(evaluateLogic(survey, {}, { [STORAGE_KEY]: true }, equals("true"), "default")).toBe(true);
+      // A stored false is a value, not "unset".
+      expect(evaluateLogic(survey, {}, { [STORAGE_KEY]: false }, equals("false"), "default")).toBe(true);
+      expect(evaluateLogic(survey, {}, { [STORAGE_KEY]: false }, equals("true"), "default")).toBe(false);
     });
   });
 });

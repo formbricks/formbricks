@@ -4,6 +4,7 @@ import { type MockInstance, beforeEach, describe, expect, test, vi } from "vites
 import { prisma } from "@formbricks/database";
 import * as crypto from "@/lib/crypto";
 import {
+  InvalidEmailChangeTokenError,
   createEmailChangeToken,
   createEmailToken,
   createFeedbackRecordsGatewayToken,
@@ -492,6 +493,40 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       });
     });
 
+    /**
+     * ENG-7310: an SSO recovery link is good for the one recovery it was mailed for. The state rides in
+     * the signed payload, so the unsigned `callbackUrl` beside it cannot point the link at another.
+     */
+    test("carries the SSO recovery state it was minted for", async () => {
+      const token = createToken(mockUser.id, { purpose: "sso_recovery", ssoRecoveryStateId: "state-abc" });
+
+      await expect(verifyToken(token)).resolves.toEqual({
+        id: mockUser.id,
+        email: mockUser.email,
+        purpose: "sso_recovery",
+        ssoRecoveryStateId: "state-abc",
+      });
+    });
+
+    test.each([
+      ["a number", 42],
+      ["an empty string", ""],
+    ])("ignores a recovery state claim that is %s", async (_label, recoveryState) => {
+      // A genuinely minted payload, re-signed with the malformed claim added.
+      const { iat: _iat, ...minted } = jwt.decode(createToken(mockUser.id, { purpose: "sso_recovery" })) as {
+        iat: number;
+      };
+      const token = jwt.sign({ ...minted, ssoRecoveryStateId: recoveryState }, TEST_AUTH_SECRET);
+
+      expect(await verifyToken(token)).not.toHaveProperty("ssoRecoveryStateId");
+    });
+
+    test("reports no recovery state when the token carries none", async () => {
+      const verified = await verifyToken(createToken(mockUser.id, { purpose: "sso_recovery" }));
+
+      expect(verified).not.toHaveProperty("ssoRecoveryStateId");
+    });
+
     test("should throw error if user not found", async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
       const token = createToken(mockUser.id);
@@ -651,6 +686,18 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       await expect(verifyEmailChangeToken(token)).rejects.toThrow(
         "Token is invalid or missing required fields"
       );
+      // The route answers this type with 422; anything else is a fault and a 500.
+      await expect(verifyEmailChangeToken(token)).rejects.toBeInstanceOf(InvalidEmailChangeTokenError);
+    });
+
+    test("calls a token whose payload segment isn't JSON invalid, not a fault", async () => {
+      // jsonwebtoken lets this one through as a bare SyntaxError, and no secret is needed to send it.
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.bm90anNvbg.x";
+      await expect(verifyEmailChangeToken(token)).rejects.toBeInstanceOf(InvalidEmailChangeTokenError);
+    });
+
+    test("leaves jsonwebtoken's own errors as they are, so the route can tell them apart", async () => {
+      await expect(verifyEmailChangeToken("not-a-jwt")).rejects.toBeInstanceOf(jwt.JsonWebTokenError);
     });
 
     test("should throw error if id is missing", async () => {
@@ -694,6 +741,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token is no longer valid");
+        await expect(verifyEmailChangeToken(token)).rejects.toBeInstanceOf(InvalidEmailChangeTokenError);
       });
 
       test("should reject a token replayed after the email already changed", async () => {
@@ -723,6 +771,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token cannot be bound");
+        await expect(verifyEmailChangeToken(token)).rejects.toBeInstanceOf(InvalidEmailChangeTokenError);
       });
 
       // The row this binds to must be the one Better Auth bumps on a password write — the full

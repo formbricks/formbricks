@@ -8,6 +8,7 @@ import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-directory";
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getWorkspaces } from "@/lib/workspace/service";
@@ -55,6 +56,10 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn(), error: vi.fn() } }));
+
+vi.mock("@/lib/cache", () => ({
+  cache: { withCache: vi.fn((fn: () => Promise<unknown>) => fn()) },
+}));
 
 vi.mock("@/lib/user/service", () => ({
   updateUser: vi.fn(),
@@ -649,6 +654,36 @@ describe("Organization Service", () => {
           createdAt: { gte: expect.any(Date), lt: expect.any(Date) },
         },
       });
+    });
+
+    // The layout reads this on every render; a minute-long cache keyed by org and cycle start keeps an org
+    // with millions of responses from recounting them each time (ENG-3789).
+    test("serves the count through the cache, keyed by organization and usage-cycle start", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+        id: "org_1",
+        name: "Test Org",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        billing: {
+          stripeCustomerId: null,
+          limits: { workspaces: 5, monthly: { responses: 5000 } },
+          usageCycleAnchor: null,
+          stripe: null,
+        },
+        isAISmartToolsEnabled: false,
+        whitelabel: null,
+      } as never);
+      vi.mocked(cache.withCache).mockResolvedValueOnce(99);
+
+      const result = await getMonthlyOrganizationResponseCount("cms634kob000001uzrelh0qeb");
+
+      expect(result).toBe(99);
+      expect(prisma.response.count).not.toHaveBeenCalled();
+      expect(cache.withCache).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.stringMatching(/^fb:org:cms634kob000001uzrelh0qeb:monthly-response-count:\d+$/),
+        60 * 1000
+      );
     });
   });
 });

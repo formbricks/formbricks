@@ -7,8 +7,8 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { forgotPasswordAction } from "@/modules/auth/forgot-password/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { requestPasswordReset } from "@/modules/auth/lib/pre-login-api-client";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -30,13 +30,13 @@ export const ForgotPasswordForm = () => {
   });
 
   const handleSubmit: SubmitHandler<TForgotPasswordForm> = async (data) => {
-    const forgotPasswordResponse = await forgotPasswordAction({ email: data.email });
-    if (forgotPasswordResponse?.data) {
-      router.push("/auth/forgot-password/email-sent");
-    } else {
-      const errorMessage = getFormattedErrorMessage(forgotPasswordResponse);
-      toast.error(errorMessage);
+    try {
+      await requestPasswordReset(data.email);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      return;
     }
+    router.push("/auth/forgot-password/email-sent");
   };
 
   return (

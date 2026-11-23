@@ -661,6 +661,59 @@ describe("surveyLogic", () => {
     expect(result.calculations.notfound).toBeUndefined();
   });
 
+  test("performActions assigns a numeric answer or hidden field to a number variable as a number (ENG-7378)", () => {
+    const survey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      embeddedFields: embeddedFieldsFromLegacyInput({
+        variables: [
+          { id: "fromAnswer", name: "from_answer", type: "number", value: 0 },
+          { id: "fromHidden", name: "from_hidden", type: "number", value: 0 },
+        ],
+      }),
+    };
+    const data: TResponseData = { q: "42", f: "2.5" };
+    const actions: TSurveyBlockLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "fromAnswer",
+        operator: "assign",
+        value: { type: "element", value: "q" },
+      },
+      {
+        id: "a2",
+        objective: "calculate",
+        variableId: "fromHidden",
+        operator: "assign",
+        value: { type: "hiddenField", value: "f" },
+      },
+    ];
+    expect(performActions(survey, actions, data, {}).calculations).toEqual({
+      fromAnswer: 42,
+      fromHidden: 2.5,
+    });
+  });
+
+  // `Number("")` is 0, so a blank would read as a real 0 and an `isSkipped` condition would miss it.
+  test("performActions keeps a blank answer blank when assigning to a number variable (ENG-7378)", () => {
+    const survey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      embeddedFields: embeddedFieldsFromLegacyInput({
+        variables: [{ id: "score", name: "score", type: "number", value: 5 }],
+      }),
+    };
+    const actions: TSurveyBlockLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "score",
+        operator: "assign",
+        value: { type: "hiddenField", value: "plan" },
+      },
+    ];
+    expect(performActions(survey, actions, { plan: "" }, {}).calculations).toEqual({ score: "" });
+  });
+
   test("getUpdatedActionBody returns same action if objective matches", () => {
     const base: TSurveyLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     expect(getUpdatedActionBody(base, "requireAnswer")).toBe(base);
@@ -1902,6 +1955,115 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
         {}
       )
     ).toEqual({});
+  });
+
+  describe("Set value on a true/false field (ENG-6973)", () => {
+    const booleanRow = (storageKey: string, source: "computed" | "ingested") => ({
+      field: {
+        key: null,
+        name: storageKey,
+        source,
+        dataType: "boolean" as const,
+        defaultValue: null,
+        locked: false,
+      },
+      link: { storageKey },
+    });
+    const survey = buildSurvey(
+      [],
+      [
+        booleanRow(STORAGE_KEY, "computed"),
+        booleanRow("source_flag", "computed"),
+        booleanRow("is_pro", "ingested"),
+      ]
+    );
+    const assign = (value: unknown): TSurveyBlockLogicAction =>
+      ({
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator: "assign",
+        value,
+      }) as TSurveyBlockLogicAction;
+    const run = (value: unknown, data: TResponseData = {}, calculations: TResponseVariables = {}) =>
+      performActions(survey, [assign(value)], data, calculations).calculations;
+
+    test("stores a static True or False as a real boolean", () => {
+      expect(run({ type: "static", value: true })).toEqual({ [STORAGE_KEY]: true });
+      expect(run({ type: "static", value: false }, {}, { [STORAGE_KEY]: true })).toEqual({
+        [STORAGE_KEY]: false,
+      });
+    });
+
+    test('copies a passed-in "true" as the boolean true', () => {
+      expect(run({ type: "hiddenField", value: "is_pro" }, { is_pro: "true" })).toEqual({
+        [STORAGE_KEY]: true,
+      });
+    });
+
+    test("copies another calculated true/false field", () => {
+      expect(run({ type: "variable", value: "source_flag" }, {}, { source_flag: false })).toEqual({
+        source_flag: false,
+        [STORAGE_KEY]: false,
+      });
+    });
+
+    test("an unset source leaves the target unset", () => {
+      expect(run({ type: "hiddenField", value: "is_pro" })).toEqual({});
+      expect(run({ type: "variable", value: "source_flag" }, {}, { [STORAGE_KEY]: true })).toEqual({
+        [STORAGE_KEY]: true,
+      });
+    });
+
+    test("a condition reads the stored boolean as True or False", () => {
+      const equals = (value: string): TConditionGroup => ({
+        id: "group1",
+        connector: "and",
+        conditions: [
+          {
+            id: "condition1",
+            operator: "equals",
+            leftOperand: { type: "variable", value: STORAGE_KEY },
+            rightOperand: { type: "static", value },
+          },
+        ],
+      });
+
+      expect(evaluateLogic(survey, {}, { [STORAGE_KEY]: true }, equals("true"), "default")).toBe(true);
+      expect(evaluateLogic(survey, {}, { [STORAGE_KEY]: false }, equals("false"), "default")).toBe(true);
+      expect(evaluateLogic(survey, {}, { [STORAGE_KEY]: false }, equals("true"), "default")).toBe(false);
+    });
+
+    // A field retyped from true/false to number keeps its stored boolean, as in the survey bundle.
+    test("a stored true/false on a number field counts as 0, not NaN", () => {
+      const add: TSurveyBlockLogicAction = {
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator: "add",
+        value: { type: "static", value: 3 },
+      };
+      for (const stored of [true, false]) {
+        expect(
+          performActions(buildSurvey([], computedRow("number", 0)), [add], {}, { [STORAGE_KEY]: stored })
+            .calculations
+        ).toEqual({ [STORAGE_KEY]: 3 });
+      }
+    });
+
+    test("a stored true/false on a text field reads as its text", () => {
+      const concat: TSurveyBlockLogicAction = {
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator: "concat",
+        value: { type: "static", value: "!" },
+      };
+      expect(
+        performActions(buildSurvey([], computedRow("string", "")), [concat], {}, { [STORAGE_KEY]: true })
+          .calculations
+      ).toEqual({ [STORAGE_KEY]: "true!" });
+    });
   });
 });
 

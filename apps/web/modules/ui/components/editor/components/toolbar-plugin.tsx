@@ -1,6 +1,6 @@
 "use client";
 
-import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
+import { $generateHtmlFromNodes } from "@lexical/html";
 import { $isLinkNode } from "@lexical/link";
 import {
   $isListNode,
@@ -33,7 +33,7 @@ import {
   PencilIcon,
   Underline,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -45,7 +45,9 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
 import { toEditorOutputHtml } from "../lib/exported-html";
-import type { TextEditorProps } from "./editor";
+import { $insertTextAtCursor } from "../lib/insert-text";
+import { $generateRootNodesFromHtml } from "../lib/root-nodes";
+import type { TEditorToolbarActions, TextEditorProps } from "./editor";
 
 const LowPriority = 1;
 
@@ -252,11 +254,7 @@ export const ToolbarPlugin = (
         const root = $getRoot();
         if (root) {
           editor.update(() => {
-            const parser = new DOMParser();
-            // Create a new TextNode
-            const dom = parser.parseFromString(props.getText(), "text/html");
-
-            const nodes = $generateNodesFromDOM(editor, dom);
+            const nodes = $generateRootNodesFromHtml(editor, props.getText());
             root.clear();
             root.append(...nodes);
           });
@@ -280,10 +278,7 @@ export const ToolbarPlugin = (
     if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
       editor.update(() => {
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(props.getText(), "text/html");
-
-        const nodes = $generateNodesFromDOM(editor, dom);
+        const nodes = $generateRootNodesFromHtml(editor, props.getText());
         const root = $getRoot();
         root.clear();
         root.append(...nodes);
@@ -339,6 +334,11 @@ export const ToolbarPlugin = (
       props.setShowLinkEditor(true);
     }
   }, [editor, isLink, props]);
+
+  const extraActions: TEditorToolbarActions = useMemo(
+    () => ({ insertText: (text) => editor.update(() => $insertTextAtCursor(text)) }),
+    [editor]
+  );
 
   // Removed custom PASTE_COMMAND handler to allow Lexical's default paste handler
   // to properly preserve rich text formatting (bold, italic, links, etc.)
@@ -454,7 +454,8 @@ export const ToolbarPlugin = (
         </DropdownMenu>
       )}
 
-      <div className="flex items-center gap-1">
+      {/* Extra controls may not fit next to the icons in a narrow panel: they wrap to a second row. */}
+      <div className={cn("flex items-center gap-1", props.renderToolbarExtras && "flex-wrap")}>
         {items.map(({ key, icon, onClick, active, tooltipText, disabled }) =>
           !props.excludedToolbarItems?.includes(key) ? (
             <ToolbarButton
@@ -467,6 +468,7 @@ export const ToolbarPlugin = (
             />
           ) : null
         )}
+        {props.renderToolbarExtras?.(extraActions)}
       </div>
     </div>
   );

@@ -1,10 +1,29 @@
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, UnknownError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
 import { SLACK_MESSAGE_LIMIT } from "../constants";
 import { deleteIntegration, getIntegrationByType } from "../integration/service";
 import { truncateText } from "../utils/strings";
+import { SlackApiError } from "./errors";
+
+/** A Slack Web API answer's JSON body; a request or answer that never got that far is a `SlackApiError`. */
+const readSlackResponse = async (request: Promise<Response>): Promise<Record<string, unknown>> => {
+  let response: Response;
+  try {
+    response = await request;
+  } catch (error) {
+    throw new SlackApiError("network_error", { cause: error });
+  }
+  if (!response.ok) {
+    throw new SlackApiError(`http_${response.status}`);
+  }
+  try {
+    return await response.json();
+  } catch (error) {
+    throw new SlackApiError("invalid_response", { cause: error });
+  }
+};
 
 export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
   let channels: TIntegrationItem[] = [];
@@ -20,34 +39,33 @@ export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIn
       url.searchParams.append("cursor", nextCursor);
     }
 
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${slackIntegration.config.key.access_token}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-
-    const data = await response.json();
+    const data = (await readSlackResponse(
+      fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${slackIntegration.config.key.access_token}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      })
+    )) as {
+      ok?: boolean;
+      error?: string;
+      channels?: { name: string; id: string }[];
+      response_metadata?: { next_cursor?: string };
+    };
 
     if (!data.ok) {
       if (data.error === "token_expired") {
         // Temporary fix to reset integration if token rotation is enabled
         await deleteIntegration(slackIntegration.id);
       }
-      throw new Error(data.error);
+      throw new SlackApiError(data.error ?? "unknown_error");
+    }
+    if (!Array.isArray(data.channels)) {
+      throw new SlackApiError("invalid_response");
     }
 
-    channels = channels.concat(
-      data.channels.map((channel: { name: string; id: string }) => ({
-        name: channel.name,
-        id: channel.id,
-      }))
-    );
+    channels = channels.concat(data.channels.map((channel) => ({ name: channel.name, id: channel.id })));
 
     nextCursor = data.response_metadata?.next_cursor;
   } while (nextCursor);
@@ -68,7 +86,8 @@ export const getSlackChannels = async (workspaceId: string): Promise<TIntegratio
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-    throw new UnknownError(error instanceof Error ? error.message : String(error));
+    // A `SlackApiError` is Slack's; anything else is ours and stays what it is.
+    throw error;
   }
 };
 

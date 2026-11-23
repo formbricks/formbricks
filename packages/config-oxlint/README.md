@@ -20,12 +20,18 @@ Usage in a package:
 ```ts
 // oxlint.config.ts
 import { defineConfig } from "oxlint";
+import { denyWarnings } from "@formbricks/config-oxlint/base";
 import library from "@formbricks/config-oxlint/library";
 
-export default defineConfig(library);
+export default defineConfig(denyWarnings(library));
 ```
 
-Local rules compose after the tier: `defineConfig(compose(library, { rules: {…}, overrides: […] }))`.
+Local rules compose after the tier: `defineConfig(denyWarnings(compose(library, { rules: {…}, overrides: […] })))`.
+
+Every workspace config wraps its export in `denyWarnings`, which raises each `warn` to `error`, so a
+warning fails `pnpm lint:code` and CI (ENG-7401). A rule is either on at `error` or `off`. The one
+exception is the staged-lines Sonar-parity rules (below), which the pre-commit hook runs as warnings.
+`scripts/deny-warnings-lint.test.ts` fails when a workspace config resolves any other rule to `warn`.
 
 Notes:
 
@@ -36,14 +42,17 @@ Notes:
   keeps the tier's setting. The category rules that clash with repo conventions or still have a backlog
   are `off` in `base.mjs`, each with its count and reason (ENG-7329).
 - **JS plugins** run the ESLint plugins oxlint does not implement natively, through its ESLint-compatible
-  plugin API: `eslint-plugin-turbo`, `eslint-plugin-react` (as `react-js`, for `prefer-read-only-props`,
-  `prop-types` and `no-deprecated`), `eslint-plugin-sonarjs` and `eslint-plugin-unicorn` (as `unicorn-js`,
-  Sonar parity only) and `eslint-plugin-storybook` (apps/storybook). `plugins/react-js.mjs` loads the three eslint-plugin-react rules and drops `prefer-read-only-props`'s autofix, which writes `readonly` members instead of the `Readonly<Props>` wrapper. `plugins/formbricks.mjs` is the
+  plugin API: `eslint-plugin-turbo`, `eslint-plugin-sonarjs` and `eslint-plugin-unicorn` (as `unicorn-js`,
+  Sonar parity only) and `eslint-plugin-storybook` (apps/storybook). `plugins/formbricks.mjs` is the
   repo's own: oxlint has no `no-restricted-syntax`, so `formbricks/restricted-syntax` takes the same
-  selector options, and `formbricks/no-inline-lint-config` (on in every tier) fails on ESLint's inline
+  selector options; `formbricks/no-inline-lint-config` (on in every tier) fails on ESLint's inline
   config comments (`/* eslint <rule>: … */`, `/* eslint-env */`, `/* global */`, `/* exported */`), which
-  oxlint ignores.
-  JS plugins are slower than native rules; `react-js` costs most of apps/web's run.
+  oxlint ignores; and `formbricks/prefer-read-only-props` (the `next` and `react` tiers) ports
+  eslint-plugin-react's rule without its autofix, which wrote `readonly` members instead of the
+  `Readonly<Props>` wrapper.
+  JS plugins are slower than native rules. eslint-plugin-react, the slowest, was dropped (ENG-7401): its
+  `prop-types` is left to TypeScript, and its `no-deprecated` to React 19's types and `react/no-unsafe`
+  with `checkAliases`.
 - **Type-aware rules** run through `oxlint-tsgolint` (TypeScript 7) when oxlint gets `--type-aware`, which
   `pnpm lint:code` and the pre-commit hook pass. Every linted `.ts`/`.tsx` file must belong to its
   package's tsconfig, and the tsconfig must be valid for TypeScript 7 (no `baseUrl`, no
@@ -53,7 +62,8 @@ Notes:
   (ENG-7329).
 - The React Compiler-era react-hooks rules are implemented natively by oxlint under `react/`, at the
   preset's severity in the `react` and `react-hooks` tiers. `apps/web/oxlint.config.ts` sets them
-  separately for the `next` tier, where only `incompatible-library` stays at `warn`.
+  separately for the `next` tier, where `incompatible-library` is `off`: the app does not run the compiler,
+  and its sites are react-hook-form's `watch()` and TanStack Table, used on purpose.
 - `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
   (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `no-nested-functions`,
   `no-nested-conditional`, `no-nested-template-literals`, `prefer-string-raw`, `prefer-optional-chain`,

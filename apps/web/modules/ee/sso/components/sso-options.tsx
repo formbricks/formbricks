@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { FORMBRICKS_LOGGED_IN_WITH_LS, readLocalStorage } from "@/lib/localStorage";
 import { AzureButton } from "./azure-button";
 import { GithubButton } from "./github-button";
 import { GoogleButton } from "./google-button";
@@ -17,6 +17,7 @@ interface SSOOptionsProps {
   readonly oidcDisplayName?: string;
   readonly returnToUrl: string;
   readonly samlSsoEnabled: boolean;
+  readonly samlConnectionExists: boolean;
   readonly source: "signin" | "signup";
 }
 
@@ -28,16 +29,15 @@ export const SSOOptions = ({
   oidcDisplayName,
   returnToUrl,
   samlSsoEnabled,
+  samlConnectionExists,
   source,
 }: SSOOptionsProps) => {
   const { t } = useTranslation();
   const [lastLoggedInWith, setLastLoggedInWith] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the default
-      setLastLoggedInWith(localStorage.getItem(FORMBRICKS_LOGGED_IN_WITH_LS) || "");
-    }
+    // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the default
+    setLastLoggedInWith(readLocalStorage(FORMBRICKS_LOGGED_IN_WITH_LS) ?? "");
   }, []);
 
   return (
@@ -60,7 +60,12 @@ export const SSOOptions = ({
         />
       )}
       {samlSsoEnabled && (
-        <SamlButton returnToUrl={returnToUrl} lastUsed={lastLoggedInWith === "Saml"} source={source} />
+        <SamlButton
+          returnToUrl={returnToUrl}
+          lastUsed={lastLoggedInWith === "Saml"}
+          source={source}
+          connectionExists={samlConnectionExists}
+        />
       )}
     </div>
   );

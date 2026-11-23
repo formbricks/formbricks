@@ -359,6 +359,16 @@ describe("ssoDatabaseHooks.user.create.after", () => {
     );
   });
 
+  test("forwards the gate's token-validated invite role to the write phase (ENG-7097)", async () => {
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision({ ...provisionDecision, inviteRole: "manager" });
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(provisionSsoUserMemberships).toHaveBeenCalledWith(
+      expect.objectContaining({ inviteRole: "manager" })
+    );
+  });
+
   test("does nothing when no decision is stashed (e.g. non-SSO sign-up)", async () => {
     await runWithSsoRequestContext(() =>
       after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never)
@@ -534,7 +544,7 @@ describe("ssoLicenseGateBefore", () => {
   /**
    * Why SSO recovery needs no entitlement check of its own.
    *
-   * Neither `resendVerificationEmailAction` nor `completeSsoRecovery` calls `getIsSsoEnabled`, which
+   * Neither `POST /api/internal/verification-emails` nor `completeSsoRecovery` calls `getIsSsoEnabled`, which
    * reads like the "EE feature reachable without an entitlement check" that `.coderabbit.yaml` asks
    * reviewers to flag. What makes it safe is upstream: recovery has exactly one producer
    * (`startSsoRecovery`, called only from `ssoRecoveryAfterHandler`), that producer runs in

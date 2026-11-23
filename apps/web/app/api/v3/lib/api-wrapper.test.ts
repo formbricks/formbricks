@@ -2,10 +2,11 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
-import { formatZodIssues, withV3ApiWrapper } from "./api-wrapper";
+import { formatZodIssues, getDefaultRateLimitConfig, withV3ApiWrapper } from "./api-wrapper";
 import { V3_REQUEST_ARRAY_MAX_ITEMS, V3_REQUEST_MAX_DEPTH } from "./array-budget";
 import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
 
@@ -114,7 +115,7 @@ describe("withV3ApiWrapper", () => {
     const response = await wrapped(
       new NextRequest("http://localhost/api/v3/surveys/survey_1", {
         method: "DELETE",
-        headers: { "x-request-id": "req-audit" },
+        headers: { ...SAME_ORIGIN_HEADERS, "x-request-id": "req-audit" },
       }),
       {}
     );
@@ -218,6 +219,37 @@ describe("withV3ApiWrapper", () => {
       "user_1"
     );
     expect(mockAuthenticateRequest).not.toHaveBeenCalled();
+  });
+
+  test("charges an /api/internal route the dashboard's own bucket, not the public API's", async () => {
+    const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    mockGetSession.mockResolvedValue({
+      user: { id: "user_1", name: "Test", email: "t@example.com" },
+      expires: "2026-01-01",
+    });
+    const wrapped = withV3ApiWrapper({ auth: "session", handler: async () => Response.json({ ok: true }) });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/internal/tags"), {});
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(applyRateLimit)).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "api:internal", allowedPerInterval: 600 }),
+      "user_1"
+    );
+    expect(vi.mocked(applyRateLimit)).not.toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "api:v3" }),
+      expect.anything()
+    );
+  });
+
+  test.each([
+    ["/api/internal/tags", "api:internal"],
+    ["/sub/api/internal/tags", "api:internal"],
+    ["/api/v3/surveys", "api:v3"],
+    ["/sub/api/v3/surveys", "api:v3"],
+    ["/api/v3/things/api/internal/x", "api:v3"],
+  ])("picks the default bucket for %s, a basePath prefix included", (pathname, namespace) => {
+    expect(getDefaultRateLimitConfig(pathname).namespace).toBe(namespace);
   });
 
   test("falls back to api key auth in both mode", async () => {
@@ -418,9 +450,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys?tag=a&tag=b", {
         method: "POST",
         body: JSON.stringify({ name: "Survey API" }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       }),
       {
         params: Promise.resolve({
@@ -450,9 +480,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys", {
         method: "POST",
         body: "{",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       }),
       {}
     );
@@ -496,6 +524,7 @@ describe("withV3ApiWrapper", () => {
         method: "POST",
         body: "{}",
         headers: {
+          ...SAME_ORIGIN_HEADERS,
           "Content-Length": String(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1),
           "Content-Type": "application/json",
           "x-request-id": "req-payload-too-large",
@@ -564,9 +593,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys", {
         method: "POST",
         body: JSON.stringify({ extra: true }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       }),
       {}
     );
@@ -627,9 +654,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys", {
         method: "POST",
         body: "{",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       }),
       {}
     );
@@ -712,7 +737,7 @@ describe("withV3ApiWrapper", () => {
     await wrapped(
       new NextRequest("http://localhost/api/v3/surveys", {
         method: "POST",
-        headers: { "x-request-id": "req-audit" },
+        headers: { ...SAME_ORIGIN_HEADERS, "x-request-id": "req-audit" },
       }),
       {}
     );
@@ -728,6 +753,166 @@ describe("withV3ApiWrapper", () => {
  * because the reporting is invisible in every response: nothing about a 500's body tells you whether
  * it reached Sentry, so a regression here is silent by construction.
  */
+describe("cross-origin protection (ENG-3380, ENG-3984)", () => {
+  const SESSION = {
+    user: { id: "user_1", name: "Test", email: "t@example.com" },
+    expires: "2026-01-01",
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockGetSession.mockResolvedValue(null);
+    mockAuthenticateRequest.mockResolvedValue(null);
+  });
+
+  const write = (headers: Record<string, string>, method = "POST") =>
+    new NextRequest("http://localhost/api/internal/things", { method, headers });
+
+  test("lets a server call an allowCrossOrigin pre-login route with no Origin, as a webhook sender does", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "none", allowCrossOrigin: true, rateLimit: false, handler });
+
+    const response = await wrapped(write({}), {});
+
+    expect(response.status).toBe(200);
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  test.each(["session", "apiKey", "both"] as const)(
+    "refuses allowCrossOrigin on an auth: %s route when the module loads",
+    (auth) => {
+      expect(() =>
+        withV3ApiWrapper({ auth, allowCrossOrigin: true, handler: async () => Response.json({}) })
+      ).toThrow("allowCrossOrigin is only for auth");
+    }
+  );
+
+  test("refuses a cross-site pre-login write before reading its body, however large", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    let bodyRead = false;
+    const request = new NextRequest("http://localhost/api/internal/password-resets", {
+      method: "POST",
+      headers: { "sec-fetch-site": "cross-site", "content-type": "application/json" },
+      // No buffer, so `pull` runs only when something reads the body (the default buffer pulls one chunk up front).
+      body: new ReadableStream<Uint8Array>(
+        {
+          pull(controller) {
+            bodyRead = true;
+            controller.enqueue(new Uint8Array(64 * 1024));
+          },
+        },
+        { highWaterMark: 0 }
+      ),
+      duplex: "half",
+    });
+
+    const response = await withV3ApiWrapper({ auth: "none", bodyLimitBytes: 1024, handler })(request, {});
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("Cross-origin requests are not allowed.");
+    expect(handler).not.toHaveBeenCalled();
+    expect(bodyRead).toBe(false);
+  });
+
+  test.each([
+    ["Sec-Fetch-Site: same-site (a sibling subdomain)", { "sec-fetch-site": "same-site" }],
+    ["Sec-Fetch-Site: cross-site", { "sec-fetch-site": "cross-site" }],
+    ["neither Sec-Fetch-Site nor Origin", {}],
+    ["Origin: null", { origin: "null" }],
+  ])(
+    "refuses a session write carrying %s, before the handler or the rate limiter run",
+    async (_label, headers) => {
+      const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+      mockGetSession.mockResolvedValue(SESSION);
+      const handler = vi.fn(async () => Response.json({ ok: true }));
+      const wrapped = withV3ApiWrapper({ auth: "session", action: "deleted", targetType: "survey", handler });
+
+      const response = await wrapped(write({ "x-request-id": "req-csrf", ...headers }), {});
+
+      expect(response.status).toBe(403);
+      expect(await response.json()).toEqual(
+        expect.objectContaining({ code: "forbidden", requestId: "req-csrf" })
+      );
+      expect(handler).not.toHaveBeenCalled();
+      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(mockQueueAuditEvent).not.toHaveBeenCalled();
+      expect(mockLoggerWarn).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: expect.any(String) }),
+        "V3 API refused a cross-origin request"
+      );
+    }
+  );
+
+  test("lets a same-origin session write through", async () => {
+    mockGetSession.mockResolvedValue(SESSION);
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "session", handler });
+
+    const response = await wrapped(write(SAME_ORIGIN_HEADERS), {});
+
+    expect(response.status).toBe(200);
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  test("lets a session read through with no browser headers at all", async () => {
+    mockGetSession.mockResolvedValue(SESSION);
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "session", handler });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/internal/things"), {});
+
+    expect(response.status).toBe(200);
+  });
+
+  test("applies to a session caller on a route that also takes API keys", async () => {
+    mockGetSession.mockResolvedValue(SESSION);
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "both", handler });
+
+    const response = await wrapped(write({ "sec-fetch-site": "cross-site" }, "PATCH"), {});
+
+    expect(response.status).toBe(403);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("leaves API-key requests alone: a key carries no ambient credential to forge", async () => {
+    mockAuthenticateRequest.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      workspacePermissions: [],
+    });
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "both", handler });
+
+    const response = await wrapped(write({ "x-api-key": "fbk_test" }, "DELETE"), {});
+
+    expect(response.status).toBe(200);
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  test("applies to unauthenticated pre-login routes too (login CSRF)", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "none", handler });
+
+    const refused = await wrapped(write({ "sec-fetch-site": "cross-site" }), {});
+    const allowed = await wrapped(write(SAME_ORIGIN_HEADERS), {});
+
+    expect(refused.status).toBe(403);
+    expect(allowed.status).toBe(200);
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  test("still answers 401, not 403, when a session route gets no session at all", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "session", handler });
+
+    const response = await wrapped(write({ "sec-fetch-site": "cross-site" }), {});
+
+    expect(response.status).toBe(401);
+  });
+});
+
 describe("5xx reporting", () => {
   const reported = () => vi.mocked(reportApiError).mock.calls.map(([c]) => c);
 
@@ -927,7 +1112,7 @@ describe("request array budget (ENG-3384)", () => {
     const response = await wrapped(
       new NextRequest("http://localhost/api/v3/surveys", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-request-id": "req-budget" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", "x-request-id": "req-budget" },
         body: JSON.stringify({
           blocks: [{ elements: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => 0) }],
         }),
@@ -967,7 +1152,7 @@ describe("request array budget (ENG-3384)", () => {
     const response = await withV3ApiWrapper({ auth: "none", schemas: { body: z.unknown() }, handler })(
       new NextRequest("http://localhost/api/v3/surveys", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: deep,
       }),
       {}
@@ -997,7 +1182,7 @@ describe("request array budget (ENG-3384)", () => {
       const response = await withV3ApiWrapper({ auth: "none", handler })(
         new NextRequest("http://localhost/api/v3/workflows", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
           body: JSON.stringify({
             definition: { nodes: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => 0) },
           }),
@@ -1019,7 +1204,7 @@ describe("request array budget (ENG-3384)", () => {
       const response = await withV3ApiWrapper({ auth: "none", handler })(
         new NextRequest("http://localhost/api/v3/workflows", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
           body: new ReadableStream<Uint8Array>({
             start(controller) {
               controller.enqueue(oversized);
@@ -1058,7 +1243,8 @@ describe("request array budget (ENG-3384)", () => {
         });
         const request = new NextRequest("http://localhost/api/v3/workflows", {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...contentLength },
+          // The browser's same-origin header, so the refusal under test is the body limit, not the origin check.
+          headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", ...contentLength },
           body: new ReadableStream<Uint8Array>({
             start(controller) {
               controller.enqueue(new TextEncoder().encode(sent));
@@ -1097,7 +1283,7 @@ describe("request array budget (ENG-3384)", () => {
       const response = await withV3ApiWrapper({ auth: "none", handler })(
         new NextRequest("http://localhost/api/v3/workflows", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
           body: JSON.stringify({ name: "Nudge", definition: { nodes: [{ id: "n1" }] } }),
         }),
         {}
@@ -1114,13 +1300,112 @@ describe("request array budget (ENG-3384)", () => {
       const handler = vi.fn(async ({ req }: { req: NextRequest }) => new Response(await req.text()));
 
       const response = await withV3ApiWrapper({ auth: "none", handler })(
-        new NextRequest("http://localhost/api/v3/workflows", { method: "POST", body: "not json" }),
+        new NextRequest("http://localhost/api/v3/workflows", {
+          method: "POST",
+          headers: SAME_ORIGIN_HEADERS,
+          body: "not json",
+        }),
         {}
       );
 
       expect(handler).toHaveBeenCalledTimes(1);
       await expect(response.text()).resolves.toBe("not json");
     });
+  });
+});
+
+describe("per-route array budget (arrayBudget)", () => {
+  const ROUTE_BUDGET = { maxItems: 5000, maxTotalElements: 6000 };
+  const post = (body: unknown) =>
+    new NextRequest("http://localhost/api/internal/contacts/imports", {
+      method: "POST",
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  const zeros = (length: number) => Array.from({ length }, () => 0);
+  const echo = vi.fn(async () => Response.json({ ok: true }));
+  const withBudget = (schemas?: { body: z.ZodTypeAny }) =>
+    withV3ApiWrapper({ auth: "none", schemas, arrayBudget: ROUTE_BUDGET, handler: echo });
+
+  test("lets an array up to the route's own cap through, and names that cap past it", async () => {
+    const route = withBudget({ body: z.unknown() });
+
+    const accepted = await route(post({ records: zeros(ROUTE_BUDGET.maxItems) }), {});
+    const refused = await route(post({ records: zeros(ROUTE_BUDGET.maxItems + 1) }), {});
+
+    expect(accepted.status).toBe(200);
+    expect(refused.status).toBe(400);
+    await expect(refused.json()).resolves.toMatchObject({
+      invalid_params: [
+        { name: "records", reason: `Too big: expected array to have <=${ROUTE_BUDGET.maxItems} items` },
+      ],
+    });
+  });
+
+  test("holds the whole body to the route's own element total", async () => {
+    const route = withBudget({ body: z.unknown() });
+    const half = ROUTE_BUDGET.maxTotalElements / 2;
+
+    const accepted = await route(post({ a: zeros(half), b: zeros(half) }), {});
+    const refused = await route(post({ a: zeros(half), b: zeros(half + 1) }), {});
+
+    expect(accepted.status).toBe(200);
+    expect(refused.status).toBe(400);
+    await expect(refused.json()).resolves.toMatchObject({
+      invalid_params: [
+        {
+          name: "b",
+          reason: `Too big: expected the request to carry <=${ROUTE_BUDGET.maxTotalElements} array elements in total`,
+        },
+      ],
+    });
+  });
+
+  test("applies to that route only: one without it keeps the default budget", async () => {
+    const body = { records: zeros(V3_REQUEST_ARRAY_MAX_ITEMS + 1) };
+    const defaultRoute = withV3ApiWrapper({ auth: "none", schemas: { body: z.unknown() }, handler: echo });
+
+    expect((await withBudget({ body: z.unknown() })(post(body), {})).status).toBe(200);
+    const refused = await defaultRoute(post(body), {});
+    expect(refused.status).toBe(400);
+    await expect(refused.json()).resolves.toMatchObject({
+      invalid_params: [
+        { name: "records", reason: `Too big: expected array to have <=${V3_REQUEST_ARRAY_MAX_ITEMS} items` },
+      ],
+    });
+  });
+
+  test("covers a route without a body schema too", async () => {
+    const route = withBudget();
+
+    expect((await route(post({ records: zeros(ROUTE_BUDGET.maxItems) }), {})).status).toBe(200);
+    expect((await route(post({ records: zeros(ROUTE_BUDGET.maxItems + 1) }), {})).status).toBe(400);
+  });
+
+  test("never lifts the depth cap", async () => {
+    const deep = `{"a":${"[".repeat(V3_REQUEST_MAX_DEPTH)}0${"]".repeat(V3_REQUEST_MAX_DEPTH)}}`;
+
+    const response = await withBudget({ body: z.unknown() })(
+      new NextRequest("http://localhost/api/internal/contacts/imports", {
+        method: "POST",
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
+        body: deep,
+      }),
+      {}
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  test.each([
+    { maxItems: 0, maxTotalElements: 10 },
+    { maxItems: 10, maxTotalElements: -1 },
+    { maxItems: 1.5, maxTotalElements: 10 },
+    { maxItems: 10, maxTotalElements: Number.POSITIVE_INFINITY },
+  ])("refuses to build a route with arrayBudget %o", (arrayBudget) => {
+    expect(() =>
+      withV3ApiWrapper({ auth: "none", arrayBudget, handler: async () => new Response(null) })
+    ).toThrow(/arrayBudget\.\w+ must be a positive integer/);
   });
 });
 
@@ -1134,7 +1419,7 @@ describe("per-route body limit (bodyLimitBytes)", () => {
   const streamedPost = (body: string) =>
     new NextRequest("http://localhost/api/internal/surveys/import/stream", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       body: new ReadableStream<Uint8Array>({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(body));
@@ -1201,7 +1486,11 @@ describe("per-route body limit (bodyLimitBytes)", () => {
       new NextRequest("http://localhost/api/internal/surveys/import/stream", {
         method: "POST",
         body: "{}",
-        headers: { "Content-Type": "application/json", "Content-Length": String(ROUTE_LIMIT + 1) },
+        headers: {
+          ...SAME_ORIGIN_HEADERS,
+          "Content-Type": "application/json",
+          "Content-Length": String(ROUTE_LIMIT + 1),
+        },
       }),
       {}
     );
@@ -1242,7 +1531,7 @@ describe("per-route concurrency limit", () => {
   const postJson = (body: string) =>
     new NextRequest("http://localhost/api/internal/surveys/import/stream", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       body,
     });
 
@@ -1314,7 +1603,7 @@ describe("per-route concurrency limit", () => {
     const post = (query: string) =>
       new NextRequest(`http://localhost/api/internal/surveys/import/stream${query}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: '{"a":"x"}',
       });
 
@@ -1434,7 +1723,7 @@ describe("per-route concurrency limit", () => {
     const response = await route(
       new NextRequest("http://localhost/api/internal/surveys/import/stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: '{"a":"x"}',
         signal: client.signal,
       }),
@@ -1469,7 +1758,7 @@ describe("per-route concurrency limit", () => {
     const pending = route(
       new NextRequest("http://localhost/api/internal/surveys/import/stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: '{"a":"x"}',
         signal: client.signal,
       }),
@@ -1512,7 +1801,7 @@ describe("per-route concurrency limit", () => {
     const response = await route(
       new NextRequest("http://localhost/api/internal/surveys/import/stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: '{"a":"x"}',
         signal: client.signal,
       }),
@@ -1559,7 +1848,7 @@ describe("multipart form bodies (schemas.formData)", () => {
   const streamedPost = (bytes: Uint8Array, headers: Record<string, string>) =>
     new NextRequest(URL_PATH, {
       method: "POST",
-      headers,
+      headers: { ...SAME_ORIGIN_HEADERS, ...headers },
       body: new ReadableStream<Uint8Array>({
         start(controller) {
           controller.enqueue(bytes);
@@ -1618,7 +1907,7 @@ describe("multipart form bodies (schemas.formData)", () => {
       new NextRequest(URL_PATH, {
         method: "POST",
         body: '{"workspaceId":"ws_1"}',
-        headers: contentType ? { "Content-Type": contentType } : {},
+        headers: contentType ? { ...SAME_ORIGIN_HEADERS, "Content-Type": contentType } : SAME_ORIGIN_HEADERS,
       }),
       {}
     );
@@ -1699,7 +1988,11 @@ describe("multipart form bodies (schemas.formData)", () => {
       new NextRequest(URL_PATH, {
         method: "POST",
         body: "--x--",
-        headers: { "Content-Type": contentType, "Content-Length": String(ROUTE_LIMIT + 1) },
+        headers: {
+          ...SAME_ORIGIN_HEADERS,
+          "Content-Type": contentType,
+          "Content-Length": String(ROUTE_LIMIT + 1),
+        },
       }),
       {}
     );

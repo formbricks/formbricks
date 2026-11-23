@@ -99,7 +99,7 @@ const getCreativeColumns = ({
         <CreativeTypeIcon type={row.original.type} />
         <Link
           href={getRowHref(row.original)}
-          className="focus-visible:ring-ring min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+          className="min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden">
           {row.original.name || t("workspace.creatives.untitled_creative")}
         </Link>
         <CreativeRowWarnings warnings={row.original.warnings} overlapNames={getOverlapNames(row.original)} />
@@ -180,7 +180,7 @@ export const CreativesList = ({ workspaceId, isReadOnly, creativesAccess }: Read
   const router = useRouter();
   const locale = getUiLocale(i18n);
 
-  useEffect(() => removeStaleFilterStorage(globalThis.window?.localStorage), []);
+  useEffect(() => removeStaleFilterStorage(), []);
 
   const filterProperties = getCreativeFilterProperties(t);
   const tableState = useTableUrlState({

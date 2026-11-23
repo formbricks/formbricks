@@ -1,3 +1,5 @@
+import { WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW } from "@formbricks/workflows";
+
 /**
  * `failClosed: true` marks the abuse limits: email-sending, account and organization creation, and the
  * brute-force guards. They refuse while Redis is unavailable instead of letting everything through; every
@@ -35,7 +37,6 @@ export const rateLimitConfigs = {
       namespace: "auth:verify:account",
       failClosed: true,
     }, // 3 per hour
-    emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token", failClosed: true }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
     // The SAML callback parses the posted XML before it can tell an IdP from a stranger (ENG-3973), so this caps
     // how often one IP can make it parse. Generous on purpose: every SAML sign-in at a company behind one NAT
     // address lands here, often in a burst at the start of the day. The markup budget is the real bound.
@@ -47,17 +48,59 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
+    // The dashboard's own `/api/internal` routes, per signed-in user: every page load, refetch and open tab
+    // reads through here, where the server actions and server-rendered pages they replace had no per-user
+    // bucket. Writes also charge their own budget (`actions.stateMutation` and the like) on top.
+    internal: { interval: 60, allowedPerInterval: 600, namespace: "api:internal" }, // 600 per minute
     v3StateMutation: {
       interval: 60,
       allowedPerInterval: 120,
       namespace: "api:v3:state-mutation",
     }, // 120 per minute per principal — the API twin of `actions.stateMutation`, for batch writes that fan out to the response pipeline
     mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth", failClosed: true }, // 30 per minute
+    // Calls to one workflow's Webhook Secret URL (ENG-7167), keyed by workflow id and counted only once
+    // the token matched, so callers without the URL cannot spend it. The default API number, in a
+    // namespace of its own. The organization-wide and daily-run quotas are configurable and live in
+    // `modules/ee/workflows/lib/webhook/limits.ts`.
+    v3WorkflowWebhook: {
+      interval: 60,
+      allowedPerInterval: WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW,
+      namespace: "api:v3:workflow-webhook",
+    }, // 100 per minute per workflow, the number the trigger panel shows
+    // The same number, checked before the database is read and keyed by workflow id plus a prefix of the
+    // token's SHA-256 hash (never the token): every wrong token spends its own budget, not the real
+    // caller's, while a token repeated past the limit still never reaches the database.
+    v3WorkflowWebhookToken: {
+      interval: 60,
+      allowedPerInterval: WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW,
+      namespace: "api:v3:workflow-webhook:token",
+    }, // 100 per minute per workflow and token
+    // "Send test request" on a workflow HTTP request step (ENG-7179): each one is a real outbound call,
+    // so a principal gets 30 a minute, REST and MCP together. An outbound-abuse limit: it refuses while
+    // Redis is down rather than letting unlimited calls out (ADR 0016).
+    v3WorkflowTestRequests: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:workflow-test-request",
+      failClosed: true,
+    }, // 30 per minute per user or API key
+    // A Test run of a workflow's draft (ENG-7181): it sends nothing, but each one saves a run and walks
+    // the whole workflow inside the request, so a principal gets 30 a minute, REST and MCP together.
+    v3WorkflowTestRuns: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:workflow-test-run",
+    }, // 30 per minute per user or API key
     v3SurveyGenerate: {
       interval: 60,
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    internalAiTranslate: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:ai-translations",
+    }, // 20 per minute per user — one call per target language, each up to 8192 output tokens
     v3SurveyVisibility: {
       interval: 60,
       allowedPerInterval: 10,
@@ -105,6 +148,12 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:internal:retention-runs:export",
     }, // 10 per hour — each export streams an organisation's whole retention history (data retention)
+    internalHeicConversion: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:heic-conversions",
+    }, // 20 per minute per user, instead of v3 — each conversion decodes a whole photo in process; the
+    // dashboard converts one per HEIC file a user picks, so a person never comes near this
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,

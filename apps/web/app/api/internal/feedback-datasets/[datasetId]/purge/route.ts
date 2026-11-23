@@ -8,15 +8,17 @@
  * responds 202 — the records are still present when it returns.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { purgeV3FeedbackDataset } from "../../lib/operations";
-import { ZDatasetPathParams, ZDatasetPurgeQuery } from "../../lib/schemas";
+import { ZDatasetPathParams } from "../../lib/schemas";
 
 export const POST = withV3ApiWrapper({
   auth: "session",
   schemas: {
     params: ZDatasetPathParams,
-    query: ZDatasetPurgeQuery,
+    // No query parameters are accepted; a stray one is a caller bug, not something to ignore.
+    query: ZV3EmptyQuery,
   },
   action: "purged",
   targetType: "feedbackDirectory",

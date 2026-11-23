@@ -54,8 +54,16 @@ info:
     /api/v3/workflows/{workflowId}/disable**, **POST
     /api/v3/workflows/{workflowId}/archive**, **POST
     /api/v3/workflows/{workflowId}/unarchive**, **POST
-    /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and
-    **GET /api/v3/workflows/runs/{runId}**.
+    /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**,
+    **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET
+    /api/v3/workflows/{workflowId}/webhook**, **POST
+    /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT
+    /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST
+    /api/v3/workflows/{workflowId}/steps/{stepId}/test-request** and **PUT
+    /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response**, Test runs **POST
+    /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL
+    **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no
+    login: the token in its path is the credential.
 
 
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**;
@@ -101,8 +109,8 @@ info:
       Every widget change moves `updatedAt`.
 
 
-    Authenticate all management endpoints with **session cookie** or
-    **`x-api-key`** (management key with access to the workspace).
+    Authenticate all management endpoints with **`x-api-key`** (management key
+    with access to the workspace).
 
 
     **Spec location:** source of truth is the multi-file tree at
@@ -129,9 +137,10 @@ info:
 
     **Auth**
 
-    Authenticate with either a session cookie or **`x-api-key`**. In dual-auth
-    mode, V3 checks the API key first when the header is present, otherwise it
-    uses the session path. Unauthenticated callers get **401** before query
+    Authenticate with **`x-api-key`** or a Bearer token. Operations also accept
+    the Formbricks app's own sign-in session, which is how the app calls them;
+    it is not supported for scripts or integrations. When an API key is
+    present, V3 checks it first. Unauthenticated callers get **401** before query
     validation.
 
 
@@ -346,7 +355,9 @@ info:
     via `workflowVersionId`. `POST .../test` is a dry run: it validates the
     definition and resolves the trigger's references synchronously, creating no
     run and sending no email, and returns `{ workflowId, ok, problems }`
-    directly. Real runs execute asynchronously and are polled via
+    directly. `POST .../test-runs` is a Test run: it runs the draft at once with
+    fake effects (nothing is sent or called), saves it as a dry run with no
+    version, and returns the finished run. Real runs execute asynchronously and are polled via
     `GET /api/v3/workflows/runs/{runId}`.
 
 
@@ -441,6 +452,20 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_unarchive.yml
   /api/v3/workflows/{workflowId}/test:
     $ref: paths/api_v3_workflows_{workflowId}_test.yml
+  /api/v3/workflows/{workflowId}/webhook:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook.yml
+  /api/v3/workflows/{workflowId}/webhook/regenerate:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook_regenerate.yml
+  /api/v3/workflows/{workflowId}/webhook/{token}:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook_{token}.yml
+  /api/v3/workflows/{workflowId}/sample:
+    $ref: paths/api_v3_workflows_{workflowId}_sample.yml
+  /api/v3/workflows/{workflowId}/steps/{stepId}/test-request:
+    $ref: paths/api_v3_workflows_{workflowId}_steps_{stepId}_test-request.yml
+  /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response:
+    $ref: paths/api_v3_workflows_{workflowId}_steps_{stepId}_expected-response.yml
+  /api/v3/workflows/{workflowId}/test-runs:
+    $ref: paths/api_v3_workflows_{workflowId}_test-runs.yml
   /api/v3/charts:
     $ref: paths/api_v3_charts.yml
   /api/v3/charts/fields:
@@ -516,13 +541,16 @@ components:
     sessionAuth:
       type: apiKey
       in: cookie
-      name: next-auth.session-token
+      name: formbricks.session_token
       description: >
-        NextAuth session JWT cookie. **Development:** often
-        `next-auth.session-token`.
+        The Formbricks app's own sign-in session (`formbricks.session_token`,
+        or `__Secure-formbricks.session_token` over HTTPS). It is how the
+        Formbricks app calls this API, and it is not supported for scripts or
+        integrations: use an API key.
 
-        **Production (HTTPS):** often `__Secure-next-auth.session-token`. Send
-        the cookie your browser receives after sign-in.
+        Session-authenticated writes (`POST`, `PUT`, `PATCH`, `DELETE`) are
+        accepted only from the Formbricks app itself (a same-origin browser
+        request) and get a `403` otherwise.
     apiKeyAuth:
       type: apiKey
       in: header

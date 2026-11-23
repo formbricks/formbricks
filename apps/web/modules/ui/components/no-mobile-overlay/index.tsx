@@ -1,11 +1,15 @@
 "use client";
 
 import { ExternalLinkIcon, Maximize2Icon, SmartphoneIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
+import { isMobileFriendlyPath } from "./lib/mobile-friendly-paths";
 
 export const NoMobileOverlay = () => {
   const { t } = useTranslation();
+  const pathname = usePathname();
+  if (isMobileFriendlyPath(pathname)) return null;
   return (
     <div className="fixed inset-0 z-9999 sm:hidden">
       <div className="absolute inset-0 bg-slate-50"></div>

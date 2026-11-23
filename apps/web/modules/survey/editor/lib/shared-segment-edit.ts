@@ -7,8 +7,8 @@ import { isDeepEqual } from "@/lib/utils/object";
  *
  * A survey save writes only the survey's own private segment. A shared segment can be nested in other
  * segments and so in other surveys' targeting, so it is saved through the segment endpoints: the card's
- * "Save changes" (`updateSegmentAction`). Until then, the edit lives only in the editor. Held by the
- * survey editor rather than the card, which unmounts with the Settings tab.
+ * "Save changes" (`PATCH /api/internal/segments/{segmentId}`). Until then, the edit lives only in the
+ * editor. Held by the survey editor rather than the card, which unmounts with the Settings tab.
  */
 export type TSharedSegmentEdit = Readonly<{ segmentId: string; savedFilters: TBaseFilters }>;
 

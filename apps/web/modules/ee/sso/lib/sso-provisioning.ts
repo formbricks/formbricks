@@ -6,12 +6,14 @@ import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
-import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import type { TAuthzedProjectionResult } from "@/lib/authzed/projection";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_ORGANIZATION_ID, DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
+import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import type { TSsoProvisioningRejectReason } from "@/modules/auth/lib/sso-provisioning-reject-reasons";
@@ -46,6 +48,12 @@ export type TSsoProvisioningDecision =
        * creates carries the single-use bootstrap marker. Absent on every other provision path.
        */
       isBootstrapAdmin?: boolean;
+      /**
+       * ENG-7097: the role of the invite whose token the callback URL carried, when that token is valid,
+       * matches the sign-up's email and belongs to `organizationId`. Absent otherwise: a role is never
+       * granted on an email match alone, since that email may be one the IdP does not vouch for.
+       */
+      inviteRole?: TOrganizationRole;
     };
 
 /**
@@ -82,6 +90,70 @@ const validateSsoInviteToken = async (
     default:
       return "invite_token_validation_error"; // "missing" | "verification_error"
   }
+};
+
+/** The gate could not read the invite from the database, so it cannot tell which role the invite grants. */
+const INVITE_LOOKUP_FAILED = "invite_lookup_failed";
+
+/**
+ * ENG-7097: the role of the invite named by the token on the callback URL, or undefined.
+ *
+ * The invite page keeps an existing member's role, so a membership provisioned here has to carry the
+ * invite's role already. Only a token proves the sign-up came from that invite's link, which was
+ * mailed to the invited address; an email match alone does not, because on the
+ * `DEFAULT_ORGANIZATION_ID` and `SKIP_INVITE_FOR_SSO` paths the IdP's email may be unverified.
+ *
+ * A missing, unreadable or mismatched token, and an invite that is gone, foreign or expired, all mean
+ * "no invite role". A failed database read is different: the invite may be valid, and provisioning
+ * with the default role would stick, because the invite page no longer raises an existing role. That
+ * case returns `INVITE_LOOKUP_FAILED` so the gate rejects and the user can retry the sign-in.
+ */
+const getSsoInviteRole = async (
+  email: string,
+  callbackUrl: string,
+  organizationId: string
+): Promise<TOrganizationRole | undefined | typeof INVITE_LOOKUP_FAILED> => {
+  let inviteId: string;
+  try {
+    const inviteToken = new URL(callbackUrl, WEBAPP_URL).searchParams.get("token");
+    if (!inviteToken) return undefined;
+    const verified = verifyInviteToken(inviteToken);
+    if (verified.email.trim().toLowerCase() !== email.trim().toLowerCase()) return undefined;
+    inviteId = verified.inviteId;
+  } catch (error) {
+    logger.warn(loggableError(error), "SSO provisioning: could not read the sign-up's invite token");
+    return undefined;
+  }
+
+  try {
+    const invite = await prisma.invite.findUnique({
+      where: { id: inviteId },
+      select: { role: true, organizationId: true, expiresAt: true },
+    });
+    if (invite?.organizationId !== organizationId || invite.expiresAt < new Date()) return undefined;
+    return invite.role;
+  } catch (error) {
+    logger.error(loggableError(error), "SSO provisioning: could not look up the sign-up's invite");
+    return INVITE_LOOKUP_FAILED;
+  }
+};
+
+type TProvisionDecision = Extract<TSsoProvisioningDecision, { action: "provision" }>;
+
+/**
+ * Adds the invite's role to a provision decision, leaving the field absent (not `undefined`) without
+ * one. Rejects instead when the invite could not be looked up (see `getSsoInviteRole`).
+ */
+const withInviteRole = async (
+  decision: TProvisionDecision & { organizationId: string },
+  email: string,
+  callbackUrl: string
+): Promise<TSsoProvisioningDecision> => {
+  const inviteRole = await getSsoInviteRole(email, callbackUrl, decision.organizationId);
+  if (inviteRole === INVITE_LOOKUP_FAILED) {
+    return { action: "reject", reason: "invite_token_validation_error" };
+  }
+  return inviteRole ? { ...decision, inviteRole } : decision;
 };
 
 /**
@@ -143,16 +215,21 @@ export const gateSsoProvisioning = async ({
   // there is no invite to check and no org to resolve here. Creation of a missing org, and the role,
   // are settled in the write phase (`ensureDefaultOrganization`).
   if (DEFAULT_ORGANIZATION_ID) {
-    return {
-      action: "provision",
-      organizationId: DEFAULT_ORGANIZATION_ID,
-      // The two self-hosting mechanisms are alternatives, not layers: DEFAULT_TEAM_ID's team belongs
-      // to whichever org it belongs to, which need not be this one, and joining a team outside your
-      // own org is not a thing. Parity with the legacy handler, which had no default-team concept.
-      assignToDefaultTeam: false,
-      signupSource,
-      useDefaultOrganization: true,
-    };
+    // No invite is required here, but one the sign-up did arrive with still sets the role.
+    return withInviteRole(
+      {
+        action: "provision",
+        organizationId: DEFAULT_ORGANIZATION_ID,
+        // The two self-hosting mechanisms are alternatives, not layers: DEFAULT_TEAM_ID's team belongs
+        // to whichever org it belongs to, which need not be this one, and joining a team outside your
+        // own org is not a thing. Parity with the legacy handler, which had no default-team concept.
+        assignToDefaultTeam: false,
+        signupSource,
+        useDefaultOrganization: true,
+      },
+      email,
+      callbackUrl
+    );
   }
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
@@ -193,12 +270,49 @@ export const gateSsoProvisioning = async ({
     return { action: "reject", reason: "insufficient_role_permissions" };
   }
 
-  return {
-    action: "provision",
-    organizationId: organization.id,
-    assignToDefaultTeam: Boolean(SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID),
-    signupSource,
-  };
+  return withInviteRole(
+    {
+      action: "provision",
+      organizationId: organization.id,
+      assignToDefaultTeam: Boolean(SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID),
+      signupSource,
+    },
+    email,
+    callbackUrl
+  );
+};
+
+/** Runs `step`, retrying once. Logs an error and returns false if both attempts fail; never throws. */
+const withOneRetry = async (failureMessage: string, step: () => Promise<unknown>): Promise<boolean> => {
+  const MAX_ATTEMPTS = 2;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      await step();
+      return true;
+    } catch (error) {
+      if (attempt === MAX_ATTEMPTS) {
+        logger.error(loggableError(error), `SSO provisioning: ${failureMessage}`);
+      }
+    }
+  }
+  return false;
+};
+
+/**
+ * AuthZed projections are best-effort: they log a failure and return it as a status instead of
+ * throwing. Throwing on that status lets `withOneRetry` retry the projection.
+ */
+class SsoProjectionFailedError extends Error {
+  readonly code: string;
+  constructor(operation: string, code: string) {
+    super(`AuthZed projection ${operation} failed`);
+    this.name = "SsoProjectionFailedError";
+    this.code = code;
+  }
+}
+
+const throwIfProjectionFailed = (operation: string, result: TAuthzedProjectionResult): void => {
+  if (result.status === "failed") throw new SsoProjectionFailedError(operation, result.code);
 };
 
 /**
@@ -208,11 +322,15 @@ export const gateSsoProvisioning = async ({
  * budget (the same reason `validateSsoInviteToken` sits outside `gateSsoProvisioning`); its behavior
  * is covered by sso-provisioning.test.ts.
  *
- * The retry exists because the user + account are already committed by Better Auth: throwing here
+ * The retries exist because the user + account are already committed by Better Auth: throwing here
  * would not roll them back and would break an otherwise successful sign-in. On the final attempt we
  * log an error for alerting instead — there is no automatic retry on later sign-ins, so a sustained
- * failure needs manual reconciliation, and the writes are idempotent (`createMembership` /
- * `createDefaultTeamMembership` upsert) so an operational retry is safe.
+ * failure needs manual reconciliation.
+ *
+ * The database writes and the SpiceDB projection retry separately. A failed transaction rolled back,
+ * so writing the same role again is safe. Once it has committed, only the projection is retried: a
+ * second `createMembership` would update the stored role back to `role`, undoing a change an
+ * administrator made in between (ENG-7097).
  */
 const assignSsoUserToOrganization = async ({
   userId,
@@ -225,52 +343,80 @@ const assignSsoUserToOrganization = async ({
   role: TOrganizationRole;
   assignToDefaultTeam: boolean;
 }): Promise<void> => {
-  const MAX_ATTEMPTS = 2;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    try {
-      await prisma.$transaction(async (tx) => {
-        await createMembership(
-          organizationId,
-          userId,
-          { role, accepted: true },
-          { projection: "deferred", transaction: tx }
-        );
-        if (assignToDefaultTeam) {
-          await createDefaultTeamMembership(userId, { projection: "deferred", transaction: tx });
-        }
-        const dbUser = await tx.user.findUnique({
-          where: { id: userId },
-          select: { notificationSettings: true },
-        });
-        const current = (dbUser?.notificationSettings ?? {}) as TUserNotificationSettings;
-        await updateUser(
-          userId,
-          {
-            notificationSettings: {
-              ...current,
-              alert: { ...current.alert },
-              unsubscribedOrganizationIds: Array.from(
-                new Set([...(current.unsubscribedOrganizationIds ?? []), organizationId])
-              ),
-            },
-          },
-          tx
-        );
+  const committed = await withOneRetry("failed to assign new SSO user to its organization", () =>
+    prisma.$transaction(async (tx) => {
+      await createMembership(
+        organizationId,
+        userId,
+        { role, accepted: true },
+        { projection: "deferred", transaction: tx }
+      );
+      if (assignToDefaultTeam) {
+        await createDefaultTeamMembership(userId, { projection: "deferred", transaction: tx });
+      }
+      const dbUser = await tx.user.findUnique({
+        where: { id: userId },
+        select: { notificationSettings: true },
       });
-      await reconcileOrganizationMembership(organizationId, userId);
-      if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
-        const defaultTeamId = DEFAULT_TEAM_ID;
-        await runPostCommitProjection("sso_default_team_membership_create", () =>
-          reconcileTeamWorkspaceRelationships({ teamMemberships: [{ teamId: defaultTeamId, userId }] })
-        );
-      }
-      return;
-    } catch (error) {
-      if (attempt === MAX_ATTEMPTS) {
-        logger.error(error, "SSO provisioning: failed to assign new SSO user to its organization");
-      }
+      const current = (dbUser?.notificationSettings ?? {}) as TUserNotificationSettings;
+      await updateUser(
+        userId,
+        {
+          notificationSettings: {
+            ...current,
+            alert: { ...current.alert },
+            unsubscribedOrganizationIds: Array.from(
+              new Set([...(current.unsubscribedOrganizationIds ?? []), organizationId])
+            ),
+          },
+        },
+        tx
+      );
+    })
+  );
+  if (!committed) return;
+
+  await withOneRetry("failed to project new SSO user's organization membership", async () => {
+    throwIfProjectionFailed(
+      "sso_organization_membership_create",
+      await reconcileOrganizationMembership(organizationId, userId)
+    );
+    if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
+      throwIfProjectionFailed(
+        "sso_default_team_membership_create",
+        await reconcileTeamWorkspaceRelationships({ teamMemberships: [{ teamId: DEFAULT_TEAM_ID, userId }] })
+      );
     }
-  }
+  });
+};
+
+// Restricted roles rank below `member`: they see less of the organization, not more.
+const ORGANIZATION_ROLE_RANK: Record<TOrganizationRole, number> = {
+  owner: 4,
+  manager: 3,
+  member: 2,
+  billing: 1,
+  dashboard_viewer: 0,
+};
+
+/**
+ * ENG-7097: the role a new SSO member gets, given the gate's token-validated invite role.
+ *
+ * On the legacy path the assignment's `member` is a placeholder, so the invite's role replaces it, a
+ * restricted one included. On the `DEFAULT_ORGANIZATION_ID` path the assignment's role is the
+ * operator's configured one (or `owner` for the sign-up that created the org), and an invite may only
+ * raise it: a lower invite must not demote below what the operator configured.
+ */
+const resolveSsoMembershipRole = (
+  assignmentRole: TOrganizationRole,
+  inviteRole: TOrganizationRole | undefined,
+  useDefaultOrganization: boolean
+): TOrganizationRole => {
+  if (!inviteRole) return assignmentRole;
+  if (!useDefaultOrganization) return inviteRole;
+  return ORGANIZATION_ROLE_RANK[inviteRole] > ORGANIZATION_ROLE_RANK[assignmentRole]
+    ? inviteRole
+    : assignmentRole;
 };
 
 /**
@@ -289,6 +435,7 @@ export const provisionSsoUserMemberships = async ({
   assignToDefaultTeam,
   signupSource,
   useDefaultOrganization = false,
+  inviteRole,
   attributionProperties = {},
 }: {
   userId: string;
@@ -300,6 +447,8 @@ export const provisionSsoUserMemberships = async ({
   signupSource: "invite" | "direct";
   /** See `TSsoProvisioningDecision`: find-or-create `organizationId` and derive the role from that. */
   useDefaultOrganization?: boolean;
+  /** See `TSsoProvisioningDecision`: set only when the gate validated the sign-up's invite token. */
+  inviteRole?: TOrganizationRole;
   /** Marketing attribution read from the request cookie in `user.create.before`. */
   attributionProperties?: Record<string, string>;
 }): Promise<void> => {
@@ -317,7 +466,7 @@ export const provisionSsoUserMemberships = async ({
     await assignSsoUserToOrganization({
       userId,
       organizationId: assignment.organizationId,
-      role: assignment.role,
+      role: resolveSsoMembershipRole(assignment.role, inviteRole, useDefaultOrganization),
       assignToDefaultTeam,
     });
   }

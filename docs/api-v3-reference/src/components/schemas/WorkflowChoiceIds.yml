@@ -1,0 +1,20 @@
+type: object
+description: >-
+  Choices of a single or multi select survey question, by choice id, mirroring `ZWorkflowChoiceIds`.
+  The condition's Variable must be that question's answer (`response.<questionId>`). A response
+  stores a choice answer as its label in the respondent's language, so a run maps the answer back to
+  choice ids first, as survey logic does: the label in the response's language, then in any language,
+  and an answer that matches no choice counts as `other` when the question offers it. `equals` and
+  `doesNotEqual` take exactly one id; the list operators take one or more.
+required:
+  - choiceIds
+properties:
+  choiceIds:
+    type: array
+    minItems: 1
+    maxItems: 100
+    items:
+      type: string
+      minLength: 1
+      maxLength: 1000
+additionalProperties: false

@@ -4,19 +4,27 @@ import { processWorkflowRunReconcileJob } from "./process-workflow-run-reconcile
 const {
   reconcileOrphanedWorkflowRuns,
   reconcileStuckRunningWorkflowRuns,
+  failStuckSendingHttpRequests,
+  failInterruptedTestRuns,
   dispatchWorkflowRunViaJobs,
   info,
   debug,
 } = vi.hoisted(() => ({
+  failInterruptedTestRuns: vi.fn(),
   reconcileOrphanedWorkflowRuns: vi.fn(),
   reconcileStuckRunningWorkflowRuns: vi.fn(),
+  failStuckSendingHttpRequests: vi.fn(),
   dispatchWorkflowRunViaJobs: vi.fn(),
   info: vi.fn(),
   debug: vi.fn(),
 }));
 
 vi.mock("./reconcile-orphaned-runs", () => ({ reconcileOrphanedWorkflowRuns }));
-vi.mock("./reconcile-stuck-running-runs", () => ({ reconcileStuckRunningWorkflowRuns }));
+vi.mock("./reconcile-stuck-running-runs", () => ({
+  reconcileStuckRunningWorkflowRuns,
+  failStuckSendingHttpRequests,
+  failInterruptedTestRuns,
+}));
 vi.mock("./dispatch", () => ({ dispatchWorkflowRunViaJobs }));
 vi.mock("@formbricks/logger", () => ({ logger: { info, debug } }));
 
@@ -37,6 +45,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   reconcileOrphanedWorkflowRuns.mockResolvedValue(noQueuedWork);
   reconcileStuckRunningWorkflowRuns.mockResolvedValue(noStuckWork);
+  failStuckSendingHttpRequests.mockResolvedValue({ scanned: 0, failed: 0 });
+  failInterruptedTestRuns.mockResolvedValue({ scanned: 0, failed: 0 });
 });
 
 describe("processWorkflowRunReconcileJob", () => {
@@ -102,6 +112,35 @@ describe("processWorkflowRunReconcileJob", () => {
       expect.any(String)
     );
     expect(debug).not.toHaveBeenCalled();
+  });
+
+  test("fails Don't wait HTTP requests stuck sending, on the same clock, and logs that it acted", async () => {
+    failStuckSendingHttpRequests.mockResolvedValue({ scanned: 1, failed: 1 });
+
+    await processWorkflowRunReconcileJob(data, context);
+
+    const [{ now }] = failStuckSendingHttpRequests.mock.calls[0] as [{ now: Date }];
+    expect(now).toBe(reconcileStuckRunningWorkflowRuns.mock.calls[0][0].now);
+    expect(info).toHaveBeenCalledWith(
+      expect.objectContaining({ stuckSending: { scanned: 1, failed: 1 } }),
+      expect.any(String)
+    );
+  });
+
+  test("fails interrupted Test runs on the same clock, never through the dispatch port, and logs it", async () => {
+    failInterruptedTestRuns.mockResolvedValue({ scanned: 2, failed: 2 });
+
+    await processWorkflowRunReconcileJob(data, context);
+
+    // Only a clock and log context: the Test run sweep has no way to queue a run.
+    expect(failInterruptedTestRuns).toHaveBeenCalledWith({
+      now: reconcileStuckRunningWorkflowRuns.mock.calls[0][0].now,
+      logContext: expect.objectContaining({ jobId: "job_1" }),
+    });
+    expect(info).toHaveBeenCalledWith(
+      expect.objectContaining({ interruptedTestRuns: { scanned: 2, failed: 2 } }),
+      expect.any(String)
+    );
   });
 
   test("logs at debug when both sweeps found nothing", async () => {

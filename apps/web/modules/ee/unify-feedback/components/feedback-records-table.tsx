@@ -10,8 +10,8 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import { useOrganization } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { CONTACT_LOOKUP_USER_IDS_MAX } from "@/app/api/internal/feedback-records/schemas";
 import { getReportingTimeZone } from "@/lib/date-ranges";
-import { getFeedbackRecordContactsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { enrichmentStatusKeys } from "@/modules/ee/unify-feedback/enrichment-status/lib/query";
@@ -31,8 +31,8 @@ import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { deleteFeedbackRecordAction } from "../actions";
 import { feedbackRecordKeys, useFeedbackRecords } from "../hooks/use-feedback-records";
+import { deleteFeedbackRecord, lookupFeedbackRecordContacts } from "../lib/api-client";
 import { FieldTypeIcon } from "../lib/field-type-icons";
 import {
   DEFAULT_RECORD_SORT,
@@ -55,8 +55,8 @@ const COMPACT_DATE_TIME: Intl.DateTimeFormatOptions = {
   minute: "2-digit",
 };
 
-// Must not exceed the getFeedbackRecordContactsAction input cap (`userIds` is `.max(1000)`).
-const CONTACT_RESOLVE_BATCH_SIZE = 1000;
+// Each lookup batch is as large as the route's cap allows.
+const CONTACT_RESOLVE_BATCH_SIZE = CONTACT_LOOKUP_USER_IDS_MAX;
 const RECORD_COLUMN_IDS = [
   "select",
   "collectedAt",
@@ -192,7 +192,7 @@ const getRecordColumns = ({
         <button
           type="button"
           onClick={() => onOpenRecord(row.original.id)}
-          className="focus-visible:ring-ring block min-w-0 truncate text-left font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+          className="block min-w-0 truncate text-left font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden">
           {row.original.field_label ?? row.original.field_id}
         </button>
       ),
@@ -330,7 +330,7 @@ export const FeedbackRecordsTable = ({
   });
 
   // Resolve any not-yet-known user_ids on the loaded records to contact ids. Chunked to stay within the
-  // action's input cap; failures are swallowed since contact links are a non-critical enhancement.
+  // lookup's input cap; failures are swallowed since contact links are a non-critical enhancement.
   const resolveContactsForRecords = useCallback(
     async (recs: FeedbackRecordData[]) => {
       const missing = [
@@ -340,9 +340,8 @@ export const FeedbackRecordsTable = ({
       try {
         for (let i = 0; i < missing.length; i += CONTACT_RESOLVE_BATCH_SIZE) {
           const batch = missing.slice(i, i + CONTACT_RESOLVE_BATCH_SIZE);
-          const result = await getFeedbackRecordContactsAction({ workspaceId, userIds: batch });
-          const resolved = result?.data;
-          if (resolved) setContactIdByUserId((prev) => ({ ...prev, ...resolved }));
+          const contactIds = await lookupFeedbackRecordContacts(workspaceId, batch);
+          setContactIdByUserId((prev) => ({ ...prev, ...contactIds }));
         }
       } catch {
         // Ignore — contact deep-links are best-effort.
@@ -393,11 +392,14 @@ export const FeedbackRecordsTable = ({
         const results = await Promise.all(
           chunk.map(async (recordId) => ({
             recordId,
-            result: await deleteFeedbackRecordAction({ workspaceId, recordId }),
+            deleted: await deleteFeedbackRecord(recordId, workspaceId).then(
+              () => true,
+              () => false
+            ),
           }))
         );
-        results.forEach(({ recordId, result }) => {
-          if (!result?.data) failedIds.push(recordId);
+        results.forEach(({ recordId, deleted }) => {
+          if (!deleted) failedIds.push(recordId);
         });
       }
 

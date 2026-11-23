@@ -1695,6 +1695,37 @@ describe("Response Utils", () => {
       });
     });
 
+    test("a calculated true/false field is written true / false (ENG-6973)", () => {
+      const booleanSurvey = {
+        ...mockSurvey,
+        blocks: [],
+        embeddedFields: [
+          {
+            field: {
+              key: null,
+              name: "qualified",
+              source: "computed",
+              dataType: "boolean",
+              defaultValue: null,
+              locked: false,
+            },
+            link: { storageKey: "v_qualified" },
+          },
+        ],
+      } as unknown as TSurvey;
+      const exportOf = (value: boolean) =>
+        getResponsesJson(
+          booleanSurvey,
+          [{ ...mockResponses[0], variables: { v_qualified: value } } as TResponse],
+          [],
+          [],
+          false
+        )[0];
+
+      expect(exportOf(true)["qualified"]).toBe("true");
+      expect(exportOf(false)["qualified"]).toBe("false");
+    });
+
     test("a computed field named `__proto__` keeps its value, and reaches both writers", async () => {
       // `ZEmbeddedDataName` is a non-blank string, so `__proto__` is a legal variable name. On an
       // ordinary row object, assigning that key runs Object.prototype's inherited setter instead of

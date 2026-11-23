@@ -6,7 +6,7 @@ const RELATIVE_URL_BASE = "http://localhost";
  * The two SSO-recovery route paths.
  *
  * They live here, not in `modules/ee/sso/lib/constants.ts`, because OSS code needs them — this file
- * builds the emailed verify link, and `verification-requested/actions.ts` matches an incoming callback
+ * builds the emailed verify link, and `app/api/internal/verification-emails` matches an incoming callback
  * against the completion path — and `.coderabbit.yaml` (`apps/web/modules/ee/**`) forbids OSS importing
  * from `modules/ee` outside the `license-check` gate. Route paths carry no entitlement, so the fix is
  * to own them on this side and let the EE modules import them; that direction is fine. This file is
@@ -14,6 +14,12 @@ const RELATIVE_URL_BASE = "http://localhost";
  * reason not to pull an EE module in from here.
  */
 export const SSO_RECOVERY_COMPLETION_PATH = "/api/auth/sso/recovery/complete";
+
+/**
+ * The page that asks the account holder to confirm the link (ENG-7395). A GET on the completion path
+ * only forwards here; the page's POST back to the completion path is what links.
+ */
+export const SSO_RECOVERY_CONFIRM_PATH = "/sso-recovery/confirm";
 
 /** Better Auth's recovery magic-link endpoint, mounted by `ssoRecoverySignInPlugin` under `/api/auth`. */
 export const SSO_RECOVERY_SIGN_IN_PATH = "/api/auth/sso-recovery/sign-in";
@@ -64,7 +70,7 @@ export const normalizeRoutePathname = (url: string): string | null => {
  * the keyboard mid-sign-in rather than being something they come back to later.
  *
  * Scope is narrower than the name: `sendVerificationEmail` is the only consumer, and its only callers
- * are `startSsoRecovery` and the SSO-recovery branch of `resendVerificationEmailAction`. Sign-up
+ * are `startSsoRecovery` and the SSO-recovery branch of `POST /api/internal/verification-emails`. Sign-up
  * verification is Better Auth's own flow on `EMAIL_VERIFICATION_TTL_SECONDS` (1 hour) and is untouched.
  * No email copy quotes a duration, so shortening this needs no rewording — the template already offers
  * the resend link for an expired one.
@@ -125,6 +131,21 @@ export const buildSignupWithoutVerificationSuccessPath = ({
   }
 
   return `${successUrl.pathname}${successUrl.search}`;
+};
+
+/**
+ * The log-in link on the verification-requested page, carrying the callback so a visitor who already has
+ * an account lands back where they were going (ENG-2091).
+ *
+ * Except an SSO recovery completion (ENG-7310): only the browser that opens the emailed link can finish
+ * recovery, so logging in here and following that callback would only land on an error.
+ */
+export const buildVerificationRequestedLoginHref = (callbackUrl: string | null | undefined): string => {
+  if (!callbackUrl || normalizeRoutePathname(callbackUrl) === SSO_RECOVERY_COMPLETION_PATH) {
+    return "/auth/login";
+  }
+
+  return `/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
 };
 
 export const buildVerificationLinks = ({

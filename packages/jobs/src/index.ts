@@ -14,6 +14,7 @@ export {
   enqueueTestLogJob,
   enqueueWebhookDeliveryJob,
   enqueueWorkflowRunJob,
+  enqueueWorkflowHttpRequestDeliveryJob,
   getBackgroundJobProducer,
   recurringJobs,
   scheduleTestLogJobAt,
@@ -24,6 +25,7 @@ export { processResponsePipelineJob } from "./processors/response-pipeline";
 export { processTestLogJob } from "./processors/test-log";
 export { processWebhookDeliveryJob } from "./processors/webhook-delivery";
 export { processWorkflowRunJob } from "./processors/workflow-run";
+export { processWorkflowHttpRequestDeliveryJob } from "./processors/workflow-http-request-delivery";
 export { openJobsUpgradeQueue } from "./upgrade";
 export type { JobsUpgradeQueue } from "./upgrade";
 export { startJobsRuntime } from "./runtime";
@@ -45,6 +47,7 @@ export {
   ZTestLogJobData,
   ZUsageTelemetryJobData,
   ZWebhookDeliveryJobData,
+  ZWorkflowHttpRequestDeliveryJobData,
   ZWorkflowRunJobData,
   ZWorkflowsUsageSnapshotJobData,
   ZWorkflowRunReconcileJobData,
@@ -64,6 +67,7 @@ export type {
   TUsageTelemetryJobData,
   TWebhookDeliveryJobData,
   TWorkflowsUsageSnapshotJobData,
+  TWorkflowHttpRequestDeliveryJobData,
   TWorkflowRunJobData,
   TWorkflowRunReconcileJobData,
 } from "./types";

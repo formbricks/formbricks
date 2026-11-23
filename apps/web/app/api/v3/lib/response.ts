@@ -82,6 +82,7 @@ export const V3_PROBLEM_CODES = [
   "survey_not_workspace_visible",
   "too_many_requests",
   "unprocessable_content",
+  "unsupported_media_type",
   "visibility_blocked_by_connections",
   "visibility_change_not_allowed",
   "visibility_not_enabled",
@@ -102,6 +103,7 @@ export type V3ProblemCode = (typeof V3_PROBLEM_CODES)[number];
  * disjoint and that none of these reaches the spec.
  */
 export const INTERNAL_PROBLEM_CODES = [
+  "ai_translation_batch_too_large",
   "attachment_export_empty",
   "attachment_export_expired",
   "attachment_export_filter_conflict",
@@ -124,7 +126,6 @@ export const INTERNAL_PROBLEM_CODES = [
   "retention_exemption_not_active",
   "retention_export_too_large",
   "survey_active",
-  "unsupported_media_type",
 ] as const;
 
 export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];
@@ -307,10 +308,11 @@ export function problemUnauthorized(
 export function problemForbidden(
   requestId: string,
   detail: string = "You are not authorized to access this resource",
-  instance?: string
+  instance?: string,
+  code: ProblemCode = "forbidden"
 ): Response {
   return problemResponse(403, "Forbidden", detail, requestId, {
-    code: "forbidden",
+    code,
     instance,
   });
 }

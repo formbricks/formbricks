@@ -17,6 +17,8 @@ interface FallbackInputProps {
   readonly open: boolean;
   readonly setOpen: (open: boolean) => void;
   readonly triggerButton?: ReactNode;
+  /** The recall item whose field takes focus on open (a clicked chip); else the newest one's. */
+  readonly focusItemId?: string;
 }
 
 export const FallbackInput = ({
@@ -27,6 +29,7 @@ export const FallbackInput = ({
   open,
   setOpen,
   triggerButton,
+  focusItemId,
 }: FallbackInputProps) => {
   const { t } = useTranslation();
   // The newest recall item's fallback, which is the one the user just inserted.
@@ -37,7 +40,15 @@ export const FallbackInput = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // Closing by clicking outside or Escape keeps what was typed: every field is applied to its
+    // Variable, an empty one too (it stays without a fallback, which the editor's own checks catch).
+    // Kept only in this popover's state, typing would be lost on the editor's next update.
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) addFallback();
+        setOpen(next);
+      }}>
       <PopoverTrigger asChild>
         {open || !triggerButton ? <div className="z-10 h-0 w-full cursor-pointer" /> : triggerButton}
       </PopoverTrigger>
@@ -47,8 +58,15 @@ export const FallbackInput = ({
         align="start"
         side="bottom"
         sideOffset={4}
-        onInteractOutside={(e) => e.preventDefault()}
-        onOpenAutoFocus={(event) => focusOnOpen(event, lastInputRef.current)}>
+        // Closes on a click outside or Escape, never on focus leaving: the recall picker that opens
+        // this popover hands focus back to the editor as it closes, which would close it at once.
+        onFocusOutside={(event) => event.preventDefault()}
+        onOpenAutoFocus={(event) =>
+          focusOnOpen(
+            event,
+            (focusItemId ? document.getElementById(`fallback-${focusItemId}`) : null) ?? lastInputRef.current
+          )
+        }>
         <p className="font-medium">{t("workspace.surveys.edit.add_fallback_placeholder")}</p>
 
         <div className="mt-2 space-y-3">

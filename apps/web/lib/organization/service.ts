@@ -1,5 +1,6 @@
 import "server-only";
 import { cache as reactCache } from "react";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -20,6 +21,7 @@ import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-
 import { deleteOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
@@ -393,6 +395,10 @@ export const deleteOrganization = async (organizationId: string) => {
   }
 };
 
+// The count scans every response the organization collected this cycle and feeds only usage banners and
+// prompts, so a minute of staleness is fine (ENG-3789).
+const MONTHLY_RESPONSE_COUNT_CACHE_TTL_MS = 60 * 1000;
+
 export const getMonthlyOrganizationResponseCount = reactCache(
   async (organizationId: string): Promise<number> => {
     validateInputs([organizationId, ZId]);
@@ -405,10 +411,18 @@ export const getMonthlyOrganizationResponseCount = reactCache(
 
       const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
 
-      return await countOrganizationResponses(organizationId, {
-        gte: usageCycleWindow.start,
-        lt: usageCycleWindow.end,
-      });
+      return await cache.withCache(
+        () =>
+          countOrganizationResponses(organizationId, {
+            gte: usageCycleWindow.start,
+            lt: usageCycleWindow.end,
+          }),
+        createCacheKey.organization.monthlyResponseCount(
+          organizationId,
+          String(usageCycleWindow.start.getTime())
+        ),
+        MONTHLY_RESPONSE_COUNT_CACHE_TTL_MS
+      );
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
