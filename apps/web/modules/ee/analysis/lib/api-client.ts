@@ -35,6 +35,24 @@ import type {
 
 const CHARTS_PATH = "/api/v3/charts";
 const DASHBOARDS_PATH = "/api/v3/dashboards";
+
+/** The query parameter View as (ENG-7484) is carried in, on the dashboard page and on its reads. */
+export const VIEW_AS_PARAM = "viewAs";
+
+/**
+ * The member an Owner or Manager is viewing the dashboard as, from the page's URL, or `null`. Only the
+ * dashboard reads carry it; the server refuses it on anything else. Starting or stopping View as reloads
+ * the page, so no read cached for one viewer is ever shown for another.
+ */
+export const getViewAsUserId = (): string | null =>
+  typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(VIEW_AS_PARAM);
+
+/** `url` with the page's View as member, if any. */
+const withViewAs = (url: string): string => {
+  const viewAs = getViewAsUserId();
+  if (!viewAs) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}${VIEW_AS_PARAM}=${encodeURIComponent(viewAs)}`;
+};
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 /** Bounds a write so a stalled request cannot leave a dialog's spinner running forever. */
@@ -250,7 +268,7 @@ export const getDashboardChartData = async ({
   const search = dashboardReadParams(dateRange, filters).toString();
   const base = `${dashboardPath(dashboardId)}/charts/${encodeURIComponent(chartId)}/data`;
   const data = await readData<TV3DashboardChartData>(
-    await fetch(search ? `${base}?${search}` : base, { cache: "no-store", signal })
+    await fetch(withViewAs(search ? `${base}?${search}` : base), { cache: "no-store", signal })
   );
   return { ...toAppChartData(data), unfilterableFilters: data.unfilterableFilters };
 };
@@ -281,7 +299,7 @@ export const listDashboardFilterValues = async ({
   const query = params.toString();
   const base = `${dashboardPath(dashboardId)}/filters/f1/values`;
   return readData<TV3DashboardFilterValues>(
-    await fetch(query ? `${base}?${query}` : base, { cache: "no-store", signal })
+    await fetch(withViewAs(query ? `${base}?${query}` : base), { cache: "no-store", signal })
   );
 };
 
@@ -294,7 +312,7 @@ export const listDashboardFilterFields = async (
   signal?: AbortSignal
 ): Promise<TV3DashboardFilterFields> =>
   readData<TV3DashboardFilterFields>(
-    await fetch(`${dashboardPath(dashboardId)}/filter-fields`, { cache: "no-store", signal })
+    await fetch(withViewAs(`${dashboardPath(dashboardId)}/filter-fields`), { cache: "no-store", signal })
   );
 
 /** A saved chart's rows, for its own date range or a requested one that narrows it. */
@@ -373,6 +391,8 @@ export type TAppDashboard = Pick<TV3DashboardResource, "id" | "workspaceId" | "n
   /** In tab order. */
   pages: TDashboardPage[];
   widgets: TDashboardWidget[];
+  /** What the reader's Dashboard Viewer access leaves them (ENG-7478); only on a dashboard read. */
+  viewerAccess?: TV3DashboardResource["viewerAccess"];
 };
 
 /**
@@ -427,6 +447,7 @@ export const toAppDashboard = (resource: TV3DashboardResource): TAppDashboard =>
   updatedAt: resource.updatedAt,
   filters: resource.filters,
   pages: resource.pages,
+  viewerAccess: resource.viewerAccess,
   widgets: resource.widgets.flatMap((widget) => {
     const app = toAppDashboardWidget(resource.id, widget);
     return app ? [app] : [];
@@ -464,7 +485,10 @@ export const listDashboards = async ({
 export const getDashboard = async (dashboardId: string, signal?: AbortSignal): Promise<TAppDashboard> =>
   toAppDashboard(
     await readData<TV3DashboardResource>(
-      await fetch(`${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`, { cache: "no-store", signal })
+      await fetch(withViewAs(`${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`), {
+        cache: "no-store",
+        signal,
+      })
     )
   );
 
@@ -718,4 +742,34 @@ export const setEmbeddedFieldLabel = async ({
 }): Promise<{ key: string; label: string | null }> =>
   readData(
     await sendJson("PUT", "/api/internal/embedded-field-labels", { workspaceId, key, label, expectedLabel })
+  );
+
+export type TDashboardAccessOverview = {
+  organizationId: string;
+  teams: {
+    id: string;
+    name: string;
+    permission: "read" | "readWrite" | "manage";
+    limitedDashboardCount: number | null;
+    memberCount: number;
+  }[];
+  members: {
+    userId: string;
+    name: string;
+    email: string;
+    role: string;
+    attributes: { label: string; values: string[] }[];
+  }[];
+};
+
+/** Who opens the dashboard and whom View as offers (ENG-7484): Owners and Managers only. */
+export const getDashboardAccessOverview = async (
+  dashboardId: string,
+  signal?: AbortSignal
+): Promise<TDashboardAccessOverview> =>
+  readData<TDashboardAccessOverview>(
+    await fetch(`/api/internal/dashboards/${encodeURIComponent(dashboardId)}/access`, {
+      cache: "no-store",
+      signal,
+    })
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { LockIcon, XIcon } from "lucide-react";
+import { LockIcon, UserLockIcon, XIcon } from "lucide-react";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -22,6 +22,12 @@ type TFilterChipProps = {
    * nothing. `onRemove` may still be given, to whoever may take it off.
    */
   readonly lockedHint?: string;
+  /**
+   * `you`: locked for the reader alone — set by their data access (a Dashboard Viewer's Dashboard Viewer
+   * access, ENG-7372). It shows a user lock and never an `×`, whatever `onRemove` says. `everyone` (the
+   * default): set by whoever edits the dashboard.
+   */
+  readonly lockedFor?: "everyone" | "you";
 } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "value">;
 
 /** A chip's `×`: removes the filter, or unlocks a locked one. */
@@ -44,16 +50,69 @@ const ChipRemoveButton = ({
   </button>
 );
 
+/** A locked chip's body: a lock, the filter, and what a screen reader says about why it is locked. */
+const LockedChipBody = ({
+  hint,
+  forYou,
+  hasRemove,
+  size,
+  accessibleName,
+  children,
+}: Readonly<{
+  hint: string;
+  forYou: boolean;
+  hasRemove: boolean;
+  size: "sm" | "md";
+  accessibleName: string;
+  children: React.ReactNode;
+}>) => {
+  const { t } = useTranslation();
+  const LockGlyph = forYou ? UserLockIcon : LockIcon;
+  return (
+    <span
+      title={hint}
+      className={cn(
+        "flex h-full min-w-0 items-center gap-1.5 py-0.5",
+        hasRemove ? "pr-1" : "pr-2",
+        size === "sm" ? "pl-2" : "pl-3"
+      )}>
+      <LockGlyph className="size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+      {/* Read as "<filter>, locked": the visible text alone would not say it cannot be changed. */}
+      <span aria-hidden="true" className="flex min-w-0 items-center gap-1.5">
+        {children}
+      </span>
+      <span className="sr-only">
+        {forYou
+          ? t("common.table_toolbar.locked_for_you_filter", { filter: accessibleName })
+          : t("common.table_toolbar.locked_filter", { filter: accessibleName })}
+      </span>
+    </span>
+  );
+};
+
 /**
  * One active filter (ENG-3538): `Label:` then the values as a bold inner pill, then `×`. The body
  * reopens the filter; `×` removes only this one. Both are real buttons, so Tab reaches each.
  */
 export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
   (
-    { label, value, accessibleName, onRemove, disabled, size = "sm", lockedHint, className, ...bodyProps },
+    {
+      label,
+      value,
+      accessibleName,
+      onRemove: onRemoveProp,
+      disabled,
+      size = "sm",
+      lockedHint,
+      lockedFor = "everyone",
+      className,
+      ...bodyProps
+    },
     ref
   ) => {
     const { t } = useTranslation();
+    const isLockedForYou = Boolean(lockedHint) && lockedFor === "you";
+    const onRemove = isLockedForYou ? undefined : onRemoveProp;
     const body = (
       <>
         <span className="shrink-0 whitespace-nowrap">{label}</span>
@@ -74,22 +133,14 @@ export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
           className
         )}>
         {lockedHint ? (
-          <span
-            title={lockedHint}
-            className={cn(
-              "flex h-full min-w-0 items-center gap-1.5 py-0.5",
-              onRemove ? "pr-1" : "pr-2",
-              size === "sm" ? "pl-2" : "pl-3"
-            )}>
-            <LockIcon className="size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
-            {/* Read as "<filter>, locked": the visible text alone would not say it cannot be changed. */}
-            <span aria-hidden="true" className="flex min-w-0 items-center gap-1.5">
-              {body}
-            </span>
-            <span className="sr-only">
-              {t("common.table_toolbar.locked_filter", { filter: accessibleName })}
-            </span>
-          </span>
+          <LockedChipBody
+            hint={lockedHint}
+            forYou={isLockedForYou}
+            hasRemove={Boolean(onRemove)}
+            size={size}
+            accessibleName={accessibleName}>
+            {body}
+          </LockedChipBody>
         ) : (
           <button
             ref={ref}

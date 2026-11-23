@@ -175,4 +175,11 @@ export type TLockedFilters = {
   /** Why a locked value cannot be ticked in the Filter menu, shown on hover. Absent: `hint`. */
   valueHint?: string;
   onRemove?: (index: number) => void;
+  /**
+   * Locked for this reader alone, by their data access (ENG-7372): shown first, with a user lock and no
+   * `×`, before the filters locked for everyone. Each is already worded: a label, its values, and why.
+   */
+  forYou?: readonly TLockedForYouFilter[];
 };
+
+export type TLockedForYouFilter = { label: string; value: string; hint: string };

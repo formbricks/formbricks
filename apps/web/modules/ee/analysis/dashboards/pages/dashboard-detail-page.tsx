@@ -5,8 +5,14 @@ import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
+import { VIEW_AS_PARAM } from "@/modules/ee/analysis/lib/api-client";
 import { getDashboardsPageAuth } from "@/modules/ee/analysis/lib/dashboards-page-auth";
-import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getViewAsMember } from "@/modules/ee/dashboard-access/lib/dashboard-access-overview";
+import { canManageDashboardAccess } from "@/modules/ee/dashboard-access/lib/spicedb-access";
+import {
+  getIsDashboardViewerRoleEnabled,
+  getIsDashboardsEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
@@ -15,8 +21,10 @@ import { deserializeFilters, getFiltersCookieName } from "../lib/dashboard-filte
 
 export async function DashboardDetailPage({
   params,
+  searchParams,
 }: Readonly<{
   params: Promise<{ workspaceId: string; dashboardId: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }>) {
   const t = await getTranslate();
   const { workspaceId, dashboardId } = await params;
@@ -81,12 +89,34 @@ export async function DashboardDetailPage({
     );
   }
 
-  const [directories, aiConfig] = await Promise.all([
+  const [directories, aiConfig, canManageAccess] = await Promise.all([
     getAuthorizedWorkspaceFeedbackDirectories(userId, workspaceId),
     getOrganizationAIConfig(organizationId),
+    getCanManageDashboardAccess(userId, dashboardId, organizationId),
   ]);
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);
   const isAIAvailable = !aiUnavailableReason;
+
+  // View as (ENG-7484): an Owner or Manager sees the dashboard as a chosen member — read-only, without
+  // their own remembered filters. The reads carry `viewAs` and the server decides them as that member.
+  const viewAsParam = (await searchParams)?.[VIEW_AS_PARAM];
+  const viewAsUserId = typeof viewAsParam === "string" ? viewAsParam : null;
+  const viewAsMember =
+    canManageAccess && viewAsUserId ? await getViewAsMember(organizationId, viewAsUserId) : null;
+  if (viewAsMember) {
+    return (
+      <DashboardDetailClient
+        workspaceId={workspaceId}
+        dashboardId={dashboardId}
+        storedDateFilter={null}
+        storedFilters={[]}
+        directories={[]}
+        isReadOnly
+        isAIAvailable={false}
+        viewAsMember={viewAsMember}
+      />
+    );
+  }
 
   return (
     <DashboardDetailClient
@@ -98,6 +128,20 @@ export async function DashboardDetailPage({
       isReadOnly={isReadOnly}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
+      canManageAccess={canManageAccess}
     />
   );
 }
+
+/** Whether the "View as" and "Access" buttons show: Owners and Managers, with Access Control and Dashboards. */
+const getCanManageDashboardAccess = async (
+  userId: string,
+  dashboardId: string,
+  organizationId: string
+): Promise<boolean> => {
+  const [entitled, allowed] = await Promise.all([
+    getIsDashboardViewerRoleEnabled(organizationId),
+    canManageDashboardAccess(userId, dashboardId),
+  ]);
+  return entitled && allowed;
+};

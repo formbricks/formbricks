@@ -15,6 +15,12 @@ import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/creat
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
 import { AddExistingChartsDialog } from "@/modules/ee/analysis/dashboards/components/add-existing-charts-dialog";
+import {
+  AccessButton,
+  type TViewAsMember,
+  ViewAsBanner,
+  ViewAsButton,
+} from "@/modules/ee/analysis/dashboards/components/dashboard-access-controls";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
 import { DashboardDateFilter } from "@/modules/ee/analysis/dashboards/components/dashboard-date-filter";
 import { DashboardLayoutBlock } from "@/modules/ee/analysis/dashboards/components/dashboard-layout-block";
@@ -135,6 +141,10 @@ interface DashboardDetailClientProps {
   isReadOnly: boolean;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
+  /** Owners and Managers with Access Control and Dashboards: the "View as" and "Access" buttons (ENG-7484). */
+  canManageAccess?: boolean;
+  /** The member the page is viewed as (View as): read-only, with a banner to stop. */
+  viewAsMember?: TViewAsMember | null;
 }
 
 const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] =>
@@ -315,6 +325,8 @@ function DashboardDetailView({
   isReadOnly,
   isAIAvailable,
   aiUnavailableReason,
+  canManageAccess = false,
+  viewAsMember = null,
 }: Readonly<Omit<DashboardDetailClientProps, "dashboardId"> & { dashboard: TAppDashboard }>) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -911,6 +923,19 @@ function DashboardDetailView({
 
   // The filter bar acts on the dashboard's charts, on every page; the grid shows the selected page.
   const hasCharts = datasetIds.length > 0;
+  // A Dashboard Viewer's data access (ENG-7372, ENG-7478): their conditions as chips locked for them, or,
+  // when their attributes match nothing, no charts at all.
+  const viewerAccess = dashboard.viewerAccess;
+  const isUnmatched = viewerAccess?.status === "unmatched";
+  const toolbarLocked = useMemo(() => {
+    const forYou = (viewerAccess?.chips ?? []).map((chip) => ({
+      label: chip.label,
+      value: chip.values.length > 0 ? chip.values.join(", ") : "—",
+      hint: t("workspace.analysis.dashboards.locked_for_you_hint", { attribute: chip.attributeLabel }),
+    }));
+    if (forYou.length === 0) return lockedFilters.locked;
+    return { ...(lockedFilters.locked ?? { filters: [], hint: "" }), forYou };
+  }, [viewerAccess?.chips, lockedFilters.locked, t]);
   const isPageEmpty = pageWidgets.length === 0;
 
   // The cookie is read by the server and seeds `chosenDateFilter`, so there is no client-side restore
@@ -964,29 +989,38 @@ function DashboardDetailView({
   return (
     <PageContentWrapper>
       <GoBackButton url={`/workspaces/${workspaceId}/dashboards`} />
+      {viewAsMember && <ViewAsBanner member={viewAsMember} />}
       <DashboardPageHeader
         name={name}
         isEditing={isEditing}
         onNameChange={setDraftName}
         cta={
-          <DashboardControlBar
-            workspaceId={workspaceId}
-            dashboardId={dashboard.id}
-            isEditing={isEditing}
-            isSaving={isSaving}
-            hasChanges={hasChanges}
-            isReadOnly={isReadOnly}
-            onRefresh={() => {
-              void refreshDashboard();
-              void queryClient.invalidateQueries({ queryKey: chartKeys.allData() });
-            }}
-            onAddChart={() => setIsAddChartsOpen(true)}
-            onAddBlock={handleAddBlock}
-            editHotkey={EDIT_HOTKEY}
-            onEditToggle={handleEnterEditMode}
-            onSave={handleSave}
-            onCancel={handleCancel}
-          />
+          <div className="flex items-center gap-2">
+            {canManageAccess && !viewAsMember && !isEditing && (
+              <>
+                <ViewAsButton dashboardId={dashboard.id} />
+                <AccessButton dashboardId={dashboard.id} />
+              </>
+            )}
+            <DashboardControlBar
+              workspaceId={workspaceId}
+              dashboardId={dashboard.id}
+              isEditing={isEditing}
+              isSaving={isSaving}
+              hasChanges={hasChanges}
+              isReadOnly={isReadOnly}
+              onRefresh={() => {
+                void refreshDashboard();
+                void queryClient.invalidateQueries({ queryKey: chartKeys.allData() });
+              }}
+              onAddChart={() => setIsAddChartsOpen(true)}
+              onAddBlock={handleAddBlock}
+              editHotkey={EDIT_HOTKEY}
+              onEditToggle={handleEnterEditMode}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
+          </div>
         }
       />
 
@@ -1016,13 +1050,13 @@ function DashboardDetailView({
           without any, and while editing, where the layout is what changes. The same table toolbar the
           responses page has: the filters an editor locked for everyone first, then this person's own, with
           the date range — always this person's own — as its action. */}
-      {!isEditing && hasCharts && (
+      {!isEditing && hasCharts && !isUnmatched && (
         <TableToolbar
           filter={{
             properties: toolbar.properties,
             filters: toolbar.filters,
             onFiltersChange: toolbar.setFilters,
-            locked: lockedFilters.locked,
+            locked: toolbarLocked,
             simpleRules: true,
           }}
           actions={
@@ -1049,38 +1083,49 @@ function DashboardDetailView({
 
       <section>
         <div ref={containerRef} className="w-full">
-          {isPageEmpty
-            ? renderEmptyState()
-            : mounted && (
-                <ResponsiveGridLayout
-                  width={width}
-                  layouts={{ lg: layout }}
-                  breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                  cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
-                  rowHeight={ROW_HEIGHT}
-                  margin={[GRID_MARGIN, GRID_MARGIN]}
-                  // Keep 16px only between items; drop the default container padding (which mirrors
-                  // margin) so the grid sits flush with the container's left/top edge, aligned with
-                  // the date filter above instead of inset from it.
-                  containerPadding={[0, 0]}
-                  dragConfig={{
-                    enabled: isEditing,
-                    handle: ".rgl-drag-handle",
-                    bounded: false,
-                    threshold: 5,
-                  }}
-                  resizeConfig={{
-                    enabled: isEditing,
-                    handles: ["n", "s", "e", "w", "ne", "nw", "se", "sw"],
-                  }}
-                  compactor={verticalCompactor}
-                  onDragStop={(finalLayout) => handleInteractionEnd(finalLayout)}
-                  onResizeStop={(finalLayout) => handleInteractionEnd(finalLayout)}>
-                  {displayedWidgets.map((widget) => (
-                    <div key={widget.id}>{renderWidget(widget)}</div>
-                  ))}
-                </ResponsiveGridLayout>
-              )}
+          {isUnmatched && (
+            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
+              <h2 className="text-base font-semibold text-slate-900">
+                {t("workspace.analysis.dashboards.access_not_set_up_title")}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {t("workspace.analysis.dashboards.access_not_set_up_description")}
+              </p>
+            </div>
+          )}
+          {!isUnmatched &&
+            (isPageEmpty
+              ? renderEmptyState()
+              : mounted && (
+                  <ResponsiveGridLayout
+                    width={width}
+                    layouts={{ lg: layout }}
+                    breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                    cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
+                    rowHeight={ROW_HEIGHT}
+                    margin={[GRID_MARGIN, GRID_MARGIN]}
+                    // Keep 16px only between items; drop the default container padding (which mirrors
+                    // margin) so the grid sits flush with the container's left/top edge, aligned with
+                    // the date filter above instead of inset from it.
+                    containerPadding={[0, 0]}
+                    dragConfig={{
+                      enabled: isEditing,
+                      handle: ".rgl-drag-handle",
+                      bounded: false,
+                      threshold: 5,
+                    }}
+                    resizeConfig={{
+                      enabled: isEditing,
+                      handles: ["n", "s", "e", "w", "ne", "nw", "se", "sw"],
+                    }}
+                    compactor={verticalCompactor}
+                    onDragStop={(finalLayout) => handleInteractionEnd(finalLayout)}
+                    onResizeStop={(finalLayout) => handleInteractionEnd(finalLayout)}>
+                    {displayedWidgets.map((widget) => (
+                      <div key={widget.id}>{renderWidget(widget)}</div>
+                    ))}
+                  </ResponsiveGridLayout>
+                ))}
         </div>
       </section>
       {!isReadOnly && (
