@@ -721,6 +721,12 @@
     },
     "tabs": "Tabs",
     "tags": "Tags",
+    "tags_field": {
+      "add_new_value": "Add \"{{value}}\"",
+      "add_value_placeholder": "Add value…",
+      "remove_value": "Remove {{value}}",
+      "selected_values": "Selected values"
+    },
     "targeting": "Targeting",
     "team": "Team",
     "team_access": "Team Access",
