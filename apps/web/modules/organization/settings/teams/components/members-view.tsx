@@ -14,7 +14,11 @@ import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team"
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { EditMemberships } from "@/modules/organization/settings/teams/components/edit-memberships";
 import { OrganizationActions } from "@/modules/organization/settings/teams/components/edit-memberships/organization-actions";
-import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
+import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
+import {
+  getMembershipByOrganizationId,
+  getMembershipsByUserId,
+} from "@/modules/organization/settings/teams/lib/membership";
 
 interface MembersViewProps {
   readonly membershipRole?: TOrganizationRole;
@@ -64,35 +68,46 @@ export const MembersView = async ({
     teams = (await getTeamsByOrganizationId(organization.id)) ?? [];
   }
 
+  // Request-cached, so the table below reads the same rows without a second query.
+  const [members, invites] = await Promise.all([
+    getMembershipByOrganizationId(organization.id),
+    getInvitesByOrganizationId(organization.id),
+  ]);
+  const memberCount = members.length + (invites?.length ?? 0);
+
+  // The CSV import sets Member attributes for Owners and Managers above the floor, while the plan has
+  // Access Control and Dashboards (the bulk endpoint's own rule).
+  const isOwnerOrManager = membershipRole === "owner" || membershipRole === "manager";
+  const isMemberAttributesEnabled = isDashboardViewerRoleEnabled && canManageUsers && isOwnerOrManager;
+
+  const organizationActions = membershipRole ? (
+    <OrganizationActions
+      className="mb-0"
+      organization={organization}
+      membershipRole={membershipRole}
+      role={membershipRole}
+      isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
+      isInviteDisabled={INVITE_DISABLED}
+      isAccessControlAllowed={isAccessControlAllowed}
+      isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+      isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
+      enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
+      isMultiOrgEnabled={isMultiOrgEnabled}
+      teams={teams}
+      isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
+      canManageUsers={canManageUsers}
+      isTeamAdmin={isTeamAdminUser}
+      userAdminTeamIds={userAdminTeamIds}
+      isBulkInviteAllowed={isBulkInviteAllowed}
+      isMemberAttributesEnabled={isMemberAttributesEnabled}
+    />
+  ) : null;
+
   return (
     <SettingsCard
-      title={t("workspace.settings.general.manage_members")}
-      description={t("workspace.settings.general.manage_members_description")}
+      title={t("workspace.settings.members.title")}
+      description={t("workspace.settings.members.member_count", { count: memberCount })}
       bodyVariant="flush">
-      {/* The table is edge-to-edge, so the controls above it carry the card's gutter themselves. */}
-      {membershipRole && (
-        <div className="px-4 pt-4">
-          <OrganizationActions
-            organization={organization}
-            membershipRole={membershipRole}
-            role={membershipRole}
-            isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
-            isInviteDisabled={INVITE_DISABLED}
-            isAccessControlAllowed={isAccessControlAllowed}
-            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-            isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
-            enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
-            isMultiOrgEnabled={isMultiOrgEnabled}
-            teams={teams}
-            isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
-            canManageUsers={canManageUsers}
-            isTeamAdmin={isTeamAdminUser}
-            userAdminTeamIds={userAdminTeamIds}
-            isBulkInviteAllowed={isBulkInviteAllowed}
-          />
-        </div>
-      )}
-
       {membershipRole && (
         <Suspense fallback={<MembersLoading />}>
           <EditMemberships
@@ -103,6 +118,7 @@ export const MembersView = async ({
             role={membershipRole}
             isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
             canManageUsers={canManageUsers}
+            actions={organizationActions}
           />
         </Suspense>
       )}

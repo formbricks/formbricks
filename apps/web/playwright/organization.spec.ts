@@ -38,17 +38,17 @@ test.describe("Invite, accept and remove organization member", async () => {
     });
 
     await test.step("Copy invite Link", async () => {
-      await expect(page.locator("#membersInfoWrapper")).toBeVisible();
+      const membersTable = page.getByTestId("members-table");
+      await expect(membersTable).toBeVisible();
 
-      const invitedMemberInfo = page.locator("#singleMemberInfo").filter({ hasText: inviteEmail });
+      const invitedMemberInfo = membersTable.getByRole("row").filter({ hasText: inviteEmail });
       await expect(invitedMemberInfo).toBeVisible({ timeout: 10000 });
 
-      await expect(invitedMemberInfo.getByText("Pending", { exact: true })).toBeVisible();
+      await expect(invitedMemberInfo.getByText("Invited", { exact: true })).toBeVisible();
 
-      const shareInviteButton = invitedMemberInfo.locator("#shareInviteButton");
-      await expect(shareInviteButton).toBeVisible();
-
-      await shareInviteButton.click();
+      // Share invite link lives in the row's menu (ENG-7474).
+      await invitedMemberInfo.getByTestId("member-row-menu").click();
+      await page.getByRole("menuitem", { name: "Share invite link" }).click();
 
       const inviteLinkText = await page.waitForSelector("#inviteLinkText");
       expect(inviteLinkText).toBeTruthy();

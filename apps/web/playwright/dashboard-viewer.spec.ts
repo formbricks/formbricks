@@ -107,9 +107,9 @@ test.describe("Inviting Dashboard viewers", () => {
     await dialog.getByRole("button", { name: "Invite", exact: true }).click();
     await expect(dialog).toBeHidden();
 
-    const row = page.locator("#singleMemberInfo").filter({ hasText: email });
+    const row = page.getByTestId("members-table").getByRole("row").filter({ hasText: email });
     await expect(row).toBeVisible();
-    await expect(row.getByText("Pending", { exact: true })).toBeVisible();
+    await expect(row.getByText("Invited", { exact: true })).toBeVisible();
     await expect(row.getByText("Dashboard viewer")).toBeVisible();
 
     const invite = await prisma.invite.findFirstOrThrow({
