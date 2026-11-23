@@ -105,6 +105,39 @@ describe("advanceFromBlock", () => {
     });
   });
 
+  test.each([
+    ["contains", "b2", "b3"],
+    ["doesNotContain", "b3", "b2"],
+  ] as const)("routes a skipped optional question with %s", (operator, skippedTarget, answeredTarget) => {
+    const survey = makeSurvey([
+      block("b1", {
+        logic: [
+          {
+            id: "r1",
+            conditions: {
+              id: "cond",
+              connector: "and",
+              conditions: [
+                {
+                  id: "c1",
+                  operator,
+                  leftOperand: { type: "element", value: "b1-q" },
+                  rightOperand: { type: "static", value: "def" },
+                },
+              ],
+            },
+            actions: [{ id: "a1", objective: "jumpToBlock", target: "b3" }],
+          },
+        ],
+      }),
+      block("b2"),
+      block("b3"),
+    ]);
+
+    expect(advance(survey, { submittedData: {} }).nextBlockId).toBe(skippedTarget);
+    expect(advance(survey, { submittedData: { "b1-q": "definitely" } }).nextBlockId).toBe(answeredTarget);
+  });
+
   test("finishes on the first ending after the last block", () => {
     const result = advance(makeSurvey([block("b1")]));
 
