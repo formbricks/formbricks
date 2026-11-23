@@ -253,8 +253,11 @@ describe("PUT /api/internal/surveys/{surveyId}", () => {
     const response = await save(buildSurveySavePayload({ ...survey, name: "Renamed survey" }));
 
     expect(response.status).toBe(200);
-    const written = mocks.updateSurvey.mock.calls[0][0] as TSurvey;
-    expect(written).toMatchObject({ name: "Renamed survey", blocks: [], questions: survey.questions });
+    expect(mocks.updateSurvey.mock.calls[0][0]).toMatchObject({
+      name: "Renamed survey",
+      blocks: [],
+      questions: survey.questions,
+    });
   });
 
   describe("PostHog", () => {
