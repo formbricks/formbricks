@@ -7,6 +7,10 @@ programming or UI concepts, and no implementation details.
 
 **Workspace** — The tenant unit inside an organization: surveys, contacts, API key permissions and stored files belong to exactly one. It replaced the older project and its environments. _Avoid_: environment, project.
 
+**Member** — Anyone who belongs to an organization, whatever their role. The role named Member is always written **Member role** where the two could be confused. _Avoid_: user (an account that can belong to several organizations).
+
+**Member attribute** — A named value describing a member in one organization, such as their Country, set by Owners and Managers. Its key comes from the organization's list of member attribute keys, plus the built-in Email; a member can hold several values for one key. _Avoid_: attribute (alone), user attribute, contact attribute (that describes a contact).
+
 ## MCP access
 
 **MCP client** — An app that connects to Formbricks over MCP on a user's behalf, such as Claude or ChatGPT. Product prose may call it an agent; UI copy and code say MCP client. _Avoid_: OAuth app, integration, connection.
@@ -79,13 +83,15 @@ programming or UI concepts, and no implementation details.
 
 **Answer filter** — A chart filter rule on how the same submission answered another question in the chart's Feedback Dataset, such as "NPS where Delivery is Late". A submission that skipped that question never matches, not even an "is not" rule. _Avoid_: sibling filter, response-wide filter.
 
-**Dashboard** — A named grid of widgets in a workspace. Its charts can come from different Feedback Datasets.
+**Dashboard** — A named set of pages of widgets in a workspace. Its charts can come from different Feedback Datasets.
 
-**Widget** — One chart's placement on one dashboard: its position, size and order. A chart sits on a dashboard at most once; removing a widget keeps the chart. User-facing copy says "chart". _Avoid_: placement, tile, panel.
+**Widget** — One item's placement on one dashboard page: a chart, an image, a text or a separator, with its position, size and order. A chart sits on a page at most once but can sit on several pages of one dashboard; removing a widget keeps the chart. User-facing copy says "chart" for a chart widget and "block" for the others. _Avoid_: placement, tile, panel.
 
 **Dashboard filter** — A filter on one field and operator that a dashboard's editors pin to the dashboard's top bar, shared by everyone who opens it. Each person picks or enters its value (their **filter pick**); the pick applies to every chart on the dashboard and only ever narrows what a chart's own saved filters let through, never widens it. A chart whose Feedback Dataset lacks the field shows no data and says it cannot be filtered by it. _Avoid_: global filter, slicer.
 
-**Dashboard viewer** — An organization role that can only read the dashboards of the workspaces its teams are granted, and pick values in their dashboard filters. It never sees surveys, responses, contacts or Feedback Records, and never runs a chart query of its own: only the saved charts on dashboards it can see. _Avoid_: viewer, read-only member (a Member on a read team still sees raw data).
+**Dashboard Viewer** — An organization role that can only read the dashboards of the workspaces its teams are granted, and pick values in their dashboard filters. It never sees surveys, responses, contacts or Feedback Records, and never runs a chart query of its own: only the saved charts on dashboards it can see. _Avoid_: viewer, Dashboard viewer, read-only member (a Member on a read team still sees raw data).
+
+**Dashboard Viewer access** — The one set of conditions on a Feedback Dataset that decides which of its Feedback Records a Dashboard Viewer's charts read, by matching a record field to the viewer's member attribute. It binds only Dashboard Viewers; a dataset without it shows them every record. _Avoid_: row rule, row-level security, data lock, data access, viewer rule.
 
 ## Tables and filtering
 
