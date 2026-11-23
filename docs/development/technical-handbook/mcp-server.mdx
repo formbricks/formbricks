@@ -728,9 +728,12 @@ Errors are returned as MCP error tool results with a structured v3 problem paylo
 
 ### Declared result shapes
 
-The response tools advertise an `outputSchema`, which no other tool does yet. A client can read the
-result shape off `tools/list` rather than inferring it from an example, and the SDK checks the
-structured result against the same schema it advertised.
+Most tools advertise an `outputSchema` — responses, creatives, dashboards, tags, workspace custom CSS,
+the workflow test tools, and on the survey side `generate_survey`, `archive_survey` and `restore_survey`.
+A client can read the result shape off `tools/list` rather than inferring it from an example, and the SDK
+checks the structured result against the same schema it advertised. The survey CRUD and list tools,
+workflows, feedback records and Audience have none yet: they would need a v3 resource schema, and none
+exists for them.
 
 One object root with every branch optional, built by `mcpToolOutput`: a tool answers either the
 success payload or the error one, which reads like a union — but a union converts to a root-level
@@ -1412,7 +1415,8 @@ changes nothing and does not restart that clock. The tool is destructive because
 from default reads.
 
 There is no `delete_survey`. Deleting a survey stays in the app and the REST API, so an agent cannot
-remove a survey or its responses without a 30-day recovery window.
+remove a survey and its responses without a 30-day recovery window. Responses keep their own
+`delete_response` and `batch_delete_responses` tools.
 
 Input:
 
@@ -2497,9 +2501,11 @@ query, like `create_feedback_record`.
   a query and a tenant. Those need Hub-side support first.
 - The search tools require an embedding model configured on the Hub API **and** the Hub worker; without
   one they return 503. Embedding is asynchronous and covers only records with text.
-- The survey, workflow, feedback-record and Audience tools advertise no result shape (`outputSchema`), so a
-  client has to infer theirs from an example. An output schema is built from the v3 resource schema and never
-  retyped, and none exists yet for those resources.
+- Most survey tools, and the workflow, feedback-record and Audience tools, advertise no result shape
+  (`outputSchema`), so a client has to infer theirs from an example. An output schema is built from the v3
+  resource schema and never retyped, and none exists yet for those resources. The survey exceptions are
+  `generate_survey`, and `archive_survey` / `restore_survey`, whose lifecycle acknowledgement is typed from
+  the v3 contract because it has no resource schema.
 - The response tools cover the v3 operations and nothing more: there is no tool that adds or removes a
   single tag, because `PATCH` replaces the tag set wholesale and such a tool would be a read-modify-write
   wrapper with its own race rather than an operation.

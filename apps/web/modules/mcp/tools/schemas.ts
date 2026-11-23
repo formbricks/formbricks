@@ -362,9 +362,9 @@ export const SURVEY_EMBEDDED_FIELDS_DESCRIPTION = [
 ].join(" ");
 
 /**
- * `confirm` on every tool that changes or deletes an existing survey (ENG-6930). A survey that is not a
- * draft and has responses is left untouched without it, and the call answers 428 with the editor's
- * caution text — so the agent asks the user, then retries.
+ * `confirm` on every tool that changes an existing survey (ENG-6930). A survey that is not a draft and has
+ * responses is left untouched without it, and the call answers 428 with the editor's caution text — so the
+ * agent asks the user, then retries.
  */
 const ZMcpSurveyWriteConfirm = z
   .boolean()

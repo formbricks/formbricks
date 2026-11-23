@@ -23,6 +23,7 @@ import {
   setV3SurveyBlockOrderResponse,
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
+import { ZMcpSurveyLifecycleOutput } from "./survey-output-schemas";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
 import {
   FULL_MCP_GRANT,
@@ -791,6 +792,7 @@ describe("registerSurveyTools", () => {
     expect(auditLog.status).toBe("success");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
     expect(result.structuredContent).toEqual({ data: ack, requestId: "req_tool" });
+    expect(ZMcpSurveyLifecycleOutput.safeParse(result.structuredContent).success).toBe(true);
   });
 
   test("restore_survey queues a successful audit log and returns the lifecycle ack", async () => {
@@ -818,6 +820,7 @@ describe("registerSurveyTools", () => {
     expect(auditLog.status).toBe("success");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
     expect(result.structuredContent).toEqual({ data: ack, requestId: "req_tool" });
+    expect(ZMcpSurveyLifecycleOutput.safeParse(result.structuredContent).success).toBe(true);
   });
 
   test("archive_survey and restore_survey take only the survey id", () => {
