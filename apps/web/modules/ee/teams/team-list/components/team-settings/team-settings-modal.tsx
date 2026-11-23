@@ -3,14 +3,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { replaceTeamDashboardLimits } from "@/modules/ee/dashboard-access/lib/api-client";
 import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
+import {
+  DashboardViewerRoleSettings,
+  useTeamDashboardLimits,
+} from "@/modules/ee/teams/team-list/components/team-settings/dashboard-viewer-role-settings";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { MemberRow } from "@/modules/ee/teams/team-list/components/team-settings/member-row";
 import { WorkspaceRow } from "@/modules/ee/teams/team-list/components/team-settings/workspace-row";
@@ -50,6 +56,8 @@ interface TeamSettingsModalProps {
   readonly membershipRole?: TOrganizationRole;
   readonly userTeamRole: TTeamRole | undefined;
   readonly currentUserId: string;
+  /** Access Control and Dashboards: the plan team dashboard limits need (ENG-7483). */
+  readonly isDashboardAccessEnabled?: boolean;
 }
 
 export const TeamSettingsModal = ({
@@ -61,8 +69,16 @@ export const TeamSettingsModal = ({
   userTeamRole,
   membershipRole,
   currentUserId,
+  isDashboardAccessEnabled = false,
 }: TeamSettingsModalProps) => {
   const { t } = useTranslation();
+  // Team dashboard limits (ENG-7483): only Owners and Managers read them, and only on the plan.
+  const { isOwner: isOwnerRole, isManager: isManagerRole } = getAccessFlags(membershipRole);
+  // The section shows for everyone who opens the settings on the plan; only Owners and Managers read the
+  // limits (the v3 read refuses anyone else), so for others it stays empty and read-only.
+  const showDashboardLimits = isDashboardAccessEnabled && (isOwnerRole || isManagerRole);
+  const dashboardLimits = useTeamDashboardLimits(team.id, showDashboardLimits);
+  const [dashboardIdsDraft, setDashboardIdsDraft] = useState<string[] | null>(null);
 
   const { isOwner, isManager, isMember } = getAccessFlags(membershipRole);
 
@@ -121,6 +137,29 @@ export const TeamSettingsModal = ({
     setOpen(false);
   };
 
+  /**
+   * Saves an edited dashboard limit after the team's workspaces: only dashboards of the workspaces the
+   * team keeps are sent, since losing a grant drops the limits there (ENG-7483).
+   */
+  const saveDashboardLimits = async (workspaceIds: string[]): Promise<boolean> => {
+    if (!showDashboardLimits || dashboardIdsDraft === null || !dashboardLimits.data) return true;
+    const kept = new Set(
+      (dashboardLimits.data.dashboards ?? [])
+        .filter(({ workspaceId }) => workspaceIds.includes(workspaceId))
+        .map(({ id }) => id)
+    );
+    try {
+      await replaceTeamDashboardLimits(
+        team.id,
+        dashboardIdsDraft.filter((id) => kept.has(id))
+      );
+      return true;
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      return false;
+    }
+  };
+
   const handleUpdateTeam: SubmitHandler<TTeamSettingsFormSchema> = async (data) => {
     const members = data.members.filter((m) => m.userId);
     const workspaces = data.workspaces.filter((p) => p.workspaceId);
@@ -135,6 +174,8 @@ export const TeamSettingsModal = ({
     });
 
     if (updatedTeamActionResponse?.data) {
+      const limitsSaved = await saveDashboardLimits(workspaces.map(({ workspaceId }) => workspaceId));
+      if (!limitsSaved) return;
       toast.success(t("workspace.settings.teams.team_updated_successfully"));
       closeSettingsModal();
       router.refresh();
@@ -363,6 +404,15 @@ export const TeamSettingsModal = ({
                   </Button>
                 </TooltipRenderer>
               </div>
+              {showDashboardLimits && (
+                <DashboardViewerRoleSettings
+                  canEdit={isOwnerOrManager}
+                  limits={dashboardLimits.data}
+                  selectedWorkspaceIds={selectedWorkspaceIds}
+                  value={dashboardIdsDraft}
+                  onChange={setDashboardIdsDraft}
+                />
+              )}
             </DialogBody>
             <DialogFooter>
               <div className="w-full">

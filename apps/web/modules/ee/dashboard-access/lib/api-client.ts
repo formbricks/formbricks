@@ -22,7 +22,14 @@ export type TDatasetViewerAccessResource = {
   updatedAt: string;
 };
 
-export type TTeamDashboardLimitsResource = { teamId: string; dashboardIds: string[] };
+export type TTeamDashboardOption = { id: string; name: string; workspaceId: string; workspaceName: string };
+
+export type TTeamDashboardLimitsResource = {
+  teamId: string;
+  dashboardIds: string[];
+  /** Only on a read: the dashboards the limit can name. */
+  dashboards?: TTeamDashboardOption[];
+};
 
 const json = async <T>(response: Response): Promise<T> => {
   if (!response.ok) throw await parseV3ApiError(response);

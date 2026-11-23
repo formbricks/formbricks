@@ -11,6 +11,7 @@ import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
 import { ManageTeamButton } from "@/modules/ee/teams/team-list/components/manage-team-button";
 import { TeamSettingsModal } from "@/modules/ee/teams/team-list/components/team-settings/team-settings-modal";
+import { TeamsQueryClientProvider } from "@/modules/ee/teams/team-list/components/teams-query-client-provider";
 import {
   TOrganizationMember,
   TOtherTeam,
@@ -41,6 +42,8 @@ interface TeamsTableProps {
   orgWorkspaces: TOrganizationWorkspace[];
   membershipRole?: TOrganizationRole;
   currentUserId: string;
+  /** Access Control and Dashboards: team dashboard limits are shown only then (ENG-7483). */
+  isDashboardAccessEnabled?: boolean;
 }
 
 /**
@@ -110,6 +113,7 @@ export const TeamsTable = ({
   orgWorkspaces,
   membershipRole,
   currentUserId,
+  isDashboardAccessEnabled = false,
 }: Readonly<TeamsTableProps>) => {
   const { t } = useTranslation();
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
@@ -166,16 +170,19 @@ export const TeamsTable = ({
         aria-label={t("common.teams")}
       />
       {openSettingsModal && selectedTeam && (
-        <TeamSettingsModal
-          open={openSettingsModal}
-          setOpen={setOpenSettingsModal}
-          team={selectedTeam}
-          orgMembers={orgMembers}
-          orgWorkspaces={orgWorkspaces}
-          membershipRole={membershipRole}
-          userTeamRole={userTeamRole}
-          currentUserId={currentUserId}
-        />
+        <TeamsQueryClientProvider>
+          <TeamSettingsModal
+            open={openSettingsModal}
+            setOpen={setOpenSettingsModal}
+            team={selectedTeam}
+            orgMembers={orgMembers}
+            orgWorkspaces={orgWorkspaces}
+            membershipRole={membershipRole}
+            userTeamRole={userTeamRole}
+            currentUserId={currentUserId}
+            isDashboardAccessEnabled={isDashboardAccessEnabled}
+          />
+        </TeamsQueryClientProvider>
       )}
     </>
   );

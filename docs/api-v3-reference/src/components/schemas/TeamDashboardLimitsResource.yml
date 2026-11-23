@@ -15,4 +15,28 @@ properties:
     items:
       type: string
       format: cuid2
+  dashboards:
+    type: array
+    description: >-
+      Only on a read: the dashboards the limit can name, those of the workspaces the team is granted.
+    maxItems: 1000
+    items:
+      type: object
+      required:
+        - id
+        - name
+        - workspaceId
+        - workspaceName
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        workspaceId:
+          type: string
+          format: cuid2
+        workspaceName:
+          type: string
+      additionalProperties: false
 additionalProperties: false

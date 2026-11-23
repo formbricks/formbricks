@@ -3,6 +3,7 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
+import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
 import { getWorkspacesByOrganizationId } from "@/modules/ee/teams/team-list/lib/workspace";
@@ -24,10 +25,11 @@ export const TeamsView = async ({
 }: TeamsViewProps) => {
   const t = await getTranslate();
 
-  const [teams, orgMembers, orgWorkspaces] = await Promise.all([
+  const [teams, orgMembers, orgWorkspaces, isDashboardAccessEnabled] = await Promise.all([
     getTeams(currentUserId, organizationId),
     getMembersByOrganizationId(organizationId),
     getWorkspacesByOrganizationId(organizationId),
+    getIsDashboardViewerRoleEnabled(organizationId),
   ]);
 
   if (!teams) {
@@ -61,6 +63,7 @@ export const TeamsView = async ({
           orgMembers={orgMembers}
           orgWorkspaces={orgWorkspaces}
           currentUserId={currentUserId}
+          isDashboardAccessEnabled={isDashboardAccessEnabled}
         />
       ) : (
         <UpgradePrompt

@@ -11,6 +11,7 @@ import {
   TeamDashboardLimitsInvalidError,
   getTeamDashboardLimits,
   getTeamOrganizationId,
+  listTeamDashboardOptions,
   replaceTeamDashboardLimits,
 } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -57,7 +58,8 @@ export async function getV3TeamDashboardLimits(params: TParams): Promise<Respons
   if (access instanceof Response) return access;
   const limits = await getTeamDashboardLimits(access.organizationId, params.teamId);
   if (!limits) return problemForbidden(params.requestId, FORBIDDEN_DETAIL, params.instance);
-  return successResponse(limits, { requestId: params.requestId });
+  const dashboards = await listTeamDashboardOptions(access.organizationId, params.teamId);
+  return successResponse({ ...limits, dashboards }, { requestId: params.requestId });
 }
 
 export async function replaceV3TeamDashboardLimits(

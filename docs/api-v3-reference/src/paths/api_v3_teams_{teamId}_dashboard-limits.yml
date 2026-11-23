@@ -3,7 +3,8 @@ get:
   summary: Get a team's dashboard limits
   description: |
     The dashboards the team's Dashboard Viewer members open in the team's workspaces; an empty list
-    means all of them. Owners and Managers, or an API key with Access Control read; needs Access Control
+    means all of them. `dashboards` lists the dashboards the limit can name: those of the workspaces the
+    team is granted. Owners and Managers, or an API key with Access Control read; needs Access Control
     and Dashboards.
   tags:
     - V3 Dashboard Access
