@@ -49,11 +49,12 @@ export const OWN_ROLE_DETAIL = "You cannot change your own role";
  * Dashboard viewer decides whether only viewer memberships remain (and revokes the wider OAuth grants), and
  * must see a removal from another organization that commits at the same moment.
  *
- * Whether this is an owner's demotion is decided from the lookup before the lock, as the action did. A
- * stale lookup can't empty the organization: a member becomes owner only by another owner's hand, and that
- * owner can't demote themselves (ENG-2177), so one owner remains. `actorUserId` is the user making the change: the actor of
- * the audit entries of any MCP grant it ends (a demotion to Dashboard viewer ends them), which are finished
- * once the transaction commits. Each attempt returns its own records, so a retried attempt's are dropped.
+ * Whether the change takes an owner out is decided under that lock, from the role read there, not from the
+ * lookup the caller made before it (ENG-2177): a member that lookup saw may have been made an owner since,
+ * and every other owner taken out, so only a change to `owner` can skip the guard. `actorUserId` is the
+ * user making the change: the actor of the audit entries of any MCP grant it ends (a demotion to Dashboard
+ * viewer ends them), which are finished once the transaction commits. Each attempt returns its own records,
+ * so a retried attempt's are dropped.
  */
 const applyRoleChange = async (
   target: TMembership,
@@ -61,7 +62,7 @@ const applyRoleChange = async (
   actorUserId: string
 ): Promise<TMembership | LastActiveOwnerError> => {
   const { userId, organizationId } = target;
-  if (target.role !== "owner" || body.role === "owner") {
+  if (body.role === "owner") {
     return updateMembership(userId, organizationId, body, actorUserId);
   }
 
@@ -95,9 +96,9 @@ const applyRoleChange = async (
  * The caller must be a member with `organization.manage_access` (user management, per
  * `USER_MANAGEMENT_MINIMUM_ROLE`) and `organization.manage`. The role rules are `assertCanAssignRole`'s
  * (managers give only the roles they may and may not touch an owner; billing is Cloud-only; the Dashboard
- * viewer role needs its plan); nobody changes their own role, as the members page never offers it (ENG-2177);
- * the last active owner can't be demoted; and the role management licence applies. A missing member gets the same 403 as one in an
- * organization the caller can't see.
+ * viewer role needs its plan); nobody changes their own role, as the members page never offers it
+ * (ENG-2177); the last active owner can't be demoted; and the role management licence applies. A missing
+ * member gets the same 403 as one in an organization the caller can't see.
  */
 export async function updateMemberRoleOperation({
   authentication,

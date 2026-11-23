@@ -249,16 +249,47 @@ describe("PATCH /api/internal/members/{userId}", () => {
       });
     });
 
-    test("changes a non-owner's role without counting owners", async () => {
+    // The lookup before the lock may be stale: the member it saw can have been made an owner, and every
+    // other owner taken out, before this change commits (ENG-2177). So the guard reads the role itself.
+    test("decides under the owners' lock whether changing a non-owner's role takes an owner out", async () => {
       roles({ caller: "owner", target: "member" });
 
       expect((await setRole("manager")).status).toBe(200);
-      expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
+      expect(mocks.runOwnerGuardedTransaction).toHaveBeenCalledWith(
+        ORG_ID,
+        TARGET_USER_ID,
+        expect.any(Function),
+        { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+      );
+      expect(mocks.updateMembershipInTransaction).toHaveBeenCalledWith(TX, TARGET_USER_ID, ORG_ID, {
+        role: "manager",
+      });
+      expect(mocks.updateMembership).not.toHaveBeenCalled();
       // The caller is the actor of any MCP grant the change ends.
+      expect(mocks.finishRevokedMcpGrants).toHaveBeenCalledWith(GRANT_AUDITS, {
+        actorUserId: CURRENT_USER_ID,
+      });
+    });
+
+    test("refuses with 409 when the member the lookup saw has since become the last owner", async () => {
+      roles({ caller: "owner", target: "member" });
+      mocks.runOwnerGuardedTransaction.mockRejectedValue(new LastActiveOwnerError());
+      const response = await setRole("member");
+
+      expect(response.status).toBe(409);
+      expect((await response.json()).detail).toBe("You cannot demote the last owner of the organization");
+      expect(mocks.updateMembership).not.toHaveBeenCalled();
+    });
+
+    test("makes a member an owner without counting owners", async () => {
+      roles({ caller: "owner", target: "member" });
+
+      expect((await setRole("owner")).status).toBe(200);
+      expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
       expect(mocks.updateMembership).toHaveBeenCalledWith(
         TARGET_USER_ID,
         ORG_ID,
-        { role: "manager" },
+        { role: "owner" },
         CURRENT_USER_ID
       );
     });
@@ -279,28 +310,16 @@ describe("PATCH /api/internal/members/{userId}", () => {
     });
   });
 
-  describe("the not-yourself rule", () => {
-    // A sole owner demoting themselves would leave an organization nobody can repair (ENG-2177): no
-    // manager may mint an owner, and only an owner may change an owner's role.
-    test.each(["owner", "manager"])(
-      "refuses the caller changing their own role (as %s) with 403, and writes nothing",
-      async (callerRole) => {
-        roles({ caller: callerRole, target: callerRole });
-        const response = await patch({ role: "member" }, { userId: CURRENT_USER_ID });
+  // A sole owner demoting themselves would leave an organization nobody can repair (ENG-2177): no manager
+  // may make an owner, and only an owner may change an owner's role.
+  test("refuses the caller changing their own role with 403, and writes nothing", async () => {
+    const response = await patch({ role: "member" }, { userId: CURRENT_USER_ID });
 
-        expect(response.status).toBe(403);
-        expect((await response.json()).detail).toBe("You cannot change your own role");
-        expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
-        expect(mocks.updateMembership).not.toHaveBeenCalled();
-        expect(mocks.updateMembershipInTransaction).not.toHaveBeenCalled();
-      }
-    );
-
-    test("still changes another member's role", async () => {
-      roles({ caller: "owner", target: "member" });
-      expect((await setRole("manager")).status).toBe(200);
-      expect(mocks.updateMembership).toHaveBeenCalledOnce();
-    });
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("You cannot change your own role");
+    expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
+    expect(mocks.updateMembership).not.toHaveBeenCalled();
+    expect(mocks.updateMembershipInTransaction).not.toHaveBeenCalled();
   });
 
   test("asks organization.manage_access, then organization.manage, of the named organization", async () => {
