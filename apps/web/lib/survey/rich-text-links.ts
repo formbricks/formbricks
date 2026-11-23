@@ -4,6 +4,7 @@ import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyEnding, TSurveyVariable, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { escapeHtml } from "@/lib/utils/escape-html";
 
 /** The parts of a survey whose texts the editor stores as rich text (HTML). */
 export type TRichTextSurveyContent = {
@@ -48,27 +49,20 @@ const collectLinksFromRendered = (html: string, links: Set<string>): void => {
 // `replaceRecallInfo` in `@formbricks/surveys` resolves these before the text is parsed: a variable's
 // value, else the respondent's answer or hidden field, else the fallback (`nbsp` read as a space).
 const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/;
-// The renderer resolves one token at a time, leftmost first, until none is left, so a value may itself
-// hold one. It swaps the token with `String.prototype.replace` and a string, so `$'`, `` $` `` and `$&`
-// in a value expand (to the text after the token, before it, and the token itself); the check does the
-// same. Text past either bound never settled for the check, so it counts as a link.
-const MAX_RECALL_PASSES = 2_000;
-const MAX_RESOLVED_LENGTH = 50_000;
+const RECALL_TOKENS = new RegExp(RECALL_TOKEN.source, "g");
 // One opening tag, a quoted value consumed whole (the pattern survey-ui strips styles with).
 const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
 
-/** The text as the renderer resolves it, or `null` when it does not settle within the bounds. */
-const resolveRecall = (html: string, resolve: (id: string, fallback: string) => string): string | null => {
-  let text = html;
-  for (let pass = 0; pass < MAX_RECALL_PASSES; pass++) {
-    const token = RECALL_TOKEN.exec(text);
-    if (!token) return text;
-    const value = resolve(token[1], token[2].replaceAll("nbsp", " ").trim());
-    text = text.replace(token[0], value);
-    if (text.length > MAX_RESOLVED_LENGTH) return null;
-  }
-  return null;
-};
+/**
+ * The text as the renderer resolves it (ENG-7270): every token in one pass, with a replacer so `$&` in a
+ * value is literal, and each value HTML-escaped, so a value can add text but never markup. A value is
+ * never scanned for tokens again. (A plain-text template the renderer leaves unescaped is wrapped as
+ * escaped text once it would parse as HTML, so escaping here finds the same links.)
+ */
+const resolveRecall = (html: string, resolve: (id: string, fallback: string) => string): string =>
+  html.replaceAll(RECALL_TOKENS, (_token, id: string, fallback: string) =>
+    escapeHtml(resolve(id, fallback.replaceAll("nbsp", " ").trim()))
+  );
 
 /** Links in text that holds `#recall:` tokens, which the survey resolves before it parses. */
 const collectRecallLinks = (
@@ -76,8 +70,9 @@ const collectRecallLinks = (
   links: Set<string>,
   recallValues: ReadonlyMap<string, string>
 ): void => {
-  // A token inside a tag becomes markup once a respondent's answer or a hidden field fills it, which
-  // no check can see in advance, so it counts as a link of its own.
+  // A token inside a tag becomes part of the tag once a respondent's answer or a hidden field fills it.
+  // Escaping keeps markup out but not a URL out of an attribute, and no check can see the answer in
+  // advance, so it counts as a link of its own.
   for (const tag of removeStyleAttributes(html).match(OPENING_TAG) ?? []) {
     const token = RECALL_TOKEN.exec(tag);
     if (token) links.add(`recall in a tag: ${token[0]}`);
@@ -89,14 +84,7 @@ const collectRecallLinks = (
     resolveRecall(html, (_id, fallback) => fallback),
     resolveRecall(html, (id, fallback) => recallValues.get(id) || fallback),
   ])) {
-    if (resolved !== null) {
-      collectLinksFromRendered(resolved, links);
-      continue;
-    }
-    // Text that never settles cannot be checked, so it counts as a link. Keyed on the variables' values
-    // too, so changing any of them is a new link rather than a grandfathered one.
-    const values = JSON.stringify([...recallValues].sort(([a], [b]) => a.localeCompare(b)));
-    links.add(`recall that does not resolve: ${html} with ${values}`);
+    collectLinksFromRendered(resolved, links);
   }
 };
 

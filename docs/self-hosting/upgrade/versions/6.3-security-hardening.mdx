@@ -18,8 +18,14 @@ neither, check that `WEBAPP_URL` is the public URL your users sign in on.
 ## Integration tokens are encrypted at rest
 
 From 6.3, Formbricks encrypts the Slack, Google Sheets and Airtable access and refresh tokens with `ENCRYPTION_KEY`
-(Notion's were already encrypted). Tokens stored by an earlier version keep working and are encrypted the next time
-the integration is saved.
+(Notion's were already encrypted). The upgrade's data migration encrypts every stored token, so nothing has to be
+reconnected.
+
+- **`ENCRYPTION_KEY` must be set when the migration runs.** It refuses to start without the key while there are
+  tokens to encrypt. Keep the same key you already use for Notion and the rest of Formbricks.
+- **During a rolling upgrade, pods of the previous version can't use the encrypted tokens.** Their Slack, Google
+  Sheets and Airtable deliveries fail until they are replaced; nothing is disconnected or deleted, and the next
+  response delivers normally once only 6.3 pods serve. Upgrade during a quiet period if a missed delivery matters.
 
 - **Rolling back is one-way for these integrations.** A version before 6.3 can't read an encrypted token. If you
   go back after 6.3 has saved one, reconnect Slack, Google Sheets and Airtable in each workspace that uses them.

@@ -110,7 +110,8 @@ describe("assertV3SurveyWritePermissions", () => {
       ).rejects.toThrow(V3SurveyWritePermissionError);
     });
 
-    test("rejects a text variable whose new value is a link its headline recalls", async () => {
+    // The survey escapes recalled values (ENG-7270), so a link-shaped value is shown as text, not a link.
+    test("allows a text variable whose new value looks like a link, which the survey shows as text", async () => {
       const variableId = "clvar1234567890123456789012";
       const blocks = blockWithHeadline(`<p>#recall:${variableId}/fallback:x#</p>`);
       const variable = (value: string) => [{ id: variableId, name: "v1", type: "text" as const, value }];
@@ -125,42 +126,15 @@ describe("assertV3SurveyWritePermissions", () => {
           },
           "org_1"
         )
-      ).rejects.toThrow(V3SurveyWritePermissionError);
+      ).resolves.toBeUndefined();
     });
 
-    test("rejects a variable that becomes a link beside a recall chain deeper than ten", async () => {
+    // Escaping keeps markup out, not a URL out of an attribute the template already opens.
+    test("rejects a text variable whose new value completes a link attribute in the template", async () => {
       const variableId = "clvar1234567890123456789012";
-      const chainIds = Array.from({ length: 12 }, (_, i) => `clchain${String(i).padStart(20, "0")}`);
-      const chain = chainIds.map((id, i) => ({
-        id,
-        name: `c${i}`,
-        type: "text" as const,
-        value: i < chainIds.length - 1 ? `#recall:${chainIds[i + 1]}/fallback:x#` : "end",
-      }));
       const blocks = blockWithHeadline(
-        `<p>#recall:${chainIds[0]}/fallback:x# #recall:${variableId}/fallback:x#</p>`
+        `<p><a h#recall:${variableId}/fallback:x#="https://example.com/a">go</a></p>`
       );
-      const variables = (value: string) => [
-        ...chain,
-        { id: variableId, name: "v1", type: "text" as const, value },
-      ];
-      await expect(
-        assertV3SurveyWritePermissions(
-          {
-            workspaceId: "ws_1",
-            blocks,
-            endings: [],
-            variables: variables(LINKED),
-            previous: { blocks, endings: [], variables: variables("friend") },
-          },
-          "org_1"
-        )
-      ).rejects.toThrow(V3SurveyWritePermissionError);
-    });
-
-    test("rejects a variable whose new value builds a link with a $` replacement pattern", async () => {
-      const variableId = "clvar1234567890123456789012";
-      const blocks = blockWithHeadline(`ef="https://example.com/a">x</a> #recall:${variableId}/fallback:x#`);
       const variable = (value: string) => [{ id: variableId, name: "v1", type: "text" as const, value }];
       await expect(
         assertV3SurveyWritePermissions(
@@ -168,7 +142,7 @@ describe("assertV3SurveyWritePermissions", () => {
             workspaceId: "ws_1",
             blocks,
             endings: [],
-            variables: variable("<a hr$`"),
+            variables: variable("ref"),
             previous: { blocks, endings: [], variables: variable("friend") },
           },
           "org_1"

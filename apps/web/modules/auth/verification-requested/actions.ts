@@ -120,7 +120,7 @@ const refreshSignupIntentCookie = async (userId: string): Promise<void> => {
       );
     }
   } catch (error) {
-    logger.error({ error, userId }, "Failed to refresh the sign-up intent cookie on resend");
+    logger.error({ err: error, userId }, "Failed to refresh the sign-up intent cookie on resend");
   }
 };
 
@@ -154,8 +154,9 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
     const user = await getUserByEmail(parsedInput.email);
     const ssoRecoveryResend = resolution.kind === "recovery" ? resolution : null;
     if (!user || (user.emailVerified && !ssoRecoveryResend)) {
-      // Nothing to send, and no account to attribute an audit record to: a `verificationEmailSent`
-      // event here would claim a send that did not happen.
+      // Nothing to send, and no account to attribute an audit record to. Past this point the event records
+      // that a send was requested for this account: the send itself runs in `after()`, where a spent
+      // per-account budget can still skip it (`deliverVerificationEmail` logs that).
       ctx.auditLoggingCtx.suppressEvent = true;
       return { success: true };
     }

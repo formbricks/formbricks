@@ -150,16 +150,22 @@ describe("getRichTextLinks with recall", () => {
     expect(getRichTextLinks(withVariable(html, "ref"))).toContain("https://example.com/a");
   });
 
-  test("finds a link that is a text variable's whole value", () => {
-    const html = `<p>#recall:${VARIABLE_ID}/fallback:x#</p>`;
-    expect(getRichTextLinks(withVariable(html, '<a href="https://example.com/a">y</a>'))).toContain(
-      "https://example.com/a"
-    );
-  });
-
-  test("finds a link that is a token's fallback", () => {
-    const html = '<p>#recall:q9/fallback:<a href="https://example.com/a">y</a>#</p>';
-    expect(getRichTextLinks(withHeadline(html))).toContain("https://example.com/a");
+  // The renderer escapes every recalled value and never scans one for tokens again (ENG-7270), so a value
+  // adds text, never markup: a link-shaped value or fallback is shown as text and is not a link.
+  test.each([
+    [
+      "a text variable's whole value",
+      `<p>#recall:${VARIABLE_ID}/fallback:x#</p>`,
+      '<a href="https://example.com/a">y</a>',
+    ],
+    ["a token's fallback", '<p>#recall:q9/fallback:<a href="https://example.com/a">y</a>#</p>', "friend"],
+    [
+      "a variable that recalls a variable holding a link",
+      `<p>#recall:${VARIABLE_ID}/fallback:x#</p>`,
+      `#recall:${VARIABLE_ID}/fallback:x#`,
+    ],
+  ])("finds no link in %s, which the survey shows as text", (_case, html, value) => {
+    expect(getRichTextLinks(withVariable(html, value)).size).toBe(0);
   });
 
   test("counts a token inside an opening tag, whose runtime value could make it a link", () => {
@@ -172,74 +178,22 @@ describe("getRichTextLinks with recall", () => {
     expect(getRichTextLinks(withVariable(html, "friend")).size).toBe(0);
   });
 
-  test("resolves a token that follows more than a hundred others", () => {
-    const linkVariableId = "clvar1234567890123456789099";
-    const html = `<p>${`#recall:${VARIABLE_ID}/fallback:x# `.repeat(150)}#recall:${linkVariableId}/fallback:x#</p>`;
-    const survey: TRichTextSurveyContent = {
-      ...withHeadline(html),
-      variables: [
-        { id: VARIABLE_ID, name: "v1", type: "text", value: "friend" },
-        { id: linkVariableId, name: "v2", type: "text", value: '<a href="https://example.com/a">y</a>' },
-      ],
-    };
-    expect(getRichTextLinks(survey)).toContain("https://example.com/a");
+  test("resolves every token in one pass, however many there are", () => {
+    const html = `<p>${`#recall:${VARIABLE_ID}/fallback:x# `.repeat(5_000)}<a href="https://example.com/a">y</a></p>`;
+    expect(getRichTextLinks(withVariable(html, "friend"))).toEqual(new Set(["https://example.com/a"]));
   });
 
-  test("counts a variable that recalls itself as a link instead of passing it", () => {
-    const token = `#recall:${VARIABLE_ID}/fallback:x#`;
-    expect(getRichTextLinks(withVariable(`<p>${token}</p>`, `a ${token}`)).size).toBe(1);
-  });
-
-  test("resolves a finite chain of variables deeper than ten, to see a link another token adds", () => {
-    const chainIds = Array.from({ length: 12 }, (_, i) => `clchain${String(i).padStart(20, "0")}`);
-    const chain = chainIds.map((id, i) => ({
-      id,
-      name: `c${i}`,
-      type: "text" as const,
-      value: i < chainIds.length - 1 ? `#recall:${chainIds[i + 1]}/fallback:x#` : "end",
-    }));
-    const html = `<p>#recall:${chainIds[0]}/fallback:x# #recall:${VARIABLE_ID}/fallback:x#</p>`;
-    const withValue = (value: string): TRichTextSurveyContent => ({
-      ...withHeadline(html),
-      variables: [...chain, { id: VARIABLE_ID, name: "v1", type: "text", value }],
-    });
-
-    expect(addsRichTextLink(withValue('<a href="https://example.com/a">y</a>'), withValue("friend"))).toBe(
-      true
-    );
-  });
-
-  test("does not grandfather a self-recalling variable once another variable changes", () => {
-    const loopId = "clloop1234567890123456789012";
-    const html = `<p>#recall:${loopId}/fallback:x# #recall:${VARIABLE_ID}/fallback:x#</p>`;
-    const withValue = (value: string): TRichTextSurveyContent => ({
-      ...withHeadline(html),
-      variables: [
-        { id: loopId, name: "loop", type: "text", value: `a #recall:${loopId}/fallback:x#` },
-        { id: VARIABLE_ID, name: "v1", type: "text", value },
-      ],
-    });
-
-    expect(addsRichTextLink(withValue('<a href="https://example.com/a">y</a>'), withValue("friend"))).toBe(
-      true
-    );
-  });
-
-  // The renderer swaps a token with `String.prototype.replace` and a string, so `$'`, `` $` `` and `$&`
-  // in the value expand to the text after the token, before it, and the token itself.
-  test("finds a link a $' in a fallback builds from the text after the token", () => {
-    const html = `<p>#recall:q9/fallback:<a hr$'#ef="https://example.com/a">x</a></p>`;
-    expect(getRichTextLinks(withHeadline(html))).toContain("https://example.com/a");
-  });
-
-  test("finds a link a $` in a variable's value builds from the text before the token", () => {
-    const html = `ef="https://example.com/a">x</a> #recall:${VARIABLE_ID}/fallback:x#`;
-    expect(getRichTextLinks(withVariable(html, "<a hr$`"))).toContain("https://example.com/a");
-  });
-
-  test("counts a $& that makes the renderer resolve the same token forever as a link", () => {
-    expect(getRichTextLinks(withHeadline("<p>#recall:q9/fallback:$&#</p>")).size).toBe(1);
-    expect(getRichTextLinks(withVariable(`<p>#recall:${VARIABLE_ID}/fallback:x#</p>`, "$&")).size).toBe(1);
+  // A string replacement would expand `$'`, `` $` `` and `$&` in a value; the renderer uses a replacer.
+  test.each([
+    ["a $' in a fallback", `<p>#recall:q9/fallback:<a hr$'#ef="https://example.com/a">x</a></p>`, "friend"],
+    [
+      "a $` in a variable's value",
+      `ef="https://example.com/a">x</a> #recall:${VARIABLE_ID}/fallback:x#`,
+      "<a hr$`",
+    ],
+    ["a $& in a fallback", "<p>#recall:q9/fallback:$&#</p>", "friend"],
+  ])("finds no link that %s would build by expanding", (_case, html, value) => {
+    expect(getRichTextLinks(withVariable(html, value)).size).toBe(0);
   });
 
   test("grandfathers a token in a tag the previous version already had", () => {
