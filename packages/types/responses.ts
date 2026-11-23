@@ -684,24 +684,23 @@ export type TResponseContact = z.infer<typeof ZResponseContact>;
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
-/** A `createdAt` bound that went through JSON comes back as ISO text; anything else is left to the schema. */
-const reviveFilterDate = (value: unknown): unknown => (typeof value === "string" ? new Date(value) : value);
-
 /**
  * Turns the `createdAt` range of a filter that went through JSON back into Dates. JSON writes a Date as
- * ISO text, and `createdAt`'s bounds are the only Dates in the filter. A string that is not a date
- * becomes an invalid Date, which the schema refuses.
+ * ISO text, and `createdAt`'s bounds are the only Dates in the filter. Each string bound goes through
+ * `new Date()`, so text it cannot read becomes an invalid Date, which the schema refuses; anything that is
+ * not a string is left for the schema to refuse.
  */
 const reviveFilterDates = (filter: unknown): unknown => {
   if (typeof filter !== "object" || filter === null || !("createdAt" in filter)) return filter;
   const { createdAt } = filter;
   if (typeof createdAt !== "object" || createdAt === null) return filter;
+  const revive = (value: unknown) => (typeof value === "string" ? new Date(value) : value);
   const { min, max } = createdAt as { min?: unknown; max?: unknown };
   return {
     ...filter,
     createdAt: {
-      ...(min === undefined ? {} : { min: reviveFilterDate(min) }),
-      ...(max === undefined ? {} : { max: reviveFilterDate(max) }),
+      ...(min === undefined ? {} : { min: revive(min) }),
+      ...(max === undefined ? {} : { max: revive(max) }),
     },
   };
 };

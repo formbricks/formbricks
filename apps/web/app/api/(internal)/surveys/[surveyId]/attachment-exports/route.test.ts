@@ -159,6 +159,8 @@ describe("POST /api/surveys/{surveyId}/attachment-exports", () => {
     const response = await post({ filterCriteria: { createdAt } });
 
     expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ data: { id: row.id, status: "running" } });
+    expect(mocks.dispatch).not.toHaveBeenCalled();
   });
 
   test("refuses a Created at bound that is not a date", async () => {

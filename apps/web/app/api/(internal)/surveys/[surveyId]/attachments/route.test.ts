@@ -99,7 +99,7 @@ describe("GET /api/surveys/[surveyId]/attachments guards", () => {
 
     const response = await exportAttachments({ filters: JSON.stringify({ createdAt: { min, max } }) });
 
-    expect(response.status).not.toBe(400);
+    expect(await response.text()).toBe("zip");
     expect(mocks.collectResponseAttachments).toHaveBeenCalledWith(
       expect.objectContaining({ filterCriteria: { createdAt: { min, max } } })
     );
