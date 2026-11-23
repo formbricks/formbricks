@@ -254,9 +254,9 @@ describe("importHistoricalResponses", () => {
   });
 
   test("pages on from the last response of each full batch", async () => {
-    const at = (second: number) => new Date(Date.UTC(2026, 0, 1, 0, 0, second));
-    const batch1 = Array.from({ length: 50 }, (_, i) => ({ id: `r${i}`, createdAt: at(100 - i) }));
-    const batch2 = [{ id: "r50", createdAt: at(10) }];
+    const atSecond = (second: number) => new Date(Date.UTC(2026, 0, 1, 0, 0, second));
+    const batch1 = Array.from({ length: 50 }, (_, i) => ({ id: `r${i}`, createdAt: atSecond(100 - i) }));
+    const batch2 = [{ id: "r50", createdAt: atSecond(10) }];
 
     getResponses.mockResolvedValueOnce(batch1 as never);
     getResponses.mockResolvedValueOnce(batch2 as never);
@@ -268,7 +268,7 @@ describe("importHistoricalResponses", () => {
 
     expect(getResponses.mock.calls).toEqual([
       [SURVEY_ID, 50, 0, { finished: true }, undefined],
-      [SURVEY_ID, 50, 0, { finished: true }, { id: "r49", createdAt: at(51) }],
+      [SURVEY_ID, 50, 0, { finished: true }, { id: "r49", createdAt: atSecond(51) }],
     ]);
   });
 
@@ -280,7 +280,7 @@ describe("importHistoricalResponses", () => {
   describe("while the survey changes under it", () => {
     type TRow = { id: string; createdAt: Date; outcome: null };
 
-    const at = (minute: number) => new Date(Date.UTC(2026, 0, 1, 0, minute, 0, 123));
+    const atMinute = (minute: number) => new Date(Date.UTC(2026, 0, 1, 0, minute, 0, 123));
 
     /** Serves `getResponses` from `rows`, read on every call, ordered and narrowed like the real one. */
     const serveResponsesFrom = (rows: TRow[]) => {
@@ -316,7 +316,7 @@ describe("importHistoricalResponses", () => {
     const makeRows = (): TRow[] =>
       Array.from({ length: 120 }, (_, i) => ({
         id: `resp-${String(i).padStart(3, "0")}`,
-        createdAt: at(i),
+        createdAt: atMinute(i),
         outcome: null,
       }));
 
@@ -351,7 +351,7 @@ describe("importHistoricalResponses", () => {
       const rows = makeRows();
       const expected = newestFirst(rows);
       // The new response is the live pipeline's to send; the import covers what existed when it began.
-      afterFirstPage(() => rows.push({ id: "resp-new", createdAt: at(500), outcome: null }));
+      afterFirstPage(() => rows.push({ id: "resp-new", createdAt: atMinute(500), outcome: null }));
       serveResponsesFrom(rows);
 
       const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
@@ -360,25 +360,41 @@ describe("importHistoricalResponses", () => {
       expect(result).toEqual({ successes: 120, failures: 0, skipped: 0 });
     });
 
-    test("imports every response once across timestamp ties and ids that are not chronological", async () => {
-      // Imported responses keep their original dates, so ids and createdAt disagree; and a run of
-      // responses sharing one createdAt straddles the 50-row page boundary.
+    test("imports every response once when the page boundary splits a timestamp tie", async () => {
+      // Imported responses keep their original dates, so ids are not chronological; and the responses
+      // at positions 45 to 54 share one createdAt, so the first page ends inside the tie and the next
+      // one has to continue it by id.
       const rows: TRow[] = Array.from({ length: 110 }, (_, i) => ({
         id: `resp-${String((i * 37) % 110).padStart(3, "0")}`,
-        createdAt: i >= 40 && i < 60 ? at(1000) : at(i),
+        createdAt: i >= 45 && i < 55 ? atMinute(150) : atMinute(200 - i),
         outcome: null,
       }));
+      const expected = newestFirst(rows);
+      expect(rows.filter((row) => row.createdAt.getTime() === atMinute(150).getTime())).toHaveLength(10);
+      afterFirstPage(() =>
+        rows.splice(
+          rows.findIndex((row) => row.id === expected[10]),
+          1
+        )
+      );
       serveResponsesFrom(rows);
-      reconcileFeedbackRecords.mockImplementation(async (records) => ({
-        created: records.length,
-        reconciled: 0,
-        superseded: 0,
-        failures: [],
-      }));
 
       await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
-      expect(importedIds()).toEqual(newestFirst(rows));
+      expect(importedIds()).toEqual(expected);
+    });
+
+    test("a response backdated behind the last page read is still imported, once", async () => {
+      const rows = makeRows();
+      // Created mid-import with an old date, as an imported response is: it sorts into a page the
+      // import has not read yet, so the import reads it.
+      const backdated: TRow = { id: "resp-030b", createdAt: atMinute(30), outcome: null };
+      afterFirstPage(() => rows.push(backdated));
+      serveResponsesFrom(rows);
+
+      await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+
+      expect(importedIds()).toEqual(newestFirst([...makeRows(), backdated]));
     });
   });
 

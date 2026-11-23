@@ -8,10 +8,11 @@ import { importHistoricalResponses } from "@/lib/feedback-source/import";
 /**
  * The historical import's paging against real Postgres (ENG-2374).
  *
- * The unit suite pages through an in-memory stand-in for Prisma. This runs the real `getResponses`
- * query while responses are deleted and created between pages, over ids that are not chronological
- * and timestamps shared across a page boundary. The Hub side is stubbed: each response the import
- * hands to the transform is recorded, which is what this suite checks.
+ * `response-pagination.integration.test.ts` proves the cursor condition itself. This proves the import
+ * loop over it: the real `getResponses` query, with the cursor ANDed onto completedOnly's `finished`
+ * filter (which the unit suite's in-memory stand-in ignores), while responses are deleted and created
+ * between pages. The Hub side is stubbed: each response the import hands to the transform is
+ * recorded, which is what this suite checks.
  */
 
 const transformed: string[] = [];
@@ -37,7 +38,7 @@ const START = Date.UTC(2025, 0, 1);
 const secondsAfterStart = (seconds: number) => new Date(START + seconds * 1000);
 
 // 130 responses: three pages of 50. Prisma assigns ids in insertion order; createdAt is backdated in
-// another order and every timestamp is shared by two responses, so ties straddle page boundaries.
+// another order and every timestamp is shared by two responses.
 // Every fifth response is unfinished, which completedOnly leaves out.
 const RESPONSE_COUNT = 130;
 

@@ -84,9 +84,13 @@ export const importHistoricalResponses = async (
   // Where the next page starts: after the last response read, in the `createdAt desc, id desc` order
   // `getResponses` sorts by. An offset counted rows instead, so a response deleted mid-import moved
   // the next page past one that was never read, and one created mid-import pushed a read one back
-  // into the next page. The cursor also bounds what the import reads: a response created after the
-  // first page sorts before the cursor and is never read, so it is the live pipeline's to send when
-  // it finishes, as it was under the offset. A response backdated past the cursor is still read.
+  // into the next page.
+  //
+  // The cursor is also the import's snapshot boundary. It reads each response at or behind the
+  // cursor exactly once. A response that sorts ahead of it (one created after the first page was
+  // read) is never read: the live pipeline sends it when it finishes. A response backdated behind
+  // the cursor mid-import is read, and if the pipeline sends it as well, reconcile turns the second
+  // write into a PATCH that `snapshotAt` stops from reverting a newer value.
   let cursor: TResponseCursor | undefined;
 
   // Match the live ingestion path, which only runs on responseFinished. Without this the two
