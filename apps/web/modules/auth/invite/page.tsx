@@ -15,6 +15,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
 import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { getSession } from "@/modules/auth/lib/session";
+import { copyInviteAttributeValuesToMembership } from "@/modules/ee/member-attributes/lib/service";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
 import { ContentLayout } from "./components/content-layout";
@@ -106,6 +107,12 @@ export const InvitePage = async (props: Readonly<InvitePageProps>) => {
           user.id
         );
       }
+      // The invite's Member attribute values become the member's, before the invite (and its values) goes.
+      await copyInviteAttributeValuesToMembership({
+        inviteId,
+        organizationId: invite.organizationId,
+        userId: session.user.id,
+      });
       await deleteInvite(inviteId);
       // Best-effort: the invite is already accepted, so a notice the SMTP server refuses must not stop the
       // rest of the acceptance.

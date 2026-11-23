@@ -56,7 +56,15 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   FeedbackSourceFormbricksMapping: "parent_derived_or_data_integrity",
   Integration: "workspace_inherited_resource",
   Invite: "authentication_or_application",
+  // Member attribute values an invite carries (ENG-7468); written behind the organization's
+  // `manage_access`, copied onto the membership on acceptance, deleted with the invite.
+  InviteAttributeValue: "parent_derived_or_data_integrity",
   Language: "parent_derived_or_data_integrity",
+  // Member attributes (ENG-7468): keys and values are organization settings, read behind
+  // `organization.manage` / `read_access` and written behind `manage_access`
+  // (`app/api/v3/lib/organization-access.ts`); values are deleted with their membership.
+  MemberAttributeKey: "parent_derived_or_data_integrity",
+  MemberAttributeValue: "parent_derived_or_data_integrity",
   // A user's grant to an MCP client and its organization & workspace selections (ENG-7149, ADR-0041).
   McpGrant: "relationship_or_grant_source",
   McpGrantOrganization: "relationship_or_grant_source",
@@ -137,6 +145,8 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   invite: "authentication_or_application",
   language: "parent_derived_or_data_integrity",
   mcpGrant: "relationship_or_grant_source",
+  memberAttributeKey: "parent_derived_or_data_integrity",
+  memberAttributes: "parent_derived_or_data_integrity",
   membership: "relationship_or_grant_source",
   organization: "direct_authorization_resource",
   quota: "parent_derived_or_data_integrity",
