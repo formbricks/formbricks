@@ -12,7 +12,7 @@ import { getTextContent } from "./surveys/validation";
  * What a resolved Embedded Data value can be. A `date` field resolves to its ISO 8601 string, not a
  * `Date` — machine-facing values stay ISO/UTC; display formatting is the consumer's job. One gap to
  * inherit consciously (ENG-1837/1839): today's recall formatters recognize date-ONLY strings
- * (`isValidDateString` in packages/surveys; `formatStoredDateForDisplay` in apps/web, which runs
+ * (`parseDateString` in packages/surveys; `formatStoredDateForDisplay` in apps/web, which runs
  * only on the responseData branch), so a datetime resolved from a `Date` renders verbatim until the
  * consumers learn to format it. Booleans come from `boolean`-dataType stored fields (legal on
  * ingested rows) as well as reserved reads; {@link projectReservedValues} stringifies them for the

@@ -1,6 +1,6 @@
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyElement } from "@formbricks/types/surveys/elements";
-import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
+import { formatDateWithOrdinal, parseDateString } from "@/lib/date-time";
 import { getLocalizedValue } from "@/lib/i18n";
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
@@ -50,7 +50,7 @@ export const replaceRecallInfo = (
     if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
 
     const fallback = extractFallbackValue(recallInfo).replace(/nbsp/g, " ").trim();
-    let value: string | null = null;
+    let value: TResponseData[string] | null = null;
 
     // Fetching value from variables based on recallItemId
     if (variables[recallItemId] !== undefined) {
@@ -59,15 +59,15 @@ export const replaceRecallInfo = (
 
     // Fetching value from responseData or attributes based on recallItemId
     if (responseData[recallItemId] !== undefined) {
-      value = (responseData[recallItemId] as string) ?? fallback;
+      value = responseData[recallItemId] ?? fallback;
     }
 
-    // Additional value formatting if it exists
     if (value) {
-      if (isValidDateString(value)) {
-        value = formatDateWithOrdinal(new Date(value), languageCode);
+      const date = parseDateString(String(value));
+      if (date) {
+        value = formatDateWithOrdinal(date, languageCode);
       } else if (Array.isArray(value)) {
-        value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
+        value = value.filter((item) => item).join(", ");
       }
     }
 

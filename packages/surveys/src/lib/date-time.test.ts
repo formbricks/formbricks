@@ -1,31 +1,31 @@
 import { describe, expect, test } from "vitest";
-import { formatDateWithOrdinal, isValidDateString } from "./date-time";
+import { formatDateWithOrdinal, parseDateString } from "./date-time";
 
-describe("isValidDateString", () => {
-  test("should return true for valid YYYY-MM-DD format", () => {
-    expect(isValidDateString("2023-01-15")).toBe(true);
-    expect(isValidDateString("2024-02-29")).toBe(true); // Leap year
+describe("parseDateString", () => {
+  test("parses valid YYYY-MM-DD format", () => {
+    expect(parseDateString("2023-01-15")).not.toBeNull();
+    expect(parseDateString("2024-02-29")).not.toBeNull(); // Leap year
   });
 
-  test("should return true for valid DD-MM-YYYY format", () => {
-    expect(isValidDateString("15-01-2023")).toBe(true);
-    expect(isValidDateString("29-02-2024")).toBe(true);
+  test("parses valid DD-MM-YYYY format", () => {
+    expect(parseDateString("15-01-2023")).not.toBeNull();
+    expect(parseDateString("29-02-2024")).not.toBeNull();
   });
 
-  test("should return false for invalid dates in valid format", () => {
-    expect(isValidDateString("2023-02-30")).toBe(true);
-    expect(isValidDateString("2023-13-01")).toBe(false);
-    expect(isValidDateString("32-01-2023")).toBe(false);
-    expect(isValidDateString("01-13-2023")).toBe(false);
+  test("preserves calendar rollover and rejects dates outside the parser range", () => {
+    expect(parseDateString("2023-02-30")).not.toBeNull();
+    expect(parseDateString("2023-13-01")).toBeNull();
+    expect(parseDateString("32-01-2023")).toBeNull();
+    expect(parseDateString("01-13-2023")).toBeNull();
   });
 
-  test("should return false for invalid formats", () => {
-    expect(isValidDateString("2023/01/15")).toBe(false);
-    expect(isValidDateString("01/15/2023")).toBe(false);
-    expect(isValidDateString("Jan 15, 2023")).toBe(false);
-    expect(isValidDateString("20230115")).toBe(false);
-    expect(isValidDateString("")).toBe(false);
-    expect(isValidDateString("not a date")).toBe(false);
+  test("rejects unsupported formats", () => {
+    expect(parseDateString("2023/01/15")).toBeNull();
+    expect(parseDateString("01/15/2023")).toBeNull();
+    expect(parseDateString("Jan 15, 2023")).toBeNull();
+    expect(parseDateString("20230115")).toBeNull();
+    expect(parseDateString("")).toBeNull();
+    expect(parseDateString("not a date")).toBeNull();
   });
 });
 
