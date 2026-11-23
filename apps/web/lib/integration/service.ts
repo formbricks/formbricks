@@ -39,26 +39,25 @@ const transformIntegration = (integration: TIntegration): TIntegration => {
   } as TIntegration;
 };
 
-export const createOrUpdateIntegration = async (
-  workspaceId: string,
-  integrationData: TIntegrationInput
-): Promise<TIntegration> => {
-  validateInputs([workspaceId, ZId]);
+type TIntegrationWriter = Pick<Prisma.TransactionClient, "integration">;
 
-  // ENG-3283: an integration row forwards its surveys' responses to a third party, so a newly mapped
-  // survey must be workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted
-  // one), so token refreshes and unrelated edits keep saving.
-  const existing = await prisma.integration.findUnique({
-    where: { type_workspaceId: { workspaceId, type: integrationData.type } },
-    select: { config: true },
-  });
+/** Writes the integration, refusing a newly mapped survey the workspace can't see (ENG-3283). */
+const writeIntegration = async (
+  client: TIntegrationWriter,
+  workspaceId: string,
+  integrationData: TIntegrationInput,
+  storedConfig: unknown
+): Promise<TIntegration> => {
+  // An integration row forwards its surveys' responses to a third party, so a newly mapped survey must
+  // be workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted one), so
+  // token refreshes and unrelated edits keep saving.
   await assertNewlyAttachedSurveysWorkspaceVisible(
     getIntegrationSurveyIds(integrationData.config),
-    getIntegrationSurveyIds(existing?.config)
+    getIntegrationSurveyIds(storedConfig)
   );
 
   try {
-    const integration = await prisma.integration.upsert({
+    return await client.integration.upsert({
       where: {
         type_workspaceId: {
           workspaceId,
@@ -74,7 +73,6 @@ export const createOrUpdateIntegration = async (
         workspace: { connect: { id: workspaceId } },
       },
     });
-    return integration;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error creating or updating integration");
@@ -84,18 +82,54 @@ export const createOrUpdateIntegration = async (
   }
 };
 
+export const createOrUpdateIntegration = async (
+  workspaceId: string,
+  integrationData: TIntegrationInput
+): Promise<TIntegration> => {
+  validateInputs([workspaceId, ZId]);
+
+  const existing = await prisma.integration.findUnique({
+    where: { type_workspaceId: { workspaceId, type: integrationData.type } },
+    select: { config: true },
+  });
+  return writeIntegration(prisma, workspaceId, integrationData, existing?.config);
+};
+
 /**
  * Saves an integration from the settings UI. The UI only ever holds redacted credentials, so the
  * `config.key` it sends is replaced with the stored one (see {@link withStoredIntegrationKey}):
  * credentials are written only by the OAuth callbacks and token refreshes, which call
  * {@link createOrUpdateIntegration} directly.
+ *
+ * The stored key is read under the row's lock, in the transaction that writes it back (ENG-2123). Read
+ * before the write, a refresh committing in between was overwritten with the key read before it, and the
+ * integration lost its new credentials. A writer that reaches the row first now makes this wait, and this
+ * reads what it committed; one that comes second waits for this save, then writes its key over it.
  */
 export const saveIntegrationKeepingStoredKey = async (
   workspaceId: string,
   integrationData: TIntegrationInput
 ): Promise<TIntegration> => {
-  const storedIntegration = await getIntegrationByType(workspaceId, integrationData.type);
-  return createOrUpdateIntegration(workspaceId, withStoredIntegrationKey(integrationData, storedIntegration));
+  validateInputs([workspaceId, ZId], [integrationData.type, ZIntegrationType]);
+
+  return prisma.$transaction(async (tx) => {
+    // No row means nothing to keep: the first connect, which only the OAuth callbacks perform.
+    await tx.$queryRaw`
+      SELECT 1 FROM "Integration"
+      WHERE "workspaceId" = ${workspaceId} AND "type" = ${integrationData.type}::"IntegrationType"
+      FOR UPDATE
+    `;
+    const stored = await tx.integration.findUnique({
+      where: { type_workspaceId: { workspaceId, type: integrationData.type } },
+      select: { config: true },
+    });
+    return writeIntegration(
+      tx,
+      workspaceId,
+      withStoredIntegrationKey(integrationData, stored),
+      stored?.config
+    );
+  });
 };
 
 export const getIntegrations = reactCache(
