@@ -679,9 +679,9 @@ const assertAppTargetingFiltersAllowed = async (
 
   if (isOwnPrivateSegment(currentSurvey, segment.id)) {
     const filters = segment.filters;
-    if (filters === undefined || filters === null) return;
-    // A draft save skips the schema, so the shape is only what the client sent. A non-array would be
-    // written raw and break consumers that iterate it, so it is refused here.
+    if (filters === undefined) return;
+    // A draft save skips the schema, so the shape is only what the client sent. A null or non-array would
+    // be written raw and break consumers that iterate it, so both are refused here.
     if (!Array.isArray(filters)) throw new InvalidInputError("Invalid user segment filters");
     if (filters.length === 0) return;
     // The draft save skips the schema, so the recursive walk below can meet any depth. Bounds first, as in
