@@ -31,7 +31,7 @@ const mockContactAttributeKey: ContactAttributeKey = {
   name: "Email",
   description: "User's email address",
   workspaceId: "workspace123",
-  directoryId: null,
+  directoryId: "directory-1",
   isUnique: true,
   type: "default",
   dataType: "string",
@@ -63,6 +63,11 @@ describe("getContactAttributeKey", () => {
     if (result.ok) {
       expect(result.data).toEqual(mockContactAttributeKey);
     }
+    // The directory decides who may reach the key; the route reports the caller's workspace.
+    expect(prisma.contactAttributeKey.findUnique).toHaveBeenCalledWith({
+      where: { id: "cak123" },
+      select: expect.objectContaining({ directoryId: true }),
+    });
   });
 
   test("returns err if contact attribute key not found", async () => {
@@ -120,18 +125,18 @@ describe("updateContactAttributeKey", () => {
       },
     ]);
 
-    const result = await updateContactAttributeKey("cak123", mockUpdateInput);
+    const result = await updateContactAttributeKey("cak123", "caller-workspace", mockUpdateInput);
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      expect(result.data).toEqual(updatedKey);
+      expect(result.data).toEqual({ ...updatedKey, workspaceId: "caller-workspace" });
     }
   });
 
   test("returns not_found if record does not exist", async () => {
     vi.mocked(prisma.contactAttributeKey.update).mockRejectedValueOnce(prismaNotFoundError);
 
-    const result = await updateContactAttributeKey("cak999", mockUpdateInput);
+    const result = await updateContactAttributeKey("cak999", "caller-workspace", mockUpdateInput);
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
@@ -145,7 +150,7 @@ describe("updateContactAttributeKey", () => {
   test("returns conflict error if key already exists", async () => {
     vi.mocked(prisma.contactAttributeKey.update).mockRejectedValueOnce(prismaUniqueConstraintError);
 
-    const result = await updateContactAttributeKey("cak123", mockUpdateInput);
+    const result = await updateContactAttributeKey("cak123", "caller-workspace", mockUpdateInput);
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
@@ -159,7 +164,7 @@ describe("updateContactAttributeKey", () => {
   test("returns internal_server_error if other error occurs", async () => {
     vi.mocked(prisma.contactAttributeKey.update).mockRejectedValueOnce(new Error("Unknown error"));
 
-    const result = await updateContactAttributeKey("cak123", mockUpdateInput);
+    const result = await updateContactAttributeKey("cak123", "caller-workspace", mockUpdateInput);
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
@@ -196,18 +201,18 @@ describe("deleteContactAttributeKey", () => {
         valueDate: null,
       },
     ]);
-    const result = await deleteContactAttributeKey("cak123");
+    const result = await deleteContactAttributeKey("cak123", "caller-workspace");
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      expect(result.data).toEqual(mockContactAttributeKey);
+      expect(result.data).toEqual({ ...mockContactAttributeKey, workspaceId: "caller-workspace" });
     }
   });
 
   test("returns not_found if record does not exist", async () => {
     vi.mocked(prisma.contactAttributeKey.delete).mockRejectedValueOnce(prismaNotFoundError);
 
-    const result = await deleteContactAttributeKey("cak999");
+    const result = await deleteContactAttributeKey("cak999", "caller-workspace");
     expect(result.ok).toBe(false);
 
     if (!result.ok) {
@@ -221,7 +226,7 @@ describe("deleteContactAttributeKey", () => {
   test("returns internal_server_error on other errors", async () => {
     vi.mocked(prisma.contactAttributeKey.delete).mockRejectedValueOnce(new Error("Delete error"));
 
-    const result = await deleteContactAttributeKey("cak123");
+    const result = await deleteContactAttributeKey("cak123", "caller-workspace");
     expect(result.ok).toBe(false);
 
     if (!result.ok) {

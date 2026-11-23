@@ -7,6 +7,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { validateInputs } from "@/lib/utils/validate";
 import { whereDirectoryAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 import { readAttributeValue } from "./attribute-storage";
 
 const selectContactAttribute = {
@@ -50,7 +51,7 @@ export const getContactAttributes = reactCache(async (contactId: string) => {
 /**
  * Scoped by workspace on purpose: this feeds the contact detail page, which is reached through a
  * workspace id in the URL. `ContactAttribute` has no workspace column of its own, so the tenant
- * check goes through the contact it hangs off.
+ * check goes through the contact it hangs off, which must be in the workspace's contact directory.
  */
 export const getContactAttributesWithKeyInfo = reactCache(async (contactId: string, workspaceId: string) => {
   validateInputs([contactId, ZId], [workspaceId, ZId]);
@@ -59,7 +60,7 @@ export const getContactAttributesWithKeyInfo = reactCache(async (contactId: stri
     const prismaAttributes = await prisma.contactAttribute.findMany({
       where: {
         contactId,
-        contact: { workspaceId },
+        contact: whereContactsOfWorkspace(workspaceId),
       },
       select: selectContactAttribute,
     });

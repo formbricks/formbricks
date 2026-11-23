@@ -17,6 +17,7 @@ import {
 } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
@@ -112,8 +113,9 @@ export const mapResponsePrismaToResponse = (
 
 /**
  * Scoped by workspace on purpose: this feeds the contact detail page, which is reached through a
- * workspace id in the URL. A contact id alone is not a tenant boundary, so the responses are
- * filtered through the workspace of the contact they belong to.
+ * workspace id in the URL. A contact id alone is not a tenant boundary, so the contact must be in the
+ * workspace's contact directory. A shared directory shares its contacts, not their responses: only
+ * responses to this workspace's surveys are listed.
  */
 export const getResponsesByContactId = reactCache(
   async (
@@ -129,8 +131,11 @@ export const getResponsesByContactId = reactCache(
       const responsePrisma = await prisma.response.findMany({
         where: {
           contactId,
-          contact: { workspaceId },
-          ...(Object.keys(visibleSurveyWhere).length > 0 ? { survey: visibleSurveyWhere } : {}),
+          contact: whereContactsOfWorkspace(workspaceId),
+          survey:
+            Object.keys(visibleSurveyWhere).length > 0
+              ? { AND: [{ workspaceId }, visibleSurveyWhere] }
+              : { workspaceId },
         },
         select: {
           ...responseSelection,

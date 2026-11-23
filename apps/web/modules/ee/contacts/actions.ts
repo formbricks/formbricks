@@ -4,20 +4,21 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributesInput } from "@formbricks/types/contact-attribute";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import {
-  getOrganizationIdFromContactId,
-  getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromContactId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE } from "@/modules/ee/contacts/lib/contact-delete-errors";
 import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
-import { createContactsFromCSV, deleteContact, getContact } from "./lib/contacts";
+import {
+  ContactInSharedDirectoryError,
+  createContactsFromCSV,
+  deleteContactInWorkspace,
+} from "./lib/contacts";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
 import {
   ZContactCSVAttributeMap,
@@ -25,14 +26,17 @@ import {
   ZContactCSVUploadResponse,
 } from "./types/contact";
 
+// The workspace comes from the page, never from the contact: a contact's own `workspaceId` only records
+// where it was created. The lib calls then require the contact to be in that workspace's directory.
 const ZContactDeleteAction = z.object({
   contactId: ZId,
+  workspaceId: ZId,
 });
 
 export const deleteContactAction = authenticatedActionClient.inputSchema(ZContactDeleteAction).action(
   withAuditLogging("deleted", "contact", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
-    const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
+    const { workspaceId } = parsedInput;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
       type: "workspace",
@@ -45,10 +49,17 @@ export const deleteContactAction = authenticatedActionClient.inputSchema(ZContac
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.contactId = parsedInput.contactId;
 
-    const result = await deleteContact(parsedInput.contactId);
-
-    ctx.auditLoggingCtx.oldObject = result;
-    return result;
+    try {
+      const result = await deleteContactInWorkspace(parsedInput.contactId, workspaceId);
+      ctx.auditLoggingCtx.oldObject = result;
+      return result;
+    } catch (error) {
+      // The page translates the code; the APIs show the error's own message.
+      if (error instanceof ContactInSharedDirectoryError) {
+        throw new OperationNotAllowedError(CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE);
+      }
+      throw error;
+    }
   })
 );
 
@@ -109,6 +120,7 @@ export const createContactsFromCSVAction = authenticatedActionClient
 
 const ZUpdateContactAttributesAction = z.object({
   contactId: ZId,
+  workspaceId: ZId,
   attributes: ZContactAttributesInput,
 });
 
@@ -117,8 +129,8 @@ export const updateContactAttributesAction = authenticatedActionClient
   .inputSchema(ZUpdateContactAttributesAction)
   .action(
     withAuditLogging("updated", "contact", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
-      const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
+      const { workspaceId } = parsedInput;
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
@@ -131,12 +143,11 @@ export const updateContactAttributesAction = authenticatedActionClient
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.contactId = parsedInput.contactId;
 
-      const contact = await getContact(parsedInput.contactId);
-      if (!contact) {
-        throw new ResourceNotFoundError("Contact", parsedInput.contactId);
-      }
-
-      const result = await updateContactAttributes(parsedInput.contactId, parsedInput.attributes);
+      const result = await updateContactAttributes(
+        parsedInput.contactId,
+        workspaceId,
+        parsedInput.attributes
+      );
 
       ctx.auditLoggingCtx.newObject = {
         contactId: parsedInput.contactId,

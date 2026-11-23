@@ -14,6 +14,7 @@ import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
+import { getTranslatedContactDeleteError } from "@/modules/ee/contacts/lib/contact-delete-errors";
 import { Button } from "@/modules/ui/components/button";
 import { SelectedRowSettings } from "@/modules/ui/components/data-table/components/selected-row-settings";
 import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
@@ -166,9 +167,9 @@ export const ContactDataView = ({
   };
 
   const deleteContact = async (contactId: string) => {
-    const result = await deleteContactAction({ contactId });
+    const result = await deleteContactAction({ contactId, workspaceId });
     if (result?.serverError) {
-      throw new Error(getFormattedErrorMessage(result));
+      throw new Error(getTranslatedContactDeleteError(getFormattedErrorMessage(result), t));
     }
   };
 

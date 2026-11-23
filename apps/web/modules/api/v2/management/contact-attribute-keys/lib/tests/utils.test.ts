@@ -14,27 +14,27 @@ describe("getContactAttributeKeysQuery", () => {
     vi.clearAllMocks();
   });
 
-  test("returns query with workspaceId in array when no params are provided", () => {
-    const workspaceIds = ["ws-1", "ws-2"];
-    const result = getContactAttributeKeysQuery(workspaceIds);
+  test("scopes the query to the given contact directories when no params are provided", () => {
+    const directoryIds = ["dir-1", "dir-2"];
+    const result = getContactAttributeKeysQuery(directoryIds);
 
     expect(result).toEqual({
       where: {
-        directory: { workspaces: { some: { id: { in: workspaceIds } } } },
+        directoryId: { in: directoryIds },
       },
     });
   });
 
   test("applies common filters when provided", () => {
-    const workspaceIds = ["ws-1", "ws-2"];
+    const directoryIds = ["dir-1", "dir-2"];
     const params: TGetContactAttributeKeysFilter = {
       ...baseParams,
     };
-    const result = getContactAttributeKeysQuery(workspaceIds, params);
+    const result = getContactAttributeKeysQuery(directoryIds, params);
 
     expect(result).toEqual({
       where: {
-        directory: { workspaces: { some: { id: { in: workspaceIds } } } },
+        directoryId: { in: directoryIds },
       },
       take: 10,
       orderBy: {
@@ -44,7 +44,7 @@ describe("getContactAttributeKeysQuery", () => {
   });
 
   test("applies date filters when provided", () => {
-    const workspaceIds = ["ws-1", "ws-2"];
+    const directoryIds = ["dir-1", "dir-2"];
     const startDate = new Date("2023-01-01");
     const endDate = new Date("2023-12-31");
 
@@ -53,11 +53,11 @@ describe("getContactAttributeKeysQuery", () => {
       startDate,
       endDate,
     };
-    const result = getContactAttributeKeysQuery(workspaceIds, params);
+    const result = getContactAttributeKeysQuery(directoryIds, params);
 
     expect(result).toEqual({
       where: {
-        directory: { workspaces: { some: { id: { in: workspaceIds } } } },
+        directoryId: { in: directoryIds },
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -71,18 +71,18 @@ describe("getContactAttributeKeysQuery", () => {
   });
 
   test("handles multiple filter parameters correctly", () => {
-    const workspaceIds = ["ws-1", "ws-2"];
+    const directoryIds = ["dir-1", "dir-2"];
     const params: TGetContactAttributeKeysFilter = {
       limit: 5,
       skip: 10,
       sortBy: "updatedAt",
       order: "asc",
     };
-    const result = getContactAttributeKeysQuery(workspaceIds, params);
+    const result = getContactAttributeKeysQuery(directoryIds, params);
 
     expect(result).toEqual({
       where: {
-        directory: { workspaces: { some: { id: { in: workspaceIds } } } },
+        directoryId: { in: directoryIds },
       },
       take: 5,
       skip: 10,

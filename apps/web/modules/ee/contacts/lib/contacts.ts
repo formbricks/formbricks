@@ -5,7 +5,12 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { getSurvey } from "@/lib/survey/service";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
@@ -19,6 +24,7 @@ import {
   whereAttributeKeysOfWorkspace,
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 import {
@@ -34,7 +40,6 @@ import {
   ZContactCSVDuplicateAction,
   ZContactCSVUploadResponse,
 } from "../types/contact";
-import { hasWorkspace, requireWorkspace } from "./workspace-row";
 
 export const getContactsInSegment = reactCache(async (segmentId: string) => {
   try {
@@ -129,7 +134,7 @@ const selectContact = {
 } satisfies Prisma.ContactSelect;
 
 export const buildContactWhereClause = (workspaceId: string, search?: string): Prisma.ContactWhereInput => {
-  const whereClause: Prisma.ContactWhereInput = { workspaceId };
+  const whereClause: Prisma.ContactWhereInput = { ...whereContactsOfWorkspace(workspaceId) };
 
   if (search) {
     whereClause.OR = [
@@ -155,29 +160,19 @@ export const buildContactWhereClause = (workspaceId: string, search?: string): P
   return whereClause;
 };
 
-export const getContact = reactCache(async (contactId: string): Promise<TContact | null> => {
-  validateInputs([contactId, ZId]);
-
-  try {
-    const contact = await prisma.contact.findUnique({
-      where: {
-        id: contactId,
-      },
-      select: selectContact,
-    });
-    return contact && hasWorkspace(contact) ? contact : null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-});
+/**
+ * A contact's `workspaceId` only records the workspace it was created from, and is null once that
+ * workspace is deleted while the directory lives on. A read made through a workspace reports that
+ * workspace instead, so `TContact.workspaceId` keeps its type.
+ */
+const withReportedWorkspace = <T extends { workspaceId: string | null }>(
+  contact: T,
+  workspaceId: string
+): T & { workspaceId: string } => ({ ...contact, workspaceId: contact.workspaceId ?? workspaceId });
 
 /**
- * Workspace-scoped variant of {@link getContact}: returns null when the contact exists but lives in
- * another workspace, so a caller holding an authorized workspace id cannot read a foreign contact.
+ * The contact, when it is in the workspace's contact directory; null otherwise, so a caller holding an
+ * authorized workspace id cannot read a contact of another directory.
  */
 export const getContactInWorkspace = reactCache(
   async (contactId: string, workspaceId: string): Promise<TContact | null> => {
@@ -187,11 +182,11 @@ export const getContactInWorkspace = reactCache(
       const contact = await prisma.contact.findFirst({
         where: {
           id: contactId,
-          workspaceId,
+          ...whereContactsOfWorkspace(workspaceId),
         },
         select: selectContact,
       });
-      return contact && hasWorkspace(contact) ? contact : null;
+      return contact ? withReportedWorkspace(contact, workspaceId) : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -202,18 +197,46 @@ export const getContactInWorkspace = reactCache(
   }
 );
 
-export const deleteContact = async (contactId: string): Promise<TContact | null> => {
-  validateInputs([contactId, ZId]);
+/** Shown by the APIs; the Contacts page translates {@link CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE} instead. */
+export const CONTACT_IN_SHARED_DIRECTORY_MESSAGE =
+  "This contact is in a contact directory that other workspaces use, so it can't be deleted.";
+
+/** Deleting the contact would also delete its responses and displays in the other workspaces. */
+export class ContactInSharedDirectoryError extends OperationNotAllowedError {
+  constructor() {
+    super(CONTACT_IN_SHARED_DIRECTORY_MESSAGE);
+  }
+}
+
+/**
+ * Deletes a contact of the workspace's contact directory (decision 9). Refused with
+ * {@link ContactInSharedDirectoryError} when another workspace uses the directory too, and with
+ * `ResourceNotFoundError` when the contact is not in the directory. The share check is part of the
+ * delete itself, so a workspace joining the directory meanwhile cannot slip past it.
+ */
+export const deleteContactInWorkspace = async (contactId: string, workspaceId: string): Promise<TContact> => {
+  validateInputs([contactId, ZId], [workspaceId, ZId]);
 
   try {
-    const contact = await prisma.contact.delete({
-      where: {
-        id: contactId,
-      },
+    const contact = await prisma.contact.findFirst({
+      where: { id: contactId, ...whereContactsOfWorkspace(workspaceId) },
       select: selectContact,
     });
+    if (!contact) {
+      throw new ResourceNotFoundError("contact", contactId);
+    }
 
-    return requireWorkspace(contact, "contact");
+    const { count } = await prisma.contact.deleteMany({
+      where: {
+        id: contactId,
+        directory: { workspaces: { some: { id: workspaceId }, every: { id: workspaceId } } },
+      },
+    });
+    if (count === 0) {
+      throw new ContactInSharedDirectoryError();
+    }
+
+    return withReportedWorkspace(contact, workspaceId);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

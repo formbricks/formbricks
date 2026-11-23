@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   CONTACT_DIRECTORY_MISSING_MESSAGE,
+  ContactDirectoryMissingError,
   getWorkspaceContactDirectory,
+  requireWorkspaceContactDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import type { TFormbricksFileReferences } from "./envelope";
@@ -10,6 +12,7 @@ import { applyFormbricksFileReferences, planFormbricksFileReferences } from "./r
 vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
   getWorkspaceContactDirectory: vi.fn(),
+  requireWorkspaceContactDirectory: vi.fn(async () => ({ id: "dir-1", matchingKey: "email" })),
 }));
 
 const WORKSPACE_ID = "clxx1234567890123456789012";
@@ -293,7 +296,57 @@ describe("applyFormbricksFileReferences", () => {
     );
   });
 
-  test("holds the workspace's attribute key cap again inside the transaction, under a lock", async () => {
+  // Keys belong to the workspace's contact directory, with the workspace as their origin; the cap and
+  // its lock are the directory's, which every workspace on it shares.
+  test("creates attribute keys in the workspace's directory and caps them per directory", async () => {
+    const createManyAndReturn = vi.fn(async () => [{ key: "plan" }]);
+    const count = vi.fn(async () => 0);
+    const executeRaw = vi.fn(async () => 0);
+    const tx = {
+      $executeRaw: executeRaw,
+      actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
+      contactAttributeKey: { count, createManyAndReturn },
+      language: { createManyAndReturn: vi.fn(async () => []) },
+    } as never;
+
+    await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
+      actionClasses: new Map(),
+      attributeKeysToCreate: [{ key: "plan", name: "Plan", description: null, dataType: "string" }],
+      languagesToCreate: [],
+      issues: [],
+    });
+
+    expect(count).toHaveBeenCalledWith({ where: { directoryId: "dir-1" } });
+    expect(executeRaw.mock.calls[0]).toContain("survey-import:attribute-keys:dir-1");
+    expect(createManyAndReturn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: [expect.objectContaining({ key: "plan", directoryId: "dir-1", workspaceId: WORKSPACE_ID })],
+      })
+    );
+  });
+
+  test("creates no attribute key for a workspace with no directory", async () => {
+    vi.mocked(requireWorkspaceContactDirectory).mockRejectedValueOnce(new ContactDirectoryMissingError());
+    const createManyAndReturn = vi.fn(async () => []);
+    const tx = {
+      $executeRaw: vi.fn(async () => 0),
+      actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
+      contactAttributeKey: { count: vi.fn(async () => 0), createManyAndReturn },
+      language: { createManyAndReturn: vi.fn(async () => []) },
+    } as never;
+
+    await expect(
+      applyFormbricksFileReferences(tx, WORKSPACE_ID, {
+        actionClasses: new Map(),
+        attributeKeysToCreate: [{ key: "plan", name: "Plan", description: null, dataType: "string" }],
+        languagesToCreate: [],
+        issues: [],
+      })
+    ).rejects.toThrow(ContactDirectoryMissingError);
+    expect(createManyAndReturn).not.toHaveBeenCalled();
+  });
+
+  test("holds the directory's attribute key cap again inside the transaction, under a lock", async () => {
     const executeRaw = vi.fn(async () => 0);
     const createManyAndReturn = vi.fn(async () => []);
     const tx = {

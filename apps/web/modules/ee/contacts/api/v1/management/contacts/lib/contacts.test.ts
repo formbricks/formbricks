@@ -9,29 +9,17 @@ vi.mock("@formbricks/database", () => ({
     contact: {
       findMany: vi.fn(),
     },
+    workspace: {
+      findMany: vi.fn(),
+    },
   },
 }));
+vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
 
-const mockWorkspaceId1 = "ay70qluzic16hu8fu6xrqebq";
-const mockWorkspaceId2 = "raeeymwqrn9iqwe5rp13vwem";
-const mockWorkspaceIds = [mockWorkspaceId1, mockWorkspaceId2];
-
-const mockContacts = [
-  {
-    id: "contactId1",
-    workspaceId: mockWorkspaceId1,
-    directoryId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "contactId2",
-    workspaceId: mockWorkspaceId2,
-    directoryId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+const workspaceA = "ay70qluzic16hu8fu6xrqebq";
+const workspaceB = "raeeymwqrn9iqwe5rp13vwem";
+const createdAt = new Date("2024-01-01");
+const updatedAt = new Date("2024-01-02");
 
 describe("getContacts", () => {
   beforeEach(() => {
@@ -42,15 +30,43 @@ describe("getContacts", () => {
     vi.clearAllMocks();
   });
 
-  test("should return contacts for given workspaceIds", async () => {
-    vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
+  test("lists the contacts of the key's directories in the pinned v1 shape", async () => {
+    // Both workspaces use one directory: each contact is listed once.
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      { id: workspaceA, contactDirectoryId: "dir-1" },
+      { id: workspaceB, contactDirectoryId: "dir-1" },
+    ] as never);
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([
+      // A column a later release adds must not reach the response.
+      { id: "c1", createdAt, updatedAt, workspaceId: workspaceB, directoryId: "dir-1", matchKey: "x" },
+      { id: "c2", createdAt, updatedAt, workspaceId: null, directoryId: "dir-1" },
+    ] as never);
 
-    const result = await getContacts(mockWorkspaceIds);
+    const result = await getContacts([workspaceB, workspaceA]);
 
-    expect(prisma.contact.findMany).toHaveBeenCalledWith({
-      where: { workspaceId: { in: mockWorkspaceIds } },
+    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+      where: { id: { in: [workspaceB, workspaceA] }, contactDirectoryId: { not: null } },
+      select: { id: true, contactDirectoryId: true },
+      orderBy: { id: "asc" },
     });
-    expect(result).toEqual(mockContacts);
+    expect(prisma.contact.findMany).toHaveBeenCalledWith({
+      where: { directoryId: { in: ["dir-1"] } },
+      select: { id: true, createdAt: true, updatedAt: true, workspaceId: true, directoryId: true },
+    });
+    expect(result).toStrictEqual([
+      // The origin workspace when it still exists…
+      { id: "c1", createdAt, updatedAt, workspaceId: workspaceB },
+      // …else the caller's workspace on the directory with the lowest id.
+      { id: "c2", createdAt, updatedAt, workspaceId: workspaceA },
+    ]);
+    expect(Object.keys(result[0]).sort()).toEqual(["createdAt", "id", "updatedAt", "workspaceId"]);
+  });
+
+  test("returns nothing, without reading contacts, when no workspace has a directory", async () => {
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+    await expect(getContacts([workspaceA])).resolves.toEqual([]);
+    expect(prisma.contact.findMany).not.toHaveBeenCalled();
   });
 
   test("should throw DatabaseError on PrismaClientKnownRequestError", async () => {
@@ -58,21 +74,18 @@ describe("getContacts", () => {
       code: "P2002",
       clientVersion: "2.0.0",
     });
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      { id: workspaceA, contactDirectoryId: "dir-1" },
+    ] as never);
     vi.mocked(prisma.contact.findMany).mockRejectedValue(prismaError);
 
-    await expect(getContacts(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
-    expect(prisma.contact.findMany).toHaveBeenCalledWith({
-      where: { workspaceId: { in: mockWorkspaceIds } },
-    });
+    await expect(getContacts([workspaceA])).rejects.toThrow(DatabaseError);
   });
 
   test("should throw original error for other errors", async () => {
     const genericError = new Error("Test Generic Error");
-    vi.mocked(prisma.contact.findMany).mockRejectedValue(genericError);
+    vi.mocked(prisma.workspace.findMany).mockRejectedValue(genericError);
 
-    await expect(getContacts(mockWorkspaceIds)).rejects.toThrow(genericError);
-    expect(prisma.contact.findMany).toHaveBeenCalledWith({
-      where: { workspaceId: { in: mockWorkspaceIds } },
-    });
+    await expect(getContacts([workspaceA])).rejects.toThrow(genericError);
   });
 });

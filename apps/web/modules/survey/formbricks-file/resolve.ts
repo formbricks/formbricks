@@ -14,10 +14,14 @@ import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
-import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import {
+  whereAttributeKeysOfDirectory,
+  whereAttributeKeysOfWorkspace,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import {
   CONTACT_DIRECTORY_MISSING_MESSAGE,
   getWorkspaceContactDirectory,
+  requireWorkspaceContactDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import {
@@ -475,23 +479,26 @@ const recoverSkippedActionClasses = async (
 };
 
 /**
- * Create the plan's attribute keys, the cap held again under a lock: the plan counted before this
- * transaction, and another import may have added keys since. A key without a name is named after itself,
- * as the other create paths name it.
+ * Create the plan's attribute keys in the workspace's contact directory (keys and their cap are per
+ * directory), the cap held again under a lock on the directory: the plan counted before this
+ * transaction, and another import, from any workspace on the directory, may have added keys since. A
+ * key without a name is named after itself, as the other create paths name it.
  */
 const createAttributeKeys = async (
   tx: Prisma.TransactionClient,
   workspaceId: string,
   attributeKeys: TFormbricksFileAttributeKey[]
 ) => {
-  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${ATTRIBUTE_KEY_CAP_LOCK_PREFIX + workspaceId}))`;
+  const directory = await requireWorkspaceContactDirectory(workspaceId);
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${ATTRIBUTE_KEY_CAP_LOCK_PREFIX + directory.id}))`;
   assertAttributeKeyCap(
-    await tx.contactAttributeKey.count({ where: whereAttributeKeysOfWorkspace(workspaceId) }),
+    await tx.contactAttributeKey.count({ where: whereAttributeKeysOfDirectory(directory.id) }),
     attributeKeys.length,
     null
   );
   return tx.contactAttributeKey.createManyAndReturn({
     data: inUniqueKeyOrder(attributeKeys, ({ key }) => key).map((attributeKey) => ({
+      directoryId: directory.id,
       workspaceId,
       ...attributeKey,
       name: attributeKey.name ?? formatSnakeCaseToTitleCase(attributeKey.key),

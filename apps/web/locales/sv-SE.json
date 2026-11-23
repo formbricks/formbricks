@@ -2441,6 +2441,7 @@
       "delete_attribute_confirmation": "{value, plural, one {Detta kommer att ta bort det valda attributet. All kontaktdata som är kopplad till detta attribut kommer att gå förlorad.} other {Detta kommer att ta bort de valda attributen. All kontaktdata som är kopplad till dessa attribut kommer att gå förlorad.}}",
       "delete_contact_confirmation": "Detta kommer att ta bort alla enkätsvar och kontaktattribut som är kopplade till denna kontakt. All målgruppsinriktning och personalisering baserad på denna kontakts data kommer att gå förlorad.",
       "delete_contact_confirmation_with_quotas": "{value, plural, one {Detta kommer att ta bort alla enkätsvar och kontaktattribut som är kopplade till denna kontakt. All målgruppsinriktning och personalisering baserad på denna kontakts data kommer att gå förlorad. Om denna kontakt har svar som räknas mot enkätkvoter, kommer kvotantalet att minskas men kvotgränserna förblir oförändrade.} other {Detta kommer att ta bort alla enkätsvar och kontaktattribut som är kopplade till dessa kontakter. All målgruppsinriktning och personalisering baserad på dessa kontakters data kommer att gå förlorad. Om dessa kontakter har svar som räknas mot enkätkvoter, kommer kvotantalet att minskas men kvotgränserna förblir oförändrade.}}",
+      "delete_contact_shared_directory": "Kontakter i en katalog som andra arbetsytor använder kan inte tas bort.",
       "directory_line": "Katalogen {directoryName}",
       "displays": "Visningar",
       "edit_attribute": "Redigera attribut",

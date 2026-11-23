@@ -54,6 +54,7 @@ export const SingleContactPage = async (props: {
     return (
       <ContactControlBar
         contactId={params.contactId}
+        workspaceId={workspace.id}
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
         publishedLinkSurveys={publishedLinkSurveys}

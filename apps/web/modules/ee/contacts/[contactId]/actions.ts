@@ -6,15 +6,12 @@ import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@form
 import { assertCan } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import {
-  getOrganizationIdFromContactId,
-  getWorkspaceIdFromContactId,
-  getWorkspaceIdFromSurveyId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { getContactInWorkspace } from "@/modules/ee/contacts/lib/contacts";
 import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 
@@ -28,8 +25,11 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
   .inputSchema(ZGeneratePersonalSurveyLinkAction)
   .action(
     withAuditLogging("created", "contact", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
-      const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
+      // Authorized on the survey's workspace: a contact's own `workspaceId` only records where it was
+      // created. The contact must then be in that workspace's contact directory, so a caller cannot mint
+      // a link for a contact of another directory.
+      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
@@ -39,15 +39,10 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
 
       await ensureContactsEnabled(organizationId);
 
-      // Cross-tenant guard: the survey must belong to the same workspace as the
-      // contact the caller was authorized against. Authorization above is derived
-      // from `contactId` only, so without this a caller could pass a `surveyId`
-      // from another workspace and mint a working personal link for it. Mirrors the
-      // workspace assertion the segment-based personal-links path performs.
-      const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-      if (surveyWorkspaceId !== workspaceId) {
+      if (!(await getContactInWorkspace(parsedInput.contactId, workspaceId))) {
         throw new ValidationError(CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE);
       }
+
       // ENG-3282: a personal link writes responses into this survey, so a restricted one needs the
       // survey's own write permission, not the workspace's.
       await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {

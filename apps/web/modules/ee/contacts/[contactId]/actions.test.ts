@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthorizationError, ValidationError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import {
-  getOrganizationIdFromContactId,
-  getWorkspaceIdFromContactId,
-  getWorkspaceIdFromSurveyId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { getContactInWorkspace } from "@/modules/ee/contacts/lib/contacts";
+import { CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { generatePersonalSurveyLinkAction } from "./actions";
 
 vi.mock("server-only", () => ({}));
@@ -19,10 +17,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromContactId: vi.fn(),
-  getWorkspaceIdFromContactId: vi.fn(),
+  getOrganizationIdFromWorkspaceId: vi.fn(),
   getWorkspaceIdFromSurveyId: vi.fn(),
 }));
+vi.mock("@/modules/ee/contacts/lib/contacts", () => ({ getContactInWorkspace: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
   rateLimitConfigs: { actions: { stateMutation: {} } },
@@ -44,9 +42,9 @@ const actAs = (surveyAllowed: boolean) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(getOrganizationIdFromContactId).mockResolvedValue("org_1");
-  vi.mocked(getWorkspaceIdFromContactId).mockResolvedValue("ws_1");
+  vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_1");
   vi.mocked(getWorkspaceIdFromSurveyId).mockResolvedValue("ws_1");
+  vi.mocked(getContactInWorkspace).mockResolvedValue({ id: "contact_1" } as never);
   vi.mocked(getContactSurveyLink).mockResolvedValue({ ok: true, data: "https://link" } as never);
 });
 
@@ -67,5 +65,31 @@ describe("generatePersonalSurveyLinkAction (ENG-3282)", () => {
 
     await generate();
     expect(getContactSurveyLink).toHaveBeenCalledWith("contact_1", "survey_1", undefined);
+  });
+});
+
+// The workspace comes from the survey, never from the contact, whose `workspaceId` only records where
+// it was created. The contact must be in that workspace's contact directory.
+describe("generatePersonalSurveyLinkAction: contact directory", () => {
+  test("authorizes on the survey's workspace and looks the contact up in its directory", async () => {
+    actAs(true);
+
+    await generate();
+
+    expect(assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "workspace.write", {
+      type: "workspace",
+      id: "ws_1",
+    });
+    expect(getContactInWorkspace).toHaveBeenCalledWith("contact_1", "ws_1");
+  });
+
+  test("mints no link for a contact outside the survey workspace's directory", async () => {
+    actAs(true);
+    vi.mocked(getContactInWorkspace).mockResolvedValue(null);
+
+    await expect(generate()).rejects.toThrow(
+      new ValidationError(CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE)
+    );
+    expect(getContactSurveyLink).not.toHaveBeenCalled();
   });
 });

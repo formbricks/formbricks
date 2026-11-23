@@ -5,35 +5,38 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TWorkspaceAuth } from "@/modules/workspaces/types/workspace-auth";
 
 /**
- * Resolves the workspace a contact belongs to, or null when the contact does not exist.
+ * Whether the contact is in the workspace's contact directory. A contact is reachable from every
+ * workspace on its directory (decision 7); its own `workspaceId` only records where it was created.
  *
  * Deliberately not run through `validateInputs`: `contactId` arrives as a raw URL segment, and a
  * malformed one should 404 exactly like a well-formed id belonging to someone else. Validating here
  * would raise a `ValidationError` instead and make the two cases distinguishable.
  *
- * Module-private on purpose — "resolve any contact's workspace, unscoped" is not something callers
- * should reach for from the module that owns the tenant boundary. Go through `getContactAuth`.
+ * Module-private on purpose: go through `getContactAuth`, the choke point for contact pages.
  */
-const getWorkspaceIdOfContact = reactCache(async (contactId: string): Promise<string | null> => {
-  try {
-    const contact = await prisma.contact.findUnique({
-      where: { id: contactId },
-      select: { workspaceId: true },
-    });
+const isContactInWorkspaceDirectory = reactCache(
+  async (workspaceId: string, contactId: string): Promise<boolean> => {
+    try {
+      const contact = await prisma.contact.findFirst({
+        where: { id: contactId, ...whereContactsOfWorkspace(workspaceId) },
+        select: { id: true },
+      });
 
-    return contact?.workspaceId ?? null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error resolving the workspace of a contact");
-      throw new DatabaseError(error.message);
+      return contact !== null;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        logger.error(error, "Error resolving the contact directory of a contact");
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
   }
-});
+);
 
 /**
  * Authorization for pages addressed by both a workspace id and a contact id.
@@ -45,17 +48,20 @@ const getWorkspaceIdOfContact = reactCache(async (contactId: string): Promise<st
  * its responses and its displays. This helper ties the two together and is the choke point every
  * contact-scoped page must go through.
  *
+ * The contact must be in the URL workspace's contact directory, so a contact of another directory (in
+ * this organization or another) stays unreachable.
+ *
  * Fails closed with a 404 rather than a 403, so a foreign contact id is indistinguishable from one
  * that does not exist.
  */
 export const getContactAuth = reactCache(
   async (workspaceId: string, contactId: string): Promise<TWorkspaceAuth> => {
-    const [workspaceAuth, contactWorkspaceId] = await Promise.all([
+    const [workspaceAuth, isInDirectory] = await Promise.all([
       getWorkspaceAuth(workspaceId),
-      getWorkspaceIdOfContact(contactId),
+      isContactInWorkspaceDirectory(workspaceId, contactId),
     ]);
 
-    if (contactWorkspaceId !== workspaceAuth.workspace.id) {
+    if (!isInDirectory) {
       notFound();
     }
 

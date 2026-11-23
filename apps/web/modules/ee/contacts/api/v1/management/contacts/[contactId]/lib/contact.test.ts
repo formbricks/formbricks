@@ -2,16 +2,16 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
-import { deleteContact, getContact } from "./contact";
+import { getContact } from "./contact";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     contact: {
       findUnique: vi.fn(),
-      delete: vi.fn(),
     },
   },
 }));
+vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
 
 const mockContactId = "eegeo7qmz9sn5z85fi76lg8o";
 const mockContact = {
@@ -19,7 +19,7 @@ const mockContact = {
   createdAt: new Date(),
   updatedAt: new Date(),
   workspaceId: "workspace-1",
-  directoryId: null,
+  directoryId: "directory-1",
 };
 
 describe("contact lib", () => {
@@ -32,107 +32,30 @@ describe("contact lib", () => {
   });
 
   describe("getContact", () => {
-    test("should return contact if found", async () => {
+    test("returns the contact's v1 columns and its directory, which decides access", async () => {
       vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
+
       const result = await getContact(mockContactId);
 
       expect(result).toEqual(mockContact);
       expect(prisma.contact.findUnique).toHaveBeenCalledWith({
         where: { id: mockContactId },
+        select: { id: true, createdAt: true, updatedAt: true, workspaceId: true, directoryId: true },
       });
     });
 
-    test("should return null if contact not found", async () => {
+    test("returns null if contact not found", async () => {
       vi.mocked(prisma.contact.findUnique).mockResolvedValue(null);
-      const result = await getContact(mockContactId);
 
-      expect(result).toBeNull();
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-        where: { id: mockContactId },
-      });
+      await expect(getContact(mockContactId)).resolves.toBeNull();
     });
 
-    test("should throw DatabaseError if prisma throws PrismaClientKnownRequestError", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-        code: "P2001",
-        clientVersion: "2.0.0",
-      });
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(prismaError);
+    test("throws DatabaseError if prisma throws PrismaClientKnownRequestError", async () => {
+      vi.mocked(prisma.contact.findUnique).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Test Prisma Error", { code: "P2025", clientVersion: "2.0" })
+      );
 
       await expect(getContact(mockContactId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("should throw error for other errors", async () => {
-      const genericError = new Error("Test Generic Error");
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(genericError);
-
-      await expect(getContact(mockContactId)).rejects.toThrow(genericError);
-    });
-  });
-
-  describe("deleteContact", () => {
-    const mockDeletedContact = {
-      id: mockContactId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      workspaceId: "workspace-1",
-      directoryId: null,
-      attributes: [{ attributeKey: { key: "email" }, value: "test@example.com" }],
-    };
-
-    const mockDeletedContactWithUserId = {
-      id: mockContactId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      workspaceId: "workspace-1",
-      directoryId: null,
-      attributes: [
-        { attributeKey: { key: "email" }, value: "test@example.com" },
-        { attributeKey: { key: "userId" }, value: "user123" },
-      ],
-    };
-
-    test("should delete contact", async () => {
-      vi.mocked(prisma.contact.delete).mockResolvedValue(mockDeletedContact);
-      await deleteContact(mockContactId);
-
-      expect(prisma.contact.delete).toHaveBeenCalledWith({
-        where: { id: mockContactId },
-        select: {
-          id: true,
-          attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
-        },
-      });
-    });
-
-    test("should delete contact with userId", async () => {
-      vi.mocked(prisma.contact.delete).mockResolvedValue(mockDeletedContactWithUserId);
-      await deleteContact(mockContactId);
-
-      expect(prisma.contact.delete).toHaveBeenCalledWith({
-        where: { id: mockContactId },
-        select: {
-          id: true,
-          attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
-        },
-      });
-    });
-
-    test("should throw DatabaseError if prisma throws PrismaClientKnownRequestError", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-        code: "P2001",
-        clientVersion: "2.0.0",
-      });
-      vi.mocked(prisma.contact.delete).mockRejectedValue(prismaError);
-
-      await expect(deleteContact(mockContactId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("should throw error for other errors", async () => {
-      const genericError = new Error("Test Generic Error");
-      vi.mocked(prisma.contact.delete).mockRejectedValue(genericError);
-
-      await expect(deleteContact(mockContactId)).rejects.toThrow(genericError);
     });
   });
 });

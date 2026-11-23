@@ -44,7 +44,7 @@ const mockContactAttributeKey: TContactAttributeKey & { directoryId: string | nu
   name: mockName,
   key: mockKey,
   workspaceId: mockWorkspaceId,
-  directoryId: null,
+  directoryId: "directory-1",
   type: "custom",
   description: "A test key",
   isUnique: false,
@@ -67,9 +67,14 @@ describe("getContactAttributeKey", () => {
     const result = await getContactAttributeKey(mockContactAttributeKeyId);
 
     expect(result).toEqual(mockContactAttributeKey);
+    // The directory decides who may reach the key; the key's own workspace is not read.
     expect(prisma.contactAttributeKey.findUnique).toHaveBeenCalledWith({
       where: { id: mockContactAttributeKeyId },
+      select: expect.objectContaining({ directoryId: true }),
     });
+    expect(vi.mocked(prisma.contactAttributeKey.findUnique).mock.calls[0][0]?.select).not.toHaveProperty(
+      "workspaceId"
+    );
   });
 
   test("should return null if contact attribute key not found", async () => {
@@ -78,9 +83,6 @@ describe("getContactAttributeKey", () => {
     const result = await getContactAttributeKey(mockContactAttributeKeyId);
 
     expect(result).toBeNull();
-    expect(prisma.contactAttributeKey.findUnique).toHaveBeenCalledWith({
-      where: { id: mockContactAttributeKeyId },
-    });
   });
 
   test("should throw DatabaseError if Prisma call fails", async () => {
@@ -108,14 +110,16 @@ describe("deleteContactAttributeKey", () => {
   });
 
   test("should delete contact attribute key", async () => {
-    const deletedAttributeKey = { ...mockContactAttributeKey };
-    vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValue(deletedAttributeKey);
+    const { directoryId: _directoryId, workspaceId: _workspaceId, ...deletedRow } = mockContactAttributeKey;
+    vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValue(deletedRow as ContactAttributeKey);
 
-    const result = await deleteContactAttributeKey(mockContactAttributeKeyId);
+    const result = await deleteContactAttributeKey(mockContactAttributeKeyId, "caller-workspace");
 
-    expect(result).toEqual(deletedAttributeKey);
+    // Reported under the caller's workspace, the response shape unchanged.
+    expect(result).toEqual({ ...deletedRow, workspaceId: "caller-workspace" });
     expect(prisma.contactAttributeKey.delete).toHaveBeenCalledWith({
       where: { id: mockContactAttributeKeyId },
+      select: expect.not.objectContaining({ directoryId: true }),
     });
   });
 
@@ -125,16 +129,24 @@ describe("deleteContactAttributeKey", () => {
       new Prisma.PrismaClientKnownRequestError(errorMessage, { code: "P2025", clientVersion: "test" })
     );
 
-    await expect(deleteContactAttributeKey(mockContactAttributeKeyId)).rejects.toThrow(DatabaseError);
-    await expect(deleteContactAttributeKey(mockContactAttributeKeyId)).rejects.toThrow(errorMessage);
+    await expect(deleteContactAttributeKey(mockContactAttributeKeyId, mockWorkspaceId)).rejects.toThrow(
+      DatabaseError
+    );
+    await expect(deleteContactAttributeKey(mockContactAttributeKeyId, mockWorkspaceId)).rejects.toThrow(
+      errorMessage
+    );
   });
 
   test("should throw generic error if non-Prisma error occurs during delete", async () => {
     const errorMessage = "Some other error during delete";
     vi.mocked(prisma.contactAttributeKey.delete).mockRejectedValue(new Error(errorMessage));
 
-    await expect(deleteContactAttributeKey(mockContactAttributeKeyId)).rejects.toThrow(Error);
-    await expect(deleteContactAttributeKey(mockContactAttributeKeyId)).rejects.toThrow(errorMessage);
+    await expect(deleteContactAttributeKey(mockContactAttributeKeyId, mockWorkspaceId)).rejects.toThrow(
+      Error
+    );
+    await expect(deleteContactAttributeKey(mockContactAttributeKeyId, mockWorkspaceId)).rejects.toThrow(
+      errorMessage
+    );
   });
 });
 
@@ -158,12 +170,17 @@ describe("updateContactAttributeKey", () => {
   test("should update contact attribute key", async () => {
     vi.mocked(prisma.contactAttributeKey.update).mockResolvedValue(updatedAttributeKey);
 
-    const result = await updateContactAttributeKey(mockContactAttributeKeyId, typedUpdateData);
+    const result = await updateContactAttributeKey(
+      mockContactAttributeKeyId,
+      "caller-workspace",
+      typedUpdateData
+    );
 
-    expect(result).toEqual(updatedAttributeKey);
+    expect(result).toEqual({ ...updatedAttributeKey, workspaceId: "caller-workspace" });
     expect(prisma.contactAttributeKey.update).toHaveBeenCalledWith({
       where: { id: mockContactAttributeKeyId },
       data: { description: updateData.description },
+      select: expect.not.objectContaining({ directoryId: true }),
     });
   });
 
@@ -173,23 +190,23 @@ describe("updateContactAttributeKey", () => {
       new Prisma.PrismaClientKnownRequestError(errorMessage, { code: "P2025", clientVersion: "test" })
     );
 
-    await expect(updateContactAttributeKey(mockContactAttributeKeyId, typedUpdateData)).rejects.toThrow(
-      DatabaseError
-    );
-    await expect(updateContactAttributeKey(mockContactAttributeKeyId, typedUpdateData)).rejects.toThrow(
-      errorMessage
-    );
+    await expect(
+      updateContactAttributeKey(mockContactAttributeKeyId, mockWorkspaceId, typedUpdateData)
+    ).rejects.toThrow(DatabaseError);
+    await expect(
+      updateContactAttributeKey(mockContactAttributeKeyId, mockWorkspaceId, typedUpdateData)
+    ).rejects.toThrow(errorMessage);
   });
 
   test("should throw generic error if non-Prisma error occurs during update", async () => {
     const errorMessage = "Some other error during update";
     vi.mocked(prisma.contactAttributeKey.update).mockRejectedValue(new Error(errorMessage));
 
-    await expect(updateContactAttributeKey(mockContactAttributeKeyId, typedUpdateData)).rejects.toThrow(
-      Error
-    );
-    await expect(updateContactAttributeKey(mockContactAttributeKeyId, typedUpdateData)).rejects.toThrow(
-      errorMessage
-    );
+    await expect(
+      updateContactAttributeKey(mockContactAttributeKeyId, mockWorkspaceId, typedUpdateData)
+    ).rejects.toThrow(Error);
+    await expect(
+      updateContactAttributeKey(mockContactAttributeKeyId, mockWorkspaceId, typedUpdateData)
+    ).rejects.toThrow(errorMessage);
   });
 });

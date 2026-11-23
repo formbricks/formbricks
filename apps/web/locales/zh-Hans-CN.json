@@ -2441,6 +2441,7 @@
       "delete_attribute_confirmation": "{value, plural, one {这将删除所选属性。与该属性相关的任何联系人数据都将丢失。} other {这将删除所选属性。与这些属性相关的任何联系人数据都将丢失。}}",
       "delete_contact_confirmation": "这将删除与此联系人相关的所有调查问卷回复和联系人属性。基于此联系人数据的任何定位和个性化将会丢失。",
       "delete_contact_confirmation_with_quotas": "{value, plural, one {这将删除与此联系人相关的所有调查回复和联系人属性。基于此联系人数据的任何定位和个性化将丢失。如果此联系人有影响调查配额的回复，配额数量将减少，但配额限制将保持不变。} other {这将删除与这些联系人相关的所有调查回复和联系人属性。基于这些联系人数据的任何定位和个性化将丢失。如果这些联系人有影响调查配额的回复，配额数量将减少，但配额限制将保持不变。}}",
+      "delete_contact_shared_directory": "其他工作区正在使用的目录中的联系人无法删除。",
       "directory_line": "{directoryName}通讯录",
       "displays": "展示次数",
       "edit_attribute": "编辑属性",

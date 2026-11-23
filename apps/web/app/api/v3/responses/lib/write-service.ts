@@ -21,6 +21,7 @@ import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { calBookingsForAnswers } from "@/lib/response/cal-bookings";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
@@ -175,8 +176,8 @@ export async function readbackV3Response(
 /**
  * Resolve the contact a create attributes the response to, and snapshot its attributes.
  *
- * Scoped to the caller's workspace, so "not in this workspace" and "does not exist" are one answer —
- * which is what keeps it from being an existence oracle for the tenant next door.
+ * Scoped to the caller's workspace's contact directory, so "not in this directory" and "does not exist"
+ * are one answer — which is what keeps it from being an existence oracle for the tenant next door.
  */
 async function checkContact(
   tx: Prisma.TransactionClient,
@@ -184,7 +185,7 @@ async function checkContact(
   contactId: string
 ): Promise<{ issue?: InvalidParam; contactAttributes?: Prisma.JsonValue }> {
   const contact = await tx.contact.findFirst({
-    where: { id: contactId, workspaceId },
+    where: { id: contactId, ...whereContactsOfWorkspace(workspaceId) },
     select: { id: true, attributes: { select: { value: true, attributeKey: { select: { key: true } } } } },
   });
 
@@ -487,7 +488,7 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
             : {}),
           ...(contactId
             ? {
-                contact: { connect: { id: contactId, workspaceId } },
+                contact: { connect: { id: contactId, ...whereContactsOfWorkspace(workspaceId) } },
                 contactAttributes: contactAttributes ?? Prisma.JsonNull,
               }
             : {}),

@@ -6,6 +6,7 @@ import { TContactAttributeKeyType } from "@formbricks/types/contact-attribute-ke
 import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
+import { CONTACT_DIRECTORY_MISSING_MESSAGE } from "@/modules/ee/contacts/lib/contact-directory";
 import { createContactAttributeKey, getContactAttributeKeys } from "./contact-attribute-keys";
 
 vi.mock("@formbricks/database", () => ({
@@ -15,54 +16,63 @@ vi.mock("@formbricks/database", () => ({
       create: vi.fn(),
       count: vi.fn(),
     },
+    workspace: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+    },
   },
 }));
 
 vi.mock("@/lib/utils/validate");
+vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
 
 describe("getContactAttributeKeys", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      { id: "ws1", contactDirectoryId: "dir-1" },
+    ] as never);
   });
 
-  test("should return contact attribute keys when found", async () => {
-    const mockWorkspaceIds = ["ws1", "ws2"];
-    const mockAttributeKeys = [
-      {
-        id: "key1",
-        workspaceId: "workspace1",
-        directoryId: null,
-        name: "Key One",
-        key: "keyOne",
-        type: "custom" as TContactAttributeKeyType,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        description: null,
-        isUnique: false,
-        dataType: "string" as const,
-      },
-      {
-        id: "key2",
-        workspaceId: "workspace2",
-        directoryId: null,
-        name: "Key Two",
-        key: "keyTwo",
-        type: "custom" as TContactAttributeKeyType,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        description: null,
-        isUnique: false,
-        dataType: "string" as const,
-      },
-    ];
-    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(mockAttributeKeys);
+  // Two of the key's workspaces on one directory see the same keys: each is listed once, under the
+  // workspace with the lowest id, and a key's `directoryId` stays out of the response.
+  test("lists each key of the key's directories once, under the caller's workspace", async () => {
+    const createdAt = new Date("2024-01-01");
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      { id: "ws1", contactDirectoryId: "dir-1" },
+      { id: "ws2", contactDirectoryId: "dir-1" },
+      { id: "ws3", contactDirectoryId: "dir-2" },
+    ] as never);
+    const keyColumns = {
+      createdAt,
+      updatedAt: createdAt,
+      description: null,
+      isUnique: false,
+      type: "custom" as TContactAttributeKeyType,
+      dataType: "string" as const,
+    };
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+      { id: "key1", key: "keyOne", name: "Key One", directoryId: "dir-1", ...keyColumns },
+      { id: "key2", key: "keyTwo", name: "Key Two", directoryId: "dir-2", ...keyColumns },
+    ] as never);
 
-    const result = await getContactAttributeKeys(mockWorkspaceIds);
+    const result = await getContactAttributeKeys(["ws3", "ws2", "ws1"]);
 
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { directory: { workspaces: { some: { id: { in: mockWorkspaceIds } } } } },
+      where: { directoryId: { in: ["dir-1", "dir-2"] } },
+      select: expect.objectContaining({ id: true, key: true, directoryId: true }),
     });
-    expect(result).toEqual(mockAttributeKeys);
+    expect(result).toStrictEqual([
+      { id: "key1", key: "keyOne", name: "Key One", workspaceId: "ws1", ...keyColumns },
+      { id: "key2", key: "keyTwo", name: "Key Two", workspaceId: "ws3", ...keyColumns },
+    ]);
+  });
+
+  test("lists nothing when none of the workspaces has a directory", async () => {
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+    await expect(getContactAttributeKeys(["ws1"])).resolves.toEqual([]);
+    expect(prisma.contactAttributeKey.findMany).not.toHaveBeenCalled();
   });
 
   test("should throw DatabaseError if Prisma call fails", async () => {
@@ -102,7 +112,6 @@ describe("createContactAttributeKey", () => {
   const mockCreatedAttributeKey = {
     id: "newKeyId",
     workspaceId,
-    directoryId: null,
     name: key,
     key,
     type,
@@ -123,16 +132,20 @@ describe("createContactAttributeKey", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      contactDirectory: { id: "dir-1", matchingKey: "email" },
+    } as never);
   });
 
   test("should create and return a new contact attribute key", async () => {
     vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(0);
-    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey);
+    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey as never);
 
     const result = await createContactAttributeKey(workspaceId, createInput);
 
+    // The cap counts the directory's keys, and the key is created in the directory.
     expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({
-      where: { directory: { workspaces: { some: { id: workspaceId } } } },
+      where: { directoryId: "dir-1" },
     });
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
@@ -140,8 +153,10 @@ describe("createContactAttributeKey", () => {
         name: createInput.name || createInput.key,
         type: createInput.type,
         description: createInput.description || "",
+        directoryId: "dir-1",
         workspaceId,
       },
+      select: expect.not.objectContaining({ directoryId: true }),
     });
     expect(result).toEqual(mockCreatedAttributeKey);
   });
@@ -153,8 +168,17 @@ describe("createContactAttributeKey", () => {
       OperationNotAllowedError
     );
     expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({
-      where: { directory: { workspaces: { some: { id: workspaceId } } } },
+      where: { directoryId: "dir-1" },
     });
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
+  });
+
+  test("creates nothing for a workspace with no directory", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ contactDirectory: null } as never);
+
+    await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(
+      CONTACT_DIRECTORY_MISSING_MESSAGE
+    );
     expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
   });
 
@@ -206,7 +230,7 @@ describe("createContactAttributeKey", () => {
 
   test("should use key as name when name is not provided", async () => {
     vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(0);
-    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey);
+    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey as never);
 
     const inputWithoutName: TContactAttributeKeyCreateInput = {
       key,
@@ -223,14 +247,16 @@ describe("createContactAttributeKey", () => {
         name: "TestKey", // formatSnakeCaseToTitleCase("testKey") capitalizes first letter
         type: inputWithoutName.type,
         description: inputWithoutName.description || "",
+        directoryId: "dir-1",
         workspaceId,
       },
+      select: expect.any(Object),
     });
   });
 
   test("should use empty string for description when description is not provided", async () => {
     vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(0);
-    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey);
+    vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(mockCreatedAttributeKey as never);
 
     const inputWithoutDescription: TContactAttributeKeyCreateInput = {
       key,
@@ -247,8 +273,10 @@ describe("createContactAttributeKey", () => {
         name: inputWithoutDescription.name,
         type: inputWithoutDescription.type,
         description: "", // Should fall back to empty string when description is not provided
+        directoryId: "dir-1",
         workspaceId,
       },
+      select: expect.any(Object),
     });
   });
 });

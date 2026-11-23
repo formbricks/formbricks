@@ -6,10 +6,10 @@ import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { EditContactAttributesModal } from "@/modules/ee/contacts/components/edit-contact-attributes-modal";
+import { getTranslatedContactDeleteError } from "@/modules/ee/contacts/lib/contact-delete-errors";
 import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
@@ -24,6 +24,7 @@ interface TContactAttributeWithKeyInfo {
 
 interface ContactControlBarProps {
   readonly contactId: string;
+  readonly workspaceId: string;
   readonly isReadOnly: boolean;
   readonly isQuotasAllowed: boolean;
   readonly publishedLinkSurveys: PublishedLinkSurvey[];
@@ -33,6 +34,7 @@ interface ContactControlBarProps {
 
 export const ContactControlBar = ({
   contactId,
+  workspaceId,
   isReadOnly,
   isQuotasAllowed,
   publishedLinkSurveys,
@@ -40,8 +42,7 @@ export const ContactControlBar = ({
   currentAttributes,
 }: ContactControlBarProps) => {
   const router = useRouter();
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+  const workspaceBasePath = `/workspaces/${workspaceId}`;
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
@@ -57,14 +58,13 @@ export const ContactControlBar = ({
 
   const handleDeletePerson = async () => {
     setIsDeletingPerson(true);
-    const deletePersonResponse = await deleteContactAction({ contactId });
+    const deletePersonResponse = await deleteContactAction({ contactId, workspaceId });
     if (deletePersonResponse?.data) {
       router.refresh();
       router.push(`${workspaceBasePath}/contacts`);
       toast.success(t("workspace.contacts.contact_deleted_successfully"));
     } else {
-      const errorMessage = getFormattedErrorMessage(deletePersonResponse);
-      toast.error(errorMessage);
+      toast.error(getTranslatedContactDeleteError(getFormattedErrorMessage(deletePersonResponse), t));
     }
     setIsDeletingPerson(false);
     setDeleteDialogOpen(false);
@@ -132,6 +132,7 @@ export const ContactControlBar = ({
         open={isEditAttributesModalOpen}
         setOpen={setIsEditAttributesModalOpen}
         contactId={contactId}
+        workspaceId={workspaceId}
         currentAttributes={currentAttributes}
         attributeKeys={allAttributeKeys}
       />

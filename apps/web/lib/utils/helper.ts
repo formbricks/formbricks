@@ -3,8 +3,6 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
-  getContact,
-  getContactAttributeKey,
   getFeedbackSource,
   getIntegration,
   getInvite,
@@ -47,24 +45,6 @@ export const getOrganizationIdFromResponseId = async (responseId: string) => {
   }
 
   return await getOrganizationIdFromSurveyId(response.surveyId);
-};
-
-export const getOrganizationIdFromContactId = async (contactId: string) => {
-  const contact = await getContact(contactId);
-  if (!contact) {
-    throw new ResourceNotFoundError("contact", contactId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(contact.workspaceId);
-};
-
-export const getOrganizationIdFromContactAttributeKeyId = async (contactAttributeKeyId: string) => {
-  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
-  if (!contactAttributeKey) {
-    throw new ResourceNotFoundError("ContactAttributeKey", contactAttributeKeyId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(contactAttributeKey.workspaceId);
 };
 
 export const getOrganizationIdFromTagId = async (tagId: string) => {
@@ -189,24 +169,6 @@ export const getWorkspaceIdFromResponseId = async (responseId: string) => {
   }
 
   return await getWorkspaceIdFromSurveyId(response.surveyId);
-};
-
-export const getWorkspaceIdFromContactId = async (contactId: string) => {
-  const contact = await getContact(contactId);
-  if (!contact) {
-    throw new ResourceNotFoundError("contact", contactId);
-  }
-
-  return contact.workspaceId;
-};
-
-export const getWorkspaceIdFromContactAttributeKeyId = async (contactAttributeKeyId: string) => {
-  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
-  if (!contactAttributeKey) {
-    throw new ResourceNotFoundError("ContactAttributeKey", contactAttributeKeyId);
-  }
-
-  return contactAttributeKey.workspaceId;
 };
 
 export const getWorkspaceIdFromIntegrationId = async (integrationId: string) => {

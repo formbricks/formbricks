@@ -147,7 +147,7 @@ export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<At
   ];
 
   const deleteAttribute = async (attributeId: string) => {
-    const response = await deleteContactAttributeKeyAction({ id: attributeId });
+    const response = await deleteContactAttributeKeyAction({ id: attributeId, workspaceId });
     if (!response?.data) {
       throw new Error(getFormattedErrorMessage(response));
     }
@@ -236,6 +236,7 @@ export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<At
       {editingAttribute && (
         <EditAttributeModal
           attribute={editingAttribute}
+          workspaceId={workspaceId}
           open={!!editingAttribute}
           setOpen={(open) => {
             if (!open) setEditingAttribute(null);
