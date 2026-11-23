@@ -218,28 +218,32 @@ describe("createDisplay", () => {
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
-  test("should throw InvalidInputError when survey does not exist (RecordNotFound)", async () => {
-    vi.mocked(getContactByUserId).mockResolvedValue(mockContact);
+  test("should throw ResourceNotFoundError and create no contact when the survey does not exist", async () => {
+    // An unknown userId would create a contact if the survey were not checked first.
+    vi.mocked(getContactByUserId).mockResolvedValue(null);
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(new ResourceNotFoundError("Survey", surveyId));
-    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: surveyId, workspaceId },
       select: { status: true },
     });
+    expect(getContactByUserId).not.toHaveBeenCalled();
+    expect(prisma.contact.create).not.toHaveBeenCalled();
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
   test.each(["draft", "paused", "completed"])(
-    "should throw InvalidInputError when survey status is %s",
+    "should throw InvalidInputError and create no contact when survey status is %s",
     async (status) => {
-      vi.mocked(getContactByUserId).mockResolvedValue(mockContact);
+      vi.mocked(getContactByUserId).mockResolvedValue(null);
       vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurvey, status } as unknown as Awaited<
         ReturnType<typeof prisma.survey.findUnique>
       >);
 
       await expect(createDisplay(displayInput)).rejects.toThrow(InvalidInputError);
+      expect(getContactByUserId).not.toHaveBeenCalled();
+      expect(prisma.contact.create).not.toHaveBeenCalled();
       expect(prisma.display.create).not.toHaveBeenCalled();
     }
   );
