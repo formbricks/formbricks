@@ -492,7 +492,8 @@ export const PreviewSurvey = ({
             isBrandingEnabled={workspace.linkSurveyBranding}
             survey={jsLinkSurvey}
             isRedirectDisabled={true}
-            languageCode={languageCode}
+            languageCode={activeLanguageCode}
+            onLanguageChange={setActiveLanguageCode}
             responseCount={42}
             styling={styling}
             showCardlessPreviewLogoSlot={!styling.isLogoHidden}
@@ -508,7 +509,7 @@ export const PreviewSurvey = ({
     showLanguageSelector && (
       <LanguageSelector
         languages={enabledLanguages}
-        languageCode={languageCode}
+        languageCode={activeLanguageCode}
         setLanguageCode={handleChromeLanguageChange}
         locale={locale}
       />
