@@ -1,6 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
@@ -10,9 +10,11 @@ import {
 } from "@formbricks/types/errors";
 import { PRE_LOGIN_BODY_LIMIT_BYTES } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { flushAfter } from "@/integration/after";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { createEmailToken, verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
+import { createOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
 import { auth } from "@/modules/auth/lib/auth";
@@ -20,6 +22,7 @@ import { isPasswordCompromisedError } from "@/modules/auth/lib/better-auth-hibp"
 import {
   SIGNUP_INTENT_COOKIE_NAME,
   SIGNUP_INTENT_COOKIE_OPTIONS,
+  createSignupIntentToken,
   readSignupIntent,
 } from "@/modules/auth/lib/signup-intent";
 import { updateUser } from "@/modules/auth/lib/user";
@@ -27,23 +30,38 @@ import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/sign
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { queueAuditEvent, queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail } from "@/modules/email";
+import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { POST } from "./route";
 
 vi.mock("next/headers", () => ({ cookies: vi.fn(), headers: vi.fn() }));
 
+// `after()` needs a Next request scope. Queued until `flushAfter()`, so a test can tell work done before
+// the response from work scheduled after it — the property ENG-7094 rests on.
+vi.mock("next/server", async (importOriginal) =>
+  (await import("@/integration/after")).withAfterMock(await importOriginal<typeof import("next/server")>())
+);
+
 const requestHeaders = new Headers({ "x-formbricks-client-ip": "203.0.113.7" });
-/** Captures cookies the route sets, so the ENG-2562 sign-up intent cookie can be asserted on. */
+/** Captures cookies the route sets and clears, so the response's `Set-Cookie`s can be asserted on. */
 let setCookies: { name: string; value: string; options: unknown }[] = [];
+let deletedCookies: string[] = [];
+/** Cookies the request arrives with. */
+let requestCookies: Record<string, string> = {};
 const mockNextRequestData = () => {
   setCookies = [];
+  deletedCookies = [];
+  requestCookies = {};
   vi.mocked(headers).mockResolvedValue(requestHeaders);
   vi.mocked(cookies).mockResolvedValue({
-    get: () => undefined,
+    get: (name: string) => (name in requestCookies ? { name, value: requestCookies[name] } : undefined),
+    getAll: () => Object.entries(requestCookies).map(([name, value]) => ({ name, value })),
     set: (name: string, value: string, options: unknown) => setCookies.push({ name, value, options }),
+    delete: (name: string) => deletedCookies.push(name),
   } as never);
 };
 
@@ -57,7 +75,10 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("server-only", () => ({}));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
-vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEvent: vi.fn() }));
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  queueAuditEvent: vi.fn(),
+  queueAuditEventWithoutRequest: vi.fn(),
+}));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: vi.fn(), applyRateLimit: vi.fn() }));
 
 // Signup is Better Auth-native (ENG-1054): the credential user + verification email come from
@@ -159,7 +180,14 @@ const signUp = (body: unknown = baseInput, extraHeaders: Record<string, string> 
 const SUCCESS = { data: { success: true, emailToken: "display-token" } };
 
 const reasonOf = async (response: Response) => (await response.json()).details?.reason;
+/** What the route's own audit entry recorded (failures, since ENG-7094). */
 const auditEvents = () => vi.mocked(queueAuditEvent).mock.calls.map(([event]) => event);
+/** The `created` record a new account gets after the response (ENG-7094). */
+const createdAuditEvents = () => vi.mocked(queueAuditEventWithoutRequest).mock.calls.map(([event]) => event);
+const asExistingAddress = () =>
+  vi.mocked(auth.api.signUpEmail).mockResolvedValue({
+    user: { ...createdUser, id: "synthetic-generated-id" },
+  } as never);
 
 const acceptInvite = () => {
   vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
@@ -181,10 +209,16 @@ beforeEach(() => {
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
   vi.mocked(isPasswordCompromisedError).mockReturnValue(false);
   vi.mocked(queueAuditEvent).mockResolvedValue(undefined);
+  vi.mocked(queueAuditEventWithoutRequest).mockResolvedValue(undefined);
   vi.mocked(createEmailToken).mockReturnValue("display-token");
   // Real Better Auth resolves with the user it wrote; the route compares that id against the persisted
   // row to tell a creation from a duplicate (ENG-2091). Matching ids => "created".
   vi.mocked(auth.api.signUpEmail).mockResolvedValue({ user: createdUser } as never);
+});
+
+afterEach(async () => {
+  // Nothing a test scheduled may leak into the next one.
+  await flushAfter();
 });
 
 describe("POST /api/internal/signups — the answer and the guards around it", () => {
@@ -306,19 +340,80 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
     });
   });
 
-  // The other half of the suppression below: a REAL creation must still be audited. Without this, a bug
-  // that skipped the entry unconditionally would silence every `created` event and no test would notice.
-  test("audits a real creation, attributed to the new account", async () => {
+  // The other half of the suppression below: a REAL creation must still be audited. Since ENG-7094 the
+  // route records nothing on success and the `created` record is written after the response, once the
+  // organization it belongs to exists. Without this, a bug that dropped that write would silence every
+  // `created` event and no test would notice.
+  test("audits a real creation after the response, with the organization it created", async () => {
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(createOrganization).mockResolvedValue({ id: "org-new", name: "Ada's Organization" } as never);
+    vi.mocked(createWorkspace).mockResolvedValue({ id: "ws-new", name: "Default" } as never);
+
     await signUp();
 
-    expect(auditEvents()).toEqual([
+    expect(auditEvents()).toEqual([]);
+    expect(createdAuditEvents()).toEqual([]);
+
+    await flushAfter();
+
+    expect(auditEvents()).toEqual([]);
+    expect(createdAuditEvents()).toEqual([
       expect.objectContaining({
         action: "created",
         targetType: "user",
+        userType: "user",
         targetId: createdUser.id,
+        organizationId: "org-new",
         status: "success",
         newObject: createdUser,
+        apiUrl: expect.stringContaining("/api/internal/signups"),
+        requestMetadata: expect.objectContaining({ ipAddress: expect.any(String) }),
       }),
+    ]);
+  });
+
+  // ENG-7094: everything only a NEW account gets is slow (database round trips, an outside call), so
+  // doing any of it before the response made a free address answer measurably slower than a
+  // registered one.
+  test("does no new-account work before the response", async () => {
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(createOrganization).mockResolvedValue({ id: "org-new", name: "Ada's Organization" } as never);
+    vi.mocked(createWorkspace).mockResolvedValue({ id: "ws-new", name: "Default" } as never);
+
+    const response = await signUp({ ...baseInput, userLocale: "de-DE" });
+
+    expect(await response.json()).toEqual(SUCCESS);
+    expect(createOrganization).not.toHaveBeenCalled();
+    expect(subscribeUserToMailingList).not.toHaveBeenCalled();
+    expect(updateUser).not.toHaveBeenCalled();
+    expect(capturePostHogEvent).not.toHaveBeenCalled();
+
+    await flushAfter();
+
+    expect(createOrganization).toHaveBeenCalledTimes(1);
+    expect(subscribeUserToMailingList).toHaveBeenCalledTimes(1);
+    expect(updateUser).toHaveBeenCalledWith(createdUser.id, { locale: "de-DE" });
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      createdUser.id,
+      "user_signed_up",
+      expect.objectContaining({ signup_source: "direct", invite_organization_id: null }),
+      { organizationId: "org-new" }
+    );
+  });
+
+  // After the response nothing would catch a throw, and the account exists either way: a failed step
+  // is logged, and the steps after it still run.
+  test("a provisioning failure after the response still subscribes and audits the new account", async () => {
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(createOrganization).mockRejectedValue(new Error("db down"));
+
+    const response = await signUp();
+    await expect(flushAfter()).resolves.toBeUndefined();
+
+    expect(await response.json()).toEqual(SUCCESS);
+    expect(subscribeUserToMailingList).toHaveBeenCalledTimes(1);
+    expect(createdAuditEvents()).toEqual([
+      expect.objectContaining({ targetId: createdUser.id, organizationId: UNKNOWN_DATA, status: "success" }),
     ]);
   });
 
@@ -333,7 +428,16 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
       body: { email: "ada@example.com", password: "Password123!", name: "Ada" },
       headers: requestHeaders,
     });
-    expect(auditEvents()).toEqual([expect.objectContaining({ organizationId: "org-1", status: "success" })]);
+    await flushAfter();
+    expect(createdAuditEvents()).toEqual([
+      expect.objectContaining({ organizationId: "org-1", status: "success" }),
+    ]);
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      createdUser.id,
+      "user_signed_up",
+      expect.objectContaining({ signup_source: "invite", invite_organization_id: "org-1" }),
+      { organizationId: "org-1" }
+    );
   });
 
   // The notice to the inviter is sent after the membership exists, so a failed send must not fail the
@@ -343,6 +447,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
     vi.mocked(sendInviteAcceptedEmail).mockRejectedValue(new Error("smtp unavailable"));
 
     const response = await signUp({ ...baseInput, inviteToken: "invite-jwt-123" });
+    await flushAfter();
 
     expect(await response.json()).toEqual(SUCCESS);
     expect(createMembership).toHaveBeenCalled();
@@ -358,6 +463,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
       vi.mocked(resolveInviteMatch).mockResolvedValue("missing");
 
       const response = await signUp({ ...baseInput, inviteToken });
+      await flushAfter();
 
       expect(await response.json()).toEqual(SUCCESS);
       expect(auth.api.signUpEmail).toHaveBeenCalled();
@@ -404,11 +510,10 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
   // duplicate — it returns 200 with a SYNTHETIC user (generated id, nothing written). The real contract
   // is pinned against the live framework in signup-duplicate-email.integration.test.ts.
   test("treats a synthetic-user response as already-existed, without post-creation side effects", async () => {
-    vi.mocked(auth.api.signUpEmail).mockResolvedValue({
-      user: { ...createdUser, id: "synthetic-generated-id" },
-    } as never);
+    asExistingAddress();
 
     const response = await signUp();
+    await flushAfter();
 
     expect(await response.json()).toEqual(SUCCESS); // same answer as a real signup
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
@@ -416,10 +521,56 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
     expect(capturePostHogEvent).not.toHaveBeenCalled();
     // No `created` event at all for an account that was not created (S1).
     expect(queueAuditEvent).not.toHaveBeenCalled();
-    // ENG-2562: and no sign-up intent cookie. The caller is an unauthenticated stranger who has proven
-    // nothing about an account that already exists; arming one would hand them the auto-sign-in on the
-    // victim's eventual verification click, and would leak that the address is registered.
-    expect(setCookies).toEqual([]);
+    expect(queueAuditEventWithoutRequest).not.toHaveBeenCalled();
+    // ENG-2562: no sign-up intent cookie for this account. The caller is an unauthenticated stranger who
+    // has proven nothing about an account that already exists; arming one would hand them the
+    // auto-sign-in on the victim's eventual verification click.
+    // ENG-7094: but a decoy of the same shape all the same, or its absence answers "is this address
+    // registered?" in one request. It names no account.
+    expect(setCookies).toHaveLength(1);
+    expect(setCookies[0].name).toBe(SIGNUP_INTENT_COOKIE_NAME);
+    expect(setCookies[0].options).toBe(SIGNUP_INTENT_COOKIE_OPTIONS);
+    expect(readSignupIntent(setCookies[0].value)).toEqual({ userId: null, reason: "absent" });
+  });
+
+  // ENG-7094: the answer itself must not say which path ran — status, body, and every cookie it sets or
+  // clears, which is all the caller sees besides time.
+  test("answers a created and a registered address alike, cookies included", async () => {
+    const observe = async () => {
+      mockNextRequestData();
+      requestCookies = { fb_attribution: "{}" };
+      const response = await signUp();
+      return {
+        status: response.status,
+        body: await response.json(),
+        // Names and attributes. Value length is pinned against real cuid2 ids in signup-intent.test.ts;
+        // the fixture's short id would differ here for that reason alone.
+        set: setCookies.map((c) => ({ name: c.name, options: c.options })),
+        deleted: [...deletedCookies],
+      };
+    };
+
+    const created = await observe();
+    asExistingAddress();
+    const existing = await observe();
+
+    expect(existing).toEqual(created);
+    expect(created.set.map((c) => c.name)).toEqual([SIGNUP_INTENT_COOKIE_NAME]);
+    expect(created.deleted).toEqual(["fb_attribution"]);
+  });
+
+  // A caller chooses the cookie it sends. Carrying a held cookie's account over on `already_existed`
+  // would let them spend the result on the resend route — which refreshes only a cookie valid for its
+  // account — and learn which path ran. So a registered address always gets a fresh decoy.
+  test("replaces a held valid cookie with a decoy when the address is registered", async () => {
+    asExistingAddress();
+    requestCookies = { [SIGNUP_INTENT_COOKIE_NAME]: createSignupIntentToken("attackers-own-account") };
+
+    await signUp();
+
+    expect(setCookies).toHaveLength(1);
+    expect(setCookies[0].value).not.toBe(requestCookies[SIGNUP_INTENT_COOKIE_NAME]);
+    expect(readSignupIntent(setCookies[0].value)).toEqual({ userId: null, reason: "absent" });
   });
 
   // ENG-2562: the other half of the same rule — a real creation DOES get the cookie, with exactly the
@@ -441,10 +592,12 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
     vi.mocked(auth.api.signUpEmail).mockRejectedValue(new Error("user already exists"));
 
     const response = await signUp();
+    await flushAfter();
 
     expect(await response.json()).toEqual(SUCCESS);
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
     expect(queueAuditEvent).not.toHaveBeenCalled();
+    expect(queueAuditEventWithoutRequest).not.toHaveBeenCalled();
   });
 
   // Regression: signup/page.tsx requires a valid invite once public sign-up is closed, but the sign-up
@@ -474,6 +627,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
       acceptInvite();
 
       expect((await signUp({ ...baseInput, inviteToken: "invite-jwt-123" })).status).toBe(200);
+      await flushAfter();
       expect(createMembership).toHaveBeenCalled();
     });
   });

@@ -1,4 +1,5 @@
 import "server-only";
+import { createId } from "@paralleldrive/cuid2";
 import jwt from "jsonwebtoken";
 import { AUTH_SECRET, ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
@@ -13,6 +14,10 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
  * the victim's click would sign the victim into the attacker's account. This cookie is the missing
  * discriminator — set when a sign-up creates an account, checked when a verification completes — so the
  * session is only ever handed to the browser that actually signed up.
+ *
+ * A sign-up that finds the address already registered gets a cookie too: a DECOY of the same shape that
+ * names no account (`createDecoySignupIntentToken`, ENG-7094). Without it the cookie's presence alone
+ * answered "is this address registered?". Do not drop the decoy to "simplify" the sign-up action.
  *
  * It is not a credential and grants nothing on its own: without the emailed verification token there is
  * no request it can influence, and the attacker's copy (of an account they created) is inert because the
@@ -94,6 +99,21 @@ export const createSignupIntentToken = (userId: string): string => {
 };
 
 /**
+ * cuid2 ids — Better Auth's `generateId` and Prisma's `cuid()` alike — always start with a letter, so a
+ * leading digit marks a decoy uid that no account can have, at the same length as a real one.
+ */
+const DECOY_UID_PREFIX = "0";
+
+/**
+ * Mint the cookie a sign-up gets when the address already had an account (ENG-7094). Indistinguishable
+ * from a real one to the caller — same claims, same length, encrypted and signed alike — but it names no
+ * account, and `readSignupIntent` reads it as `absent`. Always fresh: carrying over a cookie the caller
+ * sent would let them learn which path ran by spending it on the resend action.
+ */
+export const createDecoySignupIntentToken = (): string =>
+  createSignupIntentToken(`${DECOY_UID_PREFIX}${createId().slice(DECOY_UID_PREFIX.length)}`);
+
+/**
  * What a sign-up intent cookie says, and — when it says nothing usable — why.
  *
  * The reason is not decoration. The withheld path is reached by the ordinary cross-device click and by a
@@ -106,8 +126,9 @@ export type TSignupIntentRead =
   | { userId: null; reason: "absent" | "invalid" };
 
 /**
- * Read the cookie. `absent` is no cookie at all (or no secrets configured); `invalid` covers malformed,
- * expired, wrong signature, wrong algorithm, and the wrong `kind`.
+ * Read the cookie. `absent` is no cookie at all, no secrets configured, or a decoy (ENG-7094: the browser
+ * signed up an address that already had an account, which proves nothing — the same as no sign-up);
+ * `invalid` covers malformed, expired, wrong signature, wrong algorithm, and the wrong `kind`.
  *
  * Returns rather than throws, and never logs the token, because the caller runs inside a verification
  * request that must not fail on a bad cookie: a garbage cookie has to degrade to "no proof", which
@@ -130,6 +151,9 @@ export const readSignupIntent = (cookieValue: string | null | undefined): TSignu
     if (typeof uid !== "string" || uid.length === 0) return { userId: null, reason: "invalid" };
 
     const userId = symmetricDecrypt(uid, ENCRYPTION_KEY);
+    // Not `other_user`, which the verification hook logs and audits as a possible pre-hijack: a decoy
+    // only ever comes from a sign-up this browser made with an already-registered address.
+    if (userId.startsWith(DECOY_UID_PREFIX)) return { userId: null, reason: "absent" };
 
     return userId.length > 0 ? { userId, reason: "valid" } : { userId: null, reason: "invalid" };
   } catch {

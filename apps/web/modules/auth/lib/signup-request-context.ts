@@ -44,3 +44,11 @@ export const markBootstrapAdminSignup = (): void => {
 
 /** True only when the action admitted the current user creation via the fresh-instance exception. */
 export const isBootstrapAdminSignup = (): boolean => signupRequestContext.getStore()?.bootstrapAdmin === true;
+
+/**
+ * True while the current code runs inside the sign-up route's scope (`POST /api/internal/signups`). The verification-email
+ * callback reads it to send after the response instead of during it (ENG-7094): Better Auth only sends
+ * for an address it actually created, so a send on the response path makes the response slower for a
+ * free address than for a registered one.
+ */
+export const isInSignupRequest = (): boolean => signupRequestContext.getStore() !== undefined;

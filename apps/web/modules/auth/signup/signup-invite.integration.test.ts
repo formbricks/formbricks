@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { POST as postSignup } from "@/app/api/internal/signups/route";
+import { flushAfter } from "@/integration/after";
 import { postToPreLoginRoute, withoutEmailToken } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { createInviteToken } from "@/lib/jwt";
@@ -19,9 +20,15 @@ import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/em
 
 // The action reads/deletes the attribution cookie; there is no Next request scope under vitest.
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ get: () => undefined, delete: () => undefined })),
+  cookies: vi.fn(async () => ({ get: () => undefined, set: () => undefined, delete: () => undefined })),
   headers: vi.fn(async () => new Headers()),
 }));
+
+// `after()` needs a Next request scope. Sign-up defers the verification send and all new-account work
+// to it (ENG-7094), so the suite flushes it after each call, as a finished request would.
+vi.mock("next/server", async (importOriginal) =>
+  (await import("@/integration/after")).withAfterMock(await importOriginal<typeof import("next/server")>())
+);
 
 /**
  * Cloud-shaped instance: public sign-up open and multi-org licensed. That is the environment ENG-2091
@@ -107,6 +114,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       password: PASSWORD,
       inviteToken,
     });
+    await flushAfter();
 
     expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(sendVerificationLinkEmail).toHaveBeenCalledTimes(1);
@@ -136,6 +144,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       userLocale: "en-US",
       inviteToken,
     });
+    await flushAfter();
 
     // ENG-2099: the response must be indistinguishable from a brand-new address — an earlier version
     // routed this case to login, which turned the invite flow into an account-existence lookup. The
@@ -198,6 +207,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
           password: PASSWORD,
           inviteToken,
         });
+        await flushAfter();
         return withoutEmailToken(result);
       };
 
@@ -219,6 +229,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       password: "AttackerPassword1!",
       inviteToken,
     });
+    await flushAfter();
 
     // Rejected with the stable code the form maps to the generic invite copy — one code for
     // expired / revoked / wrong-address, so it can't be used to probe which invites exist.
@@ -247,6 +258,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       password: PASSWORD,
       inviteToken,
     });
+    await flushAfter();
 
     expect(result.data).toBeUndefined();
     expect(result.error).toContain("invite_token_invalid");
@@ -267,6 +279,7 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
       email: "victim@corporate-example.com",
       password: "AttackerPassword1!",
     });
+    await flushAfter();
 
     // No invite, so nothing is disclosed: the response is byte-identical to a real new sign-up, and
     // the user lands on the generic "confirm your email" screen (whose copy carries a generic

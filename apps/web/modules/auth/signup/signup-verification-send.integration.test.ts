@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { POST as postSignup } from "@/app/api/internal/signups/route";
+import { flushAfter } from "@/integration/after";
 import { postToPreLoginRoute, withoutEmailToken } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { sendVerificationLinkEmail } from "@/modules/email";
@@ -14,15 +15,21 @@ import { sendVerificationLinkEmail } from "@/modules/email";
  * (auth.ts `sendVerificationEmail`), and the verification-requested screen derives its "nothing was
  * sent" copy from IS_SMTP_CONFIGURED, which does not depend on the address.
  *
- * MUST: still create the account. Better Auth calls the callback through `runInBackgroundOrAwait`,
- * whose catch only logs, so sign-up resolves 200 whatever we throw — the user has a real account and
- * needs the resend path, not a second sign-up.
+ * MUST: still create the account. Inside the sign-up route the callback hands the send to `after()`
+ * (ENG-7094), so a failure surfaces after the response, where it is logged — the user has a real account
+ * and needs the resend path, not a second sign-up.
  */
 
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ get: () => undefined, delete: () => undefined })),
+  cookies: vi.fn(async () => ({ get: () => undefined, set: () => undefined, delete: () => undefined })),
   headers: vi.fn(async () => new Headers()),
 }));
+
+// `after()` needs a Next request scope. Sign-up defers the verification send and all new-account work
+// to it (ENG-7094), so the suite flushes it after each call, as a finished request would.
+vi.mock("next/server", async (importOriginal) =>
+  (await import("@/integration/after")).withAfterMock(await importOriginal<typeof import("next/server")>())
+);
 
 vi.mock("@/modules/ee/mailing/lib/mailing-subscription", () => ({
   subscribeUserToMailingList: vi.fn(async () => undefined),
@@ -38,7 +45,14 @@ const createSignup = (body: Record<string, unknown>) =>
   postToPreLoginRoute(postSignup, "/api/internal/signups", body);
 
 const EMAIL = "newcomer@corporate-example.com";
-const signUp = () => createSignup({ name: "Newcomer", email: EMAIL, password: "Passw0rd!" });
+const callSignUp = () => createSignup({ name: "Newcomer", email: EMAIL, password: "Passw0rd!" });
+
+/** Sign up and let the after-response work finish, as a real request would. */
+const signUp = async () => {
+  const result = await callSignUp();
+  await flushAfter();
+  return result;
+};
 
 /** The three mailer states the callback has to survive, including both silent-failure modes. */
 const MAILER_STATES = [
@@ -73,6 +87,22 @@ describe("verification email send failures during sign-up (real Postgres)", () =
     // sign-up looking failed, driving the user to retry into a duplicate.
     expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(await prisma.user.count({ where: { email: EMAIL } })).toBe(1);
+  });
+
+  // ENG-7094: Better Auth only sends for an address it just created, so a send on the response path made
+  // a free address answer slower than a registered one. Driven through real Better Auth and the real
+  // route, so this also pins that its sign-up still reaches our callback inside the sign-up scope.
+  test("sends the verification email only after the response", async () => {
+    const result = await callSignUp();
+
+    expect(result.status).toBe(200);
+    expect(await prisma.user.count({ where: { email: EMAIL } })).toBe(1);
+    expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
+
+    await flushAfter();
+
+    expect(sendVerificationLinkEmail).toHaveBeenCalledTimes(1);
+    expect(sendVerificationLinkEmail).toHaveBeenCalledWith(expect.objectContaining({ email: EMAIL }));
   });
 
   // The ENG-2099 invariant, asserted directly: a mail outage must not be visible in the response.

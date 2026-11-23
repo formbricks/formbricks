@@ -4,25 +4,10 @@ import type { TPreLoginRequestContext } from "@/app/api/internal/lib/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { createEmailToken } from "@/lib/jwt";
-import {
-  type TSignupAuditTrail,
-  assertSignupAdmissible,
-  createSignup,
-} from "@/modules/auth/signup/lib/sign-up";
+import { assertSignupAdmissible, createSignup } from "@/modules/auth/signup/lib/sign-up";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TSignupBody } from "../schemas";
-
-/** Copy what the sign-up got to into its audit entry, whether it finished or threw partway. */
-const recordTrail = (auditLog: TV3AuditLog | undefined, trail: TSignupAuditTrail) => {
-  if (!auditLog) return;
-  if (trail.organizationId) auditLog.organizationId = trail.organizationId;
-  if (trail.user) {
-    auditLog.targetId = trail.user.id;
-    auditLog.newObject = trail.user;
-  }
-};
 
 /**
  * `POST /api/internal/signups`: create a credential account (pre-login). Charged to the client's IP.
@@ -47,7 +32,6 @@ export async function createSignupOperation({
     return limited;
   }
 
-  const trail: TSignupAuditTrail = {};
   let emailToken: string;
   try {
     const admission = await assertSignupAdmissible(body);
@@ -56,9 +40,8 @@ export async function createSignupOperation({
     // alike whether or not the address already had an account. Minted before the account is written so a
     // missing key fails the sign-up instead of leaving an account behind a 500.
     emailToken = createEmailToken(body.email.toLowerCase());
-    await createSignup(body, admission, trail);
+    await createSignup(body, admission, { apiUrl: auditLog?.apiUrl });
   } catch (error) {
-    recordTrail(auditLog, trail);
     if (error instanceof InvalidInputError) {
       return problemUnprocessableContent(requestId, error.message, {
         instance,
@@ -68,10 +51,11 @@ export async function createSignupOperation({
     throw error;
   }
 
-  // No account was created, so no `created` event may be written: the answer below is the same either
-  // way, and only the audit record may tell them apart (ENG-2091).
-  if (trail.user) recordTrail(auditLog, trail);
-  else skipV3AuditLog(auditLog);
+  // Nothing for the route itself to record on success. On `already_existed` no account was created, so
+  // no `created` event may be written (ENG-2091); on `created`, `createSignup` writes it after the
+  // response, once the organization it belongs to exists (ENG-7094). A refusal or a throw above is still
+  // audited as a failure by the wrapper.
+  skipV3AuditLog(auditLog);
 
   return successResponse({ success: true, emailToken }, { requestId });
 }

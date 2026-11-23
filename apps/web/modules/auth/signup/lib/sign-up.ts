@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
+import { after } from "next/server";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import {
@@ -31,6 +32,7 @@ import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-doma
 import {
   SIGNUP_INTENT_COOKIE_NAME,
   SIGNUP_INTENT_COOKIE_OPTIONS,
+  createDecoySignupIntentToken,
   createSignupIntentToken,
 } from "@/modules/auth/lib/signup-intent";
 import { resolveUninvitedSignupAdmission } from "@/modules/auth/lib/signup-policy";
@@ -48,6 +50,10 @@ import {
 } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
+import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
+import { getAuditRequestMetadata } from "@/modules/ee/audit-logs/lib/request-metadata";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
@@ -63,16 +69,6 @@ const _ZCreatedUser = ZUser.pick({
 });
 
 export type TCreatedUser = z.infer<typeof _ZCreatedUser>;
-
-/**
- * What a sign-up leaves for its audit record, filled in as it goes so a sign-up that fails partway is
- * still recorded against the organization it reached. `user` is set only when THIS request created the
- * account (ENG-2091).
- */
-export type TSignupAuditTrail = {
-  organizationId?: string;
-  user?: TCreatedUser;
-};
 
 async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): Promise<void> {
   if (!IS_TURNSTILE_CONFIGURED) return;
@@ -104,12 +100,7 @@ type TSignUpOutcome =
   // side effect later.
   | { status: "already_existed" };
 
-async function signUpUserSafely(
-  email: string,
-  name: string,
-  password: string,
-  userLocale: z.infer<typeof ZUserLocale> | undefined
-): Promise<TSignUpOutcome> {
+async function signUpUserSafely(email: string, name: string, password: string): Promise<TSignUpOutcome> {
   const normalizedEmail = email.toLowerCase();
 
   // Assigned on every path that does not throw; `undefined` is only in the type because TS cannot see
@@ -163,22 +154,11 @@ async function signUpUserSafely(
     return { status: "already_existed" };
   }
 
-  // signUpEmail can't carry the chosen locale (not a Better Auth field), so apply it afterwards — only
-  // for an account this request created. Applying it on the already-existed path would let an
-  // anonymous caller rewrite an existing user's locale by POSTing their address at sign-up.
-  if (userLocale && user.locale !== userLocale) {
-    await updateUser(user.id, { locale: userLocale });
-    return { status: "created", user: { ...user, locale: userLocale } };
-  }
-
   return { status: "created", user };
 }
 
-async function handleInviteAcceptance(
-  trail: TSignupAuditTrail,
-  inviteToken: string,
-  user: TCreatedUser
-): Promise<void> {
+/** Grant the invited membership. Returns the organization the user joined. */
+async function handleInviteAcceptance(inviteToken: string, user: TCreatedUser): Promise<string> {
   // An invite grants a specific address a specific role in a specific organization. Verifying the
   // signature and loading the row is not enough: without matching the token's email against the account
   // being created, anyone holding an invite link — they get forwarded, pasted into tickets, and land in
@@ -201,7 +181,6 @@ async function handleInviteAcceptance(
   if (!invite) {
     throw new Error("Invalid invite ID");
   }
-  trail.organizationId = invite.organizationId;
 
   await createMembership(invite.organizationId, user.id, {
     accepted: true,
@@ -254,14 +233,15 @@ async function handleInviteAcceptance(
     logger.error({ err: error }, "Failed to send invite accepted email");
   }
   await deleteInvite(invite.id);
+  return invite.organizationId;
 }
 
-async function handleOrganizationCreation(trail: TSignupAuditTrail, user: TCreatedUser): Promise<void> {
+/** Create the user's own organization and workspace, when multi-org is on. Returns the organization. */
+async function handleOrganizationCreation(user: TCreatedUser): Promise<string | undefined> {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  if (!isMultiOrgEnabled) return;
+  if (!isMultiOrgEnabled) return undefined;
 
   const organization = await createOrganization({ name: `${user.name}'s Organization` });
-  trail.organizationId = organization.id;
 
   await createMembership(organization.id, user.id, {
     role: "owner",
@@ -322,6 +302,8 @@ async function handleOrganizationCreation(trail: TSignupAuditTrail, user: TCreat
       ),
     },
   });
+
+  return organization.id;
 }
 
 /**
@@ -329,18 +311,13 @@ async function handleOrganizationCreation(trail: TSignupAuditTrail, user: TCreat
  * rather than a bare user so an `"already_existed"` sign-up cannot reach it (ENG-2091).
  */
 async function handlePostUserCreation(
-  trail: TSignupAuditTrail,
   { user }: Extract<TSignUpOutcome, { status: "created" }>,
   inviteToken: string | undefined
-): Promise<void> {
-  if (inviteToken) {
-    await handleInviteAcceptance(trail, inviteToken, user);
-  } else {
-    await handleOrganizationCreation(trail, user);
-  }
+): Promise<string | undefined> {
   // Better Auth sends the verification email itself during signUpEmail (sendOnSignUp) — no manual
   // send here. The legacy EMAIL_VERIFICATION_DISABLED branch (ENG-1527) is folded into auth.ts'
   // requireEmailVerification config and the callbackURL chosen in signUpUserSafely.
+  return inviteToken ? handleInviteAcceptance(inviteToken, user) : handleOrganizationCreation(user);
 }
 
 /**
@@ -409,72 +386,72 @@ export async function assertSignupAdmissible(
   return { inviteToken, isBootstrapAdmin };
 }
 
+type TCompleteSignUpInput = {
+  outcome: Extract<TSignUpOutcome, { status: "created" }>;
+  inviteToken: string | undefined;
+  userLocale: z.infer<typeof ZUserLocale> | undefined;
+  subscribeToSecurityUpdates: boolean | undefined;
+  subscribeToProductUpdates: boolean | undefined;
+  attributionProperties: Record<string, unknown>;
+  /** For the audit record, captured while the request was live. */
+  requestMetadata: TAuditRequestMetadata;
+  apiUrl: string | undefined;
+};
+
 /**
- * Create the credential account and provision it, after `assertSignupAdmissible` let the request through.
- * Writes nothing but the audit trail on the already-existed path, and never says which path it took to
- * anyone but that trail: the caller's answer is the same either way (ENG-2099).
+ * Everything a NEW account gets, run after the response (ENG-7094). None of it happens for an address
+ * that already had an account, so any of it on the response path makes a free address answer slower
+ * than a registered one: provisioning alone is several database round trips, and the mailing list is
+ * an outside call.
+ *
+ * Never throws: nothing after the response would catch it, so every failure is logged instead. The
+ * steps are independent and each has its own guard, so a failed provisioning still subscribes the user
+ * and still records the account, which exists either way. Before ENG-7094 the same failure reached the
+ * browser as an error, but it offered no way out: a retry resolves to `already_existed` and provisions
+ * nothing, so an account left without an organization lands on organization setup at first sign-in.
  */
-export async function createSignup(
-  input: TSignupBody,
-  { inviteToken, isBootstrapAdmin }: { inviteToken: string | undefined; isBootstrapAdmin: boolean },
-  trail: TSignupAuditTrail
-): Promise<void> {
-  // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
-  // sign-up that went through this flow apart from any other caller of Better Auth's native
-  // /sign-up/email endpoint, which the hook re-checks. That endpoint is closed over HTTP (ENG-3988).
-  const outcome = await runWithSignupRequestContext(() => {
-    markSignupDomainAllowed();
-    // ENG-2247: carried into user.create.before, which stamps the marker on the row it inserts. The
-    // unique index on that column is what makes two concurrent fresh-instance sign-ups resolve to one.
-    if (isBootstrapAdmin) markBootstrapAdminSignup();
-    return signUpUserSafely(input.email, input.name, input.password, input.userLocale);
-  });
+async function completeSignUp({
+  outcome,
+  inviteToken,
+  userLocale,
+  subscribeToSecurityUpdates,
+  subscribeToProductUpdates,
+  attributionProperties,
+  requestMetadata,
+  apiUrl,
+}: TCompleteSignUpInput): Promise<void> {
+  let user = outcome.user;
 
-  // Everything below is provisioning + analytics for a NEW account. On "already_existed" nothing runs:
-  // this endpoint is unauthenticated, so the caller has proven nothing about an account that already
-  // exists (ENG-2091).
-  if (outcome.status !== "created") return;
-  const { user } = outcome;
-
-  // ENG-2562: remember, in THIS browser, that it is the one that created this account, so the
-  // verification click can be told apart from a stranger's and only this browser is auto-signed-in.
-  //
-  // Issued on the `created` path only, and that exclusion is the security-relevant half: on
-  // `already_existed` the caller is an unauthenticated stranger who has proven nothing about an
-  // account that already exists, so arming a cookie for it would hand them the very auto-sign-in
-  // this fix exists to withhold — and would leak that the address is registered.
-  //
-  // Before the other side effects: those can fail, and a sign-up that created the account but lost
-  // its intent cookie would silently degrade to "verify, then log in".
-  //
-  // Non-fatal for the same reason: the cookie buys UX (auto-sign-in after verification), so a
-  // failure to mint it must cost exactly that UX — never the sign-up itself, which has already
-  // created the account. Concretely reachable when neither secret is set.
-  try {
-    (await cookies()).set(
-      SIGNUP_INTENT_COOKIE_NAME,
-      createSignupIntentToken(user.id),
-      SIGNUP_INTENT_COOKIE_OPTIONS
-    );
-  } catch (error) {
-    logger.error(
-      { error, userId: user.id },
-      "Failed to issue the sign-up intent cookie; verification will require a manual sign-in"
-    );
+  // signUpEmail can't carry the chosen locale (not a Better Auth field), so apply it afterwards — only
+  // for an account this request created. Applying it on the already-existed path would let an
+  // anonymous caller rewrite an existing user's locale by POSTing their address at sign-up.
+  if (userLocale && user.locale !== userLocale) {
+    try {
+      await updateUser(user.id, { locale: userLocale });
+      user = { ...user, locale: userLocale };
+    } catch (error) {
+      logger.error({ err: error, userId: user.id }, "Failed to apply the sign-up locale");
+    }
   }
 
-  await handlePostUserCreation(trail, outcome, inviteToken);
+  let organizationId: string | undefined;
+  try {
+    organizationId = await handlePostUserCreation({ ...outcome, user }, inviteToken);
+  } catch (error) {
+    // `err`, not `error`: pino serializes an Error's message and stack only under `err`.
+    logger.error({ err: error, userId: user.id }, "Sign-up provisioning failed after the response");
+  }
 
-  await subscribeUserToMailingList({
-    email: user.email,
-    isFormbricksCloud: IS_FORMBRICKS_CLOUD,
-    subscribeToSecurityUpdates: input.subscribeToSecurityUpdates,
-    subscribeToProductUpdates: input.subscribeToProductUpdates,
-  });
-
-  const cookieStore = await cookies();
-  const hasAttributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined;
-  const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
+  try {
+    await subscribeUserToMailingList({
+      email: user.email,
+      isFormbricksCloud: IS_FORMBRICKS_CLOUD,
+      subscribeToSecurityUpdates,
+      subscribeToProductUpdates,
+    });
+  } catch (error) {
+    logger.error({ err: error, userId: user.id }, "Mailing-list subscription failed after sign-up");
+  }
 
   identifyPostHogPerson(user.id, {
     email: user.email,
@@ -490,14 +467,98 @@ export async function createSignup(
       auth_provider: "credentials",
       email_domain: getEmailDomain(user.email),
       signup_source: inviteToken ? "invite" : "direct",
-      invite_organization_id: trail.organizationId ?? null,
+      invite_organization_id: inviteToken ? (organizationId ?? null) : null,
     },
-    trail.organizationId ? { organizationId: trail.organizationId } : undefined
+    organizationId ? { organizationId } : undefined
   );
 
-  // Clear whenever a cookie is present (even malformed/empty) so it cannot bleed onto
-  // later events and a stale/legacy value cannot block future first-touch capture.
-  if (hasAttributionCookie) {
+  // Only on this path: an audit record claiming a user was created must only exist when one was
+  // (ENG-2091 / S1). The actor is unknown, as in the route's own entry this replaces: the caller has no
+  // session.
+  await queueAuditEventWithoutRequest({
+    action: "created",
+    targetType: "user",
+    userId: UNKNOWN_DATA,
+    userType: "user",
+    targetId: user.id,
+    organizationId: organizationId ?? UNKNOWN_DATA,
+    status: "success",
+    newObject: user,
+    apiUrl,
+    requestMetadata,
+  }).catch((error: unknown) => {
+    logger.error({ err: error, userId: user.id }, "Failed to record the sign-up audit event");
+  });
+}
+
+/**
+ * Set the sign-up intent cookie on EVERY successful sign-up, created or not (ENG-7094).
+ *
+ * Only a created account gets a cookie that names it (ENG-2562). A cookie on the `created` path alone
+ * answered "is this address free?" in one request, by its `Set-Cookie`. So `already_existed` gets a
+ * decoy of the same shape, naming no account (`createDecoySignupIntentToken`). It never passes
+ * `classifySignupIntent`, so it hands the caller nothing, and the signed, encrypted value does not show
+ * which kind it is.
+ *
+ * Always a fresh decoy, even when the browser holds a valid cookie. Carrying that cookie's account over
+ * would let a caller spend the result on the resend route, which refreshes only a cookie valid for its
+ * account, and learn which path ran. The cost is the rare double submit of one sign-up: its second
+ * request replaces the first one's cookie, and that browser signs in by hand after verifying.
+ *
+ * Non-fatal: the cookie buys UX (auto-sign-in after verification), so a failure to mint it must cost
+ * exactly that UX — never the sign-up itself, which has already created the account. Concretely
+ * reachable when neither secret is set, and then on both paths alike.
+ */
+async function issueSignupIntentCookie(outcome: TSignUpOutcome): Promise<void> {
+  try {
+    const value =
+      outcome.status === "created"
+        ? createSignupIntentToken(outcome.user.id)
+        : createDecoySignupIntentToken();
+    (await cookies()).set(SIGNUP_INTENT_COOKIE_NAME, value, SIGNUP_INTENT_COOKIE_OPTIONS);
+  } catch (error) {
+    logger.error(
+      { err: error },
+      "Failed to issue the sign-up intent cookie; verification will require a manual sign-in"
+    );
+  }
+}
+
+/**
+ * Create the credential account after `assertSignupAdmissible` let the request through, and schedule
+ * its provisioning for after the response.
+ *
+ * Until the response, both outcomes do the same work, so neither the answer nor how long it takes says
+ * whether the address already had an account (ENG-2099, ENG-7094). The one difference left is inside
+ * Better Auth's signUpEmail: a creation inserts the user and its credential account, a few milliseconds
+ * against the jitter of the password hash both paths run. The `created` audit record is written after
+ * the response too, once the organization it belongs to exists; the route records nothing itself on
+ * success.
+ */
+export async function createSignup(
+  input: TSignupBody,
+  { inviteToken, isBootstrapAdmin }: { inviteToken: string | undefined; isBootstrapAdmin: boolean },
+  { apiUrl }: { apiUrl?: string } = {}
+): Promise<void> {
+  // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
+  // sign-up that went through this flow apart from any other caller of Better Auth's native
+  // /sign-up/email endpoint, which the hook re-checks. That endpoint is closed over HTTP (ENG-3988).
+  const outcome = await runWithSignupRequestContext(() => {
+    markSignupDomainAllowed();
+    // ENG-2247: carried into user.create.before, which stamps the marker on the row it inserts. The
+    // unique index on that column is what makes two concurrent fresh-instance sign-ups resolve to one.
+    if (isBootstrapAdmin) markBootstrapAdminSignup();
+    return signUpUserSafely(input.email, input.name, input.password);
+  });
+
+  await issueSignupIntentCookie(outcome);
+
+  // Read while the request is live, and cleared on both paths alike: the marketing first-touch cookie
+  // is consumed by this sign-up attempt whatever its outcome. Clearing it only for a created account
+  // would put a `Set-Cookie` on that path alone.
+  const cookieStore = await cookies();
+  const attributionProperties = getAttributionPropertiesFromCookies(cookieStore);
+  if (cookieStore.get(ATTRIBUTION_COOKIE_NAME) !== undefined) {
     try {
       cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
     } catch {
@@ -505,8 +566,20 @@ export async function createSignup(
     }
   }
 
-  // Only here: an audit record claiming a user was created must only exist when one was. A duplicate
-  // sign-up once wrote a `created` event attributed to the PRE-EXISTING user and carrying their object
-  // (ENG-2091 / S1).
-  trail.user = user;
+  // Provisioning + analytics for a NEW account only. Nothing runs on `already_existed`: this endpoint
+  // is unauthenticated, so the caller has proven nothing about an account that already exists
+  // (ENG-2091).
+  if (outcome.status !== "created") return;
+
+  const completion: TCompleteSignUpInput = {
+    outcome,
+    inviteToken,
+    userLocale: input.userLocale,
+    subscribeToSecurityUpdates: input.subscribeToSecurityUpdates,
+    subscribeToProductUpdates: input.subscribeToProductUpdates,
+    attributionProperties,
+    requestMetadata: await getAuditRequestMetadata(),
+    apiUrl,
+  };
+  after(() => completeSignUp(completion));
 }

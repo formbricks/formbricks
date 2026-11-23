@@ -6,6 +6,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { genericOAuth, jwt, twoFactor } from "better-auth/plugins";
+import { after } from "next/server";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -56,6 +57,7 @@ import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { createTemplateKeyedRateLimitStorage } from "./rate-limit-template-key";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
+import { isInSignupRequest } from "./signup-request-context";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
@@ -95,6 +97,40 @@ const OAUTH_STATE_COOKIE_MAX_AGE_SECONDS = 10 * 60;
 export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
   const dbUser = await prisma.user.findUnique({ where: { id: userId }, select: { locale: true } });
   return (dbUser?.locale ?? "en-US") as TUserLocale;
+};
+
+/**
+ * Send one Better Auth verification link. Throws on failure — a throw or a falsy mailer return — after
+ * logging it; see the `sendVerificationEmail` callback below for why both count and who catches.
+ */
+const deliverVerificationEmail = async (user: { id: string; email: string }, url: string): Promise<void> => {
+  const { sendVerificationLinkEmail } = await import("@/modules/email");
+  try {
+    const sent = await sendVerificationLinkEmail({
+      email: user.email,
+      locale: await getUserLocale(user.id),
+      verifyLink: url,
+    });
+    if (!sent) {
+      throw new Error("Verification email was not sent (mailer reported no delivery)");
+    }
+  } catch (error) {
+    // A capped verification email (ENG-3823) must look the same as a sent one: the resend paths
+    // rethrow, so an error here only for unverified accounts would tell anyone which addresses have
+    // one. The limit is logged where it refused.
+    if (error instanceof TooManyRequestsError) {
+      return;
+    }
+    // Domain only — never the address, the token, or the verify URL (all three are sensitive and
+    // the URL grants account access).
+    // `err`, not `error`: pino serializes an Error's message and stack only under `err`, and after
+    // the sign-up response this line is the only record of a failed send.
+    logger.error(
+      { err: error, userId: user.id, emailDomain: user.email.split("@")[1] },
+      "Failed to send verification email"
+    );
+    throw error;
+  }
 };
 
 /**
@@ -270,32 +306,17 @@ export const auth = betterAuth({
     // Deliberately NOT surfaced in the sign-up response: that response must not vary by what happened to
     // one address, or it becomes an account-existence oracle (ENG-2099). The verification-requested
     // screen derives its "nothing was sent" state from IS_SMTP_CONFIGURED instead.
+    //
+    // ENG-7094: inside the sign-up route the send runs after the response. Better Auth only sends for
+    // an address it just created, so waiting on SMTP there made a free address answer measurably slower
+    // than a registered one. The sign-up path never surfaced a send failure anyway (see 1. above), and
+    // `deliverVerificationEmail` logs its own, so nothing is lost by not awaiting it.
     sendVerificationEmail: async ({ user, url }) => {
-      const { sendVerificationLinkEmail } = await import("@/modules/email");
-      try {
-        const sent = await sendVerificationLinkEmail({
-          email: user.email,
-          locale: await getUserLocale(user.id),
-          verifyLink: url,
-        });
-        if (!sent) {
-          throw new Error("Verification email was not sent (mailer reported no delivery)");
-        }
-      } catch (error) {
-        // A capped verification email (ENG-3823) must look the same as a sent one: the resend paths
-        // rethrow, so an error here only for unverified accounts would tell anyone which addresses have
-        // one. The limit is logged where it refused.
-        if (error instanceof TooManyRequestsError) {
-          return;
-        }
-        // Domain only — never the address, the token, or the verify URL (all three are sensitive and
-        // the URL grants account access).
-        logger.error(
-          { error, userId: user.id, emailDomain: user.email.split("@")[1] },
-          "Failed to send verification email"
-        );
-        throw error;
+      if (isInSignupRequest()) {
+        after(() => deliverVerificationEmail(user, url).catch(() => undefined));
+        return;
       }
+      await deliverVerificationEmail(user, url);
     },
     // Composed: records the ENG-2562 "this request just verified someone" marker for the auto-sign-in
     // after-hook, then re-homes the "token" provider's Brevo-on-first-verification side effect. See
