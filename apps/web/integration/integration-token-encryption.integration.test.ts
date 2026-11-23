@@ -5,7 +5,7 @@ import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
 import { createOrUpdateIntegration, getIntegrationByType, getIntegrations } from "@/lib/integration/service";
 // The data migration under test (auto-discovered by the migration runner).
-import { backfillIntegrationTokens } from "../../../packages/database/migration/20261116120000_encrypt_integration_tokens/migration";
+import { backfillIntegrationTokens } from "../../../packages/database/migration/20261123120000_encrypt_integration_tokens/migration";
 
 // Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));

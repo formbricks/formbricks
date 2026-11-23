@@ -169,7 +169,7 @@ export const backfillIntegrationTokens = async (
 export const encryptIntegrationTokens: MigrationScript = {
   type: "data",
   id: "p4n7wq2kd9vh5xeb3tmz8c6a",
-  name: "20261116120000_encrypt_integration_tokens",
+  name: "20261123120000_encrypt_integration_tokens",
   // `tx` is deliberately unused: the work commits in chunks on `prisma` (see backfillIntegrationTokens).
   // The migration runs in the app image, whose environment carries the same `ENCRYPTION_KEY` as the pods.
   run: async ({ prisma }) => {
