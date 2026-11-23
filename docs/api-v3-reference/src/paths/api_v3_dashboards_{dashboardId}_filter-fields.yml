@@ -21,6 +21,7 @@ get:
     - V3 Dashboards
   parameters:
     - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/ViewAsQuery.yml
   responses:
     "200":
       description: The dashboard's embedded-data filter fields

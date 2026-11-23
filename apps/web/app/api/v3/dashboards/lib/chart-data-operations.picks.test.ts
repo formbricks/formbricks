@@ -33,10 +33,21 @@ vi.mock("@/lib/cache", () => ({
     }),
   },
 }));
-vi.mock("./service", () => ({ getDashboardChartsRow: vi.fn() }));
+vi.mock("./service", () => ({
+  getDashboardChartsRow: vi.fn(),
+  keepChartsOnPages: <TRow>(row: TRow) => row,
+}));
+vi.mock("./dashboard-read-access", () => ({
+  refuseUnlessDashboardOpenable: vi.fn(async () => null),
+  getReadablePageIdsCached: vi.fn(async () => new Set(["page"])),
+}));
+vi.mock("@/modules/ee/dashboard-access/lib/viewer-data-access", () => ({
+  getViewerAccessClaimForDataset: vi.fn(async () => null),
+}));
 vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   requireDashboardsAccess: vi.fn(),
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
+  getViewerAccessReader: vi.fn(() => null),
 }));
 vi.mock("@/app/api/v3/charts/lib/data-operations", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/app/api/v3/charts/lib/data-operations")>()),

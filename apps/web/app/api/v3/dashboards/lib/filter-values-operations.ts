@@ -12,6 +12,7 @@ import {
   requestedDateRangeOf,
 } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
+import { getViewerAccessReader } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   applyV3OperationRateLimit,
@@ -55,13 +56,12 @@ import {
 import { parseRequestedDateRange } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { createRequestEmbeddedKeys } from "@/modules/ee/analysis/lib/request-embedded-keys";
 import { isLabelledValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
-import { getViewerAccessReader } from "@/app/api/v3/lib/dashboards-access";
 import { getViewerAccessClaimForDataset } from "@/modules/ee/dashboard-access/lib/viewer-data-access";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
+import { getReadablePageIdsCached } from "./dashboard-read-access";
 import { refuseNonNumericComparisons } from "./numeric-filter-fields";
 import type { TV3DashboardFilterValues } from "./resources";
 import type { TV3DashboardFilterValuesQuery } from "./schemas";
-import { getReadablePageIdsCached } from "./dashboard-read-access";
 import { getDashboardChartsRow, keepChartsOnPages } from "./service";
 import { refuseUnreadableLockedFilters } from "./unreadable-locked-filters";
 import { refuseUngroupedFieldsForViewer } from "./viewer-filter-fields";
@@ -254,7 +254,9 @@ const resolveValueListRequest = async ({
   const reader = getViewerAccessReader(access);
   const viewerAccess = Object.fromEntries(
     await Promise.all(
-      datasetIds.map(async (datasetId) => [datasetId, await getViewerAccessClaimForDataset(reader, datasetId)] as const)
+      datasetIds.map(
+        async (datasetId) => [datasetId, await getViewerAccessClaimForDataset(reader, datasetId)] as const
+      )
     )
   );
 
@@ -476,8 +478,18 @@ export async function listV3DashboardFilterValues({
 
     const resolved = await resolveValueListRequest({ dashboardId, filterId, query, context });
     if (resolved instanceof Response) return resolved;
-    const { row, access, actor, filter, locked, charts, datasetHasField, dateRange, requested, viewerAccess } =
-      resolved;
+    const {
+      row,
+      access,
+      actor,
+      filter,
+      locked,
+      charts,
+      datasetHasField,
+      dateRange,
+      requested,
+      viewerAccess,
+    } = resolved;
 
     const picks = keepCurrentPicks(locked.filters, locked.picks);
     const { [filter.id]: _ownPick, ...otherPicks } = picks;

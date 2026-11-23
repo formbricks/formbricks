@@ -5,12 +5,15 @@ get:
     Returns a dashboard with every widget and its full chart, and its filters, so one call tells a
     caller what is on it. Read each widget's numbers from
     `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`. The workspace is resolved
-    from the dashboard, so the operation takes no query parameters. Needs read access to the
+    from the dashboard, so the only query parameter is `viewAs`. Needs read access to the
     dashboard's workspace; a dashboard the caller cannot see, or that does not exist, answers 403.
+    A Dashboard Viewer reads it only when a team dashboard limit leaves it to them, and sees only the
+    pages they can open, with their widgets; `viewerAccess` tells them which records they see.
   tags:
     - V3 Dashboards
   parameters:
     - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/ViewAsQuery.yml
   responses:
     "200":
       description: The dashboard

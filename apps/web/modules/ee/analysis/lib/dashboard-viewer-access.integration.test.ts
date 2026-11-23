@@ -263,12 +263,13 @@ describe("SpiceDB grants a Dashboard viewer the dashboard reads of its teams' wo
     await expect(dashboardRead(ids.foreignViewer, fixture.workspaceId)).resolves.toBe(false);
   });
 
-  test("dashboard.read stays the workspace read: a viewer reads dashboards only through dashboard_read", async () => {
+  test("dashboard.read admits a viewer whose team has no dashboard limit, as it does a member", async () => {
     const read = (userId: string, dashboardId: string) =>
       can({ type: "user", id: userId }, "dashboard.read", { type: "dashboard", id: dashboardId });
-    await expect(read(ids.viewer, ids.dashboard)).resolves.toBe(false);
-    await expect(read(ids.manageViewer, ids.dashboard)).resolves.toBe(false);
+    await expect(read(ids.viewer, ids.dashboard)).resolves.toBe(true);
+    await expect(read(ids.manageViewer, ids.dashboard)).resolves.toBe(true);
     await expect(read(fixture.users.viewer, ids.dashboard)).resolves.toBe(true);
+    await expect(read(ids.viewer, ids.hiddenDashboard)).resolves.toBe(false);
   });
 
   test("members keep their dashboard reads, and a member without a grant still has none", async () => {
@@ -762,5 +763,174 @@ describe("entitlement lapse", () => {
     expect(await statusOf(await getV3Dashboard({ dashboardId: ids.dashboard, ...ctx(ids.viewer) }))).toBe(
       403
     );
+  });
+});
+
+describe("team dashboard limits, page team limits and Dashboard Viewer access (ENG-7472, ENG-7478, ENG-7484)", () => {
+  const limited = {
+    viewer: "",
+    team: "",
+    allowed: "",
+    openPage: "",
+    closedPage: "",
+    openChart: "",
+    closedChart: "",
+  };
+
+  beforeAll(async () => {
+    limited.viewer = await addViewer("limited-viewer", fixture.organizationId, [
+      { workspaceId: fixture.workspaceId, permission: "read" },
+    ]);
+    limited.team = (
+      await prisma.teamUser.findFirstOrThrow({ where: { userId: limited.viewer }, select: { teamId: true } })
+    ).teamId;
+    const otherTeam = await prisma.team.create({
+      data: { name: "Other team", organizationId: fixture.organizationId },
+    });
+    const allowed = await createTestDashboard({
+      data: { name: "Allowed", workspaceId: fixture.workspaceId, createdBy: fixture.users.owner },
+    });
+    limited.allowed = allowed.id;
+    limited.openPage = allowed.pages[0].id;
+    limited.closedPage = (
+      await prisma.dashboardPage.create({ data: { dashboardId: allowed.id, name: "Closed", order: 1 } })
+    ).id;
+    const chartOn = async (name: string, pageId: string) => {
+      const chart = await prisma.chart.create({
+        data: {
+          name,
+          type: "bar",
+          workspaceId: fixture.workspaceId,
+          feedbackDirectoryId: fixture.datasetId,
+          query: { measures: ["FeedbackRecords.count"] },
+          config: {},
+        },
+      });
+      await createTestWidget({
+        data: { dashboardId: allowed.id, chartId: chart.id, pageId, layout: { x: 0, y: 0, w: 4, h: 3 } },
+      });
+      return chart.id;
+    };
+    limited.openChart = await chartOn("Open", limited.openPage);
+    limited.closedChart = await chartOn("Closed", limited.closedPage);
+    await prisma.teamDashboard.create({ data: { teamId: limited.team, dashboardId: allowed.id } });
+    // A granted workspace whose only dashboard the team's limit leaves out.
+    limited.leftOutWorkspace = (
+      await prisma.workspace.create({ data: { name: "Left out", organizationId: fixture.organizationId } })
+    ).id;
+    await prisma.workspaceTeam.create({
+      data: { workspaceId: limited.leftOutWorkspace, teamId: limited.team, permission: "read" },
+    });
+    await createTestDashboard({
+      data: { name: "Not limited in", workspaceId: limited.leftOutWorkspace, createdBy: fixture.users.owner },
+    });
+    await prisma.dashboardPageTeam.create({ data: { pageId: limited.closedPage, teamId: otherTeam.id } });
+
+    const region = await prisma.memberAttributeKey.create({
+      data: { organizationId: fixture.organizationId, key: "region", label: "Region" },
+    });
+    await prisma.memberAttributeValue.create({
+      data: {
+        attributeKeyId: region.id,
+        userId: limited.viewer,
+        organizationId: fixture.organizationId,
+        value: "Web",
+        normalizedValue: "web",
+      },
+    });
+    await prisma.feedbackDirectoryViewerCondition.create({
+      data: {
+        feedbackDirectoryId: fixture.datasetId,
+        field: "FeedbackRecords.sourceName",
+        attributeKeyId: region.id,
+      },
+    });
+    await synchronizeAuthzedIntegrationFixture();
+  }, 120_000);
+
+  const dashboardOf = async (response: Response) =>
+    (
+      (await response.json()) as {
+        data: { pages: { id: string }[]; widgets: { chartId: string | null }[]; viewerAccess: unknown };
+      }
+    ).data;
+
+  test("lands only in workspaces where a dashboard opens for the viewer", async () => {
+    const workspaces = await listDashboardViewerWorkspaces(limited.viewer, fixture.organizationId);
+    expect(workspaces.map(({ id }) => id)).toEqual([fixture.workspaceId]);
+  });
+
+  test("lists and opens only the dashboards the team's limit names", async () => {
+    const listed = await listV3Dashboards({
+      query: ZV3DashboardListQuery.parse({ workspaceId: fixture.workspaceId }),
+      ...ctx(limited.viewer),
+    });
+    expect(listed.status).toBe(200);
+    expect(((await listed.json()) as { data: { id: string }[] }).data.map(({ id }) => id)).toEqual([
+      limited.allowed,
+    ]);
+    expect(await statusOf(await getV3Dashboard({ dashboardId: ids.dashboard, ...ctx(limited.viewer) }))).toBe(
+      403
+    );
+  });
+
+  test("a dashboard read keeps only the pages the viewer opens, and says which records they see", async () => {
+    const response = await getV3Dashboard({ dashboardId: limited.allowed, ...ctx(limited.viewer) });
+    expect(response.status, await response.clone().text()).toBe(200);
+    const dashboard = await dashboardOf(response);
+    expect(dashboard.pages.map(({ id }) => id)).toEqual([limited.openPage]);
+    expect(dashboard.widgets.map(({ chartId }) => chartId)).toEqual([limited.openChart]);
+    expect(dashboard.viewerAccess).toEqual({
+      status: "restricted",
+      chips: [{ label: "Source Name", values: ["Web"], attributeLabel: "Region" }],
+    });
+  });
+
+  test("chart data only for a chart on a page the viewer opens", async () => {
+    const data = (chartId: string) =>
+      getV3DashboardChartData({
+        dashboardId: limited.allowed,
+        chartId,
+        query: ZV3DashboardChartDataQuery.parse({}),
+        ...ctx(limited.viewer, "/api/v3/dashboards/charts/data"),
+      });
+    expect(await statusOf(await data(limited.openChart))).toBe(200);
+    expect(await statusOf(await data(limited.closedChart))).not.toBe(200);
+  });
+
+  test("owners see every page and every record", async () => {
+    const dashboard = await dashboardOf(
+      await getV3Dashboard({ dashboardId: limited.allowed, ...ctx(fixture.users.owner) })
+    );
+    expect(dashboard.pages).toHaveLength(2);
+    expect(dashboard.viewerAccess).toEqual({ status: "unrestricted", chips: [] });
+  });
+
+  test("View as: an Owner reads as the viewer; the viewer may not view as anyone", async () => {
+    const asViewer = await getV3Dashboard({
+      dashboardId: limited.allowed,
+      ...ctx(fixture.users.owner),
+      viewAs: limited.viewer,
+    });
+    expect(asViewer.status, await asViewer.clone().text()).toBe(200);
+    expect((await dashboardOf(asViewer)).pages.map(({ id }) => id)).toEqual([limited.openPage]);
+    expect(
+      await statusOf(
+        await getV3Dashboard({
+          dashboardId: ids.dashboard,
+          ...ctx(fixture.users.owner),
+          viewAs: limited.viewer,
+        })
+      )
+    ).toBe(403);
+    expect(
+      await statusOf(
+        await getV3Dashboard({
+          dashboardId: limited.allowed,
+          ...ctx(limited.viewer),
+          viewAs: fixture.users.owner,
+        })
+      )
+    ).toBe(403);
   });
 });

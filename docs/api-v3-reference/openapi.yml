@@ -5236,6 +5236,7 @@ paths:
         - V3 Dashboards
       parameters:
         - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/ViewAsQuery'
         - in: query
           name: limit
           schema:
@@ -5361,12 +5362,15 @@ paths:
         Returns a dashboard with every widget and its full chart, and its filters, so one call tells a
         caller what is on it. Read each widget's numbers from
         `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`. The workspace is resolved
-        from the dashboard, so the operation takes no query parameters. Needs read access to the
+        from the dashboard, so the only query parameter is `viewAs`. Needs read access to the
         dashboard's workspace; a dashboard the caller cannot see, or that does not exist, answers 403.
+        A Dashboard Viewer reads it only when a team dashboard limit leaves it to them, and sees only the
+        pages they can open, with their widgets; `viewerAccess` tells them which records they see.
       tags:
         - V3 Dashboards
       parameters:
         - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/ViewAsQuery'
       responses:
         '200':
           description: The dashboard
@@ -6021,6 +6025,7 @@ paths:
         - $ref: '#/components/parameters/DashboardDateToQuery'
         - $ref: '#/components/parameters/DashboardFilterRulesQuery'
         - $ref: '#/components/parameters/DashboardFilterPicksQuery'
+        - $ref: '#/components/parameters/ViewAsQuery'
       responses:
         '200':
           description: The chart's rows, narrowed by the dashboard date range and the picks
@@ -6155,6 +6160,7 @@ paths:
         - $ref: '#/components/parameters/DashboardDateToQuery'
         - $ref: '#/components/parameters/DashboardFilterRulesQuery'
         - $ref: '#/components/parameters/DashboardFilterPicksQuery'
+        - $ref: '#/components/parameters/ViewAsQuery'
         - in: query
           name: search
           schema:
@@ -6276,6 +6282,7 @@ paths:
         - V3 Dashboards
       parameters:
         - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/ViewAsQuery'
       responses:
         '200':
           description: The dashboard's embedded-data filter fields
@@ -17339,6 +17346,43 @@ components:
             - $ref: '#/components/schemas/DashboardTextContent'
             - type: 'null'
       additionalProperties: false
+    DashboardViewerAccess:
+      type: object
+      description: 'What the reader''s Dashboard Viewer access leaves them on this dashboard: `unrestricted` (every record: Owners, Managers, Members, API keys, and Dashboard Viewers of datasets without conditions), `restricted` (only records matching the conditions of the Feedback Datasets on the pages they can open), or `unmatched` (a condition needs a Member attribute the reader has no value for, so they see no records). One chip per condition; conditions joined with "any" are one chip whose labels are joined with " or ".'
+      required:
+        - status
+        - chips
+      properties:
+        status:
+          type: string
+          enum:
+            - unrestricted
+            - restricted
+            - unmatched
+        chips:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required:
+              - label
+              - values
+              - attributeLabel
+            properties:
+              label:
+                type: string
+                description: The dataset field the condition matches, as people read it.
+              values:
+                type: array
+                description: The reader's values the field must equal. Empty when they have none.
+                maxItems: 50
+                items:
+                  type: string
+              attributeLabel:
+                type: string
+                description: The Member attribute the values come from; `Email` for the built-in one.
+            additionalProperties: false
+      additionalProperties: false
     DashboardResource:
       type: object
       description: 'A dashboard: named pages of widgets in a workspace, and the filters pinned to its top bar. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`.'
@@ -17382,6 +17426,8 @@ components:
           description: Every widget on every page, in display order; each names its page in `pageId`.
           items:
             $ref: '#/components/schemas/DashboardWidget'
+        viewerAccess:
+          $ref: '#/components/schemas/DashboardViewerAccess'
         createdAt:
           type: string
           format: date-time
@@ -20778,6 +20824,14 @@ components:
         type: string
         format: cuid2
       description: Chart identifier.
+    ViewAsQuery:
+      in: query
+      name: viewAs
+      required: false
+      schema:
+        type: string
+        format: cuid2
+      description: 'View as: the user ID of a member of the dashboard''s organization whose view this read returns. Only an Owner or Manager session of an organization with Access Control and Dashboards may pass it; the read is then decided with that member''s dashboard and page access and their Dashboard Viewer access, and is audited as `viewedAs`. An API key, a caller who cannot manage access, or a user who is not a member answers 403. Reads only: no write takes it.'
     DashboardIdPath:
       in: path
       name: dashboardId

@@ -9,8 +9,8 @@ import { getNumericEmbeddedFields } from "@/modules/ee/analysis/dashboards/lib/e
 import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
-import type { TV3DashboardFilterFields } from "./resources";
 import { getReadablePageIdsCached } from "./dashboard-read-access";
+import type { TV3DashboardFilterFields } from "./resources";
 import { getDashboardChartsRow, keepChartsOnPages } from "./service";
 import { getGroupedEmbeddedFields, mayFilterBy } from "./viewer-filter-fields";
 

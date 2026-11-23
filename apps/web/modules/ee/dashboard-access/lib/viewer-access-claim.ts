@@ -1,5 +1,5 @@
-import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
 import { MAX_EMBEDDED_KEY_LENGTH } from "@/modules/ee/analysis/lib/embedded-data-fields";
+import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
 
 /**
  * Dashboard Viewer access as Cube enforces it (ADR-0060): a Feedback Dataset's conditions plus a viewer's

@@ -43,6 +43,7 @@ get:
     - $ref: ../components/parameters/DashboardDateToQuery.yml
     - $ref: ../components/parameters/DashboardFilterRulesQuery.yml
     - $ref: ../components/parameters/DashboardFilterPicksQuery.yml
+    - $ref: ../components/parameters/ViewAsQuery.yml
     - in: query
       name: search
       schema:

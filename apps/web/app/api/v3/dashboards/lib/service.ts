@@ -317,6 +317,9 @@ export const getDashboardChartsRow = async (dashboardId: string, { chartId }: { 
 export const keepChartsOnPages = <TRow extends { widgets: { pageIds: string[] }[] }>(
   row: TRow,
   pageIds: ReadonlySet<string>
-): TRow => ({ ...row, widgets: row.widgets.filter((widget) => widget.pageIds.some((id) => pageIds.has(id))) });
+): TRow => ({
+  ...row,
+  widgets: row.widgets.filter((widget) => widget.pageIds.some((id) => pageIds.has(id))),
+});
 
 export type TDashboardChartsRow = NonNullable<Awaited<ReturnType<typeof getDashboardChartsRow>>>;

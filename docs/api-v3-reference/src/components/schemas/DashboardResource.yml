@@ -44,6 +44,8 @@ properties:
       Every widget on every page, in display order; each names its page in `pageId`.
     items:
       $ref: ./DashboardWidget.yml
+  viewerAccess:
+    $ref: ./DashboardViewerAccess.yml
   createdAt:
     type: string
     format: date-time

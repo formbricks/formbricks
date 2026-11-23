@@ -13,12 +13,16 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: { findMany: vi.fn() },
     workspace: { findMany: vi.fn() },
+    dashboard: { findMany: vi.fn(async () => []) },
     membership: { findUnique: vi.fn(), findMany: vi.fn() },
   },
 }));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ getMembershipByUserIdOrganizationId: vi.fn() }));
-vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedWorkspaceIds: vi.fn() }));
+vi.mock("@/lib/authorization/resource-list", () => ({
+  lookupAuthorizedWorkspaceIds: vi.fn(),
+  lookupReadableDashboardIds: vi.fn(async () => []),
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDashboardViewerRoleEnabled: vi.fn() }));
 
 beforeEach(() => {

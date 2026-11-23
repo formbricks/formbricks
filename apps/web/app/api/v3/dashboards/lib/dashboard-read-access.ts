@@ -19,7 +19,11 @@ type TReadDashboard = { id: string; updatedAt: Date };
 export const refuseUnlessDashboardOpenable = async (
   access: TDashboardsAccessContext,
   dashboardId: string,
-  { authentication, requestId, instance }: Pick<TV3ChartOperationContext, "authentication" | "requestId" | "instance">
+  {
+    authentication,
+    requestId,
+    instance,
+  }: Pick<TV3ChartOperationContext, "authentication" | "requestId" | "instance">
 ): Promise<Response | null> => {
   if (!access.asDashboardViewer) return null;
   const subject = getDashboardReadSubject(authentication, access);

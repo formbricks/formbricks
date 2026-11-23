@@ -28,7 +28,18 @@ import { getDashboardChartsRow } from "./service";
 vi.mock("server-only", () => ({}));
 // The unit setup fakes hashing; the key's digest is what this suite checks, so hash for real.
 vi.mock("node:crypto", async (importOriginal) => await importOriginal());
-vi.mock("./service", () => ({ getDashboardChartsRow: vi.fn() }));
+vi.mock("./service", () => ({
+  getDashboardChartsRow: vi.fn(),
+  keepChartsOnPages: <TRow>(row: TRow) => row,
+}));
+vi.mock("./dashboard-read-access", () => ({
+  getReadablePageIdsCached: vi.fn(
+    async (_access: unknown, _row: unknown, pageIds: string[]) => new Set(pageIds)
+  ),
+}));
+vi.mock("@/modules/ee/dashboard-access/lib/viewer-data-access", () => ({
+  getViewerAccessClaimForDataset: vi.fn(async () => null),
+}));
 vi.mock("./chart-data-operations", () => ({
   authorizeDashboardRead: vi.fn(),
   refuseUnlessDashboardDatasetReadable: vi.fn(),

@@ -50,6 +50,7 @@ export const resolveViewerAccessForDatasets = async (
       : Promise.resolve(null),
   ]);
 
+  const emailValues = user?.email ? [user.email] : [];
   for (const dataset of restricted) {
     resolved.set(dataset.id, {
       join: dataset.viewerAccessJoin,
@@ -57,7 +58,7 @@ export const resolveViewerAccessForDatasets = async (
         field,
         attributeKeyId,
         attributeLabel: attributeKey?.label ?? "Email",
-        values: attributeKeyId === null ? (user?.email ? [user.email] : []) : (valuesByKey.get(attributeKeyId) ?? []),
+        values: attributeKeyId === null ? emailValues : (valuesByKey.get(attributeKeyId) ?? []),
       })),
     });
   }

@@ -13,7 +13,13 @@ export const GET = withV3ApiWrapper({
   auth: "both",
   schemas: { query: ZV3DashboardListQuery },
   handler: async ({ authentication, parsedInput, requestId, instance }) =>
-    listV3Dashboards({ query: parsedInput.query, authentication, requestId, instance }),
+    listV3Dashboards({
+      query: parsedInput.query,
+      viewAs: parsedInput.query.viewAs,
+      authentication,
+      requestId,
+      instance,
+    }),
 });
 
 export const POST = withV3ApiWrapper({

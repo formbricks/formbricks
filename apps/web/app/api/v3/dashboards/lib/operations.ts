@@ -9,6 +9,7 @@ import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
 import {
   getDashboardReadSubject,
   getViewerAccessReader,
+  queueViewedAsAudit,
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
@@ -188,6 +189,7 @@ export async function getV3Dashboard({
     };
     const datasetIds = visible.widgets.flatMap(({ chart }) => (chart ? [chart.feedbackDirectoryId] : []));
     const viewerAccess = await getViewerAccessSummary(getViewerAccessReader(access), datasetIds);
+    await queueViewedAsAudit(access, row.id);
 
     return successResponse(
       { ...serializeV3Dashboard(visible), viewerAccess },

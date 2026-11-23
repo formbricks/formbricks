@@ -158,18 +158,28 @@ const requireViewAsDashboardRead = async (
 
   const read = await requireSessionDashboardRead(targetUserId, workspaceId, requestId, instance);
   if (read instanceof Response) return read;
+  return { ...read, viewAs: { userId: targetUserId, actorUserId } };
+};
 
+/**
+ * Records that an Owner or Manager opened a dashboard as another member (`viewedAs`). Called once per
+ * dashboard open, not per widget read, so the trail names each look without one event per chart.
+ */
+export const queueViewedAsAudit = async (
+  access: TDashboardsAccessContext,
+  dashboardId: string
+): Promise<void> => {
+  if (!access.viewAs) return;
   await queueAuditEventBackground({
     action: "viewedAs",
-    targetType: "membership",
-    userId: actorUserId,
+    targetType: "dashboard",
+    userId: access.viewAs.actorUserId,
     userType: "user",
-    targetId: targetUserId,
-    organizationId: context.organizationId,
+    targetId: dashboardId,
+    organizationId: access.organizationId,
     status: "success",
-    newObject: { workspaceId, viewedAsUserId: targetUserId },
+    newObject: { workspaceId: access.workspaceId, dashboardId, viewedAsUserId: access.viewAs.userId },
   });
-  return { ...read, viewAs: { userId: targetUserId, actorUserId } };
 };
 
 /**

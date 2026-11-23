@@ -44,6 +44,17 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   requireDashboardsAccess: vi.fn(),
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
+  getDashboardReadSubject: vi.fn(() => null),
+  getViewerAccessReader: vi.fn(() => null),
+  queueViewedAsAudit: vi.fn(async () => undefined),
+}));
+vi.mock("./dashboard-read-access", () => ({
+  refuseUnlessDashboardOpenable: vi.fn(async () => null),
+  getReadablePageIds: vi.fn(async (_access: unknown, pageIds: string[]) => new Set(pageIds)),
+}));
+vi.mock("@/modules/ee/dashboard-access/lib/spicedb-access", () => ({ listReadableDashboardIds: vi.fn() }));
+vi.mock("@/modules/ee/dashboard-access/lib/viewer-data-access", () => ({
+  getViewerAccessSummary: vi.fn(async () => ({ status: "unrestricted", chips: [] })),
 }));
 vi.mock("./embedded-filter-fields", () => ({ findUnknownEmbeddedFilterFields: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));

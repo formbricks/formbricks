@@ -203,7 +203,9 @@ export async function getV3DashboardWidget({
     // A Dashboard Viewer reads a widget only on a page of a dashboard they can open (ENG-7472).
     const refused = await refuseUnlessDashboardOpenable(loaded.access, dashboardId, context);
     if (refused) return refused;
-    if (!(await getReadablePageIds(loaded.access, [widget.pageId], context.authentication)).has(widget.pageId)) {
+    if (
+      !(await getReadablePageIds(loaded.access, [widget.pageId], context.authentication)).has(widget.pageId)
+    ) {
       return problemForbidden(requestId, undefined, instance);
     }
 

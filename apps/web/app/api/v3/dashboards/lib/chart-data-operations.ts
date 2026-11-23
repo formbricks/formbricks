@@ -37,8 +37,8 @@ import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dat
 import { chartExcludesTextAnswers } from "@/modules/ee/analysis/dashboards/lib/enrichment-filters";
 import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import { getViewerAccessClaimForDataset } from "@/modules/ee/dashboard-access/lib/viewer-data-access";
-import { refuseNonNumericComparisons } from "./numeric-filter-fields";
 import { getReadablePageIdsCached, refuseUnlessDashboardOpenable } from "./dashboard-read-access";
+import { refuseNonNumericComparisons } from "./numeric-filter-fields";
 import { getDashboardReadPrincipal, withCachedDashboardDecision } from "./read-decision-cache";
 import type { TV3DashboardChartData } from "./resources";
 import type { TV3DashboardChartDataQuery } from "./schemas";
@@ -67,7 +67,11 @@ export const authorizeDashboardRead = async (
 ): Promise<Response | TDashboardsAccessContext> => {
   if (!row) return problemForbidden(requestId, undefined, instance);
   return withCachedDashboardDecision(
-    { dashboard: row, principal: getDashboardReadPrincipal({ authentication, viewAs }), decision: "dashboard" },
+    {
+      dashboard: row,
+      principal: getDashboardReadPrincipal({ authentication, viewAs }),
+      decision: "dashboard",
+    },
     async () => {
       const access = await requireDashboardsAccess(
         authentication,
@@ -79,7 +83,10 @@ export const authorizeDashboardRead = async (
       );
       if (access instanceof Response) return access;
       // A Dashboard Viewer must also be able to open this dashboard: a team dashboard limit can leave it out.
-      return (await refuseUnlessDashboardOpenable(access, row.id, { authentication, requestId, instance })) ?? access;
+      return (
+        (await refuseUnlessDashboardOpenable(access, row.id, { authentication, requestId, instance })) ??
+        access
+      );
     }
   );
 };
@@ -120,6 +127,40 @@ const chartNotOnDashboard = (chartId: string, { requestId, instance }: TV3ChartO
   problemNotFound(requestId, "Chart", chartId, instance);
 
 /**
+ * A viewer's own filters may name only the embedded data the dashboard's charts group by — the charts on
+ * the pages they open. A chart-data read carries one chart, so the dashboard's others are read for it,
+ * and only when an embedded key is named.
+ */
+const refuseUngroupedViewerFilters = async (
+  access: TDashboardsAccessContext,
+  dashboardId: string,
+  requestFilters: readonly { field: string }[],
+  context: TV3ChartOperationContext
+): Promise<Response | null> => {
+  if (!access.asDashboardViewer || !requestFilters.some(({ field }) => isEmbeddedMemberName(field))) {
+    return null;
+  }
+  const all = await getDashboardChartsRow(dashboardId);
+  const visible = all
+    ? keepChartsOnPages(
+        all,
+        await getReadablePageIdsCached(
+          access,
+          all,
+          all.widgets.flatMap(({ pageIds }) => pageIds),
+          context
+        )
+      )
+    : null;
+  return refuseUngroupedFieldsForViewer(
+    access,
+    requestFilters.map(({ field }) => field),
+    visible?.widgets ?? [],
+    context
+  );
+};
+
+/**
  * `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data` → 200 `{ data: { rows, optionLabels,
  * fieldLabels, memberLabels, query, unfilterableFilters } }`.
  *
@@ -155,7 +196,7 @@ export async function getV3DashboardChartData({
 
     const widget = row?.widgets[0];
     const chart = widget?.chart;
-    if (!chart) return chartNotOnDashboard(chartId, context);
+    if (!row || !widget || !chart) return chartNotOnDashboard(chartId, context);
     // A Dashboard Viewer reads a chart only through a page of this dashboard they can open (ENG-7472).
     if ((await getReadablePageIdsCached(access, row, widget.pageIds, context)).size === 0) {
       return chartNotOnDashboard(chartId, context);
@@ -183,27 +224,8 @@ export async function getV3DashboardChartData({
     }
     // A viewer's own filters may name only the embedded data the dashboard's charts group by. This read
     // carries one chart, so the dashboard's others are read for it, and only when an embedded key is named.
-    if (access.asDashboardViewer && requestFilters.some(({ field }) => isEmbeddedMemberName(field))) {
-      const all = await getDashboardChartsRow(dashboardId);
-      const visible = all
-        ? keepChartsOnPages(
-            all,
-            await getReadablePageIdsCached(
-              access,
-              all,
-              all.widgets.flatMap(({ pageIds }) => pageIds),
-              context
-            )
-          )
-        : null;
-      const ungrouped = refuseUngroupedFieldsForViewer(
-        access,
-        requestFilters.map(({ field }) => field),
-        visible?.widgets ?? [],
-        context
-      );
-      if (ungrouped) return ungrouped;
-    }
+    const ungrouped = await refuseUngroupedViewerFilters(access, dashboardId, requestFilters, context);
+    if (ungrouped) return ungrouped;
     // A number comparison on an embedded-data key holds only where the key is a number on this dashboard.
     const nonNumeric = await refuseNonNumericComparisons(requestFilters, {
       workspaceId: access.workspaceId,
@@ -268,7 +290,10 @@ export async function getV3DashboardChartData({
       extraFilters: rules,
       respond,
       context,
-      viewerAccess: await getViewerAccessClaimForDataset(getViewerAccessReader(access), chart.feedbackDirectoryId),
+      viewerAccess: await getViewerAccessClaimForDataset(
+        getViewerAccessReader(access),
+        chart.feedbackDirectoryId
+      ),
     });
   } catch (error) {
     const { requestId, instance } = context;
