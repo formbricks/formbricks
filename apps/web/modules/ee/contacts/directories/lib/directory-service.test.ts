@@ -34,7 +34,7 @@ const db = vi.hoisted(() => ({
   },
   contactAttributeKey: { groupBy: vi.fn(), createMany: vi.fn(), findMany: vi.fn() },
   workspace: { findMany: vi.fn(), findUnique: vi.fn(), groupBy: vi.fn(), updateMany: vi.fn() },
-  contact: { groupBy: vi.fn(), updateMany: vi.fn() },
+  contact: { groupBy: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn() },
   segment: { groupBy: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
 }));
 
@@ -223,6 +223,10 @@ const setup = ({
   db.contact.groupBy.mockImplementation(contentCount("contacts", "count contacts"));
   // Rows a previous-release pod wrote for a workspace with no directory: none here, the integration
   // test covers their adoption.
+  db.contact.findFirst.mockImplementation(async ({ where }: { where: { workspaceId?: string } }) => {
+    log.push(`check orphan contacts ${where.workspaceId}`);
+    return null;
+  });
   db.contact.updateMany.mockResolvedValue({ count: 0 });
   db.contactAttributeKey.findMany.mockResolvedValue([]);
   db.contactAttributeKey.groupBy.mockImplementation(contentCount("blockingKeys", "count blocking keys"));
@@ -392,6 +396,7 @@ describe("createContactDirectory", () => {
       "count public segments",
       "count blocking keys",
       "read private segment filters",
+      "check orphan contacts w2",
       "move w1,w2 to clnewdir00000000000000000",
       "re-point private segments s1",
       "re-point private segments s2",

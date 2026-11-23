@@ -3,7 +3,11 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { updateUser } from "@/modules/ee/contacts/api/v1/client/[workspaceId]/user/lib/update-user";
 import { ContactDirectoryMissingError } from "@/modules/ee/contacts/lib/contact-directory";
-import { createContactDirectory, updateContactDirectory } from "./directory-service";
+import {
+  ContactDirectoryWorkspacesNotMovableError,
+  createContactDirectory,
+  updateContactDirectory,
+} from "./directory-service";
 
 /**
  * ENG-7498: a workspace with no contact directory, and what changes when it gets one. Real Postgres,
@@ -158,6 +162,36 @@ describe("a workspace without a contact directory", () => {
     expect(filter.attributeKeyId).toBe(directoryPlan.id);
     expect(await prisma.contactAttributeKey.findUnique({ where: { id: plan.id } })).toBeNull();
     expect(await prisma.segment.findUniqueOrThrow({ where: { id: segment.id } })).toMatchObject({
+      directoryId: null,
+    });
+  });
+});
+
+describe("moving a workspace never merges contacts", () => {
+  // Decision 15: no merge in this release. A workspace that brings contacts may join a directory only
+  // while that directory has none.
+  test("refuses a directoryless workspace with contacts into a directory that has contacts", async () => {
+    const organizationId = await createOrganization();
+    const firstWorkspaceId = await createWorkspaceWithoutDirectory(organizationId, "First");
+    const { id: directoryId } = await createContactDirectory({
+      organizationId,
+      name: "Customers",
+      matchingKey: "email",
+      workspaceIds: [firstWorkspaceId],
+    });
+    await prisma.contact.create({ data: { workspaceId: firstWorkspaceId, directoryId } });
+
+    const workspaceId = await createWorkspaceWithoutDirectory(organizationId, "Second");
+    const orphan = await createOrphanContact(workspaceId, []);
+
+    await expect(
+      updateContactDirectory({ organizationId, directoryId, workspaceIds: [firstWorkspaceId, workspaceId] })
+    ).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotMovableError);
+
+    expect(await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } })).toMatchObject({
+      contactDirectoryId: null,
+    });
+    expect(await prisma.contact.findUniqueOrThrow({ where: { id: orphan.id } })).toMatchObject({
       directoryId: null,
     });
   });

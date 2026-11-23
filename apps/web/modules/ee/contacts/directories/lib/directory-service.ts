@@ -373,6 +373,30 @@ const adoptDirectorylessRows = async (
 };
 
 /**
+ * Decision 15: no merge of contacts in this release. Directoryless workspaces may bring their contacts
+ * only into a directory with none, and only one such workspace at a time. Runs under the move's locks:
+ * the target directory's row (an insert waits on its foreign key) and the workspaces' rows.
+ */
+const assertNoContactMerge = async (
+  tx: TClient,
+  directoryId: string,
+  directorylessWorkspaceIds: string[]
+): Promise<void> => {
+  const found = await Promise.all(
+    directorylessWorkspaceIds.map((workspaceId) =>
+      tx.contact.findFirst({ where: { workspaceId, directoryId: null }, select: { id: true } })
+    )
+  );
+  const bringingContacts = directorylessWorkspaceIds.filter((_, index) => found[index] !== null);
+  if (bringingContacts.length === 0) return;
+
+  const merges =
+    bringingContacts.length > 1 ||
+    (await tx.contact.findFirst({ where: { directoryId }, select: { id: true } })) !== null;
+  if (merges) throw new ContactDirectoryWorkspacesNotMovableError(bringingContacts);
+};
+
+/**
  * Moves workspaces into `directoryId` under spec decision 8, inside the caller's transaction.
  *
  * Locks the workspaces, then their current directories (`FOR UPDATE`, in id order), and only then reads
@@ -384,7 +408,7 @@ const adoptDirectorylessRows = async (
  * ids, so they can't clash), and the old, now unused directories go, taking their default keys.
  *
  * A workspace with no directory has none to delete; the rows it has anyway are adopted
- * ({@link adoptDirectorylessRows}).
+ * ({@link adoptDirectorylessRows}), unless that would merge contacts ({@link assertNoContactMerge}).
  */
 const moveWorkspacesIntoDirectory = async (
   tx: TClient,
@@ -430,6 +454,9 @@ const moveWorkspacesIntoDirectory = async (
       .filter((row) => row.contactDirectoryId !== null && !leavable.has(row.contactDirectoryId))
       .map((row) => row.id);
     if (notMovable.length > 0) throw new ContactDirectoryWorkspacesNotMovableError(notMovable);
+  }
+  if (directorylessWorkspaceIds.length > 0) {
+    await assertNoContactMerge(tx, directoryId, directorylessWorkspaceIds);
   }
 
   await tx.workspace.updateMany({
