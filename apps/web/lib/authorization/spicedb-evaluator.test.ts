@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
+import { getMcpGrantForActor } from "./context";
 import { AUTHORIZATION_PERMISSION_MAP, type TAuthorizationAction } from "./contract";
 import { resolveAuthorizationScope } from "./source-scope";
 import { checkSpicedbPermissionAtScope, spicedbEvaluator } from "./spicedb-evaluator";
@@ -17,6 +18,10 @@ vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
 vi.mock("@/lib/authzed/client", () => ({ getAuthzedClient: vi.fn() }));
 vi.mock("@/lib/authzed/outbox-freshness", () => ({ assertAuthzedProjectionFreshness: vi.fn() }));
 vi.mock("./source-scope", () => ({ resolveAuthorizationScope: vi.fn() }));
+vi.mock("./context", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./context")>()),
+  getMcpGrantForActor: vi.fn(() => null),
+}));
 
 const checkPermission = vi.fn();
 
@@ -28,7 +33,10 @@ beforeEach(() => {
     actorValid: true,
     organizationId: "org-1",
     permissionResource:
-      resource.type === "survey" || resource.type === "dashboard" || resource.type === "response"
+      resource.type === "survey" ||
+      resource.type === "dashboard" ||
+      resource.type === "dashboardPage" ||
+      resource.type === "response"
         ? { type: "workspace", id: "workspace-1" }
         : resource.type === "feedbackDirectoryAssignment"
           ? { type: resource.type, id: "assignment-1" }
@@ -55,7 +63,11 @@ describe("spicedbEvaluator", () => {
               : { type: resourceType, id: "resource-1" };
 
           // No workspace permission stands in for it, so on the workspace node it is denied outright.
-          if (action === "survey.change_visibility") {
+          // `dashboard#manage_access` admits users only, so an API key is never asked.
+          if (
+            action === "survey.change_visibility" ||
+            (action === "dashboard.manage_access" && actorType === "apiKey")
+          ) {
             await expect(
               spicedbEvaluator.can({ type: actorType, id: "actor-1" }, action, resource as never)
             ).resolves.toBe(false);
@@ -68,8 +80,10 @@ describe("spicedbEvaluator", () => {
           ).resolves.toBe(true);
 
           const derivedPermission = {
+            "dashboard.manage_access": "administer",
             "dashboard.read": "read",
             "dashboard.write": "write",
+            "dashboardPage.read": "read",
             "response.export": "read",
             "response.manage": "manage",
             "response.read": "read",
@@ -103,6 +117,113 @@ describe("spicedbEvaluator", () => {
         }
       }
     }
+  });
+
+  // ADR-0059: a Dashboard Viewer's dashboard and page reads are decided on the projected node, beside the
+  // workspace read that answers everyone else without waiting for the projection.
+  describe("dashboard and page reads on the projected node", () => {
+    const checkPermissionBatch = vi.fn();
+    const scope = (projectedNode: { id: string; type: "dashboard" | "dashboardPage" }) => ({
+      actorValid: true,
+      organizationId: "org-1",
+      permissionResource: { type: "workspace" as const, id: "workspace-1" },
+      projectedNode,
+    });
+
+    beforeEach(() => {
+      vi.mocked(getAuthzedClient).mockReturnValue({ checkPermission, checkPermissionBatch } as never);
+    });
+
+    test.each([
+      ["dashboard.read", "dashboard", "dashboard"],
+      ["dashboardPage.read", "dashboardPage", "dashboard_page"],
+    ] as const)(
+      "%s asks the workspace read and the node read in one request",
+      async (action, type, objectType) => {
+        checkPermissionBatch.mockResolvedValue([false, true]);
+
+        await expect(
+          checkSpicedbPermissionAtScope(
+            { type: "user", id: "viewer-1" },
+            action,
+            { type, id: "node-1" },
+            scope({ type, id: "node-1" })
+          )
+        ).resolves.toBe(true);
+
+        expect(checkPermission).not.toHaveBeenCalled();
+        expect(checkPermissionBatch).toHaveBeenCalledExactlyOnceWith([
+          {
+            permission: "read",
+            resource: { objectId: "workspace-1", objectType: "workspace" },
+            subject: { objectId: "viewer-1", objectType: "user" },
+          },
+          {
+            permission: "read",
+            resource: { objectId: "node-1", objectType },
+            subject: { objectId: "viewer-1", objectType: "user" },
+          },
+        ]);
+      }
+    );
+
+    test("denies when neither the workspace nor the node allows", async () => {
+      checkPermissionBatch.mockResolvedValue([false, false]);
+
+      await expect(
+        checkSpicedbPermissionAtScope(
+          { type: "user", id: "viewer-1" },
+          "dashboardPage.read",
+          { type: "dashboardPage", id: "page-1" },
+          scope({ type: "dashboardPage", id: "page-1" })
+        )
+      ).resolves.toBe(false);
+    });
+
+    test("under an MCP grant, the grant must reach the workspace as well", async () => {
+      vi.mocked(getMcpGrantForActor).mockReturnValueOnce({ id: "grant-1" } as never);
+      checkPermissionBatch.mockResolvedValue([false, true, false]);
+
+      await expect(
+        checkSpicedbPermissionAtScope(
+          { type: "user", id: "viewer-1" },
+          "dashboard.read",
+          { type: "dashboard", id: "dash-1" },
+          scope({ type: "dashboard", id: "dash-1" })
+        )
+      ).resolves.toBe(false);
+      expect(checkPermissionBatch.mock.calls[0][0][2]).toMatchObject({
+        permission: "mcp_reach",
+        resource: { objectId: "workspace-1", objectType: "workspace" },
+      });
+    });
+
+    test("decides dashboard.manage_access on the workspace's administer arm, never for an API key", async () => {
+      await expect(
+        checkSpicedbPermissionAtScope(
+          { type: "user", id: "owner-1" },
+          "dashboard.manage_access",
+          { type: "dashboard", id: "dash-1" },
+          scope({ type: "dashboard", id: "dash-1" })
+        )
+      ).resolves.toBe(true);
+      expect(checkPermission).toHaveBeenCalledWith({
+        permission: "administer",
+        resource: { objectId: "workspace-1", objectType: "workspace" },
+        subject: { objectId: "owner-1", objectType: "user" },
+      });
+
+      checkPermission.mockClear();
+      await expect(
+        checkSpicedbPermissionAtScope(
+          { type: "apiKey", id: "key-1" },
+          "dashboard.manage_access",
+          { type: "dashboard", id: "dash-1" },
+          scope({ type: "dashboard", id: "dash-1" })
+        )
+      ).resolves.toBe(false);
+      expect(checkPermission).not.toHaveBeenCalled();
+    });
   });
 
   test("maps API-key actors and resources to api_key", async () => {

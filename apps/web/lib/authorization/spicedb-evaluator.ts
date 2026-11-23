@@ -40,17 +40,21 @@ const parseAction = (
 };
 
 /**
- * The workspace permission a survey, response or dashboard action is decided by whenever the decision is
- * made on the workspace node: always for dashboards, and for surveys and responses while survey
- * visibility is not enforced (readiness marker off) or a change is pending. `survey.change_visibility`
- * is deliberately absent — it has no workspace equivalent. `dashboard.read` stays the workspace `read`,
- * so no caller of it depends on the `dashboard_read` permission the Dashboard viewer schema adds: a
- * viewer's dashboard-bound reads ask `workspace.dashboard_read` explicitly, and only in
- * `app/api/v3/lib/dashboards-access.ts` (ADR-0025).
+ * The workspace permission a survey, response, dashboard or page action is decided by whenever the
+ * decision is made on the workspace node: always for dashboards and pages, and for surveys and responses
+ * while survey visibility is not enforced (readiness marker off) or a change is pending.
+ * `survey.change_visibility` is deliberately absent — it has no workspace equivalent.
+ *
+ * `dashboard.read` and `dashboardPage.read` are the workspace `read` here, which never admits a
+ * Dashboard Viewer; the viewer's arm is the projected node, asked beside it (`PROJECTED_NODE_ACTIONS`).
+ * `dashboard.manage_access` is `administer` (Owners and Managers), which is what `dashboard#manage_access`
+ * resolves to, asked where it needs no projected edge.
  */
 const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
+  "dashboard.manage_access": "administer",
   "dashboard.read": "read",
   "dashboard.write": "write",
+  "dashboardPage.read": "read",
   "response.export": "read",
   "response.manage": "manage",
   "response.read": "read",
@@ -62,7 +66,19 @@ const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
   "survey.response_export": "read",
   "survey.response_read": "read",
   "survey.write": "write",
-} as const satisfies Partial<Record<TAuthorizationAction, "manage" | "read" | "write">>;
+} as const satisfies Partial<Record<TAuthorizationAction, "administer" | "manage" | "read" | "write">>;
+
+/**
+ * ADR-0059: actions also asked of the dashboard's or page's own node, which holds the team dashboard
+ * limits and page team limits a Dashboard Viewer is decided by. Either check allows. The workspace check
+ * answers Owners, Managers, Members and API keys exactly as `dashboard#full_read` would, without depending
+ * on the dashboard or page being projected yet, so a dashboard created a moment ago opens for its author;
+ * the node check adds the viewers, and denies them until the projection lands (fail closed).
+ */
+const PROJECTED_NODE_ACTIONS = {
+  "dashboard.read": "read",
+  "dashboardPage.read": "read",
+} as const satisfies Partial<Record<TAuthorizationAction, string>>;
 
 /** A response action decided on its survey's node (ENG-3282): the survey permission it inherits. */
 const SURVEY_PERMISSION_FOR_RESPONSE_ACTION = {
@@ -101,6 +117,9 @@ const getPermission = (
         return "manage_access";
     }
   }
+
+  // `dashboard#manage_access` admits users only; an API key never changes who opens a page.
+  if (actor.type === "apiKey" && action === "dashboard.manage_access") return null;
 
   if (permissionResourceType === "workspace" && resourceType !== "workspace") {
     // No workspace permission stands in for `survey.change_visibility`, so it is denied here; the
@@ -179,7 +198,7 @@ const getPendingPrivateCheck = (
 
   const ladder =
     WORKSPACE_PERMISSION_FOR_DERIVED_ACTION[action as keyof typeof WORKSPACE_PERMISSION_FOR_DERIVED_ACTION];
-  if (!ladder) return null;
+  if (!ladder || ladder === "administer") return null;
 
   return {
     permission: policy.ownerId !== null && policy.ownerId === actor.id ? ladder : "administer",
@@ -201,6 +220,22 @@ const getCheck = (
   return permission ? { permission, resource: scope.permissionResource } : null;
 };
 
+/**
+ * Every check that would allow the action, any one of them enough: the check above, and for a
+ * `PROJECTED_NODE_ACTIONS` action the projected dashboard or page node beside it (ADR-0059).
+ */
+const getChecks = (
+  actor: TAuthorizationActor,
+  action: TAuthorizationAction,
+  resourceType: TAuthorizationResourceType,
+  scope: TResolvedAuthorizationScope
+): ReadonlyArray<TSpicedbCheck> => {
+  const check = getCheck(actor, action, resourceType, scope);
+  const nodePermission = PROJECTED_NODE_ACTIONS[action as keyof typeof PROJECTED_NODE_ACTIONS];
+  if (!nodePermission || !scope.projectedNode || scope.policy) return check ? [check] : [];
+  return [...(check ? [check] : []), { permission: nodePermission, resource: scope.projectedNode }];
+};
+
 export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizationAction>(
   actor: TAuthorizationActor,
   action: TAction,
@@ -212,11 +247,13 @@ export const checkSpicedbPermissionAtScope = async <TAction extends TAuthorizati
   assertActionMatchesResource(action, resource.type);
   await assertAuthzedProjectionFreshness();
 
-  const check = getCheck(actor, action, resource.type, scope);
+  const checks = getChecks(actor, action, resource.type, scope);
+  const check = checks[0];
   if (!check) return false;
 
   const mcpGrant = getMcpGrantForActor(actor);
   try {
+    if (checks.length > 1) return await checkAnyOf(actor, checks, mcpGrant);
     return mcpGrant
       ? await checkWithinMcpGrant(actor, check, mcpGrant)
       : (
@@ -248,6 +285,43 @@ const toObjectReference = (resource: TSpicedbCheck["resource"]) => ({
   objectId: resource.id,
   objectType: getSpicedbObjectType(resource.type),
 });
+
+/**
+ * Several checks any one of which allows (`getChecks`), in one `CheckBulkPermissions` round trip. Under
+ * an MCP grant that limits organization & workspace access, the grant's `mcp_reach` is asked of the first
+ * check's node — the workspace — in the same request: a dashboard or page reaches exactly what its
+ * workspace does (`dashboard#mcp_reach = workspace->mcp_reach`), and the workspace needs no projection.
+ */
+const checkAnyOf = async (
+  actor: TAuthorizationActor,
+  checks: ReadonlyArray<TSpicedbCheck>,
+  mcpGrant: TAuthorizationMcpGrant | null
+): Promise<boolean> => {
+  const subject = { objectId: actor.id, objectType: getSpicedbObjectType(actor.type) };
+  const decisions = await getAuthzedClient().checkPermissionBatch([
+    ...checks.map((check) => ({
+      permission: check.permission,
+      resource: toObjectReference(check.resource),
+      subject,
+    })),
+    ...(mcpGrant
+      ? [
+          {
+            permission: MCP_REACH_PERMISSION,
+            resource: toObjectReference(checks[0].resource),
+            subject: toMcpGrantSubject(mcpGrant.id),
+          },
+        ]
+      : []),
+  ]);
+  const allowed = decisions.slice(0, checks.length).some((decision) => decision === true);
+  if (!mcpGrant) return allowed;
+
+  const grantReaches = decisions[checks.length] === true;
+  if (grantReaches) recordMcpReachConfirmed();
+  else recordMcpReachDenied();
+  return allowed && grantReaches;
+};
 
 /**
  * An MCP call whose grant limits organization & workspace access (ENG-7153, ADR-0042): the user's own
@@ -308,20 +382,25 @@ export const filterSpicedbAuthorizedUserIds = async <TAction extends TAuthorizat
     for (const id of page) {
       const scope = scopes.get(id);
       if (!scope?.actorValid) continue;
-      const check = getCheck({ id, type: "user" }, action, resource.type, scope);
-      if (!check) continue;
-      checks.push({
-        permission: check.permission,
-        resource: { objectId: check.resource.id, objectType: getSpicedbObjectType(check.resource.type) },
-        subject: { objectId: id, objectType: getSpicedbObjectType("user") },
-      });
+      // Any of a user's checks allows them (`getChecks`); each is its own item in the batch.
+      for (const check of getChecks({ id, type: "user" }, action, resource.type, scope)) {
+        checks.push({
+          permission: check.permission,
+          resource: toObjectReference(check.resource),
+          subject: { objectId: id, objectType: getSpicedbObjectType("user") },
+        });
+      }
     }
     if (checks.length === 0) continue;
     await assertAuthzedProjectionFreshness();
-    const decisions = await getAuthzedClient().checkPermissionBatch(checks);
-    checks.forEach((check, index) => {
-      if (decisions[index]) allowed.add(check.subject.objectId);
-    });
+    // A projected-node action asks two checks per user, so a page of users can exceed one request.
+    for (let start = 0; start < checks.length; start += AUTHZED_MAX_BULK_CHECK_ITEMS) {
+      const batch = checks.slice(start, start + AUTHZED_MAX_BULK_CHECK_ITEMS);
+      const decisions = await getAuthzedClient().checkPermissionBatch(batch); // NOSONAR
+      batch.forEach((check, index) => {
+        if (decisions[index]) allowed.add(check.subject.objectId);
+      });
+    }
   }
   return allowed;
 };

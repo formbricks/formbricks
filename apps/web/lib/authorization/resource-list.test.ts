@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getAuthzedClient } from "@/lib/authzed/client";
+import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getAuthorizationSurface, getMcpGrantForActor, recordAuthorizationCheckIssued } from "./context";
 import { recordAuthorizationDecision } from "./metrics";
 import {
+  filterReadableDashboardPageIds,
   filterReadableSurveyIds,
   lookupAuthorizedOrganizationIds,
   lookupAuthorizedWorkspaceIds,
+  lookupReadableDashboardIds,
 } from "./resource-list";
 
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn() }));
@@ -224,5 +227,93 @@ describe("under an MCP grant that limits organization & workspace access (ENG-71
 
     await expect(lookupAuthorizedWorkspaceIds(user)).resolves.toEqual(["ws-1"]);
     expect(lookupResources).toHaveBeenCalledOnce();
+  });
+});
+
+describe("dashboard and page access (ADR-0059)", () => {
+  const viewer = { type: "user", id: "viewer-1" } as const;
+
+  test("looks up the dashboards an actor reads on dashboard#read, after the freshness guard", async () => {
+    lookupResources.mockResolvedValue({ resourceIds: ["dash-1"] });
+
+    await expect(lookupReadableDashboardIds(viewer)).resolves.toEqual(["dash-1"]);
+
+    expect(assertAuthzedProjectionFreshness).toHaveBeenCalledOnce();
+    expect(lookupResources).toHaveBeenCalledExactlyOnceWith({
+      permission: "read",
+      resourceType: "dashboard",
+      subject: { objectId: "viewer-1", objectType: "user" },
+    });
+  });
+
+  test("keeps only the dashboards an MCP grant reaches", async () => {
+    vi.mocked(getMcpGrantForActor).mockReturnValue({ id: "grant-1", userId: "viewer-1" });
+    lookupResources.mockImplementation(async ({ subject }: { subject: { objectType: string } }) => ({
+      resourceIds: subject.objectType === "mcp_grant" ? ["dash-2"] : ["dash-1", "dash-2"],
+    }));
+
+    await expect(lookupReadableDashboardIds(viewer)).resolves.toEqual(["dash-2"]);
+    expect(lookupResources).toHaveBeenCalledWith(
+      expect.objectContaining({ permission: "mcp_reach", resourceType: "dashboard" })
+    );
+  });
+
+  test("checks page reads in batches no larger than one bulk request", async () => {
+    const pageIds = Array.from({ length: AUTHZED_MAX_BULK_CHECK_ITEMS + 1 }, (_, index) => `page-${index}`);
+    const checkBulkPermissions = vi.fn(
+      async ({ resourceIds }: { resourceIds: ReadonlyArray<string> }) =>
+        new Set(resourceIds.filter((id) => id !== "page-0"))
+    );
+    vi.mocked(getAuthzedClient).mockReturnValue({ checkBulkPermissions } as never);
+
+    const allowed = await filterReadableDashboardPageIds(viewer, pageIds);
+
+    expect(checkBulkPermissions).toHaveBeenCalledTimes(2);
+    expect(checkBulkPermissions.mock.calls[0][0]).toMatchObject({
+      permission: "read",
+      resourceType: "dashboard_page",
+      subject: { objectId: "viewer-1", objectType: "user" },
+    });
+    expect(checkBulkPermissions.mock.calls[0][0].resourceIds).toHaveLength(AUTHZED_MAX_BULK_CHECK_ITEMS);
+    expect(checkBulkPermissions.mock.calls[1][0].resourceIds).toEqual([
+      `page-${AUTHZED_MAX_BULK_CHECK_ITEMS}`,
+    ]);
+    expect(allowed.size).toBe(AUTHZED_MAX_BULK_CHECK_ITEMS);
+    expect(allowed.has("page-0")).toBe(false);
+  });
+
+  test("keeps only the pages an MCP grant reaches", async () => {
+    vi.mocked(getMcpGrantForActor).mockReturnValue({ id: "grant-1", userId: "viewer-1" });
+    const checkBulkPermissions = vi.fn(async ({ subject }: { subject: { objectType: string } }) =>
+      subject.objectType === "mcp_grant" ? new Set(["page-1"]) : new Set(["page-1", "page-2"])
+    );
+    vi.mocked(getAuthzedClient).mockReturnValue({ checkBulkPermissions } as never);
+
+    await expect(filterReadableDashboardPageIds(viewer, ["page-1", "page-2"])).resolves.toEqual(
+      new Set(["page-1"])
+    );
+  });
+
+  test("normalizes an operational failure instead of reading it as a denial", async () => {
+    vi.mocked(getAuthzedClient).mockReturnValue({
+      checkBulkPermissions: vi.fn().mockRejectedValue(
+        new AuthzedError({
+          attempts: 3,
+          code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+          operation: "check_bulk_permissions",
+          retryable: true,
+        })
+      ),
+    } as never);
+
+    await expect(filterReadableDashboardPageIds(viewer, ["page-1"])).rejects.toThrow();
+    expect(recordAuthorizationDecision).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "dashboardPage.read", outcome: "operational_error" })
+    );
+  });
+
+  test("asks nothing for no pages", async () => {
+    await expect(filterReadableDashboardPageIds(viewer, [])).resolves.toEqual(new Set());
+    expect(assertAuthzedProjectionFreshness).not.toHaveBeenCalled();
   });
 });
