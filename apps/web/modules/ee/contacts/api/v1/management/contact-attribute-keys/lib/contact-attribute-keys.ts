@@ -10,13 +10,17 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import {
+  whereAttributeKeysOfWorkspace,
+  whereAttributeKeysOfWorkspaces,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { hasWorkspace, requireWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
 
 export const getContactAttributeKeys = reactCache(
   async (workspaceIds: string[]): Promise<TContactAttributeKey[]> => {
     try {
       const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-        where: { workspaceId: { in: workspaceIds } },
+        where: whereAttributeKeysOfWorkspaces(workspaceIds),
       });
 
       return contactAttributeKeys.filter(hasWorkspace);
@@ -38,9 +42,7 @@ export const createContactAttributeKey = async (
   }
 
   const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
-    where: {
-      workspaceId,
-    },
+    where: whereAttributeKeysOfWorkspace(workspaceId),
   });
 
   if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {

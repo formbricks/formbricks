@@ -3,6 +3,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import { uniqueAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { getCreativeAttribution } from "@/modules/ee/creatives/lib/attribution";
 import { getContactByUserId } from "./contact";
 
@@ -22,7 +23,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
             attributes: {
               create: {
                 attributeKey: {
-                  connect: { key_workspaceId: { key: "userId", workspaceId } },
+                  connect: uniqueAttributeKey(workspaceId, "userId"),
                 },
                 value: userId,
               },

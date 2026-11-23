@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TV3SurveyResourceVisibility } from "@/app/api/v3/surveys/serializers";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import packageJson from "@/package.json";
 import type { TFormbricksFileAttributeKey } from "./envelope";
 import { type TFormbricksFile, getFormbricksFileAttributeKeys, writeFormbricksFile } from "./write";
@@ -12,7 +13,7 @@ const getAttributeKeyDefinitions = async (survey: TSurvey): Promise<TFormbricksF
   if (keys.length === 0) return [];
 
   return await prisma.contactAttributeKey.findMany({
-    where: { workspaceId: survey.workspaceId, key: { in: keys } },
+    where: { ...whereAttributeKeysOfWorkspace(survey.workspaceId), key: { in: keys } },
     select: { key: true, name: true, description: true, dataType: true },
     orderBy: { key: "asc" },
   });

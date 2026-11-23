@@ -6,6 +6,7 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { validateInputs } from "@/lib/utils/validate";
+import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { readAttributeValue } from "./attribute-storage";
 
 const selectContactAttribute = {
@@ -87,10 +88,7 @@ export const hasEmailAttribute = reactCache(
       where: {
         AND: [
           {
-            attributeKey: {
-              key: "email",
-              workspaceId,
-            },
+            attributeKey: whereAttributeKey(workspaceId, "email"),
             value: email,
           },
           {
@@ -115,10 +113,7 @@ export const hasUserIdAttribute = reactCache(
       where: {
         AND: [
           {
-            attributeKey: {
-              key: "userId",
-              workspaceId,
-            },
+            attributeKey: whereAttributeKey(workspaceId, "userId"),
             value: userId,
           },
           {

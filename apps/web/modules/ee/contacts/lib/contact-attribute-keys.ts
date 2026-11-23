@@ -4,6 +4,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
@@ -13,7 +14,7 @@ import { hasWorkspace, requireWorkspace } from "./workspace-row";
 export const getContactAttributeKeys = reactCache(
   async (workspaceId: string): Promise<TContactAttributeKey[]> => {
     const keys = await prisma.contactAttributeKey.findMany({
-      where: { workspaceId },
+      where: whereAttributeKeysOfWorkspace(workspaceId),
     });
     return keys.filter(hasWorkspace);
   }

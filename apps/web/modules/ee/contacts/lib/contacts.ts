@@ -14,6 +14,11 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   getReservedFutureDefaultAttributeKeys,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import {
+  uniqueAttributeKey,
+  whereAttributeKey,
+  whereAttributeKeysOfWorkspace,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
@@ -240,7 +245,7 @@ const createAttributeConnections = (
 
     return {
       attributeKey: {
-        connect: { key_workspaceId: { key, workspaceId } },
+        connect: uniqueAttributeKey(workspaceId, key),
       },
       value: columns.value,
       valueNumber: columns.valueNumber,
@@ -450,8 +455,8 @@ const createMissingAttributeKeys = async (
   // Fetch and update the maps with new keys
   const newAttributeKeys = await prisma.contactAttributeKey.findMany({
     where: {
+      ...whereAttributeKeysOfWorkspace(workspaceId),
       key: { in: Array.from(uniqueMissingKeys.values()) },
-      workspaceId,
     },
     select: { key: true, id: true, dataType: true },
   });
@@ -646,11 +651,11 @@ export const createContactsFromCSV = async (
         },
       }),
       prisma.contactAttribute.findMany({
-        where: { attributeKey: { key: "userId", workspaceId }, value: { in: csvUserIds } },
+        where: { attributeKey: whereAttributeKey(workspaceId, "userId"), value: { in: csvUserIds } },
         select: { value: true, contactId: true },
       }),
       prisma.contactAttributeKey.findMany({
-        where: { workspaceId },
+        where: whereAttributeKeysOfWorkspace(workspaceId),
         select: { key: true, id: true, dataType: true },
       }),
     ]);
