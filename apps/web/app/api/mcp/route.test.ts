@@ -624,6 +624,10 @@ describe("POST /api/mcp", () => {
       "duplicate_dashboard",
       "add_chart_to_dashboard",
       "update_widget",
+      "add_dashboard_block",
+      "create_dashboard_page",
+      "update_dashboard_page",
+      "delete_dashboard_page",
       "remove_chart_from_dashboard",
       "update_dashboard_layout",
       "set_dashboard_filters",
@@ -633,6 +637,10 @@ describe("POST /api/mcp", () => {
       "list_contact_attribute_values",
       "list_segments",
       "list_action_classes",
+      "list_member_attribute_keys",
+      "list_member_attributes",
+      "get_team_dashboard_limits",
+      "get_dashboard_viewer_access",
     ]);
     const tools = new Map(message.result.tools.map((tool) => [tool.name, tool]));
     expect(Object.keys(tools.get("create_survey")?.inputSchema.properties ?? {})).toEqual(
