@@ -27,8 +27,9 @@ reconnected.
   Sheets and Airtable deliveries fail until they are replaced; nothing is disconnected or deleted, and the next
   response delivers normally once only 6.3 pods serve. Upgrade during a quiet period if a missed delivery matters.
 
-- **Rolling back is one-way for these integrations.** A version before 6.3 can't read an encrypted token. If you
-  go back after 6.3 has saved one, reconnect Slack, Google Sheets and Airtable in each workspace that uses them.
+- **Rolling back is one-way for these integrations.** A version before 6.3 can't read an encrypted token, and the
+  upgrade encrypts all of them. If you go back after upgrading, reconnect Slack, Google Sheets and Airtable in each
+  workspace that uses them.
 - **Changing `ENCRYPTION_KEY` disconnects them.** A token encrypted with the old key can't be read with the new
   one. That integration stops sending responses and reads as having no token, and the log shows
   `Integration credentials no longer decrypt` with its id. The workspace's other integrations keep working.

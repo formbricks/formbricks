@@ -168,9 +168,19 @@ describe("getRichTextLinks with recall", () => {
     expect(getRichTextLinks(withVariable(html, value)).size).toBe(0);
   });
 
-  test("counts a token inside an opening tag, whose runtime value could make it a link", () => {
-    const html = "<p><a #recall:q9/fallback:x#>go</a></p>";
-    expect(getRichTextLinks(withHeadline(html)).size).toBe(1);
+  // The renderer replaces the whole token, fallback included, before it parses, so a value such as
+  // `href=https://…` becomes an attribute whatever characters the fallback holds.
+  test.each([
+    ["a plain fallback", "<p><a #recall:q9/fallback:x#>go</a></p>"],
+    ["a fallback holding >", "<p><a #recall:q9/fallback:>#>go</a></p>"],
+    ["a fallback holding <", "<p><a #recall:q9/fallback:<#>go</a></p>"],
+    ["a fallback holding a lone quote", "<p><a #recall:q9/fallback:'#>go</a></p>"],
+    ["a token inside a quoted attribute value", '<p><a title="#recall:q9/fallback:x#">go</a></p>'],
+    ["a token that is the tag name", "<p><#recall:q9/fallback:x#>go</p>"],
+  ])("counts a token inside markup, whose runtime value could make it a link: %s", (_case, html) => {
+    expect([...getRichTextLinks(withHeadline(html))]).toEqual([
+      expect.stringMatching(/^recall in a tag: #recall:q9/),
+    ]);
   });
 
   test("finds no link in a plain recall token", () => {
