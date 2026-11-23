@@ -1,30 +1,47 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckIcon, PencilIcon, PlusIcon, RefreshCwIcon, TrashIcon, XIcon } from "lucide-react";
+import {
+  ChartColumnIcon,
+  CheckIcon,
+  ImageIcon,
+  MinusIcon,
+  PencilIcon,
+  PlusIcon,
+  RefreshCwIcon,
+  TrashIcon,
+  TypeIcon,
+  XIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { AddExistingChartsDialog } from "@/modules/ee/analysis/dashboards/components/add-existing-charts-dialog";
+import type { TLayoutBlockKind } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import { deleteDashboard, getChartApiErrorMessage } from "@/modules/ee/analysis/lib/api-client";
 import { dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { IconBar } from "@/modules/ui/components/iconbar";
 
 interface DashboardControlBarProps {
   workspaceId: string;
   dashboardId: string;
-  directories: { id: string; name: string }[];
   isEditing: boolean;
   isSaving: boolean;
   hasChanges: boolean;
   isReadOnly: boolean;
-  isAIAvailable?: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
   onRefresh: () => void;
+  /** Opens the chart picker for the current page. */
+  onAddChart: () => void;
+  /** Drops a layout block on the current page, in its next free slot. */
+  onAddBlock: (kind: TLayoutBlockKind) => void;
   /**
    * Single-key shortcut that toggles edit mode. Its key cap sits on whichever button it currently
    * triggers: the pencil in view mode, save while there are changes, cancel while there are none.
@@ -38,14 +55,13 @@ interface DashboardControlBarProps {
 export const DashboardControlBar = ({
   workspaceId,
   dashboardId,
-  directories,
   isEditing,
   isSaving,
   hasChanges,
   isReadOnly,
-  isAIAvailable,
-  aiUnavailableReason,
   onRefresh,
+  onAddChart,
+  onAddBlock,
   editHotkey,
   onEditToggle,
   onSave,
@@ -54,7 +70,6 @@ export const DashboardControlBar = ({
   const router = useRouter();
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isAddExistingDialogOpen, setIsAddExistingDialogOpen] = useState(false);
   const queryClient = useQueryClient();
   const deleteMutation = useMutation({
     mutationFn: () => deleteDashboard(dashboardId),
@@ -120,17 +135,38 @@ export const DashboardControlBar = ({
   return (
     <>
       {isEditing ? (
-        <IconBar actions={editModeActions} />
-      ) : (
         <div className="flex items-center gap-2">
-          {!isReadOnly && (
-            <Button onClick={() => setIsAddExistingDialogOpen(true)}>
-              <PlusIcon />
-              {t("common.add_charts")}
-            </Button>
-          )}
-          <IconBar actions={viewModeActions} />
+          {/* Add puts a chart (through the picker) or a layout block on the current page. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <PlusIcon />
+                {t("common.add")}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onSelect={onAddChart}>
+                <ChartColumnIcon className="mr-2 size-4" />
+                {t("common.chart")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAddBlock("image")}>
+                <ImageIcon className="mr-2 size-4" />
+                {t("common.image")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAddBlock("text")}>
+                <TypeIcon className="mr-2 size-4" />
+                {t("common.text")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAddBlock("separator")}>
+                <MinusIcon className="mr-2 size-4" />
+                {t("workspace.analysis.dashboards.separator")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <IconBar actions={editModeActions} />
         </div>
+      ) : (
+        <IconBar actions={viewModeActions} />
       )}
       <DeleteDialog
         deleteWhat={t("workspace.analysis.dashboards.dashboard")}
@@ -139,19 +175,6 @@ export const DashboardControlBar = ({
         onDelete={handleDeleteDashboard}
         text={t("workspace.analysis.dashboards.dashboard_delete_confirmation")}
         isDeleting={deleteMutation.isPending}
-      />
-      <AddExistingChartsDialog
-        open={isAddExistingDialogOpen}
-        onOpenChange={setIsAddExistingDialogOpen}
-        workspaceId={workspaceId}
-        dashboardId={dashboardId}
-        directories={directories}
-        onSuccess={() => {
-          setIsAddExistingDialogOpen(false);
-          onRefresh();
-        }}
-        isAIAvailable={isAIAvailable}
-        aiUnavailableReason={aiUnavailableReason}
       />
     </>
   );

@@ -34,7 +34,8 @@ interface CreateChartViewProps {
   initialChart?: TChartWithCreator;
   generatedChart?: AnalyticsResponse | null;
   autoAddToDashboardId?: string;
-  onSuccess?: () => void;
+  /** Called after a save, with the saved chart's id. */
+  onSuccess?: (chartId?: string) => void;
   directories: { id: string; name: string }[];
 }
 

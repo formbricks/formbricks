@@ -19,7 +19,8 @@ interface CreateChartButtonProps {
   directories: { id: string; name: string }[];
   autoAddToDashboardId?: string;
   label?: string;
-  onSuccess?: () => void;
+  /** Called after a save, with the saved chart's id. */
+  onSuccess?: (chartId?: string) => void;
   showIcon?: boolean;
   buttonProps?: Omit<ButtonProps, "onClick" | "children">;
   isAIAvailable?: boolean;
