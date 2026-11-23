@@ -259,6 +259,20 @@ describe("segment filter tree bounds", () => {
     );
   });
 
+  test("counts filters hidden inside malformed nesting toward the node cap", () => {
+    // The array sits where a filter belongs, but its contents are still filters: the cap must see them.
+    const filters = [
+      { id: createId(), connector: null, resource: { resource: flatTree(MAX_SEGMENT_FILTERS_PER_TREE) } },
+    ];
+
+    const result = ZSegmentFilters.safeParse(filters);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      `Too many filters: a segment supports at most ${MAX_SEGMENT_FILTERS_PER_TREE} filters in total`
+    );
+  });
+
   test("a deep left-spine tree within the node cap fails with a clean depth issue, not a RangeError", () => {
     // Regression: depth === MAX_SEGMENT_FILTERS_PER_TREE nodes is within the node cap, but deep
     // enough that the recursive parse alone would overflow the call stack (safeParse does not catch

@@ -410,7 +410,7 @@ export const MAX_SEGMENT_FILTER_DEPTH = 50;
  * Maximum nesting of any container in the raw tree, values included. The filter-depth bound only follows
  * filter groups, but recursive consumers (the draft save's equality check included) walk every object, so a
  * deep `value` must be refused before them too. 200 is far above anything the editor shapes (a tree at the
- * filter-depth limit nests its leaf and value about 53 levels) and far below the stack limit.
+ * filter-depth limit nests its leaf and value about 100 levels) and far below the stack limit.
  */
 export const MAX_RAW_FILTER_NESTING = 200;
 

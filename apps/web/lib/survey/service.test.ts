@@ -1293,6 +1293,12 @@ describe("Tests for updateSurvey", () => {
         expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       });
 
+      test("refuses a draft whose filters are not an array", async () => {
+        await expect(save("junk")).rejects.toThrow("Invalid user segment filters");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
       test("refuses deeply nested filter values before the equality check", async () => {
         // The draft save compares the tree with `isDeepStrictEqual`, which recurses: a deep value must be
         // refused by the bounds before it reaches that comparison.
