@@ -39,48 +39,31 @@ const transformIntegration = (integration: TIntegration): TIntegration => {
   } as TIntegration;
 };
 
-type TIntegrationWriter = Pick<Prisma.TransactionClient, "integration">;
+/** Maps a Prisma failure to the service's `DatabaseError`; anything else is rethrown as is. */
+const toDatabaseError = (error: unknown): unknown => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    logger.error(error, "Error creating or updating integration");
+    return new DatabaseError(error.message);
+  }
+  return error;
+};
 
-/** Writes the integration, refusing a newly mapped survey the workspace can't see (ENG-3283). */
-const writeIntegration = async (
-  client: TIntegrationWriter,
-  workspaceId: string,
-  integrationData: TIntegrationInput,
-  storedConfig: unknown
-): Promise<TIntegration> => {
-  // An integration row forwards its surveys' responses to a third party, so a newly mapped survey must
-  // be workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted one), so
-  // token refreshes and unrelated edits keep saving.
-  await assertNewlyAttachedSurveysWorkspaceVisible(
+/**
+ * Refuses a write that maps a survey the workspace can't see (ENG-3283): an
+ * integration row forwards its surveys' responses to a third party, so a newly mapped survey must be
+ * workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted one), so token
+ * refreshes and unrelated edits keep saving.
+ */
+const assertMappedSurveysVisible = (integrationData: TIntegrationInput, storedConfig: unknown) =>
+  assertNewlyAttachedSurveysWorkspaceVisible(
     getIntegrationSurveyIds(integrationData.config),
     getIntegrationSurveyIds(storedConfig)
   );
 
-  try {
-    return await client.integration.upsert({
-      where: {
-        type_workspaceId: {
-          workspaceId,
-          type: integrationData.type,
-        },
-      },
-      update: {
-        ...integrationData,
-        workspace: { connect: { id: workspaceId } },
-      },
-      create: {
-        ...integrationData,
-        workspace: { connect: { id: workspaceId } },
-      },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error creating or updating integration");
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
+const integrationWrite = (workspaceId: string, integrationData: TIntegrationInput) => ({
+  ...integrationData,
+  workspace: { connect: { id: workspaceId } },
+});
 
 export const createOrUpdateIntegration = async (
   workspaceId: string,
@@ -92,7 +75,17 @@ export const createOrUpdateIntegration = async (
     where: { type_workspaceId: { workspaceId, type: integrationData.type } },
     select: { config: true },
   });
-  return writeIntegration(prisma, workspaceId, integrationData, existing?.config);
+  await assertMappedSurveysVisible(integrationData, existing?.config);
+
+  try {
+    return await prisma.integration.upsert({
+      where: { type_workspaceId: { workspaceId, type: integrationData.type } },
+      update: integrationWrite(workspaceId, integrationData),
+      create: integrationWrite(workspaceId, integrationData),
+    });
+  } catch (error) {
+    throw toDatabaseError(error);
+  }
 };
 
 /**
@@ -103,33 +96,39 @@ export const createOrUpdateIntegration = async (
  *
  * The stored key is read under the row's lock, in the transaction that writes it back (ENG-2123). Read
  * before the write, a refresh committing in between was overwritten with the key read before it, and the
- * integration lost its new credentials. A writer that reaches the row first now makes this wait, and this
- * reads what it committed; one that comes second waits for this save, then writes its key over it.
+ * integration lost its new credentials. Now a writer holding the row makes this save wait, and the save
+ * then reads the key that writer committed. A writer that reaches the row after the save waits for it to
+ * commit before writing its own update.
+ *
+ * With no stored row there is nothing to lock or keep, so the save only creates one: a callback that
+ * inserts the row meanwhile makes it fail on the unique key rather than be overwritten with the
+ * client's key.
  */
 export const saveIntegrationKeepingStoredKey = async (
   workspaceId: string,
   integrationData: TIntegrationInput
 ): Promise<TIntegration> => {
   validateInputs([workspaceId, ZId], [integrationData.type, ZIntegrationType]);
+  const where = { type_workspaceId: { workspaceId, type: integrationData.type } };
 
-  return prisma.$transaction(async (tx) => {
-    // No row means nothing to keep: the first connect, which only the OAuth callbacks perform.
-    await tx.$queryRaw`
-      SELECT 1 FROM "Integration"
-      WHERE "workspaceId" = ${workspaceId} AND "type" = ${integrationData.type}::"IntegrationType"
-      FOR UPDATE
-    `;
-    const stored = await tx.integration.findUnique({
-      where: { type_workspaceId: { workspaceId, type: integrationData.type } },
-      select: { config: true },
+  try {
+    return await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`
+        SELECT 1 FROM "Integration"
+        WHERE "workspaceId" = ${workspaceId} AND "type" = ${integrationData.type}::"IntegrationType"
+        FOR UPDATE
+      `;
+      const stored = await tx.integration.findUnique({ where, select: { config: true } });
+      const merged = withStoredIntegrationKey(integrationData, stored);
+      await assertMappedSurveysVisible(merged, stored?.config);
+
+      return stored
+        ? tx.integration.update({ where, data: integrationWrite(workspaceId, merged) })
+        : tx.integration.create({ data: integrationWrite(workspaceId, merged) });
     });
-    return writeIntegration(
-      tx,
-      workspaceId,
-      withStoredIntegrationKey(integrationData, stored),
-      stored?.config
-    );
-  });
+  } catch (error) {
+    throw toDatabaseError(error);
+  }
 };
 
 export const getIntegrations = reactCache(

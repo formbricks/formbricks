@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
+import { DatabaseError } from "@formbricks/types/errors";
 import type { TIntegrationGoogleSheetsConfig } from "@formbricks/types/integration/google-sheet";
+import { waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { saveIntegrationKeepingStoredKey } from "@/lib/integration/service";
 
@@ -31,7 +34,7 @@ const mapping = (surveyId: string) => ({
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
 });
 
-const seedWorkspaceWithIntegration = async (): Promise<{ workspaceId: string; surveyId: string }> => {
+const seedWorkspace = async (): Promise<{ workspaceId: string; surveyId: string }> => {
   const organization = await prisma.organization.create({ data: { name: "Integration race" } });
   const workspace = await prisma.workspace.create({
     data: { name: "Integration race workspace", organizationId: organization.id },
@@ -39,27 +42,49 @@ const seedWorkspaceWithIntegration = async (): Promise<{ workspaceId: string; su
   const survey = await prisma.survey.create({
     data: { name: "Survey", workspaceId: workspace.id, type: "link", status: "inProgress" },
   });
-  await prisma.integration.create({
-    data: {
-      type: "googleSheets",
-      workspaceId: workspace.id,
-      config: { email: "sheets@example.com", key: key("stale"), data: [] },
-    },
-  });
   return { workspaceId: workspace.id, surveyId: survey.id };
 };
 
-/** Resolves once another connection is blocked waiting for a lock: the save, behind the open refresh. */
-const waitForBlockedWriter = async (): Promise<void> => {
-  for (let attempt = 0; attempt < 200; attempt++) {
-    const [{ waiting }] = await prisma.$queryRaw<{ waiting: bigint }[]>`
-      SELECT count(*) AS waiting FROM pg_stat_activity
-      WHERE datname = current_database() AND wait_event_type = 'Lock'
-    `;
-    if (waiting > 0n) return;
-    await new Promise((resolve) => setTimeout(resolve, 25));
-  }
-  throw new Error("the settings save never waited on the refresh's lock");
+const seedWorkspaceWithIntegration = async (): Promise<{ workspaceId: string; surveyId: string }> => {
+  const seeded = await seedWorkspace();
+  await prisma.integration.create({
+    data: {
+      type: "googleSheets",
+      workspaceId: seeded.workspaceId,
+      config: { email: "sheets@example.com", key: key("stale"), data: [] },
+    },
+  });
+  return seeded;
+};
+
+/**
+ * Runs a credential write (a token refresh or an OAuth callback) and holds its transaction open until
+ * `run` has put the settings save behind its lock, then commits it.
+ */
+const withOpenCredentialWrite = async (
+  write: (tx: Prisma.TransactionClient) => Promise<unknown>,
+  run: () => Promise<unknown>
+): Promise<PromiseSettledResult<unknown>> => {
+  let started!: Promise<PromiseSettledResult<unknown>>;
+  await prisma.$transaction(
+    async (tx) => {
+      await write(tx);
+      started = run().then(
+        (value) => ({ status: "fulfilled", value }) as const,
+        (reason: unknown) => ({ status: "rejected", reason }) as const
+      );
+      await waitForBlockOn(tx);
+    },
+    { timeout: 20_000 }
+  );
+  return started;
+};
+
+const storedConfig = async (workspaceId: string): Promise<TIntegrationGoogleSheetsConfig> => {
+  const stored = await prisma.integration.findUniqueOrThrow({
+    where: { type_workspaceId: { type: "googleSheets", workspaceId } },
+  });
+  return stored.config as TIntegrationGoogleSheetsConfig;
 };
 
 beforeEach(async () => {
@@ -70,46 +95,51 @@ describe("saveIntegrationKeepingStoredKey (real Postgres)", () => {
   test("a credential write that commits while the settings save is in flight keeps its fresh key", async () => {
     const { workspaceId, surveyId } = await seedWorkspaceWithIntegration();
 
-    let releaseRefresh!: () => void;
-    const refreshMayCommit = new Promise<void>((resolve) => {
-      releaseRefresh = resolve;
-    });
-    let refreshHoldsRow!: () => void;
-    const rowLocked = new Promise<void>((resolve) => {
-      refreshHoldsRow = resolve;
-    });
-
-    // A token refresh writing new credentials, held open so the save starts before it commits.
-    const refresh = prisma.$transaction(
-      async (tx) => {
-        await tx.integration.update({
+    // A token refresh writing new credentials while the settings UI adds a mapping, sending back the
+    // redacted credentials it was given.
+    const save = await withOpenCredentialWrite(
+      (tx) =>
+        tx.integration.update({
           where: { type_workspaceId: { type: "googleSheets", workspaceId } },
           data: { config: { email: "sheets@example.com", key: key("fresh"), data: [] } },
-        });
-        refreshHoldsRow();
-        await refreshMayCommit;
-      },
-      { timeout: 20_000 }
+        }),
+      () =>
+        saveIntegrationKeepingStoredKey(workspaceId, {
+          type: "googleSheets",
+          config: { email: "sheets@example.com", key: key(""), data: [mapping(surveyId)] },
+        })
     );
-    await rowLocked;
 
-    // The settings UI adds a mapping, sending back the redacted credentials it was given.
-    const save = saveIntegrationKeepingStoredKey(workspaceId, {
-      type: "googleSheets",
-      config: { email: "sheets@example.com", key: key(""), data: [mapping(surveyId)] },
-    });
-
-    await waitForBlockedWriter();
-    releaseRefresh();
-    await Promise.all([refresh, save]);
-
-    const stored = await prisma.integration.findUniqueOrThrow({
-      where: { type_workspaceId: { type: "googleSheets", workspaceId } },
-    });
-    const config = stored.config as TIntegrationGoogleSheetsConfig;
+    expect(save.status).toBe("fulfilled");
+    const config = await storedConfig(workspaceId);
     expect(config.key.access_token).toBe("fresh");
     expect(config.key.refresh_token).toBe("refresh-fresh");
     expect(config.data.map((entry) => entry.surveyId)).toEqual([surveyId]);
+  });
+
+  test("a settings save with no stored row fails rather than overwrite a callback's new connection", async () => {
+    const { workspaceId, surveyId } = await seedWorkspace();
+
+    // An OAuth callback connecting the integration while a stale settings tab saves a mapping.
+    const save = await withOpenCredentialWrite(
+      (tx) =>
+        tx.integration.create({
+          data: {
+            type: "googleSheets",
+            workspaceId,
+            config: { email: "sheets@example.com", key: key("fresh"), data: [] },
+          },
+        }),
+      () =>
+        saveIntegrationKeepingStoredKey(workspaceId, {
+          type: "googleSheets",
+          config: { email: "sheets@example.com", key: key(""), data: [mapping(surveyId)] },
+        })
+    );
+
+    expect(save.status).toBe("rejected");
+    expect(save.status === "rejected" && save.reason).toBeInstanceOf(DatabaseError);
+    expect((await storedConfig(workspaceId)).key.access_token).toBe("fresh");
   });
 
   test("keeps the stored key when the client sends redacted credentials", async () => {
@@ -120,10 +150,7 @@ describe("saveIntegrationKeepingStoredKey (real Postgres)", () => {
       config: { email: "sheets@example.com", key: key(""), data: [mapping(surveyId)] },
     });
 
-    const stored = await prisma.integration.findUniqueOrThrow({
-      where: { type_workspaceId: { type: "googleSheets", workspaceId } },
-    });
-    const config = stored.config as TIntegrationGoogleSheetsConfig;
+    const config = await storedConfig(workspaceId);
     expect(config.key.access_token).toBe("stale");
     expect(config.data.map((entry) => entry.surveyId)).toEqual([surveyId]);
   });
