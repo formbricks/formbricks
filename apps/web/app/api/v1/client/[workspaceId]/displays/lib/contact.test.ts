@@ -19,6 +19,7 @@ vi.mock("react", async () => {
 });
 
 const workspaceId = "test-workspace-id";
+const directoryId = "test-directory-id";
 const userId = "test-user-id";
 const contact = {
   id: "test-contact-id",
@@ -29,10 +30,10 @@ const contact = {
 };
 
 describe("getContactByUserId", () => {
-  test("returns the first contact whose userId attribute exactly matches in the workspace", async () => {
+  test("returns the first contact whose userId attribute exactly matches in the directory", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(contact);
 
-    const result = await getContactByUserId(workspaceId, userId);
+    const result = await getContactByUserId(directoryId, userId);
 
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
       where: {
@@ -40,7 +41,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              workspaceId,
+              directoryId,
             },
             value: userId,
           },
@@ -54,7 +55,7 @@ describe("getContactByUserId", () => {
   test("returns null when no contact matches", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
-    const result = await getContactByUserId(workspaceId, userId);
+    const result = await getContactByUserId(directoryId, userId);
 
     expect(result).toBeNull();
   });

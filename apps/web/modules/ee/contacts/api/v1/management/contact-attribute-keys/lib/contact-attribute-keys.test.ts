@@ -60,7 +60,7 @@ describe("getContactAttributeKeys", () => {
     const result = await getContactAttributeKeys(mockWorkspaceIds);
 
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { workspaceId: { in: mockWorkspaceIds } },
+      where: { directory: { workspaces: { some: { id: { in: mockWorkspaceIds } } } } },
     });
     expect(result).toEqual(mockAttributeKeys);
   });
@@ -131,7 +131,9 @@ describe("createContactAttributeKey", () => {
 
     const result = await createContactAttributeKey(workspaceId, createInput);
 
-    expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { workspaceId } });
+    expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({
+      where: { directory: { workspaces: { some: { id: workspaceId } } } },
+    });
     expect(prisma.contactAttributeKey.create).toHaveBeenCalledWith({
       data: {
         key: createInput.key,
@@ -150,7 +152,9 @@ describe("createContactAttributeKey", () => {
     await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(
       OperationNotAllowedError
     );
-    expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { workspaceId } });
+    expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({
+      where: { directory: { workspaces: { some: { id: workspaceId } } } },
+    });
     expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
   });
 

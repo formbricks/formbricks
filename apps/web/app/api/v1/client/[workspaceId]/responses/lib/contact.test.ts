@@ -102,7 +102,7 @@ describe("Contact API Lib", () => {
             some: {
               attributeKey: {
                 key: "userId",
-                workspaceId: mockWorkspaceId,
+                directory: { workspaces: { some: { id: mockWorkspaceId } } },
               },
               value: mockUserId,
             },
@@ -138,7 +138,7 @@ describe("Contact API Lib", () => {
             some: {
               attributeKey: {
                 key: "userId",
-                workspaceId: mockWorkspaceId,
+                directory: { workspaces: { some: { id: mockWorkspaceId } } },
               },
               value: mockUserId,
             },

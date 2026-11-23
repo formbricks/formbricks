@@ -6,9 +6,13 @@ import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
-import { uniqueAttributeKey, whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import {
+  uniqueAttributeKey,
+  whereDirectoryAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { formatAttributeMessage } from "@/modules/ee/contacts/lib/attribute-messages";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getPersonSegmentIds } from "./segments";
 
 /** Message codes whose presence alone reveals whether an identifier is already a contact here. */
@@ -40,16 +44,16 @@ const contactStateSelect = {
 } satisfies Prisma.ContactSelect;
 
 /**
- * Comprehensive contact data fetcher - gets everything needed in one query
- * Eliminates redundant queries by fetching contact + user state data together
+ * The contact with this userId in the directory, with everything the user state needs, in one query.
+ * By directory only: in a shared directory the contact may have been created from another workspace.
  */
-const getContactWithFullData = async (workspaceId: string, userId: string) => {
+const getContactWithFullData = async (directoryId: string, userId: string) => {
   return prisma.contact.findFirst({
     where: {
-      workspaceId,
+      directoryId,
       attributes: {
         some: {
-          attributeKey: whereAttributeKey(workspaceId, "userId"),
+          attributeKey: whereDirectoryAttributeKey(directoryId, "userId"),
           value: userId,
         },
       },
@@ -58,12 +62,13 @@ const getContactWithFullData = async (workspaceId: string, userId: string) => {
   });
 };
 
-/**
- * Creates contact with comprehensive data structure
- */
-const createContact = async (workspaceId: string, userId: string) => {
+/** Creates the contact in the directory, recording the workspace it was created from. */
+const createContact = async (directoryId: string, workspaceId: string, userId: string) => {
   return prisma.contact.create({
     data: {
+      directory: {
+        connect: { id: directoryId },
+      },
       workspace: {
         connect: { id: workspaceId },
       },
@@ -71,7 +76,7 @@ const createContact = async (workspaceId: string, userId: string) => {
         create: [
           {
             attributeKey: {
-              connect: uniqueAttributeKey(workspaceId, "userId"),
+              connect: uniqueAttributeKey(directoryId, "userId"),
             },
             value: userId,
           },
@@ -209,12 +214,15 @@ export const updateUser = async (
   device: "phone" | "desktop",
   attributes?: TContactAttributesInput
 ): Promise<{ state: TJsPersonState; messages?: string[]; errors?: string[] }> => {
+  // Throws for a workspace with no directory, before anything is read or written.
+  const { id: directoryId } = await requireWorkspaceContactDirectory(workspaceId);
+
   // Single comprehensive query - gets contact + user state data
-  let contactData = await getContactWithFullData(workspaceId, userId);
+  let contactData = await getContactWithFullData(directoryId, userId);
 
   // Create contact if doesn't exist
   if (!contactData) {
-    contactData = await createContact(workspaceId, userId);
+    contactData = await createContact(directoryId, workspaceId, userId);
   }
 
   // Process contact attributes efficiently (single pass)

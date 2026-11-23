@@ -1289,7 +1289,7 @@ describe("segmentFilterToPrismaQuery", () => {
       where: {
         attributeKey: {
           key: "age",
-          workspaceId: mockWorkspaceId,
+          directory: { workspaces: { some: { id: mockWorkspaceId } } },
           dataType: "number",
         },
         valueNumber: null,

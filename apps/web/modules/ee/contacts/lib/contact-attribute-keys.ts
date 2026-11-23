@@ -4,7 +4,10 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
-import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import {
+  whereAttributeKeysOfDirectory,
+  whereAttributeKeysOfWorkspace,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
@@ -18,6 +21,20 @@ export const getContactAttributeKeys = reactCache(
     });
     return keys.filter(hasWorkspace);
   }
+);
+
+export type TDirectoryAttributeKey = Pick<TContactAttributeKey, "id" | "key" | "dataType">;
+
+/**
+ * Every key of a contact directory, for the contact write paths. Unlike `getContactAttributeKeys`, it
+ * keeps keys with no origin workspace (a directory's default keys, or keys whose workspace was deleted).
+ */
+export const getContactAttributeKeysOfDirectory = reactCache(
+  async (directoryId: string): Promise<TDirectoryAttributeKey[]> =>
+    prisma.contactAttributeKey.findMany({
+      where: whereAttributeKeysOfDirectory(directoryId),
+      select: { id: true, key: true, dataType: true },
+    })
 );
 
 export const getContactAttributeKeyById = async (

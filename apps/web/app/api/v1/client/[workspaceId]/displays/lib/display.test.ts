@@ -9,6 +9,10 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import {
+  ContactDirectoryMissingError,
+  requireWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getCreativeAttribution } from "@/modules/ee/creatives/lib/attribution";
 import { getContactByUserId } from "./contact";
 import { createDisplay } from "./display";
@@ -33,6 +37,11 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>();
+  return { ...actual, requireWorkspaceContactDirectory: vi.fn() };
+});
+
 vi.mock("./contact", () => ({
   getContactByUserId: vi.fn(),
 }));
@@ -42,6 +51,7 @@ vi.mock("@/modules/ee/creatives/lib/attribution", () => ({
 }));
 
 const workspaceId = "cqiu9au22kgzgqjossdlp5qh";
+const directoryId = "d7l2kq0x3m4n5p6r7s8t9u0v";
 const surveyId = "kf4w7x11wut39ttl4j5v9ccg";
 const userId = "test-user-id";
 const contactId = "f9bufd72cffj19a7qj67z5fm";
@@ -100,6 +110,7 @@ describe("createDisplay", () => {
     // Passes each value through, as a successful validation returns it.
     vi.mocked(validateInputs).mockImplementation((...pairs) => pairs.map(([value]) => value));
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurvey);
+    vi.mocked(requireWorkspaceContactDirectory).mockResolvedValue({ id: directoryId, matchingKey: "email" });
   });
 
   test("should create a display with existing contact successfully", async () => {
@@ -109,7 +120,7 @@ describe("createDisplay", () => {
     const result = await createDisplay(displayInput);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInput, expect.any(Object)]);
-    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(directoryId, userId);
     expect(prisma.contact.create).not.toHaveBeenCalled();
     expect(prisma.display.create).toHaveBeenCalledWith({
       data: {
@@ -129,14 +140,15 @@ describe("createDisplay", () => {
     const result = await createDisplay(displayInput);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInput, expect.any(Object)]);
-    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(directoryId, userId);
     expect(prisma.contact.create).toHaveBeenCalledWith({
       data: {
+        directoryId,
         workspaceId,
         attributes: {
           create: {
             attributeKey: {
-              connect: { key_workspaceId: { key: "userId", workspaceId } },
+              connect: { directoryId_key: { directoryId, key: "userId" } },
             },
             value: userId,
           },
@@ -153,6 +165,15 @@ describe("createDisplay", () => {
     expect(result).toEqual(mockDisplay);
   });
 
+  test("refuses a userId for a workspace with no directory before creating anything", async () => {
+    vi.mocked(requireWorkspaceContactDirectory).mockRejectedValue(new ContactDirectoryMissingError());
+
+    await expect(createDisplay(displayInput)).rejects.toThrow(ContactDirectoryMissingError);
+    expect(getContactByUserId).not.toHaveBeenCalled();
+    expect(prisma.contact.create).not.toHaveBeenCalled();
+    expect(prisma.display.create).not.toHaveBeenCalled();
+  });
+
   test("should create a display without contact when userId is not provided", async () => {
     vi.mocked(prisma.display.create).mockResolvedValue(mockDisplayWithoutContact);
 
@@ -160,6 +181,7 @@ describe("createDisplay", () => {
 
     expect(validateInputs).toHaveBeenCalledWith([displayInputWithoutUserId, expect.any(Object)]);
     expect(getContactByUserId).not.toHaveBeenCalled();
+    expect(requireWorkspaceContactDirectory).not.toHaveBeenCalled();
     expect(prisma.contact.create).not.toHaveBeenCalled();
     expect(prisma.display.create).toHaveBeenCalledWith({
       data: {
@@ -224,7 +246,7 @@ describe("createDisplay", () => {
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(new ResourceNotFoundError("Survey", surveyId));
-    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(directoryId, userId);
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: surveyId, workspaceId },
       select: { status: true },
@@ -254,7 +276,7 @@ describe("createDisplay", () => {
     vi.mocked(prisma.display.create).mockRejectedValue(prismaError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(DatabaseError);
-    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(directoryId, userId);
     expect(prisma.display.create).toHaveBeenCalled();
   });
 
@@ -264,7 +286,7 @@ describe("createDisplay", () => {
     vi.mocked(prisma.display.create).mockRejectedValue(genericError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(genericError);
-    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(directoryId, userId);
     expect(prisma.display.create).toHaveBeenCalled();
   });
 
@@ -273,7 +295,7 @@ describe("createDisplay", () => {
     vi.mocked(getContactByUserId).mockRejectedValue(contactError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(contactError);
-    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(directoryId, userId);
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
@@ -283,7 +305,7 @@ describe("createDisplay", () => {
     vi.mocked(prisma.contact.create).mockRejectedValue(contactCreateError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(contactCreateError);
-    expect(getContactByUserId).toHaveBeenCalledWith(workspaceId, userId);
+    expect(getContactByUserId).toHaveBeenCalledWith(directoryId, userId);
     expect(prisma.contact.create).toHaveBeenCalled();
     expect(prisma.display.create).not.toHaveBeenCalled();
   });

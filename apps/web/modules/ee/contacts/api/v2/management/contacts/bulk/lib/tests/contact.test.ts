@@ -80,8 +80,8 @@ describe("upsertBulkContacts", () => {
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: {
         attributeKey: {
-          workspaceId: mockWorkspaceId,
           key: "userId",
+          directory: { workspaces: { some: { id: mockWorkspaceId } } },
         },
         value: {
           in: ["user-123", "user-456"],
@@ -94,7 +94,7 @@ describe("upsertBulkContacts", () => {
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
       where: {
         key: { in: ["email", "userId", "name"] },
-        workspaceId: mockWorkspaceId,
+        directory: { workspaces: { some: { id: mockWorkspaceId } } },
       },
     });
 

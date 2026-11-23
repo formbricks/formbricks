@@ -6,7 +6,7 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { validateInputs } from "@/lib/utils/validate";
-import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereDirectoryAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { readAttributeValue } from "./attribute-storage";
 
 const selectContactAttribute = {
@@ -81,14 +81,14 @@ export const getContactAttributesWithKeyInfo = reactCache(async (contactId: stri
 });
 
 export const hasEmailAttribute = reactCache(
-  async (email: string, workspaceId: string, contactId: string): Promise<boolean> => {
-    validateInputs([email, ZUserEmail], [workspaceId, ZId], [contactId, ZId]);
+  async (email: string, directoryId: string, contactId: string): Promise<boolean> => {
+    validateInputs([email, ZUserEmail], [directoryId, ZId], [contactId, ZId]);
 
     const contactAttribute = await prisma.contactAttribute.findFirst({
       where: {
         AND: [
           {
-            attributeKey: whereAttributeKey(workspaceId, "email"),
+            attributeKey: whereDirectoryAttributeKey(directoryId, "email"),
             value: email,
           },
           {
@@ -106,14 +106,14 @@ export const hasEmailAttribute = reactCache(
 );
 
 export const hasUserIdAttribute = reactCache(
-  async (userId: string, workspaceId: string, contactId: string): Promise<boolean> => {
-    validateInputs([userId, ZString], [workspaceId, ZId], [contactId, ZId]);
+  async (userId: string, directoryId: string, contactId: string): Promise<boolean> => {
+    validateInputs([userId, ZString], [directoryId, ZId], [contactId, ZId]);
 
     const contactAttribute = await prisma.contactAttribute.findFirst({
       where: {
         AND: [
           {
-            attributeKey: whereAttributeKey(workspaceId, "userId"),
+            attributeKey: whereDirectoryAttributeKey(directoryId, "userId"),
             value: userId,
           },
           {

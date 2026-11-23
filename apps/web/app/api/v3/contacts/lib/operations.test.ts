@@ -97,7 +97,7 @@ describe("listV3Contacts", () => {
     expect(findManyArgs?.orderBy).toEqual([{ createdAt: "desc" }, { id: "desc" }]);
     // The attribute keys are looked up inside the authorized workspace only.
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { workspaceId, key: { in: ["seats"] } },
+      where: { directory: { workspaces: { some: { id: workspaceId } } }, key: { in: ["seats"] } },
       select: { id: true, key: true, dataType: true },
     });
     const countWhere = vi.mocked(prisma.contact.count).mock.calls[0][0]?.where;

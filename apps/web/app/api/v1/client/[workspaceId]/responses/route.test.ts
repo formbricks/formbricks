@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { MAX_INGESTED_VALUE_BYTES } from "@formbricks/types/embedded-data-ingest";
+import { CONTACT_DIRECTORY_MISSING_MESSAGE } from "@/modules/ee/contacts/lib/contact-directory";
 import { POST } from "./route";
 
 /**
@@ -18,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   enforceVerifiedEmailGate: vi.fn(),
   findRecentDuplicateResponse: vi.fn(),
   getContactByUserId: vi.fn(),
+  getWorkspaceContactDirectory: vi.fn(),
   getOpenedByCreativeMeta: vi.fn(),
   formatValidationErrorsForV1Api: vi.fn((errors) => errors),
   getClientIpFromHeaders: vi.fn(),
@@ -98,6 +100,11 @@ vi.mock("@/modules/survey/link/lib/verify-email-gate", () => ({
 vi.mock("@/app/api/client/[workspaceId]/responses/lib/duplicate-response", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   findRecentDuplicateResponse: mocks.findRecentDuplicateResponse,
+}));
+
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  getWorkspaceContactDirectory: mocks.getWorkspaceContactDirectory,
 }));
 
 vi.mock("./lib/contact", () => ({
@@ -264,6 +271,7 @@ describe("POST /api/v1/client/[workspaceId]/responses — duplicate submissions 
     mocks.validateResponseData.mockReturnValue(null);
     mocks.createQuotaFullObject.mockReturnValue({ quotaFull: false });
     mocks.getContactByUserId.mockResolvedValue({ id: contactId, attributes: { userId: "customer-1" } });
+    mocks.getWorkspaceContactDirectory.mockResolvedValue({ id: "directory-1", matchingKey: "email" });
     mocks.createResponseWithQuotaEvaluation.mockResolvedValue({
       id: responseId,
       surveyId,
@@ -294,6 +302,32 @@ describe("POST /api/v1/client/[workspaceId]/responses — duplicate submissions 
     await postRawBody({ q1: 5 }, { userId: "customer-1", finished: false });
 
     expect(mocks.getContactByUserId).not.toHaveBeenCalled();
+    expect(mocks.createResponseWithQuotaEvaluation).toHaveBeenCalledTimes(1);
+  });
+
+  // Decision 13: a userId names a contact, and a workspace with no contact directory has none.
+  test("refuses a userId for a workspace with no contact directory before reading or writing", async () => {
+    mocks.getWorkspaceContactDirectory.mockResolvedValue(null);
+
+    const result = await postRawBody({ q1: 5 }, { userId: "customer-1", finished: true });
+
+    expect(result.response.status).toBe(403);
+    expect(await result.response.json()).toMatchObject({
+      code: "forbidden",
+      message: CONTACT_DIRECTORY_MISSING_MESSAGE,
+    });
+    expect(mocks.getWorkspaceContactDirectory).toHaveBeenCalledWith(workspaceId);
+    expect(mocks.getContactByUserId).not.toHaveBeenCalled();
+    expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
+  test("does not need a contact directory for a submission without a userId", async () => {
+    mocks.getWorkspaceContactDirectory.mockResolvedValue(null);
+
+    const result = await postRawBody({ q1: 5 }, { finished: true });
+
+    expect(result.response.status).toBe(200);
+    expect(mocks.getWorkspaceContactDirectory).not.toHaveBeenCalled();
     expect(mocks.createResponseWithQuotaEvaluation).toHaveBeenCalledTimes(1);
   });
 

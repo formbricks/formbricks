@@ -8,6 +8,7 @@ import {
   deleteContactAttributeKey,
   getContactAttributeKeyById,
   getContactAttributeKeys,
+  getContactAttributeKeysOfDirectory,
   updateContactAttributeKey,
 } from "./contact-attribute-keys";
 
@@ -41,7 +42,7 @@ describe("getContactAttributeKeys", () => {
     );
     const result = await getContactAttributeKeys(workspaceId);
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { workspaceId },
+      where: { directory: { workspaces: { some: { id: workspaceId } } } },
     });
     expect(result).toEqual(mockKeys);
   });
@@ -50,6 +51,32 @@ describe("getContactAttributeKeys", () => {
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([]);
     const result = await getContactAttributeKeys(workspaceId);
     expect(result).toEqual([]);
+  });
+});
+
+describe("getContactAttributeKeysOfDirectory", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // A directory's default keys have no workspace, and in a shared directory a key keeps the workspace
+  // that created it; both are keys of every workspace on the directory.
+  test("returns every key of the directory, whatever workspace it came from", async () => {
+    const keys = [
+      { id: "id-1", key: "userId", dataType: "string" },
+      { id: "id-2", key: "plan", dataType: "string" },
+    ];
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(
+      keys as unknown as ContactAttributeKey[]
+    );
+
+    const result = await getContactAttributeKeysOfDirectory("directory-1");
+
+    expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
+      where: { directoryId: "directory-1" },
+      select: { id: true, key: true, dataType: true },
+    });
+    expect(result).toEqual(keys);
   });
 });
 

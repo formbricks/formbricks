@@ -3,7 +3,6 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { ValidationError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
@@ -14,20 +13,23 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
-import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereAttributeKeysOfDirectory } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { TAttributeUpdateMessage } from "@/modules/ee/contacts/lib/attribute-messages";
 import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import {
+  TDirectoryAttributeKey,
+  getContactAttributeKeysOfDirectory,
+} from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
   getContactAttributes,
   hasEmailAttribute,
   hasUserIdAttribute,
 } from "@/modules/ee/contacts/lib/contact-attributes";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   formatValidationError,
   validateAndParseAttributeValue,
 } from "@/modules/ee/contacts/lib/validate-attribute-type";
-import { hasWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
 
 /**
  * Total, locale-independent ordering of two strings by code unit.
@@ -50,7 +52,7 @@ const deleteAttributes = async (
   contactId: string,
   currentAttributes: TContactAttributesInput,
   submittedAttributes: TContactAttributesInput,
-  contactAttributeKeys: TContactAttributeKey[]
+  contactAttributeKeys: TDirectoryAttributeKey[]
 ): Promise<{ success: boolean }> => {
   const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
 
@@ -181,7 +183,7 @@ const resolveIdentityAttributes = ({
 /** The attributes whose key exists (type-checked), and the ones that will create a key. */
 const splitAttributesByKey = (
   contactAttributes: Record<string, string | number>,
-  contactAttributeKeyMap: Map<string, Awaited<ReturnType<typeof getContactAttributeKeys>>[number]>,
+  contactAttributeKeyMap: Map<string, TDirectoryAttributeKey>,
   messages: TAttributeUpdateMessage[]
 ): { existingAttributes: TExistingAttributeWrite[]; newAttributes: TNewAttributeWrite[] } => {
   const existingAttributes: {
@@ -346,20 +348,23 @@ class RacedKeyVanishedError extends Error {}
 const NEW_KEYS_MAX_ATTEMPTS = 2;
 
 /**
- * Creates the new keys with this contact's values, converging when a concurrent identify call
- * creates one first (ENG-4018): `skipDuplicates` turns the lost `(key, workspaceId)` race into a
- * skipped row instead of a 500 (as in `contacts.ts`, `formbricks-file/resolve.ts`), and skipped
- * keys are re-read and type-checked like existing keys. Keys and values commit together, in a
- * deterministic order (ENG-2252), with a bounded deadlock retry.
+ * Creates the new keys on the directory with this contact's values, converging when a concurrent
+ * identify call creates one first (ENG-4018): `skipDuplicates` turns the lost `(directoryId, key)` race
+ * into a skipped row instead of a 500 (as in `contacts.ts`, `formbricks-file/resolve.ts`), and skipped
+ * keys are re-read from the directory and type-checked like existing keys. In a shared directory the
+ * winner may be another workspace. Keys and values commit together, in a deterministic order
+ * (ENG-2252), with a bounded deadlock retry. A new key records the sending workspace as its origin.
  */
 const createAttributeKeysAndValues = async ({
   contactId,
   workspaceId,
+  directoryId,
   newAttributes,
   messages,
 }: {
   contactId: string;
   workspaceId: string;
+  directoryId: string;
   newAttributes: TNewAttributeWrite[];
   messages: TAttributeUpdateMessage[];
 }): Promise<void> => {
@@ -375,6 +380,7 @@ const createAttributeKeysAndValues = async ({
         name: formatSnakeCaseToTitleCase(key),
         type: "custom" as const,
         dataType,
+        directoryId,
         workspaceId,
       })),
       select: { id: true, key: true },
@@ -394,13 +400,13 @@ const createAttributeKeysAndValues = async ({
     if (racedAttributes.length > 0) {
       const racedKeys = await tx.contactAttributeKey.findMany({
         where: {
-          ...whereAttributeKeysOfWorkspace(workspaceId),
+          ...whereAttributeKeysOfDirectory(directoryId),
           key: { in: racedAttributes.map(({ key }) => key) },
         },
       });
       const { existingAttributes, newAttributes: vanishedAttributes } = splitAttributesByKey(
         Object.fromEntries(racedAttributes.map(({ key, value }) => [key, value])),
-        new Map(racedKeys.filter(hasWorkspace).map((attributeKey) => [attributeKey.key, attributeKey])),
+        new Map(racedKeys.map((attributeKey) => [attributeKey.key, attributeKey])),
         typeMessages
       );
       if (vanishedAttributes.length > 0) throw new RacedKeyVanishedError();
@@ -440,7 +446,7 @@ const createAttributeKeysAndValues = async ({
  *
  * @param contactId - The ID of the contact to update
  * @param userId - The user ID of the contact
- * @param workspaceId - The workspace ID
+ * @param workspaceId - The workspace the request came from; its contact directory scopes the keys
  * @param contactAttributesParam - The attributes to update/create
  * @param deleteRemovedAttributes - When true, deletes attributes that exist in DB but are not in the payload.
  * Use this for UI forms where all attributes are submitted. Default is false (merge behavior) for API calls.
@@ -481,13 +487,17 @@ export const updateAttributes = async (
   assertNoNullByte("email", emailValue);
   assertNoNullByte("userId", userIdValue);
 
+  // Keys and the email/userId checks belong to the workspace's contact directory. Throws for a workspace
+  // with no directory, before anything is read or written.
+  const { id: directoryId } = await requireWorkspaceContactDirectory(workspaceId);
+
   // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
   const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
     await Promise.all([
       getContactAttributes(contactId),
-      getContactAttributeKeys(workspaceId),
-      emailValue ? hasEmailAttribute(emailValue, workspaceId, contactId) : Promise.resolve(null),
-      userIdValue ? hasUserIdAttribute(userIdValue, workspaceId, contactId) : Promise.resolve(null),
+      getContactAttributeKeysOfDirectory(directoryId),
+      emailValue ? hasEmailAttribute(emailValue, directoryId, contactId) : Promise.resolve(null),
+      userIdValue ? hasUserIdAttribute(userIdValue, directoryId, contactId) : Promise.resolve(null),
     ]);
 
   // Process email and userId existence early
@@ -562,6 +572,7 @@ export const updateAttributes = async (
     await createAttributeKeysAndValues({
       contactId,
       workspaceId,
+      directoryId,
       newAttributes: newAttributesToCreate,
       messages,
     });

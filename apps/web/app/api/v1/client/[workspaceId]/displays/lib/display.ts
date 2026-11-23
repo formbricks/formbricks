@@ -4,6 +4,7 @@ import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/disp
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { uniqueAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getCreativeAttribution } from "@/modules/ee/creatives/lib/attribution";
 import { getContactByUserId } from "./contact";
 
@@ -15,15 +16,18 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   try {
     let contact: { id: string } | null = null;
     if (userId) {
-      contact = await getContactByUserId(workspaceId, userId);
+      // Throws for a workspace with no directory, before anything is created.
+      const { id: directoryId } = await requireWorkspaceContactDirectory(workspaceId);
+      contact = await getContactByUserId(directoryId, userId);
       if (!contact) {
         contact = await prisma.contact.create({
           data: {
+            directoryId,
             workspaceId,
             attributes: {
               create: {
                 attributeKey: {
-                  connect: uniqueAttributeKey(workspaceId, "userId"),
+                  connect: uniqueAttributeKey(directoryId, "userId"),
                 },
                 value: userId,
               },

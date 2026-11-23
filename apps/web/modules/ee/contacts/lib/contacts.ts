@@ -15,7 +15,6 @@ import {
   getReservedFutureDefaultAttributeKeys,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
-  uniqueAttributeKey,
   whereAttributeKey,
   whereAttributeKeysOfWorkspace,
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
@@ -233,19 +232,24 @@ const contactAttributesInclude = {
   },
 } satisfies Prisma.ContactInclude;
 
-// Helper to create attribute objects for Prisma create operations with typed columns
+// Helper to create attribute objects for Prisma create operations with typed columns. Keys are
+// connected by the ids the upload already read, as the update path does.
 const createAttributeConnections = (
   record: Record<string, string>,
-  workspaceId: string,
+  attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>
 ) =>
   Object.entries(record).map(([key, value]) => {
     const dataType = attributeTypeMap.get(key)?.dataType ?? "string";
     const columns = prepareAttributeColumnsForStorage(value, dataType);
+    const attributeKeyId = attributeKeyMap.get(key);
+    if (!attributeKeyId) {
+      throw new ValidationError(`Attribute key "${key}" not found in attribute key map`);
+    }
 
     return {
       attributeKey: {
-        connect: uniqueAttributeKey(workspaceId, key),
+        connect: { id: attributeKeyId },
       },
       value: columns.value,
       valueNumber: columns.valueNumber,
@@ -522,7 +526,7 @@ const processCsvRecord = async (
       data: {
         workspaceId,
         attributes: {
-          create: createAttributeConnections(mappedRecord, workspaceId, attributeTypeMap),
+          create: createAttributeConnections(mappedRecord, attributeKeyMap, attributeTypeMap),
         },
       },
       include: contactAttributesInclude,
@@ -609,7 +613,7 @@ const handleDuplicateContact = async (
     where: { id: existingContact.id },
     data: {
       attributes: {
-        create: createAttributeConnections(recordToProcess, workspaceId, attributeTypeMap),
+        create: createAttributeConnections(recordToProcess, attributeKeyMap, attributeTypeMap),
       },
     },
     include: contactAttributesInclude,

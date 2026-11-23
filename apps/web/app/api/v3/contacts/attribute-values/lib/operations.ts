@@ -8,7 +8,7 @@ import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemBadRequest, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
-import { uniqueAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import type { TV3ContactAttributeValuesQuery } from "./schemas";
 
 type TListV3ContactAttributeValuesParams = {
@@ -72,10 +72,11 @@ export async function listV3ContactAttributeValues({
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
 
-    // Resolved inside the authorized workspace, so a key from another workspace answers exactly like an
-    // unknown one — and the value query below can only ever read this workspace's rows.
-    const attributeKey = await prisma.contactAttributeKey.findUnique({
-      where: uniqueAttributeKey(authResult.workspaceId, query.key),
+    // Resolved inside the authorized workspace's contact directory, so a key from another directory answers
+    // exactly like an unknown one — and the value query below can only ever read this directory's rows.
+    // Keys are unique per directory, so at most one row matches.
+    const attributeKey = await prisma.contactAttributeKey.findFirst({
+      where: whereAttributeKey(authResult.workspaceId, query.key),
       select: { id: true },
     });
     if (!attributeKey) {

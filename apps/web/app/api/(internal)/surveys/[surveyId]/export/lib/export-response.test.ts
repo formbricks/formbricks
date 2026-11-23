@@ -104,7 +104,9 @@ describe("countExportResponses", () => {
       { id: "e:person_first_name", label: "person.firstName" },
     ]);
     expect(mocks.attributeKeys).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { workspaceId: "ws1", attributes: { some: {} } } })
+      expect.objectContaining({
+        where: { directory: { workspaces: { some: { id: "ws1" } } }, attributes: { some: {} } },
+      })
     );
   });
 

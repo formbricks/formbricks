@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import { createResponseWithQuotaEvaluation } from "./response";
 
@@ -31,9 +32,8 @@ beforeEach(async () => {
 
 const seed = async () => {
   const organization = await prisma.organization.create({ data: { name: "ENG-3285 org" } });
-  const workspace = await prisma.workspace.create({
-    data: { name: "ENG-3285 workspace", organizationId: organization.id },
-  });
+  const { workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "ENG-3285 workspace");
+  const workspace = { id: workspaceId };
   const survey = await prisma.survey.create({
     data: { name: "ENG-3285 survey", workspaceId: workspace.id, status: "inProgress" },
   });

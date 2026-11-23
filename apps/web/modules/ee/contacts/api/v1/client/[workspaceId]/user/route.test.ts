@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  ContactDirectoryMissingError,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { POST } from "./route";
 
 // `withV1ApiWrapper` is reduced to its handler: what it adds (rate limiting, logging) is orthogonal to
@@ -148,5 +152,20 @@ describe("POST /api/v1/client/[workspaceId]/user failures", () => {
 
     expect(result.response.status).toBe(500);
     expect(result.error).toBe(error);
+  });
+
+  // Decision 13: setUserId and setAttribute(s) on a workspace with no contact directory answer the same
+  // message the Contacts page shows, as a 403 the SDK logs, and report nothing (it is not a server fault).
+  test("answers 403 with the no-directory message for a workspace with no contact directory", async () => {
+    mocks.updateUser.mockRejectedValue(new ContactDirectoryMissingError());
+
+    const result = await (identify({ plan: "pro" }) as Promise<{ response: Response; error?: unknown }>);
+
+    expect(result.response.status).toBe(403);
+    await expect(result.response.json()).resolves.toMatchObject({
+      code: "forbidden",
+      message: CONTACT_DIRECTORY_MISSING_MESSAGE,
+    });
+    expect(result.error).toBeUndefined();
   });
 });

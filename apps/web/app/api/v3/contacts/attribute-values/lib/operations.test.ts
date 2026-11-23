@@ -7,7 +7,7 @@ import { ZV3ContactAttributeValuesQuery } from "./schemas";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    contactAttributeKey: { findUnique: vi.fn() },
+    contactAttributeKey: { findFirst: vi.fn() },
     $queryRaw: vi.fn(),
   },
 }));
@@ -74,7 +74,7 @@ describe("listV3ContactAttributeValues", () => {
   });
 
   test("resolves the key inside the workspace and returns the bounded values", async () => {
-    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({ id: attributeKeyId } as never);
+    vi.mocked(prisma.contactAttributeKey.findFirst).mockResolvedValue({ id: attributeKeyId } as never);
     vi.mocked(prisma.$queryRaw).mockResolvedValue([{ value: "Enterprise" }, { value: "Pro" }] as never);
 
     const response = await call({ key: "plan", limit: "2" });
@@ -84,8 +84,8 @@ describe("listV3ContactAttributeValues", () => {
       data: [{ value: "Enterprise" }, { value: "Pro" }],
       meta: { limit: 2, truncated: false },
     });
-    expect(prisma.contactAttributeKey.findUnique).toHaveBeenCalledWith({
-      where: { key_workspaceId: { key: "plan", workspaceId } },
+    expect(prisma.contactAttributeKey.findFirst).toHaveBeenCalledWith({
+      where: { key: "plan", directory: { workspaces: { some: { id: workspaceId } } } },
       select: { id: true },
     });
     const [sql] = vi.mocked(prisma.$queryRaw).mock.calls[0] as unknown as [{ values: unknown[] }];
@@ -93,7 +93,7 @@ describe("listV3ContactAttributeValues", () => {
   });
 
   test("one value past the limit is dropped and marks the list truncated", async () => {
-    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue({ id: attributeKeyId } as never);
+    vi.mocked(prisma.contactAttributeKey.findFirst).mockResolvedValue({ id: attributeKeyId } as never);
     vi.mocked(prisma.$queryRaw).mockResolvedValue([{ value: "A" }, { value: "B" }, { value: "C" }] as never);
 
     const body = await (await call({ key: "plan", limit: "2", "filter[value][contains]": "x" })).json();
@@ -102,7 +102,7 @@ describe("listV3ContactAttributeValues", () => {
   });
 
   test("an unknown key is a 400 naming key", async () => {
-    vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.contactAttributeKey.findFirst).mockResolvedValue(null);
 
     const response = await call({ key: "nope" });
 
@@ -117,6 +117,6 @@ describe("listV3ContactAttributeValues", () => {
     vi.mocked(getIsContactsEnabled).mockResolvedValue(false);
 
     expect((await call({ key: "plan" })).status).toBe(403);
-    expect(prisma.contactAttributeKey.findUnique).not.toHaveBeenCalled();
+    expect(prisma.contactAttributeKey.findFirst).not.toHaveBeenCalled();
   });
 });

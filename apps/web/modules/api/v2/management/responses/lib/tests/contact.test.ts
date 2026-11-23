@@ -47,7 +47,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              workspaceId,
+              directory: { workspaces: { some: { id: workspaceId } } },
             },
             value: userId,
           },
@@ -84,7 +84,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              workspaceId,
+              directory: { workspaces: { some: { id: workspaceId } } },
             },
             value: userId,
           },

@@ -20,9 +20,7 @@ describe("getContactAttributeKeysQuery", () => {
 
     expect(result).toEqual({
       where: {
-        workspaceId: {
-          in: workspaceIds,
-        },
+        directory: { workspaces: { some: { id: { in: workspaceIds } } } },
       },
     });
   });
@@ -36,9 +34,7 @@ describe("getContactAttributeKeysQuery", () => {
 
     expect(result).toEqual({
       where: {
-        workspaceId: {
-          in: workspaceIds,
-        },
+        directory: { workspaces: { some: { id: { in: workspaceIds } } } },
       },
       take: 10,
       orderBy: {
@@ -61,9 +57,7 @@ describe("getContactAttributeKeysQuery", () => {
 
     expect(result).toEqual({
       where: {
-        workspaceId: {
-          in: workspaceIds,
-        },
+        directory: { workspaces: { some: { id: { in: workspaceIds } } } },
         createdAt: {
           gte: startDate,
           lte: endDate,
@@ -88,9 +82,7 @@ describe("getContactAttributeKeysQuery", () => {
 
     expect(result).toEqual({
       where: {
-        workspaceId: {
-          in: workspaceIds,
-        },
+        directory: { workspaces: { some: { id: { in: workspaceIds } } } },
       },
       take: 5,
       skip: 10,

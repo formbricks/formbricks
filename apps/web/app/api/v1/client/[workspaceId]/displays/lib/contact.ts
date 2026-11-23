@@ -1,10 +1,11 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereDirectoryAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 
+/** The contact with this userId in the directory, whichever workspace of the directory created it. */
 export const getContactByUserId = reactCache(
   async (
-    workspaceId: string,
+    directoryId: string,
     userId: string
   ): Promise<{
     id: string;
@@ -13,7 +14,7 @@ export const getContactByUserId = reactCache(
       where: {
         attributes: {
           some: {
-            attributeKey: whereAttributeKey(workspaceId, "userId"),
+            attributeKey: whereDirectoryAttributeKey(directoryId, "userId"),
             value: userId,
           },
         },
