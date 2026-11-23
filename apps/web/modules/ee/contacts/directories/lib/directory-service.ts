@@ -153,15 +153,36 @@ const getDirectoryContents = async (
 };
 
 /**
+ * The attribute keys of `targetDirectoryId` among `keys`, or, with no target (the settings list, which
+ * cannot know where a workspace will go), the defaults every directory of that matching key has.
+ */
+const getKeysKeptIn = async (
+  client: TClient,
+  targetDirectoryId: string | undefined,
+  matchingKey: TContactDirectoryMatchingKey,
+  keys: string[]
+): Promise<Set<string>> => {
+  if (!targetDirectoryId) return new Set(getDefaultAttributeKeys(matchingKey).map(({ key }) => key));
+  const kept = await client.contactAttributeKey.findMany({
+    where: { directoryId: targetDirectoryId, key: { in: keys } },
+    select: { key: true },
+  });
+  return new Set(kept.map(({ key }) => key));
+};
+
+/**
  * Spec decision 8: a workspace may leave its directory only if it is the directory's one workspace and the
  * directory holds no contacts, no public segments, no keys beyond the defaults and no survey filter on
  * such a key. Directories that pass the counts get their surveys' private segments read, to look for
- * filters naming a key the new directory won't have. Returns the ids of the directories that may be left.
+ * filters naming a key the new directory won't have: the target directory's keys when the move names it
+ * (an `externalId` filter can't go into an email directory), else the leaving directory's own defaults.
+ * Returns the ids of the directories that may be left.
  */
 const getLeavableDirectoryIds = async (
   client: TClient,
   directories: { id: string; matchingKey: TContactDirectoryMatchingKey }[],
-  contents: Map<string, TDirectoryContents>
+  contents: Map<string, TDirectoryContents>,
+  targetDirectoryId?: string
 ): Promise<Set<string>> => {
   const candidates = directories.filter(({ id }) => {
     const c = contents.get(id);
@@ -183,10 +204,11 @@ const getLeavableDirectoryIds = async (
   for (const { directoryId, filters } of privateSegments) {
     const directory = candidates.find(({ id }) => id === directoryId);
     if (!directory) continue;
-    const defaults = new Set(getDefaultAttributeKeys(directory.matchingKey).map(({ key }) => key));
-    if (collectAttributeKeysFromSegmentFilters(filters).some((key) => !defaults.has(key))) {
-      blocked.add(directory.id);
-    }
+    const keys = collectAttributeKeysFromSegmentFilters(filters);
+    if (keys.length === 0) continue;
+    // Sequential on purpose: inside the move's transaction, and only for segments that filter on keys.
+    const kept = await getKeysKeptIn(client, targetDirectoryId, directory.matchingKey, keys); // NOSONAR
+    if (keys.some((key) => !kept.has(key))) blocked.add(directory.id);
   }
 
   return new Set(candidates.map(({ id }) => id).filter((id) => !blocked.has(id)));
@@ -448,7 +470,7 @@ const moveWorkspacesIntoDirectory = async (
       FOR UPDATE
     `;
     const contents = await getDirectoryContents(tx, oldDirectoryIds);
-    const leavable = await getLeavableDirectoryIds(tx, oldDirectories, contents);
+    const leavable = await getLeavableDirectoryIds(tx, oldDirectories, contents, directoryId);
 
     const notMovable = moving
       .filter((row) => row.contactDirectoryId !== null && !leavable.has(row.contactDirectoryId))

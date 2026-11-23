@@ -196,3 +196,83 @@ describe("moving a workspace never merges contacts", () => {
     });
   });
 });
+
+describe("a survey's private segment keeps its keys when its workspace moves", () => {
+  const filterOn = (contactAttributeKey: string) => [
+    {
+      id: "filter-1",
+      connector: null,
+      resource: {
+        id: "resource-1",
+        root: { type: "attribute", contactAttributeKey },
+        value: "x",
+        qualifier: { operator: "equals" },
+      },
+    },
+  ];
+
+  test("refuses moving a segment filtering on externalId into an email directory", async () => {
+    const organizationId = await createOrganization();
+    const workspaceId = await createWorkspaceWithoutDirectory(organizationId);
+    const { id: oldDirectoryId } = await createContactDirectory({
+      organizationId,
+      name: null,
+      matchingKey: "externalId",
+      workspaceIds: [workspaceId],
+    });
+    await prisma.segment.create({
+      data: {
+        title: "survey-id",
+        isPrivate: true,
+        filters: filterOn("externalId"),
+        workspaceId,
+        directoryId: oldDirectoryId,
+      },
+    });
+
+    await expect(
+      createContactDirectory({
+        organizationId,
+        name: null,
+        matchingKey: "email",
+        workspaceIds: [workspaceId],
+      })
+    ).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotMovableError);
+    expect(await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } })).toMatchObject({
+      contactDirectoryId: oldDirectoryId,
+    });
+  });
+
+  test("moves a segment filtering on externalId into another external-ID directory", async () => {
+    const organizationId = await createOrganization();
+    const workspaceId = await createWorkspaceWithoutDirectory(organizationId);
+    await createContactDirectory({
+      organizationId,
+      name: null,
+      matchingKey: "externalId",
+      workspaceIds: [workspaceId],
+    });
+    const segment = await prisma.segment.create({
+      data: {
+        title: "survey-id",
+        isPrivate: true,
+        filters: filterOn("externalId"),
+        workspaceId,
+        directoryId: (await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } }))
+          .contactDirectoryId,
+      },
+      select: { id: true },
+    });
+
+    const { id: directoryId } = await createContactDirectory({
+      organizationId,
+      name: null,
+      matchingKey: "externalId",
+      workspaceIds: [workspaceId],
+    });
+
+    expect(await prisma.segment.findUniqueOrThrow({ where: { id: segment.id } })).toMatchObject({
+      directoryId,
+    });
+  });
+});

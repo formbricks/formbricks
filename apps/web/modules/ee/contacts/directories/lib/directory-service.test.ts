@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
+import { getDefaultAttributeKeys } from "./constants";
 import {
   ContactDirectoryNameRequiredError,
   ContactDirectoryNameTakenError,
@@ -228,7 +229,16 @@ const setup = ({
     return null;
   });
   db.contact.updateMany.mockResolvedValue({ count: 0 });
-  db.contactAttributeKey.findMany.mockResolvedValue([]);
+  // A directory's keys are its defaults; a workspace with no directory has none (see above).
+  db.contactAttributeKey.findMany.mockImplementation(
+    async ({ where }: { where: { directoryId?: string | null; key?: { in: string[] } } }) => {
+      const directory = directories.find((d) => d.id === where.directoryId);
+      if (!directory) return [];
+      return getDefaultAttributeKeys(directory.matchingKey)
+        .filter(({ key }) => where.key?.in.includes(key) ?? true)
+        .map(({ key }) => ({ id: `${directory.id}-${key}`, key }));
+    }
+  );
   db.contactAttributeKey.groupBy.mockImplementation(contentCount("blockingKeys", "count blocking keys"));
 };
 
