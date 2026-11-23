@@ -277,4 +277,55 @@ describe("useChartQuery", () => {
       expect.objectContaining({ workspaceId: WORKSPACE_ID, datasetId: NEW_DIRECTORY_ID, query: sampleQuery })
     );
   });
+
+  test("stops loading when the data source changes while a request is in flight", async () => {
+    // The superseded request never settles here: the scope change itself must end the loading state.
+    mockPreviewChart.mockReturnValueOnce(new Promise(() => undefined));
+
+    const { result, rerender } = renderHook(
+      ({ feedbackDirectoryId }: { feedbackDirectoryId: string | null }) =>
+        useChartQuery(WORKSPACE_ID, feedbackDirectoryId),
+      { initialProps: { feedbackDirectoryId: DIRECTORY_ID } }
+    );
+
+    await act(async () => {
+      void result.current.runQuery(sampleQuery, "bar");
+    });
+    expect(result.current.isLoading).toBe(true);
+
+    rerender({ feedbackDirectoryId: "frd-2" });
+
+    expect(result.current.isLoading).toBe(false);
+    expect((mockPreviewChart.mock.calls[0][0] as { signal: AbortSignal }).signal.aborted).toBe(true);
+  });
+
+  test("stops loading when an in-flight request is aborted by a data source change", async () => {
+    // The real client rejects an aborted request; that rejection must not leave the spinner on either.
+    mockPreviewChart.mockImplementationOnce(
+      ({ signal }: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+        })
+    );
+
+    const { result, rerender } = renderHook<
+      ReturnType<typeof useChartQuery>,
+      { feedbackDirectoryId: string | null }
+    >(({ feedbackDirectoryId }) => useChartQuery(WORKSPACE_ID, feedbackDirectoryId), {
+      initialProps: { feedbackDirectoryId: DIRECTORY_ID },
+    });
+
+    let response: Promise<unknown> = Promise.resolve();
+    await act(async () => {
+      response = result.current.runQuery(sampleQuery, "bar");
+    });
+
+    rerender({ feedbackDirectoryId: null });
+    await act(async () => {
+      await response;
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 });
