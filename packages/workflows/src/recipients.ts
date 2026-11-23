@@ -10,4 +10,5 @@ const ZLiteralEmail = z.email();
  * send-time backstop (app runner) and the authoring picker's "not available" warning, so the three
  * classifications cannot drift.
  */
-export const isLiteralEmailRecipient = (to: string): boolean => ZLiteralEmail.safeParse(to).success;
+export const isLiteralEmailRecipient = (to: string | { type: "variable"; ref: string }): boolean =>
+  typeof to === "string" && ZLiteralEmail.safeParse(to).success;

@@ -113,6 +113,8 @@ get:
                   - name: picks
                     reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
                     code: limit_exceeded
+    "409":
+      $ref: ../components/responses/V3ChartEmbeddedFieldsRefused.yml
     "429":
       $ref: ../components/responses/V3ChartQueryTooManyRequests.yml
     "500":

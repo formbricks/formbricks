@@ -53,3 +53,42 @@ describe("buildPrismaResponseData — Embedded Data ingest flags", () => {
     ).toEqual([{ key: "seats", reason: "coercion_failed" }]);
   });
 });
+
+/**
+ * The details a Cal.com element reported go to their own column, set only by the client routes after they
+ * split them out of `data` (`splitCalBookingsFromInput`). No booking means the column is left out, so a
+ * create from the management routes, whose body schema has no such key, never writes it.
+ */
+describe("buildPrismaResponseData — Cal.com booking details", () => {
+  const booking = { status: "booked", startTime: "2026-11-05T10:00:00.000Z" } as const;
+
+  test("writes the bookings the route split out of data", () => {
+    expect(
+      buildPrismaResponseData(
+        { ...input(), data: { cal1: "booked" }, calBookings: { cal1: booking } },
+        null,
+        {}
+      ).calBookings
+    ).toEqual({
+      cal1: booking,
+    });
+  });
+
+  test("keeps a booking only while its answer is in data", () => {
+    const withAnswer = {
+      ...input(),
+      data: { cal1: "booked" },
+      calBookings: { cal1: booking, cal2: booking },
+    };
+
+    expect(buildPrismaResponseData(withAnswer, null, {}).calBookings).toEqual({ cal1: booking });
+    expect(buildPrismaResponseData({ ...withAnswer, data: {} }, null, {})).not.toHaveProperty("calBookings");
+  });
+
+  test("omits the column when there is no booking, or an empty set", () => {
+    expect(buildPrismaResponseData(input(), null, {})).not.toHaveProperty("calBookings");
+    expect(buildPrismaResponseData({ ...input(), calBookings: {} }, null, {})).not.toHaveProperty(
+      "calBookings"
+    );
+  });
+});

@@ -26,7 +26,8 @@ export interface EmailSendToOption {
  * Builds the "who to send to" options for a survey-response email, identical to the survey
  * Follow-Ups recipient dropdown: OpenText(email) + ContactInfo(email.show) elements, hidden fields,
  * an optional verified-email entry, and the team roster (with the current user surfaced as
- * "Yourself"). Shared by `FollowUpModal` and the workflow `send_email` inspector form.
+ * "Yourself"). Shared by `FollowUpModal` and the workflow `send_email` inspector form. Without a
+ * survey (a Webhook workflow's email) only the team roster is offered.
  */
 export const buildEmailSendToOptions = ({
   survey,
@@ -35,13 +36,13 @@ export const buildEmailSendToOptions = ({
   selectedLanguageCode,
   t,
 }: {
-  survey: TSurvey;
+  survey: TSurvey | null;
   teamMemberDetails: TFollowUpEmailToUser[];
   userEmail: string;
   selectedLanguageCode: string;
   t: TFunction;
 }): EmailSendToOption[] => {
-  const elements = getElementsFromBlocks(survey.blocks);
+  const elements = survey ? getElementsFromBlocks(survey.blocks) : [];
 
   const openTextAndContactElements = elements.filter((element) => {
     if (element.type === TSurveyElementTypeEnum.ContactInfo) {
@@ -62,7 +63,7 @@ export const buildEmailSendToOptions = ({
   // ENG-1853: the whole pair rather than the storage keys alone, because the row is now labelled by
   // the field's NAME. The id is still the storage key, so a recipient stored before this — and
   // `findEmailSendToOption`, which matches on it — is unaffected; only what the author reads changed.
-  const ingestedFields = getIngestedEmbeddedFields(survey);
+  const ingestedFields = survey ? getIngestedEmbeddedFields(survey) : [];
 
   const updatedTeamMemberDetails = teamMemberDetails.map((teamMemberDetail) =>
     teamMemberDetail.email === userEmail ? { name: "Yourself", email: userEmail } : teamMemberDetail
@@ -76,16 +77,19 @@ export const buildEmailSendToOptions = ({
     ? updatedTeamMemberDetails
     : [...updatedTeamMemberDetails, { email: userEmail, name: "Yourself" }];
 
-  const verifiedEmailOption: EmailSendToOption[] = survey.isVerifyEmailEnabled
+  const verifiedEmailOption: EmailSendToOption[] = survey?.isVerifyEmailEnabled
     ? [{ label: t("common.verified_email"), id: "verifiedEmail", type: "verifiedEmail" }]
     : [];
 
   return [
     ...verifiedEmailOption,
     ...openTextAndContactElements.map((element) => ({
-      label: getTextContent(
-        recallToHeadline(element.headline, survey, false, selectedLanguageCode)[selectedLanguageCode]
-      ),
+      // `survey` is set whenever there are elements; the guard only narrows the type.
+      label: survey
+        ? getTextContent(
+            recallToHeadline(element.headline, survey, false, selectedLanguageCode)[selectedLanguageCode]
+          )
+        : element.id,
       id: element.id,
       type: (element.type === TSurveyElementTypeEnum.OpenText
         ? "openTextElement"

@@ -61,6 +61,7 @@ describe("deliverVerificationEmail", () => {
       callbackUrl: "http://localhost:3000/cb",
       purpose: "sso_recovery",
       linkTtlSeconds: 777,
+      ssoRecoveryStateId: "state-1",
     });
     expect(recovery.refreshSsoRecoveryIntent).toHaveBeenCalledWith("state-1", 777);
     expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();

@@ -1,22 +1,23 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { ZWorkflowDefinition } from "@formbricks/workflows";
+import { ZWorkflowDefinition, getTriggerSurveyId } from "@formbricks/workflows";
 import { createWorkflowsService } from "@formbricks/workflows/server";
 import { DEFAULT_LOCALE, MAIL_FROM } from "@/lib/constants";
 import { getWorkspaceMembers } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
+import { webhookTokenIssuer } from "@/modules/ee/workflows/lib/webhook/token";
 import type { TWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/types/email-authoring-context";
 import { getUserEmail, getUserLocale } from "@/modules/survey/editor/lib/user";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { canReadSurveyInWorkspace } from "@/modules/survey/lib/survey-auth";
 
-const workflowsService = createWorkflowsService({ prisma });
+const workflowsService = createWorkflowsService({ prisma, webhookTokens: webhookTokenIssuer });
 
 /** Reads the bound survey id from a workflow row's (untrusted JSON) definition trigger, if any. */
 const readTriggerSurveyId = (definition: unknown): string | null => {
   const parsed = ZWorkflowDefinition.safeParse(definition);
   if (!parsed.success) return null;
-  return parsed.data.trigger?.config.surveyId ?? null;
+  return getTriggerSurveyId(parsed.data.trigger);
 };
 
 /**

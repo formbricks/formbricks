@@ -61,7 +61,8 @@ const verifyAndExtractSessionToken = (signedValue: string | null): string | null
   return token;
 };
 
-const getSignedCookieValueFromHeader = (cookieHeader: string, cookieName: string): string | null => {
+/** One cookie's decoded value from a raw `Cookie` header, or null when it is absent or empty. */
+export const getCookieValueFromHeader = (cookieHeader: string, cookieName: string): string | null => {
   const cookies = cookieHeader.split(";").map((cookie) => cookie.trim());
 
   for (const cookie of cookies) {
@@ -98,7 +99,7 @@ export const getSessionTokenFromCookieHeader = (cookieHeader: string | null): st
   }
 
   for (const cookieName of BETTER_AUTH_SESSION_COOKIE_NAMES) {
-    const signedValue = getSignedCookieValueFromHeader(cookieHeader, cookieName);
+    const signedValue = getCookieValueFromHeader(cookieHeader, cookieName);
     if (!signedValue) continue;
     const token = verifyAndExtractSessionToken(signedValue);
     if (token) return token;

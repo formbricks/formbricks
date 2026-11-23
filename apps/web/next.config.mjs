@@ -63,6 +63,11 @@ const nextConfig = {
   basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
+  // The Webhook Secret URL token is a credential (ADR 0057); keep `next dev`'s request log from
+  // printing it. Production never logs incoming requests.
+  logging: {
+    incomingRequests: { ignore: [/\/api\/v3\/workflows\/[^/]+\/webhook\/[^/]+$/] },
+  },
   // Enable source maps only when uploading to Sentry (CI/production); skip for faster local builds
   productionBrowserSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
   serverExternalPackages: [
@@ -258,6 +263,22 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value: `${cspBase}; frame-ancestors *`,
+          },
+        ],
+      },
+      {
+        // The SSO recovery confirmation (ENG-7395) is a one-click account change, so it may not be framed
+        // at all, same origin included: a page on this origin that framed it could steer the click.
+        // After the catch-all above, so these values replace its SAMEORIGIN and `frame-ancestors 'self'`.
+        source: "/sso-recovery/:path*",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: `${cspBase}; frame-ancestors 'none'`,
           },
         ],
       },

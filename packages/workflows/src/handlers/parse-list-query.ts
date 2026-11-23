@@ -67,6 +67,7 @@ export const parseListWorkflowRunsQuery = (searchParams: URLSearchParams): TList
     workflowId: searchParams.get("workflowId") ?? undefined,
     responseId: searchParams.get("responseId") ?? undefined,
     statusIn: multiValue(searchParams, "filter[status][in]"),
+    triggerTypeIn: multiValue(searchParams, "filter[triggerType][in]"),
     isDryRun: parseBooleanParam(searchParams.get("filter[isDryRun][eq]")),
   };
 

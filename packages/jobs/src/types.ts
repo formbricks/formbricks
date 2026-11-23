@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZCalBookingsByQuestionId } from "@formbricks/types/cal-booking";
 import { ZResponse } from "@formbricks/types/responses";
 import { ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import { ZTag } from "@formbricks/types/tags";
@@ -108,6 +109,20 @@ export const ZWorkflowRunJobData = z.object({
 
 export type TWorkflowRunJobData = z.infer<typeof ZWorkflowRunJobData>;
 
+/**
+ * One "Don't wait" HTTP request call of a workflow run (ENG-7179). Ids only: the handler reads the rendered
+ * request from the step's run log and the secret header values from the database at send time, so no
+ * payload data or secret ever sits in Redis.
+ */
+export const ZWorkflowHttpRequestDeliveryJobData = z.object({
+  workflowRunId: z.cuid2(),
+  workflowId: z.cuid2(),
+  workspaceId: z.cuid2(),
+  stepId: z.string().min(1),
+});
+
+export type TWorkflowHttpRequestDeliveryJobData = z.infer<typeof ZWorkflowHttpRequestDeliveryJobData>;
+
 // The reconciler is a global periodic sweep, not a per-run job — it carries no run identifiers.
 export const ZWorkflowRunReconcileJobData = ZGlobalScopeJobData;
 
@@ -151,6 +166,11 @@ export const ZWebhookDeliveryJobData = z.object({
     // `dataByQuestionCode`. Optional so a job queued before the deploy still parses.
     questionCodes: z.record(z.string(), z.string()).optional(),
   }),
+  // `{ [Question ID]: booking }` for the body's `calBookingsByQuestionId`: what the survey's Cal.com
+  // elements reported, read from the response when the event fired. Absent when the survey has no Cal
+  // element or the response holds no booking, and for a job queued before the deploy, so such a webhook
+  // body is byte-identical to what it was.
+  calBookings: ZCalBookingsByQuestionId.optional(),
 });
 
 export type TWebhookDeliveryJobData = z.infer<typeof ZWebhookDeliveryJobData>;

@@ -67,10 +67,25 @@ export const ZActionCalculateExpression = ZActionCalculateBase.extend({
 
 export type TActionCalculateExpression = z.infer<typeof ZActionCalculateExpression>;
 
+/**
+ * Set value on a true/false field (ENG-6973): a one-step assign of True or False, stored as a real
+ * boolean. A reference to another true/false field parses as {@link ZActionCalculateText}'s assign,
+ * as every reference does; the survey refinement (`validateBlockCalculateAction`) is what ties the
+ * operator, the value and the reference's type to the target field.
+ */
+export const ZActionCalculateBoolean = ZActionCalculateBase.extend({
+  operator: z.literal("assign"),
+  value: z.object({
+    type: z.literal("static"),
+    value: z.boolean(),
+  }),
+});
+
 export const ZActionCalculate = z.union([
   ZActionCalculateText,
   ZActionCalculateNumber,
   ZActionCalculateExpression,
+  ZActionCalculateBoolean,
 ]);
 
 export type TActionCalculate = z.infer<typeof ZActionCalculate>;

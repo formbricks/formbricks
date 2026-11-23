@@ -38,6 +38,42 @@ spec:
     level:
       default: {{ .Values.envoy.formbricks.proxy.logging.defaultLevel | quote }}
   telemetry:
+    # A Webhook Secret URL carries its credential in the path (ADR 0057), so a request whose path holds
+    # "/webhook/" is logged without its path; every other request keeps Envoy Gateway's default access
+    # log. Keep the CEL plain: Envoy Gateway drops a match it cannot parse instead of failing.
+    accessLog:
+      settings:
+        - matches:
+            - "!request.path.contains('/webhook/')"
+          sinks:
+            - type: File
+              file:
+                path: /dev/stdout
+        - matches:
+            - "request.path.contains('/webhook/')"
+          format:
+            type: JSON
+            json:
+              start_time: "%START_TIME%"
+              method: "%REQ(:METHOD)%"
+              path: "[redacted]"
+              protocol: "%PROTOCOL%"
+              response_code: "%RESPONSE_CODE%"
+              response_flags: "%RESPONSE_FLAGS%"
+              response_code_details: "%RESPONSE_CODE_DETAILS%"
+              bytes_received: "%BYTES_RECEIVED%"
+              bytes_sent: "%BYTES_SENT%"
+              duration: "%DURATION%"
+              x-forwarded-for: "%REQ(X-FORWARDED-FOR)%"
+              user-agent: "%REQ(USER-AGENT)%"
+              x-request-id: "%REQ(X-REQUEST-ID)%"
+              ":authority": "%REQ(:AUTHORITY)%"
+              upstream_host: "%UPSTREAM_HOST%"
+              route_name: "%ROUTE_NAME%"
+          sinks:
+            - type: File
+              file:
+                path: /dev/stdout
     metrics:
       prometheus:
         disable: {{ not .Values.envoy.formbricks.proxy.telemetry.prometheus.enabled }}

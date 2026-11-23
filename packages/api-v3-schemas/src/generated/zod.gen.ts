@@ -118,6 +118,7 @@ export const zProblem = z.object({
       "survey_not_workspace_visible",
       "too_many_requests",
       "unprocessable_content",
+      "unsupported_media_type",
       "visibility_blocked_by_connections",
       "visibility_change_not_allowed",
       "visibility_not_enabled",
@@ -339,7 +340,7 @@ export const zResponseAnswerSignature = z.strictObject({
 export type ResponseAnswerSignatureZodType = z.infer<typeof zResponseAnswerSignature>;
 
 /**
- * Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response; the meeting itself lives in the scheduling provider and is not proxied by this API.
+ * Scheduling answer for a `cal` element. The answer itself is the fact of the booking; the details Cal.com reported at that moment are in `booking`. The meeting lives in the scheduling provider, so a later change there is not reflected.
  */
 export const zResponseAnswerBooking = z.strictObject({
   position: z.int().gte(1),
@@ -349,6 +350,20 @@ export const zResponseAnswerBooking = z.strictObject({
   durationSeconds: z.number().gte(0).lte(86400).optional(),
   booked: z.boolean(),
   rawValue: z.string(),
+  booking: z
+    .strictObject({
+      status: z.enum(["booked"]),
+      uid: z.string().optional(),
+      title: z.string().optional(),
+      startTime: z.string().optional(),
+      endTime: z.string().optional(),
+      eventTypeId: z.string().optional(),
+      bookingStatus: z.string().optional(),
+      paymentRequired: z.string().optional(),
+      isRecurring: z.string().optional(),
+      videoCallUrl: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type ResponseAnswerBookingZodType = z.infer<typeof zResponseAnswerBooking>;

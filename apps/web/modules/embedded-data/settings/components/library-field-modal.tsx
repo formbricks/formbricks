@@ -470,9 +470,9 @@ export const LibraryFieldModal = ({
                     />
                   )}
 
-                  {/* Why the Type list below is shorter. Which types it holds is `ZEmbeddedData`'s
-                      answer, read through `getDataTypesForSource` — this only names the source the
-                      sentence is about. */}
+                  {/* Which types a calculated field takes. The list is `ZEmbeddedData`'s answer,
+                      read through `getDataTypesForSource` (every type since ENG-6973) — this only
+                      names the source the sentence is about. */}
                   {source === "computed" && (
                     <p className="text-xs text-slate-500">
                       {t("workspace.embedded_data.calculated_type_hint")}

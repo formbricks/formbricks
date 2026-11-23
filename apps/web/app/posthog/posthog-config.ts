@@ -1,4 +1,5 @@
 import type { PostHogConfig } from "posthog-js";
+import { maskWebhookNetworkRequests } from "./mask-webhook-network-requests";
 
 // Respondent answers, emails and contact data are rendered across the app, so nothing the user sees
 // may leave the browser: recordings mask every text node and input, autocapture drops element
@@ -15,5 +16,6 @@ export const getPostHogConfig = (isDevelopmentBuild: boolean): Partial<PostHogCo
     blockSelector: "iframe[src*='cdn-plain']",
     maskAllInputs: true,
     maskTextSelector: "*",
+    maskCapturedNetworkRequestFn: maskWebhookNetworkRequests,
   },
 });

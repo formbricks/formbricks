@@ -263,6 +263,8 @@ const calculationPhrase = (ctx: TLogicContext, action: TActionCalculate): string
   let value: string;
   if (operand.type !== "static") value = fieldPhrase(ctx, operand);
   else if (typeof operand.value === "number") value = String(operand.value);
+  // ENG-6973: a true/false field is set to True or False.
+  else if (typeof operand.value === "boolean") value = ctx.t(operand.value ? "common.true" : "common.false");
   else value = quote(ctx, operand.value);
   const operands = { variable, value };
 

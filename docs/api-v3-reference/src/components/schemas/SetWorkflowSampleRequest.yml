@@ -1,0 +1,12 @@
+type: object
+description: Sets the workflow's expected payload, typed or pasted in the editor or taken from a received call.
+required:
+  - payload
+properties:
+  payload:
+    type: object
+    additionalProperties: true
+    description: >-
+      A JSON object of at most 100 KB once serialized, nested at most 10
+      levels (lists count as levels).
+additionalProperties: false

@@ -32,6 +32,7 @@ import {
   getFormatLeftOperandValue,
   getFormatRightOperandValue,
   getMatchValueProps,
+  isComputedBooleanField,
   isComputedDateField,
 } from "./utils";
 
@@ -514,6 +515,63 @@ describe("calculate action options", () => {
     expect(groupNamed(groups, "common.embedded_data")?.options.map((option) => option.value)).toEqual([
       "plan",
     ]);
+  });
+});
+
+describe("a calculated true/false field (ENG-6973)", () => {
+  const withBoolean = survey([
+    field({ storageKey: "qualified", name: "Qualified", source: "computed", dataType: "boolean" }),
+    field({ storageKey: "source_flag", name: "Source flag", source: "computed", dataType: "boolean" }),
+    field({ storageKey: "is_pro", name: "Is pro", dataType: "boolean" }),
+    field({ storageKey: "plan", name: "Plan" }),
+    field({ storageKey: "note", name: "Note", source: "computed", dataType: "string" }),
+  ]);
+
+  test("its Set value row only assigns", () => {
+    expect(isComputedBooleanField(withBoolean, "qualified")).toBe(true);
+    expect(isComputedBooleanField(withBoolean, "is_pro")).toBe(false);
+    expect(isComputedBooleanField(withBoolean, "note")).toBe(false);
+    expect(getActionOperatorOptions(t, "boolean").map((option) => option.value)).toEqual(["assign"]);
+  });
+
+  test("its Set value takes True, False or another true/false field, and no question", () => {
+    const groups = getActionValueOptions("qualified", withBoolean, 0, t);
+
+    expect(groupLabels(groups)).toEqual(["common.choices", "common.embedded_data"]);
+    expect(groupNamed(groups, "common.choices")?.options).toEqual([
+      { label: "common.true", value: "static:true", meta: { type: "static" } },
+      { label: "common.false", value: "static:false", meta: { type: "static" } },
+    ]);
+    // Calculated and passed-in true/false fields, never itself, and no text field.
+    expect(groupNamed(groups, "common.embedded_data")?.options.map((option) => option.value)).toEqual([
+      "source_flag",
+      "is_pro",
+    ]);
+  });
+
+  test("a condition on it compares by True / False, with no free text", () => {
+    const variableCondition = condition({ type: "variable", value: "qualified" });
+
+    expect(operatorValues(getConditionOperatorOptions(variableCondition, withBoolean, t)).toSorted()).toEqual(
+      ["equals", "doesNotEqual", "isSet", "isNotSet"].toSorted()
+    );
+    const props = getMatchValueProps(variableCondition, withBoolean, t);
+    expect(props.showInput).toBe(false);
+    expect(groupNamed(props.options, "common.choices")?.options.map((option) => option.value)).toEqual([
+      "true",
+      "false",
+    ]);
+    expect(groupNamed(props.options, "common.embedded_data")?.options.map((option) => option.value)).toEqual(
+      expect.arrayContaining(["source_flag", "is_pro"])
+    );
+  });
+
+  test("it is offered as a condition's left operand", () => {
+    const groups = getConditionValueOptions(withBoolean, t, 0);
+
+    expect(groupNamed(groups, "common.embedded_data")?.options.map((option) => option.value)).toContain(
+      "qualified"
+    );
   });
 });
 

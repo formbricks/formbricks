@@ -53,9 +53,15 @@ export type TWorkflowSendEmailContentField = (typeof SEND_EMAIL_REQUIRED_CONTENT
  * stay free of the schema module.
  */
 export const getBlankSendEmailContentFields = (
-  config: Readonly<Record<TWorkflowSendEmailContentField, string>>
+  config: Readonly<
+    Record<Exclude<TWorkflowSendEmailContentField, "to">, string> & { to: string | { ref: string } }
+  >
 ): TWorkflowSendEmailContentField[] =>
-  SEND_EMAIL_REQUIRED_CONTENT_FIELDS.filter((field) =>
-    // Only the body is rich text; `to` and `subject` are plain strings.
-    field === "body" ? isBlankWorkflowRichText(config[field]) : config[field].trim().length === 0
-  );
+  SEND_EMAIL_REQUIRED_CONTENT_FIELDS.filter((field) => {
+    // Only the body is rich text; `subject` is a plain string.
+    if (field === "body") return isBlankWorkflowRichText(config.body);
+    if (field === "subject") return config.subject.trim().length === 0;
+    // `to` is a plain string, or a Variable recipient that names its path.
+    const { to } = config;
+    return (typeof to === "string" ? to : to.ref).trim().length === 0;
+  });

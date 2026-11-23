@@ -136,6 +136,11 @@ overrides:
   # (CVE-2026-101916 / CVE-2026-101915), alongside the malformed-message crash fixes in 1.14.4.
   # load-bearing: @boxyhq/metrics resolves 1.14.3.
   "@grpc/grpc-js": 1.14.5
+  # ENG-7423 / GHSA-7589-6fvf-x4pw (CVE-2026-121707): effect <=3.22.0 decodes Schema.TemplateLiteral with
+  # backtracking regexes, so one input blocks the event loop for seconds. Not reachable here (the only consumer
+  # validates its own config file and never uses TemplateLiteral); pinned to clear the alert.
+  # load-bearing: @prisma/config resolves 3.20.0.
+  effect: 3.22.1
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
   # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
   # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).

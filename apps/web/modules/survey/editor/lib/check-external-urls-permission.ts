@@ -1,6 +1,7 @@
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
+import { addsRichTextLink } from "@/lib/survey/rich-text-links";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -75,6 +76,13 @@ export const checkExternalUrlsPermission = async (
   if (addsExternalCtaUrl(newQuestions, oldQuestions)) {
     throw new OperationNotAllowedError(
       "External URLs are not enabled for this organization. Upgrade to use external CTA buttons."
+    );
+  }
+
+  // Check rich text (headlines, subheaders, welcome and ending cards) for new links (ENG-3891)
+  if (addsRichTextLink(newSurvey, oldSurvey)) {
+    throw new OperationNotAllowedError(
+      "External URLs are not enabled for this organization. Upgrade to use links in survey text."
     );
   }
 };

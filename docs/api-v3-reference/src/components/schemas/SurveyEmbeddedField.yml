@@ -53,7 +53,8 @@ properties:
       - boolean
       - date
     description: >-
-      The type the value is read and coerced as. A computed field is `string`, `number` or `date`.
+      The type the value is read and coerced as. A computed field is `string`, `number`, `date` or
+      `boolean`.
   defaultValue:
     type:
       - string

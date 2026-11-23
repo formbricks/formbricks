@@ -1,9 +1,13 @@
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
+import { toJsonRecord } from "./json-record";
 import {
   WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
   WORKFLOW_RUN_STUCK_RUNNING_MAX_AGE_MS,
+  WORKFLOW_TEST_RUN_INTERRUPTED_MAX_AGE_MS,
 } from "./reconcile-constants";
 
 interface ReconcileStuckRunningWorkflowRunsInput {
@@ -153,4 +157,128 @@ export const reconcileStuckRunningWorkflowRuns = async ({
   }
 
   return { scanned: stuck.length, recovered, stepsSkipped };
+};
+
+const STUCK_SENDING_ERROR =
+  "The HTTP request was still sending after an hour and was marked failed; it may or may not have reached its target";
+
+/**
+ * The 1-hour rule for "Don't wait" HTTP requests (ENG-7179, ADR 0047): a step still `running` with
+ * `delivery: "sending"` an hour after it started — its job was lost to a crash, or dropped by an older
+ * worker during a rolling upgrade — is marked `failed` on its own row. The run is left alone (it
+ * finished long ago, and a "Don't wait" call never fails it). Each write is guarded on `running`, so a
+ * job that finishes in between keeps its own outcome; the job in turn only writes a row still
+ * `running`, so a late job never overwrites this one. Served by `@@index([status, startedAt])`.
+ */
+export const failStuckSendingHttpRequests = async ({
+  now = new Date(),
+  logContext,
+}: ReconcileStuckRunningWorkflowRunsInput): Promise<{ scanned: number; failed: number }> => {
+  const stuck = await prisma.workflowRunLog.findMany({
+    where: {
+      status: "running",
+      stepType: "http_request",
+      startedAt: { lt: new Date(now.getTime() - WORKFLOW_RUN_STUCK_RUNNING_MAX_AGE_MS) },
+      output: { path: ["delivery"], equals: "sending" },
+    },
+    orderBy: { startedAt: "asc" },
+    take: WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
+    select: { id: true, runId: true, stepId: true, output: true },
+  });
+
+  let failed = 0;
+  for (const row of stuck) {
+    try {
+      const output = toJsonRecord(row.output);
+      const written = await prisma.workflowRunLog.updateMany({
+        where: { id: row.id, status: "running" },
+        data: {
+          status: "failed",
+          error: STUCK_SENDING_ERROR,
+          finishedAt: now,
+          output: { ...output, delivery: "failed" },
+        },
+      });
+      failed += written.count;
+    } catch (error) {
+      // A database error for this row is logged and the batch goes on; anything else is a bug and
+      // fails the job. By name and code only: a Prisma message can quote the step's recorded request.
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError)) throw error;
+      logger.error(
+        {
+          ...logContext,
+          ...loggableError(error),
+          code: error.code,
+          workflowRunId: row.runId,
+          stepId: row.stepId,
+        },
+        "Failed to mark a stuck sending HTTP request failed"
+      );
+    }
+  }
+  if (failed > 0)
+    logger.warn({ ...logContext, failed }, "Stuck sending workflow HTTP requests marked failed");
+  return { scanned: stuck.length, failed };
+};
+
+const INTERRUPTED_TEST_RUN_ERROR = "Test run was interrupted";
+const UNFINISHED_STATUSES = ["queued", "running"] as const;
+
+/**
+ * Test runs whose request was cut short (ENG-7354). A Test run executes inside the request that
+ * started it (ADR 0049), so a run still `queued` or `running` 10 minutes after it was created will
+ * never finish: it is marked `failed` with "Test run was interrupted", and its in-flight steps
+ * `skipped`. It is never queued, since a worker would run it with the real effects, and not reported
+ * as a workflow failure, like any Test run. Writes are guarded on the run still being unfinished, so a
+ * run that finishes in between keeps its own outcome. Served by `@@index([status, createdAt])`.
+ */
+export const failInterruptedTestRuns = async ({
+  now = new Date(),
+  logContext,
+}: ReconcileStuckRunningWorkflowRunsInput): Promise<{ scanned: number; failed: number }> => {
+  const interrupted = await prisma.workflowRun.findMany({
+    where: {
+      status: { in: [...UNFINISHED_STATUSES] },
+      isDryRun: true,
+      createdAt: { lt: new Date(now.getTime() - WORKFLOW_TEST_RUN_INTERRUPTED_MAX_AGE_MS) },
+    },
+    orderBy: { createdAt: "asc" },
+    take: WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
+    select: { id: true, workspaceId: true },
+  });
+  if (interrupted.length === 0) return { scanned: 0, failed: 0 };
+
+  let failed = 0;
+  for (const run of interrupted) {
+    // One transaction per run, so a run is never left failed with a step still running, and a run that
+    // can't be written (a lock, a timeout) rolls back alone and stays eligible for the next sweep.
+    try {
+      failed += await prisma.$transaction(async (tx) => {
+        const result = await tx.workflowRun.updateMany({
+          where: {
+            id: run.id,
+            workspaceId: run.workspaceId,
+            isDryRun: true,
+            status: { in: [...UNFINISHED_STATUSES] },
+          },
+          data: { status: "failed", error: INTERRUPTED_TEST_RUN_ERROR, lastErrorAt: now, finishedAt: now },
+        });
+        if (result.count === 0) return 0;
+        // A Test run's effects are fakes, so a step left `running` sent nothing.
+        await tx.workflowRunLog.updateMany({
+          where: { runId: run.id, run: { workspaceId: run.workspaceId }, status: "running" },
+          data: { status: "skipped", error: INTERRUPTED_TEST_RUN_ERROR, finishedAt: now },
+        });
+        return result.count;
+      });
+    } catch (error) {
+      logger.error(
+        { ...logContext, err: error, workflowRunId: run.id, workspaceId: run.workspaceId },
+        "Could not mark an interrupted Test run failed"
+      );
+    }
+  }
+
+  if (failed > 0) logger.warn({ ...logContext, failed }, "Interrupted Test runs marked failed");
+  return { scanned: interrupted.length, failed };
 };
