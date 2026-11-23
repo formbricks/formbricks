@@ -180,6 +180,24 @@ describe("processAttachmentExportJob", () => {
     expect(mockedCollect).toHaveBeenCalledWith(expect.objectContaining({ filterCriteria: undefined }));
   });
 
+  test("rebuilds with a stored Created at range, whose dates the JSON column keeps as ISO text", async () => {
+    prisma.attachmentExport.findFirst.mockResolvedValue(
+      queuedRow({
+        filterCriteria: { createdAt: { min: "2026-11-06T00:00:00.000Z", max: "2026-11-10T23:59:59.999Z" } },
+      }) as never
+    );
+
+    await processAttachmentExportJob(data, context);
+
+    expect(mockedCollect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filterCriteria: {
+          createdAt: { min: new Date("2026-11-06T00:00:00.000Z"), max: new Date("2026-11-10T23:59:59.999Z") },
+        },
+      })
+    );
+  });
+
   test("looks the export up inside the job's workspace only", async () => {
     await processAttachmentExportJob(data, context);
 
