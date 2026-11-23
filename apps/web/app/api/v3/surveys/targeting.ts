@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSurveyIdsReadBySegments } from "@/modules/ee/contacts/segments/lib/helper";
 import {
@@ -208,7 +209,10 @@ export async function assertV3SurveyTargetingFilterReferences(
   const attributeKeyRefs = references.filter((ref) => ref.kind === "attributeKey");
   if (attributeKeyRefs.length > 0) {
     const attributeKeys = tx
-      ? await tx.contactAttributeKey.findMany({ where: { workspaceId }, select: { key: true } })
+      ? await tx.contactAttributeKey.findMany({
+          where: whereAttributeKeysOfWorkspace(workspaceId),
+          select: { key: true },
+        })
       : await getContactAttributeKeys(workspaceId);
     const knownKeys = new Set(attributeKeys.map((attributeKey) => attributeKey.key));
     for (const reference of attributeKeyRefs.filter((ref) => !knownKeys.has(ref.value))) {

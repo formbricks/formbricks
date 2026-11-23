@@ -10,6 +10,10 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import {
+  whereAttributeKey,
+  whereAttributeKeysOfWorkspace,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
@@ -506,7 +510,7 @@ export const upsertBulkContacts = async (
   const [existingUserIds, existingContactsByEmail, existingAttributeKeys] = await Promise.all([
     prisma.contactAttribute.findMany({
       where: {
-        attributeKey: { workspaceId, key: "userId" },
+        attributeKey: whereAttributeKey(workspaceId, "userId"),
         value: { in: userIdsInContacts },
       },
       select: { value: true },
@@ -536,7 +540,7 @@ export const upsertBulkContacts = async (
     }),
 
     prisma.contactAttributeKey.findMany({
-      where: { key: { in: attributeKeys }, workspaceId },
+      where: { ...whereAttributeKeysOfWorkspace(workspaceId), key: { in: attributeKeys } },
     }),
   ]);
 

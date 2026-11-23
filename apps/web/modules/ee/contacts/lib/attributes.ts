@@ -14,6 +14,7 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { TAttributeUpdateMessage } from "@/modules/ee/contacts/lib/attribute-messages";
 import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
@@ -391,7 +392,10 @@ const createAttributeKeysAndValues = async ({
     const typeMessages: TAttributeUpdateMessage[] = [];
     if (racedAttributes.length > 0) {
       const racedKeys = await tx.contactAttributeKey.findMany({
-        where: { workspaceId, key: { in: racedAttributes.map(({ key }) => key) } },
+        where: {
+          ...whereAttributeKeysOfWorkspace(workspaceId),
+          key: { in: racedAttributes.map(({ key }) => key) },
+        },
       });
       const { existingAttributes, newAttributes: vanishedAttributes } = splitAttributesByKey(
         Object.fromEntries(racedAttributes.map(({ key, value }) => [key, value])),

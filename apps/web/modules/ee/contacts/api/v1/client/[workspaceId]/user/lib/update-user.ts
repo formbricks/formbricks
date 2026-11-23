@@ -6,6 +6,7 @@ import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
+import { uniqueAttributeKey, whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { formatAttributeMessage } from "@/modules/ee/contacts/lib/attribute-messages";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getPersonSegmentIds } from "./segments";
@@ -48,7 +49,7 @@ const getContactWithFullData = async (workspaceId: string, userId: string) => {
       workspaceId,
       attributes: {
         some: {
-          attributeKey: { key: "userId", workspaceId },
+          attributeKey: whereAttributeKey(workspaceId, "userId"),
           value: userId,
         },
       },
@@ -70,7 +71,7 @@ const createContact = async (workspaceId: string, userId: string) => {
         create: [
           {
             attributeKey: {
-              connect: { key_workspaceId: { key: "userId", workspaceId } },
+              connect: uniqueAttributeKey(workspaceId, "userId"),
             },
             value: userId,
           },

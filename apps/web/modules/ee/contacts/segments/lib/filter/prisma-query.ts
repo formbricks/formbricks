@@ -18,6 +18,7 @@ import {
   ZRelativeDateValue,
 } from "@formbricks/types/segment";
 import { effectivelyWorkspaceVisibleWhere } from "@/lib/survey/visibility/predicate";
+import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
 import { getSegment } from "../segments";
@@ -165,11 +166,7 @@ const buildNumberAttributeFilterWhereClause = async (
 
   const hasUnmigratedRows = await prisma.contactAttribute.findFirst({
     where: {
-      attributeKey: {
-        key: contactAttributeKey,
-        workspaceId,
-        dataType: "number",
-      },
+      attributeKey: { ...whereAttributeKey(workspaceId, contactAttributeKey), dataType: "number" },
       valueNumber: null,
     },
     select: { id: true },

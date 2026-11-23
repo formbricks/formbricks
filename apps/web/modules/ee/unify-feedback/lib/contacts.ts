@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 
 /**
  * Resolves external user identifiers (a feedback record's `user_id`) to Formbricks contact ids
@@ -16,7 +17,7 @@ export const getContactIdsByUserIds = async (
 
   const attributes = await prisma.contactAttribute.findMany({
     where: {
-      attributeKey: { key: "userId", workspaceId },
+      attributeKey: whereAttributeKey(workspaceId, "userId"),
       value: { in: uniqueUserIds },
     },
     select: { value: true, contactId: true },

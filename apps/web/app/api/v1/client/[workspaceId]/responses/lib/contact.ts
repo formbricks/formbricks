@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
+import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 
 export const getContact = reactCache(async (contactId: string) => {
   try {
@@ -31,10 +32,7 @@ export const getContactByUserId = reactCache(
       where: {
         attributes: {
           some: {
-            attributeKey: {
-              key: "userId",
-              workspaceId,
-            },
+            attributeKey: whereAttributeKey(workspaceId, "userId"),
             value: userId,
           },
         },

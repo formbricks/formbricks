@@ -1,11 +1,12 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 
 export const getContactAttributeKeys = reactCache(async (workspaceId: string) => {
   try {
     const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-      where: { workspaceId },
+      where: whereAttributeKeysOfWorkspace(workspaceId),
       select: {
         key: true,
       },

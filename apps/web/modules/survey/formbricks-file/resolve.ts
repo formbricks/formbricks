@@ -14,6 +14,7 @@ import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import {
   type TTranslate,
@@ -282,10 +283,13 @@ const planAttributeKeys = async (
 
   const [existing, count] = await Promise.all([
     db.contactAttributeKey.findMany({
-      where: { workspaceId, key: { in: wanted.map((attributeKey) => attributeKey.key) } },
+      where: {
+        ...whereAttributeKeysOfWorkspace(workspaceId),
+        key: { in: wanted.map((attributeKey) => attributeKey.key) },
+      },
       select: { key: true },
     }),
-    db.contactAttributeKey.count({ where: { workspaceId } }),
+    db.contactAttributeKey.count({ where: whereAttributeKeysOfWorkspace(workspaceId) }),
   ]);
   const existingKeys = new Set(existing.map((attributeKey) => attributeKey.key));
   // A file may name one key more than once; its first definition is the one it is created with (as an
@@ -470,7 +474,7 @@ const createAttributeKeys = async (
 ) => {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${ATTRIBUTE_KEY_CAP_LOCK_PREFIX + workspaceId}))`;
   assertAttributeKeyCap(
-    await tx.contactAttributeKey.count({ where: { workspaceId } }),
+    await tx.contactAttributeKey.count({ where: whereAttributeKeysOfWorkspace(workspaceId) }),
     attributeKeys.length,
     null
   );

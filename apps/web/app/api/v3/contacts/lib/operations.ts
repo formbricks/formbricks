@@ -7,6 +7,7 @@ import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
 import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { V3_CONTACT_SELECT, serializeV3Contact } from "../serializers";
 import { buildV3ContactsCursorWhere, buildV3ContactsOrderBy, buildV3ContactsWhere } from "./contacts-where";
 import {
@@ -70,7 +71,7 @@ export async function listV3Contacts({
     const attributeKeys =
       requestedKeys.length > 0
         ? await prisma.contactAttributeKey.findMany({
-            where: { workspaceId, key: { in: requestedKeys } },
+            where: { ...whereAttributeKeysOfWorkspace(workspaceId), key: { in: requestedKeys } },
             select: { id: true, key: true, dataType: true },
           })
         : [];

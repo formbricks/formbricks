@@ -1,6 +1,7 @@
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
 import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
 
@@ -69,7 +70,7 @@ export const createContact = async (
     // Check which attribute keys exist in the workspace
     const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
       where: {
-        workspaceId,
+        ...whereAttributeKeysOfWorkspace(workspaceId),
         key: { in: attributeKeys },
       },
     });
