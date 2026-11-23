@@ -106,6 +106,9 @@ CREATE TABLE IF NOT EXISTS "FeedbackDirectoryViewerCondition" (
 ALTER TABLE "DashboardWidget" ADD COLUMN IF NOT EXISTS "content" JSONB;
 ALTER TABLE "DashboardWidget" ADD COLUMN IF NOT EXISTS "kind" "DashboardWidgetKind" NOT NULL DEFAULT 'chart';
 ALTER TABLE "DashboardWidget" ADD COLUMN IF NOT EXISTS "pageId" TEXT;
+-- Layout blocks carry no chart. Released clients never write widgets without one, and this release
+-- upgrades in a maintenance window, so no older writer runs against the new column.
+-- squawk-ignore ban-drop-not-null
 ALTER TABLE "DashboardWidget" ALTER COLUMN "chartId" DROP NOT NULL;
 ALTER TABLE "Team" ADD COLUMN IF NOT EXISTS "dashboardLimited" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "FeedbackDirectory" ADD COLUMN IF NOT EXISTS "viewerAccessJoin" "DashboardViewerAccessJoin" NOT NULL DEFAULT 'all';
@@ -124,9 +127,12 @@ SET "pageId" = (
 )
 WHERE w."pageId" IS NULL;
 
--- squawk-ignore adding-required-field
+-- The scan runs inside the maintenance window, on a table bounded by dashboards x widgets.
+-- squawk-ignore adding-not-nullable-field
 ALTER TABLE "DashboardWidget" ALTER COLUMN "pageId" SET NOT NULL;
 
+-- Concurrent index work cannot run inside this migration's transaction; the maintenance window covers it.
+-- squawk-ignore require-concurrent-index-deletion
 DROP INDEX IF EXISTS "DashboardWidget_dashboardId_chartId_key";
 
 -- The new tables are empty and DashboardWidget is small (bounded per dashboard), so plain index builds
@@ -169,9 +175,11 @@ CREATE INDEX IF NOT EXISTS "FeedbackDirectoryViewerCondition_feedbackDirectoryId
 CREATE INDEX IF NOT EXISTS "FeedbackDirectoryViewerCondition_attributeKeyId_idx" ON "FeedbackDirectoryViewerCondition"("attributeKeyId");
 
 -- CreateIndex
+-- squawk-ignore require-concurrent-index-creation
 CREATE INDEX IF NOT EXISTS "DashboardWidget_chartId_idx" ON "DashboardWidget"("chartId");
 
 -- CreateIndex
+-- squawk-ignore require-concurrent-index-creation
 CREATE UNIQUE INDEX IF NOT EXISTS "DashboardWidget_pageId_chartId_key" ON "DashboardWidget"("pageId", "chartId");
 
 -- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
