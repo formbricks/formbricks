@@ -9,6 +9,7 @@ import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
 import { IS_SMTP_CONFIGURED, WEBAPP_URL } from "@/lib/constants";
 import { getEmailFromEmailToken } from "@/lib/jwt";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { resolveAuthCallbackUrl } from "@/modules/auth/lib/callback-url";
@@ -110,7 +111,7 @@ export const VerificationRequestedPage = async ({
       );
     }
   } catch (error) {
-    logger.warn({ err: error }, "Invalid token");
+    logger.warn(loggableError(error), "Invalid token");
     return (
       <FormWrapper>
         <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>

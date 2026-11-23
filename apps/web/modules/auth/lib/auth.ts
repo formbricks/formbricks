@@ -260,9 +260,11 @@ export const auth = betterAuth({
     // After a successful reset, send the security notification (parity with the retired
     // completePasswordReset) and audit it. Better Auth already revoked sessions
     // (revokeSessionsOnPasswordReset above); the OAuth grants it leaves are revoked here (ENG-7364).
-    // All of it is best-effort — never fail the completed reset.
+    // All of it is best-effort — never fail the completed reset. The revocation starts first and overlaps
+    // the notification and audit; it is still awaited because a dropped promise would leave 30-day refresh
+    // tokens alive in a serverless runtime, and its transaction carries its own timeout.
     onPasswordReset: async ({ user }) => {
-      await revokeOAuthGrantsAfterPasswordReset(user.id);
+      const revocation = revokeOAuthGrantsAfterPasswordReset(user.id);
       try {
         const { sendPasswordResetNotifyEmail } = await import("@/modules/email");
         await sendPasswordResetNotifyEmail({ email: user.email, locale: await getUserLocale(user.id) });
@@ -270,6 +272,7 @@ export const auth = betterAuth({
         logger.error({ error, userId: user.id }, "Failed to send password-reset notification email");
       }
       await auditPasswordReset(user.id);
+      await revocation;
     },
   },
 

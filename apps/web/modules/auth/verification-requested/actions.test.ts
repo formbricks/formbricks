@@ -23,21 +23,27 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
   },
 }));
 
-// `after()` only works inside a request. Here it runs the callback at once and keeps the promise, so a
-// test can wait for the work the action deferred (ENG-7092) before asserting on it.
-const afterTasks = vi.hoisted(() => [] as Promise<unknown>[]);
+// `after()` only works inside a request. Here the callback is stored, not started: a test proves the
+// work was handed to `after()` (ENG-7092) and only then runs it, so an action that awaited the work
+// itself would fail the "not yet called" assertion.
+const afterTasks = vi.hoisted(() => [] as (() => Promise<unknown>)[]);
 vi.mock("next/server", () => ({
   after: vi.fn((task: () => Promise<unknown>) => {
-    afterTasks.push(Promise.resolve().then(task));
+    afterTasks.push(task);
   }),
 }));
+
+/** Runs everything the action handed to `after()`. */
+const runAfterTasks = async () => {
+  while (afterTasks.length > 0) await afterTasks.shift()?.();
+};
 
 /** The action, then everything it handed to `after()`. */
 const resendVerificationEmailAction = async (
   args: Parameters<typeof resendVerificationEmailActionHandler>[0]
 ) => {
   const result = await resendVerificationEmailActionHandler(args);
-  await Promise.all(afterTasks.splice(0));
+  await runAfterTasks();
   return result;
 };
 
@@ -754,7 +760,10 @@ describe("resendVerificationEmailAction", () => {
 
       expect(result).toEqual({ success: true });
       expect(afterTasks).toHaveLength(1);
-      await Promise.all(afterTasks.splice(0));
+      // Deferred, not awaited: the per-account budget and the send have not run when the answer is ready.
+      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
+      await runAfterTasks();
       expect(auth.api.sendVerificationEmail).toHaveBeenCalled();
     });
 

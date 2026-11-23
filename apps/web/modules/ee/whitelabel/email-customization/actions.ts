@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { ZId, ZStorageUrl } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
@@ -14,12 +14,8 @@ import {
   updateOrganizationEmailLogoUrl,
 } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { checkWhiteLabelPermission } from "@/modules/ee/whitelabel/email-customization/lib/permission";
+import { ZUpdateOrganizationEmailLogoUrlAction } from "@/modules/ee/whitelabel/email-customization/lib/schemas";
 import { sendEmailCustomizationPreviewEmail } from "@/modules/email";
-
-const ZUpdateOrganizationEmailLogoUrlAction = z.object({
-  organizationId: ZId,
-  logoUrl: ZStorageUrl,
-});
 
 export const updateOrganizationEmailLogoUrlAction = authenticatedActionClient
   .inputSchema(ZUpdateOrganizationEmailLogoUrlAction)

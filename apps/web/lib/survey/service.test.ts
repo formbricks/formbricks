@@ -12,7 +12,12 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { MAX_SEGMENT_FILTERS_PER_TREE, MAX_SEGMENT_SURVEYS, TBaseFilters } from "@formbricks/types/segment";
+import {
+  MAX_SEGMENT_FILTERS_PER_TREE,
+  MAX_SEGMENT_FILTER_DEPTH,
+  MAX_SEGMENT_SURVEYS,
+  TBaseFilters,
+} from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -1253,6 +1258,18 @@ describe("Tests for updateSurvey", () => {
 
         expect(prisma.segment.updateMany).not.toHaveBeenCalled();
         expect(prisma.survey.update).not.toHaveBeenCalled();
+      });
+
+      test("refuses an over-deep draft filter tree before walking it", async () => {
+        // Deep enough to overflow a recursive walk; the iterative bounds check must refuse it first.
+        let deep: unknown = attributeFilters;
+        for (let level = 0; level < MAX_SEGMENT_FILTER_DEPTH * 400; level++) {
+          deep = [{ id: createId(), connector: null, resource: deep }];
+        }
+
+        await expect(save(deep)).rejects.toThrow("nested too deeply");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       });
     });
 

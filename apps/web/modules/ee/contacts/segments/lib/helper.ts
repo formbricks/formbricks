@@ -9,31 +9,26 @@ import {
   collectSegmentFilterSurveyIds,
   restoreHiddenSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/filter-survey-ids";
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { getSegment, getSegmentsByIds } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
   isResourceFilter,
 } from "@/modules/ee/contacts/segments/lib/utils";
 
 /**
- * Throws when a filter's referenced segment is the segment being checked, or (recursively) one of its
- * filters references it.
+ * Collects the segment ids a filter tree references, at any depth. Filters nest through `resource` arrays,
+ * so the walk recurses there only; a resource filter references at most one segment.
  */
-const checkReferencedSegment = async (segmentIdFromRoot: string, segmentId: string) => {
-  if (segmentIdFromRoot === segmentId) {
-    throw new InvalidInputError("Recursive segment filter is not allowed");
-  }
-
-  const segment = await getSegment(segmentIdFromRoot);
-
-  if (segment) {
-    // recurse into this segment and check for recursive filters:
-    const segmentFilters = segment.filters;
-
-    if (segmentFilters) {
-      await checkForRecursiveSegmentFilter(segmentFilters, segmentId);
+const collectReferencedSegmentIds = (filters: TBaseFilters, found: Set<string> = new Set()): Set<string> => {
+  for (const filter of filters) {
+    const { resource } = filter;
+    if (isResourceFilter(resource)) {
+      if (resource.root.type === "segment") found.add(resource.root.segmentId);
+    } else {
+      collectReferencedSegmentIds(resource, found);
     }
   }
+  return found;
 };
 
 /**
@@ -43,15 +38,31 @@ const checkReferencedSegment = async (segmentIdFromRoot: string, segmentId: stri
  * @throws {InvalidInputError} When a recursive segment filter is detected
  */
 export const checkForRecursiveSegmentFilter = async (filters: TBaseFilters, segmentId: string) => {
-  for (const filter of filters) {
-    const { resource } = filter;
-    if (isResourceFilter(resource)) {
-      if (resource.root.type === "segment") {
-        await checkReferencedSegment(resource.root.segmentId, segmentId);
-      }
-    } else {
-      await checkForRecursiveSegmentFilter(resource, segmentId);
+  // A level's references are read in one query, and each segment is walked once: a chain or a cycle among
+  // other segments ends, while a reference back to `segmentId` is refused at any depth.
+  const visited = new Set<string>();
+  let level: TBaseFilters[] = [filters];
+
+  while (level.length > 0) {
+    const referenced = new Set<string>();
+    for (const tree of level) collectReferencedSegmentIds(tree, referenced);
+
+    if (referenced.has(segmentId)) {
+      throw new InvalidInputError("Recursive segment filter is not allowed");
     }
+
+    const toRead = [...referenced].filter((id) => !visited.has(id));
+    if (toRead.length === 0) return;
+    for (const id of toRead) visited.add(id);
+
+    const referencedSegments = await getSegmentsByIds(toRead);
+    const filtersById = new Map(referencedSegments.map((segment) => [segment.id, segment.filters]));
+    const missing = toRead.find((id) => !filtersById.has(id));
+    if (missing) throw new ResourceNotFoundError("segment", missing);
+
+    level = toRead
+      .map((id) => filtersById.get(id))
+      .filter((segmentFilters): segmentFilters is TBaseFilters => Array.isArray(segmentFilters));
   }
 };
 

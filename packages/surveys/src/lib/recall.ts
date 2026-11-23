@@ -15,6 +15,23 @@ const HTML_ESCAPES: Record<string, string> = {
 const escapeHtml = (value: string): string => value.replaceAll(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 
 /**
+ * The entities an author's fallback picks up when the editor serializes the rich-text template to HTML
+ * (`R&D` is stored as `R&amp;D`). Named entities beyond these, and numeric ones, are decoded too; anything
+ * unrecognised is left as typed.
+ */
+const NAMED_ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+const decodeStoredEntities = (value: string): string =>
+  value.replaceAll(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (entity, body: string) => {
+    if (body.startsWith("#")) {
+      const hex = body[1] === "x" || body[1] === "X";
+      const code = Number.parseInt(body.slice(hex ? 2 : 1), hex ? 16 : 10);
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+    }
+    return NAMED_ENTITIES[body.toLowerCase()] ?? entity;
+  });
+
+/**
  * `"rich"` (default): the result is rendered as a headline or subheader, which treats it as HTML when it
  * parses as HTML. `"text"`: the result is used as plain text or a URL (redirect link, button label) and
  * values are substituted as they are; HTML-escaping there would show entities literally.
@@ -30,7 +47,7 @@ const resolveRecallValue = (
   responseData: TResponseData,
   variables: TResponseVariables,
   languageCode: string
-): string => {
+): { value: string; usedFallback: boolean } => {
   const fallback = rawFallback.replaceAll("nbsp", " ").trim();
   let value: string | null = null;
 
@@ -53,8 +70,8 @@ const resolveRecallValue = (
     }
   }
 
-  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value shows the fallback too
-  return value?.toString() || fallback;
+  const resolved = value?.toString();
+  return resolved ? { value: resolved, usedFallback: false } : { value: fallback, usedFallback: true };
 };
 
 /**
@@ -78,8 +95,12 @@ export const replaceRecallInfo = (
   const escapeValues = output === "rich" && isValidHTML(text);
   // A replacer function: a string replacement would interpret `$&` and `$1` in the value.
   const modifiedText = text.replace(RECALL_TOKEN, (_token, id: string, rawFallback: string) => {
-    const value = resolveRecallValue(id, rawFallback, responseData, variables, languageCode);
-    return escapeValues ? escapeHtml(value) : value;
+    const resolved = resolveRecallValue(id, rawFallback, responseData, variables, languageCode);
+    if (!escapeValues) return resolved.value;
+    // The fallback is authored text stored inside the template's HTML, so it arrives HTML-escaped: decode
+    // it once before the one escape, or `R&D` written in the editor renders as `R&amp;D`. A recalled
+    // value was never escaped, so it keeps its single escape.
+    return escapeHtml(resolved.usedFallback ? decodeStoredEntities(resolved.value) : resolved.value);
   });
 
   if (output === "rich" && !escapeValues && modifiedText !== text && isValidHTML(modifiedText)) {

@@ -29,6 +29,14 @@ describe("replaceRecallInfo escaping (rich text templates)", () => {
     host.innerHTML = render(out);
     expect(host.textContent).toBe(`Tom & "Jerry's"`);
   });
+
+  test("a fallback stored escaped in the HTML renders as typed, escaped only once", () => {
+    const out = replaceRecallInfo(`<p>#recall:none/fallback:R&amp;D &lt;3&gt;#</p>`, {}, {});
+    expect(out).toBe("<p>R&amp;D &lt;3&gt;</p>");
+    const host = document.createElement("div");
+    host.innerHTML = render(out);
+    expect(host.textContent).toBe("R&D <3>");
+  });
 });
 
 describe("replaceRecallInfo with a plain-text template", () => {

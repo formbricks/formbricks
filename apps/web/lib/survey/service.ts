@@ -671,6 +671,11 @@ const assertAppTargetingFiltersAllowed = async (
   if (isOwnPrivateSegment(currentSurvey, segment.id)) {
     const filters = segment.filters;
     if (!Array.isArray(filters) || filters.length === 0) return;
+    // The draft save skips the schema, so the recursive walk below can meet any depth. Bounds first, as in
+    // `updateAppSurveySegment`: a tree too deep must be refused by the iterative measure, not overflow the
+    // walk's call stack.
+    const boundsViolation = getSegmentFilterTreeBoundsViolation(filters);
+    if (boundsViolation) throw new InvalidInputError(boundsViolation);
     if (collectReferencedSegmentIds(filters).has(segment.id)) {
       throw new InvalidInputError("Recursive segment filter is not allowed");
     }
