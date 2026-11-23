@@ -230,7 +230,7 @@ describe("under an MCP grant that limits organization & workspace access (ENG-71
   });
 });
 
-describe("dashboard and page access (ADR-0059)", () => {
+describe("dashboard and page access (ADR-0060)", () => {
   const viewer = { type: "user", id: "viewer-1" } as const;
 
   test("looks up the dashboards an actor reads on dashboard#read, after the freshness guard", async () => {

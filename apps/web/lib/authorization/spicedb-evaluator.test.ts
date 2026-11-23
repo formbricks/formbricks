@@ -119,7 +119,7 @@ describe("spicedbEvaluator", () => {
     }
   });
 
-  // ADR-0059: a Dashboard Viewer's dashboard and page reads are decided on the projected node, beside the
+  // ADR-0060: a Dashboard Viewer's dashboard and page reads are decided on the projected node, beside the
   // workspace read that answers everyone else without waiting for the projection.
   describe("dashboard and page reads on the projected node", () => {
     const checkPermissionBatch = vi.fn();

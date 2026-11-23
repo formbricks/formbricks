@@ -14,7 +14,7 @@ import {
 } from "./viewer-access-claim";
 
 /**
- * A Dashboard Viewer's access to Feedback Datasets' records (ADR-0060): each dataset's conditions with
+ * A Dashboard Viewer's access to Feedback Datasets' records (ADR-0061): each dataset's conditions with
  * the viewer's Member attribute values for them. Read for every dashboard-bound read of a viewer, never
  * cached, so a changed condition or attribute applies on the next read.
  */

@@ -91,7 +91,7 @@ beforeEach(() => {
   vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([] as never);
 });
 
-describe("expected dashboard relationships (ADR-0059)", () => {
+describe("expected dashboard relationships (ADR-0060)", () => {
   test("a dashboard always names its workspace and each selecting team, sorted and deduplicated", () => {
     expect(
       expectedDashboardRelationships({

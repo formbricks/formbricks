@@ -14,7 +14,7 @@ const condition = (field: string, values: string[], attributeLabel = "Region") =
   values,
 });
 
-describe("viewer access claim (ADR-0060)", () => {
+describe("viewer access claim (ADR-0061)", () => {
   test("no conditions: no claim, unrestricted", () => {
     expect(buildViewerAccessClaim(null)).toBeNull();
     expect(buildViewerAccessClaim({ join: "all", conditions: [] })).toBeNull();

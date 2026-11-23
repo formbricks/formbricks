@@ -22,7 +22,7 @@ export const ZTeam = z.object({
     })
     .describe("The name of the team"),
   organizationId: z.cuid2().describe("The ID of the organization"),
-  // `dashboardLimited` is internal to Dashboard Access Control (ADR-0059) and stays out of the v2 shape.
+  // `dashboardLimited` is internal to Dashboard Access Control (ADR-0060) and stays out of the v2 shape.
 }) satisfies z.ZodType<Omit<Team, "dashboardLimited">>;
 
 ZTeam.meta({

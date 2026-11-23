@@ -632,7 +632,7 @@ function getCompilerCacheOptions() {
 }
 
 // ── Dashboard Viewer access ─────────────────────────────────────────────────────────────────────
-// ADR-0060: when a Dashboard Viewer reads a dataset with conditions, the app signs a `viewerAccess` claim
+// ADR-0061: when a Dashboard Viewer reads a dataset with conditions, the app signs a `viewerAccess` claim
 // ({ join: "all" | "any", conditions: [{ member, values }] }) into the token. queryRewrite appends it to
 // every query as one filter group, after the caller's filters, so no query of that token reads past it.
 // The bounds and the member list mirror apps/web/modules/ee/dashboard-access/lib/viewer-access-claim.ts.

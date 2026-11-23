@@ -17,7 +17,7 @@ export {
 };
 
 /**
- * Dashboard Viewer access as Cube enforces it (ADR-0060): a Feedback Dataset's conditions plus a viewer's
+ * Dashboard Viewer access as Cube enforces it (ADR-0061): a Feedback Dataset's conditions plus a viewer's
  * Member attribute values, compiled into the `viewerAccess` claim of the signed Cube token. Pure, so the
  * claim, its bounds and the summary the dashboard read returns are decided in one place.
  */

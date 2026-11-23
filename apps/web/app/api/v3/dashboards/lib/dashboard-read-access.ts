@@ -6,7 +6,7 @@ import { canReadDashboard, filterReadablePageIds } from "@/modules/ee/dashboard-
 import { getDashboardReadPrincipal, withCachedDashboardDecision } from "./read-decision-cache";
 
 /**
- * Which dashboards and pages a dashboard-bound read reaches (ENG-7472, ADR-0059). Owners, Managers,
+ * Which dashboards and pages a dashboard-bound read reaches (ENG-7472, ADR-0060). Owners, Managers,
  * Members and API keys reach every dashboard and page of a workspace they read, so nothing here asks
  * anything of them. A Dashboard Viewer — or an Owner or Manager viewing as one — is decided in SpiceDB on
  * the projected `dashboard` and `dashboard_page` nodes, where team dashboard limits and page team limits

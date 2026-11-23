@@ -27,7 +27,7 @@ export const getDashboardReadPrincipal = ({
  * workspace grant, the plan, each dataset; half a minute spares those while a lost grant still stops
  * reads soon after.
  *
- * The decisions kept (ADR-0059): `dashboard` (the workspace gate, and for a Dashboard Viewer
+ * The decisions kept (ADR-0060): `dashboard` (the workspace gate, and for a Dashboard Viewer
  * `dashboard.read`), `page:<pageId>` (a viewer's `dashboardPage.read`, one per page, so changing one page's
  * team limit never rides on another page's allow) and `dataset:<id>`. A team dashboard limit or a page
  * team limit does not move the dashboard's `updatedAt`, so a viewer who just lost a dashboard or a page

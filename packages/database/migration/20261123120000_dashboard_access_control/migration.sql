@@ -1,7 +1,7 @@
 -- Dashboard Access Control (P-ENG-110): Member attributes, team dashboard limits, Dashboard pages with
 -- team limits, widget kinds (chart, image, text, separator) and per-dataset Dashboard Viewer access.
 --
--- This release upgrades in a maintenance window (ADR-0059): stop writers, run migrations, run
+-- This release upgrades in a maintenance window (ADR-0060): stop writers, run migrations, run
 -- `upgrade prepare` (which applies the SpiceDB schema and drains the outbox), restart. There is no
 -- rolling-upgrade fallback: `DashboardWidget.pageId` is required from the start, and the previous
 -- release's widget writes don't set it.

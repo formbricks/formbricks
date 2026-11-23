@@ -1,4 +1,4 @@
--- ENG-7470 / ENG-7471 (ADR-0059): project dashboards, their pages and team dashboard limits into SpiceDB
+-- ENG-7470 / ENG-7471 (ADR-0060): project dashboards, their pages and team dashboard limits into SpiceDB
 -- through the existing outbox, and queue every existing dashboard, page and limited team so the normal
 -- outbox delivery copies them into SpiceDB.
 --
@@ -157,7 +157,7 @@ BEGIN
   END IF;
 
   is_revocation := CASE
-    -- ADR-0059: a page's team limit, and a team's first dashboard selection (the `team` event of
+    -- ADR-0060: a page's team limit, and a team's first dashboard selection (the `team` event of
     -- TeamDashboard), narrow who reads; see the classification table at the top of this file.
     WHEN TG_OP = 'INSERT' THEN
       TG_TABLE_NAME = 'DashboardPageTeam'

@@ -55,7 +55,7 @@
 #     user:viola contributor on team:globex_team, a team of organization:globex granted
 #                workspace:foreign, while viola is acme's viewer, not globex's: reaches nothing
 #   response:r1 (survey:onboarding), response:r2 (survey:draft)
-#   ADR-0059 dashboard and page team limits, all in workspace:dac (acme). Every team below is
+#   ADR-0060 dashboard and page team limits, all in workspace:dac (acme). Every team below is
 #   granted `read` on workspace:dac except team:dac_stray:
 #     dashboard:dac_one, dashboard:dac_two, dashboard:dac_three
 #     team:dac_open  no dashboard limit           viewer user:vopen, viewer user:vboth
@@ -390,7 +390,7 @@ assertions:
     - survey:leaky#read_v2@user:gary
 
     # ------------------------------------------------------------------
-    # Scenario 9 (ADR-0059) — team dashboard limits and page team limits.
+    # Scenario 9 (ADR-0060) — team dashboard limits and page team limits.
     # Owners, managers, members and API keys with workspace read reach every
     # dashboard and page: limits bind Dashboard Viewers only.
     # ------------------------------------------------------------------
@@ -659,7 +659,7 @@ assertions:
     # Organization-only keys and a key on another workspace see no dashboard data.
     - workspace:main#dashboard_read@api_key:org_writer_key
     - feedback_directory_assignment:fdwa_main#dashboard_read@api_key:org_reader_key
-    # ADR-0059 — team dashboard limits and page team limits (scenario 9).
+    # ADR-0060 — team dashboard limits and page team limits (scenario 9).
     # A limited team's viewers reach no dashboard it did not select.
     - dashboard:dac_two#read@user:vred
     - dashboard:dac_three#read@user:vred
@@ -689,7 +689,7 @@ assertions:
 # subject that holds them and through which relation. Kept exact so any
 # schema change that widens or narrows these permissions shows up as a diff.
 validation:
-  # ADR-0059: who reads a dashboard one team selected. Exact, so a limit that stops narrowing (or a
+  # ADR-0060: who reads a dashboard one team selected. Exact, so a limit that stops narrowing (or a
   # viewer path that widens) shows up as a diff.
   dashboard:dac_two#read:
     - "[api_key:dac_reader] is <workspace:dac#reader>"

@@ -7,7 +7,7 @@ import {
 } from "./relationship-map";
 
 /**
- * The relationship sets dashboards, their pages and team dashboard limits imply (ADR-0059). Pure, and
+ * The relationship sets dashboards, their pages and team dashboard limits imply (ADR-0060). Pure, and
  * free of the client and PostgreSQL, so the projector (`./dashboard`), the team reconciler and the
  * read-only backfill audit derive the expected sets from one place.
  */
@@ -15,7 +15,7 @@ import {
 /**
  * A dashboard's projected facts. `selectedByTeamIds` holds only the teams whose `TeamDashboard` row names
  * the dashboard AND that still hold a `WorkspaceTeam` on the dashboard's workspace in its organization:
- * a selection without that grant is ignored (ADR-0059), so it is never written.
+ * a selection without that grant is ignored (ADR-0060), so it is never written.
  */
 export type TDashboardProjectionRow = Readonly<{
   id: string;

@@ -9,7 +9,7 @@ import {
 } from "./dashboard-relationships";
 
 /**
- * PostgreSQL reads behind the dashboard and page projection (ADR-0059), shared by the projector
+ * PostgreSQL reads behind the dashboard and page projection (ADR-0060), shared by the projector
  * (`./dashboard`) and the backfill source so both derive the expected relationships from the same rows.
  *
  * Every query names its columns and reads identifiers only. Errors propagate: absence is what removes a

@@ -955,7 +955,7 @@ describe("cube embedded-data members", () => {
   });
 });
 
-describe("cube queryRewrite: Dashboard Viewer access (ADR-0060)", () => {
+describe("cube queryRewrite: Dashboard Viewer access (ADR-0061)", () => {
   beforeEach(() => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
   });

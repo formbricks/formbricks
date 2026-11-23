@@ -7,7 +7,7 @@ import {
 } from "@/lib/authorization/resource-list";
 
 /**
- * Which dashboards and pages a principal can open (ADR-0059), decided in SpiceDB.
+ * Which dashboards and pages a principal can open (ADR-0060), decided in SpiceDB.
  *
  * Owners, Managers, Members and API keys reach every dashboard and page of a workspace they read: the
  * workspace read answers for them, on the workspace node, so a dashboard or page created a moment ago is

@@ -69,7 +69,7 @@ const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
 } as const satisfies Partial<Record<TAuthorizationAction, "administer" | "manage" | "read" | "write">>;
 
 /**
- * ADR-0059: actions also asked of the dashboard's or page's own node, which holds the team dashboard
+ * ADR-0060: actions also asked of the dashboard's or page's own node, which holds the team dashboard
  * limits and page team limits a Dashboard Viewer is decided by. Either check allows. The workspace check
  * answers Owners, Managers, Members and API keys exactly as `dashboard#full_read` would, without depending
  * on the dashboard or page being projected yet, so a dashboard created a moment ago opens for its author;
@@ -222,7 +222,7 @@ const getCheck = (
 
 /**
  * Every check that would allow the action, any one of them enough: the check above, and for a
- * `PROJECTED_NODE_ACTIONS` action the projected dashboard or page node beside it (ADR-0059).
+ * `PROJECTED_NODE_ACTIONS` action the projected dashboard or page node beside it (ADR-0060).
  */
 const getChecks = (
   actor: TAuthorizationActor,

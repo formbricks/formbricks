@@ -25,7 +25,7 @@ const withoutComments = (sql: string): string => sql.replace(/^[ \t]*--[^\n]*\n/
 /** The `is_revocation := CASE … END;` assignment of the enqueue function. */
 const REVOCATION_CASE = /is_revocation := CASE[\s\S]*?\n {2}END;/;
 
-describe("dashboard projection trigger migration (ADR-0059)", () => {
+describe("dashboard projection trigger migration (ADR-0060)", () => {
   // Both shared functions are re-declared whole. Anything changed beyond the INSERT and DELETE
   // classification would silently reclassify every other trigger's events.
   test("re-declares the grant classifier unchanged and the enqueue function with only its classification", () => {

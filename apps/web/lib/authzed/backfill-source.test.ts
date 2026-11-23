@@ -426,7 +426,7 @@ describe("readOrganizationSource", () => {
   });
 });
 
-describe("dashboard sources (ADR-0059)", () => {
+describe("dashboard sources (ADR-0060)", () => {
   const dashboardRow = (overrides: Record<string, unknown> = {}) => ({
     id: "dash-1",
     teamLimits: [

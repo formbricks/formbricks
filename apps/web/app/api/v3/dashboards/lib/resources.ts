@@ -92,7 +92,7 @@ export const ZV3DashboardFilter = z
 export type TV3DashboardFilter = z.infer<typeof ZV3DashboardFilter>;
 
 /**
- * What the reader's Dashboard Viewer access (ADR-0060) leaves them, on a dashboard read: one chip per
+ * What the reader's Dashboard Viewer access (ADR-0061) leaves them, on a dashboard read: one chip per
  * condition of the datasets on the pages they can open, and whether they see every record
  * (`unrestricted`), only matching ones (`restricted`), or nothing because an attribute a condition needs
  * has no value (`unmatched`). Owners, Managers, Members and API keys always read `unrestricted`.

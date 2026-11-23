@@ -9,7 +9,7 @@ import { AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN } from "./constants";
 import { drainAuthzedOutbox } from "./outbox-processor";
 
 /**
- * ADR-0059 against a real PostgreSQL and SpiceDB: dashboard, page and team-limit writes → triggers →
+ * ADR-0060 against a real PostgreSQL and SpiceDB: dashboard, page and team-limit writes → triggers →
  * outbox → projectors → graph → `dashboard#read` / `dashboard_page#read`, plus the grant/revocation
  * classification of each write and the backfill covering the new types.
  */

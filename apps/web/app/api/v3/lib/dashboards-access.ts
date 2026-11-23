@@ -60,7 +60,7 @@ export const getDashboardReadSubject = (
 };
 
 /**
- * Whose Dashboard Viewer access (ADR-0060) a read is under: the user admitted as a Dashboard Viewer, or
+ * Whose Dashboard Viewer access (ADR-0061) a read is under: the user admitted as a Dashboard Viewer, or
  * `null` for everyone else, who reads every record.
  */
 export const getViewerAccessReader = (access: TDashboardsAccessContext): TViewerAccessReader =>

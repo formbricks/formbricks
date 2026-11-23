@@ -558,7 +558,7 @@ describe("survey relationships (ENG-3282)", () => {
   });
 });
 
-describe("dashboards, pages and team dashboard limits (ADR-0059)", () => {
+describe("dashboards, pages and team dashboard limits (ADR-0060)", () => {
   test.each([
     [
       tuple("dashboard", "dash-1", "workspace", "workspace", "ws-1"),

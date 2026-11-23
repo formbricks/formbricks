@@ -1,5 +1,5 @@
 /**
- * Client-safe constants of Dashboard Viewer access (ADR-0060): which fields a condition may name, and how
+ * Client-safe constants of Dashboard Viewer access (ADR-0061): which fields a condition may name, and how
  * many conditions a dataset holds. The claim (`viewer-access-claim.ts`) and the settings UI share them.
  */
 

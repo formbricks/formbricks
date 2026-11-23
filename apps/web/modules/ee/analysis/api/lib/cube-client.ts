@@ -72,7 +72,7 @@ type TScopedCubeQueryInput = {
    * `[]` to run on the plain model.
    */
   embeddedKeys?: readonly string[];
-  /** Dashboard Viewer access for this read (ADR-0060), with the embedded keys it matches on. */
+  /** Dashboard Viewer access for this read (ADR-0061), with the embedded keys it matches on. */
   viewerAccess?: { claim: TCubeViewerAccessClaim; embeddedKeys: readonly string[] } | null;
 };
 

@@ -412,7 +412,7 @@ const toMcpGrantIds = (selections: ReadonlyArray<TAuthzedMcpGrantSelectionTarget
   ...new Set(selections.map(({ grantId }) => grantId)),
 ];
 
-/** A source's dashboards and pages (ADR-0059), in the vocabulary an observation produces. */
+/** A source's dashboards and pages (ADR-0060), in the vocabulary an observation produces. */
 const toDashboardSourceRefs = (
   source: Pick<TAuthzedOrganizationSource, "dashboardIds" | "dashboardPageIds">
 ): ReadonlyArray<TAuthzedSourceRef> => [
@@ -607,7 +607,7 @@ const observeResources = async (
   return { relationships, snapshot };
 };
 
-/** Read filters for a source's dashboards and pages (ADR-0059). */
+/** Read filters for a source's dashboards and pages (ADR-0060). */
 const dashboardObservationFilters = (
   source: Pick<TAuthzedOrganizationSource, "dashboardIds" | "dashboardPageIds">
 ): ReadonlyArray<Readonly<{ resourceId: string; resourceType: string }>> => [

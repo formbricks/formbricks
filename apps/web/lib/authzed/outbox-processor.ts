@@ -191,7 +191,7 @@ const reconcileOrganizations = async (
 };
 
 /**
- * Team, workspace and grant events, then the dashboards a `WorkspaceTeam` change can move (ADR-0059): a
+ * Team, workspace and grant events, then the dashboards a `WorkspaceTeam` change can move (ADR-0060): a
  * dashboard's `selected_by_team` edge is written only while its team holds the dashboard's workspace, so
  * a grant added or removed re-projects the dashboards that team selected in that workspace. Run after the
  * team reconciler, in the same group, so a failure of either redelivers the grant event.

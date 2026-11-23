@@ -174,7 +174,7 @@ export async function runV3ChartQuery({
   dateRangeNames?: TRequestedDateRangeNames;
   extraFilters?: TCubeFilter[];
   respond?: (data: TV3ChartData) => object;
-  /** Dashboard Viewer access (ADR-0060) the query runs under; only dashboard-bound reads pass it. */
+  /** Dashboard Viewer access (ADR-0061) the query runs under; only dashboard-bound reads pass it. */
   viewerAccess?: Parameters<typeof runChartQuery>[0]["viewerAccess"];
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being

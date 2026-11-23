@@ -40,7 +40,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   CreativeLanguage: "parent_derived_or_data_integrity",
   CreativeTrigger: "parent_derived_or_data_integrity",
   Dashboard: "direct_authorization_resource",
-  // A Dashboard page is projected into SpiceDB with its team limits (ADR-0059); `DashboardPageTeam` and
+  // A Dashboard page is projected into SpiceDB with its team limits (ADR-0060); `DashboardPageTeam` and
   // `TeamDashboard` are the limits it is projected from.
   DashboardPage: "direct_authorization_resource",
   DashboardPageTeam: "relationship_or_grant_source",
@@ -54,7 +54,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   // read-write Dashboards check, read with the workspace's charts.
   EmbeddedFieldLabel: "workspace_inherited_resource",
   FeedbackDirectory: "direct_authorization_resource",
-  // A Feedback Dataset's Dashboard Viewer access (ADR-0060): written behind Access Control write on the
+  // A Feedback Dataset's Dashboard Viewer access (ADR-0061): written behind Access Control write on the
   // dataset's organization, and turned into the signed Cube claim that narrows a Dashboard Viewer's records.
   FeedbackDirectoryViewerCondition: "parent_derived_or_data_integrity",
   FeedbackDirectoryWorkspace: "relationship_or_grant_source",

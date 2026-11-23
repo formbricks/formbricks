@@ -8,7 +8,7 @@ import {
 } from "./viewer-access-claim";
 
 /**
- * A Feedback Dataset's Dashboard Viewer access (ENG-7476, ADR-0060): the conditions a record must meet
+ * A Feedback Dataset's Dashboard Viewer access (ENG-7476, ADR-0061): the conditions a record must meet
  * for a Dashboard Viewer to see it, read and replaced as one. The dataset's `updatedAt` is the version a
  * write compares against, so two people saving at once never silently overwrite each other.
  */

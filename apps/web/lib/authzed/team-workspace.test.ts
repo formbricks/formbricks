@@ -306,7 +306,7 @@ describe("team and workspace relationship projection", () => {
     expect(updates).toHaveLength(8);
   });
 
-  // ADR-0059: the team reconciler owns every edge on a `team`, so it writes the dashboard limit marker.
+  // ADR-0060: the team reconciler owns every edge on a `team`, so it writes the dashboard limit marker.
   test.each([
     [true, "touch"],
     [false, "delete"],

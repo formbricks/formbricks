@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 
 /**
- * A team's dashboard limits (ENG-7483, ADR-0059): the dashboards its Dashboard Viewer members open in the
+ * A team's dashboard limits (ENG-7483, ADR-0060): the dashboards its Dashboard Viewer members open in the
  * workspaces the team is granted. No rows means every dashboard there ("All dashboards"). Only members
  * whose organization role is Dashboard Viewer are narrowed; SpiceDB decides it from the projected rows.
  */

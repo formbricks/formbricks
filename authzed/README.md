@@ -440,7 +440,7 @@ mismatched parent.
 
 ## Dashboard and page projection
 
-ADR-0059 projects dashboards, their pages and team dashboard limits, so SpiceDB decides which dashboards and
+ADR-0060 projects dashboards, their pages and team dashboard limits, so SpiceDB decides which dashboards and
 pages a Dashboard Viewer can open. PostgreSQL is the durable source. `apps/web/lib/authzed/dashboard.ts` writes
 exactly the edges a dashboard or page row implies, and the team reconciler (`team-workspace.ts`), which owns
 every edge on a `team`, writes the team's limit marker:
@@ -527,7 +527,7 @@ Resource permissions preserve the operation-specific gates that exist today:
 | Read or edit a survey                                            | `survey.read`, `survey.write`                  | workspace `read` or `readWrite`                          |
 | Delete a survey through the web application or V3 API            | `survey.delete`                                | workspace `readWrite`                                    |
 | Manage survey languages or delete through legacy management APIs | `survey.manage`                                | workspace `manage`                                       |
-| Read a dashboard or one of its pages                             | `dashboard.read`, `dashboardPage.read`         | workspace `read`, or the team and page limits (ADR-0059) |
+| Read a dashboard or one of its pages                             | `dashboard.read`, `dashboardPage.read`         | workspace `read`, or the team and page limits (ADR-0060) |
 | Mutate a dashboard, including deletion                           | `dashboard.write`                              | workspace `readWrite`                                    |
 | Change who opens a dashboard's pages                             | `dashboard.manage_access`                      | organization owner or manager                            |
 | Read a saved chart's data or a filter's values on a dashboard    | `feedback_directory_assignment.dashboard_read` | dataset `read`, or a Dashboard viewer of the workspace   |

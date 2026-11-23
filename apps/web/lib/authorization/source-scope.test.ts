@@ -58,7 +58,7 @@ describe("resolveAuthorizationScope", () => {
     });
   });
 
-  // ADR-0059: decided on the workspace, with the projected node beside it for a Dashboard Viewer's reads.
+  // ADR-0060: decided on the workspace, with the projected node beside it for a Dashboard Viewer's reads.
   test.each([
     ["dashboard", getDashboardAuthorizationWorkspaceScope],
     ["dashboardPage", getDashboardPageAuthorizationWorkspaceScope],

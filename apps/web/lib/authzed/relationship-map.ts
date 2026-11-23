@@ -67,7 +67,7 @@ export const SURVEY_RELATIONS = {
 } as const;
 
 /**
- * `Dashboard` facts → `dashboard#<relation>` (ADR-0059). Which of these a dashboard carries is decided by
+ * `Dashboard` facts → `dashboard#<relation>` (ADR-0060). Which of these a dashboard carries is decided by
  * `expectedDashboardRelationships` in `./dashboard-relationships`; this is only the vocabulary, shared
  * with the backfill so the audit derives the expected set from the same names the projector writes.
  */
@@ -76,7 +76,7 @@ export const DASHBOARD_RELATIONS = {
   workspace: "workspace",
 } as const;
 
-/** `DashboardPage` facts → `dashboard_page#<relation>` (ADR-0059). */
+/** `DashboardPage` facts → `dashboard_page#<relation>` (ADR-0060). */
 export const DASHBOARD_PAGE_RELATIONS = {
   dashboard: "dashboard",
   limitedTeam: "limited_team",
@@ -84,7 +84,7 @@ export const DASHBOARD_PAGE_RELATIONS = {
 } as const;
 
 /**
- * The team self-marker `team:T#dashboard_limited@team:T` (ADR-0059), written by the team reconciler
+ * The team self-marker `team:T#dashboard_limited@team:T` (ADR-0060), written by the team reconciler
  * while the team has a dashboard limit (`TeamDashboard` rows). Never names another team: the schema
  * subtracts the marked team's members, so a marker naming another team would strip that team's
  * viewers from this one.

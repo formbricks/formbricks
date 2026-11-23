@@ -186,7 +186,7 @@ describe("AuthZed projection outbox processor", () => {
     expect(deliveredIds()).toEqual(sorted(events.map(({ id }) => id)));
   });
 
-  // ADR-0059: a dashboard's `selected_by_team` edge exists only while its team holds the workspace, so a
+  // ADR-0060: a dashboard's `selected_by_team` edge exists only while its team holds the workspace, so a
   // grant change re-projects the dashboards that team selected there, in the same delivery group.
   test("re-projects the dashboards a team selected when its workspace grant changes", async () => {
     const events = [event("workspace_team", "workspace", "team")];

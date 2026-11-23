@@ -75,7 +75,7 @@ export type TAuthzedFeedbackDirectoryAssignmentTarget = Readonly<{
 export type TAuthzedOrganizationSource = Readonly<{
   apiKeyIds: ReadonlyArray<string>;
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
-  /** The dashboards of the organization's workspaces (ADR-0059), observed and reconciled with it. */
+  /** The dashboards of the organization's workspaces (ADR-0060), observed and reconciled with it. */
   dashboardIds: ReadonlyArray<string>;
   /** The pages of those dashboards. */
   dashboardPageIds: ReadonlyArray<string>;
@@ -110,7 +110,7 @@ export type TAuthzedOrganizationSource = Readonly<{
 /** The grants attached to one workspace, for the narrower workspace repair scope. */
 export type TAuthzedWorkspaceSource = Readonly<{
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
-  /** The workspace's dashboards (ADR-0059), observed and reconciled with it. */
+  /** The workspace's dashboards (ADR-0060), observed and reconciled with it. */
   dashboardIds: ReadonlyArray<string>;
   /** The pages of those dashboards. */
   dashboardPageIds: ReadonlyArray<string>;

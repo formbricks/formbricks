@@ -31,7 +31,7 @@ export {
 } from "./dashboard-relationships";
 
 /**
- * Dashboards and their pages, projected from PostgreSQL into SpiceDB (ADR-0059).
+ * Dashboards and their pages, projected from PostgreSQL into SpiceDB (ADR-0060).
  *
  * PostgreSQL is the durable source: `Dashboard.workspaceId`, `TeamDashboard` (narrowed to the teams that
  * still hold the dashboard's workspace), `DashboardPage.dashboardId` and `DashboardPageTeam`. The graph

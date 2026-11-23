@@ -222,7 +222,7 @@ export const getDashboardAuthorizationWorkspaceScope = reactCache(
   }
 );
 
-/** The workspace and organization a dashboard page's dashboard belongs to (ADR-0059). */
+/** The workspace and organization a dashboard page's dashboard belongs to (ADR-0060). */
 export const getDashboardPageAuthorizationWorkspaceScope = reactCache(
   async (pageId: string): Promise<TAuthorizationWorkspaceScope | null> => {
     try {

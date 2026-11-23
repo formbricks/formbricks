@@ -43,7 +43,7 @@ export const runChartQuery = async ({
   organizationId: string;
   actor: TCubeQueryActor;
   source: TCubeQuerySource;
-  /** Dashboard Viewer access for this read (ADR-0060); absent for everyone else. */
+  /** Dashboard Viewer access for this read (ADR-0061); absent for everyone else. */
   viewerAccess?: { claim: TCubeViewerAccessClaim; embeddedKeys: readonly string[] } | null;
 }): Promise<TChartQueryRun> => {
   const grouping = await resolveOptionGrouping(query, workspaceId, datasetId);

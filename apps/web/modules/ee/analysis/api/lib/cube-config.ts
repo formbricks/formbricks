@@ -42,7 +42,7 @@ export type TCubeTenantScope = {
   /** The kind of each question an answer rule in the query names, which picks its column. */
   answerKinds?: Readonly<Record<string, TAnswerKind>>;
   /**
-   * Dashboard Viewer access (ADR-0060): set only when a Dashboard Viewer (or View as one) reads a dataset
+   * Dashboard Viewer access (ADR-0061): set only when a Dashboard Viewer (or View as one) reads a dataset
    * with conditions. Cube appends it to every query like the tenant; the signature keeps it from widening.
    */
   viewerAccess?: TCubeViewerAccessClaim;

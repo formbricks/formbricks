@@ -52,7 +52,7 @@ type TNormalizedTargets = Readonly<{
 type TTeamWorkspaceSnapshot = Readonly<{
   teamMemberships: ReadonlyArray<Readonly<{ role: TeamUserRole; teamId: string; userId: string }>>;
   /**
-   * `dashboardLimited` (ADR-0059): whether the team has a `TeamDashboard` row, which this reconciler
+   * `dashboardLimited` (ADR-0060): whether the team has a `TeamDashboard` row, which this reconciler
    * projects as the team self-marker because it owns every edge on a `team` resource.
    */
   teams: ReadonlyArray<Readonly<{ dashboardLimited: boolean; id: string; organizationId: string }>>;
@@ -260,7 +260,7 @@ const writeSnapshot = async (
   }
   for (const workspaceId of targets.workspaceIds) {
     if (!workspacesById.has(workspaceId)) {
-      // ENG-3282: the workspace's surveys point at it too, and so do its dashboards (ADR-0059). Their
+      // ENG-3282: the workspace's surveys point at it too, and so do its dashboards (ADR-0060). Their
       // own DELETE events remove them one by one; this clears them in a single subject-wide delete as
       // well, so a replayed workspace event cannot leave them behind.
       deletionFilters.push(

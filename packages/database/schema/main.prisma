@@ -1755,7 +1755,7 @@ model Team {
 }
 
 /// One dashboard a team's Dashboard Viewers are limited to. Only dashboards of the team's workspaces
-/// count: a row whose dashboard's workspace no longer grants the team is ignored by SpiceDB (ADR-0059)
+/// count: a row whose dashboard's workspace no longer grants the team is ignored by SpiceDB (ADR-0060)
 /// and removed when that grant is removed.
 model TeamDashboard {
   createdAt   DateTime  @default(now()) @map(name: "created_at")
@@ -1908,7 +1908,7 @@ model Dashboard {
 
 /// A Dashboard page (ENG-7467): a tab of a dashboard. Every dashboard has at least one. A page can be
 /// limited to selected teams; with no limit it is open to everyone who can open its dashboard. Limits
-/// bind Dashboard Viewers only and are enforced in SpiceDB (ADR-0059).
+/// bind Dashboard Viewers only and are enforced in SpiceDB (ADR-0060).
 ///
 /// @property order - Sort key of the tab, ascending
 model DashboardPage {
@@ -2236,7 +2236,7 @@ model FeedbackDirectory {
   charts                 Chart[]
   /// How the Dashboard Viewer access conditions combine: every one ("all") or at least one ("any").
   viewerAccessJoin       DashboardViewerAccessJoin          @default(all)
-  /// Dashboard Viewer access (ENG-7476, ADR-0060): with no conditions, Dashboard Viewers see every record.
+  /// Dashboard Viewer access (ENG-7476, ADR-0061): with no conditions, Dashboard Viewers see every record.
   viewerAccessConditions FeedbackDirectoryViewerCondition[]
 
   @@unique([organizationId, name])
@@ -2248,7 +2248,7 @@ enum DashboardViewerAccessJoin {
 }
 
 /// One condition of a Feedback Dataset's Dashboard Viewer access: the record field `field` equals one of
-/// the viewer's values for the Member attribute (ADR-0060). `field` names a string field of the Feedback
+/// the viewer's values for the Member attribute (ADR-0061). `field` names a string field of the Feedback
 /// Record itself or an embedded-data key. A key in use cannot be deleted (`onDelete: Restrict`).
 ///
 /// @property field - A Feedback Record string field id, or `ed:<key>` for an embedded-data key

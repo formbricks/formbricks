@@ -34,7 +34,7 @@ import {
  * through PostgreSQL parent lookups instead. Reconciliation must classify these as ignored rather
  * than orphaned — pruning them would delete relationships a future projector is expected to own.
  * `survey` left this list with ENG-3282, when `./survey` began projecting it, and `dashboard` with
- * ADR-0059, when `./dashboard` began projecting dashboards and their pages.
+ * ADR-0060, when `./dashboard` began projecting dashboards and their pages.
  */
 const UNPROJECTED_RESOURCE_TYPES = ["response"] as const;
 
@@ -147,7 +147,7 @@ const toTeamSourceRef: TSourceRefResolver = ({ relation, resource, subject }) =>
   if (subject.objectType === "organization" && relation === PARENT_RELATION) {
     return { kind: "team", teamId: resource.objectId };
   }
-  // The dashboard limit marker (ADR-0059) is the team's own fact, and only ever names the team itself.
+  // The dashboard limit marker (ADR-0060) is the team's own fact, and only ever names the team itself.
   // A marker naming another team is outside the vocabulary: it would strip that team's viewers from this
   // one, so it is reported as unmanaged rather than read as this team's.
   if (
@@ -239,7 +239,7 @@ const toSurveySourceRef: TSourceRefResolver = ({ relation, resource, subject }) 
 };
 
 /**
- * A dashboard's edges (ADR-0059): its workspace, and the teams whose dashboard limit selects it. Both are
+ * A dashboard's edges (ADR-0060): its workspace, and the teams whose dashboard limit selects it. Both are
  * sourced by the dashboard's row, which the projector reconciles as a whole.
  */
 const toDashboardSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
@@ -258,7 +258,7 @@ const DASHBOARD_PAGE_DASHBOARD_RELATIONS = new Set<string>([
   DASHBOARD_PAGE_RELATIONS.openOn,
 ]);
 
-/** A page's edges (ADR-0059): its dashboard, `open_on` while it has no team limit, and its limit teams. */
+/** A page's edges (ADR-0060): its dashboard, `open_on` while it has no team limit, and its limit teams. */
 const toDashboardPageSourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
   if (
     (DASHBOARD_PAGE_DASHBOARD_RELATIONS.has(relation) && subject.objectType === "dashboard") ||
@@ -384,14 +384,14 @@ export type TAuthzedOrganizationParentEdge = Readonly<{
  */
 export type TAuthzedSurveyWorkspaceEdge = Readonly<{
   childId: string;
-  /** `dashboard` (ADR-0059): `dashboard:D#workspace@workspace:W`, checked the same way. */
+  /** `dashboard` (ADR-0060): `dashboard:D#workspace@workspace:W`, checked the same way. */
   childType: "dashboard" | "survey";
   relation: string;
   workspaceId: string;
 }>;
 
 /**
- * A page claiming a dashboard (ADR-0059): `dashboard_page:P#dashboard@dashboard:D`, and the `#open_on`
+ * A page claiming a dashboard (ADR-0060): `dashboard_page:P#dashboard@dashboard:D`, and the `#open_on`
  * edge that opens the page to that dashboard's readers. `open_on` naming another dashboard would hand the
  * page to that dashboard's readers, so both are checked against `DashboardPage.dashboardId`.
  */

@@ -42,7 +42,7 @@ export const listDashboardViewerWorkspaces = async (
 };
 
 /**
- * Of a viewer's granted workspaces, those where a dashboard opens for them (ADR-0059), by a dashboard
+ * Of a viewer's granted workspaces, those where a dashboard opens for them (ADR-0060), by a dashboard
  * lookup: a team dashboard limit can leave a granted workspace with nothing to open, and the viewer is
  * not sent there. A workspace with no dashboards at all stays, so a new grant shows its empty list.
  */

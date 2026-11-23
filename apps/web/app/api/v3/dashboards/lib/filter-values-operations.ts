@@ -137,7 +137,7 @@ const filterProblem = (
  * chart edited in the chart builder does not move the dashboard, S7), every filter's definition — the
  * request names its own filters, so an id like `f1` says nothing about the field on its own — the other
  * filters' picks, the date range and the search, and the Dashboard Viewer access claims the queries run
- * under (ADR-0060). Shared across everyone who reads the dashboard with the same charts and claims: they
+ * under (ADR-0061). Shared across everyone who reads the dashboard with the same charts and claims: they
  * all see the same list, and a viewer limited to other records never reads anyone else's.
  */
 const valuesCacheKey = (parts: {
@@ -149,7 +149,7 @@ const valuesCacheKey = (parts: {
   otherPicks: Record<string, string[]>;
   dateRange: unknown;
   search?: string;
-  /** Each dataset's Dashboard Viewer access claim (ADR-0060), `null` where the read has none. */
+  /** Each dataset's Dashboard Viewer access claim (ADR-0061), `null` where the read has none. */
   viewerAccess: Record<string, unknown>;
 }): { cacheKey: TCacheKey; lockKey: TCacheKey } => {
   const digest = createHash("sha256")
@@ -250,7 +250,7 @@ const resolveValueListRequest = async ({
     actor,
   }));
 
-  // Which records each dataset's values come from, for a Dashboard Viewer (ADR-0060).
+  // Which records each dataset's values come from, for a Dashboard Viewer (ADR-0061).
   const reader = getViewerAccessReader(access);
   const viewerAccess = Object.fromEntries(
     await Promise.all(

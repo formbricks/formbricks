@@ -20,7 +20,7 @@ import { getSpicedbObjectType } from "./object-type";
 import { normalizeAuthorizationOperationalError } from "./operational-error";
 import { isPermissionMissingFromSchema } from "./schema-drift";
 
-/** `dashboard` (ADR-0059): the dashboards the actor reads, a Dashboard Viewer's team limits applied. */
+/** `dashboard` (ADR-0060): the dashboards the actor reads, a Dashboard Viewer's team limits applied. */
 type TCurrentListResource = "dashboard" | "organization" | "workspace";
 /** `dashboard_read` lists the workspaces whose dashboards the actor reads, a Dashboard viewer's included. */
 type TCurrentListPermission = "read" | "write" | "dashboard_read";
@@ -145,7 +145,7 @@ export const lookupAuthorizedWorkspaceIds = (
   );
 
 /**
- * ADR-0059: every dashboard `actor` can open, across all workspaces — `LookupResources` of
+ * ADR-0060: every dashboard `actor` can open, across all workspaces — `LookupResources` of
  * `dashboard#read`, so a Dashboard Viewer's team dashboard limits apply. Only projected dashboards are
  * listed: a dashboard created a moment ago appears once the outbox has delivered it. Callers intersect
  * the result with the dashboards PostgreSQL holds for the workspace they list.
@@ -181,7 +181,7 @@ const filterPagesWithinMcpGrant = async (
 };
 
 /**
- * ADR-0059: of `pageIds`, the dashboard pages `actor` can open — `CheckBulkPermissions` of
+ * ADR-0060: of `pageIds`, the dashboard pages `actor` can open — `CheckBulkPermissions` of
  * `dashboard_page#read` in batches of at most `AUTHZED_MAX_BULK_CHECK_ITEMS`, so a page's team limit
  * applies to a Dashboard Viewer. Unprojected pages are denied (fail closed).
  */

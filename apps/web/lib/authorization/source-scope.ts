@@ -51,7 +51,7 @@ export type TResolvedAuthorizationScope = Readonly<{
   permissionResource: TResolvedPermissionResource;
   policy?: TPendingPrivateSurveyPolicy;
   /**
-   * A dashboard's or page's own graph node (ADR-0059), decided on beside the workspace node: see
+   * A dashboard's or page's own graph node (ADR-0060), decided on beside the workspace node: see
    * `PROJECTED_NODE_ACTIONS` in the evaluator.
    */
   projectedNode?: TResolvedPermissionResource;
@@ -119,7 +119,7 @@ const resolveSurveyScope = async (surveyId: string): Promise<TResourceScope | nu
 };
 
 /**
- * A dashboard or page (ADR-0059): resolved to its workspace like before, carrying its projected node
+ * A dashboard or page (ADR-0060): resolved to its workspace like before, carrying its projected node
  * beside it. The workspace answers everything but a Dashboard Viewer's reads, without waiting for the
  * projection; the node answers the viewer, with its team dashboard limits and page team limits.
  */
