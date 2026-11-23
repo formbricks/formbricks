@@ -531,7 +531,7 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     log("error", "Failed to create user", apiError);
 
     expect(Sentry.captureException).not.toHaveBeenCalled();
-    expect(contextLoggerMock.error).toHaveBeenCalledWith("Failed to create user");
+    expect(contextLoggerMock.error).toHaveBeenCalledWith({ errorType: "Error" }, "Failed to create user");
   });
 
   test("captures a genuine internal fault passed as a trailing arg (DB/adapter error)", () => {
@@ -585,6 +585,48 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     );
   });
 
+  /**
+   * ENG-2779: self-hosters have no Sentry, so the application log is their only copy of an auth fault.
+   * The error branch carries the same allowlisted summary the warn branch does, never the raw Error.
+   */
+  test("preserves only an allowlisted error-level error summary in application logs", () => {
+    const dbError = Object.assign(new Error("Connection for admin@example.com included token-secret"), {
+      code: "P1001",
+      databaseUrl: "postgres://user:password-secret@db.example.com/formbricks",
+    });
+    dbError.stack = "Error: stack-secret";
+
+    log("error", "Better auth was unable to query admin@example.com's account", dbError);
+
+    expect(contextLoggerMock.error).toHaveBeenCalledWith(
+      { errorType: "Error", errorCode: "P1001" },
+      "Better auth was unable to query [redacted]@example.com's account"
+    );
+    expect(JSON.stringify(contextLoggerMock.error.mock.calls)).not.toMatch(
+      /token-secret|password-secret|stack-secret/
+    );
+  });
+
+  test("keeps the error type of a recognised fault and reduces any other to Error", () => {
+    log("error", "TypeError", new TypeError("Cannot read properties of null (reading 'id')"));
+    log("error", "Failed to create user", new APIError("UNPROCESSABLE_ENTITY", { message: "nope" }));
+
+    expect(contextLoggerMock.error).toHaveBeenNthCalledWith(1, { errorType: "TypeError" }, "TypeError");
+    expect(contextLoggerMock.error).toHaveBeenNthCalledWith(
+      2,
+      { errorType: "Error" },
+      "Failed to create user"
+    );
+  });
+
+  test("an error passed as the message itself is logged under a fixed label, not stringified", () => {
+    const deadlock = new Error("deadlock detected for admin@example.com");
+
+    log("error", deadlock as unknown as string);
+
+    expect(contextLoggerMock.error).toHaveBeenCalledWith({ errorType: "Error" }, "Better Auth error");
+  });
+
   test("info/debug-level logs go to info and are never captured", () => {
     log("info", "some info");
 
@@ -635,7 +677,7 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
     // Still visible in the application log — suppression is Sentry-only. A burst of these is how a
     // Redis eviction would present, since verification records live in Redis only.
-    expect(contextLoggerMock.error).toHaveBeenCalledWith(message);
+    expect(contextLoggerMock.error).toHaveBeenCalledWith({ errorType: "Error" }, message);
   });
 
   /**

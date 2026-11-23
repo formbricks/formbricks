@@ -1,6 +1,10 @@
 import { logger } from "@formbricks/logger";
 import { logoutPlainBeforeNavigation } from "@/app/plain/lib/plain-sdk";
-import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
+import {
+  FORMBRICKS_ENVIRONMENT_ID_LS,
+  FORMBRICKS_WORKSPACE_ID_LS,
+  removeLocalStorage,
+} from "@/lib/localStorage";
 import { authClient } from "@/modules/auth/lib/auth-client";
 
 interface UseSignOutOptions {
@@ -17,8 +21,8 @@ interface UseSignOutOptions {
 export const useSignOut = () => {
   const signOut = async (options?: UseSignOutOptions) => {
     if (options?.clearWorkspaceId) {
-      localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
-      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      removeLocalStorage(FORMBRICKS_WORKSPACE_ID_LS);
+      removeLocalStorage(FORMBRICKS_ENVIRONMENT_ID_LS);
     }
 
     // The full page load below never unmounts PlainChat, and Plain persists its session in

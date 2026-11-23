@@ -6,7 +6,12 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { TWorkspace } from "@formbricks/types/workspace";
-import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
+import {
+  FORMBRICKS_ENVIRONMENT_ID_LS,
+  FORMBRICKS_WORKSPACE_ID_LS,
+  removeLocalStorage,
+  writeLocalStorage,
+} from "@/lib/localStorage";
 import { truncate } from "@/lib/utils/strings";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -58,12 +63,12 @@ export const DeleteWorkspaceRender = ({
       const { destination } = await deleteWorkspaceWithConfirmation(currentWorkspace.id, confirmationName);
 
       if (destination.workspaceId) {
-        localStorage.setItem(FORMBRICKS_WORKSPACE_ID_LS, destination.workspaceId);
+        writeLocalStorage(FORMBRICKS_WORKSPACE_ID_LS, destination.workspaceId);
         // Keep legacy environment ID in sync for backward compatibility with old SDK clients
-        localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, destination.workspaceId);
+        writeLocalStorage(FORMBRICKS_ENVIRONMENT_ID_LS, destination.workspaceId);
       } else {
-        localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
-        localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+        removeLocalStorage(FORMBRICKS_WORKSPACE_ID_LS);
+        removeLocalStorage(FORMBRICKS_ENVIRONMENT_ID_LS);
       }
 
       toast.success(t("workspace.general.workspace_deleted_successfully"));

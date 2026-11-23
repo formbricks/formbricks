@@ -101,6 +101,20 @@ describe("useSignOut", () => {
     expect(localStorageMock.removeItem).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
   });
 
+  test("still signs out and redirects when the browser denies localStorage", async () => {
+    vi.stubGlobal("localStorage", {
+      removeItem: vi.fn(() => {
+        throw new DOMException("The operation is insecure.", "SecurityError");
+      }),
+    });
+    const { signOut } = useSignOut();
+
+    await signOut({ clearWorkspaceId: true });
+
+    expect(logoutPlainBeforeNavigation).toHaveBeenCalledTimes(1);
+    expect(window.location.href).toBe("/auth/login");
+  });
+
   test("logs and proceeds when Better Auth signOut resolves with an error", async () => {
     baSignOut.mockResolvedValueOnce({ error: { message: "ba boom" } });
     const { signOut } = useSignOut();

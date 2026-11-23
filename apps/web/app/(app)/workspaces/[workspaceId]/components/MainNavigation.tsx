@@ -26,6 +26,7 @@ import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
 import { useLatestStableRelease } from "@/app/(app)/workspaces/[workspaceId]/lib/use-latest-stable-release";
 import { cn } from "@/lib/cn";
+import { readLocalStorage, writeLocalStorage } from "@/lib/localStorage";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
 import {
@@ -164,11 +165,11 @@ export const MainNavigation = ({
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
-    localStorage.setItem("isMainNavCollapsed", isCollapsed ? "false" : "true");
+    writeLocalStorage("isMainNavCollapsed", isCollapsed ? "false" : "true");
   };
 
   useEffect(() => {
-    const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
+    const isCollapsedValueFromLocalStorage = readLocalStorage("isMainNavCollapsed") === "true";
     // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the expanded default
     setIsCollapsed(isCollapsedValueFromLocalStorage);
   }, []);

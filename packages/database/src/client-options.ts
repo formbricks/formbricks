@@ -15,8 +15,14 @@ import { DEFAULT_POOL_ACQUIRE_TIMEOUT_MS, createPrismaPgAdapter } from "./prisma
  *
  * `Response.notShown` (ENG-6936) is the next one: the results builders, the response card and v3
  * Responses select it; v1/v2 payloads, webhooks and integrations stay exactly as before.
+ *
+ * `Response.calBookings` (the details a Cal.com element reported) is omitted for the opposite reason: it is
+ * a public field, but only the webhook body and `/api/v3/responses` carry it, so the v1 and v2 payloads
+ * stay exactly what they were. Those two readers select it explicitly.
  */
-export const PRISMA_GLOBAL_OMIT = { response: { ingestFlags: true, notShown: true } } as const;
+export const PRISMA_GLOBAL_OMIT = {
+  response: { ingestFlags: true, notShown: true, calBookings: true },
+} as const;
 
 /**
  * Execution budget for the app client's `$transaction` calls, interactive and batch alike; a call that

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { TWithCalBookings } from "./cal-booking";
 import { ZId } from "./common";
 import { ZSurveyQuota } from "./quota";
 import { MAX_NOT_SHOWN_ID_LENGTH, ZResponseNotShown, ZResponseNotShownInput } from "./surveys/not-shown";
@@ -832,7 +833,9 @@ export const ZResponseInput = z.object({
   meta: ZResponseMeta.optional(),
 });
 
-export type TResponseInput = z.infer<typeof ZResponseInput>;
+// `TWithCalBookings` is not in `ZResponseInput` on purpose: the client routes derive it from the survey
+// and the incoming data, so a client-sent value is stripped by the parse and never reaches the column.
+export type TResponseInput = z.infer<typeof ZResponseInput> & TWithCalBookings;
 
 /**
  * Mark as low quality from the survey (ENG-6933, ADR 0022/0024): a rule's action asks the server to set the
@@ -855,7 +858,7 @@ export const ZClientResponseInput = ZResponseInput.extend({
   notShown: ZResponseNotShownInput.optional(),
 });
 
-export type TClientResponseInput = z.infer<typeof ZClientResponseInput>;
+export type TClientResponseInput = z.infer<typeof ZClientResponseInput> & TWithCalBookings;
 
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean().optional(),
@@ -867,7 +870,8 @@ export const ZResponseUpdateInput = z.object({
   pinAuthToken: z.string().nullish(),
 });
 
-export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
+// Same as `TResponseInput`: bookings ride beside the parsed input, never inside the schema.
+export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput> & TWithCalBookings;
 
 /**
  * The survey's update input on the public client route
@@ -881,7 +885,7 @@ export const ZClientResponseUpdateInput = ZResponseUpdateInput.extend({
   notShown: ZResponseNotShownInput.optional(),
 });
 
-export type TClientResponseUpdateInput = z.infer<typeof ZClientResponseUpdateInput>;
+export type TClientResponseUpdateInput = z.infer<typeof ZClientResponseUpdateInput> & TWithCalBookings;
 
 export const ZResponseWithSurvey = ZResponse.extend({
   survey: ZSurvey,

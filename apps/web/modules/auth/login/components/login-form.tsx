@@ -9,7 +9,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { cn } from "@/lib/cn";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { FORMBRICKS_LOGGED_IN_WITH_LS, readLocalStorage, writeLocalStorage } from "@/lib/localStorage";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { getOAuthErrorVariant } from "@/modules/auth/lib/oauth-error";
@@ -150,9 +150,7 @@ export const LoginForm = ({
   });
 
   const onSubmit: SubmitHandler<TLoginForm> = async (data) => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Email");
-    }
+    writeLocalStorage(FORMBRICKS_LOGGED_IN_WITH_LS, "Email");
     try {
       // Step 2 — the user is answering a two-factor challenge. Better Auth issued a partial
       // session on the first step; verifying the TOTP or backup code promotes it to a full session.
@@ -210,10 +208,8 @@ export const LoginForm = ({
   const [lastLoggedInWith, setLastLoggedInWith] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the default
-      setLastLoggedInWith(localStorage.getItem(FORMBRICKS_LOGGED_IN_WITH_LS) || "");
-    }
+    // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the default
+    setLastLoggedInWith(readLocalStorage(FORMBRICKS_LOGGED_IN_WITH_LS) ?? "");
   }, []);
 
   // Neither of these was memoized for a reason worth keeping: one picks a translated string, the
