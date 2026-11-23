@@ -108,6 +108,8 @@ export const zProblem = z.object({
       "forbidden",
       "internal_server_error",
       "invalid_workflow_state",
+      "member_attribute_key_in_use",
+      "member_attributes_plan_required",
       "not_authenticated",
       "not_found",
       "payload_too_large",

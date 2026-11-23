@@ -41,6 +41,10 @@ export const ZAuditTarget = z.enum([
   "retentionRun",
   // A user's grant to an MCP client (ENG-7149): created on Allow, deleted on Revoke.
   "mcpGrant",
+  // Dashboard Access Control (ENG-7473): an organization's Member attribute keys, and members' and
+  // invites' values for them (one bulk write is one event).
+  "memberAttributeKey",
+  "memberAttributes",
 ]);
 export const ZAuditAction = z.enum([
   "created",

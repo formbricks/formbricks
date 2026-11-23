@@ -72,6 +72,8 @@ export const V3_PROBLEM_CODES = [
   "forbidden",
   "internal_server_error",
   "invalid_workflow_state",
+  "member_attribute_key_in_use",
+  "member_attributes_plan_required",
   "not_authenticated",
   "not_found",
   "payload_too_large",
@@ -552,6 +554,42 @@ export function problemChartInUse(
     `This chart is on ${dashboards.length} dashboard(s), so it was not deleted. Remove it from them first.`,
     requestId,
     { code: "chart_in_use", instance, details: { dashboards } }
+  );
+}
+
+/**
+ * ENG-7473: Member attributes are part of Dashboard Access Control, so they need the plan that offers the
+ * Dashboard Viewer role — Access Control and Dashboards (`getIsDashboardViewerRoleEnabled`). Checked after
+ * authorization, so a caller without access never learns the organization's plan.
+ */
+export function problemMemberAttributesPlanRequired(requestId: string, instance?: string): Response {
+  return problemResponse(
+    403,
+    "Forbidden",
+    "Member attributes are not enabled for this organization. They need Access Control and Dashboards — an organization owner can enable them from the organization's billing or license settings.",
+    requestId,
+    { code: "member_attributes_plan_required", instance }
+  );
+}
+
+/**
+ * ENG-7473: a Member attribute that Dashboard Viewer access of a Feedback Dataset matches on cannot be
+ * deleted — the dataset's Dashboard Viewers would suddenly match nothing. `details.datasets` names up to
+ * 20 of them and `details.datasetCount` says how many there are, so the caller can change their access
+ * first. There is no force option.
+ */
+export function problemMemberAttributeKeyInUse(
+  requestId: string,
+  datasets: { id: string; name: string }[],
+  datasetCount: number,
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    `Dashboard Viewer access of ${datasetCount} Feedback Dataset(s) uses this Member attribute, so it was not deleted. Change their Dashboard Viewer access first.`,
+    requestId,
+    { code: "member_attribute_key_in_use", instance, details: { datasets, datasetCount } }
   );
 }
 

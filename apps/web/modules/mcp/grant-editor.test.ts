@@ -24,6 +24,7 @@ const EVERY_SCOPE = [
   "dashboards:write",
   "feedbackRecords:write",
   "audience:read",
+  "organization:read",
 ];
 const FULL_CAP = getMcpGrantPermissionsForScopes(EVERY_SCOPE);
 const ALL_PERMISSIONS = Object.keys(MCP_PERMISSIONS) as TMcpPermission[];
@@ -39,6 +40,7 @@ describe("getMcpGrantEditorCategories", () => {
       "dashboards",
       "feedback",
       "audience",
+      "organization",
     ]);
     expect(categories[0].permissions).toEqual(["surveys", "creatives", "surveyStyling"]);
     expect(categories.flatMap(({ permissions }) => permissions)).toEqual(ALL_PERMISSIONS);
@@ -196,6 +198,8 @@ describe("presets", () => {
       tags: "write",
       workflowRuns: "read",
       contacts: "read",
+      // Select all ticks the Organization category too (ENG-7479).
+      memberAttributes: "read",
     });
     expect(Object.keys(granted)).toHaveLength(ALL_PERMISSIONS.length);
   });
@@ -386,6 +390,7 @@ describe("getMcpGrantSummary", () => {
       { category: "dashboards", level: "none" },
       { category: "feedback", level: "none" },
       { category: "audience", level: "none" },
+      { category: "organization", level: "none" },
     ]);
   });
 

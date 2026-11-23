@@ -19,6 +19,7 @@ import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
+import { copyInviteAttributeValuesToMembership } from "@/modules/ee/member-attributes/lib/service";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createUserAction } from "./actions";
 
@@ -80,6 +81,9 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
 vi.mock("@/modules/ee/mailing/lib/mailing-subscription", () => ({ subscribeUserToMailingList: vi.fn() }));
 vi.mock("@/modules/email", () => ({ sendInviteAcceptedEmail: vi.fn() }));
+vi.mock("@/modules/ee/member-attributes/lib/service", () => ({
+  copyInviteAttributeValuesToMembership: vi.fn(),
+}));
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace: vi.fn() }));
 
 // Getters so individual tests can flip the Cloud gate / invite kill-switch at runtime. The real
@@ -230,6 +234,13 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
     expect(result).toEqual({ success: true });
     expect(createMembership).toHaveBeenCalled();
+    // The invite's Member attribute values become the member's before the invite is deleted (ENG-7468).
+    expect(copyInviteAttributeValuesToMembership).toHaveBeenCalledWith(
+      expect.objectContaining({ inviteId: "invite-1" })
+    );
+    expect(vi.mocked(copyInviteAttributeValuesToMembership).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(deleteInvite).mock.invocationCallOrder[0]
+    );
     expect(deleteInvite).toHaveBeenCalledWith("invite-1");
   });
 

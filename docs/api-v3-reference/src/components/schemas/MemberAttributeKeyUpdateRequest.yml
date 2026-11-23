@@ -1,0 +1,23 @@
+type: object
+additionalProperties: false
+description: >-
+  Changes a key's label, description or both; the `key` itself never changes (sending it is a **400**).
+  At least one of `label` and `description` is required.
+required:
+  - expectedUpdatedAt
+properties:
+  label:
+    type: string
+    minLength: 1
+    maxLength: 100
+  description:
+    type:
+      - string
+      - "null"
+    maxLength: 500
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: >-
+      The key's `updatedAt` from your read. If it changed since, the request answers **409** with the
+      current one in `details.currentUpdatedAt` and nothing is written.

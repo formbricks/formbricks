@@ -291,6 +291,7 @@ describe("authenticateMcpRequest", () => {
           "responses:read",
           "dashboards:read",
           "audience:read",
+          "organization:read",
           "surveys:write",
           "workflows:write",
           "feedbackRecords:write",
@@ -326,6 +327,7 @@ describe("authenticateMcpRequest", () => {
           "responses:read",
           "dashboards:read",
           "audience:read",
+          "organization:read",
         ].sort()
       );
     }
@@ -738,7 +740,7 @@ describe("authenticateMcpRequest", () => {
       // added, the baseline auth gate has been widened and MCP is accepting a token that grants no
       // resource access.
       expect(result.response.headers.get("WWW-Authenticate")).toContain(
-        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write dashboards:read dashboards:write audience:read"'
+        'scope="surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write dashboards:read dashboards:write audience:read organization:read"'
       );
     }
     expect(applyRateLimit).not.toHaveBeenCalled();

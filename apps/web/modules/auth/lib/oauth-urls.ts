@@ -116,7 +116,8 @@ export const getOAuthUserInfoUrl = (): string => `${getAuthIssuerUrl()}/oauth2/u
  * protected-resource metadata advertises, so without it every integration registered before the family
  * existed gets `invalid_scope` as its connection re-authorizes. Responses took both steps (ENG-2862,
  * 20260915120000; ENG-3470, 20261005130000), dashboards too (ENG-6581, 20261022120000 and
- * 20261022120001), and the read-only `audience` family (ENG-7151, 20261112130000 and 20261112130001).
+ * 20261022120001), the read-only `audience` family (ENG-7151, 20261112130000 and 20261112130001), and the
+ * read-only `organization` family (ENG-7479, 20261123130000 and 20261123130001).
  *
  * Never by editing the 20260812110001 seed migration. That one has already run everywhere, so widening
  * its literal repairs nothing and only makes it claim something it never did.
@@ -134,8 +135,12 @@ export const MCP_SCOPE_FAMILIES = [
  * Added by the same rules and the same two migrations as `MCP_SCOPE_FAMILIES`, with only the read scope
  * in them. ENG-7151: `audience` (contacts, contact attributes, segments, action classes), which holds
  * personal data, so it is its own family rather than riding on another one's consent.
+ *
+ * ENG-7479: `organization` (an organization's settings: Member attributes, and the other Dashboard Access
+ * Control settings as they gain read tools), which names people and what decides their access, so it is
+ * its own family too.
  */
-export const MCP_READ_ONLY_SCOPE_FAMILIES = ["audience"] as const;
+export const MCP_READ_ONLY_SCOPE_FAMILIES = ["audience", "organization"] as const;
 
 export type TMcpScopeFamily =
   | (typeof MCP_SCOPE_FAMILIES)[number]

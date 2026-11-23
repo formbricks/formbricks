@@ -57,6 +57,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
+import { copyInviteAttributeValuesToMembership } from "@/modules/ee/member-attributes/lib/service";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
@@ -226,6 +227,13 @@ async function handleInviteAcceptance(
       user.id
     );
   }
+
+  // The invite's Member attribute values become the member's, before the invite (and its values) is deleted.
+  await copyInviteAttributeValuesToMembership({
+    inviteId: invite.id,
+    organizationId: invite.organizationId,
+    userId: user.id,
+  });
 
   await updateUser(user.id, {
     notificationSettings: {

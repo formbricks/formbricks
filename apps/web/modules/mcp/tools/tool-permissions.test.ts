@@ -91,6 +91,7 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
       "dashboards:read",
       "feedbackRecords:read",
       "audience:read",
+      "organization:read",
     ],
   },
   get_workspace_custom_css: ["surveys:read"],
@@ -188,6 +189,8 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_contact_attribute_values: ["audience:read"],
   list_segments: ["audience:read"],
   list_action_classes: ["audience:read"],
+  list_member_attribute_keys: ["organization:read"],
+  list_member_attributes: ["organization:read"],
 };
 
 /**
@@ -241,6 +244,7 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
       "contactAttributes:read",
       "segments:read",
       "actionClasses:read",
+      "memberAttributes:read",
     ],
   },
   get_workspace_custom_css: ["surveyStyling:read"],
@@ -337,6 +341,8 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   list_contact_attribute_values: ["contactAttributes:read"],
   list_segments: ["segments:read", "contactAttributes:read"],
   list_action_classes: ["actionClasses:read"],
+  list_member_attribute_keys: ["memberAttributes:read"],
+  list_member_attributes: ["memberAttributes:read"],
 };
 
 const VIEWER = { extra: { dashboardViewerOnly: true } } as unknown as AuthInfo;
@@ -401,6 +407,7 @@ const loadRegistrations = async () => {
   dashboards.registerDashboardTools(server);
   tags.registerTagTools(server);
   (await import("./audience")).registerAudienceTools(server);
+  (await import("./member-attributes")).registerMemberAttributeTools(server);
   return registrations;
 };
 

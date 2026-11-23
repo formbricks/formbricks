@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { cn } from "@/lib/cn";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, removeLocalStorage } from "@/lib/localStorage";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
@@ -51,6 +52,10 @@ interface OrganizationActionsProps {
   readonly userAdminTeamIds?: string[];
   readonly enterpriseLicenseRequestFormUrl: string;
   readonly isBulkInviteAllowed: boolean;
+  /** The CSV import also sets Member attributes: an Owner or Manager above the floor, plan on (ENG-7475). */
+  readonly isMemberAttributesEnabled?: boolean;
+  /** Replaces the default bottom margin, for a toolbar that spaces its actions itself. */
+  readonly className?: string;
 }
 
 export const OrganizationActions = ({
@@ -70,6 +75,8 @@ export const OrganizationActions = ({
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
   isBulkInviteAllowed,
+  isMemberAttributesEnabled = false,
+  className,
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -178,7 +185,7 @@ export const OrganizationActions = ({
 
   return (
     <>
-      <div className="mb-4 flex justify-end gap-x-2 text-right">
+      <div className={cn("mb-4 flex justify-end gap-x-2 text-right", className)}>
         {role !== "owner" && isMultiOrgEnabled && (
           <Button variant="destructive" size="sm" onClick={() => setIsLeaveOrganizationModalOpen(true)}>
             {t("workspace.settings.general.leave_organization")}
@@ -212,6 +219,7 @@ export const OrganizationActions = ({
         userAdminTeamIds={userAdminTeamIds}
         enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
         isBulkInviteAllowed={isBulkInviteAllowed}
+        isMemberAttributesEnabled={isMemberAttributesEnabled}
       />
 
       <Dialog open={isLeaveOrganizationModalOpen} onOpenChange={setIsLeaveOrganizationModalOpen}>

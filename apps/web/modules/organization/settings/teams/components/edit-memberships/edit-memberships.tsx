@@ -1,10 +1,14 @@
+import type { ReactNode } from "react";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { MembersInfo } from "@/modules/organization/settings/teams/components/edit-memberships/members-info";
+import { getMemberAttributes } from "@/modules/ee/member-attributes/lib/service";
 import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
+import { getMemberTeamsByOrganizationId } from "@/modules/organization/settings/teams/lib/member-teams";
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
+import { MembersTable } from "./members-table";
 
 interface EditMembershipsProps {
   readonly organization: TOrganization;
@@ -14,12 +18,14 @@ interface EditMembershipsProps {
   readonly isDashboardViewerRoleEnabled: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
   readonly canManageUsers: boolean;
+  readonly actions?: ReactNode;
 }
 
 /**
- * The column headers used to live here, hand-rolled as a `grid-cols-12` of divs, while the rows lived in
- * `MembersInfo` — two files repeating the same `col-span-*` sequence and the same two feature flags. They
- * are now one column array in `MembersInfo`, which is where the flags already were.
+ * Loads the Members table's members, invites and teams on the server, as the page always has, and hands
+ * them to the client table (ENG-7474). Member attributes are read by the table itself through the v3
+ * endpoints — except the viewer's own values, read here, which a member who may not read everyone's sees
+ * in their own Member settings.
  */
 export const EditMemberships = async ({
   organization,
@@ -29,32 +35,45 @@ export const EditMemberships = async ({
   isDashboardViewerRoleEnabled,
   isUserManagementDisabledFromUi,
   canManageUsers,
+  actions,
 }: EditMembershipsProps) => {
-  const [members, invites] = await Promise.all([
+  const { isOwner, isManager } = getAccessFlags(role);
+  // Member attributes exist for Dashboard Viewer access, so they need what the role needs.
+  const isMemberAttributesEnabled = isDashboardViewerRoleEnabled;
+  const canManageMemberAttributes = isMemberAttributesEnabled && (isOwner || isManager);
+
+  const [members, invites, { teamsByUserId, teamsByInviteId }, ownAttributes] = await Promise.all([
     getMembershipByOrganizationId(organization.id),
     getInvitesByOrganizationId(organization.id),
+    getMemberTeamsByOrganizationId(organization.id),
+    isMemberAttributesEnabled && !canManageMemberAttributes
+      ? getMemberAttributes(organization.id, currentUserId)
+      : Promise.resolve([]),
   ]);
-
-  if (!role) return null;
 
   // Last sign-in is for Owners and Managers only (ENG-3317). Strip it here rather than hiding a column, so
   // it never reaches anyone else's page payload.
-  const { isOwner, isManager } = getAccessFlags(role);
   const visibleMembers =
     isOwner || isManager ? members : members.map((member) => ({ ...member, lastLoginAt: undefined }));
 
   return (
-    <MembersInfo
-      organization={organization}
-      currentUserId={currentUserId}
-      invites={invites ?? []}
+    <MembersTable
+      organizationId={organization.id}
       members={visibleMembers}
+      invites={invites ?? []}
+      teamsByUserId={teamsByUserId}
+      teamsByInviteId={teamsByInviteId}
+      currentUserId={currentUserId}
       currentUserRole={role}
       isAccessControlAllowed={isAccessControlAllowed}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
       isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
       canManageUsers={canManageUsers}
+      canManageMemberAttributes={canManageMemberAttributes}
+      ownAttributes={ownAttributes.map(({ key, label, values }) => ({ key, label, values }))}
+      reportingTimeZone={getReportingTimeZone(organization.displayTimeZone)}
+      actions={actions}
     />
   );
 };

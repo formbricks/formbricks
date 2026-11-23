@@ -142,6 +142,7 @@ describe("rateLimitConfigs", () => {
         "v3CustomCss",
         "v3ChartQueries",
         "v3ChartQueriesInFlight",
+        "v3MemberAttributesBulk",
         "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",

@@ -87,6 +87,7 @@ const loadRegistrations = async (): Promise<TRegistration[]> => {
   dashboards.registerDashboardTools(server);
   tags.registerTagTools(server);
   (await import("./audience")).registerAudienceTools(server);
+  (await import("./member-attributes")).registerMemberAttributeTools(server);
   return registrations;
 };
 

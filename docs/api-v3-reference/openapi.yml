@@ -18,6 +18,8 @@ info:
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET /api/v3/workflows/{workflowId}/webhook**, **POST /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request** and **PUT /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response**, Test runs **POST /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no login: the token in its path is the credential.
 
+    **Member attributes**: an organization's Member attribute keys (**GET**, **POST /api/v3/organizations/{organizationId}/member-attribute-keys**; **GET**, **PATCH**, **DELETE /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}**) and members' values for them (**GET /api/v3/organizations/{organizationId}/member-attributes**, **PUT /api/v3/organizations/{organizationId}/member-attributes/bulk**), which Dashboard Viewer access matches on. Owners and Managers, or an API key with Access Control read or write; they need Access Control and Dashboards.
+
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
       them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
@@ -7985,6 +7987,360 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/organizations/{organizationId}/member-attribute-keys:
+    get:
+      operationId: listMemberAttributeKeysV3
+      summary: List Member attribute keys
+      description: |
+        Returns the organization's Member attribute keys, oldest first (at most 50, so the list is not
+        paginated), each with how many members hold a value for it. The built-in Email attribute is the login
+        email and is not listed.
+
+        Needs an Owner or Manager session, or an API key of this organization with Access Control read or
+        write. Member attributes need Access Control and Dashboards (**403** `member_attributes_plan_required`
+        without them).
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      responses:
+        '200':
+          description: The organization's Member attribute keys
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    maxItems: 50
+                    items:
+                      $ref: '#/components/schemas/MemberAttributeKeyListItem'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    post:
+      operationId: createMemberAttributeKeyV3
+      summary: Create a Member attribute key
+      description: |
+        Adds a key to the organization's list, such as `country`. Its `key` never changes afterwards; its
+        label and description can. An organization can have at most 50 keys (**422** naming `key` with
+        `limit_exceeded`); a `key` it already has answers **409**.
+
+        Needs an Owner or Manager session above the organization's user-management floor, or an API key of
+        this organization with Access Control write. Audited.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberAttributeKeyCreateRequest'
+      responses:
+        '201':
+          description: The created key
+          headers:
+            Location:
+              schema:
+                type: string
+              description: The key's URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberAttributeKeyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '409':
+          $ref: '#/components/responses/V3MemberAttributeKeyConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}:
+    get:
+      operationId: getMemberAttributeKeyV3
+      summary: Get a Member attribute key
+      description: |
+        Returns one key. A key that does not exist in the organization answers **403**. Same access as the
+        list.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/MemberAttributeKeyIdPath'
+      responses:
+        '200':
+          description: The key
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberAttributeKeyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: updateMemberAttributeKeyV3
+      summary: Update a Member attribute key
+      description: |
+        Changes a key's label, description or both. Its `key` never changes. Send the `updatedAt` from your
+        read as `expectedUpdatedAt`: if the key changed since, the request answers **409** and nothing is
+        written. Same access as create. Audited.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/MemberAttributeKeyIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberAttributeKeyUpdateRequest'
+      responses:
+        '200':
+          description: The updated key
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberAttributeKeyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '409':
+          $ref: '#/components/responses/V3MemberAttributeKeyConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteMemberAttributeKeyV3
+      summary: Delete a Member attribute key
+      description: |
+        Deletes a key and every value members and pending invites hold for it. Refused with **409**
+        `member_attribute_key_in_use` while Dashboard Viewer access of a Feedback Dataset matches on the key;
+        `details.datasets` names them. With `expectedUpdatedAt`, a key changed since answers **409** too.
+        Same access as create. Audited.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/MemberAttributeKeyIdPath'
+        - in: query
+          name: expectedUpdatedAt
+          schema:
+            type: string
+            format: date-time
+          description: The key's `updatedAt` from your read. Optional.
+      responses:
+        '200':
+          description: The key was deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+                        format: cuid2
+                        description: The deleted key's id.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '409':
+          $ref: '#/components/responses/V3MemberAttributeKeyConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/organizations/{organizationId}/member-attributes:
+    get:
+      operationId: listMemberAttributesV3
+      summary: List members' Member attribute values
+      description: |
+        Returns members' and pending invites' Member attribute values, keyed by attribute `key`: every
+        member first, then every pending invite. Use `meta.nextCursor` for the next page. `search` matches
+        name or email, ignoring case.
+
+        Needs an Owner or Manager session, or an API key of this organization with Access Control read or
+        write. Member attributes need Access Control and Dashboards (**403** `member_attributes_plan_required`
+        without them).
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250).
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: search
+          schema:
+            type: string
+            maxLength: 255
+          description: Case-insensitive substring match over name and email.
+      responses:
+        '200':
+          description: One page of members' values
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MemberAttributeRow'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/organizations/{organizationId}/member-attributes/bulk:
+    put:
+      operationId: bulkSetMemberAttributesV3
+      summary: Set members' Member attribute values in bulk
+      description: |
+        Sets Member attribute values for up to 500 people at once, matched by email: a member by their login
+        email, otherwise every pending invite to it (the values are copied onto the membership when the
+        person accepts). Each row replaces the values of the keys it names and leaves the others alone; an
+        empty list clears a key. All rows apply in one transaction.
+
+        The response reports every row: `updated_member`, `updated_invite`, `unknown_email` (invite the
+        person first, then send the row again) or `invalid` with its `problems` (an unknown key, a value past
+        a limit, a second row for the same email). A refused row writes nothing; the others still apply.
+
+        Needs an Owner or Manager session above the organization's user-management floor, or an API key of
+        this organization with Access Control write. Rate-limited to 20 requests a minute per caller on top of
+        the default limit. One audit event per request.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberAttributesBulkRequest'
+      responses:
+        '200':
+          description: What each row did
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberAttributesBulkResult'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/feedbackRecords:
     get:
       operationId: listFeedbackRecordsV3
@@ -11333,6 +11689,8 @@ components:
             - forbidden
             - internal_server_error
             - invalid_workflow_state
+            - member_attribute_key_in_use
+            - member_attributes_plan_required
             - not_authenticated
             - not_found
             - payload_too_large
@@ -18604,6 +18962,289 @@ components:
             - type: 'null'
           description: Replaces both fields. `null` clears all workspace CSS. Adding or editing CSS needs the Scale plan on Formbricks Cloud; clearing either field or all CSS never does.
       additionalProperties: false
+    MemberAttributeKeyListItem:
+      type: object
+      additionalProperties: false
+      description: A Member attribute key with how widely members use it.
+      required:
+        - id
+        - key
+        - label
+        - description
+        - createdAt
+        - updatedAt
+        - memberCount
+        - distinctValueCount
+      properties:
+        id:
+          type: string
+          format: cuid2
+        key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          maxLength: 64
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        memberCount:
+          type: integer
+          minimum: 0
+          description: Members holding at least one value for the key. Pending invites are not counted.
+        distinctValueCount:
+          type: integer
+          minimum: 0
+          description: Distinct values members hold for the key, ignoring case and surrounding spaces.
+    MemberAttributeKeyCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - label
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[a-z][a-z0-9_]*$
+          description: Lowercase letters, numbers and underscores, starting with a letter. Never changes after creation. `email`, `name`, `full_name`, `role` and `teams` are reserved (**400**); a key the organization already has answers **409**.
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Trimmed; must not be empty.
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+          description: Optional. Trimmed; an empty string is stored as `null`.
+    MemberAttributeKeyResource:
+      type: object
+      additionalProperties: false
+      description: 'A Member attribute key: one entry of the organization-wide list Owners and Managers define, such as Country. Dashboard Viewer access matches a Feedback Record field against a viewer''s values for it. The built-in Email attribute is the login email and is never listed.'
+      required:
+        - id
+        - key
+        - label
+        - description
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          maxLength: 64
+          description: The identifier used in Dashboard Viewer access, CSV columns and the bulk values request. Set at creation and never changes.
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The name shown as a column and field label.
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          description: Send it back as `expectedUpdatedAt` to change or delete the key.
+    MemberAttributeKeyUpdateRequest:
+      type: object
+      additionalProperties: false
+      description: Changes a key's label, description or both; the `key` itself never changes (sending it is a **400**). At least one of `label` and `description` is required.
+      required:
+        - expectedUpdatedAt
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: The key's `updatedAt` from your read. If it changed since, the request answers **409** with the current one in `details.currentUpdatedAt` and nothing is written.
+    MemberAttributeRow:
+      type: object
+      additionalProperties: false
+      description: One member's, or one pending invite's, Member attribute values. `attributes` maps each attribute `key` the row holds a value for to its values, as stored (trimmed, first spelling of values that differ only by case). Keys with no value are absent. A `member` row carries `userId`, an `invite` row `inviteId`.
+      required:
+        - type
+        - name
+        - email
+        - role
+        - attributes
+      properties:
+        type:
+          type: string
+          enum:
+            - member
+            - invite
+        userId:
+          type: string
+        inviteId:
+          type: string
+        name:
+          type:
+            - string
+            - 'null'
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+            - owner
+            - manager
+            - member
+            - billing
+            - dashboard_viewer
+        attributes:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    MemberAttributesBulkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          minItems: 1
+          maxItems: 500
+          description: Up to 500 rows, applied in one transaction. Each row replaces the member's (or pending invites') values for the keys it names; keys it does not name are left alone, and an empty list clears a key.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - email
+              - attributes
+            properties:
+              email:
+                type: string
+                minLength: 1
+                maxLength: 320
+                description: Matched against members' login emails, then pending invites, ignoring case and surrounding spaces. A member wins over an invite to the same address. A second row for the same email is reported `invalid`.
+              attributes:
+                type: object
+                maxProperties: 50
+                description: Values per attribute `key`. Values are trimmed, empty ones dropped and duplicates ignoring case merged. A key with more than 50 values, a value longer than 255 characters, or a key the organization does not have makes the row `invalid`, and nothing of it is written.
+                additionalProperties:
+                  type: array
+                  maxItems: 200
+                  items:
+                    type: string
+                    maxLength: 1020
+    MemberAttributesBulkResult:
+      type: object
+      additionalProperties: false
+      required:
+        - summary
+        - rows
+      properties:
+        summary:
+          type: object
+          additionalProperties: false
+          required:
+            - updatedMembers
+            - updatedInvites
+            - unknownEmails
+            - invalid
+          properties:
+            updatedMembers:
+              type: integer
+              minimum: 0
+            updatedInvites:
+              type: integer
+              minimum: 0
+            unknownEmails:
+              type: integer
+              minimum: 0
+            invalid:
+              type: integer
+              minimum: 0
+        rows:
+          type: array
+          description: One outcome per request row, in request order.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - index
+              - email
+              - status
+            properties:
+              index:
+                type: integer
+                minimum: 0
+                description: The row's position in the request.
+              email:
+                type: string
+                description: The row's email, trimmed and lowercased.
+              status:
+                type: string
+                enum:
+                  - updated_member
+                  - updated_invite
+                  - unknown_email
+                  - invalid
+                description: '`updated_member` and `updated_invite` were written; `unknown_email` names no member or pending invite (invite the person first); `invalid` lists its `problems` and wrote nothing.'
+              userId:
+                type: string
+                description: The member written, for `updated_member`.
+              inviteIds:
+                type: array
+                items:
+                  type: string
+                description: The pending invites written, for `updated_invite`.
+              problems:
+                type: array
+                description: Why the row was refused, for `invalid`.
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                    - name
+                    - reason
+                    - code
+                  properties:
+                    name:
+                      type: string
+                      description: '`email` or `attributes.<key>`.'
+                    reason:
+                      type: string
+                    code:
+                      type: string
+                      enum:
+                        - invalid_reference
+                        - limit_exceeded
+                        - duplicate_identifier
+                        - unsupported_field
     FeedbackRecordFieldType:
       type: string
       description: 'The type of a feedback field, which determines which `value_*` member carries the answer: `text` → `value_text` (the only enrichable type), `categorical` → `value_text` + `value_id`, `nps` / `csat` / `ces` / `rating` / `number` → `value_number`, `boolean` → `value_boolean`, `date` → `value_date`.'
@@ -19551,6 +20192,36 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    V3MemberAttributesForbidden:
+      description: 'Forbidden. `code: forbidden` when the caller is not an Owner or Manager of the organization (or, for writes, is below the organization''s user-management floor), when an API key belongs to another organization or lacks Access Control read (reads) or write (writes), or when the key named does not exist in the organization (404 is not used, to avoid leaking existence). `code: member_attributes_plan_required` when the caller is authorized but the organization does not have Access Control and Dashboards — checked after authorization, so a caller without access never learns the organization''s plan.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3MemberAttributeKeyConflict:
+      description: 'Conflict. `code: conflict` when the key changed since the `expectedUpdatedAt` sent (`details.currentUpdatedAt` holds the current one) or, on create, when the organization already has a key with this `key`. `code: member_attribute_key_in_use` when Dashboard Viewer access of a Feedback Dataset matches on the key, so it cannot be deleted: `details.datasets` names up to 20 of them (`id`, `name`) and `details.datasetCount` says how many there are.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     FeedbackRecordsBadRequest:
       description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`; a request body that is not a single JSON object; a body whose top-level keys can be read more than one way (a repeated key, a key with non-ASCII characters, or a key that differs from `tenant_id` only in letter case); a `tenant_id` query parameter given more than once; or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
       content:
@@ -19835,6 +20506,22 @@ components:
         type: string
         format: cuid2
       description: Workspace identifier.
+    OrganizationIdPath:
+      in: path
+      name: organizationId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Organization identifier. An API key only ever reaches its own organization.
+    MemberAttributeKeyIdPath:
+      in: path
+      name: keyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Member attribute key identifier (its `id`, not its `key`).
     FeedbackRecordsTenantIdQuery:
       in: query
       name: tenant_id

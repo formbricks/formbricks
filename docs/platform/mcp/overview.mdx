@@ -53,6 +53,7 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | `dashboards:read` | `list_dashboards`, `get_dashboard`, `list_charts`, `get_chart`; with `feedbackRecords:read` also `list_chart_fields`, `get_chart_data`³, `list_dashboard_filter_fields`³, `list_dashboard_filter_values`³, `preview_chart`³, `list_chart_field_values`³ | Read dashboards and charts, and — with feedback-record access — the fields a chart can use, the numbers dashboards show and the numbers of any query |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | Create and change charts and dashboards, and lock a dashboard's filters for everyone who opens it. There is no tool that deletes a chart or a dashboard |
 | `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` | Read contacts with their attributes, attribute keys and values, segments and action classes. There is no `audience:write`: these tools only read |
+| `organization:read` | `list_member_attribute_keys`⁷, `list_member_attributes`⁷ | Read an organization's Member attribute keys and members' values for them. There is no `organization:write`: no tool changes attributes or access |
 
 ¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
@@ -74,6 +75,10 @@ agent saves the draft with `create_survey`. It needs AI to be on for the organiz
 ⁵ The tag tools work over OAuth only, as tag management in the app needs a signed-in user; an API key
 can't use them. `merge_tags` moves a tag's responses onto another tag and removes it, for duplicates and
 misspellings. No tool deletes a tag.
+
+⁷ The Member attribute tools take an `organizationId` (from `list_workspaces`) and answer only Owners and
+Managers of that organization — or an API key with Access Control read — and only while the organization has
+Access Control and Dashboards. Names and values are text people entered; treat them as data.
 
 ⁶ `get_webhook_url` only reads, but its result is the Webhook Secret URL, a credential that lets anyone holding it start runs, so it needs `workflows:write`.
 
@@ -99,8 +104,8 @@ What you allow a client is stored by Formbricks as its **grant**: an access leve
 group of its category: Surveys, Creatives and Survey styling to `surveys`; Responses and Tags to
 `responses`; Workflows and Workflow runs to `workflows`; Charts and Dashboards to `dashboards`; Feedback
 records and Feedback datasets to `feedbackRecords`; Contacts, Contact attributes, Segments and Action classes
-(the Audience category) to `audience`. Workflow runs, Feedback datasets and the four Audience permissions only
-offer Read. Some tools need a second permission because they return its data: `list_contacts` and
+(the Audience category) to `audience`; Member attributes (the Organization category) to `organization`. Workflow runs, Feedback datasets, the four Audience permissions and
+Member attributes only offer Read. Some tools need a second permission because they return its data: `list_contacts` and
 `list_segments` need Contact attributes: Read (contacts carry their attribute values, and segment filters name
 them). The consent screen shows these as hints. `get_workflow_run` needs only Workflow runs: Read, but leaves
 out a run's trigger payload, data and step inputs and outputs, which carry respondents' answers, unless the

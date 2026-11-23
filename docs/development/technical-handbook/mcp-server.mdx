@@ -1886,6 +1886,25 @@ and the Contacts entitlement (all but action classes), exactly as over REST.
 - **Untrusted text.** Contact attribute values are written by end users and SDK calls. The descriptions tell the
   agent to treat them as data; nothing on our side acts on them.
 
+### Member attribute tools
+
+Two read-only, idempotent tools over the v3 Member attribute operations (`modules/mcp/tools/member-attributes.ts`),
+with no write tools: an agent can answer "what is Anna's Country?" but cannot change anyone's attributes or
+access (ENG-7479). Both declare Member attributes: Read, in the Organization category, capped by the read-only
+`organization:read` family (migrations 20261123130000 and 20261123130001).
+
+| Tool                         | REST operation                                                  | Permission              |
+| ---------------------------- | --------------------------------------------------------------- | ----------------------- |
+| `list_member_attribute_keys` | `GET /api/v3/organizations/{organizationId}/member-attribute-keys` | Member attributes: Read |
+| `list_member_attributes`     | `GET /api/v3/organizations/{organizationId}/member-attributes`     | Member attributes: Read |
+
+- **Owners and Managers only.** The operations ask `organization.manage` of a user (an OAuth token acts as its
+  user) and Access Control read of an API key, then the Access Control + Dashboards plan gate.
+- **Smaller pages.** `list_member_attributes` defaults to 20 and caps at 50 (the API allows 250); `search` finds
+  one person by name or email.
+- **Untrusted text.** Names, labels and values are typed by people or imported from a CSV. The descriptions
+  tell the agent to treat them as data; `member-attributes.test.ts` carries an injection fixture.
+
 ### list_feedback_datasets
 
 Lists the active feedback datasets assigned to a workspace. Read-only and idempotent. Use the

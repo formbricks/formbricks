@@ -1,0 +1,52 @@
+put:
+  operationId: bulkSetMemberAttributesV3
+  summary: Set members' Member attribute values in bulk
+  description: |
+    Sets Member attribute values for up to 500 people at once, matched by email: a member by their login
+    email, otherwise every pending invite to it (the values are copied onto the membership when the
+    person accepts). Each row replaces the values of the keys it names and leaves the others alone; an
+    empty list clears a key. All rows apply in one transaction.
+
+    The response reports every row: `updated_member`, `updated_invite`, `unknown_email` (invite the
+    person first, then send the row again) or `invalid` with its `problems` (an unknown key, a value past
+    a limit, a second row for the same email). A refused row writes nothing; the others still apply.
+
+    Needs an Owner or Manager session above the organization's user-management floor, or an API key of
+    this organization with Access Control write. Rate-limited to 20 requests a minute per caller on top of
+    the default limit. One audit event per request.
+  tags:
+    - V3 Member Attributes
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/MemberAttributesBulkRequest.yml
+  responses:
+    "200":
+      description: What each row did
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/MemberAttributesBulkResult.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3MemberAttributesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

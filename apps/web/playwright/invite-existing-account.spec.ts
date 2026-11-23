@@ -35,9 +35,13 @@ test.describe("Invite sign-up with an address that already has an account @slow"
       await page.getByRole("button", { name: "Invite", exact: true }).click();
       await expect(page.locator(".formbricks__toast__success")).toBeVisible({ timeout: 15000 });
 
-      const invitedMemberInfo = page.locator("#singleMemberInfo").filter({ hasText: inviteeEmail });
+      const invitedMemberInfo = page
+        .getByTestId("members-table")
+        .getByRole("row")
+        .filter({ hasText: inviteeEmail });
       await expect(invitedMemberInfo).toBeVisible({ timeout: 10000 });
-      await invitedMemberInfo.locator("#shareInviteButton").click();
+      await invitedMemberInfo.getByTestId("member-row-menu").click();
+      await page.getByRole("menuitem", { name: "Share invite link" }).click();
       return (await page.waitForSelector("#inviteLinkText")).inputValue();
     });
     expect(inviteLink).toBeTruthy();

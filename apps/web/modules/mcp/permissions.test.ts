@@ -88,6 +88,13 @@ const SPEC_CATALOGUE = {
     scopeFamily: "audience",
     levels: ["none", "read"],
   },
+  // ENG-7479: the Organization category, read-only.
+  memberAttributes: {
+    name: "Member attributes",
+    category: "organization",
+    scopeFamily: "organization",
+    levels: ["none", "read"],
+  },
 };
 
 describe("MCP permission registry", () => {
@@ -99,6 +106,7 @@ describe("MCP permission registry", () => {
       "dashboards",
       "feedback",
       "audience",
+      "organization",
     ]);
   });
 
@@ -143,6 +151,12 @@ describe("getMcpPermissionScope", () => {
   test("maps a permission at Write to its scope family's write scope", () => {
     expect(getMcpPermissionScope({ permission: "charts", level: "write" })).toBe("dashboards:write");
     expect(getMcpPermissionScope({ permission: "tags", level: "write" })).toBe("responses:write");
+  });
+
+  test("maps Member attributes to organization:read (ENG-7479)", () => {
+    expect(getMcpPermissionScope({ permission: "memberAttributes", level: "read" })).toBe(
+      "organization:read"
+    );
   });
 
   test("maps an Audience permission to audience:read (ENG-7151)", () => {

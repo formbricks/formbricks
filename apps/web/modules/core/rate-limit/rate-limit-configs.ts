@@ -125,6 +125,11 @@ export const rateLimitConfigs = {
     // each slot's lease, twice the query timeout, after which a slot a crashed pod never released frees itself.
     // So a slot covers one Cube query: an operation running several (a dashboard filter's value list) takes
     // one per query, never one across them all.
+    v3MemberAttributesBulk: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:v3:member-attributes:bulk",
+    }, // 20 per minute per principal, on top of v3 — one bulk request writes up to 500 members' values (ENG-7473)
     internalChartGeneration: {
       interval: 60,
       allowedPerInterval: 1,

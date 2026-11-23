@@ -23,6 +23,7 @@ const CATEGORY_LABELS: Record<TMcpPermissionCategory, (t: TTranslate) => string>
   dashboards: (t) => t("auth.oauth.grant.categories.dashboards"),
   feedback: (t) => t("auth.oauth.grant.categories.feedback"),
   audience: (t) => t("auth.oauth.grant.categories.audience"),
+  organization: (t) => t("auth.oauth.grant.categories.organization"),
 };
 
 const PERMISSION_LABELS: Record<TMcpPermission, (t: TTranslate) => string> = {
@@ -41,6 +42,7 @@ const PERMISSION_LABELS: Record<TMcpPermission, (t: TTranslate) => string> = {
   contactAttributes: (t) => t("auth.oauth.grant.permissions.contact_attributes"),
   segments: (t) => t("auth.oauth.grant.permissions.segments"),
   actionClasses: (t) => t("auth.oauth.grant.permissions.action_classes"),
+  memberAttributes: (t) => t("auth.oauth.grant.permissions.member_attributes"),
 };
 
 const LEVEL_LABELS: Record<Exclude<TMcpCategoryLevel, "mixed">, (t: TTranslate) => string> = {

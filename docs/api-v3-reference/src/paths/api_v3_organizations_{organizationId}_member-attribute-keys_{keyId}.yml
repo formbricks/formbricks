@@ -1,0 +1,138 @@
+get:
+  operationId: getMemberAttributeKeyV3
+  summary: Get a Member attribute key
+  description: |
+    Returns one key. A key that does not exist in the organization answers **403**. Same access as the
+    list.
+  tags:
+    - V3 Member Attributes
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - $ref: ../components/parameters/MemberAttributeKeyIdPath.yml
+  responses:
+    "200":
+      description: The key
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/MemberAttributeKeyResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3MemberAttributesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: updateMemberAttributeKeyV3
+  summary: Update a Member attribute key
+  description: |
+    Changes a key's label, description or both. Its `key` never changes. Send the `updatedAt` from your
+    read as `expectedUpdatedAt`: if the key changed since, the request answers **409** and nothing is
+    written. Same access as create. Audited.
+  tags:
+    - V3 Member Attributes
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - $ref: ../components/parameters/MemberAttributeKeyIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/MemberAttributeKeyUpdateRequest.yml
+  responses:
+    "200":
+      description: The updated key
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/MemberAttributeKeyResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3MemberAttributesForbidden.yml
+    "409":
+      $ref: ../components/responses/V3MemberAttributeKeyConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteMemberAttributeKeyV3
+  summary: Delete a Member attribute key
+  description: |
+    Deletes a key and every value members and pending invites hold for it. Refused with **409**
+    `member_attribute_key_in_use` while Dashboard Viewer access of a Feedback Dataset matches on the key;
+    `details.datasets` names them. With `expectedUpdatedAt`, a key changed since answers **409** too.
+    Same access as create. Audited.
+  tags:
+    - V3 Member Attributes
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - $ref: ../components/parameters/MemberAttributeKeyIdPath.yml
+    - in: query
+      name: expectedUpdatedAt
+      schema:
+        type: string
+        format: date-time
+      description: The key's `updatedAt` from your read. Optional.
+  responses:
+    "200":
+      description: The key was deleted
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: object
+                additionalProperties: false
+                required:
+                  - id
+                properties:
+                  id:
+                    type: string
+                    format: cuid2
+                    description: The deleted key's id.
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3MemberAttributesForbidden.yml
+    "409":
+      $ref: ../components/responses/V3MemberAttributeKeyConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

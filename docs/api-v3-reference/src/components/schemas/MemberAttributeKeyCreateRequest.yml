@@ -1,0 +1,26 @@
+type: object
+additionalProperties: false
+required:
+  - key
+  - label
+properties:
+  key:
+    type: string
+    minLength: 1
+    maxLength: 64
+    pattern: "^[a-z][a-z0-9_]*$"
+    description: >-
+      Lowercase letters, numbers and underscores, starting with a letter. Never changes after creation.
+      `email`, `name`, `full_name`, `role` and `teams` are reserved (**400**); a key the organization
+      already has answers **409**.
+  label:
+    type: string
+    minLength: 1
+    maxLength: 100
+    description: Trimmed; must not be empty.
+  description:
+    type:
+      - string
+      - "null"
+    maxLength: 500
+    description: Optional. Trimmed; an empty string is stored as `null`.
