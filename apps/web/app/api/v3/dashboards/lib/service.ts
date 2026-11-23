@@ -1,11 +1,12 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import type { Prisma } from "@formbricks/database/prisma";
+import { Prisma } from "@formbricks/database/prisma";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { selectChartResource } from "@/app/api/v3/charts/lib/service";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { copyNamePrefix, nextCopyName } from "@/modules/ee/analysis/lib/copy-name";
 import { lockDashboard, nextDashboardUpdatedAt } from "./dashboard-lock";
+import { DEFAULT_DASHBOARD_PAGE_NAME } from "./schemas";
 
 /**
  * Persistence for the v3 dashboard operations. Like the chart service, every read is scoped by the
@@ -36,13 +37,33 @@ export type TDashboardListRow = Prisma.DashboardGetPayload<{ select: typeof sele
 /** A widget with its full chart — what a dashboard read embeds and a widget write answers with. */
 export const selectWidgetResource = {
   id: true,
+  pageId: true,
+  kind: true,
   chartId: true,
+  content: true,
   layout: true,
   order: true,
   chart: { select: selectChartResource },
 } satisfies Prisma.DashboardWidgetSelect;
 
 export type TWidgetResourceRow = Prisma.DashboardWidgetGetPayload<{ select: typeof selectWidgetResource }>;
+
+/** How a dashboard's pages read back: by `order`, then the order they were added, then id. */
+export const PAGE_READ_ORDER = [
+  { order: "asc" as const },
+  { createdAt: "asc" as const },
+  { id: "asc" as const },
+];
+
+/** A page with the teams it is limited to. */
+export const selectPageResource = {
+  id: true,
+  name: true,
+  order: true,
+  teamLimits: { orderBy: { teamId: "asc" as const }, select: { teamId: true } },
+} satisfies Prisma.DashboardPageSelect;
+
+export type TPageResourceRow = Prisma.DashboardPageGetPayload<{ select: typeof selectPageResource }>;
 
 /**
  * How a dashboard's widgets read back: by `order`, then the order they were added, then id. Orders may tie
@@ -58,6 +79,7 @@ export const WIDGET_READ_ORDER = [
 export const selectDashboardResource = {
   ...selectDashboardBase,
   filters: true,
+  pages: { orderBy: PAGE_READ_ORDER, select: selectPageResource },
   widgets: { orderBy: WIDGET_READ_ORDER, select: selectWidgetResource },
 } satisfies Prisma.DashboardSelect;
 
@@ -118,11 +140,16 @@ export const listDashboardRows = ({
   });
 };
 
+/** A new dashboard, with its first page ("Overview"): every dashboard has at least one. */
 export const createDashboardRow = (data: {
   workspaceId: string;
   name: string;
   createdBy: string | null;
-}): Promise<TDashboardResourceRow> => prisma.dashboard.create({ data, select: selectDashboardResource });
+}): Promise<TDashboardResourceRow> =>
+  prisma.dashboard.create({
+    data: { ...data, pages: { create: { name: DEFAULT_DASHBOARD_PAGE_NAME, order: 0 } } },
+    select: selectDashboardResource,
+  });
 
 /**
  * Rename an authorized dashboard under its row lock, moving `updatedAt` like every other write so an editor
@@ -165,7 +192,17 @@ export const duplicateDashboardRow = ({
         workspaceId: true,
         filters: true,
         // In the order the source shows them, so the copy can number them plainly: orders may tie.
-        widgets: { orderBy: WIDGET_READ_ORDER, select: { chartId: true, layout: true } },
+        pages: {
+          orderBy: PAGE_READ_ORDER,
+          select: {
+            name: true,
+            teamLimits: { select: { teamId: true } },
+            widgets: {
+              orderBy: WIDGET_READ_ORDER,
+              select: { kind: true, chartId: true, content: true, layout: true },
+            },
+          },
+        },
       },
     });
     if (!source) return null;
@@ -186,32 +223,64 @@ export const duplicateDashboardRow = ({
         V3_NAME_MAX_LENGTH
       );
 
-    return tx.dashboard.create({
+    const copy = await tx.dashboard.create({
       data: {
         name: resolvedName,
         workspaceId: source.workspaceId,
         createdBy,
         // The copy keeps the filter bar: its filters say how the shared charts are meant to be sliced.
         filters: source.filters ?? [],
-        widgets: {
-          create: source.widgets.map((widget, order) => ({
-            chartId: widget.chartId,
-            layout: (widget.layout ?? {}) as Prisma.InputJsonValue,
-            order,
-          })),
-        },
       },
-      select: selectDashboardResource,
+      select: { id: true },
     });
+
+    // Every page, in order and with its team limit, and each page's widgets on the copied page. A
+    // dashboard always has a page; one that somehow has none still gets the first page a dashboard needs.
+    const pages =
+      source.pages.length > 0
+        ? source.pages
+        : [{ name: DEFAULT_DASHBOARD_PAGE_NAME, teamLimits: [], widgets: [] }];
+    for (const [pageOrder, page] of pages.entries()) {
+      await tx.dashboardPage.create({
+        data: {
+          dashboardId: copy.id,
+          name: page.name,
+          order: pageOrder,
+          teamLimits: { create: page.teamLimits.map(({ teamId }) => ({ teamId })) },
+          widgets: {
+            create: page.widgets.map((widget, order) => ({
+              dashboardId: copy.id,
+              kind: widget.kind,
+              chartId: widget.chartId,
+              content: widget.content ?? Prisma.DbNull,
+              layout: (widget.layout ?? {}) as Prisma.InputJsonValue,
+              order,
+            })),
+          },
+        },
+        select: { id: true },
+      });
+    }
+
+    return tx.dashboard.findUniqueOrThrow({ where: { id: copy.id }, select: selectDashboardResource });
   });
 
+const selectDashboardChart = {
+  id: true,
+  type: true,
+  query: true,
+  feedbackDirectoryId: true,
+  updatedAt: true,
+} satisfies Prisma.ChartSelect;
+
 /**
- * A dashboard with what a dashboard-bound read needs: its workspace, version and filters, and each widget's
- * chart query and Feedback Dataset — `chartId` narrows the widgets to that chart. A chart sits on a dashboard
- * at most once, so a chart that is a widget here comes back as the one widget.
+ * A dashboard with what a dashboard-bound read needs: its workspace, version and filters, and each chart
+ * on it, once, with its query and Feedback Dataset — `chartId` narrows them to that chart. A chart may sit
+ * on several pages of a dashboard, so the chart widgets are read and each chart kept once, in the order
+ * its first widget shows. Layout blocks carry no chart and are left out.
  */
-export const getDashboardChartsRow = (dashboardId: string, { chartId }: { chartId?: string } = {}) =>
-  prisma.dashboard.findUnique({
+export const getDashboardChartsRow = async (dashboardId: string, { chartId }: { chartId?: string } = {}) => {
+  const row = await prisma.dashboard.findUnique({
     where: { id: dashboardId },
     select: {
       id: true,
@@ -219,15 +288,21 @@ export const getDashboardChartsRow = (dashboardId: string, { chartId }: { chartI
       updatedAt: true,
       filters: true,
       widgets: {
-        ...(chartId ? { where: { chartId } } : {}),
+        where: chartId ? { chartId } : { chartId: { not: null } },
         orderBy: WIDGET_READ_ORDER,
-        select: {
-          chart: {
-            select: { id: true, type: true, query: true, feedbackDirectoryId: true, updatedAt: true },
-          },
-        },
+        select: { chart: { select: selectDashboardChart } },
       },
     },
   });
+  if (!row) return null;
+  const seen = new Set<string>();
+  const widgets: { chart: Prisma.ChartGetPayload<{ select: typeof selectDashboardChart }> }[] = [];
+  for (const widget of row.widgets) {
+    if (!widget.chart || seen.has(widget.chart.id)) continue;
+    seen.add(widget.chart.id);
+    widgets.push({ chart: widget.chart });
+  }
+  return { ...row, widgets };
+};
 
 export type TDashboardChartsRow = NonNullable<Awaited<ReturnType<typeof getDashboardChartsRow>>>;

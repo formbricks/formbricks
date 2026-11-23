@@ -1,4 +1,5 @@
 import "server-only";
+import { uniqueDashboards } from "./dashboard-refs";
 import type { TV3ChartResource } from "./resources";
 import type { TChartResourceRow } from "./service";
 
@@ -22,7 +23,7 @@ export const serializeV3Chart = (row: TChartResourceRow): TV3ChartResource => ({
   query: asObject(row.query),
   config: asObject(row.config),
   creator: row.creator ? { name: row.creator.name } : null,
-  dashboards: row.widgets.map(({ dashboard }) => ({ id: dashboard.id, name: dashboard.name })),
+  dashboards: uniqueDashboards(row.widgets.map(({ dashboard }) => dashboard)),
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
 });

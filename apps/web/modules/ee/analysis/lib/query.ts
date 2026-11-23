@@ -39,6 +39,8 @@ export const dashboardKeys = {
   options: (workspaceId: string) => [...dashboardKeys.lists(), "options", workspaceId] as const,
   details: () => [...dashboardKeys.all, "detail"] as const,
   detail: (dashboardId: string) => [...dashboardKeys.details(), dashboardId] as const,
+  /** Whether this person may limit the dashboard's pages to teams, and the teams to show (ENG-7481). */
+  pageAccess: (dashboardId: string) => [...dashboardKeys.detail(dashboardId), "pageAccess"] as const,
   /**
    * The embedded-data fields a dashboard's filters can use; under the dashboard's detail key so a widget
    * change refreshes it, and keyed by its charts' datasets so a chart moved to another dataset does too.

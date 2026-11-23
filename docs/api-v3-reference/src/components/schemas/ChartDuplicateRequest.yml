@@ -13,6 +13,10 @@ properties:
     description: >-
       Also put the copy on this dashboard, in the same transaction: if placing it fails, no copy is
       left behind. Must be in the chart's workspace.
+  pageId:
+    type: string
+    format: cuid2
+    description: The page of `dashboardId` to put the copy on. Without one, the dashboard's first page.
   layout:
     $ref: ./WidgetLayout.yml
     description: Where to put the copy on `dashboardId`. Without one, the first open slot.

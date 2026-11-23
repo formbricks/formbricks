@@ -17,21 +17,30 @@ import {
   updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
 import {
+  createV3DashboardPage,
+  deleteV3DashboardPage,
+  updateV3DashboardPage,
+} from "@/app/api/v3/dashboards/lib/page-operations";
+import {
   addV3DashboardWidget,
   removeV3DashboardWidget,
   updateV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/widget-operations";
 import { toRequestFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
+import { DEFAULT_IMAGE_CONTENT } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, isMcpDashboardViewerOnly } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import type { TMcpPermissionRequirement } from "../permissions";
 import {
   type TMcpAddChartToDashboardInput,
+  type TMcpAddDashboardBlockInput,
   type TMcpChartIdInput,
   type TMcpCreateChartInput,
   type TMcpCreateDashboardInput,
+  type TMcpCreateDashboardPageInput,
   type TMcpDashboardIdInput,
+  type TMcpDeleteDashboardPageInput,
   type TMcpDuplicateChartInput,
   type TMcpDuplicateDashboardInput,
   type TMcpGetChartDataInput,
@@ -46,8 +55,10 @@ import {
   type TMcpUpdateChartInput,
   type TMcpUpdateDashboardInput,
   type TMcpUpdateDashboardLayoutInput,
+  type TMcpUpdateDashboardPageInput,
   type TMcpUpdateWidgetInput,
   ZMcpAddChartToDashboardInput,
+  ZMcpAddDashboardBlockInput,
   ZMcpChartDataOutput,
   ZMcpChartFieldCatalogOutput,
   ZMcpChartFieldValuesOutput,
@@ -56,11 +67,14 @@ import {
   ZMcpChartOutput,
   ZMcpCreateChartInput,
   ZMcpCreateDashboardInput,
+  ZMcpCreateDashboardPageInput,
   ZMcpDashboardFilterFieldsOutput,
   ZMcpDashboardFilterValuesOutput,
   ZMcpDashboardIdInput,
   ZMcpDashboardListOutput,
   ZMcpDashboardOutput,
+  ZMcpDashboardPageOutput,
+  ZMcpDeleteDashboardPageInput,
   ZMcpDuplicateChartInput,
   ZMcpDuplicateDashboardInput,
   ZMcpGetChartDataInput,
@@ -76,6 +90,7 @@ import {
   ZMcpUpdateChartInput,
   ZMcpUpdateDashboardInput,
   ZMcpUpdateDashboardLayoutInput,
+  ZMcpUpdateDashboardPageInput,
   ZMcpUpdateWidgetInput,
   ZMcpWidgetOutput,
 } from "./dashboard-schemas";
@@ -98,7 +113,7 @@ type TMutationRun = Parameters<Parameters<typeof runMcpMutation>[2]>[0];
 const runMutation = (
   ctx: TMcpToolContext,
   action: "created" | "updated" | "deleted",
-  resource: "chart" | "dashboard" | "dashboardWidget",
+  resource: "chart" | "dashboard" | "dashboardWidget" | "dashboardPage",
   run: (context: {
     authentication: TMutationRun["authentication"];
     auditLog: NonNullable<TMutationRun["auditLog"]> | undefined;
@@ -112,9 +127,11 @@ const runMutation = (
 
 /**
  * MCP tools over the v3 chart and dashboard operations — one tool per operation, so an agent can do
- * exactly what an API key can do over HTTP, minus deletion: there is no delete tool, so a vague prompt
- * like "clean up old charts" cannot remove anything permanently. There is no generate tool either; AI
- * chart generation is the app's, not the API's.
+ * exactly what an API key can do over HTTP, minus deletion: no tool deletes a chart or a dashboard, so a
+ * vague prompt like "clean up old charts" cannot remove anything permanently. A page can be deleted, like a
+ * widget removed: the charts on it stay. There is no generate tool either; AI chart generation is the
+ * app's, not the API's. No tool changes which teams see a page: that is an Owner's or Manager's call in the
+ * app or over HTTP (ENG-7481); get_dashboard reads it.
  *
  * A chart definition needs Charts: Read (D2); a read of chart numbers declares Charts and Feedback records,
  * both at Read, so a dashboards grant never becomes a way into respondents' answers. Dashboard reads declare Dashboards. The one exception is a Dashboard viewer's token reading a
@@ -541,7 +558,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Add chart to dashboard",
       description:
-        "Put an existing chart on a dashboard. Without a layout it lands in the first open slot at its type's default size; with one, exactly there, provided no other widget is. A chart appears at most once per dashboard, and the same chart can sit on several dashboards.",
+        "Put an existing chart on a dashboard page (the first page without pageId). Without a layout it lands in the first open slot at its type's default size; with one, exactly there, provided no other widget on the page is. A chart appears at most once per page, and can sit on several pages and dashboards.",
       inputSchema: ZMcpAddChartToDashboardInput,
       outputSchema: ZMcpWidgetOutput,
       audit: { action: "created", targetType: "dashboardWidget" },
@@ -560,16 +577,107 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Update widget",
       description:
-        "Move or resize a widget, or show another chart in its place, or both. Repointing is how one dashboard gets its own version of a shared chart: duplicate_chart, then point this widget at the copy.",
+        "Move or resize a widget, move it to another page, show another chart in a chart widget's place, or change a text or image block's content. Repointing is how one dashboard gets its own version of a shared chart: duplicate_chart, then point this widget at the copy.",
       inputSchema: ZMcpUpdateWidgetInput,
       outputSchema: ZMcpWidgetOutput,
       audit: { action: "updated", targetType: "dashboardWidget", targetIdArg: "widgetId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
     DASHBOARD_WRITE_WITH_CHARTS,
-    async ({ dashboardId, widgetId, ...body }: TMcpUpdateWidgetInput, ctx) =>
+    async ({ dashboardId, widgetId, text, image, ...body }: TMcpUpdateWidgetInput, ctx) =>
       runMutation(ctx, "updated", "dashboardWidget", (context) =>
-        updateV3DashboardWidget({ dashboardId, widgetId, body, ...context })
+        updateV3DashboardWidget({
+          dashboardId,
+          widgetId,
+          body: { ...body, ...(text || image ? { content: { ...text, ...image } } : {}) },
+          ...context,
+        })
+      )
+  );
+
+  registerMcpTool(
+    server,
+    "add_dashboard_block",
+    {
+      title: "Add dashboard block",
+      description:
+        "Put a layout block on a dashboard page (the first page without pageId): a text block (headline and description, plain text), a separator line, or an empty image block whose image is uploaded in the app. Without a layout it takes the first open slot.",
+      inputSchema: ZMcpAddDashboardBlockInput,
+      outputSchema: ZMcpWidgetOutput,
+      audit: { action: "created", targetType: "dashboardWidget" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    [{ permission: "dashboards", level: "write" }],
+    async ({ dashboardId, kind, text, image, ...body }: TMcpAddDashboardBlockInput, ctx) =>
+      runMutation(ctx, "created", "dashboardWidget", (context) =>
+        addV3DashboardWidget({
+          dashboardId,
+          body: {
+            ...body,
+            kind,
+            ...(kind === "text" ? { content: text } : {}),
+            ...(kind === "image" ? { content: { ...DEFAULT_IMAGE_CONTENT, ...image, fileUrl: null } } : {}),
+          },
+          ...context,
+        })
+      )
+  );
+
+  registerMcpTool(
+    server,
+    "create_dashboard_page",
+    {
+      title: "Create dashboard page",
+      description:
+        "Add a page (a tab) to a dashboard, after its last one and visible to everyone who can open the dashboard. Put charts and blocks on it with add_chart_to_dashboard and add_dashboard_block.",
+      inputSchema: ZMcpCreateDashboardPageInput,
+      outputSchema: ZMcpDashboardPageOutput,
+      audit: { action: "created", targetType: "dashboardPage" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    [{ permission: "dashboards", level: "write" }],
+    async ({ dashboardId, ...body }: TMcpCreateDashboardPageInput, ctx) =>
+      runMutation(ctx, "created", "dashboardPage", (context) =>
+        createV3DashboardPage({ dashboardId, body, ...context })
+      )
+  );
+
+  registerMcpTool(
+    server,
+    "update_dashboard_page",
+    {
+      title: "Rename dashboard page",
+      description:
+        "Rename a dashboard page. Which teams see a page is set in the app by an Owner or Manager; get_dashboard reads it as teamIds.",
+      inputSchema: ZMcpUpdateDashboardPageInput,
+      outputSchema: ZMcpDashboardPageOutput,
+      audit: { action: "updated", targetType: "dashboardPage", targetIdArg: "pageId" },
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
+    },
+    [{ permission: "dashboards", level: "write" }],
+    // Never takes teamIds: MCP reads a page's team limit but cannot change it (ENG-7481).
+    async ({ dashboardId, pageId, name }: TMcpUpdateDashboardPageInput, ctx) =>
+      runMutation(ctx, "updated", "dashboardPage", (context) =>
+        updateV3DashboardPage({ dashboardId, pageId, body: { name }, ...context })
+      )
+  );
+
+  registerMcpTool(
+    server,
+    "delete_dashboard_page",
+    {
+      title: "Delete dashboard page",
+      description:
+        "Delete a dashboard page and every widget on it. The charts themselves are kept. A dashboard keeps at least one page, so its only page cannot be deleted.",
+      inputSchema: ZMcpDeleteDashboardPageInput,
+      outputSchema: ZMcpAcknowledgement,
+      audit: { action: "deleted", targetType: "dashboardPage", targetIdArg: "pageId" },
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
+    },
+    [{ permission: "dashboards", level: "write" }],
+    async ({ dashboardId, pageId }: TMcpDeleteDashboardPageInput, ctx) =>
+      runMutation(ctx, "deleted", "dashboardPage", (context) =>
+        deleteV3DashboardPage({ dashboardId, pageId, ...context })
       )
   );
 

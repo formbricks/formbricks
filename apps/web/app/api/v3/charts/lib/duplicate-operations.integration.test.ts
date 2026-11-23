@@ -1,5 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -61,7 +62,7 @@ beforeEach(async () => {
   await prisma.chart.deleteMany({ where: { name: { startsWith: "Weekly NPS (copy" } } });
   await prisma.dashboard.deleteMany({ where: { workspaceId: fixture.workspaceId } });
   dashboardId = (
-    await prisma.dashboard.create({
+    await createTestDashboard({
       data: {
         name: "Board",
         workspaceId: fixture.workspaceId,
@@ -146,7 +147,7 @@ describe("POST /api/v3/charts/{chartId}/duplicate", () => {
   });
 
   test("needs write access to the workspace and the dataset, and a dashboard in the same workspace", async () => {
-    const foreignDashboard = await prisma.dashboard.create({
+    const foreignDashboard = await createTestDashboard({
       data: { name: "Foreign", workspaceId: fixture.foreignWorkspaceId },
     });
     const unassigned = await prisma.chart.create({

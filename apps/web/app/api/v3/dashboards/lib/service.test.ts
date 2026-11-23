@@ -15,7 +15,14 @@ vi.mock("server-only", () => ({}));
 const { tx } = vi.hoisted(() => ({
   tx: {
     $queryRaw: vi.fn(),
-    dashboard: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
+    dashboard: {
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    dashboardPage: { create: vi.fn() },
   },
 }));
 
@@ -29,6 +36,7 @@ vi.mock("@formbricks/database", () => ({
 const WORKSPACE_ID = "clws000000000000000000001";
 const DASHBOARD_ID = "clda000000000000000000001";
 const CHART_ID = "clch000000000000000000001";
+const COPY_ID = "clda000000000000000000002";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -131,8 +139,15 @@ describe("createDashboardRow", () => {
     await createDashboardRow({ workspaceId: WORKSPACE_ID, name: "Board", createdBy: null });
 
     const args = vi.mocked(prisma.dashboard.create).mock.calls[0][0];
-    expect(args.data).toEqual({ workspaceId: WORKSPACE_ID, name: "Board", createdBy: null });
+    // Every dashboard starts with one page, "Overview".
+    expect(args.data).toEqual({
+      workspaceId: WORKSPACE_ID,
+      name: "Board",
+      createdBy: null,
+      pages: { create: { name: "Overview", order: 0 } },
+    });
     expect(args.select).toHaveProperty("widgets");
+    expect(args.select).toHaveProperty("pages");
   });
 });
 
@@ -201,15 +216,35 @@ describe("duplicateDashboardRow", () => {
       label: "Language",
     },
   ];
+  const textContent = { headline: "Q3", description: "" };
   const source = {
     name: "Board",
     workspaceId: WORKSPACE_ID,
     filters,
-    widgets: [
-      { chartId: CHART_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 },
-      { chartId: "clch000000000000000000002", layout: null, order: 1 },
+    pages: [
+      {
+        name: "Overview",
+        teamLimits: [],
+        widgets: [
+          { kind: "chart", chartId: CHART_ID, content: null, layout: { x: 0, y: 0, w: 6, h: 4 } },
+          { kind: "chart", chartId: "clch000000000000000000002", content: null, layout: null },
+        ],
+      },
+      {
+        name: "Sales",
+        teamLimits: [{ teamId: "clte000000000000000000001" }],
+        widgets: [
+          { kind: "chart", chartId: CHART_ID, content: null, layout: { x: 0, y: 0, w: 4, h: 4 } },
+          { kind: "text", chartId: null, content: textContent, layout: { x: 4, y: 0, w: 8, h: 2 } },
+        ],
+      },
     ],
   };
+
+  beforeEach(() => {
+    tx.dashboard.create.mockResolvedValue({ id: COPY_ID });
+    tx.dashboard.findUniqueOrThrow.mockResolvedValue({ id: COPY_ID });
+  });
 
   test("returns null and writes nothing when the source is gone", async () => {
     tx.dashboard.findUnique.mockResolvedValue(null);
@@ -218,7 +253,7 @@ describe("duplicateDashboardRow", () => {
     expect(tx.dashboard.create).not.toHaveBeenCalled();
   });
 
-  test("copies into the source's workspace, pointing at the same charts in the same layout, with its filters", async () => {
+  test("copies into the source's workspace with its filters, then each page with its team limit and widgets", async () => {
     tx.dashboard.findUnique.mockResolvedValue(source);
 
     await duplicateDashboardRow({ sourceId: DASHBOARD_ID, name: "Board for sales", createdBy: "user_1" });
@@ -230,39 +265,57 @@ describe("duplicateDashboardRow", () => {
       workspaceId: WORKSPACE_ID,
       createdBy: "user_1",
       filters,
-      widgets: {
-        create: [
-          { chartId: CHART_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 },
-          { chartId: "clch000000000000000000002", layout: {}, order: 1 },
-        ],
-      },
     });
+    expect(tx.dashboardPage.create.mock.calls.map(([args]) => args.data)).toEqual([
+      {
+        dashboardId: COPY_ID,
+        name: "Overview",
+        order: 0,
+        teamLimits: { create: [] },
+        widgets: {
+          create: [
+            expect.objectContaining({ dashboardId: COPY_ID, kind: "chart", chartId: CHART_ID, order: 0 }),
+            expect.objectContaining({ chartId: "clch000000000000000000002", layout: {}, order: 1 }),
+          ],
+        },
+      },
+      {
+        dashboardId: COPY_ID,
+        name: "Sales",
+        order: 1,
+        teamLimits: { create: [{ teamId: "clte000000000000000000001" }] },
+        widgets: {
+          create: [
+            expect.objectContaining({ kind: "chart", chartId: CHART_ID, order: 0 }),
+            expect.objectContaining({ kind: "text", chartId: null, content: textContent, order: 1 }),
+          ],
+        },
+      },
+    ]);
+    // A chart may sit on two pages of the source, and so of the copy.
+    expect(tx.dashboard.findUniqueOrThrow).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: COPY_ID } })
+    );
   });
 
-  test("reads the source's widgets in display order and numbers the copy's plainly, so tied orders keep it", async () => {
-    tx.dashboard.findUnique.mockResolvedValue({
-      ...source,
-      widgets: [
-        { chartId: CHART_ID, layout: { x: 0, y: 0, w: 6, h: 4 } },
-        { chartId: "clch000000000000000000002", layout: { x: 6, y: 0, w: 6, h: 4 } },
-      ],
-    });
+  test("reads the source's pages and widgets in display order", async () => {
+    tx.dashboard.findUnique.mockResolvedValue(source);
 
     await duplicateDashboardRow({ sourceId: DASHBOARD_ID, createdBy: null, name: "Copy" });
 
-    expect(tx.dashboard.findUnique.mock.calls[0][0].select.widgets.orderBy).toEqual([
-      { order: "asc" },
-      { createdAt: "asc" },
-      { id: "asc" },
-    ]);
-    expect(
-      tx.dashboard.create.mock.calls[0][0].data.widgets.create.map(
-        (widget: { chartId: string; order: number }) => [widget.chartId, widget.order]
-      )
-    ).toEqual([
-      [CHART_ID, 0],
-      ["clch000000000000000000002", 1],
-    ]);
+    const select = tx.dashboard.findUnique.mock.calls[0][0].select;
+    const readOrder = [{ order: "asc" }, { createdAt: "asc" }, { id: "asc" }];
+    expect(select.pages.orderBy).toEqual(readOrder);
+    expect(select.pages.select.widgets.orderBy).toEqual(readOrder);
+  });
+
+  test("gives a copy of a dashboard without pages the first page every dashboard has", async () => {
+    tx.dashboard.findUnique.mockResolvedValue({ ...source, pages: [] });
+
+    await duplicateDashboardRow({ sourceId: DASHBOARD_ID, createdBy: null, name: "Copy" });
+
+    expect(tx.dashboardPage.create).toHaveBeenCalledTimes(1);
+    expect(tx.dashboardPage.create.mock.calls[0][0].data).toMatchObject({ name: "Overview", order: 0 });
   });
 
   test("without a name, takes the first free copy name among the workspace's dashboards", async () => {

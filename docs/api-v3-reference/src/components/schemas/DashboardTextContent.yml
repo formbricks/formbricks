@@ -1,0 +1,15 @@
+type: object
+description: >-
+  A text block's content: plain text, no markup or links. The description keeps its line breaks. A write
+  needs a headline or a description (422 when both are blank).
+required:
+  - headline
+  - description
+properties:
+  headline:
+    type: string
+    maxLength: 200
+  description:
+    type: string
+    maxLength: 2000
+additionalProperties: false

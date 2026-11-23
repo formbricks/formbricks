@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useSearchParams } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ResponsiveGridLayout, useContainerWidth, verticalCompactor } from "react-grid-layout";
@@ -9,17 +9,22 @@ import "react-grid-layout/css/styles.css";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
+import type { TDashboardImageContent, TDashboardTextContent } from "@formbricks/types/analysis";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
+import { AddExistingChartsDialog } from "@/modules/ee/analysis/dashboards/components/add-existing-charts-dialog";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
 import { DashboardDateFilter } from "@/modules/ee/analysis/dashboards/components/dashboard-date-filter";
+import { DashboardLayoutBlock } from "@/modules/ee/analysis/dashboards/components/dashboard-layout-block";
 import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components/dashboard-page-header";
+import { DashboardPageTabs } from "@/modules/ee/analysis/dashboards/components/dashboard-page-tabs";
 import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/dashboard-widget";
 import { DashboardWidgetData } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-skeleton";
 import { LockFiltersButton } from "@/modules/ee/analysis/dashboards/components/lock-filters-button";
+import { ManagePagesDialog } from "@/modules/ee/analysis/dashboards/components/manage-pages-dialog";
 import { StaleDashboardDialog } from "@/modules/ee/analysis/dashboards/components/stale-dashboard-dialog";
 import {
   ALL_TIME_VALUE,
@@ -32,6 +37,21 @@ import {
   toChartDateRange,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
+import {
+  addDraftBlock,
+  addDraftCharts,
+  addDraftPage,
+  deleteDraftPage,
+  findEmptyTextBlocks,
+  isDraftId,
+  moveDraftPage,
+  pagesChanged,
+  renameDraftPage,
+  resolveSelectedPageId,
+  setDraftPageTeams,
+  toSavedPages,
+  widgetsChanged,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-draft";
 import {
   type TDashboardFilterState,
   exceedsFiltersBudget,
@@ -47,6 +67,14 @@ import {
   isEditHotkey,
   resolveEditHotkeyAction,
 } from "@/modules/ee/analysis/dashboards/lib/edit-hotkey";
+import { MAX_DASHBOARD_PAGES } from "@/modules/ee/analysis/dashboards/lib/page-names";
+import {
+  type TLayoutBlockKind,
+  fitBlockHeights,
+  getBlockMinSize,
+  isAutoHeightBlock,
+  pixelsToGridRows,
+} from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import {
   DEFAULT_WIDGET_VIEW,
   type TWidgetView,
@@ -54,18 +82,25 @@ import {
   writeStoredWidgetView,
 } from "@/modules/ee/analysis/dashboards/lib/widget-view";
 import {
+  type TAppChart,
   type TAppDashboard,
   type TChartDateRangeInput,
   duplicateChart,
   getChartApiErrorMessage,
   getDashboard,
+  getDashboardPageAccess,
   isStaleDashboardError,
   removeDashboardWidget,
   replaceDashboard,
   restoreDashboardWidget,
 } from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
-import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
+import type {
+  TDashboardChartWidget,
+  TDashboardPage,
+  TDashboardWidget,
+} from "@/modules/ee/analysis/types/analysis";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -73,10 +108,19 @@ import { TableToolbar } from "@/modules/ui/components/table-toolbar";
 import { useDashboard } from "../hooks/use-dashboard";
 import { useDashboardToolbarFilters } from "../hooks/use-dashboard-toolbar-filters";
 import { useLockedDashboardFilters } from "../hooks/use-locked-dashboard-filters";
-import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../lib/stale-save";
+import {
+  draftOverLatest,
+  draftPagesOverLatest,
+  toSavedWidgets,
+  widgetsRemovedByOverwrite,
+} from "../lib/stale-save";
 import { GRID_COLUMNS, MAX_WIDGET_HEIGHT, findNextOpenSlot, getWidgetMinSize } from "../lib/widget-placement";
 
 const ROW_HEIGHT = 80;
+const GRID_MARGIN = 16;
+
+/** The query parameter the selected page is kept in, so a link opens the same page. */
+const PAGE_PARAM = "page";
 
 const NO_WIDGET_IDS: ReadonlySet<string> = new Set();
 
@@ -93,33 +137,23 @@ interface DashboardDetailClientProps {
   aiUnavailableReason?: TAIUnavailableReason;
 }
 
-const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] => {
-  return widgets.map((widget) => ({
+const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] =>
+  widgets.map((widget) => ({
     i: widget.id,
     x: widget.layout.x,
     y: widget.layout.y,
     w: widget.layout.w,
     h: widget.layout.h,
-    ...getWidgetMinSize(resolveChartType(widget.chart.type)),
+    ...(widget.kind === "chart"
+      ? getWidgetMinSize(resolveChartType(widget.chart.type))
+      : getBlockMinSize(widget.kind)),
     maxW: GRID_COLUMNS,
-    maxH: MAX_WIDGET_HEIGHT,
+    // A separator is one row high, and an image or text block as high as its content: a resize only
+    // changes their width.
+    ...(widget.kind === "chart"
+      ? { maxH: MAX_WIDGET_HEIGHT }
+      : { minH: widget.layout.h, maxH: widget.layout.h }),
   }));
-};
-
-const widgetLayoutsChanged = (current: TDashboardWidget[], original: TDashboardWidget[]): boolean => {
-  if (current.length !== original.length) return true;
-  return current.some((widget, i) => {
-    const orig = original[i];
-    return (
-      widget.id !== orig.id ||
-      widget.layout.x !== orig.layout.x ||
-      widget.layout.y !== orig.layout.y ||
-      widget.layout.w !== orig.layout.w ||
-      widget.layout.h !== orig.layout.h ||
-      widget.order !== orig.order
-    );
-  });
-};
 
 const applyLayoutToWidgets = (widgets: TDashboardWidget[], newLayout: Layout): TDashboardWidget[] => {
   let changed = false;
@@ -139,12 +173,7 @@ const applyLayoutToWidgets = (widgets: TDashboardWidget[], newLayout: Layout): T
     changed = true;
     return {
       ...widget,
-      layout: {
-        x: layoutItem.x,
-        y: layoutItem.y,
-        w: layoutItem.w,
-        h: layoutItem.h,
-      },
+      layout: { x: layoutItem.x, y: layoutItem.y, w: layoutItem.w, h: layoutItem.h },
     };
   });
 
@@ -158,7 +187,7 @@ const MemoizedWidgetContent = memo(function WidgetContent({
   filterFieldLabel,
   view,
 }: Readonly<{
-  widget: TDashboardWidget;
+  widget: TDashboardChartWidget;
   dateRange: TChartDateRangeInput | null;
   filters: readonly TDashboardFilterState[];
   filterFieldLabel: (field: string) => string;
@@ -191,7 +220,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   onResize,
   onRemove,
 }: Readonly<{
-  widget: TDashboardWidget;
+  widget: TDashboardChartWidget;
   isEditing: boolean;
   dateRange: TChartDateRangeInput | null;
   filters: readonly TDashboardFilterState[];
@@ -301,9 +330,15 @@ function DashboardDetailView({
   // The widgets the edit started with. The stale warning lists what a whole-dashboard save removes that
   // the editor never removed itself; without this, their own removals read as "added meanwhile".
   const [editBaseWidgetIds, setEditBaseWidgetIds] = useState<ReadonlySet<string> | null>(null);
+  // The pages the edit started with: a save sends a page's team limit only where it changed from these.
+  const [editBasePages, setEditBasePages] = useState<TDashboardPage[] | null>(null);
   // Set when a save was refused because the dashboard changed meanwhile: its latest version.
   const [staleLatest, setStaleLatest] = useState<TAppDashboard | null>(null);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
+  const [isAddChartsOpen, setIsAddChartsOpen] = useState(false);
+  const [isManagePagesOpen, setIsManagePagesOpen] = useState(false);
+  const [pageToDelete, setPageToDelete] = useState<TDashboardPage | null>(null);
+  const [isDeletePageOpen, setIsDeletePageOpen] = useState(false);
 
   // A filter pinned in the URL (a shared link, back/forward) wins; otherwise the one this viewer last
   // chose here, seeded from the cookie so the first fetch is already filtered.
@@ -366,17 +401,61 @@ function DashboardDetailView({
   const [draftName, setDraftName] = useState<string | null>(null);
   const name = draftName ?? dashboard.name;
   const [draftWidgets, setDraftWidgets] = useState<TDashboardWidget[] | null>(null);
+  const [draftPages, setDraftPages] = useState<TDashboardPage[] | null>(null);
 
   const widgets = draftWidgets ?? dashboard.widgets;
-  const datasetIds = useMemo(() => widgets.map(({ chart }) => chart.feedbackDirectoryId), [widgets]);
+  const pages = draftPages ?? dashboard.pages;
+  const datasetIds = useMemo(
+    () => widgets.flatMap((widget) => (widget.kind === "chart" ? [widget.chart.feedbackDirectoryId] : [])),
+    [widgets]
+  );
+
+  // ── The selected page, kept in the URL ────────────────────────────────────────────────────────
+  const selectedPageId = resolveSelectedPageId(pages, searchParams.get(PAGE_PARAM));
+  const selectPage = useCallback(
+    (pageId: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set(PAGE_PARAM, pageId);
+      window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
+    },
+    [pathname, searchParams]
+  );
+
+  const pageWidgets = useMemo(
+    () => widgets.filter((widget) => widget.pageId === selectedPageId),
+    [widgets, selectedPageId]
+  );
+
+  // ── Auto-height of image and text blocks ─────────────────────────────────────────────────────
+  // Each block reports the pixels its content needs; that becomes grid rows, and blocks starting on the
+  // same row take the tallest of them (`fitBlockHeights`). Drawn always, saved with the edit.
+  const [neededRows, setNeededRows] = useState<ReadonlyMap<string, number>>(new Map());
+  const handleMeasure = useCallback((widgetId: string, px: number) => {
+    const rows = pixelsToGridRows(px, ROW_HEIGHT, GRID_MARGIN);
+    setNeededRows((current) => {
+      if (current.get(widgetId) === rows) return current;
+      const next = new Map(current);
+      next.set(widgetId, rows);
+      return next;
+    });
+  }, []);
+  const displayedWidgets = useMemo(() => fitBlockHeights(pageWidgets, neededRows), [pageWidgets, neededRows]);
+  /** Every widget with the heights its blocks are drawn at, as the save sends them. */
+  const withFittedHeights = useCallback(
+    (all: TDashboardWidget[]) => {
+      return fitBlockHeights(all, neededRows);
+    },
+    [neededRows]
+  );
 
   const hasChanges = useMemo(() => {
     if (draftName !== null && draftName !== dashboard.name) return true;
+    if (draftPages && pagesChanged(draftPages, dashboard.pages)) return true;
     if (!draftWidgets) return false;
-    return widgetLayoutsChanged(draftWidgets, dashboard.widgets);
-  }, [draftName, draftWidgets, dashboard]);
+    return widgetsChanged(draftWidgets, dashboard.widgets);
+  }, [draftName, draftPages, draftWidgets, dashboard]);
 
-  const layout = useMemo(() => widgetsToLayout(widgets), [widgets]);
+  const layout = useMemo(() => widgetsToLayout(displayedWidgets), [displayedWidgets]);
 
   const handleInteractionEnd = useCallback(
     (finalLayout: Layout) => {
@@ -392,6 +471,19 @@ function DashboardDetailView({
     [dashboard.widgets]
   );
 
+  const handleBlockContentChange = useCallback(
+    (widgetId: string, content: TDashboardImageContent | TDashboardTextContent) => {
+      setDraftWidgets((current) =>
+        (current ?? dashboard.widgets).map((widget) =>
+          widget.id === widgetId && (widget.kind === "image" || widget.kind === "text")
+            ? ({ ...widget, content } as TDashboardWidget)
+            : widget
+        )
+      );
+    },
+    [dashboard.widgets]
+  );
+
   const enterEditMode = useCallback(async () => {
     if (isEditing) {
       return;
@@ -403,6 +495,8 @@ function DashboardDetailView({
     await waitForViewWrites();
     const base = queryClient.getQueryData<TAppDashboard>(dashboardKeys.detail(dashboard.id)) ?? dashboard;
     setDraftWidgets(base.widgets);
+    setDraftPages(base.pages);
+    setEditBasePages(base.pages);
     setEditBaseWidgetIds(new Set(base.widgets.map((widget) => widget.id)));
     setEditBaseUpdatedAt(base.updatedAt);
     setIsEditing(true);
@@ -417,18 +511,21 @@ function DashboardDetailView({
   }, []);
 
   const handleDuplicateWidget = useCallback(
-    async (widget: TDashboardWidget) => {
-      // The copy keeps the original's size and takes the first gap it fits, so it never lands on top of
-      // the original. A slot below the grid's last row is refused like any taken one, and the client
-      // retries without a layout — the server then answers 409 with the reason, if it has no room.
+    async (widget: TDashboardChartWidget) => {
+      // The copy keeps the original's size and takes the first gap it fits on the same page, so it never
+      // lands on top of the original. A slot below the grid's last row is refused like any taken one, and
+      // the client retries without a layout — the server then answers 409 with the reason, if it has no room.
       const slot = findNextOpenSlot(
-        dashboard.widgets.map((current) => current.layout),
+        dashboard.widgets
+          .filter((current) => current.pageId === widget.pageId)
+          .map((current) => current.layout),
         widget.layout
       );
       beginViewWrite();
       try {
         await duplicateChart(widget.chartId, {
           dashboardId: dashboard.id,
+          pageId: widget.pageId,
           layout: { ...widget.layout, ...slot },
         });
         toast.success(t("workspace.analysis.dashboards.chart_duplicated"));
@@ -445,7 +542,7 @@ function DashboardDetailView({
   );
 
   const handleUndoRemoveWidget = useCallback(
-    async (snapshot: TDashboardWidget) => {
+    async (snapshot: TDashboardChartWidget) => {
       beginViewWrite();
       try {
         await restoreDashboardWidget(dashboard.id, snapshot);
@@ -469,7 +566,7 @@ function DashboardDetailView({
       }
 
       const snapshot = (draftWidgets ?? dashboard.widgets).find((w) => w.id === widgetId);
-      if (!snapshot) return;
+      if (snapshot?.kind !== "chart") return;
 
       beginViewWrite();
       try {
@@ -513,38 +610,128 @@ function DashboardDetailView({
     ]
   );
 
-  const handleCancel = useCallback(() => {
+  const leaveEditMode = useCallback(() => {
     setDraftName(null);
     setDraftWidgets(null);
+    setDraftPages(null);
+    setEditBasePages(null);
     setEditBaseUpdatedAt(null);
     setEditBaseWidgetIds(null);
+    setIsManagePagesOpen(false);
     setIsEditing(false);
   }, []);
 
+  const handleCancel = leaveEditMode;
+
+  // ── Pages and blocks in the draft ─────────────────────────────────────────────────────────────
+  const handleAddPage = useCallback(() => {
+    if (pages.length >= MAX_DASHBOARD_PAGES) {
+      toast.error(t("workspace.analysis.dashboards.page_limit_reached", { max: MAX_DASHBOARD_PAGES }));
+      return;
+    }
+    const added = addDraftPage(
+      pages,
+      t("workspace.analysis.dashboards.new_page_name", { number: pages.length + 1 })
+    );
+    setDraftPages(added.pages);
+    selectPage(added.pageId);
+  }, [pages, selectPage, t]);
+
+  const handleRenamePage = useCallback(
+    (pageId: string, pageName: string) => setDraftPages(renameDraftPage(pages, pageId, pageName)),
+    [pages]
+  );
+
+  const handleMovePage = useCallback(
+    (activeId: string, overId: string) => setDraftPages(moveDraftPage(pages, activeId, overId)),
+    [pages]
+  );
+
+  const handlePageTeamsChange = useCallback(
+    (pageId: string, teamIds: string[]) => setDraftPages(setDraftPageTeams(pages, pageId, teamIds)),
+    [pages]
+  );
+
+  /** Delete asks first; Cancel goes back to where it was asked, the tabs or Manage pages. */
+  const askDeletePage = useCallback(
+    (pageId: string) => {
+      setPageToDelete(pages.find((page) => page.id === pageId) ?? null);
+      setIsDeletePageOpen(true);
+    },
+    [pages]
+  );
+
+  const handleConfirmDeletePage = useCallback(() => {
+    if (!pageToDelete) return;
+    const next = deleteDraftPage(pages, widgets, pageToDelete.id);
+    setDraftPages(next.pages);
+    setDraftWidgets(next.widgets);
+    setIsDeletePageOpen(false);
+  }, [pageToDelete, pages, widgets]);
+
+  const handleAddBlock = useCallback(
+    (kind: TLayoutBlockKind) => {
+      if (!selectedPageId) return;
+      setDraftWidgets(
+        addDraftBlock(widgets, { kind, pageId: selectedPageId, dashboardId: dashboard.id }).widgets
+      );
+    },
+    [dashboard.id, selectedPageId, widgets]
+  );
+
+  const handlePickCharts = useCallback(
+    (charts: TAppChart[]) => {
+      if (!selectedPageId) return;
+      setDraftWidgets(addDraftCharts(widgets, { charts, pageId: selectedPageId, dashboardId: dashboard.id }));
+    },
+    [dashboard.id, selectedPageId, widgets]
+  );
+
+  const placedChartIds = useMemo(
+    () => new Set(pageWidgets.flatMap((widget) => (widget.chartId ? [widget.chartId] : []))),
+    [pageWidgets]
+  );
+
+  // Whether this person may limit pages to teams comes from the server, with the teams it may pick.
+  const pageAccess = useQuery({
+    queryKey: dashboardKeys.pageAccess(dashboard.id),
+    queryFn: ({ signal }) => getDashboardPageAccess(dashboard.id, signal),
+    enabled: isEditing && isManagePagesOpen,
+  });
+
   /**
-   * One call saves the name and every widget's place, carrying the `updatedAt` the edit started from.
-   * If the dashboard changed since, nothing is saved and the editor chooses between the latest version
-   * and their own.
+   * One call saves the name, the pages and every widget's page, place and content, carrying the
+   * `updatedAt` the edit started from. If the dashboard changed since, nothing is saved and the editor
+   * chooses between the latest version and their own.
    */
   const saveDashboard = useCallback(
-    async (baseUpdatedAt: string, savedName: string, savedWidgets: TDashboardWidget[]) => {
+    async (
+      baseUpdatedAt: string,
+      savedName: string,
+      savedPages: TDashboardPage[],
+      basePages: TDashboardPage[],
+      savedWidgets: TDashboardWidget[]
+    ) => {
       setIsSaving(true);
       try {
         const saved = await replaceDashboard(dashboard.id, {
           name: savedName.trim(),
           expectedUpdatedAt: baseUpdatedAt,
-          widgets: toSavedWidgets(savedWidgets),
+          ...(pagesChanged(savedPages, basePages) ? { pages: toSavedPages(savedPages, basePages) } : {}),
+          widgets: toSavedWidgets(withFittedHeights(savedWidgets)),
         });
         queryClient.setQueryData(dashboardKeys.detail(dashboard.id), saved);
         void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
         void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
+        // A page created by the save had a draft id: stay on it, now under its real one.
+        if (selectedPageId && isDraftId(selectedPageId)) {
+          const index = savedPages.findIndex((page) => page.id === selectedPageId);
+          const created = saved.pages[index];
+          if (created) selectPage(created.id);
+        }
         toast.success(t("workspace.analysis.dashboards.dashboard_saved"));
         setStaleLatest(null);
-        setDraftName(null);
-        setDraftWidgets(null);
-        setEditBaseUpdatedAt(null);
-        setEditBaseWidgetIds(null);
-        setIsEditing(false);
+        leaveEditMode();
       } catch (error) {
         if (isStaleDashboardError(error)) {
           try {
@@ -561,46 +748,63 @@ function DashboardDetailView({
         setIsSaving(false);
       }
     },
-    [dashboard.id, queryClient, t]
+    [dashboard.id, leaveEditMode, queryClient, selectPage, selectedPageId, t, withFittedHeights]
   );
 
-  const handleSave = useCallback(async () => {
+  /** Whether the draft can be saved; says why not when it cannot. */
+  const canSave = useCallback((): boolean => {
     if (!name.trim()) {
       toast.error(t("workspace.analysis.dashboards.dashboard_name_required"));
-      return;
+      return false;
     }
-    await saveDashboard(editBaseUpdatedAt ?? dashboard.updatedAt, name, widgets);
-  }, [name, saveDashboard, editBaseUpdatedAt, dashboard.updatedAt, widgets, t]);
+    const emptyText = findEmptyTextBlocks(widgets)[0];
+    if (emptyText) {
+      selectPage(emptyText.pageId);
+      toast.error(t("workspace.analysis.dashboards.text_block_empty"));
+      return false;
+    }
+    return true;
+  }, [name, selectPage, t, widgets]);
+
+  const handleSave = useCallback(async () => {
+    if (!canSave()) return;
+    await saveDashboard(
+      editBaseUpdatedAt ?? dashboard.updatedAt,
+      name,
+      pages,
+      editBasePages ?? dashboard.pages,
+      widgets
+    );
+  }, [canSave, saveDashboard, editBaseUpdatedAt, dashboard, name, pages, editBasePages, widgets]);
 
   /** Discard the edit and show the dashboard as it now is. */
   const handleReloadLatest = useCallback(() => {
     if (!staleLatest) return;
     queryClient.setQueryData(dashboardKeys.detail(dashboard.id), staleLatest);
-    setDraftName(null);
     setStaleLatest(null);
-    setDraftWidgets(null);
-    setEditBaseUpdatedAt(null);
-    setEditBaseWidgetIds(null);
-    setIsEditing(false);
+    leaveEditMode();
     void refreshDashboard();
-  }, [staleLatest, queryClient, dashboard.id, refreshDashboard]);
+  }, [staleLatest, queryClient, dashboard.id, leaveEditMode, refreshDashboard]);
 
   /** Save the edit over the latest version, knowing what it removes. */
   const handleSaveAnyway = useCallback(() => {
     if (!staleLatest) return;
+    const keptPages = draftPagesOverLatest(staleLatest.pages, pages);
     // A name this editor did not touch is the latest one, so someone else's rename survives the overwrite.
     void saveDashboard(
       staleLatest.updatedAt,
       draftName ?? staleLatest.name,
-      draftOverLatest(staleLatest.widgets, widgets)
+      keptPages,
+      staleLatest.pages,
+      draftOverLatest(staleLatest.widgets, widgets, keptPages)
     );
-  }, [staleLatest, saveDashboard, draftName, widgets]);
+  }, [staleLatest, saveDashboard, draftName, pages, widgets]);
 
   const removedByOverwrite = useMemo(
     () =>
       staleLatest
-        ? widgetsRemovedByOverwrite(staleLatest.widgets, widgets, editBaseWidgetIds ?? NO_WIDGET_IDS).map(
-            (widget) => widget.chart.name
+        ? widgetsRemovedByOverwrite(staleLatest.widgets, widgets, editBaseWidgetIds ?? NO_WIDGET_IDS).flatMap(
+            (widget) => (widget.kind === "chart" ? [widget.chart.name] : [])
           )
         : [],
     [staleLatest, widgets, editBaseWidgetIds]
@@ -705,11 +909,57 @@ function DashboardDetailView({
     endWrite: endViewWrite,
   });
 
-  const isEmpty = widgets.length === 0;
+  // The filter bar acts on the dashboard's charts, on every page; the grid shows the selected page.
+  const hasCharts = datasetIds.length > 0;
+  const isPageEmpty = pageWidgets.length === 0;
 
   // The cookie is read by the server and seeds `chosenDateFilter`, so there is no client-side restore
   // effect. A pinned URL param still wins and is intentionally NOT written back to the cookie, so
   // opening a shared link never overwrites the viewer's own saved preference.
+
+  const renderEmptyState = () => {
+    if (isEditing) return <EmptyState text={t("workspace.analysis.dashboards.empty_page_message")} />;
+    return (
+      <EmptyState
+        text={
+          // Someone who can't edit the dashboard can't add charts to it either.
+          isReadOnly
+            ? t("workspace.analysis.dashboards.no_data_message_read_only")
+            : t("workspace.analysis.dashboards.no_data_message")
+        }
+      />
+    );
+  };
+
+  const renderWidget = (widget: TDashboardWidget) => {
+    if (widget.kind !== "chart") {
+      return (
+        <DashboardLayoutBlock
+          dashboardId={dashboard.id}
+          widget={widget}
+          isEditing={isEditing}
+          onContentChange={handleBlockContentChange}
+          onRemove={handleRemoveWidget}
+          onMeasure={isAutoHeightBlock(widget.kind) ? handleMeasure : undefined}
+        />
+      );
+    }
+    return (
+      <MemoizedWidgetItem
+        widget={widget}
+        isEditing={isEditing}
+        dateRange={dateRange}
+        filters={filters}
+        filterFieldLabel={toolbar.fieldLabel}
+        onEdit={isReadOnly ? undefined : () => handleEditChart(widget.chartId)}
+        // Duplicate is hidden in edit mode: it writes to the server at once, and the edit's save would then
+        // be refused as stale. In edit mode, add the chart again from Add instead.
+        onDuplicate={isReadOnly || isEditing ? undefined : () => handleDuplicateWidget(widget)}
+        onResize={isReadOnly ? undefined : handleEnterEditMode}
+        onRemove={isReadOnly ? undefined : () => handleRemoveWidgetFromMenu(widget.id)}
+      />
+    );
+  };
 
   return (
     <PageContentWrapper>
@@ -722,23 +972,33 @@ function DashboardDetailView({
           <DashboardControlBar
             workspaceId={workspaceId}
             dashboardId={dashboard.id}
-            directories={directories}
             isEditing={isEditing}
             isSaving={isSaving}
             hasChanges={hasChanges}
             isReadOnly={isReadOnly}
-            isAIAvailable={isAIAvailable}
-            aiUnavailableReason={aiUnavailableReason}
             onRefresh={() => {
               void refreshDashboard();
               void queryClient.invalidateQueries({ queryKey: chartKeys.allData() });
             }}
+            onAddChart={() => setIsAddChartsOpen(true)}
+            onAddBlock={handleAddBlock}
             editHotkey={EDIT_HOTKEY}
             onEditToggle={handleEnterEditMode}
             onSave={handleSave}
             onCancel={handleCancel}
           />
         }
+      />
+
+      <DashboardPageTabs
+        pages={pages}
+        selectedPageId={selectedPageId}
+        onSelect={selectPage}
+        isEditing={isEditing}
+        onAddPage={handleAddPage}
+        onRenamePage={handleRenamePage}
+        onDeletePage={askDeletePage}
+        onManagePages={() => setIsManagePagesOpen(true)}
       />
 
       <StaleDashboardDialog
@@ -752,11 +1012,11 @@ function DashboardDetailView({
         }}
       />
 
-      {/* The filters and the date range only act on existing charts, so the bar is hidden on an empty
-          dashboard, and while editing, where the layout is what changes. The same table toolbar the
+      {/* The filters and the date range only act on existing charts, so the bar is hidden on a dashboard
+          without any, and while editing, where the layout is what changes. The same table toolbar the
           responses page has: the filters an editor locked for everyone first, then this person's own, with
           the date range — always this person's own — as its action. */}
-      {!isEditing && !isEmpty && (
+      {!isEditing && hasCharts && (
         <TableToolbar
           filter={{
             properties: toolbar.properties,
@@ -789,61 +1049,38 @@ function DashboardDetailView({
 
       <section>
         <div ref={containerRef} className="w-full">
-          {isEmpty ? (
-            <EmptyState
-              text={
-                // Someone who can't edit the dashboard can't add charts to it either.
-                isReadOnly
-                  ? t("workspace.analysis.dashboards.no_data_message_read_only")
-                  : t("workspace.analysis.dashboards.no_data_message")
-              }
-            />
-          ) : (
-            mounted && (
-              <ResponsiveGridLayout
-                width={width}
-                layouts={{ lg: layout }}
-                breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
-                rowHeight={ROW_HEIGHT}
-                margin={[16, 16]}
-                // Keep 16px only between items; drop the default container padding (which mirrors
-                // margin) so the grid sits flush with the container's left/top edge, aligned with
-                // the date filter above instead of inset from it.
-                containerPadding={[0, 0]}
-                dragConfig={{
-                  enabled: isEditing,
-                  handle: ".rgl-drag-handle",
-                  bounded: false,
-                  threshold: 5,
-                }}
-                resizeConfig={{
-                  enabled: isEditing,
-                  handles: ["n", "s", "e", "w", "ne", "nw", "se", "sw"],
-                }}
-                compactor={verticalCompactor}
-                onDragStop={(finalLayout) => handleInteractionEnd(finalLayout)}
-                onResizeStop={(finalLayout) => handleInteractionEnd(finalLayout)}>
-                {widgets.map((widget) => (
-                  <div key={widget.id}>
-                    <MemoizedWidgetItem
-                      widget={widget}
-                      isEditing={isEditing}
-                      dateRange={dateRange}
-                      filters={filters}
-                      filterFieldLabel={toolbar.fieldLabel}
-                      onEdit={isReadOnly ? undefined : () => handleEditChart(widget.chartId)}
-                      // Duplicate is hidden in edit mode: saving edit-mode drafts removes any
-                      // widget not present in the draft, which would delete the fresh copy.
-                      onDuplicate={isReadOnly || isEditing ? undefined : () => handleDuplicateWidget(widget)}
-                      onResize={isReadOnly ? undefined : handleEnterEditMode}
-                      onRemove={isReadOnly ? undefined : () => handleRemoveWidgetFromMenu(widget.id)}
-                    />
-                  </div>
-                ))}
-              </ResponsiveGridLayout>
-            )
-          )}
+          {isPageEmpty
+            ? renderEmptyState()
+            : mounted && (
+                <ResponsiveGridLayout
+                  width={width}
+                  layouts={{ lg: layout }}
+                  breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                  cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
+                  rowHeight={ROW_HEIGHT}
+                  margin={[GRID_MARGIN, GRID_MARGIN]}
+                  // Keep 16px only between items; drop the default container padding (which mirrors
+                  // margin) so the grid sits flush with the container's left/top edge, aligned with
+                  // the date filter above instead of inset from it.
+                  containerPadding={[0, 0]}
+                  dragConfig={{
+                    enabled: isEditing,
+                    handle: ".rgl-drag-handle",
+                    bounded: false,
+                    threshold: 5,
+                  }}
+                  resizeConfig={{
+                    enabled: isEditing,
+                    handles: ["n", "s", "e", "w", "ne", "nw", "se", "sw"],
+                  }}
+                  compactor={verticalCompactor}
+                  onDragStop={(finalLayout) => handleInteractionEnd(finalLayout)}
+                  onResizeStop={(finalLayout) => handleInteractionEnd(finalLayout)}>
+                  {displayedWidgets.map((widget) => (
+                    <div key={widget.id}>{renderWidget(widget)}</div>
+                  ))}
+                </ResponsiveGridLayout>
+              )}
         </div>
       </section>
       {!isReadOnly && (
@@ -863,6 +1100,42 @@ function DashboardDetailView({
           }}
           directories={directories}
         />
+      )}
+      {!isReadOnly && isEditing && (
+        <>
+          <AddExistingChartsDialog
+            open={isAddChartsOpen}
+            onOpenChange={setIsAddChartsOpen}
+            workspaceId={workspaceId}
+            placedChartIds={placedChartIds}
+            directories={directories}
+            onPick={handlePickCharts}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
+          />
+          <ManagePagesDialog
+            open={isManagePagesOpen}
+            onOpenChange={setIsManagePagesOpen}
+            pages={pages}
+            onAddPage={handleAddPage}
+            onRenamePage={handleRenamePage}
+            onMovePage={handleMovePage}
+            onDeletePage={askDeletePage}
+            onTeamsChange={handlePageTeamsChange}
+            access={pageAccess.data}
+          />
+          <ConfirmationModal
+            open={isDeletePageOpen}
+            setOpen={setIsDeletePageOpen}
+            title={t("workspace.analysis.dashboards.delete_page_title")}
+            body={t("workspace.analysis.dashboards.delete_page_confirmation", {
+              name: pageToDelete?.name ?? "",
+            })}
+            buttonText={t("common.delete")}
+            cancelButtonText={t("common.cancel")}
+            onConfirm={handleConfirmDeletePage}
+          />
+        </>
       )}
     </PageContentWrapper>
   );

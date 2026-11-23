@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { type TChartConfig, TWidgetLayout, ZChartConfig, ZChartQuery } from "@formbricks/types/analysis";
+import {
+  type TChartConfig,
+  type TDashboardImageContent,
+  type TDashboardTextContent,
+  TWidgetLayout,
+  ZChartConfig,
+  ZChartQuery,
+} from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 
 export const CHART_TYPE_IDS = ["area", "bar", "pie", "big_number", "matrix"] as const;
@@ -31,13 +38,57 @@ export type TChartWithCreator = z.infer<typeof ZChartWithCreator>;
 
 // ── Widget as the app renders it ─────────────────────────────────────────────
 
-export type TDashboardWidget = {
+type TDashboardWidgetBase = {
   id: string;
   dashboardId: string;
-  chartId: string;
+  /** The Dashboard page the widget sits on. */
+  pageId: string;
   layout: TWidgetLayout;
   order: number;
+};
+
+/** One chart's placement on a page. */
+export type TDashboardChartWidget = TDashboardWidgetBase & {
+  kind: "chart";
+  chartId: string;
   chart: TChart;
+  content: null;
+};
+
+export type TDashboardImageWidget = TDashboardWidgetBase & {
+  kind: "image";
+  chartId: null;
+  chart: null;
+  content: TDashboardImageContent;
+};
+
+export type TDashboardTextWidget = TDashboardWidgetBase & {
+  kind: "text";
+  chartId: null;
+  chart: null;
+  content: TDashboardTextContent;
+};
+
+export type TDashboardSeparatorWidget = TDashboardWidgetBase & {
+  kind: "separator";
+  chartId: null;
+  chart: null;
+  content: null;
+};
+
+/** A Widget: a chart's placement or a layout block (image, text, separator) on one Dashboard page. */
+export type TDashboardWidget =
+  | TDashboardChartWidget
+  | TDashboardImageWidget
+  | TDashboardTextWidget
+  | TDashboardSeparatorWidget;
+
+/** A Dashboard page as the app renders it: a tab, its order, and the teams it is limited to (none = all). */
+export type TDashboardPage = {
+  id: string;
+  name: string;
+  order: number;
+  teamIds: string[];
 };
 
 // ── Charts UI (query execution, AI response) ─────────────────────────────────

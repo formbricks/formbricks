@@ -39,6 +39,7 @@ import {
 import { getV3Response, listV3Responses } from "@/app/api/v3/responses/lib/operations";
 import { getV3Survey, listV3Surveys } from "@/app/api/v3/surveys/lib/operations";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { createTestDashboard, createTestWidget } from "@/integration/dashboard-rows";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { can } from "@/lib/authorization";
 import { cache } from "@/lib/cache";
@@ -174,7 +175,7 @@ beforeAll(async () => {
       },
     })
   ).id;
-  const dashboard = await prisma.dashboard.create({
+  const dashboard = await createTestDashboard({
     data: {
       name: "Visit NPS",
       workspaceId: fixture.workspaceId,
@@ -193,12 +194,12 @@ beforeAll(async () => {
   });
   ids.dashboard = dashboard.id;
   ids.widget = (
-    await prisma.dashboardWidget.create({
+    await createTestWidget({
       data: { dashboardId: dashboard.id, chartId: ids.chart, layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
     })
   ).id;
   ids.hiddenDashboard = (
-    await prisma.dashboard.create({
+    await createTestDashboard({
       data: { name: "Hidden", workspaceId: fixture.otherWorkspaceId, createdBy: fixture.users.owner },
     })
   ).id;

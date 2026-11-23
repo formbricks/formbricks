@@ -1,14 +1,37 @@
 type: object
-required:
-  - chartId
+description: >-
+  A chart (`chartId`, with `kind` left out or `chart`) or a layout block (`kind` `image`, `text` or
+  `separator`). A text block needs `content`; an image block without `content` starts empty.
 properties:
+  kind:
+    type: string
+    enum:
+      - chart
+      - image
+      - text
+      - separator
+    default: chart
   chartId:
     type: string
     format: cuid2
-    description: A chart in the dashboard's workspace. A chart appears at most once per dashboard.
+    description: >-
+      A chart in the dashboard's workspace, for a chart widget. A chart appears at most once per page,
+      and can sit on several pages of one dashboard.
+  pageId:
+    type: string
+    format: cuid2
+    description: The dashboard page to put it on. Without one, the dashboard's first page.
+  content:
+    oneOf:
+      - $ref: ./DashboardImageContent.yml
+      - $ref: ./DashboardTextContent.yml
+      - type: "null"
+    description: >-
+      An image or text block's content. An image's `fileUrl` must be a dashboard image uploaded to
+      this workspace, or `null`.
   layout:
     $ref: ./WidgetLayout.yml
     description: >-
-      Where to put the chart. Without one it lands in the first open slot at its chart type's
-      default size.
+      Where to put it. Without one it lands in the first open slot at its default size: a chart's by
+      its type, a text block 9 columns wide, an image 3, a separator the full row.
 additionalProperties: false

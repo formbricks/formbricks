@@ -59,7 +59,9 @@ export const findUnknownEmbeddedFilterFields = async ({
   const savedFilters = parseStoredDashboardFilters(dashboard?.filters);
   const saved = new Set(savedFilters.map(({ field }) => field));
   const asked = embedded.filter(({ field }) => !saved.has(field));
-  const datasetIds = [...new Set((dashboard?.widgets ?? []).map(({ chart }) => chart.feedbackDirectoryId))];
+  const datasetIds = [
+    ...new Set((dashboard?.widgets ?? []).flatMap(({ chart }) => (chart ? [chart.feedbackDirectoryId] : []))),
+  ];
   const nonNumeric = await findNonNumericComparisons(filters, savedFilters, access.workspaceId, datasetIds);
   if (asked.length === 0) return nonNumeric;
 

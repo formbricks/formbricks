@@ -1,6 +1,7 @@
 import "server-only";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
+import type { TWidgetLayout } from "@formbricks/types/analysis";
 import { dashboardFull, dashboardNoSpace } from "@/app/api/v3/charts/lib/problems";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
@@ -13,6 +14,11 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import {
+  getDefaultBlockLayout,
+  parseWidgetContent,
+} from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
+import { getDefaultWidgetLayout } from "@/modules/ee/analysis/dashboards/lib/widget-placement";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
 import type { TV3WidgetCreateBody, TV3WidgetUpdateBody } from "./schemas";
 import { serializeV3DashboardWidget } from "./serializers";
@@ -36,9 +42,15 @@ type TV3WidgetWriteContext = TV3DashboardOperationContext & { auditLog?: TV3Audi
 const chartAlreadyOnDashboard = ({ requestId, instance }: TV3DashboardOperationContext): Response =>
   problemConflict(
     requestId,
-    "This chart is already on the dashboard. A chart appears at most once per dashboard.",
+    "This chart is already on that page. A chart appears at most once per page, but can sit on several pages of one dashboard.",
     instance
   );
+
+const unknownPage = ({ requestId, instance }: TV3DashboardOperationContext): Response =>
+  problemUnprocessableContent(requestId, "The page is not on the dashboard", {
+    instance,
+    invalid_params: [{ name: "pageId", reason: "Not a page of this dashboard." }],
+  });
 
 const overlapsWidget = (widgetId: string, { requestId, instance }: TV3DashboardOperationContext) =>
   problemUnprocessableContent(requestId, "The layout overlaps another widget", {
@@ -65,6 +77,13 @@ const refuseWidgetWrite = (
       return dashboardFull(context);
     case "noSpace":
       return dashboardNoSpace(context);
+    case "unknownPage":
+      return unknownPage(context);
+    case "invalidWidget":
+      return problemUnprocessableContent(context.requestId, "The widget change is not valid", {
+        instance: context.instance,
+        invalid_params: [{ name: result.name, reason: result.reason }],
+      });
     case "gone":
       return problemForbidden(context.requestId, undefined, context.instance);
   }
@@ -89,8 +108,9 @@ const loadDashboardForWrite = async (dashboardId: string, context: TV3DashboardO
   authorizeLoadedDashboard(await getDashboardWorkspaceRow(dashboardId), "readWrite", context);
 
 /**
- * `POST /api/v3/dashboards/{dashboardId}/widgets` → 201 `{ data }`. Without a `layout` the chart lands in
- * the first open slot at its type's default size.
+ * `POST /api/v3/dashboards/{dashboardId}/widgets` → 201 `{ data }`: a chart or a layout block on the page
+ * `pageId`, or the first page. Without a `layout` it lands in the first open slot at its kind's default
+ * size (a chart's type decides a chart's).
  */
 export async function addV3DashboardWidget({
   dashboardId,
@@ -105,11 +125,32 @@ export async function addV3DashboardWidget({
     const loaded = await loadDashboardForWrite(dashboardId, context);
     if (loaded instanceof Response) return loaded;
 
-    const chartType = await getChartTypeInWorkspace(body.chartId, loaded.access.workspaceId);
-    if (!chartType) return problemForbidden(requestId, undefined, instance);
+    const kind = body.kind ?? "chart";
+    let size: TWidgetLayout;
+    if (kind === "chart") {
+      const chartType = body.chartId
+        ? await getChartTypeInWorkspace(body.chartId, loaded.access.workspaceId)
+        : null;
+      if (!chartType) return problemForbidden(requestId, undefined, instance);
+      size = getDefaultWidgetLayout(chartType);
+    } else {
+      size = getDefaultBlockLayout(kind);
+    }
+    const content = parseWidgetContent(kind, body.content, loaded.access.workspaceId);
+    if (!content.ok) {
+      return refuseWidgetWrite({ kind: "invalidWidget", name: "content", reason: content.reason }, context);
+    }
 
     const result = await runWidgetWrite(() =>
-      addWidgetRow({ dashboardId, chartId: body.chartId, chartType, layout: body.layout })
+      addWidgetRow({
+        dashboardId,
+        pageId: body.pageId,
+        kind,
+        chartId: body.chartId,
+        content: content.content,
+        size,
+        layout: body.layout,
+      })
     );
     if (result.kind !== "ok") return refuseWidgetWrite(result, context);
 
@@ -117,7 +158,14 @@ export async function addV3DashboardWidget({
     if (auditLog) {
       auditLog.targetId = widget.id;
       auditLog.organizationId = loaded.access.organizationId;
-      auditLog.newObject = { dashboardId, chartId: widget.chartId, layout: widget.layout };
+      auditLog.newObject = {
+        dashboardId,
+        pageId: widget.pageId,
+        kind: widget.kind,
+        chartId: widget.chartId,
+        content: widget.content,
+        layout: widget.layout,
+      };
     }
 
     return createdResponse(widget, {
@@ -185,7 +233,15 @@ export async function updateV3DashboardWidget({
     }
 
     const result = await runWidgetWrite(() =>
-      updateWidgetRow({ dashboardId, widgetId, layout: body.layout, chartId: body.chartId })
+      updateWidgetRow({
+        dashboardId,
+        workspaceId: loaded.access.workspaceId,
+        widgetId,
+        layout: body.layout,
+        chartId: body.chartId,
+        content: body.content,
+        pageId: body.pageId,
+      })
     );
     if (result.kind !== "ok") return refuseWidgetWrite(result, context);
 
@@ -194,7 +250,13 @@ export async function updateV3DashboardWidget({
       auditLog.targetId = widget.id;
       auditLog.organizationId = loaded.access.organizationId;
       auditLog.oldObject = { dashboardId, ...result.previous };
-      auditLog.newObject = { dashboardId, chartId: widget.chartId, layout: widget.layout };
+      auditLog.newObject = {
+        dashboardId,
+        pageId: widget.pageId,
+        chartId: widget.chartId,
+        content: widget.content,
+        layout: widget.layout,
+      };
     }
 
     return successResponse(widget, { requestId });

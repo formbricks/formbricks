@@ -118,10 +118,13 @@ describe("analysis api client", () => {
   test("restores a removed widget at its old place, or in the first open slot once that is taken", async () => {
     const widget = {
       id: "clwidget00000000000000001",
+      pageId: "clpage000000000000000001",
+      kind: "chart",
       chartId: resource.id,
       layout: { x: 0, y: 0, w: 4, h: 4 },
       order: 0,
       chart: resource,
+      content: null,
     };
     const fetchMock = vi
       .fn()
@@ -137,7 +140,11 @@ describe("analysis api client", () => {
     const restored = await restoreDashboardWidget("cldash0000000000000000001", widget);
     expect(restored.layout).toEqual({ x: 4, y: 0, w: 4, h: 4 });
     const bodies = fetchMock.mock.calls.map(([, init]) => JSON.parse((init as RequestInit).body as string));
-    expect(bodies).toEqual([{ chartId: resource.id, layout: widget.layout }, { chartId: resource.id }]);
+    // Back on the page it was removed from.
+    expect(bodies).toEqual([
+      { chartId: resource.id, pageId: widget.pageId, layout: widget.layout },
+      { chartId: resource.id, pageId: widget.pageId },
+    ]);
   });
 
   test("reads the dashboards a refused chart delete names, and nothing from any other error", () => {
@@ -165,13 +172,28 @@ describe("analysis api client requests", () => {
     name: "Matchday",
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-03T10:00:00.123Z",
+    filters: [],
+    pages: [{ id: "clpage000000000000000001", name: "Overview", order: 0, teamIds: [] }],
     widgets: [
       {
         id: "clwidget00000000000000001",
+        pageId: "clpage000000000000000001",
+        kind: "chart",
         chartId: resource.id,
         layout: { x: 0, y: 0, w: 4, h: 4 },
         order: 0,
         chart: resource,
+        content: null,
+      },
+      {
+        id: "clwidget00000000000000002",
+        pageId: "clpage000000000000000001",
+        kind: "separator",
+        chartId: null,
+        layout: { x: 0, y: 4, w: 12, h: 1 },
+        order: 1,
+        chart: null,
+        content: null,
       },
     ],
   };
@@ -379,14 +401,30 @@ describe("analysis api client requests", () => {
       workspaceId: resource.workspaceId,
       name: "Matchday",
       updatedAt: "2026-01-03T10:00:00.123Z",
+      filters: [],
+      pages: dashboardResource.pages,
       widgets: [
         {
           id: dashboardResource.widgets[0].id,
           dashboardId: dashboardResource.id,
+          pageId: "clpage000000000000000001",
+          kind: "chart",
           chartId: resource.id,
           layout: { x: 0, y: 0, w: 4, h: 4 },
           order: 0,
           chart: toAppChart(resource),
+          content: null,
+        },
+        {
+          id: "clwidget00000000000000002",
+          dashboardId: dashboardResource.id,
+          pageId: "clpage000000000000000001",
+          kind: "separator",
+          chartId: null,
+          layout: { x: 0, y: 4, w: 12, h: 1 },
+          order: 1,
+          chart: null,
+          content: null,
         },
       ],
     });
@@ -440,7 +478,7 @@ describe("analysis api client requests", () => {
     const fetchMock = stubFetch({ status: 403, detail: "No", code: "forbidden" }, { status: 403 });
 
     await expect(
-      restoreDashboardWidget("d", { chartId: resource.id, layout: { x: 0, y: 0, w: 4, h: 4 } })
+      restoreDashboardWidget("d", { chartId: resource.id, pageId: "p", layout: { x: 0, y: 0, w: 4, h: 4 } })
     ).rejects.toMatchObject({ status: 403 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

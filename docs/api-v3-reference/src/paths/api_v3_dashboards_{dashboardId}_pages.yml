@@ -1,0 +1,59 @@
+post:
+  operationId: createDashboardPageV3
+  summary: Add a page to a dashboard
+  description: |
+    Adds a page (a tab) after the dashboard's last one, open to every team that can open the dashboard.
+    A dashboard holds at most 50 pages: an add past that answers 409. Pages are reordered with
+    `PUT /api/v3/dashboards/{dashboardId}`. Moves the dashboard's `updatedAt`. Needs write access to the
+    dashboard's workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DashboardPageCreateRequest.yml
+  responses:
+    "201":
+      description: The new page
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/dashboards/cldash00000000000000000001/pages/clpage0000000000000000001
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardPage.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

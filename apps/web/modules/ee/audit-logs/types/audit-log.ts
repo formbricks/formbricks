@@ -29,6 +29,7 @@ export const ZAuditTarget = z.enum([
   "chart",
   "dashboard",
   "dashboardWidget",
+  "dashboardPage",
   "cubeQuery",
   "feedbackDirectory",
   "feedbackRecord",

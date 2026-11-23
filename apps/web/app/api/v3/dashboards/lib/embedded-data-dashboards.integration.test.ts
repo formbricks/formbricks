@@ -5,6 +5,7 @@ import { getV3ChartData } from "@/app/api/v3/charts/lib/data-operations";
 import { ZV3ChartDataQuery } from "@/app/api/v3/charts/lib/schemas";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { cubeFake, resetCubeFake } from "@/integration/cube-fake";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { MAX_EMBEDDED_KEYS } from "@/modules/ee/analysis/lib/embedded-data-fields";
@@ -77,7 +78,7 @@ const createChart = async (datasetId: string, query: TChartQuery) =>
   ).id;
 
 const createDashboard = async (chartIds: string[], filters: TLockedDashboardFilter[]) =>
-  prisma.dashboard.create({
+  createTestDashboard({
     data: {
       name: `Board ${++sequence}`,
       workspaceId: fixture.workspaceId,

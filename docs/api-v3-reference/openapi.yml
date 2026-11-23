@@ -20,7 +20,7 @@ info:
 
     **Member attributes**: an organization's Member attribute keys (**GET**, **POST /api/v3/organizations/{organizationId}/member-attribute-keys**; **GET**, **PATCH**, **DELETE /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}**) and members' values for them (**GET /api/v3/organizations/{organizationId}/member-attributes**, **PUT /api/v3/organizations/{organizationId}/member-attributes/bulk**), which Dashboard Viewer access matches on. Owners and Managers, or an API key with Access Control read or write; they need Access Control and Dashboards.
 
-    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
+    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; its pages (**POST /api/v3/dashboards/{dashboardId}/pages**; **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/pages/{pageId}**); **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
       them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
       …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
@@ -41,12 +41,16 @@ info:
       Editing it changes all of them — duplicate it and repoint one dashboard's widget to change it
       there only. A chart still on a dashboard cannot be deleted: **409 `chart_in_use`** lists them in
       `details.dashboards`.
-    - **Grid.** Widgets sit on a 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
-      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed, overlaps answer **422** naming the widget, and a
-      chart appears at most once per dashboard (**409**). A widget added without a layout takes the
-      first open slot at its chart type's default size.
-    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name and every widget at once
-      and removes widgets left out. Send the `updatedAt` you read: if the dashboard changed since,
+    - **Pages.** A dashboard has one or more pages (tabs), each with its own grid; every widget names
+      its `pageId`. A chart appears at most once per page (**409**) but can sit on several pages of one
+      dashboard. Besides charts, a page holds layout blocks: images, text blocks and separators
+      (`kind`). A page can be limited to selected teams (`teamIds`); the limit binds Dashboard Viewers
+      only, and only a signed-in Owner or Manager with Access Control may change it.
+    - **Grid.** Widgets sit on a page's 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
+      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed and overlaps on a page answer **422** naming the
+      widget. A widget added without a layout takes the first open slot at its default size.
+    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name, the pages and every widget
+      at once, creates the new ones and removes the ones left out. Send the `updatedAt` you read: if the dashboard changed since,
       nothing is saved and **409** carries `expectedUpdatedAt` and `currentUpdatedAt` in `details`.
       Every widget change moves `updatedAt`.
 
@@ -5456,8 +5460,11 @@ paths:
       operationId: replaceDashboardV3
       summary: Save a whole dashboard
       description: |
-        Replaces a dashboard's name and every widget's place in one transaction — all of it or none of
-        it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
+        Replaces a dashboard's name, its pages and every widget's page, place and content in one
+        transaction — all of it or none of it. A widget left out is removed; its chart is kept. A page
+        left out of `pages` is removed with its widgets; new pages and widgets are created. Widgets may
+        leave gaps but not overlap on a page (422), and a chart appears at most once per page (409).
+        Changing a page's `teamIds` needs a signed-in Owner or Manager with Access Control (403).
         Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
         is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
 
@@ -5625,17 +5632,169 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/pages:
+    post:
+      operationId: createDashboardPageV3
+      summary: Add a page to a dashboard
+      description: |
+        Adds a page (a tab) after the dashboard's last one, open to every team that can open the dashboard.
+        A dashboard holds at most 50 pages: an add past that answers 409. Pages are reordered with
+        `PUT /api/v3/dashboards/{dashboardId}`. Moves the dashboard's `updatedAt`. Needs write access to the
+        dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardPageCreateRequest'
+      responses:
+        '201':
+          description: The new page
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/dashboards/cldash00000000000000000001/pages/clpage0000000000000000001
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardPage'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/pages/{pageId}:
+    patch:
+      operationId: updateDashboardPageV3
+      summary: Rename a page or limit it to teams
+      description: |
+        Renames a page, sets which teams' Dashboard Viewers see it (`teamIds`), or both. Changing the team
+        limit needs an Owner or Manager signed in and the Access Control feature — an API key gets 403 — and
+        a team that holds no grant on the dashboard's workspace, or whose dashboard limit leaves this
+        dashboard out, answers 422 naming it. A limit sent back unchanged needs neither. Moves the
+        dashboard's `updatedAt`. Needs write access to the dashboard's workspace; a page of another
+        dashboard answers 403.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/PageIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardPageUpdateRequest'
+      responses:
+        '200':
+          description: The updated page
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardPage'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteDashboardPageV3
+      summary: Delete a page
+      description: |
+        Deletes a page and every widget on it; the charts they showed are kept. A dashboard keeps at least
+        one page: deleting its last answers 409. Moves the dashboard's `updatedAt`. Needs write access to
+        the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/PageIdPath'
+      responses:
+        '204':
+          description: Page deleted with its widgets; the charts are kept
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/dashboards/{dashboardId}/widgets:
     post:
       operationId: addDashboardWidgetV3
-      summary: Add a chart to a dashboard
+      summary: Add a chart or a layout block to a dashboard
       description: |
-        Puts an existing chart on a dashboard. Without a `layout` the chart lands in the first open slot
-        at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
-        a layout covering another widget answers 422 naming it. A chart appears at most once per
-        dashboard (409), and must live in the dashboard's workspace. A dashboard holds at most 250
-        widgets, and a new widget takes the first open slot: an add past the cap, or with no open slot
-        above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
+        Puts an existing chart (`chartId`), or a layout block (`kind` image, text or separator), on a
+        dashboard page — `pageId`, or the dashboard's first page. Without a `layout` it lands in the first
+        open slot at its default size; with one, exactly there. Widgets may leave gaps but not overlap on
+        a page: a layout covering another widget answers 422 naming it. A chart appears at most once per
+        page (409), can sit on several pages, and must live in the dashboard's workspace. An image's
+        `fileUrl` must be a dashboard image uploaded to this workspace (422 otherwise). A dashboard holds
+        at most 250 widgets, and a new widget takes the first open slot: an add past the cap, or with no
+        open slot above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
         Needs write access to the dashboard's workspace.
       tags:
         - V3 Dashboards
@@ -5740,11 +5899,13 @@ paths:
         - bearerAuth: []
     patch:
       operationId: updateDashboardWidgetV3
-      summary: Move a widget or show another chart in it
+      summary: Move a widget, show another chart in it, or change a block
       description: |
-        Moves or resizes a widget, points it at another chart, or both. A layout covering another widget
-        answers 422 naming it; a chart already on the dashboard answers 409. Moves the dashboard's
-        `updatedAt`. Needs write access to the dashboard's workspace.
+        Moves or resizes a widget (on its page, or to another page with `pageId`), points a chart widget at
+        another chart, or changes an image or text block's `content`. A layout covering another widget
+        answers 422 naming it; a chart already on the page answers 409; a chart for a layout block, content
+        for a chart or an invalid content answers 422. Moves the dashboard's `updatedAt`. Needs write access
+        to the dashboard's workspace.
       tags:
         - V3 Dashboards
       parameters:
@@ -16944,6 +17105,10 @@ components:
           type: string
           format: cuid2
           description: 'Also put the copy on this dashboard, in the same transaction: if placing it fails, no copy is left behind. Must be in the chart''s workspace.'
+        pageId:
+          type: string
+          format: cuid2
+          description: The page of `dashboardId` to put the copy on. Without one, the dashboard's first page.
         layout:
           $ref: '#/components/schemas/WidgetLayout'
           description: Where to put the copy on `dashboardId`. Without one, the first open slot.
@@ -17058,39 +17223,132 @@ components:
           example:
             - Website
       additionalProperties: false
-    DashboardWidget:
+    DashboardPage:
       type: object
-      description: One chart's placement on the dashboard. `chart` is exactly what reading the chart returns.
+      description: 'A dashboard page: one tab of the dashboard. Every dashboard has at least one. `teamIds` limits which teams'' Dashboard Viewers see the page; empty means every team that can open the dashboard. The limit binds Dashboard Viewers only: Owners, Managers, Members and API keys see every page.'
       required:
         - id
-        - chartId
-        - layout
+        - name
         - order
-        - chart
+        - teamIds
       properties:
         id:
           type: string
           format: cuid2
-        chartId:
+        name:
+          type: string
+          maxLength: 100
+        order:
+          type: integer
+          minimum: 0
+          description: Sort key of the tab, ascending.
+        teamIds:
+          type: array
+          items:
+            type: string
+            format: cuid2
+      additionalProperties: false
+    DashboardImageContent:
+      type: object
+      description: An image block's content. `fileUrl` is a private file of the dashboard's workspace, uploaded in the app (`/storage/{workspaceId}/private/dashboards/{dashboardId}/{file}`); `null` while the block is empty. `fit` shows the whole image (`fit`) or fills the block's width (`fill`); `position` places a fitted image left, centre or right.
+      required:
+        - fileUrl
+        - fit
+        - position
+        - alt
+      properties:
+        fileUrl:
+          oneOf:
+            - type: string
+              maxLength: 2048
+            - type: 'null'
+        fit:
+          type: string
+          enum:
+            - fit
+            - fill
+        position:
+          type: string
+          enum:
+            - left
+            - center
+            - right
+        alt:
+          type: string
+          maxLength: 300
+          description: Alternative text for screen readers.
+      additionalProperties: false
+    DashboardTextContent:
+      type: object
+      description: 'A text block''s content: plain text, no markup or links. The description keeps its line breaks. A write needs a headline or a description (422 when both are blank).'
+      required:
+        - headline
+        - description
+      properties:
+        headline:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+      additionalProperties: false
+    DashboardWidget:
+      type: object
+      description: 'One block on one dashboard page: a chart''s placement (`kind: chart`; `chart` is exactly what reading the chart returns) or a layout block — an image, a text block or a separator. `chartId` and `chart` are `null` on a layout block; `content` is `null` on a chart and a separator.'
+      required:
+        - id
+        - pageId
+        - kind
+        - chartId
+        - layout
+        - order
+        - chart
+        - content
+      properties:
+        id:
           type: string
           format: cuid2
+        pageId:
+          type: string
+          format: cuid2
+          description: The dashboard page the widget sits on.
+        kind:
+          type: string
+          enum:
+            - chart
+            - image
+            - text
+            - separator
+        chartId:
+          oneOf:
+            - type: string
+              format: cuid2
+            - type: 'null'
         layout:
           $ref: '#/components/schemas/WidgetLayout'
         order:
           type: integer
           minimum: 0
         chart:
-          $ref: '#/components/schemas/ChartResource'
+          oneOf:
+            - $ref: '#/components/schemas/ChartResource'
+            - type: 'null'
+        content:
+          oneOf:
+            - $ref: '#/components/schemas/DashboardImageContent'
+            - $ref: '#/components/schemas/DashboardTextContent'
+            - type: 'null'
       additionalProperties: false
     DashboardResource:
       type: object
-      description: 'A dashboard: a named grid of widgets in a workspace, and the filters pinned to its top bar. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`.'
+      description: 'A dashboard: named pages of widgets in a workspace, and the filters pinned to its top bar. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`.'
       required:
         - id
         - workspaceId
         - name
         - creator
         - filters
+        - pages
         - widgets
         - createdAt
         - updatedAt
@@ -17112,9 +17370,16 @@ components:
           maxItems: 10
           items:
             $ref: '#/components/schemas/DashboardFilter'
+        pages:
+          type: array
+          description: The dashboard's pages, in tab order. Always at least one.
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/DashboardPage'
         widgets:
           type: array
-          description: In display order.
+          description: Every widget on every page, in display order; each names its page in `pageId`.
           items:
             $ref: '#/components/schemas/DashboardWidget'
         createdAt:
@@ -17127,7 +17392,7 @@ components:
       additionalProperties: false
     DashboardReplaceRequest:
       type: object
-      description: 'The whole edited dashboard: its name, every widget''s place and, optionally, its filters. A widget left out of `widgets` is removed (its chart is kept); without `filters` the saved ones are kept. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
+      description: 'The whole edited dashboard: its name, every widget''s page and place and, optionally, its filters and its pages. A widget left out of `widgets` is removed (its chart is kept); a page left out of `pages` is removed with the widgets still on it. Without `filters` or `pages` the saved ones are kept. New pages (by `key`) and new widgets (without `widgetId`) are created by the same write. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
       required:
         - name
         - expectedUpdatedAt
@@ -17147,19 +17412,74 @@ components:
           description: Every dashboard filter, in top-bar order, replacing the saved ones. At most 10; each `field` must be a catalog dimension and `operator` one it allows (422 naming the filter otherwise), and each `id` may appear once.
           items:
             $ref: '#/components/schemas/DashboardFilter'
-        widgets:
+        pages:
           type: array
-          maxItems: 1000
+          minItems: 1
+          maxItems: 50
+          description: 'Every page, in tab order: an existing one by `pageId`, or a new one by a `key` of your choosing that the save''s widgets use as `pageKey`. Each page appears once. `teamIds` sets which teams'' Dashboard Viewers see the page (empty: every team); left out, the page keeps its limit. Changing a limit needs an Owner or Manager signed in and the Access Control feature (403 otherwise), and each team must hold a grant on the dashboard''s workspace without a dashboard limit leaving this dashboard out (422 otherwise).'
           items:
             type: object
             required:
-              - widgetId
+              - name
+              - order
+            properties:
+              pageId:
+                type: string
+                format: cuid2
+              key:
+                type: string
+                pattern: ^[A-Za-z0-9_-]{1,64}$
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+              order:
+                type: integer
+                minimum: 0
+                maximum: 2147483647
+              teamIds:
+                oneOf:
+                  - type: array
+                    maxItems: 100
+                    items:
+                      type: string
+                      format: cuid2
+                  - type: 'null'
+            additionalProperties: false
+        widgets:
+          type: array
+          maxItems: 1000
+          description: Every widget to keep or create. An existing widget by `widgetId` keeps its kind and chart (repoint a chart with the widget update) and its page unless `pageId` or `pageKey` moves it; a new one needs `kind`, `chartId` for a chart and `content` for a text block, and goes on the first page without a page. On each page a chart appears at most once (409) and widgets may not overlap (422).
+          items:
+            type: object
+            required:
               - layout
               - order
             properties:
               widgetId:
                 type: string
                 format: cuid2
+              kind:
+                type: string
+                enum:
+                  - chart
+                  - image
+                  - text
+                  - separator
+              chartId:
+                type: string
+                format: cuid2
+              pageId:
+                type: string
+                format: cuid2
+              pageKey:
+                type: string
+                pattern: ^[A-Za-z0-9_-]{1,64}$
+              content:
+                oneOf:
+                  - $ref: '#/components/schemas/DashboardImageContent'
+                  - $ref: '#/components/schemas/DashboardTextContent'
+                  - type: 'null'
               layout:
                 $ref: '#/components/schemas/WidgetLayout'
               order:
@@ -17190,22 +17510,69 @@ components:
           maxLength: 255
           description: Name for the copy, unique within the workspace. Without one the copy is named "<original> (copy)", then "(copy 2)" and so on — never "(copy) (copy)".
       additionalProperties: false
+    DashboardPageCreateRequest:
+      type: object
+      description: A new page, added after the last one and visible to every team that can open the dashboard.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The tab's name; leading and trailing whitespace is trimmed. Names may repeat.
+      additionalProperties: false
+    DashboardPageUpdateRequest:
+      type: object
+      description: Send a `name`, `teamIds`, or both. `teamIds` limits which teams' Dashboard Viewers see the page; `null` or an empty list removes the limit (every team). Changing the limit needs an Owner or Manager signed in and the Access Control feature — an API key never may (403) — and each team must hold a grant on the dashboard's workspace without a dashboard limit leaving this dashboard out (422). A limit sent back unchanged needs neither. Limit changes are audited.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        teamIds:
+          oneOf:
+            - type: array
+              maxItems: 100
+              items:
+                type: string
+                format: cuid2
+            - type: 'null'
+      additionalProperties: false
     WidgetCreateRequest:
       type: object
-      required:
-        - chartId
+      description: A chart (`chartId`, with `kind` left out or `chart`) or a layout block (`kind` `image`, `text` or `separator`). A text block needs `content`; an image block without `content` starts empty.
       properties:
+        kind:
+          type: string
+          enum:
+            - chart
+            - image
+            - text
+            - separator
+          default: chart
         chartId:
           type: string
           format: cuid2
-          description: A chart in the dashboard's workspace. A chart appears at most once per dashboard.
+          description: A chart in the dashboard's workspace, for a chart widget. A chart appears at most once per page, and can sit on several pages of one dashboard.
+        pageId:
+          type: string
+          format: cuid2
+          description: The dashboard page to put it on. Without one, the dashboard's first page.
+        content:
+          oneOf:
+            - $ref: '#/components/schemas/DashboardImageContent'
+            - $ref: '#/components/schemas/DashboardTextContent'
+            - type: 'null'
+          description: An image or text block's content. An image's `fileUrl` must be a dashboard image uploaded to this workspace, or `null`.
         layout:
           $ref: '#/components/schemas/WidgetLayout'
-          description: Where to put the chart. Without one it lands in the first open slot at its chart type's default size.
+          description: 'Where to put it. Without one it lands in the first open slot at its default size: a chart''s by its type, a text block 9 columns wide, an image 3, a separator the full row.'
       additionalProperties: false
     WidgetUpdateRequest:
       type: object
-      description: Send a `layout`, a `chartId`, or both. Repointing shows another chart in the widget's place — the way to give one dashboard its own copy of a shared chart.
+      description: 'Send a `layout`, a `chartId`, `content`, a `pageId`, or several. Repointing a chart widget shows another chart in its place — the way to give one dashboard its own copy of a shared chart. `content` changes an image or text block: the fields sent replace the stored ones, the rest stay, so an image keeps its file when only its settings change. `pageId` moves the widget to another page of the dashboard, into the first open slot there unless a `layout` is sent too.'
       minProperties: 1
       properties:
         layout:
@@ -17213,7 +17580,13 @@ components:
         chartId:
           type: string
           format: cuid2
-          description: A chart in the dashboard's workspace that is not already on the dashboard.
+          description: A chart in the dashboard's workspace that is not already on the widget's page.
+        content:
+          type: object
+          description: Fields of the block's content (`DashboardImageContent` or `DashboardTextContent`) to replace.
+        pageId:
+          type: string
+          format: cuid2
       additionalProperties: false
     DashboardChartData:
       type: object
@@ -20078,7 +20451,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3DashboardsConflict:
-      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, a dashboard already holding its 250 widgets, a dashboard with no open slot left above its grid''s last row, or a dashboard changed since the `expectedUpdatedAt` the caller sent.'
+      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the page, a dashboard already holding its 250 widgets or 50 pages, the last page of a dashboard, a page with no open slot left above its grid''s last row, or a dashboard changed since the `expectedUpdatedAt` the caller sent.'
       headers:
         X-Request-Id:
           schema:
@@ -20413,6 +20786,14 @@ components:
         type: string
         format: cuid2
       description: Dashboard identifier.
+    PageIdPath:
+      in: path
+      name: pageId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Dashboard page identifier.
     WidgetIdPath:
       in: path
       name: widgetId

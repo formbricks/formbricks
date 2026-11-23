@@ -1,9 +1,10 @@
 type: object
 description: >-
-  The whole edited dashboard: its name, every widget's place and, optionally, its filters. A widget left
-  out of `widgets` is removed (its chart is kept); without `filters` the saved ones are kept.
-  `expectedUpdatedAt` is the dashboard's `updatedAt` from your read; if it changed since, nothing is
-  saved.
+  The whole edited dashboard: its name, every widget's page and place and, optionally, its filters and
+  its pages. A widget left out of `widgets` is removed (its chart is kept); a page left out of `pages` is
+  removed with the widgets still on it. Without `filters` or `pages` the saved ones are kept. New pages
+  (by `key`) and new widgets (without `widgetId`) are created by the same write. `expectedUpdatedAt` is
+  the dashboard's `updatedAt` from your read; if it changed since, nothing is saved.
 required:
   - name
   - expectedUpdatedAt
@@ -26,19 +27,84 @@ properties:
       `id` may appear once.
     items:
       $ref: ./DashboardFilter.yml
-  widgets:
+  pages:
     type: array
-    maxItems: 1000
+    minItems: 1
+    maxItems: 50
+    description: >-
+      Every page, in tab order: an existing one by `pageId`, or a new one by a `key` of your choosing
+      that the save's widgets use as `pageKey`. Each page appears once. `teamIds` sets which teams'
+      Dashboard Viewers see the page (empty: every team); left out, the page keeps its limit. Changing
+      a limit needs an Owner or Manager signed in and the Access Control feature (403 otherwise), and
+      each team must hold a grant on the dashboard's workspace without a dashboard limit leaving this
+      dashboard out (422 otherwise).
     items:
       type: object
       required:
-        - widgetId
+        - name
+        - order
+      properties:
+        pageId:
+          type: string
+          format: cuid2
+        key:
+          type: string
+          pattern: "^[A-Za-z0-9_-]{1,64}$"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        order:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        teamIds:
+          oneOf:
+            - type: array
+              maxItems: 100
+              items:
+                type: string
+                format: cuid2
+            - type: "null"
+      additionalProperties: false
+  widgets:
+    type: array
+    maxItems: 1000
+    description: >-
+      Every widget to keep or create. An existing widget by `widgetId` keeps its kind and chart (repoint
+      a chart with the widget update) and its page unless `pageId` or `pageKey` moves it; a new one needs
+      `kind`, `chartId` for a chart and `content` for a text block, and goes on the first page without a
+      page. On each page a chart appears at most once (409) and widgets may not overlap (422).
+    items:
+      type: object
+      required:
         - layout
         - order
       properties:
         widgetId:
           type: string
           format: cuid2
+        kind:
+          type: string
+          enum:
+            - chart
+            - image
+            - text
+            - separator
+        chartId:
+          type: string
+          format: cuid2
+        pageId:
+          type: string
+          format: cuid2
+        pageKey:
+          type: string
+          pattern: "^[A-Za-z0-9_-]{1,64}$"
+        content:
+          oneOf:
+            - $ref: ./DashboardImageContent.yml
+            - $ref: ./DashboardTextContent.yml
+            - type: "null"
         layout:
           $ref: ./WidgetLayout.yml
         order:

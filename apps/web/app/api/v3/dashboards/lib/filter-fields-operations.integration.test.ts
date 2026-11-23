@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { cubeFake, resetCubeFake } from "@/integration/cube-fake";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -64,7 +65,7 @@ const createChart = async (datasetId: string, dimensions: string[] = []) =>
 
 const createDashboard = async (chartIds: string[]) =>
   (
-    await prisma.dashboard.create({
+    await createTestDashboard({
       data: {
         name: `Board ${++sequence}`,
         workspaceId: fixture.workspaceId,

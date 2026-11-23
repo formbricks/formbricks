@@ -10,7 +10,7 @@ import { CreateChartButton } from "@/modules/ee/analysis/charts/components/creat
 import { useCharts } from "@/modules/ee/analysis/charts/hooks/use-charts";
 import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
 import { LoadMoreOnScroll } from "@/modules/ee/analysis/components/load-more-on-scroll";
-import { addDashboardWidget } from "@/modules/ee/analysis/lib/api-client";
+import { type TAppChart, getChart, getChartApiErrorMessage } from "@/modules/ee/analysis/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import {
@@ -28,9 +28,11 @@ interface AddExistingChartsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
-  dashboardId: string;
+  /** The charts already on the page being edited: listed, but not picked again. */
+  placedChartIds: ReadonlySet<string>;
   directories: { id: string; name: string }[];
-  onSuccess: () => void;
+  /** The charts picked, or the one just created, for the edit to place on its page. */
+  onPick: (charts: TAppChart[]) => void;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -47,9 +49,9 @@ export function AddExistingChartsDialog({
   open,
   onOpenChange,
   workspaceId,
-  dashboardId,
+  placedChartIds,
   directories,
-  onSuccess,
+  onPick,
   isAIAvailable,
   aiUnavailableReason,
 }: Readonly<AddExistingChartsDialogProps>) {
@@ -80,31 +82,23 @@ export function AddExistingChartsDialog({
       checked ? [...current, chartId] : current.filter((selected) => selected !== chartId)
     );
 
-  const handleAdd = async () => {
-    if (selectedChartIds.length === 0) return;
+  // Picked charts go into the edit's draft, placed on the current page; the dashboard's save adds them.
+  const handleAdd = () => {
+    const picked = selectedChartIds.flatMap((chartId) => charts.find((chart) => chart.id === chartId) ?? []);
+    if (picked.length === 0) return;
+    onPick(picked);
+    handleOpenChange(false);
+  };
 
+  // A chart created from here joins the draft too, read back so the page can draw it.
+  const handleCreated = async (chartId?: string) => {
+    handleOpenChange(false);
+    if (!chartId) return;
     setIsAdding(true);
     try {
-      const results = await Promise.allSettled(
-        selectedChartIds.map((chartId) => addDashboardWidget(dashboardId, { chartId }))
-      );
-      const successes = results.filter((result) => result.status === "fulfilled").length;
-      const failures = results.length - successes;
-
-      if (failures === 0) {
-        toast.success(
-          t("workspace.analysis.dashboards.charts_added_to_dashboard", { count: selectedChartIds.length })
-        );
-      } else if (successes > 0) {
-        toast.error(t("workspace.analysis.dashboards.charts_add_partial_failure", { count: failures }));
-      } else {
-        toast.error(t("workspace.analysis.dashboards.charts_add_failed"));
-      }
-
-      if (successes > 0) {
-        handleOpenChange(false);
-        onSuccess();
-      }
+      onPick([await getChart(chartId)]);
+    } catch (error) {
+      toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.charts_add_failed")));
     } finally {
       setIsAdding(false);
     }
@@ -141,7 +135,7 @@ export function AddExistingChartsDialog({
     return (
       <ul className="max-h-72 space-y-1 overflow-y-auto">
         {charts.map((chart) => {
-          const isOnDashboard = chart.dashboards.some((dashboard) => dashboard.id === dashboardId);
+          const isOnDashboard = placedChartIds.has(chart.id);
           const checkboxId = `add-chart-${chart.id}`;
           return (
             <li key={chart.id} className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-slate-50">
@@ -159,7 +153,7 @@ export function AddExistingChartsDialog({
                 {chart.name}
                 {isOnDashboard && (
                   <span className="ml-2 text-xs">
-                    ({t("workspace.analysis.dashboards.already_on_this_dashboard")})
+                    ({t("workspace.analysis.dashboards.already_on_this_page")})
                   </span>
                 )}
               </label>
@@ -199,12 +193,8 @@ export function AddExistingChartsDialog({
           <CreateChartButton
             workspaceId={workspaceId}
             directories={directories}
-            autoAddToDashboardId={dashboardId}
             label={t("workspace.analysis.dashboards.create_new_chart")}
-            onSuccess={() => {
-              handleOpenChange(false);
-              onSuccess();
-            }}
+            onSuccess={(chartId) => void handleCreated(chartId)}
             buttonProps={{ variant: "secondary", size: "default", disabled: isAdding }}
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}

@@ -170,6 +170,10 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   add_chart_to_dashboard: ["dashboards:write", "dashboards:read"],
   update_widget: ["dashboards:write", "dashboards:read"],
   remove_chart_from_dashboard: ["dashboards:write"],
+  add_dashboard_block: ["dashboards:write"],
+  create_dashboard_page: ["dashboards:write"],
+  update_dashboard_page: ["dashboards:write"],
+  delete_dashboard_page: ["dashboards:write"],
   update_dashboard_layout: ["dashboards:write", "dashboards:read"],
   set_dashboard_filters: ["dashboards:write", "dashboards:read"],
   duplicate_chart: {
@@ -323,6 +327,10 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   add_chart_to_dashboard: ["dashboards:write", "charts:read"],
   update_widget: ["dashboards:write", "charts:read"],
   remove_chart_from_dashboard: ["dashboards:write"],
+  add_dashboard_block: ["dashboards:write"],
+  create_dashboard_page: ["dashboards:write"],
+  update_dashboard_page: ["dashboards:write"],
+  delete_dashboard_page: ["dashboards:write"],
   update_dashboard_layout: ["dashboards:write", "charts:read"],
   set_dashboard_filters: ["dashboards:write", "charts:read"],
   duplicate_chart: {

@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { createTestDashboard, createTestWidgetMany } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -71,10 +72,10 @@ beforeAll(async () => {
     })
   ).id;
 
-  const alpha = await prisma.dashboard.create({ data: { name: "Alpha", workspaceId: fixture.workspaceId } });
-  const beta = await prisma.dashboard.create({ data: { name: "Beta", workspaceId: fixture.workspaceId } });
+  const alpha = await createTestDashboard({ data: { name: "Alpha", workspaceId: fixture.workspaceId } });
+  const beta = await createTestDashboard({ data: { name: "Beta", workspaceId: fixture.workspaceId } });
   dashboardIds = { alpha: alpha.id, beta: beta.id };
-  await prisma.dashboardWidget.createMany({
+  await createTestWidgetMany({
     data: [
       { dashboardId: beta.id, chartId: charts.older, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 },
       { dashboardId: alpha.id, chartId: charts.older, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 },

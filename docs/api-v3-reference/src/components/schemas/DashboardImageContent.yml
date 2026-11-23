@@ -1,0 +1,33 @@
+type: object
+description: >-
+  An image block's content. `fileUrl` is a private file of the dashboard's workspace, uploaded in the app
+  (`/storage/{workspaceId}/private/dashboards/{dashboardId}/{file}`); `null` while the block is empty.
+  `fit` shows the whole image (`fit`) or fills the block's width (`fill`); `position` places a fitted
+  image left, centre or right.
+required:
+  - fileUrl
+  - fit
+  - position
+  - alt
+properties:
+  fileUrl:
+    oneOf:
+      - type: string
+        maxLength: 2048
+      - type: "null"
+  fit:
+    type: string
+    enum:
+      - fit
+      - fill
+  position:
+    type: string
+    enum:
+      - left
+      - center
+      - right
+  alt:
+    type: string
+    maxLength: 300
+    description: Alternative text for screen readers.
+additionalProperties: false

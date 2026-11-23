@@ -32,15 +32,21 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
   disabled?: boolean;
   placeholder?: string;
   containerClassName?: string;
+  /** Focus the input on mount, which opens the options list. */
+  focusOnMount?: boolean;
 }
 
 export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   props: Readonly<MultiSelectProps<T, K>>
 ) {
-  const { options, value, onChange, disabled = false, placeholder, containerClassName } = props;
+  const { options, value, onChange, disabled = false, placeholder, containerClassName, focusOnMount } = props;
   const { t } = useTranslation();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (focusOnMount) inputRef.current?.focus();
+  }, [focusOnMount]);
 
   const [selected, setSelected] = React.useState<TOption<T>[]>(() => {
     if (value) {
