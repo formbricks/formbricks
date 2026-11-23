@@ -576,7 +576,7 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       // Recorded so an older tick that lands afterwards cannot report this draft as saved.
       saveAttemptOrder.settle(attempt);
-      onSystemError(describeSaveFailure(e, t("workspace.surveys.edit.error_saving_changes")));
+      onSystemError(describeSaveFailure(e, getSystemErrorMessage()));
       return false;
     } finally {
       isSurveySavingRef.current = false;
@@ -621,9 +621,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       setIsSurveySaving(false);
       if (attempt !== undefined) saveAttemptOrder.settle(attempt);
-      onSystemError(
-        describeSaveRefusal(describeSaveFailure(e, t("workspace.surveys.edit.error_saving_changes")))
-      );
+      onSystemError(describeSaveRefusal(describeSaveFailure(e, getSystemErrorMessage())));
       return false;
     } finally {
       isSurveySavingRef.current = false;
@@ -689,9 +687,7 @@ export const SurveyMenuBar = ({
     } catch (error) {
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
-      onSystemError(
-        describeSaveRefusal(describeSaveFailure(error, t("workspace.surveys.edit.error_publishing_survey")))
-      );
+      onSystemError(describeSaveRefusal(describeSaveFailure(error, getSystemErrorMessage())));
     }
   };
 
@@ -717,9 +713,7 @@ export const SurveyMenuBar = ({
     } catch (error) {
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
-      onSystemError(
-        describeSaveRefusal(describeSaveFailure(error, t("workspace.surveys.edit.error_publishing_survey")))
-      );
+      onSystemError(describeSaveRefusal(describeSaveFailure(error, getSystemErrorMessage())));
     }
   };
 
