@@ -1,5 +1,5 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
@@ -7,9 +7,6 @@ import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { acceptInviteMembership } from "./membership";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@formbricks/database", () => ({
-  prisma: { membership: { createMany: vi.fn(), findUnique: vi.fn() } },
-}));
 vi.mock("@/lib/authzed/organization-membership", () => ({ reconcileOrganizationMembership: vi.fn() }));
 vi.mock("@/modules/auth/invite/lib/team", () => ({ createTeamMembership: vi.fn() }));
 
@@ -21,7 +18,7 @@ describe("acceptInviteMembership", () => {
   });
 
   test("creates the membership with the invite's role when the user is not a member yet", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: "member" } as never);
+    prisma.membership.findUnique.mockResolvedValue({ role: "member" } as never);
 
     await acceptInviteMembership(invite, "user1");
 
@@ -39,7 +36,7 @@ describe("acceptInviteMembership", () => {
   // ENG-7097: a stale invite must not lower an existing member's role, an owner's included. The insert
   // is create-only, so this also holds when the owner row appears between any read and the write.
   test("keeps an existing owner's role and joins the invite's teams as owner", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: "owner" } as never);
+    prisma.membership.findUnique.mockResolvedValue({ role: "owner" } as never);
 
     await acceptInviteMembership(invite, "user1");
 
@@ -53,7 +50,7 @@ describe("acceptInviteMembership", () => {
   });
 
   test("reconciles an existing membership so a retry heals a missing relationship", async () => {
-    vi.mocked(prisma.membership.findUnique).mockResolvedValue({ role: "owner" } as never);
+    prisma.membership.findUnique.mockResolvedValue({ role: "owner" } as never);
 
     await acceptInviteMembership({ ...invite, teamIds: [] }, "user1");
 

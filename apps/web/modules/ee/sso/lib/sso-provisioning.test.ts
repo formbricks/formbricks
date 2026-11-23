@@ -97,6 +97,7 @@ beforeEach(() => {
   vi.mocked(ensureDefaultOrganization).mockResolvedValue({ organizationId: "default-org", role: "manager" });
   // clearAllMocks keeps implementations, so reset the one tests override with rejections.
   vi.mocked(createMembership).mockReset();
+  vi.mocked(reconcileOrganizationMembership).mockReset();
   vi.mocked(prisma.invite.findUnique).mockResolvedValue(null);
   vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "inv-1", email: "a@b.com" });
 });
@@ -341,8 +342,43 @@ describe("gateSsoProvisioning — invite role", () => {
     expect(decision).not.toHaveProperty("inviteRole");
     expect(logger.warn).toHaveBeenCalledWith(
       expect.any(Error),
-      "SSO provisioning: could not read the role of the sign-up's invite"
+      "SSO provisioning: could not read the sign-up's invite token"
     );
+  });
+
+  // A valid billing invite must not land as member just because the lookup failed: the invite page
+  // keeps an existing role, so nothing would correct it later. Rejecting lets the user sign in again.
+  test("rejects the sign-up when the invite cannot be looked up", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(prisma.invite.findUnique).mockRejectedValue(new Error("db down"));
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback })).toEqual({
+      action: "reject",
+      reason: "invite_token_validation_error",
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.any(Error),
+      "SSO provisioning: could not look up the sign-up's invite"
+    );
+  });
+
+  test("rejects the sign-up when the invite cannot be looked up with DEFAULT_ORGANIZATION_ID set", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    vi.mocked(prisma.invite.findUnique).mockRejectedValue(new Error("db down"));
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback })).toEqual({
+      action: "reject",
+      reason: "invite_token_validation_error",
+    });
+  });
+
+  test("carries a valid billing invite's role", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(prisma.invite.findUnique).mockResolvedValue({
+      role: "billing",
+      organizationId: "org-1",
+      expiresAt: new Date(Date.now() + 60_000),
+    } as never);
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback });
+    expect(decision).toMatchObject({ action: "provision", inviteRole: "billing" });
   });
 
   // The reported escalation: an identity whose email the IdP does not vouch for, signing up without
@@ -627,6 +663,31 @@ describe("provisionSsoUserMemberships", () => {
     expect(createMembership).toHaveBeenCalledTimes(2);
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org-1", "u1");
     expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  // ENG-7097: once the membership is committed, a retry must not write the role again, or it would
+  // undo a role change an administrator made between the attempts.
+  test("retries only the projection when it fails after the membership committed", async () => {
+    vi.mocked(createMembership).mockResolvedValue(undefined as never);
+    vi.mocked(reconcileOrganizationMembership)
+      .mockRejectedValueOnce(new Error("spicedb down"))
+      .mockResolvedValue(undefined as never);
+    await provisionSsoUserMemberships(baseArgs);
+    expect(createMembership).toHaveBeenCalledTimes(1);
+    expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(2);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  test("logs once when the projection fails on every attempt, without rewriting the membership", async () => {
+    vi.mocked(createMembership).mockResolvedValue(undefined as never);
+    vi.mocked(reconcileOrganizationMembership).mockRejectedValue(new Error("spicedb down"));
+    await expect(provisionSsoUserMemberships(baseArgs)).resolves.toBeUndefined();
+    expect(createMembership).toHaveBeenCalledTimes(1);
+    expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(2);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.any(Error),
+      "SSO provisioning: failed to project new SSO user's organization membership"
+    );
   });
 
   test("preserves existing alert settings and dedups the org in unsubscribedOrganizationIds", async () => {
