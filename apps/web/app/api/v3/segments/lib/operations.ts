@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
+import { assertV3ContactDirectory, assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
 import { type TSortCursor, buildSortCursorPage } from "@/app/api/v3/lib/sort-cursor";
@@ -89,6 +89,8 @@ export async function listV3Segments({
 
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
+    const noDirectory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (noDirectory) return noDirectory;
 
     // ENG-3282: a segment's survey references are read through the caller's survey-visibility clause,
     // exactly as `getSegments` does for the page — otherwise the list would ship restricted survey

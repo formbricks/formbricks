@@ -38,6 +38,11 @@ vi.mock("@/app/api/v1/management/lib/workspace-resolver", () => ({
   }),
 }));
 
+// The workspace has a contact directory; the no-directory answer is covered by the route's own test.
+vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  requireWorkspaceContactDirectory: async () => ({ id: "directory-1", matchingKey: "email" }),
+}));
+
 vi.mock("./contact-attributes/lib/contact-attributes", () => ({
   getContactAttributes: mocks.getContactAttributes,
 }));

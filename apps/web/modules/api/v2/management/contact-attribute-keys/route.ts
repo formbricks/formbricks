@@ -13,7 +13,10 @@ import {
 import { getAuthorizedApiKeyWorkspaceIds } from "@/modules/api/v2/management/lib/authorized-workspace-ids";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { checkContactsEnabledApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
+import {
+  checkContactDirectoryApiV2,
+  checkContactsEnabledApiV2,
+} from "@/modules/ee/license-check/lib/contacts-api-guard";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -59,6 +62,12 @@ export const POST = async (request: NextRequest) =>
       const contactsNotEnabledError = await checkContactsEnabledApiV2(authentication.organizationId);
       if (contactsNotEnabledError) {
         return handleApiError(request, contactsNotEnabledError, auditLog);
+      }
+
+      // The body's workspace was authorized by `resolveBodyIdsV2` above.
+      const noDirectoryError = await checkContactDirectoryApiV2(body.workspaceId);
+      if (noDirectoryError) {
+        return handleApiError(request, noDirectoryError, auditLog);
       }
 
       const createContactAttributeKeyResult = await createContactAttributeKey(body);

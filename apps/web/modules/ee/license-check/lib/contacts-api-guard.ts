@@ -1,5 +1,9 @@
 import "server-only";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 /**
@@ -23,4 +27,16 @@ export const checkContactsEnabledApiV2 = async (
     type: "forbidden",
     details: [{ field: "contacts", issue: "Contacts feature is not enabled for this organization" }],
   };
+};
+
+/**
+ * The no-directory guard of the same APIs (spec decision 13): a workspace with no contact directory can't
+ * hold contacts or attribute keys yet. Run it after the workspace check, so a caller without access never
+ * learns whether the workspace has a directory, and before any write.
+ */
+export const checkContactDirectoryApiV2 = async (workspaceId: string): Promise<ApiErrorResponseV2 | null> => {
+  if (await getWorkspaceContactDirectory(workspaceId)) {
+    return null;
+  }
+  return { type: "forbidden", message: CONTACT_DIRECTORY_MISSING_MESSAGE };
 };

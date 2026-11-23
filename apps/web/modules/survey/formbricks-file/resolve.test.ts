@@ -1,6 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
   ContactDirectoryMissingError,
+  getWorkspaceContactDirectory,
   requireWorkspaceContactDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
@@ -9,10 +11,18 @@ import { applyFormbricksFileReferences, planFormbricksFileReferences } from "./r
 
 vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  getWorkspaceContactDirectory: vi.fn(),
   requireWorkspaceContactDirectory: vi.fn(async () => ({ id: "dir-1", matchingKey: "email" })),
 }));
 
 const WORKSPACE_ID = "clxx1234567890123456789012";
+
+beforeEach(() => {
+  vi.mocked(getWorkspaceContactDirectory).mockResolvedValue({
+    id: "cldirectory0000000000001",
+    matchingKey: "email",
+  });
+});
 
 /** The resolver's reads, as this test reaches them: the workspace has none of the references yet. */
 const emptyReader = () => ({
@@ -119,6 +129,37 @@ describe("planFormbricksFileReferences", () => {
     });
 
     expect(plan.languagesToCreate).toEqual([{ code: "de-DE", alias: "German" }]);
+  });
+
+  test("refuses targeting by attribute keys when the workspace has no contact directory", async () => {
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue(null);
+    const reader = emptyReader();
+
+    const refusal = await planFormbricksFileReferences(reader as never, {
+      workspaceId: WORKSPACE_ID,
+      survey: surveyTargeting("email"),
+      references: references([{ key: "email", name: "Email" }]),
+      t: (text: string) => text,
+      fieldPrefix: "file",
+    }).catch((error: unknown) => error);
+
+    expect(refusal).toBeInstanceOf(SurveyImportInputError);
+    expect((refusal as SurveyImportInputError).message).toBe(CONTACT_DIRECTORY_MISSING_MESSAGE);
+    expect(reader.contactAttributeKey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("imports a survey without targeting into a workspace with no contact directory", async () => {
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue(null);
+
+    const plan = await planFormbricksFileReferences(emptyReader() as never, {
+      workspaceId: WORKSPACE_ID,
+      survey: { type: "link", defaultLanguage: "en-US" },
+      references: references([]),
+      t: (text: string) => text,
+      fieldPrefix: null,
+    });
+
+    expect(plan.attributeKeysToCreate).toEqual([]);
   });
 
   test("links a key the workspace already has, whatever it is called", async () => {
