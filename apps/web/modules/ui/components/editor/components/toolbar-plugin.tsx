@@ -1,6 +1,6 @@
 "use client";
 
-import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
+import { $generateNodesFromDOM } from "@lexical/html";
 import { $isLinkNode } from "@lexical/link";
 import {
   $isListNode,
@@ -44,7 +44,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
-import { toEditorOutputHtml } from "../lib/exported-html";
+import { registerContentWriteBack } from "../lib/content-write-back";
 import { $insertTextAtCursor } from "../lib/insert-text";
 import type { TEditorToolbarActions, TextEditorProps } from "./editor";
 
@@ -295,16 +295,9 @@ export const ToolbarPlugin = (
 
   // Register text-saving update listener - always active for each editor instance
   useEffect(() => {
-    const unregister = editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const textInHtml = toEditorOutputHtml($generateHtmlFromNodes(editor), {
-          keepEscapedText: props.keepEscapedText,
-        });
-        setText.current(textInHtml);
-      });
+    return registerContentWriteBack(editor, (html) => setText.current(html), {
+      keepEscapedText: props.keepEscapedText,
     });
-
-    return unregister;
   }, [editor, props.keepEscapedText]);
 
   useEffect(() => {
