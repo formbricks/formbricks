@@ -97,15 +97,19 @@ type TQuestionOptionsNotShown = { options: string[]; rows: string[]; columns: st
 
 const NOTHING_NOT_SHOWN: TQuestionOptionsNotShown = { options: [], rows: [], columns: [] };
 
+// Own keys only: a question id such as `constructor` would otherwise read the inherited member.
+const ownIds = (ids: Record<string, string[]> | undefined, questionId: string): string[] =>
+  ids && Object.hasOwn(ids, questionId) ? (ids[questionId] ?? []) : [];
+
 const getQuestionOptionsNotShown = (
   record: TResponseNotShown | null | undefined,
   questionId: string
 ): TQuestionOptionsNotShown =>
   record
     ? {
-        options: record.options?.[questionId] ?? [],
-        rows: record.rows?.[questionId] ?? [],
-        columns: record.columns?.[questionId] ?? [],
+        options: ownIds(record.options, questionId),
+        rows: ownIds(record.rows, questionId),
+        columns: ownIds(record.columns, questionId),
       }
     : NOTHING_NOT_SHOWN;
 

@@ -75,6 +75,20 @@ const createNotShownLookup = (survey: TSurvey) => {
 };
 
 /**
+ * The ids a response's not-shown record lists for one element. Own keys only: an element id such as
+ * `constructor` (accepted before ENG-6991) would otherwise read the inherited member, which is not an
+ * array, and crash the whole summary.
+ */
+const getNotShownIds = (
+  response: TSurveySummaryResponse,
+  recordKey: "options" | "rows" | "columns",
+  elementId: string
+): readonly string[] => {
+  const record = response.notShown?.[recordKey];
+  return record && Object.hasOwn(record, elementId) ? (record[elementId] ?? []) : [];
+};
+
+/**
  * Option bases (ENG-6937): of `answered` (the respondents in an element's base), how many were not
  * shown each option, matrix row or matrix column, by id. Read from each response's record; a response
  * without one (`null`, from before 6.2) saw every option, as results read it today.
@@ -86,7 +100,7 @@ const countOptionsNotShown = (
 ): Record<string, number> => {
   const counts: Record<string, number> = {};
   for (const response of answered) {
-    for (const optionId of new Set(response.notShown?.[recordKey]?.[elementId] ?? [])) {
+    for (const optionId of new Set(getNotShownIds(response, recordKey, elementId))) {
       counts[optionId] = (counts[optionId] ?? 0) + 1;
     }
   }
@@ -104,8 +118,7 @@ const wasOptionNotShown = (
   recordKey: "options" | "rows" | "columns",
   elementId: string,
   optionId: string | undefined
-): boolean =>
-  optionId !== undefined && (response.notShown?.[recordKey]?.[elementId] ?? []).includes(optionId);
+): boolean => optionId !== undefined && getNotShownIds(response, recordKey, elementId).includes(optionId);
 
 /**
  * An option's share over the respondents shown it: `base` (who answered the element) less those not
