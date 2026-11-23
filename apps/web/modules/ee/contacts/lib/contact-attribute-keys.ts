@@ -8,12 +8,14 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "./attribute-key-policy";
+import { hasWorkspace, requireWorkspace } from "./workspace-row";
 
 export const getContactAttributeKeys = reactCache(
   async (workspaceId: string): Promise<TContactAttributeKey[]> => {
-    return await prisma.contactAttributeKey.findMany({
+    const keys = await prisma.contactAttributeKey.findMany({
       where: { workspaceId },
     });
+    return keys.filter(hasWorkspace);
   }
 );
 
@@ -25,7 +27,7 @@ export const getContactAttributeKeyById = async (
     select: { id: true, workspaceId: true, type: true, name: true, description: true },
   });
 
-  return key;
+  return key && hasWorkspace(key) ? key : null;
 };
 
 export const createContactAttributeKey = async (data: {
@@ -51,7 +53,7 @@ export const createContactAttributeKey = async (data: {
       },
     });
 
-    return contactAttributeKey;
+    return requireWorkspace(contactAttributeKey, "contactAttributeKey");
   } catch (error) {
     if (error instanceof Error && "code" in error) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
@@ -89,7 +91,7 @@ export const updateContactAttributeKey = async (
     },
   });
 
-  return updatedKey;
+  return requireWorkspace(updatedKey, "contactAttributeKey");
 };
 
 export const deleteContactAttributeKey = async (id: string): Promise<TContactAttributeKey> => {
@@ -109,5 +111,5 @@ export const deleteContactAttributeKey = async (id: string): Promise<TContactAtt
     where: { id },
   });
 
-  return deletedKey;
+  return requireWorkspace(deletedKey, "contactAttributeKey");
 };

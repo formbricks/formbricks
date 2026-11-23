@@ -60,6 +60,7 @@ export const ZContactAttributeKey = z.object({
     })
     .describe("The data type of the attribute (string, number, date)"),
   workspaceId: z.cuid2().describe("The ID of the workspace this attribute belongs to"),
+  directoryId: z.cuid2().nullable().describe("The ID of the contact directory this attribute belongs to"),
 }) satisfies z.ZodType<ContactAttributeKey>;
 
 ZContactAttributeKey.meta({

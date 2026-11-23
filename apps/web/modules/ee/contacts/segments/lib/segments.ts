@@ -38,6 +38,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
+import { requireWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
   isResourceFilter,
@@ -45,18 +46,6 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
-
-export type PrismaSegment = Prisma.SegmentGetPayload<{
-  include: {
-    surveys: {
-      select: {
-        id: true;
-        name: true;
-        status: true;
-      };
-    };
-  };
-}>;
 
 export const selectSegment = {
   id: true,
@@ -76,7 +65,11 @@ export const selectSegment = {
   },
 } satisfies Prisma.SegmentSelect;
 
-export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurveyRefs => {
+export type PrismaSegment = Prisma.SegmentGetPayload<{ select: typeof selectSegment }>;
+
+export const transformPrismaSegment = (prismaSegment: PrismaSegment): TSegmentWithSurveyRefs => {
+  const segment = requireWorkspace(prismaSegment, "segment");
+
   const activeSurveys = segment.surveys
     .filter((survey) => survey.status === "inProgress")
     .map((survey) => ({ id: survey.id, name: survey.name }));

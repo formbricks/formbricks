@@ -37,13 +37,14 @@ const mockWorkspaceId = "fndlzrzlqw8c6zu9jfwxf34k";
 const mockKey = "testKey";
 const mockName = "Test Key";
 
-const mockContactAttributeKey: TContactAttributeKey = {
+const mockContactAttributeKey: TContactAttributeKey & { directoryId: string | null } = {
   id: mockContactAttributeKeyId,
   createdAt: new Date(),
   updatedAt: new Date(),
   name: mockName,
   key: mockKey,
   workspaceId: mockWorkspaceId,
+  directoryId: null,
   type: "custom",
   description: "A test key",
   isUnique: false,

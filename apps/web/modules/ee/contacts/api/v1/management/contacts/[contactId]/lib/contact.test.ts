@@ -19,6 +19,7 @@ const mockContact = {
   createdAt: new Date(),
   updatedAt: new Date(),
   workspaceId: "workspace-1",
+  directoryId: null,
 };
 
 describe("contact lib", () => {
@@ -75,6 +76,7 @@ describe("contact lib", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       workspaceId: "workspace-1",
+      directoryId: null,
       attributes: [{ attributeKey: { key: "email" }, value: "test@example.com" }],
     };
 
@@ -83,6 +85,7 @@ describe("contact lib", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       workspaceId: "workspace-1",
+      directoryId: null,
       attributes: [
         { attributeKey: { key: "email" }, value: "test@example.com" },
         { attributeKey: { key: "userId" }, value: "user123" },

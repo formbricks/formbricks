@@ -31,6 +31,7 @@ const mockContactAttributeKey: ContactAttributeKey = {
   name: "Email",
   description: "User's email address",
   workspaceId: "workspace123",
+  directoryId: null,
   isUnique: true,
   type: "default",
   dataType: "string",

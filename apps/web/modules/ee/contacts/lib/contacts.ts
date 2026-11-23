@@ -30,6 +30,7 @@ import {
   ZContactCSVDuplicateAction,
   ZContactCSVUploadResponse,
 } from "../types/contact";
+import { hasWorkspace, requireWorkspace } from "./workspace-row";
 
 export const getContactsInSegment = reactCache(async (segmentId: string) => {
   try {
@@ -153,12 +154,13 @@ export const getContact = reactCache(async (contactId: string): Promise<TContact
   validateInputs([contactId, ZId]);
 
   try {
-    return await prisma.contact.findUnique({
+    const contact = await prisma.contact.findUnique({
       where: {
         id: contactId,
       },
       select: selectContact,
     });
+    return contact && hasWorkspace(contact) ? contact : null;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -177,13 +179,14 @@ export const getContactInWorkspace = reactCache(
     validateInputs([contactId, ZId], [workspaceId, ZId]);
 
     try {
-      return await prisma.contact.findFirst({
+      const contact = await prisma.contact.findFirst({
         where: {
           id: contactId,
           workspaceId,
         },
         select: selectContact,
       });
+      return contact && hasWorkspace(contact) ? contact : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -205,7 +208,7 @@ export const deleteContact = async (contactId: string): Promise<TContact | null>
       select: selectContact,
     });
 
-    return contact;
+    return requireWorkspace(contact, "contact");
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -510,7 +513,7 @@ const processCsvRecord = async (
 
   if (!existingContact) {
     // Create new contact
-    return prisma.contact.create({
+    const created = await prisma.contact.create({
       data: {
         workspaceId,
         attributes: {
@@ -519,6 +522,8 @@ const processCsvRecord = async (
       },
       include: contactAttributesInclude,
     });
+    // Written for this workspace, so `workspaceId` is set.
+    return { ...created, workspaceId };
   }
 
   // Handle duplicate based on action
@@ -577,7 +582,7 @@ const handleDuplicateContact = async (
       };
     });
 
-    return prisma.contact.update({
+    const updated = await prisma.contact.update({
       where: { id: existingContact.id },
       data: {
         attributes: {
@@ -587,6 +592,7 @@ const handleDuplicateContact = async (
       },
       include: contactAttributesInclude,
     });
+    return { ...updated, workspaceId };
   }
 
   // duplicateContactsAction = "overwrite" here
@@ -594,7 +600,7 @@ const handleDuplicateContact = async (
     where: { contactId: existingContact.id },
   });
 
-  return prisma.contact.update({
+  const overwritten = await prisma.contact.update({
     where: { id: existingContact.id },
     data: {
       attributes: {
@@ -603,6 +609,7 @@ const handleDuplicateContact = async (
     },
     include: contactAttributesInclude,
   });
+  return { ...overwritten, workspaceId };
 };
 
 export type TCreateContactsFromCSVResult =

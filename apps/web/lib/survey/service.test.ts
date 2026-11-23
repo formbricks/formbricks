@@ -650,6 +650,7 @@ describe("Tests for updateSurvey", () => {
         isPrivate: true,
         filters: [],
         workspaceId: "clotherworkspace1234567890",
+        directoryId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -2514,6 +2515,7 @@ describe("Tests for createSurvey", () => {
         isPrivate: false,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -2561,6 +2563,7 @@ describe("Tests for createSurvey", () => {
         isPrivate: false,
         filters: [],
         workspaceId: "clotherworkspace1234567890",
+        directoryId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });

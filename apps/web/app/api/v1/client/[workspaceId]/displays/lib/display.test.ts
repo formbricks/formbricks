@@ -61,6 +61,7 @@ const displayInputWithoutUserId: TDisplayCreateInput = {
 const mockContact = {
   id: contactId,
   workspaceId,
+  directoryId: null,
   userId,
   createdAt: new Date(),
   updatedAt: new Date(),

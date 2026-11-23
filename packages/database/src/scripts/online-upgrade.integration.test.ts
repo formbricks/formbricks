@@ -26,6 +26,10 @@ beforeAll(async () => {
   await client.query(`CREATE TABLE "Response" (id text, created_at timestamp, "surveyId" text, "contactId" text);
     CREATE TABLE "User" ("isBootstrapAdmin" boolean);
     CREATE TABLE "Survey" ("workspaceId" text, "ownerId" text, "visibilityPending" boolean);
+    CREATE TABLE "Contact" ("directoryId" text);
+    CREATE TABLE "ContactAttributeKey" ("directoryId" text, "key" text);
+    CREATE TABLE "Segment" ("directoryId" text, "title" text);
+    CREATE TABLE "Workspace" ("contactDirectoryId" text);
     CREATE TABLE _prisma_migrations (id text, checksum text, migration_name text, started_at timestamp, finished_at timestamp, rolled_back_at timestamp, applied_steps_count integer)`);
 });
 afterAll(async () => {

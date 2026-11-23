@@ -21,6 +21,10 @@ describe.runIf(databaseUrl)("online indexes against PostgreSQL", () => {
     await client.query(
       'CREATE TABLE "Survey" ("workspaceId" text, "ownerId" text, "visibilityPending" boolean)'
     );
+    await client.query(`CREATE TABLE "Contact" ("directoryId" text);
+      CREATE TABLE "ContactAttributeKey" ("directoryId" text, "key" text);
+      CREATE TABLE "Segment" ("directoryId" text, "title" text);
+      CREATE TABLE "Workspace" ("contactDirectoryId" text)`);
     const url = new URL(databaseUrl!);
     url.searchParams.set("options", `-c search_path=${schema}`);
     scopedUrl = url.toString();

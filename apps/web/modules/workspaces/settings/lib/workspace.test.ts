@@ -30,6 +30,7 @@ const baseWorkspace = {
   appSetupCompleted: false,
   organizationId: "org1",
   legacyEnvironmentId: null,
+  contactDirectoryId: null,
   languages: [],
   recontactDays: 0,
   linkSurveyBranding: false,
@@ -45,7 +46,7 @@ const baseWorkspace = {
   customHeadScripts: null,
   customCss: null,
   customCssPrevious: null,
-} satisfies TWorkspace & { customCss: null; customCssPrevious: null };
+} satisfies TWorkspace & { customCss: null; customCssPrevious: null; contactDirectoryId: null };
 
 vi.mock("@formbricks/database", () => ({
   prisma: {

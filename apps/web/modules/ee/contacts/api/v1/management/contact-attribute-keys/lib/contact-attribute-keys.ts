@@ -10,6 +10,7 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { hasWorkspace, requireWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
 
 export const getContactAttributeKeys = reactCache(
   async (workspaceIds: string[]): Promise<TContactAttributeKey[]> => {
@@ -18,7 +19,7 @@ export const getContactAttributeKeys = reactCache(
         where: { workspaceId: { in: workspaceIds } },
       });
 
-      return contactAttributeKeys;
+      return contactAttributeKeys.filter(hasWorkspace);
     } catch (error) {
       if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
@@ -59,7 +60,7 @@ export const createContactAttributeKey = async (
       },
     });
 
-    return contactAttributeKey;
+    return requireWorkspace(contactAttributeKey, "contactAttributeKey");
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       // A caller mistake, not a server fault: the route shows this message at 400.

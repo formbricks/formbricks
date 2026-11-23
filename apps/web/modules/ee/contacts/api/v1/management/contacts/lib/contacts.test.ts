@@ -20,12 +20,14 @@ const mockContacts = [
   {
     id: "contactId1",
     workspaceId: mockWorkspaceId1,
+    directoryId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
     id: "contactId2",
     workspaceId: mockWorkspaceId2,
+    directoryId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

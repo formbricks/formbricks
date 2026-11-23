@@ -31,6 +31,7 @@ describe("getContactAttributeKeys", () => {
       {
         id: "key1",
         workspaceId: "workspace1",
+        directoryId: null,
         name: "Key One",
         key: "keyOne",
         type: "custom" as TContactAttributeKeyType,
@@ -43,6 +44,7 @@ describe("getContactAttributeKeys", () => {
       {
         id: "key2",
         workspaceId: "workspace2",
+        directoryId: null,
         name: "Key Two",
         key: "keyTwo",
         type: "custom" as TContactAttributeKeyType,
@@ -100,6 +102,7 @@ describe("createContactAttributeKey", () => {
   const mockCreatedAttributeKey = {
     id: "newKeyId",
     workspaceId,
+    directoryId: null,
     name: key,
     key,
     type,

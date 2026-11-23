@@ -6,6 +6,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { hasWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
 
 export const getContactAttributeKey = reactCache(async (contactAttributeKeyId: string) => {
   try {
@@ -15,7 +16,7 @@ export const getContactAttributeKey = reactCache(async (contactAttributeKeyId: s
       },
     });
 
-    if (!contactAttributeKey) {
+    if (!contactAttributeKey || !hasWorkspace(contactAttributeKey)) {
       return err({
         type: "not_found",
         details: [{ field: "contactAttributeKey", issue: "not found" }],

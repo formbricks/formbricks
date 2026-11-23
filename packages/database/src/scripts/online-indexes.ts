@@ -30,6 +30,22 @@ export const ONLINE_INDEXES: readonly OnlineIndex[] = [
     columns: ["workspaceId"],
     predicate: "visibilityPending",
   },
+  // Contact directories (ENG-7491): built after the backfill has filled `directoryId`, which also keeps
+  // the backfill's own writes free of index upkeep.
+  { name: "Contact_directoryId_idx", table: "Contact", columns: ["directoryId"] },
+  {
+    name: "ContactAttributeKey_directoryId_key_key",
+    table: "ContactAttributeKey",
+    columns: ["directoryId", "key"],
+    unique: true,
+  },
+  {
+    name: "Segment_directoryId_title_key",
+    table: "Segment",
+    columns: ["directoryId", "title"],
+    unique: true,
+  },
+  { name: "Workspace_contactDirectoryId_idx", table: "Workspace", columns: ["contactDirectoryId"] },
 ];
 
 const quote = (identifier: string): string => `"${identifier.replaceAll('"', '""')}"`;

@@ -72,6 +72,7 @@ describe("createContactAttributeKey", () => {
   const createdContactAttributeKey: ContactAttributeKey = {
     id: "key100",
     workspaceId: inputContactAttributeKey.workspaceId,
+    directoryId: null,
     name: inputContactAttributeKey.name,
     key: inputContactAttributeKey.key,
     description: inputContactAttributeKey.description,

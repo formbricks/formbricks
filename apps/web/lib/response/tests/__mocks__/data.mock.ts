@@ -34,6 +34,7 @@ export const mockMeta = {
 export const mockContact = {
   id: mockContactId,
   workspaceId: mockWorkspaceId,
+  directoryId: null,
   userId: mockUserId,
   createdAt: new Date(2000, 1, 1, 19),
   updatedAt: new Date(2000, 1, 1, 19),

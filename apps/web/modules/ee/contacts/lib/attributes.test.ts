@@ -81,11 +81,12 @@ const attributeKeys: TContactAttributeKey[] = [
 ];
 
 /** A full attribute-key row, as `createManyAndReturn` and `findMany` return it. */
-const keyRow = (id: string, key: string): TContactAttributeKey => ({
+const keyRow = (id: string, key: string): TContactAttributeKey & { directoryId: string | null } => ({
   ...attributeKeys[2],
   id,
   key,
   name: key,
+  directoryId: null,
 });
 
 /** Interactive transactions run their callback against the mocked client, as Prisma's tx would. */

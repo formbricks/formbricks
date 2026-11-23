@@ -37,6 +37,7 @@ describe("Contact API Lib", () => {
       const mockContactData = {
         id: mockContactId,
         workspaceId: mockWorkspaceId,
+        directoryId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -83,6 +84,7 @@ describe("Contact API Lib", () => {
       const mockContactData = {
         id: mockContactId,
         workspaceId: mockWorkspaceId,
+        directoryId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         attributes: [

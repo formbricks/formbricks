@@ -141,6 +141,7 @@ export const mockPrismaPerson: Prisma.ContactGetPayload<{
     },
   ],
   ...commonMockProperties,
+  directoryId: null,
 };
 
 export const mockActionClass: TActionClass = {
@@ -153,7 +154,7 @@ export const mockActionClass: TActionClass = {
   ...commonMockProperties,
 };
 
-export const mockContactAttributeKey: TContactAttributeKey = {
+export const mockContactAttributeKey: TContactAttributeKey & { directoryId: string | null } = {
   id: mockId,
   name: "mock attribute class",
   key: "mock attribute class",
@@ -161,6 +162,7 @@ export const mockContactAttributeKey: TContactAttributeKey = {
   description: "mock action class",
   isUnique: false,
   dataType: "string",
+  directoryId: null,
   ...commonMockProperties,
 };
 

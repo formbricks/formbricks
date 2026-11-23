@@ -9,6 +9,7 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { hasWorkspace, requireWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
 import {
   TContactAttributeKeyUpdateInput,
   ZContactAttributeKeyUpdateInput,
@@ -23,7 +24,7 @@ export const getContactAttributeKey = reactCache(
         },
       });
 
-      return contactAttributeKey;
+      return contactAttributeKey && hasWorkspace(contactAttributeKey) ? contactAttributeKey : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -45,7 +46,7 @@ export const deleteContactAttributeKey = async (
       },
     });
 
-    return deletedContactAttributeKey;
+    return requireWorkspace(deletedContactAttributeKey, "contactAttributeKey");
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -77,7 +78,7 @@ export const updateContactAttributeKey = async (
       },
     });
 
-    return contactAttributeKey;
+    return requireWorkspace(contactAttributeKey, "contactAttributeKey");
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

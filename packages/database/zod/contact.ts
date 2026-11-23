@@ -17,6 +17,7 @@ export const ZContact = z.object({
     })
     .describe("When the contact was last updated"),
   workspaceId: z.cuid2().describe("The ID of the workspace this contact belongs to"),
+  directoryId: z.cuid2().nullable().describe("The ID of the contact directory this contact belongs to"),
 }) satisfies z.ZodType<Contact>;
 
 ZContact.meta({

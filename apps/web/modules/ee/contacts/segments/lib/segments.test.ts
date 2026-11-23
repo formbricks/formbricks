@@ -89,6 +89,7 @@ const mockSegmentPrisma = {
   title: "Test Segment",
   description: "This is a test segment",
   workspaceId,
+  directoryId: null,
   filters: [],
   isPrivate: false,
   surveys: [{ id: surveyId, name: "Test Survey", status: "inProgress" }],
@@ -934,7 +935,7 @@ describe("Segment Service Tests", () => {
           },
         },
       ],
-    } as unknown as PrismaSegment;
+    } as unknown as PrismaSegment & { directoryId: string | null };
     const segmentWithoutAttrPrisma = { ...mockSegmentPrisma, id: "seg-attr-2", filters: [] };
 
     beforeEach(() => {
@@ -978,7 +979,7 @@ describe("Segment Service Tests", () => {
             ],
           },
         ],
-      } as unknown as PrismaSegment;
+      } as unknown as PrismaSegment & { directoryId: string | null };
       vi.mocked(prisma.segment.findMany).mockResolvedValue([nestedSegmentPrisma, segmentWithoutAttrPrisma]);
 
       const result = await getSegmentsByAttributeKey("workspace-id-mock", attributeKey);

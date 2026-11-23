@@ -174,7 +174,8 @@ enum ContactAttributeDataType {
 /// @property name - Display name for the attribute
 /// @property type - Whether this is a default or custom attribute
 /// @property dataType - The data type of the attribute (string, number, date)
-/// @property workspace - The workspace this attribute belongs to
+/// @property directory - The contact directory this attribute key belongs to
+/// @property workspace - The workspace the key was created from; never used for lookup or access
 model ContactAttributeKey {
   id               String                   @id @default(cuid())
   createdAt        DateTime                 @default(now()) @map(name: "created_at")
@@ -185,20 +186,26 @@ model ContactAttributeKey {
   description      String?
   type             ContactAttributeType     @default(custom)
   dataType         ContactAttributeDataType @default(string)
-  workspace        Workspace                @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId      String
+  workspace        Workspace?               @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  workspaceId      String?
+  directory        ContactDirectory?        @relation(fields: [directoryId], references: [id], onDelete: Cascade)
+  directoryId      String?
   attributes       ContactAttribute[]
   attributeFilters SurveyAttributeFilter[]
 
+  // Kept until 7.0 for the previous release's pods; the directory rule below is the stricter one.
   @@unique([key, workspaceId])
+  // Built concurrently after the migrations (ONLINE_INDEXES in packages/database/src/scripts/online-indexes.ts).
+  @@unique([directoryId, key])
   @@index([workspaceId, createdAt])
 }
 
 /// Represents a person or user who can receive and respond to surveys.
-/// Contacts are workspace-specific and can have multiple attributes and responses.
+/// Contacts belong to a contact directory and can have multiple attributes and responses.
 ///
 /// @property id - Unique identifier for the contact
-/// @property workspace - The workspace this contact belongs to
+/// @property directory - The contact directory this contact belongs to
+/// @property workspace - The workspace the contact was created from; never used for lookup or access
 /// @property responses - Survey responses from this contact
 /// @property attributes - Custom attributes associated with this contact
 /// @property displays - Record of surveys shown to this contact
@@ -206,13 +213,17 @@ model Contact {
   id          String             @id @default(cuid())
   createdAt   DateTime           @default(now()) @map(name: "created_at")
   updatedAt   DateTime           @updatedAt @map(name: "updated_at")
-  workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspace   Workspace?         @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  workspaceId String?
+  directory   ContactDirectory?  @relation(fields: [directoryId], references: [id], onDelete: Cascade)
+  directoryId String?
   responses   Response[]
   attributes  ContactAttribute[]
   displays    Display[]
 
   @@index([workspaceId])
+  // Built concurrently after the migrations (ONLINE_INDEXES in packages/database/src/scripts/online-indexes.ts).
+  @@index([directoryId])
 }
 
 /// Stores a user's response to a survey, including their answers and metadata.
@@ -817,6 +828,8 @@ model Workspace {
   embeddedFieldLabels         EmbeddedFieldLabel[]
   creatives                   Creative[]
   attachmentExports           AttachmentExport[]
+  contactDirectory            ContactDirectory?            @relation(fields: [contactDirectoryId], references: [id], onDelete: SetNull)
+  contactDirectoryId          String?
 
   surveys              Survey[]
   contacts             Contact[]
@@ -833,6 +846,8 @@ model Workspace {
   mcpGrants            McpGrantWorkspace[]
 
   @@unique([organizationId, name])
+  // Built concurrently after the migrations (ONLINE_INDEXES in packages/database/src/scripts/online-indexes.ts).
+  @@index([contactDirectoryId])
 }
 
 /// Represents the top-level organizational hierarchy in Formbricks.
@@ -863,6 +878,7 @@ model Organization {
   teams                 Team[]
   apiKeys               ApiKey[]
   feedbackDirectories   FeedbackDirectory[]
+  contactDirectories    ContactDirectory[]
   retentionPolicies     RetentionPolicy[]
   retentionExemptions   RetentionExemption[]
   retentionRuns         RetentionRun[]
@@ -1502,21 +1518,27 @@ model User {
 /// @property title - Display name of the segment
 /// @property filters - Rules defining the segment
 /// @property isPrivate - Whether the segment is private
-/// @property workspace - The workspace this segment belongs to
+/// @property directory - The contact directory this segment belongs to
+/// @property workspace - The workspace the segment was created in; never used for lookup or access
 model Segment {
-  id          String    @id @default(cuid())
-  createdAt   DateTime  @default(now()) @map(name: "created_at")
-  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now()) @map(name: "created_at")
+  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
   title       String
   description String?
-  isPrivate   Boolean   @default(true)
+  isPrivate   Boolean           @default(true)
   /// [SegmentFilter]
-  filters     Json      @default("[]")
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  filters     Json              @default("[]")
+  workspace   Workspace?        @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  workspaceId String?
+  directory   ContactDirectory? @relation(fields: [directoryId], references: [id], onDelete: Cascade)
+  directoryId String?
   surveys     Survey[]
 
+  // Kept until 7.0 for the previous release's pods; the directory rule below is the stricter one.
   @@unique([workspaceId, title])
+  // Built concurrently after the migrations (ONLINE_INDEXES in packages/database/src/scripts/online-indexes.ts).
+  @@unique([directoryId, title])
   @@index([workspaceId])
 }
 
@@ -2081,6 +2103,35 @@ model FeedbackSourceFieldMapping {
   staticValue      String?        @map(name: "static_value")
 
   @@unique([workspaceId, feedbackSourceId, sourceFieldId, targetFieldId], map: "FeedbackSourceFieldMapping_workspaceId_feedbackSourceId_sourceF")
+}
+
+enum ContactDirectoryMatchingKey {
+  email
+  externalId
+}
+
+/// An organization-level home for contacts, their attribute keys and segments. Workspaces link to one
+/// directory (or none); several workspaces can share one.
+///
+/// @property name - Optional, unique per organization. A directory made by the 6.3 migration has none,
+///                  and the app shows its workspace's name instead.
+/// @property matchingKey - How a contact is matched: email or external ID. Chosen at creation, never changed.
+/// @property workspaces - Workspaces that use this directory. A Workspace AFTER DELETE trigger deletes the
+///                        directory when its last workspace goes.
+model ContactDirectory {
+  id             String                      @id @default(cuid())
+  createdAt      DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt      DateTime                    @updatedAt @map(name: "updated_at")
+  name           String?
+  matchingKey    ContactDirectoryMatchingKey
+  organizationId String
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspaces     Workspace[]
+  contacts       Contact[]
+  attributeKeys  ContactAttributeKey[]
+  segments       Segment[]
+
+  @@unique([organizationId, name])
 }
 
 /// Represents a feedback directory (Hub tenant) owned by an organization.

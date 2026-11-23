@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import { hasWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
 import { TContact } from "@/modules/ee/contacts/types/contact";
 
 export const getContact = reactCache(async (contactId: string): Promise<TContact | null> => {
@@ -14,7 +15,7 @@ export const getContact = reactCache(async (contactId: string): Promise<TContact
       where: { id: contactId },
     });
 
-    if (!contact) {
+    if (!contact || !hasWorkspace(contact)) {
       return null;
     }
 

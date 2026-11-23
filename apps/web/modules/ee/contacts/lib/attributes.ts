@@ -26,6 +26,7 @@ import {
   formatValidationError,
   validateAndParseAttributeValue,
 } from "@/modules/ee/contacts/lib/validate-attribute-type";
+import { hasWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
 
 /**
  * Total, locale-independent ordering of two strings by code unit.
@@ -395,7 +396,7 @@ const createAttributeKeysAndValues = async ({
       });
       const { existingAttributes, newAttributes: vanishedAttributes } = splitAttributesByKey(
         Object.fromEntries(racedAttributes.map(({ key, value }) => [key, value])),
-        new Map(racedKeys.map((attributeKey) => [attributeKey.key, attributeKey])),
+        new Map(racedKeys.filter(hasWorkspace).map((attributeKey) => [attributeKey.key, attributeKey])),
         typeMessages
       );
       if (vanishedAttributes.length > 0) throw new RacedKeyVanishedError();

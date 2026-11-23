@@ -278,12 +278,16 @@ export const getContact = reactCache(async (contactId: string): Promise<{ worksp
   validateInputs([contactId, ZId]);
 
   try {
-    return await prisma.contact.findUnique({
+    const contact = await prisma.contact.findUnique({
       where: {
         id: contactId,
       },
       select: { workspaceId: true },
     });
+
+    // A contact whose workspace is gone (it stays in a shared contact directory) has no workspace to
+    // authorize against: not found, until access moves to the directory.
+    return contact?.workspaceId ? { workspaceId: contact.workspaceId } : null;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -303,7 +307,7 @@ export const getSegment = reactCache(async (segmentId: string): Promise<{ worksp
       select: { workspaceId: true },
     });
 
-    return segment;
+    return segment?.workspaceId ? { workspaceId: segment.workspaceId } : null;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -346,7 +350,7 @@ export const getContactAttributeKey = reactCache(
         select: { workspaceId: true },
       });
 
-      return contactAttributeKey;
+      return contactAttributeKey?.workspaceId ? { workspaceId: contactAttributeKey.workspaceId } : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

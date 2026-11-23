@@ -68,7 +68,7 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
         { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
-      ] as TContactAttributeKey[]);
+      ] as (TContactAttributeKey & { directoryId: string | null })[]);
 
       const result = await createContact(contactData);
 
@@ -92,6 +92,7 @@ describe("contact.ts", () => {
       vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce({
         id: "existing-contact-id",
         workspaceId: "workspace123",
+        directoryId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -121,6 +122,7 @@ describe("contact.ts", () => {
         .mockResolvedValueOnce({
           id: "existing-contact-id",
           workspaceId: "workspace123",
+          directoryId: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         }); // Existing contact by userId
@@ -148,11 +150,12 @@ describe("contact.ts", () => {
       const existingAttributeKeys = [
         { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
         { id: "attr2", key: "firstName", name: "First Name", type: "custom", workspaceId: "workspace123" },
-      ] as TContactAttributeKey[];
+      ] as (TContactAttributeKey & { directoryId: string | null })[];
 
       const contactWithAttributes = {
         id: "contact123",
         workspaceId: "workspace123",
+        directoryId: null,
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
         userId: null,
@@ -202,7 +205,7 @@ describe("contact.ts", () => {
 
       const existingAttributeKeys = [
         { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
-      ] as TContactAttributeKey[];
+      ] as (TContactAttributeKey & { directoryId: string | null })[];
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
@@ -250,11 +253,12 @@ describe("contact.ts", () => {
 
       const existingAttributeKeys = [
         { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
-      ] as TContactAttributeKey[];
+      ] as (TContactAttributeKey & { directoryId: string | null })[];
 
       const contactWithAttributes = {
         id: "contact123",
         workspaceId: "workspace123",
+        directoryId: null,
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
         userId: null,
@@ -290,7 +294,7 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
         { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
-      ] as TContactAttributeKey[]);
+      ] as (TContactAttributeKey & { directoryId: string | null })[]);
 
       const result = await createContact(contactData);
 
@@ -317,7 +321,7 @@ describe("contact.ts", () => {
         { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
         { id: "attr2", key: "userId", name: "User ID", type: "default", workspaceId: "workspace123" },
         { id: "attr3", key: "firstName", name: "First Name", type: "custom", workspaceId: "workspace123" },
-      ] as TContactAttributeKey[];
+      ] as (TContactAttributeKey & { directoryId: string | null })[];
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
@@ -325,6 +329,7 @@ describe("contact.ts", () => {
       const contactWithAttributes = {
         id: "contact123",
         workspaceId: "workspace123",
+        directoryId: null,
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
         userId: null,

@@ -25,6 +25,7 @@ const contact = {
   createdAt: new Date(),
   updatedAt: new Date(),
   workspaceId,
+  directoryId: null,
 };
 
 describe("getContactByUserId", () => {
