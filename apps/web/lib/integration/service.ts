@@ -11,6 +11,7 @@ import {
   TIntegrationInput,
   ZIntegrationType,
 } from "@formbricks/types/integration";
+import { withStoredIntegrationKey } from "@/lib/integration/redact-credentials";
 import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -81,6 +82,20 @@ export const createOrUpdateIntegration = async (
     }
     throw error;
   }
+};
+
+/**
+ * Saves an integration from the settings UI. The UI only ever holds redacted credentials, so the
+ * `config.key` it sends is replaced with the stored one (see {@link withStoredIntegrationKey}):
+ * credentials are written only by the OAuth callbacks and token refreshes, which call
+ * {@link createOrUpdateIntegration} directly.
+ */
+export const saveIntegrationKeepingStoredKey = async (
+  workspaceId: string,
+  integrationData: TIntegrationInput
+): Promise<TIntegration> => {
+  const storedIntegration = await getIntegrationByType(workspaceId, integrationData.type);
+  return createOrUpdateIntegration(workspaceId, withStoredIntegrationKey(integrationData, storedIntegration));
 };
 
 export const getIntegrations = reactCache(
