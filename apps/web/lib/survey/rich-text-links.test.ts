@@ -187,10 +187,24 @@ describe("getRichTextLinks with recall", () => {
       "a token in a style value beside a title token",
       "<p><a title=#recall:q9/fallback:x# style=#recall:q9/fallback:y#>go</a></p>",
     ],
+    // A value of `--` closes a comment, and a tag name ends a raw-text element, unhiding a static link.
+    [
+      "a token inside a comment",
+      '<p>hi</p><!-- a#recall:q9/fallback:x#> <a href="https://example.com/c">go</a> -->',
+    ],
+    [
+      "a token in a textarea end tag",
+      '<p>hi</p><textarea></#recall:q9/fallback:x#> <a href="https://example.com/t">go</a></textarea>',
+    ],
+    ["a token in a title element", "<p>hi</p><title>#recall:q9/fallback:x#</title>"],
   ])("counts a token inside markup, whose runtime value could make it a link: %s", (_case, html) => {
     const links = [...getRichTextLinks(withHeadline(html))];
     expect(links.length).toBeGreaterThan(0);
     for (const link of links) expect(link).toMatch(/^recall in a tag: #recall:q9/);
+  });
+
+  test("finds no link in a recall token in text without any tags", () => {
+    expect(getRichTextLinks(withVariable(`Hi #recall:${VARIABLE_ID}/fallback:x#`, "friend")).size).toBe(0);
   });
 
   test("finds no link in a plain recall token", () => {
