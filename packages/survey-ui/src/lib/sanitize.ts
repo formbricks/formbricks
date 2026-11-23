@@ -71,7 +71,9 @@ export const stripInlineStyles = (html: string): string => {
  */
 const openLinksInNewTab = (node: Element): void => {
   if (node.tagName !== "A" || !node.hasAttribute("href")) return;
-  if (!node.getAttribute("target")) {
+  // Only the survey's own frame or a new tab: `_top`, `_parent` or a named window would let survey text
+  // navigate the page a survey is embedded in.
+  if (node.getAttribute("target") !== "_self") {
     node.setAttribute("target", "_blank");
   }
   if (node.getAttribute("target") === "_blank") {

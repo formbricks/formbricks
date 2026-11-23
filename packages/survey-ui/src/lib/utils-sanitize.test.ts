@@ -25,6 +25,17 @@ describe("sanitizeSurveyHtml", () => {
     expect(sanitized).not.toContain("noopener");
   });
 
+  test.each(["_top", "_parent", "some-window"])(
+    "opens a link targeting %s in a new tab instead, so it cannot navigate the embedding page",
+    (target) => {
+      const sanitized = sanitizeSurveyHtml(`<a href="https://example.com" target="${target}">Go</a>`);
+
+      expect(sanitized).toContain('target="_blank"');
+      expect(sanitized).toContain('rel="noopener noreferrer"');
+      expect(sanitized).not.toContain(`target="${target}"`);
+    }
+  );
+
   test("strips inline styles and dangerous markup", () => {
     const sanitized = sanitizeSurveyHtml(
       '<script>alert("x")</script><a href="https://example.com" onclick="alert(1)" style="color:red">Go</a>'
