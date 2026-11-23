@@ -37,7 +37,7 @@ export const createOrganizationAction = authenticatedActionClient
       // ENG-7313: with no organization yet, being signed in is not enough to become the instance owner.
       if (!isMultiOrgEnabled && !(await getIsEligibleFirstOrganizationOwner(ctx.user.id))) {
         throw new OperationNotAllowedError(
-          "Only the instance's first administrator can create its first organization."
+          "Only the instance's first user can create its first organization."
         );
       }
 
