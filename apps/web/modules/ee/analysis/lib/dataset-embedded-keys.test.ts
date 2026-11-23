@@ -539,6 +539,22 @@ describe("a saved query's keys outside the top keys", () => {
       expect(keys).toEqual(expect.arrayContaining([groupBy, filterOn, pushedOut]));
     });
 
+    test("keeps a pushed-out key the member scan does not reach, from the old top keys", async () => {
+      const full = Array.from({ length: MAX_EMBEDDED_KEYS }, (_, index) => `top_${index}`);
+      stored[KEYS_KEY] = { keys: full, refreshedAt: Date.now() - 60_000 };
+      const newcomers = Array.from({ length: EMBEDDED_KEYS_MATERIAL_SHIFT }, (_, index) => `new_${index}`);
+      const pushedOut = full[MAX_EMBEDDED_KEYS - 1];
+      // The member scan stops before the pushed-out key (its row limit); the discovery scan drops it from the top keys.
+      mockExecute
+        .mockResolvedValueOnce(rows(groupBy, filterOn, ...newcomers, ...full.slice(0, -1)))
+        .mockResolvedValueOnce(rows(groupBy, filterOn, ...newcomers, ...full));
+      const naming = { ...query, dimensions: [member(groupBy), member(pushedOut)] };
+
+      const keys = await getEmbeddedKeysForQuery(scope, naming);
+
+      expect(keys).toEqual(expect.arrayContaining([groupBy, filterOn, pushedOut]));
+    });
+
     test("still refuses keys that stay rare once the catalog is fresh, without widening the token", async () => {
       const full = Array.from({ length: MAX_EMBEDDED_KEYS }, (_, index) => `top_${index}`);
       stored[KEYS_KEY] = { keys: full, refreshedAt: Date.now() - 60_000 };

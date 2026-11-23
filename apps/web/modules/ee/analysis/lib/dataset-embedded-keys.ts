@@ -402,7 +402,13 @@ export const getEmbeddedKeysForQuery = async (
   // Recheck every member the query names: the refresh can also push an old top key out of the top keys.
   const refreshedMembers = new Set(refreshed.map(getEmbeddedMemberName));
   const stillOutside = collectEmbeddedMemberNames(query).filter((member) => !refreshedMembers.has(member));
-  const retried = pickTokenKeys(refreshed, stillOutside, resolution.members);
+  // A key pushed out can also be missing from the member scan (past its row limit): the old top keys
+  // still say which key it is, so it is not silently left out of the token.
+  const members: Record<string, string> = {
+    ...Object.fromEntries(catalog.keys.map((key) => [getEmbeddedMemberName(key), key])),
+    ...resolution.members,
+  };
+  const retried = pickTokenKeys(refreshed, stillOutside, members);
   if (retried) return retried;
   throw new RareEmbeddedKeysConflictError();
 };
