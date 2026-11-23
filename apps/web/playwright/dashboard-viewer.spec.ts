@@ -1,7 +1,13 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
-import { addDashboardViewer, dashboardUrl, setupDashboard } from "./utils/dashboards";
+import {
+  addDashboardViewer,
+  dashboardUrl,
+  filterChips,
+  setupDashboard,
+  waitForOutboxDelivered,
+} from "./utils/dashboards";
 
 // ENG-6896 user stories, "Dashboard viewer role": a Dashboard viewer lands on the dashboards of the
 // workspaces its teams can access, is kept out of the rest of the product, reads charts and cannot edit a
@@ -101,8 +107,8 @@ test.describe("Inviting Dashboard viewers", () => {
     await dialog.getByLabel("Email").fill(email);
 
     await dialog.getByRole("combobox").first().click();
-    await page.getByRole("option", { name: /Dashboard viewer/ }).click();
-    await expect(dialog.getByText(/Dashboard viewers only see dashboards/)).toBeVisible();
+    await page.getByRole("option", { name: /Dashboard Viewer/ }).click();
+    await expect(dialog.getByText(/Dashboard Viewers only see dashboards/)).toBeVisible();
 
     await dialog.getByRole("button", { name: "Invite", exact: true }).click();
     await expect(dialog).toBeHidden();
@@ -110,7 +116,7 @@ test.describe("Inviting Dashboard viewers", () => {
     const row = page.getByTestId("members-table").getByRole("row").filter({ hasText: email });
     await expect(row).toBeVisible();
     await expect(row.getByText("Invited", { exact: true })).toBeVisible();
-    await expect(row.getByText("Dashboard viewer")).toBeVisible();
+    await expect(row.getByText("Dashboard Viewer")).toBeVisible();
 
     const invite = await prisma.invite.findFirstOrThrow({
       where: { email, organizationId: setup.organizationId },
@@ -157,5 +163,101 @@ test.describe("Inviting Dashboard viewers", () => {
       where: { organizationId: setup.organizationId, email: `rep-0-${stamp}@example.com` },
     });
     expect(sample.teamIds).toEqual([setup.teamId]);
+  });
+});
+
+// ENG-7472 / ENG-7478 / ENG-7484 (Dashboard Access Control): a team dashboard limit, a page team limit and
+// a dataset's Dashboard Viewer access narrow what a Dashboard Viewer sees; an owner checks it with View as.
+test.describe("Dashboard Viewer access", () => {
+  test("a viewer sees only what their limits and attributes allow, and an owner views as them", async ({
+    page,
+    users,
+  }) => {
+    const setup = await setupDashboard(users);
+    const viewer = await addDashboardViewer(users, setup);
+    const viewerName = (await prisma.user.findUniqueOrThrow({ where: { id: viewer.id } })).name;
+
+    // A second dashboard the team's limit leaves out.
+    const hidden = await prisma.dashboard.create({
+      data: {
+        name: `Hidden ${setup.dashboardName}`,
+        workspaceId: setup.workspaceId,
+        createdBy: setup.owner.id,
+      },
+    });
+    await prisma.dashboardPage.create({ data: { dashboardId: hidden.id, name: "Overview", order: 0 } });
+    await prisma.teamDashboard.create({ data: { teamId: setup.teamId, dashboardId: setup.dashboardId } });
+
+    // A second page, limited to another team.
+    const managers = await prisma.team.create({
+      data: {
+        name: `Managers ${setup.dashboardName}`,
+        organizationId: setup.organizationId,
+        workspaceTeams: { create: { workspaceId: setup.workspaceId, permission: "read" } },
+      },
+    });
+    await prisma.dashboardPage.create({
+      data: {
+        dashboardId: setup.dashboardId,
+        name: "Managers only",
+        order: 1,
+        teamLimits: { create: { teamId: managers.id } },
+      },
+    });
+
+    // The dataset shows a viewer only the records whose source matches their Region.
+    const region = await prisma.memberAttributeKey.create({
+      data: { organizationId: setup.organizationId, key: "region", label: "Region" },
+    });
+    await prisma.memberAttributeValue.create({
+      data: {
+        attributeKeyId: region.id,
+        userId: viewer.id,
+        organizationId: setup.organizationId,
+        value: "Web",
+        normalizedValue: "web",
+      },
+    });
+    await prisma.feedbackDirectoryViewerCondition.create({
+      data: {
+        feedbackDirectoryId: setup.feedbackDirectoryId,
+        field: "FeedbackRecords.sourceName",
+        attributeKeyId: region.id,
+      },
+    });
+    for (const id of [setup.dashboardId, hidden.id, setup.teamId, managers.id]) {
+      await waitForOutboxDelivered(id);
+    }
+
+    await viewer.login();
+    await expect(page.getByRole("link", { name: setup.dashboardName, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: hidden.name })).toHaveCount(0);
+
+    await page.goto(dashboardUrl(setup.workspaceId, setup.dashboardId));
+    await expect(page.getByText(setup.chartName)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Managers only" })).toHaveCount(0);
+    const chips = filterChips(page);
+    await expect(chips.getByText("Source Name")).toBeVisible();
+    await expect(chips.getByText("Web")).toBeVisible();
+    await expect(chips.getByTitle("Set by your data access, from your Region attribute")).toBeVisible();
+
+    // The owner sees every page, and as the viewer sees what the viewer sees.
+    await page.context().clearCookies();
+    await setup.owner.login();
+    await page.goto(dashboardUrl(setup.workspaceId, setup.dashboardId));
+    await expect(page.getByRole("button", { name: "Managers only" })).toBeVisible();
+    await page.getByRole("button", { name: "View as" }).click();
+    await page.getByPlaceholder("Search members").fill(viewerName);
+    await page.getByRole("option", { name: new RegExp(viewerName) }).click();
+
+    await expect(page.getByText(`Viewing as ${viewerName}`, { exact: false })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Managers only" })).toHaveCount(0);
+    await expect(filterChips(page).getByText("Web")).toBeVisible();
+    await expect(
+      page.getByRole("toolbar", { name: "Action buttons" }).getByRole("button", { name: "Edit" })
+    ).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Stop viewing as" }).click();
+    await expect(page.getByRole("button", { name: "Managers only" })).toBeVisible();
   });
 });

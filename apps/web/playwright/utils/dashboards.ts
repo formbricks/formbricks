@@ -157,7 +157,7 @@ export const addDashboardViewer = async (
   return viewer;
 };
 
-const waitForOutboxDelivered = async (id: string): Promise<void> => {
+export const waitForOutboxDelivered = async (id: string): Promise<void> => {
   const deadline = Date.now() + 20_000;
   for (;;) {
     const pending = await prisma.authzedProjectionOutbox.count({
