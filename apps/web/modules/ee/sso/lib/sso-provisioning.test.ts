@@ -80,6 +80,14 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 });
 
 const mockOrg = { id: "org-1" } as never;
+// AuthZed projections report a failure as a status; they do not throw.
+const projected = { status: "projected", passes: 1 } as const;
+const projectionFailed = {
+  status: "failed",
+  attempts: 1,
+  code: "authzed_unavailable",
+  retryable: true,
+} as never;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -97,7 +105,8 @@ beforeEach(() => {
   vi.mocked(ensureDefaultOrganization).mockResolvedValue({ organizationId: "default-org", role: "manager" });
   // clearAllMocks keeps implementations, so reset the one tests override with rejections.
   vi.mocked(createMembership).mockReset();
-  vi.mocked(reconcileOrganizationMembership).mockReset();
+  vi.mocked(reconcileOrganizationMembership).mockReset().mockResolvedValue(projected);
+  vi.mocked(reconcileTeamWorkspaceRelationships).mockReset().mockResolvedValue(projected);
   vi.mocked(prisma.invite.findUnique).mockResolvedValue(null);
   vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "inv-1", email: "a@b.com" });
 });
@@ -341,7 +350,7 @@ describe("gateSsoProvisioning — invite role", () => {
     expect(decision).toMatchObject({ action: "provision" });
     expect(decision).not.toHaveProperty("inviteRole");
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.any(Error),
+      expect.objectContaining({ errName: expect.any(String) }),
       "SSO provisioning: could not read the sign-up's invite token"
     );
   });
@@ -356,7 +365,7 @@ describe("gateSsoProvisioning — invite role", () => {
       reason: "invite_token_validation_error",
     });
     expect(logger.error).toHaveBeenCalledWith(
-      expect.any(Error),
+      expect.objectContaining({ errName: expect.any(String) }),
       "SSO provisioning: could not look up the sign-up's invite"
     );
   });
@@ -669,9 +678,7 @@ describe("provisionSsoUserMemberships", () => {
   // undo a role change an administrator made between the attempts.
   test("retries only the projection when it fails after the membership committed", async () => {
     vi.mocked(createMembership).mockResolvedValue(undefined as never);
-    vi.mocked(reconcileOrganizationMembership)
-      .mockRejectedValueOnce(new Error("spicedb down"))
-      .mockResolvedValue(undefined as never);
+    vi.mocked(reconcileOrganizationMembership).mockResolvedValueOnce(projectionFailed);
     await provisionSsoUserMemberships(baseArgs);
     expect(createMembership).toHaveBeenCalledTimes(1);
     expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(2);
@@ -680,14 +687,23 @@ describe("provisionSsoUserMemberships", () => {
 
   test("logs once when the projection fails on every attempt, without rewriting the membership", async () => {
     vi.mocked(createMembership).mockResolvedValue(undefined as never);
-    vi.mocked(reconcileOrganizationMembership).mockRejectedValue(new Error("spicedb down"));
+    vi.mocked(reconcileOrganizationMembership).mockResolvedValue(projectionFailed);
     await expect(provisionSsoUserMemberships(baseArgs)).resolves.toBeUndefined();
     expect(createMembership).toHaveBeenCalledTimes(1);
     expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.any(Error),
+      expect.objectContaining({ errName: expect.any(String) }),
       "SSO provisioning: failed to project new SSO user's organization membership"
     );
+  });
+
+  test("retries when the default-team projection reports a failure", async () => {
+    vi.mocked(createMembership).mockResolvedValue(undefined as never);
+    vi.mocked(reconcileTeamWorkspaceRelationships).mockResolvedValueOnce(projectionFailed);
+    await provisionSsoUserMemberships({ ...baseArgs, assignToDefaultTeam: true });
+    expect(createMembership).toHaveBeenCalledTimes(1);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledTimes(2);
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   test("preserves existing alert settings and dedups the org in unsubscribedOrganizationIds", async () => {

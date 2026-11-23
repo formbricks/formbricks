@@ -6,13 +6,14 @@ import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TUserNotificationSettings } from "@formbricks/types/user";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
-import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import type { TAuthzedProjectionResult } from "@/lib/authzed/projection";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_ORGANIZATION_ID, DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
 import type { TSsoProvisioningRejectReason } from "@/modules/auth/lib/sso-provisioning-reject-reasons";
@@ -120,7 +121,7 @@ const getSsoInviteRole = async (
     if (verified.email.trim().toLowerCase() !== email.trim().toLowerCase()) return undefined;
     inviteId = verified.inviteId;
   } catch (error) {
-    logger.warn(error, "SSO provisioning: could not read the sign-up's invite token");
+    logger.warn(loggableError(error), "SSO provisioning: could not read the sign-up's invite token");
     return undefined;
   }
 
@@ -132,7 +133,7 @@ const getSsoInviteRole = async (
     if (invite?.organizationId !== organizationId || invite.expiresAt < new Date()) return undefined;
     return invite.role;
   } catch (error) {
-    logger.error(error, "SSO provisioning: could not look up the sign-up's invite");
+    logger.error(loggableError(error), "SSO provisioning: could not look up the sign-up's invite");
     return INVITE_LOOKUP_FAILED;
   }
 };
@@ -290,11 +291,28 @@ const withOneRetry = async (failureMessage: string, step: () => Promise<unknown>
       return true;
     } catch (error) {
       if (attempt === MAX_ATTEMPTS) {
-        logger.error(error, `SSO provisioning: ${failureMessage}`);
+        logger.error(loggableError(error), `SSO provisioning: ${failureMessage}`);
       }
     }
   }
   return false;
+};
+
+/**
+ * AuthZed projections are best-effort: they log a failure and return it as a status instead of
+ * throwing. Throwing on that status lets `withOneRetry` retry the projection.
+ */
+class SsoProjectionFailedError extends Error {
+  readonly code: string;
+  constructor(operation: string, code: string) {
+    super(`AuthZed projection ${operation} failed`);
+    this.name = "SsoProjectionFailedError";
+    this.code = code;
+  }
+}
+
+const throwIfProjectionFailed = (operation: string, result: TAuthzedProjectionResult): void => {
+  if (result.status === "failed") throw new SsoProjectionFailedError(operation, result.code);
 };
 
 /**
@@ -359,11 +377,14 @@ const assignSsoUserToOrganization = async ({
   if (!committed) return;
 
   await withOneRetry("failed to project new SSO user's organization membership", async () => {
-    await reconcileOrganizationMembership(organizationId, userId);
+    throwIfProjectionFailed(
+      "sso_organization_membership_create",
+      await reconcileOrganizationMembership(organizationId, userId)
+    );
     if (assignToDefaultTeam && DEFAULT_TEAM_ID) {
-      const defaultTeamId = DEFAULT_TEAM_ID;
-      await runPostCommitProjection("sso_default_team_membership_create", () =>
-        reconcileTeamWorkspaceRelationships({ teamMemberships: [{ teamId: defaultTeamId, userId }] })
+      throwIfProjectionFailed(
+        "sso_default_team_membership_create",
+        await reconcileTeamWorkspaceRelationships({ teamMemberships: [{ teamId: DEFAULT_TEAM_ID, userId }] })
       );
     }
   });
