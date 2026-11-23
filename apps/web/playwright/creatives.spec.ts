@@ -2,6 +2,7 @@ import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 import { seedAppSurvey } from "./utils/app-survey";
+import { clickUntilVisible } from "./utils/click-until";
 import { hasCreativesLicense } from "./utils/license";
 import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 import {
@@ -27,6 +28,52 @@ import {
 
 const CREATIVE_NAME = "Site feedback tab";
 const BUTTON_LABEL = "Share feedback";
+
+test("creates a feedback button and chooses its icon with the keyboard", async ({ page, users }) => {
+  const user = await users.create({ skipSurveySeed: true });
+  if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
+  await user.login();
+  expect(
+    await hasCreativesLicense(page.request, user.workspaceId),
+    "the instance's Enterprise license must include Creatives (403 creatives_not_entitled)"
+  ).toBe(true);
+  await page.goto(`/workspaces/${user.workspaceId}/creatives`);
+
+  await test.step("choose the creative type and continue to its editor", async () => {
+    const dialog = page.getByRole("dialog", { name: "New creative" });
+    await clickUntilVisible(page.getByRole("button", { name: "New creative" }), dialog);
+    const typeGroup = dialog.getByRole("radiogroup", { name: "Type" });
+    const feedbackButton = typeGroup.getByRole("radio", { name: /^Feedback button/ });
+    const banner = typeGroup.getByRole("radio", { name: /^Banner/ });
+    const continueButton = dialog.getByRole("button", { name: "Continue" });
+
+    await feedbackButton.press("ArrowRight");
+    await expect(banner).toBeChecked();
+    await expect(banner).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(continueButton).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(banner).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(feedbackButton).toBeChecked();
+    await expect(feedbackButton).toBeFocused();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/creatives\/[^/]+\/edit$/);
+  });
+
+  await test.step("choose an icon and tab out of the group", async () => {
+    const iconGroup = page.getByRole("radiogroup", { name: /^Icon/ });
+    const message = iconGroup.getByRole("radio", { name: "Message", exact: true });
+    const chatBubble = iconGroup.getByRole("radio", { name: "Chat bubble", exact: true });
+    await expect(message).toBeChecked();
+    await message.press("ArrowDown");
+    await expect(chatBubble).toBeChecked();
+    await expect(chatBubble).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(iconGroup.locator(":focus")).toHaveCount(0);
+  });
+});
 
 test.describe("Creatives", () => {
   let hostPage: SdkHostPage;
