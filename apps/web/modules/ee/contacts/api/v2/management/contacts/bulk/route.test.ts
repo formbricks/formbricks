@@ -21,6 +21,8 @@ vi.mock("@/modules/api/v2/management/lib/workspace-resolver", () => ({ resolveBo
 vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
   getWorkspaceContactDirectory: mocks.getWorkspaceContactDirectory,
+  // The route reads the directory again after the guard; both go through the same mock.
+  requireWorkspaceContactDirectory: (workspaceId: string) => mocks.getWorkspaceContactDirectory(workspaceId),
 }));
 vi.mock("./lib/contact", () => ({ upsertBulkContacts: mocks.upsertBulkContacts }));
 
@@ -62,7 +64,7 @@ describe("PUT /management/contacts/bulk", () => {
 
     expect(response.status).toBe(403);
     const body = await response.json();
-    expect(body.error.details[0].issue).toMatch(/^A contact directory needs to be set up for this workspace/);
+    expect(body.error.message).toMatch(/^A contact directory needs to be set up for this workspace/);
     expect(mocks.upsertBulkContacts).not.toHaveBeenCalled();
   });
 

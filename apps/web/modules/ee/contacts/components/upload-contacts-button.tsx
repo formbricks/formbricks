@@ -41,12 +41,14 @@ interface UploadContactsCSVButtonProps {
   readonly contactAttributeKeys: TContactAttributeKey[];
   /** The workspace directory's matching key: the column every row needs and contacts are matched on. */
   readonly matchingKey: TContactDirectoryMatchingKey;
+  readonly disabled?: boolean;
 }
 
 export const UploadContactsCSVButton = ({
   workspaceId,
   contactAttributeKeys,
   matchingKey,
+  disabled = false,
 }: UploadContactsCSVButtonProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -423,7 +425,7 @@ export const UploadContactsCSVButton = ({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button size="sm" onClick={() => setOpen(true)} disabled={disabled}>
         {t("common.upload")} CSV
         <PlusIcon />
       </Button>

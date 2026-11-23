@@ -6,8 +6,9 @@ import { responses } from "@/modules/api/v2/lib/response";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createContact } from "@/modules/ee/contacts/api/v2/management/contacts/lib/contact";
-import { getContactDirectoryOrForbidden } from "@/modules/ee/contacts/api/v2/management/lib/contact-directory";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { ZContactCreateRequest, getContactCreateRequestSchema } from "@/modules/ee/contacts/types/contact";
+import { checkContactDirectoryApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const POST = async (request: NextRequest) =>
@@ -61,8 +62,11 @@ export const POST = async (request: NextRequest) =>
         );
       }
 
-      const directory = await getContactDirectoryOrForbidden(request, workspaceId, auditLog);
-      if (directory instanceof Response) return directory;
+      const noDirectoryError = await checkContactDirectoryApiV2(workspaceId);
+      if (noDirectoryError) {
+        return handleApiError(request, noDirectoryError, auditLog);
+      }
+      const directory = await requireWorkspaceContactDirectory(workspaceId);
 
       // The identity attribute depends on the directory's matching key, known only now.
       const identityCheck = getContactCreateRequestSchema(directory.matchingKey).safeParse(body);

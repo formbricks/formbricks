@@ -20,7 +20,7 @@ export const handleApiError = (
     case "unauthorized":
       return responses.unauthorizedResponse();
     case "forbidden":
-      return responses.forbiddenResponse();
+      return responses.forbiddenResponse({ message: err.message });
     case "not_found":
       return responses.notFoundResponse({ details: err.details });
     case "conflict":

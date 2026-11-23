@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { resolveV3VisibleSurveyWhere } from "@/app/api/v3/surveys/visibility-context";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listV3Segments } from "./operations";
 
@@ -16,6 +20,10 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
 vi.mock("@/app/api/v3/surveys/visibility-context", () => ({ resolveV3VisibleSurveyWhere: vi.fn() }));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  getWorkspaceContactDirectory: vi.fn(),
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: vi.fn() }));
 
 const workspaceId = "clws0000000000000000000001";
@@ -50,6 +58,10 @@ describe("listV3Segments", () => {
     vi.resetAllMocks();
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId, organizationId });
     vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue({
+      id: "cldir0000000000000000001",
+      matchingKey: "email",
+    });
     vi.mocked(resolveV3VisibleSurveyWhere).mockResolvedValue(visibleSurveyWhere as never);
     vi.mocked(prisma.segment.count).mockResolvedValue(2);
   });
@@ -217,6 +229,14 @@ describe("listV3Segments", () => {
     const body = await (await call([["includeTotalCount", "false"]])).json();
     expect(body.meta).toEqual({ limit: 50, nextCursor: null, totalCount: null });
     expect(prisma.segment.count).not.toHaveBeenCalled();
+  });
+
+  test("403 with the no-directory message when the workspace has no contact directory", async () => {
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue(null);
+    const response = await call();
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe(CONTACT_DIRECTORY_MISSING_MESSAGE);
+    expect(prisma.segment.findMany).not.toHaveBeenCalled();
   });
 
   test("403 without the Contacts entitlement, before reading segments", async () => {

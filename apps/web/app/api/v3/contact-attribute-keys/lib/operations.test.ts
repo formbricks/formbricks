@@ -3,6 +3,10 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listV3ContactAttributeKeys } from "./operations";
 
@@ -16,6 +20,10 @@ vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
   getContactAttributeKeys: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  getWorkspaceContactDirectory: vi.fn(),
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsContactsEnabled: vi.fn(),
 }));
@@ -65,6 +73,10 @@ describe("listV3ContactAttributeKeys", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue({
+      id: "cldir0000000000000000001",
+      matchingKey: "email",
+    });
   });
 
   test("returns the public attribute-key shape for an authorized workspace", async () => {
@@ -133,6 +145,17 @@ describe("listV3ContactAttributeKeys", () => {
     const response = await listV3ContactAttributeKeys(params);
 
     expect(response).toBe(denied);
+    expect(getContactAttributeKeys).not.toHaveBeenCalled();
+  });
+
+  test("returns 403 with the no-directory message when the workspace has no contact directory", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(accessGranted);
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue(null);
+
+    const response = await listV3ContactAttributeKeys(params);
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe(CONTACT_DIRECTORY_MISSING_MESSAGE);
     expect(getContactAttributeKeys).not.toHaveBeenCalled();
   });
 
@@ -206,6 +229,10 @@ describe("listV3ContactAttributeKeys — search, filters, sort, totals", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue({
+      id: "cldir0000000000000000001",
+      matchingKey: "email",
+    });
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(accessGranted);
     vi.mocked(getContactAttributeKeys).mockResolvedValue(keys);
   });

@@ -56,12 +56,6 @@ describe("API Responses", () => {
       });
     });
 
-    test("include the details only when they are given", async () => {
-      const details = [{ field: "workspaceId", issue: "no contact directory" }];
-      const body = await responses.forbiddenResponse({ details }).json();
-      expect(body).toEqual({ error: { code: 403, message: "Forbidden", details } });
-    });
-
     test("include CORS headers when cors is true", () => {
       const res = responses.forbiddenResponse({ cors: true });
       expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");

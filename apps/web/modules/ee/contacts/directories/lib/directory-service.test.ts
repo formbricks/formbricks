@@ -32,9 +32,9 @@ const db = vi.hoisted(() => ({
     update: vi.fn(),
     deleteMany: vi.fn(),
   },
-  contactAttributeKey: { groupBy: vi.fn(), createMany: vi.fn() },
+  contactAttributeKey: { groupBy: vi.fn(), createMany: vi.fn(), findMany: vi.fn() },
   workspace: { findMany: vi.fn(), findUnique: vi.fn(), groupBy: vi.fn(), updateMany: vi.fn() },
-  contact: { groupBy: vi.fn() },
+  contact: { groupBy: vi.fn(), updateMany: vi.fn() },
   segment: { groupBy: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
 }));
 
@@ -190,6 +190,8 @@ const setup = ({
     ).map(({ id, count }) => ({ directoryId: id, _count: { _all: count } }));
   });
   db.segment.findMany.mockImplementation(async ({ where }: { where: Record<string, unknown> }) => {
+    // The public segments a workspace with no directory has (none here: the integration test covers them).
+    if (where.directoryId === null) return [];
     log.push("read private segment filters");
     return segments
       .filter((seg) => seg.isPrivate && idsIn(where, "directoryId").includes(seg.directoryId ?? ""))
@@ -219,6 +221,10 @@ const setup = ({
         .map((d) => ({ directoryId: d.id, _count: { _all: d[field] } }));
     };
   db.contact.groupBy.mockImplementation(contentCount("contacts", "count contacts"));
+  // Rows a previous-release pod wrote for a workspace with no directory: none here, the integration
+  // test covers their adoption.
+  db.contact.updateMany.mockResolvedValue({ count: 0 });
+  db.contactAttributeKey.findMany.mockResolvedValue([]);
   db.contactAttributeKey.groupBy.mockImplementation(contentCount("blockingKeys", "count blocking keys"));
 };
 

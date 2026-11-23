@@ -20,6 +20,8 @@ vi.mock("@/modules/api/v2/management/lib/workspace-resolver", () => ({ resolveBo
 vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
   getWorkspaceContactDirectory: mocks.getWorkspaceContactDirectory,
+  // The route reads the directory again after the guard; both go through the same mock.
+  requireWorkspaceContactDirectory: (workspaceId: string) => mocks.getWorkspaceContactDirectory(workspaceId),
 }));
 vi.mock("./lib/contact", () => ({ createContact: mocks.createContact }));
 
@@ -59,14 +61,8 @@ describe("POST /management/contacts", () => {
     expect(await response.json()).toEqual({
       error: {
         code: 403,
-        message: "Forbidden",
-        details: [
-          {
-            field: "workspaceId",
-            issue:
-              "A contact directory needs to be set up for this workspace before contacts are available. Ask an organization owner or manager to assign one.",
-          },
-        ],
+        message:
+          "A contact directory needs to be set up for this workspace before contacts are available. Ask an organization owner or manager to assign one.",
       },
     });
     expect(mocks.createContact).not.toHaveBeenCalled();

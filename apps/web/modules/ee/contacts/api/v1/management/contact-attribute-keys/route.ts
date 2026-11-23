@@ -7,6 +7,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { CONTACTS_API_V1_NOT_ENABLED_MESSAGE } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
@@ -98,6 +99,9 @@ export const POST = withV1ApiWrapper({
       ) {
         return { response: responses.unauthorizedResponse() };
       }
+
+      // No directory, nowhere to put the key: a 403 with the decision 13 message, through handleApiError.
+      await requireWorkspaceContactDirectory(inputValidation.data.workspaceId);
 
       const contactAttributeKey = await createContactAttributeKey(
         inputValidation.data.workspaceId,

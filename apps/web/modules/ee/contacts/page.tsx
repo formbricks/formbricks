@@ -17,7 +17,9 @@ export const ContactsPage = async ({
 }) => {
   const params = await paramsProps;
 
-  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, isOwner, isManager, organization, workspace } = await getWorkspaceAuth(
+    params.workspaceId
+  );
 
   const t = await getTranslate();
 
@@ -25,19 +27,24 @@ export const ContactsPage = async ({
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const [contactAttributeKeys, sharedDirectoryName, contactDirectory] = isContactsEnabled
-    ? await Promise.all([
-        getContactAttributeKeys(workspace.id),
-        getSharedContactDirectoryName(workspace.id),
-        getWorkspaceContactDirectory(workspace.id),
-      ])
-    : [[], null, null];
+  const contactDirectory = await getWorkspaceContactDirectory(workspace.id);
+  const hasContactDirectory = Boolean(contactDirectory);
 
+  const [contactAttributeKeys, sharedDirectoryName] =
+    isContactsEnabled && hasContactDirectory
+      ? await Promise.all([
+          getContactAttributeKeys(workspace.id),
+          getSharedContactDirectoryName(workspace.id),
+        ])
+      : [[], null];
+
+  // Spec decision 13: Upload CSV stays in the header, disabled, until the workspace has a directory.
   const AddContactsButton = (
     <UploadContactsCSVButton
       workspaceId={workspace.id}
       contactAttributeKeys={contactAttributeKeys}
       matchingKey={contactDirectory?.matchingKey ?? "email"}
+      disabled={!hasContactDirectory}
     />
   );
 
@@ -49,6 +56,8 @@ export const ContactsPage = async ({
       organizationId={organization.id}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
+      hasContactDirectory={hasContactDirectory}
+      isOwnerOrManager={isOwner || isManager}
       cta={AddContactsButton}>
       {/* Spec decision 20: which directory this workspace uses, shown only when others share it. */}
       {sharedDirectoryName ? (

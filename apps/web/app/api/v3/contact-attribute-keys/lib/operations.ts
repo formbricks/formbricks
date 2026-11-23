@@ -2,7 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
+import { assertV3ContactDirectory, assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
@@ -49,6 +49,8 @@ export async function listV3ContactAttributeKeys({
     // the UI and management API do, so an unentitled organization can't enumerate them through v3.
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
+    const noDirectory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (noDirectory) return noDirectory;
 
     const keys = await getContactAttributeKeys(authResult.workspaceId);
     const { page, nextCursor, totalCount } = listContactAttributeKeysPage(

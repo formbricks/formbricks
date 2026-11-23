@@ -418,8 +418,9 @@ async function seedContactsAndSegment(): Promise<void> {
       workspaceId: SEED_IDS.WORKSPACE,
     },
   });
-  const emailKey = await prisma.contactAttributeKey.findUnique({
-    where: { key_workspaceId: { key: "email", workspaceId: SEED_IDS.WORKSPACE } },
+  // The seed workspace's default keys belong to its contact directory, with no workspace of origin.
+  const emailKey = await prisma.contactAttributeKey.findFirst({
+    where: { key: "email", directory: { workspaces: { some: { id: SEED_IDS.WORKSPACE } } } },
     select: { id: true },
   });
 
