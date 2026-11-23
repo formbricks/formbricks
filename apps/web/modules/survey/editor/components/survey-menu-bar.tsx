@@ -20,6 +20,7 @@ import {
   TSurveyVisibility,
   ZSurvey,
 } from "@formbricks/types/surveys/types";
+import { removeLocalStorage } from "@/lib/localStorage";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
@@ -269,10 +270,8 @@ export const SurveyMenuBar = ({
   }, [localSurvey, survey, t]);
 
   const clearSurveyLocalStorage = () => {
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem(`${localSurvey.id}-columnOrder`);
-      localStorage.removeItem(`${localSurvey.id}-columnVisibility`);
-    }
+    removeLocalStorage(`${localSurvey.id}-columnOrder`);
+    removeLocalStorage(`${localSurvey.id}-columnVisibility`);
   };
 
   /**
