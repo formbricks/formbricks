@@ -196,7 +196,7 @@ const EMAIL_IN_MESSAGE = /[^\s@]{1,64}@([\w-]{1,63}(?:\.[\w-]{1,63}){1,8})/g;
 export const redactEmailsInLogMessage = (message: unknown): unknown =>
   typeof message === "string" ? message.replace(EMAIL_IN_MESSAGE, "[redacted]@$1") : message;
 
-const SAFE_WARNING_ERROR_NAMES = new Set([
+const SAFE_ERROR_NAMES = new Set([
   "Error",
   "TypeError",
   "PrismaClientInitializationError",
@@ -206,12 +206,12 @@ const SAFE_WARNING_ERROR_NAMES = new Set([
 const PRISMA_ERROR_CODE = /^P\d{4}$/;
 
 /**
- * Warning causes stay in application logs only as a small allowlisted summary. Passing the Error to
- * Pino's `err` serializer would also emit its message, stack, and enumerable properties, any of which
- * can contain credentials supplied by an upstream provider.
+ * Error and warning causes stay in application logs only as a small allowlisted summary. Passing the
+ * Error to Pino's `err` serializer would also emit its message, stack, and enumerable properties, any of
+ * which can contain credentials supplied by an upstream provider.
  */
-const getSafeWarningErrorContext = (cause: Error): { errorType: string; errorCode?: string } => {
-  const errorType = SAFE_WARNING_ERROR_NAMES.has(cause.name) ? cause.name : "Error";
+const getSafeErrorContext = (cause: Error): { errorType: string; errorCode?: string } => {
+  const errorType = SAFE_ERROR_NAMES.has(cause.name) ? cause.name : "Error";
   const code = (cause as Error & { code?: unknown }).code;
 
   return {
@@ -333,28 +333,32 @@ const getStateErrorCode = (cause: Error | undefined): string | undefined => {
 const isUnactionableStateError = (code: string | undefined): boolean =>
   code !== undefined && UNACTIONABLE_STATE_ERROR_CODES.has(code);
 
+const FALLBACK_LOG_LABEL = { error: "Better Auth error", warn: "Better Auth warning" } as const;
+
 /**
- * Emit a Better Auth `warn`-level log, attaching the safe error context when the entry carried an
- * `Error`.
+ * Emit a Better Auth `error`- or `warn`-level log, attaching the safe error context when the entry
+ * carried an `Error`. Both levels carry it: self-hosters have no Sentry, so for them the application
+ * log is the only copy of an auth fault's cause (ENG-2779).
  *
  * `safeMessage` is `unknown` because Better Auth's logger signature is: the message is usually a
  * string, but a couple of call sites pass the `Error` itself. pino's two-argument form needs a string
  * in the message slot, hence the narrowing — a non-string falls back to a fixed label rather than
  * being stringified, since the `Error` is already carried by the context object.
  */
-const logWarning = (
+const logWithSafeCause = (
   contextLogger: ReturnType<typeof logger.withContext>,
+  level: "error" | "warn",
   safeMessage: unknown,
   cause: Error | undefined
 ): void => {
   if (!cause) {
-    contextLogger.warn(safeMessage);
+    contextLogger[level](safeMessage);
     return;
   }
 
-  contextLogger.warn(
-    getSafeWarningErrorContext(cause),
-    typeof safeMessage === "string" ? safeMessage : "Better Auth warning"
+  contextLogger[level](
+    getSafeErrorContext(cause),
+    typeof safeMessage === "string" ? safeMessage : FALLBACK_LOG_LABEL[level]
   );
 };
 
@@ -438,10 +442,10 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
     });
     const safeMessage = redactEmailsInLogMessage(message);
     if (level === "error") {
-      contextLogger.error(safeMessage);
+      logWithSafeCause(contextLogger, "error", safeMessage, cause);
       captureInternalAuthFault(cause, stateErrorCode, request);
     } else if (level === "warn") {
-      logWarning(contextLogger, safeMessage, cause);
+      logWithSafeCause(contextLogger, "warn", safeMessage, cause);
     } else {
       contextLogger.info(safeMessage);
     }

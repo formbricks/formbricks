@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { FORMBRICKS_LOGGED_IN_WITH_LS, readLocalStorage } from "@/lib/localStorage";
 import { AzureButton } from "./azure-button";
 import { GithubButton } from "./github-button";
 import { GoogleButton } from "./google-button";
@@ -34,10 +34,8 @@ export const SSOOptions = ({
   const [lastLoggedInWith, setLastLoggedInWith] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the default
-      setLastLoggedInWith(localStorage.getItem(FORMBRICKS_LOGGED_IN_WITH_LS) || "");
-    }
+    // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the default
+    setLastLoggedInWith(readLocalStorage(FORMBRICKS_LOGGED_IN_WITH_LS) ?? "");
   }, []);
 
   return (

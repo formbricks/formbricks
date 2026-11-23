@@ -88,15 +88,12 @@ const ACTION_TIMEOUT = 8_000;
 const MAX_STEPS = 25;
 
 // The file the answered-states walk attaches to the (required) file-upload card. Built in
-// memory rather than read from disk so the spec owns its own fixture, and kept to an SVG the
-// storage mock already serves for unknown names (see `mockStorageUploads`). The name is asserted
+// memory rather than read from disk so the spec owns its own fixture, and a type the storage API
+// allows: the survey refuses any other before uploading (SVG is not one). The name is asserted
 // exactly against the delete control's accessible name, which the app derives from the stored file
 // name — so it must survive the upload round-trip unchanged.
-const UPLOAD_FIXTURE_FILE_NAME = "a11y-answered-states.svg";
-const UPLOAD_FIXTURE_BODY = Buffer.from(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#0f172a"/></svg>',
-  "utf8"
-);
+const UPLOAD_FIXTURE_FILE_NAME = "a11y-answered-states.txt";
+const UPLOAD_FIXTURE_BODY = Buffer.from("Answered-states upload fixture", "utf8");
 
 const isAllowlisted = (ruleId: string, target: string): boolean =>
   ALLOWLIST.some(
@@ -705,7 +702,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
 
       await card.locator('input[type="file"]').setInputFiles({
         name: UPLOAD_FIXTURE_FILE_NAME,
-        mimeType: "image/svg+xml",
+        mimeType: "text/plain",
         buffer: UPLOAD_FIXTURE_BODY,
       });
 

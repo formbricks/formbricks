@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  createOrUpdateIntegration,
-  getIntegrationByType,
-  getStoredIntegrationConfig,
-} from "@/lib/integration/service";
+import { saveIntegrationKeepingStoredKey } from "@/lib/integration/service";
 import { createOrUpdateIntegrationAction } from "./actions";
 
 type ActionHandler = (args: {
@@ -23,10 +19,8 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 }));
 
 vi.mock("@/lib/integration/service", () => ({
-  createOrUpdateIntegration: vi.fn(),
   deleteIntegration: vi.fn(),
-  getIntegrationByType: vi.fn(),
-  getStoredIntegrationConfig: vi.fn(),
+  saveIntegrationKeepingStoredKey: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
@@ -38,35 +32,26 @@ vi.mock("@/lib/utils/helper", () => ({
 }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 
-const CIPHERTEXT = `${"a".repeat(32)}:${"b".repeat(8)}:${"c".repeat(32)}`;
+// The settings UI echoes the redacted key; the row-locked save is where it is merged back.
+const integrationData = {
+  type: "slack" as const,
+  config: { key: { access_token: "" }, data: [], email: "" },
+};
 
 describe("createOrUpdateIntegrationAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(createOrUpdateIntegration).mockResolvedValue({ id: "int_1" } as never);
+    vi.mocked(saveIntegrationKeepingStoredKey).mockResolvedValue({ id: "int_1" } as never);
   });
 
-  test("writes back the stored ciphertext, never the decrypted view of a token that no longer decrypts", async () => {
-    vi.mocked(getStoredIntegrationConfig).mockResolvedValue({
-      config: { key: { access_token: CIPHERTEXT }, data: [], email: "" },
-    } as never);
-    // What the decrypted read returns for that row: the token blanked to "".
-    vi.mocked(getIntegrationByType).mockResolvedValue({
-      config: { key: { access_token: "" }, data: [], email: "" },
-    });
-
-    await (createOrUpdateIntegrationAction as unknown as ActionHandler)({
+  test("delegates the save to the row-locked path and returns only the id", async () => {
+    const result = await (createOrUpdateIntegrationAction as unknown as ActionHandler)({
       ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
-      parsedInput: {
-        workspaceId: "ws_1",
-        // The settings UI echoes the redacted key.
-        integrationData: { type: "slack", config: { key: { access_token: "" }, data: [], email: "" } },
-      },
+      parsedInput: { workspaceId: "ws_1", integrationData },
     });
 
-    expect(createOrUpdateIntegration).toHaveBeenCalledWith(
-      "ws_1",
-      expect.objectContaining({ config: expect.objectContaining({ key: { access_token: CIPHERTEXT } }) })
-    );
+    expect(saveIntegrationKeepingStoredKey).toHaveBeenCalledWith("ws_1", integrationData);
+    // ENG-2292: the provider credentials never reach the action's response.
+    expect(result).toEqual({ id: "int_1" });
   });
 });
