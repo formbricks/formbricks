@@ -107,7 +107,12 @@ const seed = async (): Promise<void> => {
 };
 
 const segmentMembers = async (filters: TBaseFilters): Promise<string[]> => {
-  const query = await segmentFilterToPrismaQuery("clsegment0000000000000001", filters, directoryId);
+  const query = await segmentFilterToPrismaQuery(
+    "clsegment0000000000000001",
+    filters,
+    directoryId,
+    workspaceId
+  );
   if (!query.ok) throw new Error("segmentFilterToPrismaQuery failed");
   const rows = await prisma.contact.findMany({ where: query.data.whereClause, select: { id: true } });
   return rows.map((row) => row.id).sort();

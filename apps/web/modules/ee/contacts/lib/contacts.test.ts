@@ -200,7 +200,7 @@ describe("Contacts Lib", () => {
         mockContactsInSegment
       );
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toEqual([
         {
@@ -215,7 +215,7 @@ describe("Contacts Lib", () => {
     test("returns null when segment is not found", async () => {
       vi.mocked(getSegment).mockResolvedValue(null as unknown as Awaited<ReturnType<typeof getSegment>>);
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toBeNull();
     });
@@ -234,7 +234,7 @@ describe("Contacts Lib", () => {
         error: "Filter error",
       });
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toBeNull();
     });
@@ -254,7 +254,7 @@ describe("Contacts Lib", () => {
       } as unknown as Awaited<ReturnType<typeof segmentFilterToPrismaQuery>>);
       vi.mocked(prisma.contact.findMany).mockRejectedValue(new Error("DB Error"));
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toBeNull();
     });
@@ -288,7 +288,7 @@ describe("Contacts Lib", () => {
         mockContactsInSegment
       );
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toEqual([
         {
@@ -1213,7 +1213,12 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contact.findMany, { partial: true }).mockResolvedValue([]);
 
       await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).resolves.toEqual([]);
-      expect(segmentFilterToPrismaQuery).toHaveBeenCalledWith(mockSegmentId, [], `dir-${mockWorkspaceId}`);
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledWith(
+        mockSegmentId,
+        [],
+        `dir-${mockWorkspaceId}`,
+        mockWorkspaceId
+      );
     });
 
     test("throws when the segment belongs to a different workspace than the survey (cross-tenant guard)", async () => {

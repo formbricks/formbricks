@@ -10,6 +10,7 @@ export const getSegment = reactCache(async (segmentId: string) => {
         id: true,
         workspaceId: true,
         directoryId: true,
+        isPrivate: true,
         filters: true,
       },
     });

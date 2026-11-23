@@ -198,7 +198,13 @@ export const getPersonSegmentIds = async (
         continue;
       }
 
-      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, directory.id, deviceType);
+      const queryResult = await segmentFilterToPrismaQuery(
+        segment.id,
+        filters,
+        directory.id,
+        workspaceId,
+        deviceType
+      );
 
       if (!queryResult.ok) {
         logger.warn(

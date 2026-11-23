@@ -14,6 +14,15 @@ export const whereSegmentsOfWorkspace = (workspaceId: string, directoryId: strin
 });
 
 /**
+ * `whereSegmentsOfWorkspace`'s private-segment rule for a segment already read, once its directory is
+ * known to be the workspace's: shared, or private to this workspace's own surveys.
+ */
+export const isSegmentVisibleToWorkspace = (
+  segment: { isPrivate: boolean; workspaceId: string | null },
+  workspaceId: string
+): boolean => !segment.isPrivate || segment.workspaceId === workspaceId;
+
+/**
  * Where a survey's private segment is found: its title, the survey's id, in the workspace's directory.
  * A workspace with no directory (decision 3) still gives its app surveys a private segment, keyed in the
  * workspace until a directory is picked for it.

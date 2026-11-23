@@ -55,6 +55,7 @@ describe("getSegment", () => {
         id: true,
         workspaceId: true,
         directoryId: true,
+        isPrivate: true,
         filters: true,
       },
     });
@@ -76,6 +77,7 @@ describe("getSegment", () => {
         id: true,
         workspaceId: true,
         directoryId: true,
+        isPrivate: true,
         filters: true,
       },
     });

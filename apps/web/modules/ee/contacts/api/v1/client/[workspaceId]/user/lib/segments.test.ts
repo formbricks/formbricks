@@ -158,6 +158,7 @@ describe("segments lib", () => {
         "segment1",
         mockSegmentsData[0].filters,
         mockDirectoryId,
+        mockWorkspaceId,
         mockDeviceType
       );
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);

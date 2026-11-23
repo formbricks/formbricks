@@ -48,7 +48,7 @@ import {
   getContactCSVUploadSchema,
 } from "../types/contact";
 
-export const getContactsInSegment = reactCache(async (segmentId: string) => {
+export const getContactsInSegment = reactCache(async (segmentId: string, workspaceId: string) => {
   try {
     const segment = await getSegment(segmentId);
 
@@ -60,7 +60,8 @@ export const getContactsInSegment = reactCache(async (segmentId: string) => {
     const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
       segment.id,
       segment.filters,
-      segment.directoryId
+      segment.directoryId,
+      workspaceId
     );
 
     if (!segmentFilterToPrismaQueryResult.ok) {
@@ -855,7 +856,7 @@ export const generatePersonalLinks = async (
     throw new ValidationError(SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE);
   }
 
-  const contactsResult = await getContactsInSegment(segmentId);
+  const contactsResult = await getContactsInSegment(segmentId, survey.workspaceId);
 
   if (!contactsResult) {
     return null;

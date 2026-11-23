@@ -152,7 +152,7 @@ describe("evaluation reads contacts and keys by directory", () => {
     await contactAged(workspaceB, directoryD, ageKeyD.id, "12");
     await contactAged(workspaceC, directoryC, ageKeyC.id, "60");
 
-    const query = await segmentFilterToPrismaQuery(createId(), ageOver(30), directoryD);
+    const query = await segmentFilterToPrismaQuery(createId(), ageOver(30), directoryD, workspaceB);
     if (!query.ok) throw new Error("the filter did not build");
     const matched = await prisma.contact.findMany({ where: query.data.whereClause, select: { id: true } });
 
@@ -231,5 +231,51 @@ describe("a workspace with no contact directory", () => {
 
     // A shared segment needs a directory.
     await expect(publicSegmentIn(bareWorkspace, "Adults")).rejects.toThrow();
+  });
+});
+
+describe("private segments on a shared directory", () => {
+  const privateSegmentIn = (workspaceId: string, directoryId: string, filters: TBaseFilters) =>
+    prisma.segment.create({
+      data: { workspaceId, directoryId, title: createId(), isPrivate: true, filters },
+      select: { id: true },
+    });
+
+  test("another workspace of the directory cannot reach one by id", async () => {
+    const segment = await privateSegmentIn(workspaceA, directoryD, ageOver(30));
+
+    await expect(getSegmentInWorkspace(segment.id, workspaceA)).resolves.toMatchObject({ id: segment.id });
+    await expect(getSegmentInWorkspace(segment.id, workspaceB)).rejects.toBeInstanceOf(ResourceNotFoundError);
+  });
+
+  test("another workspace of the directory cannot nest one as a filter", async () => {
+    const ageKeyD = await prisma.contactAttributeKey.create({
+      data: { key: "age", workspaceId: workspaceA, directoryId: directoryD, dataType: "number" },
+    });
+    const older = await contactAged(workspaceA, directoryD, ageKeyD.id, "51");
+    const younger = await contactAged(workspaceA, directoryD, ageKeyD.id, "12");
+    const secret = await privateSegmentIn(workspaceA, directoryD, ageOver(30));
+    const nesting: TBaseFilters = [
+      {
+        id: createId(),
+        connector: null,
+        resource: {
+          id: createId(),
+          root: { type: "segment", segmentId: secret.id },
+          value: "",
+          qualifier: { operator: "userIsIn" },
+        },
+      },
+    ];
+    const members = async (workspaceId: string) => {
+      const query = await segmentFilterToPrismaQuery(createId(), nesting, directoryD, workspaceId);
+      if (!query.ok) throw new Error("the filter did not build");
+      const rows = await prisma.contact.findMany({ where: query.data.whereClause, select: { id: true } });
+      return rows.map(({ id }) => id).sort();
+    };
+
+    expect(await members(workspaceA)).toEqual([older]);
+    // From B the private segment's filters are not applied: membership tells nothing about them.
+    expect(await members(workspaceB)).toEqual([older, younger].sort());
   });
 });

@@ -1140,6 +1140,24 @@ describe("Segment Service Tests", () => {
       );
     });
 
+    test("refuses another workspace's private segment on the same directory as not found", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue({
+        ...mockSegmentPrisma,
+        isPrivate: true,
+        workspaceId: "other",
+      });
+
+      await expect(getSegmentInWorkspace(segmentId, workspaceId)).rejects.toBeInstanceOf(
+        ResourceNotFoundError
+      );
+    });
+
+    test("returns the workspace's own private segment", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue({ ...mockSegmentPrisma, isPrivate: true });
+
+      await expect(getSegmentInWorkspace(segmentId, workspaceId)).resolves.toMatchObject({ id: segmentId });
+    });
+
     test("refuses any segment for a workspace with no directory", async () => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue({ ...mockSegmentPrisma, directoryId: null });
       vi.mocked(getWorkspaceContactDirectory).mockResolvedValue(null);

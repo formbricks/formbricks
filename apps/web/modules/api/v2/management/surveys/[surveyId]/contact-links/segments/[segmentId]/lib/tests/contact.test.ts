@@ -124,6 +124,7 @@ describe("getContactsInSegment", () => {
     id: mockSegmentId,
     workspaceId: mockWorkspaceId,
     directoryId: mockDirectoryId,
+    isPrivate: false,
     filters: mockFilters,
   };
 
@@ -582,7 +583,12 @@ describe("getContactsInSegment", () => {
     const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
 
     expect(result.ok).toBe(true);
-    expect(segmentFilterToPrismaQuery).toHaveBeenCalledWith(mockSegmentId, mockFilters, mockDirectoryId);
+    expect(segmentFilterToPrismaQuery).toHaveBeenCalledWith(
+      mockSegmentId,
+      mockFilters,
+      mockDirectoryId,
+      mockWorkspaceId
+    );
     expect(getContactAttributeKeys).toHaveBeenCalledWith(mockWorkspaceId);
   });
 
@@ -605,6 +611,25 @@ describe("getContactsInSegment", () => {
     expect(prisma.contact.count).not.toHaveBeenCalled();
     expect(prisma.contact.findMany).not.toHaveBeenCalled();
 
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toEqual({
+        type: "bad_request",
+        details: [{ field: "segmentId", issue: "Environment mismatch" }],
+      });
+    }
+  });
+
+  // A private segment is its survey's own filter: another workspace on the directory never reads it.
+  test("should return error when the segment is another workspace's private segment", async () => {
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: true,
+      data: { ...mockSegment, workspaceId: "other-workspace-on-directory", isPrivate: true },
+    });
+
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
+
+    expect(prisma.contact.findMany).not.toHaveBeenCalled();
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toEqual({
@@ -646,7 +671,13 @@ describe("getContactsInSegment", () => {
     ] as unknown as TBaseFilters;
     vi.mocked(getSegment).mockResolvedValue({
       ok: true,
-      data: { id: mockSegmentId, workspaceId: mockWorkspaceId, directoryId: mockDirectoryId, filters },
+      data: {
+        id: mockSegmentId,
+        workspaceId: mockWorkspaceId,
+        directoryId: mockDirectoryId,
+        isPrivate: false,
+        filters,
+      },
     });
     vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: "clrestricted00000000000001" } as Awaited<
       ReturnType<typeof prisma.survey.findFirst>

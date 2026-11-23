@@ -73,7 +73,8 @@ export const getContactsInSegment = reactCache(
       const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
         segment.id,
         segment.filters,
-        directoryId
+        directoryId,
+        survey.workspaceId
       );
 
       if (!segmentFilterToPrismaQueryResult.ok) {

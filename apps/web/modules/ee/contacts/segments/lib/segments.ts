@@ -49,7 +49,7 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
-import { privateSegmentKey, whereSegmentsOfWorkspace } from "./segment-scope";
+import { isSegmentVisibleToWorkspace, privateSegmentKey, whereSegmentsOfWorkspace } from "./segment-scope";
 
 export const selectSegment = {
   id: true,
@@ -268,13 +268,17 @@ export const getSegmentInWorkspace = async (
   return segment;
 };
 
-/** Whether `workspaceId` may use the segment: it is in the workspace's contact directory (decision 24). */
+/**
+ * Whether `workspaceId` may use the segment: it is in the workspace's contact directory (decision 24) and
+ * is shared, or is a private one of this workspace's own surveys (the rule of `whereSegmentsOfWorkspace`).
+ */
 export const isSegmentOfWorkspace = async (
-  segment: Pick<TSegmentWithDirectory, "directoryId">,
+  segment: Pick<TSegmentWithDirectory, "directoryId" | "isPrivate" | "workspaceId">,
   workspaceId: string
 ): Promise<boolean> => {
   const directory = await getWorkspaceContactDirectory(workspaceId);
-  return directory !== null && segment.directoryId === directory.id;
+  if (directory === null || segment.directoryId !== directory.id) return false;
+  return isSegmentVisibleToWorkspace(segment, workspaceId);
 };
 
 /**

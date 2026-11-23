@@ -21,6 +21,7 @@ import { effectivelyWorkspaceVisibleWhere } from "@/lib/survey/visibility/predic
 import { whereDirectoryAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
+import { isSegmentVisibleToWorkspace } from "../segment-scope";
 import { getSegment } from "../segments";
 import { SURVEY_INTERACTION_SEMANTICS, getSurveyInteractionWindowStart } from "./survey-interaction";
 
@@ -391,6 +392,7 @@ const buildSegmentFilterWhereClause = async (
   filter: TSegmentSegmentFilter,
   segmentPath: Set<string>,
   directoryId: string,
+  workspaceId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier } = filter;
@@ -424,10 +426,25 @@ const buildSegmentFilterWhereClause = async (
     return {};
   }
 
+  // Another workspace's private segment is its survey's own filter, never shared (decision 24).
+  if (!isSegmentVisibleToWorkspace(segment, workspaceId)) {
+    logger.error(
+      { segmentId, segmentWorkspaceId: segment.workspaceId, workspaceId },
+      "Refusing to resolve a segment filter referencing another workspace's private segment"
+    );
+    return {};
+  }
+
   const newPath = new Set(segmentPath);
   newPath.add(segmentId);
 
-  const nestedWhereClause = await processFilters(segment.filters, newPath, directoryId, deviceType);
+  const nestedWhereClause = await processFilters(
+    segment.filters,
+    newPath,
+    directoryId,
+    workspaceId,
+    deviceType
+  );
   const hasNestedConditions = Object.keys(nestedWhereClause).length > 0;
 
   if (qualifier.operator === "userIsIn") {
@@ -452,6 +469,7 @@ const processSingleFilter = async (
   filter: TSegmentFilter,
   segmentPath: Set<string>,
   directoryId: string,
+  workspaceId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
@@ -468,6 +486,7 @@ const processSingleFilter = async (
         filter as TSegmentSegmentFilter,
         segmentPath,
         directoryId,
+        workspaceId,
         deviceType
       );
     case "surveyInteraction":
@@ -484,6 +503,7 @@ const processFilters = async (
   filters: TBaseFilters,
   segmentPath: Set<string>,
   directoryId: string,
+  workspaceId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   if (filters.length === 0) return {};
@@ -504,8 +524,8 @@ const processFilters = async (
     const { resource, connector } = filters[i];
 
     const whereClause = isResourceFilter(resource)
-      ? await processSingleFilter(resource, segmentPath, directoryId, deviceType)
-      : await processFilters(resource, segmentPath, directoryId, deviceType);
+      ? await processSingleFilter(resource, segmentPath, directoryId, workspaceId, deviceType)
+      : await processFilters(resource, segmentPath, directoryId, workspaceId, deviceType);
 
     // The first filter's connector is `null` and always starts the first group; from then on an `or`
     // connector opens a new AND group.
@@ -543,10 +563,17 @@ const processFilters = async (
  * @param segmentId - The segment ID being evaluated
  * @param filters - The segment filters
  * @param directoryId - The contact directory evaluated against: its contacts and attribute keys (decision 24)
+ * @param workspaceId - The workspace evaluating it: a nested segment must be shared, or private to it
  * @param deviceType - Optional device type for runtime device filter evaluation
  */
 export const segmentFilterToPrismaQuery = reactCache(
-  async (segmentId: string, filters: TBaseFilters, directoryId: string, deviceType?: "phone" | "desktop") => {
+  async (
+    segmentId: string,
+    filters: TBaseFilters,
+    directoryId: string,
+    workspaceId: string,
+    deviceType?: "phone" | "desktop"
+  ) => {
     try {
       const baseWhereClause = {
         directoryId,
@@ -554,7 +581,13 @@ export const segmentFilterToPrismaQuery = reactCache(
 
       // Initialize an empty stack for tracking the current evaluation path
       const segmentPath = new Set<string>([segmentId]);
-      const filtersWhereClause = await processFilters(filters, segmentPath, directoryId, deviceType);
+      const filtersWhereClause = await processFilters(
+        filters,
+        segmentPath,
+        directoryId,
+        workspaceId,
+        deviceType
+      );
 
       const whereClause = {
         AND: [baseWhereClause, filtersWhereClause],
