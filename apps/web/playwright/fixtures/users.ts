@@ -3,6 +3,7 @@ import { Page } from "playwright";
 import { TestInfo, expect } from "playwright/test";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { getDefaultAttributeKeys } from "@/modules/ee/contacts/directories/lib/constants";
 import { waitForAuthzedProjection } from "@/playwright/utils/authzed";
 
 export const login = async (user: Prisma.UserGetPayload<{ include: { memberships: true } }>, page: Page) => {
@@ -130,18 +131,24 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
         });
 
         if (workspace) {
-          const defaultKeys = [
-            { name: "Email", key: "email", isUnique: true, type: "default" as const },
-            { name: "First Name", key: "firstName", isUnique: false, type: "default" as const },
-            { name: "Last Name", key: "lastName", isUnique: false, type: "default" as const },
-            { name: "userId", key: "userId", isUnique: true, type: "default" as const },
-          ];
-
+          // A new workspace has no contact directory (ENG-7498). Give it one with the default keys, so
+          // the contacts, segments and SDK specs have somewhere to write. The keys keep the workspace as
+          // their origin, the shape the directories migration leaves, because specs look them up by it.
+          const contactDirectory = await prisma.contactDirectory.create({
+            data: { organizationId: workspace.organizationId, matchingKey: "email" },
+            select: { id: true },
+          });
           await prisma.contactAttributeKey.createMany({
-            data: defaultKeys.map((k) => ({
-              ...k,
+            data: getDefaultAttributeKeys("email").map((key) => ({
+              ...key,
+              type: "default" as const,
+              directoryId: contactDirectory.id,
               workspaceId: workspace.id,
             })),
+          });
+          await prisma.workspace.update({
+            where: { id: workspace.id },
+            data: { contactDirectoryId: contactDirectory.id },
           });
 
           if (!params?.skipSurveySeed) {

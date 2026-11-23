@@ -6,6 +6,7 @@ import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
+import { checkContactDirectoryApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const PUT = async (request: Request) =>
@@ -68,6 +69,11 @@ export const PUT = async (request: Request) =>
           },
           auditLog
         );
+      }
+
+      const noDirectoryError = await checkContactDirectoryApiV2(workspaceId);
+      if (noDirectoryError) {
+        return handleApiError(request, noDirectoryError, auditLog);
       }
 
       const emails = contacts.map(

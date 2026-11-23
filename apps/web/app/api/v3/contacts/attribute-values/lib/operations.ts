@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
+import { assertV3ContactDirectory, assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemBadRequest, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
@@ -71,6 +71,8 @@ export async function listV3ContactAttributeValues({
 
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
+    const noDirectory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (noDirectory) return noDirectory;
 
     // Resolved inside the authorized workspace's contact directory, so a key from another directory answers
     // exactly like an unknown one — and the value query below can only ever read this directory's rows.

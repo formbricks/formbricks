@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
+import { assertV3ContactDirectory, assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
 import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
@@ -62,6 +62,8 @@ export async function listV3Contacts({
 
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
+    const noDirectory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (noDirectory) return noDirectory;
 
     const { workspaceId } = authResult;
 

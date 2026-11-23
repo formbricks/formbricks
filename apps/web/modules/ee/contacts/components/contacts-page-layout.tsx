@@ -4,6 +4,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
+import { ContactDirectoryEmptyState } from "./contact-directory-empty-state";
 import { ContactsSecondaryNavigation } from "./contacts-secondary-navigation";
 
 interface ContactsPageLayoutProps {
@@ -13,6 +14,9 @@ interface ContactsPageLayoutProps {
   readonly organizationId: string;
   readonly isContactsEnabled: boolean;
   readonly isReadOnly: boolean;
+  /** False when the workspace has no contact directory: the page shows the no-directory state instead. */
+  readonly hasContactDirectory: boolean;
+  readonly isOwnerOrManager: boolean;
   readonly cta?: ReactNode;
   readonly children: ReactNode;
   readonly upgradePromptTitle?: string;
@@ -27,6 +31,8 @@ export const ContactsPageLayout = async ({
   organizationId,
   isContactsEnabled,
   isReadOnly,
+  hasContactDirectory,
+  isOwnerOrManager,
   cta,
   children,
   upgradePromptTitle,
@@ -42,9 +48,11 @@ export const ContactsPageLayout = async ({
         <ContactsSecondaryNavigation activeId={activeId} workspaceId={workspaceId} />
       </PageHeader>
 
-      {isContactsEnabled ? (
-        children
-      ) : (
+      {isContactsEnabled && !hasContactDirectory && (
+        <ContactDirectoryEmptyState organizationId={organizationId} isOwnerOrManager={isOwnerOrManager} />
+      )}
+      {isContactsEnabled && hasContactDirectory && children}
+      {!isContactsEnabled && (
         <div className="flex items-center justify-center">
           <UpgradePrompt
             title={upgradePromptTitle ?? t("workspace.contacts.unlock_contacts_title")}

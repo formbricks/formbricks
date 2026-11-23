@@ -1,6 +1,7 @@
 import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { AttributesTable } from "./components/attributes-table";
@@ -14,9 +15,12 @@ export const AttributesPage = async ({
   const params = await paramsProps;
   const locale = await getLocale();
   const t = await getTranslate();
-  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, isOwner, isManager, organization, workspace } = await getWorkspaceAuth(
+    params.workspaceId
+  );
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
+  const hasContactDirectory = Boolean(await getWorkspaceContactDirectory(workspace.id));
 
   return (
     <ContactsPageLayout
@@ -26,7 +30,9 @@ export const AttributesPage = async ({
       organizationId={organization.id}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
-      cta={<CreateAttributeModal workspaceId={workspace.id} />}>
+      hasContactDirectory={hasContactDirectory}
+      isOwnerOrManager={isOwner || isManager}
+      cta={hasContactDirectory ? <CreateAttributeModal workspaceId={workspace.id} /> : undefined}>
       <AttributesTable isReadOnly={isReadOnly} workspaceId={params.workspaceId} locale={locale} />
     </ContactsPageLayout>
   );
