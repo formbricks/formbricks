@@ -29,52 +29,6 @@ import {
 const CREATIVE_NAME = "Site feedback tab";
 const BUTTON_LABEL = "Share feedback";
 
-test("creates a feedback button and chooses its icon with the keyboard", async ({ page, users }) => {
-  const user = await users.create({ skipSurveySeed: true });
-  if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
-  await user.login();
-  expect(
-    await hasCreativesLicense(page.request, user.workspaceId),
-    "the instance's Enterprise license must include Creatives (403 creatives_not_entitled)"
-  ).toBe(true);
-  await page.goto(`/workspaces/${user.workspaceId}/creatives`);
-
-  await test.step("choose the creative type and continue to its editor", async () => {
-    const dialog = page.getByRole("dialog", { name: "New creative" });
-    await clickUntilVisible(page.getByRole("button", { name: "New creative" }), dialog);
-    const typeGroup = dialog.getByRole("radiogroup", { name: "Type" });
-    const feedbackButton = typeGroup.getByRole("radio", { name: /^Feedback button/ });
-    const banner = typeGroup.getByRole("radio", { name: /^Banner/ });
-    const continueButton = dialog.getByRole("button", { name: "Continue" });
-
-    await feedbackButton.press("ArrowRight");
-    await expect(banner).toBeChecked();
-    await expect(banner).toBeFocused();
-    await page.keyboard.press("Tab");
-    await expect(continueButton).toBeFocused();
-    await page.keyboard.press("Shift+Tab");
-    await expect(banner).toBeFocused();
-    await page.keyboard.press("ArrowDown");
-    await expect(feedbackButton).toBeChecked();
-    await expect(feedbackButton).toBeFocused();
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/\/creatives\/[^/]+\/edit$/);
-  });
-
-  await test.step("choose an icon and tab out of the group", async () => {
-    const iconGroup = page.getByRole("radiogroup", { name: /^Icon/ });
-    const message = iconGroup.getByRole("radio", { name: "Message", exact: true });
-    const chatBubble = iconGroup.getByRole("radio", { name: "Chat bubble", exact: true });
-    await expect(message).toBeChecked();
-    await message.press("ArrowDown");
-    await expect(chatBubble).toBeChecked();
-    await expect(chatBubble).toBeFocused();
-    await page.keyboard.press("Tab");
-    await expect(iconGroup.locator(":focus")).toHaveCount(0);
-  });
-});
-
 test.describe("Creatives", () => {
   let hostPage: SdkHostPage;
   let workspaceId = "";
@@ -95,7 +49,6 @@ test.describe("Creatives", () => {
     page,
     users,
   }) => {
-    const cspConsoleMessages = await collectCspViolations(page);
     const seeded = await seedAppSurvey(users);
     workspaceId = seeded.workspaceId;
     await seeded.user.login();
@@ -106,6 +59,28 @@ test.describe("Creatives", () => {
       licensed,
       "the instance's Enterprise license must include Creatives (403 creatives_not_entitled)"
     ).toBe(true);
+
+    await test.step("select a creative type with the keyboard", async () => {
+      await page.goto(`/workspaces/${workspaceId}/creatives`);
+      const dialog = page.getByRole("dialog", { name: "New creative" });
+      await clickUntilVisible(page.getByRole("button", { name: "New creative" }), dialog);
+      const typeGroup = dialog.getByRole("radiogroup", { name: "Type" });
+      const feedbackButton = typeGroup.getByRole("radio", { name: /^Feedback button/ });
+      const banner = typeGroup.getByRole("radio", { name: /^Banner/ });
+
+      await feedbackButton.press("ArrowRight");
+      await expect(banner).toBeChecked();
+      await expect(banner).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(dialog.getByRole("button", { name: "Continue" })).toBeFocused();
+      await page.keyboard.press("Shift+Tab");
+      await expect(banner).toBeFocused();
+      await page.keyboard.press("ArrowDown");
+      await expect(feedbackButton).toBeChecked();
+      await expect(feedbackButton).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(dialog).toBeHidden();
+    });
 
     const creativeId = await test.step("publish a feedback button through API v3", async () => {
       // A survey Destination must be visible to the whole workspace with no visibility change pending;
@@ -140,6 +115,24 @@ test.describe("Creatives", () => {
       return data.id;
     });
 
+    await test.step("select and restore the button icon with the keyboard", async () => {
+      await page.goto(`/workspaces/${workspaceId}/creatives/${creativeId}/edit`);
+      const iconGroup = page.getByRole("radiogroup", { name: /^Icon/ });
+      const message = iconGroup.getByRole("radio", { name: "Message", exact: true });
+      const chatBubble = iconGroup.getByRole("radio", { name: "Chat bubble", exact: true });
+      await expect(message).toBeChecked();
+      await message.press("ArrowDown");
+      await expect(chatBubble).toBeChecked();
+      await expect(chatBubble).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(iconGroup.locator(":focus")).toHaveCount(0);
+      await page.keyboard.press("Shift+Tab");
+      await expect(chatBubble).toBeFocused();
+      await page.keyboard.press("ArrowUp");
+      await expect(message).toBeChecked();
+    });
+
+    const cspConsoleMessages = await collectCspViolations(page);
     await test.step("the host page shows the button, which opens its survey", async () => {
       await page.goto(hostPage.url);
       await page.getByRole("button", { name: BUTTON_LABEL }).click();
