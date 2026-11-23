@@ -36,6 +36,7 @@ import {
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
+import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import {
@@ -504,16 +505,16 @@ export const cloneSegment = async (
     }
 
     // Titles are unique per directory, so the copy's number counts the directory's copies.
-    const directoryTitles = await prisma.segment.findMany({
-      where: { directoryId: segment.directoryId },
+    const copyTitles = await prisma.segment.findMany({
+      where: {
+        directoryId: segment.directoryId,
+        title: { startsWith: escapeLikePattern(`Copy of ${segment.title}`) },
+      },
       select: { title: true },
     });
 
     // Find the last "Copy of" title and extract the number from it
-    const lastCopyTitle = directoryTitles
-      .map((existingSegment) => existingSegment.title)
-      .filter((title) => title.startsWith(`Copy of ${segment.title}`))
-      .pop();
+    const lastCopyTitle = copyTitles.map((existingSegment) => existingSegment.title).pop();
 
     let suffix = 1;
     if (lastCopyTitle) {

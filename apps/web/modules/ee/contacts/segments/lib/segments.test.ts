@@ -642,8 +642,9 @@ describe("Segment Service Tests", () => {
         where: { id: segmentId },
         select: selectSegment,
       });
+      // Only the directory's copies of this segment are read, not every title of the directory.
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { directoryId },
+        where: { directoryId, title: { startsWith: "Copy of Test Segment" } },
         select: { title: true },
       });
       expect(prisma.segment.create).toHaveBeenCalledWith({
@@ -680,6 +681,17 @@ describe("Segment Service Tests", () => {
           data: expect.objectContaining({ title: "Copy of Test Segment (2)" }),
         })
       );
+    });
+
+    test("escapes LIKE wildcards in the title it searches copies by", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue({ ...mockSegmentPrisma, title: "50%_off" });
+
+      await cloneSegment(segmentId, surveyId, surveyWorkspaceId);
+
+      expect(prisma.segment.findMany).toHaveBeenCalledWith({
+        where: { directoryId, title: { startsWith: String.raw`Copy of 50\%\_off` } },
+        select: { title: true },
+      });
     });
 
     test("should throw ResourceNotFoundError if original segment not found", async () => {
