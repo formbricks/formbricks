@@ -1,7 +1,10 @@
 import "server-only";
 import { google } from "googleapis";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { createCacheKey } from "@formbricks/cache";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { ZString } from "@formbricks/types/common";
 import {
   AuthenticationError,
@@ -13,6 +16,7 @@ import {
   TIntegrationGoogleSheets,
   ZIntegrationGoogleSheets,
 } from "@formbricks/types/integration/google-sheet";
+import { cache } from "@/lib/cache";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
@@ -121,6 +125,64 @@ const columnLetters = (index: number): string => {
 const getHeaderRowRange = (columnCount: number): string =>
   `A1:${columnLetters(Math.max(columnCount, 1) - 1)}1`;
 
+/** Longer than one header read, header write and append take, so a crashed holder frees the sheet. */
+const SHEET_WRITE_LOCK_TTL_MS = 60_000;
+/** How long a write waits for another one on the same spreadsheet before it goes ahead without the lock. */
+const SHEET_WRITE_LOCK_WAIT_MS = 30_000;
+const SHEET_WRITE_LOCK_POLL_MS = 200;
+
+/** Deletes the lock only while it still holds this writer's token, so an expired lock taken over stays. */
+const RELEASE_LOCK_SCRIPT = `if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) end return 0`;
+
+/**
+ * ENG-3907: `writeData` reads the header row, may extend it, then appends a row placed by that header. Two
+ * response-pipeline jobs writing to one spreadsheet at once (several workers or replicas) could both read
+ * the same header, and the later header write would drop the label the earlier one added. The whole
+ * sequence therefore runs under a Redis lock per spreadsheet. Without Redis, or after waiting
+ * `SHEET_WRITE_LOCK_WAIT_MS`, the write goes ahead unserialized rather than dropping the response.
+ */
+const withSpreadsheetWriteLock = async <T>(spreadsheetId: string, write: () => Promise<T>): Promise<T> => {
+  const lockKey = createCacheKey.integration.googleSheetWriteLock(spreadsheetId);
+  const token = randomUUID();
+  const deadline = Date.now() + SHEET_WRITE_LOCK_WAIT_MS;
+  let held = false;
+
+  for (;;) {
+    const locked = await cache.tryLock(lockKey, token, SHEET_WRITE_LOCK_TTL_MS);
+    if (!locked.ok) {
+      logger.warn({ spreadsheetId }, "Google Sheets write lock unavailable; writing without it");
+      break;
+    }
+    if (locked.data) {
+      held = true;
+      break;
+    }
+    if (Date.now() >= deadline) {
+      logger.warn(
+        { spreadsheetId },
+        "Timed out waiting for the Google Sheets write lock; writing without it"
+      );
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, SHEET_WRITE_LOCK_POLL_MS));
+  }
+
+  try {
+    return await write();
+  } finally {
+    if (held) {
+      try {
+        await cache.runRedisOperation((redis) =>
+          redis.eval(RELEASE_LOCK_SCRIPT, { keys: [lockKey], arguments: [token] })
+        );
+      } catch (error) {
+        // The lock expires on its own after SHEET_WRITE_LOCK_TTL_MS; the write's outcome stands.
+        logger.warn({ error, spreadsheetId }, "Could not release the Google Sheets write lock");
+      }
+    }
+  }
+};
+
 export const writeData = async (
   integrationData: TIntegrationGoogleSheets,
   spreadsheetId: string,
@@ -143,40 +205,46 @@ export const writeData = async (
         : response
     );
 
-    const existingHeaders = await readHeaderRow((callback) =>
-      sheets.spreadsheets.values.get({ spreadsheetId, range: "1:1" }, callback)
-    );
-    const { headers, row, headersChanged } = alignRowToHeaders(existingHeaders, elements, truncatedResponses);
+    await withSpreadsheetWriteLock(spreadsheetId, async () => {
+      const existingHeaders = await readHeaderRow((callback) =>
+        sheets.spreadsheets.values.get({ spreadsheetId, range: "1:1" }, callback)
+      );
+      const { headers, row, headersChanged } = alignRowToHeaders(
+        existingHeaders,
+        elements,
+        truncatedResponses
+      );
 
-    if (headersChanged) {
+      if (headersChanged) {
+        await runSheetsWrite((callback) =>
+          sheets.spreadsheets.values.update(
+            {
+              spreadsheetId: spreadsheetId,
+              range: "A1",
+              valueInputOption: "RAW",
+              requestBody: { values: [headers] },
+            },
+            callback
+          )
+        );
+      }
+
+      // ENG-4050: `append` looks for the "table" at `range` and writes below its last row. Anchored on
+      // `A2`, a response whose first answer was empty (e.g. a Statement / CTA first) left `A2` blank, so
+      // the next append found no table there and wrote over row 2 — the sheet only ever kept the latest
+      // response. The header row, kept or just written above, always carries the table, so anchor on it.
       await runSheetsWrite((callback) =>
-        sheets.spreadsheets.values.update(
+        sheets.spreadsheets.values.append(
           {
             spreadsheetId: spreadsheetId,
-            range: "A1",
+            range: getHeaderRowRange(headers.length),
             valueInputOption: "RAW",
-            requestBody: { values: [headers] },
+            requestBody: { values: [row] },
           },
           callback
         )
       );
-    }
-
-    // ENG-4050: `append` looks for the "table" at `range` and writes below its last row. Anchored on
-    // `A2`, a response whose first answer was empty (e.g. a Statement / CTA first) left `A2` blank, so
-    // the next append found no table there and wrote over row 2 — the sheet only ever kept the latest
-    // response. The header row, kept or just written above, always carries the table, so anchor on it.
-    await runSheetsWrite((callback) =>
-      sheets.spreadsheets.values.append(
-        {
-          spreadsheetId: spreadsheetId,
-          range: getHeaderRowRange(headers.length),
-          valueInputOption: "RAW",
-          requestBody: { values: [row] },
-        },
-        callback
-      )
-    );
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

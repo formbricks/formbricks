@@ -9,6 +9,32 @@ import {
 
 vi.mock("@/lib/integration/service", () => ({ createOrUpdateIntegration: vi.fn() }));
 
+/** An in-memory stand-in for the Redis locks `writeData` takes per spreadsheet. */
+const lockStore = vi.hoisted(() => new Map<string, string>());
+const cacheMock = vi.hoisted(() => ({
+  tryLock: vi.fn(
+    async (
+      key: string,
+      value: string
+    ): Promise<{ ok: true; data: boolean } | { ok: false; error: { code: string } }> => {
+      if (lockStore.has(key)) return { ok: true, data: false };
+      lockStore.set(key, value);
+      return { ok: true, data: true };
+    }
+  ),
+  runRedisOperation: vi.fn(async (operation: (redis: unknown) => Promise<unknown>) =>
+    operation({
+      eval: async (_script: string, options: { keys: string[]; arguments: string[] }) => {
+        const [key] = options.keys;
+        if (lockStore.get(key) !== options.arguments[0]) return 0;
+        lockStore.delete(key);
+        return 1;
+      },
+    })
+  ),
+}));
+vi.mock("@/lib/cache", () => ({ cache: cacheMock }));
+
 vi.mock("@/lib/constants", () => ({
   GOOGLE_SHEETS_CLIENT_ID: "client-id",
   GOOGLE_SHEETS_CLIENT_SECRET: "client-secret",
@@ -156,6 +182,9 @@ describe("writeData", () => {
   };
 
   beforeEach(() => {
+    lockStore.clear();
+    cacheMock.tryLock.mockClear();
+    cacheMock.runRedisOperation.mockClear();
     sheetsMock.get.mockReset();
     sheetsMock.update.mockReset();
     sheetsMock.append.mockReset();
@@ -412,6 +441,88 @@ describe("writeData", () => {
     expect(sheetsMock.update).toHaveBeenCalledTimes(1);
     expect(sheetsMock.append.mock.calls[1][0]).toMatchObject({ range: "A1:AB1" });
     expect(rows[2]).toEqual(["", "y", ...Array(26).fill("")]);
+  });
+  // ENG-3907: the header read, header write and append run as one sequence per spreadsheet, so two jobs
+  // on different workers cannot both extend the header from the same read.
+  describe("serializes writes to one spreadsheet", () => {
+    const lockKey = "fb:integration:google-sheets:sheet1:write-lock";
+
+    test("holds the spreadsheet's lock across the read and both writes, then releases it", async () => {
+      const lockHeldDuring: string[] = [];
+      const record = (step: string) => () => {
+        if (lockStore.has(lockKey)) lockHeldDuring.push(step);
+      };
+      sheetsMock.get.mockImplementation(
+        (_params: unknown, callback: (err: null, res: { data: object }) => void) => {
+          record("get")();
+          setTimeout(() => callback(null, { data: {} }), 0);
+        }
+      );
+      sheetsMock.update.mockImplementation(respondAsync(null, record("update")));
+      sheetsMock.append.mockImplementation(respondAsync(null, record("append")));
+
+      await writeData(authorizedIntegration, "sheet1", ["answer"], ["question"]);
+
+      expect(lockHeldDuring).toEqual(["get", "update", "append"]);
+      expect(lockStore.has(lockKey)).toBe(false);
+    });
+
+    test("two concurrent writes with new labels both keep their columns", async () => {
+      const sheet: string[][] = [["Q1"]];
+      sheetsMock.get.mockImplementation(
+        (_params: unknown, callback: (err: null, res: { data: { values: string[][] } }) => void) => {
+          const header = [...sheet[0]];
+          setTimeout(() => callback(null, { data: { values: [header] } }), 5);
+        }
+      );
+      sheetsMock.update.mockImplementation(
+        (params: { requestBody: { values: string[][] } }, callback: (err: null) => void) => {
+          setTimeout(() => {
+            sheet[0] = [...params.requestBody.values[0]];
+            callback(null);
+          }, 5);
+        }
+      );
+      sheetsMock.append.mockImplementation(
+        (params: { requestBody: { values: string[][] } }, callback: (err: null) => void) => {
+          setTimeout(() => {
+            sheet.push([...params.requestBody.values[0]]);
+            callback(null);
+          }, 5);
+        }
+      );
+
+      await Promise.all([
+        writeData(authorizedIntegration, "sheet1", ["a", "plan-a"], ["Q1", "person.plan"]),
+        writeData(authorizedIntegration, "sheet1", ["b", "acme"], ["Q1", "person.company"]),
+      ]);
+
+      expect(sheet[0]).toEqual(["Q1", "person.plan", "person.company"]);
+      expect(sheet.slice(1)).toEqual([
+        ["a", "plan-a"],
+        ["b", "", "acme"],
+      ]);
+    });
+
+    test("releases the lock when a write fails", async () => {
+      sheetsMock.update.mockImplementation(respondAsync(new Error("Requested entity was not found")));
+
+      await expect(writeData(authorizedIntegration, "sheet1", ["answer"], ["question"])).rejects.toThrow(
+        UnknownError
+      );
+      expect(lockStore.has(lockKey)).toBe(false);
+    });
+
+    test("still writes when Redis is unavailable", async () => {
+      cacheMock.tryLock.mockResolvedValueOnce({ ok: false, error: { code: "redis_connection_error" } });
+      sheetsMock.update.mockImplementation(respondAsync(null));
+      sheetsMock.append.mockImplementation(respondAsync(null));
+
+      await writeData(authorizedIntegration, "sheet1", ["answer"], ["question"]);
+
+      expect(sheetsMock.append).toHaveBeenCalledTimes(1);
+      expect(cacheMock.runRedisOperation).not.toHaveBeenCalled();
+    });
   });
 });
 
