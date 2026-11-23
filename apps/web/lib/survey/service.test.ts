@@ -1271,6 +1271,53 @@ describe("Tests for updateSurvey", () => {
 
         expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       });
+
+      test("refuses an over-deep malformed array, which is not a filter group", async () => {
+        let deep: unknown = [];
+        for (let level = 0; level < MAX_SEGMENT_FILTER_DEPTH * 400; level++) deep = [deep];
+
+        await expect(save(deep)).rejects.toThrow("nested too deeply");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses a resource-object chain that the array measure cannot see", async () => {
+        let resource: unknown = { root: { type: "attribute" } };
+        for (let level = 0; level < 20_000; level++) resource = { resource };
+
+        await expect(save([{ id: createId(), connector: null, resource }])).rejects.toThrow(
+          "nested too deeply"
+        );
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses an indirect recursion hidden in filters that fail the schema", async () => {
+        const otherSegmentId = createId();
+        const referenceToThisSegment = [
+          {
+            id: createId(),
+            connector: null,
+            resource: { root: { type: "segment", segmentId: SEGMENT_ID } },
+          },
+        ];
+        prisma.segment.findMany.mockResolvedValueOnce([
+          { id: otherSegmentId, filters: referenceToThisSegment },
+        ] as never);
+
+        const malformed = [
+          {
+            id: createId(),
+            connector: null,
+            resource: { root: { type: "segment", segmentId: otherSegmentId } },
+          },
+          { id: "junk", resource: { root: { type: "attribute" } } },
+        ];
+
+        await expect(save(malformed)).rejects.toThrow("Recursive segment filter is not allowed");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
     });
 
     // ENG-2305 sibling of the filter-tree gate: on the draft path segment.surveys is just as

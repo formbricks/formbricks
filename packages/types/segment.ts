@@ -424,6 +424,72 @@ const countLeafSurveyInteractionIds = (resource: unknown): number => {
   return Array.isArray(surveyIds) ? surveyIds.length : 0;
 };
 
+/** A malformed chain object where a filter belongs: `resource: { resource: … }`, no `root` of its own. */
+const isResourceChain = (value: unknown): value is { resource?: unknown } =>
+  typeof value === "object" &&
+  value !== null &&
+  !Array.isArray(value) &&
+  !("root" in value) &&
+  "resource" in value;
+
+/**
+ * Follows a `resource` chain up to the depth limit. Returns the depth it reached and, when the chain ends
+ * in an array, the group that array forms. Capped so a 20k-link chain costs `MAX_SEGMENT_FILTER_DEPTH`.
+ */
+const measureResourceChain = (
+  resource: unknown,
+  level: number
+): { depth: number; nextGroup?: { group: unknown[]; level: number } } => {
+  let link = resource;
+  let chainDepth = level + 1;
+  let nextGroup: { group: unknown[]; level: number } | undefined;
+
+  while (chainDepth <= MAX_SEGMENT_FILTER_DEPTH && isResourceChain(link)) {
+    const next = link.resource;
+    if (Array.isArray(next)) {
+      nextGroup = { group: next, level: chainDepth + 1 };
+      break;
+    }
+    link = next;
+    chainDepth += 1;
+  }
+
+  return { depth: chainDepth, nextGroup };
+};
+
+type TPendingFilterGroup = { group: unknown[]; level: number; countNodes: boolean };
+
+/**
+ * Queues every nested group `node` opens and returns the survey-interaction ids it references as a leaf,
+ * plus the depth a malformed `resource` chain reached. A node that is itself an array where a filter
+ * belongs (`[[…]]`) is followed for depth only, never counted as a filter.
+ */
+const queueFilterNodeGroups = (
+  node: unknown,
+  level: number,
+  pending: TPendingFilterGroup[]
+): { surveyInteractionIds: number; depth: number } => {
+  if (Array.isArray(node)) {
+    pending.push({ group: node, level: level + 1, countNodes: false });
+    return { surveyInteractionIds: 0, depth: 0 };
+  }
+
+  const resource =
+    typeof node === "object" && node !== null ? (node as { resource?: unknown }).resource : undefined;
+  if (Array.isArray(resource)) {
+    pending.push({ group: resource, level: level + 1, countNodes: true });
+    return { surveyInteractionIds: 0, depth: 0 };
+  }
+  if (isResourceChain(resource)) {
+    // A `resource` chain where a filter belongs is malformed but still walked by recursive consumers, so
+    // its links count toward depth. A filter leaf carries `root` and is not nesting.
+    const chain = measureResourceChain(resource, level);
+    if (chain.nextGroup) pending.push({ ...chain.nextGroup, countNodes: false });
+    return { surveyInteractionIds: 0, depth: chain.depth };
+  }
+  return { surveyInteractionIds: countLeafSurveyInteractionIds(resource), depth: 0 };
+};
+
 /**
  * Measures the raw (untrusted, unparsed) filter tree in one linear pass: total nodes, max nesting
  * depth, and total survey-interaction surveyIds. Iterative (explicit stack) on purpose — this walk
@@ -437,24 +503,20 @@ const measureSegmentFilterTree = (
   let depth = 0;
   let surveyInteractionIds = 0;
 
-  const pending: { group: unknown[]; level: number }[] = [];
+  const pending: TPendingFilterGroup[] = [];
   if (Array.isArray(raw)) {
-    pending.push({ group: raw, level: 1 });
+    pending.push({ group: raw, level: 1, countNodes: true });
   }
 
   let entry = pending.pop();
   while (entry) {
-    const { group, level } = entry;
+    const { group, level, countNodes } = entry;
     depth = Math.max(depth, level);
     for (const node of group) {
-      nodes += 1;
-      const resource =
-        typeof node === "object" && node !== null ? (node as { resource?: unknown }).resource : undefined;
-      if (Array.isArray(resource)) {
-        pending.push({ group: resource, level: level + 1 });
-      } else {
-        surveyInteractionIds += countLeafSurveyInteractionIds(resource);
-      }
+      if (countNodes) nodes += 1;
+      const opened = queueFilterNodeGroups(node, level, pending);
+      depth = Math.max(depth, opened.depth);
+      surveyInteractionIds += opened.surveyInteractionIds;
     }
     entry = pending.pop();
   }

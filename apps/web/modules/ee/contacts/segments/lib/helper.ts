@@ -16,19 +16,68 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 
 /**
- * Collects the segment ids a filter tree references, at any depth. Filters nest through `resource` arrays,
- * so the walk recurses there only; a resource filter references at most one segment.
+ * Collects the segment ids a parsed filter tree references, at any depth. Iterative: this also runs on
+ * stored rows, whose shape only the write path bounded.
  */
 const collectReferencedSegmentIds = (filters: TBaseFilters, found: Set<string> = new Set()): Set<string> => {
-  for (const filter of filters) {
-    const { resource } = filter;
-    if (isResourceFilter(resource)) {
-      if (resource.root.type === "segment") found.add(resource.root.segmentId);
-    } else {
-      collectReferencedSegmentIds(resource, found);
+  // A queue, not a stack: ids come back in tree order, so batched reads and error messages are stable.
+  const pending: unknown[] = [filters];
+  for (let index = 0; index < pending.length; index++) {
+    const current = pending[index];
+    if (Array.isArray(current)) {
+      for (const node of current) pending.push(node);
+      continue;
+    }
+    if (!current || typeof current !== "object") continue;
+    const { root, resource } = current as {
+      root?: { type?: unknown; segmentId?: unknown };
+      resource?: unknown;
+    };
+    if (root?.type === "segment" && typeof root.segmentId === "string") {
+      found.add(root.segmentId);
+    } else if (resource) {
+      pending.push(resource);
     }
   }
   return found;
+};
+
+/**
+ * Checks that no segment named in `segmentIds` refers back to `segmentId`, directly or through its stored
+ * filters. Each level's references are read in one query, and each segment is walked once: a chain or a
+ * cycle among other segments ends, while a reference back to `segmentId` is refused at any depth.
+ *
+ * Takes ids rather than a tree so the survey draft path can check a raw, schema-failing tree with it.
+ * @throws {InvalidInputError} When a recursive segment filter is detected
+ */
+export const checkReferencedSegmentsForRecursion = async (
+  segmentIds: Iterable<string>,
+  segmentId: string
+): Promise<void> => {
+  const visited = new Set<string>();
+  let level = new Set(segmentIds);
+
+  while (level.size > 0) {
+    if (level.has(segmentId)) {
+      throw new InvalidInputError("Recursive segment filter is not allowed");
+    }
+
+    const toRead = [...level].filter((id) => !visited.has(id));
+    if (toRead.length === 0) return;
+    for (const id of toRead) visited.add(id);
+
+    const referencedSegments = await getSegmentsByIds(toRead);
+    const filtersById = new Map(referencedSegments.map((segment) => [segment.id, segment.filters]));
+    const missing = toRead.find((id) => !filtersById.has(id));
+    if (missing) throw new ResourceNotFoundError("segment", missing);
+
+    level = new Set(
+      toRead.flatMap((id) => {
+        const filters = filtersById.get(id);
+        return filters ? [...collectReferencedSegmentIds(filters)] : [];
+      })
+    );
+  }
 };
 
 /**
@@ -38,32 +87,7 @@ const collectReferencedSegmentIds = (filters: TBaseFilters, found: Set<string> =
  * @throws {InvalidInputError} When a recursive segment filter is detected
  */
 export const checkForRecursiveSegmentFilter = async (filters: TBaseFilters, segmentId: string) => {
-  // A level's references are read in one query, and each segment is walked once: a chain or a cycle among
-  // other segments ends, while a reference back to `segmentId` is refused at any depth.
-  const visited = new Set<string>();
-  let level: TBaseFilters[] = [filters];
-
-  while (level.length > 0) {
-    const referenced = new Set<string>();
-    for (const tree of level) collectReferencedSegmentIds(tree, referenced);
-
-    if (referenced.has(segmentId)) {
-      throw new InvalidInputError("Recursive segment filter is not allowed");
-    }
-
-    const toRead = [...referenced].filter((id) => !visited.has(id));
-    if (toRead.length === 0) return;
-    for (const id of toRead) visited.add(id);
-
-    const referencedSegments = await getSegmentsByIds(toRead);
-    const filtersById = new Map(referencedSegments.map((segment) => [segment.id, segment.filters]));
-    const missing = toRead.find((id) => !filtersById.has(id));
-    if (missing) throw new ResourceNotFoundError("segment", missing);
-
-    level = toRead
-      .map((id) => filtersById.get(id))
-      .filter((segmentFilters): segmentFilters is TBaseFilters => Array.isArray(segmentFilters));
-  }
+  await checkReferencedSegmentsForRecursion(collectReferencedSegmentIds(filters), segmentId);
 };
 
 /**

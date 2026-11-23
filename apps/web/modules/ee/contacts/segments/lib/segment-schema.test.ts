@@ -232,6 +232,19 @@ describe("segment filter tree bounds", () => {
     expect(result.success).toBe(false);
   });
 
+  test("bounds a malformed array nested where a filter belongs, not only resource arrays", () => {
+    // `[[…]]` is not a filter group, but a recursive consumer would still walk it: the measure must.
+    let deep: unknown = [];
+    for (let level = 0; level <= MAX_SEGMENT_FILTER_DEPTH; level++) deep = [deep];
+
+    const result = ZSegmentFilters.safeParse(deep);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      `Segment filters are nested too deeply: at most ${MAX_SEGMENT_FILTER_DEPTH} levels are supported`
+    );
+  });
+
   test("a deep left-spine tree within the node cap fails with a clean depth issue, not a RangeError", () => {
     // Regression: depth === MAX_SEGMENT_FILTERS_PER_TREE nodes is within the node cap, but deep
     // enough that the recursive parse alone would overflow the call stack (safeParse does not catch

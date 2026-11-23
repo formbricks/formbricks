@@ -74,7 +74,7 @@ import {
 import {
   assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
-  checkForRecursiveSegmentFilter,
+  checkReferencedSegmentsForRecursion,
   getAddedSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import {
@@ -633,12 +633,21 @@ const getIsQuotasEnabledForWorkspace = async (workspaceId: string): Promise<bool
 
 /** Every segment id named by a (possibly half-built) filter tree, read without assuming its shape. */
 const collectReferencedSegmentIds = (node: unknown, found: Set<string> = new Set()): Set<string> => {
-  if (Array.isArray(node)) {
-    for (const child of node) collectReferencedSegmentIds(child, found);
-  } else if (node && typeof node === "object") {
-    const { root, resource } = node as { root?: { type?: unknown; segmentId?: unknown }; resource?: unknown };
-    if (root?.type === "segment" && typeof root.segmentId === "string") found.add(root.segmentId);
-    if (resource) collectReferencedSegmentIds(resource, found);
+  // Iterative: the draft save bounds the tree's arrays, but not a chain of `resource` objects, and a
+  // recursive walk would overflow its stack before anything else ran.
+  const pending: unknown[] = [node];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (Array.isArray(current)) {
+      for (const child of current) pending.push(child);
+    } else if (current && typeof current === "object") {
+      const { root, resource } = current as {
+        root?: { type?: unknown; segmentId?: unknown };
+        resource?: unknown;
+      };
+      if (root?.type === "segment" && typeof root.segmentId === "string") found.add(root.segmentId);
+      if (resource) pending.push(resource);
+    }
   }
   return found;
 };
@@ -676,11 +685,13 @@ const assertAppTargetingFiltersAllowed = async (
     // walk's call stack.
     const boundsViolation = getSegmentFilterTreeBoundsViolation(filters);
     if (boundsViolation) throw new InvalidInputError(boundsViolation);
-    if (collectReferencedSegmentIds(filters).has(segment.id)) {
+    const referenced = collectReferencedSegmentIds(filters);
+    if (referenced.has(segment.id)) {
       throw new InvalidInputError("Recursive segment filter is not allowed");
     }
-    const parsed = ZSegmentFilters.safeParse(filters);
-    if (parsed.success) await checkForRecursiveSegmentFilter(parsed.data, segment.id);
+    // The draft tree can fail the schema and still name other segments, so follow the raw ids: an indirect
+    // recursion must be refused before `saveAppSurveySegment` writes the tree it takes on.
+    await checkReferencedSegmentsForRecursion(referenced, segment.id);
     if (isDeepStrictEqual(filters, currentSurvey.segment.filters ?? [])) return;
     await assertContactsLicence(currentSurvey.workspaceId);
   }
