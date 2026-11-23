@@ -10,6 +10,7 @@ import {
   getSlidingAnimationClass,
   isInsideSurveyRoot,
   mirrorPlacementForDir,
+  resolvePreviewLanguageCode,
   resolvePreviewType,
 } from "./utils";
 
@@ -157,5 +158,36 @@ describe("getSlidingAnimationClass", () => {
 
   test("has no animation class for any other mode", () => {
     expect(getSlidingAnimationClass("null", true)).toBe("");
+  });
+});
+
+describe("resolvePreviewLanguageCode", () => {
+  const language = (code: string, isDefault = false) => ({
+    default: isDefault,
+    language: {
+      id: `lang-${code}`,
+      code,
+      alias: null,
+      workspaceId: "ws",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+  const enabled = [language("en", true), language("de")];
+
+  test("keeps an enabled language picked in the preview", () => {
+    expect(resolvePreviewLanguageCode("de", enabled)).toBe("de");
+  });
+
+  test("keeps the default language", () => {
+    expect(resolvePreviewLanguageCode("default", enabled)).toBe("default");
+  });
+
+  test("falls back to the default once the picked language is no longer enabled", () => {
+    expect(resolvePreviewLanguageCode("de", [language("en", true)])).toBe("default");
+  });
+
+  test("does not treat the default language's own code as a non-default pick", () => {
+    expect(resolvePreviewLanguageCode("en", enabled)).toBe("default");
   });
 });

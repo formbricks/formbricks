@@ -54,6 +54,7 @@ import {
   getModalBackground,
   getPreviewPageUrl,
   mirrorPlacementForDir,
+  resolvePreviewLanguageCode,
   resolvePreviewType,
 } from "./lib/utils";
 
@@ -238,6 +239,11 @@ export const PreviewSurvey = ({
     setActiveLanguageCode(languageCode);
   }, [languageCode]);
 
+  // That reset only fires when the EDITING language is the one disabled, so the preview reads the
+  // active language through `resolvePreviewLanguageCode`: a language picked with the in-survey switch
+  // and disabled since falls back to "default", and a frame toggle never remounts the survey in it.
+  const previewLanguageCode = resolvePreviewLanguageCode(activeLanguageCode, enabledLanguages);
+
   // Sets BOTH, because picking the language the prop already holds is a same-value setState: React
   // bails and the effect above never re-runs. That is exactly the "put it back after an in-survey
   // switch" click — both switches spell the default language `"default"` — so keying the reset on the
@@ -261,7 +267,7 @@ export const PreviewSurvey = ({
 
   const placement = mirrorPlacementForDir(
     surveyPlacement || workspace.placement,
-    isRTLLanguage(jsSurvey, activeLanguageCode) ? "rtl" : "ltr"
+    isRTLLanguage(jsSurvey, previewLanguageCode) ? "rtl" : "ltr"
   );
   const {
     overlay,
@@ -453,7 +459,7 @@ export const PreviewSurvey = ({
         appearance={appearance}
         isBrandingEnabled={workspace.inAppSurveyBranding}
         isRedirectDisabled={true}
-        languageCode={activeLanguageCode}
+        languageCode={previewLanguageCode}
         styling={styling}
         pageFont={pageFont}
         isCardBorderVisible={!styling.highlightBorderColor?.light}
@@ -497,7 +503,7 @@ export const PreviewSurvey = ({
             isBrandingEnabled={workspace.linkSurveyBranding}
             survey={jsLinkSurvey}
             isRedirectDisabled={true}
-            languageCode={activeLanguageCode}
+            languageCode={previewLanguageCode}
             onLanguageChange={setActiveLanguageCode}
             responseCount={42}
             styling={styling}
@@ -514,7 +520,7 @@ export const PreviewSurvey = ({
     showLanguageSelector && (
       <LanguageSelector
         languages={enabledLanguages}
-        languageCode={activeLanguageCode}
+        languageCode={previewLanguageCode}
         setLanguageCode={handleChromeLanguageChange}
         locale={locale}
       />
