@@ -116,7 +116,38 @@ describe("CommandQueue", () => {
     expect(cmd).toHaveBeenCalledTimes(1);
   });
 
-  test("logs errors if a command throws or returns error", async () => {
+  test("drains the queue without logging an error when a command resolves without a result", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const executionOrder: string[] = [];
+
+    try {
+      await queue.add(
+        () => {
+          executionOrder.push("void");
+          return Promise.resolve();
+        },
+        CommandType.UserAction,
+        false
+      );
+      await queue.add(
+        () => {
+          executionOrder.push("next");
+          return { ok: true, data: undefined };
+        },
+        CommandType.UserAction,
+        false
+      );
+
+      await queue.wait();
+
+      expect(executionOrder).toEqual(["void", "next"]);
+      expect(consoleError).not.toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  test("logs errors if a command throws", async () => {
     // Spy on console.error to see if it's called
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {
       return {
@@ -144,6 +175,20 @@ describe("CommandQueue", () => {
 
     expect(consoleErrorSpy).toHaveBeenCalledWith("🧱 Formbricks - Global error: ", expect.any(Error));
     consoleErrorSpy.mockRestore();
+  });
+
+  test("logs a failure returned by a command", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const error = new Error("command failed");
+
+    try {
+      await queue.add(() => ({ ok: false, error }), CommandType.UserAction, false);
+      await queue.wait();
+
+      expect(consoleError).toHaveBeenCalledWith("🧱 Formbricks - Global error: ", error);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   test("resolves wait() after all commands complete", async () => {
