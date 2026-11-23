@@ -332,6 +332,8 @@ export const getContactDirectoryOrganizationId = async (directoryId: string): Pr
 /**
  * Moves the attribute values and survey filters of key `fromId` onto key `toId`, then deletes `fromId`.
  * A contact or survey that already has a row on `toId` keeps that row; its row on `fromId` goes.
+ * Five statements per merged key, run per key by `adoptDirectorylessRows`: an N+1 kept on purpose, since
+ * only keys a previous-release pod wrote during the rolling deploy are merged, and a workspace has few.
  */
 const mergeAttributeKey = async (tx: TClient, fromId: string, toId: string): Promise<void> => {
   await tx.contactAttribute.deleteMany({
