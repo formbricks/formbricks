@@ -1,3 +1,4 @@
+import { mockSurvey } from "@/app/api/(internal)/pipeline/lib/__mocks__/survey-follow-up.mock";
 import {
   SAVED_SURVEY_ID as SURVEY_ID,
   SAVED_SURVEY_WORKSPACE_ID as WORKSPACE_ID,
@@ -19,6 +20,7 @@ import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { SurveySegmentChangedError } from "@/lib/survey/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { SurveyLinkedCreativesError } from "@/modules/ee/creatives/lib/linked-creatives";
+import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { PUT as PUT_DRAFT } from "./draft/route";
 import {
   SURVEY_SAVE_MAX_ARRAY_ITEMS,
@@ -242,6 +244,17 @@ describe("PUT /api/internal/surveys/{surveyId}", () => {
 
     expect(response.status).toBe(400);
     expect(mocks.updateSurvey).not.toHaveBeenCalled();
+  });
+
+  test("saves editor changes to a survey with legacy questions and no blocks", async () => {
+    const survey = storedSurvey({ blocks: [], questions: mockSurvey.questions });
+    mocks.getSurvey.mockResolvedValue(survey);
+
+    const response = await save(buildSurveySavePayload({ ...survey, name: "Renamed survey" }));
+
+    expect(response.status).toBe(200);
+    const written = mocks.updateSurvey.mock.calls[0][0] as TSurvey;
+    expect(written).toMatchObject({ name: "Renamed survey", blocks: [], questions: survey.questions });
   });
 
   describe("PostHog", () => {

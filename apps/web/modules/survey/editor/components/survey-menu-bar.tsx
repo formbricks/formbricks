@@ -712,7 +712,6 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      // A copy without draft flags or legacy questions; the editor's survey is not mutated.
       const surveyToSave = buildSurveySavePayload(localSurvey);
 
       await waitOutAutoSave();
