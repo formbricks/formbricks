@@ -90,6 +90,26 @@ describe("public segments of a shared directory", () => {
     await expect(getSegmentInWorkspace(segment.id, workspaceC)).rejects.toBeInstanceOf(ResourceNotFoundError);
   });
 
+  test("a workspace sees only its own surveys among those a shared segment targets", async () => {
+    const surveyIn = (workspaceId: string, name: string) =>
+      prisma.survey.create({
+        data: { name, type: "app", status: "inProgress", workspaceId },
+        select: { id: true },
+      });
+    const surveyInA = await surveyIn(workspaceA, "A's survey");
+    const surveyInB = await surveyIn(workspaceB, "B's survey");
+    const segment = await publicSegmentIn(workspaceA, "Adults");
+    await prisma.segment.update({
+      where: { id: segment.id },
+      data: { surveys: { connect: [{ id: surveyInA.id }, { id: surveyInB.id }] } },
+    });
+
+    const [listedInB] = await getSegments(workspaceB, {});
+    expect(listedInB.surveys).toEqual([surveyInB.id]);
+    expect(listedInB.activeSurveys).toEqual([{ id: surveyInB.id, name: "B's survey" }]);
+    expect(listedInB.inactiveSurveys).toEqual([]);
+  });
+
   test("titles are unique per directory, not per workspace", async () => {
     await publicSegmentIn(workspaceA, "Adults");
 

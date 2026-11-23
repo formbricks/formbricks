@@ -13,7 +13,10 @@ import {
   CONTACT_DIRECTORY_MISSING_MESSAGE,
   getWorkspaceContactDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
-import { selectSegment, transformPrismaSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  selectSegmentForWorkspace,
+  transformPrismaSegment,
+} from "@/modules/ee/contacts/segments/lib/segments";
 import { collectSegmentFilterSurveyIds, serializeV3Segment } from "../serializers";
 import { SEGMENTS_CURSOR_KIND, parseV3SegmentsListQuery } from "./parse-v3-segments-list-query";
 import {
@@ -121,7 +124,7 @@ export async function listV3Segments({
         where: pageWhere,
         orderBy: buildV3SegmentsOrderBy(query.sortBy),
         take: query.limit + 1,
-        select: { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } },
+        select: selectSegmentForWorkspace(authResult.workspaceId, visibleSurveyWhere),
       }),
       query.includeTotalCount ? prisma.segment.count({ where }) : Promise.resolve(null),
     ]);

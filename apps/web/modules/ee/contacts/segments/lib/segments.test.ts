@@ -199,14 +199,17 @@ describe("Segment Service Tests", () => {
       expect(getWorkspaceContactDirectory).toHaveBeenCalledWith("workspace-id-mock");
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: workspaceSegmentsWhere,
-        select: selectSegment,
+        select: {
+          ...selectSegment,
+          surveys: { ...selectSegment.surveys, where: { workspaceId: "workspace-id-mock" } },
+        },
       });
       expect(validateInputs).toHaveBeenCalledWith(["workspace-id-mock", expect.any(Object)]);
     });
 
     // ENG-3282: segments reach the browser on the survey pages, so their survey references go through the
     // viewer's visibility clause in SQL.
-    test("reads each segment's survey references through the visibility clause", async () => {
+    test("reads each segment's survey references of the workspace through the visibility clause", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
       const visibleSurveyWhere = { OR: [{ visibility: "workspace" as const }, { ownerId: "user-1" }] };
 
@@ -214,7 +217,13 @@ describe("Segment Service Tests", () => {
 
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: workspaceSegmentsWhere,
-        select: { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } },
+        select: {
+          ...selectSegment,
+          surveys: {
+            ...selectSegment.surveys,
+            where: { workspaceId: "workspace-id-mock", AND: [visibleSurveyWhere] },
+          },
+        },
       });
     });
 

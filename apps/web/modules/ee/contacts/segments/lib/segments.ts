@@ -73,6 +73,20 @@ export const selectSegment = {
 export type PrismaSegment = Prisma.SegmentGetPayload<{ select: typeof selectSegment }>;
 
 /**
+ * `selectSegment` for a list `workspaceId` reads: the segment's surveys are only that workspace's, through
+ * the viewer's visibility clause. A shared segment can target surveys of every workspace on its directory
+ * (decision 24); the names and ids of another workspace's surveys never leave the server.
+ */
+export const selectSegmentForWorkspace = (workspaceId: string, visibleSurveyWhere: Prisma.SurveyWhereInput) =>
+  ({
+    ...selectSegment,
+    surveys: {
+      ...selectSegment.surveys,
+      where: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
+    },
+  }) satisfies Prisma.SegmentSelect;
+
+/**
  * A segment as the service reads it, with the contact directory it belongs to. Every scope check compares
  * that directory (decision 24): `workspaceId` is only the workspace the segment was created in.
  */
@@ -120,14 +134,16 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
 });
 
 /**
- * `getSegments`' survey-reference scope for the server-side callers that need every survey a segment is
- * attached to, visible to the viewer or not — reference validation and copy naming, whose results never
- * reach a browser. A shared constant, not an inline `{}`, so `reactCache` keeps its dedupe and every
+ * `getSegments`' survey-reference scope for the server-side callers that need every survey of the workspace
+ * a segment is attached to, visible to the viewer or not — reference validation and copy naming, whose
+ * results never reach a browser. A shared constant, not an inline `{}`, so `reactCache` keeps its dedupe and every
  * unscoped caller is greppable.
  */
 export const ALL_SEGMENT_SURVEY_REFS: Prisma.SurveyWhereInput = Object.freeze({});
 
 /**
+ * Each segment's `surveys` / `activeSurveys` / `inactiveSurveys` are the workspace's own surveys only
+ * (`selectSegmentForWorkspace`).
  * @param visibleSurveyWhere ENG-3282: the `Survey` clause each segment's `activeSurveys` /
  *   `inactiveSurveys` are read through. Required, so no page can forget it and ship restricted survey
  *   names and ids to the browser: pass `getUserVisibleSurveyWhere(...)` for anything a viewer sees, and
@@ -145,10 +161,7 @@ export const getSegments = reactCache(
 
       const segments = await prisma.segment.findMany({
         where: whereSegmentsOfWorkspace(workspaceId, directory.id),
-        select:
-          Object.keys(visibleSurveyWhere).length > 0
-            ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
-            : selectSegment,
+        select: selectSegmentForWorkspace(workspaceId, visibleSurveyWhere),
       });
 
       if (!segments) {
