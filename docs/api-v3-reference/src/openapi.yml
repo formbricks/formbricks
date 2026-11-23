@@ -66,6 +66,15 @@ info:
     login: the token in its path is the credential.
 
 
+    **Member attributes**: an organization's Member attribute keys (**GET**, **POST
+    /api/v3/organizations/{organizationId}/member-attribute-keys**; **GET**, **PATCH**, **DELETE
+    /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}**) and members' values for them
+    (**GET /api/v3/organizations/{organizationId}/member-attributes**, **PUT
+    /api/v3/organizations/{organizationId}/member-attributes/bulk**), which Dashboard Viewer access
+    matches on. Owners and Managers, or an API key with Access Control read or write; they need Access
+    Control and Dashboards.
+
+
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**;
     **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST
     /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**,
@@ -527,6 +536,14 @@ paths:
     $ref: paths/api_v3_tags_{tagId}_merge.yml
   /api/v3/workspaces/{workspaceId}/custom-css:
     $ref: paths/api_v3_workspaces_{workspaceId}_custom-css.yml
+  /api/v3/organizations/{organizationId}/member-attribute-keys:
+    $ref: paths/api_v3_organizations_{organizationId}_member-attribute-keys.yml
+  /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}:
+    $ref: paths/api_v3_organizations_{organizationId}_member-attribute-keys_{keyId}.yml
+  /api/v3/organizations/{organizationId}/member-attributes:
+    $ref: paths/api_v3_organizations_{organizationId}_member-attributes.yml
+  /api/v3/organizations/{organizationId}/member-attributes/bulk:
+    $ref: paths/api_v3_organizations_{organizationId}_member-attributes_bulk.yml
   /api/v3/feedbackRecords:
     $ref: paths/api_v3_feedbackRecords.yml
   /api/v3/feedbackRecords/search/semantic:

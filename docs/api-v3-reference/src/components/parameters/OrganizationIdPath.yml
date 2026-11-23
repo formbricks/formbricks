@@ -1,0 +1,7 @@
+in: path
+name: organizationId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Organization identifier. An API key only ever reaches its own organization.

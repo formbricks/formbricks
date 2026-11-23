@@ -1,0 +1,86 @@
+type: object
+additionalProperties: false
+required:
+  - summary
+  - rows
+properties:
+  summary:
+    type: object
+    additionalProperties: false
+    required:
+      - updatedMembers
+      - updatedInvites
+      - unknownEmails
+      - invalid
+    properties:
+      updatedMembers:
+        type: integer
+        minimum: 0
+      updatedInvites:
+        type: integer
+        minimum: 0
+      unknownEmails:
+        type: integer
+        minimum: 0
+      invalid:
+        type: integer
+        minimum: 0
+  rows:
+    type: array
+    description: One outcome per request row, in request order.
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - index
+        - email
+        - status
+      properties:
+        index:
+          type: integer
+          minimum: 0
+          description: The row's position in the request.
+        email:
+          type: string
+          description: The row's email, trimmed and lowercased.
+        status:
+          type: string
+          enum:
+            - updated_member
+            - updated_invite
+            - unknown_email
+            - invalid
+          description: >-
+            `updated_member` and `updated_invite` were written; `unknown_email` names no member or pending
+            invite (invite the person first); `invalid` lists its `problems` and wrote nothing.
+        userId:
+          type: string
+          description: The member written, for `updated_member`.
+        inviteIds:
+          type: array
+          items:
+            type: string
+          description: The pending invites written, for `updated_invite`.
+        problems:
+          type: array
+          description: Why the row was refused, for `invalid`.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - name
+              - reason
+              - code
+            properties:
+              name:
+                type: string
+                description: "`email` or `attributes.<key>`."
+              reason:
+                type: string
+              code:
+                type: string
+                enum:
+                  - invalid_reference
+                  - limit_exceeded
+                  - duplicate_identifier
+                  - unsupported_field

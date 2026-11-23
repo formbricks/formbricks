@@ -1,0 +1,21 @@
+description: >-
+  Forbidden. `code: forbidden` when the caller is not an Owner or Manager of the organization (or, for
+  writes, is below the organization's user-management floor), when an API key belongs to another
+  organization or lacks Access Control read (reads) or write (writes), or when the key named does not
+  exist in the organization (404 is not used, to avoid leaking existence).
+  `code: member_attributes_plan_required` when the caller is authorized but the organization does not
+  have Access Control and Dashboards — checked after authorization, so a caller without access never
+  learns the organization's plan.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

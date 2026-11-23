@@ -948,6 +948,10 @@ async function main(): Promise<void> {
       dashboardId: CONTRACT_IDS.DASHBOARD_READ,
       widgetId: CONTRACT_IDS.WIDGET_READ,
       filterId: CONTRACT_IDS.DASHBOARD_FILTER,
+      // The Member attribute operations (ENG-7473) run against the seed organization. The seed key has no
+      // Access Control grant (seed.ts), so they are checked against their documented 403 on a real
+      // organization rather than a generated id.
+      organizationId: SEED_IDS.ORGANIZATION,
     },
     operations: {
       getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },

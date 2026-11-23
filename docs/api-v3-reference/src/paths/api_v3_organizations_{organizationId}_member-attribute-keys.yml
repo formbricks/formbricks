@@ -1,0 +1,99 @@
+get:
+  operationId: listMemberAttributeKeysV3
+  summary: List Member attribute keys
+  description: |
+    Returns the organization's Member attribute keys, oldest first (at most 50, so the list is not
+    paginated), each with how many members hold a value for it. The built-in Email attribute is the login
+    email and is not listed.
+
+    Needs an Owner or Manager session, or an API key of this organization with Access Control read or
+    write. Member attributes need Access Control and Dashboards (**403** `member_attributes_plan_required`
+    without them).
+  tags:
+    - V3 Member Attributes
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+  responses:
+    "200":
+      description: The organization's Member attribute keys
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: array
+                maxItems: 50
+                items:
+                  $ref: ../components/schemas/MemberAttributeKeyListItem.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3MemberAttributesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+post:
+  operationId: createMemberAttributeKeyV3
+  summary: Create a Member attribute key
+  description: |
+    Adds a key to the organization's list, such as `country`. Its `key` never changes afterwards; its
+    label and description can. An organization can have at most 50 keys (**422** naming `key` with
+    `limit_exceeded`); a `key` it already has answers **409**.
+
+    Needs an Owner or Manager session above the organization's user-management floor, or an API key of
+    this organization with Access Control write. Audited.
+  tags:
+    - V3 Member Attributes
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/MemberAttributeKeyCreateRequest.yml
+  responses:
+    "201":
+      description: The created key
+      headers:
+        Location:
+          schema:
+            type: string
+          description: The key's URL
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/MemberAttributeKeyResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3MemberAttributesForbidden.yml
+    "409":
+      $ref: ../components/responses/V3MemberAttributeKeyConflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -1,0 +1,61 @@
+get:
+  operationId: listMemberAttributesV3
+  summary: List members' Member attribute values
+  description: |
+    Returns members' and pending invites' Member attribute values, keyed by attribute `key`: every
+    member first, then every pending invite. Use `meta.nextCursor` for the next page. `search` matches
+    name or email, ignoring case.
+
+    Needs an Owner or Manager session, or an API key of this organization with Access Control read or
+    write. Member attributes need Access Control and Dashboards (**403** `member_attributes_plan_required`
+    without them).
+  tags:
+    - V3 Member Attributes
+  parameters:
+    - $ref: ../components/parameters/OrganizationIdPath.yml
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 250
+        default: 50
+      description: Page size (max 250).
+    - $ref: ../components/parameters/CursorQuery.yml
+    - in: query
+      name: search
+      schema:
+        type: string
+        maxLength: 255
+      description: Case-insensitive substring match over name and email.
+  responses:
+    "200":
+      description: One page of members' values
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/MemberAttributeRow.yml
+              meta:
+                $ref: ../components/schemas/CursorPaginationMeta.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3MemberAttributesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
