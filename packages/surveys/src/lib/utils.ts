@@ -304,6 +304,20 @@ const mimeTypes: Record<string, string> = {
 export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
 
 /**
+ * Whether a file upload question takes a file of this name: its last extension, in any case, must be
+ * one of the question's allowed extensions. A question without a restriction takes any file.
+ */
+export const isFileTypeAllowed = (
+  fileName: string,
+  allowedFileExtensions?: readonly TAllowedFileExtension[]
+): boolean => {
+  if (!allowedFileExtensions || allowedFileExtensions.length === 0) return true;
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  if (!extension) return false;
+  return allowedFileExtensions.includes(extension as TAllowedFileExtension);
+};
+
+/**
  * Mirrors a widget placement horizontally for a right-to-left survey.
  *
  * Placement is authored once, in LTR terms, and is not per-language — so an Arabic respondent would

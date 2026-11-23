@@ -12,6 +12,7 @@ import {
   getShuffledChoicesIds,
   getShuffledRowIndices,
   getSurveyLanguageTag,
+  isFileTypeAllowed,
   isRTL,
   isRTLLanguage,
   mirrorPlacementForDir,
@@ -30,6 +31,17 @@ describe("getMimeType", () => {
     test(`should return "${expectedMimeType}" for extension "${extension}"`, () => {
       expect(getMimeType(extension as TAllowedFileExtension)).toBe(expectedMimeType);
     });
+  });
+});
+
+describe("isFileTypeAllowed", () => {
+  test("takes a file whose extension the question allows, in any case", () => {
+    expect(isFileTypeAllowed("photo.png", ["png", "pdf"])).toBe(true);
+    expect(isFileTypeAllowed("Report.PDF", ["png", "pdf"])).toBe(true);
+  });
+
+  test("refuses a file whose extension the question does not allow", () => {
+    expect(isFileTypeAllowed("report.pdf", ["png"])).toBe(false);
   });
 });
 
