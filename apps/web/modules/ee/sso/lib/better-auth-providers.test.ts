@@ -1012,18 +1012,29 @@ describe("SSO provider config cannot fail Better Auth's init (ENG-2779)", () => 
     vi.unstubAllGlobals();
   });
 
-  test("no generic provider requires id_token verification", async () => {
-    for (const tenant of [undefined, "common", "organizations", "contoso.onmicrosoft.com"]) {
-      const m = await loadProviders({ ...ALL_ON, AZUREAD_TENANT_ID: tenant });
+  // Each axis that moves a provider between discovery and explicit endpoints, since only a provider
+  // without a `discoveryUrl` turns `requireIdTokenVerification` into a throw.
+  const ENDPOINT_SHAPES: [string, Partial<MockConstants>][] = [
+    ["multi-tenant Azure", { AZUREAD_TENANT_ID: undefined }],
+    ["single-tenant Azure", { AZUREAD_TENANT_ID: "contoso.onmicrosoft.com" }],
+    [
+      "OIDC at a Microsoft template authority",
+      { OIDC_ISSUER: "https://login.microsoftonline.com/common/v2.0" },
+    ],
+  ];
+
+  test.each(ENDPOINT_SHAPES)(
+    "no generic provider requires id_token verification: %s",
+    async (_label, overrides) => {
+      const m = await loadProviders({ ...ALL_ON, ...overrides });
       expect(
         m.ssoGenericOAuthConfig.filter((c) => c.requireIdTokenVerification).map((c) => c.providerId)
       ).toEqual([]);
     }
-  });
+  );
 
   test.each([
-    ["multi-tenant Azure, credentials set", { AZUREAD_TENANT_ID: undefined }],
-    ["single-tenant Azure, credentials set", { AZUREAD_TENANT_ID: "contoso.onmicrosoft.com" }],
+    ...ENDPOINT_SHAPES,
     [
       "credentials unset",
       {
