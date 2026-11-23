@@ -10,4 +10,5 @@ A team can limit its Dashboard Viewers to selected dashboards, and a dashboard p
 
 - A person's dashboard and page access is the union of their teams' grants. A team without a dashboard limit reaches every dashboard in its workspaces, as today. A page with no team limit is open to everyone who can open its dashboard. A page limit only narrows a dashboard; it never grants one.
 - Limits bind only Dashboard Viewers. Owners, Managers and the Member role keep reaching every dashboard and page through `workspace#read`.
-- Self-hosters apply the new schema and run the relationship backfill for dashboards and pages as an upgrade step. Until they do, the old `workspace#dashboard_read` path still answers.
+- Self-hosters apply the new schema with `formbricks-authzed upgrade prepare`, the step every schema-changing release already needs, because the app never writes `schema.zed` itself and SpiceDB refuses relationships its schema does not declare.
+- Existing dashboards were never projected, and the outbox only carries writes made after its triggers exist, so every existing dashboard and its new Overview page has to be projected once, or a fail-closed check would deny every Dashboard Viewer. The migration that creates the Overview pages also queues their outbox rows, so the normal outbox delivery does this copy and no separate backfill command is needed.
