@@ -96,22 +96,46 @@ const countsById = <T extends { _count: { _all: number } }>(
   return counts;
 };
 
-/** What each directory holds, in four grouped queries however many directories there are. */
+/**
+ * Contacts per directory. The settings list shows the number: one grouped count over the page's directories
+ * on the indexed `Contact.directoryId` (to check at production size, where a directory can hold millions).
+ * The move only needs to know whether there are any, so it reads one row per directory (`exists`, counted
+ * as 1) instead of counting them under its lock.
+ */
+const tallyContacts = async (
+  client: TClient,
+  directoryIds: string[],
+  mode: "count" | "exists"
+): Promise<Map<string, number>> => {
+  if (mode === "exists") {
+    const found = await Promise.all(
+      directoryIds.map((directoryId) =>
+        client.contact.findFirst({ where: { directoryId }, select: { id: true } })
+      )
+    );
+    return new Map(directoryIds.filter((_, index) => found[index] !== null).map((id) => [id, 1]));
+  }
+  const groups = await client.contact.groupBy({
+    by: ["directoryId"],
+    where: { directoryId: { in: directoryIds } },
+    _count: { _all: true },
+  });
+  return countsById(groups, (row) => row.directoryId);
+};
+
+/** What each directory holds: grouped counts per kind, and contacts as `tallyContacts` reads them. */
 const getDirectoryContents = async (
   client: TClient,
-  directoryIds: string[]
+  directoryIds: string[],
+  contactTally: "count" | "exists" = "count"
 ): Promise<Map<string, TDirectoryContents>> => {
-  const [workspaceGroups, contactGroups, segmentGroups, keyGroups] = await Promise.all([
+  const [workspaceGroups, contacts, segmentGroups, keyGroups] = await Promise.all([
     client.workspace.groupBy({
       by: ["contactDirectoryId"],
       where: { contactDirectoryId: { in: directoryIds } },
       _count: { _all: true },
     }),
-    client.contact.groupBy({
-      by: ["directoryId"],
-      where: { directoryId: { in: directoryIds } },
-      _count: { _all: true },
-    }),
+    tallyContacts(client, directoryIds, contactTally),
     // Private segments are surveys' own filters: they move with the workspace instead of blocking it.
     client.segment.groupBy({
       by: ["directoryId"],
@@ -135,7 +159,6 @@ const getDirectoryContents = async (
   ]);
 
   const workspaces = countsById(workspaceGroups, (row) => row.contactDirectoryId);
-  const contacts = countsById(contactGroups, (row) => row.directoryId);
   const segments = countsById(segmentGroups, (row) => row.directoryId);
   const keys = countsById(keyGroups, (row) => row.directoryId);
 
@@ -469,7 +492,7 @@ const moveWorkspacesIntoDirectory = async (
       ORDER BY "id"
       FOR UPDATE
     `;
-    const contents = await getDirectoryContents(tx, oldDirectoryIds);
+    const contents = await getDirectoryContents(tx, oldDirectoryIds, "exists");
     const leavable = await getLeavableDirectoryIds(tx, oldDirectories, contents, directoryId);
 
     const notMovable = moving

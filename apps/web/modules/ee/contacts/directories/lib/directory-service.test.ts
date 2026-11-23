@@ -222,12 +222,19 @@ const setup = ({
         .map((d) => ({ directoryId: d.id, _count: { _all: d[field] } }));
     };
   db.contact.groupBy.mockImplementation(contentCount("contacts", "count contacts"));
-  // Rows a previous-release pod wrote for a workspace with no directory: none here, the integration
-  // test covers their adoption.
-  db.contact.findFirst.mockImplementation(async ({ where }: { where: { workspaceId?: string } }) => {
-    log.push(`check orphan contacts ${where.workspaceId}`);
-    return null;
-  });
+  // Under the move's lock only whether a directory has a contact is read. Rows a previous-release pod
+  // wrote for a workspace with no directory: none here, the integration test covers their adoption.
+  db.contact.findFirst.mockImplementation(
+    async ({ where }: { where: { directoryId: string | null; workspaceId?: string } }) => {
+      if (where.directoryId === null) {
+        log.push(`check orphan contacts ${where.workspaceId}`);
+        return null;
+      }
+      log.push(`check contacts ${where.directoryId}`);
+      const directory = directories.find((d) => d.id === where.directoryId);
+      return (directory?.contacts ?? 0) > 0 ? { id: "contact" } : null;
+    }
+  );
   db.contact.updateMany.mockResolvedValue({ count: 0 });
   // A directory's keys are its defaults; a workspace with no directory has none (see above).
   db.contactAttributeKey.findMany.mockImplementation(
@@ -402,7 +409,7 @@ describe("createContactDirectory", () => {
       "lock workspaces w1,w2",
       "lock directories d1",
       "count workspaces",
-      "count contacts",
+      "check contacts d1",
       "count public segments",
       "count blocking keys",
       "read private segment filters",
