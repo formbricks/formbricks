@@ -177,10 +177,20 @@ describe("getRichTextLinks with recall", () => {
     ["a fallback holding a lone quote", "<p><a #recall:q9/fallback:'#>go</a></p>"],
     ["a token inside a quoted attribute value", '<p><a title="#recall:q9/fallback:x#">go</a></p>'],
     ["a token that is the tag name", "<p><#recall:q9/fallback:x#>go</p>"],
+    // The style stripping removes an unquoted style value whole, while the real value may split it.
+    ["a token in an unquoted style value", "<p><a style=#recall:q9/fallback:x#>go</a></p>"],
+    [
+      "a token in a style value inside a comment",
+      "<p>hi</p><!-- <p style=#recall:q9/fallback:x#--> <a>go</a>",
+    ],
+    [
+      "a token in a style value beside a title token",
+      "<p><a title=#recall:q9/fallback:x# style=#recall:q9/fallback:y#>go</a></p>",
+    ],
   ])("counts a token inside markup, whose runtime value could make it a link: %s", (_case, html) => {
-    expect([...getRichTextLinks(withHeadline(html))]).toEqual([
-      expect.stringMatching(/^recall in a tag: #recall:q9/),
-    ]);
+    const links = [...getRichTextLinks(withHeadline(html))];
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) expect(link).toMatch(/^recall in a tag: #recall:q9/);
   });
 
   test("finds no link in a plain recall token", () => {
