@@ -60,6 +60,7 @@ import { ResponseQueue } from "@/lib/response-queue";
 import { getPreviousBlockId, getRestorableHistory, isFinishedBlockId } from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
+import { createSurveySubmissionGuard } from "@/lib/survey-submission";
 import { useOnlineStatus } from "@/lib/use-online-status";
 import { cn, findBlockByElementId, getDefaultLanguageCode, getElementsFromSurveyBlocks } from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
@@ -217,6 +218,25 @@ export function Survey({
     [onResponseCreated]
   );
 
+  // Block-based navigation: track current block ID instead of question ID
+  const [submissionGuard] = useState(() => {
+    let initialBlockId = localSurvey.blocks[0]?.id;
+    if (startAtQuestionId) {
+      const startBlock = findBlockByElementId(localSurvey.blocks, startAtQuestionId);
+      initialBlockId = startBlock?.id || initialBlockId;
+    } else if (localSurvey.welcomeCard.enabled) {
+      initialBlockId = "start";
+    }
+    return createSurveySubmissionGuard(initialBlockId);
+  });
+
+  const [cardVisit, setCardVisit] = useState(submissionGuard.current);
+  const blockId = cardVisit.blockId;
+  const setBlockId = useCallback(
+    (nextBlockId: string) => setCardVisit(submissionGuard.navigate(nextBlockId)),
+    [submissionGuard]
+  );
+
   const responseQueue = useMemo(() => {
     if (appUrl && workspaceId && surveyState) {
       return new ResponseQueue(
@@ -277,6 +297,7 @@ export function Survey({
     offlinePersistEnabled,
     persistSurveyStateSnapshot,
     triggerResponseCreatedOnce,
+    setBlockId,
     survey.id,
   ]);
 
@@ -319,19 +340,6 @@ export function Survey({
 
   const autoFocusEnabled = autoFocus ?? window.self === window.top;
 
-  // Block-based navigation: track current block ID instead of question ID
-  const [blockId, setBlockId] = useState(() => {
-    if (startAtQuestionId) {
-      // If starting at a specific question, find its parent block
-      const startBlock = findBlockByElementId(localSurvey.blocks, startAtQuestionId);
-      return startBlock?.id || localSurvey.blocks[0]?.id;
-    } else if (localSurvey.welcomeCard.enabled) {
-      return "start";
-    }
-
-    return localSurvey.blocks[0]?.id;
-  });
-
   // True once the user navigated between cards (Next/Back/auto-progress). Moving focus into
   // the new card is then a response to a user action (safe under WCAG 3.2.x), unlike the
   // initial render of an embedded survey, where stealing focus from the host page is not.
@@ -345,7 +353,8 @@ export function Survey({
   );
   const [isSurveyFinished, setIsSurveyFinished] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
-  const [loadingElement, setLoadingElement] = useState(false);
+  const [loadingCardVisit, setLoadingCardVisit] = useState<typeof cardVisit | null>(null);
+  const loadingElement = loadingCardVisit === cardVisit;
   const [history, setHistory] = useState<string[]>([]);
   const isNavigatingBackRef = useRef(false);
   /**
@@ -545,7 +554,7 @@ export function Survey({
         setBlockId(value);
       });
     }
-  }, [getSetBlockId]);
+  }, [getSetBlockId, setBlockId]);
 
   useEffect(() => {
     if (getSetResponseData) {
@@ -1078,7 +1087,7 @@ export function Survey({
     if (active instanceof HTMLElement) active.blur();
   };
 
-  const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
+  const submitResponse = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     // The survey is already over — an ending card or the "end" sentinel is showing. Re-sending the
     // response would repeat `finished: true`, which the server rejects with a 400, and the error card
     // would then replace the ending. Nothing is left to record, so the submit is a no-op; returning
@@ -1093,16 +1102,16 @@ export function Survey({
     const respondedElementIds = Object.keys(surveyResponseData);
     const firstRespondedElementId = respondedElementIds[0];
 
-    setLoadingElement(true);
+    setLoadingCardVisit(cardVisit);
 
     if (isSpamProtectionEnabled && !surveyState?.responseId && getRecaptchaToken) {
       const token = await getRecaptchaToken();
+      if (!submissionGuard.isCurrent(cardVisit, blockId)) return;
       if (responseQueue && token) {
         responseQueue.setResponseRecaptchaToken(token);
       } else {
         setShowError(true);
         setErrorType(TResponseErrorCodesEnum.RecaptchaError);
-        setLoadingElement(false);
         return;
       }
     }
@@ -1174,11 +1183,25 @@ export function Survey({
         updatedAt: Date.now(),
       });
     }
-
-    setLoadingElement(false);
   };
 
-  const onBack = (): void => {
+  const onSubmit = async (
+    sourceBlockId: string,
+    surveyResponseData: TResponseData,
+    responsettc: TResponseTtc
+  ) => {
+    const release = submissionGuard.begin(cardVisit, sourceBlockId);
+    if (!release) return;
+    try {
+      await submitResponse(surveyResponseData, responsettc);
+    } finally {
+      if (submissionGuard.isCurrent(cardVisit, sourceBlockId)) setLoadingCardVisit(null);
+      release();
+    }
+  };
+
+  const onBack = (sourceBlockId: string): void => {
+    if (!submissionGuard.isCurrent(cardVisit, sourceBlockId)) return;
     const prevBlockId = getPreviousBlockId(localSurvey, blockId, history);
 
     // Nothing precedes the current card — the respondent is on the first block, or `blockId` is an
@@ -1286,7 +1309,7 @@ export function Survey({
             fileUrl={localSurvey.welcomeCard.fileUrl}
             videoUrl={localSurvey.welcomeCard.videoUrl}
             buttonLabel={localSurvey.welcomeCard.buttonLabel}
-            onSubmit={onSubmit}
+            onSubmit={(data, ttc) => onSubmit("start", data, ttc)}
             survey={localSurvey}
             languageCode={selectedLanguage}
             responseCount={responseCount}
@@ -1339,8 +1362,8 @@ export function Survey({
               }}
               value={responseData}
               onChange={onChange}
-              onSubmit={onSubmit}
-              onBack={onBack}
+              onSubmit={(data, ttc) => onSubmit(block.id, data, ttc)}
+              onBack={() => onBack(block.id)}
               ttc={ttc}
               setTtc={setTtc}
               onFileUpload={onFileUpload}
