@@ -693,7 +693,8 @@ export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 const reviveFilterDates = (filter: unknown): unknown => {
   if (typeof filter !== "object" || filter === null || !("createdAt" in filter)) return filter;
   const { createdAt } = filter;
-  if (typeof createdAt !== "object" || createdAt === null) return filter;
+  // An array is an object too; rebuilding it would turn `[]` into `{}`, which the schema accepts.
+  if (typeof createdAt !== "object" || createdAt === null || Array.isArray(createdAt)) return filter;
   const revive = (value: unknown) => (typeof value === "string" ? new Date(value) : value);
   const { min, max } = createdAt as { min?: unknown; max?: unknown };
   return {

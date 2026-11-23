@@ -264,6 +264,10 @@ describe("ZResponseFilterCriteriaFromJson", () => {
     );
     expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: { max: 42 } }).success).toBe(false);
     expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: "2026-11-06" }).success).toBe(false);
+    expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: [] }).success).toBe(false);
+    expect(
+      ZResponseFilterCriteriaFromJson.safeParse({ createdAt: ["2026-11-06T00:00:00.000Z"] }).success
+    ).toBe(false);
   });
 });
 
