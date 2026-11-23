@@ -21,33 +21,11 @@ describe("getRichTextLinks", () => {
     ["a slash instead of a space", '<p><a/href="https://example.com/a">this</a></p>'],
     ["a > inside a quoted attribute", '<p><a title=">" href="https://example.com/a">this</a></p>'],
     ["an unquoted href", "<p><a href=https://example.com/a>this</a></p>"],
-    // The renderer's DOMPurify keeps SVG and MathML, where a link is not an HTML <a href>.
-    ["an SVG xlink:href", '<svg><a xlink:href="https://example.com/a"><text y="9">x</text></a></svg>'],
-    ["an SVG href", '<svg><a href="https://example.com/a"><text y="9">x</text></a></svg>'],
-    ["a MathML href on <math>", '<math href="https://example.com/a"><mi>x</mi></math>'],
-    ["a MathML href on a child", '<math><mi href="https://example.com/a">x</mi></math>'],
-    [
-      "an image-map area",
-      '<map name="m"><area href="https://example.com/a" shape="rect" coords="0,0,9,9"></map>',
-    ],
-    ["a form action", '<form action="https://example.com/a"><button>go</button></form>'],
     // The renderer strips style attributes from the raw string before it parses, which can join the
     // text around one into a link attribute.
     ["an href joined by removing a style", '<p><a hr style="x"ef="https://example.com/a">go</a></p>'],
     ["an href joined across single quotes", "<p><a hr style='x'ef='https://example.com/a'>go</a></p>"],
     ["an href joined before an unquoted value", '<p><a h style="x"ref=https://example.com/a>go</a></p>'],
-    [
-      "an SVG xlink:href joined by removing a style",
-      '<svg><a xlink:hr style="x"ef="https://example.com/a"><text y="9">x</text></a></svg>',
-    ],
-    [
-      "a MathML href joined by removing a style",
-      '<math hr style="x"ef="https://example.com/a"><mi>x</mi></math>',
-    ],
-    [
-      "a form action joined by removing a style",
-      '<form acti style="x"on="https://example.com/a"><button>go</button></form>',
-    ],
   ])("finds %s", (_case, html) => {
     expect(getRichTextLinks(withHeadline(html))).toEqual(new Set(["https://example.com/a"]));
   });
@@ -62,6 +40,35 @@ describe("getRichTextLinks", () => {
     ["split attributes the renderer leaves apart", '<p><a hr style=x ef="https://example.com/a">go</a></p>'],
     ["a formaction the renderer strips", '<button formaction="https://example.com/a">go</button>'],
     ["an SVG <use> the renderer strips", '<svg><use href="https://example.com/a.svg#x"></use></svg>'],
+    // The renderer's allow-list (ENG-7270) keeps only the editor's markup, so SVG, MathML, image maps and
+    // forms never reach a respondent, and neither do the links inside them.
+    [
+      "an SVG xlink:href the renderer strips",
+      '<svg><a xlink:href="https://example.com/a"><text y="9">x</text></a></svg>',
+    ],
+    [
+      "an SVG href the renderer strips",
+      '<svg><a href="https://example.com/a"><text y="9">x</text></a></svg>',
+    ],
+    ["a MathML href on <math> the renderer strips", '<math href="https://example.com/a"><mi>x</mi></math>'],
+    ["a MathML href on a child the renderer strips", '<math><mi href="https://example.com/a">x</mi></math>'],
+    [
+      "an image-map area the renderer strips",
+      '<map name="m"><area href="https://example.com/a" shape="rect" coords="0,0,9,9"></map>',
+    ],
+    ["a form action the renderer strips", '<form action="https://example.com/a"><button>go</button></form>'],
+    [
+      "an SVG xlink:href joined by removing a style",
+      '<svg><a xlink:hr style="x"ef="https://example.com/a"><text y="9">x</text></a></svg>',
+    ],
+    [
+      "a MathML href joined by removing a style",
+      '<math hr style="x"ef="https://example.com/a"><mi>x</mi></math>',
+    ],
+    [
+      "a form action joined by removing a style",
+      '<form acti style="x"on="https://example.com/a"><button>go</button></form>',
+    ],
   ])("finds no link in %s", (_case, html) => {
     expect(getRichTextLinks(withHeadline(html)).size).toBe(0);
   });

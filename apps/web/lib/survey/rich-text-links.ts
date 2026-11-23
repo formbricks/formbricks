@@ -18,9 +18,9 @@ export type TRichTextSurveyContent = {
 const MAY_HOLD_LINK = /href|action/i;
 
 /**
- * The URL an attribute navigates to, if it is one. The renderer's DOMPurify keeps SVG and MathML, so a
- * link is any `href` in any namespace (`<a href>`, `<area href>`, SVG `xlink:href`, MathML `href` on
- * any element), plus a `<form action>`, which its submit button follows.
+ * The URL an attribute navigates to, if it is one. The renderer's allow-list (ENG-7270) keeps only the
+ * editor's markup, so today only `<a href>` survives it; any `href` in any namespace and a `<form action>`
+ * still count, so this check keeps holding if that list ever widens.
  */
 const getLinkTarget = (element: Element, attribute: Attr): string | undefined => {
   const isLink =
