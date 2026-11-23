@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
+import { FORMBRICKS_ENVIRONMENT_ID_LS, removeLocalStorage } from "@/lib/localStorage";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
@@ -96,7 +96,7 @@ export const OrganizationActions = ({
       toast.success(t("workspace.settings.general.member_deleted_successfully"));
       router.refresh();
       setLoading(false);
-      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      removeLocalStorage(FORMBRICKS_ENVIRONMENT_ID_LS);
       router.push("/");
     } catch (err) {
       toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`);

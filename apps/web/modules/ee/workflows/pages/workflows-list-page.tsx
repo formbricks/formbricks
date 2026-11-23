@@ -137,7 +137,7 @@ export const WorkflowsListPage = ({
   const router = useRouter();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
-  useEffect(() => removeStaleFilterStorage(globalThis.window?.localStorage), []);
+  useEffect(() => removeStaleFilterStorage(), []);
 
   const filterProperties = getWorkflowFilterProperties(t);
   const tableState = useTableUrlState({

@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { deleteOrganizationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
+import { FORMBRICKS_ENVIRONMENT_ID_LS, removeLocalStorage } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -40,9 +40,7 @@ export const DeleteOrganization = ({
         return;
       }
       toast.success(t("workspace.settings.general.organization_deleted_successfully"));
-      if (typeof localStorage !== "undefined") {
-        localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
-      }
+      removeLocalStorage(FORMBRICKS_ENVIRONMENT_ID_LS);
       router.push("/");
     } catch {
       toast.error(t("workspace.settings.general.error_deleting_organization_please_try_again"));

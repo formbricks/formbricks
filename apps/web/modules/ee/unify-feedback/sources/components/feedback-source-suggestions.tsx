@@ -3,6 +3,7 @@
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "@/lib/localStorage";
 import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
 import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { Button } from "@/modules/ui/components/button";
@@ -35,7 +36,7 @@ export function FeedbackSourceSuggestions({
 
   useEffect(() => {
     const key = getDismissedStorageKey(workspaceId);
-    const stored = localStorage.getItem(key);
+    const stored = readLocalStorage(key);
     if (!stored) return;
     try {
       const parsed = JSON.parse(stored);
@@ -48,7 +49,7 @@ export function FeedbackSourceSuggestions({
       // fall through to cleanup
     }
     // Unparseable or wrong-shape value — drop it so it doesn't fail to parse on every mount.
-    localStorage.removeItem(key);
+    removeLocalStorage(key);
   }, [workspaceId]);
 
   const visibleSurveys = suggestedSurveys.filter((survey) => !dismissedIds.includes(survey.id));
@@ -70,7 +71,7 @@ export function FeedbackSourceSuggestions({
     if (dismissedIds.includes(surveyId)) return;
     const next = [...dismissedIds, surveyId];
     setDismissedIds(next);
-    localStorage.setItem(getDismissedStorageKey(workspaceId), JSON.stringify(next));
+    writeLocalStorage(getDismissedStorageKey(workspaceId), JSON.stringify(next));
   };
 
   return (
