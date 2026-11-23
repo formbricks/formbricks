@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  ZDashboardImageContent,
+  ZDashboardTextContent,
+  ZDashboardWidgetKind,
+} from "@formbricks/types/analysis";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { V3_LIST_DEFAULT_LIMIT, V3_LIST_MAX_LIMIT } from "@/app/api/v3/lib/cursor-pagination";
 import { zPostgresText } from "@/lib/utils/postgres-text";
@@ -12,6 +17,11 @@ import {
   ZLockedDashboardFilter,
   findDashboardFilterIssues,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import {
+  DEFAULT_DASHBOARD_PAGE_NAME,
+  MAX_DASHBOARD_PAGES,
+  MAX_PAGE_NAME_LENGTH,
+} from "@/modules/ee/analysis/dashboards/lib/page-names";
 import {
   GRID_COLUMNS,
   MAX_WIDGET_HEIGHT,
@@ -74,10 +84,130 @@ export const ZV3WidgetLayoutInput = z
 
 export const ZV3DashboardWidgetParams = z.object({ dashboardId: z.cuid2(), widgetId: z.cuid2() }).strict();
 
-/** `POST /api/v3/dashboards/{dashboardId}/widgets`: without a `layout`, the first open slot. */
+// ── Dashboard pages (ENG-7480) ──────────────────────────────────────────────────────────────
+
+export { DEFAULT_DASHBOARD_PAGE_NAME, MAX_DASHBOARD_PAGES, MAX_PAGE_NAME_LENGTH };
+
+/** The most teams one page may be limited to. */
+export const MAX_PAGE_TEAMS = 100;
+
+/** A page's name: trimmed, never empty. Names may repeat within a dashboard. */
+export const ZV3DashboardPageName = z.string().trim().min(1).max(MAX_PAGE_NAME_LENGTH);
+
+/** Refuses a team listed twice in a page's limit. */
+const refuseRepeatedTeams = (teamIds: readonly string[] | null | undefined, ctx: z.RefinementCtx): void => {
+  if (!teamIds) return;
+  const seen = new Set<string>();
+  teamIds.forEach((teamId, index) => {
+    if (seen.has(teamId))
+      ctx.addIssue({ code: "custom", message: "Each team may appear once.", path: [index] });
+    seen.add(teamId);
+  });
+};
+
+/**
+ * The teams a page is limited to. `null` or an empty list means no limit ("All teams"). Changing it needs
+ * Owner or Manager and the Access Control feature (`dashboard.manage_access`).
+ */
+export const ZV3PageTeamIds = z
+  .array(z.cuid2())
+  .max(MAX_PAGE_TEAMS)
+  .nullable()
+  .superRefine(refuseRepeatedTeams);
+
+export const ZV3DashboardPageParams = z.object({ dashboardId: z.cuid2(), pageId: z.cuid2() }).strict();
+
+/** `POST /api/v3/dashboards/{dashboardId}/pages`: a new page, last, open to all teams. */
+export const ZV3PageCreateBody = z.object({ name: ZV3DashboardPageName }).strict();
+export type TV3PageCreateBody = z.infer<typeof ZV3PageCreateBody>;
+
+/** A page update must change something, or it would move `updatedAt` for nothing. */
+export const refuseEmptyPageUpdate = (
+  body: { name?: unknown; teamIds?: unknown },
+  ctx: z.RefinementCtx
+): void => {
+  if (body.name === undefined && body.teamIds === undefined) {
+    ctx.addIssue({ code: "custom", message: "Send a name, teamIds, or both." });
+  }
+};
+
+/** `PATCH /api/v3/dashboards/{dashboardId}/pages/{pageId}`: rename, limit to teams, or both. */
+export const ZV3PageUpdateBody = z
+  .object({ name: ZV3DashboardPageName.optional(), teamIds: ZV3PageTeamIds.optional() })
+  .strict()
+  .superRefine(refuseEmptyPageUpdate);
+export type TV3PageUpdateBody = z.infer<typeof ZV3PageUpdateBody>;
+
+// ── Widgets ──────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The shape rules of a widget's `kind`, `chartId` and `content`, shared by the add, the save and MCP: a
+ * chart names its chart and has no content; an image or text block has no chart and its content has the
+ * block's shape; a separator has neither. Whether an image's file belongs to the workspace is the
+ * operation's check (`parseWidgetContent`), answered 422.
+ */
+export const refuseWidgetKindMismatch = (
+  widget: { kind?: string; chartId?: unknown; content?: unknown },
+  ctx: z.RefinementCtx,
+  path: (string | number)[] = []
+): void => {
+  const kind = widget.kind ?? "chart";
+  if (kind === "chart") {
+    if (widget.content !== undefined && widget.content !== null) {
+      ctx.addIssue({ code: "custom", message: "A chart widget has no content.", path: [...path, "content"] });
+    }
+    return;
+  }
+  if (widget.chartId !== undefined) {
+    ctx.addIssue({ code: "custom", message: `A ${kind} widget shows no chart.`, path: [...path, "chartId"] });
+  }
+  if (kind === "separator") {
+    if (widget.content !== undefined && widget.content !== null) {
+      ctx.addIssue({ code: "custom", message: "A separator has no content.", path: [...path, "content"] });
+    }
+    return;
+  }
+  if (widget.content === undefined) return;
+  const parsed = (kind === "image" ? ZDashboardImageContent : ZDashboardTextContent).safeParse(
+    widget.content
+  );
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      ctx.addIssue({
+        code: "custom",
+        message: issue.message,
+        path: [...path, "content", ...issue.path.map(String)],
+      });
+    }
+  }
+};
+
+/** Content as a request carries it: checked against the widget's kind by `refuseWidgetKindMismatch`. */
+const ZV3WidgetContentInput = z.record(z.string(), z.unknown()).nullable();
+
+/**
+ * `POST /api/v3/dashboards/{dashboardId}/widgets`: a chart (`chartId`) or a layout block (`kind` image,
+ * text or separator, with `content` for image and text) on a page — the first page without `pageId` —
+ * at `layout`, or the first open slot at the kind's default size.
+ */
 export const ZV3WidgetCreateBody = z
-  .object({ chartId: z.cuid2(), layout: ZV3WidgetLayoutInput.optional() })
-  .strict();
+  .object({
+    kind: ZDashboardWidgetKind.optional(),
+    chartId: z.cuid2().optional(),
+    pageId: z.cuid2().optional(),
+    content: ZV3WidgetContentInput.optional(),
+    layout: ZV3WidgetLayoutInput.optional(),
+  })
+  .strict()
+  .superRefine((body, ctx) => {
+    if ((body.kind ?? "chart") === "chart" && body.chartId === undefined) {
+      ctx.addIssue({ code: "custom", message: "A chart widget needs a chartId.", path: ["chartId"] });
+    }
+    if (body.kind === "text" && (body.content === undefined || body.content === null)) {
+      ctx.addIssue({ code: "custom", message: "A text block needs content.", path: ["content"] });
+    }
+    refuseWidgetKindMismatch(body, ctx);
+  });
 export type TV3WidgetCreateBody = z.infer<typeof ZV3WidgetCreateBody>;
 
 /**
@@ -85,17 +215,30 @@ export type TV3WidgetCreateBody = z.infer<typeof ZV3WidgetCreateBody>;
  * every editor's next save would then be refused as stale. Shared with the MCP `update_widget` input.
  */
 export const refuseEmptyWidgetUpdate = (
-  body: { layout?: unknown; chartId?: unknown },
+  body: { layout?: unknown; chartId?: unknown; content?: unknown; pageId?: unknown },
   ctx: z.RefinementCtx
 ): void => {
-  if (body.layout === undefined && body.chartId === undefined) {
-    ctx.addIssue({ code: "custom", message: "Send a layout, a chartId, or both." });
+  if (
+    body.layout === undefined &&
+    body.chartId === undefined &&
+    body.content === undefined &&
+    body.pageId === undefined
+  ) {
+    ctx.addIssue({ code: "custom", message: "Send a layout, a chartId, content or a pageId." });
   }
 };
 
-/** `PATCH /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`: move, repoint, or both. */
+/**
+ * `PATCH /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`: move it (on its page or to another),
+ * repoint a chart widget, or replace a block's content.
+ */
 export const ZV3WidgetUpdateBody = z
-  .object({ layout: ZV3WidgetLayoutInput.optional(), chartId: z.cuid2().optional() })
+  .object({
+    layout: ZV3WidgetLayoutInput.optional(),
+    chartId: z.cuid2().optional(),
+    content: z.record(z.string(), z.unknown()).optional(),
+    pageId: z.cuid2().optional(),
+  })
   .strict()
   .superRefine(refuseEmptyWidgetUpdate);
 export type TV3WidgetUpdateBody = z.infer<typeof ZV3WidgetUpdateBody>;
@@ -127,9 +270,10 @@ export const MAX_WIDGET_ORDER = 2_147_483_647;
 const ZV3ExpectedDashboardUpdatedAt = z.iso.datetime({ offset: true });
 
 /** A whole-dashboard write lists each widget once. Shared with the MCP `update_dashboard_layout` input. */
-export const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.RefinementCtx): void => {
+export const refuseRepeatedWidgets = (widgets: { widgetId?: string }[], ctx: z.RefinementCtx): void => {
   const seen = new Set<string>();
   widgets.forEach(({ widgetId }, index) => {
+    if (widgetId === undefined) return;
     if (seen.has(widgetId)) {
       ctx.addIssue({ code: "custom", message: "Each widget may appear once.", path: ["widgets", index] });
     }
@@ -164,30 +308,145 @@ export const ZV3DashboardFilters = z
   .max(MAX_DASHBOARD_FILTERS)
   .superRefine(refuseInvalidDashboardFilters);
 
+/** A new page's key in a save: how the save's widgets name a page that does not exist yet. */
+export const ZV3NewPageKey = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
+
 /**
- * `PUT /api/v3/dashboards/{dashboardId}`: the name, every widget's place and, optionally, the filters, in
- * one write. A widget left out of `widgets` is removed — this is the app's save, which sends the whole
- * edited dashboard. Without `filters` the saved ones stay as they are.
+ * A page in a whole-dashboard save: an existing one by `pageId`, or a new one by a `key` of the caller's
+ * choosing. `teamIds` is kept as it is when omitted; a new page without it is open to all teams.
+ */
+const ZV3ReplacePage = z
+  .object({
+    pageId: z.cuid2().optional(),
+    key: ZV3NewPageKey.optional(),
+    name: ZV3DashboardPageName,
+    order: z.number().int().min(0).max(MAX_WIDGET_ORDER),
+    teamIds: ZV3PageTeamIds.optional(),
+  })
+  .strict();
+
+/**
+ * A widget in a whole-dashboard save: an existing one by `widgetId`, or — without one — a new widget of
+ * `kind` (a chart with its `chartId`, or a layout block). `pageId` (an existing page) or `pageKey` (a new
+ * page of the save) puts it on a page; an existing widget sent without either stays on its page, a new one
+ * goes on the first page. `content` replaces an image or text block's content.
+ */
+const ZV3ReplaceWidget = z
+  .object({
+    widgetId: z.cuid2().optional(),
+    kind: ZDashboardWidgetKind.optional(),
+    chartId: z.cuid2().optional(),
+    pageId: z.cuid2().optional(),
+    pageKey: ZV3NewPageKey.optional(),
+    content: ZV3WidgetContentInput.optional(),
+    layout: ZV3WidgetLayoutInput,
+    order: z.number().int().min(0).max(MAX_WIDGET_ORDER),
+  })
+  .strict();
+
+type TReplaceShape = {
+  pages?: { pageId?: string; key?: string }[];
+  widgets: {
+    widgetId?: string;
+    kind?: string;
+    chartId?: string;
+    pageId?: string;
+    pageKey?: string;
+    content?: unknown;
+  }[];
+};
+
+/** Each page of a save is an existing one or a new one, and appears once. */
+const refuseInvalidReplacePages = (pages: TReplaceShape["pages"], ctx: z.RefinementCtx): Set<string> => {
+  const keys = new Set<string>();
+  const pageIds = new Set<string>();
+  pages?.forEach((page, index) => {
+    if ((page.pageId === undefined) === (page.key === undefined)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Send pageId for an existing page or key for a new one, not both.",
+        path: ["pages", index],
+      });
+    }
+    const [seen, value] = page.pageId === undefined ? [keys, page.key] : [pageIds, page.pageId];
+    if (value === undefined) return;
+    if (seen.has(value)) {
+      ctx.addIssue({ code: "custom", message: "Each page may appear once.", path: ["pages", index] });
+    }
+    seen.add(value);
+  });
+  return keys;
+};
+
+/**
+ * The cross-field rules of a save: each page is an existing one or a new one, named once; each widget is
+ * an existing one (which keeps its chart — repoint it with the widget update) or a new one with its kind's
+ * fields; a `pageKey` names a new page of the same save.
+ */
+export const refuseInvalidReplaceShape = (body: TReplaceShape, ctx: z.RefinementCtx): void => {
+  const keys = refuseInvalidReplacePages(body.pages, ctx);
+
+  body.widgets.forEach((widget, index) => {
+    const path = ["widgets", index];
+    if (widget.pageId !== undefined && widget.pageKey !== undefined) {
+      ctx.addIssue({ code: "custom", message: "Send pageId or pageKey, not both.", path });
+    }
+    if (widget.pageKey !== undefined && !keys.has(widget.pageKey)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "pageKey must name a new page of this save.",
+        path: [...path, "pageKey"],
+      });
+    }
+    if (widget.widgetId !== undefined) {
+      if (widget.chartId !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: "An existing widget keeps its chart; repoint it with the widget update.",
+          path: [...path, "chartId"],
+        });
+      }
+      // An existing widget's kind is checked against the stored one, its content against that kind.
+      if (widget.kind !== undefined) refuseWidgetKindMismatch(widget, ctx, path);
+      return;
+    }
+    if (widget.kind === undefined) {
+      ctx.addIssue({ code: "custom", message: "A new widget needs a kind.", path: [...path, "kind"] });
+      return;
+    }
+    if (widget.kind === "chart" && widget.chartId === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "A chart widget needs a chartId.",
+        path: [...path, "chartId"],
+      });
+    }
+    if (widget.kind === "text" && (widget.content === undefined || widget.content === null)) {
+      ctx.addIssue({ code: "custom", message: "A text block needs content.", path: [...path, "content"] });
+    }
+    refuseWidgetKindMismatch(widget, ctx, path);
+  });
+};
+
+/**
+ * `PUT /api/v3/dashboards/{dashboardId}`: the name, every widget's place and, optionally, the filters and
+ * the pages, in one write. A widget left out of `widgets` is removed — this is the app's save, which sends
+ * the whole edited dashboard — and so is a page left out of `pages`, with its widgets. Without `filters`
+ * or `pages` the saved ones stay as they are. New pages and new widgets are created by the same write.
  */
 export const ZV3DashboardReplaceBody = z
   .object({
     name: ZV3DashboardName,
     expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt,
     filters: ZV3DashboardFilters.optional(),
-    widgets: z
-      .array(
-        z
-          .object({
-            widgetId: z.cuid2(),
-            layout: ZV3WidgetLayoutInput,
-            order: z.number().int().min(0).max(MAX_WIDGET_ORDER),
-          })
-          .strict()
-      )
-      .max(MAX_WIDGETS_PER_WRITE),
+    pages: z.array(ZV3ReplacePage).min(1).max(MAX_DASHBOARD_PAGES).optional(),
+    widgets: z.array(ZV3ReplaceWidget).max(MAX_WIDGETS_PER_WRITE),
   })
   .strict()
-  .superRefine((body, ctx) => refuseRepeatedWidgets(body.widgets, ctx));
+  .superRefine((body, ctx) => {
+    refuseRepeatedWidgets(body.widgets, ctx);
+    refuseInvalidReplaceShape(body, ctx);
+  });
 export type TV3DashboardReplaceBody = z.infer<typeof ZV3DashboardReplaceBody>;
 
 /**

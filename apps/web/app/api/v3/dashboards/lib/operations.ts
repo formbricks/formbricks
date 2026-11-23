@@ -3,6 +3,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { getSessionUserId } from "@/app/api/v3/charts/lib/access";
+import { dashboardFull } from "@/app/api/v3/charts/lib/problems";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
 import {
@@ -33,6 +34,8 @@ import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/
 import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
 import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
+import { canManageDashboardAccess, ineligiblePageTeams, pageAccessDenied } from "./page-access";
+import { type TDashboardReplaceResult, replaceDashboardRow } from "./replace-service";
 import type {
   TV3DashboardCreateBody,
   TV3DashboardDuplicateBody,
@@ -53,7 +56,6 @@ import {
   listDashboardRows,
   renameDashboardRow,
 } from "./service";
-import { type TDashboardReplaceResult, replaceDashboardRow } from "./widget-service";
 
 type TV3DashboardWriteContext = TV3DashboardOperationContext & { auditLog?: TV3AuditLog };
 
@@ -384,6 +386,30 @@ const refuseDashboardReplace = (
       );
     case "unknownWidgets":
       return widgetsProblem(`Not on this dashboard: ${result.widgetIds.join(", ")}.`);
+    case "unknownPages":
+      return problemUnprocessableContent(requestId, "The pages do not match the dashboard", {
+        instance,
+        invalid_params: [
+          { name: "pages", reason: `Not pages of this dashboard: ${result.pageIds.join(", ")}.` },
+        ],
+      });
+    case "duplicateChart":
+      return problemConflict(
+        requestId,
+        `Chart ${result.chartId} appears twice on one page. A chart appears at most once per page.`,
+        instance
+      );
+    case "invalidWidget":
+      return problemUnprocessableContent(requestId, "A widget is not valid", {
+        instance,
+        invalid_params: [{ name: `widgets[${result.index}].${result.name}`, reason: result.reason }],
+      });
+    case "full":
+      return dashboardFull({ requestId, instance });
+    case "accessDenied":
+      return pageAccessDenied({ requestId, instance });
+    case "ineligibleTeams":
+      return ineligiblePageTeams(result.teamIds, { requestId, instance }, "pages");
     case "missingWidgets":
       return widgetsProblem(
         `List every widget on the dashboard; missing: ${result.widgetIds.join(", ")}. A rearrange never removes a widget — take a chart off the dashboard by removing its widget.`
@@ -414,7 +440,7 @@ const runDashboardReplace = async (
     auditLog?: TV3AuditLog;
     context: TV3DashboardOperationContext;
   },
-  write: () => Promise<TDashboardReplaceResult>,
+  write: (access: V3WorkspaceContext) => Promise<TDashboardReplaceResult>,
   /** Checks the write needs the caller's access for; a `Response` refuses it before anything is written. */
   precheck?: (access: V3WorkspaceContext) => Promise<Response | null>
 ): Promise<Response> => {
@@ -429,7 +455,7 @@ const runDashboardReplace = async (
 
   let result: TDashboardReplaceResult;
   try {
-    result = await write();
+    result = await write(loaded.access);
   } catch (error) {
     if (isUniqueConstraintError(error)) return dashboardNameTaken(context);
     throw error;
@@ -441,10 +467,12 @@ const runDashboardReplace = async (
     auditLog.targetId = dashboard.id;
     auditLog.organizationId = loaded.access.organizationId;
     auditLog.oldObject = result.previous;
+    // Page team limits are part of what a save records: a limit change is an access change (ENG-7481).
     auditLog.newObject = {
       name: dashboard.name,
       filters: dashboard.filters,
-      widgets: dashboard.widgets.map(({ id, layout, order }) => ({ id, layout, order })),
+      pages: dashboard.pages,
+      widgets: dashboard.widgets.map(({ id, pageId, layout, order }) => ({ id, pageId, layout, order })),
     };
   }
 
@@ -510,22 +538,30 @@ export async function replaceV3Dashboard({
   const log = logger.withContext({ requestId, dashboardId });
 
   try {
+    // Asked only when the save carries team limits: an unchanged limit sent back needs no permission, and
+    // the write decides which limits change against its own read.
+    const sendsTeamLimits = body.pages?.some((page) => page.teamIds !== undefined) ?? false;
     return await runDashboardReplace(
       { dashboardId, expectedUpdatedAt: body.expectedUpdatedAt, auditLog, context },
-      () =>
+      async (access) =>
         replaceDashboardRow({
           dashboardId,
+          workspaceId: access.workspaceId,
           expectedUpdatedAt: new Date(body.expectedUpdatedAt),
           name: body.name,
           filters: body.filters,
+          pages: body.pages,
           widgets: body.widgets,
+          canManageAccess: sendsTeamLimits
+            ? await canManageDashboardAccess(context.authentication, dashboardId, access.organizationId)
+            : false,
         }),
       async (access) =>
         body.filters
           ? refuseUnknownEmbeddedFilterFields({
               dashboardId,
               filters: body.filters,
-              widgetIds: body.widgets.map(({ widgetId }) => widgetId),
+              widgetIds: body.widgets.flatMap(({ widgetId }) => (widgetId ? [widgetId] : [])),
               access,
               context,
             })
@@ -552,9 +588,10 @@ export async function updateV3DashboardLayout({
   try {
     return await runDashboardReplace(
       { dashboardId, expectedUpdatedAt: body.expectedUpdatedAt, auditLog, context },
-      () =>
+      (access) =>
         replaceDashboardRow({
           dashboardId,
+          workspaceId: access.workspaceId,
           expectedUpdatedAt: new Date(body.expectedUpdatedAt),
           widgets: body.widgets,
           requireEveryWidget: true,
@@ -584,9 +621,10 @@ export async function setV3DashboardFilters({
   try {
     return await runDashboardReplace(
       { dashboardId, expectedUpdatedAt: body.expectedUpdatedAt, auditLog, context },
-      () =>
+      (access) =>
         replaceDashboardRow({
           dashboardId,
+          workspaceId: access.workspaceId,
           expectedUpdatedAt: new Date(body.expectedUpdatedAt),
           filters: body.filters,
         }),

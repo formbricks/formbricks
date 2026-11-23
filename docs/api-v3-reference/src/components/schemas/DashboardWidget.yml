@@ -1,23 +1,49 @@
 type: object
-description: One chart's placement on the dashboard. `chart` is exactly what reading the chart returns.
+description: >-
+  One block on one dashboard page: a chart's placement (`kind: chart`; `chart` is exactly what reading
+  the chart returns) or a layout block — an image, a text block or a separator. `chartId` and `chart`
+  are `null` on a layout block; `content` is `null` on a chart and a separator.
 required:
   - id
+  - pageId
+  - kind
   - chartId
   - layout
   - order
   - chart
+  - content
 properties:
   id:
     type: string
     format: cuid2
-  chartId:
+  pageId:
     type: string
     format: cuid2
+    description: The dashboard page the widget sits on.
+  kind:
+    type: string
+    enum:
+      - chart
+      - image
+      - text
+      - separator
+  chartId:
+    oneOf:
+      - type: string
+        format: cuid2
+      - type: "null"
   layout:
     $ref: ./WidgetLayout.yml
   order:
     type: integer
     minimum: 0
   chart:
-    $ref: ./ChartResource.yml
+    oneOf:
+      - $ref: ./ChartResource.yml
+      - type: "null"
+  content:
+    oneOf:
+      - $ref: ./DashboardImageContent.yml
+      - $ref: ./DashboardTextContent.yml
+      - type: "null"
 additionalProperties: false

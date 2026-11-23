@@ -70,6 +70,7 @@ describe("spicedbEvaluator", () => {
           const derivedPermission = {
             "dashboard.read": "read",
             "dashboard.write": "write",
+            "dashboard.manage_access": "administer",
             "response.export": "read",
             "response.manage": "manage",
             "response.read": "read",

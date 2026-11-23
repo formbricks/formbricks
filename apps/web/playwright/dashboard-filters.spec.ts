@@ -319,8 +319,17 @@ const seed = async (browser: Browser): Promise<Seeded> => {
       name: dashboardName,
       workspaceId,
       createdBy: owner.id,
+    },
+  });
+  // Every dashboard has a page; the charts sit on its first.
+  await prisma.dashboardPage.create({
+    data: {
+      dashboardId: dashboard.id,
+      name: "Overview",
+      order: 0,
       widgets: {
         create: order.map((chartId, index) => ({
+          dashboardId: dashboard.id,
           chartId,
           order: index,
           layout: { x: (index % 2) * 6, y: Math.floor(index / 2) * 4, w: 6, h: 4 },

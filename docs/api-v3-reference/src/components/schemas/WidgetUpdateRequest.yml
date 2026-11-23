@@ -1,7 +1,10 @@
 type: object
 description: >-
-  Send a `layout`, a `chartId`, or both. Repointing shows another chart in the widget's place — the way
-  to give one dashboard its own copy of a shared chart.
+  Send a `layout`, a `chartId`, `content`, a `pageId`, or several. Repointing a chart widget shows
+  another chart in its place — the way to give one dashboard its own copy of a shared chart. `content`
+  changes an image or text block: the fields sent replace the stored ones, the rest stay, so an image
+  keeps its file when only its settings change. `pageId` moves the widget to another page of the
+  dashboard, into the first open slot there unless a `layout` is sent too.
 minProperties: 1
 properties:
   layout:
@@ -9,5 +12,12 @@ properties:
   chartId:
     type: string
     format: cuid2
-    description: A chart in the dashboard's workspace that is not already on the dashboard.
+    description: A chart in the dashboard's workspace that is not already on the widget's page.
+  content:
+    type: object
+    description: >-
+      Fields of the block's content (`DashboardImageContent` or `DashboardTextContent`) to replace.
+  pageId:
+    type: string
+    format: cuid2
 additionalProperties: false

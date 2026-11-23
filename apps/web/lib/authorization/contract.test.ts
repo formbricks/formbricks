@@ -26,19 +26,19 @@ describe("current authorization vocabulary", () => {
         "response_export",
         "change_visibility",
       ],
-      dashboard: ["read", "write"],
+      dashboard: ["read", "write", "manage_access"],
       feedbackDirectory: ["read", "write", "manage"],
       feedbackDirectoryAssignment: ["read", "write", "manage", "dashboard_read"],
       response: ["read", "write", "manage", "export"],
     });
   });
 
-  test("contains 38 actions and no deferred capabilities", () => {
+  test("contains 39 actions and no deferred capabilities", () => {
     const actions = Object.entries(AUTHORIZATION_PERMISSION_MAP).flatMap(([resourceType, permissions]) =>
       permissions.map((permission) => `${resourceType}.${permission}`)
     );
 
-    expect(actions).toHaveLength(38);
+    expect(actions).toHaveLength(39);
     expect(actions).not.toContain("survey.share");
     expect(actions).not.toContain("dashboard.manage");
     expect(actions).not.toContain("auditLog.read");

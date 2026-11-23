@@ -20,6 +20,8 @@ import {
   setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "./operations";
+import { canManageDashboardAccess } from "./page-access";
+import { type TDashboardReplaceResult, replaceDashboardRow } from "./replace-service";
 import {
   type TDashboardListRow,
   type TDashboardResourceRow,
@@ -31,7 +33,6 @@ import {
   listDashboardRows,
   renameDashboardRow,
 } from "./service";
-import { type TDashboardReplaceResult, replaceDashboardRow } from "./widget-service";
 
 vi.mock("server-only", () => ({}));
 // vitestSetup fakes createHash; the cursor's filter fingerprint needs the real one to round-trip.
@@ -55,7 +56,11 @@ vi.mock("./service", () => ({
   listDashboardRows: vi.fn(),
   renameDashboardRow: vi.fn(),
 }));
-vi.mock("./widget-service", () => ({ replaceDashboardRow: vi.fn() }));
+vi.mock("./replace-service", () => ({ replaceDashboardRow: vi.fn() }));
+vi.mock("./page-access", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./page-access")>()),
+  canManageDashboardAccess: vi.fn(async () => false),
+}));
 
 const WORKSPACE_ID = "clws000000000000000000001";
 const ORGANIZATION_ID = "clor000000000000000000001";
@@ -64,6 +69,7 @@ const COPY_ID = "clda000000000000000000002";
 const WIDGET_A = "clwi000000000000000000001";
 const WIDGET_B = "clwi000000000000000000002";
 const CHART_ID = "clch000000000000000000001";
+const PAGE_ID = "clpg000000000000000000001";
 const USER_ID = "clus000000000000000000001";
 const REQUEST_ID = "req_1";
 const INSTANCE = "/api/v3/dashboards";
@@ -106,8 +112,18 @@ const dashboardRow = (overrides: Partial<TDashboardResourceRow> = {}): TDashboar
     createdAt: new Date("2026-02-01T00:00:00.000Z"),
     updatedAt: new Date("2026-02-02T00:00:00.000Z"),
     creator: { name: "Editor" },
+    pages: [{ id: PAGE_ID, name: "Overview", order: 0, teamLimits: [] }],
     widgets: [
-      { id: WIDGET_A, chartId: CHART_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0, chart: chartRow },
+      {
+        id: WIDGET_A,
+        pageId: PAGE_ID,
+        kind: "chart",
+        chartId: CHART_ID,
+        content: null,
+        layout: { x: 0, y: 0, w: 6, h: 4 },
+        order: 0,
+        chart: chartRow,
+      },
     ],
     ...overrides,
   }) as TDashboardResourceRow;
@@ -276,13 +292,17 @@ describe("getV3Dashboard", () => {
       creator: { name: "Editor" },
       createdAt: "2026-02-01T00:00:00.000Z",
     });
+    expect(data.pages).toEqual([{ id: PAGE_ID, name: "Overview", order: 0, teamIds: [] }]);
     expect(data.widgets).toEqual([
       {
         id: WIDGET_A,
+        pageId: PAGE_ID,
+        kind: "chart",
         chartId: CHART_ID,
         layout: { x: 0, y: 0, w: 6, h: 4 },
         order: 0,
         chart: expect.objectContaining({ id: CHART_ID, dashboards: [{ id: DASHBOARD_ID, name: "Board" }] }),
+        content: null,
       },
     ]);
   });
@@ -637,7 +657,8 @@ describe("replaceV3Dashboard (PUT)", () => {
   test("writes the name and every widget against the caller's updatedAt, and audits before and after", async () => {
     const previous = {
       name: "Board",
-      widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 }],
+      pages: [{ id: PAGE_ID, name: "Overview", order: 0, teamIds: [] }],
+      widgets: [{ id: WIDGET_A, pageId: PAGE_ID, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 }],
     };
     resultIs({ kind: "ok", row: dashboardRow({ name: "Saved" }), previous });
     const log = auditLog();
@@ -647,9 +668,11 @@ describe("replaceV3Dashboard (PUT)", () => {
     expect(response.status).toBe(200);
     expect(replaceDashboardRow).toHaveBeenCalledWith({
       dashboardId: DASHBOARD_ID,
+      workspaceId: WORKSPACE_ID,
       expectedUpdatedAt: new Date(EXPECTED_UPDATED_AT),
       name: "Saved",
       widgets,
+      canManageAccess: false,
     });
     expect((await response.json()).data).toMatchObject({ id: DASHBOARD_ID, name: "Saved" });
     expect(log).toEqual({
@@ -659,9 +682,35 @@ describe("replaceV3Dashboard (PUT)", () => {
       newObject: {
         name: "Saved",
         filters: [],
-        widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
+        pages: [{ id: PAGE_ID, name: "Overview", order: 0, teamIds: [] }],
+        widgets: [{ id: WIDGET_A, pageId: PAGE_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
       },
     });
+  });
+
+  test("asks whether the caller may manage access only when the save carries team limits", async () => {
+    resultIs({ kind: "ok", row: dashboardRow(), previous: { name: "Board", pages: [], widgets: [] } });
+    const body = {
+      name: "Saved",
+      expectedUpdatedAt: EXPECTED_UPDATED_AT,
+      pages: [{ pageId: PAGE_ID, name: "Overview", order: 0, teamIds: ["clte000000000000000000001"] }],
+      widgets,
+    };
+    vi.mocked(canManageDashboardAccess).mockResolvedValueOnce(true);
+    expect((await replaceV3Dashboard({ dashboardId: DASHBOARD_ID, body, ...contextOf() })).status).toBe(200);
+    expect(canManageDashboardAccess).toHaveBeenCalledWith(session, DASHBOARD_ID, ORGANIZATION_ID);
+    expect(replaceDashboardRow).toHaveBeenCalledWith(
+      expect.objectContaining({ pages: body.pages, canManageAccess: true })
+    );
+  });
+
+  test("answers 403 for a team limit change the caller may not make, and 422 for a team it cannot pick", async () => {
+    resultIs({ kind: "accessDenied" });
+    expect((await replace()).status).toBe(403);
+    resultIs({ kind: "ineligibleTeams", teamIds: ["clte000000000000000000001"] });
+    const response = await replace();
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("pages");
   });
 
   test("answers 409 with both timestamps when the dashboard changed since the caller's read", async () => {
@@ -762,7 +811,7 @@ describe("updateV3DashboardLayout (MCP update_dashboard_layout)", () => {
     vi.mocked(replaceDashboardRow).mockResolvedValue({
       kind: "ok",
       row: dashboardRow(),
-      previous: { name: "Board", widgets: [] },
+      previous: { name: "Board", pages: [], widgets: [] },
     });
     const log = auditLog();
 
@@ -771,6 +820,7 @@ describe("updateV3DashboardLayout (MCP update_dashboard_layout)", () => {
     expect(response.status).toBe(200);
     expect(replaceDashboardRow).toHaveBeenCalledWith({
       dashboardId: DASHBOARD_ID,
+      workspaceId: WORKSPACE_ID,
       expectedUpdatedAt: new Date(EXPECTED_UPDATED_AT),
       widgets,
       requireEveryWidget: true,
@@ -829,7 +879,7 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
     vi.mocked(replaceDashboardRow).mockResolvedValue({
       kind: "ok",
       row: dashboardRow(),
-      previous: { name: "Board", filters: [], widgets: [] },
+      previous: { name: "Board", filters: [], pages: [], widgets: [] },
     });
     const log = auditLog();
 
@@ -838,6 +888,7 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
     expect(response.status).toBe(200);
     expect(replaceDashboardRow).toHaveBeenCalledWith({
       dashboardId: DASHBOARD_ID,
+      workspaceId: WORKSPACE_ID,
       expectedUpdatedAt: new Date(EXPECTED_UPDATED_AT),
       filters,
     });
@@ -848,7 +899,7 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
     vi.mocked(replaceDashboardRow).mockResolvedValue({
       kind: "ok",
       row: dashboardRow(),
-      previous: { name: "Board", filters, widgets: [] },
+      previous: { name: "Board", filters, pages: [], widgets: [] },
     });
 
     expect((await setFilters(undefined, [])).status).toBe(200);
@@ -872,7 +923,7 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
     vi.mocked(replaceDashboardRow).mockResolvedValue({
       kind: "ok",
       row: dashboardRow(),
-      previous: { name: "Board", filters: [], widgets: [] },
+      previous: { name: "Board", filters: [], pages: [], widgets: [] },
     });
     vi.mocked(refuseUnlessFeedbackDatasetAccess).mockImplementation(async (_auth, _access, datasetId) =>
       datasetId === "clds000000000000000000002" ? refused() : null

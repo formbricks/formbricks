@@ -124,6 +124,7 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   creative: "workspace_inherited_resource",
   cubeQuery: "parent_derived_or_data_integrity",
   dashboard: "direct_authorization_resource",
+  dashboardPage: "direct_authorization_resource",
   dashboardWidget: "parent_derived_or_data_integrity",
   // Every write to a shared Embedded Data field is authorized as `workspace.read` / `workspace.write`
   // against the workspace resolved from the row, so the audit target inherits from the workspace even

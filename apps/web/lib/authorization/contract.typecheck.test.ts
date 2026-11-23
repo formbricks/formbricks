@@ -44,6 +44,7 @@ type TExpectedAuthorizationAction =
   | "survey.change_visibility"
   | "dashboard.read"
   | "dashboard.write"
+  | "dashboard.manage_access"
   | "feedbackDirectory.read"
   | "feedbackDirectory.write"
   | "feedbackDirectory.manage"

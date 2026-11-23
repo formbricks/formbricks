@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { addV3DashboardWidget } from "@/app/api/v3/dashboards/lib/widget-operations";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -42,7 +43,7 @@ const createChart = (name: string, feedbackDirectoryId = fixture.datasetId) =>
   });
 
 const createDashboard = (name: string, chartId?: string) =>
-  prisma.dashboard.create({
+  createTestDashboard({
     data: {
       name,
       workspaceId: fixture.workspaceId,

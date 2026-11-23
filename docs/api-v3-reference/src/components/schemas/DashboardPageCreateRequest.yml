@@ -1,0 +1,11 @@
+type: object
+description: A new page, added after the last one and visible to every team that can open the dashboard.
+required:
+  - name
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 100
+    description: The tab's name; leading and trailing whitespace is trimmed. Names may repeat.
+additionalProperties: false

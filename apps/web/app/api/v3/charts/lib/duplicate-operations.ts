@@ -55,6 +55,7 @@ export async function duplicateV3Chart({
           name: body.name,
           createdBy: getSessionUserId(authentication),
           dashboardId: body.dashboardId,
+          pageId: body.pageId,
           layout: body.layout,
         }),
       { nameChosen: body.name !== undefined }
@@ -65,6 +66,12 @@ export async function duplicateV3Chart({
     if (result.kind === "gone") return problemForbidden(requestId, undefined, instance);
     if (result.kind === "full") return dashboardFull(context);
     if (result.kind === "noSpace") return dashboardNoSpace(context);
+    if (result.kind === "unknownPage") {
+      return problemUnprocessableContent(requestId, "The page is not on the dashboard", {
+        instance,
+        invalid_params: [{ name: "pageId", reason: "Not a page of the dashboard named by dashboardId." }],
+      });
+    }
     if (result.kind === "overlap") {
       return problemUnprocessableContent(requestId, "The layout overlaps another widget", {
         instance,

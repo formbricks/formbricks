@@ -44,6 +44,7 @@ vi.mock("./widget-service", () => ({
 const DASHBOARD_ID = "cldb000000000000000000001";
 const WIDGET_ID = "clwg000000000000000000001";
 const CHART_ID = "clch000000000000000000001";
+const PAGE_ID = "clpg000000000000000000001";
 const WORKSPACE_ID = "clws000000000000000000001";
 const ORGANIZATION_ID = "clor000000000000000000001";
 
@@ -57,7 +58,10 @@ const layout = { x: 4, y: 0, w: 4, h: 4 };
 
 const widgetRow = (overrides: { chartId?: string; layout?: unknown } = {}) => ({
   id: WIDGET_ID,
+  pageId: PAGE_ID,
+  kind: "chart" as const,
   chartId: overrides.chartId ?? CHART_ID,
+  content: null,
   layout: overrides.layout ?? layout,
   order: 2,
   chart: {
@@ -177,7 +181,14 @@ describe("addV3DashboardWidget", () => {
     expect(auditLog).toEqual({
       targetId: WIDGET_ID,
       organizationId: ORGANIZATION_ID,
-      newObject: { dashboardId: DASHBOARD_ID, chartId: CHART_ID, layout },
+      newObject: {
+        dashboardId: DASHBOARD_ID,
+        pageId: PAGE_ID,
+        kind: "chart",
+        chartId: CHART_ID,
+        content: null,
+        layout,
+      },
     });
   });
 
@@ -190,10 +201,51 @@ describe("addV3DashboardWidget", () => {
     expect(getChartTypeInWorkspace).toHaveBeenCalledWith(CHART_ID, WORKSPACE_ID);
     expect(addWidgetRow).toHaveBeenCalledWith({
       dashboardId: DASHBOARD_ID,
+      kind: "chart",
       chartId: CHART_ID,
-      chartType: "big_number",
+      content: null,
+      size: { x: 0, y: 0, w: 3, h: 2 },
       layout,
     });
+  });
+
+  test("adds a layout block at its kind's default size, on the page asked for, without a chart lookup", async () => {
+    vi.mocked(addWidgetRow).mockResolvedValueOnce(ok());
+    await addV3DashboardWidget({
+      dashboardId: DASHBOARD_ID,
+      body: { kind: "text", pageId: PAGE_ID, content: { headline: "Q3", description: "" } },
+      ...context,
+    });
+    expect(getChartTypeInWorkspace).not.toHaveBeenCalled();
+    expect(addWidgetRow).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "text",
+        pageId: PAGE_ID,
+        content: { headline: "Q3", description: "" },
+        size: { x: 0, y: 0, w: 9, h: 2 },
+      })
+    );
+  });
+
+  test("answers 422 for an image file that is not a dashboard upload of this workspace", async () => {
+    const response = await addV3DashboardWidget({
+      dashboardId: DASHBOARD_ID,
+      body: {
+        kind: "image",
+        content: { fileUrl: "https://example.com/x.png", fit: "fit", position: "left", alt: "" },
+      },
+      ...context,
+    });
+    expect(response.status).toBe(422);
+    expect((await problemOf(response)).invalid_params?.[0].name).toBe("content");
+    expect(addWidgetRow).not.toHaveBeenCalled();
+  });
+
+  test("answers 422 for a page that is not on the dashboard", async () => {
+    vi.mocked(addWidgetRow).mockResolvedValueOnce({ kind: "unknownPage" });
+    const response = await add();
+    expect(response.status).toBe(422);
+    expect((await problemOf(response)).invalid_params?.[0].name).toBe("pageId");
   });
 
   test("answers 403 for a chart outside the dashboard's workspace, and writes nothing", async () => {
@@ -266,6 +318,7 @@ describe("updateV3DashboardWidget", () => {
     expect(data).toMatchObject({ id: WIDGET_ID, chartId: CHART_ID, layout });
     expect(updateWidgetRow).toHaveBeenCalledWith({
       dashboardId: DASHBOARD_ID,
+      workspaceId: WORKSPACE_ID,
       widgetId: WIDGET_ID,
       layout,
       chartId: CHART_ID,
@@ -274,7 +327,7 @@ describe("updateV3DashboardWidget", () => {
       targetId: WIDGET_ID,
       organizationId: ORGANIZATION_ID,
       oldObject: { dashboardId: DASHBOARD_ID, ...previous },
-      newObject: { dashboardId: DASHBOARD_ID, chartId: CHART_ID, layout },
+      newObject: { dashboardId: DASHBOARD_ID, pageId: PAGE_ID, chartId: CHART_ID, content: null, layout },
     });
   });
 
@@ -323,7 +376,7 @@ describe("removeV3DashboardWidget", () => {
     removeV3DashboardWidget({ dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID, auditLog, ...context });
 
   test("answers 204, removing the widget from this dashboard, and records what was removed", async () => {
-    const removed = { chartId: CHART_ID, layout };
+    const removed = { pageId: PAGE_ID, kind: "chart" as const, chartId: CHART_ID, layout };
     vi.mocked(deleteWidgetRow).mockResolvedValueOnce(removed);
     const auditLog = freshAuditLog();
 

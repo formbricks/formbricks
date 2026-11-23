@@ -8,15 +8,17 @@ import { ZV3ChartName } from "./schemas";
  */
 /** A layout only means something with a dashboard to place the copy on. Shared with MCP `duplicate_chart`. */
 export const refuseLayoutWithoutDashboard = (
-  body: { dashboardId?: unknown; layout?: unknown },
+  body: { dashboardId?: unknown; layout?: unknown; pageId?: unknown },
   ctx: z.RefinementCtx
 ): void => {
-  if (body.layout !== undefined && body.dashboardId === undefined) {
-    ctx.addIssue({
-      code: "custom",
-      message: "A layout places the copy on a dashboard: send dashboardId with it.",
-      path: ["layout"],
-    });
+  for (const field of ["layout", "pageId"] as const) {
+    if (body[field] !== undefined && body.dashboardId === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: `A ${field} places the copy on a dashboard: send dashboardId with it.`,
+        path: [field],
+      });
+    }
   }
 };
 
@@ -24,6 +26,8 @@ export const ZV3ChartDuplicateBody = z
   .object({
     name: ZV3ChartName.optional(),
     dashboardId: z.cuid2().optional(),
+    /** The dashboard page the copy goes on; the dashboard's first page without one. */
+    pageId: z.cuid2().optional(),
     layout: ZV3WidgetLayoutInput.optional(),
   })
   .strict()

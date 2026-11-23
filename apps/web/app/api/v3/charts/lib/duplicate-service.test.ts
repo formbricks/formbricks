@@ -14,6 +14,7 @@ const copyId = "clch000000000000000000002";
 const workspaceId = "clws000000000000000000001";
 const datasetId = "clds000000000000000000001";
 const dashboardId = "cldb000000000000000000001";
+const pageId = "clpg000000000000000000001";
 const LOCKED_AT = new Date("2026-01-01T00:00:00.000Z");
 
 const SOURCE = {
@@ -45,8 +46,10 @@ const fakeTx = ({
     findUniqueOrThrow: vi.fn().mockResolvedValue({ id: copyId, name: "read back" }),
   },
   dashboard: { updateMany: vi.fn().mockResolvedValue({ count: touched }) },
+  dashboardPage: { findFirst: vi.fn().mockResolvedValue({ id: pageId }) },
   dashboardWidget: {
     findMany: vi.fn().mockResolvedValue(siblings),
+    count: vi.fn().mockResolvedValue(siblings.length),
     create: vi.fn().mockResolvedValue({ id: "clwg000000000000000000009" }),
   },
 });
@@ -147,13 +150,20 @@ describe("duplicateChartRow onto a dashboard", () => {
     expect(strings.join("?")).toContain("FOR UPDATE");
     expect(values).toEqual([dashboardId]);
     expect(tx.dashboardWidget.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { dashboardId } })
+      expect.objectContaining({ where: { dashboardId, pageId } })
     );
     expect(tx.dashboard.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: dashboardId } })
     );
     expect(tx.dashboardWidget.create).toHaveBeenCalledWith({
-      data: { dashboardId, chartId: copyId, layout: { x: 6, y: 0, w: 4, h: 4 }, order: 1 },
+      data: {
+        dashboardId,
+        pageId,
+        kind: "chart",
+        chartId: copyId,
+        layout: { x: 6, y: 0, w: 4, h: 4 },
+        order: 1,
+      },
       select: { id: true },
     });
     // Read back after the widget exists, so the copy embeds the dashboard it was put on.

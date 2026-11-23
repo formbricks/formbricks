@@ -88,6 +88,18 @@ const CONTRACT_IDS = {
   WIDGET_REPLACE: "clctwidgetreplace0000001",
   WIDGET_PATCH: "clctwidgetpatch000000001",
   WIDGET_DELETE: "clctwidgetdelete00000001",
+  // Every dashboard has a page (ENG-7480): each fixture dashboard's first page, and a dashboard whose
+  // pages the page operations rename and delete.
+  PAGE_READ: "clctpageread000000000001",
+  PAGE_RENAME: "clctpagerename0000000001",
+  PAGE_DELETE_DASHBOARD: "clctpagedelete0000000001",
+  PAGE_DUPLICATE: "clctpageduplicate0000001",
+  PAGE_REPLACE: "clctpagereplace000000001",
+  PAGE_WIDGETS: "clctpagewidgets000000001",
+  DASHBOARD_PAGES: "clctdashboardpages000001",
+  PAGE_KEEP: "clctpagekeep000000000001",
+  PAGE_PATCH: "clctpagepatch00000000001",
+  PAGE_REMOVE: "clctpageremove0000000001",
   CREATIVE_READ: "clctcreativeread00000001",
   CREATIVE_PATCH: "clctcreativepatch0000001",
   CREATIVE_DELETE: "clctcreativedelete000001",
@@ -590,32 +602,53 @@ async function seedDashboards(organizationId: string): Promise<void> {
     await prisma.chart.upsert({ where: { id }, update: fields, create: { id, ...fields } });
   }
 
-  const dashboards: [string, string, [string, string][]][] = [
+  // Each dashboard: its id, name, pages (the first holds the widgets) and widgets.
+  const dashboards: [string, string, string[], [string, string][]][] = [
     [
       CONTRACT_IDS.DASHBOARD_READ,
       "Contract fixture — dashboard read",
+      [CONTRACT_IDS.PAGE_READ],
       [[CONTRACT_IDS.WIDGET_READ, CONTRACT_IDS.CHART_READ]],
     ],
-    [CONTRACT_IDS.DASHBOARD_RENAME, "Contract fixture — dashboard rename", []],
-    [CONTRACT_IDS.DASHBOARD_DELETE, "Contract fixture — dashboard delete", []],
-    [CONTRACT_IDS.DASHBOARD_DUPLICATE, "Contract fixture — dashboard duplicate", []],
+    [CONTRACT_IDS.DASHBOARD_RENAME, "Contract fixture — dashboard rename", [CONTRACT_IDS.PAGE_RENAME], []],
+    [
+      CONTRACT_IDS.DASHBOARD_DELETE,
+      "Contract fixture — dashboard delete",
+      [CONTRACT_IDS.PAGE_DELETE_DASHBOARD],
+      [],
+    ],
+    [
+      CONTRACT_IDS.DASHBOARD_DUPLICATE,
+      "Contract fixture — dashboard duplicate",
+      [CONTRACT_IDS.PAGE_DUPLICATE],
+      [],
+    ],
     [
       CONTRACT_IDS.DASHBOARD_REPLACE,
       "Contract fixture — dashboard replace",
+      [CONTRACT_IDS.PAGE_REPLACE],
       [[CONTRACT_IDS.WIDGET_REPLACE, CONTRACT_IDS.CHART_READ]],
     ],
     [
       CONTRACT_IDS.DASHBOARD_WIDGETS,
       "Contract fixture — dashboard widgets",
+      [CONTRACT_IDS.PAGE_WIDGETS],
       [
         [CONTRACT_IDS.WIDGET_PATCH, CONTRACT_IDS.CHART_READ],
         [CONTRACT_IDS.WIDGET_DELETE, CONTRACT_IDS.CHART_PATCH],
       ],
     ],
+    [
+      CONTRACT_IDS.DASHBOARD_PAGES,
+      "Contract fixture — dashboard pages",
+      [CONTRACT_IDS.PAGE_KEEP, CONTRACT_IDS.PAGE_PATCH, CONTRACT_IDS.PAGE_REMOVE],
+      [],
+    ],
   ];
-  for (const [id, name, widgets] of dashboards) {
-    // Re-seeding resets the widgets too, so a second run starts from the same layout as the first.
+  for (const [id, name, pageIds, widgets] of dashboards) {
+    // Re-seeding resets the pages and widgets too, so a second run starts from the same layout as the first.
     await prisma.dashboardWidget.deleteMany({ where: { dashboardId: id } });
+    await prisma.dashboardPage.deleteMany({ where: { dashboardId: id } });
     const fields = {
       name,
       workspaceId: SEED_IDS.WORKSPACE,
@@ -639,9 +672,22 @@ async function seedDashboards(organizationId: string): Promise<void> {
           : [],
     };
     await prisma.dashboard.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+    for (const [order, pageId] of pageIds.entries()) {
+      await prisma.dashboardPage.create({
+        data: { id: pageId, dashboardId: id, name: order === 0 ? "Overview" : `Page ${order + 1}`, order },
+      });
+    }
     for (const [order, [widgetId, chartId]] of widgets.entries()) {
       await prisma.dashboardWidget.create({
-        data: { id: widgetId, dashboardId: id, chartId, layout: { x: order * 4, y: 0, w: 4, h: 4 }, order },
+        data: {
+          id: widgetId,
+          dashboardId: id,
+          pageId: pageIds[0],
+          kind: "chart",
+          chartId,
+          layout: { x: order * 4, y: 0, w: 4, h: 4 },
+          order,
+        },
       });
     }
     // Adding the widgets moved nothing, but pin it again so the replace precondition below holds.
@@ -1039,6 +1085,19 @@ async function main(): Promise<void> {
       },
       removeDashboardWidgetV3: {
         path: { dashboardId: CONTRACT_IDS.DASHBOARD_WIDGETS, widgetId: CONTRACT_IDS.WIDGET_DELETE },
+      },
+      // Pages (ENG-7480): a rename (an API key never sets a team limit), and the delete of a page that is
+      // not the dashboard's last.
+      createDashboardPageV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_PAGES },
+        body: { name: "Contract fixture — new page" },
+      },
+      updateDashboardPageV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_PAGES, pageId: CONTRACT_IDS.PAGE_PATCH },
+        body: { name: "Contract fixture — page renamed" },
+      },
+      deleteDashboardPageV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_PAGES, pageId: CONTRACT_IDS.PAGE_REMOVE },
       },
       patchCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_PATCH } },
       deleteCreativeV3: { path: { creativeId: CONTRACT_IDS.CREATIVE_DELETE } },

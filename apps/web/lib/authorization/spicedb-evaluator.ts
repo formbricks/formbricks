@@ -51,6 +51,8 @@ const parseAction = (
 const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
   "dashboard.read": "read",
   "dashboard.write": "write",
+  // Owners and Managers (ENG-7481): `dashboard#manage_access` is `workspace->administer` in the schema.
+  "dashboard.manage_access": "administer",
   "response.export": "read",
   "response.manage": "manage",
   "response.read": "read",
@@ -62,7 +64,7 @@ const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
   "survey.response_export": "read",
   "survey.response_read": "read",
   "survey.write": "write",
-} as const satisfies Partial<Record<TAuthorizationAction, "manage" | "read" | "write">>;
+} as const satisfies Partial<Record<TAuthorizationAction, "administer" | "manage" | "read" | "write">>;
 
 /** A response action decided on its survey's node (ENG-3282): the survey permission it inherits. */
 const SURVEY_PERMISSION_FOR_RESPONSE_ACTION = {

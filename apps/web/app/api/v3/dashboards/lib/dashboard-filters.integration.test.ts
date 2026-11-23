@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { cubeFake, resetCubeFake } from "@/integration/cube-fake";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -106,7 +107,7 @@ const createChart = (query: TChartQuery, datasetId = fixture.datasetId) =>
 
 /** A dashboard holding `charts` side by side, with `filters` locked on it. */
 const createDashboard = async (chartIds: string[], filters: TLockedDashboardFilter[] = []) =>
-  prisma.dashboard.create({
+  createTestDashboard({
     data: {
       name: `Board ${++sequence}`,
       workspaceId: fixture.workspaceId,

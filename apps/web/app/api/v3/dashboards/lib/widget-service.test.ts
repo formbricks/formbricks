@@ -1,19 +1,21 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
+import { getDefaultBlockLayout } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
+import { getDefaultWidgetLayout } from "@/modules/ee/analysis/dashboards/lib/widget-placement";
 import { MAX_DASHBOARD_WIDGETS, MAX_WIDGET_ORDER } from "./schemas";
 import {
   addWidgetRow,
   deleteWidgetRow,
   getChartTypeInWorkspace,
   planNewWidget,
-  replaceDashboardRow,
   updateWidgetRow,
 } from "./widget-service";
 
 /**
- * The decisions the widget writes make inside their transaction: the lock, the chart-at-most-once and
- * no-overlap rules, placement, and the `updatedAt` every write moves. The transaction client is a stub
- * so the callback actually runs; the real-database behaviour lives in the integration suites.
+ * The decisions the widget writes make inside their transaction: the lock, the page they write to, the
+ * chart-at-most-once-per-page and no-overlap rules, placement, block content, and the `updatedAt` every
+ * write moves. The transaction client is a stub so the callback actually runs; the real-database
+ * behaviour lives in the integration suites.
  */
 
 vi.mock("server-only", () => ({}));
@@ -31,20 +33,36 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 const DASHBOARD_ID = "cldb000000000000000000001";
+const WORKSPACE_ID = "clws000000000000000000001";
+const PAGE_ID = "clpg000000000000000000001";
+const OTHER_PAGE_ID = "clpg000000000000000000002";
 const LOCKED_AT = new Date("2026-06-01T12:00:00.000Z");
+const BAR_SIZE = getDefaultWidgetLayout("bar");
 
-type TSibling = { id: string; chartId: string; layout: unknown; order: number };
+type TSibling = { id: string; chartId: string | null; layout: unknown; order: number };
 
 const makeTx = ({
   locked = LOCKED_AT,
   siblings = [] as TSibling[],
+  count,
+  pageId = PAGE_ID,
   touched = 1,
-}: { locked?: Date | null; siblings?: TSibling[]; touched?: number } = {}) => ({
+}: {
+  locked?: Date | null;
+  siblings?: TSibling[];
+  count?: number;
+  pageId?: string | null;
+  touched?: number;
+} = {}) => ({
   $queryRaw: vi.fn(async () => (locked ? [{ updatedAt: locked }] : [])),
   $executeRaw: vi.fn(async () => 1),
+  dashboardPage: {
+    findFirst: vi.fn(async () => (pageId ? { id: pageId } : null)),
+  },
   dashboardWidget: {
     findMany: vi.fn(async () => siblings),
     findFirst: vi.fn(),
+    count: vi.fn(async () => count ?? siblings.length),
     create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: "clwg_new", ...data })),
     update: vi.fn(async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => ({
       id: where.id,
@@ -54,8 +72,6 @@ const makeTx = ({
   },
   dashboard: {
     updateMany: vi.fn(async () => ({ count: touched })),
-    findUnique: vi.fn(),
-    update: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: DASHBOARD_ID, ...data })),
   },
 });
 
@@ -74,31 +90,23 @@ const touchedAt = (tx: TTx): Date => {
 
 const expectNothingWritten = (tx: TTx) => {
   expect(tx.dashboard.updateMany).not.toHaveBeenCalled();
-  expect(tx.dashboard.update).not.toHaveBeenCalled();
   expect(tx.dashboardWidget.create).not.toHaveBeenCalled();
   expect(tx.dashboardWidget.update).not.toHaveBeenCalled();
   expect(tx.dashboardWidget.deleteMany).not.toHaveBeenCalled();
-  expect(tx.$executeRaw).not.toHaveBeenCalled();
 };
 
-/** The widget places a save wrote in its one UPDATE: the ids, layouts and orders it was given, in order. */
-const placesWritten = (tx: TTx) => {
-  expect(tx.$executeRaw).toHaveBeenCalledTimes(1);
-  const [strings, ids, layouts, orders, dashboardId] = tx.$executeRaw.mock.calls[0] as unknown as [
-    TemplateStringsArray,
-    string[],
-    string[],
-    (number | null)[],
-    string,
-  ];
-  expect(strings.join("?")).toContain('w."dashboardId" = ?');
-  return { ids, layouts: layouts.map((layout) => JSON.parse(layout) as unknown), orders, dashboardId };
-};
+const addChart = (chartId: string, extra: Partial<Parameters<typeof addWidgetRow>[0]> = {}) =>
+  addWidgetRow({
+    dashboardId: DASHBOARD_ID,
+    kind: "chart",
+    chartId,
+    content: null,
+    size: BAR_SIZE,
+    ...extra,
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // The app's clock reads the locked updatedAt, so a write that took plain "now" would leave the token as
-  // it was: every touch below must land exactly a millisecond past it.
   vi.useFakeTimers({ now: LOCKED_AT, toFake: ["Date"] });
 });
 
@@ -122,21 +130,36 @@ describe("getChartTypeInWorkspace", () => {
   });
 });
 
+describe("planNewWidget", () => {
+  test("refuses once the dashboard holds the most widgets, counting every page", () => {
+    expect(planNewWidget({ siblings: [], widgetCount: MAX_DASHBOARD_WIDGETS, size: BAR_SIZE })).toEqual({
+      kind: "full",
+    });
+  });
+
+  test("never numbers a new widget past the order column", () => {
+    const plan = planNewWidget({
+      siblings: [{ id: "a", layout: { x: 0, y: 0, w: 4, h: 4 }, order: MAX_WIDGET_ORDER }],
+      widgetCount: 1,
+      size: BAR_SIZE,
+    });
+    expect(plan).toMatchObject({ kind: "ok", order: MAX_WIDGET_ORDER });
+  });
+});
+
 describe("addWidgetRow", () => {
   const sibling: TSibling = { id: "clwg_a", chartId: "clch_a", layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 };
 
   test("is gone when the dashboard no longer exists, without reading or writing widgets", async () => {
     const tx = stubTransaction(makeTx({ locked: null }));
-    expect(await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_b", chartType: "bar" })).toEqual({
-      kind: "gone",
-    });
+    expect(await addChart("clch_b")).toEqual({ kind: "gone" });
     expect(tx.dashboardWidget.findMany).not.toHaveBeenCalled();
     expectNothingWritten(tx);
   });
 
-  test("locks this dashboard's row and reads only its widgets", async () => {
+  test("locks this dashboard's row and reads only the target page's widgets", async () => {
     const tx = stubTransaction(makeTx());
-    await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_b", chartType: "bar" });
+    await addChart("clch_b");
     const [strings, ...values] = tx.$queryRaw.mock.calls[0] as unknown as [
       TemplateStringsArray,
       ...unknown[],
@@ -144,57 +167,49 @@ describe("addWidgetRow", () => {
     expect(strings.join("?")).toContain("FOR UPDATE");
     expect(values).toEqual([DASHBOARD_ID]);
     expect(tx.dashboardWidget.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { dashboardId: DASHBOARD_ID } })
+      expect.objectContaining({ where: { dashboardId: DASHBOARD_ID, pageId: PAGE_ID } })
     );
   });
 
-  test("refuses a chart already on the dashboard and writes nothing", async () => {
-    const tx = stubTransaction(makeTx({ siblings: [sibling] }));
-    expect(await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_a", chartType: "bar" })).toEqual({
-      kind: "duplicate",
-    });
+  test("without a pageId, writes to the dashboard's first page by order", async () => {
+    const tx = stubTransaction(makeTx());
+    await addChart("clch_b");
+    expect(tx.dashboardPage.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { dashboardId: DASHBOARD_ID } })
+    );
+    expect(tx.dashboardWidget.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ pageId: PAGE_ID, kind: "chart" }) })
+    );
+  });
+
+  test("looks a named page up on this dashboard, and refuses one that is not", async () => {
+    const tx = stubTransaction(makeTx({ pageId: null }));
+    expect(await addChart("clch_b", { pageId: OTHER_PAGE_ID })).toEqual({ kind: "unknownPage" });
+    expect(tx.dashboardPage.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { dashboardId: DASHBOARD_ID, id: OTHER_PAGE_ID } })
+    );
     expectNothingWritten(tx);
   });
 
-  test("refuses an add once the dashboard holds the most widgets a save carries, and writes nothing", async () => {
-    const full = Array.from({ length: MAX_DASHBOARD_WIDGETS }, (_, index) => ({
-      ...sibling,
-      id: `clwg_${index}`,
-      chartId: `clch_${index}`,
-      layout: { x: 0, y: index, w: 1, h: 1 },
-      order: index,
-    }));
-    const tx = stubTransaction(makeTx({ siblings: full }));
-    expect(await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_new", chartType: "bar" })).toEqual({
-      kind: "full",
-    });
+  test("refuses a chart already on that page and writes nothing", async () => {
+    const tx = stubTransaction(makeTx({ siblings: [sibling] }));
+    expect(await addChart("clch_a")).toEqual({ kind: "duplicate" });
     expectNothingWritten(tx);
+  });
 
-    stubTransaction(makeTx({ siblings: full.slice(1) }));
-    expect(
-      (await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_new", chartType: "bar" })).kind
-    ).toBe("ok");
+  test("refuses an add once the dashboard is full, counting widgets on every page", async () => {
+    const tx = stubTransaction(makeTx({ count: MAX_DASHBOARD_WIDGETS }));
+    expect(await addChart("clch_new")).toEqual({ kind: "full" });
+    expectNothingWritten(tx);
   });
 
   test("refuses a layout that covers a widget, naming it, and writes nothing", async () => {
     const tx = stubTransaction(makeTx({ siblings: [sibling] }));
-    expect(
-      await addWidgetRow({
-        dashboardId: DASHBOARD_ID,
-        chartId: "clch_b",
-        chartType: "bar",
-        layout: { x: 2, y: 2, w: 4, h: 4 },
-      })
-    ).toEqual({ kind: "overlap", widgetId: "clwg_a" });
+    expect(await addChart("clch_b", { layout: { x: 2, y: 2, w: 4, h: 4 } })).toEqual({
+      kind: "overlap",
+      widgetId: "clwg_a",
+    });
     expectNothingWritten(tx);
-  });
-
-  test("never numbers a new widget past the order column, however high a save set the last one", async () => {
-    const tx = stubTransaction(makeTx({ siblings: [{ ...sibling, order: MAX_WIDGET_ORDER }] }));
-    await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_b", chartType: "bar" });
-    expect(tx.dashboardWidget.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ order: MAX_WIDGET_ORDER }) })
-    );
   });
 
   test("puts a chart exactly at a free layout, after the highest order, and moves updatedAt", async () => {
@@ -202,26 +217,28 @@ describe("addWidgetRow", () => {
       makeTx({ siblings: [sibling, { ...sibling, id: "clwg_c", chartId: "clch_c", layout: null, order: 3 }] })
     );
     const layout = { x: 8, y: 10, w: 4, h: 3 };
-    const result = await addWidgetRow({
-      dashboardId: DASHBOARD_ID,
-      chartId: "clch_b",
-      chartType: "bar",
-      layout,
-    });
+    const result = await addChart("clch_b", { layout });
 
     expect(result.kind).toBe("ok");
     expect(tx.dashboardWidget.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { dashboardId: DASHBOARD_ID, chartId: "clch_b", layout, order: 4 } })
-    );
-    expect(tx.dashboard.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: DASHBOARD_ID } })
+      expect.objectContaining({
+        data: {
+          dashboardId: DASHBOARD_ID,
+          pageId: PAGE_ID,
+          kind: "chart",
+          chartId: "clch_b",
+          content: Prisma.DbNull,
+          layout,
+          order: 4,
+        },
+      })
     );
     expect(touchedAt(tx).getTime()).toBe(LOCKED_AT.getTime() + 1);
   });
 
-  test("without a layout, places the chart in the first open slot at its type's default size", async () => {
+  test("without a layout, places the widget in the first open slot at the size it is given", async () => {
     const tx = stubTransaction(makeTx({ siblings: [sibling] }));
-    await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_b", chartType: "big_number" });
+    await addChart("clch_b", { size: getDefaultWidgetLayout("big_number") });
     expect(tx.dashboardWidget.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ layout: { x: 4, y: 0, w: 3, h: 2 }, order: 1 }),
@@ -229,21 +246,31 @@ describe("addWidgetRow", () => {
     );
   });
 
-  test("starts an empty dashboard at the origin with order 0", async () => {
+  test("adds a layout block with its content and no chart", async () => {
     const tx = stubTransaction(makeTx());
-    await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_b", chartType: "bar" });
+    const content = { headline: "Q3", description: "" };
+    await addWidgetRow({
+      dashboardId: DASHBOARD_ID,
+      kind: "text",
+      chartId: "clch_ignored",
+      content,
+      size: getDefaultBlockLayout("text"),
+    });
     expect(tx.dashboardWidget.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 }),
+        data: expect.objectContaining({
+          kind: "text",
+          chartId: null,
+          content,
+          layout: { x: 0, y: 0, w: 9, h: 2 },
+        }),
       })
     );
   });
 
   test("is gone, and creates nothing, when the dashboard vanished before it could be touched", async () => {
     const tx = stubTransaction(makeTx({ touched: 0 }));
-    expect(await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_b", chartType: "bar" })).toEqual({
-      kind: "gone",
-    });
+    expect(await addChart("clch_b")).toEqual({ kind: "gone" });
     expect(tx.dashboardWidget.create).not.toHaveBeenCalled();
   });
 
@@ -255,17 +282,19 @@ describe("addWidgetRow", () => {
       )
       .mockImplementationOnce(async (callback: (client: TTx) => unknown) => callback(tx));
 
-    const result = await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_b", chartType: "bar" });
-    expect(result.kind).toBe("ok");
+    expect((await addChart("clch_b")).kind).toBe("ok");
     expect(mockTransaction).toHaveBeenCalledTimes(2);
   });
 });
 
 describe("updateWidgetRow", () => {
-  const mine: TSibling = {
+  const mine = {
     id: "clwg_mine",
+    pageId: PAGE_ID,
+    kind: "chart" as const,
     chartId: "clch_mine",
     layout: { x: 0, y: 0, w: 4, h: 4 },
+    content: null,
     order: 0,
   };
   const other: TSibling = {
@@ -275,72 +304,116 @@ describe("updateWidgetRow", () => {
     order: 1,
   };
 
+  const update = (extra: Partial<Parameters<typeof updateWidgetRow>[0]>) =>
+    updateWidgetRow({ dashboardId: DASHBOARD_ID, workspaceId: WORKSPACE_ID, widgetId: mine.id, ...extra });
+
+  const txWith = (current: unknown, siblings: TSibling[] = [mine, other]) => {
+    const tx = stubTransaction(makeTx({ siblings }));
+    tx.dashboardWidget.findFirst.mockResolvedValue(current);
+    return tx;
+  };
+
   test("is gone when the dashboard no longer exists", async () => {
     const tx = stubTransaction(makeTx({ locked: null }));
-    expect(
-      await updateWidgetRow({ dashboardId: DASHBOARD_ID, widgetId: mine.id, chartId: "clch_x" })
-    ).toEqual({
-      kind: "gone",
-    });
+    expect(await update({ chartId: "clch_x" })).toEqual({ kind: "gone" });
     expectNothingWritten(tx);
   });
 
   test("is gone for a widget that is not on this dashboard", async () => {
-    const tx = stubTransaction(makeTx({ siblings: [other] }));
-    expect(
-      await updateWidgetRow({
-        dashboardId: DASHBOARD_ID,
-        widgetId: mine.id,
-        layout: { x: 0, y: 4, w: 4, h: 4 },
-      })
-    ).toEqual({ kind: "gone" });
+    const tx = txWith(null);
+    expect(await update({ layout: { x: 0, y: 4, w: 4, h: 4 } })).toEqual({ kind: "gone" });
+    expect(tx.dashboardWidget.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: mine.id, dashboardId: DASHBOARD_ID } })
+    );
     expectNothingWritten(tx);
   });
 
-  test("refuses repointing to a chart another widget on the dashboard shows", async () => {
-    const tx = stubTransaction(makeTx({ siblings: [mine, other] }));
-    expect(
-      await updateWidgetRow({ dashboardId: DASHBOARD_ID, widgetId: mine.id, chartId: "clch_other" })
-    ).toEqual({ kind: "duplicate" });
+  test("refuses repointing to a chart another widget on its page shows", async () => {
+    const tx = txWith(mine);
+    expect(await update({ chartId: "clch_other" })).toEqual({ kind: "duplicate" });
+    expectNothingWritten(tx);
+  });
+
+  test("refuses a chart for a layout block, and content for a chart", async () => {
+    let tx = txWith({ ...mine, kind: "separator", chartId: null });
+    expect(await update({ chartId: "clch_x" })).toMatchObject({ kind: "invalidWidget", name: "chartId" });
+    expectNothingWritten(tx);
+
+    tx = txWith(mine);
+    expect(await update({ content: { headline: "x" } })).toMatchObject({
+      kind: "invalidWidget",
+      name: "content",
+    });
+    expectNothingWritten(tx);
+  });
+
+  test("merges a block's content: an image keeps its file when only its settings change", async () => {
+    const fileUrl = `/storage/${WORKSPACE_ID}/private/dashboards/cldb1/photo--fid--1.png`;
+    const tx = txWith({
+      ...mine,
+      kind: "image",
+      chartId: null,
+      content: { fileUrl, fit: "fit", position: "center", alt: "" },
+    });
+    expect((await update({ content: { fit: "fill", alt: "Team" } })).kind).toBe("ok");
+    expect(tx.dashboardWidget.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { content: { fileUrl, fit: "fill", position: "center", alt: "Team" } },
+      })
+    );
+  });
+
+  test("refuses an image file that is not a dashboard upload of this workspace", async () => {
+    const tx = txWith({ ...mine, kind: "image", chartId: null, content: null });
+    expect(await update({ content: { fileUrl: "https://evil.example/x.png" } })).toMatchObject({
+      kind: "invalidWidget",
+      name: "content",
+    });
     expectNothingWritten(tx);
   });
 
   test("refuses a move onto another widget, naming it", async () => {
-    const tx = stubTransaction(makeTx({ siblings: [mine, other] }));
-    expect(
-      await updateWidgetRow({
-        dashboardId: DASHBOARD_ID,
-        widgetId: mine.id,
-        layout: { x: 3, y: 0, w: 4, h: 4 },
-      })
-    ).toEqual({ kind: "overlap", widgetId: other.id });
+    const tx = txWith(mine);
+    expect(await update({ layout: { x: 3, y: 0, w: 4, h: 4 } })).toEqual({
+      kind: "overlap",
+      widgetId: other.id,
+    });
     expectNothingWritten(tx);
   });
 
   test("checks the move against the other widgets only, so overlapping its own old place is fine", async () => {
-    const tx = stubTransaction(makeTx({ siblings: [mine, other] }));
+    const tx = txWith(mine);
     const layout = { x: 0, y: 2, w: 4, h: 4 };
-    const result = await updateWidgetRow({ dashboardId: DASHBOARD_ID, widgetId: mine.id, layout });
+    const result = await update({ layout });
 
-    expect(result).toMatchObject({
-      kind: "ok",
-      previous: { chartId: mine.chartId, layout: mine.layout },
-    });
+    expect(result).toMatchObject({ kind: "ok", previous: { chartId: mine.chartId, layout: mine.layout } });
     expect(tx.dashboardWidget.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: mine.id }, data: { layout } })
     );
     expect(touchedAt(tx).getTime()).toBe(LOCKED_AT.getTime() + 1);
   });
 
-  test("repoints in place, writing only the chart, and returns what it showed before", async () => {
-    const tx = stubTransaction(makeTx({ siblings: [mine, other] }));
-    const result = await updateWidgetRow({
-      dashboardId: DASHBOARD_ID,
-      widgetId: mine.id,
-      chartId: "clch_new",
-    });
+  test("moves a widget to another page, into its first open slot at its size", async () => {
+    const tx = txWith(mine, [other]);
+    tx.dashboardPage.findFirst.mockResolvedValueOnce({ id: OTHER_PAGE_ID });
+    expect((await update({ pageId: OTHER_PAGE_ID })).kind).toBe("ok");
+    expect(tx.dashboardWidget.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { pageId: OTHER_PAGE_ID, layout: { x: 0, y: 0, w: 4, h: 4 } },
+      })
+    );
+  });
 
-    expect(result).toMatchObject({ kind: "ok", previous: { chartId: "clch_mine", layout: mine.layout } });
+  test("refuses a move to a page of another dashboard", async () => {
+    const tx = txWith(mine);
+    tx.dashboardPage.findFirst.mockResolvedValueOnce(null);
+    expect(await update({ pageId: OTHER_PAGE_ID })).toEqual({ kind: "unknownPage" });
+    expectNothingWritten(tx);
+  });
+
+  test("repoints in place, writing only the chart", async () => {
+    const tx = txWith(mine);
+    expect(await update({ chartId: "clch_new" })).toMatchObject({ kind: "ok" });
     expect(tx.dashboardWidget.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: mine.id }, data: { chartId: "clch_new" } })
     );
@@ -348,17 +421,14 @@ describe("updateWidgetRow", () => {
 
   test("is gone, and updates nothing, when the dashboard vanished before it could be touched", async () => {
     const tx = stubTransaction(makeTx({ siblings: [mine], touched: 0 }));
-    expect(
-      await updateWidgetRow({ dashboardId: DASHBOARD_ID, widgetId: mine.id, chartId: "clch_new" })
-    ).toEqual({
-      kind: "gone",
-    });
+    tx.dashboardWidget.findFirst.mockResolvedValue(mine);
+    expect(await update({ chartId: "clch_new" })).toEqual({ kind: "gone" });
     expect(tx.dashboardWidget.update).not.toHaveBeenCalled();
   });
 });
 
 describe("deleteWidgetRow", () => {
-  const removed = { chartId: "clch_a", layout: { x: 0, y: 0, w: 4, h: 4 } };
+  const removed = { pageId: PAGE_ID, kind: "chart", chartId: "clch_a", layout: { x: 0, y: 0, w: 4, h: 4 } };
 
   test("is null when the dashboard no longer exists", async () => {
     const tx = stubTransaction(makeTx({ locked: null }));
@@ -377,14 +447,6 @@ describe("deleteWidgetRow", () => {
     expectNothingWritten(tx);
   });
 
-  test("is null, and leaves updatedAt alone, when the widget was deleted concurrently", async () => {
-    const tx = stubTransaction(makeTx());
-    tx.dashboardWidget.findFirst.mockResolvedValueOnce(removed);
-    tx.dashboardWidget.deleteMany.mockResolvedValueOnce({ count: 0 });
-    expect(await deleteWidgetRow(DASHBOARD_ID, "clwg_a")).toBeNull();
-    expect(tx.dashboard.updateMany).not.toHaveBeenCalled();
-  });
-
   test("deletes the widget scoped to the dashboard, moves updatedAt, and returns what was removed", async () => {
     const tx = stubTransaction(makeTx());
     tx.dashboardWidget.findFirst.mockResolvedValueOnce(removed);
@@ -393,215 +455,5 @@ describe("deleteWidgetRow", () => {
       where: { id: "clwg_a", dashboardId: DASHBOARD_ID },
     });
     expect(touchedAt(tx).getTime()).toBe(LOCKED_AT.getTime() + 1);
-  });
-
-  test("runs the transaction again after a deadlock, like every other widget write", async () => {
-    const tx = makeTx();
-    tx.dashboardWidget.findFirst.mockResolvedValueOnce(removed);
-    mockTransaction
-      .mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError("deadlock", { code: "P2034", clientVersion: "7" })
-      )
-      .mockImplementationOnce(async (callback: (client: TTx) => unknown) => callback(tx));
-
-    expect(await deleteWidgetRow(DASHBOARD_ID, "clwg_a")).toEqual(removed);
-    expect(mockTransaction).toHaveBeenCalledTimes(2);
-  });
-});
-
-describe("replaceDashboardRow", () => {
-  const widgetA = { id: "clwg_a", layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 };
-  const widgetB = { id: "clwg_b", layout: { x: 4, y: 0, w: 4, h: 4 }, order: 1 };
-  const current = { name: "Board", updatedAt: LOCKED_AT, widgets: [widgetA, widgetB] };
-
-  const txWith = (found: typeof current | null = current, locked: Date | null = LOCKED_AT) => {
-    const tx = stubTransaction(makeTx({ locked }));
-    tx.dashboard.findUnique.mockResolvedValue(found);
-    return tx;
-  };
-
-  test("is gone when the dashboard cannot be locked", async () => {
-    const tx = txWith(current, null);
-    expect(
-      await replaceDashboardRow({ dashboardId: DASHBOARD_ID, expectedUpdatedAt: LOCKED_AT, widgets: [] })
-    ).toEqual({ kind: "gone" });
-    expect(tx.dashboard.findUnique).not.toHaveBeenCalled();
-  });
-
-  test("is gone when the dashboard cannot be read after the lock", async () => {
-    const tx = txWith(null);
-    expect(
-      await replaceDashboardRow({ dashboardId: DASHBOARD_ID, expectedUpdatedAt: LOCKED_AT, widgets: [] })
-    ).toEqual({ kind: "gone" });
-    expectNothingWritten(tx);
-  });
-
-  test("refuses a stale version, naming the current one, and writes nothing", async () => {
-    const tx = txWith();
-    expect(
-      await replaceDashboardRow({
-        dashboardId: DASHBOARD_ID,
-        expectedUpdatedAt: new Date(LOCKED_AT.getTime() - 1),
-        widgets: [],
-      })
-    ).toEqual({ kind: "stale", currentUpdatedAt: LOCKED_AT });
-    expectNothingWritten(tx);
-  });
-
-  test("refuses widgets that are not on the dashboard, naming them", async () => {
-    const tx = txWith();
-    expect(
-      await replaceDashboardRow({
-        dashboardId: DASHBOARD_ID,
-        expectedUpdatedAt: LOCKED_AT,
-        widgets: [
-          { widgetId: widgetA.id, layout: widgetA.layout },
-          { widgetId: "clwg_foreign", layout: { x: 0, y: 4, w: 4, h: 4 } },
-        ],
-      })
-    ).toEqual({ kind: "unknownWidgets", widgetIds: ["clwg_foreign"] });
-    expectNothingWritten(tx);
-  });
-
-  test("with requireEveryWidget, refuses a list that leaves a widget out, and removes nothing", async () => {
-    const tx = txWith();
-    expect(
-      await replaceDashboardRow({
-        dashboardId: DASHBOARD_ID,
-        expectedUpdatedAt: LOCKED_AT,
-        widgets: [{ widgetId: widgetA.id, layout: widgetA.layout }],
-        requireEveryWidget: true,
-      })
-    ).toEqual({ kind: "missingWidgets", widgetIds: [widgetB.id] });
-    expectNothingWritten(tx);
-  });
-
-  test("refuses overlapping widgets, naming both, and writes nothing", async () => {
-    const tx = txWith();
-    expect(
-      await replaceDashboardRow({
-        dashboardId: DASHBOARD_ID,
-        expectedUpdatedAt: LOCKED_AT,
-        widgets: [
-          { widgetId: widgetA.id, layout: { x: 0, y: 0, w: 6, h: 4 } },
-          { widgetId: widgetB.id, layout: { x: 5, y: 0, w: 4, h: 4 } },
-        ],
-      })
-    ).toEqual({ kind: "overlap", widgetIds: [widgetB.id, widgetA.id] });
-    expectNothingWritten(tx);
-  });
-
-  test("saves name and places, removes an omitted widget, and moves updatedAt past the locked value", async () => {
-    // The clock stands still at the locked value: the save must still move updatedAt.
-    vi.useFakeTimers({ now: LOCKED_AT, toFake: ["Date"] });
-    const tx = txWith();
-    const moved = { x: 0, y: 4, w: 6, h: 4 };
-
-    const result = await replaceDashboardRow({
-      dashboardId: DASHBOARD_ID,
-      expectedUpdatedAt: new Date(LOCKED_AT.getTime()),
-      name: "Renamed",
-      widgets: [{ widgetId: widgetA.id, layout: moved, order: 5 }],
-    });
-
-    expect(result).toMatchObject({
-      kind: "ok",
-      previous: { name: "Board", widgets: [widgetA, widgetB] },
-    });
-    expect(tx.dashboardWidget.deleteMany).toHaveBeenCalledWith({
-      where: { dashboardId: DASHBOARD_ID, id: { in: [widgetB.id] } },
-    });
-    expect(placesWritten(tx)).toEqual({
-      ids: [widgetA.id],
-      layouts: [moved],
-      orders: [5],
-      dashboardId: DASHBOARD_ID,
-    });
-    expect(tx.dashboard.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: DASHBOARD_ID },
-        data: { name: "Renamed", updatedAt: new Date(LOCKED_AT.getTime() + 1) },
-      })
-    );
-  });
-
-  test("keeps the name and each order when they are omitted, and deletes nothing when every widget is sent", async () => {
-    const tx = txWith();
-    await replaceDashboardRow({
-      dashboardId: DASHBOARD_ID,
-      expectedUpdatedAt: LOCKED_AT,
-      widgets: [
-        { widgetId: widgetA.id, layout: widgetA.layout },
-        { widgetId: widgetB.id, layout: widgetB.layout },
-      ],
-      requireEveryWidget: true,
-    });
-
-    expect(tx.dashboardWidget.deleteMany).not.toHaveBeenCalled();
-    // A null order keeps the stored one (COALESCE in the statement).
-    expect(placesWritten(tx)).toEqual({
-      ids: [widgetA.id, widgetB.id],
-      layouts: [widgetA.layout, widgetB.layout],
-      orders: [null, null],
-      dashboardId: DASHBOARD_ID,
-    });
-    const [[dashboardUpdate]] = tx.dashboard.update.mock.calls as unknown as [[{ data: object }]];
-    expect(dashboardUpdate.data).not.toHaveProperty("name");
-    expect(dashboardUpdate.data).toHaveProperty("updatedAt");
-  });
-
-  test("without widgets, writes only the filters and leaves every widget as it is", async () => {
-    const tx = txWith();
-    const filters = [
-      {
-        id: "clfi000000000000000000001",
-        field: "FeedbackRecords.sourceName",
-        operator: "equals" as const,
-        label: "Source",
-        values: ["Web"],
-      },
-    ];
-
-    expect(
-      await replaceDashboardRow({ dashboardId: DASHBOARD_ID, expectedUpdatedAt: LOCKED_AT, filters })
-    ).toMatchObject({ kind: "ok" });
-
-    expect(tx.dashboardWidget.deleteMany).not.toHaveBeenCalled();
-    expect(tx.$executeRaw).not.toHaveBeenCalled();
-    const [[dashboardUpdate]] = tx.dashboard.update.mock.calls as unknown as [[{ data: object }]];
-    expect(dashboardUpdate.data).toMatchObject({ filters });
-    expect(dashboardUpdate.data).not.toHaveProperty("name");
-  });
-});
-
-describe("planNewWidget", () => {
-  test("places a new widget in the first open slot while the grid has room", () => {
-    expect(planNewWidget([], "bar")).toEqual({
-      kind: "ok",
-      layout: { x: 0, y: 0, w: 4, h: 4 },
-      order: 0,
-    });
-  });
-
-  test("refuses a slot below the grid's last row, which a whole-dashboard save could not carry", () => {
-    // 126 full-width widgets stacked 0..1000: the next open slot is row 1008, past MAX_WIDGET_Y.
-    const siblings = Array.from({ length: 126 }, (_, index) => ({
-      id: `widget-${index.toString()}`,
-      layout: { x: 0, y: index * 8, w: 12, h: 8 },
-      order: index,
-    }));
-    expect(planNewWidget(siblings, "bar")).toEqual({ kind: "noSpace" });
-  });
-
-  test("keeps taking widgets while the next open slot is on the last row", () => {
-    const siblings = Array.from({ length: 125 }, (_, index) => ({
-      id: `widget-${index.toString()}`,
-      layout: { x: 0, y: index * 8, w: 12, h: 8 },
-      order: index,
-    }));
-    expect(planNewWidget(siblings, "big_number")).toMatchObject({
-      kind: "ok",
-      layout: { x: 0, y: 1000 },
-    });
   });
 });

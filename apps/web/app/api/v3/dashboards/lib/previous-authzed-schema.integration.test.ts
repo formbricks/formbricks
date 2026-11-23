@@ -10,6 +10,7 @@ import {
   ZV3DashboardListQuery,
 } from "@/app/api/v3/dashboards/lib/schemas";
 import { getV3DashboardWidget } from "@/app/api/v3/dashboards/lib/widget-operations";
+import { createTestDashboard, createTestWidget } from "@/integration/dashboard-rows";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
@@ -63,7 +64,7 @@ beforeAll(async () => {
     })
   ).id;
   ids.dashboard = (
-    await prisma.dashboard.create({
+    await createTestDashboard({
       data: {
         name: "Board",
         workspaceId: fixture.workspaceId,
@@ -81,7 +82,7 @@ beforeAll(async () => {
     })
   ).id;
   ids.widget = (
-    await prisma.dashboardWidget.create({
+    await createTestWidget({
       data: { dashboardId: ids.dashboard, chartId: ids.chart, layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
     })
   ).id;

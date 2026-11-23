@@ -1,0 +1,22 @@
+type: object
+description: >-
+  Send a `name`, `teamIds`, or both. `teamIds` limits which teams' Dashboard Viewers see the page;
+  `null` or an empty list removes the limit (every team). Changing the limit needs an Owner or Manager
+  signed in and the Access Control feature — an API key never may (403) — and each team must hold a
+  grant on the dashboard's workspace without a dashboard limit leaving this dashboard out (422). A
+  limit sent back unchanged needs neither. Limit changes are audited.
+minProperties: 1
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 100
+  teamIds:
+    oneOf:
+      - type: array
+        maxItems: 100
+        items:
+          type: string
+          format: cuid2
+      - type: "null"
+additionalProperties: false

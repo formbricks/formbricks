@@ -1,0 +1,89 @@
+patch:
+  operationId: updateDashboardPageV3
+  summary: Rename a page or limit it to teams
+  description: |
+    Renames a page, sets which teams' Dashboard Viewers see it (`teamIds`), or both. Changing the team
+    limit needs an Owner or Manager signed in and the Access Control feature — an API key gets 403 — and
+    a team that holds no grant on the dashboard's workspace, or whose dashboard limit leaves this
+    dashboard out, answers 422 naming it. A limit sent back unchanged needs neither. Moves the
+    dashboard's `updatedAt`. Needs write access to the dashboard's workspace; a page of another
+    dashboard answers 403.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/PageIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DashboardPageUpdateRequest.yml
+  responses:
+    "200":
+      description: The updated page
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardPage.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteDashboardPageV3
+  summary: Delete a page
+  description: |
+    Deletes a page and every widget on it; the charts they showed are kept. A dashboard keeps at least
+    one page: deleting its last answers 409. Moves the dashboard's `updatedAt`. Needs write access to
+    the dashboard's workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/PageIdPath.yml
+  responses:
+    "204":
+      description: Page deleted with its widgets; the charts are kept
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

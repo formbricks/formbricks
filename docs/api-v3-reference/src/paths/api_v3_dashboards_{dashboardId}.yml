@@ -104,8 +104,11 @@ put:
   operationId: replaceDashboardV3
   summary: Save a whole dashboard
   description: |
-    Replaces a dashboard's name and every widget's place in one transaction — all of it or none of
-    it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
+    Replaces a dashboard's name, its pages and every widget's page, place and content in one
+    transaction — all of it or none of it. A widget left out is removed; its chart is kept. A page
+    left out of `pages` is removed with its widgets; new pages and widgets are created. Widgets may
+    leave gaps but not overlap on a page (422), and a chart appears at most once per page (409).
+    Changing a page's `teamIds` needs a signed-in Owner or Manager with Access Control (403).
     Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
     is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
 
