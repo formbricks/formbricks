@@ -27,7 +27,8 @@ export const ContactsPage = async ({
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const hasContactDirectory = Boolean(await getWorkspaceContactDirectory(workspace.id));
+  const contactDirectory = await getWorkspaceContactDirectory(workspace.id);
+  const hasContactDirectory = Boolean(contactDirectory);
 
   const [contactAttributeKeys, sharedDirectoryName] =
     isContactsEnabled && hasContactDirectory
@@ -42,6 +43,7 @@ export const ContactsPage = async ({
     <UploadContactsCSVButton
       workspaceId={workspace.id}
       contactAttributeKeys={contactAttributeKeys}
+      matchingKey={contactDirectory?.matchingKey ?? "email"}
       disabled={!hasContactDirectory}
     />
   );

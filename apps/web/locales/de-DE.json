@@ -2506,6 +2506,7 @@
       "upload_contacts_modal_pick_different_file": "Wähle eine andere Datei",
       "upload_contacts_modal_preview": "Hier ist eine Vorschau deiner Daten.",
       "upload_contacts_modal_upload_btn": "Kontakte hochladen",
+      "upload_contacts_multi_match": "{count, plural, one {{count} Zeile hat mehr als einem Kontakt entsprochen. Es wurde der Kontakt mit derselben userId aktualisiert, andernfalls der älteste.} other {{count} Zeilen haben mehr als einem Kontakt entsprochen. Dabei wurde jeweils der Kontakt mit derselben userId aktualisiert, andernfalls der älteste.}}",
       "upload_contacts_success": "Kontakte erfolgreich hochgeladen"
     },
     "creatives": {

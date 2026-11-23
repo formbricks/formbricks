@@ -2,10 +2,14 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
-import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
-import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  ZContactBulkUploadRequest,
+  getContactBulkUploadRequestSchema,
+} from "@/modules/ee/contacts/types/contact";
 import { checkContactDirectoryApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -75,12 +79,21 @@ export const PUT = async (request: Request) =>
       if (noDirectoryError) {
         return handleApiError(request, noDirectoryError, auditLog);
       }
+      const directory = await requireWorkspaceContactDirectory(workspaceId);
 
-      const emails = contacts.map(
-        (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value as string
+      // The identity attribute depends on the directory's matching key, known only now.
+      const identityCheck = getContactBulkUploadRequestSchema(directory.matchingKey).safeParse(
+        parsedInput.body
       );
+      if (!identityCheck.success) {
+        return handleApiError(
+          request,
+          { type: "unprocessable_entity", details: formatZodError(identityCheck.error) },
+          auditLog
+        );
+      }
 
-      const upsertBulkContactsResult = await upsertBulkContacts(contacts, workspaceId, emails);
+      const upsertBulkContactsResult = await upsertBulkContacts(contacts, workspaceId, directory);
 
       if (!upsertBulkContactsResult.ok) {
         return handleApiError(request, upsertBulkContactsResult.error, auditLog);

@@ -2506,6 +2506,7 @@
       "upload_contacts_modal_pick_different_file": "Välj en annan fil",
       "upload_contacts_modal_preview": "Här är en förhandsgranskning av dina data.",
       "upload_contacts_modal_upload_btn": "Ladda upp kontakter",
+      "upload_contacts_multi_match": "{count, plural, one {{count} rad matchade mer än en kontakt. Den uppdaterade kontakten med samma userId, annars den äldsta.} other {{count} rader matchade mer än en kontakt. Varje rad uppdaterade kontakten med samma userId, annars den äldsta.}}",
       "upload_contacts_success": "Kontakter uppladdade"
     },
     "creatives": {
