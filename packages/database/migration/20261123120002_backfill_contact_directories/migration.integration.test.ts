@@ -6,8 +6,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { createContactDirectories } from "../20261123120001_create_contact_directories/migration";
 import { getPgConnectionConfig } from "../../src/pg-connection-config";
-import { PrismaClient } from "../../src/prisma";
-import { createPrismaPgAdapter } from "../../src/prisma-adapter";
+import type { PrismaClient } from "../../src/prisma";
 import { ensureOnlineIndexes } from "../../src/scripts/online-indexes";
 import { backfillContactDirectories } from "./migration";
 
@@ -145,6 +144,12 @@ describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", ()
     const url = new URL(databaseUrl!);
     url.searchParams.set("options", `-c search_path=${schema}`);
     scopedUrl = url.toString();
+    // Imported only when the test runs: the generated client is rebuilt by the package build, which can
+    // run alongside the unit tests that skip this file.
+    const [{ PrismaClient }, { createPrismaPgAdapter }] = await Promise.all([
+      import("../../src/prisma"),
+      import("../../src/prisma-adapter"),
+    ]);
     prisma = new PrismaClient({ adapter: createPrismaPgAdapter(scopedUrl).adapter });
   });
 
