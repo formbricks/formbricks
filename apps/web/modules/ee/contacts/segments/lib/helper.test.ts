@@ -39,6 +39,7 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
 }));
 
 describe("checkForRecursiveSegmentFilter", () => {
+  const WORKSPACE_ID = "workspace-1";
   const segmentReference = (segmentId: string) => ({
     id: `filter-${segmentId}`,
     connector: null,
@@ -64,7 +65,7 @@ describe("checkForRecursiveSegmentFilter", () => {
     const filters = [segmentReference(segmentId)];
 
     await expect(
-      checkForRecursiveSegmentFilter(filters as unknown as TBaseFilters, segmentId)
+      checkForRecursiveSegmentFilter(filters as unknown as TBaseFilters, segmentId, WORKSPACE_ID)
     ).rejects.toThrow(new InvalidInputError("Recursive segment filter is not allowed"));
 
     // The direct reference is refused before any segment is read.
@@ -82,11 +83,12 @@ describe("checkForRecursiveSegmentFilter", () => {
     await expect(
       checkForRecursiveSegmentFilter(
         [segmentReference(differentSegmentId)] as unknown as TBaseFilters,
-        segmentId
+        segmentId,
+        WORKSPACE_ID
       )
     ).resolves.toBeUndefined();
 
-    expect(getSegmentsByIds).toHaveBeenCalledWith([differentSegmentId]);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([differentSegmentId], WORKSPACE_ID);
     expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
   });
 
@@ -107,11 +109,12 @@ describe("checkForRecursiveSegmentFilter", () => {
     await expect(
       checkForRecursiveSegmentFilter(
         [segmentReference(nestedSegmentId)] as unknown as TBaseFilters,
-        originalSegmentId
+        originalSegmentId,
+        WORKSPACE_ID
       )
     ).rejects.toThrow(new InvalidInputError("Recursive segment filter is not allowed"));
 
-    expect(getSegmentsByIds).toHaveBeenCalledWith([nestedSegmentId]);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([nestedSegmentId], WORKSPACE_ID);
     expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
   });
 
@@ -129,11 +132,15 @@ describe("checkForRecursiveSegmentFilter", () => {
     );
 
     await expect(
-      checkForRecursiveSegmentFilter([segmentReference(segmentIdB)] as unknown as TBaseFilters, segmentIdA)
+      checkForRecursiveSegmentFilter(
+        [segmentReference(segmentIdB)] as unknown as TBaseFilters,
+        segmentIdA,
+        WORKSPACE_ID
+      )
     ).rejects.toThrow(new InvalidInputError("Recursive segment filter is not allowed"));
 
-    expect(getSegmentsByIds).toHaveBeenNthCalledWith(1, [segmentIdB]);
-    expect(getSegmentsByIds).toHaveBeenNthCalledWith(2, [segmentIdC]);
+    expect(getSegmentsByIds).toHaveBeenNthCalledWith(1, [segmentIdB], WORKSPACE_ID);
+    expect(getSegmentsByIds).toHaveBeenNthCalledWith(2, [segmentIdC], WORKSPACE_ID);
     expect(getSegmentsByIds).toHaveBeenCalledTimes(2);
   });
 
@@ -148,11 +155,12 @@ describe("checkForRecursiveSegmentFilter", () => {
 
     await checkForRecursiveSegmentFilter(
       [segmentReference(first), segmentReference(second)] as unknown as TBaseFilters,
-      segmentId
+      segmentId,
+      WORKSPACE_ID
     );
 
     expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
-    expect(getSegmentsByIds).toHaveBeenCalledWith([first, second]);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([first, second], WORKSPACE_ID);
   });
 
   test("stops on a cycle among other segments that never reaches the checked one", async () => {
@@ -169,7 +177,11 @@ describe("checkForRecursiveSegmentFilter", () => {
     );
 
     await expect(
-      checkForRecursiveSegmentFilter([segmentReference(segmentA)] as unknown as TBaseFilters, segmentId)
+      checkForRecursiveSegmentFilter(
+        [segmentReference(segmentA)] as unknown as TBaseFilters,
+        segmentId,
+        WORKSPACE_ID
+      )
     ).resolves.toBeUndefined();
 
     expect(getSegmentsByIds).toHaveBeenCalledTimes(2);
@@ -181,7 +193,11 @@ describe("checkForRecursiveSegmentFilter", () => {
     vi.mocked(getSegmentsByIds).mockResolvedValue([]);
 
     await expect(
-      checkForRecursiveSegmentFilter([segmentReference(missing)] as unknown as TBaseFilters, segmentId)
+      checkForRecursiveSegmentFilter(
+        [segmentReference(missing)] as unknown as TBaseFilters,
+        segmentId,
+        WORKSPACE_ID
+      )
     ).rejects.toThrow(new ResourceNotFoundError("segment", missing));
   });
 });

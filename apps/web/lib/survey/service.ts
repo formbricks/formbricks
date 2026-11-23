@@ -691,7 +691,7 @@ const assertAppTargetingFiltersAllowed = async (
     }
     // The draft tree can fail the schema and still name other segments, so follow the raw ids: an indirect
     // recursion must be refused before `saveAppSurveySegment` writes the tree it takes on.
-    await checkReferencedSegmentsForRecursion(referenced, segment.id);
+    await checkReferencedSegmentsForRecursion(referenced, segment.id, currentSurvey.workspaceId);
     if (isDeepStrictEqual(filters, currentSurvey.segment.filters ?? [])) return;
     await assertContactsLicence(currentSurvey.workspaceId);
   }

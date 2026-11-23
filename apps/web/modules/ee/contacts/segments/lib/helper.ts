@@ -52,7 +52,8 @@ const collectReferencedSegmentIds = (filters: TBaseFilters, found: Set<string> =
  */
 export const checkReferencedSegmentsForRecursion = async (
   segmentIds: Iterable<string>,
-  segmentId: string
+  segmentId: string,
+  workspaceId: string
 ): Promise<void> => {
   const visited = new Set<string>();
   let level = new Set(segmentIds);
@@ -66,7 +67,7 @@ export const checkReferencedSegmentsForRecursion = async (
     if (toRead.length === 0) return;
     for (const id of toRead) visited.add(id);
 
-    const referencedSegments = await getSegmentsByIds(toRead);
+    const referencedSegments = await getSegmentsByIds(toRead, workspaceId);
     const filtersById = new Map(referencedSegments.map((segment) => [segment.id, segment.filters]));
     const missing = toRead.find((id) => !filtersById.has(id));
     if (missing) throw new ResourceNotFoundError("segment", missing);
@@ -86,8 +87,12 @@ export const checkReferencedSegmentsForRecursion = async (
  * @param segmentId - The ID of the segment being checked
  * @throws {InvalidInputError} When a recursive segment filter is detected
  */
-export const checkForRecursiveSegmentFilter = async (filters: TBaseFilters, segmentId: string) => {
-  await checkReferencedSegmentsForRecursion(collectReferencedSegmentIds(filters), segmentId);
+export const checkForRecursiveSegmentFilter = async (
+  filters: TBaseFilters,
+  segmentId: string,
+  workspaceId: string
+) => {
+  await checkReferencedSegmentsForRecursion(collectReferencedSegmentIds(filters), segmentId, workspaceId);
 };
 
 /**

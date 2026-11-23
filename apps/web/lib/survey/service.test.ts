@@ -13,6 +13,7 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import {
+  MAX_RAW_FILTER_NESTING,
   MAX_SEGMENT_FILTERS_PER_TREE,
   MAX_SEGMENT_FILTER_DEPTH,
   MAX_SEGMENT_SURVEYS,
@@ -1288,6 +1289,18 @@ describe("Tests for updateSurvey", () => {
         await expect(save([{ id: createId(), connector: null, resource }])).rejects.toThrow(
           "nested too deeply"
         );
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses deeply nested filter values before the equality check", async () => {
+        // The draft save compares the tree with `isDeepStrictEqual`, which recurses: a deep value must be
+        // refused by the bounds before it reaches that comparison.
+        let value: unknown = "x";
+        for (let level = 0; level <= MAX_RAW_FILTER_NESTING; level++) value = { value };
+        const filters = [{ ...attributeFilters[0], resource: { ...attributeFilters[0].resource, value } }];
+
+        await expect(save(filters)).rejects.toThrow("values are nested too deeply");
 
         expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       });

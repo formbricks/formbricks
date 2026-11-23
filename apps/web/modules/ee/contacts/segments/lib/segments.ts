@@ -119,16 +119,18 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
 
 /**
  * The filters of several segments in one read, for the recursion check: a level of references costs one
- * query instead of one per segment. Only ids that exist come back; the caller reports a missing one, so it
- * names the id its walk met.
+ * query instead of one per segment. Scoped to the workspace, like every other nested-segment read, so a
+ * tree naming another workspace's segment is refused rather than followed. Only ids that exist come back;
+ * the caller reports a missing one, so it names the id its walk met.
  */
 export const getSegmentsByIds = async (
-  segmentIds: string[]
+  segmentIds: string[],
+  workspaceId: string
 ): Promise<{ id: string; filters: TBaseFilters }[]> => {
-  validateInputs([segmentIds, z.array(ZId)]);
+  validateInputs([segmentIds, z.array(ZId)], [workspaceId, ZId]);
   try {
     const segments = await prisma.segment.findMany({
-      where: { id: { in: segmentIds } },
+      where: { id: { in: segmentIds }, workspaceId },
       select: { id: true, filters: true },
     });
     return segments.map((segment) => ({ id: segment.id, filters: segment.filters as TBaseFilters }));

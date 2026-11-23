@@ -217,7 +217,7 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
         throw new InvalidInputError(errMsg);
       }
 
-      await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
+      await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId, segmentWorkspaceId);
       data = { ...parsedInput.data, filters: parsedFilters.data };
     }
 

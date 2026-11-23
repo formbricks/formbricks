@@ -198,20 +198,22 @@ describe("Segment Service Tests", () => {
   });
 
   describe("getSegmentsByIds", () => {
-    test("reads only the filters of the given ids, in one query", async () => {
+    const workspaceId = "workspace-1";
+
+    test("reads only the filters of the given ids in the workspace, in one query", async () => {
       const filters = [{ id: "filter-1" }] as unknown as TBaseFilters;
       vi.mocked(prisma.segment.findMany).mockResolvedValue([
         { id: "segment-1", filters: [] },
         { id: "segment-2", filters },
       ] as unknown as Awaited<ReturnType<typeof prisma.segment.findMany>>);
 
-      await expect(getSegmentsByIds(["segment-1", "segment-2"])).resolves.toEqual([
+      await expect(getSegmentsByIds(["segment-1", "segment-2"], workspaceId)).resolves.toEqual([
         { id: "segment-1", filters: [] },
         { id: "segment-2", filters },
       ]);
       expect(prisma.segment.findMany).toHaveBeenCalledTimes(1);
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { id: { in: ["segment-1", "segment-2"] } },
+        where: { id: { in: ["segment-1", "segment-2"] }, workspaceId },
         select: { id: true, filters: true },
       });
     });
@@ -221,7 +223,7 @@ describe("Segment Service Tests", () => {
         new Prisma.PrismaClientKnownRequestError("boom", { code: "P1", clientVersion: "5" })
       );
 
-      await expect(getSegmentsByIds(["segment-1"])).rejects.toThrow(DatabaseError);
+      await expect(getSegmentsByIds(["segment-1"], workspaceId)).rejects.toThrow(DatabaseError);
     });
   });
 

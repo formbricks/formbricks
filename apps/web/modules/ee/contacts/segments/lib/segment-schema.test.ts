@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
 import {
+  MAX_RAW_FILTER_NESTING,
   MAX_SEGMENT_FILTERS_PER_TREE,
   MAX_SEGMENT_FILTER_DEPTH,
   MAX_SEGMENT_SURVEYS,
@@ -242,6 +243,19 @@ describe("segment filter tree bounds", () => {
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.message).toBe(
       `Segment filters are nested too deeply: at most ${MAX_SEGMENT_FILTER_DEPTH} levels are supported`
+    );
+  });
+
+  test("refuses filter values nested past the raw nesting bound", () => {
+    let value: unknown = "x";
+    for (let level = 0; level <= MAX_RAW_FILTER_NESTING; level++) value = { value };
+    const filters = [{ ...validFilters[0], resource: { ...validFilters[0].resource, value } }] as unknown;
+
+    const result = ZSegmentFilters.safeParse(filters);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      `Filter values are nested too deeply: at most ${MAX_RAW_FILTER_NESTING} levels are supported`
     );
   });
 
