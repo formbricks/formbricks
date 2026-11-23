@@ -203,6 +203,20 @@ describe("getRichTextLinks with recall", () => {
     for (const link of links) expect(link).toMatch(/^recall in a tag: #recall:q9/);
   });
 
+  // The editor's own markup: a token there is plain text and must not count as a link.
+  test.each([
+    ["a list item", "<ul><li>Hi #recall:q9/fallback:there#</li></ul>"],
+    ["bold text", "<p><strong>#recall:q9/fallback:there#</strong></p>"],
+    ["a heading", "<h2>Hello #recall:q9/fallback:there#</h2>"],
+    ["link text", '<p><a href="https://example.com/a">#recall:q9/fallback:there#</a></p>'],
+    ["two tokens side by side", "<p>#recall:q9/fallback:a##recall:q8/fallback:b#</p>"],
+    ["a token with an nbsp fallback", "<p>Hi #recall:q9/fallback:nbsp#</p>"],
+  ])("does not count a token in %s as a link of its own", (_case, html) => {
+    expect(
+      [...getRichTextLinks(withHeadline(html))].filter((link) => link.startsWith("recall in a tag"))
+    ).toEqual([]);
+  });
+
   test("finds no link in a recall token in text without any tags", () => {
     expect(getRichTextLinks(withVariable(`Hi #recall:${VARIABLE_ID}/fallback:x#`, "friend")).size).toBe(0);
   });
