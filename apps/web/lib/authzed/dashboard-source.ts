@@ -1,6 +1,5 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import type { Prisma } from "@formbricks/database/prisma";
 import {
   type TDashboardPageProjectionRow,
   type TDashboardProjectionRow,
@@ -17,6 +16,12 @@ import {
  * relationship, so a failed read must never be mistaken for "no row".
  */
 
+// `@formbricks/database/prisma` re-exports only some `WhereInput` types; these are the queries' own.
+type TDashboardWhere = NonNullable<NonNullable<Parameters<typeof prisma.dashboard.findMany>[0]>["where"]>;
+type TDashboardPageWhere = NonNullable<
+  NonNullable<Parameters<typeof prisma.dashboardPage.findMany>[0]>["where"]
+>;
+
 const teamLimitSelect = {
   team: { select: { organizationId: true } },
   teamId: true,
@@ -27,7 +32,7 @@ const teamLimitSelect = {
  * their `TeamDashboard` rows, then the `WorkspaceTeam` grants those selections need to count.
  */
 export const readDashboardProjectionRows = async (
-  where: Prisma.DashboardWhereInput
+  where: TDashboardWhere
 ): Promise<ReadonlyArray<TDashboardProjectionRow>> => {
   const dashboards = await prisma.dashboard.findMany({
     where,
@@ -64,7 +69,7 @@ export const readDashboardProjectionRows = async (
 
 /** The dashboard pages `where` selects, as projection rows, ordered by ID. */
 export const readDashboardPageProjectionRows = async (
-  where: Prisma.DashboardPageWhereInput
+  where: TDashboardPageWhere
 ): Promise<ReadonlyArray<TDashboardPageProjectionRow>> => {
   const pages = await prisma.dashboardPage.findMany({
     where,
