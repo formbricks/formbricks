@@ -17,6 +17,9 @@ const functionBody = (sql: string, name: string): string => {
   return match[0];
 };
 
+/** Every regex metacharacter in `text`, backslash included, taken literally. */
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const withoutComments = (sql: string): string => sql.replace(/^[ \t]*--[^\n]*\n/gm, "");
 
 /** The `is_revocation := CASE … END;` assignment of the enqueue function. */
@@ -88,7 +91,7 @@ describe("dashboard projection trigger migration (ADR-0059)", () => {
     for (const [timing, target] of triggers) {
       expect(dashboardMigration).toMatch(
         new RegExp(
-          `${timing.replace(/[()]/g, "\\$&")}\\n(?:FOR EACH ROW WHEN [^\\n]*\\n)?(?:FOR EACH ROW )?EXECUTE FUNCTION enqueue_authzed_projection${target.replace(/[()]/g, "\\$&")}`
+          `${escapeRegExp(timing)}\\n(?:FOR EACH ROW WHEN [^\\n]*\\n)?(?:FOR EACH ROW )?EXECUTE FUNCTION enqueue_authzed_projection${escapeRegExp(target)}`
         )
       );
     }
