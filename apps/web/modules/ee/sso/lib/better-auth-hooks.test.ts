@@ -359,6 +359,16 @@ describe("ssoDatabaseHooks.user.create.after", () => {
     );
   });
 
+  test("forwards the gate's token-validated invite role to the write phase (ENG-7097)", async () => {
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision({ ...provisionDecision, inviteRole: "manager" });
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(provisionSsoUserMemberships).toHaveBeenCalledWith(
+      expect.objectContaining({ inviteRole: "manager" })
+    );
+  });
+
   test("does nothing when no decision is stashed (e.g. non-SSO sign-up)", async () => {
     await runWithSsoRequestContext(() =>
       after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never)

@@ -27,9 +27,9 @@ import {
 } from "@/lib/googleSheet/constants";
 import { getSpreadsheetNameById, validateGoogleSheetsConnection } from "@/lib/googleSheet/service";
 import {
-  createOrUpdateIntegration,
   deleteIntegration,
   getIntegrationByType,
+  saveIntegrationKeepingStoredKey,
 } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SlackApiError } from "@/lib/slack/errors";
@@ -112,13 +112,19 @@ export async function putIntegrationOperation({
 
   // The mappings go onto the stored integration, whose credentials and account go back exactly as stored:
   // parsing them would drop fields the schema doesn't name, such as parts of a provider's token response.
-  let integration: Awaited<ReturnType<typeof createOrUpdateIntegration>>;
+  // `saveIntegrationKeepingStoredKey` re-reads the row under a lock and keeps its key, so credentials a
+  // callback writes while this request is in flight cannot be overwritten by the read above (ENG-2123), and
+  // it refuses a mapping that names a survey outside this workspace.
+  let integration: Awaited<ReturnType<typeof saveIntegrationKeepingStoredKey>>;
   try {
-    integration = await createOrUpdateIntegration(workspaceId, {
+    integration = await saveIntegrationKeepingStoredKey(workspaceId, {
       type,
       config: { ...stored.config, data: parsed.data.config.data },
     } as TIntegrationInput);
   } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      return problemNotFound(requestId, error.resourceType, error.resourceId, instance);
+    }
     // ENG-3283: a survey restricted to some members can't feed an outbound integration.
     if (error instanceof OperationNotAllowedError && error.message === SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE) {
       return problemForbidden(requestId, error.message, instance, "survey_not_workspace_visible");

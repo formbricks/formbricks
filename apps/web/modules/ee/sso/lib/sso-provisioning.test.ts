@@ -5,6 +5,7 @@ import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getIsFreshInstance } from "@/lib/instance/service";
+import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
@@ -21,6 +22,7 @@ vi.mock("@formbricks/database", () => ({
     $transaction: vi.fn(async (cb: (tx: unknown) => unknown) =>
       cb({ user: { findUnique: vi.fn().mockResolvedValue({ notificationSettings: {} }) } })
     ),
+    invite: { findUnique: vi.fn() },
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
@@ -31,6 +33,7 @@ vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
+vi.mock("@/lib/jwt", () => ({ verifyInviteToken: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn(), identifyPostHogPerson: vi.fn() }));
 vi.mock("@/modules/auth/lib/brevo", () => ({ createBrevoCustomer: vi.fn() }));
@@ -77,6 +80,14 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 });
 
 const mockOrg = { id: "org-1" } as never;
+// AuthZed projections report a failure as a status; they do not throw.
+const projected = { status: "projected", passes: 1 } as const;
+const projectionFailed = {
+  status: "failed",
+  attempts: 1,
+  code: "authzed_unavailable",
+  retryable: true,
+} as never;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -94,6 +105,10 @@ beforeEach(() => {
   vi.mocked(ensureDefaultOrganization).mockResolvedValue({ organizationId: "default-org", role: "manager" });
   // clearAllMocks keeps implementations, so reset the one tests override with rejections.
   vi.mocked(createMembership).mockReset();
+  vi.mocked(reconcileOrganizationMembership).mockReset().mockResolvedValue(projected);
+  vi.mocked(reconcileTeamWorkspaceRelationships).mockReset().mockResolvedValue(projected);
+  vi.mocked(prisma.invite.findUnique).mockResolvedValue(null);
+  vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "inv-1", email: "a@b.com" });
 });
 
 describe("gateSsoProvisioning — bypass branches", () => {
@@ -273,6 +288,129 @@ describe("gateSsoProvisioning — provisions", () => {
   });
 });
 
+// ENG-7097: the invite's role reaches the write phase only through a valid invite token, never through
+// an email match, because the IdP may assert an email it does not vouch for.
+describe("gateSsoProvisioning — invite role", () => {
+  const inviteCallback = "/invite?token=tok";
+
+  test("carries the role of the invite whose token the callback URL holds", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(prisma.invite.findUnique).mockResolvedValue({
+      role: "manager",
+      organizationId: "org-1",
+      expiresAt: new Date(Date.now() + 60_000),
+    } as never);
+    const decision = await gateSsoProvisioning({ email: "A@b.com", callbackUrl: inviteCallback });
+    expect(verifyInviteToken).toHaveBeenCalledWith("tok");
+    expect(prisma.invite.findUnique).toHaveBeenCalledWith({
+      where: { id: "inv-1" },
+      select: { role: true, organizationId: true, expiresAt: true },
+    });
+    expect(decision).toMatchObject({ action: "provision", organizationId: "org-1", inviteRole: "manager" });
+  });
+
+  test("ignores an invite that belongs to another organization", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(prisma.invite.findUnique).mockResolvedValue({
+      role: "owner",
+      organizationId: "other-org",
+      expiresAt: new Date(Date.now() + 60_000),
+    } as never);
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback });
+    expect(decision).toMatchObject({ action: "provision" });
+    expect(decision).not.toHaveProperty("inviteRole");
+  });
+
+  test("ignores an expired invite", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(prisma.invite.findUnique).mockResolvedValue({
+      role: "owner",
+      organizationId: "org-1",
+      expiresAt: new Date(Date.now() - 60_000),
+    } as never);
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback });
+    expect(decision).not.toHaveProperty("inviteRole");
+  });
+
+  test("ignores a token issued for another email", async () => {
+    constantsOverrides.SKIP_INVITE_FOR_SSO = true;
+    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "inv-1", email: "someone@else.com" });
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback });
+    expect(decision).toMatchObject({ action: "provision" });
+    expect(decision).not.toHaveProperty("inviteRole");
+    expect(prisma.invite.findUnique).not.toHaveBeenCalled();
+  });
+
+  test("keeps the default role and still provisions when the token cannot be read", async () => {
+    constantsOverrides.SKIP_INVITE_FOR_SSO = true;
+    vi.mocked(verifyInviteToken).mockImplementation(() => {
+      throw new Error("bad token");
+    });
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback });
+    expect(decision).toMatchObject({ action: "provision" });
+    expect(decision).not.toHaveProperty("inviteRole");
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: expect.any(String) }),
+      "SSO provisioning: could not read the sign-up's invite token"
+    );
+  });
+
+  // A valid billing invite must not land as member just because the lookup failed: the invite page
+  // keeps an existing role, so nothing would correct it later. Rejecting lets the user sign in again.
+  test("rejects the sign-up when the invite cannot be looked up", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(prisma.invite.findUnique).mockRejectedValue(new Error("db down"));
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback })).toEqual({
+      action: "reject",
+      reason: "invite_token_validation_error",
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: expect.any(String) }),
+      "SSO provisioning: could not look up the sign-up's invite"
+    );
+  });
+
+  test("rejects the sign-up when the invite cannot be looked up with DEFAULT_ORGANIZATION_ID set", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    vi.mocked(prisma.invite.findUnique).mockRejectedValue(new Error("db down"));
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback })).toEqual({
+      action: "reject",
+      reason: "invite_token_validation_error",
+    });
+  });
+
+  test("carries a valid billing invite's role", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(prisma.invite.findUnique).mockResolvedValue({
+      role: "billing",
+      organizationId: "org-1",
+      expiresAt: new Date(Date.now() + 60_000),
+    } as never);
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback });
+    expect(decision).toMatchObject({ action: "provision", inviteRole: "billing" });
+  });
+
+  // The reported escalation: an identity whose email the IdP does not vouch for, signing up without
+  // an invite link while an owner invite for that email is pending, used to become owner.
+  test("grants no invite role without a token, even with DEFAULT_ORGANIZATION_ID set", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
+    expect(decision).not.toHaveProperty("inviteRole");
+    expect(prisma.invite.findUnique).not.toHaveBeenCalled();
+  });
+
+  test("carries a valid invite's role with DEFAULT_ORGANIZATION_ID set", async () => {
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
+    vi.mocked(prisma.invite.findUnique).mockResolvedValue({
+      role: "manager",
+      organizationId: "default-org",
+      expiresAt: new Date(Date.now() + 60_000),
+    } as never);
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: inviteCallback });
+    expect(decision).toMatchObject({ useDefaultOrganization: true, inviteRole: "manager" });
+  });
+});
+
 describe("gateSsoProvisioning — personal email domain block (Cloud)", () => {
   const blockedEmail = "spammer@gmail.com";
 
@@ -377,6 +515,28 @@ describe("provisionSsoUserMemberships", () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
+  // ENG-7097: the invite page no longer changes an existing member's role, so an SSO sign-up from an
+  // invite link has to get the invite's role here.
+  test("gives the new member the gate's token-validated invite role", async () => {
+    await provisionSsoUserMemberships({ ...baseArgs, signupSource: "invite", inviteRole: "manager" });
+    expect(createMembership).toHaveBeenCalledWith(
+      "org-1",
+      "u1",
+      { role: "manager", accepted: true },
+      expect.anything()
+    );
+  });
+
+  test("lets an invite set a restricted role on the ordinary path, where member is only a default", async () => {
+    await provisionSsoUserMemberships({ ...baseArgs, signupSource: "invite", inviteRole: "billing" });
+    expect(createMembership).toHaveBeenCalledWith(
+      "org-1",
+      "u1",
+      { role: "billing", accepted: true },
+      expect.anything()
+    );
+  });
+
   describe("useDefaultOrganization (ENG-2089)", () => {
     const defaultOrgArgs = {
       ...baseArgs,
@@ -407,6 +567,35 @@ describe("provisionSsoUserMemberships", () => {
         role: "owner",
       });
       await provisionSsoUserMemberships(defaultOrgArgs);
+      expect(createMembership).toHaveBeenCalledWith(
+        "default-org",
+        "u1",
+        { role: "owner", accepted: true },
+        expect.anything()
+      );
+    });
+
+    // ENG-7097: the configured role is the operator's floor; an invite may raise it, never lower it.
+    test("keeps the configured role when the invite's role is lower", async () => {
+      vi.mocked(ensureDefaultOrganization).mockResolvedValue({
+        organizationId: "default-org",
+        role: "manager",
+      });
+      await provisionSsoUserMemberships({ ...defaultOrgArgs, inviteRole: "member" });
+      expect(createMembership).toHaveBeenCalledWith(
+        "default-org",
+        "u1",
+        { role: "manager", accepted: true },
+        expect.anything()
+      );
+    });
+
+    test("raises the configured role to the invite's when the invite's is higher", async () => {
+      vi.mocked(ensureDefaultOrganization).mockResolvedValue({
+        organizationId: "default-org",
+        role: "member",
+      });
+      await provisionSsoUserMemberships({ ...defaultOrgArgs, inviteRole: "owner" });
       expect(createMembership).toHaveBeenCalledWith(
         "default-org",
         "u1",
@@ -482,6 +671,38 @@ describe("provisionSsoUserMemberships", () => {
     await provisionSsoUserMemberships(baseArgs);
     expect(createMembership).toHaveBeenCalledTimes(2);
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org-1", "u1");
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  // ENG-7097: once the membership is committed, a retry must not write the role again, or it would
+  // undo a role change an administrator made between the attempts.
+  test("retries only the projection when it fails after the membership committed", async () => {
+    vi.mocked(createMembership).mockResolvedValue(undefined as never);
+    vi.mocked(reconcileOrganizationMembership).mockResolvedValueOnce(projectionFailed);
+    await provisionSsoUserMemberships(baseArgs);
+    expect(createMembership).toHaveBeenCalledTimes(1);
+    expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(2);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  test("logs once when the projection fails on every attempt, without rewriting the membership", async () => {
+    vi.mocked(createMembership).mockResolvedValue(undefined as never);
+    vi.mocked(reconcileOrganizationMembership).mockResolvedValue(projectionFailed);
+    await expect(provisionSsoUserMemberships(baseArgs)).resolves.toBeUndefined();
+    expect(createMembership).toHaveBeenCalledTimes(1);
+    expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(2);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: expect.any(String) }),
+      "SSO provisioning: failed to project new SSO user's organization membership"
+    );
+  });
+
+  test("retries when the default-team projection reports a failure", async () => {
+    vi.mocked(createMembership).mockResolvedValue(undefined as never);
+    vi.mocked(reconcileTeamWorkspaceRelationships).mockResolvedValueOnce(projectionFailed);
+    await provisionSsoUserMemberships({ ...baseArgs, assignToDefaultTeam: true });
+    expect(createMembership).toHaveBeenCalledTimes(1);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledTimes(2);
     expect(logger.error).not.toHaveBeenCalled();
   });
 

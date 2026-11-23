@@ -27,7 +27,7 @@ const mocks = vi.hoisted(() => ({
   queueAuditEvent: vi.fn(),
   capturePostHogEvent: vi.fn(),
   getIntegrationByType: vi.fn(),
-  createOrUpdateIntegration: vi.fn(),
+  saveIntegrationKeepingStoredKey: vi.fn(),
   deleteIntegration: vi.fn(),
   validateGoogleSheetsConnection: vi.fn(),
   getSpreadsheetNameById: vi.fn(),
@@ -38,7 +38,7 @@ vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan, can: vi.fn()
 vi.mock("@/app/api/v3/lib/workspace-context", () => ({ resolveV3WorkspaceContext: mocks.resolveWorkspace }));
 vi.mock("@/lib/integration/service", () => ({
   getIntegrationByType: mocks.getIntegrationByType,
-  createOrUpdateIntegration: mocks.createOrUpdateIntegration,
+  saveIntegrationKeepingStoredKey: mocks.saveIntegrationKeepingStoredKey,
   deleteIntegration: mocks.deleteIntegration,
 }));
 vi.mock("@/lib/googleSheet/service", () => ({
@@ -138,7 +138,7 @@ beforeEach(() => {
   }));
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.getIntegrationByType.mockResolvedValue(storedSlack());
-  mocks.createOrUpdateIntegration.mockResolvedValue(
+  mocks.saveIntegrationKeepingStoredKey.mockResolvedValue(
     storedSlack({ config: { key: STORED_KEY, data: [slackMapping] } })
   );
   mocks.deleteIntegration.mockResolvedValue(storedSlack());
@@ -189,7 +189,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
       type: "workspace",
       id: WORKSPACE_ID,
     });
-    const [workspaceId, input] = mocks.createOrUpdateIntegration.mock.calls[0];
+    const [workspaceId, input] = mocks.saveIntegrationKeepingStoredKey.mock.calls[0];
     expect(workspaceId).toBe(WORKSPACE_ID);
     expect(input).toEqual({
       type: "slack",
@@ -215,7 +215,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
     });
 
     expect((await put({ config: { data: [sheetsMapping] } }, "googleSheets")).status).toBe(200);
-    expect(mocks.createOrUpdateIntegration.mock.calls[0][1].config).toEqual({
+    expect(mocks.saveIntegrationKeepingStoredKey.mock.calls[0][1].config).toEqual({
       key: storedKey,
       email: "owner@example.com",
       data: [{ ...sheetsMapping, createdAt: new Date(sheetsMapping.createdAt) }],
@@ -231,7 +231,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
     });
 
     expect((await put({ config: { data: [notionMapping] } }, "notion")).status).toBe(200);
-    expect(mocks.createOrUpdateIntegration.mock.calls[0][1].config.data[0].mapping).toEqual(
+    expect(mocks.saveIntegrationKeepingStoredKey.mock.calls[0][1].config.data[0].mapping).toEqual(
       notionMapping.mapping
     );
   });
@@ -252,7 +252,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
 
     expect(response.status).toBe(400);
     expect(body.invalid_params.map((param: { name: string }) => param.name)).toContain(field);
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 
   test.each([
@@ -291,7 +291,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
     expect(response.status).toBe(400);
     expect(body.invalid_params.map((param: { name: string }) => param.name)).toContain(field);
     expect(mocks.getIntegrationByType).not.toHaveBeenCalled();
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 
   test("accepts text right at its limit", async () => {
@@ -305,11 +305,11 @@ describe("PUT /api/internal/integrations/{type}", () => {
 
     expect(response.status).toBe(409);
     expect((await response.json()).details).toEqual({ reason: "not_connected" });
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 
   test("refuses a mapping to a survey restricted to some members (ENG-3283), with its own message", async () => {
-    mocks.createOrUpdateIntegration.mockRejectedValue(
+    mocks.saveIntegrationKeepingStoredKey.mockRejectedValue(
       new OperationNotAllowedError(SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE)
     );
     const response = await put({ config: { data: [slackMapping] } });
@@ -318,6 +318,16 @@ describe("PUT /api/internal/integrations/{type}", () => {
     expect(response.status).toBe(403);
     expect(body.code).toBe("survey_not_workspace_visible");
     expect(body.detail).toBe(SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE);
+  });
+
+  test("refuses a mapping to a survey outside this workspace, and answers 404 rather than 500", async () => {
+    mocks.saveIntegrationKeepingStoredKey.mockRejectedValue(new ResourceNotFoundError("Survey", "svy_other"));
+    const response = await put({ config: { data: [slackMapping] } });
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body.code).toBe("not_found");
+    expect(body.details).toEqual({ resource_type: "Survey", resource_id: "svy_other" });
   });
 
   test("records the integration_connected event", async () => {
@@ -334,7 +344,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
   test("refuses a caller without write access to the workspace, and stores nothing", async () => {
     mocks.assertCan.mockRejectedValue(new AuthorizationError("Not authorized"));
     expect((await put({ config: { data: [] } })).status).toBe(403);
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 
   test("answers 400 naming the field for a mapping of the wrong shape", async () => {
@@ -345,7 +355,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
     expect(body.invalid_params.map((param: { name: string }) => param.name)).toContain(
       "config.data.0.channelId"
     );
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 
   test("bounds the invalid_params list however many mappings are wrong", async () => {
@@ -353,7 +363,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
     const body = await (await put({ config: { data } })).json();
 
     expect(body.invalid_params.length).toBeLessThanOrEqual(V3_INVALID_PARAMS_MAX + 1);
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 
   test.each([
@@ -361,7 +371,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
     ["a body that isn't a configuration", () => put({ type: "slack", config: { data: [] } })],
   ])("answers 400 for %s", async (_label, call) => {
     expect((await call()).status).toBe(400);
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 
   test(`takes a config of ${INTEGRATION_CONFIG_MAX_ENTRIES} entries to the type's parse, and answers 400 naming a bigger one`, async () => {
@@ -378,7 +388,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
     const response = await put({ config: config(INTEGRATION_CONFIG_MAX_ENTRIES + 1) });
     expect(response.status).toBe(400);
     expect((await response.json()).invalid_params).toEqual([{ name: "config", reason: tooBig }]);
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 
   test.each([
@@ -408,11 +418,11 @@ describe("PUT /api/internal/integrations/{type}", () => {
       });
       expect((await put({ config: { data: [mapping(V3_REQUEST_ARRAY_MAX_ITEMS)] } }, type)).status).toBe(200);
 
-      mocks.createOrUpdateIntegration.mockClear();
+      mocks.saveIntegrationKeepingStoredKey.mockClear();
       const response = await put({ config: { data: [mapping(V3_REQUEST_ARRAY_MAX_ITEMS + 1)] } }, type);
       expect(response.status).toBe(400);
       expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
-      expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+      expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
     }
   );
 
@@ -421,7 +431,7 @@ describe("PUT /api/internal/integrations/{type}", () => {
       headers: { "sec-fetch-site": "cross-site" },
     });
     expect(response.status).toBe(403);
-    expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+    expect(mocks.saveIntegrationKeepingStoredKey).not.toHaveBeenCalled();
   });
 });
 

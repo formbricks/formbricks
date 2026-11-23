@@ -271,8 +271,9 @@ export const resolveSelectedLanguageCode = (languageCode: string, defaultLanguag
   return isSameLanguageCode(languageCode, defaultLanguageCode) ? "default" : languageCode;
 };
 
-// Inlined from @formbricks/types/storage.ts to avoid Zod dependency
-const mimeTypes: Record<string, string> = {
+// Inlined from @formbricks/types/storage.ts to avoid Zod dependency. Its keys are the storage API's
+// allowed file extensions; a test keeps the two lists equal.
+export const mimeTypes: Record<string, string> = {
   heic: "image/heic",
   png: "image/png",
   jpeg: "image/jpeg",
@@ -302,6 +303,29 @@ const mimeTypes: Record<string, string> = {
 };
 
 export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
+
+/** A file name's last extension, lowercase, or null when it has none: the storage API's rule. */
+const getFileExtension = (fileName: string): string | null => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  if (!extension || extension === fileName.toLowerCase()) return null;
+  return extension;
+};
+
+/**
+ * Whether a file upload question takes a file of this name: its last extension, in any case, must be
+ * one the storage API allows and, when the question restricts types, one of the question's. Checking
+ * here shows a respondent a file type error; the storage API's own refusal is a 400 the survey reads
+ * as a bad file name.
+ */
+export const isFileTypeAllowed = (
+  fileName: string,
+  allowedFileExtensions?: readonly TAllowedFileExtension[]
+): boolean => {
+  const extension = getFileExtension(fileName);
+  if (!extension || !Object.hasOwn(mimeTypes, extension)) return false;
+  if (!allowedFileExtensions || allowedFileExtensions.length === 0) return true;
+  return allowedFileExtensions.includes(extension as TAllowedFileExtension);
+};
 
 /**
  * Mirrors a widget placement horizontally for a right-to-left survey.
