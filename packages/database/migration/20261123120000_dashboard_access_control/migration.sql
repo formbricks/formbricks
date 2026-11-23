@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS "MemberAttributeKey" (
     "label" TEXT NOT NULL,
     "description" TEXT,
 
+    CONSTRAINT "MemberAttributeKey_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "MemberAttributeValue" (
     "id" TEXT NOT NULL,
@@ -42,6 +45,9 @@ CREATE TABLE IF NOT EXISTS "MemberAttributeValue" (
     "value" TEXT NOT NULL,
     "normalizedValue" TEXT NOT NULL,
 
+    CONSTRAINT "MemberAttributeValue_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "InviteAttributeValue" (
     "id" TEXT NOT NULL,
@@ -51,11 +57,17 @@ CREATE TABLE IF NOT EXISTS "InviteAttributeValue" (
     "value" TEXT NOT NULL,
     "normalizedValue" TEXT NOT NULL,
 
+    CONSTRAINT "InviteAttributeValue_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "TeamDashboard" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "teamId" TEXT NOT NULL,
     "dashboardId" TEXT NOT NULL,
+
+    CONSTRAINT "TeamDashboard_pkey" PRIMARY KEY ("teamId","dashboardId")
+);
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "DashboardPage" (
@@ -66,11 +78,17 @@ CREATE TABLE IF NOT EXISTS "DashboardPage" (
     "name" TEXT NOT NULL,
     "order" INTEGER NOT NULL DEFAULT 0,
 
+    CONSTRAINT "DashboardPage_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "DashboardPageTeam" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "pageId" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
+
+    CONSTRAINT "DashboardPageTeam_pkey" PRIMARY KEY ("pageId","teamId")
+);
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "FeedbackDirectoryViewerCondition" (
@@ -80,6 +98,9 @@ CREATE TABLE IF NOT EXISTS "FeedbackDirectoryViewerCondition" (
     "field" TEXT NOT NULL,
     "attributeKeyId" TEXT,
     "order" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "FeedbackDirectoryViewerCondition_pkey" PRIMARY KEY ("id")
+);
 
 -- Widgets move onto pages. The column is added nullable, filled, then made required.
 ALTER TABLE "DashboardWidget" ADD COLUMN IF NOT EXISTS "content" JSONB;
