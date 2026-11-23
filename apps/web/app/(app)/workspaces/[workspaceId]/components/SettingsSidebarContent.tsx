@@ -3,6 +3,7 @@
 import {
   BellIcon,
   BlocksIcon,
+  BookUserIcon,
   BrushIcon,
   Building2Icon,
   ChartColumnIcon,
@@ -365,6 +366,14 @@ export const SettingsSidebarContent = ({
       label: t("workspace.settings.feedback_directories.nav_label"),
       href: organizationSettingsPath(organizationId, "feedback-directories"),
       icon: <FoldersIcon className={iconClassName} />,
+      hidden: isMember,
+      disabled: !isOwnerOrManager,
+    },
+    {
+      id: "org-contact-directories",
+      label: t("workspace.settings.contact_directories.nav_label"),
+      href: organizationSettingsPath(organizationId, "contact-directories"),
+      icon: <BookUserIcon className={iconClassName} />,
       hidden: isMember,
       disabled: !isOwnerOrManager,
     },
