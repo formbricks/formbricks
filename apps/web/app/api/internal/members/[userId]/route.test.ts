@@ -279,6 +279,30 @@ describe("PATCH /api/internal/members/{userId}", () => {
     });
   });
 
+  describe("the not-yourself rule", () => {
+    // A sole owner demoting themselves would leave an organization nobody can repair (ENG-2177): no
+    // manager may mint an owner, and only an owner may change an owner's role.
+    test.each(["owner", "manager"])(
+      "refuses the caller changing their own role (as %s) with 403, and writes nothing",
+      async (callerRole) => {
+        roles({ caller: callerRole, target: callerRole });
+        const response = await patch({ role: "member" }, { userId: CURRENT_USER_ID });
+
+        expect(response.status).toBe(403);
+        expect((await response.json()).detail).toBe("You cannot change your own role");
+        expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
+        expect(mocks.updateMembership).not.toHaveBeenCalled();
+        expect(mocks.updateMembershipInTransaction).not.toHaveBeenCalled();
+      }
+    );
+
+    test("still changes another member's role", async () => {
+      roles({ caller: "owner", target: "member" });
+      expect((await setRole("manager")).status).toBe(200);
+      expect(mocks.updateMembership).toHaveBeenCalledOnce();
+    });
+  });
+
   test("asks organization.manage_access, then organization.manage, of the named organization", async () => {
     roles({ caller: "owner", target: "member" });
     await setRole("manager");

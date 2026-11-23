@@ -39,6 +39,7 @@ import type { TMemberUpdateBody } from "../schemas";
 import { serializeMemberRole } from "../serializers";
 
 export const LAST_OWNER_DETAIL = "You cannot demote the last owner of the organization";
+export const OWN_ROLE_DETAIL = "You cannot change your own role";
 
 /**
  * Change the role, demoting an owner only while another active owner remains, as the member list's server
@@ -48,8 +49,9 @@ export const LAST_OWNER_DETAIL = "You cannot demote the last owner of the organi
  * Dashboard viewer decides whether only viewer memberships remain (and revokes the wider OAuth grants), and
  * must see a removal from another organization that commits at the same moment.
  *
- * Whether this is an owner's demotion is decided from the lookup before the lock, as the action did;
- * deciding it under the lock instead is ENG-2177. `actorUserId` is the user making the change: the actor of
+ * Whether this is an owner's demotion is decided from the lookup before the lock, as the action did. A
+ * stale lookup can't empty the organization: a member becomes owner only by another owner's hand, and that
+ * owner can't demote themselves (ENG-2177), so one owner remains. `actorUserId` is the user making the change: the actor of
  * the audit entries of any MCP grant it ends (a demotion to Dashboard viewer ends them), which are finished
  * once the transaction commits. Each attempt returns its own records, so a retried attempt's are dropped.
  */
@@ -93,8 +95,8 @@ const applyRoleChange = async (
  * The caller must be a member with `organization.manage_access` (user management, per
  * `USER_MANAGEMENT_MINIMUM_ROLE`) and `organization.manage`. The role rules are `assertCanAssignRole`'s
  * (managers give only the roles they may and may not touch an owner; billing is Cloud-only; the Dashboard
- * viewer role needs its plan); the last active owner can't be demoted; and the role management licence
- * applies. A missing member gets the same 403 as one in an
+ * viewer role needs its plan); nobody changes their own role, as the members page never offers it (ENG-2177);
+ * the last active owner can't be demoted; and the role management licence applies. A missing member gets the same 403 as one in an
  * organization the caller can't see.
  */
 export async function updateMemberRoleOperation({
@@ -149,6 +151,10 @@ export async function updateMemberRoleOperation({
     instance,
   });
   if (limited) return limited;
+
+  // A sole owner demoting themselves would leave an organization no one in it can repair: managers can't
+  // make an owner, and only an owner may change an owner's role.
+  if (userId === actor.id) return problemForbidden(requestId, OWN_ROLE_DETAIL, instance);
 
   const target = await getMembershipByUserIdOrganizationId(userId, organizationId);
   const refused = await refuseRoleAssignment({
