@@ -1,12 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { generateV3Survey } from "@/app/api/v3/surveys/generate/operations";
 import {
+  archiveV3Survey,
   createV3SurveyResponseFromRawInput,
-  deleteV3Survey,
   editV3SurveyBlocksResponse,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
+  restoreV3Survey,
   setV3SurveyBlockOrderResponse,
   validateV3SurveyFromRawInput,
   withGeneratedInsertIds,
@@ -18,25 +19,25 @@ import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateSurveyInput,
-  type TMcpDeleteSurveyInput,
   type TMcpEditSurveyBlocksInput,
   type TMcpGenerateSurveyInput,
   type TMcpGetSurveyInput,
   type TMcpListSurveysInput,
   type TMcpPatchSurveyInput,
   type TMcpSetSurveyBlockOrderInput,
+  type TMcpSurveyIdInput,
   type TMcpValidateSurveyInput,
   ZMcpCreateSurveyInput,
-  ZMcpDeleteSurveyInput,
   ZMcpEditSurveyBlocksInput,
   ZMcpGenerateSurveyInput,
   ZMcpGetSurveyInput,
   ZMcpListSurveysInput,
   ZMcpPatchSurveyInput,
   ZMcpSetSurveyBlockOrderInput,
+  ZMcpSurveyIdInput,
   ZMcpValidateSurveyInput,
 } from "./schemas";
-import { ZMcpGeneratedSurveyOutput } from "./survey-output-schemas";
+import { ZMcpGeneratedSurveyOutput, ZMcpSurveyLifecycleOutput } from "./survey-output-schemas";
 import { surveyResultForCaller } from "./survey-targeting";
 
 export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSearchParams {
@@ -426,33 +427,68 @@ export function registerSurveyTools(server: McpServer): void {
 
   registerMcpTool(
     server,
-    "delete_survey",
+    "archive_survey",
     {
-      title: "Delete survey",
+      title: "Archive survey",
       description:
-        "Delete a Formbricks survey using the v3 Surveys API contract. Refused with a 409 (code survey_has_linked_creatives, listing them in details.creatives) while non-archived creatives open the survey: delete those first (pausing or closing one keeps it linked). A survey that is not a draft and has responses is deleted with them only when you pass confirm: true, after the user agreed; without it the call returns the warning to show them.",
-      inputSchema: ZMcpDeleteSurveyInput,
-      audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" },
+        "Archive a survey: it leaves the default list, stops collecting responses (an in-progress survey is paused) and becomes read-only until restored. Formbricks permanently deletes an archived survey and its responses after 30 days. Use restore_survey to bring one back. Works on any survey, including legacy question-based ones, and archiving an already-archived survey changes nothing. Deleting a survey stays in the app and the REST API; MCP only archives.",
+      inputSchema: ZMcpSurveyIdInput,
+      outputSchema: ZMcpSurveyLifecycleOutput,
+      audit: { action: "archived", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
         readOnlyHint: false,
+        // Takes the survey out of the default list and stops collection; reversible for 30 days.
         destructiveHint: true,
-        idempotentHint: false,
+        // Archiving an archived survey is a no-op, and the purge clock is not restarted.
+        idempotentHint: true,
         openWorldHint: true,
       },
     },
     [{ permission: "surveys", level: "write" }],
-    async (input: TMcpDeleteSurveyInput, ctx) =>
+    async (input: TMcpSurveyIdInput, ctx) =>
       runMcpMutation(
         ctx,
-        { action: "deleted", resource: "survey", logContext: { surveyId: input.surveyId } },
+        { action: "archived", resource: "survey", logContext: { surveyId: input.surveyId } },
         ({ authentication, requestId, auditLog }) =>
-          deleteV3Survey({
+          archiveV3Survey({
             surveyId: input.surveyId,
             authentication,
             requestId,
             instance: MCP_API_ROUTE,
             auditLog,
-            writeConfirmation: { confirmed: input.confirm === true },
+          })
+      )
+  );
+
+  registerMcpTool(
+    server,
+    "restore_survey",
+    {
+      title: "Restore survey",
+      description:
+        "Restore an archived survey: it is listed and editable again, and keeps its status from before the restore, so a survey archived while in progress comes back paused. Restoring a survey that is not archived changes nothing. Idempotent.",
+      inputSchema: ZMcpSurveyIdInput,
+      outputSchema: ZMcpSurveyLifecycleOutput,
+      audit: { action: "restored", targetType: "survey", targetIdArg: "surveyId" },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    [{ permission: "surveys", level: "write" }],
+    async (input: TMcpSurveyIdInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        { action: "restored", resource: "survey", logContext: { surveyId: input.surveyId } },
+        ({ authentication, requestId, auditLog }) =>
+          restoreV3Survey({
+            surveyId: input.surveyId,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
           })
       )
   );

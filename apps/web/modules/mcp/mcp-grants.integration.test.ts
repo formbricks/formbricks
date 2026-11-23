@@ -145,8 +145,8 @@ const listSurveys = (accessToken: string, setup: TSetup) =>
 const renameSurvey = (accessToken: string, setup: TSetup) =>
   callMcpTool({ accessToken }, "patch_survey", { surveyId: setup.surveyId, data: { name: "Renamed" } });
 
-const deleteSurvey = (accessToken: string, setup: TSetup) =>
-  callMcpTool({ accessToken }, "delete_survey", { surveyId: setup.surveyId });
+const archiveSurvey = (accessToken: string, setup: TSetup) =>
+  callMcpTool({ accessToken }, "archive_survey", { surveyId: setup.surveyId });
 
 /** The problem a refused tool answered with; a tool result carries it under `error`. */
 const problemOf = (outcome: TMcpToolCallOutcome) =>
@@ -224,28 +224,30 @@ describe("a connection's grant", () => {
     expectNotPermitted(await listSurveys(access_token, setup), "Surveys: Read");
   });
 
-  test("Read reads but can't write or delete", async () => {
+  test("Read reads but can't write or archive", async () => {
     const { access_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
     await setGrant(setup, { surveys: "read" });
 
     expect(succeeded(await listSurveys(access_token, setup))).toBe(true);
     expectNotPermitted(await renameSurvey(access_token, setup), "Surveys: Write");
-    expectNotPermitted(await deleteSurvey(access_token, setup), "Surveys: Write");
+    expectNotPermitted(await archiveSurvey(access_token, setup), "Surveys: Write");
     expect(await prisma.survey.findUnique({ where: { id: setup.surveyId } })).toMatchObject({
       name: "Draft",
     });
   });
 
-  test("Write reads, writes and deletes", async () => {
+  test("Write reads, writes and archives", async () => {
     const { access_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
     await setGrant(setup, { surveys: "write" });
 
     expect(succeeded(await listSurveys(access_token, setup))).toBe(true);
     const renamed = await renameSurvey(access_token, setup);
     expect(succeeded(renamed), toolText(renamed)).toBe(true);
-    const deleted = await deleteSurvey(access_token, setup);
-    expect(succeeded(deleted), toolText(deleted)).toBe(true);
-    expect(await prisma.survey.findUnique({ where: { id: setup.surveyId } })).toBeNull();
+    const archived = await archiveSurvey(access_token, setup);
+    expect(succeeded(archived), toolText(archived)).toBe(true);
+    expect(await prisma.survey.findUnique({ where: { id: setup.surveyId } })).toMatchObject({
+      archivedAt: expect.any(Date),
+    });
   });
 
   test("a narrowed grant applies to the next call with the same token", async () => {

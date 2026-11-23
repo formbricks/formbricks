@@ -553,7 +553,8 @@ describe("POST /api/mcp", () => {
       "patch_survey",
       "edit_survey_blocks",
       "set_survey_block_order",
-      "delete_survey",
+      "archive_survey",
+      "restore_survey",
       "list_workflows",
       "get_workflow",
       "list_workflow_runs",
@@ -671,11 +672,18 @@ describe("POST /api/mcp", () => {
         idempotentHint: false,
       },
     });
-    expect(message.result.tools.find((tool) => tool.name === "delete_survey")).toMatchObject({
+    expect(message.result.tools.find((tool) => tool.name === "archive_survey")).toMatchObject({
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
-        idempotentHint: false,
+        idempotentHint: true,
+      },
+    });
+    expect(message.result.tools.find((tool) => tool.name === "restore_survey")).toMatchObject({
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
       },
     });
   });
@@ -853,7 +861,7 @@ describe("POST /api/mcp", () => {
           id: 9,
           method: "tools/call",
           params: {
-            name: "delete_survey",
+            name: "archive_survey",
             arguments: {
               surveyId: "clsv1234567890123456789012",
             },

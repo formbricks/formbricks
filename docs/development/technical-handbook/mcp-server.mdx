@@ -110,7 +110,7 @@ Supported scopes:
 | Scope                   | Use                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `surveys:read`          | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`                                                                                                                                                                                                                                                                                   |
-| `surveys:write`         | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`                                                                                                                                               |
+| `surveys:write`         | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `archive_survey`, `restore_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`                                                                                                                                               |
 | `workflows:read`        | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`                                                                                                                                                                                                                                                                                                                           |
 | `workflows:write`       | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, the enable/disable/archive/unarchive mutations, and the Webhook trigger tools `get_webhook_url`, `regenerate_webhook_url`, `set_sample_payload`, `send_test_request`, `set_expected_response`, and `run_test`                                                                                                                                                                                                                                                                                      |
 | `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`                                                                                                                                                                                                                                                        |
@@ -347,7 +347,8 @@ API key permissions are enforced through the same workspace access checks as the
 | `patch_survey`                                                                                                                                                                                              | `write` or `manage`                                                                                                                                                           |
 | `edit_survey_blocks`                                                                                                                                                                                        | `write` or `manage`                                                                                                                                                           |
 | `set_survey_block_order`                                                                                                                                                                                    | `write` or `manage`                                                                                                                                                           |
-| `delete_survey`                                                                                                                                                                                             | `write` or `manage`                                                                                                                                                           |
+| `archive_survey`                                                                                                                                                                                            | `write` or `manage`                                                                                                                                                           |
+| `restore_survey`                                                                                                                                                                                            | `write` or `manage`                                                                                                                                                           |
 | `get_workspace_custom_css`                                                                                                                                                                                  | `read`                                                                                                                                                                        |
 | `patch_workspace_custom_css`                                                                                                                                                                                | `manage` for an API key; an organization owner or manager for an OAuth user — stricter than `surveys:write`                                                                   |
 | `list_creatives`                                                                                                                                                                                            | `read`                                                                                                                                                                        |
@@ -1261,11 +1262,11 @@ Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` a
 
 #### Confirmation on surveys with responses
 
-`patch_survey`, `edit_survey_blocks`, `set_survey_block_order` and `delete_survey` take an optional
-`confirm` argument. On a survey that is not a draft and already has at least one response, a call
+`patch_survey`, `edit_survey_blocks` and `set_survey_block_order` take an optional `confirm`
+argument. On a survey that is not a draft and already has at least one response, a call
 without `confirm: true` changes nothing: it returns an error (`status: 428`, "Confirmation required")
-whose `detail` is the caution the editor shows a person — mixed old and new responses for a change, the
-loss of every response for a delete — followed by "Pass confirm: true after the user agrees". The agent
+whose `detail` is the caution the editor shows a person (mixed old and new responses for a change),
+followed by "Pass confirm: true after the user agrees". The agent
 shows that to the user and retries with `confirm: true` only after they agree. Drafts and surveys
 without responses need nothing. The rule is MCP-only: the v3 HTTP API is unchanged, and an operation
 enforces it only when the tool passes `writeConfirmation`.
@@ -1402,9 +1403,16 @@ Input:
 
 Output matches `edit_survey_blocks`: concise by default, echoing the applied `order`.
 
-### delete_survey
+### archive_survey
 
-Deletes one survey by ID. The tool is destructive, writes data, and is not idempotent.
+Archives (soft-deletes) one survey by ID: it leaves the default list, stops collecting responses (an
+in-progress survey is paused) and becomes read-only until restored. Formbricks permanently deletes an
+archived survey and its responses 30 days after it was archived. Archiving is idempotent: a second call
+changes nothing and does not restart that clock. The tool is destructive because it removes the survey
+from default reads.
+
+There is no `delete_survey`. Deleting a survey stays in the app and the REST API, so an agent cannot
+remove a survey or its responses without a 30-day recovery window.
 
 Input:
 
@@ -1414,14 +1422,27 @@ Input:
 }
 ```
 
-The v3 REST delete operation returns `204 No Content`. The MCP tool result contains the `requestId`
-so callers can correlate the audit trail:
+Output is the v3 lifecycle acknowledgement, not the survey resource: archive works on legacy
+question-based surveys that cannot be serialized as a v3 document.
 
 ```json
 {
+  "data": {
+    "id": "clsv1234567890123456789012",
+    "status": "paused",
+    "archivedAt": "2026-11-23T10:00:00.000Z"
+  },
   "requestId": "req_..."
 }
 ```
+
+### restore_survey
+
+Restores an archived survey: it is listed and editable again, and keeps the status it had before the
+restore, so a survey archived while in progress comes back paused. Restoring a survey that is not
+archived changes nothing, so the tool is idempotent and is not destructive.
+
+Input and output match `archive_survey`; `archivedAt` is `null` in the acknowledgement.
 
 ### Creative tools
 
@@ -2412,7 +2433,8 @@ survey operations used by the REST routes:
 | `patch_survey`               | `PATCH /api/v3/surveys/{surveyId}`                  |
 | `edit_survey_blocks`         | `PATCH /api/v3/surveys/{surveyId}/blocks`           |
 | `set_survey_block_order`     | `PUT /api/v3/surveys/{surveyId}/blocks/order`       |
-| `delete_survey`              | `DELETE /api/v3/surveys/{surveyId}`                 |
+| `archive_survey`             | `POST /api/v3/surveys/{surveyId}/archive`           |
+| `restore_survey`             | `POST /api/v3/surveys/{surveyId}/restore`           |
 | `get_workspace_custom_css`   | `GET /api/v3/workspaces/{workspaceId}/custom-css`   |
 | `patch_workspace_custom_css` | `PATCH /api/v3/workspaces/{workspaceId}/custom-css` |
 

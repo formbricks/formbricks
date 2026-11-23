@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 import type { TV3SurveyGenerateResult } from "@/app/api/v3/surveys/generate/service";
 import { mcpToolOutput } from "./output-schemas";
 
@@ -25,4 +26,17 @@ export const ZMcpGeneratedSurveyOutput = mcpToolOutput(
         .loose(),
     })
     .loose() satisfies z.ZodType<Omit<TV3SurveyGenerateResult, "payload"> & { payload: unknown }>
+);
+
+/**
+ * The lifecycle acknowledgement `POST /api/v3/surveys/{surveyId}/archive` and `/restore` answer with:
+ * deliberately not the survey resource, because both work on legacy question-based surveys that cannot
+ * be serialized as a v3 document. `archivedAt` is null after a restore and a timestamp after an archive.
+ */
+export const ZMcpSurveyLifecycleOutput = mcpToolOutput(
+  z.object({
+    id: z.string(),
+    status: ZSurveyStatus,
+    archivedAt: z.iso.datetime({ offset: true }).nullable(),
+  })
 );

@@ -370,7 +370,7 @@ const ZMcpSurveyWriteConfirm = z
   .boolean()
   .optional()
   .describe(
-    "Set true only after the user agreed. Required to change or delete a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
+    "Set true only after the user agreed. Required to change a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
   );
 
 export const ZMcpCreateSurveyInput = z
@@ -523,10 +523,13 @@ export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.e
   workspaceId: ZId.describe("Workspace ID whose shared survey CSS should be saved or cleared."),
 }).strict();
 
-export const ZMcpDeleteSurveyInput = z
+/**
+ * Archive and restore take only the id. Neither needs `confirm`: archive is reversible for the archive
+ * retention window, and both are idempotent.
+ */
+export const ZMcpSurveyIdInput = z
   .object({
-    surveyId: z.cuid2().describe("Survey ID to delete."),
-    confirm: ZMcpSurveyWriteConfirm,
+    surveyId: z.cuid2().describe("Survey ID."),
   })
   .strict();
 
@@ -651,7 +654,7 @@ export type TMcpEditSurveyBlocksInput = z.infer<typeof ZMcpEditSurveyBlocksInput
 export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrderInput>;
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpGenerateSurveyInput = z.infer<typeof ZMcpGenerateSurveyInput>;
-export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
+export type TMcpSurveyIdInput = z.infer<typeof ZMcpSurveyIdInput>;
 export type TMcpGetWorkspaceCustomCssInput = z.infer<typeof ZMcpGetWorkspaceCustomCssInput>;
 export type TMcpPatchWorkspaceCustomCssInput = z.infer<typeof ZMcpPatchWorkspaceCustomCssInput>;
 export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatasetsInput>;
