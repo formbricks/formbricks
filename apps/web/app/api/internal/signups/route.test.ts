@@ -403,7 +403,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
 
   // After the response nothing would catch a throw, and the account exists either way: a failed step
   // is logged, and the steps after it still run.
-  test("a provisioning failure after the response still subscribes and audits the new account", async () => {
+  test("a provisioning failure after the response still subscribes and audits the account as a failure", async () => {
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
     vi.mocked(createOrganization).mockRejectedValue(new Error("db down"));
 
@@ -413,7 +413,23 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
     expect(await response.json()).toEqual(SUCCESS);
     expect(subscribeUserToMailingList).toHaveBeenCalledTimes(1);
     expect(createdAuditEvents()).toEqual([
-      expect.objectContaining({ targetId: createdUser.id, organizationId: UNKNOWN_DATA, status: "success" }),
+      expect.objectContaining({ targetId: createdUser.id, organizationId: UNKNOWN_DATA, status: "failure" }),
+    ]);
+  });
+
+  // The organization exists before createWorkspace/updateUser run, so a throw after it must not lose
+  // the id the failure record — and the analytics group — belong to (ENG-7094).
+  test("keeps the organization in the failure record when a later provisioning step throws", async () => {
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(createOrganization).mockResolvedValue({ id: "org-new", name: "Ada's Organization" } as never);
+    vi.mocked(createWorkspace).mockRejectedValue(new Error("workspace insert failed"));
+
+    const response = await signUp();
+    await flushAfter();
+
+    expect(await response.json()).toEqual(SUCCESS);
+    expect(createdAuditEvents()).toEqual([
+      expect.objectContaining({ targetId: createdUser.id, organizationId: "org-new", status: "failure" }),
     ]);
   });
 

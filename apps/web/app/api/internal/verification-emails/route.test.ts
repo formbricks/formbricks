@@ -29,6 +29,7 @@ vi.mock("next/headers", () => ({
 // only the route's decision — refresh iff the browser already proves this user — is under test.
 const signupIntentMocks = vi.hoisted(() => ({
   classifySignupIntent: vi.fn(),
+  createDecoySignupIntentToken: vi.fn(),
   createSignupIntentToken: vi.fn(),
 }));
 
@@ -42,6 +43,7 @@ vi.mock("@/modules/auth/lib/signup-intent", () => ({
   SIGNUP_INTENT_COOKIE_NAME: "formbricks.signup_intent",
   SIGNUP_INTENT_COOKIE_OPTIONS: { httpOnly: true, secure: false, path: "/", sameSite: "lax", maxAge: 3600 },
   classifySignupIntent: signupIntentMocks.classifySignupIntent,
+  createDecoySignupIntentToken: signupIntentMocks.createDecoySignupIntentToken,
   createSignupIntentToken: signupIntentMocks.createSignupIntentToken,
 }));
 
@@ -110,6 +112,7 @@ beforeEach(() => {
   recoveryIntentMocks.getSsoRecoveryPairedTtlSeconds.mockReturnValue(60 * 15);
   cookieMocks.get.mockReturnValue(undefined);
   signupIntentMocks.classifySignupIntent.mockReturnValue("absent");
+  signupIntentMocks.createDecoySignupIntentToken.mockReturnValue("fresh-decoy-token");
   signupIntentMocks.createSignupIntentToken.mockReturnValue("fresh-intent-token");
 });
 
@@ -308,10 +311,10 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
   });
 
   // ENG-2562: a resent link gets a fresh hour while the intent cookie's clock started at sign-up, so the
-  // route re-pairs the cookie with the new link — but only for a browser that already holds a valid
-  // cookie naming this user. Anything weaker would let an unauthenticated caller arm sign-up proof for an
-  // arbitrary account by asking for a resend.
-  describe("Sign-up intent cookie refresh (ENG-2562)", () => {
+  // route re-pairs a cookie the browser already holds for THIS user — never one it does not. ENG-7094:
+  // every other answer carries a fresh decoy instead, so a `Set-Cookie`'s presence cannot tell an
+  // address that just got an account from one that already had it.
+  describe("Sign-up intent cookie shaping on resend (ENG-2562, ENG-7094)", () => {
     beforeEach(() => {
       cookieMocks.get.mockReturnValue({ value: "existing-intent-cookie" });
     });
@@ -335,25 +338,38 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
       });
     });
 
+    // ENG-7094: a decoy (or no usable cookie) is replaced with a fresh decoy, never with the absence
+    // of a `Set-Cookie`: whether one came back must not tell the two sign-up paths apart.
     test.each([["absent"], ["invalid"], ["other_user"]])(
-      "does not mint a cookie when the browser's proof classifies as %s",
+      "answers with a decoy when the browser's proof classifies as %s",
       async (classification) => {
         signupIntentMocks.classifySignupIntent.mockReturnValue(classification);
 
         await resend();
 
         expect(signupIntentMocks.createSignupIntentToken).not.toHaveBeenCalled();
-        expect(cookieMocks.set).not.toHaveBeenCalled();
+        expect(signupIntentMocks.createDecoySignupIntentToken).toHaveBeenCalledTimes(1);
+        expect(cookieMocks.set).toHaveBeenCalledWith("formbricks.signup_intent", "fresh-decoy-token", {
+          httpOnly: true,
+          secure: false,
+          path: "/",
+          sameSite: "lax",
+          maxAge: 3600,
+        });
       }
     );
 
-    test("does not touch the cookie when the user is already verified (no email sent)", async () => {
+    test("answers with a decoy when the user is already verified (no email sent)", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(mockVerifiedUser as never);
-      signupIntentMocks.classifySignupIntent.mockReturnValue("valid");
 
       await resend();
 
-      expect(cookieMocks.set).not.toHaveBeenCalled();
+      expect(signupIntentMocks.createDecoySignupIntentToken).toHaveBeenCalledTimes(1);
+      expect(cookieMocks.set).toHaveBeenCalledWith(
+        "formbricks.signup_intent",
+        "fresh-decoy-token",
+        expect.anything()
+      );
     });
   });
 });

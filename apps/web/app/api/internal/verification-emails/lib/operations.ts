@@ -17,6 +17,7 @@ import {
   SIGNUP_INTENT_COOKIE_NAME,
   SIGNUP_INTENT_COOKIE_OPTIONS,
   classifySignupIntent,
+  createDecoySignupIntentToken,
   createSignupIntentToken,
 } from "@/modules/auth/lib/signup-intent";
 import { getUserByEmail } from "@/modules/auth/lib/user";
@@ -134,7 +135,41 @@ const resendSsoRecoveryEmail = async (
   await refreshSsoRecoveryIntent(recovery.stateId, pairedTtlSeconds);
 };
 
-/** The ordinary branch: Better Auth's verification email, and the sign-up intent cookie re-paired with it. */
+/**
+ * Shape the sign-up intent cookie on EVERY answer that can be a resend (ENG-2562, ENG-7094).
+ *
+ * ENG-2562: a resent link gets a fresh hour while the intent cookie's clock started at sign-up, so
+ * re-pair a cookie the browser already holds for THIS user. Strictly a refresh — it extends evidence
+ * the browser has and never arms one that lacks it, or an unauthenticated caller could mint sign-up
+ * proof for an arbitrary account by asking for a resend.
+ *
+ * ENG-7094: but whether a cookie comes back must not answer "does this address have an account?"
+ * either. A resend for a registered, unverified address follows a sign-up that left a decoy; a resend
+ * after a sign-up that created the account follows a real cookie. Replying with a refreshed cookie
+ * only in the second case completes the two-step existence oracle the decoy exists to close. So an
+ * absent, invalid or decoy cookie is replaced with a fresh decoy — same name, attributes and length —
+ * and every 204 carries one intent-shaped cookie.
+ *
+ * Non-fatal, like the sign-up issuance: a failure here costs exactly the auto-sign-in UX, never the
+ * resend itself.
+ */
+const pairSignupIntentCookie = async (userId: string): Promise<void> => {
+  try {
+    const cookieStore = await cookies();
+    const held = cookieStore.get(SIGNUP_INTENT_COOKIE_NAME)?.value;
+    cookieStore.set(
+      SIGNUP_INTENT_COOKIE_NAME,
+      classifySignupIntent(held, userId) === "valid"
+        ? createSignupIntentToken(userId)
+        : createDecoySignupIntentToken(),
+      SIGNUP_INTENT_COOKIE_OPTIONS
+    );
+  } catch (error) {
+    logger.error({ error, userId }, "Failed to pair the sign-up intent cookie on resend");
+  }
+};
+
+/** The ordinary branch: Better Auth's verification email to an unverified account. */
 const resendEmailVerification = async (
   user: TResendUser,
   validatedCallbackUrl: string | undefined
@@ -147,28 +182,6 @@ const resendEmailVerification = async (
     body: { email: user.email, callbackURL: validatedCallbackUrl },
     headers: await headers(),
   });
-
-  // ENG-2562: re-pair the sign-up intent cookie with the link just minted. The cookie's clock
-  // starts at sign-up while every resent link gets a fresh hour, so without this a resend's link
-  // outlives the cookie and the sign-up browser itself lands on the withheld path. Strictly a
-  // refresh — the browser must already hold a valid cookie naming THIS user — so it extends
-  // evidence the browser has, and never arms one that lacks it: an unauthenticated caller must not
-  // be able to mint sign-up proof for an arbitrary account by asking for a resend. A browser whose
-  // cookie has already expired therefore stays on the withheld path (documented residual).
-  // Non-fatal, like the sign-up issuance: the email above has already gone out, so a failure here
-  // must cost exactly the auto-sign-in UX, never the resend itself.
-  try {
-    const cookieStore = await cookies();
-    if (classifySignupIntent(cookieStore.get(SIGNUP_INTENT_COOKIE_NAME)?.value, user.id) === "valid") {
-      cookieStore.set(
-        SIGNUP_INTENT_COOKIE_NAME,
-        createSignupIntentToken(user.id),
-        SIGNUP_INTENT_COOKIE_OPTIONS
-      );
-    }
-  } catch (error) {
-    logger.error({ error, userId: user.id }, "Failed to refresh the sign-up intent cookie on resend");
-  }
 };
 
 /** A refusal the page explains: `details.reason` (and `detail`) is the stable code it translates. */
@@ -214,6 +227,10 @@ export async function resendVerificationEmailOperation({
   if (resolution.kind === "expired") {
     return refused(context, SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE);
   }
+
+  // Every answer from here on can be a resend, so shape the intent cookie before the paths diverge:
+  // a 204 must never differ by whether the address had an account (ENG-7094).
+  await pairSignupIntentCookie(user.id);
 
   const ssoRecoveryResend = resolution.kind === "recovery" ? resolution : null;
   if (user.emailVerified && !ssoRecoveryResend) {

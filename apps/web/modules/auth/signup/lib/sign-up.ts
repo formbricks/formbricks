@@ -13,7 +13,12 @@ import {
 } from "@formbricks/types/errors";
 import { ZUser, ZUserLocale } from "@formbricks/types/user";
 import type { TSignupBody } from "@/app/api/internal/signups/schemas";
-import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import {
+  AUDIT_LOG_ENABLED,
+  IS_FORMBRICKS_CLOUD,
+  IS_TURNSTILE_CONFIGURED,
+  TURNSTILE_SECRET_KEY,
+} from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
@@ -51,7 +56,10 @@ import {
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
-import { getAuditRequestMetadata } from "@/modules/ee/audit-logs/lib/request-metadata";
+import {
+  UNKNOWN_AUDIT_REQUEST_METADATA,
+  getAuditRequestMetadata,
+} from "@/modules/ee/audit-logs/lib/request-metadata";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
@@ -157,8 +165,18 @@ async function signUpUserSafely(email: string, name: string, password: string): 
   return { status: "created", user };
 }
 
-/** Grant the invited membership. Returns the organization the user joined. */
-async function handleInviteAcceptance(inviteToken: string, user: TCreatedUser): Promise<string> {
+/**
+ * What provisioning managed to create, filled in as it goes. A step after the organization exists can
+ * still throw; the audit record must then still name the organization the account belongs to.
+ */
+type TProvisioningTrail = { organizationId?: string };
+
+/** Grant the invited membership, recording the organization it joined in the trail. */
+async function handleInviteAcceptance(
+  inviteToken: string,
+  user: TCreatedUser,
+  trail: TProvisioningTrail
+): Promise<void> {
   // An invite grants a specific address a specific role in a specific organization. Verifying the
   // signature and loading the row is not enough: without matching the token's email against the account
   // being created, anyone holding an invite link — they get forwarded, pasted into tickets, and land in
@@ -186,6 +204,7 @@ async function handleInviteAcceptance(inviteToken: string, user: TCreatedUser): 
     accepted: true,
     role: invite.role,
   });
+  trail.organizationId = invite.organizationId;
 
   try {
     const invitedOrganization = await getOrganization(invite.organizationId);
@@ -233,15 +252,15 @@ async function handleInviteAcceptance(inviteToken: string, user: TCreatedUser): 
     logger.error({ err: error }, "Failed to send invite accepted email");
   }
   await deleteInvite(invite.id);
-  return invite.organizationId;
 }
 
-/** Create the user's own organization and workspace, when multi-org is on. Returns the organization. */
-async function handleOrganizationCreation(user: TCreatedUser): Promise<string | undefined> {
+/** Create the user's own organization and workspace, when multi-org is on. */
+async function handleOrganizationCreation(user: TCreatedUser, trail: TProvisioningTrail): Promise<void> {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  if (!isMultiOrgEnabled) return undefined;
+  if (!isMultiOrgEnabled) return;
 
   const organization = await createOrganization({ name: `${user.name}'s Organization` });
+  trail.organizationId = organization.id;
 
   await createMembership(organization.id, user.id, {
     role: "owner",
@@ -302,8 +321,6 @@ async function handleOrganizationCreation(user: TCreatedUser): Promise<string | 
       ),
     },
   });
-
-  return organization.id;
 }
 
 /**
@@ -312,12 +329,17 @@ async function handleOrganizationCreation(user: TCreatedUser): Promise<string | 
  */
 async function handlePostUserCreation(
   { user }: Extract<TSignUpOutcome, { status: "created" }>,
-  inviteToken: string | undefined
-): Promise<string | undefined> {
+  inviteToken: string | undefined,
+  trail: TProvisioningTrail
+): Promise<void> {
   // Better Auth sends the verification email itself during signUpEmail (sendOnSignUp) — no manual
   // send here. The legacy EMAIL_VERIFICATION_DISABLED branch (ENG-1527) is folded into auth.ts'
   // requireEmailVerification config and the callbackURL chosen in signUpUserSafely.
-  return inviteToken ? handleInviteAcceptance(inviteToken, user) : handleOrganizationCreation(user);
+  if (inviteToken) {
+    await handleInviteAcceptance(inviteToken, user, trail);
+    return;
+  }
+  await handleOrganizationCreation(user, trail);
 }
 
 /**
@@ -406,9 +428,10 @@ type TCompleteSignUpInput = {
  *
  * Never throws: nothing after the response would catch it, so every failure is logged instead. The
  * steps are independent and each has its own guard, so a failed provisioning still subscribes the user
- * and still records the account, which exists either way. Before ENG-7094 the same failure reached the
- * browser as an error, but it offered no way out: a retry resolves to `already_existed` and provisions
- * nothing, so an account left without an organization lands on organization setup at first sign-in.
+ * and still records the account — as a failure, since the account was left without its organization.
+ * Before ENG-7094 the same failure reached the browser as an error, but it offered no way out: a retry
+ * resolves to `already_existed` and provisions nothing, so an account left without an organization
+ * lands on organization setup at first sign-in.
  */
 async function completeSignUp({
   outcome,
@@ -434,13 +457,36 @@ async function completeSignUp({
     }
   }
 
-  let organizationId: string | undefined;
+  const trail: TProvisioningTrail = {};
+  let provisioningFailed = false;
   try {
-    organizationId = await handlePostUserCreation({ ...outcome, user }, inviteToken);
+    await handlePostUserCreation({ ...outcome, user }, inviteToken, trail);
   } catch (error) {
     // `err`, not `error`: pino serializes an Error's message and stack only under `err`.
     logger.error({ err: error, userId: user.id }, "Sign-up provisioning failed after the response");
+    provisioningFailed = true;
   }
+  // Named by the trail even when a later step threw: the organization can exist regardless (ENG-7094).
+  const organizationId = trail.organizationId;
+
+  // The audit record comes before the mailing list and analytics: an account that exists must be
+  // recorded even if an outside call below hangs or the process stops, and a failed provisioning is
+  // a failure record, as the route wrapper wrote before this work moved after the response (ENG-2091).
+  // The actor is unknown, as in the route's own entry this replaces: the caller has no session.
+  await queueAuditEventWithoutRequest({
+    action: "created",
+    targetType: "user",
+    userId: UNKNOWN_DATA,
+    userType: "user",
+    targetId: user.id,
+    organizationId: organizationId ?? UNKNOWN_DATA,
+    status: provisioningFailed ? "failure" : "success",
+    newObject: user,
+    apiUrl,
+    requestMetadata,
+  }).catch((error: unknown) => {
+    logger.error({ err: error, userId: user.id }, "Failed to record the sign-up audit event");
+  });
 
   try {
     await subscribeUserToMailingList({
@@ -471,24 +517,6 @@ async function completeSignUp({
     },
     organizationId ? { organizationId } : undefined
   );
-
-  // Only on this path: an audit record claiming a user was created must only exist when one was
-  // (ENG-2091 / S1). The actor is unknown, as in the route's own entry this replaces: the caller has no
-  // session.
-  await queueAuditEventWithoutRequest({
-    action: "created",
-    targetType: "user",
-    userId: UNKNOWN_DATA,
-    userType: "user",
-    targetId: user.id,
-    organizationId: organizationId ?? UNKNOWN_DATA,
-    status: "success",
-    newObject: user,
-    apiUrl,
-    requestMetadata,
-  }).catch((error: unknown) => {
-    logger.error({ err: error, userId: user.id }, "Failed to record the sign-up audit event");
-  });
 }
 
 /**
@@ -566,6 +594,13 @@ export async function createSignup(
     }
   }
 
+  // Captured on BOTH outcomes, while the request is live: the header read must not be an extra step
+  // only a created account pays, or it becomes the timing difference the rest of this function
+  // removes (ENG-7094). Only the `created` path uses it.
+  const requestMetadata = AUDIT_LOG_ENABLED
+    ? await getAuditRequestMetadata()
+    : UNKNOWN_AUDIT_REQUEST_METADATA;
+
   // Provisioning + analytics for a NEW account only. Nothing runs on `already_existed`: this endpoint
   // is unauthenticated, so the caller has proven nothing about an account that already exists
   // (ENG-2091).
@@ -578,7 +613,7 @@ export async function createSignup(
     subscribeToSecurityUpdates: input.subscribeToSecurityUpdates,
     subscribeToProductUpdates: input.subscribeToProductUpdates,
     attributionProperties,
-    requestMetadata: await getAuditRequestMetadata(),
+    requestMetadata,
     apiUrl,
   };
   after(() => completeSignUp(completion));

@@ -6,6 +6,7 @@ import { postToPreLoginRoute, withoutEmailToken } from "@/integration/pre-login-
 import { resetDb } from "@/integration/reset-db";
 import { createInviteToken } from "@/lib/jwt";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
+import { SIGNUP_INTENT_COOKIE_NAME, readSignupIntent } from "@/modules/auth/lib/signup-intent";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/email";
 
@@ -18,9 +19,18 @@ import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/em
  * every post-creation side effect against the pre-existing account.
  */
 
+const cookieJar = vi.hoisted(() => ({ sets: [] as { name: string; value: string }[] }));
+
 // The action reads/deletes the attribution cookie; there is no Next request scope under vitest.
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ get: () => undefined, set: () => undefined, delete: () => undefined })),
+  cookies: vi.fn(async () => ({
+    get: () => undefined,
+    getAll: () => [],
+    set: (name: string, value: string) => {
+      cookieJar.sets.push({ name, value });
+    },
+    delete: () => undefined,
+  })),
   headers: vi.fn(async () => new Headers()),
 }));
 
@@ -102,6 +112,7 @@ const seedInvite = async ({
 beforeEach(async () => {
   await resetDb();
   vi.clearAllMocks();
+  cookieJar.sets.length = 0;
 });
 
 describe("ENG-2091: accepting an invite via sign-up", () => {
@@ -293,5 +304,30 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
       memberships: await prisma.membership.count({ where: { userId: existing.id } }),
     }).toEqual({ orgs: orgsBefore, memberships: 0 });
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
+  });
+
+  // ENG-7094: the unit test pins the decoy's length against a `createId()` fixture. This drives a REAL
+  // Better Auth-generated id through the real route, so a change in how BA mints user ids cannot make
+  // the decoy distinguishable from the cookie a new account gets while every other suite stays green.
+  test("gives the duplicate a decoy of the created cookie's length (real Better Auth id)", async () => {
+    const email = "duplicate-parity@corporate-example.com";
+
+    const createdResponse = await createSignup({ name: "First", email, password: PASSWORD });
+    await flushAfter();
+    const created = cookieJar.sets.find((cookie) => cookie.name === SIGNUP_INTENT_COOKIE_NAME);
+
+    cookieJar.sets.length = 0;
+    const duplicateResponse = await createSignup({ name: "Second", email, password: PASSWORD });
+    await flushAfter();
+    const decoy = cookieJar.sets.find((cookie) => cookie.name === SIGNUP_INTENT_COOKIE_NAME);
+
+    // Same answer both times, token included (ENG-2099).
+    expect(createdResponse.data).toEqual({ success: true, emailToken: expect.any(String) });
+    expect(duplicateResponse.data).toEqual({ success: true, emailToken: expect.any(String) });
+    expect(created).toBeDefined();
+    expect(decoy).toBeDefined();
+    expect(decoy!.value).toHaveLength(created!.value.length);
+    expect(readSignupIntent(created!.value)).toMatchObject({ reason: "valid" });
+    expect(readSignupIntent(decoy!.value)).toEqual({ userId: null, reason: "absent" });
   });
 });
