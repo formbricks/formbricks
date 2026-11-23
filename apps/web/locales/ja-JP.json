@@ -2303,7 +2303,7 @@
         "image_position_right": "右",
         "image_settings": "画像設定",
         "image_size": "サイズ",
-        "image_types": "PNG、JPG、SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "画像をアップロードできませんでした",
         "lock_filters": "全員に対してロック",
         "lock_filters_tooltip": "このダッシュボードを開く全員にこれらのフィルターを適用します。閲覧者は解除できません。",

@@ -2303,7 +2303,7 @@
         "image_position_right": "Sağ",
         "image_settings": "Görsel ayarları",
         "image_size": "Boyut",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Görsel yüklenemedi",
         "lock_filters": "Herkes için kilitle",
         "lock_filters_tooltip": "Bu filtreleri bu panoyu açan herkes için uygula. Görüntüleyenler bunları kaldıramaz.",

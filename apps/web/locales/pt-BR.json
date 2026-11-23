@@ -2303,7 +2303,7 @@
         "image_position_right": "Direita",
         "image_settings": "Configurações da imagem",
         "image_size": "Tamanho",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Falha ao enviar a imagem",
         "lock_filters": "Bloquear para todos",
         "lock_filters_tooltip": "Aplique estes filtros para todos que abrirem este painel. Quem apenas visualiza não pode removê-los.",

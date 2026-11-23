@@ -2303,7 +2303,7 @@
         "image_position_right": "靠右",
         "image_settings": "图片设置",
         "image_size": "大小",
-        "image_types": "PNG、JPG、SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "图片上传失败",
         "lock_filters": "为所有人锁定",
         "lock_filters_tooltip": "为所有打开此仪表板的人应用这些筛选条件，查看者无法移除。",

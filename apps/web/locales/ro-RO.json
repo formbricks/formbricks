@@ -2303,7 +2303,7 @@
         "image_position_right": "Dreapta",
         "image_settings": "Setări imagine",
         "image_size": "Dimensiune",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Încărcarea imaginii a eșuat",
         "lock_filters": "Blochează pentru toată lumea",
         "lock_filters_tooltip": "Aplică aceste filtre pentru oricine deschide acest dashboard. Utilizatorii care doar vizualizează nu le pot elimina.",

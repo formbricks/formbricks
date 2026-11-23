@@ -2303,7 +2303,7 @@
         "image_position_right": "Höger",
         "image_settings": "Bildinställningar",
         "image_size": "Storlek",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Det gick inte att ladda upp bilden",
         "lock_filters": "Lås för alla",
         "lock_filters_tooltip": "Använd de här filtren för alla som öppnar den här instrumentpanelen. Tittare kan inte ta bort dem.",

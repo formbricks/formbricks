@@ -2303,7 +2303,7 @@
         "image_position_right": "Rechts",
         "image_settings": "Afbeeldingsinstellingen",
         "image_size": "Grootte",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Uploaden van de afbeelding mislukt",
         "lock_filters": "Vergrendelen voor iedereen",
         "lock_filters_tooltip": "Pas deze filters toe voor iedereen die dit dashboard opent. Kijkers kunnen ze niet verwijderen.",

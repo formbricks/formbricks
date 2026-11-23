@@ -2303,7 +2303,7 @@
         "image_position_right": "Droite",
         "image_settings": "Paramètres de l'image",
         "image_size": "Taille",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Échec du téléversement de l'image",
         "lock_filters": "Verrouiller pour tout le monde",
         "lock_filters_tooltip": "Appliquez ces filtres pour tous ceux qui ouvrent ce tableau de bord. Les lecteurs ne pourront pas les supprimer.",

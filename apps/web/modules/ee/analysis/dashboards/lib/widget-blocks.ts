@@ -6,6 +6,7 @@ import {
   ZDashboardImageContent,
   ZDashboardTextContent,
 } from "@formbricks/types/analysis";
+import type { TAllowedFileExtension } from "@formbricks/types/storage";
 import { GRID_COLUMNS, MAX_WIDGET_HEIGHT, findNextOpenSlot } from "./widget-placement";
 
 /**
@@ -70,6 +71,18 @@ export const placeNewBlock = (kind: TLayoutBlockKind, existing: TWidgetLayout[])
   const size = getDefaultBlockLayout(kind);
   return { ...size, ...findNextOpenSlot(existing, size) };
 };
+
+/**
+ * The image types an image block takes: those the storage upload allowlist accepts and browsers draw in an
+ * `<img>`. SVG stays out, as for survey media: storage serves it from the app's origin unsanitized, an XSS
+ * vector (`IMAGE_FILE_EXTENSIONS`); GIF is not uploadable at all.
+ */
+export const DASHBOARD_IMAGE_EXTENSIONS = [
+  "png",
+  "jpg",
+  "jpeg",
+  "webp",
+] as const satisfies readonly TAllowedFileExtension[];
 
 /**
  * The private storage URL an image block may point at: a dashboard upload of this workspace

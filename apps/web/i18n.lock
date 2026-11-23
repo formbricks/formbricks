@@ -2218,7 +2218,7 @@ checksums:
     workspace/analysis/dashboards/image_position_right: d2ecd32a214b897f3edddb395a04253d
     workspace/analysis/dashboards/image_settings: bd2aac1f6414c5c1dbdd47f7aa8f2a6e
     workspace/analysis/dashboards/image_size: 227fadeeff951e041ff42031a11a4626
-    workspace/analysis/dashboards/image_types: f40fcb3a230a63eb39432d65a2cd46b0
+    workspace/analysis/dashboards/image_types: 14e679ce09240867049727a6876c03e4
     workspace/analysis/dashboards/image_upload_failed: fdc2791957f698315e7807ef4897bdf9
     workspace/analysis/dashboards/lock_filters: 23c03896f31682272a68c2d6140b19fd
     workspace/analysis/dashboards/lock_filters_tooltip: b53c856195ee607a516e655976977cfd

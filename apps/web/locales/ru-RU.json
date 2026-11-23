@@ -2303,7 +2303,7 @@
         "image_position_right": "Справа",
         "image_settings": "Настройки изображения",
         "image_size": "Размер",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Не удалось загрузить изображение",
         "lock_filters": "Заблокировать для всех",
         "lock_filters_tooltip": "Применить эти фильтры для всех, кто открывает этот дашборд. Зрители не смогут их убрать.",

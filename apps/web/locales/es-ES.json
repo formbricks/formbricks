@@ -2303,7 +2303,7 @@
         "image_position_right": "Derecha",
         "image_settings": "Ajustes de imagen",
         "image_size": "Tamaño",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "No se ha podido subir la imagen",
         "lock_filters": "Bloquear para todos",
         "lock_filters_tooltip": "Aplica estos filtros para todas las personas que abran este panel. Quienes lo vean no podrán quitarlos.",

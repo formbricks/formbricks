@@ -2303,7 +2303,7 @@
         "image_position_right": "靠右",
         "image_settings": "圖片設定",
         "image_size": "大小",
-        "image_types": "PNG、JPG、SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "圖片上傳失敗",
         "lock_filters": "為所有人鎖定",
         "lock_filters_tooltip": "為所有開啟此儀表板的人套用這些篩選器，檢視者無法移除。",

@@ -2303,7 +2303,7 @@
         "image_position_right": "Jobb",
         "image_settings": "Képbeállítások",
         "image_size": "Méret",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "A kép feltöltése sikertelen volt",
         "lock_filters": "Zárolás mindenki számára",
         "lock_filters_tooltip": "Ezen szűrők alkalmazása mindenki számára, aki megnyitja ezt az irányítópultot. A megtekintők nem távolíthatják el őket.",

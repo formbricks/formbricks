@@ -2303,7 +2303,7 @@
         "image_position_right": "Rechts",
         "image_settings": "Bildeinstellungen",
         "image_size": "Größe",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Das Bild konnte nicht hochgeladen werden",
         "lock_filters": "Für alle sperren",
         "lock_filters_tooltip": "Wende diese Filter für alle an, die dieses Dashboard öffnen. Betrachter können sie nicht entfernen.",

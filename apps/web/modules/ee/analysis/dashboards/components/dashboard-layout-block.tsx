@@ -12,6 +12,7 @@ import {
   type TDashboardTextContent,
 } from "@formbricks/types/analysis";
 import { cn } from "@/lib/cn";
+import { DASHBOARD_IMAGE_EXTENSIONS } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import { getChartApiErrorMessage, uploadDashboardImage } from "@/modules/ee/analysis/lib/api-client";
 import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -23,7 +24,7 @@ import { Separator } from "@/modules/ui/components/separator";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 
 /** The image types an image block takes, as the file picker offers them. */
-const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.svg,.webp,.gif";
+const IMAGE_ACCEPT = DASHBOARD_IMAGE_EXTENSIONS.map((extension) => `.${extension}`).join(",");
 
 /**
  * The card's own height outside its content: the 1px border on both sides and the 16px padding. What a

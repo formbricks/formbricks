@@ -7,10 +7,8 @@ import type { TV3DashboardOperationContext } from "@/app/api/v3/dashboards/lib/a
 import { getDashboardWorkspaceRow } from "@/app/api/v3/dashboards/lib/service";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemBadRequest, problemInternalError, successResponse } from "@/app/api/v3/lib/response";
+import { DASHBOARD_IMAGE_EXTENSIONS } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
-
-/** The image types an image block takes: what browsers draw in an `<img>`. */
-export const DASHBOARD_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "svg", "webp", "gif"] as const;
 
 /** The largest image a block may upload. */
 export const MAX_DASHBOARD_IMAGE_BYTES = 5 * 1024 * 1024;

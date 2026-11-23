@@ -2303,7 +2303,7 @@
         "image_position_right": "Right",
         "image_settings": "Image settings",
         "image_size": "Size",
-        "image_types": "PNG, JPG, SVG",
+        "image_types": "PNG, JPG, WEBP",
         "image_upload_failed": "Failed to upload the image",
         "lock_filters": "Lock for everyone",
         "lock_filters_tooltip": "Apply these filters for everyone who opens this dashboard. Viewers cannot remove them.",
