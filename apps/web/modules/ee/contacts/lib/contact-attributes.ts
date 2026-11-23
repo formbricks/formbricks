@@ -130,14 +130,16 @@ export const hasUserIdAttribute = reactCache(
   }
 );
 
+/** The values contacts hold for a key of `directoryId`; none for a key of another directory. */
 export const getDistinctAttributeValues = reactCache(
-  async (attributeKeyId: string, limit: number = 50): Promise<string[]> => {
-    validateInputs([attributeKeyId, ZId]);
+  async (attributeKeyId: string, directoryId: string, limit: number = 50): Promise<string[]> => {
+    validateInputs([attributeKeyId, ZId], [directoryId, ZId]);
 
     try {
       const results = await prisma.contactAttribute.findMany({
         where: {
           attributeKeyId,
+          attributeKey: { directoryId },
           value: { not: "" },
         },
         select: {

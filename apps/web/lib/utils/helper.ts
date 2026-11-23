@@ -11,7 +11,6 @@ import {
   getLanguage,
   getQuota,
   getResponse,
-  getSegment,
   getSurvey,
   getTag,
   getTeam,
@@ -75,15 +74,6 @@ export const getOrganizationIdFromTagId = async (tagId: string) => {
   }
 
   return await getOrganizationIdFromWorkspaceId(tag.workspaceId);
-};
-
-export const getOrganizationIdFromSegmentId = async (segmentId: string) => {
-  const segment = await getSegment(segmentId);
-  if (!segment) {
-    throw new ResourceNotFoundError("segment", segmentId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(segment.workspaceId);
 };
 
 export const getOrganizationIdFromActionClassId = async (actionClassId: string) => {
@@ -163,15 +153,6 @@ export const getWorkspaceIdFromSurveyId = async (surveyId: string) => {
   }
 
   return survey.workspaceId;
-};
-
-export const getWorkspaceIdFromSegmentId = async (segmentId: string) => {
-  const segment = await getSegment(segmentId);
-  if (!segment) {
-    throw new ResourceNotFoundError("segment", segmentId);
-  }
-
-  return segment.workspaceId;
 };
 
 export const getWorkspaceIdFromActionClassId = async (actionClassId: string) => {

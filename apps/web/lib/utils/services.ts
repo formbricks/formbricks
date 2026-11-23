@@ -297,26 +297,6 @@ export const getContact = reactCache(async (contactId: string): Promise<{ worksp
   }
 });
 
-export const getSegment = reactCache(async (segmentId: string): Promise<{ workspaceId: string } | null> => {
-  validateInputs([segmentId, ZId]);
-  try {
-    const segment = await prisma.segment.findUnique({
-      where: {
-        id: segmentId,
-      },
-      select: { workspaceId: true },
-    });
-
-    return segment?.workspaceId ? { workspaceId: segment.workspaceId } : null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-});
-
 export const getFeedbackSource = reactCache(
   async (feedbackSourceId: string): Promise<{ workspaceId: string } | null> => {
     validateInputs([feedbackSourceId, ZId]);

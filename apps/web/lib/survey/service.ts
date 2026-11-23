@@ -69,11 +69,13 @@ import {
   readCustomCssPayloadSource,
   resolveCustomCssWriteOrThrow,
 } from "@/modules/custom-css/lib/service";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
   getAddedSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
+import { privateSegmentKey } from "@/modules/ee/contacts/segments/lib/segment-scope";
 import {
   assertNoLinkedCreatives,
   getDestinationSettingTurnedOn,
@@ -821,10 +823,15 @@ const updateAppSurveySegment = async (
   await saveAppSurveySegment(currentSurvey, segment, options.targetingActor);
 };
 
-/** An app survey without a segment gets its own private one. */
+/** The id of the workspace's contact directory, which its segments belong to; null while it has none. */
+const getSegmentDirectoryId = async (workspaceId: string): Promise<string | null> =>
+  (await getWorkspaceContactDirectory(workspaceId))?.id ?? null;
+
+/** An app survey without a segment gets its own private one, in its workspace's directory. */
 const ensureAppSurveySegment = async (currentSurvey: TSurvey, surveyId: string): Promise<void> => {
   if (!currentSurvey.segment) {
     const workspaceId = currentSurvey.workspaceId;
+    const directoryId = await getSegmentDirectoryId(workspaceId);
     await prisma.survey.update({
       where: {
         id: surveyId,
@@ -832,21 +839,13 @@ const ensureAppSurveySegment = async (currentSurvey: TSurvey, surveyId: string):
       data: {
         segment: {
           connectOrCreate: {
-            where: {
-              workspaceId_title: {
-                workspaceId,
-                title: surveyId,
-              },
-            },
+            where: privateSegmentKey(workspaceId, directoryId, surveyId),
             create: {
               title: surveyId,
               isPrivate: true,
               filters: [],
-              workspace: {
-                connect: {
-                  id: workspaceId,
-                },
-              },
+              workspaceId,
+              directoryId,
             },
           },
         },
@@ -1414,11 +1413,11 @@ const isOwnPrivateSegment = (
  * ENG-6957: an app survey's save, applied to targeting. `segment` comes from the client, so the stored
  * survey decides what it may do, and only this survey's targeting changes:
  * - its own private segment (`isOwnPrivateSegment`): the filters are written;
- * - another segment of the workspace that `segment.surveys` names this survey on: the survey is linked
- *   to it as stored. A private segment belongs to its own survey and is refused;
+ * - another segment of the workspace's directory that `segment.surveys` names this survey on: the survey
+ *   is linked to it as stored. A private segment belongs to its own survey and is refused;
  * - anything else, its current shared segment included: nothing is written.
  * The other ids in `segment.surveys` are ignored: connecting them would re-point surveys the saver may
- * not write or see. `assertSurveySegmentBelongsToWorkspace` has already checked `segment.id`'s workspace.
+ * not write or see. `assertSurveySegmentBelongsToWorkspace` has already checked `segment.id`'s directory.
  */
 const saveAppSurveySegment = async (
   survey: Pick<TSurvey, "id" | "workspaceId" | "segment">,
@@ -1464,11 +1463,15 @@ const saveAppSurveySegment = async (
 
   if (segment.id === survey.segment?.id || !segment.surveys?.includes(survey.id)) return;
 
-  const target = await prisma.segment.findFirst({
-    where: { id: segment.id, workspaceId: survey.workspaceId },
-    select: { isPrivate: true, filters: true },
-  });
-  if (!target) throw new ResourceNotFoundError("Segment", segment.id);
+  // A shared segment of the directory, whichever workspace made it (decision 24).
+  const directoryId = await getSegmentDirectoryId(survey.workspaceId);
+  const target = directoryId
+    ? await prisma.segment.findFirst({
+        where: { id: segment.id, directoryId },
+        select: { isPrivate: true, filters: true },
+      })
+    : null;
+  if (!directoryId || !target) throw new ResourceNotFoundError("Segment", segment.id);
   if (target.isPrivate) {
     throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
   }
@@ -1479,10 +1482,10 @@ const saveAppSurveySegment = async (
     actor,
     segment.id
   );
-  // `isPrivate` and `workspaceId` repeat the checks in the write: a segment that no longer matches fails it.
+  // `isPrivate` and `directoryId` repeat the checks in the write: a segment that no longer matches fails it.
   await prisma.survey.update({
     where: { id: survey.id, workspaceId: survey.workspaceId },
-    data: { segment: { connect: { id: segment.id, isPrivate: false, workspaceId: survey.workspaceId } } },
+    data: { segment: { connect: { id: segment.id, isPrivate: false, directoryId } } },
     select: { id: true },
   });
 };
@@ -1516,6 +1519,7 @@ const unlinkSurveySegment = async (
   }
 };
 
+/** A survey may use any segment of its workspace's contact directory (decision 24), and no other. */
 const assertSurveySegmentBelongsToWorkspace = async (
   workspaceId: string,
   segment: { id?: string | null } | null | undefined,
@@ -1525,12 +1529,12 @@ const assertSurveySegmentBelongsToWorkspace = async (
     return;
   }
 
-  const existingSegment = await client.segment.findUnique({
-    where: { id: segment.id },
-    select: { workspaceId: true },
-  });
+  const [existingSegment, directoryId] = await Promise.all([
+    client.segment.findUnique({ where: { id: segment.id }, select: { directoryId: true } }),
+    getSegmentDirectoryId(workspaceId),
+  ]);
 
-  if (existingSegment?.workspaceId !== workspaceId) {
+  if (!directoryId || existingSegment?.directoryId !== directoryId) {
     throw new ResourceNotFoundError("Segment", segment.id);
   }
 };
@@ -1603,21 +1607,26 @@ const assertCreateTargetingVisible = async (
   }
 };
 
-/** The private targeting segment an app survey is created with, written in the survey's transaction. */
+/**
+ * The private targeting segment an app survey is created with, written in the survey's transaction, in
+ * the workspace's contact directory (`directoryId`, null while the workspace has none).
+ */
 const createPrivateSegmentForSurvey = async (
   tx: Prisma.TransactionClient,
-  { surveyId, workspaceId, filters }: { surveyId: string; workspaceId: string; filters: TBaseFilters }
+  {
+    surveyId,
+    workspaceId,
+    directoryId,
+    filters,
+  }: { surveyId: string; workspaceId: string; directoryId: string | null; filters: TBaseFilters }
 ): Promise<void> => {
   const newSegment = await tx.segment.create({
     data: {
       title: surveyId,
       filters,
       isPrivate: true,
-      workspace: {
-        connect: {
-          id: workspaceId,
-        },
-      },
+      workspaceId,
+      directoryId,
     },
   });
 
@@ -1702,6 +1711,8 @@ export const createSurvey = async (
     const db = transaction?.tx ?? prisma;
     await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages, db);
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment, db);
+    // Read before the survey's transaction: its private segment is created in the workspace's directory.
+    const segmentDirectoryId = await getSegmentDirectoryId(parsedWorkspaceId);
     await assertCreateTargetingVisible(parsedWorkspaceId, segment, privateSegmentFilters, targetingActor, db);
 
     // ENG-1839: `existing` is empty because a create authors every name fresh — there is nothing to
@@ -1787,6 +1798,7 @@ export const createSurvey = async (
         await createPrivateSegmentForSurvey(tx, {
           surveyId: createdSurvey.id,
           workspaceId: parsedWorkspaceId,
+          directoryId: segmentDirectoryId,
           filters: privateSegmentFilters,
         });
       }
@@ -1892,12 +1904,16 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       return currentSurvey;
     }
 
-    const newSegment = await prisma.segment.findFirst({
-      where: { id: newSegmentId, workspaceId: currentSurvey.workspaceId },
-      select: { isPrivate: true },
-    });
+    // Any segment of the workspace's contact directory, whichever workspace made it (decision 24).
+    const directoryId = await getSegmentDirectoryId(currentSurvey.workspaceId);
+    const newSegment = directoryId
+      ? await prisma.segment.findFirst({
+          where: { id: newSegmentId, directoryId },
+          select: { isPrivate: true },
+        })
+      : null;
 
-    if (!newSegment) {
+    if (!directoryId || !newSegment) {
       throw new ResourceNotFoundError("segment", newSegmentId);
     }
 
@@ -1912,8 +1928,8 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       select: selectSurvey,
       data: {
         segment: {
-          // `isPrivate` and `workspaceId` repeat the checks in the write.
-          connect: { id: newSegmentId, isPrivate: false, workspaceId: currentSurvey.workspaceId },
+          // `isPrivate` and `directoryId` repeat the checks in the write.
+          connect: { id: newSegmentId, isPrivate: false, directoryId },
         },
       },
     });

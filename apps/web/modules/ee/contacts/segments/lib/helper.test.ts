@@ -1,22 +1,24 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import {
-  MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE,
-  TBaseFilters,
-  TSegmentWithSurveyRefs,
-} from "@formbricks/types/segment";
+import { MAX_SEGMENT_SURVEY_INTERACTION_IDS_PER_TREE, TBaseFilters } from "@formbricks/types/segment";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import {
   SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE,
+  assertAddedSurveyInteractionSurveyIds,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   collectSurveyIdsFromSegmentFilters,
   getSurveyIdsReadBySegments,
+  restoreHiddenSegmentSurveyIds,
   segmentFiltersReadHiddenSurvey,
 } from "@/modules/ee/contacts/segments/lib/helper";
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  getOtherWorkspaceSurveyIds,
+  getSegment,
+  getSegmentInWorkspace,
+} from "@/modules/ee/contacts/segments/lib/segments";
 
 /** The batched lookup's arguments, as the code under test builds them. */
 type TSurveyBatchArgs = { where: { id: { in: string[] }; workspaceId?: string } };
@@ -34,7 +36,9 @@ vi.mock("@formbricks/database", () => ({
 
 // Mock dependencies
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
+  getOtherWorkspaceSurveyIds: vi.fn(),
   getSegment: vi.fn(),
+  getSegmentInWorkspace: vi.fn(),
 }));
 
 describe("checkForRecursiveSegmentFilter", () => {
@@ -105,7 +109,9 @@ describe("checkForRecursiveSegmentFilter", () => {
       ],
     };
 
-    vi.mocked(getSegment).mockResolvedValue(referencedSegment as unknown as TSegmentWithSurveyRefs);
+    vi.mocked(getSegment).mockResolvedValue(
+      referencedSegment as unknown as Awaited<ReturnType<typeof getSegment>>
+    );
 
     // Act & Assert
     // The function should complete without throwing an error
@@ -492,8 +498,8 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     },
   });
   const tree = (...filters: unknown[]) => filters as TBaseFilters;
-  const segment = (id: string, filters: TBaseFilters, ws = workspaceId) =>
-    ({ id, filters, workspaceId: ws }) as unknown as TSegmentWithSurveyRefs;
+  const segment = (id: string, filters: TBaseFilters) =>
+    ({ id, filters, workspaceId }) as unknown as Awaited<ReturnType<typeof getSegmentInWorkspace>>;
   const memberHiddenWhere = {
     AND: [
       expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) }),
@@ -558,7 +564,7 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
   test("follows nested segment filters, at any depth and inside groups", async () => {
     const outer = "clouter0000000000000000001";
     const inner = "clinner0000000000000000001";
-    vi.mocked(getSegment).mockImplementation(async (id: string) =>
+    vi.mocked(getSegmentInWorkspace).mockImplementation(async (id: string) =>
       id === outer
         ? segment(outer, tree({ id: "g", connector: null, resource: tree(nestedSegment(inner)) }))
         : segment(inner, tree(interaction("specific", [restrictedId])))
@@ -571,13 +577,14 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     );
   });
 
-  test("skips what evaluation skips: itself, a missing segment and another workspace's segment", async () => {
+  // `getSegmentInWorkspace` answers not found for a segment of another directory than the workspace's.
+  test("skips what evaluation skips: itself, a missing segment and another directory's segment", async () => {
     const self = "clself00000000000000000001";
     const missing = "clmissing00000000000000001";
     const foreign = "clforeign00000000000000001";
-    vi.mocked(getSegment).mockImplementation(async (id: string) => {
-      if (id === missing) throw new ResourceNotFoundError("segment", id);
-      if (id === foreign) return segment(foreign, tree(interaction("specific", [restrictedId])), "ws-other");
+    vi.mocked(getSegmentInWorkspace).mockImplementation(async (id: string, ws: string) => {
+      expect(ws).toBe(workspaceId);
+      if (id === missing || id === foreign) throw new ResourceNotFoundError("segment", id);
       throw new Error(`unexpected lookup of ${id}`);
     });
 
@@ -589,7 +596,7 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     );
 
     expect(result).toBe(false);
-    expect(getSegment).toHaveBeenCalledTimes(2);
+    expect(getSegmentInWorkspace).toHaveBeenCalledTimes(2);
     expect(mockSurveyFindFirst).not.toHaveBeenCalled();
   });
 
@@ -607,7 +614,7 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
   // CodeRabbit on #9935: many references sharing one nested chain must not each walk it again.
   test("getSurveyIdsReadBySegments reads a chain shared by several segments once", async () => {
     const shared = "clshared00000000000000001";
-    vi.mocked(getSegment).mockImplementation(async (id: string) =>
+    vi.mocked(getSegmentInWorkspace).mockImplementation(async (id: string) =>
       segment(id, tree(interaction("specific", [restrictedId])))
     );
     const referencing = Array.from({ length: 5 }, (_, i) => ({
@@ -618,7 +625,7 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     const read = await getSurveyIdsReadBySegments(referencing, workspaceId);
 
     expect([...read].sort()).toEqual([restrictedId, visibleId].sort());
-    expect(getSegment).toHaveBeenCalledTimes(1);
+    expect(getSegmentInWorkspace).toHaveBeenCalledTimes(1);
   });
 
   // CodeRabbit on #9935: a draft may store a non-id; it reads nothing and must not reach id validation.
@@ -642,5 +649,67 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     await expect(
       assertSegmentSurveyFiltersVisible(tree(interaction("specific", [restrictedId])), workspaceId, member)
     ).rejects.toThrow(new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE));
+  });
+});
+
+describe("survey ids of a shared segment edited from another workspace (decision 24)", () => {
+  const workspaceId = "ws-b";
+  const ownId = "clown0000000000000000000001";
+  const otherWorkspaceId = "clother000000000000000000001";
+  const hiddenId = "clhidden00000000000000000001";
+  const interaction = (filterId: string, surveyIds: string[]) => ({
+    id: filterId,
+    connector: null,
+    resource: {
+      id: `${filterId}-r`,
+      root: { type: "surveyInteraction" },
+      qualifier: { operator: "haveNotSeen" },
+      value: { surveyScope: "specific", surveyIds, within: { amount: 30, unit: "days" } },
+    },
+  });
+  const tree = (...filters: unknown[]) => filters as TBaseFilters;
+  const idsOf = (filters: TBaseFilters) =>
+    filters.map(
+      (filter) => (filter.resource as unknown as { value: { surveyIds: string[] } }).value.surveyIds
+    );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("an edit is only checked for the survey ids it adds", async () => {
+    mockSurveyFindMany.mockResolvedValue([{ id: ownId }]);
+
+    await assertAddedSurveyInteractionSurveyIds(
+      tree(interaction("f1", [otherWorkspaceId, ownId])),
+      tree(interaction("f1", [otherWorkspaceId])),
+      workspaceId
+    );
+
+    expect(mockSurveyFindMany).toHaveBeenCalledTimes(1);
+    expect(mockSurveyFindMany.mock.calls[0][0].where.id.in).toEqual([ownId]);
+  });
+
+  test("an added survey of another workspace is refused", async () => {
+    mockSurveyFindMany.mockResolvedValue([]);
+
+    await expect(
+      assertAddedSurveyInteractionSurveyIds(tree(interaction("f1", [otherWorkspaceId])), tree(), workspaceId)
+    ).rejects.toThrow(InvalidInputError);
+  });
+
+  test("a survey of another workspace the editor removed stays removed; a hidden one comes back", async () => {
+    mockSurveyFindMany.mockResolvedValue([{ id: ownId }]);
+    vi.mocked(getOtherWorkspaceSurveyIds).mockResolvedValue([otherWorkspaceId]);
+
+    const restored = await restoreHiddenSegmentSurveyIds(
+      tree(interaction("f1", [ownId])),
+      tree(interaction("f1", [ownId, otherWorkspaceId, hiddenId])),
+      workspaceId,
+      { visibility: "workspace" }
+    );
+
+    expect(idsOf(restored)).toEqual([[ownId, hiddenId]]);
+    expect(getOtherWorkspaceSurveyIds).toHaveBeenCalledWith(workspaceId, [ownId, otherWorkspaceId, hiddenId]);
   });
 });

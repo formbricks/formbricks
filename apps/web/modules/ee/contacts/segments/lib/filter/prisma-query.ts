@@ -18,7 +18,7 @@ import {
   ZRelativeDateValue,
 } from "@formbricks/types/segment";
 import { effectivelyWorkspaceVisibleWhere } from "@/lib/survey/visibility/predicate";
-import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereDirectoryAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { endOfDay, startOfDay, subtractTimeUnit } from "../date-utils";
 import { getSegment } from "../segments";
@@ -128,7 +128,7 @@ const buildDateAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): P
  */
 const buildNumberAttributeFilterWhereClause = async (
   filter: TSegmentAttributeFilter,
-  workspaceId: string
+  directoryId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier, value } = filter;
   const { contactAttributeKey } = root;
@@ -166,7 +166,7 @@ const buildNumberAttributeFilterWhereClause = async (
 
   const hasUnmigratedRows = await prisma.contactAttribute.findFirst({
     where: {
-      attributeKey: { ...whereAttributeKey(workspaceId, contactAttributeKey), dataType: "number" },
+      attributeKey: { ...whereDirectoryAttributeKey(directoryId, contactAttributeKey), dataType: "number" },
       valueNumber: null,
     },
     select: { id: true },
@@ -183,7 +183,7 @@ const buildNumberAttributeFilterWhereClause = async (
     FROM "ContactAttribute" ca
     JOIN "ContactAttributeKey" cak ON ca."attributeKeyId" = cak.id
     WHERE cak.key = $1
-    AND cak."workspaceId" = $4
+    AND cak."directoryId" = $4
     AND cak."dataType" = 'number'
     AND ca."valueNumber" IS NULL
     AND ca.value ~ $3
@@ -192,7 +192,7 @@ const buildNumberAttributeFilterWhereClause = async (
     contactAttributeKey,
     numericValue,
     NUMBER_PATTERN_SQL,
-    workspaceId
+    directoryId
   );
 
   if (unmigratedMatchingIds.length === 0) {
@@ -211,7 +211,7 @@ const buildNumberAttributeFilterWhereClause = async (
  */
 const buildAttributeFilterWhereClause = async (
   filter: TSegmentAttributeFilter,
-  workspaceId: string
+  directoryId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier, value } = filter;
   const { contactAttributeKey } = root;
@@ -258,7 +258,7 @@ const buildAttributeFilterWhereClause = async (
 
   // Handle number operators
   if (["greaterThan", "greaterEqual", "lessThan", "lessEqual"].includes(operator)) {
-    return await buildNumberAttributeFilterWhereClause(filter, workspaceId);
+    return await buildNumberAttributeFilterWhereClause(filter, directoryId);
   }
 
   // For string operators, ensure value is a primitive (not an object or array)
@@ -297,7 +297,7 @@ const buildAttributeFilterWhereClause = async (
  */
 const buildPersonFilterWhereClause = async (
   filter: TSegmentPersonFilter,
-  workspaceId: string
+  directoryId: string
 ): Promise<Prisma.ContactWhereInput> => {
   const { personIdentifier } = filter.root;
 
@@ -309,7 +309,7 @@ const buildPersonFilterWhereClause = async (
         contactAttributeKey: personIdentifier,
       },
     };
-    return await buildAttributeFilterWhereClause(personFilter, workspaceId);
+    return await buildAttributeFilterWhereClause(personFilter, directoryId);
   }
 
   return {};
@@ -390,7 +390,7 @@ const buildSurveyInteractionFilterWhereClause = (
 const buildSegmentFilterWhereClause = async (
   filter: TSegmentSegmentFilter,
   segmentPath: Set<string>,
-  workspaceId: string,
+  directoryId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root, qualifier } = filter;
@@ -412,13 +412,14 @@ const buildSegmentFilterWhereClause = async (
   }
 
   // `getSegment` looks up by id alone, and `segmentId` comes from a caller-authored filter tree. Without
-  // this check a user could nest another workspace's segment inside their own and have its filters
+  // this check a user could nest another directory's segment inside their own and have its filters
   // evaluated against contacts they control — probing seeded attribute values against the resulting
-  // membership reveals the other team's targeting rules.
-  if (segment.workspaceId !== workspaceId) {
+  // membership reveals the other team's targeting rules. A segment of another workspace on the same
+  // directory is shared with this one (decision 24).
+  if (segment.directoryId !== directoryId) {
     logger.error(
-      { segmentId, segmentWorkspaceId: segment.workspaceId, workspaceId },
-      "Refusing to resolve a segment filter referencing another workspace's segment"
+      { segmentId, segmentDirectoryId: segment.directoryId, directoryId },
+      "Refusing to resolve a segment filter referencing another directory's segment"
     );
     return {};
   }
@@ -426,7 +427,7 @@ const buildSegmentFilterWhereClause = async (
   const newPath = new Set(segmentPath);
   newPath.add(segmentId);
 
-  const nestedWhereClause = await processFilters(segment.filters, newPath, workspaceId, deviceType);
+  const nestedWhereClause = await processFilters(segment.filters, newPath, directoryId, deviceType);
   const hasNestedConditions = Object.keys(nestedWhereClause).length > 0;
 
   if (qualifier.operator === "userIsIn") {
@@ -450,23 +451,23 @@ const buildSegmentFilterWhereClause = async (
 const processSingleFilter = async (
   filter: TSegmentFilter,
   segmentPath: Set<string>,
-  workspaceId: string,
+  directoryId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
 
   switch (root.type) {
     case "attribute":
-      return await buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter, workspaceId);
+      return await buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter, directoryId);
     case "person":
-      return await buildPersonFilterWhereClause(filter as TSegmentPersonFilter, workspaceId);
+      return await buildPersonFilterWhereClause(filter as TSegmentPersonFilter, directoryId);
     case "device":
       return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter, deviceType);
     case "segment":
       return await buildSegmentFilterWhereClause(
         filter as TSegmentSegmentFilter,
         segmentPath,
-        workspaceId,
+        directoryId,
         deviceType
       );
     case "surveyInteraction":
@@ -482,7 +483,7 @@ const processSingleFilter = async (
 const processFilters = async (
   filters: TBaseFilters,
   segmentPath: Set<string>,
-  workspaceId: string,
+  directoryId: string,
   deviceType?: "phone" | "desktop"
 ): Promise<Prisma.ContactWhereInput> => {
   if (filters.length === 0) return {};
@@ -503,8 +504,8 @@ const processFilters = async (
     const { resource, connector } = filters[i];
 
     const whereClause = isResourceFilter(resource)
-      ? await processSingleFilter(resource, segmentPath, workspaceId, deviceType)
-      : await processFilters(resource, segmentPath, workspaceId, deviceType);
+      ? await processSingleFilter(resource, segmentPath, directoryId, deviceType)
+      : await processFilters(resource, segmentPath, directoryId, deviceType);
 
     // The first filter's connector is `null` and always starts the first group; from then on an `or`
     // connector opens a new AND group.
@@ -541,19 +542,19 @@ const processFilters = async (
  * Transforms a segment filter into a Prisma query for contacts
  * @param segmentId - The segment ID being evaluated
  * @param filters - The segment filters
- * @param workspaceId - The workspace ID
+ * @param directoryId - The contact directory evaluated against: its contacts and attribute keys (decision 24)
  * @param deviceType - Optional device type for runtime device filter evaluation
  */
 export const segmentFilterToPrismaQuery = reactCache(
-  async (segmentId: string, filters: TBaseFilters, workspaceId: string, deviceType?: "phone" | "desktop") => {
+  async (segmentId: string, filters: TBaseFilters, directoryId: string, deviceType?: "phone" | "desktop") => {
     try {
       const baseWhereClause = {
-        workspaceId,
+        directoryId,
       };
 
       // Initialize an empty stack for tracking the current evaluation path
       const segmentPath = new Set<string>([segmentId]);
-      const filtersWhereClause = await processFilters(filters, segmentPath, workspaceId, deviceType);
+      const filtersWhereClause = await processFilters(filters, segmentPath, directoryId, deviceType);
 
       const whereClause = {
         AND: [baseWhereClause, filtersWhereClause],
@@ -561,7 +562,7 @@ export const segmentFilterToPrismaQuery = reactCache(
 
       return ok({ whereClause });
     } catch (error) {
-      logger.error({ error, segmentId, workspaceId }, "Error transforming segment filter to Prisma query");
+      logger.error({ error, segmentId, directoryId }, "Error transforming segment filter to Prisma query");
       return err({
         type: "bad_request",
         message: "Failed to convert segment filters to Prisma query",

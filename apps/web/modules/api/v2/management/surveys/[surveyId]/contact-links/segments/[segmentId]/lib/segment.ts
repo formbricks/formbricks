@@ -9,6 +9,7 @@ export const getSegment = reactCache(async (segmentId: string) => {
       select: {
         id: true,
         workspaceId: true,
+        directoryId: true,
         filters: true,
       },
     });

@@ -39,6 +39,13 @@ vi.mock("../segment", () => ({
   getSegment: vi.fn(),
 }));
 
+// The survey's workspace is on `directory-789`.
+vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  getWorkspaceContactDirectory: vi.fn(async (workspaceId: string) =>
+    workspaceId === "workspace-789" ? { id: "directory-789", matchingKey: "email" } : null
+  ),
+}));
+
 vi.mock("../surveys", () => ({
   getSurvey: vi.fn(),
 }));
@@ -111,9 +118,12 @@ describe("getContactsInSegment", () => {
     },
   ];
 
+  const mockDirectoryId = "directory-789";
+
   const mockSegment = {
     id: mockSegmentId,
     workspaceId: mockWorkspaceId,
+    directoryId: mockDirectoryId,
     filters: mockFilters,
   };
 
@@ -559,10 +569,28 @@ describe("getContactsInSegment", () => {
     }
   });
 
-  test("should return error when survey and segment are in different workspaces", async () => {
+  // Decision 24: a segment another workspace of the directory made (now deleted, so no workspace) is
+  // evaluated against the directory's contacts.
+  test("should read a shared segment of the survey's directory in that directory", async () => {
+    vi.mocked(getSegment).mockResolvedValue({
+      ok: true,
+      data: { ...mockSegment, workspaceId: null },
+    });
+    vi.mocked(prisma.contact.count).mockResolvedValue(0);
+    vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
+
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, apiKeyActor, mockLimit, mockSkip);
+
+    expect(result.ok).toBe(true);
+    expect(segmentFilterToPrismaQuery).toHaveBeenCalledWith(mockSegmentId, mockFilters, mockDirectoryId);
+    expect(getContactAttributeKeys).toHaveBeenCalledWith(mockWorkspaceId);
+  });
+
+  test("should return error when the segment is in another directory than the survey's workspace", async () => {
     const mockSegmentWithDifferentWorkspace = {
       ...mockSegment,
       workspaceId: "different-workspace",
+      directoryId: "different-directory",
     };
 
     vi.mocked(getSegment).mockResolvedValue({
@@ -618,7 +646,7 @@ describe("getContactsInSegment", () => {
     ] as unknown as TBaseFilters;
     vi.mocked(getSegment).mockResolvedValue({
       ok: true,
-      data: { id: mockSegmentId, workspaceId: mockWorkspaceId, filters },
+      data: { id: mockSegmentId, workspaceId: mockWorkspaceId, directoryId: mockDirectoryId, filters },
     });
     vi.mocked(prisma.survey.findFirst).mockResolvedValue({ id: "clrestricted00000000000001" } as Awaited<
       ReturnType<typeof prisma.survey.findFirst>

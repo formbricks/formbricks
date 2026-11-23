@@ -9,7 +9,6 @@ import {
   Language,
   Prisma,
   Response,
-  Segment,
   Survey,
   Tag,
   Team,
@@ -31,7 +30,6 @@ import {
   getLanguage,
   getQuota,
   getResponse,
-  getSegment,
   getSurvey,
   getTag,
   getTeam,
@@ -92,9 +90,6 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
     },
     feedbackSource: {
-      findUnique: vi.fn(),
-    },
-    segment: {
       findUnique: vi.fn(),
     },
     surveyQuota: {
@@ -534,34 +529,6 @@ describe("Service Functions", () => {
       );
 
       await expect(getContact(contactId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getSegment", () => {
-    const segmentId = "segment123";
-
-    test("returns the segment when found", async () => {
-      const mockSegment = { workspaceId: "ws123" } as unknown as Segment;
-      vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegment);
-
-      const result = await getSegment(segmentId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.segment.findUnique).toHaveBeenCalledWith({
-        where: { id: segmentId },
-        select: { workspaceId: true },
-      });
-      expect(result).toEqual(mockSegment);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.segment.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getSegment(segmentId)).rejects.toThrow(DatabaseError);
     });
   });
 

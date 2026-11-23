@@ -128,8 +128,8 @@ async function getV3SegmentReferenceIssues(
     identifier: reference.value,
   });
 
-  // Scope to the workspace's own segments — `getSegment(id)` is global, so a bare existence check
-  // would accept (and store) a reference to another workspace's segment.
+  // Scope to the segments the workspace reaches, its directory's (decision 24) — `getSegment(id)` is
+  // global, so a bare existence check would accept (and store) a reference to another directory's segment.
   const segments = await getSegments(workspaceId, ALL_SEGMENT_SURVEY_REFS);
   const segmentsById = new Map(segments.map((segment) => [segment.id, segment]));
   for (const reference of segmentRefs.filter((ref) => !segmentsById.has(ref.value))) {

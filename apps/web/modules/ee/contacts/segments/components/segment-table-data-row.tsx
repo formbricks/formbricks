@@ -17,6 +17,7 @@ type TSegmentTableDataRowProps = {
   readonly contactAttributeKeys: TContactAttributeKey[];
   readonly isContactsEnabled: boolean;
   readonly isReadOnly: boolean;
+  readonly workspaceId: string;
 };
 
 export const SegmentTableDataRow = ({
@@ -26,6 +27,7 @@ export const SegmentTableDataRow = ({
   segments,
   isContactsEnabled,
   isReadOnly,
+  workspaceId,
 }: TSegmentTableDataRowProps) => {
   const { i18n } = useTranslation();
   const { createdAt, id, surveys, title, updatedAt, description } = currentSegment;
@@ -76,6 +78,7 @@ export const SegmentTableDataRow = ({
         segments={segments}
         isContactsEnabled={isContactsEnabled}
         isReadOnly={isReadOnly}
+        workspaceId={workspaceId}
       />
     </>
   );

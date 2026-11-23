@@ -53,9 +53,24 @@ vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
 }));
 
-vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
-  getSegment: vi.fn(),
-}));
+// A workspace's contact directory here is `dir-<workspaceId>`; a segment belongs to its directory.
+vi.mock("@/modules/ee/contacts/segments/lib/segments", async () => {
+  const { ResourceNotFoundError } = await import("@formbricks/types/errors");
+  const getSegment = vi.fn();
+  const isSegmentOfWorkspace = async (segment: { directoryId: string | null }, workspaceId: string) =>
+    segment.directoryId === `dir-${workspaceId}`;
+  return {
+    getSegment,
+    isSegmentOfWorkspace,
+    getSegmentInWorkspace: async (segmentId: string, workspaceId: string) => {
+      const segment = await getSegment(segmentId);
+      if (!(await isSegmentOfWorkspace(segment, workspaceId))) {
+        throw new ResourceNotFoundError("segment", segmentId);
+      }
+      return segment;
+    },
+  };
+});
 
 vi.mock("@/modules/ee/contacts/segments/lib/filter/prisma-query", () => ({
   segmentFilterToPrismaQuery: vi.fn(),
@@ -157,6 +172,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       const mockContactsInSegment = [
@@ -205,6 +221,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -223,6 +240,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -242,6 +260,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       const mockContactsInSegment = [
@@ -760,6 +779,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -794,6 +814,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -833,6 +854,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -869,6 +891,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -895,6 +918,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -915,6 +939,25 @@ describe("Contacts Lib", () => {
       expect(result).toHaveLength(0);
     });
 
+    // Decision 24: a shared segment made in another workspace of the survey's directory is the survey's
+    // to use, even once that workspace is deleted; its contacts are read in the directory.
+    test("generates links for a shared segment another workspace of the directory made", async () => {
+      vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue({
+        id: mockSegmentId,
+        filters: [],
+        workspaceId: null,
+        directoryId: `dir-${mockWorkspaceId}`,
+      });
+      vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+        ok: true,
+        data: { whereClause: {} },
+      } as unknown as Awaited<ReturnType<typeof segmentFilterToPrismaQuery>>);
+      vi.mocked(prisma.contact.findMany, { partial: true }).mockResolvedValue([]);
+
+      await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).resolves.toEqual([]);
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledWith(mockSegmentId, [], `dir-${mockWorkspaceId}`);
+    });
+
     test("throws when the segment belongs to a different workspace than the survey (cross-tenant guard)", async () => {
       // Survey is in workspace A, segment is in workspace B. The caller was only
       // authorized against the survey's workspace, so reading the segment's
@@ -927,6 +970,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: "workspace-B",
+        directoryId: "dir-workspace-B",
       });
 
       await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).rejects.toThrow(
@@ -972,7 +1016,9 @@ describe("Contacts Lib", () => {
       ];
 
       const segmentWith = (filters: unknown, id = mockSegmentId) =>
-        ({ id, filters, workspaceId: mockWorkspaceId }) as Awaited<ReturnType<typeof getSegment>>;
+        ({ id, filters, workspaceId: mockWorkspaceId, directoryId: `dir-${mockWorkspaceId}` }) as Awaited<
+          ReturnType<typeof getSegment>
+        >;
 
       /** Whatever reached the contact query would end up in the CSV. */
       const mockSegmentContacts = () => {

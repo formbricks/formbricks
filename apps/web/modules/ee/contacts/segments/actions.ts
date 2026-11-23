@@ -3,7 +3,13 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
+import {
+  type TBaseFilters,
+  ZSegmentCreateInput,
+  ZSegmentFilters,
+  ZSegmentSurveyIds,
+  ZSegmentUpdateInput,
+} from "@formbricks/types/segment";
 import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -11,19 +17,18 @@ import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { getUserVisibleSurveyWhere, resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import {
-  getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromContactAttributeKeyId,
-  getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   assertAddedSegmentSurveyFiltersVisible,
+  assertAddedSurveyInteractionSurveyIds,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
@@ -34,7 +39,8 @@ import {
   cloneSegment,
   createSegment,
   deleteSegment,
-  getSegment,
+  getOtherWorkspaceSurveyIds,
+  getSegmentInWorkspace,
   getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap,
   resetSegmentInSurvey,
@@ -54,13 +60,17 @@ const assertCanWriteSurvey = (userId: string, surveyId: string) =>
 /**
  * ENG-6870: attaching or copying a segment onto a survey targets that survey at whoever the segment's
  * survey-interaction filters match, and the survey's responses then show who they are. So the caller must
- * see every survey those filters read, as if they had written them.
+ * see every survey those filters read, as if they had written them. `workspaceId` is the survey's.
  */
-const assertCanTargetWithSegment = async (userId: string, organizationId: string, segmentId: string) => {
-  const segment = await getSegment(segmentId);
+const assertCanTargetWithSegment = async (
+  userId: string,
+  organizationId: string,
+  segment: { id: string; filters: TBaseFilters },
+  workspaceId: string
+) => {
   await assertSegmentSurveyFiltersVisible(
     segment.filters,
-    segment.workspaceId,
+    workspaceId,
     await resolveSurveyActorContext({ type: "user", id: userId }, organizationId),
     segment.id
   );
@@ -147,65 +157,75 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
   })
 );
 
+// A segment belongs to its contact directory and every workspace on it may use it (decision 24), so the
+// caller names the workspace they act from; the segment's own `workspaceId` is only where it was made.
 const ZUpdateSegmentAction = z.object({
   segmentId: ZId,
+  workspaceId: ZId,
   data: ZSegmentUpdateInput,
 });
 
 export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdateSegmentAction).action(
   withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
-    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
+    const { workspaceId } = parsedInput;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
       type: "workspace",
-      id: segmentWorkspaceId,
+      id: workspaceId,
     });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, segmentWorkspaceId);
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
     await checkAdvancedTargetingPermission(organizationId);
 
-    // ENG-1920: the surveys are connected to the segment by id alone, so ensure every survey
-    // belongs to the segment's workspace — otherwise a caller could re-point another tenant's
-    // survey to their segment. A single batched lookup avoids fanning out a query per survey id
-    // over the caller-controlled array; an unknown id is absent from the map and thus rejected.
-    if (parsedInput.data.surveys && parsedInput.data.surveys.length > 0) {
-      const surveyWorkspaceIdMap = await getSurveyWorkspaceIdMap(parsedInput.data.surveys);
-      const allInSegmentWorkspace = parsedInput.data.surveys.every(
-        (surveyId) => surveyWorkspaceIdMap.get(surveyId) === segmentWorkspaceId
+    const oldObject = await getSegmentInWorkspace(parsedInput.segmentId, workspaceId);
+
+    // ENG-1920: the surveys are connected to the segment by id alone, so a survey it is not on yet must
+    // belong to the caller's workspace — otherwise a caller could re-point another tenant's survey to
+    // their segment, or a survey of another workspace on the directory they cannot write. A single
+    // batched lookup avoids fanning out a query per survey id over the caller-controlled array; an
+    // unknown id is absent from the map and thus rejected.
+    const connectedSurveyIds = new Set(oldObject.surveys);
+    const addedSurveyIds = (parsedInput.data.surveys ?? []).filter(
+      (surveyId) => !connectedSurveyIds.has(surveyId)
+    );
+    if (addedSurveyIds.length > 0) {
+      const surveyWorkspaceIdMap = await getSurveyWorkspaceIdMap(addedSurveyIds);
+      const allInWorkspace = addedSurveyIds.every(
+        (surveyId) => surveyWorkspaceIdMap.get(surveyId) === workspaceId
       );
-      if (!allInSegmentWorkspace) {
+      if (!allInWorkspace) {
         throw new InvalidInputError("Survey and segment are not in the same workspace");
       }
     }
     const visibleSurveyWhere = await getUserVisibleSurveyWhere(ctx.user.id, organizationId);
-    if (parsedInput.data.surveys?.length && Object.keys(visibleSurveyWhere).length > 0) {
-      await assertSurveysInWorkspace(parsedInput.data.surveys, segmentWorkspaceId, visibleSurveyWhere);
+    if (addedSurveyIds.length > 0 && Object.keys(visibleSurveyWhere).length > 0) {
+      await assertSurveysInWorkspace(addedSurveyIds, workspaceId, visibleSurveyWhere);
     }
 
-    const oldObject = await getSegment(parsedInput.segmentId);
     const actor = await resolveSurveyActorContext({ type: "user", id: ctx.user.id }, organizationId);
     let data = parsedInput.data;
     const { filters } = parsedInput.data;
     if (filters) {
-      // Only the ids the caller sent must be visible to them; the stored ones they could not see are
-      // put back afterwards, since the editor never held them.
-      await assertSurveyInteractionSurveyIds(filters, segmentWorkspaceId, visibleSurveyWhere);
+      // Only the ids the caller added must be surveys of their workspace they can see; the stored ones
+      // stay (a shared segment can name another workspace's survey), and the stored ones they could not
+      // see are put back afterwards, since the editor never held them.
+      await assertAddedSurveyInteractionSurveyIds(
+        filters,
+        oldObject.filters,
+        workspaceId,
+        visibleSurveyWhere
+      );
       // ENG-6870: and the surveys nested segment filters read, where the edit adds them.
       await assertAddedSegmentSurveyFiltersVisible(
         filters,
         oldObject.filters,
-        segmentWorkspaceId,
+        workspaceId,
         actor,
         parsedInput.segmentId
       );
       const merged =
         Object.keys(visibleSurveyWhere).length > 0
-          ? await restoreHiddenSegmentSurveyIds(
-              filters,
-              oldObject.filters,
-              segmentWorkspaceId,
-              visibleSurveyWhere
-            )
+          ? await restoreHiddenSegmentSurveyIds(filters, oldObject.filters, workspaceId, visibleSurveyWhere)
           : filters;
 
       // The merged tree is what gets stored, so it is the one held to the bounds (at most 100 surveys
@@ -223,11 +243,10 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
 
     // ENG-6870: connecting a survey to the segment targets it with the whole tree, as attaching one
     // does (`assertCanTargetWithSegment`), so every survey the stored tree reads must be visible too.
-    const connectedSurveyIds = new Set(oldObject.surveys);
-    if (parsedInput.data.surveys?.some((surveyId) => !connectedSurveyIds.has(surveyId))) {
+    if (addedSurveyIds.length > 0) {
       await assertSegmentSurveyFiltersVisible(
         data.filters ?? oldObject.filters,
-        segmentWorkspaceId,
+        workspaceId,
         actor,
         parsedInput.segmentId
       );
@@ -252,12 +271,6 @@ const ZLoadNewSegmentAction = z.object({
 export const loadNewSegmentAction = authenticatedActionClient.inputSchema(ZLoadNewSegmentAction).action(
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
-
-    if (surveyWorkspaceId !== segmentWorkspaceId) {
-      throw new InvalidInputError("Segment and survey are not in the same workspace");
-    }
-
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
       type: "workspace",
@@ -267,7 +280,9 @@ export const loadNewSegmentAction = authenticatedActionClient.inputSchema(ZLoadN
 
     await checkAdvancedTargetingPermission(organizationId);
     await assertCanWriteSurvey(ctx.user.id, parsedInput.surveyId);
-    await assertCanTargetWithSegment(ctx.user.id, organizationId, parsedInput.segmentId);
+    // The survey may use any segment of its workspace's directory (decision 24).
+    const segment = await getSegmentInWorkspace(parsedInput.segmentId, surveyWorkspaceId);
+    await assertCanTargetWithSegment(ctx.user.id, organizationId, segment, surveyWorkspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
@@ -285,12 +300,6 @@ const ZCloneSegmentAction = z.object({
 export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSegmentAction).action(
   withAuditLogging("created", "segment", async ({ ctx, parsedInput }) => {
     const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-    const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
-
-    if (surveyWorkspaceId !== segmentWorkspaceId) {
-      throw new Error("Segment and survey are not in the same workspace");
-    }
-
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
 
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
@@ -301,12 +310,14 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
 
     await checkAdvancedTargetingPermission(organizationId);
     await assertCanWriteSurvey(ctx.user.id, parsedInput.surveyId);
-    await assertCanTargetWithSegment(ctx.user.id, organizationId, parsedInput.segmentId);
+    // The survey may copy any segment of its workspace's directory (decision 24).
+    const segment = await getSegmentInWorkspace(parsedInput.segmentId, surveyWorkspaceId);
+    await assertCanTargetWithSegment(ctx.user.id, organizationId, segment, surveyWorkspaceId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
 
-    const result = await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
+    const result = await cloneSegment(parsedInput.segmentId, parsedInput.surveyId, surveyWorkspaceId);
     ctx.auditLoggingCtx.newObject = result;
     return result;
   })
@@ -314,12 +325,13 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
 
 const ZDeleteSegmentAction = z.object({
   segmentId: ZId,
+  workspaceId: ZId,
 });
 
 export const deleteSegmentAction = authenticatedActionClient.inputSchema(ZDeleteSegmentAction).action(
   withAuditLogging("deleted", "segment", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
-    const workspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
+    const { workspaceId } = parsedInput;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
     await assertCan({ type: "user", id: ctx.user?.id ?? "" }, "workspace.write", {
       type: "workspace",
@@ -330,7 +342,7 @@ export const deleteSegmentAction = authenticatedActionClient.inputSchema(ZDelete
     await checkAdvancedTargetingPermission(organizationId);
 
     ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
-    ctx.auditLoggingCtx.oldObject = await getSegment(parsedInput.segmentId);
+    ctx.auditLoggingCtx.oldObject = await getSegmentInWorkspace(parsedInput.segmentId, workspaceId);
     ctx.auditLoggingCtx.organizationId = organizationId;
 
     return await deleteSegment(parsedInput.segmentId);
@@ -368,14 +380,17 @@ export const resetSegmentFiltersAction = authenticatedActionClient
     })
   );
 
+// A key belongs to the directory and records only the workspace it was made from (none for a directory's
+// default keys), so the caller names the workspace they act from.
 const ZGetDistinctAttributeValuesAction = z.object({
   attributeKeyId: ZId,
+  workspaceId: ZId,
 });
 
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
-    const workspaceId = await getWorkspaceIdFromContactAttributeKeyId(parsedInput.attributeKeyId);
+    const { workspaceId } = parsedInput;
     const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
@@ -385,11 +400,15 @@ export const getDistinctAttributeValuesAction = authenticatedActionClient
 
     await checkAdvancedTargetingPermission(organizationId);
 
-    return await getDistinctAttributeValues(parsedInput.attributeKeyId);
+    const directory = await requireWorkspaceContactDirectory(workspaceId);
+    return await getDistinctAttributeValues(parsedInput.attributeKeyId, directory.id);
   });
 
 const ZGetSurveysForSegmentFilterAction = z.object({
   workspaceId: ZId,
+  // The ids a filter names that are not among the workspace's surveys: the ones of another workspace on
+  // the directory come back so the picker can show them (decision 24).
+  surveyIds: ZSegmentSurveyIds.optional(),
 });
 
 export const getSurveysForSegmentFilterAction = authenticatedActionClient
@@ -404,8 +423,12 @@ export const getSurveysForSegmentFilterAction = authenticatedActionClient
 
     await checkAdvancedTargetingPermission(organizationId);
 
-    return await getSurveyRefsForWorkspace(
-      parsedInput.workspaceId,
-      await getUserVisibleSurveyWhere(ctx.user.id, organizationId)
-    );
+    const [surveys, otherWorkspaceSurveyIds] = await Promise.all([
+      getSurveyRefsForWorkspace(
+        parsedInput.workspaceId,
+        await getUserVisibleSurveyWhere(ctx.user.id, organizationId)
+      ),
+      getOtherWorkspaceSurveyIds(parsedInput.workspaceId, parsedInput.surveyIds ?? []),
+    ]);
+    return { surveys, otherWorkspaceSurveyIds };
   });

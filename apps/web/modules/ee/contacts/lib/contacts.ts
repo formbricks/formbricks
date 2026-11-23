@@ -27,7 +27,7 @@ import {
 } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { segmentFiltersReadHiddenSurvey } from "@/modules/ee/contacts/segments/lib/helper";
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { getSegment, isSegmentOfWorkspace } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   TContact,
   ZContactCSVAttributeMap,
@@ -40,14 +40,15 @@ export const getContactsInSegment = reactCache(async (segmentId: string) => {
   try {
     const segment = await getSegment(segmentId);
 
-    if (!segment) {
+    // A segment is evaluated against the contacts of its own directory (decision 24).
+    if (!segment?.directoryId) {
       return null;
     }
 
     const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
       segment.id,
       segment.filters,
-      segment.workspaceId
+      segment.directoryId
     );
 
     if (!segmentFilterToPrismaQueryResult.ok) {
@@ -747,25 +748,26 @@ export const generatePersonalLinks = async (
     return null;
   }
 
+  // Cross-tenant guard: the segment must belong to the directory of the workspace
+  // of the survey the caller is authorized against (decision 24: every workspace
+  // on a directory shares its segments). Without this, a caller with access to
+  // `surveyId`'s workspace could pass a `segmentId` from another directory and
+  // exfiltrate its contact PII. Mirrors the v2 management API
+  // (contact-links/segments) which rejects the same mismatch. The message is a
+  // stable error code the client maps to a localized string.
   const segment = await getSegment(segmentId);
 
   if (!segment) {
     return null;
   }
 
-  // Cross-tenant guard: the segment must belong to the same workspace as the
-  // survey the caller is authorized against. Without this, a caller with access
-  // to `surveyId`'s workspace could pass a `segmentId` from another workspace and
-  // exfiltrate that workspace's contact PII. Mirrors the v2 management API
-  // (contact-links/segments) which rejects the same mismatch. The message is a
-  // stable error code the client maps to a localized string.
-  if (survey.workspaceId !== segment.workspaceId) {
+  if (!(await isSegmentOfWorkspace(segment, survey.workspaceId))) {
     throw new ValidationError(SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE);
   }
 
   // Survey-visibility guard (ENG-6870): the contacts a survey-interaction filter matches are the people
   // who saw, started or completed the surveys it reads, so the caller must see every one of them.
-  if (await segmentFiltersReadHiddenSurvey(segment.filters, segment.workspaceId, actor, segment.id)) {
+  if (await segmentFiltersReadHiddenSurvey(segment.filters, survey.workspaceId, actor, segment.id)) {
     throw new ValidationError(SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE);
   }
 

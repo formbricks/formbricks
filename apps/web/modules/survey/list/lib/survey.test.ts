@@ -39,6 +39,14 @@ const targetingMocks = vi.hoisted(() => ({
   assertSegmentSurveyFiltersVisible: vi.fn(),
   resolveSurveyActorContext: vi.fn(),
 }));
+// Each workspace is on a contact directory of its own, `dir_<workspaceId>`, unless a test says otherwise.
+vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  getWorkspaceContactDirectory: vi.fn(async (workspaceId: string) => ({
+    id: `dir_${workspaceId}`,
+    matchingKey: "email",
+  })),
+}));
+
 vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
   assertSegmentSurveyFiltersVisible: targetingMocks.assertSegmentSurveyFiltersVisible,
 }));
@@ -919,6 +927,7 @@ describe("copySurveyToOtherWorkspace", () => {
               isPrivate: true,
               filters: surveyWithPrivateSegment.segment.filters,
               workspace: { connect: { id: targetWorkspaceId } },
+              directory: { connect: { id: `dir_${targetWorkspaceId}` } },
             },
           },
         }),
@@ -975,6 +984,7 @@ describe("copySurveyToOtherWorkspace", () => {
               isPrivate: false,
               filters: [],
               workspace: { connect: { id: targetWorkspaceId } },
+              directory: { connect: { id: `dir_${targetWorkspaceId}` } },
             },
           },
         }),
@@ -1008,6 +1018,10 @@ describe("copySurveyToOtherWorkspace", () => {
     const dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(1234567890);
 
     await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+    // Titles are unique per directory, so the clash is looked for in the target's directory.
+    expect(prisma.segment.findFirst).toHaveBeenCalledWith({
+      where: { title: "Public Segment", isPrivate: false, directoryId: `dir_${targetWorkspaceId}` },
+    });
     expect(prisma.survey.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -1017,12 +1031,51 @@ describe("copySurveyToOtherWorkspace", () => {
               isPrivate: false,
               filters: [],
               workspace: { connect: { id: targetWorkspaceId } },
+              directory: { connect: { id: `dir_${targetWorkspaceId}` } },
             },
           },
         }),
       })
     );
     dateNowSpy.mockRestore();
+  });
+
+  // Decision 24: a workspace on the segment's directory shares it, so the copy uses the segment itself.
+  test("should connect a public segment when the target workspace is on its directory", async () => {
+    const surveyWithPublicSegment = {
+      ...mockExistingSurveyDetails,
+      segment: {
+        id: "seg_public",
+        title: "Public Segment",
+        isPrivate: false,
+        filters: [],
+        directoryId: `dir_${targetWorkspaceId}`,
+      },
+    };
+    resetMocks();
+    vi.mocked(createId).mockReturnValue("new_cuid2_id");
+    vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue(surveyWithPublicSegment);
+    vi.mocked(doesWorkspaceExist).mockResolvedValue(sourceWorkspaceId);
+    vi.mocked(getWorkspaceWithLanguages)
+      .mockResolvedValueOnce(mockSourceWorkspace)
+      .mockResolvedValueOnce(mockTargetWorkspace);
+    vi.mocked(prisma.survey.create, { partial: true }).mockResolvedValue(mockNewSurveyResult);
+    vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
+    vi.mocked(getQuotas).mockResolvedValue([]);
+    vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({
+      billing: {},
+      id: "org_123",
+    } as Awaited<ReturnType<typeof getOrganizationByWorkspaceId>>);
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+    expect(prisma.survey.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ segment: { connect: { id: "seg_public" } } }),
+      })
+    );
+    expect(prisma.segment.findFirst).not.toHaveBeenCalled();
   });
 
   test("should throw ResourceNotFoundError if source workspace not found", async () => {

@@ -9,6 +9,7 @@ import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/respons
 import { type TSortCursor, buildSortCursorPage } from "@/app/api/v3/lib/sort-cursor";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { resolveV3VisibleSurveyWhere } from "@/app/api/v3/surveys/visibility-context";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { selectSegment, transformPrismaSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { collectSegmentFilterSurveyIds, serializeV3Segment } from "../serializers";
 import { SEGMENTS_CURSOR_KIND, parseV3SegmentsListQuery } from "./parse-v3-segments-list-query";
@@ -46,15 +47,15 @@ type TListV3SegmentsParams = {
 
 /**
  * The cursor's position. A title too long to carry in the token is re-read from the segment it names,
- * scoped to the workspace; `null` when that segment is gone, which the list answers with a 400 cursor.
+ * scoped to the directory; `null` when that segment is gone, which the list answers with a 400 cursor.
  */
 const resolveSegmentsCursor = async (
   cursor: TSortCursor,
-  workspaceId: string
+  directoryId: string
 ): Promise<{ value: string; id: string } | null> => {
   if (cursor.value !== null) return { value: cursor.value, id: cursor.id };
   const anchor = await prisma.segment.findFirst({
-    where: { id: cursor.id, workspaceId },
+    where: { id: cursor.id, directoryId },
     select: { title: true },
   });
   return anchor ? { value: anchor.title, id: cursor.id } : null;
@@ -95,10 +96,19 @@ export async function listV3Segments({
     // names and ids. Fails closed (no survey visible) when the caller cannot be resolved.
     const visibleSurveyWhere = await resolveV3VisibleSurveyWhere(authentication, authResult.organizationId);
 
-    const where = buildV3SegmentsWhere(authResult.workspaceId, query.search);
-    const cursor = query.cursor
-      ? await resolveSegmentsCursor(query.cursor, authResult.workspaceId)
-      : undefined;
+    // Segments belong to the workspace's contact directory (decision 24). A workspace with none has no
+    // segments to list.
+    const directory = await getWorkspaceContactDirectory(authResult.workspaceId);
+    if (!directory) {
+      return successListResponse(
+        [],
+        { limit: query.limit, nextCursor: null, totalCount: query.includeTotalCount ? 0 : null },
+        { requestId, cache: "private, no-store" }
+      );
+    }
+
+    const where = buildV3SegmentsWhere(directory.id, query.search);
+    const cursor = query.cursor ? await resolveSegmentsCursor(query.cursor, directory.id) : undefined;
     if (cursor === null) {
       return problemBadRequest(requestId, "Invalid query parameters", {
         invalid_params: [{ name: "cursor", reason: "The cursor is invalid." }],
@@ -134,7 +144,7 @@ export async function listV3Segments({
     );
 
     return successListResponse(
-      segments.map((segment) => serializeV3Segment(segment, visibleSurveyIds)),
+      segments.map((segment) => serializeV3Segment(segment, authResult.workspaceId, visibleSurveyIds)),
       { limit: query.limit, nextCursor, totalCount },
       { requestId, cache: "private, no-store" }
     );

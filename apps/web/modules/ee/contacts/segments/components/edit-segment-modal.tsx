@@ -26,6 +26,8 @@ interface EditSegmentModalProps {
   readonly contactAttributeKeys: TContactAttributeKey[];
   readonly isContactsEnabled: boolean;
   readonly isReadOnly: boolean;
+  /** The workspace the page is open in: a shared segment is edited from any workspace of its directory. */
+  readonly workspaceId: string;
 }
 
 const SegmentSettingsTab = ({
@@ -36,6 +38,7 @@ const SegmentSettingsTab = ({
   isReadOnly,
   segments,
   setOpen,
+  workspaceId,
 }: Pick<
   EditSegmentModalProps,
   | "activitySummary"
@@ -45,6 +48,7 @@ const SegmentSettingsTab = ({
   | "isReadOnly"
   | "segments"
   | "setOpen"
+  | "workspaceId"
 >) => {
   if (!isContactsEnabled) {
     return null;
@@ -58,6 +62,7 @@ const SegmentSettingsTab = ({
       segments={segments}
       setOpen={setOpen}
       isReadOnly={isReadOnly}
+      workspaceId={workspaceId}
     />
   );
 };
@@ -71,6 +76,7 @@ export const EditSegmentModal = ({
   segments,
   isContactsEnabled,
   isReadOnly,
+  workspaceId,
 }: EditSegmentModalProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(0);
@@ -91,6 +97,7 @@ export const EditSegmentModal = ({
           isReadOnly={isReadOnly}
           segments={segments}
           setOpen={setOpen}
+          workspaceId={workspaceId}
         />
       ),
     },

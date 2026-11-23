@@ -9,20 +9,30 @@ import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
 import { effectivelyRestrictedWhere } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import {
   type TContactInteractionData,
   hasAnyScopeInteractionFilter,
   tryEvaluateSurveyInteractionSegmentInMemory,
 } from "@/modules/ee/contacts/segments/lib/filter/survey-interaction";
+import { whereSegmentsOfWorkspace } from "@/modules/ee/contacts/segments/lib/segment-scope";
 
+/**
+ * The segments the workspace's surveys can target: the shared ones of its contact directory, whichever
+ * workspace made them (decision 24), and its own surveys' private ones. Cached per workspace, so a shared
+ * segment edited in another workspace reaches this one's SDK within the TTL, as an edit here does.
+ */
 export const getSegments = reactCache(
   async (workspaceId: string) =>
     await cache.withCache(
       async () => {
         try {
+          const directory = await getWorkspaceContactDirectory(workspaceId);
+          if (!directory) return [];
+
           const segments = await prisma.segment.findMany({
-            where: { workspaceId },
+            where: whereSegmentsOfWorkspace(workspaceId, directory.id),
             select: {
               id: true,
               filters: true,
@@ -145,9 +155,13 @@ export const getPersonSegmentIds = async (
   try {
     validateInputs([workspaceId, ZId], [contactId, ZId], [contactUserId, ZString]);
 
-    const segments = await getSegments(workspaceId);
+    // The contact is in the workspace's directory, and so is every segment it can be in.
+    const [segments, directory] = await Promise.all([
+      getSegments(workspaceId),
+      getWorkspaceContactDirectory(workspaceId),
+    ]);
 
-    if (!segments || !Array.isArray(segments) || segments.length === 0) {
+    if (!directory || !segments || !Array.isArray(segments) || segments.length === 0) {
       return [];
     }
 
@@ -184,7 +198,7 @@ export const getPersonSegmentIds = async (
         continue;
       }
 
-      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, workspaceId, deviceType);
+      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, directory.id, deviceType);
 
       if (!queryResult.ok) {
         logger.warn(

@@ -536,7 +536,10 @@ export const ZSegment = z.object({
   description: z.string().nullable(),
   isPrivate: z.boolean().prefault(true),
   filters: ZSegmentFilters,
-  workspaceId: ZId,
+  // The workspace the segment was created in. A segment belongs to its contact directory and is shared by
+  // every workspace on it (decision 24), so this is only its origin: never scope or authorize on it. NULL
+  // once that workspace is deleted while the directory lives on.
+  workspaceId: ZId.nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   surveys: ZSegmentSurveyIds,

@@ -3215,6 +3215,7 @@ checksums:
     workspace/segments/segments_help_you_target_users_with_same_characteristics_easily: b18b75bda13fe408a467dd625611ea06
     workspace/segments/select_at_least_one_survey: b69861b2304733014a087565ac79ee2d
     workspace/segments/specific_surveys: 623afb0cc476469640e419c054ee1fe3
+    workspace/segments/survey_in_another_workspace: 249d0d803664c17dbc73919c0cc8608e
     workspace/segments/survey_interaction: 5a4fb7c1572fca37ad976cdf561f5e07
     workspace/segments/target_audience: ca47151c4f0ddb348e52ec43ce15eb03
     workspace/segments/this_action_resets_all_filters_in_this_survey: a7b342c25f0d3d6060bfdff38ade0682

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import type { TBaseFilters, TSegmentCreateInput } from "@formbricks/types/segment";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import { createSegment, updateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
@@ -54,9 +55,8 @@ const VICTIM_FILTERS = attributeFilters("victim@example.com");
 beforeEach(async () => {
   await resetDb();
   const organization = await prisma.organization.create({ data: { name: "ENG-6956 Org" } });
-  workspaceId = (
-    await prisma.workspace.create({ data: { name: "ENG-6956 Workspace", organizationId: organization.id } })
-  ).id;
+  // Segments belong to the workspace's contact directory (ENG-7496).
+  ({ workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "ENG-6956 Workspace"));
 
   const createSurvey = async (name: string) =>
     (

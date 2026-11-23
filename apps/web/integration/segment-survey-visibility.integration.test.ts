@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TBaseFilters } from "@formbricks/types/segment";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { buildContactInteractionData } from "@/modules/ee/contacts/api/v1/client/[workspaceId]/user/lib/segments";
@@ -22,6 +23,7 @@ import { segmentFiltersReadHiddenSurvey } from "@/modules/ee/contacts/segments/l
  */
 
 let workspaceId: string;
+let directoryId: string;
 let ownerId: string;
 let memberId: string;
 const surveys: Record<"D" | "V" | "R" | "P", string> = { D: "", V: "", R: "", P: "" };
@@ -65,10 +67,11 @@ const tree = (...filters: unknown[]) => filters as TBaseFilters;
 
 const seed = async (): Promise<void> => {
   const organization = await prisma.organization.create({ data: { name: "ENG-6870 Org" } });
-  const workspace = await prisma.workspace.create({
-    data: { name: "ENG-6870 Workspace", organizationId: organization.id },
-  });
-  workspaceId = workspace.id;
+  // Contacts and segments belong to the workspace's contact directory (ENG-7496).
+  ({ workspaceId, directoryId } = await createWorkspaceWithContactDirectory(
+    organization.id,
+    "ENG-6870 Workspace"
+  ));
   ownerId = (await prisma.user.create({ data: { name: "Owner", email: "owner@eng6870.test" } })).id;
   memberId = (await prisma.user.create({ data: { name: "Member", email: "member@eng6870.test" } })).id;
 
@@ -104,7 +107,7 @@ const seed = async (): Promise<void> => {
 };
 
 const segmentMembers = async (filters: TBaseFilters): Promise<string[]> => {
-  const query = await segmentFilterToPrismaQuery("clsegment0000000000000001", filters, workspaceId);
+  const query = await segmentFilterToPrismaQuery("clsegment0000000000000001", filters, directoryId);
   if (!query.ok) throw new Error("segmentFilterToPrismaQuery failed");
   const rows = await prisma.contact.findMany({ where: query.data.whereClause, select: { id: true } });
   return rows.map((row) => row.id).sort();

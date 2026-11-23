@@ -3339,6 +3339,7 @@
       "segments_help_you_target_users_with_same_characteristics_easily": "セグメントを使うと、同じ特性を持つユーザーを簡単にターゲティングできます",
       "select_at_least_one_survey": "少なくとも1つのアンケートを選択してください",
       "specific_surveys": "特定のアンケート",
+      "survey_in_another_workspace": "別のワークスペースのアンケート",
       "survey_interaction": "アンケートのインタラクション",
       "target_audience": "ターゲットオーディエンス",
       "this_action_resets_all_filters_in_this_survey": "この操作はこのアンケートのすべてのフィルターをリセットします。",

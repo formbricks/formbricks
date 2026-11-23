@@ -38,7 +38,10 @@ import { getSurvey } from "@/lib/survey/service";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import { requireWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
+import {
+  getWorkspaceContactDirectory,
+  requireWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
   isResourceFilter,
@@ -46,6 +49,7 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
+import { privateSegmentKey, whereSegmentsOfWorkspace } from "./segment-scope";
 
 export const selectSegment = {
   id: true,
@@ -54,6 +58,7 @@ export const selectSegment = {
   title: true,
   description: true,
   workspaceId: true,
+  directoryId: true,
   filters: true,
   isPrivate: true,
   surveys: {
@@ -67,9 +72,13 @@ export const selectSegment = {
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{ select: typeof selectSegment }>;
 
-export const transformPrismaSegment = (prismaSegment: PrismaSegment): TSegmentWithSurveyRefs => {
-  const segment = requireWorkspace(prismaSegment, "segment");
+/**
+ * A segment as the service reads it, with the contact directory it belongs to. Every scope check compares
+ * that directory (decision 24): `workspaceId` is only the workspace the segment was created in.
+ */
+export type TSegmentWithDirectory = TSegmentWithSurveyRefs & { directoryId: string | null };
 
+export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithDirectory => {
   const activeSurveys = segment.surveys
     .filter((survey) => survey.status === "inProgress")
     .map((survey) => ({ id: survey.id, name: survey.name }));
@@ -86,7 +95,7 @@ export const transformPrismaSegment = (prismaSegment: PrismaSegment): TSegmentWi
   };
 };
 
-export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithSurveyRefs> => {
+export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithDirectory> => {
   validateInputs([segmentId, ZId]);
   try {
     const segment = await prisma.segment.findUnique({
@@ -128,13 +137,14 @@ export const getSegments = reactCache(
   async (
     workspaceId: string,
     visibleSurveyWhere: Prisma.SurveyWhereInput
-  ): Promise<TSegmentWithSurveyRefs[]> => {
+  ): Promise<TSegmentWithDirectory[]> => {
     validateInputs([workspaceId, ZId]);
     try {
+      const directory = await getWorkspaceContactDirectory(workspaceId);
+      if (!directory) return [];
+
       const segments = await prisma.segment.findMany({
-        where: {
-          workspaceId,
-        },
+        where: whereSegmentsOfWorkspace(workspaceId, directory.id),
         select:
           Object.keys(visibleSurveyWhere).length > 0
             ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
@@ -243,12 +253,96 @@ export const getExistingWorkspaceSurveyIds = reactCache(
 );
 
 /**
+ * The segment the caller acts on through `workspaceId`, the workspace they work in. A segment belongs to
+ * its contact directory and every workspace on it may use it (decision 24), so its own `workspaceId` says
+ * nothing about access. One in another directory, or any for a workspace with no directory, is not found.
+ */
+export const getSegmentInWorkspace = async (
+  segmentId: string,
+  workspaceId: string
+): Promise<TSegmentWithDirectory> => {
+  const segment = await getSegment(segmentId);
+  if (!(await isSegmentOfWorkspace(segment, workspaceId))) {
+    throw new ResourceNotFoundError("segment", segmentId);
+  }
+  return segment;
+};
+
+/** Whether `workspaceId` may use the segment: it is in the workspace's contact directory (decision 24). */
+export const isSegmentOfWorkspace = async (
+  segment: Pick<TSegmentWithDirectory, "directoryId">,
+  workspaceId: string
+): Promise<boolean> => {
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  return directory !== null && segment.directoryId === directory.id;
+};
+
+/**
+ * The surveys whose ids may title a segment of this directory, or of this workspace for a segment
+ * without a directory (made before the workspace had one).
+ */
+const surveysSharingTitles = (
+  directoryId: string | null,
+  workspaceId: string | null
+): Prisma.SurveyWhereInput =>
+  directoryId
+    ? { workspace: { contactDirectoryId: directoryId } }
+    : { workspaceId: workspaceId ?? undefined };
+
+/**
+ * The subset of `surveyIds` that are surveys of another workspace on `workspaceId`'s contact directory. A
+ * shared segment's survey-interaction filters can name them (decision 24); the editor shows each as
+ * "Survey in another workspace" and keeps it. Ids only: the caller may not see those surveys, so their
+ * names never leave the server. Empty for a workspace with no directory.
+ */
+export const getOtherWorkspaceSurveyIds = async (
+  workspaceId: string,
+  surveyIds: string[]
+): Promise<string[]> => {
+  validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
+  const uniqueSurveyIds = Array.from(new Set(surveyIds));
+  if (uniqueSurveyIds.length === 0) return [];
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (!directory) return [];
+  try {
+    const otherWorkspaceSurveyIds: string[] = [];
+    for (let i = 0; i < uniqueSurveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
+      const batch = uniqueSurveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
+      // Sequential on purpose: caps concurrent database work, as getSurveyWorkspaceIdMap does.
+      const surveys = await prisma.survey.findMany({
+        where: {
+          id: { in: batch },
+          workspaceId: { not: workspaceId },
+          workspace: { contactDirectoryId: directory.id },
+        },
+        select: { id: true },
+      });
+      otherWorkspaceSurveyIds.push(...surveys.map((survey) => survey.id));
+    }
+    return otherWorkspaceSurveyIds;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
+/**
  * ENG-6956: a survey's private targeting segment is stored under the survey's id as its title, and the
  * survey save finds (or connects to) it by that title. A segment a caller titles freely must therefore
- * never take a survey's id, or it would be picked up as that survey's targeting.
+ * never take the id of a survey whose private segment would share its title scope: any survey of the
+ * directory, since titles are unique per directory (decision 24).
  */
-const assertTitleIsNotSurveyId = async (workspaceId: string, title: string): Promise<void> => {
-  const survey = await prisma.survey.findFirst({ where: { id: title, workspaceId }, select: { id: true } });
+const assertTitleIsNotSurveyId = async (
+  directoryId: string | null,
+  workspaceId: string | null,
+  title: string
+): Promise<void> => {
+  const survey = await prisma.survey.findFirst({
+    where: { id: title, ...surveysSharingTitles(directoryId, workspaceId) },
+    select: { id: true },
+  });
   if (survey) {
     throw new InvalidInputError("A segment cannot be titled with the id of a survey");
   }
@@ -278,7 +372,7 @@ const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSegment): 
 };
 
 /**
- * Titles are unique per workspace, so a create or rename onto a title another segment holds (a survey's
+ * Titles are unique per directory, so a create or rename onto a title another segment holds (a survey's
  * private segment included) is the caller's input error, not a database fault.
  */
 const throwSegmentTitleTaken = (error: unknown): void => {
@@ -300,17 +394,19 @@ const upsertPrivateSegment = async ({
   description,
   filters,
 }: Pick<TSegmentCreateInput, "workspaceId" | "surveyId" | "description" | "filters">) => {
+  const directoryId = (await getWorkspaceContactDirectory(workspaceId))?.id ?? null;
   const upsert = () =>
     prisma.segment.upsert({
       // A shared segment holding the title, or a private one other surveys also use (only possible
       // through older bugs), is not this survey's to rewrite: the create clashes and the save is refused.
       where: {
-        workspaceId_title: { workspaceId, title: surveyId },
+        ...privateSegmentKey(workspaceId, directoryId, surveyId),
         isPrivate: true,
         surveys: { every: { id: surveyId } },
       },
       create: {
         workspaceId,
+        directoryId,
         title: surveyId,
         description,
         isPrivate: true,
@@ -341,11 +437,14 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
       return transformPrismaSegment(await upsertPrivateSegment(segmentCreateInput));
     }
 
-    await assertTitleIsNotSurveyId(workspaceId, title);
+    // A shared segment belongs to the directory, so a workspace with none cannot make one (decision 13).
+    const directory = await requireWorkspaceContactDirectory(workspaceId);
+    await assertTitleIsNotSurveyId(directory.id, workspaceId, title);
 
     const segment = await prisma.segment.create({
       data: {
         workspaceId,
+        directoryId: directory.id,
         title,
         description,
         isPrivate,
@@ -366,8 +465,16 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
   }
 };
 
-export const cloneSegment = async (segmentId: string, surveyId: string): Promise<TSegment> => {
-  validateInputs([segmentId, ZId], [surveyId, ZId]);
+/**
+ * A copy of the segment for the survey, in the segment's directory. `workspaceId` is the survey's
+ * workspace, recorded as the copy's origin; the caller has checked the segment is in its directory.
+ */
+export const cloneSegment = async (
+  segmentId: string,
+  surveyId: string,
+  workspaceId: string
+): Promise<TSegment> => {
+  validateInputs([segmentId, ZId], [surveyId, ZId], [workspaceId, ZId]);
 
   try {
     const segment = await getSegment(segmentId);
@@ -375,14 +482,18 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
-    if (!segment.workspaceId) {
-      throw new DatabaseError("Segment is not associated with a workspace");
+    if (!segment.directoryId) {
+      throw new DatabaseError("Segment is not associated with a contact directory");
     }
 
-    const allSegments = await getSegments(segment.workspaceId, ALL_SEGMENT_SURVEY_REFS);
+    // Titles are unique per directory, so the copy's number counts the directory's copies.
+    const directoryTitles = await prisma.segment.findMany({
+      where: { directoryId: segment.directoryId },
+      select: { title: true },
+    });
 
     // Find the last "Copy of" title and extract the number from it
-    const lastCopyTitle = allSegments
+    const lastCopyTitle = directoryTitles
       .map((existingSegment) => existingSegment.title)
       .filter((title) => title.startsWith(`Copy of ${segment.title}`))
       .pop();
@@ -410,7 +521,8 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
         title: clonedTitle,
         description: segment.description,
         isPrivate: segment.isPrivate,
-        workspaceId: segment.workspaceId,
+        workspaceId,
+        directoryId: segment.directoryId,
         filters: segment.filters,
         surveys: {
           connect: {
@@ -469,13 +581,15 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
     throw new ResourceNotFoundError("survey", surveyId);
   }
 
+  const directoryId = (await getWorkspaceContactDirectory(survey.workspaceId))?.id ?? null;
+
   try {
     return await prisma.$transaction(async (tx) => {
-      // for this survey, does a private segment already exist. Titles are unique per workspace only, so
-      // another workspace can hold a private segment titled with this survey's id (ENG-7389).
+      // for this survey, does a private segment already exist. Titles are unique per directory only, so
+      // another directory can hold a private segment titled with this survey's id (ENG-7389).
       const segment = await tx.segment.findFirst({
         where: {
-          workspaceId: survey.workspaceId,
+          ...(directoryId ? { directoryId } : { workspaceId: survey.workspaceId }),
           title: surveyId,
           isPrivate: true,
         },
@@ -509,6 +623,7 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
             filters: [],
             surveys: { connect: { id: surveyId } },
             workspaceId: survey.workspaceId,
+            directoryId,
           },
           select: selectSegment,
         });
@@ -590,7 +705,11 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
 
     assertPrivateSegmentKeepsTitle(data, currentSegment);
     if (needsSurveyIdTitleCheck(data, currentSegment)) {
-      await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title ?? currentSegment.title);
+      await assertTitleIsNotSurveyId(
+        currentSegment.directoryId,
+        currentSegment.workspaceId,
+        data.title ?? currentSegment.title
+      );
     }
 
     const segment = await prisma.segment.update({
@@ -616,10 +735,11 @@ export const getSegmentsByAttributeKey = reactCache(async (workspaceId: string, 
   validateInputs([workspaceId, ZId], [attributeKey, ZString]);
 
   try {
+    const directory = await getWorkspaceContactDirectory(workspaceId);
+    if (!directory) return [];
+
     const segments = await prisma.segment.findMany({
-      where: {
-        workspaceId,
-      },
+      where: whereSegmentsOfWorkspace(workspaceId, directory.id),
       select: selectSegment,
     });
 

@@ -29,6 +29,7 @@ import { type TSurveyVisibilityFilter, buildSurveyAccessWhere } from "@/lib/surv
 import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveCopiedSurveyCustomCss } from "@/modules/custom-css/lib/service";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { assertSegmentSurveyFiltersVisible } from "@/modules/ee/contacts/segments/lib/helper";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
@@ -428,45 +429,55 @@ const copyQuotaData = (existingQuotas: Awaited<ReturnType<typeof getQuotas>>) =>
   }));
 
 /**
- * The copy's segment: a private one is recreated for it; a public one is shared in the same workspace,
- * and recreated in another (renamed when the target already has one by that title).
+ * The copy's segment: a private one is recreated for it; a public one is shared in the same workspace or
+ * when the target workspace is on the segment's contact directory (decision 24), and recreated in the
+ * target's directory otherwise (renamed when the directory already has one by that title).
+ * `targetDirectoryId` is null while the target workspace has no directory; its segments are then kept by
+ * workspace.
  */
 const buildCopiedSegment = async (
   segment: NonNullable<TCopiedSurvey["segment"]>,
   surveyId: string,
-  isSameWorkspace: boolean,
-  targetWorkspaceId: string
+  { isSameWorkspace, targetWorkspaceId, targetDirectoryId }: TCopyTarget
 ): Promise<Prisma.SurveyCreateInput["segment"]> => {
+  const owner = { workspace: { connect: { id: targetWorkspaceId } } };
+  const directory = targetDirectoryId ? { directory: { connect: { id: targetDirectoryId } } } : {};
   if (segment.isPrivate) {
     return {
-      create: {
-        title: surveyId,
-        isPrivate: true,
-        filters: segment.filters,
-        workspace: { connect: { id: targetWorkspaceId } },
-      },
+      create: { title: surveyId, isPrivate: true, filters: segment.filters, ...owner, ...directory },
     };
   }
-  if (isSameWorkspace) {
+  if (isSegmentShared(segment, { isSameWorkspace, targetWorkspaceId, targetDirectoryId })) {
     return { connect: { id: segment.id } };
   }
-  const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
+  const existingSegmentInTarget = await prisma.segment.findFirst({
     where: {
       title: segment.title,
       isPrivate: false,
-      workspaceId: targetWorkspaceId,
+      ...(targetDirectoryId ? { directoryId: targetDirectoryId } : { workspaceId: targetWorkspaceId }),
     },
   });
 
   return {
     create: {
-      title: existingSegmentInTargetEnvironment ? `${segment.title}-${Date.now()}` : segment.title,
+      title: existingSegmentInTarget ? `${segment.title}-${Date.now()}` : segment.title,
       isPrivate: false,
       filters: segment.filters,
-      workspace: { connect: { id: targetWorkspaceId } },
+      ...owner,
+      ...directory,
     },
   };
 };
+
+type TCopyTarget = { isSameWorkspace: boolean; targetWorkspaceId: string; targetDirectoryId: string | null };
+
+/** Whether the copy can use the source's public segment itself. */
+const isSegmentShared = (
+  segment: NonNullable<TCopiedSurvey["segment"]>,
+  { isSameWorkspace, targetDirectoryId }: TCopyTarget
+): boolean =>
+  !segment.isPrivate &&
+  (isSameWorkspace || (targetDirectoryId !== null && segment.directoryId === targetDirectoryId));
 
 /** The source workspace, survey, quotas and organization a copy reads; each must exist. */
 const loadCopySource = async (workspaceId: string, surveyId: string) => {
@@ -489,18 +500,14 @@ const loadCopySource = async (workspaceId: string, surveyId: string) => {
 /** The copier must see every survey the copied segment's filters read, in the target workspace. */
 const assertCopiedSegmentVisible = async (
   segment: NonNullable<TCopiedSurvey["segment"]>,
-  {
-    targetWorkspaceId,
-    userId,
-    organizationId,
-    isSameWorkspace,
-  }: { targetWorkspaceId: string; userId: string; organizationId: string; isSameWorkspace: boolean }
+  target: TCopyTarget,
+  { userId, organizationId }: { userId: string; organizationId: string }
 ): Promise<void> => {
   await assertSegmentSurveyFiltersVisible(
     segment.filters,
-    targetWorkspaceId,
+    target.targetWorkspaceId,
     await resolveSurveyActorContext({ type: "user", id: userId }, organizationId),
-    isSameWorkspace && !segment.isPrivate ? segment.id : undefined
+    isSegmentShared(segment, target) ? segment.id : undefined
   );
 };
 
@@ -541,12 +548,18 @@ export const copySurveyToOtherWorkspace = async (
     // into a new one in the target), and the copier then reads the copy's responses, so the copier must
     // see every survey that targeting reads *in the workspace it lands in*. Checked against the target:
     // a stored filter can name an id that is foreign to the source but a hidden survey in the target.
+    // The target's contact directory, which a copied segment belongs to (decision 24).
+    const segmentTarget: TCopyTarget = {
+      isSameWorkspace,
+      targetWorkspaceId,
+      targetDirectoryId: existingSurvey.segment
+        ? ((await getWorkspaceContactDirectory(targetWorkspaceId))?.id ?? null)
+        : null,
+    };
     if (existingSurvey.segment) {
-      await assertCopiedSegmentVisible(existingSurvey.segment, {
-        targetWorkspaceId,
+      await assertCopiedSegmentVisible(existingSurvey.segment, segmentTarget, {
         userId,
         organizationId: organization.id,
-        isSameWorkspace,
       });
     }
 
@@ -660,12 +673,7 @@ export const copySurveyToOtherWorkspace = async (
 
     // Handle segment
     if (existingSurvey.segment) {
-      surveyData.segment = await buildCopiedSegment(
-        existingSurvey.segment,
-        surveyData.id!,
-        isSameWorkspace,
-        targetWorkspace.id
-      );
+      surveyData.segment = await buildCopiedSegment(existingSurvey.segment, surveyData.id!, segmentTarget);
     }
 
     if (surveyData.blocks) {

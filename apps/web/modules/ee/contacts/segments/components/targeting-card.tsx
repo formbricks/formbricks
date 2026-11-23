@@ -159,7 +159,11 @@ export function TargetingCard({
   };
 
   const handleSaveAsNewSegmentUpdate = async (segmentId: string, data: TSegmentUpdateInput) => {
-    const updatedSegment = await updateSegmentAction({ segmentId, data });
+    const updatedSegment = await updateSegmentAction({
+      segmentId,
+      workspaceId: localSurvey.workspaceId,
+      data,
+    });
     return updatedSegment?.data as TSegment;
   };
 
@@ -171,7 +175,11 @@ export function TargetingCard({
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error(t("workspace.segments.invalid_segment"));
-      const result = await updateSegmentAction({ segmentId: segment.id, data });
+      const result = await updateSegmentAction({
+        segmentId: segment.id,
+        workspaceId: localSurvey.workspaceId,
+        data,
+      });
       if (result?.serverError) {
         toast.error(getFormattedErrorMessage(result));
         return;

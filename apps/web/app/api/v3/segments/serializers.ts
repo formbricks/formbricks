@@ -11,7 +11,9 @@ export { collectSegmentFilterSurveyIds } from "@/modules/ee/contacts/segments/li
  * Public v3 segment. The same fields the Segments page hands `SegmentTable` / `EditSegmentModal` today
  * (`TSegmentWithSurveyRefs`), with the dates as ISO 8601 strings, so the page can move to this endpoint
  * without losing anything. `surveys`, `activeSurveys`, `inactiveSurveys` and the survey ids inside
- * `filters` only ever name surveys the caller may see (ENG-3282).
+ * `filters` only ever name surveys the caller may see (ENG-3282). `workspaceId` is the workspace the caller
+ * listed: a segment is shared by every workspace of its directory (decision 24), and the one it was made
+ * in may be another, or deleted.
  */
 export type TV3SegmentResource = {
   id: string;
@@ -29,6 +31,7 @@ export type TV3SegmentResource = {
 
 export function serializeV3Segment(
   segment: TSegmentWithSurveyRefs,
+  workspaceId: string,
   visibleSurveyIds: ReadonlySet<string>
 ): TV3SegmentResource {
   return {
@@ -37,7 +40,7 @@ export function serializeV3Segment(
     description: segment.description,
     isPrivate: segment.isPrivate,
     filters: redactSegmentFilterSurveyIds(segment.filters, visibleSurveyIds),
-    workspaceId: segment.workspaceId,
+    workspaceId,
     surveys: segment.surveys,
     activeSurveys: segment.activeSurveys,
     inactiveSurveys: segment.inactiveSurveys,

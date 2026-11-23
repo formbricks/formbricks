@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { getDistinctAttributeValuesAction } from "../actions";
@@ -24,11 +25,14 @@ export const AttributeValueInput = ({
 }: AttributeValueInputProps) => {
   const [options, setOptions] = useState<TComboboxOption[]>([]);
   const [loading, setLoading] = useState(false);
+  // Keys belong to the contact directory, so values are read through the workspace the editor is open in.
+  const { workspace } = useWorkspace();
+  const workspaceId = workspace?.id;
 
   // Fetch on mount or when key params change
   useEffect(() => {
     // Don't fetch if we don't have a valid attributeKeyId
-    if (!attributeKeyId || attributeKeyId === "") {
+    if (!attributeKeyId || attributeKeyId === "" || !workspaceId) {
       return;
     }
 
@@ -39,6 +43,7 @@ export const AttributeValueInput = ({
       try {
         const result = await getDistinctAttributeValuesAction({
           attributeKeyId,
+          workspaceId,
         });
 
         if (!isCancelled && result?.data) {
@@ -65,7 +70,7 @@ export const AttributeValueInput = ({
     return () => {
       isCancelled = true;
     };
-  }, [attributeKeyId]);
+  }, [attributeKeyId, workspaceId]);
 
   const emptyDropdownText = useMemo(() => {
     if (loading) return "Loading values...";

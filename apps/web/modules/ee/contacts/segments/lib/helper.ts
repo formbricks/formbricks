@@ -9,7 +9,11 @@ import {
   collectSegmentFilterSurveyIds,
   restoreHiddenSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/filter-survey-ids";
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  getOtherWorkspaceSurveyIds,
+  getSegment,
+  getSegmentInWorkspace,
+} from "@/modules/ee/contacts/segments/lib/segments";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
   isResourceFilter,
@@ -139,8 +143,27 @@ export const assertSurveyInteractionSurveyIds = (
 ) => assertSurveysInWorkspace(collectSurveyIdsFromSegmentFilters(filters), workspaceId, visibleSurveyWhere);
 
 /**
+ * `assertSurveyInteractionSurveyIds` for an edit of a stored tree: only the ids the edit adds must be
+ * surveys of `workspaceId` the caller sees. A shared segment is edited from every workspace of its
+ * directory (decision 24), so a stored id can name a survey of another workspace; it was checked when it
+ * was added there, and it stays.
+ * @throws {InvalidInputError} When an added survey is not found in the workspace or not visible to the caller
+ */
+export const assertAddedSurveyInteractionSurveyIds = (
+  filters: TBaseFilters,
+  storedFilters: TBaseFilters,
+  workspaceId: string,
+  visibleSurveyWhere: Prisma.SurveyWhereInput = {}
+) => {
+  const storedIds = new Set(collectSegmentFilterSurveyIds(storedFilters));
+  const addedIds = collectSurveyIdsFromSegmentFilters(filters).filter((surveyId) => !storedIds.has(surveyId));
+  return assertSurveysInWorkspace(addedIds, workspaceId, visibleSurveyWhere);
+};
+
+/**
  * `filters` as saved, with the stored survey ids this caller may not see put back into the filters
- * they came from (see `restoreHiddenSurveyIds`). One query over the stored tree's ids.
+ * they came from (see `restoreHiddenSurveyIds`). A survey of another workspace on the directory is not
+ * hidden: the editor shows it as "Survey in another workspace" (decision 24), so removing it there sticks.
  */
 export const restoreHiddenSegmentSurveyIds = async (
   filters: TBaseFilters,
@@ -150,17 +173,28 @@ export const restoreHiddenSegmentSurveyIds = async (
 ): Promise<TBaseFilters> => {
   const storedIds = [...new Set(collectSegmentFilterSurveyIds(storedFilters))];
   if (storedIds.length === 0) return filters;
-  const visible = await prisma.survey.findMany({
-    where: { AND: [{ workspaceId, id: { in: storedIds } }, visibleSurveyWhere] },
-    select: { id: true },
-  });
-  return restoreHiddenSurveyIds(filters, storedFilters, new Set(visible.map((survey) => survey.id)));
+  const [visible, otherWorkspaceIds] = await Promise.all([
+    prisma.survey.findMany({
+      where: { AND: [{ workspaceId, id: { in: storedIds } }, visibleSurveyWhere] },
+      select: { id: true },
+    }),
+    // A draft may have stored a value that is not an id: it names no survey anywhere.
+    getOtherWorkspaceSurveyIds(
+      workspaceId,
+      storedIds.filter((surveyId) => ZId.safeParse(surveyId).success)
+    ),
+  ]);
+  return restoreHiddenSurveyIds(
+    filters,
+    storedFilters,
+    new Set([...visible.map((survey) => survey.id), ...otherWorkspaceIds])
+  );
 };
 
 /**
  * Every survey id the tree's `specific` survey-interaction filters name, at any depth and through nested
  * segment filters, the way evaluation resolves them (`buildSegmentFilterWhereClause`): a segment is
- * followed once, and a missing one or another workspace's reads nothing.
+ * followed once, and a missing one or another directory's reads nothing.
  */
 /** The survey ids a `specific` survey-interaction filter names; none for `any` or a half-built node. */
 const specificSurveyIdsOf = (resource: TSegmentFilter): string[] => {
@@ -174,7 +208,7 @@ const specificSurveyIdsOf = (resource: TSegmentFilter): string[] => {
 
 /**
  * The filters of a nested segment as evaluation reads them, or `null` when it reads nothing: a dangling or
- * malformed reference matches nobody, and another workspace's segment is ignored
+ * malformed reference matches nobody, and a segment of another directory than the workspace's is ignored
  * (`buildSegmentFilterWhereClause`).
  */
 const getNestedSegmentFilters = async (
@@ -182,8 +216,7 @@ const getNestedSegmentFilters = async (
   workspaceId: string
 ): Promise<TBaseFilters | null> => {
   try {
-    const nested = await getSegment(segmentId);
-    return nested.workspaceId === workspaceId ? nested.filters : null;
+    return (await getSegmentInWorkspace(segmentId, workspaceId)).filters;
   } catch (error) {
     if (error instanceof ResourceNotFoundError || error instanceof ValidationError) return null;
     throw error;

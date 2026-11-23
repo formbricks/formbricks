@@ -6,6 +6,7 @@ import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context"
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { segmentFiltersReadHiddenSurvey } from "@/modules/ee/contacts/segments/lib/helper";
+import { isSegmentOfWorkspace } from "@/modules/ee/contacts/segments/lib/segments";
 import { getContactAttributeKeys } from "./contact-attribute-key";
 import { getSegment } from "./segment";
 import { getSurvey } from "./surveys";
@@ -42,9 +43,15 @@ export const getContactsInSegment = reactCache(
       }
 
       const segment = segmentResult.data;
+      const { directoryId } = segment;
 
-      if (survey.workspaceId !== segment.workspaceId) {
-        logger.error({ surveyId, segmentId }, "Survey and segment are not in the same workspace");
+      // Every workspace on a contact directory shares its segments (decision 24); the segment's own
+      // `workspaceId` is only where it was made.
+      if (!directoryId || !(await isSegmentOfWorkspace(segment, survey.workspaceId))) {
+        logger.error(
+          { surveyId, segmentId },
+          "Segment is not in the contact directory of the survey's workspace"
+        );
         const error: ApiErrorResponseV2 = {
           type: "bad_request",
           details: [{ field: "segmentId", issue: "Environment mismatch" }],
@@ -54,7 +61,7 @@ export const getContactsInSegment = reactCache(
 
       // ENG-6870: the contacts a survey-interaction filter matches are the people who saw, started or
       // completed the surveys it reads, so the caller must be able to read every one of them.
-      if (await segmentFiltersReadHiddenSurvey(segment.filters, segment.workspaceId, actor, segment.id)) {
+      if (await segmentFiltersReadHiddenSurvey(segment.filters, survey.workspaceId, actor, segment.id)) {
         logger.warn({ surveyId, segmentId }, "Segment filters read surveys the caller cannot access");
         const error: ApiErrorResponseV2 = {
           type: "forbidden",
@@ -66,7 +73,7 @@ export const getContactsInSegment = reactCache(
       const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
         segment.id,
         segment.filters,
-        segment.workspaceId
+        directoryId
       );
 
       if (!segmentFilterToPrismaQueryResult.ok) {
@@ -75,7 +82,7 @@ export const getContactsInSegment = reactCache(
 
       const { whereClause } = segmentFilterToPrismaQueryResult.data;
 
-      const contactAttributeKeysResult = await getContactAttributeKeys(segment.workspaceId);
+      const contactAttributeKeysResult = await getContactAttributeKeys(survey.workspaceId);
       if (!contactAttributeKeysResult.ok) {
         return err(contactAttributeKeysResult.error);
       }

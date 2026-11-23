@@ -154,6 +154,7 @@ export function SegmentTable({
           segments={segments}
           isContactsEnabled={isContactsEnabled}
           isReadOnly={isReadOnly}
+          workspaceId={workspaceId}
         />
       )}
     </div>

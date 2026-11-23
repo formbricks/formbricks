@@ -12,7 +12,6 @@ import {
   getOrganizationIdFromLanguageId,
   getOrganizationIdFromQuotaId,
   getOrganizationIdFromResponseId,
-  getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromTagId,
   getOrganizationIdFromTeamId,
@@ -25,7 +24,6 @@ import {
   getWorkspaceIdFromLanguageId,
   getWorkspaceIdFromQuotaId,
   getWorkspaceIdFromResponseId,
-  getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId,
   getWorkspaceIdFromTagId,
   getWorkspaceIdFromWebhookId,
@@ -39,7 +37,6 @@ vi.mock("@/lib/utils/services", () => ({
   getContact: vi.fn(),
   getContactAttributeKey: vi.fn(),
   getQuota: vi.fn(),
-  getSegment: vi.fn(),
   getActionClass: vi.fn(),
   getIntegration: vi.fn(),
   getWebhook: vi.fn(),
@@ -169,23 +166,6 @@ describe("Helper Utilities", () => {
       vi.mocked(services.getTag).mockResolvedValueOnce(null);
 
       await expect(getOrganizationIdFromTagId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("getOrganizationIdFromSegmentId returns organization ID correctly", async () => {
-      vi.mocked(services.getSegment).mockResolvedValueOnce({
-        workspaceId: "workspace1",
-      });
-      vi.mocked(services.getWorkspace).mockResolvedValueOnce({
-        organizationId: "org1",
-      });
-
-      const orgId = await getOrganizationIdFromSegmentId("segment1");
-      expect(orgId).toBe("org1");
-    });
-
-    test("getOrganizationIdFromSegmentId throws error when segment not found", async () => {
-      vi.mocked(services.getSegment).mockResolvedValueOnce(null);
-      await expect(getOrganizationIdFromSegmentId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("getOrganizationIdFromActionClassId returns organization ID correctly", async () => {
@@ -383,20 +363,6 @@ describe("Helper Utilities", () => {
       await expect(getWorkspaceIdFromContactAttributeKeyId("nonexistent")).rejects.toThrow(
         ResourceNotFoundError
       );
-    });
-
-    test("getWorkspaceIdFromSegmentId returns workspace ID correctly", async () => {
-      vi.mocked(services.getSegment).mockResolvedValueOnce({
-        workspaceId: "workspace1",
-      });
-
-      const workspaceId = await getWorkspaceIdFromSegmentId("segment1");
-      expect(workspaceId).toBe("workspace1");
-    });
-
-    test("getWorkspaceIdFromSegmentId throws error when segment not found", async () => {
-      vi.mocked(services.getSegment).mockResolvedValueOnce(null);
-      await expect(getWorkspaceIdFromSegmentId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("getWorkspaceIdFromActionClassId returns workspace ID correctly", async () => {
