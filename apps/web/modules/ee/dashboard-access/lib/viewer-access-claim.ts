@@ -1,5 +1,20 @@
 import { MAX_EMBEDDED_KEY_LENGTH } from "@/modules/ee/analysis/lib/embedded-data-fields";
 import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
+import {
+  type TViewerAccessJoin,
+  VIEWER_ACCESS_EMBEDDED_PREFIX,
+  VIEWER_ACCESS_MAX_CONDITIONS,
+  VIEWER_ACCESS_RECORD_FIELDS,
+  getViewerAccessEmbeddedKey,
+} from "./viewer-access-fields";
+
+export {
+  type TViewerAccessJoin,
+  VIEWER_ACCESS_EMBEDDED_PREFIX,
+  VIEWER_ACCESS_MAX_CONDITIONS,
+  VIEWER_ACCESS_RECORD_FIELDS,
+  getViewerAccessEmbeddedKey,
+};
 
 /**
  * Dashboard Viewer access as Cube enforces it (ADR-0060): a Feedback Dataset's conditions plus a viewer's
@@ -7,37 +22,10 @@ import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member
  * claim, its bounds and the summary the dashboard read returns are decided in one place.
  */
 
-/** At most this many conditions on one dataset. Mirrored in docker/cube/cube.js. */
-export const VIEWER_ACCESS_MAX_CONDITIONS = 10;
 /** At most this many of a viewer's values per condition reach the claim. Mirrored in docker/cube/cube.js. */
 export const VIEWER_ACCESS_MAX_VALUES = 50;
 /** Longest value the claim carries. Mirrored in docker/cube/cube.js. */
 export const VIEWER_ACCESS_MAX_VALUE_LENGTH = 255;
-/** A condition on an embedded-data key names its field `ed:<key>`. */
-export const VIEWER_ACCESS_EMBEDDED_PREFIX = "ed:";
-
-/**
- * The Feedback Record's own string fields a condition may name: fields of the record itself (where it
- * came from and its response context), never the answer it holds, and each one Cube matches ignoring case
- * and surrounding spaces. Mirrored in docker/cube/cube.js (`VIEWER_ACCESS_MEMBERS`).
- */
-export const VIEWER_ACCESS_RECORD_FIELDS: Readonly<Record<string, string>> = {
-  "FeedbackRecords.sourceName": "Source Name",
-  "FeedbackRecords.sourceType": "Source Type",
-  "FeedbackRecords.metadataCountry": "Country",
-  "FeedbackRecords.metadataSource": "Channel",
-  "FeedbackRecords.metadataDevice": "Device",
-  "FeedbackRecords.metadataBrowser": "Browser",
-  "FeedbackRecords.metadataOs": "Operating System",
-  "FeedbackRecords.metadataAction": "Trigger Action",
-  "FeedbackRecords.language": "Language",
-};
-
-export type TViewerAccessJoin = "all" | "any";
-
-/** The embedded-data key a condition field names, or `null` for a record field. */
-export const getViewerAccessEmbeddedKey = (field: string): string | null =>
-  field.startsWith(VIEWER_ACCESS_EMBEDDED_PREFIX) ? field.slice(VIEWER_ACCESS_EMBEDDED_PREFIX.length) : null;
 
 /** Whether a condition may name `field`: a listed record field, or `ed:<key>` with a usable key. */
 export const isViewerAccessField = (field: string): boolean => {

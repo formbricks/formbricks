@@ -68,6 +68,7 @@ export const V3_PROBLEM_CODES = [
   "conflict",
   "creatives_not_entitled",
   "custom_css_plan_required",
+  "dashboard_access_plan_required",
   "dashboards_plan_required",
   "forbidden",
   "internal_server_error",
@@ -569,6 +570,20 @@ export function problemMemberAttributesPlanRequired(requestId: string, instance?
     "Member attributes are not enabled for this organization. They need Access Control and Dashboards — an organization owner can enable them from the organization's billing or license settings.",
     requestId,
     { code: "member_attributes_plan_required", instance }
+  );
+}
+
+/**
+ * ENG-7476 / ENG-7483: Dashboard access settings (a Feedback Dataset's Dashboard Viewer access, a team's
+ * dashboard limits) need what the Dashboard Viewer role needs: Access Control and Dashboards.
+ */
+export function problemDashboardAccessPlanRequired(requestId: string, instance?: string): Response {
+  return problemResponse(
+    403,
+    "Forbidden",
+    "Dashboard access settings are not enabled for this organization. They need Access Control and Dashboards — an organization owner can enable them from the organization's billing or license settings.",
+    requestId,
+    { code: "dashboard_access_plan_required", instance }
   );
 }
 

@@ -75,6 +75,11 @@ info:
     Control and Dashboards.
 
 
+    **Dashboard access**: a Feedback Dataset's Dashboard Viewer access (**GET**, **PUT
+    /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access**) and a team's dashboard limits
+    (**GET**, **PUT /api/v3/teams/{teamId}/dashboard-limits**). Same access and plan as Member attributes.
+
+
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**;
     **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST
     /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**,
@@ -554,6 +559,10 @@ paths:
     $ref: paths/api_v3_organizations_{organizationId}_member-attributes.yml
   /api/v3/organizations/{organizationId}/member-attributes/bulk:
     $ref: paths/api_v3_organizations_{organizationId}_member-attributes_bulk.yml
+  /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access:
+    $ref: paths/api_v3_feedback-datasets_{datasetId}_dashboard-viewer-access.yml
+  /api/v3/teams/{teamId}/dashboard-limits:
+    $ref: paths/api_v3_teams_{teamId}_dashboard-limits.yml
   /api/v3/feedbackRecords:
     $ref: paths/api_v3_feedbackRecords.yml
   /api/v3/feedbackRecords/search/semantic:

@@ -768,6 +768,7 @@ describe("entitlement lapse", () => {
 
 describe("team dashboard limits, page team limits and Dashboard Viewer access (ENG-7472, ENG-7478, ENG-7484)", () => {
   const limited = {
+    leftOutWorkspace: "",
     viewer: "",
     team: "",
     allowed: "",

@@ -13,6 +13,7 @@ import {
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { validateInputs } from "@/lib/utils/validate";
+import { deleteTeamDashboardLimitsInWorkspaces } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 import {
   TOrganizationTeam,
   TOtherTeam,
@@ -432,6 +433,8 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
         where: { id: teamId },
         data: payload,
       });
+      // A lost workspace grant takes the team's dashboard limits there with it (ENG-7483).
+      await deleteTeamDashboardLimitsInWorkspaces(tx, teamId, deletedWorkspaces);
     });
 
     const membershipUserIds = new Set([

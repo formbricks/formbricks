@@ -20,6 +20,8 @@ info:
 
     **Member attributes**: an organization's Member attribute keys (**GET**, **POST /api/v3/organizations/{organizationId}/member-attribute-keys**; **GET**, **PATCH**, **DELETE /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}**) and members' values for them (**GET /api/v3/organizations/{organizationId}/member-attributes**, **PUT /api/v3/organizations/{organizationId}/member-attributes/bulk**), which Dashboard Viewer access matches on. Owners and Managers, or an API key with Access Control read or write; they need Access Control and Dashboards.
 
+    **Dashboard access**: a Feedback Dataset's Dashboard Viewer access (**GET**, **PUT /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access**) and a team's dashboard limits (**GET**, **PUT /api/v3/teams/{teamId}/dashboard-limits**). Same access and plan as Member attributes.
+
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; its pages (**POST /api/v3/dashboards/{dashboardId}/pages**; **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/pages/{pageId}**); **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
       them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
@@ -8509,6 +8511,187 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access:
+    get:
+      operationId: getDashboardViewerAccessV3
+      summary: Get a Feedback Dataset's Dashboard Viewer access
+      description: |
+        Which records of the dataset a Dashboard Viewer sees: its conditions, in order, and whether all or
+        any of them must hold. Owners and Managers, or an API key with Access Control read; needs Access
+        Control and Dashboards.
+      tags:
+        - V3 Dashboard Access
+      parameters:
+        - $ref: '#/components/parameters/DatasetIdPath'
+      responses:
+        '200':
+          description: The Dashboard Viewer access
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardViewerAccessResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardAccessForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    put:
+      operationId: replaceDashboardViewerAccessV3
+      summary: Replace a Feedback Dataset's Dashboard Viewer access
+      description: |
+        Replaces the join and every condition (at most 10). Send the `updatedAt` from your read as
+        `expectedUpdatedAt`: if the dataset changed since, the request answers **409** and nothing is
+        written. A field that is not a Feedback Record string field or `ed:<key>`, or a Member attribute of
+        another organization, answers **422**. Owners and Managers, or an API key with Access Control write;
+        needs Access Control and Dashboards. Audited.
+      tags:
+        - V3 Dashboard Access
+      parameters:
+        - $ref: '#/components/parameters/DatasetIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardViewerAccessReplaceRequest'
+      responses:
+        '200':
+          description: The replaced Dashboard Viewer access
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardViewerAccessResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardAccessForbidden'
+        '409':
+          $ref: '#/components/responses/V3Conflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/teams/{teamId}/dashboard-limits:
+    get:
+      operationId: getTeamDashboardLimitsV3
+      summary: Get a team's dashboard limits
+      description: |
+        The dashboards the team's Dashboard Viewer members open in the team's workspaces; an empty list
+        means all of them. Owners and Managers, or an API key with Access Control read; needs Access Control
+        and Dashboards.
+      tags:
+        - V3 Dashboard Access
+      parameters:
+        - $ref: '#/components/parameters/TeamIdPath'
+      responses:
+        '200':
+          description: The team's dashboard limits
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TeamDashboardLimitsResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardAccessForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    put:
+      operationId: replaceTeamDashboardLimitsV3
+      summary: Replace a team's dashboard limits
+      description: |
+        Replaces the dashboards the team's Dashboard Viewer members open; an empty list opens every
+        dashboard of the team's workspaces. Each dashboard must be in a workspace the team is granted
+        (**422** otherwise). Losing a workspace grant removes the team's limits there. Owners and Managers,
+        or an API key with Access Control write; needs Access Control and Dashboards. Audited.
+      tags:
+        - V3 Dashboard Access
+      parameters:
+        - $ref: '#/components/parameters/TeamIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dashboardIds
+              properties:
+                dashboardIds:
+                  type: array
+                  maxItems: 200
+                  items:
+                    type: string
+                    format: cuid2
+              additionalProperties: false
+      responses:
+        '200':
+          description: The replaced dashboard limits
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TeamDashboardLimitsResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardAccessForbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/feedbackRecords:
     get:
       operationId: listFeedbackRecordsV3
@@ -11853,6 +12036,7 @@ components:
             - conflict
             - creatives_not_entitled
             - custom_css_plan_required
+            - dashboard_access_plan_required
             - dashboards_plan_required
             - forbidden
             - internal_server_error
@@ -19664,6 +19848,110 @@ components:
                         - limit_exceeded
                         - duplicate_identifier
                         - unsupported_field
+    DashboardViewerAccessResource:
+      type: object
+      description: 'A Feedback Dataset''s Dashboard Viewer access: the conditions a record must meet for a Dashboard Viewer to see it. Each condition says a dataset field equals one of the viewer''s values for a Member attribute. Without conditions, Dashboard Viewers see every record. Owners, Managers and Members always see every record.'
+      required:
+        - datasetId
+        - join
+        - conditions
+        - updatedAt
+      properties:
+        datasetId:
+          type: string
+          format: cuid2
+        join:
+          type: string
+          enum:
+            - all
+            - any
+          description: Show a record when all of the conditions are true, or any of them.
+        conditions:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            required:
+              - field
+              - fieldLabel
+              - attributeKeyId
+              - attributeLabel
+            properties:
+              field:
+                type: string
+                description: A Feedback Record string field (for example `FeedbackRecords.sourceName`), or `ed:<key>` for an embedded-data key.
+              fieldLabel:
+                type: string
+              attributeKeyId:
+                type:
+                  - string
+                  - 'null'
+                format: cuid2
+                description: The Member attribute matched against; `null` is the built-in Email attribute.
+              attributeLabel:
+                type: string
+            additionalProperties: false
+        updatedAt:
+          type: string
+          format: date-time
+          description: Send it back as `expectedUpdatedAt` on a replace.
+      additionalProperties: false
+    DashboardViewerAccessReplaceRequest:
+      type: object
+      required:
+        - join
+        - conditions
+        - expectedUpdatedAt
+      properties:
+        join:
+          type: string
+          enum:
+            - all
+            - any
+        conditions:
+          type: array
+          maxItems: 10
+          description: The whole list, in order. Empty lets Dashboard Viewers see every record.
+          items:
+            type: object
+            required:
+              - field
+              - attributeKeyId
+            properties:
+              field:
+                type: string
+                minLength: 1
+                maxLength: 300
+                description: One of `FeedbackRecords.sourceName`, `FeedbackRecords.sourceType`, `FeedbackRecords.metadataCountry`, `FeedbackRecords.metadataSource`, `FeedbackRecords.metadataDevice`, `FeedbackRecords.metadataBrowser`, `FeedbackRecords.metadataOs`, `FeedbackRecords.metadataAction`, `FeedbackRecords.language`, or `ed:<key>` for an embedded-data key. Answers and measures are never conditions.
+              attributeKeyId:
+                type:
+                  - string
+                  - 'null'
+                format: cuid2
+                description: A Member attribute of the dataset's organization; `null` for Email.
+            additionalProperties: false
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: The `updatedAt` from your read; **409** when the dataset changed since.
+      additionalProperties: false
+    TeamDashboardLimitsResource:
+      type: object
+      description: 'A team''s dashboard limits: the dashboards its members whose organization role is Dashboard Viewer open in the workspaces the team is granted. Empty means all of them. Other members are never limited.'
+      required:
+        - teamId
+        - dashboardIds
+      properties:
+        teamId:
+          type: string
+          format: cuid2
+        dashboardIds:
+          type: array
+          maxItems: 200
+          items:
+            type: string
+            format: cuid2
+      additionalProperties: false
     FeedbackRecordFieldType:
       type: string
       description: 'The type of a feedback field, which determines which `value_*` member carries the answer: `text` → `value_text` (the only enrichable type), `categorical` → `value_text` + `value_id`, `nps` / `csat` / `ces` / `rating` / `number` → `value_number`, `boolean` → `value_boolean`, `date` → `value_date`.'
@@ -20641,6 +20929,21 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    V3DashboardAccessForbidden:
+      description: 'Forbidden. `code: forbidden` when the caller is not an Owner or Manager of the organization the resource belongs to (or, for writes, is below the organization''s user-management floor), when an API key belongs to another organization or lacks Access Control read (reads) or write (writes), or when the resource does not exist (404 is not used, to avoid leaking existence). `code: dashboard_access_plan_required` when the caller is authorized but the organization does not have Access Control and Dashboards.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     FeedbackRecordsBadRequest:
       description: 'Bad Request. From the **gateway** (`text/plain`): a missing or malformed `tenant_id`; a request body that is not a single JSON object; a body whose top-level keys can be read more than one way (a repeated key, a key with non-ASCII characters, or a key that differs from `tenant_id` only in letter case); a `tenant_id` query parameter given more than once; or a path under `/api/v3/feedbackRecords` that is not one of the documented operations. A record id that is not a UUID and a path such as `/count` both fall in that last case and share the one `Unsupported FeedbackRecords route` body, so the two cannot be told apart from the response. From the **feedback store** (`application/problem+json`): schema validation failures — an unknown enum value, an inverted range, a malformed or re-ordered cursor, or a string with NULL bytes or invalid UTF-8.'
       content:
@@ -20957,6 +21260,22 @@ components:
         type: string
         format: cuid2
       description: Member attribute key identifier (its `id`, not its `key`).
+    DatasetIdPath:
+      in: path
+      name: datasetId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Feedback Dataset identifier.
+    TeamIdPath:
+      in: path
+      name: teamId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Team identifier.
     FeedbackRecordsTenantIdQuery:
       in: query
       name: tenant_id

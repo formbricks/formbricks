@@ -12,6 +12,7 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/types/workspace-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
+import { deleteTeamDashboardLimitsInWorkspaces } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 
 export const getWorkspaceTeams = async (
   organizationId: string,
@@ -116,13 +117,18 @@ export const deleteWorkspaceTeam = async (
   workspaceId: string
 ): Promise<Result<WorkspaceTeam, ApiErrorResponseV2>> => {
   try {
-    const deletedWorkspaceTeam = await prisma.workspaceTeam.delete({
-      where: {
-        workspaceId_teamId: {
-          workspaceId,
-          teamId,
+    // A lost workspace grant takes the team's dashboard limits there with it (ENG-7483).
+    const deletedWorkspaceTeam = await prisma.$transaction(async (tx) => {
+      const deleted = await tx.workspaceTeam.delete({
+        where: {
+          workspaceId_teamId: {
+            workspaceId,
+            teamId,
+          },
         },
-      },
+      });
+      await deleteTeamDashboardLimitsInWorkspaces(tx, teamId, [workspaceId]);
+      return deleted;
     });
 
     await runPostCommitProjection("api_v2_workspace_team_delete", () =>

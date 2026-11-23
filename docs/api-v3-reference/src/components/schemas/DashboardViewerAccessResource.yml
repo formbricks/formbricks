@@ -1,0 +1,53 @@
+type: object
+description: >-
+  A Feedback Dataset's Dashboard Viewer access: the conditions a record must meet for a Dashboard Viewer
+  to see it. Each condition says a dataset field equals one of the viewer's values for a Member
+  attribute. Without conditions, Dashboard Viewers see every record. Owners, Managers and Members always
+  see every record.
+required:
+  - datasetId
+  - join
+  - conditions
+  - updatedAt
+properties:
+  datasetId:
+    type: string
+    format: cuid2
+  join:
+    type: string
+    enum:
+      - all
+      - any
+    description: Show a record when all of the conditions are true, or any of them.
+  conditions:
+    type: array
+    maxItems: 10
+    items:
+      type: object
+      required:
+        - field
+        - fieldLabel
+        - attributeKeyId
+        - attributeLabel
+      properties:
+        field:
+          type: string
+          description: >-
+            A Feedback Record string field (for example `FeedbackRecords.sourceName`), or `ed:<key>` for an
+            embedded-data key.
+        fieldLabel:
+          type: string
+        attributeKeyId:
+          type:
+            - string
+            - "null"
+          format: cuid2
+          description: The Member attribute matched against; `null` is the built-in Email attribute.
+        attributeLabel:
+          type: string
+      additionalProperties: false
+  updatedAt:
+    type: string
+    format: date-time
+    description: Send it back as `expectedUpdatedAt` on a replace.
+additionalProperties: false

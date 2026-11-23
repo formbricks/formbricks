@@ -1,0 +1,18 @@
+type: object
+description: >-
+  A team's dashboard limits: the dashboards its members whose organization role is Dashboard Viewer
+  open in the workspaces the team is granted. Empty means all of them. Other members are never limited.
+required:
+  - teamId
+  - dashboardIds
+properties:
+  teamId:
+    type: string
+    format: cuid2
+  dashboardIds:
+    type: array
+    maxItems: 200
+    items:
+      type: string
+      format: cuid2
+additionalProperties: false

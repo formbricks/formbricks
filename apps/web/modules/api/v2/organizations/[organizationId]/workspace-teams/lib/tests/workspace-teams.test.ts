@@ -28,6 +28,9 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
+vi.mock("@/modules/ee/dashboard-access/lib/team-dashboard-limits", () => ({
+  deleteTeamDashboardLimitsInWorkspaces: vi.fn(),
+}));
 
 describe("WorkspaceTeams Lib", () => {
   beforeEach(() => {
@@ -117,6 +120,12 @@ describe("WorkspaceTeams Lib", () => {
   });
 
   describe("deleteWorkspaceTeam", () => {
+    beforeEach(() => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (run: unknown) =>
+        (run as (tx: typeof prisma) => Promise<never>)(prisma)
+      );
+    });
+
     test("deletes a workspaceTeam successfully", async () => {
       vi.mocked(prisma.workspaceTeam.delete, { partial: true }).mockResolvedValueOnce({
         workspaceId: "p1",

@@ -15,6 +15,7 @@ import {
   updateFeedbackDirectoryAction,
 } from "@/modules/ee/feedback-directory/actions";
 import { ArchiveFeedbackDirectory } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory";
+import { DashboardViewerAccessSection } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/dashboard-viewer-access-section";
 import { PurgeFeedbackDirectoryData } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/purge-feedback-directory-data";
 import { FeedbackDirectoryQueryClientProvider } from "@/modules/ee/feedback-directory/components/query-client-provider";
 import { getWorkspaceAccessConflictState } from "@/modules/ee/feedback-directory/lib/workspace-access-conflicts";
@@ -51,6 +52,8 @@ interface FeedbackDirectorySettingsModalProps {
   orgWorkspaces: TOrganizationWorkspace[];
   workspaceAccessByWorkspace: TWorkspaceFeedbackDirectoryAccess[];
   membershipRole: TOrganizationRole;
+  /** Access Control and Dashboards: the plan Dashboard Viewer access needs (ENG-7476). */
+  isDashboardViewerAccessEnabled?: boolean;
 }
 
 export const FeedbackDirectorySettingsModal = ({
@@ -61,6 +64,7 @@ export const FeedbackDirectorySettingsModal = ({
   orgWorkspaces,
   workspaceAccessByWorkspace,
   membershipRole,
+  isDashboardViewerAccessEnabled = false,
 }: Readonly<FeedbackDirectorySettingsModalProps>) => {
   const { t } = useTranslation();
   const { isOwner, isManager } = getAccessFlags(membershipRole);
@@ -337,6 +341,16 @@ export const FeedbackDirectorySettingsModal = ({
                   </Alert>
                 )}
               </div>
+
+              {isEdit && isDashboardViewerAccessEnabled && (
+                <FeedbackDirectoryQueryClientProvider>
+                  <DashboardViewerAccessSection
+                    datasetId={directory.id}
+                    organizationId={organizationId}
+                    canEdit={isOwnerOrManager}
+                  />
+                </FeedbackDirectoryQueryClientProvider>
+              )}
 
               {isEdit && (
                 <div className="space-y-2">
