@@ -1,60 +1,57 @@
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import {
+  whereAttributeKeysOfDirectory,
+  whereDirectoryAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
+import type { TWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
 
+/** A contact of the directory whose `key` attribute is `value`, if any. */
+const findContactWithAttribute = (directoryId: string, key: string, value: string) =>
+  prisma.contact.findFirst({
+    where: {
+      directoryId,
+      attributes: { some: { attributeKey: whereDirectoryAttributeKey(directoryId, key), value } },
+    },
+    select: { id: true },
+  });
+
+/**
+ * Creates a contact in `directory`, from the request's workspace. The directory's matching key (`email`
+ * or `externalId`) is required and, like `userId`, must not belong to another contact of the directory.
+ */
 export const createContact = async (
-  contactData: TContactCreateRequest
+  contactData: TContactCreateRequest,
+  directory: TWorkspaceContactDirectory
 ): Promise<Result<TContactResponse, ApiErrorResponseV2>> => {
   const { workspaceId, attributes } = contactData;
+  const identityKey = directory.matchingKey;
 
   try {
-    const emailValue = attributes.email;
-    if (!emailValue) {
+    const identityValue = attributes[identityKey];
+    if (!identityValue) {
       return err({
         type: "bad_request",
-        details: [{ field: "attributes", issue: "email attribute is required" }],
+        details: [{ field: "attributes", issue: `${identityKey} attribute is required` }],
       });
     }
 
     // Extract userId if present
     const userId = attributes.userId;
 
-    // Check for existing contact with same email
-    const existingContactByEmail = await prisma.contact.findFirst({
-      where: {
-        workspaceId,
-        attributes: {
-          some: {
-            attributeKey: { key: "email" },
-            value: emailValue,
-          },
-        },
-      },
-    });
-
-    if (existingContactByEmail) {
+    if (await findContactWithAttribute(directory.id, identityKey, identityValue)) {
       return err({
         type: "conflict",
-        details: [{ field: "email", issue: "contact with this email already exists" }],
+        details: [{ field: identityKey, issue: `contact with this ${identityKey} already exists` }],
       });
     }
 
     // Check for existing contact with same userId (if provided)
     if (userId) {
-      const existingContactByUserId = await prisma.contact.findFirst({
-        where: {
-          workspaceId,
-          attributes: {
-            some: {
-              attributeKey: { key: "userId" },
-              value: userId,
-            },
-          },
-        },
-      });
+      const existingContactByUserId = await findContactWithAttribute(directory.id, "userId", userId);
 
       if (existingContactByUserId) {
         return err({
@@ -67,10 +64,10 @@ export const createContact = async (
     // Get all attribute keys that need to exist
     const attributeKeys = Object.keys(attributes);
 
-    // Check which attribute keys exist in the workspace
+    // Check which attribute keys exist in the directory
     const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
       where: {
-        ...whereAttributeKeysOfWorkspace(workspaceId),
+        ...whereAttributeKeysOfDirectory(directory.id),
         key: { in: attributeKeys },
       },
     });
@@ -98,6 +95,8 @@ export const createContact = async (
 
     const result = await prisma.contact.create({
       data: {
+        // The directory owns the contact; the workspace records where it was created.
+        directoryId: directory.id,
         workspaceId,
         attributes: {
           createMany: {

@@ -1,10 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { deleteContactAction, updateContactAttributesAction } from "./actions";
+import {
+  ContactDirectoryMissingError,
+  requireWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
+import { createContactsFromCSVAction, deleteContactAction, updateContactAttributesAction } from "./actions";
 import { CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE } from "./lib/contact-delete-errors";
-import { ContactInSharedDirectoryError, deleteContactInWorkspace } from "./lib/contacts";
+import {
+  ContactInSharedDirectoryError,
+  createContactsFromCSV,
+  deleteContactInWorkspace,
+} from "./lib/contacts";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
 
 vi.mock("server-only", () => ({}));
@@ -23,6 +32,10 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
   rateLimitConfigs: { actions: { stateMutation: {} } },
 }));
 vi.mock("@/modules/ee/contacts/lib/contacts-entitlement", () => ({ ensureContactsEnabled: vi.fn() }));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  requireWorkspaceContactDirectory: vi.fn(),
+}));
 vi.mock("./lib/contacts", async (importOriginal) => ({
   ContactInSharedDirectoryError: (await importOriginal<typeof import("./lib/contacts")>())
     .ContactInSharedDirectoryError,
@@ -100,5 +113,43 @@ describe("updateContactAttributesAction", () => {
       run(updateContactAttributesAction, { contactId: "contact_1", workspaceId: "ws_1", attributes: {} })
     ).rejects.toThrow(AuthorizationError);
     expect(updateContactAttributes).not.toHaveBeenCalled();
+  });
+});
+
+describe("createContactsFromCSVAction", () => {
+  const upload = {
+    csvData: [{ email: "a@example.com" }],
+    workspaceId: "ws_1",
+    duplicateContactsAction: "update",
+    attributeMap: {},
+  };
+
+  test("refuses a workspace with no contact directory before any read or write", async () => {
+    vi.mocked(requireWorkspaceContactDirectory).mockRejectedValue(new ContactDirectoryMissingError());
+
+    await expect(run(createContactsFromCSVAction, upload)).rejects.toThrow(
+      "A contact directory needs to be set up for this workspace before contacts are available."
+    );
+    expect(prisma.contact.count).not.toHaveBeenCalled();
+    expect(createContactsFromCSV).not.toHaveBeenCalled();
+  });
+
+  test("uploads into the workspace's directory and returns the multi-match count", async () => {
+    const directory = { id: "directory_1", matchingKey: "email" as const };
+    vi.mocked(requireWorkspaceContactDirectory).mockResolvedValue(directory);
+    vi.mocked(prisma.contact.count).mockResolvedValue(3);
+    vi.mocked(createContactsFromCSV).mockResolvedValue({ contacts: [], multiMatchCount: 2 });
+
+    const result = await run(createContactsFromCSVAction, upload);
+
+    expect(prisma.contact.count).toHaveBeenCalledWith({ where: { directoryId: "directory_1" } });
+    expect(createContactsFromCSV).toHaveBeenCalledWith(
+      [{ email: "a@example.com" }],
+      "ws_1",
+      directory,
+      "update",
+      {}
+    );
+    expect(result).toEqual({ contacts: [], multiMatchCount: 2 });
   });
 });

@@ -2506,6 +2506,7 @@
       "upload_contacts_modal_pick_different_file": "Selectați un alt fișier",
       "upload_contacts_modal_preview": "Iată o previzualizare a datelor tale.",
       "upload_contacts_modal_upload_btn": "Încărcați contacte",
+      "upload_contacts_multi_match": "{count, plural, one {{count} rând corespunde mai multor contacte. A actualizat contactul cu același userId sau, în lipsa acestuia, pe cel mai vechi.} few {{count} rânduri corespund mai multor contacte. Fiecare a actualizat contactul cu același userId sau, în lipsa acestuia, pe cel mai vechi.} other {{count} de rânduri corespund mai multor contacte. Fiecare a actualizat contactul cu același userId sau, în lipsa acestuia, pe cel mai vechi.}}",
       "upload_contacts_success": "Contactele au fost încărcate cu succes"
     },
     "creatives": {

@@ -2506,6 +2506,7 @@
       "upload_contacts_modal_pick_different_file": "Farklı bir dosya seç",
       "upload_contacts_modal_preview": "İşte verilerinin önizlemesi.",
       "upload_contacts_modal_upload_btn": "Kişileri yükle",
+      "upload_contacts_multi_match": "{count, plural, one {{count} satır birden fazla kişiyle eşleşti. Aynı userId'ye sahip kişi güncellendi, yoksa en eski kişi güncellendi.} other {{count} satır birden fazla kişiyle eşleşti. Her biri için aynı userId'ye sahip kişi güncellendi, yoksa en eski kişi güncellendi.}}",
       "upload_contacts_success": "Kişiler başarıyla yüklendi"
     },
     "creatives": {

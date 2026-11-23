@@ -20,11 +20,17 @@ import {
   getReservedFutureDefaultAttributeKeys,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
-  whereAttributeKey,
-  whereAttributeKeysOfWorkspace,
+  whereAttributeKeysOfDirectory,
+  whereDirectoryAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
+import type { TWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  CONTACTS_OLDEST_FIRST,
+  groupContactsByIdentity,
+  pickContactForRow,
+} from "@/modules/ee/contacts/lib/contact-identity";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 import {
@@ -38,7 +44,8 @@ import {
   TContact,
   ZContactCSVAttributeMap,
   ZContactCSVDuplicateAction,
-  ZContactCSVUploadResponse,
+  ZContactCSVRecords,
+  getContactCSVUploadSchema,
 } from "../types/contact";
 
 export const getContactsInSegment = reactCache(async (segmentId: string) => {
@@ -307,17 +314,18 @@ const resolveUserIdConflict = (
 };
 
 /**
- * Extracts unique emails, userIds, and attribute keys from CSV data
+ * Extracts unique identity values, userIds, and attribute keys from CSV data
  */
 const extractCsvMetadata = (
-  csvData: Record<string, string>[]
+  csvData: Record<string, string>[],
+  identityKey: string
 ): {
-  csvEmails: string[];
+  csvIdentityValues: string[];
   csvUserIds: string[];
   csvKeys: Set<string>;
   attributeValuesByKey: Map<string, string[]>;
 } => {
-  const csvEmails = Array.from(new Set(csvData.map((r) => r.email).filter(Boolean)));
+  const csvIdentityValues = Array.from(new Set(csvData.map((r) => r[identityKey]).filter(Boolean)));
   const csvUserIds = Array.from(new Set(csvData.map((r) => r.userId).filter(Boolean)));
   const csvKeys = new Set<string>();
   const attributeValuesByKey = new Map<string, string[]>();
@@ -334,7 +342,7 @@ const extractCsvMetadata = (
     }
   }
 
-  return { csvEmails, csvUserIds, csvKeys, attributeValuesByKey };
+  return { csvIdentityValues, csvUserIds, csvKeys, attributeValuesByKey };
 };
 
 /**
@@ -442,7 +450,8 @@ const createMissingAttributeKeys = async (
   lowercaseToActualKeyMap: Map<string, string>,
   attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
-  workspaceId: string
+  workspaceId: string,
+  directoryId: string
 ): Promise<void> => {
   const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
 
@@ -475,15 +484,18 @@ const createMissingAttributeKeys = async (
       key,
       name: formatSnakeCaseToTitleCase(key),
       dataType: attributeTypeMap.get(key)?.dataType ?? "string",
+      // The directory owns the key; the workspace records where it was created.
+      directoryId,
       workspaceId,
     })),
     skipDuplicates: true,
   });
 
-  // Fetch and update the maps with new keys
+  // Fetch and update the maps with new keys. Read by directory: a key another workspace of a shared
+  // directory created at the same moment carries that workspace's id.
   const newAttributeKeys = await prisma.contactAttributeKey.findMany({
     where: {
-      ...whereAttributeKeysOfWorkspace(workspaceId),
+      ...whereAttributeKeysOfDirectory(directoryId),
       key: { in: Array.from(uniqueMissingKeys.values()) },
     },
     select: { key: true, id: true, dataType: true },
@@ -504,13 +516,27 @@ type TExistingUserId = { value: string; contactId: string };
 
 type TCsvProcessingContext = {
   lowercaseToActualKeyMap: Map<string, string>;
-  emailToContactMap: Map<string, TExistingContactFromCsv>;
+  /** Existing contacts by identity value, oldest first. One value can match several contacts. */
+  identityToContactsMap: Map<string, TExistingContactFromCsv[]>;
+  identityKey: string;
   existingUserIds: TExistingUserId[];
   attributeKeyMap: Map<string, string>;
   attributeTypeMap: Map<string, TAttributeTypeInfo>;
   duplicateContactsAction: "skip" | "update" | "overwrite";
   workspaceId: string;
+  directoryId: string;
 };
+
+type TCsvRecordResult = {
+  contact: TContact | null;
+  /** The row matched several contacts and updated one of them (spec decision 5). */
+  updatedOneOfSeveral: boolean;
+};
+
+const missingIdentityMessage = (identityKey: string): string =>
+  identityKey === "email"
+    ? "Email is required for all contacts"
+    : `${identityKey} is required for all contacts`;
 
 /**
  * Processes a single CSV record to create or update a contact
@@ -518,15 +544,17 @@ type TCsvProcessingContext = {
 const processCsvRecord = async (
   record: Record<string, string>,
   ctx: TCsvProcessingContext
-): Promise<TContact | null> => {
+): Promise<TCsvRecordResult> => {
   const {
     lowercaseToActualKeyMap,
-    emailToContactMap,
+    identityToContactsMap,
+    identityKey,
     existingUserIds,
     attributeKeyMap,
     attributeTypeMap,
     duplicateContactsAction,
     workspaceId,
+    directoryId,
   } = ctx;
   // Map CSV keys to actual DB keys (case-insensitive matching)
   const mappedRecord: Record<string, string> = {};
@@ -538,16 +566,19 @@ const processCsvRecord = async (
     mappedRecord[actualKey] = value;
   }
 
-  if (!mappedRecord.email) {
-    throw new ValidationError("Email is required for all contacts");
+  const identityValue = mappedRecord[identityKey];
+  if (!identityValue) {
+    throw new ValidationError(missingIdentityMessage(identityKey));
   }
 
-  const existingContact = emailToContactMap.get(mappedRecord.email);
+  const matches = identityToContactsMap.get(identityValue) ?? [];
+  const existingContact = pickContactForRow(matches, mappedRecord.userId);
 
   if (!existingContact) {
-    // Create new contact
+    // Create new contact in the directory; the workspace records where it was created.
     const created = await prisma.contact.create({
       data: {
+        directoryId,
         workspaceId,
         attributes: {
           create: createAttributeConnections(mappedRecord, attributeKeyMap, attributeTypeMap),
@@ -556,11 +587,11 @@ const processCsvRecord = async (
       include: contactAttributesInclude,
     });
     // Written for this workspace, so `workspaceId` is set.
-    return { ...created, workspaceId };
+    return { contact: { ...created, workspaceId }, updatedOneOfSeveral: false };
   }
 
   // Handle duplicate based on action
-  return handleDuplicateContact(
+  const contact = await handleDuplicateContact(
     mappedRecord,
     existingContact,
     existingUserIds,
@@ -569,6 +600,7 @@ const processCsvRecord = async (
     duplicateContactsAction,
     workspaceId
   );
+  return { contact, updatedOneOfSeveral: contact !== null && matches.length > 1 };
 };
 
 /**
@@ -646,56 +678,77 @@ const handleDuplicateContact = async (
 };
 
 export type TCreateContactsFromCSVResult =
-  | { contacts: TContact[] }
+  | {
+      contacts: TContact[];
+      /** Rows that matched several contacts and updated one of them (spec decision 5). */
+      multiMatchCount: number;
+    }
   | { validationErrors: TCsvAttributeValidationError[] };
 
+/**
+ * Creates or updates contacts of `directory` from CSV rows, as uploaded from `workspaceId`. A row matches
+ * existing contacts by the directory's matching key (`email` or `externalId`).
+ */
 export const createContactsFromCSV = async (
   csvData: Record<string, string>[],
   workspaceId: string,
+  directory: TWorkspaceContactDirectory,
   duplicateContactsAction: "skip" | "update" | "overwrite",
   attributeMap: Record<string, string>
 ): Promise<TCreateContactsFromCSVResult> => {
   validateInputs(
-    [csvData, ZContactCSVUploadResponse],
+    [csvData, ZContactCSVRecords],
     [workspaceId, ZId],
     [duplicateContactsAction, ZContactCSVDuplicateAction],
     [attributeMap, ZContactCSVAttributeMap]
   );
 
+  const identityKey = directory.matchingKey;
+  const identityCheck = getContactCSVUploadSchema(identityKey).safeParse(csvData);
+  if (!identityCheck.success) {
+    throw new ValidationError(identityCheck.error.issues[0].message);
+  }
+
   try {
     // Step 2: Extract metadata from CSV data
-    const { csvEmails, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData);
+    const { csvIdentityValues, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(
+      csvData,
+      identityKey
+    );
 
     // Step 3: Fetch existing data from database
-    const [existingContactsByEmail, existingUserIds, existingAttributeKeys] = await Promise.all([
+    const [existingContactsByIdentity, existingUserIds, existingAttributeKeys] = await Promise.all([
       prisma.contact.findMany({
         where: {
-          workspaceId,
-          attributes: { some: { attributeKey: { key: "email" }, value: { in: csvEmails } } },
+          directoryId: directory.id,
+          attributes: {
+            some: {
+              attributeKey: whereDirectoryAttributeKey(directory.id, identityKey),
+              value: { in: csvIdentityValues },
+            },
+          },
         },
         select: {
           id: true,
           attributes: { select: { attributeKey: { select: { key: true, id: true } }, value: true } },
         },
+        orderBy: CONTACTS_OLDEST_FIRST,
       }),
       prisma.contactAttribute.findMany({
-        where: { attributeKey: whereAttributeKey(workspaceId, "userId"), value: { in: csvUserIds } },
+        where: {
+          attributeKey: whereDirectoryAttributeKey(directory.id, "userId"),
+          value: { in: csvUserIds },
+        },
         select: { value: true, contactId: true },
       }),
       prisma.contactAttributeKey.findMany({
-        where: whereAttributeKeysOfWorkspace(workspaceId),
+        where: whereAttributeKeysOfDirectory(directory.id),
         select: { key: true, id: true, dataType: true },
       }),
     ]);
 
     // Step 3: Build lookup maps
-    const emailToContactMap = new Map<string, TExistingContactFromCsv>();
-    for (const contact of existingContactsByEmail) {
-      const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === "email");
-      if (emailAttr) {
-        emailToContactMap.set(emailAttr.value, contact);
-      }
-    }
+    const identityToContactsMap = groupContactsByIdentity(existingContactsByIdentity, identityKey);
 
     const attributeKeyMap = new Map<string, string>();
     const lowercaseToActualKeyMap = new Map<string, string>();
@@ -721,22 +774,25 @@ export const createContactsFromCSV = async (
       lowercaseToActualKeyMap,
       attributeKeyMap,
       attributeTypeMap,
-      workspaceId
+      workspaceId,
+      directory.id
     );
 
     // Step 6: Process each CSV record
     const processingContext: TCsvProcessingContext = {
       lowercaseToActualKeyMap,
-      emailToContactMap,
+      identityToContactsMap,
+      identityKey,
       existingUserIds,
       attributeKeyMap,
       attributeTypeMap,
       duplicateContactsAction,
       workspaceId,
+      directoryId: directory.id,
     };
 
     const CHUNK_SIZE = 50;
-    const allResults: (TContact | null)[] = [];
+    const allResults: TCsvRecordResult[] = [];
 
     for (let i = 0; i < csvData.length; i += CHUNK_SIZE) {
       const chunk = csvData.slice(i, i + CHUNK_SIZE);
@@ -746,7 +802,12 @@ export const createContactsFromCSV = async (
       allResults.push(...chunkResults);
     }
 
-    return { contacts: allResults.filter((contact): contact is TContact => contact !== null) };
+    return {
+      contacts: allResults
+        .map(({ contact }) => contact)
+        .filter((contact): contact is TContact => contact !== null),
+      multiMatchCount: allResults.filter(({ updatedOneOfSeveral }) => updatedOneOfSeveral).length,
+    };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

@@ -11,14 +11,23 @@ import {
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
-  whereAttributeKey,
-  whereAttributeKeysOfWorkspace,
+  whereAttributeKeysOfDirectory,
+  whereDirectoryAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
+import type { TWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  CONTACTS_OLDEST_FIRST,
+  groupContactsByIdentity,
+  pickContactForRow,
+} from "@/modules/ee/contacts/lib/contact-identity";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
 
-const EMAIL_ATTRIBUTE_KEY = "email";
+type TExistingContactRow = {
+  id: string;
+  attributes: { id: string; attributeKey: { key: string }; createdAt: Date; value: string }[];
+};
 
 type TExistingContact = {
   contactId: string;
@@ -182,33 +191,30 @@ const validateAndAdjustAttributeTypes = (
 };
 
 /**
- * Builds a map from email to contact data for existing contacts
+ * The existing contact a request contact updates: of the contacts with its identity value (oldest
+ * first), the one with its userId, otherwise the oldest (spec decision 5). Other matches are left alone.
  */
-const buildExistingContactMap = (
-  existingContactsByEmail: {
-    id: string;
-    attributes: { id: string; attributeKey: { key: string }; createdAt: Date; value: string }[];
-  }[]
-): Map<string, TExistingContact> => {
-  const contactMap = new Map<string, TExistingContact>();
+const findExistingContact = (
+  contact: TContactBulkUploadContact,
+  identityKey: string,
+  contactsByIdentity: Map<string, TExistingContactRow[]>
+): TExistingContact | undefined => {
+  const findValue = (key: string) => contact.attributes.find((attr) => attr.attributeKey.key === key)?.value;
+  const identityValue = findValue(identityKey);
+  if (!identityValue) return undefined;
 
-  for (const contact of existingContactsByEmail) {
-    const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === EMAIL_ATTRIBUTE_KEY);
+  const match = pickContactForRow(contactsByIdentity.get(identityValue) ?? [], findValue("userId"));
+  if (!match) return undefined;
 
-    if (emailAttr) {
-      contactMap.set(emailAttr.value, {
-        contactId: contact.id,
-        attributes: contact.attributes.map((attr) => ({
-          id: attr.id,
-          attributeKey: { key: attr.attributeKey.key },
-          createdAt: attr.createdAt,
-          value: attr.value,
-        })),
-      });
-    }
-  }
-
-  return contactMap;
+  return {
+    contactId: match.id,
+    attributes: match.attributes.map((attr) => ({
+      id: attr.id,
+      attributeKey: { key: attr.attributeKey.key },
+      createdAt: attr.createdAt,
+      value: attr.value,
+    })),
+  };
 };
 
 /**
@@ -408,12 +414,21 @@ const prepareAttributesForExistingContacts = (
 const BATCH_SIZE = 10000;
 
 /**
- * Upserts attribute keys in batches using raw SQL
+ * Upserts attribute keys of the directory in batches using raw SQL. A new key records `workspaceId` as
+ * the workspace it was created from.
+ *
+ * The conflict target is the `(directoryId, key)` unique index, which the migration runner builds
+ * concurrently after the migrations (`ONLINE_INDEXES`). Postgres needs that exact index to exist and be
+ * valid, or the insert fails with "no unique or exclusion constraint matching the ON CONFLICT
+ * specification". The old `(key, workspaceId)` unique stays until 7.0: a row that hit only that one
+ * would raise instead of upserting, but that needs the same workspace to own the key in another
+ * directory, which moving a workspace rules out (its old directory is deleted with its keys).
  */
 const upsertAttributeKeysInBatches = async (
   tx: Prisma.TransactionClient,
   keysToUpsert: Map<string, { key: string; name: string; dataType: TContactAttributeDataType }>,
   workspaceId: string,
+  directoryId: string,
   attributeKeyMap: Record<string, string>
 ): Promise<void> => {
   const keysArray = Array.from(keysToUpsert.values());
@@ -429,16 +444,17 @@ const upsertAttributeKeysInBatches = async (
     const dataTypes = batch.map((k) => k.dataType);
 
     const upsertedKeys = await tx.$queryRaw<{ id: string; key: string }[]>`
-      INSERT INTO "ContactAttributeKey" ("id", "key", "name", "workspaceId", "dataType", "created_at", "updated_at")
+      INSERT INTO "ContactAttributeKey" ("id", "key", "name", "workspaceId", "directoryId", "dataType", "created_at", "updated_at")
       SELECT
         unnest(${ids}::text[]),
         unnest(${keys}::text[]),
         unnest(${names}::text[]),
         ${workspaceId},
+        ${directoryId},
         unnest(${dataTypes}::text[]::"ContactAttributeDataType"[]),
         NOW(),
         NOW()
-      ON CONFLICT ("key", "workspaceId")
+      ON CONFLICT ("directoryId", "key")
       DO UPDATE SET
         "name" = EXCLUDED."name",
         "updated_at" = NOW()
@@ -492,10 +508,14 @@ const upsertAttributesInBatches = async (
   }
 };
 
+/**
+ * Creates or updates contacts of `directory`, as sent from `workspaceId`. A contact matches existing ones
+ * by the directory's matching key (`email` or `externalId`), which the route has checked is present.
+ */
 export const upsertBulkContacts = async (
   contacts: TContactBulkUploadContact[],
   workspaceId: string,
-  parsedEmails: string[]
+  directory: TWorkspaceContactDirectory
 ): Promise<
   Result<
     {
@@ -505,12 +525,16 @@ export const upsertBulkContacts = async (
   >
 > => {
   const contactIdxWithConflictingUserIds: number[] = [];
+  const identityKey = directory.matchingKey;
   const { userIdsInContacts, attributeKeys } = extractContactMetadata(contacts);
+  const identityValues = contacts.flatMap((contact) =>
+    contact.attributes.filter((attr) => attr.attributeKey.key === identityKey).map((attr) => attr.value)
+  );
 
-  const [existingUserIds, existingContactsByEmail, existingAttributeKeys] = await Promise.all([
+  const [existingUserIds, existingContactsByIdentity, existingAttributeKeys] = await Promise.all([
     prisma.contactAttribute.findMany({
       where: {
-        attributeKey: whereAttributeKey(workspaceId, "userId"),
+        attributeKey: whereDirectoryAttributeKey(directory.id, "userId"),
         value: { in: userIdsInContacts },
       },
       select: { value: true },
@@ -518,11 +542,11 @@ export const upsertBulkContacts = async (
 
     prisma.contact.findMany({
       where: {
-        workspaceId,
+        directoryId: directory.id,
         attributes: {
           some: {
-            attributeKey: { key: EMAIL_ATTRIBUTE_KEY },
-            value: { in: parsedEmails },
+            attributeKey: whereDirectoryAttributeKey(directory.id, identityKey),
+            value: { in: identityValues },
           },
         },
       },
@@ -537,10 +561,11 @@ export const upsertBulkContacts = async (
         },
         id: true,
       },
+      orderBy: CONTACTS_OLDEST_FIRST,
     }),
 
     prisma.contactAttributeKey.findMany({
-      where: { ...whereAttributeKeysOfWorkspace(workspaceId), key: { in: attributeKeys } },
+      where: { ...whereAttributeKeysOfDirectory(directory.id), key: { in: attributeKeys } },
     }),
   ]);
 
@@ -596,7 +621,7 @@ export const upsertBulkContacts = async (
   }
 
   // Build contact lookup map
-  const contactMap = buildExistingContactMap(existingContactsByEmail);
+  const contactsByIdentity = groupContactsByIdentity(existingContactsByIdentity, identityKey);
 
   // Split contacts into ones to update and ones to create
   const contactsToUpdate: TContactToUpdate[] = [];
@@ -604,8 +629,7 @@ export const upsertBulkContacts = async (
   const filteredContacts: TContactBulkUploadContact[] = [];
 
   contacts.forEach((contact, idx) => {
-    const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === EMAIL_ATTRIBUTE_KEY);
-    const existingContact = emailAttr ? contactMap.get(emailAttr.value) : undefined;
+    const existingContact = findExistingContact(contact, identityKey, contactsByIdentity);
 
     if (existingContact) {
       processExistingContact(
@@ -655,11 +679,15 @@ export const upsertBulkContacts = async (
 
         // Upsert attribute keys in batches
         if (keysToUpsert.size > 0) {
-          await upsertAttributeKeysInBatches(tx, keysToUpsert, workspaceId, attributeKeyMap);
+          await upsertAttributeKeysInBatches(tx, keysToUpsert, workspaceId, directory.id, attributeKeyMap);
         }
 
-        // Create new contacts
-        const newContacts = contactsToCreate.map(() => ({ id: createId(), workspaceId }));
+        // Create new contacts in the directory; the workspace records where each was created.
+        const newContacts = contactsToCreate.map(() => ({
+          id: createId(),
+          directoryId: directory.id,
+          workspaceId,
+        }));
 
         if (newContacts.length > 0) {
           await tx.contact.createMany({ data: newContacts });

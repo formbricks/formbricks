@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/strings";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
+import type { TContactDirectoryMatchingKey } from "@/modules/ee/contacts/directories/types";
 import { RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
   findUnmappableCsvColumns,
@@ -20,7 +21,7 @@ import {
 } from "@/modules/ee/contacts/lib/csv-attribute-mapping";
 import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
 import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
-import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
+import { TContactCSVRecords, getContactCSVUploadSchema } from "@/modules/ee/contacts/types/contact";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { CsvTable } from "@/modules/ui/components/csv-table";
@@ -38,12 +39,15 @@ import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 interface UploadContactsCSVButtonProps {
   readonly workspaceId: string;
   readonly contactAttributeKeys: TContactAttributeKey[];
+  /** The workspace directory's matching key: the column every row needs and contacts are matched on. */
+  readonly matchingKey: TContactDirectoryMatchingKey;
   readonly disabled?: boolean;
 }
 
 export const UploadContactsCSVButton = ({
   workspaceId,
   contactAttributeKeys,
+  matchingKey,
   disabled = false,
 }: UploadContactsCSVButtonProps) => {
   const { t } = useTranslation();
@@ -55,7 +59,7 @@ export const UploadContactsCSVButton = ({
   const [duplicateContactsAction, setDuplicateContactsAction] = useState<"skip" | "update" | "overwrite">(
     "skip"
   );
-  const [csvResponse, setCSVResponse] = useState<TContactCSVUploadResponse>([]);
+  const [csvResponse, setCSVResponse] = useState<TContactCSVRecords>([]);
   const [attributeMap, setAttributeMap] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -89,7 +93,7 @@ export const UploadContactsCSVButton = ({
       try {
         const records = parseContactsCSV(csv);
 
-        const parsedRecords = ZContactCSVUploadResponse.safeParse(records);
+        const parsedRecords = getContactCSVUploadSchema(matchingKey).safeParse(records);
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
           setError(parsedRecords.error.issues[0].message);
@@ -234,6 +238,9 @@ export const UploadContactsCSVButton = ({
 
       setError("");
       toast.success(t("workspace.contacts.upload_contacts_success"));
+      if (result.data.multiMatchCount > 0) {
+        toast(t("workspace.contacts.upload_contacts_multi_match", { count: result.data.multiMatchCount }));
+      }
       resetState(true);
 
       router.refresh();
@@ -374,11 +381,14 @@ export const UploadContactsCSVButton = ({
       },
     ];
 
-    const headers = Object.keys(exampleData[0]);
-    const csvRows = [
-      headers.join(","),
-      ...exampleData.map((row) => headers.map((h) => (row as Record<string, string>)[h]).join(",")),
-    ];
+    // An external-ID directory matches rows on `externalId`, so its sample leads with that column.
+    const sampleRows: Record<string, string>[] =
+      matchingKey === "externalId"
+        ? exampleData.map((row) => ({ externalId: `crm-${row.user_id}`, ...row }))
+        : exampleData;
+
+    const headers = Object.keys(sampleRows[0]);
+    const csvRows = [headers.join(","), ...sampleRows.map((row) => headers.map((h) => row[h]).join(","))];
     const csvString = csvRows.join("\n");
     const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvString);
 

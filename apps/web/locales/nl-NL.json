@@ -2506,6 +2506,7 @@
       "upload_contacts_modal_pick_different_file": "Kies een ander bestand",
       "upload_contacts_modal_preview": "Hier ziet u een voorbeeld van uw gegevens.",
       "upload_contacts_modal_upload_btn": "Contacten uploaden",
+      "upload_contacts_multi_match": "{count, plural, one {{count} rij kwam overeen met meer dan één contact. Hierbij is het contact met dezelfde userId bijgewerkt, of anders het oudste contact.} other {{count} rijen kwamen overeen met meer dan één contact. Hierbij is telkens het contact met dezelfde userId bijgewerkt, of anders het oudste contact.}}",
       "upload_contacts_success": "Contacten succesvol geüpload"
     },
     "creatives": {

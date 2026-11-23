@@ -2506,6 +2506,7 @@
       "upload_contacts_modal_pick_different_file": "Escolha um arquivo diferente",
       "upload_contacts_modal_preview": "Aqui está uma prévia dos seus dados.",
       "upload_contacts_modal_upload_btn": "Fazer upload de contatos",
+      "upload_contacts_multi_match": "{count, plural, one {{count} linha correspondeu a mais de um contato. Ela atualizou o contato com o mesmo userId ou, caso não exista, o mais antigo.} many {{count} de linhas corresponderam a mais de um contato. Cada uma atualizou o contato com o mesmo userId ou, caso não exista, o mais antigo.} other {{count} linhas corresponderam a mais de um contato. Cada uma atualizou o contato com o mesmo userId ou, caso não exista, o mais antigo.}}",
       "upload_contacts_success": "Contatos carregados com sucesso"
     },
     "creatives": {

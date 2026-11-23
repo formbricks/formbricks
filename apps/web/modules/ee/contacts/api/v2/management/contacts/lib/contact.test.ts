@@ -17,12 +17,108 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+const emailDirectory = { id: "directory123", matchingKey: "email" as const };
+const externalIdDirectory = { id: "directory-ext", matchingKey: "externalId" as const };
+
 describe("contact.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe("createContact", () => {
+    test("checks for an existing contact across the whole directory", async () => {
+      vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce({ id: "from-other-workspace" } as Awaited<
+        ReturnType<typeof prisma.contact.findFirst>
+      >);
+
+      const result = await createContact(
+        { workspaceId: "workspace123", attributes: { email: "john@example.com" } },
+        emailDirectory
+      );
+
+      expect(result.ok).toBe(false);
+      expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+        where: {
+          directoryId: "directory123",
+          attributes: {
+            some: {
+              attributeKey: { key: "email", directoryId: "directory123" },
+              value: "john@example.com",
+            },
+          },
+        },
+        select: { id: true },
+      });
+      expect(prisma.contact.create).not.toHaveBeenCalled();
+    });
+
+    test("an external-ID directory requires externalId instead of email", async () => {
+      const result = await createContact(
+        { workspaceId: "workspace123", attributes: { email: "john@example.com" } },
+        externalIdDirectory
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: {
+          type: "bad_request",
+          details: [{ field: "attributes", issue: "externalId attribute is required" }],
+        },
+      });
+      expect(prisma.contact.findFirst).not.toHaveBeenCalled();
+    });
+
+    test("an external-ID directory refuses an externalId another contact has", async () => {
+      vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce({ id: "existing" } as Awaited<
+        ReturnType<typeof prisma.contact.findFirst>
+      >);
+
+      const result = await createContact(
+        { workspaceId: "workspace123", attributes: { externalId: "crm-1" } },
+        externalIdDirectory
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: {
+          type: "conflict",
+          details: [{ field: "externalId", issue: "contact with this externalId already exists" }],
+        },
+      });
+    });
+
+    test("creates the contact in the directory with keys of the directory", async () => {
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+        { id: "key-ext", key: "externalId", dataType: "string" },
+      ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
+      vi.mocked(prisma.contact.create).mockResolvedValue({
+        id: "new-contact",
+        createdAt: new Date("2026-01-01"),
+        attributes: [{ value: "crm-1", attributeKey: { key: "externalId", dataType: "string" } }],
+      } as unknown as Awaited<ReturnType<typeof prisma.contact.create>>);
+
+      const result = await createContact(
+        { workspaceId: "workspace123", attributes: { externalId: "crm-1" } },
+        externalIdDirectory
+      );
+
+      expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
+        where: { directoryId: "directory-ext", key: { in: ["externalId"] } },
+      });
+      expect(prisma.contact.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ directoryId: "directory-ext", workspaceId: "workspace123" }),
+        })
+      );
+      expect(result).toEqual(
+        expect.objectContaining({
+          ok: true,
+          data: expect.objectContaining({ workspaceId: "workspace123", attributes: { externalId: "crm-1" } }),
+        })
+      );
+    });
+
     test("returns bad_request error when email attribute is missing", async () => {
       const contactData: TContactCreateRequest = {
         workspaceId: "workspace123",
@@ -31,7 +127,7 @@ describe("contact.ts", () => {
         },
       };
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -48,7 +144,7 @@ describe("contact.ts", () => {
         },
       };
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -70,7 +166,7 @@ describe("contact.ts", () => {
         { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
       ] as (TContactAttributeKey & { directoryId: string | null })[]);
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -97,7 +193,7 @@ describe("contact.ts", () => {
         updatedAt: new Date(),
       });
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -127,7 +223,7 @@ describe("contact.ts", () => {
           updatedAt: new Date(),
         }); // Existing contact by userId
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -179,7 +275,7 @@ describe("contact.ts", () => {
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
       vi.mocked(prisma.contact.create).mockResolvedValue(contactWithAttributes);
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -213,7 +309,7 @@ describe("contact.ts", () => {
         null as unknown as Awaited<ReturnType<typeof prisma.contact.create>>
       );
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -234,7 +330,7 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contact.findFirst).mockRejectedValue(new Error("Database connection failed"));
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -276,7 +372,7 @@ describe("contact.ts", () => {
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
       vi.mocked(prisma.contact.create).mockResolvedValue(contactWithAttributes);
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(true);
       expect(prisma.contact.findFirst).toHaveBeenCalledTimes(1); // Only called once for email check
@@ -296,7 +392,7 @@ describe("contact.ts", () => {
         { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
       ] as (TContactAttributeKey & { directoryId: string | null })[]);
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -357,7 +453,7 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contact.create).mockResolvedValue(contactWithAttributes);
 
-      const result = await createContact(contactData);
+      const result = await createContact(contactData, emailDirectory);
 
       expect(result.ok).toBe(true);
       expect(prisma.contact.findFirst).toHaveBeenCalledTimes(2); // Called once for email check and once for userId check
