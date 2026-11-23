@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ZUserCurrentPassword, ZUserPassword } from "./user";
+import { ZUserCurrentPassword, ZUserPassword, ZUserPersonalInfoUpdateInput } from "./user";
 
 // bcrypt only hashes the first 72 bytes of its input, so a password longer than that is
 // silently truncated: two passwords sharing their first 72 bytes become the same password.
@@ -43,5 +43,15 @@ describe("ZUserCurrentPassword (verify-only)", () => {
 
   test("still caps at 128 characters", () => {
     expect(ZUserCurrentPassword.safeParse(`Aa1${"x".repeat(126)}`).success).toBe(false);
+  });
+});
+
+describe("ZUserPersonalInfoUpdateInput", () => {
+  test("accepts a password above the bcrypt limit for verification", () => {
+    expect(ZUserPersonalInfoUpdateInput.safeParse({ password: `Aa1${"x".repeat(100)}` }).success).toBe(true);
+  });
+
+  test("still enforces the limit on a password being set", () => {
+    expect(ZUserPassword.safeParse(`Aa1${"x".repeat(100)}`).success).toBe(false);
   });
 });

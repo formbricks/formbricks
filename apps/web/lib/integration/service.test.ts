@@ -2,19 +2,17 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { IntegrationType, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import { ENCRYPTION_KEY, ITEMS_PER_PAGE } from "../constants";
 import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
-import { encryptIntegrationConfig } from "./credentials";
-import { withStoredIntegrationKey } from "./redact-credentials";
 import {
   createOrUpdateIntegration,
   deleteIntegration,
   getIntegration,
   getIntegrationByType,
   getIntegrations,
-  getStoredIntegrationConfig,
+  saveIntegrationKeepingStoredKey,
 } from "./service";
 
 vi.mock("@/lib/constants", async (importOriginal) => ({
@@ -27,6 +25,7 @@ vi.mock("@/lib/constants", async (importOriginal) => ({
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     survey: { findMany: vi.fn() },
     integration: {
       upsert: vi.fn(),
@@ -122,6 +121,154 @@ describe("Integration Service", () => {
       await expect(createOrUpdateIntegration(mockWorkspaceId, mockIntegrationData)).rejects.toThrow(
         DatabaseError
       );
+    });
+  });
+
+  describe("saveIntegrationKeepingStoredKey", () => {
+    const mockWorkspaceId = "clg123456789012345678901234";
+    const redacted = {
+      type: "googleSheets" as const,
+      config: { ...mockIntegrationConfig, key: { ...mockIntegrationConfig.key, access_token: "" } },
+    };
+    const where = { type_workspaceId: { workspaceId: mockWorkspaceId, type: "googleSheets" } };
+
+    // The transaction client: the locking read, the write, and the visibility check's survey read.
+    const mockTx = (lockedRows: { config: unknown }[]) => {
+      const tx = {
+        $queryRaw: vi.fn().mockResolvedValue(lockedRows),
+        survey: { findMany: vi.fn().mockResolvedValue([]) },
+        integration: {
+          update: vi.fn().mockResolvedValue({ id: "int_123" }),
+          create: vi.fn().mockResolvedValue({ id: "int_new" }),
+        },
+      };
+      vi.mocked(prisma.$transaction).mockImplementation(((run: (client: typeof tx) => unknown) =>
+        run(tx)) as never);
+      return tx;
+    };
+
+    test("updates the locked row, keeping its stored ciphertext over the redacted key", async () => {
+      const storedConfig = {
+        ...mockIntegrationConfig,
+        key: {
+          ...mockIntegrationConfig.key,
+          access_token: symmetricEncrypt("stored-access", ENCRYPTION_KEY),
+          refresh_token: symmetricEncrypt("stored-refresh", ENCRYPTION_KEY),
+        },
+      };
+      const tx = mockTx([{ config: storedConfig }]);
+
+      await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
+
+      expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(tx.integration.create).not.toHaveBeenCalled();
+      // ENG-7311: the stored ciphertext is written back exactly as read — not re-encrypted, not blanked.
+      expect(tx.integration.update).toHaveBeenCalledWith({
+        where,
+        data: {
+          type: "googleSheets",
+          config: { ...redacted.config, key: storedConfig.key },
+          workspace: { connect: { id: mockWorkspaceId } },
+        },
+      });
+    });
+
+    test("writes a ciphertext that no longer decrypts back unchanged", async () => {
+      // Encrypted under a different ENCRYPTION_KEY: the decrypting getter would have blanked it to "".
+      const stale = symmetricEncrypt("old", "f".repeat(64));
+      const storedConfig = {
+        ...mockIntegrationConfig,
+        key: { ...mockIntegrationConfig.key, access_token: stale },
+      };
+      const tx = mockTx([{ config: storedConfig }]);
+
+      await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
+
+      expect(tx.integration.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            config: expect.objectContaining({ key: expect.objectContaining({ access_token: stale }) }),
+          }),
+        })
+      );
+    });
+
+    test("upgrades a legacy plaintext stored token to ciphertext on save", async () => {
+      const tx = mockTx([{ config: mockIntegrationConfig }]);
+
+      await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
+
+      const data = vi.mocked(tx.integration.update).mock.calls[0][0].data as {
+        config: typeof mockIntegrationConfig;
+      };
+      expect(symmetricDecrypt(data.config.key.access_token, ENCRYPTION_KEY)).toBe("mock-access-token");
+      expect(symmetricDecrypt(data.config.key.refresh_token, ENCRYPTION_KEY)).toBe("mock-refresh-token");
+    });
+
+    test("creates the row with the sent config when none is stored", async () => {
+      const tx = mockTx([]);
+      tx.survey.findMany.mockResolvedValueOnce([{ id: "survey123" }]);
+
+      const result = await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
+
+      expect(result).toEqual({ id: "int_new" });
+      expect(tx.integration.update).not.toHaveBeenCalled();
+      const data = vi.mocked(tx.integration.create).mock.calls[0][0].data as {
+        config: typeof mockIntegrationConfig;
+      };
+      // The client's blank stays blank; any plaintext credential is encrypted before it reaches the row.
+      expect(data.config.key.access_token).toBe("");
+      expect(symmetricDecrypt(data.config.key.refresh_token, ENCRYPTION_KEY)).toBe("mock-refresh-token");
+      expect(data).toMatchObject({
+        type: "googleSheets",
+        workspace: { connect: { id: mockWorkspaceId } },
+      });
+    });
+
+    test("checks newly mapped surveys on the transaction, not the app client", async () => {
+      const tx = mockTx([{ config: { ...mockIntegrationConfig, data: [] } }]);
+      tx.survey.findMany.mockResolvedValueOnce([{ id: "survey123" }]);
+
+      await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
+
+      expect(tx.survey.findMany).toHaveBeenCalledTimes(2);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    });
+
+    test("refuses a newly mapped survey from another workspace", async () => {
+      const tx = mockTx([{ config: { ...mockIntegrationConfig, data: [] } }]);
+      tx.survey.findMany.mockResolvedValueOnce([]);
+
+      await expect(saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted)).rejects.toThrow(
+        ResourceNotFoundError
+      );
+
+      expect(tx.survey.findMany.mock.calls[0][0]).toEqual({
+        where: { id: { in: ["survey123"] }, workspaceId: mockWorkspaceId },
+        select: { id: true },
+      });
+      expect(tx.integration.update).not.toHaveBeenCalled();
+    });
+
+    test("throws DatabaseError when Prisma rejects the write", async () => {
+      const tx = mockTx([]);
+      tx.survey.findMany.mockResolvedValueOnce([{ id: "survey123" }]);
+      tx.integration.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: "P2002",
+          clientVersion: "5.0.0",
+        })
+      );
+
+      await expect(saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted)).rejects.toThrow(DatabaseError);
+    });
+
+    test("rethrows an error that is not Prisma's unchanged", async () => {
+      const tx = mockTx([{ config: mockIntegrationConfig }]);
+      const failure = new Error("boom");
+      tx.integration.update.mockRejectedValue(failure);
+
+      await expect(saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted)).rejects.toBe(failure);
     });
   });
 
@@ -335,41 +482,6 @@ describe("Integration Service", () => {
       vi.mocked(prisma.integration.findFirst).mockRejectedValue(prismaError);
 
       await expect(getIntegrationByType(mockWorkspaceId, mockType)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getStoredIntegrationConfig", () => {
-    const mockWorkspaceId = "clg123456789012345678901234";
-
-    test("a settings save keeps a token that no longer decrypts as its ciphertext", async () => {
-      const ciphertext = symmetricEncrypt("old", "f".repeat(64));
-      const storedConfig = {
-        ...mockIntegrationConfig,
-        key: { ...mockIntegrationConfig.key, access_token: ciphertext },
-      };
-      // `type` is on the row so a getter that decrypted the row (via transformIntegration) would blank the token.
-      vi.mocked(prisma.integration.findFirst).mockResolvedValue({
-        type: "slack",
-        config: storedConfig,
-      } as never);
-
-      const stored = await getStoredIntegrationConfig(mockWorkspaceId, IntegrationType.slack);
-
-      expect(prisma.integration.findFirst).toHaveBeenCalledWith({
-        where: { workspaceId: mockWorkspaceId, type: IntegrationType.slack },
-        select: { config: true },
-      });
-      // What the settings action does with it: the client echoes a redacted key, the stored one replaces it,
-      // and the save encrypts. The ciphertext must come out unchanged, not blanked.
-      const redacted = { type: "slack" as const, config: { ...storedConfig, key: { access_token: "" } } };
-      const saved = encryptIntegrationConfig("slack", withStoredIntegrationKey(redacted, stored).config);
-      expect(saved).toMatchObject({ key: { access_token: ciphertext } });
-    });
-
-    test("returns null when there is no integration of that type", async () => {
-      vi.mocked(prisma.integration.findFirst).mockResolvedValue(null);
-
-      expect(await getStoredIntegrationConfig(mockWorkspaceId, IntegrationType.slack)).toBeNull();
     });
   });
 

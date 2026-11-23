@@ -50,11 +50,6 @@ const collectLinksFromRendered = (html: string, links: Set<string>): void => {
 // value, else the respondent's answer or hidden field, else the fallback (`nbsp` read as a space).
 const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/;
 const RECALL_TOKENS = new RegExp(RECALL_TOKEN.source, "g");
-// Stands in for a token while the text is parsed: letters and digits only, so the parser keeps it whole
-// wherever it lands (an attribute name, an attribute value, a tag name), and lower case, as the parser
-// lower-cases names.
-const RECALL_MARKER = "fbrecallmarker";
-const RECALL_MARKERS = new RegExp(String.raw`${RECALL_MARKER}(\d+)x`, "g");
 // Elements whose text the parser never turns into markup and the browser does not show as survey text
 // (raw text and RCDATA). A token here is not plain text either.
 const RAW_TEXT_PARENTS: ReadonlySet<string> = new Set([
@@ -83,13 +78,19 @@ const RAW_TEXT_PARENTS: ReadonlySet<string> = new Set([
  */
 const getTokensOutsidePlainText = (html: string): string[] => {
   const tokens: string[] = [];
-  const marked = html.replaceAll(RECALL_TOKENS, (token) => `${RECALL_MARKER}${tokens.push(token) - 1}x`);
+  // Stands in for a token while the text is parsed. Random per call: survey text could otherwise spell the
+  // marker inside a text node and make a token that sits in a tag look like plain text (the permission
+  // check would miss it). Letters and digits only, so the parser keeps it whole wherever it lands (an
+  // attribute name, an attribute value, a tag name), and lower case, as the parser lower-cases names.
+  const marker = `fbrecallmarker${crypto.randomUUID().replaceAll("-", "")}`;
+  const markers = new RegExp(String.raw`${marker}(\d+)x`, "g");
+  const marked = html.replaceAll(RECALL_TOKENS, (token) => `${marker}${tokens.push(token) - 1}x`);
   const inPlainText = new Set<number>();
   DOMPurify.addHook("uponSanitizeElement", (node) => {
     const parent = node.parentNode;
     if (node.nodeName !== "#text" || parent?.nodeType !== 1) return;
     if (RAW_TEXT_PARENTS.has(parent.nodeName.toLowerCase())) return;
-    for (const match of (node.textContent ?? "").matchAll(RECALL_MARKERS)) inPlainText.add(Number(match[1]));
+    for (const match of (node.textContent ?? "").matchAll(markers)) inPlainText.add(Number(match[1]));
   });
   try {
     // RETURN_DOM_FRAGMENT: DOMPurify returns text without `<` unparsed, and then visits nothing.

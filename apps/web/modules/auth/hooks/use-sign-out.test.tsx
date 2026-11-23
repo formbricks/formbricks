@@ -113,6 +113,20 @@ describe("useSignOut", () => {
     expect(localStorageMock.removeItem).toHaveBeenCalledWith(FORMBRICKS_ENVIRONMENT_ID_LS);
   });
 
+  test("still signs out and redirects when the browser denies localStorage", async () => {
+    vi.stubGlobal("localStorage", {
+      removeItem: vi.fn(() => {
+        throw new DOMException("The operation is insecure.", "SecurityError");
+      }),
+    });
+    const { signOut } = useSignOut({ id: "u", email: "e@x.com" });
+
+    await signOut({ clearWorkspaceId: true });
+
+    expect(logoutPlainBeforeNavigation).toHaveBeenCalledTimes(1);
+    expect(window.location.href).toBe("/auth/login");
+  });
+
   test("skips the audit log when there is no session user", async () => {
     const { signOut } = useSignOut(null);
 

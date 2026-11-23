@@ -16,6 +16,7 @@ import {
 import { ExportModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/export-modal";
 import { ResponseCardModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { generateResponseTableColumns } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
+import { readLocalStorage, writeLocalStorage } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { BulkOutcomeActions } from "@/modules/analysis/response-outcome/components/bulk-outcome-actions";
@@ -102,13 +103,13 @@ export const ResponseTable = ({
   // Save settings to localStorage when they change
   useEffect(() => {
     if (columnOrder.length > 0) {
-      localStorage.setItem(`${survey.id}-columnOrder`, JSON.stringify(columnOrder));
+      writeLocalStorage(`${survey.id}-columnOrder`, JSON.stringify(columnOrder));
     }
     if (Object.keys(columnVisibility).length > 0) {
-      localStorage.setItem(`${survey.id}-columnVisibility`, JSON.stringify(columnVisibility));
+      writeLocalStorage(`${survey.id}-columnVisibility`, JSON.stringify(columnVisibility));
     }
     if (isExpanded !== null) {
-      localStorage.setItem(`${survey.id}-rowExpand`, JSON.stringify(isExpanded));
+      writeLocalStorage(`${survey.id}-rowExpand`, JSON.stringify(isExpanded));
     }
   }, [columnOrder, columnVisibility, isExpanded, survey.id]);
 
@@ -138,9 +139,9 @@ export const ResponseTable = ({
   const defaultColumnOrder = useMemo(() => table.getAllLeafColumns().map((d) => d.id), [table]);
 
   useEffect(() => {
-    const savedColumnOrder = localStorage.getItem(`${survey.id}-columnOrder`);
-    const savedColumnVisibility = localStorage.getItem(`${survey.id}-columnVisibility`);
-    const savedExpandedSettings = localStorage.getItem(`${survey.id}-rowExpand`);
+    const savedColumnOrder = readLocalStorage(`${survey.id}-columnOrder`);
+    const savedColumnVisibility = readLocalStorage(`${survey.id}-columnVisibility`);
+    const savedExpandedSettings = readLocalStorage(`${survey.id}-rowExpand`);
 
     // Reconciled rather than adopted wholesale (ENG-2540): the settings modal iterates THIS array, so
     // a column id the saved order has never seen used to get no toggle and no drag handle at all.

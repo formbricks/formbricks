@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TIntegration,
   TIntegrationByType,
@@ -12,7 +12,9 @@ import {
   ZIntegrationType,
 } from "@formbricks/types/integration";
 import { decryptIntegrationConfig, encryptIntegrationConfig } from "@/lib/integration/credentials";
+import { withStoredIntegrationKey } from "@/lib/integration/redact-credentials";
 import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -51,23 +53,72 @@ const transformIntegration = (integration: TIntegration): TIntegration => {
   } as TIntegration;
 };
 
+/** Maps a Prisma failure to the service's `DatabaseError`; anything else is rethrown as is. */
+const toDatabaseError = (error: unknown): unknown => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    logger.error(loggableError(error), "Error creating or updating integration");
+    return new DatabaseError(error.message);
+  }
+  return error;
+};
+
+/**
+ * Refuses a write that maps a survey the workspace can't see (ENG-3283): an
+ * integration row forwards its surveys' responses to a third party, so a newly mapped survey must be
+ * workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted one), so token
+ * refreshes and unrelated edits keep saving.
+ */
+const assertMappedSurveysVisible = (
+  integrationData: TIntegrationInput,
+  storedConfig: unknown,
+  client: Pick<Prisma.TransactionClient, "survey"> = prisma
+) =>
+  assertNewlyAttachedSurveysWorkspaceVisible(
+    getIntegrationSurveyIds(integrationData.config),
+    getIntegrationSurveyIds(storedConfig),
+    client
+  );
+
+/**
+ * Refuses a mapping that names a survey outside the workspace. The survey ids come from the client, so
+ * each newly mapped one is resolved within the workspace the caller was authorized for; ids already
+ * stored on the row are left alone, as the visibility check leaves them.
+ */
+const assertNewlyMappedSurveysInWorkspace = async (
+  client: Pick<Prisma.TransactionClient, "survey">,
+  workspaceId: string,
+  integrationData: TIntegrationInput,
+  storedConfig: unknown
+): Promise<void> => {
+  const stored = new Set(getIntegrationSurveyIds(storedConfig));
+  const added = [...new Set(getIntegrationSurveyIds(integrationData.config))].filter((id) => !stored.has(id));
+  if (added.length === 0) return;
+
+  const found = await client.survey.findMany({
+    where: { id: { in: added }, workspaceId },
+    select: { id: true },
+  });
+  const foundIds = new Set(found.map(({ id }) => id));
+  const missing = added.find((id) => !foundIds.has(id));
+  if (missing) throw new ResourceNotFoundError("Survey", missing);
+};
+
+const integrationWrite = (workspaceId: string, integrationData: TIntegrationInput) => ({
+  ...integrationData,
+  workspace: { connect: { id: workspaceId } },
+});
+
 export const createOrUpdateIntegration = async (
   workspaceId: string,
   integrationData: TIntegrationInput
 ): Promise<TIntegration> => {
   validateInputs([workspaceId, ZId]);
 
-  // ENG-3283: an integration row forwards its surveys' responses to a third party, so a newly mapped
-  // survey must be workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted
-  // one), so token refreshes and unrelated edits keep saving.
   const existing = await prisma.integration.findUnique({
     where: { type_workspaceId: { workspaceId, type: integrationData.type } },
     select: { config: true },
   });
-  await assertNewlyAttachedSurveysWorkspaceVisible(
-    getIntegrationSurveyIds(integrationData.config),
-    getIntegrationSurveyIds(existing?.config)
-  );
+  await assertMappedSurveysVisible(integrationData, existing?.config);
 
   try {
     // ENG-7311: tokens are encrypted before they reach the database. The returned row is the stored
@@ -76,29 +127,71 @@ export const createOrUpdateIntegration = async (
       ...integrationData,
       config: encryptIntegrationConfig(integrationData.type, integrationData.config),
     } as TIntegrationInput;
-    const integration = await prisma.integration.upsert({
-      where: {
-        type_workspaceId: {
-          workspaceId,
-          type: integrationData.type,
-        },
-      },
-      update: {
-        ...storedData,
-        workspace: { connect: { id: workspaceId } },
-      },
-      create: {
-        ...storedData,
-        workspace: { connect: { id: workspaceId } },
-      },
+    return await prisma.integration.upsert({
+      where: { type_workspaceId: { workspaceId, type: integrationData.type } },
+      update: integrationWrite(workspaceId, storedData),
+      create: integrationWrite(workspaceId, storedData),
     });
-    return integration;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error creating or updating integration");
-      throw new DatabaseError(error.message);
-    }
-    throw error;
+    throw toDatabaseError(error);
+  }
+};
+
+/**
+ * Saves an integration from the settings UI. The UI only ever holds redacted credentials, so the
+ * `config.key` it sends is replaced with the stored one (see {@link withStoredIntegrationKey}):
+ * credentials are written only by the OAuth callbacks and token refreshes, which call
+ * {@link createOrUpdateIntegration} directly.
+ *
+ * The stored key is read under the row's lock, in the transaction that writes it back (ENG-2123). Read
+ * before the write, a refresh committing in between was overwritten with the key read before it, and the
+ * integration lost its new credentials. Now a writer holding the row makes this save wait, and the save
+ * then reads the key that writer committed. A writer that reaches the row after the save waits for it to
+ * commit before writing its own update.
+ *
+ * With no stored row there is nothing to lock or keep, so the save only creates one: a callback that
+ * inserts the row meanwhile makes it fail on the unique key rather than be overwritten with the
+ * client's key.
+ *
+ * The locked read takes the stored `config` as persisted, credentials still encrypted: reading it through
+ * the decrypting getter would blank a token that no longer decrypts, and writing "" back would erase the
+ * ciphertext for good, so fixing a wrong `ENCRYPTION_KEY` could not recover it. Ciphertext passes through
+ * `encryptIntegrationConfig` unchanged, so the save is lossless.
+ */
+export const saveIntegrationKeepingStoredKey = async (
+  workspaceId: string,
+  integrationData: TIntegrationInput
+): Promise<TIntegration> => {
+  validateInputs([workspaceId, ZId], [integrationData.type, ZIntegrationType]);
+  const where = { type_workspaceId: { workspaceId, type: integrationData.type } };
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // The config comes from the locking read itself: a later read is a new snapshot, which could see a
+      // row a callback inserted after this lock found none, unlocked.
+      const [stored] = await tx.$queryRaw<{ config: TIntegration["config"] }[]>`
+        SELECT "config" FROM "Integration"
+        WHERE "workspaceId" = ${workspaceId} AND "type" = ${integrationData.type}::"IntegrationType"
+        FOR UPDATE
+      `;
+      const merged = withStoredIntegrationKey(integrationData, stored);
+      await assertNewlyMappedSurveysInWorkspace(tx, workspaceId, merged, stored?.config);
+      await assertMappedSurveysVisible(merged, stored?.config, tx);
+
+      // ENG-7311: encrypt before the write. The stored key comes from the raw read above, so ciphertext
+      // passes through unchanged (a token that no longer decrypts is not blanked) and a legacy plaintext
+      // token is upgraded on save.
+      const storedData = {
+        ...merged,
+        config: encryptIntegrationConfig(merged.type, merged.config),
+      } as TIntegrationInput;
+
+      return stored
+        ? tx.integration.update({ where, data: integrationWrite(workspaceId, storedData) })
+        : tx.integration.create({ data: integrationWrite(workspaceId, storedData) });
+    });
+  } catch (error) {
+    throw toDatabaseError(error);
   }
 };
 
@@ -163,29 +256,6 @@ export const getIntegrationByType = reactCache(
     }
   }
 );
-
-/**
- * The stored `config` exactly as persisted, credentials still encrypted. For the settings save path only: it
- * copies the stored `key` back over the redacted one the client echoes, and must copy the ciphertext, not
- * {@link transformIntegration}'s decrypted view. That view blanks a token that no longer decrypts to "", and
- * writing "" back would erase the ciphertext for good, so fixing a wrong `ENCRYPTION_KEY` could not recover
- * it. Ciphertext passes through `encryptIntegrationConfig` unchanged, so the save is lossless.
- */
-export const getStoredIntegrationConfig = async (
-  workspaceId: string,
-  type: TIntegrationInput["type"]
-): Promise<{ config: TIntegration["config"] } | null> => {
-  validateInputs([workspaceId, ZId], [type, ZIntegrationType]);
-
-  try {
-    return await prisma.integration.findFirst({ where: { workspaceId, type }, select: { config: true } });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
 
 export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
   validateInputs([integrationId, ZString]);

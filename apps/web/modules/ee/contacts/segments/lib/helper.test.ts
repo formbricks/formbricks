@@ -16,7 +16,7 @@ import {
   getSurveyIdsReadBySegments,
   segmentFiltersReadHiddenSurvey,
 } from "@/modules/ee/contacts/segments/lib/helper";
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import { getSegment, getSegmentsByIds } from "@/modules/ee/contacts/segments/lib/segments";
 
 /** The batched lookup's arguments, as the code under test builds them. */
 type TSurveyBatchArgs = { where: { id: { in: string[] }; workspaceId?: string } };
@@ -35,209 +35,170 @@ vi.mock("@formbricks/database", () => ({
 // Mock dependencies
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   getSegment: vi.fn(),
+  getSegmentsByIds: vi.fn(),
 }));
 
 describe("checkForRecursiveSegmentFilter", () => {
+  const WORKSPACE_ID = "workspace-1";
+  const segmentReference = (segmentId: string) => ({
+    id: `filter-${segmentId}`,
+    connector: null,
+    resource: { root: { type: "segment", segmentId } },
+  });
+  const attributeFilter = {
+    id: "filter-attribute",
+    connector: null,
+    resource: {
+      id: "resource-attribute",
+      root: { type: "attribute", attributeClassName: "user", attributeKey: "email" },
+      operator: "equals",
+      value: "test@example.com",
+    },
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test("should throw InvalidInputError when a filter references the same segment ID as the one being checked", async () => {
-    // Arrange
     const segmentId = "segment-123";
+    const filters = [segmentReference(segmentId)];
 
-    // Create a filter that references the same segment ID
-    const filters = [
-      {
-        operator: "and",
-        resource: {
-          root: {
-            type: "segment",
-            segmentId, // This creates the recursive reference
-          },
-        },
-      },
-    ];
-
-    // Act & Assert
     await expect(
-      checkForRecursiveSegmentFilter(filters as unknown as TBaseFilters, segmentId)
+      checkForRecursiveSegmentFilter(filters as unknown as TBaseFilters, segmentId, WORKSPACE_ID)
     ).rejects.toThrow(new InvalidInputError("Recursive segment filter is not allowed"));
 
-    // Verify that getSegment was not called since the function should throw before reaching that point
-    expect(getSegment).not.toHaveBeenCalled();
+    // The direct reference is refused before any segment is read.
+    expect(getSegmentsByIds).not.toHaveBeenCalled();
   });
 
   test("should complete successfully when filters do not reference the same segment ID as the one being checked", async () => {
-    // Arrange
     const segmentId = "segment-123";
     const differentSegmentId = "segment-456";
 
-    // Create a filter that references a different segment ID
-    const filters = [
-      {
-        operator: "and",
-        resource: {
-          root: {
-            type: "segment",
-            segmentId: differentSegmentId, // Different segment ID
-          },
-        },
-      },
-    ];
+    vi.mocked(getSegmentsByIds).mockResolvedValue([
+      { id: differentSegmentId, filters: [attributeFilter] as unknown as TBaseFilters },
+    ]);
 
-    // Mock the referenced segment to have non-recursive filters
-    const referencedSegment = {
-      id: differentSegmentId,
-      filters: [
-        {
-          operator: "and",
-          resource: {
-            root: {
-              type: "attribute",
-              attributeClassName: "user",
-              attributeKey: "email",
-            },
-            operator: "equals",
-            value: "test@example.com",
-          },
-        },
-      ],
-    };
-
-    vi.mocked(getSegment).mockResolvedValue(referencedSegment as unknown as TSegmentWithSurveyRefs);
-
-    // Act & Assert
-    // The function should complete without throwing an error
     await expect(
-      checkForRecursiveSegmentFilter(filters as unknown as TBaseFilters, segmentId)
+      checkForRecursiveSegmentFilter(
+        [segmentReference(differentSegmentId)] as unknown as TBaseFilters,
+        segmentId,
+        WORKSPACE_ID
+      )
     ).resolves.toBeUndefined();
 
-    // Verify that getSegment was called with the correct segment ID
-    expect(getSegment).toHaveBeenCalledWith(differentSegmentId);
-    expect(getSegment).toHaveBeenCalledTimes(1);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([differentSegmentId], WORKSPACE_ID);
+    expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
   });
 
   test("should recursively check nested filters for recursive references and throw InvalidInputError", async () => {
-    // Arrange
     const originalSegmentId = "segment-123";
     const nestedSegmentId = "segment-456";
 
-    // Create a filter that references another segment
-    const filters = [
+    vi.mocked(getSegmentsByIds).mockResolvedValueOnce([
       {
-        operator: "and",
-        resource: {
-          root: {
-            type: "segment",
-            segmentId: nestedSegmentId, // This references another segment
-          },
-        },
+        id: nestedSegmentId,
+        // The reference back to the original segment sits inside a group.
+        filters: [
+          { id: "group-1", connector: null, resource: [segmentReference(originalSegmentId)] },
+        ] as unknown as TBaseFilters,
       },
-    ];
+    ]);
 
-    // Mock the nested segment to have a filter that references back to the original segment
-    // This creates an indirect recursive reference
-    vi.mocked(getSegment).mockResolvedValueOnce({
-      id: nestedSegmentId,
-      filters: [
-        {
-          operator: "and",
-          resource: [
-            {
-              id: "group-1",
-              connector: null,
-              resource: {
-                root: {
-                  type: "segment",
-                  segmentId: originalSegmentId, // This creates the recursive reference back to the original segment
-                },
-              },
-            },
-          ],
-        },
-      ],
-    } as unknown as Awaited<ReturnType<typeof getSegment>>);
-
-    // Act & Assert
     await expect(
-      checkForRecursiveSegmentFilter(filters as unknown as TBaseFilters, originalSegmentId)
+      checkForRecursiveSegmentFilter(
+        [segmentReference(nestedSegmentId)] as unknown as TBaseFilters,
+        originalSegmentId,
+        WORKSPACE_ID
+      )
     ).rejects.toThrow(new InvalidInputError("Recursive segment filter is not allowed"));
 
-    // Verify that getSegment was called with the nested segment ID
-    expect(getSegment).toHaveBeenCalledWith(nestedSegmentId);
-
-    // Verify that getSegment was called exactly once
-    expect(getSegment).toHaveBeenCalledTimes(1);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([nestedSegmentId], WORKSPACE_ID);
+    expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
   });
 
   test("should detect circular references between multiple segments", async () => {
-    // Arrange
     const segmentIdA = "segment-A";
     const segmentIdB = "segment-B";
     const segmentIdC = "segment-C";
+    // A references B, B references C, C references A.
+    const filtersById: Record<string, TBaseFilters> = {
+      [segmentIdB]: [segmentReference(segmentIdC)] as unknown as TBaseFilters,
+      [segmentIdC]: [segmentReference(segmentIdA)] as unknown as TBaseFilters,
+    };
+    vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
+      ids.map((id) => ({ id, filters: filtersById[id] }))
+    );
 
-    // Create filters for segment A that reference segment B
-    const filtersA = [
-      {
-        operator: "and",
-        resource: {
-          root: {
-            type: "segment",
-            segmentId: segmentIdB, // A references B
-          },
-        },
-      },
-    ];
-
-    // Create filters for segment B that reference segment C
-    const filtersB = [
-      {
-        operator: "and",
-        resource: {
-          root: {
-            type: "segment",
-            segmentId: segmentIdC, // B references C
-          },
-        },
-      },
-    ];
-
-    // Create filters for segment C that reference segment A (creating a circular reference)
-    const filtersC = [
-      {
-        operator: "and",
-        resource: {
-          root: {
-            type: "segment",
-            segmentId: segmentIdA, // C references back to A, creating a circular reference
-          },
-        },
-      },
-    ];
-
-    // Mock getSegment to return appropriate segment data for each segment ID
-    vi.mocked(getSegment, { partial: true, deep: true }).mockImplementation(async (id) => {
-      if (id === segmentIdB) {
-        // The filters are only read for their segment references, so they are not full TBaseFilters.
-        return { id: segmentIdB, filters: filtersB } as unknown as Awaited<ReturnType<typeof getSegment>>;
-      } else if (id === segmentIdC) {
-        return { id: segmentIdC, filters: filtersC } as unknown as Awaited<ReturnType<typeof getSegment>>;
-      }
-      return { id, filters: [] };
-    });
-
-    // Act & Assert
     await expect(
-      checkForRecursiveSegmentFilter(filtersA as unknown as TBaseFilters, segmentIdA)
+      checkForRecursiveSegmentFilter(
+        [segmentReference(segmentIdB)] as unknown as TBaseFilters,
+        segmentIdA,
+        WORKSPACE_ID
+      )
     ).rejects.toThrow(new InvalidInputError("Recursive segment filter is not allowed"));
 
-    // Verify that getSegment was called for segments B and C
-    expect(getSegment).toHaveBeenCalledWith(segmentIdB);
-    expect(getSegment).toHaveBeenCalledWith(segmentIdC);
+    expect(getSegmentsByIds).toHaveBeenNthCalledWith(1, [segmentIdB], WORKSPACE_ID);
+    expect(getSegmentsByIds).toHaveBeenNthCalledWith(2, [segmentIdC], WORKSPACE_ID);
+    expect(getSegmentsByIds).toHaveBeenCalledTimes(2);
+  });
 
-    // Verify the number of calls to getSegment (should be 2)
-    expect(getSegment).toHaveBeenCalledTimes(2);
+  test("reads every segment a level references in one query", async () => {
+    const segmentId = "segment-123";
+    const first = "segment-B";
+    const second = "segment-C";
+
+    vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
+      ids.map((id) => ({ id, filters: [] as unknown as TBaseFilters }))
+    );
+
+    await checkForRecursiveSegmentFilter(
+      [segmentReference(first), segmentReference(second)] as unknown as TBaseFilters,
+      segmentId,
+      WORKSPACE_ID
+    );
+
+    expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([first, second], WORKSPACE_ID);
+  });
+
+  test("stops on a cycle among other segments that never reaches the checked one", async () => {
+    // A references B and B references A: neither is the checked segment, so the walk must end.
+    const segmentId = "segment-root";
+    const segmentA = "segment-A";
+    const segmentB = "segment-B";
+    const filtersById: Record<string, TBaseFilters> = {
+      [segmentA]: [segmentReference(segmentB)] as unknown as TBaseFilters,
+      [segmentB]: [segmentReference(segmentA)] as unknown as TBaseFilters,
+    };
+    vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
+      ids.map((id) => ({ id, filters: filtersById[id] }))
+    );
+
+    await expect(
+      checkForRecursiveSegmentFilter(
+        [segmentReference(segmentA)] as unknown as TBaseFilters,
+        segmentId,
+        WORKSPACE_ID
+      )
+    ).resolves.toBeUndefined();
+
+    expect(getSegmentsByIds).toHaveBeenCalledTimes(2);
+  });
+
+  test("names a referenced segment that no longer exists", async () => {
+    const segmentId = "segment-123";
+    const missing = "segment-gone";
+    vi.mocked(getSegmentsByIds).mockResolvedValue([]);
+
+    await expect(
+      checkForRecursiveSegmentFilter(
+        [segmentReference(missing)] as unknown as TBaseFilters,
+        segmentId,
+        WORKSPACE_ID
+      )
+    ).rejects.toThrow(new ResourceNotFoundError("segment", missing));
   });
 });
 

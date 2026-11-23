@@ -12,7 +12,13 @@ import {
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { MAX_SEGMENT_FILTERS_PER_TREE, MAX_SEGMENT_SURVEYS, TBaseFilters } from "@formbricks/types/segment";
+import {
+  MAX_RAW_FILTER_NESTING,
+  MAX_SEGMENT_FILTERS_PER_TREE,
+  MAX_SEGMENT_FILTER_DEPTH,
+  MAX_SEGMENT_SURVEYS,
+  TBaseFilters,
+} from "@formbricks/types/segment";
 import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -1253,6 +1259,89 @@ describe("Tests for updateSurvey", () => {
 
         expect(prisma.segment.updateMany).not.toHaveBeenCalled();
         expect(prisma.survey.update).not.toHaveBeenCalled();
+      });
+
+      test("refuses an over-deep draft filter tree before walking it", async () => {
+        // Deep enough to overflow a recursive walk; the iterative bounds check must refuse it first.
+        let deep: unknown = attributeFilters;
+        for (let level = 0; level < MAX_SEGMENT_FILTER_DEPTH * 400; level++) {
+          deep = [{ id: createId(), connector: null, resource: deep }];
+        }
+
+        await expect(save(deep)).rejects.toThrow("nested too deeply");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses an over-deep malformed array, which is not a filter group", async () => {
+        let deep: unknown = [];
+        for (let level = 0; level < MAX_SEGMENT_FILTER_DEPTH * 400; level++) deep = [deep];
+
+        await expect(save(deep)).rejects.toThrow("nested too deeply");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses a resource-object chain that the array measure cannot see", async () => {
+        let resource: unknown = { root: { type: "attribute" } };
+        for (let level = 0; level < 20_000; level++) resource = { resource };
+
+        await expect(save([{ id: createId(), connector: null, resource }])).rejects.toThrow(
+          "nested too deeply"
+        );
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses a draft whose filters are not an array", async () => {
+        await expect(save("junk")).rejects.toThrow("Invalid user segment filters");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses null draft filters instead of writing them raw", async () => {
+        await expect(save(null)).rejects.toThrow("Invalid user segment filters");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses deeply nested filter values before the equality check", async () => {
+        // The draft save compares the tree with `isDeepStrictEqual`, which recurses: a deep value must be
+        // refused by the bounds before it reaches that comparison.
+        let value: unknown = "x";
+        for (let level = 0; level <= MAX_RAW_FILTER_NESTING; level++) value = { value };
+        const filters = [{ ...attributeFilters[0], resource: { ...attributeFilters[0].resource, value } }];
+
+        await expect(save(filters)).rejects.toThrow("values are nested too deeply");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
+      test("refuses an indirect recursion hidden in filters that fail the schema", async () => {
+        const otherSegmentId = createId();
+        const referenceToThisSegment = [
+          {
+            id: createId(),
+            connector: null,
+            resource: { root: { type: "segment", segmentId: SEGMENT_ID } },
+          },
+        ];
+        prisma.segment.findMany.mockResolvedValueOnce([
+          { id: otherSegmentId, filters: referenceToThisSegment },
+        ] as never);
+
+        const malformed = [
+          {
+            id: createId(),
+            connector: null,
+            resource: { root: { type: "segment", segmentId: otherSegmentId } },
+          },
+          { id: "junk", resource: { root: { type: "attribute" } } },
+        ];
+
+        await expect(save(malformed)).rejects.toThrow("Recursive segment filter is not allowed");
+
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       });
     });
 

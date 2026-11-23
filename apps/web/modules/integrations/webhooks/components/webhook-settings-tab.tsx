@@ -259,6 +259,7 @@ export const WebhookSettingsTab = ({
                 />
                 <button
                   type="button"
+                  aria-label={showSecret ? t("common.hide") : t("common.show")}
                   className="absolute top-1/2 right-3 -translate-y-1/2 transform"
                   onClick={handleToggleSecret}>
                   {showSecret ? (

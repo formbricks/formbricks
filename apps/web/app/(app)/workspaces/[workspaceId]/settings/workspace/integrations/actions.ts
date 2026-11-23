@@ -4,12 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZIntegrationInput } from "@formbricks/types/integration";
 import { assertCan } from "@/lib/authorization";
-import { withStoredIntegrationKey } from "@/lib/integration/redact-credentials";
-import {
-  createOrUpdateIntegration,
-  deleteIntegration,
-  getStoredIntegrationConfig,
-} from "@/lib/integration/service";
+import { deleteIntegration, saveIntegrationKeepingStoredKey } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import {
@@ -43,22 +38,19 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
 
       ctx.auditLoggingCtx.organizationId = organizationId;
 
-      // `config.key` holds the provider's OAuth credentials, which the settings pages now redact before
+      // `config.key` holds the provider's OAuth credentials, which the settings pages redact before
       // handing the integration to a client component (lib/integration/redact-credentials.ts). The
       // mapping UI echoes the whole integration object back here on every add, edit *and* delete, so
       // trusting the `key` it sends would write those blanks straight over the stored tokens and
       // silently disconnect the integration — while the UI still rendered it as connected, because the
       // wrappers only test `config.key` for presence. The stored value is the sole source of truth on
-      // this path; credentials are written only by the OAuth callbacks, which call
-      // createOrUpdateIntegration directly rather than through this action.
-      // Read raw, not decrypted: a token that no longer decrypts must be written back as its ciphertext.
-      const storedIntegration = await getStoredIntegrationConfig(
+      // this path, so the save keeps it rather than taking the client's. It reads the stored config raw,
+      // not through the decrypting getter: a token that no longer decrypts must be written back as its
+      // ciphertext, or fixing ENCRYPTION_KEY could not recover it.
+      const result = await saveIntegrationKeepingStoredKey(
         parsedInput.workspaceId,
-        parsedInput.integrationData.type
+        parsedInput.integrationData
       );
-      const integrationData = withStoredIntegrationKey(parsedInput.integrationData, storedIntegration);
-
-      const result = await createOrUpdateIntegration(parsedInput.workspaceId, integrationData);
       ctx.auditLoggingCtx.integrationId = result.id;
       ctx.auditLoggingCtx.newObject = result;
 

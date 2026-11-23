@@ -1,6 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { auth } from "@/modules/auth/lib/auth";
 import type { TVerificationRequestPurpose } from "@/modules/auth/lib/verification-links";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -114,7 +115,6 @@ export const deliverVerificationEmail = async ({
       headers: requestHeaders,
     });
   } catch (error) {
-    // `err`, not `error`: pino serializes an Error's message and stack only under `err`.
-    logger.error({ err: error, userId: user.id }, "Failed to deliver the verification email");
+    logger.error({ ...loggableError(error), userId: user.id }, "Failed to deliver the verification email");
   }
 };

@@ -146,7 +146,9 @@ export const ZUserPersonalInfoUpdateInput = ZUserUpdateInput.pick({
   email: true,
   locale: true,
 }).extend({
-  password: ZUserPassword.optional(),
+  // Verification only (re-authentication for an email change), never a password being set: it must accept
+  // every password that was valid when it was set, including ones above the bcrypt limit.
+  password: ZUserCurrentPassword.optional(),
 });
 
 export type TUserPersonalInfoUpdateInput = z.infer<typeof ZUserPersonalInfoUpdateInput>;

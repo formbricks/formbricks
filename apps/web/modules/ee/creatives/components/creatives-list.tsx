@@ -180,7 +180,7 @@ export const CreativesList = ({ workspaceId, isReadOnly, creativesAccess }: Read
   const router = useRouter();
   const locale = getUiLocale(i18n);
 
-  useEffect(() => removeStaleFilterStorage(globalThis.window?.localStorage), []);
+  useEffect(() => removeStaleFilterStorage(), []);
 
   const filterProperties = getCreativeFilterProperties(t);
   const tableState = useTableUrlState({

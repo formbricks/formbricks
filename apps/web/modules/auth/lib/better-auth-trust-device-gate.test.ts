@@ -118,23 +118,27 @@ describe("trust-device gate (SEC-17) against a real Better Auth instance", () =>
     const secret = await setup(issuer);
     const jar = cookieHeader((await signInAndVerify(issuer, secret, true)).headers);
 
-    const request = (auth: ReturnType<typeof makeAuth>) =>
+    const request = (auth: ReturnType<typeof makeAuth>, cookie = jar) =>
       auth.handler(
         new Request("http://localhost:3000/api/auth/sign-in/email", {
           method: "POST",
-          headers: { "content-type": "application/json", origin: "http://localhost:3000", cookie: jar },
+          headers: { "content-type": "application/json", origin: "http://localhost:3000", cookie },
           body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
         })
       );
 
-    expect(
-      ((await (await request(makeAuth(false, db))).json()) as { twoFactorRedirect?: boolean })
-        .twoFactorRedirect
-    ).toBeUndefined();
-    expect(
-      ((await (await request(makeAuth(true, db))).json()) as { twoFactorRedirect?: boolean })
-        .twoFactorRedirect
-    ).toBe(true);
+    // The trusted sign-in consumes the stored trust record and returns a replacement cookie; the gate must
+    // refuse that live cookie too, not merely one whose server record is already spent.
+    const baseline = await request(makeAuth(false, db));
+    const baselineBody = (await baseline.json()) as { twoFactorRedirect?: boolean };
+    expect(baselineBody.twoFactorRedirect).toBeUndefined();
+    const liveJar = cookieHeader(baseline.headers);
+    expect(liveJar).toContain("trust_device");
+
+    const gatedBody = (await (await request(makeAuth(true, db), liveJar)).json()) as {
+      twoFactorRedirect?: boolean;
+    };
+    expect(gatedBody.twoFactorRedirect).toBe(true);
   });
 });
 

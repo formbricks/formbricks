@@ -197,6 +197,11 @@ describe("getRichTextLinks with recall", () => {
       '<p>hi</p><textarea></#recall:q9/fallback:x#> <a href="https://example.com/t">go</a></textarea>',
     ],
     ["a token in a title element", "<p>hi</p><title>#recall:q9/fallback:x#</title>"],
+    // A literal marker-shaped text cannot make a token that sits in a tag read as plain text.
+    [
+      "a marker-shaped literal beside a token in a tag",
+      '<p>fbrecallmarker0x</p><a h#recall:q9/fallback:x#="https://example.com">go</a>',
+    ],
   ])("counts a token inside markup, whose runtime value could make it a link: %s", (_case, html) => {
     const links = [...getRichTextLinks(withHeadline(html))];
     expect(links.length).toBeGreaterThan(0);
