@@ -15,6 +15,10 @@ import {
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import {
   type TTranslate,
@@ -280,6 +284,14 @@ const planAttributeKeys = async (
 ): Promise<Pick<TFormbricksFileReferencePlan, "attributeKeysToCreate" | "issues">> => {
   const wanted = fileKeys.filter((attributeKey) => usedKeys.has(attributeKey.key));
   if (wanted.length === 0) return { attributeKeysToCreate: [], issues: [] };
+
+  // Attribute keys live in the workspace's contact directory; without one there is nowhere to put them.
+  if (!(await getWorkspaceContactDirectory(workspaceId))) {
+    throw new SurveyImportInputError(
+      [{ name: at(fieldPrefix, "references.attributeKeys"), reason: CONTACT_DIRECTORY_MISSING_MESSAGE }],
+      CONTACT_DIRECTORY_MISSING_MESSAGE
+    );
+  }
 
   const [existing, count] = await Promise.all([
     db.contactAttributeKey.findMany({

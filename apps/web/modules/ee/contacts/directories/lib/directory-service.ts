@@ -285,6 +285,94 @@ export const getContactDirectoryOrganizationId = async (directoryId: string): Pr
 };
 
 /**
+ * Moves the attribute values and survey filters of key `fromId` onto key `toId`, then deletes `fromId`.
+ * A contact or survey that already has a row on `toId` keeps that row; its row on `fromId` goes.
+ */
+const mergeAttributeKey = async (tx: TClient, fromId: string, toId: string): Promise<void> => {
+  await tx.contactAttribute.deleteMany({
+    where: { attributeKeyId: fromId, contact: { attributes: { some: { attributeKeyId: toId } } } },
+  });
+  await tx.contactAttribute.updateMany({ where: { attributeKeyId: fromId }, data: { attributeKeyId: toId } });
+  await tx.surveyAttributeFilter.deleteMany({
+    where: { attributeKeyId: fromId, survey: { attributeFilters: { some: { attributeKeyId: toId } } } },
+  });
+  await tx.surveyAttributeFilter.updateMany({
+    where: { attributeKeyId: fromId },
+    data: { attributeKeyId: toId },
+  });
+  await tx.contactAttributeKey.delete({ where: { id: fromId } });
+};
+
+/**
+ * Spec decision 8: a workspace with no directory (made by a pod of the previous release during the rolling
+ * deploy) can still have contacts, attribute keys and segments that pod wrote, all without a
+ * `directoryId`. Getting its first directory gives them that directory's id:
+ * - contacts and private segments (titles are survey ids, so they can't clash) join as they are;
+ * - a key joins unless the directory already has one by that name, which then takes over its attribute
+ *   values and survey filters (the directory's own defaults always do: `email`, `userId`, ...);
+ * - a public segment joins unless the directory already has one by that title; such a segment stays where
+ *   it is, still linked to its surveys.
+ * Runs under the workspace locks of the move. A previous-release pod that writes for the workspace while
+ * the move runs can still leave a row behind.
+ */
+const adoptDirectorylessRows = async (
+  tx: TClient,
+  directoryId: string,
+  workspaceIds: string[]
+): Promise<void> => {
+  const orphan = { workspaceId: { in: workspaceIds }, directoryId: null };
+
+  await tx.contact.updateMany({ where: orphan, data: { directoryId } });
+  await tx.segment.updateMany({ where: { ...orphan, isPrivate: true }, data: { directoryId } });
+
+  const orphanKeys = await tx.contactAttributeKey.findMany({
+    where: orphan,
+    select: { id: true, key: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+  if (orphanKeys.length > 0) {
+    const directoryKeys = await tx.contactAttributeKey.findMany({
+      where: { directoryId, key: { in: [...new Set(orphanKeys.map(({ key }) => key))] } },
+      select: { id: true, key: true },
+    });
+    const keyIdByName = new Map(directoryKeys.map(({ id, key }) => [key, id]));
+    for (const { id, key } of orphanKeys) {
+      const directoryKeyId = keyIdByName.get(key);
+      if (directoryKeyId) {
+        await mergeAttributeKey(tx, id, directoryKeyId);
+      } else {
+        await tx.contactAttributeKey.update({ where: { id }, data: { directoryId } });
+        keyIdByName.set(key, id);
+      }
+    }
+  }
+
+  const orphanSegments = await tx.segment.findMany({
+    where: { ...orphan, isPrivate: false },
+    select: { id: true, title: true },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+  });
+  if (orphanSegments.length > 0) {
+    const taken = await tx.segment.findMany({
+      where: { directoryId, title: { in: orphanSegments.map(({ title }) => title) } },
+      select: { title: true },
+    });
+    const takenTitles = new Set(taken.map(({ title }) => title));
+    const adopted = orphanSegments.filter(({ title }) => {
+      if (takenTitles.has(title)) return false;
+      takenTitles.add(title);
+      return true;
+    });
+    if (adopted.length > 0) {
+      await tx.segment.updateMany({
+        where: { id: { in: adopted.map(({ id }) => id) } },
+        data: { directoryId },
+      });
+    }
+  }
+};
+
+/**
  * Moves workspaces into `directoryId` under spec decision 8, inside the caller's transaction.
  *
  * Locks the workspaces, then their current directories (`FOR UPDATE`, in id order), and only then reads
@@ -295,8 +383,8 @@ export const getContactDirectoryOrganizationId = async (directoryId: string): Pr
  * cascade would otherwise delete them and the surveys would lose their targeting; their titles are survey
  * ids, so they can't clash), and the old, now unused directories go, taking their default keys.
  *
- * A workspace with no directory has none to delete; its surveys' private segments are adopted. Its other
- * rows (only a pod of the previous release can have written them) are not.
+ * A workspace with no directory has none to delete; the rows it has anyway are adopted
+ * ({@link adoptDirectorylessRows}).
  */
 const moveWorkspacesIntoDirectory = async (
   tx: TClient,
@@ -356,10 +444,7 @@ const moveWorkspacesIntoDirectory = async (
     });
   }
   if (directorylessWorkspaceIds.length > 0) {
-    await tx.segment.updateMany({
-      where: { workspaceId: { in: directorylessWorkspaceIds }, directoryId: null, isPrivate: true },
-      data: { directoryId },
-    });
+    await adoptDirectorylessRows(tx, directoryId, directorylessWorkspaceIds);
   }
   if (oldDirectoryIds.length > 0) {
     await tx.contactDirectory.deleteMany({ where: { id: { in: oldDirectoryIds }, organizationId } });

@@ -38,11 +38,13 @@ import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 interface UploadContactsCSVButtonProps {
   readonly workspaceId: string;
   readonly contactAttributeKeys: TContactAttributeKey[];
+  readonly disabled?: boolean;
 }
 
 export const UploadContactsCSVButton = ({
   workspaceId,
   contactAttributeKeys,
+  disabled = false,
 }: UploadContactsCSVButtonProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -413,7 +415,7 @@ export const UploadContactsCSVButton = ({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button size="sm" onClick={() => setOpen(true)} disabled={disabled}>
         {t("common.upload")} CSV
         <PlusIcon />
       </Button>

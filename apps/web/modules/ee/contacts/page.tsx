@@ -5,6 +5,7 @@ import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-pa
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getSharedContactDirectoryName } from "@/modules/ee/contacts/directories/lib/directory-service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ContactDataView } from "./components/contact-data-view";
@@ -16,7 +17,9 @@ export const ContactsPage = async ({
 }) => {
   const params = await paramsProps;
 
-  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, isOwner, isManager, organization, workspace } = await getWorkspaceAuth(
+    params.workspaceId
+  );
 
   const t = await getTranslate();
 
@@ -24,12 +27,23 @@ export const ContactsPage = async ({
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const [contactAttributeKeys, sharedDirectoryName] = isContactsEnabled
-    ? await Promise.all([getContactAttributeKeys(workspace.id), getSharedContactDirectoryName(workspace.id)])
-    : [[], null];
+  const hasContactDirectory = Boolean(await getWorkspaceContactDirectory(workspace.id));
 
+  const [contactAttributeKeys, sharedDirectoryName] =
+    isContactsEnabled && hasContactDirectory
+      ? await Promise.all([
+          getContactAttributeKeys(workspace.id),
+          getSharedContactDirectoryName(workspace.id),
+        ])
+      : [[], null];
+
+  // Spec decision 13: Upload CSV stays in the header, disabled, until the workspace has a directory.
   const AddContactsButton = (
-    <UploadContactsCSVButton workspaceId={workspace.id} contactAttributeKeys={contactAttributeKeys} />
+    <UploadContactsCSVButton
+      workspaceId={workspace.id}
+      contactAttributeKeys={contactAttributeKeys}
+      disabled={!hasContactDirectory}
+    />
   );
 
   return (
@@ -40,6 +54,8 @@ export const ContactsPage = async ({
       organizationId={organization.id}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
+      hasContactDirectory={hasContactDirectory}
+      isOwnerOrManager={isOwner || isManager}
       cta={AddContactsButton}>
       {/* Spec decision 20: which directory this workspace uses, shown only when others share it. */}
       {sharedDirectoryName ? (

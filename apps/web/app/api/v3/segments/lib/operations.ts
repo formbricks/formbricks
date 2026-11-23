@@ -3,13 +3,16 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
+import { assertV3ContactDirectory, assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
+import { problemBadRequest, problemForbidden, successListResponse } from "@/app/api/v3/lib/response";
 import { type TSortCursor, buildSortCursorPage } from "@/app/api/v3/lib/sort-cursor";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { resolveV3VisibleSurveyWhere } from "@/app/api/v3/surveys/visibility-context";
-import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { selectSegment, transformPrismaSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { collectSegmentFilterSurveyIds, serializeV3Segment } from "../serializers";
 import { SEGMENTS_CURSOR_KIND, parseV3SegmentsListQuery } from "./parse-v3-segments-list-query";
@@ -90,22 +93,18 @@ export async function listV3Segments({
 
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
+    const noDirectory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (noDirectory) return noDirectory;
 
     // ENG-3282: a segment's survey references are read through the caller's survey-visibility clause,
     // exactly as `getSegments` does for the page — otherwise the list would ship restricted survey
     // names and ids. Fails closed (no survey visible) when the caller cannot be resolved.
     const visibleSurveyWhere = await resolveV3VisibleSurveyWhere(authentication, authResult.organizationId);
 
-    // Segments belong to the workspace's contact directory (decision 24). A workspace with none has no
-    // segments to list.
+    // Segments belong to the workspace's contact directory (decision 24). Read once per request with the
+    // gate above; null only if the workspace lost its directory since.
     const directory = await getWorkspaceContactDirectory(authResult.workspaceId);
-    if (!directory) {
-      return successListResponse(
-        [],
-        { limit: query.limit, nextCursor: null, totalCount: query.includeTotalCount ? 0 : null },
-        { requestId, cache: "private, no-store" }
-      );
-    }
+    if (!directory) return problemForbidden(requestId, CONTACT_DIRECTORY_MISSING_MESSAGE, instance);
 
     const where = buildV3SegmentsWhere(directory.id, query.search);
     const cursor = query.cursor ? await resolveSegmentsCursor(query.cursor, directory.id) : undefined;

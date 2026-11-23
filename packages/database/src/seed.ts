@@ -893,22 +893,32 @@ async function main(): Promise<void> {
     await seedApiKey(organization.id, workspace.id, seedApiKeySecret);
   }
 
-  // Keep seed defaults aligned with production v5 camelCase keys.
-  // Safe-identifier migration is deferred to v5.1.
-  // Contact attribute keys for the workspace
+  // A new workspace has no contact directory (ENG-7498), so the seed gives it one, with the default keys
+  // a directory starts with (`getDefaultAttributeKeys` in apps/web). A database seeded before the
+  // directories migration already has one, made by that migration.
+  let contactDirectoryId = workspace.contactDirectoryId;
+  if (!contactDirectoryId) {
+    const contactDirectory = await prisma.contactDirectory.create({
+      data: { organizationId: organization.id, matchingKey: "email" },
+      select: { id: true },
+    });
+    contactDirectoryId = contactDirectory.id;
+    await prisma.workspace.update({ where: { id: workspace.id }, data: { contactDirectoryId } });
+  }
+
   const defaultAttributeKeys = [
+    { name: "User Id", key: "userId", isUnique: true, type: "default" as const },
     { name: "Email", key: "email", isUnique: true, type: "default" as const },
     { name: "First Name", key: "firstName", isUnique: false, type: "default" as const },
     { name: "Last Name", key: "lastName", isUnique: false, type: "default" as const },
-    { name: "userId", key: "userId", isUnique: true, type: "default" as const },
     { name: "Language", key: "language", isUnique: false, type: "default" as const },
   ];
 
   for (const attr of defaultAttributeKeys) {
     await prisma.contactAttributeKey.upsert({
-      where: { key_workspaceId: { key: attr.key, workspaceId: workspace.id } },
+      where: { directoryId_key: { directoryId: contactDirectoryId, key: attr.key } },
       update: {},
-      create: { ...attr, workspaceId: workspace.id },
+      create: { ...attr, directoryId: contactDirectoryId },
     });
   }
 

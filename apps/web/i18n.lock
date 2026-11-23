@@ -2361,11 +2361,15 @@ checksums:
     workspace/contacts/edit_attributes_success: 39f93b1a6f1605bc5951f4da5847bb22
     workspace/contacts/generate_personal_link: 9ac0865f6876d40fe858f94eae781eb8
     workspace/contacts/generate_personal_link_description: ba3708a8cbd7b975b448908501db4f68
+    workspace/contacts/go_to_contact_directories: 5ecb79de3374b2dcf478170bb7349c7d
     workspace/contacts/invalid_csv_column_names: dcb8534e7d4c00b9ea7bdaf389f72328
     workspace/contacts/invalid_csv_reserved_column_names: 6fef9d55e3dd298fea069404c9aaa474
     workspace/contacts/invalid_date_format: 5bad9730ac5a5bacd0792098f712b1c4
     workspace/contacts/invalid_number_format: bd0422507385f671c3046730a6febc64
     workspace/contacts/no_activity_yet: f88897ac05afd6bf8af0d4834ad24ffc
+    workspace/contacts/no_contact_directory_admin_description: 532e529bcb0097a827285540de8b7854
+    workspace/contacts/no_contact_directory_member_description: f197b8d14ef5f9532cfb93c32586d581
+    workspace/contacts/no_contact_directory_title: 7e23110ad46d7a68330a34b90f1f0592
     workspace/contacts/no_published_link_surveys_available: 529e920aed596eeec938f3145635f26f
     workspace/contacts/no_published_surveys: f604ddd0867aafd9822bed035d8fefd6
     workspace/contacts/no_responses_found: f10190cffdda4ca1bed479acbb89b13f
