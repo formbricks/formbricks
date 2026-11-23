@@ -50,8 +50,41 @@ const collectLinksFromRendered = (html: string, links: Set<string>): void => {
 // value, else the respondent's answer or hidden field, else the fallback (`nbsp` read as a space).
 const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/;
 const RECALL_TOKENS = new RegExp(RECALL_TOKEN.source, "g");
-// One opening tag, a quoted value consumed whole (the pattern survey-ui strips styles with).
-const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
+// Stands in for a token while the text is parsed: letters and digits only, so the parser keeps it whole
+// wherever it lands (an attribute name, an attribute value, a tag name), and lower case, as the parser
+// lower-cases names.
+const RECALL_MARKER = "fbrecallmarker";
+const RECALL_MARKERS = new RegExp(String.raw`${RECALL_MARKER}(\d+)x`, "g");
+
+/**
+ * The tokens that sit inside markup rather than in text. Once a respondent's answer or a hidden field
+ * fills one, it becomes part of that markup: escaping keeps `<` and quotes out but not `href=https://…`,
+ * and no check can see the answer in advance, so each one counts as a link of its own.
+ *
+ * Found by parsing, not by matching tags with a pattern: the renderer replaces the whole token, fallback
+ * included, before it parses, so a fallback holding `>`, `<` or a quote must not hide the token from the
+ * check. Each token is swapped for a marker, the text goes through the same style stripping the renderer
+ * applies, and every element and attribute the parser builds is read before anything is removed.
+ */
+const getTokensInMarkup = (html: string): string[] => {
+  const tokens: string[] = [];
+  const marked = html.replaceAll(RECALL_TOKENS, (token) => `${RECALL_MARKER}${tokens.push(token) - 1}x`);
+  const found = new Set<string>();
+  const record = (text: string) => {
+    for (const match of text.matchAll(RECALL_MARKERS)) {
+      found.add(tokens[Number(match[1])]);
+    }
+  };
+  DOMPurify.addHook("uponSanitizeElement", (node) => record(node.nodeName.toLowerCase()));
+  DOMPurify.addHook("uponSanitizeAttribute", (_node, data) => record(`${data.attrName} ${data.attrValue}`));
+  try {
+    DOMPurify.sanitize(removeStyleAttributes(marked));
+  } finally {
+    DOMPurify.removeHook("uponSanitizeAttribute");
+    DOMPurify.removeHook("uponSanitizeElement");
+  }
+  return [...found];
+};
 
 /**
  * The text as the renderer resolves it (ENG-7270): every token in one pass, with a replacer so `$&` in a
@@ -70,13 +103,7 @@ const collectRecallLinks = (
   links: Set<string>,
   recallValues: ReadonlyMap<string, string>
 ): void => {
-  // A token inside a tag becomes part of the tag once a respondent's answer or a hidden field fills it.
-  // Escaping keeps markup out but not a URL out of an attribute, and no check can see the answer in
-  // advance, so it counts as a link of its own.
-  for (const tag of removeStyleAttributes(html).match(OPENING_TAG) ?? []) {
-    const token = RECALL_TOKEN.exec(tag);
-    if (token) links.add(`recall in a tag: ${token[0]}`);
-  }
+  for (const token of getTokensInMarkup(html)) links.add(`recall in a tag: ${token}`);
   // What the survey shows when each token resolves to nothing, to its fallback, or to the variable's
   // value the survey defines.
   for (const resolved of new Set([
