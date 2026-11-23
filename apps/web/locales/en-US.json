@@ -159,6 +159,7 @@
         },
         "needs_permission": "Needs {permission}: {level}.",
         "permissions": {
+          "access_settings": "Access settings",
           "action_classes": "Action classes",
           "charts": "Charts",
           "contact_attributes": "Contact attributes",

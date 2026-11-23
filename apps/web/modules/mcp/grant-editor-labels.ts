@@ -43,6 +43,7 @@ const PERMISSION_LABELS: Record<TMcpPermission, (t: TTranslate) => string> = {
   segments: (t) => t("auth.oauth.grant.permissions.segments"),
   actionClasses: (t) => t("auth.oauth.grant.permissions.action_classes"),
   memberAttributes: (t) => t("auth.oauth.grant.permissions.member_attributes"),
+  accessSettings: (t) => t("auth.oauth.grant.permissions.access_settings"),
 };
 
 const LEVEL_LABELS: Record<Exclude<TMcpCategoryLevel, "mixed">, (t: TTranslate) => string> = {

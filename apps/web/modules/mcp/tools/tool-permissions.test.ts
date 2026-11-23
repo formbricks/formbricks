@@ -195,6 +195,8 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_action_classes: ["audience:read"],
   list_member_attribute_keys: ["organization:read"],
   list_member_attributes: ["organization:read"],
+  get_team_dashboard_limits: ["organization:read"],
+  get_dashboard_viewer_access: ["organization:read"],
 };
 
 /**
@@ -249,6 +251,7 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
       "segments:read",
       "actionClasses:read",
       "memberAttributes:read",
+      "accessSettings:read",
     ],
   },
   get_workspace_custom_css: ["surveyStyling:read"],
@@ -351,6 +354,8 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   list_action_classes: ["actionClasses:read"],
   list_member_attribute_keys: ["memberAttributes:read"],
   list_member_attributes: ["memberAttributes:read"],
+  get_team_dashboard_limits: ["accessSettings:read"],
+  get_dashboard_viewer_access: ["accessSettings:read"],
 };
 
 const VIEWER = { extra: { dashboardViewerOnly: true } } as unknown as AuthInfo;
@@ -416,6 +421,7 @@ const loadRegistrations = async () => {
   tags.registerTagTools(server);
   (await import("./audience")).registerAudienceTools(server);
   (await import("./member-attributes")).registerMemberAttributeTools(server);
+  (await import("./access-settings")).registerAccessSettingsTools(server);
   return registrations;
 };
 

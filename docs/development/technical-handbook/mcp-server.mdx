@@ -1915,6 +1915,22 @@ access (ENG-7479). Both declare Member attributes: Read, in the Organization cat
 - **Untrusted text.** Names, labels and values are typed by people or imported from a CSV. The descriptions
   tell the agent to treat them as data; `member-attributes.test.ts` carries an injection fixture.
 
+### Access settings tools
+
+Two read-only, idempotent tools over the dashboard access settings (`modules/mcp/tools/access-settings.ts`),
+with no write tools: an agent can explain who sees which dashboards and records, but cannot change access
+(ENG-7479). Both declare Access settings: Read, in the Organization category, capped by `organization:read`.
+Same access as the Member attribute tools: Owners and Managers, or an API key with Access Control read, on a
+plan with Access Control and Dashboards.
+
+| Tool                          | REST operation                                                    | Permission            |
+| ----------------------------- | ----------------------------------------------------------------- | --------------------- |
+| `get_team_dashboard_limits`   | `GET /api/v3/teams/{teamId}/dashboard-limits`                     | Access settings: Read |
+| `get_dashboard_viewer_access` | `GET /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access` | Access settings: Read |
+
+- **Untrusted text.** Dashboard, workspace and attribute names and embedded-data keys are typed by people. The
+  descriptions tell the agent to treat them as data; `access-settings.test.ts` carries an injection fixture.
+
 ### list_feedback_datasets
 
 Lists the active feedback datasets assigned to a workspace. Read-only and idempotent. Use the

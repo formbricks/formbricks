@@ -95,6 +95,12 @@ const SPEC_CATALOGUE = {
     scopeFamily: "organization",
     levels: ["none", "read"],
   },
+  accessSettings: {
+    name: "Access settings",
+    category: "organization",
+    scopeFamily: "organization",
+    levels: ["none", "read"],
+  },
 };
 
 describe("MCP permission registry", () => {

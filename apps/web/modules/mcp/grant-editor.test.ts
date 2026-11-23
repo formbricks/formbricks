@@ -200,6 +200,7 @@ describe("presets", () => {
       contacts: "read",
       // Select all ticks the Organization category too (ENG-7479).
       memberAttributes: "read",
+      accessSettings: "read",
     });
     expect(Object.keys(granted)).toHaveLength(ALL_PERMISSIONS.length);
   });

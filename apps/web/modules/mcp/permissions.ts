@@ -90,6 +90,13 @@ export const MCP_PERMISSIONS = {
     scopeFamily: "organization",
     levels: READ_ONLY,
   },
+  // ENG-7479: team dashboard limits and Feedback Datasets' Dashboard Viewer access, read-only.
+  accessSettings: {
+    name: "Access settings",
+    category: "organization",
+    scopeFamily: "organization",
+    levels: READ_ONLY,
+  },
 } as const satisfies Record<string, TMcpPermissionDefinition>;
 
 export type TMcpPermission = keyof typeof MCP_PERMISSIONS;
