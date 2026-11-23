@@ -13,6 +13,7 @@ import {
 import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/lib/creative-texts";
 import * as audienceSchemas from "./audience-schemas";
 import * as creativeSchemas from "./creative-schemas";
+import * as memberAttributeSchemas from "./member-attribute-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as tagSchemas from "./tag-schemas";
 import * as workflowSchemas from "./workflow-schemas";
@@ -144,6 +145,7 @@ const allExports: [string, unknown][] = Object.entries({
   ...creativeSchemas,
   ...tagSchemas,
   ...audienceSchemas,
+  ...memberAttributeSchemas,
 });
 
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);

@@ -5,6 +5,7 @@ import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 // The data migrations under test (auto-discovered by the migration runner at deploy).
 import { grantAudienceScope } from "../../../packages/database/migration/20261112130000_grant_audience_scope/migration";
 import { grantAudienceScopeToClients } from "../../../packages/database/migration/20261112130001_grant_audience_scope_to_clients/migration";
+import { grantOrganizationScope } from "../../../packages/database/migration/20261123130000_grant_organization_scope/migration";
 
 /**
  * ENG-7151 against real Postgres: the two repairs that let upgraded instances grant `audience:read`, the
@@ -73,6 +74,8 @@ describe("ENG-7151 audience scope grant on the MCP resource", () => {
     await seedResource(MCP_IDENTIFIER, PRE_ENG7151_SCOPES);
 
     await runResourceGrant();
+    // Later scope families ship their own repair; run the chain as an upgraded instance runs it.
+    await grantOrganizationScope.run!({ prisma, tx: prisma as never });
 
     const allowed = new Set(await resourceScopesOf(MCP_IDENTIFIER));
     expect(MCP_OAUTH_SCOPES.filter((scope) => !allowed.has(scope))).toEqual([]);

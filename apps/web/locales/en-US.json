@@ -139,6 +139,7 @@
           "audience": "Audience",
           "dashboards": "Dashboards",
           "feedback": "Feedback",
+          "organization": "Organization",
           "responses": "Responses",
           "surveys": "Surveys",
           "workflows": "Workflows"
@@ -166,6 +167,7 @@
           "dashboards": "Dashboards",
           "feedback_datasets": "Feedback datasets",
           "feedback_records": "Feedback records",
+          "member_attributes": "Member attributes",
           "responses": "Responses",
           "segments": "Segments",
           "survey_styling": "Survey styling",

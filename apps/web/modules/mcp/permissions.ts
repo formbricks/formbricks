@@ -20,8 +20,9 @@ import type { TMcpScopeFamily } from "@/modules/auth/lib/oauth-urls";
 export type TMcpAccessLevel = "none" | "read" | "write";
 
 /**
- * A scope family that caps a permission. `audience` is read-only (`MCP_READ_ONLY_SCOPE_FAMILIES`): it has
- * `audience:read` and no write scope, so its permissions offer No access and Read only.
+ * A scope family that caps a permission. `audience` and `organization` are read-only
+ * (`MCP_READ_ONLY_SCOPE_FAMILIES`): each has `<family>:read` and no write scope, so their permissions offer
+ * No access and Read only.
  */
 export type TMcpPermissionScopeFamily = TMcpScopeFamily;
 
@@ -32,6 +33,7 @@ export const MCP_PERMISSION_CATEGORIES = [
   "dashboards",
   "feedback",
   "audience",
+  "organization",
 ] as const;
 
 export type TMcpPermissionCategory = (typeof MCP_PERMISSION_CATEGORIES)[number];
@@ -79,6 +81,15 @@ export const MCP_PERMISSIONS = {
   },
   segments: { name: "Segments", category: "audience", scopeFamily: "audience", levels: READ_ONLY },
   actionClasses: { name: "Action classes", category: "audience", scopeFamily: "audience", levels: READ_ONLY },
+  // ENG-7479: the Organization category holds organization settings an agent may read, capped by the
+  // read-only `organization` family. Owners and Managers only (the v3 operations decide); no writes.
+  // Further organization settings (Access settings: Read) slot in here at READ_ONLY with no migration.
+  memberAttributes: {
+    name: "Member attributes",
+    category: "organization",
+    scopeFamily: "organization",
+    levels: READ_ONLY,
+  },
 } as const satisfies Record<string, TMcpPermissionDefinition>;
 
 export type TMcpPermission = keyof typeof MCP_PERMISSIONS;

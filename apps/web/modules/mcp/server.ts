@@ -12,6 +12,7 @@ import { registerAudienceTools } from "./tools/audience";
 import { registerCreativeTools } from "./tools/creatives";
 import { registerDashboardTools } from "./tools/dashboards";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
+import { registerMemberAttributeTools } from "./tools/member-attributes";
 import { registerResponseTools } from "./tools/responses";
 import { registerSurveyTools } from "./tools/surveys";
 import { registerTagTools } from "./tools/tags";
@@ -131,5 +132,6 @@ export const mcpHandler = createMcpHandler((server) => {
   registerCreativeTools(server);
   registerDashboardTools(server);
   registerAudienceTools(server);
+  registerMemberAttributeTools(server);
   instrumentMcpServerWithTracing(server, identifyMcpUser);
 }, MCP_HANDLER_OPTIONS);
