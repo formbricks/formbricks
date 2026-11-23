@@ -157,13 +157,20 @@ describe("POST /api/internal/verification-emails — rate limiting", () => {
   });
 
   // A spent cap must look like a sent email: only unverified accounts reach it, so an error here would
-  // tell anyone which addresses have one (ENG-3823).
+  // tell anyone which addresses have one (ENG-3823). It carries the same intent-shaped cookie too, or a
+  // capped address's resend would answer without one and complete ENG-7094's two-step oracle.
   test("answers 204 once the account's resends are spent, so it reveals nothing", async () => {
     vi.mocked(applyRateLimit).mockRejectedValue(
       new TooManyRequestsError("Maximum number of requests reached")
     );
 
     expect((await resend()).status).toBe(204);
+    expect(signupIntentMocks.createDecoySignupIntentToken).toHaveBeenCalledTimes(1);
+    expect(cookieMocks.set).toHaveBeenCalledWith(
+      "formbricks.signup_intent",
+      "fresh-decoy-token",
+      expect.anything()
+    );
     expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
     expect(sendVerificationEmail).not.toHaveBeenCalled();
   });

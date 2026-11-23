@@ -69,10 +69,11 @@ export const SIGNUP_INTENT_COOKIE_OPTIONS = {
   // turning every legitimate same-browser sign-up into a withheld session.
   sameSite: "lax",
   // Paired with the verification token's TTL — but the pairing only holds for the CURRENT link. A
-  // resent link gets a fresh hour, so the resend action re-issues this cookie alongside it when (and
-  // only when) the requesting browser already holds a valid one for the same user
-  // (`app/api/internal/verification-emails`). A browser whose cookie has already expired cannot be told
-  // apart from one that never signed up, so a resend after expiry stays on the withheld path.
+  // resent link gets a fresh hour, so the resend route re-issues this cookie alongside it: a valid
+  // cookie for the same user is refreshed, and every other 204 carries a fresh decoy of the same shape
+  // (`app/api/internal/verification-emails`, ENG-7094), so a `Set-Cookie`'s presence cannot tell the
+  // two sign-up paths apart. A browser whose cookie has already expired cannot be told apart from one
+  // that never signed up, so a resend after expiry stays on the withheld path.
   maxAge: EMAIL_VERIFICATION_TTL_SECONDS,
 } as const;
 
