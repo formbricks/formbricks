@@ -61,6 +61,17 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 </Note>
 
 <Note>
+  **`country` can't drive logic, and it can be empty.** It is captured on the server when the response reaches
+  Formbricks, so a running survey has no value to branch on. It is read from the `CF-IPCountry` (Cloudflare) or
+  `CloudFront-Viewer-Country` (AWS CloudFront) request header, so it stays empty when requests don't pass
+  through a CDN that sets one (common on self-hosted setups) or when **Anonymize responses** is on. To show
+  questions by country, pass the country in yourself: a [hidden field](/surveys/general-features/hidden-fields)
+  filled from the URL for link surveys, or [`setEmbeddedData`](/surveys/embedded-data/set-embedded-data) for
+  app surveys. Then use it in logic like any other field. `country` is a reserved name, so call yours
+  something like `userCountry`.
+</Note>
+
+<Note>
   Responses collected before a field existed carry nothing for it and read back as unset, so a filter or an
   export column can legitimately be empty for older responses.
 </Note>
