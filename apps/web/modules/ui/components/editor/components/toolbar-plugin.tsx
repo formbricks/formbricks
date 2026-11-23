@@ -1,6 +1,6 @@
 "use client";
 
-import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
+import { $generateHtmlFromNodes } from "@lexical/html";
 import { $isLinkNode } from "@lexical/link";
 import {
   $isListNode,
@@ -46,6 +46,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 import { cn } from "@/modules/ui/lib/utils";
 import { toEditorOutputHtml } from "../lib/exported-html";
 import { $insertTextAtCursor } from "../lib/insert-text";
+import { $generateRootNodesFromHtml } from "../lib/root-nodes";
 import type { TEditorToolbarActions, TextEditorProps } from "./editor";
 
 const LowPriority = 1;
@@ -253,11 +254,7 @@ export const ToolbarPlugin = (
         const root = $getRoot();
         if (root) {
           editor.update(() => {
-            const parser = new DOMParser();
-            // Create a new TextNode
-            const dom = parser.parseFromString(props.getText(), "text/html");
-
-            const nodes = $generateNodesFromDOM(editor, dom);
+            const nodes = $generateRootNodesFromHtml(editor, props.getText());
             root.clear();
             root.append(...nodes);
           });
@@ -281,10 +278,7 @@ export const ToolbarPlugin = (
     if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
       editor.update(() => {
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(props.getText(), "text/html");
-
-        const nodes = $generateNodesFromDOM(editor, dom);
+        const nodes = $generateRootNodesFromHtml(editor, props.getText());
         const root = $getRoot();
         root.clear();
         root.append(...nodes);

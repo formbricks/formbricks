@@ -9,11 +9,10 @@ import { after } from "next/server";
 import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
-import { createMembership } from "@/lib/membership/service";
 import { getUser, updateUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
-import { createTeamMembership } from "@/modules/auth/invite/lib/team";
+import { acceptInviteMembership } from "@/modules/auth/invite/lib/membership";
 import { getSession } from "@/modules/auth/lib/session";
 import { copyInviteAttributeValuesToMembership } from "@/modules/ee/member-attributes/lib/service";
 import { sendInviteAcceptedEmail } from "@/modules/email";
@@ -93,25 +92,12 @@ export const InvitePage = async (props: Readonly<InvitePageProps>) => {
 
       if (!session || !user) return;
 
-      await createMembership(invite.organizationId, session.user.id, {
-        accepted: true,
-        role: invite.role,
-      });
-      if (invite.teamIds) {
-        await createTeamMembership(
-          {
-            organizationId: invite.organizationId,
-            role: invite.role,
-            teamIds: invite.teamIds,
-          },
-          user.id
-        );
-      }
+      await acceptInviteMembership(invite, user.id);
       // The invite's Member attribute values become the member's, before the invite (and its values) goes.
       await copyInviteAttributeValuesToMembership({
         inviteId,
         organizationId: invite.organizationId,
-        userId: session.user.id,
+        userId: user.id,
       });
       await deleteInvite(inviteId);
       // Best-effort: the invite is already accepted, so a notice the SMTP server refuses must not stop the
