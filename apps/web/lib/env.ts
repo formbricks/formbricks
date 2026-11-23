@@ -771,10 +771,15 @@ const parsedEnv = createEnv({
     PASSWORD_HIBP_CHECK_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z.coerce.number().int().min(5).max(120).optional().default(30),
-    SETUP_TOKEN: z
-      .string()
-      .min(16, "SETUP_TOKEN must be at least 16 characters (generate one with `openssl rand -hex 16`)")
-      .optional(),
+    // Blank counts as unset, so `SETUP_TOKEN=` in an env file keeps the open setup instead of failing boot.
+    // Kept verbatim like the other secrets: it is compared as given.
+    SETUP_TOKEN: z.preprocess(
+      emptyStringToUndefined,
+      z
+        .string()
+        .min(16, "SETUP_TOKEN must be at least 16 characters (generate one with `openssl rand -hex 16`)")
+        .optional()
+    ),
     PRIVACY_URL: z
       .url()
       .optional()

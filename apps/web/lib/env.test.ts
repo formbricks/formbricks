@@ -333,6 +333,21 @@ describe("env", () => {
     }
   );
 
+  // ENG-7313: `SETUP_TOKEN=` in an env file means "no token", not a boot failure.
+  test("treats a blank SETUP_TOKEN as unset", async () => {
+    setTestEnv({ SETUP_TOKEN: "" });
+
+    const { env } = await import("./env");
+
+    expect(env.SETUP_TOKEN).toBeUndefined();
+  });
+
+  test("refuses a SETUP_TOKEN shorter than 16 characters", async () => {
+    setTestEnv({ SETUP_TOKEN: "too-short" });
+
+    await expect(import("./env")).rejects.toThrow("SETUP_TOKEN");
+  });
+
   test("parses MCP_DCR_ALLOWED_REDIRECT_URIS as a trimmed comma-separated list", async () => {
     setTestEnv({
       MCP_DCR_ALLOWED_REDIRECT_URIS:

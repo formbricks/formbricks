@@ -6,11 +6,11 @@ import {
   IS_TURNSTILE_CONFIGURED,
   OIDC_DISPLAY_NAME,
   PRIVACY_URL,
-  SETUP_TOKEN,
   TERMS_URL,
   TURNSTILE_SITE_KEY,
   WEBAPP_URL,
 } from "@/lib/constants";
+import { isSetupTokenConfigured } from "@/lib/instance/setup-token";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 
 export const SignupPage = async () => {
   const locale = await findMatchingLocale();
+  const isSetupTokenRequired = isSetupTokenConfigured();
 
   const ssoAvailability = await getSsoAvailability();
 
@@ -40,8 +41,8 @@ export const SignupPage = async () => {
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
         {...toSsoFormProps(ssoAvailability)}
         // SSO has no way to present the setup token, so it is not offered while one is required.
-        isSsoEnabled={ssoAvailability.isSsoEnabled && !SETUP_TOKEN}
-        isSetupTokenRequired={Boolean(SETUP_TOKEN)}
+        isSsoEnabled={ssoAvailability.isSsoEnabled && !isSetupTokenRequired}
+        isSetupTokenRequired={isSetupTokenRequired}
         oidcDisplayName={OIDC_DISPLAY_NAME}
         userLocale={locale}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
