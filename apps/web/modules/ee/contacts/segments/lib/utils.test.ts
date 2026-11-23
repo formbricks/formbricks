@@ -33,6 +33,7 @@ import {
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
   updateSurveyInteractionValueInFilter,
+  withFilterOperator,
 } from "./utils";
 
 // Mock createId
@@ -676,6 +677,25 @@ describe("Segment Utils", () => {
       surveyIds: [],
       within: { amount: 12, unit: "days" },
     });
+  });
+
+  test("withFilterOperator returns a copy with the filter's operator changed and leaves the input as it is", () => {
+    const segment: TSegment = {
+      id: "seg1",
+      title: "Test Segment",
+      description: "Desc",
+      isPrivate: false,
+      workspaceId: "workspace1",
+      surveys: [],
+      filters: [createBaseFilter(createMockFilter("f1", "attribute"), null, "bf1")],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const updated = withFilterOperator(segment, "f1", "notEquals");
+
+    expect((updated.filters[0].resource as TSegmentFilter).qualifier.operator).toBe("notEquals");
+    expect((segment.filters[0].resource as TSegmentFilter).qualifier.operator).toBe("equals");
   });
 
   test("formatSegmentDateFields", () => {

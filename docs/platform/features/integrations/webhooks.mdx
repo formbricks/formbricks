@@ -78,6 +78,9 @@ By default, Formbricks blocks webhook URLs that point to private or internal IP 
 DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1
 ```
 
+This switch applies to the Webhooks integration only. Workflow HTTP request steps have their own,
+`DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS`.
+
 <Warning>
   Only enable this on trusted, self-hosted environments. Enabling this on a publicly accessible instance exposes your server to SSRF risks.
 </Warning>
@@ -285,6 +288,8 @@ Two more keys are new in the response object:
 <Warning>
   Both keys are additive. If your receiver validates the payload against a strict schema, allow unknown keys, or add `dataByQuestionCode` and `outcome` to the schema. A webhook that was queued before an update can arrive without `dataByQuestionCode`.
 </Warning>
+
+`data.variables` holds the calculated fields. A text field's value is a string and a number field's is a number. A true/false field's value is a JSON boolean, `true` or `false`, so a receiver that validates `variables` against a strict schema must allow booleans.
 
 <Note>
   Zapier, Make, n8n and Activepieces show the fields of the last sample they received. After you update Formbricks or add questions, re-test the trigger to see the new fields.

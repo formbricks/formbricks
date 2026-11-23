@@ -47,7 +47,11 @@ export const ZResponseData = z.record(z.string(), ZResponseDataValue);
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
-export const ZResponseVariables = z.record(z.string(), z.union([z.string(), z.number()]));
+/**
+ * Computed field values by storage key. A true/false field (ENG-6973) holds a real boolean; a date
+ * (ENG-6935) an ISO 8601 string.
+ */
+export const ZResponseVariables = z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]));
 
 export type TResponseVariables = z.infer<typeof ZResponseVariables>;
 
@@ -121,6 +125,8 @@ export const checkFlatMap =
 
 const isTextOrNumber = (value: unknown) => typeof value === "string" || typeof value === "number";
 
+const isVariableValue = (value: unknown) => isTextOrNumber(value) || typeof value === "boolean";
+
 const NO_ITEMS: readonly unknown[] = [];
 
 /**
@@ -180,7 +186,12 @@ export const ZResponseDataInput = withSizeCheck(
 
 export const ZResponseVariablesInput = withSizeCheck(
   ZResponseVariables,
-  checkFlatMap(MAX_RESPONSE_VARIABLE_KEYS, "variables", isTextOrNumber, "A variable must be text or a number")
+  checkFlatMap(
+    MAX_RESPONSE_VARIABLE_KEYS,
+    "variables",
+    isVariableValue,
+    "A variable must be text, a number or true/false"
+  )
 );
 
 export const ZResponseTtc = z.record(z.string(), z.number());
@@ -925,7 +936,7 @@ export const ZResponseTableData = z.object({
   tags: z.array(ZTag),
   language: z.string().nullable(),
   responseData: ZResponseData,
-  variables: z.record(z.string(), z.union([z.string(), z.number()])),
+  variables: ZResponseVariables,
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
   meta: ZResponseMeta,

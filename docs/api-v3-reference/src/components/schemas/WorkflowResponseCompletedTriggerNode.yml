@@ -8,6 +8,12 @@ properties:
   id:
     type: string
     minLength: 1
+    maxLength: 64
+    pattern: "^[A-Za-z0-9_-]+$"
+    description: >-
+      Trigger id, unique in the definition: letters, digits, `_` and `-`, at most
+      64 characters. Checked on writes and enable; a definition stored before the
+      rule still loads and runs.
   type:
     type: string
     enum:

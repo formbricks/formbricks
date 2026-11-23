@@ -327,6 +327,41 @@ describe("checkFeaturePermissions", () => {
     expect(result).toBeNull();
   });
 
+  // ENG-3891: links in rich text are external URLs too.
+  test("should return forbiddenResponse when the welcome card gains a link without permission", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    const surveyData = {
+      ...baseSurveyData,
+      welcomeCard: {
+        ...baseSurveyData.welcomeCard,
+        enabled: true,
+        headline: { default: "Hi" },
+        subheader: { default: '<p><a href="https://example.com/terms">Terms</a></p>' },
+      },
+    };
+    const oldSurvey = {
+      welcomeCard: baseSurveyData.welcomeCard,
+      blocks: [],
+      endings: [],
+    } as unknown as TSurvey;
+    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    expect(result?.status).toBe(403);
+  });
+
+  test("should allow keeping an existing rich-text link without permission (grandfathering)", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    const welcomeCard = {
+      ...baseSurveyData.welcomeCard,
+      enabled: true,
+      headline: { default: "Hi" },
+      subheader: { default: '<p><a href="https://example.com/terms">Terms</a></p>' },
+    };
+    const surveyData = { ...baseSurveyData, welcomeCard };
+    const oldSurvey = { welcomeCard, blocks: [], endings: [] } as unknown as TSurvey;
+    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    expect(result).toBeNull();
+  });
+
   test("should allow ending buttonLink when permission is granted", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
     const surveyData = {

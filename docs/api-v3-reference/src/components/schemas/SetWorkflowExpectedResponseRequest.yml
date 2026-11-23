@@ -1,0 +1,14 @@
+type: object
+description: >-
+  Sets an HTTP request step's expected response body: the body its API answers with,
+  typed or pasted, or a Test request response chosen to use.
+required:
+  - body
+properties:
+  body:
+    type: object
+    additionalProperties: true
+    description: >-
+      A JSON object of at most 100 KB once serialized, nested at most 10
+      levels (lists count as levels).
+additionalProperties: false

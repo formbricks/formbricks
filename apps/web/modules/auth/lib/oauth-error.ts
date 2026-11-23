@@ -1,5 +1,6 @@
 import {
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+  SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE,
   SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE,
 } from "@formbricks/types/errors";
 import type { TSsoProvisioningRejectReason } from "./sso-provisioning-reject-reasons";
@@ -13,7 +14,7 @@ import type { TSsoProvisioningRejectReason } from "./sso-provisioning-reject-rea
  * `gateSsoProvisioning`, which arrives as its own reason code — rendered the same untouched form,
  * leaving the user to guess whether they had mistyped something, lost a session, or hit a policy.
  *
- * Codes collapse into five variants rather than a message each, because what the user can *do*
+ * Codes collapse into six variants rather than a message each, because what the user can *do*
  * differs by variant and the exact code rarely does. Anything unrecognized still gets `generic`,
  * which is the point: Better Auth's code set moves between versions (`oauth_code_verification_failed`
  * from the original report no longer exists upstream), and a new code must degrade to "something went
@@ -36,6 +37,11 @@ export type TOAuthErrorVariant =
    * admin — the recovery link itself cannot stand in for the factor.
    */
   | "second_factor_unavailable"
+  /**
+   * SSO recovery reached its completion in a browser that never opened the emailed link. Remedy: open
+   * that link in this browser, or ignore the email if the user did not start a sign-in (ENG-7310).
+   */
+  | "recovery_link_not_opened"
   /** Anything else, including transient callback failures. Remedy: try again. */
   | "generic";
 
@@ -80,6 +86,10 @@ const VARIANT_BY_CODE = new Map<string, TOAuthErrorVariant>([
   // arrives on the redirect `better-auth-recovery-signin.ts` builds, not on an SSO callback — same
   // query param, and the user's next step is the same kind of dead end to resolve with an admin.
   [SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE, "second_factor_unavailable"],
+
+  // ENG-7310: also from the recovery flow, not an SSO callback. The completion route sends it when the
+  // browser holds no proof of having opened the emailed link.
+  [SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE, "recovery_link_not_opened"],
 
   // The SAML callback's own refusals (ENG-3973). jackson's raw reasons stay in the server log; the browser gets
   // one of these fixed codes. A response that is malformed, oversized or failed validation may be fixed by

@@ -18,6 +18,7 @@ import {
   TSegmentSurveyInteractionFilterValue,
   TSurveyInteractionOperator,
 } from "@formbricks/types/segment";
+import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 // type guard to check if a resource is a filter
 export const isResourceFilter = (resource: TSegmentFilter | TBaseFilters): resource is TSegmentFilter => {
@@ -400,6 +401,19 @@ export const updateOperatorInFilter = (
       updateOperatorInFilter(resource, filterId, newOperator);
     }
   }
+};
+
+/** A copy of `segment` with one filter's operator changed; `segment` itself is left as it is. */
+export const withFilterOperator = (
+  segment: TSegment,
+  filterId: string,
+  newOperator: Parameters<typeof updateOperatorInFilter>[2]
+): TSegment => {
+  const updatedSegment = structuredClone(segment);
+  if (updatedSegment.filters) {
+    updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
+  }
+  return updatedSegment;
 };
 
 export const updateContactAttributeKeyInFilter = (

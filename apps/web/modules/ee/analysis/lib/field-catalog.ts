@@ -109,8 +109,11 @@ const CATALOG_BY_NAME = new Map(CHART_FIELD_CATALOG.map((field) => [field.name, 
 /** A field every dataset has. A dataset's embedded-data fields need `createChartFieldLookup`. */
 export const getChartField = (name: string): TChartField | undefined => CATALOG_BY_NAME.get(name);
 
-/** An embedded-data key of a dataset and the member it compiles to (`getEmbeddedMemberName`). */
-export type TEmbeddedChartField = { name: string; key: string };
+/**
+ * An embedded-data key of a dataset and the member it compiles to (`getEmbeddedMemberName`). `label` is the
+ * name the workspace gave the key, when it renamed it; display text only, the key stays what queries name.
+ */
+export type TEmbeddedChartField = { name: string; key: string; label?: string };
 
 /**
  * What one Feedback Dataset adds to the catalog. `answerQuestions` is left out where they were not
@@ -122,12 +125,12 @@ export type TDatasetChartFields = {
 };
 
 /** The catalog field an embedded-data key of a dataset is: a text dimension listed under the key. */
-export const toEmbeddedChartField = ({ name, key }: TEmbeddedChartField): TChartField => ({
+export const toEmbeddedChartField = ({ name, key, label }: TEmbeddedChartField): TChartField => ({
   name,
   kind: "dimension",
   type: "string",
-  // Listed under the key's own name, as collected (ENG-6893).
-  label: key,
+  // Listed under the workspace's name for the key, else the key's own name, as collected (ENG-6893).
+  label: label ?? key,
   description: `Embedded data "${key}". Matched exactly as collected, case included.`,
   filterOperators: FILTER_OPERATORS.string,
   granularities: [],
@@ -146,11 +149,11 @@ export const getChartFieldCatalog = (dataset?: TDatasetChartFields): TChartField
  * with `gt` / `gte` / `lt` / `lte` (and equality) by a dashboard filter. Filter-only and never listed: a
  * chart groups by the key's own field.
  */
-export const toEmbeddedNumberChartField = ({ name, key }: TEmbeddedChartField): TChartField => ({
+export const toEmbeddedNumberChartField = ({ name, key, label }: TEmbeddedChartField): TChartField => ({
   name: toEmbeddedNumberMember(name),
   kind: "dimension",
   type: "number",
-  label: key,
+  label: label ?? key,
   description: `Embedded data "${key}" read as a number; no value where it is not one. Filter only.`,
   filterOperators: FILTER_OPERATORS.number,
   granularities: [],

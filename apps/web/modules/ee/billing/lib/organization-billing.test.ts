@@ -587,6 +587,59 @@ describe("organization-billing", () => {
     }
   );
 
+  // ENG-7024: the usage window of a trial starts at the trial start, so the sync must store it.
+  test("syncOrganizationBillingFromStripe stores the trial start of a trialing subscription", async () => {
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedEventId: null },
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1742515200,
+          cancel_at_period_end: false,
+          cancel_at: null,
+          trial_start: 1741305600,
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.entitlementsList.mockResolvedValue({ data: [], has_more: false });
+
+    await syncOrganizationBillingFromStripe("org_1");
+
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          stripe: expect.objectContaining({ trialStart: "2025-03-07T00:00:00.000Z" }),
+        }),
+      })
+    );
+  });
+
   test("syncOrganizationBillingFromStripe stores hobby plan when customer has no active subscription", async () => {
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",

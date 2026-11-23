@@ -70,16 +70,21 @@ const versionFindFirst = vi.fn<WorkflowVersionDelegate["findFirst"]>();
 const versionCreate = vi.fn<WorkflowVersionDelegate["create"]>();
 const runFindMany = vi.fn<WorkflowRunDelegate["findMany"]>();
 const runFindUnique = vi.fn<WorkflowRunDelegate["findUnique"]>();
+const runCreate = vi.fn<WorkflowRunDelegate["create"]>();
 const workflow = { findMany, findUnique, create, update, delete: deleteFn, updateMany, count };
 const workflowVersion = { findFirst: versionFindFirst, create: versionCreate };
-const workflowRun = { findMany: runFindMany, findUnique: runFindUnique };
+const workflowRun = { findMany: runFindMany, findUnique: runFindUnique, create: runCreate };
 const prisma: WorkflowsDb = {
   workflow,
   workflowVersion,
   workflowRun,
+  workflowSample: { findUnique: vi.fn(), upsert: vi.fn() },
   $transaction: (fn) => fn({ workflow, workflowVersion }),
 };
-const service = createWorkflowsService({ prisma });
+const service = createWorkflowsService({
+  prisma,
+  webhookTokens: { issue: () => ({ hash: "hash", encrypted: "encrypted" }), reveal: () => "token" },
+});
 
 const runId = "cm9zr4w9d000308l8c5n8xk7e";
 
@@ -116,6 +121,10 @@ const makeRunDetail = (overrides: Partial<WorkflowRunWithLogsRow> = {}): Workflo
   idempotencyKey: null,
   nextAttemptAt: null,
   lastErrorAt: null,
+  callerIp: null,
+  contentDeletedAt: null,
+  contentRetentionDays: null,
+  workflowVersion: null,
   logs: [],
   ...overrides,
 });
@@ -144,7 +153,8 @@ describe("createWorkflow", () => {
     expect(createArgs.include).toEqual({
       runs: { take: 1, orderBy: { createdAt: "desc" } },
       creator: { select: { name: true } },
-      _count: { select: { runs: true } },
+      _count: { select: { runs: { where: { isDryRun: false } } } },
+      secrets: { select: { id: true, boundOrigin: true } },
     });
     expect(result).toBe(row);
   });
@@ -173,6 +183,16 @@ describe("listWorkflows", () => {
     expect(findManyArgs.orderBy).toEqual([{ updatedAt: "desc" }, { id: "desc" }]);
     expect(page.nextCursor).toBeNull();
     expect(page.workflows).toHaveLength(1);
+  });
+
+  test("counts only real runs for the Runs column, never Test runs", async () => {
+    findMany.mockResolvedValue([makeRow()]);
+
+    await service.listWorkflows({ workspaceId, limit: 20, sortBy: "updatedAt", includeTotalCount: false });
+
+    expect(findMany.mock.calls[0][0].include._count).toEqual({
+      select: { runs: { where: { isDryRun: false } } },
+    });
   });
 
   test("honors an explicit status filter", async () => {
@@ -274,7 +294,7 @@ describe("listWorkflows", () => {
 });
 
 describe("getWorkflowById", () => {
-  test("loads a single row by id with its last run", async () => {
+  test("loads a single row by id with its last run and its secrets' origins", async () => {
     const row = makeRow();
     findUnique.mockResolvedValue(row);
 
@@ -284,7 +304,8 @@ describe("getWorkflowById", () => {
       include: {
         runs: { take: 1, orderBy: { createdAt: "desc" } },
         creator: { select: { name: true } },
-        _count: { select: { runs: true } },
+        _count: { select: { runs: { where: { isDryRun: false } } } },
+        secrets: { select: { id: true, boundOrigin: true } },
       },
     });
   });
@@ -506,11 +527,11 @@ describe("listWorkflowRuns", () => {
     expect(args.orderBy).toEqual([{ createdAt: "desc" }, { id: "desc" }]);
     expect(args.take).toBe(21);
     // List omits the large JSON columns and joins the workflow name (omit + include compose in Prisma).
-    expect(args.omit).toEqual({ triggerPayload: true, data: true });
+    expect(args.omit).toEqual({ triggerPayload: true, data: true, testRunDefinition: true });
     expect(args.include).toEqual({ workflow: { select: { name: true } } });
   });
 
-  test("applies workflowId, responseId, statusIn, and isDryRun filters", async () => {
+  test("applies workflowId, responseId, statusIn, triggerTypeIn, and isDryRun filters", async () => {
     runFindMany.mockResolvedValue([]);
 
     await service.listWorkflowRuns({
@@ -519,6 +540,7 @@ describe("listWorkflowRuns", () => {
       workflowId: "cm9zr4t2b000208l8h2m1aq3c",
       responseId: "cm9zr5resp0000000000000000",
       statusIn: ["failed", "completed"],
+      triggerTypeIn: ["webhook"],
       isDryRun: true,
     });
 
@@ -527,6 +549,7 @@ describe("listWorkflowRuns", () => {
       workflowId: "cm9zr4t2b000208l8h2m1aq3c",
       responseId: "cm9zr5resp0000000000000000",
       status: { in: ["failed", "completed"] },
+      triggerType: { in: ["webhook"] },
       isDryRun: true,
     });
   });
@@ -655,6 +678,65 @@ describe("listWorkflowRuns", () => {
   });
 });
 
+describe("createTestRun", () => {
+  test("saves a queued dry run with no version and the draft it runs, so nothing bills or dispatches it", async () => {
+    runCreate.mockResolvedValue({ id: runId });
+    const triggerPayload = {
+      type: "webhook" as const,
+      workspaceId: "cm9zr4mps000008l8btfy1vtz",
+      payload: { order: 1 },
+      triggeredAt: "2026-11-13T10:00:00.000Z",
+    };
+
+    const result = await service.createTestRun(
+      { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId: "cm9zr4mps000008l8btfy1vtz" },
+      { triggerPayload, definition }
+    );
+
+    expect(result).toEqual({ id: runId });
+    expect(runCreate).toHaveBeenCalledWith({
+      data: {
+        workflowId: "cm9zr4t2b000208l8h2m1aq3c",
+        workspaceId: "cm9zr4mps000008l8btfy1vtz",
+        workflowVersionId: null,
+        status: "queued",
+        triggerType: "webhook",
+        isDryRun: true,
+        attempt: 0,
+        triggerPayload,
+        testRunDefinition: definition,
+      },
+      select: { id: true },
+    });
+  });
+
+  test("records a response run's survey and response, so the runs list's survey filter covers it", async () => {
+    runCreate.mockResolvedValue({ id: runId });
+
+    await service.createTestRun(
+      { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId: "cm9zr4mps000008l8btfy1vtz" },
+      {
+        triggerPayload: {
+          type: "response.completed",
+          workspaceId: "cm9zr4mps000008l8btfy1vtz",
+          surveyId: "cm9zr4q7i000108l84gozfggr",
+          responseId: "cm9zr5res000000000000000a",
+          data: {},
+          triggeredAt: "2026-11-13T10:00:00.000Z",
+        },
+        definition,
+      }
+    );
+
+    expect(runCreate.mock.calls[0][0].data).toMatchObject({
+      triggerType: "response.completed",
+      surveyId: "cm9zr4q7i000108l84gozfggr",
+      responseId: "cm9zr5res000000000000000a",
+      isDryRun: true,
+    });
+  });
+});
+
 describe("getWorkflowRun", () => {
   test("loads a run by id and eager-loads its logs ordered by sequence", async () => {
     const detail = makeRunDetail({ logs: [] });
@@ -664,7 +746,10 @@ describe("getWorkflowRun", () => {
 
     expect(runFindUnique.mock.calls[0][0]).toEqual({
       where: { id: runId },
-      include: { logs: { orderBy: { sequence: "asc" } } },
+      include: {
+        logs: { orderBy: { sequence: "asc" } },
+        workflowVersion: { select: { version: true } },
+      },
     });
     expect(result).toBe(detail);
   });

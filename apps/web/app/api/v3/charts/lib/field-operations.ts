@@ -14,6 +14,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { getDatasetQuestions } from "@/modules/ee/analysis/charts/lib/answer-questions";
 import {
   ANSWER_OPERATORS,
   type TAnswerQuestion,
@@ -31,6 +32,7 @@ import {
   createChartFieldLookup,
   getChartFieldCatalog,
 } from "@/modules/ee/analysis/lib/field-catalog";
+import type { TDatasetQuestion } from "@/modules/ee/analysis/lib/question-filter";
 import { applyChartQueryRateLimit, withChartQuerySlot } from "./data-operations";
 import type { TV3ChartFieldCatalog } from "./resources";
 import type { TV3ChartFieldValuesQuery } from "./schemas";
@@ -43,7 +45,8 @@ type TV3ReadContext = {
 
 const serializeCatalog = (
   fields: readonly TChartField[],
-  answerQuestions: readonly TAnswerQuestion[]
+  answerQuestions: readonly TAnswerQuestion[],
+  questions: readonly TDatasetQuestion[]
 ): TV3ChartFieldCatalog => ({
   fields: fields.map((field) => ({
     ...field,
@@ -59,6 +62,8 @@ const serializeCatalog = (
     operators: [...ANSWER_OPERATORS[kind]],
     options: options.map((option) => ({ value: formatAnswerValue(id, option.value), label: option.label })),
   })),
+  // The questions a `FeedbackRecords.fieldId` filter may name, so it is picked by label and stored by id (ENG-7323).
+  questions: questions.map(({ id, label }) => ({ id, label })),
 });
 
 /**
@@ -66,7 +71,8 @@ const serializeCatalog = (
  *
  * Answered per dataset: the caller has to be able to read the dataset it is about to write a query for,
  * and each dataset adds its embedded-data keys as `FeedbackRecords.ed_*` fields, labelled by the key
- * (ENG-6893), and the questions an answer rule may name (`answerQuestions`, C14). Returns a `Response` and never throws — the MCP server calls it directly, with no wrapper.
+ * (ENG-6893), the questions an answer rule may name (`answerQuestions`, C14), and the questions a
+ * question filter may name (`questions`, ENG-7323). Returns a `Response` and never throws — the MCP server calls it directly, with no wrapper.
  */
 export async function getV3ChartFieldCatalog({
   workspaceId,
@@ -94,13 +100,17 @@ export async function getV3ChartFieldCatalog({
     const actor = getV3AuthorizationActor(authentication);
     if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
 
-    const dataset = await getDatasetChartFields(
-      { datasetId, workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
-      { withAnswerQuestions: true }
+    const [dataset, questions] = await Promise.all([
+      getDatasetChartFields(
+        { datasetId, workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
+        { withAnswerQuestions: true }
+      ),
+      getDatasetQuestions(access.workspaceId, datasetId),
+    ]);
+    return successResponse(
+      serializeCatalog(getChartFieldCatalog(dataset), dataset.answerQuestions ?? [], questions),
+      { requestId }
     );
-    return successResponse(serializeCatalog(getChartFieldCatalog(dataset), dataset.answerQuestions ?? []), {
-      requestId,
-    });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.fields" });
   }

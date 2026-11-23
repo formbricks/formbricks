@@ -5,6 +5,7 @@ import type { TAuthzedRelationship } from "./client";
 import {
   AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
   AUTHZED_BACKFILL_SURVEY_PAGE_SIZE,
+  AUTHZED_PROJECTED_USER,
   AUTHZED_TARGET_CHUNK_SIZE,
 } from "./constants";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
@@ -520,7 +521,7 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     mcpGrantWorkspaceSelections,
   ] = await Promise.all([
     prisma.membership.findMany({
-      where: { organizationId },
+      where: { organizationId, user: AUTHZED_PROJECTED_USER },
       select: { role: true, userId: true },
       orderBy: { userId: "asc" },
     }),
@@ -540,7 +541,7 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       orderBy: { id: "asc" },
     }),
     prisma.teamUser.findMany({
-      where: { team: { organizationId } },
+      where: { team: { organizationId }, user: AUTHZED_PROJECTED_USER },
       select: { role: true, teamId: true, userId: true },
       orderBy: [{ teamId: "asc" }, { userId: "asc" }],
     }),
@@ -839,6 +840,8 @@ export const findMissingSourceRefs = async (
       : prisma.membership.findMany({
           where: {
             OR: membershipRefs.map(({ organizationId, userId }) => ({ organizationId, userId })),
+            // A deactivated user's relationship has no source, so a pruning run removes it.
+            user: AUTHZED_PROJECTED_USER,
           },
           select: { organizationId: true, userId: true },
         }),
@@ -851,7 +854,10 @@ export const findMissingSourceRefs = async (
     teamMembershipRefs.length === 0
       ? []
       : prisma.teamUser.findMany({
-          where: { OR: teamMembershipRefs.map(({ teamId, userId }) => ({ teamId, userId })) },
+          where: {
+            OR: teamMembershipRefs.map(({ teamId, userId }) => ({ teamId, userId })),
+            user: AUTHZED_PROJECTED_USER,
+          },
           select: { teamId: true, userId: true },
         }),
     workspaceRefs.length === 0

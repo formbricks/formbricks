@@ -193,12 +193,23 @@ describe("updateMembership", () => {
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org1", "user1");
   });
 
+  test("projects the new role even when finishing the ended grants fails", async () => {
+    endGrantsOnDemotion();
+    vi.mocked(finishRevokedMcpGrants).mockRejectedValueOnce(new Error("audit down"));
+
+    await expect(updateMembership("user1", "org1", { role: "dashboard_viewer" }, "owner-1")).rejects.toThrow(
+      "audit down"
+    );
+
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org1", "user1");
+  });
+
   test("inside a caller's transaction, returns the ended grants for after the commit instead of finishing them", async () => {
     const grantAudits = endGrantsOnDemotion();
 
     await expect(
       updateMembershipInTransaction(prisma as never, "user1", "org1", { role: "dashboard_viewer" })
-    ).resolves.toEqual({ membership: { role: "dashboard_viewer" }, grantAudits });
+    ).resolves.toEqual({ membership: { role: "dashboard_viewer" }, grantAudits, affectedTeamIds: [] });
 
     expect(finishRevokedMcpGrants).not.toHaveBeenCalled();
   });
@@ -255,6 +266,7 @@ describe("updateMembership", () => {
     await expect(updateMembershipInTransaction(tx, "user1", "org1", { role: "member" })).resolves.toEqual({
       membership: mockMembership,
       grantAudits: [],
+      affectedTeamIds: ["team1"],
     });
 
     expect(tx.membership.update).toHaveBeenCalled();

@@ -59,12 +59,83 @@ const preferCanonicalSibling = (
 };
 
 /**
+ * The regions that read Latin American Spanish (`es-419`) rather than the `es-ES` base default
+ * (ENG-3894): Latin America and the Caribbean plus the United States, as CLDR parents them under
+ * `es-419`, and the `419` region code itself.
+ */
+const ES_419_REGIONS: ReadonlySet<string> = new Set([
+  "419",
+  "AR",
+  "BO",
+  "BR",
+  "BZ",
+  "CL",
+  "CO",
+  "CR",
+  "CU",
+  "DO",
+  "EC",
+  "GT",
+  "HN",
+  "MX",
+  "NI",
+  "PA",
+  "PE",
+  "PR",
+  "PY",
+  "SV",
+  "US",
+  "UY",
+  "VE",
+]);
+
+/** A plain Spanish regional tag (`es-MX`, `es_419`), and nothing more: no script, variant or extension. */
+const PLAIN_SPANISH_REGIONAL_TAG = /^es[-_]([a-z]{2}|\d{3})$/i;
+
+/**
+ * The region of a plain Spanish regional tag (`es-MX` -> `MX`), or undefined for anything else. A tag
+ * with more subtags (`es-MX-u-nu-latn`, `es-Latn-MX`) keeps the base default, so the creatives page,
+ * which only keys plain `es-<region>` tags (`getLatinAmericanSpanishRequests`), answers it the same way.
+ */
+const spanishRegionOf = (code: string): string | undefined =>
+  PLAIN_SPANISH_REGIONAL_TAG.exec(code.trim())?.[1].toUpperCase();
+
+/** Whether a stored code is Latin American Spanish (`es-419`, any spelling). */
+const isLatinAmericanSpanish = (code: string): boolean => spanishRegionOf(code) === "419";
+
+/**
+ * The Latin American Spanish tags (`es-MX`, `es-AR`, …) the matcher sends to a survey's `es-419`
+ * language rather than to its base default, or none when the survey has no enabled `es-419`. Lets a
+ * precomputed matcher (creatives) key them without restating the rule.
+ */
+export const getLatinAmericanSpanishRequests = (languages: readonly TMatchableSurveyLanguage[]): string[] =>
+  languages.some(
+    (surveyLanguage) =>
+      (surveyLanguage.enabled || surveyLanguage.default) &&
+      isLatinAmericanSpanish(surveyLanguage.language.code)
+  )
+    ? [...ES_419_REGIONS].map((region) => `es-${region}`)
+    : [];
+
+/** A Latin American Spanish request's `es-419` survey language, when the survey has one. */
+const findLatinAmericanSpanish = (
+  sameBase: readonly TMatchableSurveyLanguage[],
+  requestedCode: string
+): TMatchableSurveyLanguage | undefined => {
+  const requestedRegion = spanishRegionOf(requestedCode);
+  if (!requestedRegion || !ES_419_REGIONS.has(requestedRegion)) return undefined;
+  return sameBase.find((surveyLanguage) => isLatinAmericanSpanish(surveyLanguage.language.code));
+};
+
+/**
  * Tier 4: a survey language that writes the same base language, script preserved. Works in both
  * directions — `ar` finds `ar-SA`, and `ar-SA` finds `ar-EG` — because both sides are reduced to their
  * language default tag (`ar-*` -> `ar-EG`, `zh-TW` -> `zh-Hant-TW`, never `zh-Hans-CN`).
  *
- * Tie-break among several same-base languages: the one whose stored code IS the base's canonical
- * default tag (`ar-MA` on an `ar-SA`/`ar-EG` survey picks `ar-EG`), else the first in survey order.
+ * Tie-break among several same-base languages: for a Latin American Spanish request, `es-419`
+ * (`es-MX` on an `es-ES`/`es-419` survey picks `es-419`); otherwise the one whose stored code IS the
+ * base's canonical default tag (`ar-MA` on an `ar-SA`/`ar-EG` survey picks `ar-EG`), else the first in
+ * survey order.
  */
 const findSameBaseLanguage = (
   candidates: readonly TMatchableSurveyLanguage[],
@@ -79,10 +150,12 @@ const findSameBaseLanguage = (
   );
 
   return (
+    findLatinAmericanSpanish(sameBase, requestedCode) ??
     sameBase.find(
       (surveyLanguage) =>
         normalizeLanguageCode(surveyLanguage.language.code)?.toLowerCase() === requestedBaseTag.toLowerCase()
-    ) ?? sameBase[0]
+    ) ??
+    sameBase[0]
   );
 };
 
@@ -94,7 +167,8 @@ const findSameBaseLanguage = (
  *   1. exact stored code, ignoring case and treating `_` as `-` (`DE_de` -> `de-DE`)
  *   2. exact alias, ignoring case
  *   3. canonical equivalence via `normalizeLanguageCode` (`pt` -> `pt-BR`, `zh-CN` -> `zh-Hans-CN`)
- *   4. same base language, script preserved (`en-GB` -> `en-US`, `zh-TW` -> `zh-Hant-TW`)
+ *   4. same base language, script preserved (`en-GB` -> `en-US`, `zh-TW` -> `zh-Hant-TW`), Latin
+ *      American Spanish preferring `es-419` (`es-MX` -> `es-419` over `es-ES`)
  *
  * Disabled languages never match. The default language always does: it is the language the survey
  * was authored in, so its `enabled` flag carries no meaning and has never gated it. A match on a legacy

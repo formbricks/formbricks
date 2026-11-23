@@ -106,6 +106,7 @@ export function ChartBuilderBody({
               chartType={chartData?.chartType}
               config={chartConfig}
               onChange={onChartConfigChange}
+              query={chartData?.query}
             />
           ) : undefined
         }

@@ -83,4 +83,133 @@ describe("assertV3SurveyWritePermissions", () => {
     ).resolves.toBeUndefined();
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
   });
+
+  // ENG-3891: a PATCH could otherwise add the link a create is refused.
+  describe("links in rich text", () => {
+    const blockWithHeadline = (html: string) =>
+      [
+        {
+          id: "blk1",
+          name: "Block 1",
+          elements: [{ id: "q1", type: "openText", headline: { default: html }, required: false }],
+        },
+      ] as never;
+    const LINKED = '<p>See <a href="https://example.com/terms">terms</a></p>';
+
+    test("rejects a headline that gains a link", async () => {
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks: blockWithHeadline(LINKED),
+            endings: [],
+            previous: { blocks: blockWithHeadline("<p>See terms</p>"), endings: [] },
+          },
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+    });
+
+    test("rejects a text variable whose new value is a link its headline recalls", async () => {
+      const variableId = "clvar1234567890123456789012";
+      const blocks = blockWithHeadline(`<p>#recall:${variableId}/fallback:x#</p>`);
+      const variable = (value: string) => [{ id: variableId, name: "v1", type: "text" as const, value }];
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks,
+            endings: [],
+            variables: variable(LINKED),
+            previous: { blocks, endings: [], variables: variable("friend") },
+          },
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+    });
+
+    test("rejects a variable that becomes a link beside a recall chain deeper than ten", async () => {
+      const variableId = "clvar1234567890123456789012";
+      const chainIds = Array.from({ length: 12 }, (_, i) => `clchain${String(i).padStart(20, "0")}`);
+      const chain = chainIds.map((id, i) => ({
+        id,
+        name: `c${i}`,
+        type: "text" as const,
+        value: i < chainIds.length - 1 ? `#recall:${chainIds[i + 1]}/fallback:x#` : "end",
+      }));
+      const blocks = blockWithHeadline(
+        `<p>#recall:${chainIds[0]}/fallback:x# #recall:${variableId}/fallback:x#</p>`
+      );
+      const variables = (value: string) => [
+        ...chain,
+        { id: variableId, name: "v1", type: "text" as const, value },
+      ];
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks,
+            endings: [],
+            variables: variables(LINKED),
+            previous: { blocks, endings: [], variables: variables("friend") },
+          },
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+    });
+
+    test("rejects a variable whose new value builds a link with a $` replacement pattern", async () => {
+      const variableId = "clvar1234567890123456789012";
+      const blocks = blockWithHeadline(`ef="https://example.com/a">x</a> #recall:${variableId}/fallback:x#`);
+      const variable = (value: string) => [{ id: variableId, name: "v1", type: "text" as const, value }];
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks,
+            endings: [],
+            variables: variable("<a hr$`"),
+            previous: { blocks, endings: [], variables: variable("friend") },
+          },
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+    });
+
+    test("rejects a welcome card that gains a link", async () => {
+      const welcomeCard = {
+        enabled: true,
+        headline: { default: "Hi" },
+        timeToFinish: false,
+        showResponseCount: false,
+      };
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks: [],
+            endings: [],
+            welcomeCard: { ...welcomeCard, subheader: { default: LINKED } },
+            previous: { blocks: [], endings: [], welcomeCard },
+          },
+          "org_1"
+        )
+      ).rejects.toThrow(V3SurveyWritePermissionError);
+    });
+
+    test("keeps a link the survey already had without asking the plan", async () => {
+      await expect(
+        assertV3SurveyWritePermissions(
+          {
+            workspaceId: "ws_1",
+            blocks: blockWithHeadline(`${LINKED}<p>Edited</p>`),
+            endings: [],
+            previous: { blocks: blockWithHeadline(LINKED), endings: [] },
+          },
+          "org_1"
+        )
+      ).resolves.toBeUndefined();
+      expect(getExternalUrlsPermission).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -26,6 +26,7 @@ vi.mock("@formbricks/workflows/server", () => ({
 // Keep ZWorkflowDefinition real so trigger surveyId parsing is exercised end-to-end.
 vi.mock("@/lib/constants", () => ({ MAIL_FROM: undefined, DEFAULT_LOCALE: "en-US" }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMembers: mockGetWorkspaceMembers }));
+vi.mock("@/modules/ee/workflows/lib/webhook/token", () => ({ webhookTokenIssuer: {} }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mockGetSession }));
 vi.mock("@/modules/survey/editor/lib/user", () => ({
   getUserEmail: mockGetUserEmail,

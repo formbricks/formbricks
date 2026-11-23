@@ -33,6 +33,12 @@ import {
   ZSurveyBlocks,
 } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
+import {
+  BOOLEAN_ASSIGN_MESSAGE,
+  BOOLEAN_VALUE_TARGET_MESSAGE,
+  isStaticBooleanValue,
+  isValidBooleanAssign,
+} from "./boolean-assign";
 import { validateSurveyCodes } from "./codes";
 import { getCopiedOptionsIssues } from "./copied-options";
 import {
@@ -3305,10 +3311,6 @@ const ELEMENT_MULTI_SELECT_OPERATORS: TOperatorList = [
 ];
 const ELEMENT_SUBMITTED_OPERATORS: TOperatorList = ["isSubmitted", "isSkipped"];
 
-/** A table's own entry for `key`; a prototype key (`constructor`, `toString`) has none. */
-const ownEntry = <T>(table: Partial<Record<string, T>>, key: string): T | undefined =>
-  Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined;
-
 /** The operators an open-text element allows, by input type. Other input types allow every operator. */
 const OPEN_TEXT_ELEMENT_OPERATORS: Partial<Record<string, TOperatorList>> = {
   email: ELEMENT_TEXT_OPERATORS,
@@ -3370,6 +3372,11 @@ const ELEMENT_OPERATORS: Partial<Record<TSurveyElementTypeEnum, TOperatorList>> 
   [TSurveyElementTypeEnum.ContactInfo]: ELEMENT_SUBMITTED_OPERATORS,
 };
 
+// Looked up through Maps, so a prototype key (`constructor`, `toString`) has no entry. Not
+// `Object.hasOwn`: this package compiles against ES2021.
+const OPEN_TEXT_ELEMENT_OPERATOR_MAP = new Map(Object.entries(OPEN_TEXT_ELEMENT_OPERATORS));
+const ELEMENT_OPERATOR_MAP = new Map(Object.entries(ELEMENT_OPERATORS));
+
 const isInvalidOperatorsForElementType = (
   element: TSurveyElement,
   operator: TSurveyLogicConditionsOperator
@@ -3378,8 +3385,8 @@ const isInvalidOperatorsForElementType = (
 
   const allowedOperators =
     element.type === TSurveyElementTypeEnum.OpenText
-      ? ownEntry(OPEN_TEXT_ELEMENT_OPERATORS, element.inputType)
-      : ownEntry(ELEMENT_OPERATORS, element.type);
+      ? OPEN_TEXT_ELEMENT_OPERATOR_MAP.get(element.inputType)
+      : ELEMENT_OPERATOR_MAP.get(element.type);
 
   return allowedOperators !== undefined && !allowedOperators.includes(operator);
 };
@@ -4041,6 +4048,33 @@ const validateCalculationElementSource = (
 };
 
 /**
+ * Set value on a true/false field (ENG-6973): one-step `assign` only, of a static `true` / `false` or
+ * a reference to another true/false Embedded Data field. No expression: expressions don't return
+ * true/false yet.
+ */
+const validateBooleanCalculateAction = (
+  ctx: TBlockActionContext,
+  action: Extract<TSurveyBlockLogicAction, { objective: "calculate" }>,
+  actionIndex: number
+): z.core.$ZodIssue | undefined => {
+  const { survey, blockIndex, logicIndex } = ctx;
+  const getFieldType = (storageKey: string, source: "computed" | "ingested") =>
+    source === "computed"
+      ? findLogicComputedField(survey, storageKey)?.dataType
+      : survey.embeddedFields?.find(
+          ({ field, link }) => field.source === "ingested" && link.storageKey === storageKey
+        )?.field.dataType;
+
+  if (isValidBooleanAssign(action, getFieldType)) return undefined;
+
+  return {
+    code: "custom",
+    message: `Conditional Logic: ${BOOLEAN_ASSIGN_MESSAGE} in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+    path: ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value"],
+  };
+};
+
+/**
  * A Set value or one-step calculation. Its expression's issues, each at its exact path into the tree,
  * go to `expressionIssues`; anything else is returned.
  */
@@ -4058,6 +4092,20 @@ const validateBlockCalculateAction = (
       code: "custom",
       message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
       path: ["blocks", blockIndex, "logic", logicIndex],
+    };
+  }
+
+  // ENG-6973: a true/false field is set in one step only, to True, False or another true/false field.
+  if (variable.type === "boolean") {
+    return validateBooleanCalculateAction(ctx, action, actionIndex);
+  }
+
+  // True and False are values of a true/false field only.
+  if (isStaticBooleanValue(action.value)) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: ${BOOLEAN_VALUE_TARGET_MESSAGE} in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      path: ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex, "value"],
     };
   }
 
@@ -4217,18 +4265,19 @@ const validateBlockActions = (
 
 /**
  * The computed field a logic reference names, with its type. Read from the rows when the payload has
- * them, because a computed date (ENG-6935) lives only there; the legacy `variables` otherwise.
+ * them, because a computed date (ENG-6935) or true/false (ENG-6973) lives only there; the legacy
+ * `variables` otherwise.
  */
 const findLogicComputedField = (
   survey: TSurvey,
   storageKey: string
-): { type: "number" | "text" | "date"; dataType: TEmbeddedDataType } | undefined => {
+): { type: "number" | "text" | "date" | "boolean"; dataType: TEmbeddedDataType } | undefined => {
   const row = survey.embeddedFields?.find(
     ({ field, link }) => field.source === "computed" && link.storageKey === storageKey
   );
   if (row) {
     const { dataType } = row.field;
-    return { type: dataType === "number" || dataType === "date" ? dataType : "text", dataType };
+    return { type: dataType === "string" ? "text" : dataType, dataType };
   }
   const variable = survey.variables.find((v) => v.id === storageKey);
   if (!variable) return undefined;

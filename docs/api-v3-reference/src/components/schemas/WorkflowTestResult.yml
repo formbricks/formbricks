@@ -6,6 +6,7 @@ required:
   - workflowId
   - ok
   - problems
+  - warnings
 properties:
   workflowId:
     type: string
@@ -14,8 +15,9 @@ properties:
   ok:
     type: boolean
     description: >
-      True when the definition is executable, every trigger reference resolves, and every literal
-      `send_email` recipient can access this workspace.
+      True when the definition is executable, every trigger reference resolves, every literal
+      `send_email` recipient can access this workspace, and every survey link points to a link
+      survey in this workspace.
   problems:
     type: array
     description: Every problem found, so all issues can be fixed at once. Empty when `ok` is true.
@@ -34,6 +36,8 @@ properties:
             - ending_card_not_found
             - survey_not_workspace_visible
             - recipient_not_allowed
+            - survey_link_survey_not_found
+            - survey_link_survey_not_link
           description: Machine-readable problem category.
         field:
           type: string
@@ -42,3 +46,10 @@ properties:
         message:
           type: string
           description: Human-readable explanation of the problem.
+  warnings:
+    type: array
+    description: >
+      Things that do not stop the workflow from running but probably need a look. They never make
+      `ok` false.
+    items:
+      $ref: ./WorkflowWarning.yml

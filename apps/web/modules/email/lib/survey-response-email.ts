@@ -38,6 +38,22 @@ import { resolveStorageUrl } from "@/modules/storage/utils";
  * `ul`/`ol`/`li` are on the list because `sanitize-html` drops a disallowed tag but keeps its text:
  * without them the Body editor's list buttons produced items run together on one line, unnumbered.
  */
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br", "ul", "ol", "li"],
+  allowedAttributes: {
+    a: ["href", "rel", "target"],
+    // Lexical numbers list items explicitly; keep both so an `<ol>` that starts at something other
+    // than 1 keeps its numbering instead of restarting.
+    ol: ["start"],
+    li: ["value"],
+    "*": ["dir", "class"],
+  },
+  allowedSchemes: ["http", "https"],
+  allowedSchemesByTag: {
+    a: ["http", "https"],
+  },
+};
+
 const sanitizeBody = (body: string, survey: TSurvey, response: TResponse, locale?: TUserLocale): string =>
   sanitizeHtml(
     // Pass the resolved locale rather than letting it default to "en-US": recall values include date
@@ -55,21 +71,7 @@ const sanitizeBody = (body: string, survey: TSurvey, response: TResponse, locale
       undefined,
       true
     ),
-    {
-      allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br", "ul", "ol", "li"],
-      allowedAttributes: {
-        a: ["href", "rel", "target"],
-        // Lexical numbers list items explicitly; keep both so an `<ol>` that starts at something other
-        // than 1 keeps its numbering instead of restarting.
-        ol: ["start"],
-        li: ["value"],
-        "*": ["dir", "class"],
-      },
-      allowedSchemes: ["http", "https"],
-      allowedSchemesByTag: {
-        a: ["http", "https"],
-      },
-    }
+    SANITIZE_OPTIONS
   );
 
 const buildResponseData = (
@@ -108,21 +110,20 @@ const buildVariables = (
   if (!attachResponseData || !includeVariables) return [];
 
   // ENG-1837: definitions from the EmbeddedData tables; the value read stays the raw response slot,
-  // so a response that never captured this field is filtered out rather than shown its default.
-  return getComputedEmbeddedFields(survey)
-    .filter(({ link }) => {
-      const variableResponse = response.variables[link.storageKey];
-      return (
-        (typeof variableResponse === "string" || typeof variableResponse === "number") &&
-        variableResponse !== undefined
-      );
-    })
-    .map(({ field, link }) => ({
-      id: link.storageKey,
-      name: field.name,
-      type: field.dataType === "number" ? ("number" as const) : ("text" as const),
-      value: response.variables[link.storageKey],
-    }));
+  // so a response that never captured this field is filtered out rather than shown its default. A
+  // true/false field (ENG-6973) reads `true` / `false`, as the exports write it.
+  return getComputedEmbeddedFields(survey).flatMap(({ field, link }) => {
+    const variableResponse = response.variables[link.storageKey];
+    if (variableResponse === undefined) return [];
+    return [
+      {
+        id: link.storageKey,
+        name: field.name,
+        type: field.dataType === "number" ? ("number" as const) : ("text" as const),
+        value: typeof variableResponse === "boolean" ? String(variableResponse) : variableResponse,
+      },
+    ];
+  });
 };
 
 const buildHiddenFields = (
@@ -184,6 +185,40 @@ export const buildSurveyResponseEmailHtml = async ({
     // The whitelabel logo is stored as a relative `/storage/...` path, which an email client cannot
     // resolve — it has no origin to resolve against, so the `<img>` renders broken. Resolve it to an
     // absolute URL here, exactly like every other email sender does (see `@/modules/email`).
+    logoUrl: logoUrl ? resolveStorageUrl(logoUrl) : undefined,
+    t,
+    privacyUrl: PRIVACY_URL || undefined,
+    termsUrl: TERMS_URL || undefined,
+    imprintUrl: IMPRINT_URL || undefined,
+    imprintAddress: IMPRINT_ADDRESS || undefined,
+  });
+};
+
+/**
+ * The same branded email for a workflow run that has no survey response (a Webhook run). The body is
+ * sanitized exactly like {@link buildSurveyResponseEmailHtml}; a survey-answer recall token has no
+ * response to read, so it renders its fallback, and there are no response-data blocks.
+ */
+export const buildWorkflowEmailHtml = async ({
+  body,
+  logoUrl,
+  locale,
+}: {
+  body: string;
+  logoUrl?: string;
+  locale?: TUserLocale;
+}): Promise<string> => {
+  const resolvedLocale = locale ?? DEFAULT_LOCALE;
+  const t = await getTranslate(resolvedLocale);
+
+  return renderFollowUpEmail({
+    body: sanitizeHtml(
+      parseRecallInfo(body, {}, {}, false, resolvedLocale, undefined, true),
+      SANITIZE_OPTIONS
+    ),
+    responseData: [],
+    variables: [],
+    hiddenFields: [],
     logoUrl: logoUrl ? resolveStorageUrl(logoUrl) : undefined,
     t,
     privacyUrl: PRIVACY_URL || undefined,

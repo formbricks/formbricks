@@ -40,7 +40,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
 
-const elementIconMapping = {
+export const elementIconMapping = {
   openText: MessageSquareTextIcon,
   multipleChoiceSingle: Rows3Icon,
   multipleChoiceMulti: ListIcon,

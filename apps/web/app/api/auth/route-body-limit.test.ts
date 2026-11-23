@@ -25,16 +25,14 @@ vi.mock("@/modules/auth/lib/auth", () => ({
     },
     api: {},
   },
+  getDeclaredAuthPaths: () => [],
 }));
 vi.mock("@/modules/auth/lib/mcp-dcr-application-type", () => ({ prepareDcrRequest: prepareDcrRequestMock }));
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
 vi.mock("@/modules/auth/lib/session-revocation", () => ({ revokeSessionByToken: vi.fn() }));
-vi.mock("@/modules/ee/sso/lib/sso-recovery", () => ({
-  SsoRecoveryError: class extends Error {},
-  completeSsoRecovery: vi.fn(),
-  getSsoRecoveryFailureRedirectUrl: vi.fn(() => "http://localhost/auth/login"),
-}));
+vi.mock("@/modules/ee/sso/lib/sso-recovery", () => ({ completeSsoRecovery: vi.fn() }));
+vi.mock("@/modules/ee/sso/lib/recovery-authorize", () => ({ cancelSsoRecovery: vi.fn() }));
 
 type RouteModule = Record<string, unknown>;
 

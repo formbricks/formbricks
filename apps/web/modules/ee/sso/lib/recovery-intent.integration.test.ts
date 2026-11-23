@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { beforeEach, describe, expect, test } from "vitest";
 import { cache } from "@/lib/cache";
 import {
+  claimSsoRecoveryIntent,
   consumeSsoRecoveryIntent,
   createSsoRecoveryIntent,
   getSsoRecoveryPairedTtlSeconds,
@@ -31,8 +32,8 @@ const intentInput = {
   callbackUrl: "http://localhost:3000/organizations/org_1/workspaces/ws_1/surveys",
 };
 
-const keyFor = (stateId: string) =>
-  `fb:sso_recovery:intent:${crypto.createHash("sha256").update(stateId).digest("hex")}`;
+const keyFor = (stateId: string, kind: "intent" | "claim" = "intent") =>
+  `fb:sso_recovery:{${crypto.createHash("sha256").update(stateId).digest("hex")}}:${kind}`;
 
 const redisClient = async () => {
   const redis = await cache.getRedisClient();
@@ -89,7 +90,9 @@ describe("SSO recovery intent store (real Redis)", () => {
   test("consuming removes the key rather than merely expiring it", async () => {
     const stateId = await createSsoRecoveryIntent(intentInput);
 
-    await consumeSsoRecoveryIntent(stateId);
+    // Exactly one consume wins: the count real Redis returns, which a cancel racing a link relies on.
+    await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(true);
+    await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(false);
 
     await expect(redisClient().then((r) => r.exists(keyFor(stateId)))).resolves.toBe(0);
     await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();
@@ -103,5 +106,40 @@ describe("SSO recovery intent store (real Redis)", () => {
 
     await expect(readSsoRecoveryIntent(first)).resolves.toBeNull();
     await expect(readSsoRecoveryIntent(second)).resolves.toMatchObject({ userId: "other-user" });
+  });
+
+  /** The claim's Lua against real Redis: one owner at a time, none once spent, freed only by its owner. */
+  test("a recovery is claimed by one request at a time, and not at all once spent", async () => {
+    const stateId = await createSsoRecoveryIntent(intentInput);
+
+    const first = await claimSsoRecoveryIntent(stateId);
+    expect(first.kind).toBe("claimed");
+    // The claim must expire on its own, or a crashed holder would block the recovery.
+    const claimTtl = await (await redisClient()).ttl(keyFor(stateId, "claim"));
+    expect(claimTtl).toBeGreaterThan(0);
+    expect(claimTtl).toBeLessThanOrEqual(5 * 60);
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
+
+    if (first.kind === "claimed") await first.release();
+    const second = await claimSsoRecoveryIntent(stateId);
+    expect(second.kind).toBe("claimed");
+    if (second.kind === "claimed") await second.release();
+
+    await consumeSsoRecoveryIntent(stateId);
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "spent" });
+  });
+
+  test("a claim that lapsed and was retaken is not freed by its first owner", async () => {
+    const stateId = await createSsoRecoveryIntent(intentInput);
+    const first = await claimSsoRecoveryIntent(stateId);
+    // The first claim's TTL runs out, and another request takes the recovery.
+    await (await redisClient()).del(keyFor(stateId, "claim"));
+    const second = await claimSsoRecoveryIntent(stateId);
+    expect(second.kind).toBe("claimed");
+
+    if (first.kind === "claimed") await first.release();
+
+    // Still the second request's: a third cannot claim.
+    await expect(claimSsoRecoveryIntent(stateId)).resolves.toEqual({ kind: "held" });
   });
 });

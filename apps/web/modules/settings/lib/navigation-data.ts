@@ -9,6 +9,7 @@ import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } fro
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { needsMonthlyResponseCount } from "@/lib/utils/billing";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getSession } from "@/modules/auth/lib/session";
 import {
@@ -99,21 +100,20 @@ export const getSettingsLayoutData = async (
   if (!user || !organization || !membership) return null;
 
   const isDashboardViewer = membership.role === "dashboard_viewer";
-  const [isAccessControlAllowed, license, organizationWorkspacesLimit, workspaces] = await Promise.all([
-    getAccessControlPermission(organization.id),
-    getEnterpriseLicense(),
-    getOrganizationWorkspacesLimit(organization.id),
-    isDashboardViewer
-      ? listDashboardViewerWorkspaces(userId, organization.id)
-      : getWorkspacesByUserId(userId, organization.id),
-  ]);
-
   // A Dashboard viewer sees nothing of the organization's plan: no Cloud response count, and the
   // organization below goes out without its billing.
-  const responseCount =
-    IS_FORMBRICKS_CLOUD && !isDashboardViewer
-      ? await getMonthlyOrganizationResponseCount(organization.id)
-      : 0;
+  const needsResponseCount =
+    IS_FORMBRICKS_CLOUD && !isDashboardViewer && needsMonthlyResponseCount(organization.billing);
+  const [isAccessControlAllowed, license, organizationWorkspacesLimit, workspaces, responseCount] =
+    await Promise.all([
+      getAccessControlPermission(organization.id),
+      getEnterpriseLicense(),
+      getOrganizationWorkspacesLimit(organization.id),
+      isDashboardViewer
+        ? listDashboardViewerWorkspaces(userId, organization.id)
+        : getWorkspacesByUserId(userId, organization.id),
+      needsResponseCount ? getMonthlyOrganizationResponseCount(organization.id) : 0,
+    ]);
 
   // Resolve the workspace to display in the shell. Prefer the last active workspace when it belongs
   // to the accessible list; otherwise fall back to the first accessible workspace so the shell
