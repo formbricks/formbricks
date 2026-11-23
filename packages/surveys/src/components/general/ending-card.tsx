@@ -11,6 +11,7 @@ import { LoadingSpinner } from "@/components/general/loading-spinner";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getI18nLanguage } from "@/lib/i18n-utils";
 import { replaceRecallInfo } from "@/lib/recall";
 
 interface EndingCardProps {
@@ -54,6 +55,7 @@ export function EndingCard({
   isOfflineWithPending = false,
 }: Readonly<EndingCardProps>) {
   const { t } = useTranslation();
+  const dayFirstLocale = getI18nLanguage(languageCode, survey.languages);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // When the ending card has no button, nothing receives focus on arrival and
@@ -176,7 +178,8 @@ export function EndingCard({
                       getLocalizedValue(endingCard.headline, languageCode),
                       responseData,
                       variablesData,
-                      languageCode
+                      languageCode,
+                      dayFirstLocale
                     )}
                   />
                   <Subheader
@@ -184,7 +187,8 @@ export function EndingCard({
                       getLocalizedValue(endingCard.subheader, languageCode),
                       responseData,
                       variablesData,
-                      languageCode
+                      languageCode,
+                      dayFirstLocale
                     )}
                   />
                   {endingCard.buttonLabel ? (
@@ -194,7 +198,8 @@ export function EndingCard({
                           getLocalizedValue(endingCard.buttonLabel, languageCode),
                           responseData,
                           variablesData,
-                          languageCode
+                          languageCode,
+                          dayFirstLocale
                         )}
                         isLastQuestion={false}
                         focus={isCurrent ? autoFocusEnabled : false}

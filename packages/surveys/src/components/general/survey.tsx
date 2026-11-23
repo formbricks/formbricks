@@ -58,6 +58,7 @@ import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-
 import { getCardStartsWithMedia } from "@/lib/card-header";
 import { type TFinishOnLoad, getFinishOnLoadToSend, prepareResponseCreate } from "@/lib/finish-on-load";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getI18nLanguage } from "@/lib/i18n-utils";
 import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
 import {
   type TLowQualityFlag,
@@ -1599,6 +1600,8 @@ export function Survey({
     return undefined;
   };
 
+  const dayFirstLocale = getI18nLanguage(selectedLanguage, localSurvey.languages);
+
   // The welcome card, the ending card or the block a card shows.
   const renderCardBody = (blockIdx: number, offset: number) => {
     if (blockIdx === -1) {
@@ -1670,7 +1673,13 @@ export function Survey({
               ...block,
               elements: block.elements.map((element) =>
                 withOptionsShown(
-                  parseRecallInformation(element, selectedLanguage, recallValues, currentVariables),
+                  parseRecallInformation(
+                    element,
+                    selectedLanguage,
+                    recallValues,
+                    currentVariables,
+                    dayFirstLocale
+                  ),
                   optionsNotShown[element.id]
                 )
               ),
@@ -1833,7 +1842,8 @@ export function Survey({
           // `#recall:url#` resolves here too instead of staying literal.
           recallValues,
           currentVariables,
-          selectedLanguage
+          selectedLanguage,
+          dayFirstLocale
         )}
       />
     </div>

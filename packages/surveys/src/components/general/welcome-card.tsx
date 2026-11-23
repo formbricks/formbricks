@@ -7,6 +7,7 @@ import { type TResponseData, type TResponseTtc, type TResponseVariables } from "
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getLocalizedValue } from "@/lib/i18n";
+import { getI18nLanguage } from "@/lib/i18n-utils";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx, getElementsFromSurveyBlocks } from "@/lib/utils";
 import { ElementMedia } from "./element-media";
@@ -94,6 +95,7 @@ export function WelcomeCard({
   isPreviewMode = false,
 }: WelcomeCardProps) {
   const { t } = useTranslation();
+  const dayFirstLocale = getI18nLanguage(languageCode, survey.languages);
 
   const calculateTimeToComplete = () => {
     const questions = getElementsFromSurveyBlocks(survey.blocks);
@@ -172,7 +174,8 @@ export function WelcomeCard({
             getLocalizedValue(headline, languageCode),
             responseData,
             variablesData,
-            languageCode
+            languageCode,
+            dayFirstLocale
           )}
         />
         <Subheader
@@ -180,7 +183,8 @@ export function WelcomeCard({
             getLocalizedValue(subheader, languageCode),
             responseData,
             variablesData,
-            languageCode
+            languageCode,
+            dayFirstLocale
           )}
         />
         <div className="mt-4 flex gap-4 pt-4">

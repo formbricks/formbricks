@@ -34,11 +34,25 @@ const extractRecallInfo = (headline: string, id?: string): string | null => {
   return match ? match[0] : null;
 };
 
+const formatRecallValue = (
+  value: TResponseData[string] | null,
+  languageCode: string,
+  dayFirstLocale: string
+): TResponseData[string] | null => {
+  if (!value) return value;
+
+  const parsed = parseDateString(String(value));
+  if (parsed) return formatDateWithOrdinal(parsed.date, parsed.dayFirst ? dayFirstLocale : languageCode);
+
+  return Array.isArray(value) ? value.filter((item) => item).join(", ") : value;
+};
+
 export const replaceRecallInfo = (
   text: string,
   responseData: TResponseData,
   variables: TResponseVariables,
-  languageCode: string = "en-US"
+  languageCode: string = "en-US",
+  dayFirstLocale: string = languageCode
 ): string => {
   let modifiedText = text;
 
@@ -62,18 +76,11 @@ export const replaceRecallInfo = (
       value = responseData[recallItemId] ?? fallback;
     }
 
-    if (value) {
-      const date = parseDateString(String(value));
-      if (date) {
-        value = formatDateWithOrdinal(date, languageCode);
-      } else if (Array.isArray(value)) {
-        value = value.filter((item) => item).join(", ");
-      }
-    }
+    const formattedValue = formatRecallValue(value, languageCode, dayFirstLocale);
 
     // Replace the recallInfo in the text with the obtained or fallback value
     // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value shows the fallback too
-    modifiedText = modifiedText.replace(recallInfo, value?.toString() || fallback);
+    modifiedText = modifiedText.replace(recallInfo, formattedValue?.toString() || fallback);
   }
 
   return modifiedText;
@@ -83,7 +90,8 @@ export const parseRecallInformation = (
   question: TSurveyElement,
   languageCode: string,
   responseData: TResponseData,
-  variables: TResponseVariables
+  variables: TResponseVariables,
+  dayFirstLocale?: string
 ): TSurveyElement => {
   const modifiedQuestion = JSON.parse(JSON.stringify(question));
   // Use getLocalizedValue (falls back to the `default` key) instead of indexing by languageCode
@@ -93,7 +101,8 @@ export const parseRecallInformation = (
       getLocalizedValue(modifiedQuestion.headline, languageCode),
       responseData,
       variables,
-      languageCode
+      languageCode,
+      dayFirstLocale
     );
   }
   if (
@@ -105,7 +114,8 @@ export const parseRecallInformation = (
       getLocalizedValue(modifiedQuestion.subheader, languageCode),
       responseData,
       variables,
-      languageCode
+      languageCode,
+      dayFirstLocale
     );
   }
   return modifiedQuestion;

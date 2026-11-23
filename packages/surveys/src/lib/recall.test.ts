@@ -163,6 +163,18 @@ describe("parseRecallInformation", () => {
     expect(result.subheader?.["de-DE"]).toBe(`Termin am ${expected}`);
   });
 
+  test("looks up default text while localizing a day-first date with the configured language", () => {
+    const question: TSurveyOpenTextElement = {
+      ...baseQuestion,
+      headline: { default: "Termin am #recall:appointment/fallback:unbekannt#" },
+      subheader: { default: "Antwort vom #recall:appointment/fallback:unbekannt#" },
+    };
+    const result = parseRecallInformation(question, "default", { appointment: "15-01-2023" }, {}, "de-DE");
+
+    expect(result.headline.default).toBe("Termin am Sonntag, 15. Januar 2023");
+    expect(result.subheader?.default).toBe("Antwort vom Sonntag, 15. Januar 2023");
+  });
+
   test("should replace recall info in headline", () => {
     const question: TSurveyOpenTextElement = {
       ...baseQuestion,
