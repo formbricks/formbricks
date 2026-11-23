@@ -47,7 +47,7 @@ const formatRecallValue = (
   const parsed = parseDateString(text);
   if (parsed) return formatDateWithOrdinal(parsed.date, parsed.dayFirst ? dayFirstLocale : languageCode);
 
-  return Array.isArray(value) ? value.filter((item) => item).join(", ") : text;
+  return Array.isArray(value) ? value.filter(Boolean).join(", ") : text;
 };
 
 export const replaceRecallInfo = (
