@@ -4,8 +4,8 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
-import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { CreateMembershipInvite } from "@/modules/auth/invite/types/invites";
+import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 
 /**
  * Creates the organization membership if the user has none, and returns the role they hold afterwards.
