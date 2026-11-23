@@ -318,7 +318,7 @@ describe("team and workspace relationship projection", () => {
       args.where?.dashboardLimited
         ? Promise.resolve(limited ? [{ id: TEAM_ID }] : [])
         : teams
-          ? teams(args as never)
+          ? teams(args)
           : Promise.resolve([{ id: TEAM_ID, organizationId: ORGANIZATION_ID }])) as never);
 
     await reconcileTeamWorkspaceRelationships({ teamIds: [TEAM_ID] });
