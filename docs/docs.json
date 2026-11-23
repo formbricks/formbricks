@@ -342,6 +342,7 @@
               "workflows/variables",
               "workflows/if-else",
               "workflows/switch",
+              "workflows/filter",
               "workflows/http-request",
               "workflows/email-payload-address",
               "workflows/test-runs",

@@ -83,6 +83,8 @@ The run details drawer includes:
 - A chronological list of step logs, including duration, input, output, and errors
 - The trigger payload and accumulated run data, and for a Webhook trigger the IP address of the caller
 - For an If/else, the branch the run took and whether each condition matched
+- For a Switch, the cases it tried and the one it took
+- For a Filter, whether each condition matched and whether the run went on or ended there
 - For an HTTP request, the request it sent, with secret header values shown as `••••••`, and up to 64 KB of the
   response
 - A link back to the workflow

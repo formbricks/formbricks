@@ -17,12 +17,12 @@ comment with a <Frame>. */}
 ## Configure the request
 
 | Field                | Configuration                                                                                       |
-| -------------------- | --------------------------------------------------------------------------------------------------- |
+| -------------------- | ---------------------------------------------------------------------------------------------------- |
 | **Method**           | `GET`, `POST`, `PUT`, `PATCH` or `DELETE`.                                                          |
 | **URL**              | The full `https://` address to call. Its path can insert Variables; its host can't.                 |
 | **Query parameters** | Name and value rows added to the URL. Values can insert Variables and are URL-encoded.              |
 | **Headers**          | Name and value rows. Values can insert Variables. Mark a header as secret for API keys and tokens.  |
-| **Body**             | A JSON body for `POST`, `PUT` and `PATCH`. It can insert Variables. `GET` and `DELETE` send no body. |
+| **Request body**     | A JSON body for `POST`, `PUT` and `PATCH`. It can insert Variables. `GET` and `DELETE` send no body. |
 
 When the request has a body and no `Content-Type` header, Formbricks sends `Content-Type: application/json`.
 Formbricks sets `Host`, `Content-Length`, `Transfer-Encoding`, `Connection` and the other transport headers
@@ -138,12 +138,31 @@ The response is available to later steps as Variables:
 - `steps.<stepId>.body`: the response body. When the response is JSON, you can pick values inside it, such as
   `steps.<stepId>.body.order.id`. Otherwise it is the body as text.
 
+The `@` picker offers the values inside the body from the step's
+[expected response body](#expected-response-body). `steps.<stepId>.status` is always offered.
+
 Later steps read up to 1 MB of the response. Run detail keeps the first 64 KB.
 
 A `4xx` or `5xx` answer counts as an error, and so does a request that times out or can't be sent. An error fails
 the step and the run. Turn on **Continue on error** to let the run go on instead: the step is marked as
 succeeded, run detail shows the error, and later steps can check `steps.<stepId>.status`, for example with an
 [If/else](/workflows/if-else). When no answer came at all, `status` is not set.
+
+### Expected response body
+
+In **Wait and use it** mode, the step shows an **Expected response body** card: an example of the body the API
+answers with. Its fields are the step's Variables, which later steps insert with `@`.
+[Test runs](/workflows/test-runs) answer with it instead of calling the API.
+
+To fill it, either:
+
+- Select **Write an example** and enter an example of the response body as JSON. The type of each field is taken
+  from your example.
+- Or use [Send test request](#send-test-request). When the answer comes back, select **Use as expected response
+  body**, or **Edit it first** to change it before you save it.
+
+A test request never changes the expected response body by itself. When a newer test response comes back with
+different fields, the card offers it: select **Review**, then **Use it instead** or **Keep the current one**.
 
 ### Don't wait
 
@@ -167,14 +186,15 @@ such as `Idempotency-Key: @payload.ticket.id`.
 Select **Send test request** to make one real call with the step's current settings, even before you save them,
 so you can see what the API answers.
 
-- Variables are filled from the **expected payload** and from the expected response bodies of other HTTP request
-  steps.
+- Variables are filled from your test payload and from the expected response bodies of other HTTP request
+  steps. The test payload is the trigger's **expected payload**, unless you edited it for a
+  [Test run](/workflows/test-runs#webhook-trigger) in this browser.
 - A secret value you just typed is used for this call. Otherwise the saved value is used, but only for the host
   it was entered for: if you changed the URL to another host, type the value again.
 - The call waits up to 10 seconds and isn't retried.
-- The answer is kept as the step's last test response (up to 64 KB). It doesn't change the step's Variables: select
-  **Use as expected response body** to make it the step's expected response body, which the `@` picker offers as
-  Variables and [Test runs](/workflows/test-runs) answer with.
+- The answer is kept as the step's last test response (up to 64 KB). It doesn't change the step's Variables. In
+  **Wait and use it** mode, the [Expected response body](#expected-response-body) card offers it: select **Use as
+  expected response body** to make its fields the step's Variables.
 - Each test request is recorded in the audit log with its host and status, never its headers or body.
 
 A test request is a real call: it can create records in the API you call. It isn't a run and isn't billed. You can

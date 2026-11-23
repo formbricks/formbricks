@@ -40,12 +40,17 @@ Cases are tried in order and the first that matches wins, so put the most specif
 empty, which means "do nothing" for that case. Branches never join again, so steps after a Switch belong to one
 branch. Deleting a Switch deletes its branches too, after you confirm.
 
+On the canvas, the Switch card shows the Variable it compares and how many cases it has, such as
+`tier · 2 cases + Default`. A survey question shows as a chip with its code.
+
 A Switch counts as one step toward the [25 steps](/workflows/limits) a workflow can have.
 
 ## Operators
 
 A case uses the same operators and comparison as an [If/else](/workflows/if-else#operators), so the
-[rules for comparing values](/workflows/if-else#how-values-are-compared) apply here too. To match on more than one
+[rules for comparing values](/workflows/if-else#how-values-are-compared) apply here too. For a survey question,
+the cases offer the operators survey logic shows for that question type, and number comparisons show as `=`,
+`>`, `<` and the other symbols. To match on more than one
 Variable, use an If/else instead.
 
 ## Run detail

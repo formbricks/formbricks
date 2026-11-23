@@ -41,13 +41,23 @@ stores `customer_id` and `channel` as Embedded Data.
   </Step>
 
   <Step title="Insert the survey link">
-    Select **Insert survey link**, choose a link survey in the same workspace, and place the link in the body.
+    Place the cursor in the body where the link should go and select **Survey link** in the body's toolbar. In
+    **Insert survey link**, choose a link survey in the same workspace.
   </Step>
 
-  <Step title="Add Embedded Data">
-    Add a row for each value the response should store. The key must be a
-    [passed-in Embedded Data field](/surveys/embedded-data/overview#declaring-a-field) of that survey. The value can
-    be text, a Variable, or both, such as `@payload.customer.id`.
+  <Step title="Pass run data to the survey">
+    Under **Pass run data to the survey**, the survey's
+    [passed-in Embedded Data fields](/surveys/embedded-data/overview#declaring-a-field) are listed, one row each.
+    For each field the response should store, type `@` and pick the Variable that fills it, such as
+    `@payload.customer.id`. The value can also be text, or text and Variables together. When a Variable's name
+    matches the field, the row suggests it: select **Suggested: use …** to fill it in. A survey with no passed-in
+    fields says the link carries no run data.
+  </Step>
+
+  <Step title="Insert the link">
+    Select **Insert link**. The link shows in the body as a **Survey link** chip. To change it later, select
+    **Survey link** again: it opens **Edit survey link**, where **Save** keeps your changes and **Remove link**
+    takes the link out.
   </Step>
 </Steps>
 
@@ -67,6 +77,8 @@ value inserts a step's output, or while **Attach response data** is on.
 - **A link survey in the same workspace.** Enabling fails for any other survey. The survey's status isn't checked,
   so make sure it is published and open while the workflow sends emails.
 - **Only declared keys.** A key the survey doesn't declare as a passed-in Embedded Data field is left off the link.
+  When a step was set up through the API or MCP with such a key, or the field was removed from the survey later,
+  the row says the survey doesn't take that key from its link.
   So are the keys a link survey reads for itself, such as `lang` and `userId`, so a payload can't change how the
   survey behaves.
 - **Keys are matched without case,** so the same key can't be used twice with different spelling.

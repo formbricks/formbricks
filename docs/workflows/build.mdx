@@ -10,7 +10,7 @@ Formbricks version. Changes to draft and disabled workflows are saved automatica
 
 To start a workflow from another system, see [Webhook trigger](/workflows/webhook-trigger). The steps a workflow
 can run each have their own page: [If/else](/workflows/if-else), [Switch](/workflows/switch),
-[HTTP request](/workflows/http-request) and
+[Filter](/workflows/filter), [HTTP request](/workflows/http-request) and
 [Send email to an address from the payload](/workflows/email-payload-address).
 
 <Frame>
@@ -44,10 +44,55 @@ verification, or a hidden field.
 
   <Step title="Add steps">
     Select the **+** below the trigger, then choose a step from the list: an action such as **Send email** or
-    **HTTP request**, or **If/else** or **Switch** under **Logic**. Select the step's card to open its configuration. A workflow
-    holds up to 25 steps.
+    **HTTP request**, or **If/else**, **Switch** or **Filter** under **Logic**. Select the step's card to open its
+    configuration. A workflow holds up to 25 steps.
   </Step>
 </Steps>
+
+## Work on the canvas
+
+### Add, move and remove steps
+
+- **Insert a step between two steps.** Select the **+** on the line between them (**Insert step here**), or
+  select **Insert step** in the ⋮ menu of the step before. If/else and Switch have no **Insert step**: use the
+  **+** at the start of a branch.
+- **Move a step.** Drag its card onto another **+**, which shows **Move here**, or select **Move to…** in its ⋮
+  menu and pick a place. A Send email or HTTP request step moves alone. An If/else, Switch or Filter moves with
+  every step after it.
+- **Delete a step.** Select **Delete** in its ⋮ menu, or select its card and press `Backspace` or `Delete`.
+  Deleting an If/else or Switch asks first, because its branches go with it.
+
+### Cut, copy and paste
+
+**Cut** and **Copy** in a step's ⋮ menu take the step and every step after it, with all branches. Then select
+the **+** where they should go and select **Paste here**.
+
+- **Cut** moves the same steps, with their secret header values. Press `Escape` to cancel a cut.
+- **Copy** adds new steps each time you paste. Secret header values are not copied, so enter them again in each
+  copy.
+- After a paste, a step may read a Variable from a step that no longer runs before it. The editor warns you and
+  marks that step on the canvas.
+
+With a step selected, `⌘X` / `Ctrl+X`, `⌘C` / `Ctrl+C` and `⌘V` / `Ctrl+V` cut, copy and paste.
+
+### Undo and redo
+
+**Undo** and **Redo** sit next to the autosave status, above the canvas. They cover every edit, on the canvas
+and in the step panels. Shortcuts, when you are not typing in a field:
+
+| Action | Mac           | Windows and Linux          |
+| ------ | ------------- | -------------------------- |
+| Undo   | `⌘Z`          | `Ctrl+Z`                   |
+| Redo   | `⌘⇧Z`         | `Ctrl+Shift+Z` or `Ctrl+Y` |
+
+### Move around and arrange
+
+The controls at the bottom of the canvas zoom in and out, **Fit to screen**, and switch between **Pointer
+mode** (the default: select and drag steps) and **Pan mode** (drag to move the view; steps can't be selected or
+dragged). The **Layout** menu has:
+
+- **Auto layout**: tidies up the steps.
+- **Arrange left to right** or **Arrange top to bottom**: switches the direction the workflow is drawn in.
 
 ## Configure the Response completed trigger
 
@@ -73,13 +118,14 @@ If you choose the **Send email** action, complete these fields in its configurat
 | **Subject**  | Enter the email subject.                                                              |
 | **Body**     | Write the message and insert survey recall values where needed.                       |
 
-The **Send to** options can include:
+The **Send to** options are grouped:
 
-- The verified email address, when email verification is enabled for the survey
-- An Open Text question configured for email input
-- The email field of a Contact Info question
-- A hidden field
-- A workspace member, including yourself
+- **Questions**: the verified email address, when email verification is enabled for the survey, an Open Text
+  question configured for email input, and the email field of a Contact Info question.
+- **Embedded Data**: a field passed in with the response, by a link, a URL parameter or the SDK.
+- **Members**: a workspace member, including yourself.
+- **Expected payload**: with a Webhook trigger, an address from the payload. See
+  [Send email to an address from the payload](/workflows/email-payload-address).
 
 ### Personalize the body
 
@@ -90,7 +136,8 @@ in [Recall Data](/surveys/general-features/recall).
 ### Include response data
 
 Turn on **Attach response data** to include the triggering survey response with the email. You can then also
-turn on **Include Embedded Data** and **Include hidden fields**.
+turn on **Include Embedded Data**, which adds the response's Embedded Data: the fields passed in with it and the
+ones the survey computed.
 
 <Note>
   In API v3 and MCP, **Include Embedded Data** is `includeEmbeddedData`. Its old name, `includeVariables`, is
@@ -98,26 +145,19 @@ turn on **Include Embedded Data** and **Include hidden fields**.
   other in a step, not both.
 </Note>
 
-## Check validity or enable
+## Check for problems and enable
 
-The status button in the upper-left corner shows whether the editor's client-side checks consider the
-workflow **Valid** or **Invalid**. Select it whenever you want Formbricks to manually verify that the current
-workflow definition is valid and executable. For the **Response completed** example, the manual check also
-confirms that required configuration is present and that the linked survey and selected ending cards still
-exist.
-
-<Note>
-  Running the manual check is optional and side-effect-free. It does not create a run or execute an action. It
-  is available for draft, enabled, and disabled workflows, but not archived workflows, and it requires
-  workspace write access.
-</Note>
+The editor checks the workflow as you build it. The bottom-right corner of the canvas shows **Valid** when the
+workflow can run. Otherwise it shows how many problems there are, such as **2 problems**. Select it to see
+**Validation problems**: each one names what to fix, such as a step that needs setting up or a survey ending
+that no longer exists. Select a problem to open its step, with the field to fix in focus.
 
 A [Test run](/workflows/test-runs) goes further: it runs the draft with the expected payload (a Webhook trigger)
 or an existing survey response (a Response completed trigger) and shows what each step would do, without sending
 anything.
 
-You do not have to run the manual check before enabling. Open the status menu and select **Enable** when you
-are ready to start the workflow. An enabled workflow listens for its configured trigger. Its definition is
+Open the status menu and select **Enable** when you are ready to start the workflow. **Enable** stays off
+while there are problems. An enabled workflow listens for its configured trigger. Its definition is
 read-only while enabled; select **Disable** before editing it again. The one exception is replacing a
 [secret header](/workflows/http-request#secret-headers) value in the editor, which updates the enabled workflow
 right away.
@@ -126,3 +166,9 @@ right away.
   Enabling verifies that the workflow is executable. A workflow with incomplete or outdated configuration
   cannot be enabled.
 </Note>
+
+### Discard changes
+
+After you disable an enabled workflow and edit it, you can go back to the version that was last enabled: open
+the status menu and select **Discard changes**. The workflow goes back to that version, and Undo brings your
+changes back.
