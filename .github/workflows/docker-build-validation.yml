@@ -772,6 +772,14 @@ jobs:
 
           echo "✨ Docker validation complete - all checks passed!"
 
+      # Rolling deploy from 6.2: rows a 6.2 pod writes after the migration get their contact directory
+      # from the trigger. Delete this step and its script with the `contact_directory_from_workspace`
+      # trigger, one release after contact directories ship.
+      - name: Check 6.2 writes get a contact directory
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: bash docker/contact-directory-compat-smoke.sh "formbricks-test:$GITHUB_SHA"
+
       - name: Remove PR image from the runner cache
         if: ${{ always() && env.BLACKSMITH_BUILD == 'true' && steps.build.outcome == 'success' }}
         run: docker image rm "formbricks-test:$GITHUB_SHA"
