@@ -1,7 +1,5 @@
 import { z } from "zod";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
-import { ZId } from "@formbricks/types/common";
-import { ZAITranslationFields } from "./translate-fields";
 
 // The English name is what goes into the prompt, in whatever UI locale the editor runs in.
 const PROMPT_LANGUAGE_LOCALE = "en-US";
@@ -23,10 +21,3 @@ export const ZAITranslationLanguageCode = z
 
 export const getAITranslationLanguageName = (code: string): string =>
   getLanguageLabel(code, PROMPT_LANGUAGE_LOCALE) ?? code;
-
-export const ZTranslateSurveyFieldsInput = z.object({
-  workspaceId: ZId,
-  fields: ZAITranslationFields,
-  sourceLanguage: ZAITranslationLanguageCode,
-  targetLanguage: ZAITranslationLanguageCode,
-});

@@ -4,7 +4,11 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { PRE_LOGIN_BODY_LIMIT_BYTES } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
-import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import {
+  applyIPRateLimit,
+  reserveRateLimitUsage,
+  settleRateLimitUsage,
+} from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
@@ -181,6 +185,21 @@ describe("POST /api/internal/link-survey-pin-verifications — rate limiting", (
     await validatePin();
 
     expect(queueAuditEvent).not.toHaveBeenCalled();
+  });
+
+  test("spends a per-survey attempt on a wrong PIN and refunds a right one", async () => {
+    mockSurvey({ pin: "1234" });
+
+    await validatePin("0000");
+    expect(reserveRateLimitUsage).toHaveBeenCalledWith(
+      rateLimitConfigs.actions.validateSurveyPinFailuresPerSurvey,
+      surveyId
+    );
+    expect(settleRateLimitUsage).not.toHaveBeenCalled();
+
+    vi.mocked(reserveRateLimitUsage).mockClear();
+    await validatePin("1234");
+    expect(settleRateLimitUsage).toHaveBeenCalledWith(undefined, 0);
   });
 });
 
