@@ -80,8 +80,37 @@ export const withInferredApplicationType = (body: string): string => {
 };
 
 /**
+ * Client metadata anonymous registration may not set (ENG-3533). A `backchannel_logout_uri` is a URL the
+ * Formbricks server itself POSTs a signed `logout_token` to when a user who authorized the client signs
+ * out. Upstream only rejects a private *literal* hostname, so a DNS name that resolves to an internal
+ * address passes, and the registrant can trigger the request with their own account. No MCP client uses
+ * back-channel logout, so both of its fields are refused rather than validated.
+ */
+const DCR_REFUSED_METADATA_FIELDS = [
+  "backchannel_logout_uri",
+  "backchannel_logout_session_required",
+] as const;
+
+/**
+ * The first refused metadata field a DCR body sets, or `null`. A body that is not a JSON object is
+ * upstream's to reject, like in `findDisallowedRedirectUri`.
+ */
+export const findRefusedDcrMetadataField = (body: string): string | null => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return null;
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+
+  return DCR_REFUSED_METADATA_FIELDS.find((field) => Object.hasOwn(parsed, field)) ?? null;
+};
+
+/**
  * The request Better Auth should handle — or the rejection for a registration whose redirect URIs
- * fall outside the allowlist: loopback or an exact hosted-connector callback (ENG-3086, ENG-3471).
+ * fall outside the allowlist: loopback or an exact hosted-connector callback (ENG-3086, ENG-3471), or
+ * that sets back-channel logout metadata (ENG-3533).
  * Reads the body only for a DCR POST, and always reconstructs with the body it read — a Request body
  * is single-use, so it cannot be inspected and then reused.
  */
@@ -99,6 +128,17 @@ export const prepareDcrRequest = async (request: Request): Promise<Request | Res
       {
         error: "invalid_redirect_uri",
         error_description: `"${disallowed.uri}" in ${disallowed.field} is not an allowed redirect URI for dynamic client registration`,
+      },
+      { status: 400 }
+    );
+  }
+
+  const refusedField = findRefusedDcrMetadataField(raw);
+  if (refusedField) {
+    return Response.json(
+      {
+        error: "invalid_client_metadata",
+        error_description: `${refusedField} is not supported for dynamic client registration`,
       },
       { status: 400 }
     );
