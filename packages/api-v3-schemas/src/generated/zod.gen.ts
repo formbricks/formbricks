@@ -104,6 +104,7 @@ export const zProblem = z.object({
       "conflict",
       "creatives_not_entitled",
       "custom_css_plan_required",
+      "dashboard_access_plan_required",
       "dashboards_plan_required",
       "forbidden",
       "internal_server_error",
