@@ -955,3 +955,105 @@ describe("per-sign-in profile sync", () => {
     expect(social.google?.overrideUserInfoOnSignIn).toBe(true);
   });
 });
+
+/**
+ * ENG-2779: Better Auth builds its context once, and every `/api/auth/*` handler awaits it, so a plugin
+ * `init` that throws takes every auth route down for the life of the process (ENG-2772). Better Auth
+ * 1.7's `genericOAuth.init` still throws, rather than skipping the provider, when:
+ *
+ * - `requireIdTokenVerification` is set on a provider with no `discoveryUrl` (Azure's multi-tenant
+ *   branch and SAML have none), or
+ * - `tokenEndpointAuth` / `authentication: "basic"` disagrees with whether a `clientSecret` is set.
+ *
+ * Our configuration avoids both today. These tests make a future edit that reintroduces either fail
+ * here rather than as a sign-in outage. They initialise the real plugin with our config, with
+ * discovery unreachable, because that is when the skip-or-throw split decides the outcome.
+ */
+describe("SSO provider config cannot fail Better Auth's init (ENG-2779)", () => {
+  const ALL_ON: Partial<MockConstants> = {
+    ENTERPRISE_LICENSE_KEY: "license",
+    AZURE_OAUTH_ENABLED: true,
+    AZUREAD_CLIENT_ID: "az-id",
+    AZUREAD_CLIENT_SECRET: "az-secret",
+    OIDC_OAUTH_ENABLED: true,
+    OIDC_CLIENT_ID: "oidc-id",
+    OIDC_CLIENT_SECRET: "oidc-secret",
+    OIDC_ISSUER: "https://idp.test",
+    SAML_OAUTH_ENABLED: true,
+  };
+
+  const initGenericOAuth = async (
+    config: Awaited<ReturnType<typeof loadProviders>>["ssoGenericOAuthConfig"]
+  ) => {
+    const { betterAuth } = await import("better-auth");
+    const { memoryAdapter } = await import("better-auth/adapters/memory");
+    const { genericOAuth } = await import("better-auth/plugins");
+    const auth = betterAuth({
+      baseURL: "https://app.formbricks.test",
+      secret: "sso-provider-contract-secret-0123456789",
+      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      plugins: [genericOAuth({ config })],
+      // Better Auth logs the failed discovery fetches; keep them out of the test output.
+      logger: { disabled: true },
+    });
+    return auth.$context;
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("discovery unreachable");
+      })
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("no generic provider requires id_token verification", async () => {
+    for (const tenant of [undefined, "common", "organizations", "contoso.onmicrosoft.com"]) {
+      const m = await loadProviders({ ...ALL_ON, AZUREAD_TENANT_ID: tenant });
+      expect(
+        m.ssoGenericOAuthConfig.filter((c) => c.requireIdTokenVerification).map((c) => c.providerId)
+      ).toEqual([]);
+    }
+  });
+
+  test.each([
+    ["multi-tenant Azure, credentials set", { AZUREAD_TENANT_ID: undefined }],
+    ["single-tenant Azure, credentials set", { AZUREAD_TENANT_ID: "contoso.onmicrosoft.com" }],
+    [
+      "credentials unset",
+      {
+        AZUREAD_CLIENT_ID: undefined,
+        AZUREAD_CLIENT_SECRET: undefined,
+        OIDC_CLIENT_ID: undefined,
+        OIDC_CLIENT_SECRET: undefined,
+      },
+    ],
+  ])("initialises with every generic provider registered: %s", async (_label, overrides) => {
+    const m = await loadProviders({ ...ALL_ON, ...overrides });
+    expect(m.ssoGenericOAuthConfig.map((c) => c.providerId)).toEqual(["azuread", "openid", "saml"]);
+
+    await expect(initGenericOAuth(m.ssoGenericOAuthConfig)).resolves.toBeDefined();
+  });
+
+  // The tripwire itself: if Better Auth ever stops throwing here, the tests above prove nothing and
+  // this one says so.
+  test("Better Auth still throws at init for the shapes this suite guards against", async () => {
+    const m = await loadProviders(ALL_ON);
+    const saml = m.ssoGenericOAuthConfig.find((c) => c.providerId === "saml");
+    expect(saml).toBeDefined();
+
+    await expect(initGenericOAuth([{ ...saml!, requireIdTokenVerification: true }])).rejects.toThrow(
+      /requires verified ID tokens/
+    );
+    await expect(
+      initGenericOAuth([
+        { ...saml!, requireIdTokenVerification: false, clientSecret: "", authentication: "basic" },
+      ])
+    ).rejects.toThrow(/requires clientSecret/);
+  });
+});
