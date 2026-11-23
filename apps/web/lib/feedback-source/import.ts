@@ -6,6 +6,7 @@ import {
   TFeedbackSourceWithMappings,
 } from "@formbricks/types/feedback-source";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TResponseCursor } from "../response/pagination";
 import { getResponses } from "../response/service";
 import { reconcileFeedbackRecords } from "./reconcile";
 import { transformResponseToFeedbackRecords } from "./transform";
@@ -80,7 +81,13 @@ export const importHistoricalResponses = async (
   let successes = 0;
   let failures = 0;
   let skipped = 0;
-  let offset = 0;
+  // Where the next page starts: after the last response read, in the `createdAt desc, id desc` order
+  // `getResponses` sorts by. An offset counted rows instead, so a response deleted mid-import moved
+  // the next page past one that was never read, and one created mid-import pushed a read one back
+  // into the next page. The cursor also bounds what the import reads: a response created after the
+  // first page sorts before the cursor and is never read, so it is the live pipeline's to send when
+  // it finishes, as it was under the offset. A response backdated past the cursor is still read.
+  let cursor: TResponseCursor | undefined;
 
   // Match the live ingestion path, which only runs on responseFinished. Without this the two
   // disagreed: the historical import pulled partials that the pipeline would never have sent.
@@ -93,8 +100,9 @@ export const importHistoricalResponses = async (
     // wrongly thinks our copy is fresh would revert a newer write, which is the failure being
     // prevented. Erring the other way only skips a redundant PATCH.
     const snapshotAt = new Date();
-    const responses = await getResponses(survey.id, IMPORT_BATCH_SIZE, offset, filterCriteria);
-    if (responses.length === 0) break;
+    const responses = await getResponses(survey.id, IMPORT_BATCH_SIZE, 0, filterCriteria, cursor);
+    const last = responses.at(-1);
+    if (!last) break;
 
     // Low quality responses have no Feedback Records (ENG-4026). Filtered here, after the page is read, rather
     // than in the query: the filter criteria can only select an outcome, not exclude one. Paging still runs
@@ -112,7 +120,8 @@ export const importHistoricalResponses = async (
     skipped += batch.skipped;
 
     if (responses.length < IMPORT_BATCH_SIZE) break;
-    offset += IMPORT_BATCH_SIZE;
+    // From the whole page, Low quality responses included, so the next page starts where this one ended.
+    cursor = { id: last.id, createdAt: last.createdAt };
   }
 
   return { successes, failures, skipped };

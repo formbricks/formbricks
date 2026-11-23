@@ -1,7 +1,9 @@
+import { createInMemoryResponseFindMany } from "../response/__mocks__/response-find-many.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { type TResponseCursor, whereAfterResponseCursor } from "../response/pagination";
 import { importHistoricalResponses } from "./import";
 
 vi.mock("../response/service", () => ({
@@ -251,21 +253,133 @@ describe("importHistoricalResponses", () => {
     expect(result).toEqual({ successes: 1, failures: 0, skipped: 0 });
   });
 
-  test("paginates through responses in batches", async () => {
-    const batch1 = Array.from({ length: 50 }, (_, i) => ({ id: `r${i}` }));
-    const batch2 = [{ id: "r50" }];
+  test("pages on from the last response of each full batch", async () => {
+    const at = (second: number) => new Date(Date.UTC(2026, 0, 1, 0, 0, second));
+    const batch1 = Array.from({ length: 50 }, (_, i) => ({ id: `r${i}`, createdAt: at(100 - i) }));
+    const batch2 = [{ id: "r50", createdAt: at(10) }];
 
     getResponses.mockResolvedValueOnce(batch1 as never);
     getResponses.mockResolvedValueOnce(batch2 as never);
-    getResponses.mockResolvedValueOnce([]);
 
     transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
     reconcileFeedbackRecords.mockResolvedValue({ created: 1, reconciled: 0, superseded: 0, failures: [] });
 
     await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
-    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0, { finished: true });
-    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 50, { finished: true });
+    expect(getResponses.mock.calls).toEqual([
+      [SURVEY_ID, 50, 0, { finished: true }, undefined],
+      [SURVEY_ID, 50, 0, { finished: true }, { id: "r49", createdAt: at(51) }],
+    ]);
+  });
+
+  /**
+   * The import pages through the survey's responses while respondents keep answering and admins keep
+   * deleting. These run the import over an in-memory survey that pages with the real cursor
+   * condition, and change it between pages (ENG-2374).
+   */
+  describe("while the survey changes under it", () => {
+    type TRow = { id: string; createdAt: Date; outcome: null };
+
+    const at = (minute: number) => new Date(Date.UTC(2026, 0, 1, 0, minute, 0, 123));
+
+    /** Serves `getResponses` from `rows`, read on every call, ordered and narrowed like the real one. */
+    const serveResponsesFrom = (rows: TRow[]) => {
+      const findMany = createInMemoryResponseFindMany(rows);
+      getResponses.mockImplementation((async (
+        _surveyId: string,
+        limit?: number,
+        offset?: number,
+        _filterCriteria?: unknown,
+        cursor?: TResponseCursor
+      ) =>
+        findMany({
+          where: whereAfterResponseCursor({ surveyId: SURVEY_ID }, cursor),
+          skip: offset,
+          take: limit,
+        })) as never);
+    };
+
+    /** Ids the import handed to the transform, in order; each is one response published to the Hub. */
+    const importedIds = () => transformResponseToFeedbackRecords.mock.calls.map(([response]) => response.id);
+
+    /** Runs `change` once, right after the import has published its first page. */
+    const afterFirstPage = (change: () => void) => {
+      let pages = 0;
+      reconcileFeedbackRecords.mockImplementation(async (records) => {
+        pages += 1;
+        if (pages === 1) change();
+        return { created: records.length, reconciled: 0, superseded: 0, failures: [] };
+      });
+    };
+
+    /** 120 responses, one a minute, newest first: `resp-119` … `resp-000`. */
+    const makeRows = (): TRow[] =>
+      Array.from({ length: 120 }, (_, i) => ({
+        id: `resp-${String(i).padStart(3, "0")}`,
+        createdAt: at(i),
+        outcome: null,
+      }));
+
+    const newestFirst = (rows: TRow[]) =>
+      [...rows]
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime() || (a.id < b.id ? 1 : -1))
+        .map((row) => row.id);
+
+    beforeEach(() => {
+      transformResponseToFeedbackRecords.mockImplementation((response) => [{ field: response.id }] as never);
+    });
+
+    test("a response deleted mid-import does not make the next page skip one", async () => {
+      const rows = makeRows();
+      const expected = newestFirst(rows);
+      // A response the first page already published is deleted: every later row moves up one place.
+      afterFirstPage(() =>
+        rows.splice(
+          rows.findIndex((row) => row.id === "resp-100"),
+          1
+        )
+      );
+      serveResponsesFrom(rows);
+
+      const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+
+      expect(importedIds()).toEqual(expected);
+      expect(result).toEqual({ successes: 120, failures: 0, skipped: 0 });
+    });
+
+    test("a response that arrives mid-import is not read, and no page is read twice", async () => {
+      const rows = makeRows();
+      const expected = newestFirst(rows);
+      // The new response is the live pipeline's to send; the import covers what existed when it began.
+      afterFirstPage(() => rows.push({ id: "resp-new", createdAt: at(500), outcome: null }));
+      serveResponsesFrom(rows);
+
+      const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+
+      expect(importedIds()).toEqual(expected);
+      expect(result).toEqual({ successes: 120, failures: 0, skipped: 0 });
+    });
+
+    test("imports every response once across timestamp ties and ids that are not chronological", async () => {
+      // Imported responses keep their original dates, so ids and createdAt disagree; and a run of
+      // responses sharing one createdAt straddles the 50-row page boundary.
+      const rows: TRow[] = Array.from({ length: 110 }, (_, i) => ({
+        id: `resp-${String((i * 37) % 110).padStart(3, "0")}`,
+        createdAt: i >= 40 && i < 60 ? at(1000) : at(i),
+        outcome: null,
+      }));
+      serveResponsesFrom(rows);
+      reconcileFeedbackRecords.mockImplementation(async (records) => ({
+        created: records.length,
+        reconciled: 0,
+        superseded: 0,
+        failures: [],
+      }));
+
+      await importHistoricalResponses(mockFeedbackSource, mockSurvey);
+
+      expect(importedIds()).toEqual(newestFirst(rows));
+    });
   });
 
   // The whole point of ENG-2058: the historical import used to pull every response, while the live
@@ -275,7 +389,7 @@ describe("importHistoricalResponses", () => {
 
     await importHistoricalResponses({ ...mockFeedbackSource, importMode: "completedOnly" }, mockSurvey);
 
-    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0, { finished: true });
+    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0, { finished: true }, undefined);
   });
 
   test("all leaves the response query unfiltered so partials are included", async () => {
@@ -283,7 +397,7 @@ describe("importHistoricalResponses", () => {
 
     await importHistoricalResponses({ ...mockFeedbackSource, importMode: "all" }, mockSurvey);
 
-    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0, undefined);
+    expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0, undefined, undefined);
   });
 
   test("does not call Hub API when all responses are skipped", async () => {
