@@ -81,11 +81,21 @@ programming or UI concepts, and no implementation details.
 
 **Dashboard** — A named grid of widgets in a workspace. Its charts can come from different Feedback Datasets.
 
-**Widget** — One chart's placement on one dashboard: its position, size and order. A chart sits on a dashboard at most once; removing a widget keeps the chart. User-facing copy says "chart". _Avoid_: placement, tile, panel.
+**Dashboard page** — A tab of a dashboard. Every dashboard has at least one; an upgraded dashboard opens as one page called "Overview". A page can be limited to selected teams, and then only those teams' Dashboard Viewers can open it, in the app, by link, and through the API and MCP. Owners, Managers and Members see every page. _Avoid_: tab (in code), section, sheet.
+
+**Widget** — One block on one Dashboard page: a chart's placement, or a layout block (an image, a text block or a separator). Each has a position, size and order on the page's grid. A chart sits on a page at most once, but can sit on several pages of one dashboard; removing a widget keeps the chart. User-facing copy says "chart" or names the block. _Avoid_: placement, tile, panel.
 
 **Dashboard filter** — A filter on one field and operator that a dashboard's editors pin to the dashboard's top bar, shared by everyone who opens it. Each person picks or enters its value (their **filter pick**); the pick applies to every chart on the dashboard and only ever narrows what a chart's own saved filters let through, never widens it. A chart whose Feedback Dataset lacks the field shows no data and says it cannot be filtered by it. _Avoid_: global filter, slicer.
 
-**Dashboard viewer** — An organization role that can only read the dashboards of the workspaces its teams are granted, and pick values in their dashboard filters. It never sees surveys, responses, contacts or Feedback Records, and never runs a chart query of its own: only the saved charts on dashboards it can see. _Avoid_: viewer, read-only member (a Member on a read team still sees raw data).
+**Dashboard Viewer** — An organization role that can only read the dashboards of the workspaces its teams are granted, and pick values in their dashboard filters. A team can limit its Dashboard Viewers to selected dashboards of its workspaces (a **team dashboard limit**), which only ever narrows the team's workspace grant. It never sees surveys, responses, contacts or Feedback Records, and never runs a chart query of its own: only the saved charts on dashboards and pages it can see. Capitalized wherever it names the role. _Avoid_: viewer, read-only member (a Member on a read team still sees raw data).
+
+**Member** — A person's membership of an organization: their role, teams and Member attributes. _Avoid_: user (the account, which can hold several memberships), contact (a survey respondent).
+
+**Member attribute** — A named value on a Member, such as Country, from an organization-wide list of keys that Owners and Managers define. A Member can hold several values for one key. The built-in Email attribute is the login email and is never stored. Set in Member settings, by CSV, or through the API; MCP only reads them. _Avoid_: user attribute, contact attribute (contacts are respondents), property.
+
+**Dashboard Viewer access** — The conditions on a Feedback Dataset that decide which of its records a Dashboard Viewer sees: each condition says a record field equals one of the viewer's values for a Member attribute, and they combine with "all" or "any". Matching ignores case and surrounding spaces; a viewer with no value for the attribute matches nothing. A dataset without conditions shows Dashboard Viewers every record. It never binds Owners, Managers or Members. _Avoid_: row rule, row-level security, data lock (in code and copy).
+
+**View as** — How an Owner or Manager opens a dashboard as a chosen Member sees it: their pages, their records and their locked chips. Read-only, and audited. _Avoid_: impersonate, log in as.
 
 ## Tables and filtering
 

@@ -194,6 +194,19 @@ definition team {
     permission dashboard_member: user = (admin + contributor) & organization->dashboard_member
 
     /**
+     * Self-marker (`team:T#dashboard_limited@team:T`), written while the team has a dashboard limit
+     * (`TeamDashboard` rows, ADR-0059). Never names another team.
+     */
+    relation dashboard_limited: team
+
+    /**
+     * The team's `dashboard_member`s while the team has no dashboard limit, nobody once it has one: the
+     * marker points back at this team, so the subtraction removes every member. Lets "no limit means
+     * every dashboard of the workspace" hold without one edge per team and dashboard.
+     */
+    permission unlimited_dashboard_member: user = dashboard_member - dashboard_limited->dashboard_member
+
+    /**
      * Who can view the team: its members, organization owners/managers, and API
      * keys with either read or write organization access-control permission.
      */
@@ -269,6 +282,14 @@ definition workspace {
      */
     // spicedb-ignore-warning: arrow-walks-subject-relation
     permission dashboard_read: user | api_key = read + reader_team->dashboard_member + writer_team->dashboard_member + manager_team->dashboard_member
+
+    /**
+     * Read every dashboard of the workspace as a Dashboard Viewer: the viewers of the granted teams that
+     * have no dashboard limit (ADR-0059). A limited team's viewers reach only the dashboards it selected,
+     * through `dashboard#selected_by_team`.
+     */
+    // spicedb-ignore-warning: arrow-walks-subject-relation
+    permission unlimited_dashboard_read: user = reader_team->unlimited_dashboard_member + writer_team->unlimited_dashboard_member + manager_team->unlimited_dashboard_member
 
     /**
      * Manage who has access to the workspace (workspace team assignments).
@@ -434,26 +455,61 @@ definition survey {
 }
 
 /**
- * An analysis dashboard, identified by the Prisma `Dashboard.id`. Dashboards
- * carry no access control of their own today: access derives from the owning
- * workspace, and the app decides `dashboard.read` on the workspace node with
- * `workspace#dashboard_read`.
+ * An analysis dashboard, identified by the Prisma `Dashboard.id`, projected from its row and its team
+ * dashboard limits (ADR-0059). Owners, Managers, Members and API keys reach every dashboard through
+ * `workspace->read`. Dashboard Viewers reach it through a granted team without a dashboard limit, or
+ * through a granted team that selected it.
  */
 definition dashboard {
-    /** The owning workspace (`Dashboard.workspaceId`). */
+    /** The owning workspace (`Dashboard.workspaceId`). Always written. */
     relation workspace: workspace
 
-    /** View the dashboard and its widgets, Dashboard viewers included (ADR-0025). */
-    permission read: user | api_key = workspace->dashboard_read
+    /**
+     * A team whose dashboard limit selects this dashboard (`TeamDashboard`), written only while the team
+     * still holds a grant on the dashboard's workspace.
+     */
+    relation selected_by_team: team
+
+    /** Everyone who reads the workspace: never narrowed by team or page limits. */
+    permission full_read: user | api_key = workspace->read
+
+    /** View the dashboard and its widgets, Dashboard Viewers included (ADR-0025, ADR-0059). */
+    permission read: user | api_key = full_read + workspace->unlimited_dashboard_read + (selected_by_team->dashboard_member & workspace->dashboard_read)
 
     /**
-     * Create, update, duplicate, or delete the dashboard and mutate its widgets.
+     * Create, update, duplicate, or delete the dashboard and mutate its pages and widgets.
      * Every dashboard mutation currently uses the workspace readWrite gate.
      */
     permission write: user | api_key = workspace->write
 
+    /** Change who can open the dashboard's pages (page team limits): Owners and Managers only. */
+    permission manage_access: user = workspace->administer
+
     /** MCP grants that reach the dashboard's workspace. */
     permission mcp_reach: mcp_grant = workspace->mcp_reach
+}
+
+/**
+ * A Dashboard page, identified by the Prisma `DashboardPage.id` (ADR-0059). A page without a team limit
+ * carries `open_on` to its dashboard and is readable by everyone who reads the dashboard. A limited page
+ * is readable by the Dashboard Viewers of the teams it is limited to who can also read the dashboard:
+ * page limits only narrow within a dashboard, never grant it.
+ */
+definition dashboard_page {
+    /** The owning dashboard (`DashboardPage.dashboardId`). Always written. */
+    relation dashboard: dashboard
+
+    /** The owning dashboard, written only while the page has no team limit. */
+    relation open_on: dashboard
+
+    /** A team the page is limited to (`DashboardPageTeam`). */
+    relation limited_team: team
+
+    /** View the page, its widgets and their data. */
+    permission read: user | api_key = dashboard->full_read + open_on->read + (limited_team->dashboard_member & dashboard->read)
+
+    /** MCP grants that reach the page's dashboard. */
+    permission mcp_reach: mcp_grant = dashboard->mcp_reach
 }
 
 /**

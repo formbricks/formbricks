@@ -868,6 +868,7 @@ model Organization {
   retentionRuns         RetentionRun[]
   retentionNotices      RetentionNotice[]
   mcpGrants             McpGrantOrganization[]
+  memberAttributeKeys   MemberAttributeKey[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.
@@ -917,15 +918,76 @@ enum OrganizationRole {
 /// @property accepted - Whether the user has accepted the membership
 /// @property role - User's role within the organization (owner, manager, member, billing)
 model Membership {
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
-  accepted       Boolean          @default(false)
-  role           OrganizationRole @default(member)
+  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  accepted        Boolean                @default(false)
+  role            OrganizationRole       @default(member)
+  attributeValues MemberAttributeValue[]
 
   @@id([userId, organizationId])
   @@index([organizationId])
+}
+
+/// A Member attribute key (ENG-7468): one entry of an organization-wide list that Owners and Managers
+/// define, such as Country. Dashboard Viewer access matches a Feedback Record field against a viewer's
+/// values for a key. The built-in Email attribute is never stored: it is read from the login email.
+///
+/// @property key - The identifier used in Dashboard Viewer access and CSV columns. Never changes.
+/// @property label - The name shown as a column and field label
+model MemberAttributeKey {
+  id                    String                             @id @default(cuid())
+  createdAt             DateTime                           @default(now()) @map(name: "created_at")
+  updatedAt             DateTime                           @updatedAt @map(name: "updated_at")
+  organization          Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId        String
+  key                   String
+  label                 String
+  description           String?
+  values                MemberAttributeValue[]
+  inviteValues          InviteAttributeValue[]
+  dashboardViewerAccess FeedbackDirectoryViewerCondition[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId, createdAt])
+}
+
+/// One value of one Member attribute for one membership. A member holds several values for a key as
+/// several rows ("Sweden", "Norway"). Deleted with the membership or the key.
+///
+/// @property value - Stored as entered (trimmed). Matching ignores case and surrounding spaces.
+/// @property normalizedValue - `lower(trim(value))`, unique per member and key, so "sweden" next to
+///                             "Sweden" is one value
+model MemberAttributeValue {
+  id              String             @id @default(cuid())
+  createdAt       DateTime           @default(now()) @map(name: "created_at")
+  attributeKey    MemberAttributeKey @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  attributeKeyId  String
+  membership      Membership         @relation(fields: [userId, organizationId], references: [userId, organizationId], onDelete: Cascade)
+  userId          String
+  organizationId  String
+  value           String
+  normalizedValue String
+
+  @@unique([attributeKeyId, userId, normalizedValue])
+  @@index([userId, organizationId])
+  @@index([attributeKeyId, normalizedValue])
+}
+
+/// Member attribute values an invite carries. Copied onto the membership when the person accepts.
+model InviteAttributeValue {
+  id              String             @id @default(cuid())
+  createdAt       DateTime           @default(now()) @map(name: "created_at")
+  invite          Invite             @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  inviteId        String
+  attributeKey    MemberAttributeKey @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  attributeKeyId  String
+  value           String
+  normalizedValue String
+
+  @@unique([inviteId, attributeKeyId, normalizedValue])
+  @@index([attributeKeyId])
 }
 
 /// Represents pending invitations to join an organization.
@@ -942,19 +1004,20 @@ model Membership {
 /// @property role - Intended role for the invited user
 /// @property teamIds - Teams the user will be added to upon acceptance
 model Invite {
-  id             String           @id @default(uuid())
-  email          String
-  name           String?
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
-  creator        User             @relation("inviteCreatedBy", fields: [creatorId], references: [id])
-  creatorId      String
-  acceptor       User?            @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
-  acceptorId     String?
-  createdAt      DateTime         @default(now())
-  expiresAt      DateTime
-  role           OrganizationRole @default(member)
-  teamIds        String[]         @default([])
+  id              String                 @id @default(uuid())
+  email           String
+  name            String?
+  organization    Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId  String
+  creator         User                   @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  creatorId       String
+  acceptor        User?                  @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  acceptorId      String?
+  createdAt       DateTime               @default(now())
+  expiresAt       DateTime
+  role            OrganizationRole       @default(member)
+  teamIds         String[]               @default([])
+  attributeValues InviteAttributeValue[]
 
   @@index([email, organizationId])
   @@index([organizationId])
@@ -1671,16 +1734,34 @@ model SurveyEmbeddedData {
 /// @property teamUsers - Users who are part of this team
 /// @property workspaceTeams - Workspaces this team has access to
 model Team {
-  id             String          @id @default(cuid())
-  createdAt      DateTime        @default(now()) @map(name: "created_at")
-  updatedAt      DateTime        @updatedAt @map(name: "updated_at")
-  name           String
-  organizationId String
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  teamUsers      TeamUser[]
-  workspaceTeams WorkspaceTeam[]
+  id              String              @id @default(cuid())
+  createdAt       DateTime            @default(now()) @map(name: "created_at")
+  updatedAt       DateTime            @updatedAt @map(name: "updated_at")
+  name            String
+  organizationId  String
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamUsers       TeamUser[]
+  workspaceTeams  WorkspaceTeam[]
+  /// The dashboards this team's Dashboard Viewers are limited to (ENG-7469). None means every dashboard
+  /// of the team's workspaces. A limit only narrows the team's own workspace grant (D5).
+  dashboardLimits TeamDashboard[]
+  pageLimits      DashboardPageTeam[]
 
   @@unique([organizationId, name])
+}
+
+/// One dashboard a team's Dashboard Viewers are limited to. Only dashboards of the team's workspaces
+/// count: a row whose dashboard's workspace no longer grants the team is ignored by SpiceDB (ADR-0059)
+/// and removed when that grant is removed.
+model TeamDashboard {
+  createdAt   DateTime  @default(now()) @map(name: "created_at")
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId      String
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  dashboardId String
+
+  @@id([teamId, dashboardId])
+  @@index([dashboardId])
 }
 
 enum TeamUserRole {
@@ -1814,33 +1895,80 @@ model Dashboard {
   createdBy   String?
   widgets     DashboardWidget[]
   filters     Json              @default("[]")
+  pages       DashboardPage[]
+  teamLimits  TeamDashboard[]
 
   @@unique([workspaceId, name])
   @@index([workspaceId, createdAt])
 }
 
-/// Represents a chart widget on a dashboard.
-/// Widgets are positioned using a grid layout system.
+/// A Dashboard page (ENG-7467): a tab of a dashboard. Every dashboard has at least one. A page can be
+/// limited to selected teams; with no limit it is open to everyone who can open its dashboard. Limits
+/// bind Dashboard Viewers only and are enforced in SpiceDB (ADR-0059).
 ///
-/// @property id - Unique identifier for the widget
-/// @property dashboard - The dashboard this widget belongs to
-/// @property chart - The chart displayed in this widget (chart name is used for display)
-/// @property layout - Grid layout configuration (x, y, width, height)
-/// @property order - Display order within the dashboard
-model DashboardWidget {
-  id          String    @id @default(cuid())
-  createdAt   DateTime  @default(now()) @map(name: "created_at")
-  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
-  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+/// @property order - Sort key of the tab, ascending
+model DashboardPage {
+  id          String              @id @default(cuid())
+  createdAt   DateTime            @default(now()) @map(name: "created_at")
+  updatedAt   DateTime            @updatedAt @map(name: "updated_at")
+  dashboard   Dashboard           @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
   dashboardId String
-  chart       Chart     @relation(fields: [chartId], references: [id], onDelete: Cascade)
-  chartId     String
-  /// [WidgetLayout] - Grid layout: { x, y, w, h }
-  layout      Json      @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
-  order       Int       @default(0)
+  name        String
+  order       Int                 @default(0)
+  widgets     DashboardWidget[]
+  teamLimits  DashboardPageTeam[]
 
-  @@unique([dashboardId, chartId])
   @@index([dashboardId, order])
+}
+
+/// One team a Dashboard page is limited to.
+model DashboardPageTeam {
+  createdAt DateTime      @default(now()) @map(name: "created_at")
+  page      DashboardPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  pageId    String
+  team      Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId    String
+
+  @@id([pageId, teamId])
+  @@index([teamId])
+}
+
+enum DashboardWidgetKind {
+  chart
+  image
+  text
+  separator
+}
+
+/// A Widget: one block on one Dashboard page — a chart's placement, or a layout block (image, text,
+/// separator). Widgets are positioned on the page's 12-column grid.
+///
+/// @property kind - What the widget shows. Only `chart` widgets reference a chart.
+/// @property chart - The chart a `chart` widget shows. A chart sits on a page at most once, but can sit
+///                   on several pages of one dashboard.
+/// @property content - [DashboardWidgetContent] An image or text widget's own content; null otherwise
+/// @property layout - Grid layout configuration (x, y, width, height)
+/// @property order - Display order within the page
+model DashboardWidget {
+  id          String              @id @default(cuid())
+  createdAt   DateTime            @default(now()) @map(name: "created_at")
+  updatedAt   DateTime            @updatedAt @map(name: "updated_at")
+  dashboard   Dashboard           @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  dashboardId String
+  page        DashboardPage       @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  pageId      String
+  kind        DashboardWidgetKind @default(chart)
+  chart       Chart?              @relation(fields: [chartId], references: [id], onDelete: Cascade)
+  chartId     String?
+  /// [DashboardWidgetContent]
+  content     Json?
+  /// [WidgetLayout] - Grid layout: { x, y, w, h }
+  layout      Json                @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
+  order       Int                 @default(0)
+
+  @@unique([pageId, chartId])
+  @@index([dashboardId, order])
+  @@index([chartId])
 }
 
 enum FeedbackSourceType {
@@ -2092,18 +2220,47 @@ model FeedbackSourceFieldMapping {
 /// @property organization - The parent organization
 /// @property workspaces - Workspaces assigned to this directory
 model FeedbackDirectory {
-  id              String                       @id @default(cuid())
-  createdAt       DateTime                     @default(now()) @map(name: "created_at")
-  updatedAt       DateTime                     @updatedAt @map(name: "updated_at")
-  name            String
-  isArchived      Boolean                      @default(false)
-  organizationId  String
-  organization    Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  workspaces      FeedbackDirectoryWorkspace[]
-  feedbackSources FeedbackSource[]
-  charts          Chart[]
+  id                     String                             @id @default(cuid())
+  createdAt              DateTime                           @default(now()) @map(name: "created_at")
+  updatedAt              DateTime                           @updatedAt @map(name: "updated_at")
+  name                   String
+  isArchived             Boolean                            @default(false)
+  organizationId         String
+  organization           Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspaces             FeedbackDirectoryWorkspace[]
+  feedbackSources        FeedbackSource[]
+  charts                 Chart[]
+  /// How the Dashboard Viewer access conditions combine: every one ("all") or at least one ("any").
+  viewerAccessJoin       DashboardViewerAccessJoin          @default(all)
+  /// Dashboard Viewer access (ENG-7476, ADR-0060): with no conditions, Dashboard Viewers see every record.
+  viewerAccessConditions FeedbackDirectoryViewerCondition[]
 
   @@unique([organizationId, name])
+}
+
+enum DashboardViewerAccessJoin {
+  all
+  any
+}
+
+/// One condition of a Feedback Dataset's Dashboard Viewer access: the record field `field` equals one of
+/// the viewer's values for the Member attribute (ADR-0060). `field` names a string field of the Feedback
+/// Record itself or an embedded-data key. A key in use cannot be deleted (`onDelete: Restrict`).
+///
+/// @property field - A Feedback Record string field id, or `ed:<key>` for an embedded-data key
+/// @property attributeKey - The Member attribute matched against; null means the built-in Email
+model FeedbackDirectoryViewerCondition {
+  id                  String              @id @default(cuid())
+  createdAt           DateTime            @default(now()) @map(name: "created_at")
+  feedbackDirectory   FeedbackDirectory   @relation(fields: [feedbackDirectoryId], references: [id], onDelete: Cascade)
+  feedbackDirectoryId String
+  field               String
+  attributeKey        MemberAttributeKey? @relation(fields: [attributeKeyId], references: [id], onDelete: Restrict)
+  attributeKeyId      String?
+  order               Int                 @default(0)
+
+  @@index([feedbackDirectoryId, order])
+  @@index([attributeKeyId])
 }
 
 /// Links feedback directories to workspaces (workspaces).
