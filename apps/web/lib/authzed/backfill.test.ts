@@ -25,6 +25,7 @@ vi.mock("./backfill-source", () => ({
 const apply = {
   deleteFeedbackDirectoryAssignmentResources: vi.fn(),
   reconcileApiKeys: vi.fn(),
+  reconcileDashboards: vi.fn(),
   reconcileFeedbackDirectories: vi.fn(),
   reconcileMcpGrants: vi.fn(),
   reconcileMemberships: vi.fn(),
@@ -41,6 +42,8 @@ const PROJECTED = { passes: 1, status: "projected" } as const;
 const emptySource: TAuthzedOrganizationSource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
+  dashboardIds: [],
+  dashboardPageIds: [],
   expectedRelationships: [],
   feedbackDirectoryAssignments: [],
   feedbackDirectoryIds: [],
@@ -68,6 +71,7 @@ const emptyPage = { cursor: null, relationships: [], snapshot: null };
 beforeEach(() => {
   vi.clearAllMocks();
   apply.reconcileApiKeys.mockResolvedValue(PROJECTED);
+  apply.reconcileDashboards.mockResolvedValue(PROJECTED);
   apply.deleteFeedbackDirectoryAssignmentResources.mockResolvedValue(PROJECTED);
   apply.reconcileFeedbackDirectories.mockResolvedValue(PROJECTED);
   apply.reconcileMcpGrants.mockResolvedValue(PROJECTED);
@@ -83,6 +87,8 @@ beforeEach(() => {
   vi.mocked(source.findMismatchedParentEdges).mockResolvedValue([]);
   vi.mocked(source.readWorkspaceSource).mockResolvedValue({
     apiKeyWorkspaceGrants: [],
+    dashboardIds: [],
+    dashboardPageIds: [],
     expectedRelationships: [],
     feedbackDirectoryAssignments: [],
     invalidApiKeyWorkspaceGrants: [],
@@ -716,6 +722,8 @@ describe("scope and observation completeness", () => {
     expect(result.orphanScope).toBe("all");
     expect(readRelationships.mock.calls.map(([query]) => query.filter)).toEqual([
       { resourceType: "api_key" },
+      { resourceType: "dashboard" },
+      { resourceType: "dashboard_page" },
       { resourceType: "feedback_directory" },
       { resourceType: "feedback_directory_assignment" },
       { resourceType: "organization" },
@@ -784,9 +792,9 @@ describe("scope and observation completeness", () => {
       cursor: null,
       relationships: [
         {
-          relation: "workspace",
-          resource: { objectId: "dashboard-1", objectType: "dashboard" },
-          subject: { objectId: "ws-1", objectType: "workspace" },
+          relation: "survey",
+          resource: { objectId: "response-1", objectType: "response" },
+          subject: { objectId: "survey-1", objectType: "survey" },
         },
       ],
       snapshot: { token: "revision-1" },
@@ -839,6 +847,8 @@ describe("workspace scope", () => {
   const missingWorkspace = (): void => {
     vi.mocked(source.readWorkspaceSource).mockResolvedValue({
       apiKeyWorkspaceGrants: [],
+      dashboardIds: [],
+      dashboardPageIds: [],
       expectedRelationships: [],
       feedbackDirectoryAssignments: [],
       invalidApiKeyWorkspaceGrants: [],

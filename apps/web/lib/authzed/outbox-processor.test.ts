@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { reconcileApiKeyRelationships } from "./api-key";
 import { isAuthzedEnabled } from "./config";
+import { reconcileDashboardRelationships } from "./dashboard";
+import { readDashboardIdsSelectedByGrants } from "./dashboard-source";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
 import {
   observeAuthzedOutboxStatus,
@@ -39,6 +41,8 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
 vi.mock("./api-key", () => ({ reconcileApiKeyRelationships: vi.fn() }));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
+vi.mock("./dashboard", () => ({ reconcileDashboardRelationships: vi.fn() }));
+vi.mock("./dashboard-source", () => ({ readDashboardIdsSelectedByGrants: vi.fn() }));
 vi.mock("./feedback-directory", () => ({ reconcileFeedbackDirectoryRelationships: vi.fn() }));
 vi.mock("./metrics", () => ({
   observeAuthzedOutboxStatus: vi.fn(),
@@ -104,6 +108,8 @@ const everyTarget = (): ReadonlyArray<TAuthzedOutboxEvent> => [
   event("feedback_directory", "directory"),
   event("feedback_directory_assignment", "directory", "workspace"),
   event("survey", "survey"),
+  event("dashboard", "dashboard"),
+  event("dashboard_page", "page"),
 ];
 
 const sorted = (ids: ReadonlyArray<string>): ReadonlyArray<string> =>
@@ -125,6 +131,8 @@ describe("AuthZed projection outbox processor", () => {
     vi.mocked(reconcileApiKeyRelationships).mockResolvedValue(projected);
     vi.mocked(reconcileFeedbackDirectoryRelationships).mockResolvedValue(projected);
     vi.mocked(reconcileSurveyRelationships).mockResolvedValue(projected);
+    vi.mocked(reconcileDashboardRelationships).mockResolvedValue(projected);
+    vi.mocked(readDashboardIdsSelectedByGrants).mockResolvedValue([]);
     vi.mocked(prisma.organization.findMany).mockResolvedValue([]);
     vi.mocked(prisma.user.findMany).mockResolvedValue([]);
     vi.mocked(markAuthzedOutboxEventsFailed).mockResolvedValue(0);
@@ -144,9 +152,9 @@ describe("AuthZed projection outbox processor", () => {
     vi.mocked(claimAuthzedOutboxEvents).mockResolvedValue(events);
 
     await expect(processAuthzedOutboxBatch("lease")).resolves.toEqual({
-      claimed: 12,
+      claimed: 14,
       deadLettered: 0,
-      delivered: 12,
+      delivered: 14,
       failed: 0,
     });
 
@@ -171,7 +179,37 @@ describe("AuthZed projection outbox processor", () => {
       feedbackDirectoryIds: ["directory"],
     });
     expect(reconcileSurveyRelationships).toHaveBeenCalledWith(["survey"]);
+    expect(reconcileDashboardRelationships).toHaveBeenCalledWith({
+      dashboardIds: ["dashboard"],
+      pageIds: ["page"],
+    });
     expect(deliveredIds()).toEqual(sorted(events.map(({ id }) => id)));
+  });
+
+  // ADR-0059: a dashboard's `selected_by_team` edge exists only while its team holds the workspace, so a
+  // grant change re-projects the dashboards that team selected there, in the same delivery group.
+  test("re-projects the dashboards a team selected when its workspace grant changes", async () => {
+    const events = [event("workspace_team", "workspace", "team")];
+    vi.mocked(claimAuthzedOutboxEvents).mockResolvedValue(events);
+    vi.mocked(readDashboardIdsSelectedByGrants).mockResolvedValue(["dashboard-1", "dashboard-2"]);
+
+    await expect(processAuthzedOutboxBatch("lease")).resolves.toMatchObject({ delivered: 1, failed: 0 });
+
+    expect(readDashboardIdsSelectedByGrants).toHaveBeenCalledWith([
+      { teamId: "team", workspaceId: "workspace" },
+    ]);
+    expect(reconcileDashboardRelationships).toHaveBeenCalledWith({
+      dashboardIds: ["dashboard-1", "dashboard-2"],
+    });
+  });
+
+  test("redelivers a grant event whose dashboards failed to project", async () => {
+    vi.mocked(claimAuthzedOutboxEvents).mockResolvedValue([event("workspace_team", "workspace", "team")]);
+    vi.mocked(readDashboardIdsSelectedByGrants).mockResolvedValue(["dashboard-1"]);
+    vi.mocked(reconcileDashboardRelationships).mockResolvedValue(failed("authzed_unavailable", true));
+
+    await expect(processAuthzedOutboxBatch("lease")).resolves.toMatchObject({ delivered: 0, failed: 1 });
+    expect(deliveredIds()).toEqual([]);
   });
 
   test("delivers every healthy group when one of them fails", async () => {
@@ -180,7 +218,7 @@ describe("AuthZed projection outbox processor", () => {
     vi.mocked(reconcileApiKeyRelationships).mockResolvedValue(failed("authzed_internal", false));
 
     await expect(processAuthzedOutboxBatch("lease")).resolves.toMatchObject({
-      delivered: 10,
+      delivered: 12,
       failed: 2,
     });
 
@@ -201,7 +239,7 @@ describe("AuthZed projection outbox processor", () => {
     // The membership group runs first, so a retryable failure there must release the rest untried.
     vi.mocked(reconcileOrganizationMemberships).mockResolvedValue(failed("authzed_unavailable", true));
 
-    await expect(processAuthzedOutboxBatch("lease")).resolves.toMatchObject({ delivered: 0, failed: 12 });
+    await expect(processAuthzedOutboxBatch("lease")).resolves.toMatchObject({ delivered: 0, failed: 14 });
 
     expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
     expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();

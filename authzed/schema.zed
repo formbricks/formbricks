@@ -388,8 +388,8 @@ definition feedback_directory_assignment {
  *
  * `response_read` and `response_export` both equal `read` — the export gate
  * is identical to the response-view gate. They stay separate permissions so
- * response access keeps a stable vocabulary. Responses and dashboards remain
- * unprojected.
+ * response access keeps a stable vocabulary. Responses remain unprojected;
+ * dashboards and their pages are projected since ADR-0059.
  */
 definition survey {
     /** The owning workspace (`Survey.workspaceId`). Always written. */

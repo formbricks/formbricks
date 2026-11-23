@@ -15,6 +15,7 @@ const clientMocks = {
 vi.mock("@formbricks/database", () => ({
   prisma: {
     team: { findMany: vi.fn() },
+    teamDashboard: { findMany: vi.fn() },
     teamUser: { findMany: vi.fn() },
     workspace: { findMany: vi.fn() },
     workspaceTeam: { findMany: vi.fn() },
@@ -48,6 +49,7 @@ const setStableSnapshot = ({
   teamRole?: "admin" | "contributor" | null;
   workspacePermission?: "manage" | "read" | "readWrite" | null;
 }> = {}): void => {
+  vi.mocked(prisma.teamDashboard.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.team.findMany).mockResolvedValue([
     { id: TEAM_ID, organizationId: ORGANIZATION_ID },
   ] as never);
@@ -228,7 +230,10 @@ describe("team and workspace relationship projection", () => {
 
     const pairUpdates = clientMocks.writeRelationships.mock.calls
       .flatMap(([batch]) => batch)
-      .filter(({ relationship }) => relationship.relation !== "organization");
+      .filter(
+        ({ relationship }) =>
+          relationship.relation !== "organization" && relationship.relation !== "dashboard_limited"
+      );
     expect(pairUpdates).toHaveLength(5);
     expect(pairUpdates.every(({ operation }) => operation === "delete")).toBe(true);
   });
@@ -297,11 +302,50 @@ describe("team and workspace relationship projection", () => {
     });
 
     const updates = clientMocks.writeRelationships.mock.calls.flatMap(([batch]) => batch);
-    expect(updates).toHaveLength(7);
+    // Two parents, the team's dashboard limit marker, two role alternatives and three grant alternatives.
+    expect(updates).toHaveLength(8);
+  });
+
+  // ADR-0059: the team reconciler owns every edge on a `team`, so it writes the dashboard limit marker.
+  test.each([
+    [true, "touch"],
+    [false, "delete"],
+  ])("projects the dashboard limit self-marker when limited=%s", async (limited, operation) => {
+    vi.mocked(prisma.teamDashboard.findMany).mockResolvedValue(
+      (limited ? [{ teamId: TEAM_ID }] : []) as never
+    );
+
+    await reconcileTeamWorkspaceRelationships({ teamIds: [TEAM_ID] });
+
+    expect(prisma.teamDashboard.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { teamId: { in: [TEAM_ID] } } })
+    );
+    const [batch] = clientMocks.writeRelationships.mock.calls[0];
+    expect(batch).toContainEqual({
+      operation,
+      relationship: {
+        relation: "dashboard_limited",
+        resource: { objectId: TEAM_ID, objectType: "team" },
+        subject: { objectId: TEAM_ID, objectType: "team" },
+      },
+    });
+  });
+
+  test("clears the dashboard edges of a missing workspace with it", async () => {
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
+
+    await reconcileTeamWorkspaceRelationships({ workspaceIds: [WORKSPACE_ID] });
+
+    expect(clientMocks.deleteRelationships).toHaveBeenCalledWith({
+      resourceType: "dashboard",
+      subject: { objectId: WORKSPACE_ID, objectType: "workspace" },
+    });
   });
 
   test("packs at most 1,000 updates without splitting a three-update grant", async () => {
-    const teamIds = Array.from({ length: 999 }, (_, index) => `team-${index}`);
+    // Each team is a two-update group (parent and dashboard limit marker): 499 of them and the workspace
+    // parent fill 999, and the three-update grant does not fit in the last slot.
+    const teamIds = Array.from({ length: 499 }, (_, index) => `team-${index}`);
     const grantTeamId = teamIds[0];
     vi.mocked(prisma.team.findMany).mockResolvedValue(
       teamIds.map((id) => ({ id, organizationId: ORGANIZATION_ID })) as never
@@ -320,7 +364,7 @@ describe("team and workspace relationship projection", () => {
     });
 
     expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(2);
-    expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(1_000);
+    expect(clientMocks.writeRelationships.mock.calls[0][0]).toHaveLength(999);
     expect(clientMocks.writeRelationships.mock.calls[1][0]).toHaveLength(3);
     const finalBatch = clientMocks.writeRelationships.mock
       .calls[1][0] as ReadonlyArray<TAuthzedRelationshipUpdate>;

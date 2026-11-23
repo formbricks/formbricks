@@ -4,6 +4,8 @@ import { logger } from "@formbricks/logger";
 import { reconcileApiKeyRelationships } from "./api-key";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
+import { reconcileDashboardRelationships } from "./dashboard";
+import { readDashboardIdsSelectedByGrants } from "./dashboard-source";
 import { AUTHZED_ERROR_CODES } from "./errors";
 import { reconcileFeedbackDirectoryRelationships } from "./feedback-directory";
 import { reconcileMcpGrantRelationships } from "./mcp-grant";
@@ -189,6 +191,33 @@ const reconcileOrganizations = async (
 };
 
 /**
+ * Team, workspace and grant events, then the dashboards a `WorkspaceTeam` change can move (ADR-0059): a
+ * dashboard's `selected_by_team` edge is written only while its team holds the dashboard's workspace, so
+ * a grant added or removed re-projects the dashboards that team selected in that workspace. Run after the
+ * team reconciler, in the same group, so a failure of either redelivers the grant event.
+ */
+const reconcileTeamWorkspaceEvents = async (
+  events: ReadonlyArray<TAuthzedOutboxEvent>
+): Promise<TAuthzedProjectionResult> => {
+  const workspaceTeamGrants = secondaryTargets(byType(events, "workspace_team")).map(
+    ({ primaryId, secondaryId }) => ({ teamId: secondaryId, workspaceId: primaryId })
+  );
+  const teamWorkspace = await runChunkedProjection(reconcileTeamWorkspaceRelationships, {
+    teamIds: byType(events, "team").map(({ primaryId }) => primaryId),
+    teamMemberships: secondaryTargets(byType(events, "team_membership")).map(
+      ({ primaryId, secondaryId }) => ({ teamId: primaryId, userId: secondaryId })
+    ),
+    workspaceIds: byType(events, "workspace").map(({ primaryId }) => primaryId),
+    workspaceTeamGrants,
+  });
+  if (teamWorkspace.status !== "projected") return teamWorkspace;
+
+  return runChunkedProjection(reconcileDashboardRelationships, {
+    dashboardIds: await readDashboardIdsSelectedByGrants(workspaceTeamGrants),
+  });
+};
+
+/**
  * One delivery group per reconciler call.
  *
  * The grouping is the attribution boundary: a failure is charged to the events that were in flight
@@ -220,17 +249,7 @@ const buildDeliveryGroups = (grouped: TGroupedEvents): ReadonlyArray<TDeliveryGr
     { events: collect("user"), run: reconcileUsers },
     {
       events: collect("team", "team_membership", "workspace", "workspace_team"),
-      run: (events) =>
-        runChunkedProjection(reconcileTeamWorkspaceRelationships, {
-          teamIds: byType(events, "team").map(({ primaryId }) => primaryId),
-          teamMemberships: secondaryTargets(byType(events, "team_membership")).map(
-            ({ primaryId, secondaryId }) => ({ teamId: primaryId, userId: secondaryId })
-          ),
-          workspaceIds: byType(events, "workspace").map(({ primaryId }) => primaryId),
-          workspaceTeamGrants: secondaryTargets(byType(events, "workspace_team")).map(
-            ({ primaryId, secondaryId }) => ({ teamId: secondaryId, workspaceId: primaryId })
-          ),
-        }),
+      run: reconcileTeamWorkspaceEvents,
     },
     {
       events: collect("api_key", "api_key_workspace"),
@@ -262,6 +281,14 @@ const buildDeliveryGroups = (grouped: TGroupedEvents): ReadonlyArray<TDeliveryGr
     {
       events: collect("survey"),
       run: (events) => reconcileSurveyRelationships(events.map(({ primaryId }) => primaryId)),
+    },
+    {
+      events: collect("dashboard", "dashboard_page"),
+      run: (events) =>
+        runChunkedProjection(reconcileDashboardRelationships, {
+          dashboardIds: byType(events, "dashboard").map(({ primaryId }) => primaryId),
+          pageIds: byType(events, "dashboard_page").map(({ primaryId }) => primaryId),
+        }),
     },
   ];
 

@@ -41,6 +41,7 @@ import {
   AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN,
   AUTHZED_MAX_TRACKED_ORPHAN_REFS,
 } from "./constants";
+import type { TDashboardProjectionTargets } from "./dashboard";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 import type { TFeedbackDirectoryProjectionTargets } from "./feedback-directory";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
@@ -78,6 +79,7 @@ export type TAuthzedBackfillApply = Readonly<{
     assignmentIds: ReadonlyArray<string>
   ) => Promise<TAuthzedProjectionResult>;
   reconcileApiKeys: (targets: TApiKeyProjectionTargets) => Promise<TAuthzedProjectionResult>;
+  reconcileDashboards: (targets: TDashboardProjectionTargets) => Promise<TAuthzedProjectionResult>;
   reconcileMemberships: (
     targets: TOrganizationMembershipProjectionTargets
   ) => Promise<TAuthzedProjectionResult>;
@@ -162,7 +164,7 @@ export type TAuthzedBackfillDependencies = Readonly<{
 export type TAuthzedBackfillCounters = Readonly<{
   failed: number;
   /**
-   * Relationships on a deliberately unprojected resource type — `dashboard`, `response`.
+   * Relationships on a deliberately unprojected resource type — `response`.
    *
    * Expected to be 0, and structurally so: every read this tool issues filters to a managed type, so
    * there is no path by which an unprojected type is observed. The classification behind it is kept
@@ -270,6 +272,8 @@ const toErrorCode = (error: unknown): Readonly<{ attempts: number; code: string;
 type TReconcileTargets = Readonly<{
   apiKeyIds: ReadonlyArray<string>;
   apiKeyWorkspaceGrants: ReadonlyArray<TAuthzedApiKeyWorkspaceTarget>;
+  dashboardIds: ReadonlyArray<string>;
+  dashboardPageIds: ReadonlyArray<string>;
   feedbackDirectoryAssignmentObjectIds: ReadonlyArray<string>;
   feedbackDirectoryAssignments: ReadonlyArray<TAuthzedFeedbackDirectoryAssignmentTarget>;
   feedbackDirectoryIds: ReadonlyArray<string>;
@@ -285,6 +289,8 @@ type TReconcileTargets = Readonly<{
 const NO_TARGETS: TReconcileTargets = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
+  dashboardIds: [],
+  dashboardPageIds: [],
   feedbackDirectoryAssignmentObjectIds: [],
   feedbackDirectoryAssignments: [],
   feedbackDirectoryIds: [],
@@ -308,6 +314,8 @@ const NO_TARGETS: TReconcileTargets = {
 const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTargets => {
   const apiKeyIds: string[] = [];
   const apiKeyWorkspaceGrants: TAuthzedApiKeyWorkspaceTarget[] = [];
+  const dashboardIds: string[] = [];
+  const dashboardPageIds: string[] = [];
   const feedbackDirectoryAssignmentObjectIds: string[] = [];
   const feedbackDirectoryAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
   const feedbackDirectoryIds: string[] = [];
@@ -326,6 +334,12 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
         break;
       case "apiKeyWorkspaceGrant":
         apiKeyWorkspaceGrants.push({ apiKeyId: ref.apiKeyId, workspaceId: ref.workspaceId });
+        break;
+      case "dashboard":
+        dashboardIds.push(ref.dashboardId);
+        break;
+      case "dashboardPage":
+        dashboardPageIds.push(ref.pageId);
         break;
       case "feedbackDirectory":
         feedbackDirectoryIds.push(ref.feedbackDirectoryId);
@@ -367,6 +381,8 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
   return {
     apiKeyIds,
     apiKeyWorkspaceGrants,
+    dashboardIds,
+    dashboardPageIds,
     feedbackDirectoryAssignmentObjectIds,
     feedbackDirectoryAssignments,
     feedbackDirectoryIds,
@@ -394,6 +410,14 @@ const toMcpGrantSelectionRefs = (
 
 const toMcpGrantIds = (selections: ReadonlyArray<TAuthzedMcpGrantSelectionTarget>): ReadonlyArray<string> => [
   ...new Set(selections.map(({ grantId }) => grantId)),
+];
+
+/** A source's dashboards and pages (ADR-0059), in the vocabulary an observation produces. */
+const toDashboardSourceRefs = (
+  source: Pick<TAuthzedOrganizationSource, "dashboardIds" | "dashboardPageIds">
+): ReadonlyArray<TAuthzedSourceRef> => [
+  ...source.dashboardIds.map((dashboardId): TAuthzedSourceRef => ({ dashboardId, kind: "dashboard" })),
+  ...source.dashboardPageIds.map((pageId): TAuthzedSourceRef => ({ kind: "dashboardPage", pageId })),
 ];
 
 /**
@@ -458,12 +482,15 @@ const toSourceRefs = (source: TAuthzedOrganizationSource): ReadonlyArray<TAuthze
       }
     ),
     ...toMcpGrantSelectionRefs(source.mcpGrantSelections),
+    ...toDashboardSourceRefs(source),
   ];
 };
 
 const mergeTargets = (left: TReconcileTargets, right: TReconcileTargets): TReconcileTargets => ({
   apiKeyIds: [...left.apiKeyIds, ...right.apiKeyIds],
   apiKeyWorkspaceGrants: [...left.apiKeyWorkspaceGrants, ...right.apiKeyWorkspaceGrants],
+  dashboardIds: [...left.dashboardIds, ...right.dashboardIds],
+  dashboardPageIds: [...left.dashboardPageIds, ...right.dashboardPageIds],
   feedbackDirectoryAssignmentObjectIds: [
     ...left.feedbackDirectoryAssignmentObjectIds,
     ...right.feedbackDirectoryAssignmentObjectIds,
@@ -527,6 +554,13 @@ const reconcileTargets = async (
         { surveyIds: targets.surveyIds }
       ),
     () => runChunked(apply.reconcileMcpGrants, { grantIds: [...new Set(targets.mcpGrantIds)] }),
+    // After the team reconciler, like the outbox: a dashboard's `selected_by_team` edges read the team
+    // grants that step just converged.
+    () =>
+      runChunked(apply.reconcileDashboards, {
+        dashboardIds: targets.dashboardIds,
+        pageIds: targets.dashboardPageIds,
+      }),
   ];
 
   for (const step of steps) {
@@ -573,6 +607,14 @@ const observeResources = async (
   return { relationships, snapshot };
 };
 
+/** Read filters for a source's dashboards and pages (ADR-0059). */
+const dashboardObservationFilters = (
+  source: Pick<TAuthzedOrganizationSource, "dashboardIds" | "dashboardPageIds">
+): ReadonlyArray<Readonly<{ resourceId: string; resourceType: string }>> => [
+  ...source.dashboardIds.map((dashboardId) => ({ resourceId: dashboardId, resourceType: "dashboard" })),
+  ...source.dashboardPageIds.map((pageId) => ({ resourceId: pageId, resourceType: "dashboard_page" })),
+];
+
 /**
  * Observe the relationships on one organization's own resources.
  *
@@ -600,6 +642,7 @@ const observeOrganizationResources = async (
       resourceId: getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, workspaceId),
       resourceType: "feedback_directory_assignment",
     })),
+    ...dashboardObservationFilters(source),
   ];
 
   return observeResources(client, filters);
@@ -882,6 +925,8 @@ const processOrganization = async (ctx: TRunContext, organizationId: string): Pr
       {
         apiKeyIds: source.apiKeyIds,
         apiKeyWorkspaceGrants: source.apiKeyWorkspaceGrants,
+        dashboardIds: source.dashboardIds,
+        dashboardPageIds: source.dashboardPageIds,
         feedbackDirectoryAssignmentObjectIds: [],
         feedbackDirectoryAssignments: source.feedbackDirectoryAssignments,
         feedbackDirectoryIds: source.feedbackDirectoryIds,
@@ -1046,6 +1091,7 @@ const toWorkspaceSourceRefs = (
     ),
     ...source.surveyIds.map((surveyId): TAuthzedSourceRef => ({ kind: "survey", surveyId })),
     ...toMcpGrantSelectionRefs(source.mcpGrantSelections),
+    ...toDashboardSourceRefs(source),
     { kind: "workspace", workspaceId },
   ];
 };
@@ -1073,14 +1119,15 @@ const observeWorkspace = async (
         })
     ),
   ]);
-  // A workspace can hold thousands of surveys, so these go through the bounded windows instead.
-  const surveys = await observeResources(
-    ctx.client,
-    source.surveyIds.map((surveyId) => ({ resourceId: surveyId, resourceType: "survey" }))
-  );
+  // A workspace can hold thousands of surveys, so these go through the bounded windows instead, and
+  // so do its dashboards and their pages.
+  const windowed = await observeResources(ctx.client, [
+    ...source.surveyIds.map((surveyId) => ({ resourceId: surveyId, resourceType: "survey" })),
+    ...dashboardObservationFilters(source),
+  ]);
   const summary = summarizeObservation([
     ...observations.flatMap(({ relationships }) => relationships),
-    ...surveys.relationships,
+    ...windowed.relationships,
   ]);
   await recordObservationSummary(ctx, summary);
 
@@ -1208,6 +1255,8 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
       {
         apiKeyIds: [],
         apiKeyWorkspaceGrants: source.apiKeyWorkspaceGrants,
+        dashboardIds: source.dashboardIds,
+        dashboardPageIds: source.dashboardPageIds,
         feedbackDirectoryAssignmentObjectIds: [],
         feedbackDirectoryAssignments: source.feedbackDirectoryAssignments,
         feedbackDirectoryIds: [],

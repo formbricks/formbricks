@@ -8,6 +8,9 @@ import {
   getAuthzedClient,
 } from "./client";
 import { AUTHZED_PROJECTED_USER } from "./constants";
+import { dashboardRelationshipsOnWorkspaceFilter } from "./dashboard";
+import { teamDashboardLimitedRelationship } from "./dashboard-relationships";
+import { readDashboardLimitedTeamIds } from "./dashboard-source";
 import { deleteOrganizationParentRelationships } from "./organization-parent";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
@@ -48,7 +51,11 @@ type TNormalizedTargets = Readonly<{
 
 type TTeamWorkspaceSnapshot = Readonly<{
   teamMemberships: ReadonlyArray<Readonly<{ role: TeamUserRole; teamId: string; userId: string }>>;
-  teams: ReadonlyArray<Readonly<{ id: string; organizationId: string }>>;
+  /**
+   * `dashboardLimited` (ADR-0059): whether the team has a `TeamDashboard` row, which this reconciler
+   * projects as the team self-marker because it owns every edge on a `team` resource.
+   */
+  teams: ReadonlyArray<Readonly<{ dashboardLimited: boolean; id: string; organizationId: string }>>;
   workspaceTeamGrants: ReadonlyArray<
     Readonly<{ permission: WorkspaceTeamPermission; teamId: string; workspaceId: string }>
   >;
@@ -102,44 +109,52 @@ const isEmptyTargetSet = (targets: TNormalizedTargets): boolean =>
   targets.workspaceTeamGrants.length === 0;
 
 const readSnapshot = async (targets: TNormalizedTargets): Promise<TTeamWorkspaceSnapshot> => {
-  const [teams, workspaces, teamMemberships, workspaceTeamGrants] = await Promise.all([
-    targets.teamIds.length === 0
-      ? []
-      : prisma.team.findMany({
-          where: { id: { in: [...targets.teamIds] } },
-          select: { id: true, organizationId: true },
-          orderBy: { id: "asc" },
-        }),
-    targets.workspaceIds.length === 0
-      ? []
-      : prisma.workspace.findMany({
-          where: { id: { in: [...targets.workspaceIds] } },
-          select: { id: true, organizationId: true },
-          orderBy: { id: "asc" },
-        }),
-    targets.teamMemberships.length === 0
-      ? []
-      : prisma.teamUser.findMany({
-          where: {
-            OR: targets.teamMemberships.map(({ teamId, userId }) => ({ teamId, userId })),
-            user: AUTHZED_PROJECTED_USER,
-          },
-          select: { role: true, teamId: true, userId: true },
-          orderBy: [{ teamId: "asc" }, { userId: "asc" }],
-        }),
-    targets.workspaceTeamGrants.length === 0
-      ? []
-      : prisma.workspaceTeam.findMany({
-          where: {
-            OR: targets.workspaceTeamGrants.map(({ teamId, workspaceId }) => ({
-              teamId,
-              workspaceId,
-            })),
-          },
-          select: { permission: true, teamId: true, workspaceId: true },
-          orderBy: [{ workspaceId: "asc" }, { teamId: "asc" }],
-        }),
-  ]);
+  const [teamRows, dashboardLimitedTeamIds, workspaces, teamMemberships, workspaceTeamGrants] =
+    await Promise.all([
+      targets.teamIds.length === 0
+        ? []
+        : prisma.team.findMany({
+            where: { id: { in: [...targets.teamIds] } },
+            select: { id: true, organizationId: true },
+            orderBy: { id: "asc" },
+          }),
+      readDashboardLimitedTeamIds(targets.teamIds),
+      targets.workspaceIds.length === 0
+        ? []
+        : prisma.workspace.findMany({
+            where: { id: { in: [...targets.workspaceIds] } },
+            select: { id: true, organizationId: true },
+            orderBy: { id: "asc" },
+          }),
+      targets.teamMemberships.length === 0
+        ? []
+        : prisma.teamUser.findMany({
+            where: {
+              OR: targets.teamMemberships.map(({ teamId, userId }) => ({ teamId, userId })),
+              user: AUTHZED_PROJECTED_USER,
+            },
+            select: { role: true, teamId: true, userId: true },
+            orderBy: [{ teamId: "asc" }, { userId: "asc" }],
+          }),
+      targets.workspaceTeamGrants.length === 0
+        ? []
+        : prisma.workspaceTeam.findMany({
+            where: {
+              OR: targets.workspaceTeamGrants.map(({ teamId, workspaceId }) => ({
+                teamId,
+                workspaceId,
+              })),
+            },
+            select: { permission: true, teamId: true, workspaceId: true },
+            orderBy: [{ workspaceId: "asc" }, { teamId: "asc" }],
+          }),
+    ]);
+
+  const teams = teamRows.map(({ id, organizationId }) => ({
+    dashboardLimited: dashboardLimitedTeamIds.has(id),
+    id,
+    organizationId,
+  }));
 
   return { teamMemberships, teams, workspaceTeamGrants, workspaces };
 };
@@ -202,7 +217,13 @@ const writeSnapshot = async (
   const updateGroups: TAuthzedRelationshipUpdate[][] = [];
 
   for (const team of snapshot.teams) {
-    updateGroups.push([createParentUpdate("team", team.id, team.organizationId)]);
+    updateGroups.push([
+      createParentUpdate("team", team.id, team.organizationId),
+      {
+        operation: team.dashboardLimited ? "touch" : "delete",
+        relationship: teamDashboardLimitedRelationship(team.id),
+      },
+    ]);
   }
   for (const workspace of snapshot.workspaces) {
     updateGroups.push([createParentUpdate("workspace", workspace.id, workspace.organizationId)]);
@@ -239,12 +260,13 @@ const writeSnapshot = async (
   }
   for (const workspaceId of targets.workspaceIds) {
     if (!workspacesById.has(workspaceId)) {
-      // ENG-3282: the workspace's surveys point at it too. Their own DELETE events remove them one by
-      // one; this clears them in a single subject-wide delete as well, so a replayed workspace event
-      // cannot leave them behind.
+      // ENG-3282: the workspace's surveys point at it too, and so do its dashboards (ADR-0059). Their
+      // own DELETE events remove them one by one; this clears them in a single subject-wide delete as
+      // well, so a replayed workspace event cannot leave them behind.
       deletionFilters.push(
         { resourceId: workspaceId, resourceType: "workspace" },
-        surveyRelationshipsOnWorkspaceFilter(workspaceId)
+        surveyRelationshipsOnWorkspaceFilter(workspaceId),
+        dashboardRelationshipsOnWorkspaceFilter(workspaceId)
       );
     }
   }

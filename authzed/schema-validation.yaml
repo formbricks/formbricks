@@ -55,6 +55,22 @@
 #     user:viola contributor on team:globex_team, a team of organization:globex granted
 #                workspace:foreign, while viola is acme's viewer, not globex's: reaches nothing
 #   response:r1 (survey:onboarding), response:r2 (survey:draft)
+#   ADR-0059 dashboard and page team limits, all in workspace:dac (acme). Every team below is
+#   granted `read` on workspace:dac except team:dac_stray:
+#     dashboard:dac_one, dashboard:dac_two, dashboard:dac_three
+#     team:dac_open  no dashboard limit           viewer user:vopen, viewer user:vboth
+#     team:dac_red   limited to dac_one            viewer user:vred, viewer user:vboth,
+#                                                  viewer user:vpair, member user:mdac,
+#                                                  billing user:bella
+#     team:dac_blue  limited to dac_two            viewer user:vblue, viewer user:vpair
+#     team:dac_stray limited to dac_three, NOT granted workspace:dac; viewer user:vstray. Its
+#                    `selected_by_team` edge is written anyway (the projector never writes one for a
+#                    team without the grant) to show the workspace intersection still refuses it.
+#     api_key:dac_reader  read on workspace:dac
+#     dashboard_page:dac_open_page   on dac_one, no team limit (`open_on`)
+#     dashboard_page:dac_red_page    on dac_one, limited to team:dac_red
+#     dashboard_page:dac_blue_page   on dac_one, limited to team:dac_blue
+#     dashboard_page:dac_two_page    on dac_two, no team limit
 
 schemaFile: schema.zed
 
@@ -126,6 +142,50 @@ relationships: |-
   workspace:foreign#reader_team@team:globex_team#member
   organization:acme#mcp_grant@mcp_grant:acme_org
   workspace:other#mcp_grant@mcp_grant:other_only
+  workspace:dac#organization@organization:acme
+  organization:acme#dashboard_viewer@user:vopen
+  organization:acme#dashboard_viewer@user:vboth
+  organization:acme#dashboard_viewer@user:vred
+  organization:acme#dashboard_viewer@user:vblue
+  organization:acme#dashboard_viewer@user:vpair
+  organization:acme#dashboard_viewer@user:vstray
+  organization:acme#member@user:mdac
+  team:dac_open#organization@organization:acme
+  team:dac_open#contributor@user:vopen
+  team:dac_open#contributor@user:vboth
+  team:dac_red#organization@organization:acme
+  team:dac_red#contributor@user:vred
+  team:dac_red#contributor@user:vboth
+  team:dac_red#contributor@user:vpair
+  team:dac_red#contributor@user:mdac
+  team:dac_red#contributor@user:bella
+  team:dac_red#dashboard_limited@team:dac_red
+  team:dac_blue#organization@organization:acme
+  team:dac_blue#contributor@user:vblue
+  team:dac_blue#contributor@user:vpair
+  team:dac_blue#dashboard_limited@team:dac_blue
+  team:dac_stray#organization@organization:acme
+  team:dac_stray#contributor@user:vstray
+  team:dac_stray#dashboard_limited@team:dac_stray
+  workspace:dac#reader_team@team:dac_open#member
+  workspace:dac#reader_team@team:dac_red#member
+  workspace:dac#reader_team@team:dac_blue#member
+  workspace:dac#reader@api_key:dac_reader
+  api_key:dac_reader#organization@organization:acme
+  dashboard:dac_one#workspace@workspace:dac
+  dashboard:dac_one#selected_by_team@team:dac_red
+  dashboard:dac_two#workspace@workspace:dac
+  dashboard:dac_two#selected_by_team@team:dac_blue
+  dashboard:dac_three#workspace@workspace:dac
+  dashboard:dac_three#selected_by_team@team:dac_stray
+  dashboard_page:dac_open_page#dashboard@dashboard:dac_one
+  dashboard_page:dac_open_page#open_on@dashboard:dac_one
+  dashboard_page:dac_red_page#dashboard@dashboard:dac_one
+  dashboard_page:dac_red_page#limited_team@team:dac_red
+  dashboard_page:dac_blue_page#dashboard@dashboard:dac_one
+  dashboard_page:dac_blue_page#limited_team@team:dac_blue
+  dashboard_page:dac_two_page#dashboard@dashboard:dac_two
+  dashboard_page:dac_two_page#open_on@dashboard:dac_two
 
 assertions:
   assertTrue:
@@ -328,6 +388,48 @@ assertions:
     # The hazard the survey audit exists to catch: a forged `shared_workspace` edge naming another
     # organization's workspace grants that organization's members read on this survey.
     - survey:leaky#read_v2@user:gary
+
+    # ------------------------------------------------------------------
+    # Scenario 9 (ADR-0059) — team dashboard limits and page team limits.
+    # Owners, managers, members and API keys with workspace read reach every
+    # dashboard and page: limits bind Dashboard Viewers only.
+    # ------------------------------------------------------------------
+    - dashboard:dac_one#read@user:olivia
+    - dashboard:dac_three#read@user:mark
+    - dashboard:dac_three#read@user:mdac
+    - dashboard_page:dac_red_page#read@user:olivia
+    - dashboard_page:dac_blue_page#read@user:mark
+    - dashboard_page:dac_blue_page#read@user:mdac
+    - dashboard:dac_three#read@api_key:dac_reader
+    - dashboard_page:dac_blue_page#read@api_key:dac_reader
+    - dashboard_page:dac_two_page#read@api_key:dac_reader
+    # Only Owners and Managers change who can open a dashboard's pages.
+    - dashboard:dac_one#manage_access@user:olivia
+    - dashboard:dac_one#manage_access@user:mark
+    # A viewer of a granted team without a dashboard limit reads every dashboard of the workspace.
+    - dashboard:dac_one#read@user:vopen
+    - dashboard:dac_two#read@user:vopen
+    - dashboard:dac_three#read@user:vopen
+    - team:dac_open#unlimited_dashboard_member@user:vopen
+    - workspace:dac#unlimited_dashboard_read@user:vopen
+    # A viewer of a limited team reads only the dashboards it selected.
+    - dashboard:dac_one#read@user:vred
+    - dashboard:dac_two#read@user:vblue
+    # Union across teams: one limited and one unlimited team reach everything.
+    - dashboard:dac_one#read@user:vboth
+    - dashboard:dac_two#read@user:vboth
+    - dashboard:dac_three#read@user:vboth
+    # Union across two limited teams: both selections, nothing more.
+    - dashboard:dac_one#read@user:vpair
+    - dashboard:dac_two#read@user:vpair
+    # A page without a team limit is open to everyone who reads its dashboard.
+    - dashboard_page:dac_open_page#read@user:vred
+    - dashboard_page:dac_open_page#read@user:vopen
+    - dashboard_page:dac_two_page#read@user:vblue
+    # A limited page: its teams' viewers who can read the dashboard, through any team.
+    - dashboard_page:dac_red_page#read@user:vred
+    - dashboard_page:dac_red_page#read@user:vboth
+    - dashboard_page:dac_blue_page#read@user:vpair
 
   assertFalse:
     # ENG-7153 / ADR-0042: a grant reaches nothing outside what it selects. Another
@@ -557,11 +659,50 @@ assertions:
     # Organization-only keys and a key on another workspace see no dashboard data.
     - workspace:main#dashboard_read@api_key:org_writer_key
     - feedback_directory_assignment:fdwa_main#dashboard_read@api_key:org_reader_key
+    # ADR-0059 — team dashboard limits and page team limits (scenario 9).
+    # A limited team's viewers reach no dashboard it did not select.
+    - dashboard:dac_two#read@user:vred
+    - dashboard:dac_three#read@user:vred
+    - dashboard:dac_one#read@user:vblue
+    - dashboard:dac_three#read@user:vpair
+    - team:dac_red#unlimited_dashboard_member@user:vred
+    - workspace:dac#unlimited_dashboard_read@user:vpair
+    # A selection by a team without the workspace grant gives nothing, even with the edge written.
+    - dashboard:dac_three#read@user:vstray
+    - workspace:dac#dashboard_read@user:vstray
+    # A page limit narrows within the dashboard and never grants it: blue's viewer is in the page's
+    # team but cannot read dac_one, and the unlimited team's viewer is in neither page team.
+    - dashboard_page:dac_blue_page#read@user:vblue
+    - dashboard_page:dac_open_page#read@user:vblue
+    - dashboard_page:dac_red_page#read@user:vopen
+    - dashboard_page:dac_blue_page#read@user:vred
+    - dashboard_page:dac_blue_page#read@user:vboth
+    # Billing on a limited team reaches no dashboard and no page.
+    - dashboard:dac_one#read@user:bella
+    - dashboard_page:dac_open_page#read@user:bella
+    - dashboard_page:dac_red_page#read@user:bella
+    # Members, viewers and API keys never change page access.
+    - dashboard:dac_one#manage_access@user:mdac
+    - dashboard:dac_one#manage_access@user:vopen
 
 # Expected-relations documentation: enumerates, for key permissions, every
 # subject that holds them and through which relation. Kept exact so any
 # schema change that widens or narrows these permissions shows up as a diff.
 validation:
+  # ADR-0059: who reads a dashboard one team selected. Exact, so a limit that stops narrowing (or a
+  # viewer path that widens) shows up as a diff.
+  dashboard:dac_two#read:
+    - "[api_key:dac_reader] is <workspace:dac#reader>"
+    - "[team:dac_blue#member] is <workspace:dac#reader_team>"
+    - "[team:dac_open#member] is <workspace:dac#reader_team>"
+    - "[team:dac_red#member] is <workspace:dac#reader_team>"
+    - "[user:mark] is <organization:acme#manager>"
+    - "[user:mdac] is <organization:acme#member>/<team:dac_red#contributor>"
+    - "[user:olivia] is <organization:acme#owner>"
+    - "[user:vblue] is <organization:acme#dashboard_viewer>/<team:dac_blue#contributor>"
+    - "[user:vboth] is <organization:acme#dashboard_viewer>/<team:dac_open#contributor>"
+    - "[user:vopen] is <organization:acme#dashboard_viewer>/<team:dac_open#contributor>"
+    - "[user:vpair] is <organization:acme#dashboard_viewer>/<team:dac_blue#contributor>/<team:dac_red#contributor>"
   workspace:main#read:
     - "[api_key:ci_reader] is <workspace:main#reader>"
     - "[api_key:ci_writer] is <workspace:main#writer>"
@@ -582,6 +723,7 @@ validation:
     - "[api_key:org_reader_key] is <organization:acme#api_key_reader>"
     - "[api_key:org_writer_key] is <organization:acme#api_key_writer>"
     - "[user:mark] is <organization:acme#manager>"
+    - "[user:mdac] is <organization:acme#member>"
     - "[user:mia] is <organization:acme#member>"
     - "[user:mo] is <organization:acme#member>"
     - "[user:olivia] is <organization:acme#owner>"
@@ -600,6 +742,7 @@ validation:
     - "[api_key:org_writer_key] is <organization:acme#api_key_writer>"
     - "[user:bella] is <organization:acme#billing>"
     - "[user:mark] is <organization:acme#manager>"
+    - "[user:mdac] is <organization:acme#member>"
     - "[user:mia] is <organization:acme#member>"
     - "[user:mo] is <organization:acme#member>"
     - "[user:olivia] is <organization:acme#owner>"

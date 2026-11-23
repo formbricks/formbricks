@@ -20,6 +20,8 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     apiKey: { findMany: vi.fn() },
     apiKeyWorkspace: { findMany: vi.fn() },
+    dashboard: { findMany: vi.fn() },
+    dashboardPage: { findMany: vi.fn() },
     feedbackDirectory: { findMany: vi.fn() },
     feedbackDirectoryWorkspace: { findMany: vi.fn() },
     mcpGrantOrganization: { findMany: vi.fn() },
@@ -28,6 +30,7 @@ vi.mock("@formbricks/database", () => ({
     organization: { count: vi.fn(), findMany: vi.fn() },
     survey: { findMany: vi.fn() },
     team: { findMany: vi.fn() },
+    teamDashboard: { findMany: vi.fn() },
     teamUser: { findMany: vi.fn() },
     workspace: { findMany: vi.fn(), findUnique: vi.fn() },
     workspaceTeam: { findMany: vi.fn() },
@@ -50,6 +53,9 @@ const setEmptySource = (): void => {
   vi.mocked(prisma.survey.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.mcpGrantOrganization.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.mcpGrantWorkspace.findMany).mockResolvedValue([] as never);
+  vi.mocked(prisma.dashboard.findMany).mockResolvedValue([] as never);
+  vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([] as never);
+  vi.mocked(prisma.teamDashboard.findMany).mockResolvedValue([] as never);
 };
 
 beforeEach(() => {
@@ -165,6 +171,8 @@ describe("readOrganizationSource", () => {
     await expect(readOrganizationSource(ORGANIZATION_ID)).resolves.toEqual({
       apiKeyIds: ["key-1"],
       apiKeyWorkspaceGrants: [{ apiKeyId: "key-1", workspaceId: "ws-1" }],
+      dashboardIds: [],
+      dashboardPageIds: [],
       expectedRelationships: expect.arrayContaining([
         expect.objectContaining({ relation: "owner" }),
         expect.objectContaining({ relation: "admin" }),
@@ -299,6 +307,8 @@ describe("readOrganizationSource", () => {
 
     await expect(readWorkspaceSource("ws-1")).resolves.toEqual({
       apiKeyWorkspaceGrants: [],
+      dashboardIds: [],
+      dashboardPageIds: [],
       expectedRelationships: expect.arrayContaining([
         expect.objectContaining({ relation: "organization" }),
         expect.objectContaining({ relation: "reader_team" }),
@@ -392,6 +402,8 @@ describe("readOrganizationSource", () => {
     expect(source).toEqual({
       apiKeyIds: [],
       apiKeyWorkspaceGrants: [],
+      dashboardIds: [],
+      dashboardPageIds: [],
       expectedRelationships: [],
       feedbackDirectoryAssignments: [],
       feedbackDirectoryIds: [],
@@ -411,6 +423,139 @@ describe("readOrganizationSource", () => {
     vi.mocked(prisma.teamUser.findMany).mockRejectedValue(new Error("statement timeout"));
 
     await expect(readOrganizationSource(ORGANIZATION_ID)).rejects.toThrow("statement timeout");
+  });
+});
+
+describe("dashboard sources (ADR-0059)", () => {
+  const dashboardRow = (overrides: Record<string, unknown> = {}) => ({
+    id: "dash-1",
+    teamLimits: [
+      { team: { organizationId: ORGANIZATION_ID }, teamId: "team-granted" },
+      { team: { organizationId: ORGANIZATION_ID }, teamId: "team-ungranted" },
+      { team: { organizationId: "org-foreign" }, teamId: "team-foreign" },
+    ],
+    workspace: { organizationId: ORGANIZATION_ID },
+    workspaceId: "ws-1",
+    ...overrides,
+  });
+
+  const edge = (resourceType: string, resourceId: string, relation: string, type: string, id: string) => ({
+    relation,
+    resource: { objectId: resourceId, objectType: resourceType },
+    subject: { objectId: id, objectType: type },
+  });
+
+  beforeEach(() => {
+    vi.mocked(prisma.dashboard.findMany).mockResolvedValue([dashboardRow()] as never);
+    vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([
+      {
+        dashboard: { workspace: { organizationId: ORGANIZATION_ID } },
+        dashboardId: "dash-1",
+        id: "page-open",
+        teamLimits: [],
+      },
+      {
+        dashboard: { workspace: { organizationId: ORGANIZATION_ID } },
+        dashboardId: "dash-1",
+        id: "page-limited",
+        teamLimits: [
+          { team: { organizationId: ORGANIZATION_ID }, teamId: "team-granted" },
+          { team: { organizationId: "org-foreign" }, teamId: "team-foreign" },
+        ],
+      },
+    ] as never);
+    // Only the granted team's selection survives: the ungranted one holds no `WorkspaceTeam`, and the
+    // foreign team never counts. The grant read is asked for exactly the selected pairs.
+    vi.mocked(prisma.workspaceTeam.findMany).mockImplementation((async (args: {
+      where?: { OR?: unknown };
+    }) => (args.where?.OR ? [{ teamId: "team-granted", workspaceId: "ws-1" }] : [])) as never);
+  });
+
+  test("an organization's expected graph holds its dashboards, pages and limited-team markers", async () => {
+    vi.mocked(prisma.team.findMany).mockResolvedValue([
+      { id: "team-granted", organizationId: ORGANIZATION_ID },
+      { id: "team-open", organizationId: ORGANIZATION_ID },
+    ] as never);
+    vi.mocked(prisma.teamDashboard.findMany).mockResolvedValue([{ teamId: "team-granted" }] as never);
+
+    const source = await readOrganizationSource(ORGANIZATION_ID);
+
+    expect(prisma.dashboard.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { workspace: { organizationId: ORGANIZATION_ID } } })
+    );
+    expect(prisma.dashboardPage.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { dashboard: { workspace: { organizationId: ORGANIZATION_ID } } } })
+    );
+    expect(source.dashboardIds).toEqual(["dash-1"]);
+    expect(source.dashboardPageIds).toEqual(["page-open", "page-limited"]);
+    const dashboardEdges = source.expectedRelationships.filter(
+      ({ resource }) => resource.objectType === "dashboard" || resource.objectType === "dashboard_page"
+    );
+    expect(dashboardEdges).toEqual([
+      edge("dashboard", "dash-1", "workspace", "workspace", "ws-1"),
+      edge("dashboard", "dash-1", "selected_by_team", "team", "team-granted"),
+      edge("dashboard_page", "page-open", "dashboard", "dashboard", "dash-1"),
+      edge("dashboard_page", "page-open", "open_on", "dashboard", "dash-1"),
+      edge("dashboard_page", "page-limited", "dashboard", "dashboard", "dash-1"),
+      edge("dashboard_page", "page-limited", "limited_team", "team", "team-granted"),
+    ]);
+    expect(source.expectedRelationships).toContainEqual(
+      edge("team", "team-granted", "dashboard_limited", "team", "team-granted")
+    );
+    expect(source.expectedRelationships).not.toContainEqual(
+      edge("team", "team-open", "dashboard_limited", "team", "team-open")
+    );
+  });
+
+  test("a workspace's repair scope covers its dashboards and pages", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ organizationId: ORGANIZATION_ID } as never);
+
+    const source = await readWorkspaceSource("ws-1");
+
+    expect(prisma.dashboard.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { workspaceId: "ws-1" } })
+    );
+    expect(source.dashboardIds).toEqual(["dash-1"]);
+    expect(source.dashboardPageIds).toEqual(["page-open", "page-limited"]);
+    expect(source.expectedRelationships).toContainEqual(
+      edge("dashboard", "dash-1", "selected_by_team", "team", "team-granted")
+    );
+    expect(source.expectedRelationships).not.toContainEqual(
+      edge("dashboard", "dash-1", "selected_by_team", "team", "team-ungranted")
+    );
+  });
+
+  test("reports a dashboard or page attached to a parent PostgreSQL contradicts", async () => {
+    vi.mocked(prisma.dashboard.findMany).mockResolvedValue([{ id: "dash-1", workspaceId: "ws-1" }] as never);
+    vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([
+      { dashboardId: "dash-1", id: "page-1" },
+    ] as never);
+
+    const edges = [
+      { childId: "dash-1", childType: "dashboard", relation: "workspace", workspaceId: "ws-1" },
+      { childId: "dash-1", childType: "dashboard", relation: "workspace", workspaceId: "ws-foreign" },
+      { childId: "page-1", childType: "dashboard_page", dashboardId: "dash-1", relation: "dashboard" },
+      { childId: "page-1", childType: "dashboard_page", dashboardId: "dash-2", relation: "open_on" },
+    ] as const;
+
+    await expect(findMismatchedParentEdges(edges)).resolves.toEqual([edges[1], edges[3]]);
+  });
+
+  test("names dashboards and pages PostgreSQL no longer holds", async () => {
+    vi.mocked(prisma.dashboard.findMany).mockResolvedValue([{ id: "dash-1" }] as never);
+    vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([{ id: "page-1" }] as never);
+
+    await expect(
+      findMissingSourceRefs([
+        { dashboardId: "dash-1", kind: "dashboard" },
+        { dashboardId: "dash-gone", kind: "dashboard" },
+        { kind: "dashboardPage", pageId: "page-1" },
+        { kind: "dashboardPage", pageId: "page-gone" },
+      ])
+    ).resolves.toEqual([
+      { dashboardId: "dash-gone", kind: "dashboard" },
+      { kind: "dashboardPage", pageId: "page-gone" },
+    ]);
   });
 });
 
