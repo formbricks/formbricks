@@ -25,6 +25,7 @@ import {
   getAuditRequestMetadata,
 } from "@/modules/ee/audit-logs/lib/request-metadata";
 import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
+import type { TCubeViewerAccessClaim } from "@/modules/ee/dashboard-access/lib/viewer-access-claim";
 import { type TCubeQueryActor, type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
 import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
 
@@ -71,6 +72,8 @@ type TScopedCubeQueryInput = {
    * `[]` to run on the plain model.
    */
   embeddedKeys?: readonly string[];
+  /** Dashboard Viewer access for this read (ADR-0060), with the embedded keys it matches on. */
+  viewerAccess?: { claim: TCubeViewerAccessClaim; embeddedKeys: readonly string[] } | null;
 };
 
 /**
@@ -258,6 +261,12 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
       source: input.source,
       embeddedKeys,
       answerKinds,
+      ...(input.viewerAccess
+        ? {
+            viewerAccess: input.viewerAccess.claim,
+            viewerAccessEmbeddedKeys: input.viewerAccess.embeddedKeys,
+          }
+        : {}),
     }));
   } catch (error) {
     queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId: randomUUID(), status: "failure" });

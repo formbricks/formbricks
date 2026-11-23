@@ -161,6 +161,7 @@ export async function runV3ChartQuery({
   dateRangeNames,
   extraFilters = [],
   respond = (data) => data,
+  viewerAccess,
 }: {
   access: V3WorkspaceContext;
   datasetId: string;
@@ -173,6 +174,8 @@ export async function runV3ChartQuery({
   dateRangeNames?: TRequestedDateRangeNames;
   extraFilters?: TCubeFilter[];
   respond?: (data: TV3ChartData) => object;
+  /** Dashboard Viewer access (ADR-0060) the query runs under; only dashboard-bound reads pass it. */
+  viewerAccess?: Parameters<typeof runChartQuery>[0]["viewerAccess"];
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
   // edited in the builder. Nothing is saved here; a write keeps such a range only if its chart already had it.
@@ -222,6 +225,7 @@ export async function runV3ChartQuery({
         organizationId: access.organizationId,
         actor,
         source,
+        viewerAccess,
       });
 
       const data: TV3ChartData = {

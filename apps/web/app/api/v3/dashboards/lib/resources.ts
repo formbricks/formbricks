@@ -91,12 +91,30 @@ export const ZV3DashboardFilter = z
   .strict();
 export type TV3DashboardFilter = z.infer<typeof ZV3DashboardFilter>;
 
+/**
+ * What the reader's Dashboard Viewer access (ADR-0060) leaves them, on a dashboard read: one chip per
+ * condition of the datasets on the pages they can open, and whether they see every record
+ * (`unrestricted`), only matching ones (`restricted`), or nothing because an attribute a condition needs
+ * has no value (`unmatched`). Owners, Managers, Members and API keys always read `unrestricted`.
+ */
+export const ZV3DashboardViewerAccess = z
+  .object({
+    status: z.enum(["unrestricted", "restricted", "unmatched"]),
+    chips: z.array(
+      z.object({ label: z.string(), values: z.array(z.string()), attributeLabel: z.string() }).strict()
+    ),
+  })
+  .strict();
+export type TV3DashboardViewerAccess = z.infer<typeof ZV3DashboardViewerAccess>;
+
 export const ZV3DashboardResource = z
   .object({
     ...dashboardBase,
     filters: z.array(ZV3DashboardFilter),
     pages: z.array(ZV3DashboardPage),
     widgets: z.array(ZV3DashboardWidget),
+    /** Only on `GET /api/v3/dashboards/{dashboardId}`: the reader's Dashboard Viewer access. */
+    viewerAccess: ZV3DashboardViewerAccess.optional(),
   })
   .strict();
 export type TV3DashboardResource = z.infer<typeof ZV3DashboardResource>;

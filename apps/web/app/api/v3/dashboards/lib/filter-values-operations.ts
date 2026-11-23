@@ -55,11 +55,14 @@ import {
 import { parseRequestedDateRange } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { createRequestEmbeddedKeys } from "@/modules/ee/analysis/lib/request-embedded-keys";
 import { isLabelledValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
+import { getViewerAccessReader } from "@/app/api/v3/lib/dashboards-access";
+import { getViewerAccessClaimForDataset } from "@/modules/ee/dashboard-access/lib/viewer-data-access";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
 import { refuseNonNumericComparisons } from "./numeric-filter-fields";
 import type { TV3DashboardFilterValues } from "./resources";
 import type { TV3DashboardFilterValuesQuery } from "./schemas";
-import { getDashboardChartsRow } from "./service";
+import { getReadablePageIdsCached } from "./dashboard-read-access";
+import { getDashboardChartsRow, keepChartsOnPages } from "./service";
 import { refuseUnreadableLockedFilters } from "./unreadable-locked-filters";
 import { refuseUngroupedFieldsForViewer } from "./viewer-filter-fields";
 
@@ -133,8 +136,9 @@ const filterProblem = (
  * a changed filter is never answered from before), each widget's chart and the version it was read at (a
  * chart edited in the chart builder does not move the dashboard, S7), every filter's definition — the
  * request names its own filters, so an id like `f1` says nothing about the field on its own — the other
- * filters' picks, the date range and the search. Shared across everyone who may read the dashboard: they all see
- * the same list.
+ * filters' picks, the date range and the search, and the Dashboard Viewer access claims the queries run
+ * under (ADR-0060). Shared across everyone who reads the dashboard with the same charts and claims: they
+ * all see the same list, and a viewer limited to other records never reads anyone else's.
  */
 const valuesCacheKey = (parts: {
   dashboardId: string;
@@ -145,6 +149,8 @@ const valuesCacheKey = (parts: {
   otherPicks: Record<string, string[]>;
   dateRange: unknown;
   search?: string;
+  /** Each dataset's Dashboard Viewer access claim (ADR-0060), `null` where the read has none. */
+  viewerAccess: Record<string, unknown>;
 }): { cacheKey: TCacheKey; lockKey: TCacheKey } => {
   const digest = createHash("sha256")
     .update(
@@ -156,6 +162,7 @@ const valuesCacheKey = (parts: {
         Object.entries(parts.otherPicks).sort(([a], [b]) => a.localeCompare(b)),
         parts.dateRange ?? null,
         parts.search ?? null,
+        Object.entries(parts.viewerAccess).sort(([a], [b]) => a.localeCompare(b)),
       ])
     )
     .digest("hex");
@@ -182,10 +189,20 @@ const resolveValueListRequest = async ({
   context: TV3ChartOperationContext;
 }) => {
   const { requestId, instance } = context;
-  const row = await getDashboardChartsRow(dashboardId);
-  const access = await authorizeDashboardRead(row, context);
+  const fullRow = await getDashboardChartsRow(dashboardId);
+  const access = await authorizeDashboardRead(fullRow, context);
   if (access instanceof Response) return access;
-  if (!row) return filterProblem("filterId", "Not a filter of this dashboard.", context);
+  if (!fullRow) return filterProblem("filterId", "Not a filter of this dashboard.", context);
+  // A Dashboard Viewer's values come only from the charts on pages they can open (ENG-7472).
+  const row = keepChartsOnPages(
+    fullRow,
+    await getReadablePageIdsCached(
+      access,
+      fullRow,
+      fullRow.widgets.flatMap(({ pageIds }) => pageIds),
+      context
+    )
+  );
 
   const checked = checkValuesRequest(query, filterId, context);
   if (checked instanceof Response) return checked;
@@ -233,7 +250,15 @@ const resolveValueListRequest = async ({
     actor,
   }));
 
-  return { row, access, actor, filter, locked, charts, datasetHasField, dateRange, requested };
+  // Which records each dataset's values come from, for a Dashboard Viewer (ADR-0060).
+  const reader = getViewerAccessReader(access);
+  const viewerAccess = Object.fromEntries(
+    await Promise.all(
+      datasetIds.map(async (datasetId) => [datasetId, await getViewerAccessClaimForDataset(reader, datasetId)] as const)
+    )
+  );
+
+  return { row, access, actor, filter, locked, charts, datasetHasField, dateRange, requested, viewerAccess };
 };
 
 /** The key one principal's concurrent requests for a list share a build under. */
@@ -290,17 +315,21 @@ const createSlottedRunner = (
  * Runs one value-list Cube query in the caller's tenant. One list runs many queries on few datasets, so
  * their tokens' embedded keys are resolved once per dataset.
  */
-const createValueQueryRunner = (scope: {
-  workspaceId: string;
-  organizationId: string;
-  actor: NonNullable<ReturnType<typeof getV3AuthorizationActor>>;
-}) => {
+const createValueQueryRunner = (
+  scope: {
+    workspaceId: string;
+    organizationId: string;
+    actor: NonNullable<ReturnType<typeof getV3AuthorizationActor>>;
+  },
+  viewerAccess: Record<string, Awaited<ReturnType<typeof getViewerAccessClaimForDataset>>>
+) => {
   const embeddedKeysFor = createRequestEmbeddedKeys((datasetId) => ({ datasetId, ...scope }));
   return async ({ datasetId, query: cubeQuery }: TFilterValueQuery): Promise<unknown[]> => {
     const rows = await executeTenantScopedQuery({
       query: cubeQuery,
       feedbackDirectoryId: datasetId,
       ...scope,
+      viewerAccess: viewerAccess[datasetId] ?? null,
       source: "v3.dashboards.filterValues",
       embeddedKeys: await embeddedKeysFor(datasetId, cubeQuery),
     });
@@ -447,7 +476,8 @@ export async function listV3DashboardFilterValues({
 
     const resolved = await resolveValueListRequest({ dashboardId, filterId, query, context });
     if (resolved instanceof Response) return resolved;
-    const { row, access, actor, filter, locked, charts, datasetHasField, dateRange, requested } = resolved;
+    const { row, access, actor, filter, locked, charts, datasetHasField, dateRange, requested, viewerAccess } =
+      resolved;
 
     const picks = keepCurrentPicks(locked.filters, locked.picks);
     const { [filter.id]: _ownPick, ...otherPicks } = picks;
@@ -460,6 +490,7 @@ export async function listV3DashboardFilterValues({
       otherPicks,
       dateRange,
       search: query.search,
+      viewerAccess,
     });
 
     const cached = await cache.get<TV3DashboardFilterValues>(cacheKey);
@@ -497,11 +528,10 @@ export async function listV3DashboardFilterValues({
       });
     }
 
-    const run = createValueQueryRunner({
-      workspaceId: access.workspaceId,
-      organizationId: access.organizationId,
-      actor,
-    });
+    const run = createValueQueryRunner(
+      { workspaceId: access.workspaceId, organizationId: access.organizationId, actor },
+      viewerAccess
+    );
 
     const build = async (): Promise<TBuiltList> => {
       const reserved = await reserveV3OperationRateLimit({

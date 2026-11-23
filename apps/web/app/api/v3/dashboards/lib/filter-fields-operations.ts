@@ -10,7 +10,8 @@ import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-f
 import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import { authorizeDashboardRead, refuseUnlessDashboardDatasetReadable } from "./chart-data-operations";
 import type { TV3DashboardFilterFields } from "./resources";
-import { getDashboardChartsRow } from "./service";
+import { getReadablePageIdsCached } from "./dashboard-read-access";
+import { getDashboardChartsRow, keepChartsOnPages } from "./service";
 import { getGroupedEmbeddedFields, mayFilterBy } from "./viewer-filter-fields";
 
 /** How many of a dashboard's Feedback Datasets have their keys read at once. */
@@ -60,11 +61,21 @@ export async function listV3DashboardFilterFields({
   const log = logger.withContext({ requestId, dashboardId });
 
   try {
-    const row = await getDashboardChartsRow(dashboardId);
+    const fullRow = await getDashboardChartsRow(dashboardId);
     // A dashboard that does not exist answers the same 403 as one the caller may not see.
-    if (!row) return problemForbidden(requestId, undefined, instance);
-    const access = await authorizeDashboardRead(row, context);
+    if (!fullRow) return problemForbidden(requestId, undefined, instance);
+    const access = await authorizeDashboardRead(fullRow, context);
     if (access instanceof Response) return access;
+    // A Dashboard Viewer's fields come only from the charts on pages they can open (ENG-7472).
+    const row = keepChartsOnPages(
+      fullRow,
+      await getReadablePageIdsCached(
+        access,
+        fullRow,
+        fullRow.widgets.flatMap(({ pageIds }) => pageIds),
+        context
+      )
+    );
 
     const actor = getV3AuthorizationActor(context.authentication);
     if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);

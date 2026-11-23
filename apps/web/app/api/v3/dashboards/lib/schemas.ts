@@ -33,9 +33,19 @@ import {
  * does not take is a 400 naming it rather than something silently ignored.
  */
 
+/**
+ * View as (ENG-7484): the member a dashboard read runs as. Only an Owner or Manager session may pass it,
+ * only on dashboard reads; the read is decided and its records chosen as that member's own.
+ */
+const viewAsParam = { viewAs: z.cuid2().optional() };
+
+/** `GET /api/v3/dashboards/{dashboardId}`: nothing but `viewAs`. */
+export const ZV3DashboardReadQuery = z.object(viewAsParam).strict();
+
 /** `GET /api/v3/dashboards`, with v3's `filter[field][operator]` spelling. */
 export const ZV3DashboardListQuery = z
   .object({
+    ...viewAsParam,
     workspaceId: z.cuid2(),
     limit: z.coerce.number().int().min(1).max(V3_LIST_MAX_LIMIT).default(V3_LIST_DEFAULT_LIMIT),
     cursor: z.string().min(1).optional(),
@@ -524,6 +534,7 @@ export const ZV3DashboardChartDataQuery = z.preprocess(
   z
     .object({
       ...dashboardDateRange,
+      ...viewAsParam,
       rules: ZDashboardFilterRules.optional(),
       picks: ZDashboardFilterPicks.optional(),
     })
@@ -537,6 +548,7 @@ export const ZV3DashboardFilterValuesQuery = z.preprocess(
   z
     .object({
       ...dashboardDateRange,
+      ...viewAsParam,
       rules: ZDashboardFilterRules.optional(),
       picks: ZDashboardFilterPicks.optional(),
       search: zPostgresText().trim().min(1).max(V3_NAME_MAX_LENGTH).optional(),

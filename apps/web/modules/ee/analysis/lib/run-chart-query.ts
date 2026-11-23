@@ -8,6 +8,7 @@ import {
 } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 import { pruneChartLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import type { TChartDataRow, TChartLabelMaps } from "@/modules/ee/analysis/types/analysis";
+import type { TCubeViewerAccessClaim } from "@/modules/ee/dashboard-access/lib/viewer-access-claim";
 
 export type TChartQueryRun = TChartLabelMaps & {
   rows: TChartDataRow[];
@@ -34,6 +35,7 @@ export const runChartQuery = async ({
   organizationId,
   actor,
   source,
+  viewerAccess,
 }: {
   query: TChartQuery;
   datasetId: string;
@@ -41,6 +43,8 @@ export const runChartQuery = async ({
   organizationId: string;
   actor: TCubeQueryActor;
   source: TCubeQuerySource;
+  /** Dashboard Viewer access for this read (ADR-0060); absent for everyone else. */
+  viewerAccess?: { claim: TCubeViewerAccessClaim; embeddedKeys: readonly string[] } | null;
 }): Promise<TChartQueryRun> => {
   const grouping = await resolveOptionGrouping(query, workspaceId, datasetId);
   const { rewrittenQuery } = grouping;
@@ -52,6 +56,7 @@ export const runChartQuery = async ({
     organizationId,
     actor,
     source,
+    viewerAccess,
   });
 
   const rows = dropEmptyMeasureRows(Array.isArray(data) ? data : [], rewrittenQuery);

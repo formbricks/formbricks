@@ -105,6 +105,8 @@ export type TDashboardListFilter = {
   workspaceId: string;
   nameContains?: string;
   chartId?: string;
+  /** Only these dashboards: a Dashboard Viewer's readable ones (ENG-7472). Absent, every one. */
+  ids?: readonly string[];
 };
 
 /**
@@ -126,6 +128,7 @@ export const listDashboardRows = ({
   return prisma.dashboard.findMany({
     where: {
       workspaceId: filter.workspaceId,
+      ...(filter.ids ? { id: { in: [...filter.ids] } } : {}),
       ...(filter.nameContains
         ? { name: { contains: escapeLikePattern(filter.nameContains), mode: "insensitive" } }
         : {}),
@@ -290,19 +293,30 @@ export const getDashboardChartsRow = async (dashboardId: string, { chartId }: { 
       widgets: {
         where: chartId ? { chartId } : { chartId: { not: null } },
         orderBy: WIDGET_READ_ORDER,
-        select: { chart: { select: selectDashboardChart } },
+        select: { pageId: true, chart: { select: selectDashboardChart } },
       },
     },
   });
   if (!row) return null;
-  const seen = new Set<string>();
-  const widgets: { chart: Prisma.ChartGetPayload<{ select: typeof selectDashboardChart }> }[] = [];
+  // One entry per chart, with every page it sits on: a Dashboard Viewer reads a chart through any page
+  // of the dashboard they can open (ENG-7472).
+  const byChart = new Map<
+    string,
+    { chart: Prisma.ChartGetPayload<{ select: typeof selectDashboardChart }>; pageIds: string[] }
+  >();
   for (const widget of row.widgets) {
-    if (!widget.chart || seen.has(widget.chart.id)) continue;
-    seen.add(widget.chart.id);
-    widgets.push({ chart: widget.chart });
+    if (!widget.chart) continue;
+    const entry = byChart.get(widget.chart.id);
+    if (entry) entry.pageIds.push(widget.pageId);
+    else byChart.set(widget.chart.id, { chart: widget.chart, pageIds: [widget.pageId] });
   }
-  return { ...row, widgets };
+  return { ...row, widgets: [...byChart.values()] };
 };
+
+/** The row with only the charts that sit on at least one of `pageIds`. */
+export const keepChartsOnPages = <TRow extends { widgets: { pageIds: string[] }[] }>(
+  row: TRow,
+  pageIds: ReadonlySet<string>
+): TRow => ({ ...row, widgets: row.widgets.filter((widget) => widget.pageIds.some((id) => pageIds.has(id))) });
 
 export type TDashboardChartsRow = NonNullable<Awaited<ReturnType<typeof getDashboardChartsRow>>>;

@@ -1,12 +1,14 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { can } from "@/lib/authorization";
+import { type TAuthorizationActor, can } from "@/lib/authorization";
 import {
   getFeedbackDirectoryAssignmentAuthorizationAction,
   getWorkspaceAuthorizationAction,
 } from "@/lib/authorization/permission-action";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import type { TViewerAccessReader } from "@/modules/ee/dashboard-access/lib/viewer-data-access";
 import { getAccessControlPermission, getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { getV3AuthorizationActor, getV3SessionUserId, requireV3WorkspaceAccess } from "./auth";
@@ -21,14 +23,50 @@ import { type V3WorkspaceContext, resolveV3WorkspaceContext } from "./workspace-
  * the workspace's viewers; without the option the caller is asked for `read`, which viewers never hold.
  * It only ever changes a `read`: a write is never asked as a dashboard read, whatever the caller passes.
  */
-export type TDashboardViewerAccessOptions = Readonly<{ allowDashboardViewer?: boolean }>;
+export type TDashboardViewerAccessOptions = Readonly<{
+  allowDashboardViewer?: boolean;
+  /**
+   * View as (ENG-7484): the member whose reads these are. Only a dashboard-bound read takes it, only an
+   * Owner or Manager session may ask, and the read is then decided for that member — their SpiceDB
+   * subject, their Dashboard Viewer access — while the caller stays the actor of record.
+   */
+  viewAs?: string;
+}>;
 
 /**
  * The workspace a dashboards operation runs in. `asDashboardViewer` marks a caller admitted as the
  * workspace's Dashboard viewer, so the dataset check that follows asks `dashboard_read` of it, and only
  * of it (S2).
  */
-export type TDashboardsAccessContext = V3WorkspaceContext & { asDashboardViewer?: true };
+export type TDashboardsAccessContext = V3WorkspaceContext & {
+  asDashboardViewer?: true;
+  /** The signed-in user the read was decided for: the caller, or the member chosen in View as. */
+  readerUserId?: string;
+  /** Set when the read runs as another member (View as): read-only, audited. */
+  viewAs?: { userId: string; actorUserId: string };
+};
+
+/**
+ * The subject dashboard and page decisions are asked for: the member a View as read runs as, else the
+ * caller (a user, or an API key).
+ */
+export const getDashboardReadSubject = (
+  authentication: TV3Authentication,
+  access: TDashboardsAccessContext
+): TAuthorizationActor | null => {
+  if (access.viewAs) return { type: "user", id: access.viewAs.userId };
+  if (access.readerUserId) return { type: "user", id: access.readerUserId };
+  return getV3AuthorizationActor(authentication);
+};
+
+/**
+ * Whose Dashboard Viewer access (ADR-0060) a read is under: the user admitted as a Dashboard Viewer, or
+ * `null` for everyone else, who reads every record.
+ */
+export const getViewerAccessReader = (access: TDashboardsAccessContext): TViewerAccessReader =>
+  access.asDashboardViewer && access.readerUserId
+    ? { userId: access.readerUserId, organizationId: access.organizationId }
+    : null;
 
 const isDashboardRead = (
   minPermission: TTeamPermission,
@@ -70,7 +108,7 @@ const requireSessionDashboardRead = async (
 
   if (!asDashboardViewer) {
     return (await getIsDashboardsEnabled(context.organizationId))
-      ? context
+      ? { ...context, readerUserId: userId }
       : problemDashboardsPlanRequired(requestId, instance);
   }
 
@@ -82,7 +120,56 @@ const requireSessionDashboardRead = async (
   if (!isAccessControlAllowed || !isDashboardsEnabled) {
     return problemForbidden(requestId, "You are not authorized to access this resource", instance);
   }
-  return { ...context, asDashboardViewer: true };
+  return { ...context, asDashboardViewer: true, readerUserId: userId };
+};
+
+/**
+ * View as (ENG-7484): the caller must be an Owner or Manager (`organization.manage`) of the workspace's
+ * organization with Access Control and Dashboards, and the chosen user a member of it. The read is then
+ * decided as that member's own, and audited as `viewedAs`. Any refusal is the same 403, so member ids of
+ * other organizations cannot be probed.
+ */
+const requireViewAsDashboardRead = async (
+  actorUserId: string,
+  targetUserId: string,
+  workspaceId: string,
+  requestId: string,
+  instance: string | undefined
+): Promise<Response | TDashboardsAccessContext> => {
+  const forbidden = () =>
+    problemForbidden(requestId, "You are not authorized to view this dashboard as this member", instance);
+  let context: V3WorkspaceContext;
+  try {
+    context = await resolveV3WorkspaceContext(workspaceId);
+  } catch (error) {
+    if (!(error instanceof ResourceNotFoundError)) throw error;
+    return forbidden();
+  }
+  const [mayManage, isAccessControlAllowed, isDashboardsEnabled, target] = await Promise.all([
+    can({ type: "user", id: actorUserId }, "organization.manage", {
+      type: "organization",
+      id: context.organizationId,
+    }),
+    getAccessControlPermission(context.organizationId),
+    getIsDashboardsEnabled(context.organizationId),
+    getMembershipByUserIdOrganizationId(targetUserId, context.organizationId),
+  ]);
+  if (!mayManage || !isAccessControlAllowed || !isDashboardsEnabled || !target) return forbidden();
+
+  const read = await requireSessionDashboardRead(targetUserId, workspaceId, requestId, instance);
+  if (read instanceof Response) return read;
+
+  await queueAuditEventBackground({
+    action: "viewedAs",
+    targetType: "membership",
+    userId: actorUserId,
+    userType: "user",
+    targetId: targetUserId,
+    organizationId: context.organizationId,
+    status: "success",
+    newObject: { workspaceId, viewedAsUserId: targetUserId },
+  });
+  return { ...read, viewAs: { userId: targetUserId, actorUserId } };
 };
 
 /**
@@ -105,6 +192,13 @@ export async function requireDashboardsAccess(
   options?: TDashboardViewerAccessOptions
 ): Promise<Response | TDashboardsAccessContext> {
   const sessionUserId = getV3SessionUserId(authentication);
+  if (options?.viewAs !== undefined) {
+    // View as is read-only and a person's choice: a write, or an API key, never runs as someone else.
+    if (!sessionUserId || !isDashboardRead(minPermission, options)) {
+      return problemForbidden(requestId, "View as is only for reading dashboards in the app", instance);
+    }
+    return requireViewAsDashboardRead(sessionUserId, options.viewAs, workspaceId, requestId, instance);
+  }
   if (sessionUserId && isDashboardRead(minPermission, options)) {
     return requireSessionDashboardRead(sessionUserId, workspaceId, requestId, instance);
   }
@@ -145,7 +239,10 @@ export async function refuseUnlessFeedbackDatasetAccess(
   instance?: string,
   options?: TDashboardViewerAccessOptions
 ): Promise<Response | null> {
-  const actor = getV3AuthorizationActor(authentication);
+  // Under View as, the dataset is decided for the member being viewed as, never for the caller.
+  const actor = context.viewAs
+    ? ({ type: "user", id: context.viewAs.userId } as const)
+    : getV3AuthorizationActor(authentication);
   if (!actor) {
     return problemUnauthorized(requestId, "Not authenticated", instance);
   }

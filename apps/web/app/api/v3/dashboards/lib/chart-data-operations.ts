@@ -14,11 +14,11 @@ import type { TV3ChartData } from "@/app/api/v3/charts/lib/resources";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
   type TDashboardsAccessContext,
+  getViewerAccessReader,
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { getV3RateLimitPrincipal } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   problemForbidden,
   problemNotFound,
@@ -36,11 +36,13 @@ import { resolveFilterRules } from "@/modules/ee/analysis/dashboards/lib/dashboa
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
 import { chartExcludesTextAnswers } from "@/modules/ee/analysis/dashboards/lib/enrichment-filters";
 import { isEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-data-fields";
+import { getViewerAccessClaimForDataset } from "@/modules/ee/dashboard-access/lib/viewer-data-access";
 import { refuseNonNumericComparisons } from "./numeric-filter-fields";
-import { withCachedDashboardDecision } from "./read-decision-cache";
+import { getReadablePageIdsCached, refuseUnlessDashboardOpenable } from "./dashboard-read-access";
+import { getDashboardReadPrincipal, withCachedDashboardDecision } from "./read-decision-cache";
 import type { TV3DashboardChartData } from "./resources";
 import type { TV3DashboardChartDataQuery } from "./schemas";
-import { getDashboardChartsRow } from "./service";
+import { getDashboardChartsRow, keepChartsOnPages } from "./service";
 import { refuseUnreadableLockedFilters } from "./unreadable-locked-filters";
 import { refuseUngroupedFieldsForViewer } from "./viewer-filter-fields";
 
@@ -61,15 +63,24 @@ type TReadDashboard = { id: string; workspaceId: string; updatedAt: Date };
  */
 export const authorizeDashboardRead = async (
   row: TReadDashboard | null,
-  { authentication, requestId, instance }: TV3ChartOperationContext
+  { authentication, requestId, instance, viewAs }: TV3ChartOperationContext
 ): Promise<Response | TDashboardsAccessContext> => {
   if (!row) return problemForbidden(requestId, undefined, instance);
   return withCachedDashboardDecision(
-    { dashboard: row, principal: getV3RateLimitPrincipal(authentication), decision: "dashboard" },
-    () =>
-      requireDashboardsAccess(authentication, row.workspaceId, "read", requestId, instance, {
-        allowDashboardViewer: true,
-      })
+    { dashboard: row, principal: getDashboardReadPrincipal({ authentication, viewAs }), decision: "dashboard" },
+    async () => {
+      const access = await requireDashboardsAccess(
+        authentication,
+        row.workspaceId,
+        "read",
+        requestId,
+        instance,
+        { allowDashboardViewer: true, viewAs }
+      );
+      if (access instanceof Response) return access;
+      // A Dashboard Viewer must also be able to open this dashboard: a team dashboard limit can leave it out.
+      return (await refuseUnlessDashboardOpenable(access, row.id, { authentication, requestId, instance })) ?? access;
+    }
   );
 };
 
@@ -82,12 +93,12 @@ export const refuseUnlessDashboardDatasetReadable = async (
   access: TDashboardsAccessContext,
   datasetId: string,
   dashboard: TReadDashboard,
-  { authentication, requestId, instance }: TV3ChartOperationContext
+  { authentication, requestId, instance, viewAs }: TV3ChartOperationContext
 ): Promise<Response | null> => {
   const decided = await withCachedDashboardDecision(
     {
       dashboard,
-      principal: getV3RateLimitPrincipal(authentication),
+      principal: getDashboardReadPrincipal({ authentication, viewAs }),
       decision: `dataset:${datasetId}:${access.asDashboardViewer ? "viewer" : "member"}`,
     },
     async () =>
@@ -142,8 +153,13 @@ export async function getV3DashboardChartData({
     const access = await authorizeDashboardRead(row, context);
     if (access instanceof Response) return access;
 
-    const chart = row?.widgets[0]?.chart;
+    const widget = row?.widgets[0];
+    const chart = widget?.chart;
     if (!chart) return chartNotOnDashboard(chartId, context);
+    // A Dashboard Viewer reads a chart only through a page of this dashboard they can open (ENG-7472).
+    if ((await getReadablePageIdsCached(access, row, widget.pageIds, context)).size === 0) {
+      return chartNotOnDashboard(chartId, context);
+    }
 
     const refused = await refuseUnlessDashboardDatasetReadable(
       access,
@@ -168,10 +184,22 @@ export async function getV3DashboardChartData({
     // A viewer's own filters may name only the embedded data the dashboard's charts group by. This read
     // carries one chart, so the dashboard's others are read for it, and only when an embedded key is named.
     if (access.asDashboardViewer && requestFilters.some(({ field }) => isEmbeddedMemberName(field))) {
+      const all = await getDashboardChartsRow(dashboardId);
+      const visible = all
+        ? keepChartsOnPages(
+            all,
+            await getReadablePageIdsCached(
+              access,
+              all,
+              all.widgets.flatMap(({ pageIds }) => pageIds),
+              context
+            )
+          )
+        : null;
       const ungrouped = refuseUngroupedFieldsForViewer(
         access,
         requestFilters.map(({ field }) => field),
-        (await getDashboardChartsRow(dashboardId))?.widgets ?? [],
+        visible?.widgets ?? [],
         context
       );
       if (ungrouped) return ungrouped;
@@ -240,6 +268,7 @@ export async function getV3DashboardChartData({
       extraFilters: rules,
       respond,
       context,
+      viewerAccess: await getViewerAccessClaimForDataset(getViewerAccessReader(access), chart.feedbackDirectoryId),
     });
   } catch (error) {
     const { requestId, instance } = context;

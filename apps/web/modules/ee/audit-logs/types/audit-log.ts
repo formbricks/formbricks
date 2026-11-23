@@ -102,6 +102,8 @@ export const ZAuditAction = z.enum([
   "testRunStarted",
   // ENG-7177: a workflow's Webhook Secret URL was replaced; the old URL stopped working.
   "webhookUrlRegenerated",
+  // ENG-7484: an Owner or Manager opened a dashboard as a chosen member sees it (View as). Read-only.
+  "viewedAs",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

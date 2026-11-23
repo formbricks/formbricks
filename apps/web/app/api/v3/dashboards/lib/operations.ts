@@ -7,6 +7,8 @@ import { dashboardFull } from "@/app/api/v3/charts/lib/problems";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
 import {
+  getDashboardReadSubject,
+  getViewerAccessReader,
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
@@ -32,7 +34,10 @@ import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import { listReadableDashboardIds } from "@/modules/ee/dashboard-access/lib/spicedb-access";
+import { getViewerAccessSummary } from "@/modules/ee/dashboard-access/lib/viewer-data-access";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
+import { getReadablePageIds, refuseUnlessDashboardOpenable } from "./dashboard-read-access";
 import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 import { canManageDashboardAccess, ineligiblePageTeams, pageAccessDenied } from "./page-access";
 import { type TDashboardReplaceResult, replaceDashboardRow } from "./replace-service";
@@ -79,6 +84,7 @@ export async function listV3Dashboards({
   authentication,
   requestId,
   instance,
+  viewAs,
 }: TV3DashboardOperationContext & { query: TV3DashboardListQuery }): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId: query.workspaceId });
 
@@ -90,7 +96,7 @@ export async function listV3Dashboards({
       "read",
       requestId,
       instance,
-      { allowDashboardViewer: true }
+      { allowDashboardViewer: true, viewAs }
     );
     if (access instanceof Response) return access;
 
@@ -100,6 +106,12 @@ export async function listV3Dashboards({
       chartId: query["filter[chartId][eq]"],
     };
     const fp = computeFilterFingerprint(filter);
+    // A Dashboard Viewer lists only the dashboards their team dashboard limits leave them (ENG-7472).
+    const subject = getDashboardReadSubject(authentication, access);
+    const ids =
+      access.asDashboardViewer && subject
+        ? [...(await listReadableDashboardIds(subject, access.workspaceId))]
+        : undefined;
 
     let cursor: { value: string; id: string } | null = null;
     if (query.cursor) {
@@ -118,7 +130,7 @@ export async function listV3Dashboards({
       }
     }
 
-    const rows = await listDashboardRows({ filter, cursor, limit: query.limit });
+    const rows = await listDashboardRows({ filter: { ...filter, ids }, cursor, limit: query.limit });
     const { page, nextCursor } = buildKeysetPage({
       rows,
       limit: query.limit,
@@ -154,13 +166,33 @@ export async function getV3Dashboard({
       await getDashboardResourceRow(dashboardId),
       "read",
       context,
-      {
-        allowDashboardViewer: true,
-      }
+      { allowDashboardViewer: true, viewAs: context.viewAs }
     );
     if (loaded instanceof Response) return loaded;
+    const { row, access } = loaded;
 
-    return successResponse(serializeV3Dashboard(loaded.row), { requestId: context.requestId });
+    // A Dashboard Viewer sees the dashboard only if a team dashboard limit leaves it to them, and then
+    // only the pages they can open, with their widgets; none open answers like no dashboard (ENG-7472).
+    const refused = await refuseUnlessDashboardOpenable(access, row.id, context);
+    if (refused) return refused;
+    const readable = await getReadablePageIds(
+      access,
+      row.pages.map(({ id }) => id),
+      context.authentication
+    );
+    if (readable.size === 0) return problemForbidden(context.requestId, undefined, context.instance);
+    const visible = {
+      ...row,
+      pages: row.pages.filter(({ id }) => readable.has(id)),
+      widgets: row.widgets.filter(({ pageId }) => readable.has(pageId)),
+    };
+    const datasetIds = visible.widgets.flatMap(({ chart }) => (chart ? [chart.feedbackDirectoryId] : []));
+    const viewerAccess = await getViewerAccessSummary(getViewerAccessReader(access), datasetIds);
+
+    return successResponse(
+      { ...serializeV3Dashboard(visible), viewerAccess },
+      { requestId: context.requestId }
+    );
   } catch (error) {
     return mapV3ThrownError(error, {
       log,

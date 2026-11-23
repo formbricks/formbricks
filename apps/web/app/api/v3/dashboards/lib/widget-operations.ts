@@ -20,6 +20,7 @@ import {
 } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import { getDefaultWidgetLayout } from "@/modules/ee/analysis/dashboards/lib/widget-placement";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
+import { getReadablePageIds, refuseUnlessDashboardOpenable } from "./dashboard-read-access";
 import type { TV3WidgetCreateBody, TV3WidgetUpdateBody } from "./schemas";
 import { serializeV3DashboardWidget } from "./serializers";
 import { getDashboardWorkspaceRow, getWidgetResourceRow } from "./service";
@@ -199,6 +200,12 @@ export async function getV3DashboardWidget({
     const loaded = await authorizeLoadedDashboard(dashboard, "read", context, { allowDashboardViewer: true });
     if (loaded instanceof Response) return loaded;
     if (!widget) return problemForbidden(requestId, undefined, instance);
+    // A Dashboard Viewer reads a widget only on a page of a dashboard they can open (ENG-7472).
+    const refused = await refuseUnlessDashboardOpenable(loaded.access, dashboardId, context);
+    if (refused) return refused;
+    if (!(await getReadablePageIds(loaded.access, [widget.pageId], context.authentication)).has(widget.pageId)) {
+      return problemForbidden(requestId, undefined, instance);
+    }
 
     return successResponse(serializeV3DashboardWidget(widget), { requestId });
   } catch (error) {

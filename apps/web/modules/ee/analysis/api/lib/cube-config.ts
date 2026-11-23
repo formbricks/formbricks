@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { randomUUID } from "node:crypto";
 import { env } from "@/lib/env";
 import type { TAnswerKind } from "@/modules/ee/analysis/lib/answer-filter";
+import type { TCubeViewerAccessClaim } from "@/modules/ee/dashboard-access/lib/viewer-access-claim";
 
 export const CUBE_API_TOKEN_TTL_SECONDS = 5 * 60;
 export const CUBE_QUERY_SCOPE = "xm:cube:query";
@@ -40,7 +41,19 @@ export type TCubeTenantScope = {
   embeddedKeys?: readonly string[];
   /** The kind of each question an answer rule in the query names, which picks its column. */
   answerKinds?: Readonly<Record<string, TAnswerKind>>;
+  /**
+   * Dashboard Viewer access (ADR-0060): set only when a Dashboard Viewer (or View as one) reads a dataset
+   * with conditions. Cube appends it to every query like the tenant; the signature keeps it from widening.
+   */
+  viewerAccess?: TCubeViewerAccessClaim;
+  /** The embedded keys `viewerAccess` names: compiled into `edKeys` alongside `embeddedKeys`. */
+  viewerAccessEmbeddedKeys?: readonly string[];
 };
+
+/** The token's `edKeys`: the query's keys plus those the viewer access claim matches on. */
+const getEdKeys = (tenantScope: TCubeTenantScope): string[] => [
+  ...new Set([...(tenantScope.embeddedKeys ?? []), ...(tenantScope.viewerAccessEmbeddedKeys ?? [])]),
+];
 
 /** The one actor claim the token carries: `userId` for a user, `apiKeyId` for an API key. */
 const getActorClaim = (actor: TCubeQueryActor): { userId: string } | { apiKeyId: string } =>
@@ -91,10 +104,11 @@ export const createCubeApiToken = (
         ...getActorClaim(tenantScope.actor),
         scope: CUBE_QUERY_SCOPE,
         source: tenantScope.source,
-        ...(tenantScope.embeddedKeys?.length ? { edKeys: [...tenantScope.embeddedKeys] } : {}),
+        ...(getEdKeys(tenantScope).length ? { edKeys: getEdKeys(tenantScope) } : {}),
         ...(tenantScope.answerKinds && Object.keys(tenantScope.answerKinds).length > 0
           ? { answerKinds: { ...tenantScope.answerKinds } }
           : {}),
+        ...(tenantScope.viewerAccess ? { viewerAccess: tenantScope.viewerAccess } : {}),
       },
       apiSecret,
       {
