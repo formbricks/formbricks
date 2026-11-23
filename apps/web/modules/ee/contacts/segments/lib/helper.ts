@@ -5,6 +5,7 @@ import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@form
 import { TBaseFilters, TSegmentFilter, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { andVisibleSurveys, buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   collectSegmentFilterSurveyIds,
   restoreHiddenSurveyIds,
@@ -18,6 +19,7 @@ import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
   isResourceFilter,
 } from "@/modules/ee/contacts/segments/lib/utils";
+import { whereSegmentsOfWorkspace } from "./segment-scope";
 
 /**
  * Throws when a filter's referenced segment is the segment being checked, or (recursively) one of its
@@ -141,6 +143,49 @@ export const assertSurveyInteractionSurveyIds = (
   workspaceId: string,
   visibleSurveyWhere: Prisma.SurveyWhereInput = {}
 ) => assertSurveysInWorkspace(collectSurveyIdsFromSegmentFilters(filters), workspaceId, visibleSurveyWhere);
+
+/** Which of `surveyIds` a segment `workspaceId` reaches (`whereSegmentsOfWorkspace`) already names. */
+const getSurveyIdsNamedBySegmentsOfWorkspace = async (
+  workspaceId: string,
+  surveyIds: string[]
+): Promise<Set<string>> => {
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (!directory) return new Set();
+  const segments = await prisma.segment.findMany({
+    where: whereSegmentsOfWorkspace(workspaceId, directory.id),
+    select: { filters: true },
+  });
+  const named = new Set(segments.flatMap(({ filters }) => collectSegmentFilterSurveyIds(filters)));
+  return new Set(surveyIds.filter((surveyId) => named.has(surveyId)));
+};
+
+/**
+ * `assertSurveyInteractionSurveyIds` for a new segment, whose filters may be copied from a segment the
+ * workspace reaches ("Save as new segment", decision 24). Like an edit, an id copied that way may name a
+ * survey of another workspace on the directory and stays; any other id must be a survey of `workspaceId`
+ * the caller sees. A survey outside the directory is never allowed.
+ * @throws {InvalidInputError} When a survey is neither copied nor found in the workspace for the caller
+ */
+export const assertNewSegmentSurveyInteractionSurveyIds = async (
+  filters: TBaseFilters,
+  workspaceId: string,
+  visibleSurveyWhere: Prisma.SurveyWhereInput = {}
+) => {
+  const surveyIds = collectSurveyIdsFromSegmentFilters(filters);
+  const otherWorkspaceIds = await getOtherWorkspaceSurveyIds(
+    workspaceId,
+    surveyIds.filter((surveyId) => ZId.safeParse(surveyId).success)
+  );
+  const copiedIds =
+    otherWorkspaceIds.length > 0
+      ? await getSurveyIdsNamedBySegmentsOfWorkspace(workspaceId, otherWorkspaceIds)
+      : new Set<string>();
+  return assertSurveysInWorkspace(
+    surveyIds.filter((surveyId) => !copiedIds.has(surveyId)),
+    workspaceId,
+    visibleSurveyWhere
+  );
+};
 
 /**
  * `assertSurveyInteractionSurveyIds` for an edit of a stored tree: only the ids the edit adds must be

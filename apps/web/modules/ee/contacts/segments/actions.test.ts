@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
   restoreHiddenSegmentSurveyIds: vi.fn(),
   getUserVisibleSurveyWhere: vi.fn(),
   assertSurveysInWorkspace: vi.fn(),
-  assertSurveyInteractionSurveyIds: vi.fn(),
+  assertNewSegmentSurveyInteractionSurveyIds: vi.fn(),
   assertAddedSurveyInteractionSurveyIds: vi.fn(),
   assertSegmentSurveyFiltersVisible: vi.fn(),
   assertAddedSegmentSurveyFiltersVisible: vi.fn(),
@@ -83,7 +83,7 @@ vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
 vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
   assertAddedSegmentSurveyFiltersVisible: mocks.assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible: mocks.assertSegmentSurveyFiltersVisible,
-  assertSurveyInteractionSurveyIds: mocks.assertSurveyInteractionSurveyIds,
+  assertNewSegmentSurveyInteractionSurveyIds: mocks.assertNewSegmentSurveyInteractionSurveyIds,
   assertAddedSurveyInteractionSurveyIds: mocks.assertAddedSurveyInteractionSurveyIds,
   assertSurveysInWorkspace: mocks.assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter: vi.fn(),
@@ -230,7 +230,7 @@ describe("segment actions authorize on the caller's workspace and its directory"
     await run(updateSegmentAction, { segmentId: "seg1", workspaceId: "ws-b", data: { filters: [] } });
 
     expect(mocks.assertAddedSurveyInteractionSurveyIds).toHaveBeenCalledWith([], stored, "ws-b", {});
-    expect(mocks.assertSurveyInteractionSurveyIds).not.toHaveBeenCalled();
+    expect(mocks.assertNewSegmentSurveyInteractionSurveyIds).not.toHaveBeenCalled();
   });
 
   test("getDistinctAttributeValuesAction reads the key's values in the caller's directory", async () => {
@@ -367,7 +367,7 @@ describe("segment mutations authorize every referenced survey (ENG-3282)", () =>
     await run(createSegmentAction, { workspaceId: "ws1", title: "Seg", filters: [], isPrivate: true });
     await run(updateSegmentAction, { segmentId: "seg1", workspaceId: "ws1", data: { filters: [] } });
 
-    expect(mocks.assertSurveyInteractionSurveyIds).toHaveBeenCalledWith([], "ws1", visibleWhere);
+    expect(mocks.assertNewSegmentSurveyInteractionSurveyIds).toHaveBeenCalledWith([], "ws1", visibleWhere);
     expect(mocks.assertAddedSurveyInteractionSurveyIds).toHaveBeenCalledWith([], [], "ws1", visibleWhere);
   });
 

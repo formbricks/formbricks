@@ -29,8 +29,8 @@ import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/cont
 import {
   assertAddedSegmentSurveyFiltersVisible,
   assertAddedSurveyInteractionSurveyIds,
+  assertNewSegmentSurveyInteractionSurveyIds,
   assertSegmentSurveyFiltersVisible,
-  assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   restoreHiddenSegmentSurveyIds,
@@ -124,7 +124,9 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
 
     const userId = ctx.user?.id ?? "";
     if (parsedInput.surveyId) await assertCanWriteSurvey(userId, parsedInput.surveyId);
-    await assertSurveyInteractionSurveyIds(
+    // As for an edit, a survey id copied from a segment the workspace reaches may name another workspace's
+    // survey on the directory ("Save as new segment"); every other id must be the caller's to see.
+    await assertNewSegmentSurveyInteractionSurveyIds(
       parsedFilters.data,
       workspaceId,
       await getUserVisibleSurveyWhere(userId, organizationId)

@@ -12,6 +12,7 @@ import { resetDb } from "@/integration/reset-db";
 import { selectSurvey, updateSurveyInternal } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { assertNewSegmentSurveyInteractionSurveyIds } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   ALL_SEGMENT_SURVEY_REFS,
   createSegment,
@@ -297,5 +298,65 @@ describe("private segments on a shared directory", () => {
     expect(await members(workspaceA)).toEqual([older]);
     // From B the private segment's filters are not applied: membership tells nothing about them.
     expect(await members(workspaceB)).toEqual([older, younger].sort());
+  });
+});
+
+describe("a new segment copied from a shared one", () => {
+  const seenSurvey = (surveyId: string): TBaseFilters => [
+    {
+      id: createId(),
+      connector: null,
+      resource: {
+        id: createId(),
+        root: { type: "surveyInteraction" },
+        qualifier: { operator: "haveSeen" },
+        value: { surveyScope: "specific", surveyIds: [surveyId], within: { amount: 30, unit: "days" } },
+      },
+    },
+  ];
+  const surveyIn = async (workspaceId: string) =>
+    (
+      await prisma.survey.create({
+        data: { name: "Survey", type: "app", status: "inProgress", workspaceId },
+        select: { id: true },
+      })
+    ).id;
+
+  test("keeps a survey of another workspace that a segment of the directory already names", async () => {
+    const surveyInA = await surveyIn(workspaceA);
+    await createSegment({
+      workspaceId: workspaceA,
+      title: "Saw A's survey",
+      isPrivate: false,
+      filters: seenSurvey(surveyInA),
+      surveyId: "",
+    });
+
+    await expect(
+      assertNewSegmentSurveyInteractionSurveyIds(seenSurvey(surveyInA), workspaceB, {})
+    ).resolves.toBeUndefined();
+  });
+
+  test("refuses a survey of another workspace that no segment of the directory names", async () => {
+    const surveyInA = await surveyIn(workspaceA);
+
+    await expect(
+      assertNewSegmentSurveyInteractionSurveyIds(seenSurvey(surveyInA), workspaceB, {})
+    ).rejects.toBeInstanceOf(InvalidInputError);
+  });
+
+  test("refuses a survey of another directory, even one its segments name", async () => {
+    const surveyInC = await surveyIn(workspaceC);
+    await createSegment({
+      workspaceId: workspaceC,
+      title: "Saw C's survey",
+      isPrivate: false,
+      filters: seenSurvey(surveyInC),
+      surveyId: "",
+    });
+
+    await expect(
+      assertNewSegmentSurveyInteractionSurveyIds(seenSurvey(surveyInC), workspaceB, {})
+    ).rejects.toBeInstanceOf(InvalidInputError);
   });
 });
