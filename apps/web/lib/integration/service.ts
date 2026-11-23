@@ -13,6 +13,7 @@ import {
 } from "@formbricks/types/integration";
 import { withStoredIntegrationKey } from "@/lib/integration/redact-credentials";
 import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -42,7 +43,7 @@ const transformIntegration = (integration: TIntegration): TIntegration => {
 /** Maps a Prisma failure to the service's `DatabaseError`; anything else is rethrown as is. */
 const toDatabaseError = (error: unknown): unknown => {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    logger.error(error, "Error creating or updating integration");
+    logger.error(loggableError(error), "Error creating or updating integration");
     return new DatabaseError(error.message);
   }
   return error;
@@ -54,10 +55,15 @@ const toDatabaseError = (error: unknown): unknown => {
  * workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted one), so token
  * refreshes and unrelated edits keep saving.
  */
-const assertMappedSurveysVisible = (integrationData: TIntegrationInput, storedConfig: unknown) =>
+const assertMappedSurveysVisible = (
+  integrationData: TIntegrationInput,
+  storedConfig: unknown,
+  client: Pick<Prisma.TransactionClient, "survey"> = prisma
+) =>
   assertNewlyAttachedSurveysWorkspaceVisible(
     getIntegrationSurveyIds(integrationData.config),
-    getIntegrationSurveyIds(storedConfig)
+    getIntegrationSurveyIds(storedConfig),
+    client
   );
 
 const integrationWrite = (workspaceId: string, integrationData: TIntegrationInput) => ({
@@ -113,14 +119,15 @@ export const saveIntegrationKeepingStoredKey = async (
 
   try {
     return await prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`
-        SELECT 1 FROM "Integration"
+      // The config comes from the locking read itself: a later read is a new snapshot, which could see a
+      // row a callback inserted after this lock found none, unlocked.
+      const [stored] = await tx.$queryRaw<{ config: TIntegration["config"] }[]>`
+        SELECT "config" FROM "Integration"
         WHERE "workspaceId" = ${workspaceId} AND "type" = ${integrationData.type}::"IntegrationType"
         FOR UPDATE
       `;
-      const stored = await tx.integration.findUnique({ where, select: { config: true } });
       const merged = withStoredIntegrationKey(integrationData, stored);
-      await assertMappedSurveysVisible(merged, stored?.config);
+      await assertMappedSurveysVisible(merged, stored?.config, tx);
 
       return stored
         ? tx.integration.update({ where, data: integrationWrite(workspaceId, merged) })
