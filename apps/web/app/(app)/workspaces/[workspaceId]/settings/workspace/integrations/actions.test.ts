@@ -41,7 +41,23 @@ const integrationData = {
 describe("createOrUpdateIntegrationAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(saveIntegrationKeepingStoredKey).mockResolvedValue({ id: "int_1" } as never);
+    // A representative stored row: if the action returned the row itself, the credentials below would
+    // show up in the response and fail the assertion.
+    vi.mocked(saveIntegrationKeepingStoredKey).mockResolvedValue({
+      id: "int_1",
+      type: "slack",
+      workspaceId: "ws_1",
+      config: {
+        key: {
+          access_token: "secret-access-token",
+          refresh_token: "secret-refresh-token",
+          token_type: "bot" as const,
+          bot_id: "B1",
+        },
+        data: [],
+        email: "",
+      },
+    } as never);
   });
 
   test("delegates the save to the row-locked path and returns only the id", async () => {
