@@ -1,12 +1,14 @@
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import type { TSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
-import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { generateSingleUseLinks } from "@/modules/survey/list/lib/api-client";
 import type { TSurvey as TSurveyList } from "@/modules/survey/list/types/surveys";
 
 export const useSingleUseId = (survey: TSurvey | TSurveyList, isReadOnly: boolean) => {
+  const { t } = useTranslation();
   const [singleUseLinkParams, setSingleUseLinkParams] = useState<TSurveySingleUseLinkParams>();
 
   const refreshSingleUseId = useCallback(async (): Promise<TSurveySingleUseLinkParams | undefined> => {
@@ -16,20 +18,19 @@ export const useSingleUseId = (survey: TSurvey | TSurveyList, isReadOnly: boolea
       return undefined;
     }
 
-    const response = await generateSingleUseIdsAction({
-      surveyId: survey.id,
-      isEncrypted: Boolean(survey.singleUse?.isEncrypted),
-      count: 1,
-    });
-
-    if (response?.data?.length) {
-      setSingleUseLinkParams(response.data[0]);
-      return response.data[0];
-    } else {
-      toast.error(getFormattedErrorMessage(response));
+    try {
+      const [link] = await generateSingleUseLinks({
+        surveyId: survey.id,
+        isEncrypted: Boolean(survey.singleUse?.isEncrypted),
+        count: 1,
+      });
+      setSingleUseLinkParams(link);
+      return link;
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       return undefined;
     }
-  }, [survey, isReadOnly]);
+  }, [survey, isReadOnly, t]);
 
   return {
     singleUseId: isReadOnly ? undefined : singleUseLinkParams?.suId,

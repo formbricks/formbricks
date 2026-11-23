@@ -12,9 +12,10 @@ import type {
   FilterValue,
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
-import { getSurveyFilterDataAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
+import { getResponseFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/lib/api-client";
 import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getReportingTimeZone } from "@/lib/date-ranges";
+import { surveyAnalysisKeys } from "@/modules/analysis/lib/query";
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { STRING_RULE_OPERATORS } from "@/modules/ui/components/table-toolbar/lib/operators";
 import type { TFilterProperty } from "@/modules/ui/components/table-toolbar/lib/types";
@@ -48,8 +49,6 @@ const pendingProperties = (known: readonly TFilterProperty[], search: string): T
   }));
 };
 
-const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-data"] as const;
-
 /** Properties the survey alone describes; every other one (attributes, tags, meta…) needs the filter data. */
 const isSurveyOnlyProperty = (id: string) =>
   id === "status" ||
@@ -82,12 +81,8 @@ export const useResponseTableFilters = (survey: TSurvey) => {
   const needsFilterData = urlNeedsFilterData(new URLSearchParams(searchParams?.toString() ?? ""));
   const [isFilterDataRequested, setIsFilterDataRequested] = useState(false);
   const filterData = useQuery({
-    queryKey: surveyFilterDataKey(survey.id),
-    queryFn: async () => {
-      const result = await getSurveyFilterDataAction({ surveyId: survey.id });
-      if (!result?.data) throw new Error(result?.serverError ?? "filter data unavailable");
-      return result.data;
-    },
+    queryKey: surveyAnalysisKeys.filterData(survey.id),
+    queryFn: ({ signal }) => getResponseFilterOptions(survey.id, { signal }),
     enabled: needsFilterData || isFilterDataRequested,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -104,7 +99,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
     const data = filterData.data;
     const { elementOptions, elementFilterOptions } = generateElementAndFilterOptions({
       survey,
-      environmentTags: data?.environmentTags ?? [],
+      environmentTags: data?.tags ?? [],
       attributes: data?.attributes ?? {},
       reservedValues: data?.reservedValues ?? {},
       hiddenFields: data?.hiddenFields ?? {},
@@ -116,7 +111,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
       survey,
       elementOptions,
       elementFilterOptions,
-      tagNames: (data?.environmentTags ?? []).map((tag) => tag.name),
+      tagNames: (data?.tags ?? []).map((tag) => tag.name),
       t,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `surveyKey` stands in for `survey`

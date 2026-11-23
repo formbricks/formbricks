@@ -134,7 +134,8 @@ Rules:
       if (error instanceof AIOutputTokenLimitError) {
         throw new InvalidInputError(AI_TRANSLATION_OUTPUT_TOO_LONG);
       }
-      // AI SDK errors can contain survey text and model output. Keep them out of the action response.
+      // AI SDK errors can contain survey text and model output. Keep them out of the response and the
+      // route wrapper's error log.
       throw redactAIError(error);
     });
 

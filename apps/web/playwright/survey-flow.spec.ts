@@ -6,6 +6,7 @@ import {
   SURVEY_FLOW_FIXTURE_IDS as ids,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import { test } from "./lib/fixtures";
+import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 
 /**
  * **Survey flow, end to end (ENG-6939).**
@@ -152,7 +153,11 @@ test.describe("Survey flow @slow", () => {
       });
 
       await owner.login();
-      const response = await page.request.post("/api/v3/surveys", { data: toV3CreateBody(workspaceId) });
+      // The page's session writes like the dashboard does, so it carries the browser's same-origin header.
+      const response = await page.request.post("/api/v3/surveys", {
+        data: toV3CreateBody(workspaceId),
+        headers: SAME_ORIGIN_HEADERS,
+      });
       const body = (await response.json().catch(() => null)) as { data?: { id?: string } } | null;
       expect(response.status(), JSON.stringify(body)).toBe(201);
       if (typeof body?.data?.id !== "string") throw new TypeError("Survey create response carried no id");

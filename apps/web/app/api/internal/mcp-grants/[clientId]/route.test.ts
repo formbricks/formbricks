@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { AuthzedError } from "@/lib/authzed/errors";
 import { MCP_GRANT_NOT_SAVED_CODE } from "@/modules/auth/lib/mcp-grant-consent-errors";
 import { MAX_MCP_GRANT_SELECTIONS, MAX_MCP_GRANT_SELECTION_ID_LENGTH } from "@/modules/mcp/grant";
@@ -68,7 +69,7 @@ const edit = (body: Record<string, unknown>, clientId = CLIENT_ID) =>
   PATCH(
     new NextRequest(`http://localhost/api/internal/mcp-grants/${clientId}`, {
       method: "PATCH",
-      headers: { "x-request-id": "req_1", "content-type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "x-request-id": "req_1", "content-type": "application/json" },
       body: JSON.stringify({ expectedUpdatedAt: OPENED_AT, ...body }),
     }),
     { params: Promise.resolve({ clientId }) }
@@ -331,7 +332,7 @@ const revoke = (clientId = CLIENT_ID) =>
   DELETE(
     new NextRequest(`http://localhost/api/internal/mcp-grants/${clientId}`, {
       method: "DELETE",
-      headers: { "x-request-id": "req_1" },
+      headers: { ...SAME_ORIGIN_HEADERS, "x-request-id": "req_1" },
     }),
     { params: Promise.resolve({ clientId }) }
   );
@@ -403,6 +404,48 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
     mocks.getSession.mockResolvedValue(null);
 
     expect((await revoke()).status).toBe(401);
+    expect(mocks.revokeMcpClient).not.toHaveBeenCalled();
+  });
+});
+
+describe("cross-origin writes to /api/internal/mcp-grants/{clientId}", () => {
+  // The session cookie rides along on a cross-site request, so the origin check is what keeps another site
+  // from editing or revoking the user's MCP access.
+  const CROSS_SITE = { "sec-fetch-site": "cross-site", origin: "https://evil.example" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // A signed-in user, so the refusal is the origin check's and not a missing session.
+    mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
+    mocks.queueAuditEvent.mockResolvedValue(undefined);
+  });
+
+  test("refuses a cross-site edit with 403 and saves nothing", async () => {
+    const response = await PATCH(
+      new NextRequest(`http://localhost/api/internal/mcp-grants/${CLIENT_ID}`, {
+        method: "PATCH",
+        headers: { ...CROSS_SITE, "content-type": "application/json" },
+        body: JSON.stringify({ expectedUpdatedAt: OPENED_AT, permissions: { surveys: "read" } }),
+      }),
+      { params: Promise.resolve({ clientId: CLIENT_ID }) }
+    );
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("Cross-origin requests are not allowed.");
+    expect(mocks.editMcpGrant).not.toHaveBeenCalled();
+  });
+
+  test("refuses a cross-site revoke with 403 and revokes nothing", async () => {
+    const response = await DELETE(
+      new NextRequest(`http://localhost/api/internal/mcp-grants/${CLIENT_ID}`, {
+        method: "DELETE",
+        headers: CROSS_SITE,
+      }),
+      { params: Promise.resolve({ clientId: CLIENT_ID }) }
+    );
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("Cross-origin requests are not allowed.");
     expect(mocks.revokeMcpClient).not.toHaveBeenCalled();
   });
 });

@@ -9,8 +9,8 @@ type TWorkspaceGrant = {
  * True when a team-settings submission would add, remove, or re-scope any of the team's workspace
  * grants.
  *
- * `updateTeamDetailsAction` is reachable by an org owner/manager *or* a team admin, and a team admin
- * may be a plain org `member`. Its input carries the team's whole workspace grant list, so without
+ * `PATCH /api/internal/teams/{teamId}` is reachable by an org owner/manager *or* a team admin, and a
+ * team admin may be a plain org `member`. Its input carries the team's whole workspace grant list, so without
  * this check a team admin could grant their own team `manage` on every workspace in the organization —
  * i.e. read/write on all surveys, responses, and contacts — while the UI only ever offered them the
  * members section (workspace selects are disabled for non-owners in `workspace-row.tsx`).

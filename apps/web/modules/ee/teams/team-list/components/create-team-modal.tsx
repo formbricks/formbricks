@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { createTeam } from "@/modules/ee/teams/team-list/lib/api-client";
+import { TEAM_NAME_MAX } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -37,18 +38,17 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
     setIsLoading(true);
 
     const name = teamName.trim();
-    const createTeamActionResponse = await createTeamAction({ name, organizationId });
-    if (createTeamActionResponse?.data) {
+    try {
+      const team = await createTeam({ organizationId, body: { name } });
       toast.success(t("workspace.settings.teams.team_created_successfully"));
       if (typeof onCreate === "function") {
-        onCreate(createTeamActionResponse.data);
+        onCreate(team.id);
       }
       router.refresh();
       setOpen(false);
       setTeamName("");
-    } else {
-      const errorMessage = getFormattedErrorMessage(createTeamActionResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
     setIsLoading(false);
   };
@@ -73,6 +73,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
                   setTeamName(e.target.value);
                 }}
                 placeholder={t("workspace.settings.teams.enter_team_name")}
+                maxLength={TEAM_NAME_MAX}
               />
             </div>
           </DialogBody>

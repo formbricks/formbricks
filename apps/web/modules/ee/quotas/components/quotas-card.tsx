@@ -10,12 +10,8 @@ import { useTranslation } from "react-i18next";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import {
-  createQuotaAction,
-  deleteQuotaAction,
-  getQuotaResponseCountAction,
-} from "@/modules/ee/quotas/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { createQuota, deleteQuota, getQuotaResponseCount } from "@/modules/ee/quotas/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -83,19 +79,16 @@ export const QuotasCard = ({
 
   const handleQuotaDelete = async (quotaId: string) => {
     setIsDeletingQuota(true);
-    const deleteQuotaActionResult = await deleteQuotaAction({
-      quotaId: quotaId,
-    });
-    if (deleteQuotaActionResult?.data) {
+    try {
+      await deleteQuota(quotaId);
       toast.success(t("workspace.surveys.edit.quotas.quota_deleted_successfull_toast"));
       // Clear activeQuota if we're deleting the currently active quota
       if (activeQuota?.id === quotaId) {
         setActiveQuota(null);
       }
       router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(deleteQuotaActionResult);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
     setQuotaToDelete(null);
     setIsDeletingQuota(false);
@@ -110,27 +103,21 @@ export const QuotasCard = ({
       ...rest,
       name: `${quota.name} (Copy)`,
     };
-    const duplicateQuotaActionResult = await createQuotaAction({
-      quota: quotaInput,
-    });
-    if (duplicateQuotaActionResult?.data) {
+    try {
+      await createQuota(quotaInput);
       toast.success(t("workspace.surveys.edit.quotas.quota_duplicated_successfull_toast"));
       router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(duplicateQuotaActionResult);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
   const openEditQuotaModal = async (quota: TSurveyQuota) => {
-    const quotaResponseCountActionResult = await getQuotaResponseCountAction({
-      quotaId: quota.id,
-    });
-    if (quotaResponseCountActionResult?.data) {
-      setQuotaResponseCount(quotaResponseCountActionResult.data.count);
-    } else {
-      const errorMessage = getFormattedErrorMessage(quotaResponseCountActionResult);
-      toast.error(errorMessage);
+    try {
+      const { count } = await getQuotaResponseCount(quota.id);
+      setQuotaResponseCount(count);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       return;
     }
     setActiveQuota(quota);
