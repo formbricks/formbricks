@@ -299,6 +299,25 @@ describe("useChartQuery", () => {
     expect((mockPreviewChart.mock.calls[0][0] as { signal: AbortSignal }).signal.aborted).toBe(true);
   });
 
+  test("clears the previous data source's error when the data source changes", async () => {
+    mockPreviewChart.mockRejectedValueOnce(new Error("network down"));
+
+    const { result, rerender } = renderHook(
+      ({ feedbackDirectoryId }: { feedbackDirectoryId: string | null }) =>
+        useChartQuery(WORKSPACE_ID, feedbackDirectoryId),
+      { initialProps: { feedbackDirectoryId: DIRECTORY_ID } }
+    );
+
+    await act(async () => {
+      await result.current.runQuery(sampleQuery, "bar");
+    });
+    expect(result.current.error).toBe("network down");
+
+    rerender({ feedbackDirectoryId: "frd-2" });
+
+    expect(result.current.error).toBeNull();
+  });
+
   test("stops loading when an in-flight request is aborted by a data source change", async () => {
     // The real client rejects an aborted request; that rejection must not leave the spinner on either.
     mockPreviewChart.mockImplementationOnce(

@@ -179,8 +179,6 @@ export function AdvancedChartBuilder({
   const lastRunQueryJsonRef = useRef<string | null>(
     initialQuery && !runInitialQuery ? toComparableQueryJson(initialQuery, chartType) : null
   );
-  // The data source that query ran against: the same query over another data source is another result.
-  const lastRunDirectoryIdRef = useRef(feedbackDirectoryId);
   // Read by the effect below without re-running it; this effect is declared first, so it runs first.
   const runInitialQueryRef = useRef(runInitialQuery);
   useEffect(() => {
@@ -195,13 +193,12 @@ export function AdvancedChartBuilder({
     const parsed = parseQueryToState(initialQuery);
     const initialQueryJson = toComparableQueryJson(initialQuery, chartType);
     lastRunQueryJsonRef.current = runInitialQueryRef.current ? null : initialQueryJson;
-    lastRunDirectoryIdRef.current = feedbackDirectoryId;
     setAdoptedQueryJson(toAdoptedQueryJson(initialQuery, chartType));
     dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
     setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
-    // chartType and feedbackDirectoryId only feed the baseline above; a later switch of either is
-    // caught by the guard and left to drift detection, which is what re-runs the query.
-  }, [initialQuery, chartType, feedbackDirectoryId]);
+    // chartType only feeds the baseline above; a later switch is caught by the guard and left to
+    // drift detection, which is what re-runs the query for the new type.
+  }, [initialQuery, chartType]);
 
   // Incomplete configs (no measure yet, half-filled filter row) are skipped silently instead of
   // surfacing validation toasts on every keystroke; the preview keeps its last valid state.
@@ -218,7 +215,6 @@ export function AdvancedChartBuilder({
   useEffect(() => {
     executeQueryRef.current = () => {
       lastRunQueryJsonRef.current = currentQueryJson;
-      lastRunDirectoryIdRef.current = feedbackDirectoryId;
       setIsConfigDirty(false);
       void runQuery(currentQuery, chartTypeRef.current).then((result) => {
         if (result) {
@@ -229,9 +225,7 @@ export function AdvancedChartBuilder({
   });
 
   useEffect(() => {
-    const hasDrift =
-      currentQueryJson !== lastRunQueryJsonRef.current ||
-      feedbackDirectoryId !== lastRunDirectoryIdRef.current;
+    const hasDrift = currentQueryJson !== lastRunQueryJsonRef.current;
     setIsConfigDirty(hasDrift);
 
     if (!feedbackDirectoryId || !isConfigComplete || !hasDrift) return;
