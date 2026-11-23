@@ -54,6 +54,9 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   // read-write Dashboards check, read with the workspace's charts.
   EmbeddedFieldLabel: "workspace_inherited_resource",
   FeedbackDirectory: "direct_authorization_resource",
+  // A Feedback Dataset's Dashboard Viewer access (ADR-0060): written behind Access Control write on the
+  // dataset's organization, and turned into the signed Cube claim that narrows a Dashboard Viewer's records.
+  FeedbackDirectoryViewerCondition: "parent_derived_or_data_integrity",
   FeedbackDirectoryWorkspace: "relationship_or_grant_source",
   FeedbackSource: "parent_derived_or_data_integrity",
   FeedbackSourceFieldMapping: "parent_derived_or_data_integrity",
