@@ -55,42 +55,49 @@ const RECALL_TOKENS = new RegExp(RECALL_TOKEN.source, "g");
 // lower-cases names.
 const RECALL_MARKER = "fbrecallmarker";
 const RECALL_MARKERS = new RegExp(String.raw`${RECALL_MARKER}(\d+)x`, "g");
-// One opening tag, a quoted value consumed whole (the pattern survey-ui strips styles with). Neither a
-// marker nor an escaped value holds `<`, `>` or a quote, so it finds the same tags with either in place.
-const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
+// Elements whose text the parser never turns into markup and the browser does not show as survey text
+// (raw text and RCDATA). A token here is not plain text either.
+const RAW_TEXT_PARENTS: ReadonlySet<string> = new Set([
+  "iframe",
+  "noembed",
+  "noframes",
+  "noscript",
+  "plaintext",
+  "script",
+  "style",
+  "textarea",
+  "title",
+  "xmp",
+]);
 
 /**
- * The tokens that sit inside markup rather than in text. Once a respondent's answer or a hidden field
- * fills one, it becomes part of that markup: escaping keeps `<` and quotes out but not `href=https://…`,
- * and no check can see the answer in advance, so each one counts as a link of its own.
+ * The tokens that do not sit in plain text. Once a respondent's answer or a hidden field fills one, it
+ * becomes part of whatever markup surrounds it: escaping keeps `<` and quotes out, but not
+ * `href=https://…` in a tag, nor a `--` that closes a comment, nor a tag name that ends a `<textarea>`.
+ * No check can see the answer in advance, so each such token counts as a link of its own.
  *
- * Found by parsing, not by matching tags with a pattern: the renderer replaces the whole token, fallback
- * included, before it parses, so a fallback holding `>`, `<` or a quote must not hide the token from the
- * check. Each token is swapped for a marker; a marker in any tag of the raw text counts, and so does one
- * in any element or attribute the parser builds after the renderer's style stripping.
+ * An allow-list, not a list of dangerous places: each token is swapped for a marker, the text goes
+ * through the renderer's style stripping and a parse, and a token is plain text only if its marker
+ * lands in a text node of an ordinary element. A marker in a tag, an attribute, a comment, an end tag, a
+ * raw-text element, or one the stripping removed, counts. That can only over-report.
  */
-const getTokensInMarkup = (html: string): string[] => {
+const getTokensOutsidePlainText = (html: string): string[] => {
   const tokens: string[] = [];
   const marked = html.replaceAll(RECALL_TOKENS, (token) => `${RECALL_MARKER}${tokens.push(token) - 1}x`);
-  const found = new Set<string>();
-  const record = (text: string) => {
-    for (const match of text.matchAll(RECALL_MARKERS)) {
-      found.add(tokens[Number(match[1])]);
-    }
-  };
-  // Before the style stripping: a token in an unquoted `style` value is removed with it here, while the
-  // real value can split that value differently (`x href=…`) or leave a comment's `-->` behind. Any token
-  // in a tag of the raw text counts, commented-out tags included, which can only over-report.
-  for (const tag of marked.match(OPENING_TAG) ?? []) record(tag);
-  DOMPurify.addHook("uponSanitizeElement", (node) => record(node.nodeName.toLowerCase()));
-  DOMPurify.addHook("uponSanitizeAttribute", (_node, data) => record(`${data.attrName} ${data.attrValue}`));
+  const inPlainText = new Set<number>();
+  DOMPurify.addHook("uponSanitizeElement", (node) => {
+    const parent = node.parentNode;
+    if (node.nodeName !== "#text" || parent?.nodeType !== 1) return;
+    if (RAW_TEXT_PARENTS.has(parent.nodeName.toLowerCase())) return;
+    for (const match of (node.textContent ?? "").matchAll(RECALL_MARKERS)) inPlainText.add(Number(match[1]));
+  });
   try {
-    DOMPurify.sanitize(removeStyleAttributes(marked));
+    // RETURN_DOM_FRAGMENT: DOMPurify returns text without `<` unparsed, and then visits nothing.
+    DOMPurify.sanitize(removeStyleAttributes(marked), { RETURN_DOM_FRAGMENT: true });
   } finally {
-    DOMPurify.removeHook("uponSanitizeAttribute");
     DOMPurify.removeHook("uponSanitizeElement");
   }
-  return [...found];
+  return tokens.filter((_token, index) => !inPlainText.has(index));
 };
 
 /**
@@ -110,7 +117,7 @@ const collectRecallLinks = (
   links: Set<string>,
   recallValues: ReadonlyMap<string, string>
 ): void => {
-  for (const token of getTokensInMarkup(html)) links.add(`recall in a tag: ${token}`);
+  for (const token of getTokensOutsidePlainText(html)) links.add(`recall in a tag: ${token}`);
   // What the survey shows when each token resolves to nothing, to its fallback, or to the variable's
   // value the survey defines.
   for (const resolved of new Set([
