@@ -113,7 +113,8 @@ export function registerSurveyTools(server: McpServer): void {
     "list_surveys",
     {
       title: "List surveys",
-      description: "List surveys in a Formbricks workspace using the v3 Surveys API contract.",
+      description:
+        "List surveys in a Formbricks workspace using the v3 Surveys API contract. Archived surveys are left out unless `filter.status.in` includes `archived`.",
       inputSchema: ZMcpListSurveysInput,
       annotations: {
         readOnlyHint: true,
@@ -431,7 +432,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Archive survey",
       description:
-        "Archive a survey: it leaves the default list, stops collecting responses (an in-progress survey is paused) and becomes read-only until restored. Formbricks permanently deletes an archived survey and its responses after 30 days. Use restore_survey to bring one back. Works on any survey, including legacy question-based ones, and archiving an already-archived survey changes nothing. Deleting a survey stays in the app and the REST API; MCP only archives.",
+        'Archive a survey: it leaves the default list, stops collecting responses (an in-progress survey is paused) and becomes read-only until restored. Ask the user before archiving a survey that is not a draft and already has responses. Formbricks permanently deletes an archived survey and its responses at least 30 days after it was archived, unless a data-retention exemption holds it longer. Find it again with list_surveys and filter.status.in: ["archived"], then use restore_survey. Works on any survey, including legacy question-based ones, and archiving an already-archived survey changes nothing. Deleting a survey stays in the app and the REST API; MCP only archives.',
       inputSchema: ZMcpSurveyIdInput,
       outputSchema: ZMcpSurveyLifecycleOutput,
       audit: { action: "archived", targetType: "survey", targetIdArg: "surveyId" },
@@ -466,7 +467,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Restore survey",
       description:
-        "Restore an archived survey: it is listed and editable again, and keeps its status from before the restore, so a survey archived while in progress comes back paused. Restoring a survey that is not archived changes nothing. Idempotent.",
+        "Restore an archived survey: it is listed and editable again, and keeps its status from before the restore, so a survey archived while in progress comes back paused. If a data-retention policy archived it, restoring gives it a fresh retention period. Restoring a survey that is not archived changes nothing. Idempotent.",
       inputSchema: ZMcpSurveyIdInput,
       outputSchema: ZMcpSurveyLifecycleOutput,
       audit: { action: "restored", targetType: "survey", targetIdArg: "surveyId" },

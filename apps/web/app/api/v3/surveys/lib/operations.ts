@@ -772,7 +772,6 @@ export async function deleteV3Survey({
   requestId,
   instance,
   auditLog,
-  writeConfirmation,
 }: TV3SurveyMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
@@ -788,16 +787,6 @@ export async function deleteV3Survey({
     if (response) {
       log.warn({ statusCode: 403 }, "Survey not found or not accessible");
       return response;
-    }
-
-    const refusal = await getV3SurveyWriteConfirmationRefusal(survey, writeConfirmation, {
-      action: "delete",
-      requestId,
-      instance,
-    });
-    if (refusal) {
-      log.warn({ statusCode: 428 }, "Survey delete awaits confirmation");
-      return refusal;
     }
 
     if (auditLog) {
@@ -1279,7 +1268,6 @@ async function runV3SurveyDocumentMutation({
     assertV3SurveyPrecondition(survey, effectivePrecondition);
 
     const refusal = await getV3SurveyWriteConfirmationRefusal(survey, writeConfirmation, {
-      action: "change",
       requestId,
       instance,
     });

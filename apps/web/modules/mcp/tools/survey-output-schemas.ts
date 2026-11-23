@@ -35,7 +35,7 @@ export const ZMcpGeneratedSurveyOutput = mcpToolOutput(
  */
 export const ZMcpSurveyLifecycleOutput = mcpToolOutput(
   z.object({
-    id: z.string(),
+    id: z.cuid2(),
     status: ZSurveyStatus,
     archivedAt: z.iso.datetime({ offset: true }).nullable(),
   })

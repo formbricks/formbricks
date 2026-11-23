@@ -163,7 +163,7 @@ describe("buildListSurveysSearchParams", () => {
       sortBy: "updatedAt",
       filter: {
         name: { contains: "Onboarding" },
-        status: { in: ["draft", "inProgress"] },
+        status: { in: ["draft", "inProgress", "archived"] },
         type: { in: ["link"] },
       },
     });
@@ -174,8 +174,20 @@ describe("buildListSurveysSearchParams", () => {
     expect(params.get("includeTotalCount")).toBe("false");
     expect(params.get("sortBy")).toBe("updatedAt");
     expect(params.get("filter[name][contains]")).toBe("Onboarding");
-    expect(params.getAll("filter[status][in]")).toEqual(["draft", "inProgress"]);
+    expect(params.getAll("filter[status][in]")).toEqual(["draft", "inProgress", "archived"]);
     expect(params.getAll("filter[type][in]")).toEqual(["link"]);
+  });
+
+  test("accepts the archived pseudo-status the v3 list supports", () => {
+    const { tools } = createToolServer();
+    const schema = tools.get("list_surveys")!.config.inputSchema as z.ZodType;
+
+    expect(
+      schema.safeParse({
+        workspaceId: "clxx1234567890123456789012",
+        filter: { status: { in: ["archived"] } },
+      }).success
+    ).toBe(true);
   });
 });
 
@@ -286,6 +298,13 @@ describe("registerSurveyTools", () => {
         idempotentHint: true,
       },
     });
+    // Both advertise the v3 lifecycle ack, and the schema is the one parsed below in the handler tests:
+    // deleting the registration's outputSchema or weakening the shared schema fails here.
+    expect(tools.get("archive_survey")?.config.outputSchema).toBe(ZMcpSurveyLifecycleOutput);
+    expect(tools.get("restore_survey")?.config.outputSchema).toBe(ZMcpSurveyLifecycleOutput);
+    expect(ZMcpSurveyLifecycleOutput.safeParse({ data: { id: "clxx1234567890123456789012" } }).success).toBe(
+      false
+    );
   });
 
   /**
@@ -833,6 +852,28 @@ describe("registerSurveyTools", () => {
     }
   });
 
+  test("a refused archive is audited as a failed archived event", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const auditLog = { status: "failure" as const };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
+
+    const result = await tools
+      .get("archive_survey")!
+      .handler({ surveyId }, { http: { authInfo: readOnlyOAuthAuthInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      expect.anything(),
+      "archived",
+      "survey",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
+    expect(auditLog).toMatchObject({ eventId: "req_tool", targetId: surveyId });
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+    expect(archiveV3Survey).not.toHaveBeenCalled();
+  });
+
   test("archive_survey preserves forbidden errors without leaking resource existence", async () => {
     const { tools } = createToolServer();
     const auditLog = { status: "failure" as const };
@@ -865,8 +906,8 @@ describe("registerSurveyTools", () => {
   test("write tools return MCP errors for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
     const surveyId = "clxx1234567890123456789012";
-    // Every write tool, so a new one registered under `surveys:read` by mistake fails here. For an
-    // OAuth user who holds the write role, this scope is the only barrier.
+    // Every write tool covered by this file, so a new one registered under `surveys:read` by mistake
+    // fails here. For an OAuth user who holds the write role, this scope is the only barrier.
     const cases: [string, Record<string, unknown>, unknown][] = [
       ["archive_survey", { surveyId }, archiveV3Survey],
       ["restore_survey", { surveyId }, restoreV3Survey],
@@ -991,6 +1032,21 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
     expect(errorText(outcome)).toContain(expected);
     expect(listV3Surveys).not.toHaveBeenCalled();
   });
+
+  test.each(["archive_survey", "restore_survey"] as const)(
+    "%s rejects an undeclared argument instead of silently dropping it",
+    async (name) => {
+      const outcome = await callTool(name, {
+        surveyId: "clxx1234567890123456789012",
+        confirm: true,
+      });
+
+      expect(outcome.result?.isError).toBe(true);
+      expect(errorText(outcome)).toContain("confirm");
+      expect(archiveV3Survey).not.toHaveBeenCalled();
+      expect(restoreV3Survey).not.toHaveBeenCalled();
+    }
+  );
 
   test("accepts the declared spelling and reaches the operation", async () => {
     vi.mocked(listV3Surveys).mockResolvedValue(

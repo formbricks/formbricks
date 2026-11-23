@@ -733,7 +733,8 @@ the workflow test tools, and on the survey side `generate_survey`, `archive_surv
 A client can read the result shape off `tools/list` rather than inferring it from an example, and the SDK
 checks the structured result against the same schema it advertised. The remaining survey tools, the
 workflow tools other than `send_test_request`, `set_expected_response` and `run_test`, feedback records
-and Audience have none yet: they would need a v3 resource schema, and none exists for them.
+and Audience do not advertise one yet: their results are list projections, redacted resources or the
+survey document, which have no single v3 resource schema to build from.
 
 One object root with every branch optional, built by `mcpToolOutput`: a tool answers either the
 success payload or the error one, which reads like a union — but a union converts to a root-level
@@ -924,7 +925,8 @@ the read scope (`audience`, ENG-7151: 20261112130000 and 20261112130001).
 
 ### list_surveys
 
-Lists surveys in one workspace. The tool is read-only and idempotent.
+Lists surveys in one workspace. The tool is read-only and idempotent. Archived surveys are left out
+unless `filter.status.in` includes `archived`, which includes them alongside the other statuses selected.
 
 Input:
 
@@ -1410,13 +1412,15 @@ Output matches `edit_survey_blocks`: concise by default, echoing the applied `or
 
 Archives (soft-deletes) one survey by ID: it leaves the default list, stops collecting responses (an
 in-progress survey is paused) and becomes read-only until restored. Formbricks permanently deletes an
-archived survey and its responses 30 days after it was archived. Archiving is idempotent: a second call
-changes nothing and does not restart that clock. The tool is destructive because it removes the survey
-from default reads.
+archived survey and its responses at least 30 days after it was archived, unless a data-retention
+exemption holds it longer. Ask the user first when the survey is not a draft and already has responses.
+Archiving is idempotent: a second call changes nothing and does not restart that clock. The tool is
+destructive because it removes the survey from default reads.
 
-There is no `delete_survey`. Deleting a survey stays in the app and the REST API, so an agent cannot
-remove a survey and its responses without a 30-day recovery window. Responses keep their own
-`delete_response` and `batch_delete_responses` tools.
+To find an archived survey again, list with `filter.status.in: ["archived"]`. There is no
+`delete_survey`: deleting a survey stays in the app and the REST API, so an agent cannot remove a survey
+and its responses without a 30-day recovery window. Responses keep their own `delete_response` and
+`batch_delete_responses` tools.
 
 Input:
 
@@ -1443,8 +1447,9 @@ question-based surveys that cannot be serialized as a v3 document.
 ### restore_survey
 
 Restores an archived survey: it is listed and editable again, and keeps the status it had before the
-restore, so a survey archived while in progress comes back paused. Restoring a survey that is not
-archived changes nothing, so the tool is idempotent and is not destructive.
+restore, so a survey archived while in progress comes back paused. If a data-retention policy archived
+it, restoring gives it a fresh retention period. Restoring a survey that is not archived changes nothing,
+so the tool is idempotent and is not destructive.
 
 Input and output match `archive_survey`; `archivedAt` is `null` in the acknowledgement.
 
@@ -2504,9 +2509,11 @@ query, like `create_feedback_record`.
 - Most survey tools, the workflow tools other than `send_test_request`, `set_expected_response` and
   `run_test`, and the feedback-record and Audience tools advertise no result shape (`outputSchema`), so a
   client has to infer theirs from an example. An output schema is built from the v3 resource schema and
-  never retyped, and none exists yet for those resources. The survey exceptions are `generate_survey`, and
-  `archive_survey` / `restore_survey`, whose lifecycle acknowledgement is typed from the v3 contract
-  because it has no resource schema.
+  never retyped, and those tools' results are list projections, redacted resources or the survey document,
+  which have no single schema to build from. The survey exceptions are `generate_survey`, and
+  `archive_survey` / `restore_survey`, whose lifecycle acknowledgement is typed by hand from the v3
+  archive/restore response, because the contract declares that response inline and generates no schema
+  for it.
 - The response tools cover the v3 operations and nothing more: there is no tool that adds or removes a
   single tag, because `PATCH` replaces the tag set wholesale and such a tool would be a read-modify-write
   wrapper with its own race rather than an operation.

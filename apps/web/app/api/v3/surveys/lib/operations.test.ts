@@ -1063,7 +1063,6 @@ describe("MCP confirmation on surveys with responses (ENG-6930)", () => {
     });
     vi.mocked(patchV3Survey, { partial: true, deep: true }).mockResolvedValue(updatedSurvey);
     vi.mocked(serializeV3SurveyResource, { partial: true, deep: true }).mockReturnValue(serializedSurvey);
-    vi.mocked(deleteSurvey, { partial: true, deep: true }).mockResolvedValue(liveSurvey);
   });
 
   test("refuses a change to a live survey with responses until the call confirms, with the editor's caution", async () => {
@@ -1110,18 +1109,6 @@ describe("MCP confirmation on surveys with responses (ENG-6930)", () => {
 
     expect([edit.status, reorder.status]).toEqual([428, 428]);
     expect(patchV3Survey).not.toHaveBeenCalled();
-  });
-
-  test("refuses deleting a survey with responses with the delete warning", async () => {
-    const response = await deleteV3Survey({ ...base, writeConfirmation: { confirmed: false } });
-
-    expect(response.status).toBe(428);
-    expect((await response.json()).detail).toBe(
-      "This survey has responses. Are you sure you want to delete this survey and all of its responses? Pass confirm: true after the user agrees."
-    );
-    expect(deleteSurvey).not.toHaveBeenCalled();
-
-    expect((await deleteV3Survey({ ...base, writeConfirmation: { confirmed: true } })).status).toBe(204);
   });
 
   test("needs nothing on a survey without responses", async () => {

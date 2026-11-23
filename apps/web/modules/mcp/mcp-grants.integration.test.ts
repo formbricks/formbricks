@@ -148,6 +148,9 @@ const renameSurvey = (accessToken: string, setup: TSetup) =>
 const archiveSurvey = (accessToken: string, setup: TSetup) =>
   callMcpTool({ accessToken }, "archive_survey", { surveyId: setup.surveyId });
 
+const restoreSurvey = (accessToken: string, setup: TSetup) =>
+  callMcpTool({ accessToken }, "restore_survey", { surveyId: setup.surveyId });
+
 /** The problem a refused tool answered with; a tool result carries it under `error`. */
 const problemOf = (outcome: TMcpToolCallOutcome) =>
   (JSON.parse(toolText(outcome)) as { error: { status: number; code: string; detail: string } }).error;
@@ -233,10 +236,17 @@ describe("a connection's grant", () => {
     expectNotPermitted(await archiveSurvey(access_token, setup), "Surveys: Write");
     expect(await prisma.survey.findUnique({ where: { id: setup.surveyId } })).toMatchObject({
       name: "Draft",
+      archivedAt: null,
     });
+
+    await prisma.survey.update({ where: { id: setup.surveyId }, data: { archivedAt: new Date() } });
+    expectNotPermitted(await restoreSurvey(access_token, setup), "Surveys: Write");
+    expect((await prisma.survey.findUnique({ where: { id: setup.surveyId } }))?.archivedAt).toBeInstanceOf(
+      Date
+    );
   });
 
-  test("Write reads, writes and archives", async () => {
+  test("Write reads, writes, archives and restores", async () => {
     const { access_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
     await setGrant(setup, { surveys: "write" });
 
@@ -247,6 +257,12 @@ describe("a connection's grant", () => {
     expect(succeeded(archived), toolText(archived)).toBe(true);
     expect(await prisma.survey.findUnique({ where: { id: setup.surveyId } })).toMatchObject({
       archivedAt: expect.any(Date),
+    });
+
+    const restored = await restoreSurvey(access_token, setup);
+    expect(succeeded(restored), toolText(restored)).toBe(true);
+    expect(await prisma.survey.findUnique({ where: { id: setup.surveyId } })).toMatchObject({
+      archivedAt: null,
     });
   });
 
