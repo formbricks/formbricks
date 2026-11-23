@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import {
-  createInviteTokenAction,
-  deleteInviteAction,
-  deleteMembershipAction,
-  resendInviteAction,
-} from "@/modules/organization/settings/teams/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { ShareInviteModal } from "@/modules/organization/settings/teams/components/invite-member/share-invite-modal";
+import {
+  createInviteShareLink,
+  deleteInvite,
+  deleteMember,
+  resendInvite,
+} from "@/modules/organization/settings/teams/lib/api-client";
 import type { TMemberTableRow } from "@/modules/organization/settings/teams/lib/member-table";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -35,8 +35,8 @@ type TMemberRowMenuProps = Readonly<{
 
 /**
  * A Members table row's ⋯ menu (ENG-7474): Member settings first, then Share invite link and Resend
- * invitation email for a pending invite, then Delete. Each item runs the existing invite and membership
- * actions, so their rules are unchanged; items the caller may not use are left out.
+ * invitation email for a pending invite, then Delete. Each item calls the existing invite and membership
+ * routes, so their rules are unchanged; items the caller may not use are left out.
  */
 export const MemberRowMenu = ({
   organizationId,
@@ -57,35 +57,34 @@ export const MemberRowMenu = ({
 
   const handleShareInvite = async () => {
     if (!invite) return;
-    const response = await createInviteTokenAction({ inviteId: invite.id });
-    if (response?.data) {
-      setShareToken(response.data.inviteToken);
+    try {
+      const { inviteToken } = await createInviteShareLink(invite.id);
+      setShareToken(inviteToken);
       router.refresh();
-    } else {
-      toast.error(getFormattedErrorMessage(response));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
   const handleResendInvite = async () => {
     if (!invite) return;
-    const response = await resendInviteAction({ inviteId: invite.id, organizationId });
-    if (response?.data) {
+    try {
+      await resendInvite({ inviteId: invite.id, organizationId });
       toast.success(t("workspace.settings.general.invitation_sent_once_more"));
       router.refresh();
-    } else {
-      toast.error(getFormattedErrorMessage(response));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const result =
-        row.kind === "member" && row.member
-          ? await deleteMembershipAction({ userId: row.member.userId, organizationId })
-          : await deleteInviteAction({ inviteId: invite?.id ?? "" });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
+      if (row.kind === "member" && row.member) {
+        await deleteMember({ userId: row.member.userId, organizationId });
+      } else if (invite) {
+        await deleteInvite(invite.id);
+      } else {
         return;
       }
       toast.success(
@@ -95,6 +94,8 @@ export const MemberRowMenu = ({
       );
       setIsDeleteOpen(false);
       router.refresh();
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

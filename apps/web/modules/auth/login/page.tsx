@@ -14,6 +14,7 @@ import {
   resolveAuthCallbackUrl,
 } from "@/modules/auth/lib/callback-url";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getSamlConnectionExists } from "@/modules/ee/sso/lib/saml-connection";
 import { getSsoAvailability, toSsoFormProps } from "@/modules/ee/sso/lib/sso-availability";
 import { LoginForm } from "./components/login-form";
 
@@ -32,6 +33,7 @@ export const LoginPage = async ({
     getSsoAvailability(),
     searchParamsProps,
   ]);
+  const samlConnectionExists = await getSamlConnectionExists(ssoAvailability);
   const oauthError = getSearchParamString(searchParams.error);
 
   const resolvedCallbackUrl =
@@ -49,6 +51,7 @@ export const LoginPage = async ({
         publicSignUpEnabled={SIGNUP_ENABLED}
         passwordResetEnabled={!PASSWORD_RESET_DISABLED}
         {...toSsoFormProps(ssoAvailability)}
+        samlConnectionExists={samlConnectionExists}
         oidcDisplayName={OIDC_DISPLAY_NAME}
         isMultiOrgEnabled={isMultiOrgEnabled}
         oauthError={oauthError}

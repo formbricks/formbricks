@@ -6,12 +6,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { getOrganizationRoleLabels } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { updateInviteAction, updateMembershipAction } from "@/modules/ee/role-management/actions";
+import { updateInviteRole, updateMemberRole } from "@/modules/ee/role-management/lib/api-client";
 import { getAssignableOrganizationRoles } from "@/modules/ee/role-management/lib/assignable-roles";
 import { TeamPermissionTranslationKeys } from "@/modules/ee/teams/utils/teams";
-import { deleteInviteAction, deleteMembershipAction } from "@/modules/organization/settings/teams/actions";
+import { deleteInvite, deleteMember } from "@/modules/organization/settings/teams/lib/api-client";
 import {
   type TMemberTableRow,
   getAttributeSuggestions,
@@ -113,15 +112,17 @@ export const MemberSettingsDialog = ({
 
   const saveRole = async (): Promise<boolean> => {
     if (role === row.role) return true;
-    const result =
-      row.kind === "member" && row.member
-        ? await updateMembershipAction({ userId: row.member.userId, organizationId, data: { role } })
-        : await updateInviteAction({ inviteId: row.invite?.id ?? "", data: { role } });
-    if (result?.serverError) {
-      toast.error(getFormattedErrorMessage(result));
+    try {
+      if (row.kind === "member" && row.member) {
+        await updateMemberRole({ userId: row.member.userId, organizationId, body: { role } });
+      } else if (row.invite) {
+        await updateInviteRole({ inviteId: row.invite.id, body: { role } });
+      }
+      return true;
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       return false;
     }
-    return true;
   };
 
   const saveAttributes = async (): Promise<boolean> => {
@@ -158,12 +159,11 @@ export const MemberSettingsDialog = ({
   const onDelete = async () => {
     setIsDeleting(true);
     try {
-      const result =
-        row.kind === "member" && row.member
-          ? await deleteMembershipAction({ userId: row.member.userId, organizationId })
-          : await deleteInviteAction({ inviteId: row.invite?.id ?? "" });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
+      if (row.kind === "member" && row.member) {
+        await deleteMember({ userId: row.member.userId, organizationId });
+      } else if (row.invite) {
+        await deleteInvite(row.invite.id);
+      } else {
         return;
       }
       toast.success(
@@ -174,6 +174,8 @@ export const MemberSettingsDialog = ({
       setIsDeleteOpen(false);
       setOpen(false);
       router.refresh();
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

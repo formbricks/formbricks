@@ -11,7 +11,7 @@ interface CreateFirstWorkspaceButtonProps {
   isAccessControlAllowed: boolean;
 }
 
-// Escape hatch for an org owner/manager who landed here with zero workspaces: the server action
+// Escape hatch for an org owner/manager who landed here with zero workspaces: the API
 // behind the modal enforces the real workspace limit, so no client-side limit gating is needed.
 export const CreateFirstWorkspaceButton = ({
   organizationId,

@@ -11,18 +11,17 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfigData,
-  TIntegrationAirtableInput,
   TIntegrationAirtableTables,
 } from "@formbricks/types/integration/airtable";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
 import { BaseSelectDropdown } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/lib/airtable";
+import { saveIntegrationMappings } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import AirtableLogo from "@/images/airtableLogo.svg";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -201,14 +200,7 @@ export const AddIntegrationModal = ({
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
-  const airtableIntegrationData: TIntegrationAirtableInput = {
-    type: "airtable",
-    config: {
-      key: airtableIntegration?.config?.key,
-      data: airtableIntegration.config.data ?? [],
-      email: airtableIntegration?.config?.email,
-    },
-  };
+  const existingMappings = airtableIntegration.config.data ?? [];
 
   useEffect(() => {
     if (isEditMode) {
@@ -279,22 +271,16 @@ export const AddIntegrationModal = ({
         includeContactAttributes,
       };
 
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the page refreshes.
+      const mappings = [...existingMappings];
       if (isEditMode) {
-        // update action
-        airtableIntegrationData.config.data[defaultData.index] = integrationData;
+        mappings[defaultData.index] = integrationData;
       } else {
-        // create action
-        airtableIntegrationData.config?.data.push(integrationData);
+        mappings.push(integrationData);
       }
+      await saveIntegrationMappings(workspaceId, "airtable", mappings);
 
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: airtableIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      router.refresh();
       if (isEditMode) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -302,7 +288,7 @@ export const AddIntegrationModal = ({
       }
       handleClose();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -327,20 +313,14 @@ export const AddIntegrationModal = ({
 
   const handleDelete = async (index: number) => {
     try {
-      const integrationData = structuredClone(airtableIntegrationData);
-      integrationData.config.data.splice(index, 1);
-
-      const result = await createOrUpdateIntegrationAction({ workspaceId, integrationData });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      const mappings = existingMappings.filter((_, mappingIndex) => mappingIndex !== index);
+      await saveIntegrationMappings(workspaceId, "airtable", mappings);
       handleClose();
       router.refresh();
 
       toast.success(t("workspace.integrations.integration_removed_successfully"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     }
   };
 

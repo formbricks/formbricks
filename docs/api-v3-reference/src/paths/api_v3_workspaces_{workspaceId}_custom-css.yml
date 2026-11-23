@@ -5,8 +5,7 @@ get:
     Returns the workspace's shared survey CSS as editable **source** (light and dark), the one
     recoverable previous revision, whether the stored CSS is being delivered to respondents
     (`status`), and whether this caller may change it (`canEdit`, `planAllowed`). Compiled output is
-    never returned here. Requires read access to the workspace. Session cookie, `x-api-key`, or a
-    Bearer token.
+    never returned here. Requires read access to the workspace. `x-api-key` or a Bearer token.
   tags:
     - V3 Workspaces
   parameters:

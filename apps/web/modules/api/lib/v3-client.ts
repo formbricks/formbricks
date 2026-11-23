@@ -33,6 +33,7 @@ export class V3ApiError extends Error {
     requestId,
     invalid_params,
     details,
+    cause,
     retryAfter,
   }: {
     status: number;
@@ -41,9 +42,10 @@ export class V3ApiError extends Error {
     requestId?: string;
     invalid_params?: TV3InvalidParam[];
     details?: unknown;
+    cause?: unknown;
     retryAfter?: number;
   }) {
-    super(detail);
+    super(detail, { cause });
     this.name = "V3ApiError";
     this.status = status;
     this.code = code;
@@ -95,15 +97,41 @@ export const v3RetryDelay = (failureCount: number, error: unknown): number =>
     ? (error.retryAfter as number) * 1000 + Math.floor(Math.random() * 500)
     : Math.min(1000 * 2 ** failureCount, 30_000);
 
+/** The wrapper's schema-validation details (`api-wrapper.ts`): they name no field, so the field's reason says more. */
+const GENERIC_VALIDATION_DETAILS = new Set([
+  "Invalid request body",
+  "Invalid query parameters",
+  "Invalid route parameters",
+]);
+
 export function getV3ApiErrorMessage(error: unknown, fallbackMessage: string): string {
   if (error instanceof V3ApiError) {
-    return error.detail;
+    if (GENERIC_VALIDATION_DETAILS.has(error.detail)) {
+      const fieldReason = error.invalid_params?.[0]?.reason;
+      if (fieldReason) return fieldReason;
+    }
+    // A failure with nothing to say (no problem body, a network error) gets the caller's translated text.
+    return error.detail || fallbackMessage;
   }
 
   if (error instanceof Error && error.message) {
     return error.message;
   }
 
+  return fallbackMessage;
+}
+
+/**
+ * The machine-readable reason a refused request carries in `details.reason` — a service's error code that
+ * the page translates — falling back to the problem's message, then to the caller's translated fallback.
+ */
+export function getV3ApiErrorReason(error: unknown, fallbackMessage: string): string {
+  if (error instanceof V3ApiError) {
+    const { details } = error;
+    const reason =
+      typeof details === "object" && details !== null ? Reflect.get(details, "reason") : undefined;
+    return typeof reason === "string" ? reason : error.detail || fallbackMessage;
+  }
   return fallbackMessage;
 }
 
@@ -118,7 +146,9 @@ export async function parseV3ApiError(response: Response): Promise<V3ApiError> {
 
   return new V3ApiError({
     status: problemBody?.status ?? response.status,
-    detail: problemBody?.detail ?? response.statusText ?? "An unexpected error occurred.",
+    // Only a problem body's own detail. A proxy's HTML 502 or a bare 500 carries none, and its reason phrase
+    // ("Bad Gateway", present over HTTP/1.1 only) is untranslated, so callers show their translated fallback.
+    detail: problemBody?.detail ?? "",
     code: problemBody?.code,
     requestId: problemBody?.requestId ?? response.headers.get("X-Request-Id") ?? undefined,
     invalid_params: problemBody?.invalid_params,

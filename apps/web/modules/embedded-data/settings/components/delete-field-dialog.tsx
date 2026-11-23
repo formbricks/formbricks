@@ -4,9 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteSharedEmbeddedDataAction } from "@/modules/embedded-data/actions";
-import type { TEmbeddedDataUsage, TSharedEmbeddedData } from "@/modules/embedded-data/types";
+import type {
+  TEmbeddedDataResource,
+  TEmbeddedDataUsageResource,
+} from "@/app/api/internal/embedded-data/serializers";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { useDeleteEmbeddedData } from "@/modules/embedded-data/hooks/use-embedded-data";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -22,11 +25,10 @@ import { getSurveyStatusLabel } from "../lib/field-labels";
 import { HiddenSurveysItem } from "./hidden-surveys-item";
 
 interface DeleteFieldDialogProps {
-  field: TSharedEmbeddedData;
+  field: TEmbeddedDataResource;
   workspaceId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  onDeleted: () => void;
 }
 
 /**
@@ -39,18 +41,17 @@ interface DeleteFieldDialogProps {
  * no force-delete path**, on purpose: the remedy is to remove the field from those surveys first.
  *
  * The refusal is read from the write's result rather than pre-empted by the row's `surveyCount`,
- * which is as old as the page.
+ * which may be out of date. Either way the library refetches afterwards.
  */
 export const DeleteFieldDialog = ({
   field,
   workspaceId,
   open,
   setOpen,
-  onDeleted,
 }: Readonly<DeleteFieldDialogProps>) => {
   const { t } = useTranslation();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [blockingSurveys, setBlockingSurveys] = useState<TEmbeddedDataUsage | null>(null);
+  const deleteField = useDeleteEmbeddedData(workspaceId);
+  const [blockingSurveys, setBlockingSurveys] = useState<TEmbeddedDataUsageResource | null>(null);
 
   const close = () => {
     setBlockingSurveys(null);
@@ -58,26 +59,18 @@ export const DeleteFieldDialog = ({
   };
 
   const handleDelete = async () => {
-    setIsDeleting(true);
     try {
-      const response = await deleteSharedEmbeddedDataAction({ id: field.id });
-      if (!response?.data) {
-        toast.error(getFormattedErrorMessage(response) || t("common.something_went_wrong_please_try_again"));
+      const result = await deleteField.mutateAsync(field.id);
+      if (result.status === "inUse") {
+        setBlockingSurveys(result.usage);
         return;
       }
-
-      if (response.data.status === "inUse") {
-        setBlockingSurveys(response.data.usage);
-        return;
-      }
-
-      if (response.data.status === "ok") {
+      if (result.status === "ok") {
         toast.success(t("workspace.embedded_data.field_deleted", { name: field.name }));
         close();
-        onDeleted();
       }
-    } finally {
-      setIsDeleting(false);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -135,7 +128,7 @@ export const DeleteFieldDialog = ({
       deleteWhat={t("workspace.embedded_data.library_field")}
       text={t("workspace.embedded_data.delete_field_text", { name: field.name })}
       onDelete={handleDelete}
-      isDeleting={isDeleting}
+      isDeleting={deleteField.isPending}
     />
   );
 };

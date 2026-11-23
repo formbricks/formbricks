@@ -23,6 +23,7 @@ import {
   removeDashboardWidget,
   replaceDashboard,
   restoreDashboardWidget,
+  setEmbeddedFieldLabel,
   toAppChart,
   updateChart,
 } from "./api-client";
@@ -449,6 +450,24 @@ describe("analysis api client requests", () => {
       { url: `/api/v3/dashboards/${ENCODED_ID}/duplicate`, init: { method: "POST" }, body: {} },
       { url: `/api/v3/dashboards/${ENCODED_ID}/duplicate`, init: { method: "POST" }, body: { name: "Copy" } },
     ]);
+  });
+
+  test("names an imported key with a PUT carrying the label the editor saw, and resolves to the stored name", async () => {
+    const fetchMock = stubFetch({ key: "plan", label: "Plan" });
+
+    const stored = await setEmbeddedFieldLabel({
+      workspaceId: "w",
+      key: "plan",
+      label: "Plan",
+      expectedLabel: null,
+    });
+
+    expect(callOf(fetchMock)).toMatchObject({
+      url: "/api/internal/embedded-field-labels",
+      init: { method: "PUT" },
+      body: { workspaceId: "w", key: "plan", label: "Plan", expectedLabel: null },
+    });
+    expect(stored).toEqual({ key: "plan", label: "Plan" });
   });
 
   test("deletes dashboards, widgets and charts by encoded path, and throws the problem on failure", async () => {

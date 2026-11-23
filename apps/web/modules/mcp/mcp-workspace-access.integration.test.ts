@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { PATCH as patchGrant } from "@/app/api/internal/mcp-grants/[clientId]/route";
 import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { listV3DashboardFilterFields } from "@/app/api/v3/dashboards/lib/filter-fields-operations";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { createTestDashboard } from "@/integration/dashboard-rows";
 import { sessionOf } from "@/integration/dashboards-fixture";
@@ -723,7 +724,7 @@ describe("organization & workspace access on MCP calls", () => {
       response = await patchGrant(
         new NextRequest(`http://localhost/api/internal/mcp-grants/${setup.clientId}`, {
           method: "PATCH",
-          headers: { "content-type": "application/json" },
+          headers: { ...SAME_ORIGIN_HEADERS, "content-type": "application/json" },
           body: JSON.stringify({
             permissions: READ_ALL,
             access: "workspaces",

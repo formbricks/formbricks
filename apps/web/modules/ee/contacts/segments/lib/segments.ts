@@ -45,6 +45,7 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
+import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "./segment-errors";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
@@ -290,7 +291,7 @@ const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSegment): 
  */
 const throwSegmentTitleTaken = (error: unknown): void => {
   if (isUniqueConstraintError(error)) {
-    throw new InvalidInputError("A segment with this title already exists");
+    throw new InvalidInputError(SEGMENT_TITLE_TAKEN_ERROR_MESSAGE);
   }
 };
 

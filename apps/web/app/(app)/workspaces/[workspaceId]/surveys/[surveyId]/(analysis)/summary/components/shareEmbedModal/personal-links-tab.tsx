@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getTranslatedPersonalLinkError } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
@@ -28,7 +28,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { generatePersonalLinksAction } from "../../actions";
+import { generatePersonalLinks } from "../../lib/api-client";
 
 interface PersonalLinksTabProps {
   readonly surveyId: string;
@@ -96,41 +96,48 @@ export const PersonalLinksTab = ({
       id: "generating-links",
     });
 
-    const result = await generatePersonalLinksAction({
-      surveyId: surveyId,
-      segmentId: selectedSegment,
-      expirationDays: expiryDate
-        ? Math.max(1, Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
-        : undefined,
+    let result: Awaited<ReturnType<typeof generatePersonalLinks>>;
+    try {
+      result = await generatePersonalLinks({
+        surveyId: surveyId,
+        segmentId: selectedSegment,
+        expirationDays: expiryDate
+          ? Math.max(1, Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+          : undefined,
+      });
+    } catch (error) {
+      // The refusals the tab explains arrive as a personal-link error code; anything else keeps its reason.
+      const errorMessage = getV3ApiErrorMessage(
+        error,
+        t("workspace.surveys.share.personal_links.error_generating_links")
+      );
+      toast.error(getTranslatedPersonalLinkError(errorMessage, t), {
+        duration: 5000,
+        id: "generating-links",
+      });
+      setIsGenerating(false);
+      return;
+    }
+
+    const fileName = result.fileName || "personal-links.csv";
+    const file = new File([result.csvContent], fileName, {
+      type: "text/csv",
     });
 
-    if (result?.data) {
-      const fileName = result.data.fileName || "personal-links.csv";
-      const file = new File([result.data.csvContent], fileName, {
-        type: "text/csv",
-      });
-
-      try {
-        const url = URL.createObjectURL(file);
-        downloadFile(url, fileName);
-        URL.revokeObjectURL(url);
-      } catch {
-        toast.error(t("workspace.surveys.share.personal_links.error_generating_links"));
-        setIsGenerating(false);
-        return;
-      }
-
-      toast.success(t("workspace.surveys.share.personal_links.links_generated_success_toast"), {
-        duration: 5000,
-        id: "generating-links",
-      });
-    } else {
-      const errorMessage = getTranslatedPersonalLinkError(getFormattedErrorMessage(result), t);
-      toast.error(errorMessage, {
-        duration: 5000,
-        id: "generating-links",
-      });
+    try {
+      const url = URL.createObjectURL(file);
+      downloadFile(url, fileName);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error(t("workspace.surveys.share.personal_links.error_generating_links"));
+      setIsGenerating(false);
+      return;
     }
+
+    toast.success(t("workspace.surveys.share.personal_links.links_generated_success_toast"), {
+      duration: 5000,
+      id: "generating-links",
+    });
 
     setIsGenerating(false);
   };

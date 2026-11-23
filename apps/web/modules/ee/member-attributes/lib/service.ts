@@ -571,29 +571,49 @@ export const applyMemberAttributeWrites = async (
   );
 };
 
+type TInviteAttributeValueRow = { attributeKeyId: string; value: string; normalizedValue: string };
+
+/**
+ * An invite's values, as `copyInviteAttributeValuesToMembership` copies them. Keys of another organization
+ * are never read: only values whose key belongs to the invite's organization. A caller that spends the
+ * invite before the membership exists (deleting the invite deletes its values) reads them first, in the
+ * same transaction, and passes them on.
+ */
+export const readInviteAttributeValues = (
+  { inviteId, organizationId }: { inviteId: string; organizationId: string },
+  client: Prisma.TransactionClient = prisma
+): Promise<TInviteAttributeValueRow[]> =>
+  client.inviteAttributeValue.findMany({
+    where: { inviteId, invite: { organizationId }, attributeKey: { organizationId } },
+    select: { attributeKeyId: true, value: true, normalizedValue: true },
+  });
+
 /**
  * Copies an invite's values onto the membership its acceptance created (ENG-7468: "Invites carry values
  * too, copied onto the membership when the person accepts"). Called on every acceptance path after the
- * membership exists and before the invite is deleted (which deletes its values). Keys of another
- * organization are never copied: only values whose key belongs to the invite's organization are read.
+ * membership exists. The values are read here unless the caller read them already (`values`), as it must
+ * when the invite is deleted (which deletes its values) before the membership exists. `transaction` runs
+ * the read and the write inside the caller's transaction.
  */
 export const copyInviteAttributeValuesToMembership = async ({
   inviteId,
   organizationId,
   userId,
+  values,
+  transaction,
 }: {
   inviteId: string;
   organizationId: string;
   userId: string;
+  values?: TInviteAttributeValueRow[];
+  transaction?: Prisma.TransactionClient;
 }): Promise<number> => {
-  const values = await prisma.inviteAttributeValue.findMany({
-    where: { inviteId, invite: { organizationId }, attributeKey: { organizationId } },
-    select: { attributeKeyId: true, value: true, normalizedValue: true },
-  });
-  if (values.length === 0) return 0;
+  const client = transaction ?? prisma;
+  const rows = values ?? (await readInviteAttributeValues({ inviteId, organizationId }, client));
+  if (rows.length === 0) return 0;
 
-  const { count } = await prisma.memberAttributeValue.createMany({
-    data: values.map((value) => ({ ...value, organizationId, userId })),
+  const { count } = await client.memberAttributeValue.createMany({
+    data: rows.map((value) => ({ ...value, organizationId, userId })),
     skipDuplicates: true,
   });
   return count;

@@ -8,10 +8,11 @@ import { useTranslation } from "react-i18next";
 import { TSurveyBackgroundBgType } from "@formbricks/types/surveys/types";
 import { isExternalImageSrc } from "@/lib/image-hosts";
 import { debounce } from "@/lib/utils/debounce";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import { getImagesFromUnsplashAction, triggerDownloadUnsplashImageAction } from "../actions";
+import { searchUnsplashPhotos, triggerUnsplashPhotoDownload } from "../lib/api-client";
 
 interface ImageFromUnsplashSurveyBgProps {
   readonly handleBgChange: (url: string, bgType: TSurveyBackgroundBgType) => void;
@@ -19,7 +20,7 @@ interface ImageFromUnsplashSurveyBgProps {
 
 interface UnsplashImage {
   id: string;
-  alt_description: string;
+  alt_description: string | null;
   urls: {
     regularWithAttribution: string;
     download?: string;
@@ -133,22 +134,14 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     const fetchData = async (searchQuery: string, currentPage: number) => {
       try {
         setIsLoading(true);
-        const getImagesFromUnsplashResponse = await getImagesFromUnsplashAction({
-          searchQuery: searchQuery,
-          page: currentPage,
-        });
-        if (!getImagesFromUnsplashResponse?.data) return;
-
-        const imagesFromUnsplash = getImagesFromUnsplashResponse.data;
-        for (let i = 0; i < imagesFromUnsplash.length; i++) {
-          const authorName = new URL(imagesFromUnsplash[i].urls.regularWithAttribution).searchParams.get(
-            "authorName"
-          );
-          imagesFromUnsplash[i].authorName = authorName;
-        }
+        const photos = await searchUnsplashPhotos(searchQuery, currentPage);
+        const imagesFromUnsplash: UnsplashImage[] = photos.map((photo) => ({
+          ...photo,
+          authorName: new URL(photo.urls.regularWithAttribution).searchParams.get("authorName") ?? undefined,
+        }));
         setImages((prevImages) => [...prevImages, ...imagesFromUnsplash]);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       } finally {
         setIsLoading(false);
       }
@@ -163,7 +156,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     return () => {
       debouncedFetchData.cancel();
     };
-  }, [query, page, setImages]);
+  }, [query, page, setImages, t]);
 
   useEffect(() => {
     inputFocus.current?.focus();
@@ -175,14 +168,12 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
     setImages([]);
   };
 
-  const handleImageSelected = async (imageUrl: string, downloadImageUrl?: string) => {
-    try {
-      handleBgChange(imageUrl, "image");
-      if (downloadImageUrl) {
-        await triggerDownloadUnsplashImageAction({ downloadUrl: downloadImageUrl });
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+  const handleImageSelected = (imageUrl: string, downloadImageUrl?: string) => {
+    handleBgChange(imageUrl, "image");
+    if (downloadImageUrl) {
+      // Unsplash's usage report, owed to Unsplash rather than to the author: the background is already
+      // set, so a failed report stays out of the way, as it did when the server action returned it as data.
+      triggerUnsplashPhotoDownload(downloadImageUrl).catch(() => undefined);
     }
   };
 
@@ -211,7 +202,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
                 width={300}
                 height={200}
                 src={image.urls.regularWithAttribution}
-                alt={image.alt_description}
+                alt={image.alt_description ?? ""}
                 onClick={() => handleImageSelected(image.urls.regularWithAttribution, image.urls.download)}
                 className="h-full cursor-pointer rounded-lg object-cover"
                 unoptimized={isExternalImageSrc(image.urls.regularWithAttribution)}
