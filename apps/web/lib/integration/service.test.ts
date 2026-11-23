@@ -10,12 +10,14 @@ import {
   getIntegration,
   getIntegrationByType,
   getIntegrations,
+  saveIntegrationKeepingStoredKey,
 } from "./service";
 
 // Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     survey: { findMany: vi.fn() },
     integration: {
       upsert: vi.fn(),
@@ -112,6 +114,88 @@ describe("Integration Service", () => {
       await expect(createOrUpdateIntegration(mockWorkspaceId, mockIntegrationData)).rejects.toThrow(
         DatabaseError
       );
+    });
+  });
+
+  describe("saveIntegrationKeepingStoredKey", () => {
+    const mockWorkspaceId = "clg123456789012345678901234";
+    const redacted = {
+      type: "googleSheets" as const,
+      config: { ...mockIntegrationConfig, key: { ...mockIntegrationConfig.key, access_token: "" } },
+    };
+    const where = { type_workspaceId: { workspaceId: mockWorkspaceId, type: "googleSheets" } };
+
+    // The transaction client: the locking read, the write, and the visibility check's survey read.
+    const mockTx = (lockedRows: { config: unknown }[]) => {
+      const tx = {
+        $queryRaw: vi.fn().mockResolvedValue(lockedRows),
+        survey: { findMany: vi.fn().mockResolvedValue([]) },
+        integration: {
+          update: vi.fn().mockResolvedValue({ id: "int_123" }),
+          create: vi.fn().mockResolvedValue({ id: "int_new" }),
+        },
+      };
+      vi.mocked(prisma.$transaction).mockImplementation(((run: (client: typeof tx) => unknown) =>
+        run(tx)) as never);
+      return tx;
+    };
+
+    test("updates the locked row, keeping its stored key over the redacted one", async () => {
+      const tx = mockTx([{ config: mockIntegrationConfig }]);
+
+      await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
+
+      expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(tx.integration.create).not.toHaveBeenCalled();
+      expect(tx.integration.update).toHaveBeenCalledWith({
+        where,
+        data: {
+          type: "googleSheets",
+          config: { ...redacted.config, key: mockIntegrationConfig.key },
+          workspace: { connect: { id: mockWorkspaceId } },
+        },
+      });
+    });
+
+    test("creates the row with the sent config when none is stored", async () => {
+      const tx = mockTx([]);
+
+      const result = await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
+
+      expect(result).toEqual({ id: "int_new" });
+      expect(tx.integration.update).not.toHaveBeenCalled();
+      expect(tx.integration.create).toHaveBeenCalledWith({
+        data: { ...redacted, workspace: { connect: { id: mockWorkspaceId } } },
+      });
+    });
+
+    test("checks newly mapped surveys on the transaction, not the app client", async () => {
+      const tx = mockTx([{ config: { ...mockIntegrationConfig, data: [] } }]);
+
+      await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
+
+      expect(tx.survey.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    });
+
+    test("throws DatabaseError when Prisma rejects the write", async () => {
+      const tx = mockTx([]);
+      tx.integration.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: "P2002",
+          clientVersion: "5.0.0",
+        })
+      );
+
+      await expect(saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted)).rejects.toThrow(DatabaseError);
+    });
+
+    test("rethrows an error that is not Prisma's unchanged", async () => {
+      const tx = mockTx([{ config: mockIntegrationConfig }]);
+      const failure = new Error("boom");
+      tx.integration.update.mockRejectedValue(failure);
+
+      await expect(saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted)).rejects.toBe(failure);
     });
   });
 
