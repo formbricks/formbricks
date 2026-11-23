@@ -2,7 +2,7 @@
 
 import { toast } from "react-hot-toast";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
-import { convertHeicToJpegAction } from "./actions";
+import { convertHeicToJpeg } from "./api-client";
 
 const isFileSizeExceed = (fileSizeInMB: number, maxSizeInMB?: number) => {
   if (maxSizeInMB && fileSizeInMB > maxSizeInMB) {
@@ -34,21 +34,18 @@ const checkFile = async (
     return { file };
   }
 
-  const convertedFileResponse = await convertHeicToJpegAction({ file });
-  if (!convertedFileResponse?.data) {
+  let convertedFile: File;
+  try {
+    convertedFile = await convertHeicToJpeg(file);
+  } catch {
     return { rejected: "unsupported" };
   }
 
-  const convertedFileSizeInMB = convertedFileResponse.data.size / 1000000;
-  if (isFileSizeExceed(convertedFileSizeInMB, maxSizeInMB)) {
+  if (isFileSizeExceed(convertedFile.size / 1000000, maxSizeInMB)) {
     return { rejected: "size" };
   }
 
-  return {
-    file: new File([convertedFileResponse.data], file.name.replace(/\.heic$/, ".jpg"), {
-      type: "image/jpeg",
-    }),
-  };
+  return { file: convertedFile };
 };
 
 /** The toast text for the rejected files, empty when none were rejected. */

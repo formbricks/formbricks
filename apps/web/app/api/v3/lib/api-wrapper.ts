@@ -9,12 +9,7 @@ import {
   type TReleaseSlot,
   releaseWhenBodySettles,
 } from "@/app/lib/api/concurrency-limiter";
-import {
-  getCrossOriginRefusal,
-  isJsonContentType,
-  isSafeMethod,
-  mediaTypeOf,
-} from "@/app/lib/api/origin-check";
+import { isJsonContentType, isSafeMethod } from "@/app/lib/api/origin-check";
 import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
@@ -30,6 +25,8 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
+  type TArrayBudget,
+  V3_REQUEST_ARRAY_BUDGET,
   arrayBudgetInvalidParam,
   findArrayBudgetViolation,
   findRawArrayBudgetViolation,
@@ -37,6 +34,7 @@ import {
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import { mapV3ThrownError } from "./errors";
 import { BoundedInvalidParams } from "./invalid-params";
+import { getCrossOriginRefusal } from "./origin-check";
 import {
   type InvalidParam,
   isInvalidParamCode,
@@ -55,6 +53,11 @@ import type { TV3AuditLog, TV3Authentication } from "./types";
 type TV3Schema = z.ZodTypeAny;
 type MaybePromise<T> = T | Promise<T>;
 
+/**
+ * How a route authenticates. `session` and `none` serve browsers on this origin only: their unsafe
+ * methods pass the cross-origin check (`origin-check.ts`), so a script or another site gets a 403 there.
+ * `both` checks the session path the same way and leaves API-key callers alone.
+ */
 export type TV3AuthMode = "none" | "session" | "apiKey" | "both";
 
 export type TV3Schemas = {
@@ -103,6 +106,14 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    */
   bodyLimitBytes?: number;
   /**
+   * The array limits this route's JSON body is held to, in place of `V3_REQUEST_ARRAY_BUDGET` (1,000
+   * items per array, 50,000 elements in all). Only for a route whose body is, by design, one long list
+   * — a contacts CSV import of up to 10,000 records — and sized from that route's own caps, never
+   * "big enough". The depth cap and `bodyLimitBytes` still hold, and the route's schema still bounds
+   * every array it declares; this only lets the pre-schema walk reach that schema.
+   */
+  arrayBudget?: TArrayBudget;
+  /**
    * Caps how many requests to this route one server process handles at once; the next one gets a 503
    * `capacity_reached` with `Retry-After`. The slot is taken after authentication, rate limiting and
    * **once the body has been read** within `bodyLimitBytes`: it bounds the work, not the transfer, so a
@@ -139,6 +150,13 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    * which the array-budget 400 would (it names the offending path).
    */
   handlerReadsBody?: boolean;
+  /**
+   * Skip the cross-origin check on writes. Only for an `auth: "none"` route that servers call and that is
+   * authenticated by a secret in the request itself (the Webhook Secret URL token): it carries no browser
+   * credential for a forged cross-site request to ride on, and its callers send no `Origin`, which the
+   * check would refuse. Refused at module load on any other auth mode.
+   */
+  allowCrossOrigin?: boolean;
   action?: TAuditAction;
   targetType?: TAuditTarget;
   handler: (params: TV3HandlerParams<TV3ParsedInput<S>, TProps>) => MaybePromise<Response>;
@@ -149,6 +167,7 @@ type TV3ParseContext = {
   requestId: string;
   instance: string;
   bodyLimitBytes: number;
+  arrayBudget: TArrayBudget;
   handlerReadsBody?: boolean;
 };
 
@@ -364,12 +383,11 @@ function bodyTooLargeFailure(
  */
 function arrayBudgetFailure(
   bodyData: unknown,
-  requestId: string,
-  instance: string
+  { requestId, instance, arrayBudget }: TV3ParseContext
 ): TV3InputParseFailure | null {
-  const violation = findArrayBudgetViolation(bodyData);
+  const violation = findArrayBudgetViolation(bodyData, arrayBudget);
   return violation
-    ? invalidBodyFailure([arrayBudgetInvalidParam(violation, "body")], requestId, instance)
+    ? invalidBodyFailure([arrayBudgetInvalidParam(violation, "body", arrayBudget)], requestId, instance)
     : null;
 }
 
@@ -386,7 +404,7 @@ type TV3JsonBodyRead =
  */
 async function readV3JsonBody(
   req: Request,
-  { requestId, instance, bodyLimitBytes }: TV3ParseContext
+  { requestId, instance, bodyLimitBytes, arrayBudget }: TV3ParseContext
 ): Promise<TV3JsonBodyRead> {
   let text: string;
   try {
@@ -397,11 +415,15 @@ async function readV3JsonBody(
       : { kind: "malformed" };
   }
 
-  const violation = findRawArrayBudgetViolation(text);
+  const violation = findRawArrayBudgetViolation(text, arrayBudget);
   if (violation) {
     return {
       kind: "refused",
-      failure: invalidBodyFailure([arrayBudgetInvalidParam(violation, "body")], requestId, instance),
+      failure: invalidBodyFailure(
+        [arrayBudgetInvalidParam(violation, "body", arrayBudget)],
+        requestId,
+        instance
+      ),
     };
   }
 
@@ -432,7 +454,7 @@ async function parseV3Body(
   }
 
   const bodyData = read.data;
-  const budgetFailure = arrayBudgetFailure(bodyData, requestId, instance);
+  const budgetFailure = arrayBudgetFailure(bodyData, context);
   if (budgetFailure) {
     return budgetFailure;
   }
@@ -467,10 +489,7 @@ async function preflightUndeclaredBody(
     return null;
   }
 
-  const failure =
-    read.kind === "refused"
-      ? read.failure
-      : arrayBudgetFailure(read.data, context.requestId, context.instance);
+  const failure = read.kind === "refused" ? read.failure : arrayBudgetFailure(read.data, context);
   if (failure) {
     // The clone's branch matters when Content-Length refused it unread; otherwise its read already
     // settled it.
@@ -481,6 +500,10 @@ async function preflightUndeclaredBody(
 }
 
 const MULTIPART_FORM_DATA = "multipart/form-data";
+
+/** The media type of a `Content-Type` header, without its parameters (the multipart boundary). */
+const mediaTypeOf = (contentType: string | null): string =>
+  (contentType ?? "").split(";")[0].trim().toLowerCase();
 
 /**
  * The form step of `parseV3Input`, for a route that takes `multipart/form-data`: the media type first
@@ -619,6 +642,58 @@ function ensureRequestIdHeader(response: Response, requestId: string): Response 
   });
 }
 
+/**
+ * Whether this request carries an ambient credential and so needs the cross-origin check: a session
+ * cookie, or nothing at all on a pre-login (`auth: "none"`) route. API-key requests carry no ambient
+ * credential, so a forged cross-site request has nothing to ride on.
+ */
+function carriesAmbientCredential(authMode: TV3AuthMode, authentication: TV3Authentication): boolean {
+  if (authMode === "none") return true;
+  return Boolean(authentication && "user" in authentication);
+}
+
+/** A 403 for a cross-origin request that carries the browser's credentials; null for any other request. */
+function refuseCrossOriginOrContinue(params: {
+  req: NextRequest;
+  authMode: TV3AuthMode;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance?: string;
+  log: ReturnType<typeof logger.withContext>;
+}): Response | null {
+  const { req, authMode, authentication, requestId, instance, log } = params;
+  if (!carriesAmbientCredential(authMode, authentication)) return null;
+
+  const refusal = getCrossOriginRefusal(req);
+  if (!refusal) return null;
+
+  log.warn(
+    { reason: refusal, secFetchSite: req.headers.get("sec-fetch-site"), origin: req.headers.get("origin") },
+    "V3 API refused a cross-origin request"
+  );
+  return problemForbidden(requestId, "Cross-origin requests are not allowed.", instance);
+}
+
+/**
+ * A session-authenticated route that declares a JSON body must receive JSON (ENG-3380): a cross-site form
+ * can post `text/plain` without a preflight, and the body parser would read that text as JSON anyway.
+ * API-key callers are exempt, as they are from the origin check.
+ */
+function refuseNonJsonSessionBody(
+  req: NextRequest,
+  authentication: TV3Authentication,
+  schemas: TV3Schemas | undefined,
+  { requestId, instance }: { requestId: string; instance?: string }
+): Response | null {
+  if (!authentication || !("user" in authentication)) return null;
+  if (isSafeMethod(req.method) || !schemas?.body || isJsonContentType(req.headers.get("content-type"))) {
+    return null;
+  }
+
+  const detail = "The request body must be application/json";
+  return problemUnsupportedMediaType(requestId, detail, { instance, acceptPost: "application/json" });
+}
+
 async function authenticateV3RequestOrRespond(
   req: NextRequest,
   authMode: TV3AuthMode,
@@ -648,39 +723,18 @@ async function authenticateV3RequestOrRespond(
 }
 
 /**
- * The CSRF gate for a request that authenticated with the session cookie (ENG-3380): a state-changing
- * call must come from the app itself, and a route that declares a JSON body must be sent as JSON, which a
- * cross-site form cannot do without a preflight. API-key requests carry no cookie and are not checked.
+ * The bucket a route charges unless it names its own: the dashboard's `/api/internal` surface gets one
+ * sized for page loads and refetches, so it never spends a user's public API budget (ADR 0059: the
+ * directory is the declaration). Under a `basePath` deployment the request URL keeps the prefix (see
+ * `reportServerError`), so the first `/api/` segment decides, wherever it sits: a later one, say inside a
+ * catch-all's path, can't move a request into the larger bucket.
  */
-function refuseUnsafeSessionRequest(
-  req: NextRequest,
-  authentication: TV3Authentication,
-  schemas: TV3Schemas | undefined,
-  {
-    requestId,
-    instance,
-    log,
-  }: { requestId: string; instance: string; log: ReturnType<typeof logger.withContext> }
-): Response | null {
-  if (!authentication || !("user" in authentication)) {
-    return null;
-  }
-
-  const refusal = getCrossOriginRefusal(req);
-  if (refusal) {
-    log.warn({ statusCode: 403, refusal }, "V3 API cross-origin session request refused");
-    return problemForbidden(requestId, "Cross-origin request refused", instance);
-  }
-
-  if (!isSafeMethod(req.method) && schemas?.body && !isJsonContentType(req.headers.get("content-type"))) {
-    return problemUnsupportedMediaType(requestId, "The request body must be application/json", {
-      instance,
-      acceptPost: "application/json",
-    });
-  }
-
-  return null;
-}
+export const getDefaultRateLimitConfig = (pathname: string): TRateLimitConfig => {
+  const api = pathname.indexOf("/api/");
+  return api !== -1 && pathname.startsWith("/api/internal/", api)
+    ? rateLimitConfigs.api.internal
+    : rateLimitConfigs.api.v3;
+};
 
 async function applyV3RateLimitOrRespond(params: {
   authentication: TV3Authentication;
@@ -835,12 +889,14 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     rateLimit = true,
     customRateLimitConfig,
     bodyLimitBytes = DEFAULT_REQUEST_BODY_LIMIT_BYTES,
+    arrayBudget = V3_REQUEST_ARRAY_BUDGET,
     concurrency,
     handler,
     action,
     targetType,
     redactPath,
     handlerReadsBody,
+    allowCrossOrigin = false,
   } = params;
 
   // A misconfigured limit is a programming error in the route module, so fail when the module loads
@@ -848,6 +904,18 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
   // or negative limit would refuse every request with a body.
   if (!Number.isSafeInteger(bodyLimitBytes) || bodyLimitBytes <= 0) {
     throw new Error(`withV3ApiWrapper: bodyLimitBytes must be a positive integer, got ${bodyLimitBytes}`);
+  }
+
+  for (const [name, limit] of Object.entries(arrayBudget)) {
+    if (!Number.isSafeInteger(limit) || limit <= 0) {
+      throw new Error(`withV3ApiWrapper: arrayBudget.${name} must be a positive integer, got ${limit}`);
+    }
+  }
+
+  if (allowCrossOrigin && auth !== "none") {
+    throw new Error(
+      'withV3ApiWrapper: allowCrossOrigin is only for auth: "none" routes with their own secret'
+    );
   }
 
   if (schemas?.body && schemas.formData) {
@@ -890,30 +958,37 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return authResult.response;
       }
 
-      const csrfRefusal = refuseUnsafeSessionRequest(req, authResult.authentication, schemas, {
-        requestId,
-        instance,
-        log,
-      });
-      if (csrfRefusal) {
-        return csrfRefusal;
-      }
-
-      const rateLimitResponse = await applyV3RateLimitOrRespond({
-        authentication: authResult.authentication,
-        enabled: rateLimit,
-        config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
-        requestId,
-        log,
-      });
-      if (rateLimitResponse) {
-        return rateLimitResponse;
+      // The cross-origin check runs before rate limiting, so a forged request spends nothing, and after
+      // authentication, because whether it applies depends on how the caller authenticated
+      // (see `origin-check.ts`).
+      const guardResponse =
+        (allowCrossOrigin
+          ? null
+          : refuseCrossOriginOrContinue({
+              req,
+              authMode: auth,
+              authentication: authResult.authentication,
+              requestId,
+              instance,
+              log,
+            })) ??
+        refuseNonJsonSessionBody(req, authResult.authentication, schemas, { requestId, instance }) ??
+        (await applyV3RateLimitOrRespond({
+          authentication: authResult.authentication,
+          enabled: rateLimit,
+          config: customRateLimitConfig ?? getDefaultRateLimitConfig(instance),
+          requestId,
+          log,
+        }));
+      if (guardResponse) {
+        return guardResponse;
       }
 
       const parsedInputResult = await parseV3Input(req, props, schemas, {
         requestId,
         instance,
         bodyLimitBytes,
+        arrayBudget,
         handlerReadsBody,
       });
       if (!parsedInputResult.ok) {
@@ -946,8 +1021,16 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // 429 is already logged by the limiter; a 400 is a malformed request, not an authorization event.
       // The rejection a reviewer wants — the 403 an authenticated caller gets for someone else's
       // resource — is raised by the operation below and is audited as a failure. MCP's permission gate
-      // audits its own refusals in `registerMcpTool`.
-      auditLog = buildV3AuditLog(authResult.authentication, action, targetType, recordedRequest.url);
+      // audits its own refusals in `registerMcpTool`. A pre-login route that names an audit action is
+      // audited with no actor: what it changes (an account, through a link's token) is worth a record. Its
+      // operation charges an IP budget and skips the entry when that refuses, so the budget bounds the rows.
+      auditLog = buildV3AuditLog(
+        authResult.authentication,
+        action,
+        targetType,
+        recordedRequest.url,
+        auth === "none"
+      );
 
       const execute = () =>
         handler({

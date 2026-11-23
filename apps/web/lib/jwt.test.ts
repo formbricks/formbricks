@@ -4,6 +4,7 @@ import { type MockInstance, beforeEach, describe, expect, test, vi } from "vites
 import { prisma } from "@formbricks/database";
 import * as crypto from "@/lib/crypto";
 import {
+  InvalidEmailChangeTokenError,
   createEmailChangeToken,
   createEmailToken,
   createFeedbackRecordsGatewayToken,
@@ -742,6 +743,18 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       await expect(verifyEmailChangeToken(token)).rejects.toThrow(
         "Token is invalid or missing required fields"
       );
+      // The route answers this type with 422; anything else is a fault and a 500.
+      await expect(verifyEmailChangeToken(token)).rejects.toBeInstanceOf(InvalidEmailChangeTokenError);
+    });
+
+    test("calls a token whose payload segment isn't JSON invalid, not a fault", async () => {
+      // jsonwebtoken lets this one through as a bare SyntaxError, and no secret is needed to send it.
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.bm90anNvbg.x";
+      await expect(verifyEmailChangeToken(token)).rejects.toBeInstanceOf(InvalidEmailChangeTokenError);
+    });
+
+    test("leaves jsonwebtoken's own errors as they are, so the route can tell them apart", async () => {
+      await expect(verifyEmailChangeToken("not-a-jwt")).rejects.toBeInstanceOf(jwt.JsonWebTokenError);
     });
 
     test("should throw error if id is missing", async () => {
@@ -785,6 +798,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token is no longer valid");
+        await expect(verifyEmailChangeToken(token)).rejects.toBeInstanceOf(InvalidEmailChangeTokenError);
       });
 
       test("should reject a token replayed after the email already changed", async () => {
@@ -814,6 +828,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token cannot be bound");
+        await expect(verifyEmailChangeToken(token)).rejects.toBeInstanceOf(InvalidEmailChangeTokenError);
       });
 
       // The row this binds to must be the one Better Auth bumps on a password write — the full

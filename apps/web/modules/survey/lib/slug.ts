@@ -49,12 +49,12 @@ export const getSurveyBySlug = reactCache(async (slug: string): Promise<TSurveyB
 export const updateSurveySlug = async (
   surveyId: string,
   slug: string | null
-): Promise<{ id: string; slug: string | null }> => {
+): Promise<{ id: string; slug: string | null; updatedAt: Date }> => {
   try {
     const result = await prisma.survey.update({
       where: { id: surveyId },
       data: { slug },
-      select: { id: true, slug: true },
+      select: { id: true, slug: true, updatedAt: true },
     });
     return result;
   } catch (error) {

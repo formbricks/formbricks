@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as postSignup } from "@/app/api/internal/signups/route";
+import { flushAfter } from "@/integration/after";
+import { postToPreLoginRoute } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { createInviteToken } from "@/lib/jwt";
-import { createUserAction } from "@/modules/auth/signup/actions";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/email";
 
@@ -17,9 +19,15 @@ import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/em
  */
 
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ get: () => undefined, delete: () => undefined })),
+  cookies: vi.fn(async () => ({ get: () => undefined, set: () => undefined, delete: () => undefined })),
   headers: vi.fn(async () => new Headers()),
 }));
+
+// `after()` needs a Next request scope. Sign-up defers the verification send and all new-account work
+// to it (ENG-7094), so the suite flushes it after each call, as a finished request would.
+vi.mock("next/server", async (importOriginal) =>
+  (await import("@/integration/after")).withAfterMock(await importOriginal<typeof import("next/server")>())
+);
 
 /**
  * Cloud-shaped instance: public sign-up open and multi-org licensed. That is the environment ENG-2091
@@ -47,6 +55,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>();
   return { ...actual, queueAuditEventBackground: vi.fn(async () => undefined) };
 });
+
+/** The sign-up form's request, through the real `POST /api/internal/signups`. */
+const createSignup = (body: Record<string, unknown>) =>
+  postToPreLoginRoute(postSignup, "/api/internal/signups", body);
 
 const SSO_EMAIL = "azure.person@corporate-example.com";
 
@@ -96,15 +108,16 @@ describe("invite sign-up when the existing account is SSO-only (real Postgres)",
     expect(await prisma.account.count({ where: { userId: ssoUser.id } })).toBe(0);
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Azure Person",
       email: SSO_EMAIL,
       password: "SomePassword1!",
       inviteToken,
     });
+    await flushAfter();
 
     // Same indistinguishable response as the credential case (ENG-2099).
-    expect(result?.data).toEqual({ success: true, emailDisplayToken: expect.any(String) });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
     // Critically: no credential account may be created for an SSO-only user by an unauthenticated
@@ -129,14 +142,15 @@ describe("invite sign-up when the existing account is SSO-only (real Postgres)",
     const orgsBefore = await prisma.organization.count();
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Impersonator",
       email: SSO_EMAIL,
       password: "AttackerPassword1!",
     });
+    await flushAfter();
 
     // Enumeration-safe: no invite, so the generic screen — identical to a brand-new address.
-    expect(result?.data).toEqual({ success: true, emailDisplayToken: expect.any(String) });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(await prisma.account.count({ where: { userId: ssoUser.id } })).toBe(0);
     expect(await prisma.organization.count()).toBe(orgsBefore);
     expect(await prisma.membership.count({ where: { userId: ssoUser.id } })).toBe(0);

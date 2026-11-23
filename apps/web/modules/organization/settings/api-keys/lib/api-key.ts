@@ -48,6 +48,8 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
           organizationId,
         },
         select: apiKeyClientSelect,
+        // Oldest first, so a rename or a new key doesn't reshuffle the list the page refetches.
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
       return apiKeys;
     } catch (error) {
@@ -240,10 +242,14 @@ export const createApiKey = async (
   }
 };
 
+/**
+ * Rename a key. Returns the fields the settings page shows — never the stored hashes, which have no
+ * business leaving this module (they used to reach the caller and, through it, the audit log).
+ */
 export const updateApiKey = async (
   apiKeyId: string,
   data: TApiKeyUpdateInput
-): Promise<TApiKeyWithEnvironmentPermission | null> => {
+): Promise<TApiKeyWithEnvironmentPermission> => {
   try {
     const updatedApiKey = await prisma.apiKey.update({
       where: {

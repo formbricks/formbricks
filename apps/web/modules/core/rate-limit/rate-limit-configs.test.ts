@@ -107,6 +107,9 @@ describe("rateLimitConfigs", () => {
         namespace: "auth:verify:account",
         failClosed: true,
       });
+      // The email-token endpoint is gone (the sign-up answer carries the display token), and its bucket
+      // with it.
+      expect(rateLimitConfigs.auth).not.toHaveProperty("emailToken");
       // How often one IP can make the SAML callback parse an anonymous XML document (ENG-3973).
       expect(rateLimitConfigs.auth.samlCallback).toEqual({
         interval: 60,
@@ -121,6 +124,7 @@ describe("rateLimitConfigs", () => {
         "v1",
         "v2",
         "v3",
+        "internal",
         "v3StateMutation",
         "mcpAuth",
         "v3WorkflowWebhook",
@@ -128,6 +132,7 @@ describe("rateLimitConfigs", () => {
         "v3WorkflowTestRequests",
         "v3WorkflowTestRuns",
         "v3SurveyGenerate",
+        "internalAiTranslate",
         "v3SurveyVisibility",
         "v3SurveysFullList",
         "v3CustomCss",
@@ -137,6 +142,7 @@ describe("rateLimitConfigs", () => {
         "internalDatasetPurge",
         "internalRetentionExport",
         "internalFeedbackCsvImport",
+        "internalHeicConversion",
         "client",
         "clientEnvironment",
         "clientCreativeEvents",
@@ -184,6 +190,18 @@ describe("rateLimitConfigs", () => {
         allowedPerInterval: 10,
         namespace: "api:internal:retention-runs:export",
       });
+      // Every conversion decodes a whole photo on the server, so a loosened quota is a CPU regression.
+      expect(rateLimitConfigs.api.internalHeicConversion).toEqual({
+        interval: 60,
+        allowedPerInterval: 20,
+        namespace: "api:internal:heic-conversions",
+      });
+      // One call per target language, each up to 8192 output tokens: a loosened quota is a cost regression.
+      expect(rateLimitConfigs.api.internalAiTranslate).toEqual({
+        interval: 60,
+        allowedPerInterval: 20,
+        namespace: "api:internal:ai-translations",
+      });
     });
 
     test("should have all action configurations", () => {
@@ -199,13 +217,11 @@ describe("rateLimitConfigs", () => {
         "twoFactorManage",
         "webhookTest",
         "webhookSecretReveal",
-        "heicConvert",
         "licenseRecheck",
         "unsplash",
         "inviteMember",
         "inviteMemberPerUser",
         "createOrganization",
-        "aiTranslation",
         "generateExampleResponses",
         "integrationMutation",
         "feedbackSourceMutation",

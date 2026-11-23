@@ -20,7 +20,7 @@ import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/li
 export const enforceCredentialSignupBackstop = async (
   email: string
 ): Promise<false | { data: { isBootstrapAdmin: BootstrapAdminMarker } } | undefined> => {
-  // createUserAction runs the full personal-email policy (Cloud gate + invite exemption) and marks the
+  // the sign-up route runs the full personal-email policy (Cloud gate + invite exemption) and marks the
   // request scope before calling signUpEmail. If that mark is absent, the sign-up did not come through
   // the action, so both re-checks below re-enforce what the action would have applied (no invite is
   // carried on that path). The raw HTTP route is closed since ENG-3988, so this covers in-process callers

@@ -7,7 +7,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
-import { recheckLicenseAction } from "@/modules/ee/license-check/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { recheckLicense } from "@/modules/ee/license-check/lib/api-client";
 import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
@@ -58,30 +59,20 @@ export const EnterpriseLicenseStatus = ({
   const handleRecheck = async () => {
     setIsRechecking(true);
     try {
-      const result = await recheckLicenseAction({ workspaceId });
-      if (result?.serverError) {
-        toast.error(result.serverError || t("workspace.settings.enterprise.recheck_license_failed"));
-        return;
-      }
-
-      if (result?.data) {
-        if (result.data.status === "unreachable") {
-          toast.error(t("workspace.settings.enterprise.recheck_license_unreachable"));
-        } else if (result.data.status === "instance_mismatch") {
-          toast.error(t("workspace.settings.enterprise.recheck_license_instance_mismatch"));
-        } else if (result.data.status === "invalid_license") {
-          toast.error(t("workspace.settings.enterprise.recheck_license_invalid"));
-        } else {
-          toast.success(t("workspace.settings.enterprise.recheck_license_success"));
-        }
-        router.refresh();
+      const result = await recheckLicense(workspaceId);
+      if (result.status === "unreachable") {
+        toast.error(t("workspace.settings.enterprise.recheck_license_unreachable"));
+      } else if (result.status === "instance_mismatch") {
+        toast.error(t("workspace.settings.enterprise.recheck_license_instance_mismatch"));
+      } else if (result.status === "invalid_license") {
+        toast.error(t("workspace.settings.enterprise.recheck_license_invalid"));
       } else {
-        toast.error(t("workspace.settings.enterprise.recheck_license_failed"));
+        toast.success(t("workspace.settings.enterprise.recheck_license_success"));
       }
+      // The license status on this page is server-rendered; re-render it.
+      router.refresh();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("workspace.settings.enterprise.recheck_license_failed")
-      );
+      toast.error(getV3ApiErrorMessage(error, t("workspace.settings.enterprise.recheck_license_failed")));
     } finally {
       setIsRechecking(false);
     }

@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteTeamAction } from "@/modules/ee/teams/team-list/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { deleteTeam } from "@/modules/ee/teams/team-list/lib/api-client";
 import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -27,19 +27,13 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
   const handleDeleteTeam = async () => {
     setIsDeleting(true);
 
-    const deleteTeamActionResponse = await deleteTeamAction({ teamId });
-    if (deleteTeamActionResponse?.serverError) {
-      toast.error(getFormattedErrorMessage(deleteTeamActionResponse));
-      setIsDeleteDialogOpen(false);
-      setIsDeleting(false);
-      return;
-    }
-    if (deleteTeamActionResponse?.data) {
+    try {
+      await deleteTeam(teamId);
       toast.success(t("workspace.settings.teams.team_deleted_successfully"));
       onDelete?.();
       router.refresh();
-    } else {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
 
     setIsDeleteDialogOpen(false);

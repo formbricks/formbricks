@@ -4,8 +4,7 @@ get:
   description: |
     Returns the contact attribute keys for a workspace. Use the returned `key` values as
     `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
-    operators apply. Requires the Contacts entitlement (**403** without it). Session cookie,
-    `x-api-key`, or a Bearer token.
+    operators apply. Requires the Contacts entitlement (**403** without it). `x-api-key` or a Bearer token.
 
     Optional `search`, `filter[dataType][in]`, `filter[type][in]`, `sortBy` and `includeTotalCount`
     narrow, order and count the list on the server. Without them the endpoint behaves as before:
