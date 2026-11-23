@@ -160,7 +160,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
   Until the first administrator exists, anyone who can reach the instance can create that account. If the
   instance is reachable from the internet before you finish setup, set the optional `SETUP_TOKEN` environment
   variable (at least 16 characters, for example from `openssl rand -hex 16`). The setup form then asks for it,
-  and single sign-on cannot be used to create the first administrator while it is set (unless you configured `DEFAULT_ORGANIZATION_ID`, which admits SSO sign-ups by design). Leaving it unset keeps
+  and single sign-on cannot be used to create the first administrator while it is set, so keep email sign-in on
+  (`EMAIL_AUTH_DISABLED` unset) until setup is done. Leaving it unset keeps
   the default open setup. Once the first account exists, the instance never accepts a new first administrator
   again, even if every account is later deleted.
 </Note>

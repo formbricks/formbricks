@@ -277,7 +277,8 @@ For the complete values surface, refer to the chart README in the repository:
 
 Until the first administrator exists, anyone who can reach the instance can create that account. If the
 instance is reachable from the internet before you finish setup, set `SETUP_TOKEN` (at least 16 characters)
-through `deployment.env`. The setup form then asks for it. See the
+through `deployment.env`. The setup form then asks for it, and single sign-on cannot create the first
+administrator while it is set, so keep email sign-in on until setup is done. See the
 [environment variables reference](/self-hosting/configuration/environment-variables). It is optional: leaving
 it unset keeps the default open setup.
 

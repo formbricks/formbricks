@@ -308,7 +308,7 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         // already committed, and getIsFreshInstance writes the marker too once it sees a user.
         if (decision.isBootstrapAdmin) {
           await markInstanceSetupCompleted().catch((error: unknown) =>
-            logger.error({ error, userId: user.id }, "Failed to record that the instance is set up")
+            logger.error({ err: error, userId: user.id }, "Failed to record that the instance is set up")
           );
         }
 

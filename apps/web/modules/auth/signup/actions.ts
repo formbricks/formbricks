@@ -396,7 +396,7 @@ const recordInstanceSetupForBootstrapAdmin = async (isBootstrapAdmin: boolean, u
   try {
     await markInstanceSetupCompleted();
   } catch (error) {
-    logger.error({ error, userId }, "Failed to record that the instance is set up");
+    logger.error({ err: error, userId }, "Failed to record that the instance is set up");
   }
 };
 
