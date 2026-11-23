@@ -11,6 +11,7 @@ vi.mock("@/lib/integration/service", () => ({ createOrUpdateIntegration: vi.fn()
 
 /** An in-memory stand-in for the Redis locks `writeData` takes per spreadsheet. */
 const lockStore = vi.hoisted(() => new Map<string, string>());
+const lockRenewals = vi.hoisted((): string[] => []);
 const cacheMock = vi.hoisted(() => ({
   tryLock: vi.fn(
     async (
@@ -24,9 +25,14 @@ const cacheMock = vi.hoisted(() => ({
   ),
   runRedisOperation: vi.fn(async (operation: (redis: unknown) => Promise<unknown>) =>
     operation({
-      eval: async (_script: string, options: { keys: string[]; arguments: string[] }) => {
+      // The two token-checked scripts the service runs: PEXPIRE renews the lease, otherwise DEL releases it.
+      eval: async (script: string, options: { keys: string[]; arguments: string[] }) => {
         const [key] = options.keys;
         if (lockStore.get(key) !== options.arguments[0]) return 0;
+        if (script.includes("PEXPIRE")) {
+          lockRenewals.push(key);
+          return 1;
+        }
         lockStore.delete(key);
         return 1;
       },
@@ -183,6 +189,7 @@ describe("writeData", () => {
 
   beforeEach(() => {
     lockStore.clear();
+    lockRenewals.length = 0;
     cacheMock.tryLock.mockClear();
     cacheMock.runRedisOperation.mockClear();
     sheetsMock.get.mockReset();
@@ -511,6 +518,49 @@ describe("writeData", () => {
         UnknownError
       );
       expect(lockStore.has(lockKey)).toBe(false);
+    });
+
+    describe("while a write outlasts the renewal interval", () => {
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      /** Header read that lets one renewal interval pass, with `during` run first, before it answers. */
+      const slowHeaderRead =
+        (during: () => void = () => {}) =>
+        (_params: unknown, callback: (err: null, res: { data: object }) => void) => {
+          during();
+          vi.advanceTimersByTime(10_000);
+          setTimeout(() => callback(null, { data: {} }), 0);
+        };
+
+      test("renews the lease, then writes and releases as usual", async () => {
+        sheetsMock.get.mockImplementation(slowHeaderRead());
+        sheetsMock.update.mockImplementation(respondAsync(null));
+        sheetsMock.append.mockImplementation(respondAsync(null));
+
+        await writeData(authorizedIntegration, "sheet1", ["answer"], ["question"]);
+
+        expect(lockRenewals).toEqual([lockKey]);
+        expect(sheetsMock.append).toHaveBeenCalledTimes(1);
+        expect(lockStore.has(lockKey)).toBe(false);
+      });
+
+      test("writes nothing once another writer has taken the lapsed lock", async () => {
+        // The lease lapsed during the read and another writer took the lock.
+        sheetsMock.get.mockImplementation(slowHeaderRead(() => lockStore.set(lockKey, "other-writer")));
+
+        await expect(writeData(authorizedIntegration, "sheet1", ["answer"], ["question"])).rejects.toThrow(
+          new UnknownError("Lost the Google Sheets write lock to another writer; nothing more was written")
+        );
+        expect(sheetsMock.update).not.toHaveBeenCalled();
+        expect(sheetsMock.append).not.toHaveBeenCalled();
+        expect(lockStore.get(lockKey)).toBe("other-writer");
+      });
     });
 
     test("still writes when Redis is unavailable", async () => {

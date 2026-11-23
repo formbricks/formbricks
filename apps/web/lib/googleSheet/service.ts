@@ -125,60 +125,94 @@ const columnLetters = (index: number): string => {
 const getHeaderRowRange = (columnCount: number): string =>
   `A1:${columnLetters(Math.max(columnCount, 1) - 1)}1`;
 
-/** Longer than one header read, header write and append take, so a crashed holder frees the sheet. */
-const SHEET_WRITE_LOCK_TTL_MS = 60_000;
+/**
+ * The lease a holder renews every `SHEET_WRITE_LOCK_RENEW_MS` while it writes. A crashed holder stops
+ * renewing, so its lock frees the sheet within this time.
+ */
+const SHEET_WRITE_LOCK_TTL_MS = 30_000;
+const SHEET_WRITE_LOCK_RENEW_MS = 10_000;
 /** How long a write waits for another one on the same spreadsheet before it goes ahead without the lock. */
 const SHEET_WRITE_LOCK_WAIT_MS = 30_000;
 const SHEET_WRITE_LOCK_POLL_MS = 200;
 
 /** Deletes the lock only while it still holds this writer's token, so an expired lock taken over stays. */
 const RELEASE_LOCK_SCRIPT = `if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) end return 0`;
+/** Extends the lease only while it still holds this writer's token; returns 0 once another writer has it. */
+const RENEW_LOCK_SCRIPT = `if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("PEXPIRE", KEYS[1], ARGV[2]) end return 0`;
 
-/**
- * ENG-3907: `writeData` reads the header row, may extend it, then appends a row placed by that header. Two
- * response-pipeline jobs writing to one spreadsheet at once (several workers or replicas) could both read
- * the same header, and the later header write would drop the label the earlier one added. The whole
- * sequence therefore runs under a Redis lock per spreadsheet. Without Redis, or after waiting
- * `SHEET_WRITE_LOCK_WAIT_MS`, the write goes ahead unserialized rather than dropping the response.
- */
-const withSpreadsheetWriteLock = async <T>(spreadsheetId: string, write: () => Promise<T>): Promise<T> => {
-  const lockKey = createCacheKey.integration.googleSheetWriteLock(spreadsheetId);
-  const token = randomUUID();
+/** Called before each sheet write; throws once this writer has lost the lock to another one. */
+type TAssertLockHeld = () => void;
+
+const acquireSpreadsheetWriteLock = async (lockKey: string, token: string, spreadsheetId: string) => {
   const deadline = Date.now() + SHEET_WRITE_LOCK_WAIT_MS;
-  let held = false;
-
   for (;;) {
     const locked = await cache.tryLock(lockKey, token, SHEET_WRITE_LOCK_TTL_MS);
     if (!locked.ok) {
       logger.warn({ spreadsheetId }, "Google Sheets write lock unavailable; writing without it");
-      break;
+      return false;
     }
-    if (locked.data) {
-      held = true;
-      break;
-    }
+    if (locked.data) return true;
     if (Date.now() >= deadline) {
       logger.warn(
         { spreadsheetId },
         "Timed out waiting for the Google Sheets write lock; writing without it"
       );
-      break;
+      return false;
     }
     await new Promise((resolve) => setTimeout(resolve, SHEET_WRITE_LOCK_POLL_MS));
   }
+};
+
+const runLockScript = (script: string, lockKey: string, args: string[]): Promise<unknown> =>
+  cache.runRedisOperation((redis) => redis.eval(script, { keys: [lockKey], arguments: args }));
+
+/**
+ * ENG-3907: `writeData` reads the header row, may extend it, then appends a row placed by that header. Two
+ * response-pipeline jobs writing to one spreadsheet at once (several workers or replicas) could both read
+ * the same header, and the later header write would drop the label the earlier one added. The whole
+ * sequence therefore runs under a Redis lock per spreadsheet, whose lease the holder renews while it
+ * writes. If a renewal finds another writer holding the lock (the lease lapsed, e.g. a long event-loop
+ * stall), the next `assertLockHeld` throws, so a stale header snapshot is never written over theirs.
+ * Without Redis, or after waiting `SHEET_WRITE_LOCK_WAIT_MS`, the write goes ahead unserialized: a failed
+ * Sheets write is logged, not retried, so refusing would drop the response from the sheet.
+ */
+const withSpreadsheetWriteLock = async <T>(
+  spreadsheetId: string,
+  write: (assertLockHeld: TAssertLockHeld) => Promise<T>
+): Promise<T> => {
+  const lockKey = createCacheKey.integration.googleSheetWriteLock(spreadsheetId);
+  const token = randomUUID();
+  const held = await acquireSpreadsheetWriteLock(lockKey, token, spreadsheetId);
+  if (!held) return await write(() => {});
+
+  let lost = false;
+  const renewal = setInterval(() => {
+    runLockScript(RENEW_LOCK_SCRIPT, lockKey, [token, String(SHEET_WRITE_LOCK_TTL_MS)])
+      .then((renewed) => {
+        if (renewed !== 1) lost = true;
+      })
+      .catch((error: unknown) => {
+        // A missed renewal is not a lost lock yet: the lease still runs for SHEET_WRITE_LOCK_TTL_MS.
+        logger.warn({ error, spreadsheetId }, "Could not renew the Google Sheets write lock");
+      });
+  }, SHEET_WRITE_LOCK_RENEW_MS);
+  renewal.unref?.();
+
+  const assertLockHeld: TAssertLockHeld = () => {
+    if (lost) {
+      throw new UnknownError("Lost the Google Sheets write lock to another writer; nothing more was written");
+    }
+  };
 
   try {
-    return await write();
+    return await write(assertLockHeld);
   } finally {
-    if (held) {
-      try {
-        await cache.runRedisOperation((redis) =>
-          redis.eval(RELEASE_LOCK_SCRIPT, { keys: [lockKey], arguments: [token] })
-        );
-      } catch (error) {
-        // The lock expires on its own after SHEET_WRITE_LOCK_TTL_MS; the write's outcome stands.
-        logger.warn({ error, spreadsheetId }, "Could not release the Google Sheets write lock");
-      }
+    clearInterval(renewal);
+    try {
+      await runLockScript(RELEASE_LOCK_SCRIPT, lockKey, [token]);
+    } catch (error) {
+      // The lock expires on its own after SHEET_WRITE_LOCK_TTL_MS; the write's outcome stands.
+      logger.warn({ error, spreadsheetId }, "Could not release the Google Sheets write lock");
     }
   }
 };
@@ -205,7 +239,7 @@ export const writeData = async (
         : response
     );
 
-    await withSpreadsheetWriteLock(spreadsheetId, async () => {
+    await withSpreadsheetWriteLock(spreadsheetId, async (assertLockHeld) => {
       const existingHeaders = await readHeaderRow((callback) =>
         sheets.spreadsheets.values.get({ spreadsheetId, range: "1:1" }, callback)
       );
@@ -216,6 +250,7 @@ export const writeData = async (
       );
 
       if (headersChanged) {
+        assertLockHeld();
         await runSheetsWrite((callback) =>
           sheets.spreadsheets.values.update(
             {
@@ -233,6 +268,7 @@ export const writeData = async (
       // `A2`, a response whose first answer was empty (e.g. a Statement / CTA first) left `A2` blank, so
       // the next append found no table there and wrote over row 2 — the sheet only ever kept the latest
       // response. The header row, kept or just written above, always carries the table, so anchor on it.
+      assertLockHeld();
       await runSheetsWrite((callback) =>
         sheets.spreadsheets.values.append(
           {
