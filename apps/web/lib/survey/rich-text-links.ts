@@ -55,6 +55,9 @@ const RECALL_TOKENS = new RegExp(RECALL_TOKEN.source, "g");
 // lower-cases names.
 const RECALL_MARKER = "fbrecallmarker";
 const RECALL_MARKERS = new RegExp(String.raw`${RECALL_MARKER}(\d+)x`, "g");
+// One opening tag, a quoted value consumed whole (the pattern survey-ui strips styles with). Neither a
+// marker nor an escaped value holds `<`, `>` or a quote, so it finds the same tags with either in place.
+const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
 
 /**
  * The tokens that sit inside markup rather than in text. Once a respondent's answer or a hidden field
@@ -63,8 +66,8 @@ const RECALL_MARKERS = new RegExp(String.raw`${RECALL_MARKER}(\d+)x`, "g");
  *
  * Found by parsing, not by matching tags with a pattern: the renderer replaces the whole token, fallback
  * included, before it parses, so a fallback holding `>`, `<` or a quote must not hide the token from the
- * check. Each token is swapped for a marker, the text goes through the same style stripping the renderer
- * applies, and every element and attribute the parser builds is read before anything is removed.
+ * check. Each token is swapped for a marker; a marker in any tag of the raw text counts, and so does one
+ * in any element or attribute the parser builds after the renderer's style stripping.
  */
 const getTokensInMarkup = (html: string): string[] => {
   const tokens: string[] = [];
@@ -75,6 +78,10 @@ const getTokensInMarkup = (html: string): string[] => {
       found.add(tokens[Number(match[1])]);
     }
   };
+  // Before the style stripping: a token in an unquoted `style` value is removed with it here, while the
+  // real value can split that value differently (`x href=…`) or leave a comment's `-->` behind. Any token
+  // in a tag of the raw text counts, commented-out tags included, which can only over-report.
+  for (const tag of marked.match(OPENING_TAG) ?? []) record(tag);
   DOMPurify.addHook("uponSanitizeElement", (node) => record(node.nodeName.toLowerCase()));
   DOMPurify.addHook("uponSanitizeAttribute", (_node, data) => record(`${data.attrName} ${data.attrValue}`));
   try {
