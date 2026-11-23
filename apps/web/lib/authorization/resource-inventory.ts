@@ -124,6 +124,8 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   chart: "workspace_inherited_resource",
   contact: "workspace_inherited_resource",
   contactAttributeKey: "workspace_inherited_resource",
+  // Created and updated by organization owners and managers (ENG-7497), like its Prisma model above.
+  contactDirectory: "parent_derived_or_data_integrity",
   creative: "workspace_inherited_resource",
   cubeQuery: "parent_derived_or_data_integrity",
   dashboard: "direct_authorization_resource",

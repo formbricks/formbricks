@@ -2351,6 +2351,7 @@ checksums:
     workspace/contacts/delete_attribute_confirmation: 01d99b89eb3d27ff468d0db1b4aeb394
     workspace/contacts/delete_contact_confirmation: 2d45579e0bb4bc40fb1ee75b43c0e7a4
     workspace/contacts/delete_contact_confirmation_with_quotas: d3d17f13ae46ce04c126c82bf01299ac
+    workspace/contacts/directory_line: 4f097e8a0e651f7aee87cf379586468e
     workspace/contacts/displays: fcc4527002bd045021882be463b8ac72
     workspace/contacts/edit_attribute: 92a83c96a5d850e7d39002e8fd5898f4
     workspace/contacts/edit_attribute_description: 073a3084bb2f3b34ed1320ed1cd6db3c
@@ -3428,6 +3429,33 @@ checksums:
     workspace/settings/billing/yearly: 87f43e016c19cb25860f456549a2f431
     workspace/settings/billing/yearly_checkout_unavailable: f7b694de0e554c8583d8aaa4740e01a2
     workspace/settings/billing/your_plan: dc56f0334977d7d5d7d8f1f5801ac54b
+    workspace/settings/contact_directories/create_directory: e62c607f0d71e0fd012f2249ac124554
+    workspace/settings/contact_directories/create_directory_description: e4d24431bd406cbc98f6a5f9ec219f29
+    workspace/settings/contact_directories/directory_created: f9a89d958d7bf7dc4e30dc20fdef605e
+    workspace/settings/contact_directories/directory_name: de393976bf41ff3fd9da30dc177ba8f1
+    workspace/settings/contact_directories/directory_updated: 5bee2a13ebcbed7904a1cb577765a90b
+    workspace/settings/contact_directories/empty_state: a04cb9d758aac4a649758d8a1b5446a8
+    workspace/settings/contact_directories/error_name_required: e242a455b99b774852f824880caab854
+    workspace/settings/contact_directories/error_name_taken: 9b825dd2dd3c9d41fa800bf59802fa2f
+    workspace/settings/contact_directories/error_name_too_long: dab19384e71239a8ae0202d7880130e4
+    workspace/settings/contact_directories/error_workspace_cannot_leave: 991545f5ef53180b72beb3a3fdf9ab61
+    workspace/settings/contact_directories/error_workspace_not_movable: d6281c526cf9b5a72a8ed0dc0e8a3542
+    workspace/settings/contact_directories/error_workspace_required: 330637acea216cc57815ba3adcc8dd9e
+    workspace/settings/contact_directories/external_id: 0e2f087f5c7bac1a4563cd03d1581ec5
+    workspace/settings/contact_directories/load_failed: d85ce58c7d30ee15a0d21abd5d0ce06c
+    workspace/settings/contact_directories/manage_directory: 1274a4a5ed0cdee9033b3b7114c2e08f
+    workspace/settings/contact_directories/match_contacts_by: 776e8bd7ffcdcd2124a86b596ec203b2
+    workspace/settings/contact_directories/matches_by: cc40628d219aacbee02edc7a734c1bc1
+    workspace/settings/contact_directories/matching_key_help: 49b7182bd9951eefffb0346717092ecc
+    workspace/settings/contact_directories/name_placeholder: f993bff1c2274cce980594362ac995e8
+    workspace/settings/contact_directories/nav_label: 85d9d4004b2bbff0ab18bda751fe8e86
+    workspace/settings/contact_directories/no_access: c9a4abc581f95179dbcdc3de950351ed
+    workspace/settings/contact_directories/save_failed: f932b241613a21094ce0cd1703b33f0e
+    workspace/settings/contact_directories/select_workspaces_placeholder: 9fd43216ef3d15c9a7159c1a06cb807e
+    workspace/settings/contact_directories/shared_contacts_note: 2bed5bcf9c6b1ec4ebac53bca9ac27e2
+    workspace/settings/contact_directories/title: 85d9d4004b2bbff0ab18bda751fe8e86
+    workspace/settings/contact_directories/workspace_uses_directory: 7e88b43c54696b10d36b47663f1f63dd
+    workspace/settings/contact_directories/workspaces_help: ea6ac00199615eab4f00f14787506d7a
     workspace/settings/data_retention/add_exemption: ffd32798505e9cbe470c6ef07e8940b9
     workspace/settings/data_retention/add_exemption_description: 36eb90ad00003f8e911556e9fd905fcf
     workspace/settings/data_retention/condition_created_before: caa54cfde5d47b4c39338c8390c769d4
