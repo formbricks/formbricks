@@ -61,6 +61,13 @@ describe("replaceRecallInfo", () => {
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
+  test("preserves the display of numeric and record answers", () => {
+    const text = "Score: #recall:score/fallback:N/A#. Contact: #recall:contact/fallback:N/A#.";
+    expect(replaceRecallInfo(text, { score: 0, contact: { firstName: "Jamie" } }, {})).toBe(
+      "Score: 0. Contact: [object Object]."
+    );
+  });
+
   test("should handle empty array values, replacing with fallback", () => {
     const text = "Categories: #recall:emptyArray/fallback:No&nbsp;Categories#.";
     const expected = "Categories: No& ;Categories.";

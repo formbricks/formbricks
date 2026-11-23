@@ -38,13 +38,16 @@ const formatRecallValue = (
   value: TResponseData[string] | null,
   languageCode: string,
   dayFirstLocale: string
-): TResponseData[string] | null => {
-  if (!value) return value;
+): string => {
+  if (value == null) return "";
+  // Record answers keep the same display text as the original recall conversion.
+  if (typeof value === "object" && !Array.isArray(value)) return Object.prototype.toString.call(value);
 
-  const parsed = parseDateString(String(value));
+  const text = Array.isArray(value) ? value.join(",") : String(value);
+  const parsed = parseDateString(text);
   if (parsed) return formatDateWithOrdinal(parsed.date, parsed.dayFirst ? dayFirstLocale : languageCode);
 
-  return Array.isArray(value) ? value.filter((item) => item).join(", ") : value;
+  return Array.isArray(value) ? value.filter((item) => item).join(", ") : text;
 };
 
 export const replaceRecallInfo = (
@@ -79,8 +82,7 @@ export const replaceRecallInfo = (
     const formattedValue = formatRecallValue(value, languageCode, dayFirstLocale);
 
     // Replace the recallInfo in the text with the obtained or fallback value
-    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value shows the fallback too
-    modifiedText = modifiedText.replace(recallInfo, formattedValue?.toString() || fallback);
+    modifiedText = modifiedText.replace(recallInfo, formattedValue || fallback);
   }
 
   return modifiedText;
