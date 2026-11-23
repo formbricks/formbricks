@@ -1,0 +1,15 @@
+type: object
+description: >-
+  Builder-only UI metadata for the whole workflow. It does not affect
+  execution. Additional keys are preserved.
+properties:
+  direction:
+    type: string
+    enum:
+      - vertical
+      - horizontal
+    description: >-
+      Which way the builder's canvas reads: `vertical` (top to bottom, the
+      default when absent) or `horizontal` (left to right). Step positions in
+      each node's `ui.position` are laid out for it.
+additionalProperties: true

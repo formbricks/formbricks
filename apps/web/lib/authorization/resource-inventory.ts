@@ -46,6 +46,9 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   DeletionCleanup: "authentication_or_application",
   Display: "parent_derived_or_data_integrity",
   EmbeddedData: "parent_derived_or_data_integrity",
+  // A workspace's display names for its imported fields (ENG-7323); written behind the workspace's
+  // read-write Dashboards check, read with the workspace's charts.
+  EmbeddedFieldLabel: "workspace_inherited_resource",
   FeedbackDirectory: "direct_authorization_resource",
   FeedbackDirectoryWorkspace: "relationship_or_grant_source",
   FeedbackSource: "parent_derived_or_data_integrity",
@@ -96,6 +99,8 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Workflow: "workspace_inherited_resource",
   WorkflowRun: "parent_derived_or_data_integrity",
   WorkflowRunLog: "parent_derived_or_data_integrity",
+  WorkflowSample: "parent_derived_or_data_integrity",
+  WorkflowSecret: "parent_derived_or_data_integrity",
   WorkflowVersion: "parent_derived_or_data_integrity",
   Workspace: "direct_authorization_resource",
   WorkspaceTeam: "relationship_or_grant_source",

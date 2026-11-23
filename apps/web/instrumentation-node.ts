@@ -19,6 +19,7 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { logger } from "@formbricks/logger";
 import { getMetricExportIntervalMs, nodeAutoInstrumentationConfig } from "./instrumentation-node-config";
+import { createWebhookTokenRedactingExporter } from "./lib/utils/redact-webhook-token-span-exporter";
 
 // --- Configuration from environment ---
 const serviceName = process.env.OTEL_SERVICE_NAME || "formbricks";
@@ -132,7 +133,7 @@ const sdk = new NodeSDK({
   // which would attempt connections to localhost:4318 and cause noisy errors.
   spanProcessors: traceExporter
     ? [
-        new BatchSpanProcessor(traceExporter, {
+        new BatchSpanProcessor(createWebhookTokenRedactingExporter(traceExporter), {
           maxQueueSize: 2048,
           maxExportBatchSize: 512,
           scheduledDelayMillis: 5000,

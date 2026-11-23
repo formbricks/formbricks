@@ -74,7 +74,9 @@ patch:
     with code
 
     `invalid_workflow_state`. A structurally invalid definition returns **400**
-    with structured `invalid_params`; the referenced survey and ending cards are
+    with structured `invalid_params`, and so does a secret header value for an
+    HTTP request step without a valid URL (a stored value is bound to its step's
+    URL); the referenced survey and ending cards are
     not verified here — that existence check runs when the workflow is enabled.
   tags:
     - V3 Workflows

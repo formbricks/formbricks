@@ -25,5 +25,11 @@ export const WORKFLOW_RUN_ORPHAN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
  */
 export const WORKFLOW_RUN_STUCK_RUNNING_MAX_AGE_MS = 60 * 60 * 1000;
 
+/**
+ * A Test run executes inside the request that started it (ADR 0049) and finishes in seconds. One
+ * still `queued` or `running` this long after it was created lost its request and is marked failed.
+ */
+export const WORKFLOW_TEST_RUN_INTERRUPTED_MAX_AGE_MS = 10 * 60 * 1000;
+
 /** Max orphans handled per tick. A larger backlog drains over subsequent ticks (re-dispatch is idempotent). */
 export const WORKFLOW_RUN_RECONCILE_BATCH_SIZE = 250;

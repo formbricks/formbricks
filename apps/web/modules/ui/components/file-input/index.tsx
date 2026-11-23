@@ -5,6 +5,7 @@ import Image from "next/image";
 import { type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getDroppedFiles, setDropEffect } from "@formbricks/survey-ui/drag-data";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { cn } from "@/lib/cn";
 import { isExternalImageSrc } from "@/lib/image-hosts";
@@ -133,14 +134,14 @@ export const FileInput = ({
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = "copy";
+    setDropEffect(e, "copy");
   };
 
   const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const files = Array.from(e.dataTransfer.files);
+    const files = getDroppedFiles(e);
     void handleUpload(files);
   };
 
@@ -154,7 +155,7 @@ export const FileInput = ({
     e.preventDefault();
     e.stopPropagation();
 
-    const files = Array.from(e.dataTransfer.files);
+    const files = getDroppedFiles(e);
     void handleUploadMore(files);
   };
 

@@ -76,6 +76,12 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   disable_workflow: ["workflows:write"],
   archive_workflow: ["workflows:write"],
   unarchive_workflow: ["workflows:write"],
+  get_webhook_url: ["workflows:write"],
+  regenerate_webhook_url: ["workflows:write"],
+  set_sample_payload: ["workflows:write"],
+  send_test_request: ["workflows:write"],
+  set_expected_response: ["workflows:write"],
+  run_test: ["workflows:write"],
   // ENG-7153: any permission at Read, in registry order; the same six scopes as before.
   list_workspaces: {
     anyOf: [
@@ -212,6 +218,12 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   disable_workflow: ["workflows:write"],
   archive_workflow: ["workflows:write"],
   unarchive_workflow: ["workflows:write"],
+  get_webhook_url: ["workflows:write"],
+  regenerate_webhook_url: ["workflows:write"],
+  set_sample_payload: ["workflows:write"],
+  send_test_request: ["workflows:write"],
+  set_expected_response: ["workflows:write"],
+  run_test: ["workflows:write"],
   list_workspaces: {
     anyOf: [
       "surveys:read",

@@ -29,7 +29,6 @@ export const isDeepEqual = (left: unknown, right: unknown): boolean => {
   if (leftKeys.length !== rightKeys.length) return false;
 
   return leftKeys.every(
-    (key) =>
-      Object.prototype.hasOwnProperty.call(rightRecord, key) && isDeepEqual(leftRecord[key], rightRecord[key])
+    (key) => Object.hasOwn(rightRecord, key) && isDeepEqual(leftRecord[key], rightRecord[key])
   );
 };

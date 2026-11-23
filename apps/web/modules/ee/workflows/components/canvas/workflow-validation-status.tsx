@@ -4,6 +4,7 @@ import { useAtomValue } from "jotai";
 import { CheckIcon, TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { isResponseCompletedTrigger } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
 import { useWorkflowSurveyEndings } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { summarizeValidationProblems, trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
@@ -39,7 +40,7 @@ export const WorkflowValidationStatus = () => {
   // TanStack cache, never mirrored into Jotai. Consequence: the header's Enable gate
   // (workflowValidityAtom.isReady) deliberately excludes ending problems; the server's enable
   // pre-flight still rejects stale endings.
-  const trigger = definition?.trigger ?? null;
+  const trigger = isResponseCompletedTrigger(definition?.trigger) ? definition.trigger : null;
   const endingsQuery = useWorkflowSurveyEndings(trigger?.config.surveyId ?? null);
   // Only a successfully RESOLVED endings list may flag a problem. While the query is loading,
   // disabled (no trigger/survey), or errored (e.g. a read-only viewer's 403, an unbound survey's
@@ -75,7 +76,7 @@ export const WorkflowValidationStatus = () => {
           className={cn(
             PILL_CLASS_NAME,
             "border-amber-200 bg-amber-100 text-amber-800 transition-colors hover:bg-amber-200",
-            "focus-visible:ring-ring focus-visible:ring-1 focus-visible:outline-hidden"
+            "focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden"
           )}
           onClick={() => {
             trackWorkflowEvent(

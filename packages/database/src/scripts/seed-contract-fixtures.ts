@@ -12,6 +12,7 @@
  * id map is written to docs/api-v3-reference/contract-tests/fixtures.json unless `--out` says
  * otherwise.
  */
+import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,6 +49,8 @@ const CONTRACT_IDS = {
   EMBEDDED_DATA_LIBRARY: "clctembeddeddatalib00001",
   EMBEDDED_DATA_LOCAL: "clctembeddeddatalocal001",
   EMBEDDED_DATA_LOCAL_KEY: "clctembeddeddatascore001",
+  EMBEDDED_DATA_BOOLEAN: "clctembeddeddatabool0001",
+  EMBEDDED_DATA_BOOLEAN_KEY: "clctembeddeddataqualif01",
   WORKFLOW_PATCH: "clctworkflowpatch0000001",
   WORKFLOW_DELETE: "clctworkflowdelete000001",
   WORKFLOW_DUPLICATE: "clctworkflowduplicate001",
@@ -56,6 +59,10 @@ const CONTRACT_IDS = {
   WORKFLOW_ARCHIVE: "clctworkflowarchive00001",
   WORKFLOW_UNARCHIVE: "clctworkflowunarchive001",
   WORKFLOW_TEST: "clctworkflowtest00000001",
+  WORKFLOW_WEBHOOK: "clctworkflowwebhook00001",
+  WORKFLOW_WEBHOOK_REGENERATE: "clctworkflowwebhookrgn01",
+  WORKFLOW_WEBHOOK_SAMPLE: "clctworkflowwebhooksmp01",
+  WORKFLOW_TEST_RUN: "clctworkflowtestrun00001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
   RESPONSE_OUTCOME: "clctresponseoutcome00001",
@@ -181,7 +188,10 @@ async function seedResponse(id: string, surveyId: string): Promise<void> {
     data: { [elementId]: "Contract fixture answer" },
     ttc: { [elementId]: 1500, _total: 1500 },
     meta: { source: "link" },
-    variables: {},
+    // ENG-6973: a calculated true/false field's stored boolean, so the read returns a boolean
+    // `embeddedData` value and the contract checks it. Both fixture responses are on the read survey,
+    // which declares the field.
+    variables: { [CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN_KEY]: true },
   };
 
   await prisma.response.upsert({
@@ -243,7 +253,9 @@ async function seedSurvey(
 /**
  * Typed Embedded Data on the read survey (ENG-6930): a workspace library field it links by key and a
  * computed field of its own, so `GET /api/v3/surveys/{surveyId}` returns a populated `embeddedFields`
- * (and the legacy pair derived from it) and the contract checks both entry shapes. The library key is
+ * (and the legacy pair derived from it) and the contract checks both entry shapes. A second computed
+ * field is true/false (ENG-6973), with a Set value step that assigns it True, so the read also returns
+ * that type and the step's boolean value. The library key is
  * the one the `linkLibraryField` example of `PATCH /api/v3/surveys/{surveyId}` names, so that example
  * links a field that exists instead of answering its documented 400.
  */
@@ -268,6 +280,16 @@ async function seedEmbeddedData(surveyId: string): Promise<void> {
     surveyId,
     workspaceId: SEED_IDS.WORKSPACE,
   };
+  const trueFalse = {
+    key: null,
+    name: "qualified",
+    source: "computed" as const,
+    dataType: "boolean" as const,
+    defaultValue: false,
+    locked: false,
+    surveyId,
+    workspaceId: SEED_IDS.WORKSPACE,
+  };
 
   await prisma.embeddedData.upsert({
     where: { id: CONTRACT_IDS.EMBEDDED_DATA_LIBRARY },
@@ -279,6 +301,11 @@ async function seedEmbeddedData(surveyId: string): Promise<void> {
     update: local,
     create: { id: CONTRACT_IDS.EMBEDDED_DATA_LOCAL, ...local },
   });
+  await prisma.embeddedData.upsert({
+    where: { id: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN },
+    update: trueFalse,
+    create: { id: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN, ...trueFalse },
+  });
 
   const links = [
     { embeddedDataId: CONTRACT_IDS.EMBEDDED_DATA_LIBRARY, storageKey: "plan_tier", order: 0 },
@@ -288,6 +315,11 @@ async function seedEmbeddedData(surveyId: string): Promise<void> {
       storageKey: CONTRACT_IDS.EMBEDDED_DATA_LOCAL_KEY,
       order: 1,
     },
+    {
+      embeddedDataId: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN,
+      storageKey: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN_KEY,
+      order: 2,
+    },
   ];
   for (const link of links) {
     await prisma.surveyEmbeddedData.upsert({
@@ -296,6 +328,32 @@ async function seedEmbeddedData(surveyId: string): Promise<void> {
       create: { surveyId, workspaceId: SEED_IDS.WORKSPACE, ...link },
     });
   }
+
+  // The Set value step. No condition, so it runs for every respondent.
+  const { blocks } = await prisma.survey.findUniqueOrThrow({
+    where: { id: surveyId },
+    select: { blocks: true },
+  });
+  const [firstBlock, ...otherBlocks] = blocks;
+  const logic: TSurveyBlocks[number]["logic"] = [
+    {
+      id: `${surveyId}logic`,
+      conditions: { id: `${surveyId}group`, connector: "and", conditions: [] },
+      actions: [
+        {
+          id: `${surveyId}action`,
+          objective: "calculate",
+          variableId: CONTRACT_IDS.EMBEDDED_DATA_BOOLEAN_KEY,
+          operator: "assign",
+          value: { type: "static", value: true },
+        },
+      ],
+    },
+  ];
+  await prisma.survey.update({
+    where: { id: surveyId },
+    data: { blocks: [{ ...firstBlock, logic }, ...otherBlocks], updatedAt: CONTRACT_FIXTURE_UPDATED_AT },
+  });
 }
 
 /**
@@ -420,10 +478,17 @@ async function seedContactsAndSegment(): Promise<void> {
   });
 }
 
+/**
+ * The Webhook Secret URL token of the webhook fixtures (ENG-7177). Not a secret: it only opens disposable
+ * fixture workflows in a throwaway contract-test database. Stored, like a real one, only as its hash.
+ */
+const CONTRACT_WEBHOOK_TOKEN = "contractFixtureWebhook1";
+
 async function seedWorkflow(
   id: string,
   name: string,
-  status: "draft" | "enabled" | "disabled" | "archived"
+  status: "draft" | "enabled" | "disabled" | "archived",
+  triggerType: "response.completed" | "webhook" = "response.completed"
 ): Promise<void> {
   const triggerId = `${id}trigger`;
   const actionId = `${id}action`;
@@ -431,13 +496,16 @@ async function seedWorkflow(
   const definition: TWorkflowDefinition = {
     schemaVersion: 1,
     entryNodeId: triggerId,
-    trigger: {
-      id: triggerId,
-      type: "trigger",
-      triggerType: "response.completed",
-      config: { surveyId: SEED_IDS.SURVEY_KITCHEN_SINK, endingCardIds: [] },
-      ui: { position: { x: 220, y: 80 } },
-    },
+    trigger:
+      triggerType === "webhook"
+        ? { id: triggerId, type: "trigger", triggerType, config: {}, ui: { position: { x: 220, y: 80 } } }
+        : {
+            id: triggerId,
+            type: "trigger",
+            triggerType,
+            config: { surveyId: SEED_IDS.SURVEY_KITCHEN_SINK, endingCardIds: [] },
+            ui: { position: { x: 220, y: 80 } },
+          },
     nodes: [
       {
         id: actionId,
@@ -470,6 +538,10 @@ async function seedWorkflow(
     status,
     definition,
     workspaceId: SEED_IDS.WORKSPACE,
+    // Hash only: the encrypted copy needs the app's ENCRYPTION_KEY, so `GET /webhook` on a fixture answers
+    // its documented 422 until `regenerate` has issued a full token.
+    webhookTokenHash:
+      triggerType === "webhook" ? createHash("sha256").update(CONTRACT_WEBHOOK_TOKEN).digest("hex") : null,
   };
 
   await prisma.workflow.upsert({ where: { id }, update: fields, create: { id, ...fields } });
@@ -720,6 +792,30 @@ async function main(): Promise<void> {
   // `test` is a dry run, but it resolves the trigger and the recipient allowlist for real, so it needs
   // a definition whose recipient is a workspace member — which the base seed's demo workflows are not.
   await seedWorkflow(CONTRACT_IDS.WORKFLOW_TEST, "Contract fixture — test", "draft");
+  // Webhook trigger (ENG-7177): an enabled one the public Secret URL can start runs on, one to regenerate,
+  // and a draft for the Sample payload.
+  await seedWorkflow(CONTRACT_IDS.WORKFLOW_WEBHOOK, "Contract fixture — webhook", "enabled", "webhook");
+  await seedWorkflow(
+    CONTRACT_IDS.WORKFLOW_WEBHOOK_REGENERATE,
+    "Contract fixture — webhook regenerate",
+    "draft",
+    "webhook"
+  );
+  await seedWorkflow(
+    CONTRACT_IDS.WORKFLOW_WEBHOOK_SAMPLE,
+    "Contract fixture — webhook sample",
+    "draft",
+    "webhook"
+  );
+  // Test run (ENG-7181): a Webhook draft with a Sample payload, so a call without a body gets past the
+  // documented "no test payload" 422 to its 201. The run sends nothing (fake effects).
+  await seedWorkflow(CONTRACT_IDS.WORKFLOW_TEST_RUN, "Contract fixture — test run", "draft", "webhook");
+  const testRunSample = { workflowId: CONTRACT_IDS.WORKFLOW_TEST_RUN, source: "trigger" };
+  await prisma.workflowSample.upsert({
+    where: { workflowId_source: testRunSample },
+    update: { sample: { order: { id: 1 } } },
+    create: { ...testRunSample, workspaceId: SEED_IDS.WORKSPACE, sample: { order: { id: 1 } } },
+  });
 
   // An empty collection response satisfies the list schema without ever validating an item, so the
   // read fixtures below exist to put at least one row in front of every list endpoint.
@@ -900,6 +996,15 @@ async function main(): Promise<void> {
       archiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_ARCHIVE } },
       unarchiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_UNARCHIVE } },
       testWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST } },
+      getWorkflowWebhookV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK } },
+      regenerateWorkflowWebhookV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK_REGENERATE } },
+      setWorkflowSampleV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK_SAMPLE } },
+      createWorkflowTestRunV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST_RUN } },
+      // The public Secret URL: the fixture's real token, so the call gets past the identical 404 to
+      // its 202 (or, without a licence granting workflows, its documented 403).
+      callWorkflowWebhookV3: {
+        path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK, token: CONTRACT_WEBHOOK_TOKEN },
+      },
       // `key` is required and must name an attribute of the workspace, or the operation only ever
       // exercises its documented 400.
       listContactAttributeValuesV3: { query: { key: CONTRACT_ATTRIBUTE_KEY } },

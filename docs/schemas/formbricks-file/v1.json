@@ -2715,6 +2715,47 @@
                       "operator",
                       "value"
                     ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/$defs/__schema30"
+                      },
+                      "objective": {
+                        "$ref": "#/$defs/__schema77"
+                      },
+                      "variableId": {
+                        "$ref": "#/$defs/__schema78"
+                      },
+                      "operator": {
+                        "type": "string",
+                        "const": "assign"
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "static"
+                          },
+                          "value": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "value"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "objective",
+                      "variableId",
+                      "operator",
+                      "value"
+                    ]
                   }
                 ]
               },
@@ -3103,7 +3144,7 @@
       ]
     },
     "__schema107": {
-      "description": "string (default), number, boolean or date. A computed field is string, number or date.",
+      "description": "string (default), number, boolean or date. A computed field may be any of them.",
       "$ref": "#/$defs/__schema108"
     },
     "__schema108": {

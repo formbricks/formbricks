@@ -143,6 +143,13 @@ export const recurringJobDescriptors = {
     name: JOB_NAMES.workflowRunReconcile,
     scheduleId: "workflow-run-reconcile",
   }),
+  // Clears workflow run content past its retention period, deletes old Test runs and stale samples
+  // (ENG-7186, ADR 0044). Bounded per tick and idempotent.
+  workflowRunRetention: defineRecurringJob({
+    label: "workflow run retention",
+    name: JOB_NAMES.workflowRunRetention,
+    scheduleId: "workflow-run-retention",
+  }),
   workflowsUsageSnapshot: defineRecurringJob({
     label: "workflows usage snapshot",
     name: JOB_NAMES.workflowsUsageSnapshot,

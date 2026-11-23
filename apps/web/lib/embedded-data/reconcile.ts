@@ -127,9 +127,10 @@ const isSharedDesiredField = (entry: TDesiredEmbeddedField): entry is TSharedDes
  * read-modify-write PUT from an integration that has never heard of the library would quietly
  * localize every shared field the editor had linked.
  *
- * A computed field the legacy shape cannot say at all — a computed date (ENG-6935), which the derived
- * `variables` leave out — is kept, at its position, by a `variables` write that does not name its
- * storage key: that write never saw it, so it cannot have meant to remove it.
+ * A computed field the legacy shape cannot say at all — a computed date (ENG-6935) or true/false
+ * (ENG-6973), which the derived `variables` leave out — is kept, at its position, by a `variables`
+ * write that does not name its storage key: that write never saw it, so it cannot have meant to
+ * remove it.
  *
  * `computed` and `ingested` are the only two sources carried over, and that is the whole set a row
  * can have: `ZEmbeddedData` rejects `source: "reserved"` outright, because reserved fields are a

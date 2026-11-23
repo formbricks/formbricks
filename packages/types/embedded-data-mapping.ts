@@ -206,10 +206,11 @@ const toLegacyVariable = (field: TDesiredEmbeddedField): TSurveyVariable =>
  */
 /**
  * Whether a computed field of this type is a legacy variable. A variable is a number or text, so a
- * computed date (ENG-6935) lives only in the typed rows (json-shapes §6): a legacy reader would
- * otherwise take it for a text variable, and a legacy write keeps it as stored.
+ * computed date (ENG-6935) or true/false (ENG-6973) lives only in the typed rows (json-shapes §6): a
+ * legacy reader would otherwise take it for a text variable, and a legacy write keeps it as stored.
  */
-export const isLegacySayableComputedType = (dataType: TEmbeddedDataType): boolean => dataType !== "date";
+export const isLegacySayableComputedType = (dataType: TEmbeddedDataType): boolean =>
+  dataType === "string" || dataType === "number";
 
 export const toLegacyEmbeddedFields = (desired: readonly TDesiredEmbeddedField[]): TLegacyEmbeddedColumns => {
   const variables = desired

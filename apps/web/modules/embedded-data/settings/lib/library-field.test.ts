@@ -26,8 +26,8 @@ describe("getDataTypesForSource", () => {
     expect(getDataTypesForSource("ingested")).toEqual(["string", "number", "boolean", "date"]);
   });
 
-  test("a calculated field is narrowed to what survey logic can calculate", () => {
-    expect(getDataTypesForSource("computed")).toEqual(["string", "number", "date"]);
+  test("a calculated field takes what survey logic can calculate: every type since ENG-6973", () => {
+    expect(getDataTypesForSource("computed")).toEqual(["string", "number", "boolean", "date"]);
   });
 });
 
@@ -44,9 +44,9 @@ describe("narrowDataTypeToSource", () => {
     expect(narrowDataTypeToSource("date", "ingested")).toBe("date");
   });
 
-  test("falls back to the first allowed type when the current one is no longer offered", () => {
+  test("keeps a true/false type when the field becomes calculated (ENG-6973)", () => {
     expect(narrowDataTypeToSource("date", "computed")).toBe("date");
-    expect(narrowDataTypeToSource("boolean", "computed")).toBe("string");
+    expect(narrowDataTypeToSource("boolean", "computed")).toBe("boolean");
   });
 });
 
@@ -137,9 +137,9 @@ describe("describeRowIssues", () => {
    * sentence an author reads inline is the one a refused write would have returned.
    */
   test("forwards the schema's own sentence, on the column it complained about", () => {
-    expect(describeRowIssues(candidate({ source: "computed", dataType: "boolean" }), draftColumns)).toEqual([
-      { message: "Computed fields support only string, number or date", path: ["dataType"] },
-    ]);
+    expect(describeRowIssues(candidate({ dataType: "number", defaultValue: "seven" }), draftColumns)).toEqual(
+      [{ message: "A number field's default value must be a number", path: ["defaultValue"] }]
+    );
     expect(describeRowIssues(candidate({ key: "country" }), draftColumns)).toEqual([
       { message: "Key is reserved", path: ["key"] },
     ]);

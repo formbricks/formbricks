@@ -1,6 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import type { TResponseData, TResponseDataValue, TResponseOutcome } from "@formbricks/types/responses";
+import type { TResponseData, TResponseOutcome } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
@@ -53,6 +53,7 @@ import {
 } from "./service";
 import { refuseUnlessV3SurveyVisible, resolveV3ResponsesActorContext } from "./visibility";
 import {
+  type TV3VariableWrites,
   normalizeV3Ttc,
   planAnswerDataWrite,
   planEmbeddedDataWrite,
@@ -718,11 +719,11 @@ function composeV3ResponseWrite({
   plan: ReturnType<typeof buildAnswerPlan>;
   survey: TV3WriteSurveyRow;
   body: { data?: TResponseData; embeddedData?: Record<string, string | number | boolean | null> };
-  stored: { data: TResponseData; variables: Record<string, TResponseDataValue> } | undefined;
+  stored: { data: TResponseData; variables: TV3VariableWrites } | undefined;
 }): {
   issues: InvalidParam[];
   data: TResponseData | undefined;
-  variables: Record<string, TResponseDataValue> | undefined;
+  variables: TV3VariableWrites | undefined;
 } {
   const issues: InvalidParam[] = [];
 
@@ -1093,7 +1094,7 @@ export async function planV3ResponsePatch({
     body,
     stored: {
       data: (stored.data ?? {}) as TResponseData,
-      variables: (stored.variables ?? {}) as Record<string, TResponseDataValue>,
+      variables: (stored.variables ?? {}) as TV3VariableWrites,
     },
   });
 

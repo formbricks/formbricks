@@ -100,6 +100,7 @@ describe("organization membership projection", () => {
         select: { organizationId: true, role: true, userId: true },
         where: {
           OR: [{ organizationId: ORGANIZATION_ID, userId: USER_ID }],
+          user: { isActive: true },
         },
       });
     }

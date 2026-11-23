@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import type { TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
 import { resolveEnumFilter } from "@/modules/ui/components/table-toolbar/lib/enum-filters";
+import { isHiddenToggleOn, setHiddenToggle } from "@/modules/ui/components/table-toolbar/lib/hidden-toggle";
 import { ENUM_RULE_OPERATORS } from "@/modules/ui/components/table-toolbar/lib/operators";
 import type {
   TFilterProperty,
@@ -44,12 +45,10 @@ export const getWorkflowFilterProperties = (t: TFunction): TFilterProperty[] => 
 ];
 
 export const isShowingArchived = (filters: readonly TTableFilter[]) =>
-  filters.some((filter) => filter.property === SHOW_ARCHIVED_PROPERTY && filter.values.includes("true"));
+  isHiddenToggleOn(filters, SHOW_ARCHIVED_PROPERTY);
 
-export const setShowArchived = (filters: readonly TTableFilter[], show: boolean): TTableFilter[] => {
-  const rest = filters.filter((filter) => filter.property !== SHOW_ARCHIVED_PROPERTY);
-  return show ? [...rest, { property: SHOW_ARCHIVED_PROPERTY, operator: "in", values: ["true"] }] : rest;
-};
+export const setShowArchived = (filters: readonly TTableFilter[], show: boolean): TTableFilter[] =>
+  setHiddenToggle(filters, SHOW_ARCHIVED_PROPERTY, show);
 
 /**
  * The statuses to ask the API for. `undefined` is the API default (every live status, archived hidden);

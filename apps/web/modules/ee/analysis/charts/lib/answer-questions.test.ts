@@ -3,6 +3,7 @@ import {
   ANSWER_QUESTIONS_CACHE_TTL_MS,
   MAX_ANSWER_QUESTION_MAPPINGS,
   collectAnswerQuestions,
+  collectDatasetQuestions,
   getAnswerQuestions,
 } from "./answer-questions";
 
@@ -137,7 +138,7 @@ describe("getAnswerQuestions (C7)", () => {
     await expect(getAnswerQuestions("workspace-1", "frd-1")).resolves.toEqual([]);
     expect(mockWithCache).toHaveBeenCalledWith(
       expect.any(Function),
-      "fb:analytics:frd-1:answer-questions-workspace-1",
+      "fb:analytics:frd-1:survey-questions-workspace-1",
       ANSWER_QUESTIONS_CACHE_TTL_MS
     );
     expect(ANSWER_QUESTIONS_CACHE_TTL_MS).toBeLessThanOrEqual(5 * 60 * 1000);
@@ -167,5 +168,38 @@ describe("getAnswerQuestions (C7)", () => {
     mockPrisma.feedbackSourceFormbricksMapping.findMany.mockResolvedValue([]);
     await getAnswerQuestions("workspace-1", "frd-1");
     expect(mockPrisma.survey.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("collectDatasetQuestions (ENG-7323)", () => {
+  test("lists every mapped question whose records carry its own id, by label, once per id", () => {
+    const surveys = [
+      survey("s1", [
+        select("q_delivery", "multipleChoiceSingle", "How was delivery?", ["Late"]),
+        select("q_feat", "multipleChoiceMulti", "Which features?", ["Charts"]),
+        { id: "q_nps", type: "nps", headline: { default: "Recommend us?" } },
+        { id: "q_text", type: "openText", headline: { default: "Anything else?" } },
+        { id: "q_matrix", type: "matrix", headline: { default: "Grid" }, rows: [], columns: [] },
+        { id: "q_rank", type: "ranking", headline: { default: "Rank" }, choices: [] },
+      ]),
+      survey("s2", [{ id: "q_nps", type: "nps", headline: { default: "Würden Sie uns empfehlen?" } }]),
+    ];
+    const mappings = [
+      ...["q_delivery", "q_feat", "q_nps", "q_text", "q_matrix", "q_rank"].map((id) => mapping("s1", id)),
+      mapping("s2", "q_nps"),
+    ];
+
+    expect(collectDatasetQuestions(mappings, surveys)).toEqual([
+      { id: "q_text", label: "Anything else?" },
+      { id: "q_delivery", label: "How was delivery?" },
+      { id: "q_nps", label: "Recommend us?" },
+    ]);
+  });
+
+  test("labels a question with its mapping's custom label", () => {
+    const surveys = [survey("s1", [{ id: "q_text", type: "openText", headline: { default: "Anything?" } }])];
+    expect(collectDatasetQuestions([mapping("s1", "q_text", "Comments")], surveys)).toEqual([
+      { id: "q_text", label: "Comments" },
+    ]);
   });
 });

@@ -133,6 +133,22 @@ describe("resolveDesiredEmbeddedFields", () => {
     expect(resolveDesiredEmbeddedFields(stored, { variables: [] })).toEqual([signedUpAt, currentPlan]);
   });
 
+  test("a legacy variables write keeps a computed true/false field in place (ENG-6973)", () => {
+    const qualified: TDesiredEmbeddedField = {
+      ...desiredScore,
+      storageKey: "var_qualified",
+      name: "qualified",
+      dataType: "boolean",
+      defaultValue: false,
+    };
+    const stored = [currentScore, qualified, currentPlan];
+    const legacy = [
+      { id: currentScore.storageKey, name: currentScore.name, type: "number" as const, value: 0 },
+    ];
+
+    expect(resolveDesiredEmbeddedFields(stored, { variables: legacy })).toEqual(stored);
+  });
+
   test("the ingested group is independent of the computed one", () => {
     const result = resolveDesiredEmbeddedFields(current, {
       hiddenFields: { enabled: true, fieldIds: ["plan", "tier"] },

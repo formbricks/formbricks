@@ -1,0 +1,29 @@
+type: object
+description: >
+  A workflow's expected payload — what the calling system sends to its Webhook
+  Secret URL — and the Variables inferred from it. Only editors set it (typed,
+  pasted, or a received call they chose to use); calls never change it.
+required:
+  - workflowId
+  - source
+  - payload
+  - variables
+  - updatedAt
+properties:
+  workflowId:
+    type: string
+    format: cuid2
+  source:
+    type: string
+    enum:
+      - trigger
+  payload:
+    type: object
+    additionalProperties: true
+    description: The expected payload, a JSON object.
+  variables:
+    $ref: ./WorkflowSampleVariables.yml
+  updatedAt:
+    type: string
+    format: date-time
+additionalProperties: false

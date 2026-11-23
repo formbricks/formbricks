@@ -60,6 +60,14 @@
     "./youtube-id": {
       "types": "./dist/lib/youtube-id.d.ts",
       "import": "./dist/lib/youtube-id.js"
+    },
+    "./sanitize": {
+      "types": "./dist/lib/sanitize.d.ts",
+      "import": "./dist/lib/sanitize.js"
+    },
+    "./drag-data": {
+      "types": "./dist/lib/drag-data.d.ts",
+      "import": "./dist/lib/drag-data.js"
     }
   },
   "scripts": {

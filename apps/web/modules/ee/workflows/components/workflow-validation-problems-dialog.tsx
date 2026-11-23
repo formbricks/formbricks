@@ -63,6 +63,9 @@ export const WorkflowValidationProblemsDialog = ({
     flow_invalid: t("workspace.workflows.validation_problem_flow_invalid"),
     step_not_executable: t("workspace.workflows.validation_problem_step_not_executable"),
     step_incomplete: t("workspace.workflows.validation_problem_step_incomplete"),
+    step_needs_setup: t("workspace.workflows.validation_problem_step_needs_setup"),
+    survey_link_not_placed: t("workspace.workflows.validation_problem_survey_link_not_placed"),
+    survey_link_without_survey: t("workspace.workflows.validation_problem_survey_link_without_survey"),
     definition_invalid: t("workspace.workflows.validation_problem_generic"),
   };
 
@@ -88,7 +91,7 @@ export const WorkflowValidationProblemsDialog = ({
                     <button
                       type="button"
                       aria-label={t("workspace.workflows.validation_problem_fix_label", { problem: message })}
-                      className="focus-visible:ring-ring flex w-full items-start gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition-colors hover:border-slate-300 hover:bg-slate-100 focus-visible:ring-1 focus-visible:outline-hidden"
+                      className="flex w-full items-start gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition-colors hover:border-slate-300 hover:bg-slate-100 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden"
                       onClick={() => {
                         trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.validationProblemFixClicked, {
                           problem_code: problem.code,
