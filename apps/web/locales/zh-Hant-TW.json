@@ -2501,6 +2501,7 @@
       "upload_contacts_modal_pick_different_file": "選取不同的檔案",
       "upload_contacts_modal_preview": "這是您的資料預覽。",
       "upload_contacts_modal_upload_btn": "上傳聯絡人",
+      "upload_contacts_multi_match": "{count, plural, other {有 {count} 列資料符合多位聯絡人。系統已更新 userId 相同的聯絡人,若沒有則更新建立時間最早的聯絡人。}}",
       "upload_contacts_success": "聯絡人已成功上傳"
     },
     "creatives": {

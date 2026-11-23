@@ -5,6 +5,7 @@ import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-pa
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
 import { getSharedContactDirectoryName } from "@/modules/ee/contacts/directories/lib/directory-service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ContactDataView } from "./components/contact-data-view";
@@ -24,12 +25,20 @@ export const ContactsPage = async ({
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const [contactAttributeKeys, sharedDirectoryName] = isContactsEnabled
-    ? await Promise.all([getContactAttributeKeys(workspace.id), getSharedContactDirectoryName(workspace.id)])
-    : [[], null];
+  const [contactAttributeKeys, sharedDirectoryName, contactDirectory] = isContactsEnabled
+    ? await Promise.all([
+        getContactAttributeKeys(workspace.id),
+        getSharedContactDirectoryName(workspace.id),
+        getWorkspaceContactDirectory(workspace.id),
+      ])
+    : [[], null, null];
 
   const AddContactsButton = (
-    <UploadContactsCSVButton workspaceId={workspace.id} contactAttributeKeys={contactAttributeKeys} />
+    <UploadContactsCSVButton
+      workspaceId={workspace.id}
+      contactAttributeKeys={contactAttributeKeys}
+      matchingKey={contactDirectory?.matchingKey ?? "email"}
+    />
   );
 
   return (

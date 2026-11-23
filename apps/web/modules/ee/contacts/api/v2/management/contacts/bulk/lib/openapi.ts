@@ -6,11 +6,11 @@ const bulkContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "uploadBulkContacts",
   summary: "Upload Bulk Contacts",
   description:
-    "Uploads contacts in bulk. This endpoint expects the bulk request shape: `contacts` must be an array, and each contact item must contain an `attributes` array of `{ attributeKey, value }` objects. Unlike `POST /management/contacts`, this endpoint does not accept a top-level `attributes` object. Each contact must include an `email` attribute in its `attributes` array, and that email must be valid.",
+    "Uploads contacts in bulk. This endpoint expects the bulk request shape: `contacts` must be an array, and each contact item must contain an `attributes` array of `{ attributeKey, value }` objects. Unlike `POST /management/contacts`, this endpoint does not accept a top-level `attributes` object. Each contact must include the matching key of the workspace's contact directory in its `attributes` array: a valid `email`, or `externalId` for a directory matched by external ID. A contact that matches several existing contacts updates the one with its `userId`, otherwise the oldest. A workspace with no contact directory gets 403.",
   requestBody: {
     required: true,
     description:
-      "The contacts to upload. Use the full nested bulk body shown in the example or cURL snippet: `{ workspaceId, contacts: [{ attributes: [{ attributeKey: { key, name }, value }] }] }`. Each contact must include an `email` attribute inside its `attributes` array.",
+      "The contacts to upload. Use the full nested bulk body shown in the example or cURL snippet: `{ workspaceId, contacts: [{ attributes: [{ attributeKey: { key, name }, value }] }] }`. Each contact must include the directory's matching key (`email` or `externalId`) inside its `attributes` array.",
     content: {
       "application/json": {
         schema: ZContactBulkUploadRequest,

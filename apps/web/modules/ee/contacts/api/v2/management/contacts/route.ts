@@ -3,10 +3,11 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
-import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createContact } from "@/modules/ee/contacts/api/v2/management/contacts/lib/contact";
-import { ZContactCreateRequest } from "@/modules/ee/contacts/types/contact";
+import { getContactDirectoryOrForbidden } from "@/modules/ee/contacts/api/v2/management/lib/contact-directory";
+import { ZContactCreateRequest, getContactCreateRequestSchema } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const POST = async (request: NextRequest) =>
@@ -60,7 +61,20 @@ export const POST = async (request: NextRequest) =>
         );
       }
 
-      const createContactResult = await createContact(body);
+      const directory = await getContactDirectoryOrForbidden(request, workspaceId, auditLog);
+      if (directory instanceof Response) return directory;
+
+      // The identity attribute depends on the directory's matching key, known only now.
+      const identityCheck = getContactCreateRequestSchema(directory.matchingKey).safeParse(body);
+      if (!identityCheck.success) {
+        return handleApiError(
+          request,
+          { type: "unprocessable_entity", details: formatZodError(identityCheck.error) },
+          auditLog
+        );
+      }
+
+      const createContactResult = await createContact(body, directory);
 
       if (!createContactResult.ok) {
         return handleApiError(request, createContactResult.error, auditLog);

@@ -2501,6 +2501,7 @@
       "upload_contacts_modal_pick_different_file": "別のファイルを選択",
       "upload_contacts_modal_preview": "データのプレビューです。",
       "upload_contacts_modal_upload_btn": "連絡先をアップロード",
+      "upload_contacts_multi_match": "{count, plural, other {{count}行が複数のコンタクトに一致しました。同じuserIdのコンタクトが更新され、該当するものがない場合は最も古いコンタクトが更新されました。}}",
       "upload_contacts_success": "連絡先のアップロードに成功しました"
     },
     "creatives": {

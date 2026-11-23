@@ -65,9 +65,12 @@ const unauthorizedResponse = ({
 };
 
 const forbiddenResponse = ({
+  details,
   cors = false,
   cache = "private, no-store",
 }: {
+  /** Only for a reason the caller may read; most 403s say nothing more than "Forbidden". */
+  details?: ApiErrorDetails;
   cors?: boolean;
   cache?: string;
 } = {}) => {
@@ -81,6 +84,7 @@ const forbiddenResponse = ({
       error: {
         code: 403,
         message: "Forbidden",
+        ...(details && { details }),
       },
     },
     {

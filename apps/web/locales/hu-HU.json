@@ -2501,6 +2501,7 @@
       "upload_contacts_modal_pick_different_file": "Válasszon egy másik fájlt",
       "upload_contacts_modal_preview": "Itt van az adatok előnézete.",
       "upload_contacts_modal_upload_btn": "Partnerek feltöltése",
+      "upload_contacts_multi_match": "{count, plural, one {{count} sor egynél több névjegyre illeszkedett. A rendszer az azonos userId-val rendelkező névjegyet frissítette, ennek hiányában a legrégebbit.} other {{count} sor egynél több névjegyre illeszkedett. A rendszer mindegyik esetben az azonos userId-val rendelkező névjegyet frissítette, ennek hiányában a legrégebbit.}}",
       "upload_contacts_success": "A partnerek sikeresen feltöltve"
     },
     "creatives": {

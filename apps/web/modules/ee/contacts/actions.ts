@@ -16,14 +16,11 @@ import {
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { createContactsFromCSV, deleteContact, getContact } from "./lib/contacts";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
-import {
-  ZContactCSVAttributeMap,
-  ZContactCSVDuplicateAction,
-  ZContactCSVUploadResponse,
-} from "./types/contact";
+import { ZContactCSVAttributeMap, ZContactCSVDuplicateAction, ZContactCSVRecords } from "./types/contact";
 
 const ZContactDeleteAction = z.object({
   contactId: ZId,
@@ -53,7 +50,8 @@ export const deleteContactAction = authenticatedActionClient.inputSchema(ZContac
 );
 
 const ZCreateContactsFromCSV = z.object({
-  csvData: ZContactCSVUploadResponse,
+  // The identity column is checked by the service once the workspace's directory is known.
+  csvData: ZContactCSVRecords,
   workspaceId: ZId,
   duplicateContactsAction: ZContactCSVDuplicateAction,
   attributeMap: ZContactCSVAttributeMap,
@@ -74,12 +72,15 @@ export const createContactsFromCSVAction = authenticatedActionClient
       await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
+      // Before any write: a workspace with no directory gets the decision 13 message and nothing is created.
+      const directory = await requireWorkspaceContactDirectory(workspaceId);
       const existingContactCount = await prisma.contact.count({
-        where: { workspaceId },
+        where: { directoryId: directory.id },
       });
       const result = await createContactsFromCSV(
         parsedInput.csvData,
         workspaceId,
+        directory,
         parsedInput.duplicateContactsAction,
         parsedInput.attributeMap
       );

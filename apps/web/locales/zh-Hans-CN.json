@@ -2501,6 +2501,7 @@
       "upload_contacts_modal_pick_different_file": "选择不同的文件",
       "upload_contacts_modal_preview": "这是 你 的 数据 预览。",
       "upload_contacts_modal_upload_btn": "上传 联系人",
+      "upload_contacts_multi_match": "{count, plural, other {有 {count} 行匹配到多个联系人。系统已更新 userId 相同的联系人;如果没有,则更新最早创建的联系人。}}",
       "upload_contacts_success": "联系人上传成功"
     },
     "creatives": {
