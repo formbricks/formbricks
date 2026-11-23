@@ -6,8 +6,9 @@ export const FORMBRICKS_LOGGED_IN_WITH_LS = "formbricks-logged-in-with";
  * Runs `access` against localStorage, or returns `fallback` when the browser withholds it.
  *
  * `typeof window !== "undefined"` only says the code runs in a browser, not that storage is
- * reachable. Safari with "Block all cookies", a sandboxed iframe or a locked-down profile throws a
- * `SecurityError` on reading `localStorage` itself, and a full quota throws on `setItem`; both are
+ * reachable. Safari with "Block all cookies", a sandboxed iframe or a locked-down profile either
+ * leaves `localStorage` out (read through `globalThis`, that is `undefined`, not a ReferenceError)
+ * or throws a `SecurityError` on reading it; a full quota throws on `setItem`. Both throws are
  * `DOMException`s. Everything kept here is a convenience (a remembered workspace, the last sign-in
  * method, a collapsed sidebar), so losing it must never take a page down. Other errors are ours
  * and propagate.
