@@ -55,6 +55,11 @@ const mockDisplaysWithContact = [
 
 describe("getDisplayCountBySurveyId", () => {
   describe("Happy Path", () => {
+    const dateRange = {
+      min: new Date("2024-01-01T00:00:00.000Z"),
+      max: new Date("2024-01-31T23:59:59.999Z"),
+    };
+
     test("counts displays by surveyId", async () => {
       vi.mocked(prisma.display.count).mockResolvedValue(5);
 
@@ -69,14 +74,10 @@ describe("getDisplayCountBySurveyId", () => {
     });
 
     test("counts displays by date range when no response IDs are supplied", async () => {
-      const createdAt = {
-        min: new Date("2024-01-01T00:00:00.000Z"),
-        max: new Date("2024-01-31T23:59:59.999Z"),
-      };
       vi.mocked(prisma.display.count).mockResolvedValue(2);
 
       const result = await getDisplayCountBySurveyId(mockSurveyId, {
-        createdAt,
+        createdAt: dateRange,
       });
 
       expect(result).toBe(2);
@@ -84,11 +85,32 @@ describe("getDisplayCountBySurveyId", () => {
         where: {
           surveyId: mockSurveyId,
           createdAt: {
-            gte: createdAt.min,
-            lte: createdAt.max,
+            gte: dateRange.min,
+            lte: dateRange.max,
           },
         },
       });
+    });
+
+    test.each([
+      { label: "no date bounds", createdAt: undefined },
+      { label: "both date bounds", createdAt: dateRange },
+    ])("binds response IDs as a single array with $label", async ({ createdAt }) => {
+      const responseIds = [mockResponseId, "clqnfg59i000208i426pb4wcw"];
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([{ count: 2n }]);
+
+      await expect(getDisplayCountBySurveyId(mockSurveyId, { createdAt, responseIds })).resolves.toBe(2);
+
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+      const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as [
+        TemplateStringsArray,
+        ...unknown[],
+      ];
+      expect(Prisma.sql(strings, ...values).values).toEqual([
+        mockSurveyId,
+        responseIds,
+        ...(createdAt ? [createdAt.min, createdAt.max] : []),
+      ]);
     });
 
     test("returns 0 without querying when responseIds filter is empty", async () => {
