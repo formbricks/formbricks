@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { IntegrationType, Prisma } from "@formbricks/database/prisma";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import { ITEMS_PER_PAGE } from "../constants";
 import {
@@ -159,6 +159,7 @@ describe("Integration Service", () => {
 
     test("creates the row with the sent config when none is stored", async () => {
       const tx = mockTx([]);
+      tx.survey.findMany.mockResolvedValueOnce([{ id: "survey123" }]);
 
       const result = await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
 
@@ -171,15 +172,32 @@ describe("Integration Service", () => {
 
     test("checks newly mapped surveys on the transaction, not the app client", async () => {
       const tx = mockTx([{ config: { ...mockIntegrationConfig, data: [] } }]);
+      tx.survey.findMany.mockResolvedValueOnce([{ id: "survey123" }]);
 
       await saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted);
 
-      expect(tx.survey.findMany).toHaveBeenCalledTimes(1);
+      expect(tx.survey.findMany).toHaveBeenCalledTimes(2);
       expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    });
+
+    test("refuses a newly mapped survey from another workspace", async () => {
+      const tx = mockTx([{ config: { ...mockIntegrationConfig, data: [] } }]);
+      tx.survey.findMany.mockResolvedValueOnce([]);
+
+      await expect(saveIntegrationKeepingStoredKey(mockWorkspaceId, redacted)).rejects.toThrow(
+        ResourceNotFoundError
+      );
+
+      expect(tx.survey.findMany.mock.calls[0][0]).toEqual({
+        where: { id: { in: ["survey123"] }, workspaceId: mockWorkspaceId },
+        select: { id: true },
+      });
+      expect(tx.integration.update).not.toHaveBeenCalled();
     });
 
     test("throws DatabaseError when Prisma rejects the write", async () => {
       const tx = mockTx([]);
+      tx.survey.findMany.mockResolvedValueOnce([{ id: "survey123" }]);
       tx.integration.create.mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
           code: "P2002",

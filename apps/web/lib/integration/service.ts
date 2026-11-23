@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TIntegration,
   TIntegrationByType,
@@ -65,6 +65,30 @@ const assertMappedSurveysVisible = (
     getIntegrationSurveyIds(storedConfig),
     client
   );
+
+/**
+ * Refuses a mapping that names a survey outside the workspace. The survey ids come from the client, so
+ * each newly mapped one is resolved within the workspace the caller was authorized for; ids already
+ * stored on the row are left alone, as the visibility check leaves them.
+ */
+const assertNewlyMappedSurveysInWorkspace = async (
+  client: Pick<Prisma.TransactionClient, "survey">,
+  workspaceId: string,
+  integrationData: TIntegrationInput,
+  storedConfig: unknown
+): Promise<void> => {
+  const stored = new Set(getIntegrationSurveyIds(storedConfig));
+  const added = [...new Set(getIntegrationSurveyIds(integrationData.config))].filter((id) => !stored.has(id));
+  if (added.length === 0) return;
+
+  const found = await client.survey.findMany({
+    where: { id: { in: added }, workspaceId },
+    select: { id: true },
+  });
+  const foundIds = new Set(found.map(({ id }) => id));
+  const missing = added.find((id) => !foundIds.has(id));
+  if (missing) throw new ResourceNotFoundError("Survey", missing);
+};
 
 const integrationWrite = (workspaceId: string, integrationData: TIntegrationInput) => ({
   ...integrationData,
@@ -127,6 +151,7 @@ export const saveIntegrationKeepingStoredKey = async (
         FOR UPDATE
       `;
       const merged = withStoredIntegrationKey(integrationData, stored);
+      await assertNewlyMappedSurveysInWorkspace(tx, workspaceId, merged, stored?.config);
       await assertMappedSurveysVisible(merged, stored?.config, tx);
 
       return stored
