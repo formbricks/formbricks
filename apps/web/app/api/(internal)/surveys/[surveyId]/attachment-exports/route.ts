@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { ZResponseFilterCriteriaFromJson } from "@formbricks/types/responses";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import {
   problemConflict,
@@ -46,7 +46,7 @@ const paramsSchema = z.object({
 const bodySchema = z
   .object({
     /** The response filter, matching what the CSV/Excel export sends. Absent exports every response. */
-    filterCriteria: ZResponseFilterCriteria.optional(),
+    filterCriteria: ZResponseFilterCriteriaFromJson.optional(),
   })
   .strict();
 

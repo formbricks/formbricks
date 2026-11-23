@@ -8,6 +8,7 @@ import {
   ZClientResponseInput,
   ZClientResponseUpdateInput,
   ZResponseFilterCriteria,
+  ZResponseFilterCriteriaFromJson,
   ZResponseInput,
   ZResponseMeta,
   ZResponseUpdate,
@@ -226,6 +227,43 @@ describe("ZResponseFilterCriteria.data", () => {
   test.each(["equals", "notEquals"] as const)("rejects a jsonb boolean under %s", (op) => {
     expect(parse({ op, value: true }).success).toBe(false);
     expect(parse({ op, value: "true" }).success).toBe(true);
+  });
+});
+
+describe("ZResponseFilterCriteriaFromJson", () => {
+  const min = new Date("2026-11-06T00:00:00.000Z");
+  const max = new Date("2026-11-10T23:59:59.999Z");
+  const overJson = (value: unknown): unknown => JSON.parse(JSON.stringify(value));
+
+  test("takes back the Created at range a JSON round trip turned into ISO text", () => {
+    const filter = { finished: true, createdAt: { min, max } };
+
+    expect(ZResponseFilterCriteria.safeParse(overJson(filter)).success).toBe(false);
+    expect(ZResponseFilterCriteriaFromJson.parse(overJson(filter))).toEqual(filter);
+  });
+
+  test("keeps a one-sided range one-sided", () => {
+    expect(ZResponseFilterCriteriaFromJson.parse(overJson({ createdAt: { min } }))).toEqual({
+      createdAt: { min },
+    });
+    expect(ZResponseFilterCriteriaFromJson.parse(overJson({ createdAt: { max } }))).toEqual({
+      createdAt: { max },
+    });
+  });
+
+  test("still takes Dates, and a filter without a range, unchanged", () => {
+    expect(ZResponseFilterCriteriaFromJson.parse({ createdAt: { min, max } })).toEqual({
+      createdAt: { min, max },
+    });
+    expect(ZResponseFilterCriteriaFromJson.parse({ finished: false })).toEqual({ finished: false });
+  });
+
+  test("refuses a bound that is not a date", () => {
+    expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: { min: "not a date" } }).success).toBe(
+      false
+    );
+    expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: { max: 42 } }).success).toBe(false);
+    expect(ZResponseFilterCriteriaFromJson.safeParse({ createdAt: "2026-11-06" }).success).toBe(false);
   });
 });
 

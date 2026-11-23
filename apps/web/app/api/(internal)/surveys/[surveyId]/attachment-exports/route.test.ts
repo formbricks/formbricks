@@ -132,6 +132,42 @@ describe("POST /api/surveys/{surveyId}/attachment-exports", () => {
     expect(mocks.dispatch).not.toHaveBeenCalled();
   });
 
+  test("accepts a Created at range, which arrives over JSON as ISO text, and hands on Dates", async () => {
+    const min = new Date("2026-11-06T00:00:00.000Z");
+    const max = new Date("2026-11-10T23:59:59.999Z");
+
+    // The browser sends the Responses filter through JSON.stringify, which turns its Dates into strings.
+    const response = await post({ filterCriteria: { finished: true, createdAt: { min, max } } });
+
+    expect(response.status).toBe(202);
+    expect(mocks.collect).toHaveBeenCalledWith(
+      expect.objectContaining({ filterCriteria: { finished: true, createdAt: { min, max } } })
+    );
+    expect(mocks.create).toHaveBeenCalledWith(
+      expect.objectContaining({ filterCriteria: { finished: true, createdAt: { min, max } } })
+    );
+  });
+
+  test("returns the export in flight when it was started with the same Created at range", async () => {
+    // The stored filter went through the JSON column, so its dates are ISO text.
+    const createdAt = { min: "2026-11-06T00:00:00.000Z", max: "2026-11-10T23:59:59.999Z" };
+    mocks.create.mockResolvedValue({
+      row: { ...row, status: "running", filterCriteria: { createdAt } },
+      created: false,
+    });
+
+    const response = await post({ filterCriteria: { createdAt } });
+
+    expect(response.status).toBe(200);
+  });
+
+  test("refuses a Created at bound that is not a date", async () => {
+    const response = await post({ filterCriteria: { createdAt: { min: "not a date" } } });
+
+    expect(response.status).toBe(400);
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
   test("refuses a request whose filter differs from the export in flight", async () => {
     // The running export covers completed responses only; this request asks for every response.
     mocks.create.mockResolvedValue({

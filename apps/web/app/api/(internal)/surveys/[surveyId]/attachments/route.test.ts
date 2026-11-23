@@ -93,6 +93,27 @@ describe("GET /api/surveys/[surveyId]/attachments guards", () => {
     );
   });
 
+  test("accepts a Created at range, which arrives over JSON as ISO text, and hands on Dates", async () => {
+    const min = new Date("2026-11-06T00:00:00.000Z");
+    const max = new Date("2026-11-10T23:59:59.999Z");
+
+    const response = await exportAttachments({ filters: JSON.stringify({ createdAt: { min, max } }) });
+
+    expect(response.status).not.toBe(400);
+    expect(mocks.collectResponseAttachments).toHaveBeenCalledWith(
+      expect.objectContaining({ filterCriteria: { createdAt: { min, max } } })
+    );
+  });
+
+  test("refuses a Created at bound that is not a date", async () => {
+    const response = await exportAttachments({
+      filters: JSON.stringify({ createdAt: { max: "not a date" } }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(mocks.collectResponseAttachments).not.toHaveBeenCalled();
+  });
+
   test("answers a dry run with the counts, recorded as a query, and streams nothing", async () => {
     const auditLog: Record<string, unknown> = { action: "exported" };
 

@@ -684,6 +684,35 @@ export type TResponseContact = z.infer<typeof ZResponseContact>;
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
+/** A `createdAt` bound that went through JSON comes back as ISO text; anything else is left to the schema. */
+const reviveFilterDate = (value: unknown): unknown => (typeof value === "string" ? new Date(value) : value);
+
+/**
+ * Turns the `createdAt` range of a filter that went through JSON back into Dates. JSON writes a Date as
+ * ISO text, and `createdAt`'s bounds are the only Dates in the filter. A string that is not a date
+ * becomes an invalid Date, which the schema refuses.
+ */
+const reviveFilterDates = (filter: unknown): unknown => {
+  if (typeof filter !== "object" || filter === null || !("createdAt" in filter)) return filter;
+  const { createdAt } = filter;
+  if (typeof createdAt !== "object" || createdAt === null) return filter;
+  const { min, max } = createdAt as { min?: unknown; max?: unknown };
+  return {
+    ...filter,
+    createdAt: {
+      ...(min === undefined ? {} : { min: reviveFilterDate(min) }),
+      ...(max === undefined ? {} : { max: reviveFilterDate(max) }),
+    },
+  };
+};
+
+/**
+ * The Responses filter, read from JSON: a request body, a query parameter or a JSON column. The server
+ * actions keep Dates across the wire, but `JSON.stringify` turns the `createdAt` bounds into strings,
+ * which `ZResponseFilterCriteria` refuses. Parse any filter that crossed JSON with this one (ENG-7228).
+ */
+export const ZResponseFilterCriteriaFromJson = z.preprocess(reviveFilterDates, ZResponseFilterCriteria);
+
 /**
  * The browser-runtime context the survey renderer snapshots once, at display time, and attaches to
  * every write of the response (ENG-1841). Kept as its own schema because three shapes need exactly
