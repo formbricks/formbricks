@@ -82,6 +82,11 @@ export const DashboardViewerRoleSettings = ({
           onChange={onChange}
           disabled={!canEdit || !limits}
         />
+        {value === null && limits?.limited && selected.length === 0 && (
+          <Muted className="block text-amber-700">
+            {t("workspace.settings.teams.dashboard_access_limited_to_none")}
+          </Muted>
+        )}
         <Muted className="block text-slate-500">
           {t("workspace.settings.teams.dashboard_access_helper")}
         </Muted>

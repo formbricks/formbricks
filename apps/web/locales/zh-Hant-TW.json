@@ -4124,6 +4124,7 @@
         "create_new_team": "建立新團隊",
         "dashboard_access": "儀表板存取權",
         "dashboard_access_helper": "僅適用於組織角色為「儀表板檢視者」的成員。",
+        "dashboard_access_limited_to_none": "此團隊原本限定可存取的儀表板已被刪除，因此該團隊的儀表板檢視者目前看不到任何儀表板。請重新選擇儀表板，或移除限制以開放所有儀表板。",
         "dashboard_viewer": "儀表板檢視者",
         "dashboard_viewer_role_description": "儀表板檢視者只能看到其所屬團隊有權存取之工作區中的儀表板。",
         "dashboard_viewer_role_info_message": "儀表板檢視者只能查看儀表板,而且僅限其所屬團隊有權存取的工作區。請將他們加入下方的團隊。",

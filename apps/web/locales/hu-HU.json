@@ -4124,6 +4124,7 @@
         "create_new_team": "Új csapat létrehozása",
         "dashboard_access": "Hozzáférés az irányítópultokhoz",
         "dashboard_access_helper": "Kizárólag azokra a tagokra vonatkozik, akiknek a szervezeti szerepköre Irányítópult-megtekintő.",
+        "dashboard_access_limited_to_none": "Azok az irányítópultok, amelyekre ez a csapat korlátozva volt, törlésre kerültek, ezért a csapat Irányítópult-megtekintői nem látnak egyetlen irányítópultot sem. Kérjük, válasszon ki irányítópultokat, vagy távolítsa el a korlátozást, hogy az összeset elérhessék.",
         "dashboard_viewer": "Irányítópult-megtekintő",
         "dashboard_viewer_role_description": "Az Irányítópult-megtekintők kizárólag azon munkaterületek irányítópultjait láthatják, amelyekhez csapataik hozzáféréssel rendelkeznek.",
         "dashboard_viewer_role_info_message": "Az Irányítópult-megtekintők kizárólag az irányítópultokat láthatják, és azokat is csak azokon a munkaterületeken, amelyekhez csapataik hozzáféréssel rendelkeznek. Kérjük, adja hozzá őket az alábbi csapatok egyikéhez.",

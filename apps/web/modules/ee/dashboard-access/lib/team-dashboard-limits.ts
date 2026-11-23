@@ -20,7 +20,12 @@ export type TTeamDashboardOption = {
 
 export type TTeamDashboardLimits = {
   teamId: string;
-  /** Empty: every dashboard of the team's workspaces. */
+  /**
+   * Whether the team's Dashboard Viewers are limited to `dashboardIds`. True with no `dashboardIds` when
+   * every selected dashboard was deleted: the team then reaches no dashboard (fail closed).
+   */
+  limited: boolean;
+  /** The selected dashboards; empty while `limited` is false means every dashboard of the team's workspaces. */
   dashboardIds: string[];
 };
 
@@ -44,6 +49,7 @@ export const getTeamDashboardLimits = async (
     where: { id: teamId, organizationId },
     select: {
       id: true,
+      dashboardLimited: true,
       dashboardLimits: {
         select: { dashboardId: true },
         orderBy: { dashboardId: "asc" },
@@ -52,7 +58,11 @@ export const getTeamDashboardLimits = async (
     },
   });
   return team
-    ? { teamId: team.id, dashboardIds: team.dashboardLimits.map(({ dashboardId }) => dashboardId) }
+    ? {
+        teamId: team.id,
+        limited: team.dashboardLimited,
+        dashboardIds: team.dashboardLimits.map(({ dashboardId }) => dashboardId),
+      }
     : null;
 };
 
@@ -89,7 +99,10 @@ export const replaceTeamDashboardLimits = async (
   return prisma.$transaction(async (tx) => {
     const before = await tx.team.findFirst({
       where: { id: teamId, organizationId },
-      select: { dashboardLimits: { select: { dashboardId: true }, orderBy: { dashboardId: "asc" } } },
+      select: {
+        dashboardLimited: true,
+        dashboardLimits: { select: { dashboardId: true }, orderBy: { dashboardId: "asc" } },
+      },
     });
     if (!before) return null;
 
@@ -115,9 +128,13 @@ export const replaceTeamDashboardLimits = async (
     if (added.length > 0) {
       await tx.teamDashboard.createMany({ data: added.map((dashboardId) => ({ teamId, dashboardId })) });
     }
+    const limited = ids.length > 0;
+    if (before.dashboardLimited !== limited) {
+      await tx.team.update({ where: { id: teamId }, data: { dashboardLimited: limited } });
+    }
     return {
-      before: { teamId, dashboardIds: previous },
-      after: { teamId, dashboardIds: [...ids].sort((a, b) => a.localeCompare(b)) },
+      before: { teamId, limited: before.dashboardLimited, dashboardIds: previous },
+      after: { teamId, limited, dashboardIds: [...ids].sort((a, b) => a.localeCompare(b)) },
     };
   });
 };

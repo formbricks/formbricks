@@ -4164,7 +4164,8 @@
         "unlock_teams_description": "Manage which organization members have access to specific workspaces and surveys.",
         "unlock_teams_title": "Unlock Teams with a higher plan.",
         "upgrade_plan_notice_message": "Unlock Organization Roles with a higher plan.",
-        "you_are_a_member": "You are a member"
+        "you_are_a_member": "You are a member",
+        "dashboard_access_limited_to_none": "The dashboards this team was limited to were deleted, so its Dashboard Viewers see no dashboards. Pick dashboards, or remove the limit to give them all."
       },
       "usage": {
         "load_error": "Could not load usage. Reload the page to try again.",

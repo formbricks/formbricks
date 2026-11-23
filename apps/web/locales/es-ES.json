@@ -4124,6 +4124,7 @@
         "create_new_team": "Crear equipo nuevo",
         "dashboard_access": "Acceso a paneles",
         "dashboard_access_helper": "Solo se aplica a los miembros cuyo rol en la organización sea Visor de paneles.",
+        "dashboard_access_limited_to_none": "Los paneles a los que estaba limitado este equipo se han eliminado, por lo que sus Dashboard Viewers no ven ningún panel. Elige paneles o quita el límite para darles acceso a todos.",
         "dashboard_viewer": "Visor de paneles",
         "dashboard_viewer_role_description": "Los Visores de paneles solo ven los paneles de los espacios de trabajo a los que pueden acceder sus equipos.",
         "dashboard_viewer_role_info_message": "Los Visores de paneles solo ven paneles, y únicamente en los espacios de trabajo a los que pueden acceder sus equipos. Añádelos a un equipo más abajo.",

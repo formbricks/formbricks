@@ -4124,6 +4124,7 @@
         "create_new_team": "Yeni ekip oluştur",
         "dashboard_access": "Pano erişimi",
         "dashboard_access_helper": "Yalnızca kuruluş rolü Pano Görüntüleyici olan üyeler için geçerlidir.",
+        "dashboard_access_limited_to_none": "Bu ekibin erişiminin sınırlandığı panolar silindi, bu yüzden ekibin Pano Görüntüleyicileri hiçbir pano göremiyor. Panoları seç ya da sınırlamayı kaldırarak tüm panolara erişim ver.",
         "dashboard_viewer": "Pano Görüntüleyici",
         "dashboard_viewer_role_description": "Pano Görüntüleyiciler yalnızca takımlarının erişebildiği çalışma alanlarındaki panoları görür.",
         "dashboard_viewer_role_info_message": "Pano Görüntüleyiciler yalnızca panoları ve yalnızca takımlarının erişebildiği çalışma alanlarında görür. Onları aşağıdan bir Takıma ekle.",

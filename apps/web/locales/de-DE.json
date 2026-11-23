@@ -4124,6 +4124,7 @@
         "create_new_team": "Neues Team erstellen",
         "dashboard_access": "Dashboard-Zugriff",
         "dashboard_access_helper": "Gilt nur für Mitglieder mit der Organisationsrolle „Dashboard Viewer“.",
+        "dashboard_access_limited_to_none": "Die Dashboards, auf die dieses Team beschränkt war, wurden gelöscht, daher sehen die Dashboard-Betrachter:innen keine Dashboards. Wähle Dashboards aus oder entferne die Beschränkung, um ihnen alle Dashboards freizugeben.",
         "dashboard_viewer": "Dashboard Viewer",
         "dashboard_viewer_role_description": "Dashboard Viewer sehen nur die Dashboards der Workspaces, auf die ihre Teams zugreifen können.",
         "dashboard_viewer_role_info_message": "Dashboard Viewer sehen nur Dashboards, und zwar ausschließlich in den Workspaces, auf die ihre Teams zugreifen können. Füge sie unten zu einem Team hinzu.",

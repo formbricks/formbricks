@@ -92,17 +92,19 @@ export const readDashboardPageProjectionRows = async (
   );
 };
 
-/** Of `teamIds`, the teams that hold at least one `TeamDashboard` row (a dashboard limit). */
+/**
+ * Of `teamIds`, the teams with a dashboard limit (`Team.dashboardLimited`). Read from the flag, not from
+ * the `TeamDashboard` rows: a limit whose dashboards were all deleted must keep the team limited.
+ */
 export const readDashboardLimitedTeamIds = async (
   teamIds: ReadonlyArray<string>
 ): Promise<ReadonlySet<string>> => {
   if (teamIds.length === 0) return new Set();
-  const rows = await prisma.teamDashboard.findMany({
-    where: { teamId: { in: [...teamIds] } },
-    select: { teamId: true },
-    distinct: ["teamId"],
+  const rows = await prisma.team.findMany({
+    where: { id: { in: [...teamIds] }, dashboardLimited: true },
+    select: { id: true },
   });
-  return new Set(rows.map(({ teamId }) => teamId));
+  return new Set(rows.map(({ id }) => id));
 };
 
 /**

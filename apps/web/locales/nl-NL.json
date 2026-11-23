@@ -4124,6 +4124,7 @@
         "create_new_team": "Nieuw team aanmaken",
         "dashboard_access": "Toegang tot dashboards",
         "dashboard_access_helper": "Alleen van toepassing op leden met de organisatierol Dashboard Viewer.",
+        "dashboard_access_limited_to_none": "De dashboards waartoe dit team beperkt was, zijn verwijderd, dus de Dashboard Viewers van dit team zien geen dashboards. Kies dashboards of verwijder de beperking om ze alle dashboards te geven.",
         "dashboard_viewer": "Dashboard Viewer",
         "dashboard_viewer_role_description": "Dashboard Viewers zien alleen de dashboards van werkruimtes waartoe hun teams toegang hebben.",
         "dashboard_viewer_role_info_message": "Dashboard Viewers zien alleen dashboards, en alleen in de werkruimtes waartoe hun teams toegang hebben. Voeg ze hieronder toe aan een team.",

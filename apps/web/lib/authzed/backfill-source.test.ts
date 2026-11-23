@@ -472,11 +472,15 @@ describe("dashboard sources (ADR-0059)", () => {
   });
 
   test("an organization's expected graph holds its dashboards, pages and limited-team markers", async () => {
-    vi.mocked(prisma.team.findMany).mockResolvedValue([
-      { id: "team-granted", organizationId: ORGANIZATION_ID },
-      { id: "team-open", organizationId: ORGANIZATION_ID },
-    ] as never);
-    vi.mocked(prisma.teamDashboard.findMany).mockResolvedValue([{ teamId: "team-granted" }] as never);
+    vi.mocked(prisma.team.findMany).mockImplementation(((args: { where?: { dashboardLimited?: boolean } }) =>
+      Promise.resolve(
+        args.where?.dashboardLimited
+          ? [{ id: "team-granted" }]
+          : [
+              { id: "team-granted", organizationId: ORGANIZATION_ID },
+              { id: "team-open", organizationId: ORGANIZATION_ID },
+            ]
+      )) as never);
 
     const source = await readOrganizationSource(ORGANIZATION_ID);
 

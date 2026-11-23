@@ -4124,6 +4124,7 @@
         "create_new_team": "Créer une nouvelle équipe",
         "dashboard_access": "Accès aux tableaux de bord",
         "dashboard_access_helper": "S'applique uniquement aux membres dont le rôle dans l'organisation est Lecteur de tableaux de bord.",
+        "dashboard_access_limited_to_none": "Les tableaux de bord auxquels cette équipe était limitée ont été supprimés. Ses lecteurs de tableaux de bord n’en voient donc plus aucun. Sélectionne des tableaux de bord ou supprime la limite pour leur donner accès à tous.",
         "dashboard_viewer": "Lecteur de tableaux de bord",
         "dashboard_viewer_role_description": "Les lecteurs de tableaux de bord voient uniquement les tableaux de bord des espaces de travail auxquels leurs équipes ont accès.",
         "dashboard_viewer_role_info_message": "Les lecteurs de tableaux de bord voient uniquement les tableaux de bord, et seulement dans les espaces de travail auxquels leurs équipes ont accès. Ajoute-les à une équipe ci-dessous.",

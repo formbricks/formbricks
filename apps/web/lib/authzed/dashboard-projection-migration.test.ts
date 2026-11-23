@@ -87,6 +87,7 @@ describe("dashboard projection trigger migration (ADR-0059)", () => {
         'AFTER INSERT OR DELETE OR UPDATE OF "teamId", "dashboardId" ON "TeamDashboard"',
         "('team', 'teamId', '')",
       ],
+      ['AFTER UPDATE OF "dashboardLimited" ON "Team"', "('team', 'id', '')"],
     ] as const;
     for (const [timing, target] of triggers) {
       expect(dashboardMigration).toMatch(

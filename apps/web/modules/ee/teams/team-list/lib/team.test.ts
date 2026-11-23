@@ -50,8 +50,22 @@ vi.mock("@/lib/authzed/team-workspace", () => ({
 }));
 
 const mockTeams = [
-  { id: "t1", name: "Team 1", organizationId: "org1", createdAt: new Date(), updatedAt: new Date() },
-  { id: "t2", name: "Team 2", organizationId: "org1", createdAt: new Date(), updatedAt: new Date() },
+  {
+    id: "t1",
+    name: "Team 1",
+    organizationId: "org1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    dashboardLimited: false,
+  },
+  {
+    id: "t2",
+    name: "Team 2",
+    organizationId: "org1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    dashboardLimited: false,
+  },
 ];
 const mockUserTeams = [
   {
@@ -60,6 +74,7 @@ const mockUserTeams = [
     organizationId: "org1",
     createdAt: new Date(),
     updatedAt: new Date(),
+    dashboardLimited: false,
     teamUsers: [{ role: "admin" }],
     _count: { teamUsers: 2 },
   },
@@ -71,6 +86,7 @@ const mockOtherTeams = [
     organizationId: "org1",
     createdAt: new Date(),
     updatedAt: new Date(),
+    dashboardLimited: false,
     _count: { teamUsers: 3 },
   },
 ];
@@ -86,6 +102,7 @@ const mockTeamDetails = {
   organizationId: "org1",
   createdAt: new Date(),
   updatedAt: new Date(),
+  dashboardLimited: false,
   teamUsers: [
     { userId: "u1", role: "admin", user: { name: "User 1" } },
     { userId: "u2", role: "member", user: { name: "User 2" } },
@@ -180,6 +197,7 @@ describe("createTeam", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     const result = await createTeam("org1", "Team 1");
     expect(result).toBe("t1");
@@ -192,6 +210,7 @@ describe("createTeam", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     await expect(createTeam("org1", "Team 1")).rejects.toThrow(InvalidInputError);
   });
@@ -249,6 +268,7 @@ describe("deleteTeam", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
       workspaceTeams: [{ workspaceId: "p1" }],
     };
     vi.mocked(prisma.team.delete).mockResolvedValueOnce(mockTeam);
@@ -280,6 +300,7 @@ describe("updateTeamDetails", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockTeamDetails);
     vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockUserTeams);
@@ -292,6 +313,7 @@ describe("updateTeamDetails", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     const result = await updateTeamDetails("t1", data);
     expect(result).toBe(true);
@@ -312,6 +334,7 @@ describe("updateTeamDetails", () => {
         name: "Team 1",
         createdAt: new Date(),
         updatedAt: new Date(),
+        dashboardLimited: false,
       })
       .mockResolvedValueOnce({ ...mockTeamDetails, teamUsers: [], workspaceTeams: [] } as never);
     vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
@@ -342,6 +365,7 @@ describe("updateTeamDetails", () => {
         name: "Team 1",
         createdAt: new Date(),
         updatedAt: new Date(),
+        dashboardLimited: false,
       })
       .mockResolvedValueOnce(mockTeamDetails);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
@@ -363,6 +387,7 @@ describe("updateTeamDetails", () => {
         name: "Team 1",
         createdAt: new Date(),
         updatedAt: new Date(),
+        dashboardLimited: false,
       })
       .mockResolvedValueOnce(mockTeamDetails);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
@@ -386,6 +411,7 @@ describe("updateTeamDetails", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
     await expect(updateTeamDetails("t1", data)).rejects.toThrow("Team with ID t1 not found");
@@ -397,6 +423,7 @@ describe("updateTeamDetails", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
       id: "t1",
@@ -404,6 +431,7 @@ describe("updateTeamDetails", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
       teamUsers: [],
       workspaceTeams: [],
     } as Awaited<ReturnType<typeof prisma.team.findUnique>>);
@@ -417,6 +445,7 @@ describe("updateTeamDetails", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
       id: "t1",
@@ -424,6 +453,7 @@ describe("updateTeamDetails", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
       teamUsers: [],
       workspaceTeams: [],
     } as Awaited<ReturnType<typeof prisma.team.findUnique>>);

@@ -19938,14 +19938,18 @@ components:
       additionalProperties: false
     TeamDashboardLimitsResource:
       type: object
-      description: 'A team''s dashboard limits: the dashboards its members whose organization role is Dashboard Viewer open in the workspaces the team is granted. Empty means all of them. Other members are never limited.'
+      description: 'A team''s dashboard limits: the dashboards its members whose organization role is Dashboard Viewer open in the workspaces the team is granted. Not limited means all of them. Other members are never limited.'
       required:
         - teamId
+        - limited
         - dashboardIds
       properties:
         teamId:
           type: string
           format: cuid2
+        limited:
+          type: boolean
+          description: Whether the team's Dashboard Viewers are limited to `dashboardIds`. Writing a non-empty `dashboardIds` sets it, an empty one clears it. It stays set when every selected dashboard is deleted, and the team's Dashboard Viewers then open no dashboard.
         dashboardIds:
           type: array
           maxItems: 200

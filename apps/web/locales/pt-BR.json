@@ -4124,6 +4124,7 @@
         "create_new_team": "Criar nova equipe",
         "dashboard_access": "Acesso aos dashboards",
         "dashboard_access_helper": "Aplica-se apenas a membros cuja função na organização é Visualizador de dashboards.",
+        "dashboard_access_limited_to_none": "Os painéis aos quais esta equipe tinha acesso limitado foram excluídos, então os Visualizadores de Painel dela não veem nenhum painel. Escolha painéis ou remova o limite para dar acesso a todos.",
         "dashboard_viewer": "Visualizador de dashboards",
         "dashboard_viewer_role_description": "Visualizadores de dashboards só veem os dashboards dos workspaces que suas equipes podem acessar.",
         "dashboard_viewer_role_info_message": "Visualizadores de dashboards só veem dashboards, e apenas nos workspaces que suas equipes podem acessar. Adicione-os a uma equipe abaixo.",

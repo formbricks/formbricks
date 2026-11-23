@@ -26,6 +26,8 @@ export type TTeamDashboardOption = { id: string; name: string; workspaceId: stri
 
 export type TTeamDashboardLimitsResource = {
   teamId: string;
+  /** Whether the team's Dashboard Viewers are limited; true with no `dashboardIds` reaches no dashboard. */
+  limited: boolean;
   dashboardIds: string[];
   /** Only on a read: the dashboards the limit can name. */
   dashboards?: TTeamDashboardOption[];

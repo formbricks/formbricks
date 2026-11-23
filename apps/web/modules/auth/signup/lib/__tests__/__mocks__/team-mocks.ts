@@ -45,6 +45,7 @@ export const MOCK_DEFAULT_TEAM: Team = {
   name: "Default Team",
   createdAt: MOCK_DATE,
   updatedAt: MOCK_DATE,
+  dashboardLimited: false,
 };
 
 /**

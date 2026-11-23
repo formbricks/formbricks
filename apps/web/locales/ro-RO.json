@@ -4124,6 +4124,7 @@
         "create_new_team": "Creează echipă nouă",
         "dashboard_access": "Acces la tablourile de bord",
         "dashboard_access_helper": "Se aplică doar membrilor al căror rol în organizație este Vizualizator tablou de bord.",
+        "dashboard_access_limited_to_none": "Dashboardurile la care avea acces această echipă au fost șterse, așa că Dashboard Viewers nu văd niciun dashboard. Alege dashboardurile sau elimină restricția pentru a le oferi acces la toate.",
         "dashboard_viewer": "Vizualizator tablou de bord",
         "dashboard_viewer_role_description": "Vizualizatorii de tablouri de bord văd doar tablourile de bord din spațiile de lucru la care au acces echipele lor.",
         "dashboard_viewer_role_info_message": "Vizualizatorii de tablouri de bord văd doar tablourile de bord, și numai în spațiile de lucru la care au acces echipele lor. Adaugă-i mai jos într-o echipă.",

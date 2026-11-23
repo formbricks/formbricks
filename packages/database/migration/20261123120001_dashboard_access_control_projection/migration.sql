@@ -257,4 +257,15 @@ INSERT INTO "AuthzedProjectionOutbox" ("id", "targetType", "primaryId", "isRevoc
 SELECT gen_random_uuid()::text, 'team', "teamId", true, NOW()
 FROM (SELECT DISTINCT "teamId" FROM "TeamDashboard") AS limited_teams;
 
+
+-- The team marker follows `Team.dashboardLimited`, which the limits write sets in the same transaction
+-- as its `TeamDashboard` rows. A flag change with no row change (clearing a limit whose dashboards were
+-- all deleted) still has to reach SpiceDB, so the column gets its own trigger. Any update is classified
+-- as a revocation, which is the safe side for both directions.
+DROP TRIGGER IF EXISTS "authzed_projection_team_dashboard_limited" ON "Team";
+CREATE TRIGGER "authzed_projection_team_dashboard_limited"
+AFTER UPDATE OF "dashboardLimited" ON "Team"
+FOR EACH ROW WHEN (OLD."dashboardLimited" IS DISTINCT FROM NEW."dashboardLimited")
+EXECUTE FUNCTION enqueue_authzed_projection('team', 'id', '');
+
 RESET lock_timeout;

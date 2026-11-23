@@ -4124,6 +4124,7 @@
         "create_new_team": "Criar nova equipa",
         "dashboard_access": "Acesso aos dashboards",
         "dashboard_access_helper": "Aplica-se apenas a membros cuja função na organização seja Visualizador de dashboards.",
+        "dashboard_access_limited_to_none": "Os dashboards aos quais esta equipa estava limitada foram eliminados, por isso os Visualizadores de Dashboards não veem nenhum dashboard. Escolha dashboards ou remova o limite para dar acesso a todos.",
         "dashboard_viewer": "Visualizador de dashboards",
         "dashboard_viewer_role_description": "Os Visualizadores de dashboards só veem os dashboards dos espaços de trabalho aos quais as respetivas equipas têm acesso.",
         "dashboard_viewer_role_info_message": "Os Visualizadores de dashboards só veem dashboards, e apenas nos espaços de trabalho aos quais as respetivas equipas têm acesso. Adiciona-os a uma equipa abaixo.",

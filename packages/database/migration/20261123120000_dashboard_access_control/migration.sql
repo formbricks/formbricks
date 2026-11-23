@@ -107,6 +107,7 @@ ALTER TABLE "DashboardWidget" ADD COLUMN IF NOT EXISTS "content" JSONB;
 ALTER TABLE "DashboardWidget" ADD COLUMN IF NOT EXISTS "kind" "DashboardWidgetKind" NOT NULL DEFAULT 'chart';
 ALTER TABLE "DashboardWidget" ADD COLUMN IF NOT EXISTS "pageId" TEXT;
 ALTER TABLE "DashboardWidget" ALTER COLUMN "chartId" DROP NOT NULL;
+ALTER TABLE "Team" ADD COLUMN IF NOT EXISTS "dashboardLimited" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "FeedbackDirectory" ADD COLUMN IF NOT EXISTS "viewerAccessJoin" "DashboardViewerAccessJoin" NOT NULL DEFAULT 'all';
 
 -- One "Overview" page per dashboard that has none yet. The id only has to be unique; cuid-shaped ids

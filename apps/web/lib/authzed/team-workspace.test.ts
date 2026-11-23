@@ -311,15 +311,22 @@ describe("team and workspace relationship projection", () => {
     [true, "touch"],
     [false, "delete"],
   ])("projects the dashboard limit self-marker when limited=%s", async (limited, operation) => {
-    vi.mocked(prisma.teamDashboard.findMany).mockResolvedValue(
-      (limited ? [{ teamId: TEAM_ID }] : []) as never
-    );
+    // The marker follows `Team.dashboardLimited`, not the `TeamDashboard` rows: a limit whose dashboards
+    // were all deleted keeps the team limited (fail closed).
+    const teams = vi.mocked(prisma.team.findMany).getMockImplementation();
+    vi.mocked(prisma.team.findMany).mockImplementation(((args: { where?: { dashboardLimited?: boolean } }) =>
+      args.where?.dashboardLimited
+        ? Promise.resolve(limited ? [{ id: TEAM_ID }] : [])
+        : teams
+          ? teams(args as never)
+          : Promise.resolve([{ id: TEAM_ID, organizationId: ORGANIZATION_ID }])) as never);
 
     await reconcileTeamWorkspaceRelationships({ teamIds: [TEAM_ID] });
 
-    expect(prisma.teamDashboard.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { teamId: { in: [TEAM_ID] } } })
+    expect(prisma.team.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { in: [TEAM_ID] }, dashboardLimited: true } })
     );
+    expect(prisma.teamDashboard.findMany).not.toHaveBeenCalled();
     const [batch] = clientMocks.writeRelationships.mock.calls[0];
     expect(batch).toContainEqual({
       operation,

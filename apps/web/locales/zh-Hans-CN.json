@@ -4124,6 +4124,7 @@
         "create_new_team": "创建 新 团队",
         "dashboard_access": "仪表板访问权限",
         "dashboard_access_helper": "仅适用于组织角色为“仪表板查看者”的成员。",
+        "dashboard_access_limited_to_none": "此团队原本可访问的仪表板已被删除，因此该团队的仪表板查看者目前看不到任何仪表板。请重新选择仪表板，或取消限制以开放全部仪表板。",
         "dashboard_viewer": "仪表板查看者",
         "dashboard_viewer_role_description": "仪表板查看者只能查看其所在团队有权访问的工作区中的仪表板。",
         "dashboard_viewer_role_info_message": "仪表板查看者只能查看仪表板，且仅限其所在团队有权访问的工作区。请在下方将他们添加到团队中。",

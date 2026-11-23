@@ -4124,6 +4124,7 @@
         "create_new_team": "Skapa nytt team",
         "dashboard_access": "Åtkomst till instrumentpaneler",
         "dashboard_access_helper": "Gäller bara medlemmar vars organisationsroll är Dashboard Viewer.",
+        "dashboard_access_limited_to_none": "De dashboards som det här teamet var begränsat till har tagits bort, så teamets Dashboard Viewers ser inga dashboards. Välj dashboards eller ta bort begränsningen så att de får tillgång till alla.",
         "dashboard_viewer": "Dashboard Viewer",
         "dashboard_viewer_role_description": "Dashboard Viewers ser bara instrumentpanelerna i de arbetsytor som deras team har åtkomst till.",
         "dashboard_viewer_role_info_message": "Dashboard Viewers ser bara instrumentpaneler, och bara i de arbetsytor som deras team har åtkomst till. Lägg till dem i ett team nedan.",
