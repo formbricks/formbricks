@@ -35,6 +35,7 @@ interface EditContactAttributesModalProps {
   readonly open: boolean;
   readonly setOpen: (open: boolean) => void;
   readonly contactId: string;
+  readonly workspaceId: string;
   readonly currentAttributes: TContactAttributeWithKeyInfo[];
   readonly attributeKeys: TContactAttributeKey[];
 }
@@ -43,6 +44,7 @@ export const EditContactAttributesModal = ({
   open,
   setOpen,
   contactId,
+  workspaceId,
   currentAttributes,
   attributeKeys,
 }: EditContactAttributesModalProps) => {
@@ -171,6 +173,7 @@ export const EditContactAttributesModal = ({
 
       const result = await updateContactAttributesAction({
         contactId,
+        workspaceId,
         attributes,
       });
 

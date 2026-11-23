@@ -1,7 +1,8 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
@@ -15,22 +16,42 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import {
+  selectContactAttributeKey,
+  withCallerWorkspace,
+} from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getReportingWorkspaceByDirectory,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 
+/**
+ * Every key of the contact directories the given workspaces use. Two of those workspaces on one
+ * directory see the same keys, so each key is listed once, under one of them (`workspaceId`).
+ */
 export const getContactAttributeKeys = reactCache(
   async (workspaceIds: string[], params: TGetContactAttributeKeysFilter) => {
     try {
-      const query = getContactAttributeKeysQuery(workspaceIds, params);
+      const workspaceByDirectory = await getReportingWorkspaceByDirectory(workspaceIds);
+      const query = getContactAttributeKeysQuery([...workspaceByDirectory.keys()], params);
 
       const [keys, count] = await prisma.$transaction([
         prisma.contactAttributeKey.findMany({
           ...query,
+          select: { ...selectContactAttributeKey, directoryId: true },
         }),
         prisma.contactAttributeKey.count({
           where: query.where,
         }),
       ]);
 
-      return ok({ data: keys, meta: { total: count, limit: params.limit, offset: params.skip } });
+      const data = keys.flatMap(({ directoryId, ...key }) => {
+        const workspaceId = directoryId ? workspaceByDirectory.get(directoryId) : undefined;
+        return workspaceId ? [withCallerWorkspace(key, workspaceId)] : [];
+      });
+
+      return ok({ data, meta: { total: count, limit: params.limit, offset: params.skip } });
     } catch (error) {
       return err({
         type: "internal_server_error",
@@ -47,7 +68,7 @@ export const getContactAttributeKeys = reactCache(
 
 export const createContactAttributeKey = async (
   contactAttributeKey: TContactAttributeKeyInput
-): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
+): Promise<Result<TContactAttributeKey, ApiErrorResponseV2>> => {
   const { workspaceId, name, description, key, dataType } = contactAttributeKey;
 
   if (isReservedFutureDefaultAttributeKey(key)) {
@@ -57,8 +78,18 @@ export const createContactAttributeKey = async (
     });
   }
 
+  // Keys belong to the workspace's contact directory; with none, nothing is created.
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (!directory) {
+    return err({
+      type: "forbidden",
+      details: [{ field: "workspaceId", issue: CONTACT_DIRECTORY_MISSING_MESSAGE }],
+    });
+  }
+
   try {
     const prismaData: Prisma.ContactAttributeKeyCreateInput = {
+      directory: { connect: { id: directory.id } },
       workspace: {
         connect: {
           id: workspaceId,
@@ -72,9 +103,10 @@ export const createContactAttributeKey = async (
 
     const createdContactAttributeKey = await prisma.contactAttributeKey.create({
       data: prismaData,
+      select: selectContactAttributeKey,
     });
 
-    return ok(createdContactAttributeKey);
+    return ok(withCallerWorkspace(createdContactAttributeKey, workspaceId));
   } catch (error) {
     if (
       isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||

@@ -58,3 +58,47 @@ export const requireWorkspaceContactDirectory = async (
 export const whereContactsOfWorkspace = (workspaceId: string): Pick<ContactWhereInput, "directory"> => ({
   directory: { workspaces: { some: { id: workspaceId } } },
 });
+
+/**
+ * For listings that span the workspaces an API key can read: each contact directory those workspaces
+ * use, mapped to the one workspace a row of that directory is reported under. Two of the key's
+ * workspaces on one directory see the same rows, so each row is listed once, under the workspace with
+ * the lowest id (deterministic, whatever order the key's permissions arrive in).
+ */
+export const getReportingWorkspaceByDirectory = async (
+  workspaceIds: readonly string[]
+): Promise<Map<string, string>> => {
+  if (workspaceIds.length === 0) return new Map();
+
+  const workspaces = await prisma.workspace.findMany({
+    where: { id: { in: [...workspaceIds] }, contactDirectoryId: { not: null } },
+    select: { id: true, contactDirectoryId: true },
+    orderBy: { id: "asc" },
+  });
+
+  const byDirectory = new Map<string, string>();
+  for (const workspace of workspaces) {
+    if (workspace.contactDirectoryId && !byDirectory.has(workspace.contactDirectoryId)) {
+      byDirectory.set(workspace.contactDirectoryId, workspace.id);
+    }
+  }
+  return byDirectory;
+};
+
+/**
+ * The workspaces among `workspaceIds` that use `directoryId`, lowest id first. For routes addressed by a
+ * contact or key id: the caller may reach the row through any of its workspaces on the row's directory.
+ */
+export const getWorkspacesOnDirectory = async (
+  directoryId: string,
+  workspaceIds: readonly string[]
+): Promise<string[]> => {
+  if (workspaceIds.length === 0) return [];
+
+  const workspaces = await prisma.workspace.findMany({
+    where: { id: { in: [...workspaceIds] }, contactDirectoryId: directoryId },
+    select: { id: true },
+    orderBy: { id: "asc" },
+  });
+  return workspaces.map((workspace) => workspace.id);
+};

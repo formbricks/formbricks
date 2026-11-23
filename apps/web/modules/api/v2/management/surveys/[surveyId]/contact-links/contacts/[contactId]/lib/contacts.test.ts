@@ -21,7 +21,8 @@ describe("getContact", () => {
     vi.clearAllMocks();
   });
 
-  test("returns contact when found", async () => {
+  // Any contact of the survey workspace's contact directory, whichever workspace created it.
+  test("returns the contact when it is in the workspace's directory", async () => {
     vi.mocked(prisma.contact.findUnique).mockResolvedValue(
       mockContact as Awaited<ReturnType<typeof prisma.contact.findUnique>>
     );
@@ -31,7 +32,7 @@ describe("getContact", () => {
     expect(prisma.contact.findUnique).toHaveBeenCalledWith({
       where: {
         id: mockContactId,
-        workspaceId: mockWorkspaceId,
+        directory: { workspaces: { some: { id: mockWorkspaceId } } },
       },
       select: {
         id: true,

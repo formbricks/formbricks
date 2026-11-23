@@ -102,7 +102,7 @@ describe("listV3Contacts", () => {
     });
     const countWhere = vi.mocked(prisma.contact.count).mock.calls[0][0]?.where;
     expect(countWhere).toEqual({
-      workspaceId,
+      directory: { workspaces: { some: { id: workspaceId } } },
       AND: [
         { attributes: { some: { attributeKeyId: "clak0000000000000000000001", valueNumber: { gt: 10 } } } },
       ],
@@ -129,7 +129,7 @@ describe("listV3Contacts", () => {
     const at = new Date("2026-03-01T00:00:00.000Z");
     expect(where).toEqual({
       AND: [
-        { workspaceId },
+        { directory: { workspaces: { some: { id: workspaceId } } } },
         { OR: [{ createdAt: { lt: at } }, { createdAt: at, id: { lt: "clct0000000000000000000003" } }] },
       ],
     });

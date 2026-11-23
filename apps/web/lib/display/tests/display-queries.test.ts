@@ -133,7 +133,11 @@ describe("getDisplaysByContactId", () => {
 
       expect(result).toEqual(mockDisplaysForContact);
       expect(prisma.display.findMany).toHaveBeenCalledWith({
-        where: { contactId: mockContactId, contact: { workspaceId: mockWorkspaceId } },
+        where: {
+          contactId: mockContactId,
+          contact: { directory: { workspaces: { some: { id: mockWorkspaceId } } } },
+          survey: { workspaceId: mockWorkspaceId },
+        },
         select: {
           id: true,
           createdAt: true,
@@ -153,14 +157,21 @@ describe("getDisplaysByContactId", () => {
 
     // ENG-2290: a contact id alone is not a tenant boundary. The query must join through the
     // contact's workspace so an authorized workspace id cannot be paired with a foreign contact.
-    test("scopes the query to the workspace of the contact", async () => {
+    // A shared directory shares its contacts, not their displays: only displays of this workspace's
+    // surveys are listed, ANDed with the viewer's survey visibility.
+    test("scopes the query to the workspace's directory and to the workspace's surveys", async () => {
       vi.mocked(prisma.display.findMany).mockResolvedValue([]);
+      const visibleSurveyWhere = { createdBy: "user-1" };
 
-      await getDisplaysByContactId(mockContactId, mockWorkspaceId, {});
+      await getDisplaysByContactId(mockContactId, mockWorkspaceId, visibleSurveyWhere);
 
       expect(prisma.display.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ contact: { workspaceId: mockWorkspaceId } }),
+          where: {
+            contactId: mockContactId,
+            contact: { directory: { workspaces: { some: { id: mockWorkspaceId } } } },
+            survey: { AND: [{ workspaceId: mockWorkspaceId }, visibleSurveyWhere] },
+          },
         })
       );
     });

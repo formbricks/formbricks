@@ -274,29 +274,6 @@ export const isTeamPartOfOrganization = async (organizationId: string, teamId: s
   return team.organizationId === organizationId;
 };
 
-export const getContact = reactCache(async (contactId: string): Promise<{ workspaceId: string } | null> => {
-  validateInputs([contactId, ZId]);
-
-  try {
-    const contact = await prisma.contact.findUnique({
-      where: {
-        id: contactId,
-      },
-      select: { workspaceId: true },
-    });
-
-    // A contact whose workspace is gone (it stays in a shared contact directory) has no workspace to
-    // authorize against: not found, until access moves to the directory.
-    return contact?.workspaceId ? { workspaceId: contact.workspaceId } : null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-});
-
 export const getSegment = reactCache(async (segmentId: string): Promise<{ workspaceId: string } | null> => {
   validateInputs([segmentId, ZId]);
   try {

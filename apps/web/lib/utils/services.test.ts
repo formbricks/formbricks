@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import {
   ActionClass,
   ApiKey,
-  Contact,
   Integration,
   Invite,
   Language,
@@ -23,7 +22,6 @@ import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 import {
   getActionClass,
   getApiKey,
-  getContact,
   getContactAttributeKey,
   getFeedbackSource,
   getIntegration,
@@ -506,34 +504,6 @@ describe("Service Functions", () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
       await expect(isTeamPartOfOrganization(organizationId, teamId)).rejects.toThrow(ResourceNotFoundError);
-    });
-  });
-
-  describe("getContact", () => {
-    const contactId = "contact123";
-
-    test("returns the contact when found", async () => {
-      const mockContact = { workspaceId: "ws123" } as unknown as Contact;
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
-
-      const result = await getContact(contactId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-        where: { id: contactId },
-        select: { workspaceId: true },
-      });
-      expect(result).toEqual(mockContact);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getContact(contactId)).rejects.toThrow(DatabaseError);
     });
   });
 

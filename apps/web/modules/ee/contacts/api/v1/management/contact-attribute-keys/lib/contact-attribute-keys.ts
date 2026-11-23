@@ -10,20 +10,35 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { whereAttributeKeysOfDirectory } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import {
-  whereAttributeKeysOfWorkspace,
-  whereAttributeKeysOfWorkspaces,
-} from "@/modules/ee/contacts/lib/attribute-key-scope";
-import { hasWorkspace, requireWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
+  selectContactAttributeKey,
+  withCallerWorkspace,
+} from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import {
+  getReportingWorkspaceByDirectory,
+  requireWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 
+/**
+ * Every key of the contact directories the given workspaces use. Two of those workspaces on one
+ * directory see the same keys, so each key is listed once, under one of them.
+ */
 export const getContactAttributeKeys = reactCache(
   async (workspaceIds: string[]): Promise<TContactAttributeKey[]> => {
     try {
+      const workspaceByDirectory = await getReportingWorkspaceByDirectory(workspaceIds);
+      if (workspaceByDirectory.size === 0) return [];
+
       const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-        where: whereAttributeKeysOfWorkspaces(workspaceIds),
+        where: { directoryId: { in: [...workspaceByDirectory.keys()] } },
+        select: { ...selectContactAttributeKey, directoryId: true },
       });
 
-      return contactAttributeKeys.filter(hasWorkspace);
+      return contactAttributeKeys.flatMap(({ directoryId, ...key }) => {
+        const workspaceId = directoryId ? workspaceByDirectory.get(directoryId) : undefined;
+        return workspaceId ? [withCallerWorkspace(key, workspaceId)] : [];
+      });
     } catch (error) {
       if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
@@ -41,8 +56,10 @@ export const createContactAttributeKey = async (
     throw new InvalidInputError(getReservedFutureDefaultAttributeKeyIssue([data.key]));
   }
 
+  // Before the write, so a workspace with no directory creates nothing. Keys, and their cap, are per directory.
+  const directory = await requireWorkspaceContactDirectory(workspaceId);
   const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
-    where: whereAttributeKeysOfWorkspace(workspaceId),
+    where: whereAttributeKeysOfDirectory(directory.id),
   });
 
   if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
@@ -58,11 +75,13 @@ export const createContactAttributeKey = async (
         type: data.type,
         description: data.description ?? "",
         ...(data.dataType && { dataType: data.dataType }),
+        directoryId: directory.id,
         workspaceId,
       },
+      select: selectContactAttributeKey,
     });
 
-    return requireWorkspace(contactAttributeKey, "contactAttributeKey");
+    return withCallerWorkspace(contactAttributeKey, workspaceId);
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       // A caller mistake, not a server fault: the route shows this message at 400.

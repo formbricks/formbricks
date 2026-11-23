@@ -1,22 +1,28 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { TContactAttributeKeyUpdateSchema } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { hasWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
+import {
+  selectContactAttributeKey,
+  withCallerWorkspace,
+} from "@/modules/ee/contacts/lib/contact-attribute-keys";
 
+/** The key with its directory, which decides who may reach it. */
 export const getContactAttributeKey = reactCache(async (contactAttributeKeyId: string) => {
   try {
     const contactAttributeKey = await prisma.contactAttributeKey.findUnique({
       where: {
         id: contactAttributeKeyId,
       },
+      select: { ...selectContactAttributeKey, directoryId: true },
     });
 
-    if (!contactAttributeKey || !hasWorkspace(contactAttributeKey)) {
+    if (!contactAttributeKey) {
       return err({
         type: "not_found",
         details: [{ field: "contactAttributeKey", issue: "not found" }],
@@ -37,10 +43,12 @@ export const getContactAttributeKey = reactCache(async (contactAttributeKeyId: s
   }
 });
 
+/** `workspaceId` is the caller's workspace the route authorized, reported in the response. */
 export const updateContactAttributeKey = async (
   contactAttributeKeyId: string,
+  workspaceId: string,
   contactAttributeKeyInput: TContactAttributeKeyUpdateSchema
-): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
+): Promise<Result<TContactAttributeKey, ApiErrorResponseV2>> => {
   try {
     // Only allow updating name and description, not key
     const updateData: Prisma.ContactAttributeKeyUpdateInput = {
@@ -53,6 +61,7 @@ export const updateContactAttributeKey = async (
         id: contactAttributeKeyId,
       },
       data: updateData,
+      select: selectContactAttributeKey,
     });
 
     await prisma.contactAttribute.findMany({
@@ -65,7 +74,7 @@ export const updateContactAttributeKey = async (
       },
     });
 
-    return ok(updatedKey);
+    return ok(withCallerWorkspace(updatedKey, workspaceId));
   } catch (error) {
     if (
       isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
@@ -99,14 +108,17 @@ export const updateContactAttributeKey = async (
   }
 };
 
+/** `workspaceId` is the caller's workspace the route authorized, reported in the response. */
 export const deleteContactAttributeKey = async (
-  contactAttributeKeyId: string
-): Promise<Result<ContactAttributeKey, ApiErrorResponseV2>> => {
+  contactAttributeKeyId: string,
+  workspaceId: string
+): Promise<Result<TContactAttributeKey, ApiErrorResponseV2>> => {
   try {
     const deletedKey = await prisma.contactAttributeKey.delete({
       where: {
         id: contactAttributeKeyId,
       },
+      select: selectContactAttributeKey,
     });
 
     await prisma.contactAttribute.findMany({
@@ -119,7 +131,7 @@ export const deleteContactAttributeKey = async (
       },
     });
 
-    return ok(deletedKey);
+    return ok(withCallerWorkspace(deletedKey, workspaceId));
   } catch (error) {
     if (
       isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||

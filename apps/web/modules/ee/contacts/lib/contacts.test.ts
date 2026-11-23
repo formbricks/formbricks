@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { getSurvey } from "@/lib/survey/service";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
@@ -12,11 +12,11 @@ import {
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
+  ContactInSharedDirectoryError,
   buildContactWhereClause,
   createContactsFromCSV,
-  deleteContact,
+  deleteContactInWorkspace,
   generatePersonalLinks,
-  getContact,
   getContactInWorkspace,
   getContactsInSegment,
 } from "./contacts";
@@ -28,6 +28,7 @@ vi.mock("@formbricks/database", () => ({
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -91,6 +92,8 @@ const adminActor: TSurveyActorContext = {
   kind: "user",
   userId: "owner-user-1",
 };
+/** The contacts a workspace sees: every contact of its directory, never `contact.workspaceId`. */
+const directoryScope = { directory: { workspaces: { some: { id: mockWorkspaceId } } } };
 const mockPrismaContact = {
   id: mockContactId,
   createdAt: new Date("2024-01-01"),
@@ -113,9 +116,9 @@ describe("Contacts Lib", () => {
   });
 
   describe("buildContactWhereClause", () => {
-    test("returns where clause with only workspaceId when no search provided", () => {
+    test("scopes to the workspace's contact directory when no search is provided", () => {
       const result = buildContactWhereClause(mockWorkspaceId);
-      expect(result).toEqual({ workspaceId: mockWorkspaceId });
+      expect(result).toEqual(directoryScope);
     });
 
     test("returns where clause with search filters when search is provided", () => {
@@ -123,7 +126,7 @@ describe("Contacts Lib", () => {
       const result = buildContactWhereClause(mockWorkspaceId, searchTerm);
 
       expect(result).toEqual({
-        workspaceId: mockWorkspaceId,
+        ...directoryScope,
         OR: [
           {
             attributes: {
@@ -147,7 +150,7 @@ describe("Contacts Lib", () => {
 
     test("handles empty search string same as no search", () => {
       const result = buildContactWhereClause(mockWorkspaceId, "");
-      expect(result).toEqual({ workspaceId: mockWorkspaceId });
+      expect(result).toEqual(directoryScope);
     });
   });
 
@@ -281,64 +284,37 @@ describe("Contacts Lib", () => {
     });
   });
 
-  describe("getContact", () => {
-    test("returns a single contact by ID", async () => {
-      vi.mocked(prisma.contact.findUnique, { partial: true, deep: true }).mockResolvedValue(
-        mockPrismaContact
-      );
-
-      const result = await getContact(mockContactId);
-
-      expect(result).toEqual(mockPrismaContact);
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-        where: { id: mockContactId },
-        select: expect.any(Object),
-      });
-    });
-
-    test("returns null when contact not found", async () => {
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue(null);
-
-      const result = await getContact(mockContactId);
-
-      expect(result).toBeNull();
-    });
-
-    test("throws DatabaseError on Prisma error", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("DB Error", {
-        code: "P2002",
-        clientVersion: "5.0.0",
-      });
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(prismaError);
-
-      await expect(getContact(mockContactId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("re-throws non-Prisma errors", async () => {
-      const error = new Error("Unknown error");
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(error);
-
-      await expect(getContact(mockContactId)).rejects.toThrow(error);
-    });
-  });
-
   // ENG-2290: the contact detail page authorizes the workspace in the URL and must not be able to
-  // load a contact from another workspace with it. `getContact` stays unscoped on purpose — it is
-  // what derives a contact's workspace elsewhere — so page reads go through this scoped sibling.
+  // load a contact of another directory with it.
   describe("getContactInWorkspace", () => {
-    test("returns the contact when it belongs to the workspace", async () => {
-      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockPrismaContact);
+    test("returns the contact when it is in the workspace's directory", async () => {
+      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue({
+        ...mockPrismaContact,
+        workspaceId: "workspace-origin",
+      });
 
       const result = await getContactInWorkspace(mockContactId, mockWorkspaceId);
 
-      expect(result).toEqual(mockPrismaContact);
+      // The origin workspace is reported as it is.
+      expect(result).toEqual({ ...mockPrismaContact, workspaceId: "workspace-origin" });
       expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-        where: { id: mockContactId, workspaceId: mockWorkspaceId },
+        where: { id: mockContactId, ...directoryScope },
         select: expect.any(Object),
       });
     });
 
-    test("returns null for a contact in another workspace", async () => {
+    test("reports the caller's workspace when the contact's origin workspace is gone", async () => {
+      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue({
+        ...mockPrismaContact,
+        workspaceId: null,
+      });
+
+      const result = await getContactInWorkspace(mockContactId, mockWorkspaceId);
+
+      expect(result?.workspaceId).toBe(mockWorkspaceId);
+    });
+
+    test("returns null for a contact of another directory", async () => {
       // The scoped where clause is what makes this null: Prisma finds no row for the pair.
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
@@ -346,10 +322,9 @@ describe("Contacts Lib", () => {
 
       expect(result).toBeNull();
       expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-        where: { id: mockContactId, workspaceId: "workspace-attacker" },
+        where: { id: mockContactId, directory: { workspaces: { some: { id: "workspace-attacker" } } } },
         select: expect.any(Object),
       });
-      // The unscoped lookup must not be used as a fallback.
       expect(prisma.contact.findUnique).not.toHaveBeenCalled();
     });
 
@@ -371,17 +346,53 @@ describe("Contacts Lib", () => {
     });
   });
 
-  describe("deleteContact", () => {
-    test("deletes a contact and returns it", async () => {
-      vi.mocked(prisma.contact.delete, { partial: true, deep: true }).mockResolvedValue(mockPrismaContact);
+  // Decision 9: deleting a contact also deletes its responses and displays, so it is refused while
+  // another workspace uses the contact's directory.
+  describe("deleteContactInWorkspace", () => {
+    test("deletes a contact of an unshared directory and returns it", async () => {
+      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue({
+        ...mockPrismaContact,
+        workspaceId: mockWorkspaceId,
+      });
+      vi.mocked(prisma.contact.deleteMany).mockResolvedValue({ count: 1 });
 
-      const result = await deleteContact(mockContactId);
+      const result = await deleteContactInWorkspace(mockContactId, mockWorkspaceId);
 
-      expect(result).toEqual(mockPrismaContact);
-      expect(prisma.contact.delete).toHaveBeenCalledWith({
-        where: { id: mockContactId },
+      expect(result).toEqual({ ...mockPrismaContact, workspaceId: mockWorkspaceId });
+      // The share check is part of the delete: a directory every workspace of which is the caller's.
+      expect(prisma.contact.deleteMany).toHaveBeenCalledWith({
+        where: {
+          id: mockContactId,
+          directory: {
+            workspaces: { some: { id: mockWorkspaceId }, every: { id: mockWorkspaceId } },
+          },
+        },
+      });
+    });
+
+    test("refuses a contact of a shared directory", async () => {
+      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue({
+        ...mockPrismaContact,
+        workspaceId: mockWorkspaceId,
+      });
+      vi.mocked(prisma.contact.deleteMany).mockResolvedValue({ count: 0 });
+
+      await expect(deleteContactInWorkspace(mockContactId, mockWorkspaceId)).rejects.toThrow(
+        ContactInSharedDirectoryError
+      );
+    });
+
+    test("does not delete a contact of another directory", async () => {
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
+
+      await expect(deleteContactInWorkspace(mockContactId, "workspace-attacker")).rejects.toThrow(
+        ResourceNotFoundError
+      );
+      expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+        where: { id: mockContactId, directory: { workspaces: { some: { id: "workspace-attacker" } } } },
         select: expect.any(Object),
       });
+      expect(prisma.contact.deleteMany).not.toHaveBeenCalled();
     });
 
     test("throws DatabaseError on Prisma error", async () => {
@@ -389,16 +400,9 @@ describe("Contacts Lib", () => {
         code: "P2002",
         clientVersion: "5.0.0",
       });
-      vi.mocked(prisma.contact.delete).mockRejectedValue(prismaError);
+      vi.mocked(prisma.contact.findFirst).mockRejectedValue(prismaError);
 
-      await expect(deleteContact(mockContactId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("re-throws non-Prisma errors", async () => {
-      const error = new Error("Unknown error");
-      vi.mocked(prisma.contact.delete).mockRejectedValue(error);
-
-      await expect(deleteContact(mockContactId)).rejects.toThrow(error);
+      await expect(deleteContactInWorkspace(mockContactId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
     });
   });
 

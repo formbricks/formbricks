@@ -6,6 +6,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 import { validateInputs } from "../utils/validate";
 
 export const selectDisplay = {
@@ -57,8 +58,9 @@ export const getDisplayCountBySurveyId = reactCache(
 
 /**
  * Scoped by workspace on purpose: this feeds the contact detail page, which is reached through a
- * workspace id in the URL. A contact id alone is not a tenant boundary, so the displays are
- * filtered through the workspace of the contact they belong to.
+ * workspace id in the URL. A contact id alone is not a tenant boundary, so the contact must be in the
+ * workspace's contact directory. A shared directory shares its contacts, not their displays: only
+ * displays to this workspace's surveys are listed.
  */
 export const getDisplaysByContactId = reactCache(
   async (
@@ -73,8 +75,11 @@ export const getDisplaysByContactId = reactCache(
       const displays = await prisma.display.findMany({
         where: {
           contactId,
-          contact: { workspaceId },
-          ...(Object.keys(visibleSurveyWhere).length > 0 ? { survey: visibleSurveyWhere } : {}),
+          contact: whereContactsOfWorkspace(workspaceId),
+          survey:
+            Object.keys(visibleSurveyWhere).length > 0
+              ? { AND: [{ workspaceId }, visibleSurveyWhere] }
+              : { workspaceId },
         },
         select: {
           id: true,

@@ -564,14 +564,20 @@ describe("getResponsesByContactId", () => {
     vi.clearAllMocks();
   });
 
-  test("scopes the query to the workspace of the contact", async () => {
+  // A shared directory shares its contacts, not their responses: workspace B's reader must not see the
+  // contact's responses to workspace A's surveys.
+  test("scopes the query to the workspace's directory and to the workspace's surveys", async () => {
     prisma.response.findMany.mockResolvedValue([]);
 
     await getResponsesByContactId(mockContactId, mockWorkspaceId, {});
 
     expect(prisma.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { contactId: mockContactId, contact: { workspaceId: mockWorkspaceId } },
+        where: {
+          contactId: mockContactId,
+          contact: { directory: { workspaces: { some: { id: mockWorkspaceId } } } },
+          survey: { workspaceId: mockWorkspaceId },
+        },
       })
     );
   });

@@ -2441,6 +2441,7 @@
       "delete_attribute_confirmation": "{value, plural, one {This will delete the selected attribute. Any contact data associated with this attribute will be lost.} other {This will delete the selected attributes. Any contact data associated with these attributes will be lost.}}",
       "delete_contact_confirmation": "This will delete all survey responses and contact attributes associated with this contact. Any targeting and personalization based on this contact’s data will be lost.",
       "delete_contact_confirmation_with_quotas": "{value, plural, one {This will delete all survey responses and contact attributes associated with this contact. Any targeting and personalization based on this contact’s data will be lost. If this contact has responses that count towards survey quotas, the quota counts will be reduced but the quota limits will remain unchanged.} other {This will delete all survey responses and contact attributes associated with these contacts. Any targeting and personalization based on these contacts’ data will be lost. If these contacts have responses that count towards survey quotas, the quota counts will be reduced but the quota limits will remain unchanged.}}",
+      "delete_contact_shared_directory": "Contacts in a directory that other workspaces use can't be deleted.",
       "directory_line": "{directoryName} directory",
       "displays": "Displays",
       "edit_attribute": "Edit attribute",

@@ -82,8 +82,11 @@ export const createContactAttributeKeyAction = authenticatedActionClient
     })
   );
 
+// The workspace comes from the page, never from the key: a key's own `workspaceId` only records where it
+// was created (and is null for a directory's default keys). The key must be in that workspace's directory.
 const ZUpdateContactAttributeKeyAction = z.object({
   id: ZId,
+  workspaceId: ZId,
   name: z.string().optional(),
   description: z.string().optional(),
 });
@@ -91,14 +94,7 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
   .inputSchema(ZUpdateContactAttributeKeyAction)
   .action(
     withAuditLogging("updated", "contactAttributeKey", async ({ ctx, parsedInput }) => {
-      // Fetch existing key to check authorization
-      const existingKey = await getContactAttributeKeyById(parsedInput.id);
-
-      if (!existingKey) {
-        throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
-      }
-
-      const workspaceId = existingKey.workspaceId;
+      const { workspaceId } = parsedInput;
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
@@ -109,10 +105,15 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
 
       await ensureContactsEnabled(organizationId);
 
+      const existingKey = await getContactAttributeKeyById(parsedInput.id, workspaceId);
+      if (!existingKey) {
+        throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
+      }
+
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.oldObject = existingKey;
 
-      const updatedKey = await updateContactAttributeKey(parsedInput.id, {
+      const updatedKey = await updateContactAttributeKey(parsedInput.id, workspaceId, {
         name: parsedInput.name,
         description: parsedInput.description,
       });
@@ -125,19 +126,13 @@ export const updateContactAttributeKeyAction = authenticatedActionClient
 
 const ZDeleteContactAttributeKeyAction = z.object({
   id: ZId,
+  workspaceId: ZId,
 });
 export const deleteContactAttributeKeyAction = authenticatedActionClient
   .inputSchema(ZDeleteContactAttributeKeyAction)
   .action(
     withAuditLogging("deleted", "contactAttributeKey", async ({ ctx, parsedInput }) => {
-      // Fetch existing key to check authorization
-      const existingKey = await getContactAttributeKeyById(parsedInput.id);
-
-      if (!existingKey) {
-        throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
-      }
-
-      const workspaceId = existingKey.workspaceId;
+      const { workspaceId } = parsedInput;
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
@@ -148,10 +143,15 @@ export const deleteContactAttributeKeyAction = authenticatedActionClient
 
       await ensureContactsEnabled(organizationId);
 
+      const existingKey = await getContactAttributeKeyById(parsedInput.id, workspaceId);
+      if (!existingKey) {
+        throw new ResourceNotFoundError("contactAttributeKey", parsedInput.id);
+      }
+
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.oldObject = existingKey;
 
-      const deletedKey = await deleteContactAttributeKey(parsedInput.id);
+      const deletedKey = await deleteContactAttributeKey(parsedInput.id, workspaceId);
 
       return deletedKey;
     })

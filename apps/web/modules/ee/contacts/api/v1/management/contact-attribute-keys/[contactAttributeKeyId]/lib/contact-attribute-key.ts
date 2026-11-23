@@ -9,33 +9,36 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
-import { hasWorkspace, requireWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
+import {
+  selectContactAttributeKey,
+  withCallerWorkspace,
+} from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
   TContactAttributeKeyUpdateInput,
   ZContactAttributeKeyUpdateInput,
 } from "../types/contact-attribute-keys";
 
-export const getContactAttributeKey = reactCache(
-  async (contactAttributeKeyId: string): Promise<TContactAttributeKey | null> => {
-    try {
-      const contactAttributeKey = await prisma.contactAttributeKey.findUnique({
-        where: {
-          id: contactAttributeKeyId,
-        },
-      });
-
-      return contactAttributeKey && hasWorkspace(contactAttributeKey) ? contactAttributeKey : null;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-      throw error;
+/** The key with its directory, which decides who may reach it; null when it does not exist. */
+export const getContactAttributeKey = reactCache(async (contactAttributeKeyId: string) => {
+  try {
+    return await prisma.contactAttributeKey.findUnique({
+      where: {
+        id: contactAttributeKeyId,
+      },
+      select: { ...selectContactAttributeKey, directoryId: true },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
     }
+    throw error;
   }
-);
+});
 
+/** `workspaceId` is the caller's workspace the route authorized, reported in the response. */
 export const deleteContactAttributeKey = async (
-  contactAttributeKeyId: string
+  contactAttributeKeyId: string,
+  workspaceId: string
 ): Promise<TContactAttributeKey> => {
   validateInputs([contactAttributeKeyId, ZId]);
 
@@ -44,9 +47,10 @@ export const deleteContactAttributeKey = async (
       where: {
         id: contactAttributeKeyId,
       },
+      select: selectContactAttributeKey,
     });
 
-    return requireWorkspace(deletedContactAttributeKey, "contactAttributeKey");
+    return withCallerWorkspace(deletedContactAttributeKey, workspaceId);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -55,8 +59,10 @@ export const deleteContactAttributeKey = async (
   }
 };
 
+/** `workspaceId` is the caller's workspace the route authorized, reported in the response. */
 export const updateContactAttributeKey = async (
   contactAttributeKeyId: string,
+  workspaceId: string,
   data: TContactAttributeKeyUpdateInput
 ): Promise<TContactAttributeKey | null> => {
   validateInputs([contactAttributeKeyId, ZId], [data, ZContactAttributeKeyUpdateInput]);
@@ -76,9 +82,10 @@ export const updateContactAttributeKey = async (
         key: data.key,
         ...(data.dataType && { dataType: data.dataType }),
       },
+      select: selectContactAttributeKey,
     });
 
-    return requireWorkspace(contactAttributeKey, "contactAttributeKey");
+    return withCallerWorkspace(contactAttributeKey, workspaceId);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

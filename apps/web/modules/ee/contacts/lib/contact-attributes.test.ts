@@ -120,7 +120,7 @@ describe("getContactAttributesWithKeyInfo", () => {
     const result = await getContactAttributesWithKeyInfo(contactId, workspaceId);
 
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
-      where: { contactId, contact: { workspaceId } },
+      where: { contactId, contact: { directory: { workspaces: { some: { id: workspaceId } } } } },
       select: {
         value: true,
         valueNumber: true,
@@ -205,14 +205,16 @@ describe("getContactAttributesWithKeyInfo", () => {
 
   // ENG-2290: a contact id alone is not a tenant boundary. The query must join through the contact's
   // workspace so a caller holding an authorized workspace id cannot read a foreign contact's PII.
-  test("scopes the query to the workspace of the contact", async () => {
+  test("scopes the query to the contacts of the workspace's directory", async () => {
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
 
     await getContactAttributesWithKeyInfo(contactId, workspaceId);
 
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ contact: { workspaceId } }),
+        where: expect.objectContaining({
+          contact: { directory: { workspaces: { some: { id: workspaceId } } } },
+        }),
       })
     );
   });

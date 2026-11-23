@@ -4,22 +4,17 @@ import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { hasWorkspace } from "@/modules/ee/contacts/lib/workspace-row";
-import { TContact } from "@/modules/ee/contacts/types/contact";
+import { selectV1Contact } from "@/modules/ee/contacts/api/v1/management/contacts/lib/contacts";
 
-export const getContact = reactCache(async (contactId: string): Promise<TContact | null> => {
+/** The contact with its directory, which decides who may reach it; null when it does not exist. */
+export const getContact = reactCache(async (contactId: string) => {
   validateInputs([contactId, ZId]);
 
   try {
-    const contact = await prisma.contact.findUnique({
+    return await prisma.contact.findUnique({
       where: { id: contactId },
+      select: { ...selectV1Contact, directoryId: true },
     });
-
-    if (!contact || !hasWorkspace(contact)) {
-      return null;
-    }
-
-    return contact;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -28,23 +23,3 @@ export const getContact = reactCache(async (contactId: string): Promise<TContact
     throw error;
   }
 });
-
-export const deleteContact = async (contactId: string): Promise<void> => {
-  validateInputs([contactId, ZId]);
-
-  try {
-    await prisma.contact.delete({
-      where: { id: contactId },
-      select: {
-        id: true,
-        attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
-      },
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};

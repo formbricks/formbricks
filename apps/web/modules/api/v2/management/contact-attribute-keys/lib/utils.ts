@@ -1,14 +1,14 @@
 import { Prisma } from "@formbricks/database/prisma";
 import { TGetContactAttributeKeysFilter } from "@/modules/api/v2/management/contact-attribute-keys/types/contact-attribute-keys";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
-import { whereAttributeKeysOfWorkspaces } from "@/modules/ee/contacts/lib/attribute-key-scope";
 
+/** Every key of the given contact directories, filtered and paged by the common v2 parameters. */
 export const getContactAttributeKeysQuery = (
-  workspaceIds: string[],
+  directoryIds: string[],
   params?: TGetContactAttributeKeysFilter
 ): Prisma.ContactAttributeKeyFindManyArgs => {
   let query: Prisma.ContactAttributeKeyFindManyArgs = {
-    where: whereAttributeKeysOfWorkspaces(workspaceIds),
+    where: { directoryId: { in: directoryIds } },
   };
 
   if (!params) return query;
