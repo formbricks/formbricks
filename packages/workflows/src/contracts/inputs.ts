@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { ZWorkflowStatus } from "../types/common";
-import { ZWorkflowDefinition } from "../types/document";
+import { ZWorkflowDefinitionInput } from "../types/document";
 import { ZWorkflowRunStatus } from "../types/runs";
+import { ZWorkflowTriggerType } from "../types/triggers/enum";
 import { zPostgresText } from "./postgres-text";
 
 /**
@@ -19,7 +20,7 @@ export const ZCreateWorkflowInput = z
       .literal("draft")
       .optional()
       .describe("Workflows are always created as drafts; only enable can make them live."),
-    definition: ZWorkflowDefinition,
+    definition: ZWorkflowDefinitionInput,
   })
   .describe("Creates a draft workflow.");
 export type TCreateWorkflowInput = z.infer<typeof ZCreateWorkflowInput>;
@@ -28,7 +29,7 @@ export const ZPatchWorkflowInput = z
   .strictObject({
     name: z.string().min(1).max(120).optional(),
     description: z.string().max(500).nullable().optional(),
-    definition: ZWorkflowDefinition.optional().describe(
+    definition: ZWorkflowDefinitionInput.optional().describe(
       "Only accepted while the workflow is draft or disabled; the live version of an enabled workflow is immutable."
     ),
   })
@@ -109,6 +110,11 @@ export const ZListWorkflowRunsInput = z
     workflowId: z.cuid2().optional().describe("Returns only runs of this workflow."),
     responseId: z.cuid2().optional().describe("Returns only runs triggered by this survey response."),
     statusIn: z.array(ZWorkflowRunStatus).min(1).optional().describe("Parsed form of filter[status][in]."),
+    triggerTypeIn: z
+      .array(ZWorkflowTriggerType)
+      .min(1)
+      .optional()
+      .describe("Parsed form of filter[triggerType][in]."),
     isDryRun: z
       .boolean()
       .optional()

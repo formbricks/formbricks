@@ -37,7 +37,7 @@ const ChipRemoveButton = ({
     onClick={onRemove}
     aria-label={label}
     className={cn(
-      "focus-visible:ring-ring flex h-full items-center rounded-r-md text-slate-500 hover:text-slate-900 focus-visible:ring-1 focus-visible:outline-hidden",
+      "flex h-full items-center rounded-r-md text-slate-500 hover:text-slate-900 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden",
       size === "sm" ? "px-1.5" : "px-2"
     )}>
     <XIcon className="size-3.5" />
@@ -98,7 +98,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
             aria-label={t("common.table_toolbar.edit_filter", { filter: accessibleName })}
             title={value ? `${label} ${value}` : label}
             className={cn(
-              "focus-visible:ring-ring flex h-full min-w-0 items-center gap-1.5 py-0.5 focus-visible:ring-1 focus-visible:outline-hidden",
+              "flex h-full min-w-0 items-center gap-1.5 py-0.5 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden",
               onRemove ? "rounded-l-md pr-1" : "rounded-md pr-2",
               size === "sm" ? "pl-2" : "pl-3"
             )}

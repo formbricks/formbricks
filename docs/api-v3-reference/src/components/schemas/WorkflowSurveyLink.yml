@@ -1,0 +1,42 @@
+type: object
+description: >
+  The survey link a `send_email` step carries: `<public domain>/s/<surveyId>?key=value`, placed in
+  the body with `#survey-link#`. The survey must be a link survey in this workflow's workspace
+  (enable returns **422** otherwise). Embedded Data values may insert Variables and are URL-encoded;
+  keys the survey doesn't accept as passed-in Embedded Data are left off the link, and enable and
+  the dry run warn about them (`survey_link_key_not_accepted`).
+required:
+  - surveyId
+  - embeddedData
+properties:
+  surveyId:
+    type: string
+    format: cuid2
+    description: A link survey in this workflow's workspace.
+  embeddedData:
+    type: array
+    maxItems: 30
+    description: >
+      Embedded Data put on the link as URL parameters, in order. Keys are unique, compared
+      case-insensitively as the link survey compares them.
+    items:
+      type: object
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Passed-in Embedded Data key the survey declares; the URL parameter name.
+          example: call_id
+        value:
+          type: string
+          maxLength: 2048
+          description: >
+            Text that may insert Variables as recall tokens, e.g.
+            `#recall:payload.call.id/fallback:#`. URL-encoded when the link is built.
+          example: "#recall:payload.call.id/fallback:#"
+      additionalProperties: false
+additionalProperties: false

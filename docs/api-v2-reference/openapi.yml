@@ -646,6 +646,7 @@ paths:
                             anyOf:
                               - type: string
                               - type: number
+                              - type: boolean
                           description: The variables of the response
                           example: &a2
                             variable1: answer1
@@ -799,6 +800,7 @@ paths:
                     anyOf:
                       - type: string
                       - type: number
+                      - type: boolean
                   description: The variables of the response
                   example: *a2
                 ttc:
@@ -895,6 +897,7 @@ paths:
                       anyOf:
                         - type: string
                         - type: number
+                        - type: boolean
                     description: The variables of the response
                     example: *a2
                   ttc:
@@ -1023,6 +1026,7 @@ paths:
                       anyOf:
                         - type: string
                         - type: number
+                        - type: boolean
                     description: The variables of the response
                     example: *a2
                   ttc:
@@ -1190,6 +1194,7 @@ paths:
                       anyOf:
                         - type: string
                         - type: number
+                        - type: boolean
                     description: The variables of the response
                     example: *a2
                   ttc:
@@ -1317,6 +1322,7 @@ paths:
                       anyOf:
                         - type: string
                         - type: number
+                        - type: boolean
                     description: The variables of the response
                     example: *a2
                   ttc:
@@ -3837,6 +3843,7 @@ components:
             anyOf:
               - type: string
               - type: number
+              - type: boolean
           description: The variables of the response
           example: *a2
         ttc:

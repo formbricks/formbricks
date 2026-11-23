@@ -1,0 +1,50 @@
+description: >-
+  If/else operator. New definitions use the survey logic operator names, compared exactly as
+  survey logic compares them (a number sent as text compares as a number). The workflow operator
+  names from v1 are deprecated: still accepted, stored and returned as written until v7.0.0, but
+  one definition uses one name set, never a mix (**400**). `equals` and `contains` belong to both
+  sets.
+oneOf:
+  - title: Survey operator
+    type: string
+    enum:
+      - equals
+      - doesNotEqual
+      - contains
+      - doesNotContain
+      - startsWith
+      - doesNotStartWith
+      - endsWith
+      - doesNotEndWith
+      - isGreaterThan
+      - isLessThan
+      - isGreaterThanOrEqual
+      - isLessThanOrEqual
+      - isBefore
+      - isAfter
+      - equalsOneOf
+      - includesAllOf
+      - includesOneOf
+      - doesNotIncludeAllOf
+      - doesNotIncludeOneOf
+      - isSet
+      - isNotSet
+      - isEmpty
+      - isNotEmpty
+  - title: Deprecated workflow operator
+    type: string
+    deprecated: true
+    description: >-
+      Removed in v7.0.0. Each means a survey operator: `notEquals` → `doesNotEqual`,
+      `lessThan` → `isLessThan`, `lessEqual` → `isLessThanOrEqual`, `greaterThan` →
+      `isGreaterThan`, `greaterEqual` → `isGreaterThanOrEqual`, `notContains` →
+      `doesNotContain`, `exists` → `isSet`, `notExists` → `isNotSet`.
+    enum:
+      - notEquals
+      - lessThan
+      - lessEqual
+      - greaterThan
+      - greaterEqual
+      - notContains
+      - exists
+      - notExists

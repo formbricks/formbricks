@@ -11,7 +11,7 @@ export const ZResponseCompletedTriggerConfig = z.object({
 });
 export type TResponseCompletedTriggerConfig = z.infer<typeof ZResponseCompletedTriggerConfig>;
 
-export const ZWorkflowTriggerPayload = z
+export const ZWorkflowResponseCompletedTriggerPayload = z
   .object({
     type: z.literal(WORKFLOW_TRIGGERS.RESPONSE_COMPLETED),
     workspaceId: z.cuid2(),
@@ -21,8 +21,10 @@ export const ZWorkflowTriggerPayload = z
     data: z.record(z.string(), z.unknown()).optional(),
   })
   .catchall(z.unknown())
-  .describe("Runtime payload captured when a workflow trigger fires.");
-export type TWorkflowTriggerPayload = z.infer<typeof ZWorkflowTriggerPayload>;
+  .describe("Runtime payload captured when a Response completed trigger fires.");
+export type TWorkflowResponseCompletedTriggerPayload = z.infer<
+  typeof ZWorkflowResponseCompletedTriggerPayload
+>;
 
 export const ZWorkflowResponseCompletedTriggerNode = ZWorkflowNodeBase.extend({
   type: z.literal("trigger"),

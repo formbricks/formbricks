@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { TWithCalBookings } from "./cal-booking";
 import { ZId } from "./common";
 import { ZSurveyQuota } from "./quota";
 import { MAX_NOT_SHOWN_ID_LENGTH, ZResponseNotShown, ZResponseNotShownInput } from "./surveys/not-shown";
@@ -47,7 +48,11 @@ export const ZResponseData = z.record(z.string(), ZResponseDataValue);
 
 export type TResponseData = z.infer<typeof ZResponseData>;
 
-export const ZResponseVariables = z.record(z.string(), z.union([z.string(), z.number()]));
+/**
+ * Computed field values by storage key. A true/false field (ENG-6973) holds a real boolean; a date
+ * (ENG-6935) an ISO 8601 string.
+ */
+export const ZResponseVariables = z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]));
 
 export type TResponseVariables = z.infer<typeof ZResponseVariables>;
 
@@ -121,6 +126,8 @@ export const checkFlatMap =
 
 const isTextOrNumber = (value: unknown) => typeof value === "string" || typeof value === "number";
 
+const isVariableValue = (value: unknown) => isTextOrNumber(value) || typeof value === "boolean";
+
 const NO_ITEMS: readonly unknown[] = [];
 
 /**
@@ -180,7 +187,12 @@ export const ZResponseDataInput = withSizeCheck(
 
 export const ZResponseVariablesInput = withSizeCheck(
   ZResponseVariables,
-  checkFlatMap(MAX_RESPONSE_VARIABLE_KEYS, "variables", isTextOrNumber, "A variable must be text or a number")
+  checkFlatMap(
+    MAX_RESPONSE_VARIABLE_KEYS,
+    "variables",
+    isVariableValue,
+    "A variable must be text, a number or true/false"
+  )
 );
 
 export const ZResponseTtc = z.record(z.string(), z.number());
@@ -821,7 +833,9 @@ export const ZResponseInput = z.object({
   meta: ZResponseMeta.optional(),
 });
 
-export type TResponseInput = z.infer<typeof ZResponseInput>;
+// `TWithCalBookings` is not in `ZResponseInput` on purpose: the client routes derive it from the survey
+// and the incoming data, so a client-sent value is stripped by the parse and never reaches the column.
+export type TResponseInput = z.infer<typeof ZResponseInput> & TWithCalBookings;
 
 /**
  * Mark as low quality from the survey (ENG-6933, ADR 0022/0024): a rule's action asks the server to set the
@@ -844,7 +858,7 @@ export const ZClientResponseInput = ZResponseInput.extend({
   notShown: ZResponseNotShownInput.optional(),
 });
 
-export type TClientResponseInput = z.infer<typeof ZClientResponseInput>;
+export type TClientResponseInput = z.infer<typeof ZClientResponseInput> & TWithCalBookings;
 
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean().optional(),
@@ -856,7 +870,8 @@ export const ZResponseUpdateInput = z.object({
   pinAuthToken: z.string().nullish(),
 });
 
-export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
+// Same as `TResponseInput`: bookings ride beside the parsed input, never inside the schema.
+export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput> & TWithCalBookings;
 
 /**
  * The survey's update input on the public client route
@@ -870,7 +885,7 @@ export const ZClientResponseUpdateInput = ZResponseUpdateInput.extend({
   notShown: ZResponseNotShownInput.optional(),
 });
 
-export type TClientResponseUpdateInput = z.infer<typeof ZClientResponseUpdateInput>;
+export type TClientResponseUpdateInput = z.infer<typeof ZClientResponseUpdateInput> & TWithCalBookings;
 
 export const ZResponseWithSurvey = ZResponse.extend({
   survey: ZSurvey,
@@ -925,7 +940,7 @@ export const ZResponseTableData = z.object({
   tags: z.array(ZTag),
   language: z.string().nullable(),
   responseData: ZResponseData,
-  variables: z.record(z.string(), z.union([z.string(), z.number()])),
+  variables: ZResponseVariables,
   person: ZResponseContact.nullable(),
   contactAttributes: ZResponseContactAttributes,
   meta: ZResponseMeta,

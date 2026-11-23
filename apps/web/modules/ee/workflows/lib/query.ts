@@ -21,6 +21,15 @@ export const workflowKeys = {
   list: (input: TWorkflowListKeyInput) => [...workflowKeys.lists(), input] as const,
   details: () => [...workflowKeys.all, "detail"] as const,
   detail: (workflowId: string) => [...workflowKeys.details(), workflowId] as const,
+  /** The Webhook Secret URL and Sample payload; under the detail, so invalidating it refetches both. */
+  webhook: (workflowId: string) => [...workflowKeys.detail(workflowId), "webhook"] as const,
+  /** Every sample of the workflow, HTTP request steps' Test request responses included. */
+  samples: (workflowId: string) => [...workflowKeys.detail(workflowId), "samples"] as const,
+  publishedVersion: (workflowId: string) =>
+    [...workflowKeys.detail(workflowId), "published-version"] as const,
+  /** The trigger survey's responses for the Test run picker; keyed by survey so a new one refetches. */
+  testResponses: (workflowId: string, surveyId: string) =>
+    [...workflowKeys.detail(workflowId), "test-responses", surveyId] as const,
 };
 
 export function flattenWorkflowPages(data?: InfiniteData<TWorkflowListPage>): TWorkflowListItem[] {
@@ -39,6 +48,12 @@ export const workflowRunKeys = {
   list: (input: TWorkflowRunListKeyInput) => [...workflowRunKeys.lists(), input] as const,
   details: () => [...workflowRunKeys.all, "detail"] as const,
   detail: (runId: string) => [...workflowRunKeys.details(), runId] as const,
+  /**
+   * The graph the run executed. Never changes, so it sits outside `detail`: refreshing a run's detail
+   * does not refetch it.
+   */
+  definition: (workflowId: string, runId: string) =>
+    [...workflowRunKeys.all, "definition", workflowId, runId] as const,
 };
 
 export function flattenWorkflowRunPages(data?: InfiniteData<TWorkflowRunListPage>): TWorkflowRunListItem[] {

@@ -2202,6 +2202,9 @@ export const syncOrganizationBillingFromStripe = async (
       lastStripeEventCreatedAt: toIsoStringOrNull(incomingEventDate ?? previousEventDate),
       lastSyncedAt: new Date().toISOString(),
       lastSyncedEventId: event?.id ?? existingStripeSnapshot?.lastSyncedEventId ?? null,
+      trialStart: subscription?.trial_start
+        ? new Date(subscription.trial_start * 1000).toISOString()
+        : (existingStripeSnapshot?.trialStart ?? null),
       trialEnd: subscription?.trial_end
         ? new Date(subscription.trial_end * 1000).toISOString()
         : (existingStripeSnapshot?.trialEnd ?? null),

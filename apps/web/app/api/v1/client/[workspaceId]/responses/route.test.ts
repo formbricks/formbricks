@@ -370,3 +370,75 @@ describe("POST /api/v1/client/[workspaceId]/responses — opened by creative (EN
     expect(persistedMeta()).not.toHaveProperty("openedByCreativeName");
   });
 });
+
+describe("POST /api/v1/client/[workspaceId]/responses — Cal booking details", () => {
+  const calSurvey = () => ({
+    ...getSurveyWithFields([]),
+    blocks: [
+      {
+        id: "block_1",
+        elements: [{ id: "q1" }, { id: "cal1", type: "cal" }],
+      },
+    ],
+  });
+  const booking = { status: "booked", uid: "abc", startTime: "2026-12-01T10:00:00Z" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
+    mocks.getSurvey.mockResolvedValue(calSurvey());
+    mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
+    mocks.enforceVerifiedEmailGate.mockReturnValue(null);
+    mocks.verifyResponseRecaptcha.mockResolvedValue(null);
+    mocks.validateSingleUseResponseInput.mockReturnValue(undefined);
+    mocks.validateClientFileUploads.mockReturnValue(true);
+    mocks.validateResponseData.mockReturnValue(null);
+    mocks.createQuotaFullObject.mockReturnValue({});
+    mocks.findRecentDuplicateResponse.mockResolvedValue(null);
+    mocks.createResponseWithQuotaEvaluation.mockResolvedValue({
+      id: responseId,
+      surveyId,
+      finished: false,
+      quotaFull: undefined,
+    });
+  });
+
+  const persistedInput = () => mocks.createResponseWithQuotaEvaluation.mock.calls[0][0];
+
+  test('keeps the string "booked" in data and moves the details to calBookings', async () => {
+    const result = await postRawBody({ q1: "answer", cal1: booking });
+
+    expect(result.response.status).toBe(200);
+    expect(persistedInput().data).toEqual({ q1: "answer", cal1: "booked" });
+    expect(persistedInput().calBookings).toEqual({ cal1: booking });
+  });
+
+  test('leaves a legacy "booked" string alone and stores no details', async () => {
+    await postRawBody({ cal1: "booked" });
+
+    expect(persistedInput().data).toEqual({ cal1: "booked" });
+    expect(persistedInput().calBookings).toBeUndefined();
+  });
+
+  test("answers 400 for a booking with a NUL byte, and stores nothing", async () => {
+    const result = await postRawBody({ cal1: { ...booking, title: "Intro\u0000call" } });
+
+    expect(result.response.status).toBe(400);
+    expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
+  test("hands the booking to the duplicate lookup, which folds only a replay of the same one", async () => {
+    await postRawBody({ cal1: booking }, { finished: true });
+
+    expect(mocks.findRecentDuplicateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ calBookings: { cal1: booking } })
+    );
+  });
+
+  test("ignores a calBookings key the client sends itself", async () => {
+    await postRawBody({ cal1: "booked" }, { calBookings: { cal1: booking } });
+
+    expect(persistedInput().calBookings).toBeUndefined();
+  });
+});

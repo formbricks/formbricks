@@ -11,7 +11,7 @@ import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-
 import { responses } from "@/app/lib/api/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
-import { applyIngestContractToResponseData } from "@/lib/response/ingest";
+import { applyIngestContractToResponseInput } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -93,11 +93,17 @@ const getContactsDisabledResponse = async (
 const validateResponseSubmission = async (
   workspaceId: string,
   responseInputData: TResponseInputV2,
-  survey: TResponseSurvey
+  survey: TResponseSurvey,
+  invalidCalElementId: string | undefined
 ): Promise<Response | null> => {
   const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInputData);
   if (surveyCheckResult) {
     return surveyCheckResult;
+  }
+
+  // After the PIN and workspace checks, so a caller without access learns nothing about its input.
+  if (invalidCalElementId) {
+    return responses.badRequestResponse("Invalid booking details", { elementId: invalidCalElementId }, true);
   }
 
   if (
@@ -267,10 +273,16 @@ export const POST = async (request: Request, context: Context): Promise<Response
     // will be stored, and `checkSurveyValidity` stamps `verifiedEmail` from the verification token —
     // a forbidden field name no survey declares, so the contract has to run before that write rather
     // than after it.
-    const ingestResult = applyIngestContractToResponseData(survey, responseInputData.data);
-    responseInputData.data = ingestResult.data;
+    // The same step splits a Cal element's booking record out of `data` (the stored answer stays the
+    // string "booked").
+    const ingestResult = applyIngestContractToResponseInput(survey, responseInputData);
 
-    const validationResponse = await validateResponseSubmission(workspaceId, responseInputData, survey);
+    const validationResponse = await validateResponseSubmission(
+      workspaceId,
+      responseInputData,
+      survey,
+      ingestResult.invalidCalElementId
+    );
     if (validationResponse) {
       return validationResponse;
     }
@@ -283,6 +295,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
       contactId: responseInputData.contactId,
       data: responseInputData.data,
       finished: responseInputData.finished,
+      calBookings: responseInputData.calBookings,
     });
     if (duplicate) {
       logger.info({ surveyId: survey.id, responseId: duplicate.id }, "Folded duplicate response submission");

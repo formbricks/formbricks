@@ -1,0 +1,26 @@
+type: object
+description: >
+  The last call to the Webhook Secret URL: the payload it sent, the Variables
+  inferred from it, when it arrived and from where. Shown so an editor can
+  review it and use it as the expected payload.
+required:
+  - payload
+  - variables
+  - receivedAt
+  - callerIp
+properties:
+  payload:
+    type: object
+    additionalProperties: true
+    description: The JSON object the last call sent.
+  variables:
+    $ref: ./WorkflowSampleVariables.yml
+  receivedAt:
+    type: string
+    format: date-time
+  callerIp:
+    type:
+      - string
+      - "null"
+    description: IP of the call. Null when unknown.
+additionalProperties: false

@@ -2,6 +2,12 @@ import type { z } from "zod";
 import type { TEmbeddedDataType } from "../embedded-data";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
 import type { TActionCalculate, TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
+import {
+  BOOLEAN_ASSIGN_MESSAGE,
+  BOOLEAN_VALUE_TARGET_MESSAGE,
+  isStaticBooleanValue,
+  isValidBooleanAssign,
+} from "./boolean-assign";
 import { getSetValueExpressionIssues } from "./expression-types";
 import { type TExpression, isExpressionOverLimits } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
@@ -209,6 +215,10 @@ const validateAction = (
   }
 
   if (action.objective === "calculate") {
+    // ENG-6973: a computed true/false field (declared only in the typed rows) is set in one step only.
+    if (getFieldType(survey, action.variableId, "computed") === "boolean") {
+      return validateBooleanCalculation(survey, action, ruleIdx, path);
+    }
     // ENG-6935: a Set value formula, which may set a computed date (declared only in the typed rows).
     if (action.value.type === "expression") {
       return validateExpressionAction(survey, action.variableId, action.value.value, ruleIdx, path);
@@ -217,6 +227,26 @@ const validateAction = (
   }
 
   return undefined;
+};
+
+/**
+ * Set value on a true/false field before the first question (ENG-6973), as in block rules: one-step
+ * `assign` of a static `true` / `false`, or another true/false field.
+ */
+const validateBooleanCalculation = (
+  survey: TStartLogicSurvey,
+  action: TActionCalculate,
+  ruleIdx: number,
+  path: (string | number)[]
+): TIssue | undefined => {
+  if (isValidBooleanAssign(action, (storageKey, source) => getFieldType(survey, storageKey, source))) {
+    return undefined;
+  }
+  return {
+    code: "custom",
+    message: `Conditional Logic: ${BOOLEAN_ASSIGN_MESSAGE} in ${ruleLabel(ruleIdx)}`,
+    path: [...path, "value"],
+  };
 };
 
 /** A one-step calculation (not a formula) before the first question: its variable and its source. */
@@ -232,6 +262,14 @@ const validateOneStepCalculation = (
       code: "custom",
       message: `Conditional Logic: Variable ID ${action.variableId} does not exist in ${ruleLabel(ruleIdx)}`,
       path: [...path, "variableId"],
+    };
+  }
+  // True and False are values of a true/false field only.
+  if (isStaticBooleanValue(action.value)) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: ${BOOLEAN_VALUE_TARGET_MESSAGE} in ${ruleLabel(ruleIdx)}`,
+      path: [...path, "value"],
     };
   }
   if (action.value.type === "element") {

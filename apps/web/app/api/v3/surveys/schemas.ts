@@ -671,6 +671,8 @@ const DYNAMIC_REFERENCE_KEYS = new Set(["type", "value", "meta"]);
 const STATIC_OPERAND_KEYS = new Set(["type", "value", "columnId", "columnIds"]);
 const CALCULATE_ACTION_KEYS = new Set(["id", "objective", "variableId", "operator", "value"]);
 const EXPRESSION_VALUE_KEYS = new Set(["type", "value"]);
+// ENG-6973: True or False on a true/false field carries no matrix column keys.
+const BOOLEAN_STATIC_VALUE_KEYS = EXPRESSION_VALUE_KEYS;
 const EXPRESSION_CALL_KEYS = new Set(["type", "fn", "args"]);
 const REQUIRE_ANSWER_ACTION_KEYS = new Set(["id", "objective", "target"]);
 const JUMP_TO_BLOCK_ACTION_KEYS = REQUIRE_ANSWER_ACTION_KEYS;
@@ -964,6 +966,14 @@ function validateAction(value: unknown, path: string, issues: SurveyDocumentProb
     if (isPlainObject(value.value) && value.value.type === "expression") {
       addUnknownKeyIssues(value.value, EXPRESSION_VALUE_KEYS, `${path}.value`, issues);
       validateExpressionNode(value.value.value, `${path}.value.value`, issues, 1);
+      return;
+    }
+    if (
+      isPlainObject(value.value) &&
+      value.value.type === "static" &&
+      typeof value.value.value === "boolean"
+    ) {
+      addUnknownKeyIssues(value.value, BOOLEAN_STATIC_VALUE_KEYS, `${path}.value`, issues);
       return;
     }
     validateLogicOperand(value.value, `${path}.value`, issues);

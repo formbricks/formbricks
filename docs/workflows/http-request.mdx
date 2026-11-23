@@ -1,0 +1,198 @@
+---
+title: "HTTP request"
+description: "Call an outside API from a workflow and use its response in later steps."
+icon: "globe"
+---
+
+The **HTTP request** action calls a URL with the method, headers and JSON body you set, and passes the response
+to later steps. Use it to update a CRM, open a ticket, or look up data that a later step needs.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+{/* SCREENSHOT PLACEHOLDER: http-request-panel.webp. The HTTP request panel with method POST, a fixed URL, a
+query parameter using a Variable, a secret Authorization header showing ••••••, a JSON body, and the response
+mode set to "Wait and use it". Save to /images/platform/workflows/http-request-panel.webp and replace this
+comment with a <Frame>. */}
+
+## Configure the request
+
+| Field                | Configuration                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| **Method**           | `GET`, `POST`, `PUT`, `PATCH` or `DELETE`.                                                          |
+| **URL**              | The full `https://` address to call. Its path can insert Variables; its host can't.                 |
+| **Query parameters** | Name and value rows added to the URL. Values can insert Variables and are URL-encoded.              |
+| **Headers**          | Name and value rows. Values can insert Variables. Mark a header as secret for API keys and tokens.  |
+| **Body**             | A JSON body for `POST`, `PUT` and `PATCH`. It can insert Variables. `GET` and `DELETE` send no body. |
+
+When the request has a body and no `Content-Type` header, Formbricks sends `Content-Type: application/json`.
+Formbricks sets `Host`, `Content-Length`, `Transfer-Encoding`, `Connection` and the other transport headers
+itself, so they can't be added.
+
+### Variables in the URL path
+
+An API that expects an ID in its path, such as `PATCH /customers/123`, can get it from a
+[Variable](/workflows/variables). Type `@` in the URL's path and pick the Variable:
+
+```
+https://api.example.com/customers/@payload.customer.id/orders
+```
+
+The host is fixed. Anyone who has a [Webhook Secret URL](/workflows/webhook-trigger) controls the payload, so
+Variables can never choose where the request goes or where your secret headers are sent:
+
+- **Only in the path.** The `@` picker opens only after the `/` that follows the host. Saving refuses a Variable
+  in the scheme, host or port, and in the query or fragment. Put query values in **query parameters** instead.
+- **One path segment per value.** Each value is URL-encoded, so a `/`, `?`, `#`, `%` or `\` in it stays part of
+  that segment. A customer ID of `a/b` is sent as `a%2Fb`, never as two segments.
+- **No empty, `.` or `..` values.** A value that is empty, `.` or `..` (also when encoded, such as `%2e%2e`)
+  fails the step with an error that names the Variable, so a payload can't move the request to another path.
+  Set a [fallback](/workflows/variables#when-a-value-is-missing) for values that can be missing.
+- **Same host after insertion.** Formbricks checks the final URL again and fails the step if its host is not the
+  one you typed.
+
+Run detail, Test run results and **Send test request** show the final URL, with the values filled in. The 2 KB URL
+limit applies to that final URL.
+
+The URL must use HTTPS and point to a public address. Self-hosted instances can allow plain HTTP with
+`DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP` and internal addresses with `DANGEROUSLY_ALLOW_WORKFLOW_INTERNAL_URLS`;
+neither applies on Formbricks Cloud. The Webhooks integration's `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS` doesn't
+open internal addresses to workflows, because **Send test request** shows the response body: with internal
+addresses allowed, anyone who can edit a workflow can read your internal services. See
+[Environment variables](/self-hosting/configuration/environment-variables).
+
+Redirects are never followed, so a redirect can't send your headers to another host. A `3xx` answer is the
+response the step gets.
+
+## Secret headers
+
+Mark a header as secret for anything that grants access, such as `Authorization: Bearer …` or `X-Api-Key`.
+`Authorization` and headers whose name contains `token`, `key`, `secret` or `cookie` are secret by default.
+
+- **The value is stored encrypted and never shown again.** The editor, the API, run detail and the audit log show
+  `••••••` instead. To change it, select **Replace** and enter a new value. The new value is used from the next
+  run on, also on the enabled workflow: you don't need to disable it or enable it again, and no other draft
+  change goes live with it. This makes rotating a leaked or expired key a single step. A typo breaks live runs
+  right away, so use **Send test request** to check the new value. A header that had no value yet gets one in
+  the draft only; the enabled workflow uses it once you enable the draft. **Replace** is in the editor only:
+  through the API or MCP, send the new value in the workflow definition, which means disabling the workflow,
+  updating it and enabling it again.
+- **The value is only sent to the host it was entered for.** See [Secret values stay with their host](#secret-values-stay-with-their-host).
+- **A secret value can't insert Variables.** It is sent exactly as you entered it, and can't contain line
+  breaks.
+- **Duplicates don't copy secret values.** A duplicated workflow keeps the header names, and can't be enabled
+  until you enter each value again.
+- **Echoed values are masked.** If the API you call repeats a secret value back in its response, run detail and
+  the saved test response show it masked. Later steps in the same run still read the real response.
+
+Only people with write or manage access can set or replace a secret header. Every change is recorded in the
+audit log, with the header name and the host the value is sent to, never the value.
+
+### Secret values stay with their host
+
+When you enter a secret value, Formbricks remembers the host of the step's URL at that moment: its scheme, host
+name and port, such as `https://api.example.com`. The value is only ever sent to that host. Changing the path or
+the query parameters is fine; changing to another host, to `http://` or to another port is not.
+
+This protects your API keys when someone changes the URL, whether a person or an AI agent working through
+[MCP](/platform/mcp/overview) that was tricked by text in a response or payload into pointing the step at another
+server. To send a key somewhere new, someone has to enter it again.
+
+If a step's URL points at another host than a secret value was entered for:
+
+- The editor shows **Enter again: the saved value is only sent to api.example.com** under that header.
+- **Enable** is refused until you enter the value again.
+- **Send test request** is refused, unless you type the value for that call.
+- A run never sends the value to the other host. The step fails with "Secret header Authorization is set for
+  api.example.com; enter it again for the new URL" and nothing is sent. With **Continue on error** on, the run
+  goes on and run detail shows the error.
+
+To move a step to a new host:
+
+1. Change the URL.
+2. For each secret header, select **Replace** and enter the value for the new host. The value is saved for the
+   new URL. On a workflow that has been enabled, the enabled version keeps sending its old value to the old
+   host until you enable the draft.
+3. Use **Send test request** to check the call, then enable the workflow.
+
+Through the API or MCP, send the URL and each secret header's value together in the workflow definition. A read
+returns each stored secret header's `boundOrigin`, the host its value is sent to.
+
+A secret value needs the step's URL first: entering one while the URL is empty or invalid is refused. Values
+stored before Formbricks recorded hosts are sent to the URL their step was saved with, and are tied to a host
+the next time you enter them.
+
+## Response mode
+
+Choose what the run does while the request is sent:
+
+| Mode                | What happens                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Wait and use it** | The run waits for the answer. Later steps can use `steps.<stepId>.status` and `steps.<stepId>.body`. A failed request fails the run, unless **Continue on error** is on. |
+| **Don't wait**      | The request is sent in the background and the run moves on at once. Later steps can't use the response, and the request's outcome never fails the run.              |
+
+### Wait and use it
+
+The response is available to later steps as Variables:
+
+- `steps.<stepId>.status`: the HTTP status code, such as `200`.
+- `steps.<stepId>.body`: the response body. When the response is JSON, you can pick values inside it, such as
+  `steps.<stepId>.body.order.id`. Otherwise it is the body as text.
+
+Later steps read up to 1 MB of the response. Run detail keeps the first 64 KB.
+
+A `4xx` or `5xx` answer counts as an error, and so does a request that times out or can't be sent. An error fails
+the step and the run. Turn on **Continue on error** to let the run go on instead: the step is marked as
+succeeded, run detail shows the error, and later steps can check `steps.<stepId>.status`, for example with an
+[If/else](/workflows/if-else). When no answer came at all, `status` is not set.
+
+### Don't wait
+
+Run detail shows the step as **Sending…** until the request finishes, then as sent or failed. A request that is
+still sending after an hour is marked failed, because Formbricks can't tell whether it reached its target. Use
+**Don't wait** when nothing after the step depends on the answer, such as a notification to a chat tool.
+
+## Timeouts and retries
+
+Each attempt waits up to 10 seconds for an answer. A request that times out, can't be sent, or is answered with
+`429` or a `5xx` status is retried up to 3 times, after 1, 2 and 4 seconds. Any other answer ends the request, and
+a URL that isn't allowed is never retried. With **Wait and use it**, one step can hold the run for up to about
+50 seconds.
+
+Retries can deliver the same request more than once, for example when the target timed out after it already
+processed the first attempt. If the API supports it, send an idempotency header with a value from the payload,
+such as `Idempotency-Key: @payload.ticket.id`.
+
+## Send test request
+
+Select **Send test request** to make one real call with the step's current settings, even before you save them,
+so you can see what the API answers.
+
+- Variables are filled from the **expected payload** and from the expected response bodies of other HTTP request
+  steps.
+- A secret value you just typed is used for this call. Otherwise the saved value is used, but only for the host
+  it was entered for: if you changed the URL to another host, type the value again.
+- The call waits up to 10 seconds and isn't retried.
+- The answer is kept as the step's last test response (up to 64 KB). It doesn't change the step's Variables: select
+  **Use as expected response body** to make it the step's expected response body, which the `@` picker offers as
+  Variables and [Test runs](/workflows/test-runs) answer with.
+- Each test request is recorded in the audit log with its host and status, never its headers or body.
+
+A test request is a real call: it can create records in the API you call. It isn't a run and isn't billed. You can
+send 30 test requests per minute.
+
+## Limits
+
+| Limit                         | Value       |
+| ----------------------------- | ----------- |
+| URL length                    | 2 KB        |
+| Headers                       | 30          |
+| Header value                  | 8 KB        |
+| Query parameters              | 30          |
+| Query parameter value         | 2 KB        |
+| Body template                 | 100 KB      |
+| Timeout per attempt           | 10 seconds  |
+| Retries                       | 3           |
+| Response read by later steps  | 1 MB        |
+| Response kept in run detail   | 64 KB       |
+
+All limits are listed on [Limits](/workflows/limits).

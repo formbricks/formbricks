@@ -307,7 +307,7 @@ export const FilterChipRow = ({
             disabled={disabled}
             data-filter-add=""
             aria-label={t("common.table_toolbar.add_filter")}
-            className="focus-visible:ring-ring flex size-7 items-center justify-center rounded-md text-slate-600 hover:bg-white hover:text-slate-900 focus-visible:ring-1 focus-visible:outline-hidden">
+            className="flex size-7 items-center justify-center rounded-md text-slate-600 hover:bg-white hover:text-slate-900 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden">
             <PlusIcon className="size-4" />
           </button>
         </li>
@@ -317,7 +317,7 @@ export const FilterChipRow = ({
           type="button"
           onClick={() => onFiltersChange([])}
           disabled={disabled}
-          className="focus-visible:ring-ring h-7 shrink-0 rounded-md px-2 text-xs font-medium text-slate-800 hover:bg-white focus-visible:ring-1 focus-visible:outline-hidden">
+          className="h-7 shrink-0 rounded-md px-2 text-xs font-medium text-slate-800 hover:bg-white focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden">
           {t("common.clear_all")}
         </button>
       )}

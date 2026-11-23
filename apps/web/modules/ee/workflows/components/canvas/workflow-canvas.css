@@ -18,3 +18,11 @@
 .workflow-canvas.pan-mode .react-flow__node {
   pointer-events: none;
 }
+
+/* Moving a step (use-step-move): the dragged card passes under the other cards and the `+` buttons,
+   a little see-through, so the `+` under the pointer and its "Move here" stay visible. React Flow writes
+   the node's z-index inline (raised by 1000 while it is selected), so only !important can lower it. */
+.workflow-canvas .react-flow__node.dragging {
+  z-index: -1 !important; /* NOSONAR: overrides React Flow's inline z-index, see above */
+  opacity: 0.8;
+}

@@ -1,0 +1,19 @@
+type: object
+description: >-
+  Starts a Test run of the workflow's draft. A Webhook workflow tests with `payload`; a Response
+  completed workflow tests with `responseId`. Sending the other trigger's field answers 400.
+properties:
+  payload:
+    type: object
+    additionalProperties: true
+    description: >-
+      Webhook trigger only. The test payload: a JSON object of at most 100 KB once serialized, nested
+      at most 10 levels (lists count as levels). Defaults to the workflow's expected payload.
+  responseId:
+    type: string
+    format: cuid2
+    description: >-
+      Response completed trigger only, and required there. An existing response of the trigger's
+      survey to run against, completed or not, whatever ending it reached. A response of another
+      survey or workspace, or of a survey the caller cannot read, answers 403.
+additionalProperties: false

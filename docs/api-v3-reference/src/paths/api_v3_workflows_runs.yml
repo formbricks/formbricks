@@ -62,6 +62,20 @@ get:
 
         (`filter[status][in]=failed,canceled`). Invalid values → **400**.
     - in: query
+      name: filter[triggerType][in]
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - response.completed
+            - webhook
+      style: form
+      explode: true
+      description: >
+        Trigger filter: runs started by these trigger types. Repeat the parameter or use
+        comma-separated values (`filter[triggerType][in]=webhook`). Invalid values → **400**.
+    - in: query
       name: filter[isDryRun][eq]
       schema:
         type: boolean

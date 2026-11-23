@@ -1,0 +1,21 @@
+type: object
+description: >
+  Something that does not stop the workflow from running but probably needs a look, such as an
+  Embedded Data key the linked survey does not accept (the link leaves it off).
+required:
+  - code
+  - field
+  - message
+properties:
+  code:
+    type: string
+    enum:
+      - survey_link_key_not_accepted
+    description: Machine-readable warning category.
+  field:
+    type: string
+    description: >
+      Dotted path to the field, e.g. `definition.nodes.0.config.surveyLink.embeddedData.1.key`.
+  message:
+    type: string
+    description: Human-readable explanation.

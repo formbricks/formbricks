@@ -1,6 +1,6 @@
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver";
-import type { TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import type { TSurveyBlockLogicAction, TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import { getCopiedOptionsIssues } from "@formbricks/types/surveys/copied-options";
 import {
   type TExpressionTypeContext,
@@ -17,6 +17,7 @@ import { type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/s
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { getBooleanCalculateIssue } from "./boolean-assign-validation";
 
 type TReferenceValidationInput = {
   blocks: TSurveyBlocks;
@@ -293,6 +294,39 @@ function validateExpressionValue(
   }
 }
 
+/**
+ * The value of a calculate action: a Set value expression, a reference, or (ENG-6973) a value the
+ * true/false rules refuse, as the save's refinement does. A dangling reference is named as one rather
+ * than as a refused true/false value.
+ */
+function validateCalculateActionValue(
+  action: Extract<TSurveyBlockLogicAction, { objective: "calculate" }>,
+  actionPath: string,
+  input: TReferenceValidationInput,
+  typeContext: TExpressionTypeContext,
+  references: TReferenceLookup,
+  issues: InvalidParam[]
+): void {
+  const booleanIssue = getBooleanCalculateIssue(action, `${actionPath}.value`, typeContext);
+  const before = issues.length;
+  if (action.value.type === "expression") {
+    // A true/false field takes no expression, so a refused one is not type-checked as well.
+    if (!booleanIssue) {
+      validateExpressionValue(
+        action.value.value,
+        action.variableId,
+        `${actionPath}.value.value`,
+        input,
+        references,
+        issues
+      );
+    }
+  } else if (action.value.type !== "static") {
+    validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
+  }
+  if (booleanIssue && issues.length === before) issues.push(booleanIssue);
+}
+
 /** The typed fields of one source, by storage key; a `dataType` left out is the default `string`. */
 function getTypedFields(
   embeddedFields: NonNullable<TReferenceValidationInput["embeddedFields"]>,
@@ -423,6 +457,8 @@ function validateConditionGroup(
 
 export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInput): InvalidParam[] {
   const issues: InvalidParam[] = [];
+  // Built once: every calculate action reads its fields' types from it (ENG-6973).
+  const typeContext = getTypeContext(input);
   const blockIds = input.blocks.map((block) => block.id);
   const blockEntries = input.blocks.map((block, index) => ({
     id: block.id,
@@ -562,18 +598,7 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
             });
           }
 
-          if (action.value.type === "expression") {
-            validateExpressionValue(
-              action.value.value,
-              action.variableId,
-              `${actionPath}.value.value`,
-              input,
-              references,
-              issues
-            );
-          } else if (action.value.type !== "static") {
-            validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
-          }
+          validateCalculateActionValue(action, actionPath, input, typeContext, references, issues);
         }
 
         if (action.objective === "requireAnswer" && !references.elementIds.has(action.target)) {

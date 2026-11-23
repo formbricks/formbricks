@@ -62,6 +62,10 @@ export const createCacheKey = {
     // Single-flight lock so only one process refreshes an org's stale billing snapshot at a time.
     billingSyncLock: (organizationId: string): CacheKey =>
       makeCacheKey("org", organizationId, "billing-sync-lock"),
+    // Responses counted in one usage cycle, keyed by the cycle start (epoch ms) so a new cycle never reads the
+    // previous cycle's total (ENG-3789).
+    monthlyResponseCount: (organizationId: string, cycleStart: string): CacheKey =>
+      makeCacheKey("org", organizationId, "monthly-response-count", cycleStart),
   },
 
   // License and enterprise features

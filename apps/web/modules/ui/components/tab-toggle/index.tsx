@@ -48,8 +48,12 @@ export const TabToggle = <T extends string | number>({
               // Scoped by the toggle's id: two toggles with an option of the same value on one page
               // (the appearance and overlay toggles both have "light"/"dark") must not share ids.
               htmlFor={`${id}-${option.value.toString()}`}
+              // `relative` keeps the sr-only (absolute) radio inside the label. Without a positioned
+              // ancestor nearby it was placed against the page's outer column, escaped any scrolling
+              // panel's clipping and, below the fold, made the whole page taller (the HTTP request
+              // panel's empty space when scrolled to its end).
               className={cn(
-                "flex-1 cursor-pointer rounded-md py-2 text-center text-sm text-slate-800",
+                "relative flex-1 cursor-pointer rounded-md py-2 text-center text-sm text-slate-800",
                 selectedOption === option.value && "bg-white",
                 "focus:ring-2 focus:ring-brand-dark/50 focus:outline-hidden",
                 isDisabled && "cursor-not-allowed opacity-50"

@@ -64,7 +64,11 @@ const { getSettingsLayoutData } = await import("./navigation-data");
 const seedSuccess = () => {
   mocks.getSession.mockResolvedValue({ user: { id: "user-1" } });
   mocks.getUser.mockResolvedValue({ id: "user-1", name: "Test" });
-  mocks.getOrganization.mockResolvedValue({ id: "org-1", name: "Org", billing: {} });
+  mocks.getOrganization.mockResolvedValue({
+    id: "org-1",
+    name: "Org",
+    billing: { limits: { monthly: { responses: 250 } } },
+  });
   mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "owner" });
   mocks.getAccessControlPermission.mockResolvedValue(true);
   mocks.getEnterpriseLicense.mockResolvedValue({ features: { isMultiOrgEnabled: true } });
@@ -105,6 +109,23 @@ describe("getSettingsLayoutData", () => {
     expect(data?.backUrl).toBe("/workspaces/ws-1/surveys");
     expect(data?.isOwnerOrManager).toBe(true);
     expect(data?.responseCount).toBe(42);
+  });
+
+  // The count scans the whole cycle's responses; on a plan with no response limit nothing reads it (ENG-3789).
+  test("skips the Cloud response count when the plan has no response limit", async () => {
+    seedSuccess();
+    mocks.getOrganization.mockResolvedValue({
+      id: "org-1",
+      name: "Org",
+      billing: { limits: { monthly: { responses: null } } },
+    });
+    mocks.getWorkspacesByUserId.mockResolvedValue([{ id: "ws-1" }]);
+    mocks.getWorkspace.mockResolvedValue({ id: "ws-1", name: "Workspace" });
+
+    const data = await getSettingsLayoutData("user-1", "org-1");
+
+    expect(data?.responseCount).toBe(0);
+    expect(mocks.getMonthlyOrganizationResponseCount).not.toHaveBeenCalled();
   });
 
   test("resolves layout data with no workspace (org/account-only)", async () => {

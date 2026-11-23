@@ -42,6 +42,23 @@ describe("redactWorkflowDefinitionPII", () => {
     expect(config.replyTo).toEqual([expect.stringMatching(MARKER)]);
   });
 
+  test("keeps a Variable recipient's path readable, since it names where the address comes from", () => {
+    const to = { type: "variable", ref: "payload.customer.email" };
+    expect(redactConfig([sendEmailNode({ to })]).to).toEqual(to);
+  });
+
+  test("masks survey link Embedded Data values but keeps the survey and keys", () => {
+    const config = redactConfig([
+      sendEmailNode({
+        surveyLink: { surveyId: "s_2", embeddedData: [{ key: "agent_id", value: "Ana Smith" }] },
+      }),
+    ]);
+    const link = config.surveyLink as { surveyId: string; embeddedData: { key: string; value: string }[] };
+    expect(link.surveyId).toBe("s_2");
+    expect(link.embeddedData[0].key).toBe("agent_id");
+    expect(link.embeddedData[0].value).toMatch(MARKER);
+  });
+
   test("leaves non-PII config fields intact so behavioral changes still diff", () => {
     const config = redactConfig([sendEmailNode()]);
 
@@ -133,5 +150,31 @@ describe("redactWorkflowDefinitionPII", () => {
     expect(redactWorkflowDefinitionPII({ schemaVersion: 1 })).toEqual({ schemaVersion: 1 });
     expect(redactWorkflowDefinitionPII(null)).toBeNull();
     expect(redactWorkflowDefinitionPII("nope")).toBe("nope");
+  });
+});
+
+describe("redactWorkflowDefinitionPII on http_request", () => {
+  const httpNode = (headers: unknown[]): Record<string, unknown> => ({
+    id: "call",
+    type: "action",
+    actionType: "http_request",
+    config: { method: "POST", url: "https://api.example.com/hook", queryParameters: [], headers, body: "{}" },
+  });
+
+  test("a secret header keeps only its name and whether it is set, even if a value slipped in", () => {
+    const config = redactConfig([
+      httpNode([{ name: "Authorization", secret: true, value: "Bearer leak", secretId: "sec_1" }]),
+    ]);
+
+    expect(config.headers).toEqual([{ name: "Authorization", secret: true, isSet: true }]);
+  });
+
+  test("plain header values are masked with a marker; the URL and names stay readable", () => {
+    const config = redactConfig([httpNode([{ name: "X-Team", value: "growth" }])]);
+
+    expect(config.url).toBe("https://api.example.com/hook");
+    const [header] = config.headers as { name: string; value: string }[];
+    expect(header.name).toBe("X-Team");
+    expect(header.value).toMatch(MARKER);
   });
 });

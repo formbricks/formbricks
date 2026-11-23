@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import posthog, { type CaptureResult } from "posthog-js";
 import { describe, expect, test } from "vitest";
+import { maskWebhookNetworkRequests } from "./mask-webhook-network-requests";
 import { getPostHogConfig } from "./posthog-config";
 
 describe("getPostHogConfig", () => {
@@ -10,6 +11,7 @@ describe("getPostHogConfig", () => {
       blockSelector: "iframe[src*='cdn-plain']",
       maskAllInputs: true,
       maskTextSelector: "*",
+      maskCapturedNetworkRequestFn: maskWebhookNetworkRequests,
     });
   });
 

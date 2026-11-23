@@ -171,13 +171,19 @@ export const planAnswerDataWrite = (
   return { data, issues };
 };
 
+/**
+ * What a `Response.variables` entry holds on this path: the ingest contract's stored forms, plus the
+ * real boolean of a true/false variable (ENG-6973).
+ */
+export type TV3VariableWrites = Record<string, TResponseDataValue | boolean>;
+
 export type TV3EmbeddedDataPlan = TV3WritePlanIssues & {
   /** Answer-map keys to set — a hidden field is stored in `Response.data` under its storage key. */
   dataWrites: TResponseData;
   /** Answer-map keys to remove, because the payload sent `null` for them. */
   dataClears: string[];
   /** `Response.variables` entries to set, keyed by the variable's cuid. */
-  variableWrites: Record<string, TResponseDataValue>;
+  variableWrites: TV3VariableWrites;
   variableClears: string[];
 };
 
@@ -276,7 +282,7 @@ type TEmbeddedWriteEffect =
   | { kind: "ignore" }
   | { kind: "clearData"; storageKey: string }
   | { kind: "clearVariable"; storageKey: string }
-  | { kind: "writeVariable"; storageKey: string; value: TResponseDataValue }
+  | { kind: "writeVariable"; storageKey: string; value: TV3VariableWrites[string] }
   | { kind: "writeIngested"; storageKey: string; value: string | number | boolean };
 
 /**
@@ -342,7 +348,11 @@ const planEmbeddedEntry = (
       };
     }
 
-    return { kind: "writeVariable", storageKey: link.storageKey, value: normalized.value };
+    // ENG-6973: a true/false variable holds a real boolean, as Set value writes it, so one field never
+    // holds both `true` and the `"true"` the ingest contract normalizes to for a hidden field.
+    const stored = field.dataType === "boolean" ? normalized.value === "true" : normalized.value;
+
+    return { kind: "writeVariable", storageKey: link.storageKey, value: stored };
   }
 
   // An answer owns this address and an answer is never rewritten, so the field can never hold a
@@ -393,7 +403,7 @@ export const planEmbeddedDataWrite = ({
   const dataClears: string[] = [];
   // Null-prototype: keyed by the variable's own name, and `ZEmbeddedDataName` is any non-blank
   // string — so `__proto__` is a legal variable name and would otherwise write nowhere.
-  const variableWrites = Object.create(null) as Record<string, TResponseDataValue>;
+  const variableWrites = Object.create(null) as TV3VariableWrites;
   const variableClears: string[] = [];
   // Null-prototype, for the same reason `applyIngestContract` uses one: a storage key only has to
   // satisfy `isLegacyIdCharset`, which admits `__proto__`. On a plain `{}` that key hits

@@ -1,3 +1,4 @@
+import { type TCalBookingsByQuestionId, sanitizeCalBooking } from "@formbricks/types/cal-booking";
 import { listReadableFields } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import { MAX_RESPONSE_TTC } from "@formbricks/types/responses";
@@ -628,7 +629,8 @@ const serializeStoredValue = (
   plan: TV3AnswerPlan,
   key: string,
   raw: TResponseData[string] | null,
-  ttc: TResponseTtc | undefined
+  ttc: TResponseTtc | undefined,
+  calBookings?: TCalBookingsByQuestionId | null
 ): { answer: TV3ResponseAnswer } | { unresolved: TV3ResponseUnresolvedEntry } | undefined => {
   // A hidden field's value lives in this same map, under the field's name. It is not an answer
   // and it is not a deleted element — `embeddedData[]` reports it — so skipping it here is what
@@ -703,19 +705,33 @@ const serializeStoredValue = (
     };
   }
 
-  return { answer: result.answer };
+  // Read back through the same sanitizer the write used, so a row that was edited by hand can never
+  // produce a body the published schema rejects.
+  const booking =
+    result.answer.elementType === "cal" && result.answer.booked
+      ? sanitizeCalBooking(calBookings?.[key])
+      : null;
+  return {
+    answer: booking && result.answer.elementType === "cal" ? { ...result.answer, booking } : result.answer,
+  };
 };
 
+/**
+ * `calBookings` is `Response.calBookings`: what a Cal.com element reported, by Question ID. It decorates the
+ * `cal` answer with `booking` and nothing else; the answer itself (`booked`, `rawValue`) still comes from
+ * `data`, where the string "booked" is what is stored.
+ */
 export const serializeAnswers = (
   plan: TV3AnswerPlan,
   data: TResponseData,
-  ttc: TResponseTtc | undefined
+  ttc: TResponseTtc | undefined,
+  calBookings?: TCalBookingsByQuestionId | null
 ): { answers: TV3ResponseAnswer[]; unresolved: TV3ResponseUnresolvedEntry[] } => {
   const answers: TV3ResponseAnswer[] = [];
   const unresolved: TV3ResponseUnresolvedEntry[] = [];
 
   for (const [key, raw] of Object.entries(data)) {
-    const entry = serializeStoredValue(plan, key, raw, ttc);
+    const entry = serializeStoredValue(plan, key, raw, ttc, calBookings);
     if (!entry) continue;
     if ("answer" in entry) answers.push(entry.answer);
     else unresolved.push(entry.unresolved);

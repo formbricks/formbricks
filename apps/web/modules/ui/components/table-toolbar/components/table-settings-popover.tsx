@@ -93,7 +93,7 @@ const SortableColumnRow = ({
       ) : (
         <button
           type="button"
-          className="focus-visible:ring-ring flex size-5 shrink-0 cursor-grab items-center justify-center rounded text-slate-300 group-hover:text-slate-500 hover:text-slate-700 focus-visible:text-slate-700 focus-visible:ring-1 focus-visible:outline-hidden active:cursor-grabbing"
+          className="flex size-5 shrink-0 cursor-grab items-center justify-center rounded text-slate-300 group-hover:text-slate-500 hover:text-slate-700 focus-visible:text-slate-700 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden active:cursor-grabbing"
           aria-label={t("common.table_toolbar.reorder_column", { column: column.label })}
           {...attributes}
           {...listeners}>

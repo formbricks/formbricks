@@ -13,6 +13,7 @@ import { createIcuTranslate } from "./__fixtures__/translate";
 import { createLogicRenderer } from "./logic";
 
 const VARIABLE_ID = createId();
+const BOOLEAN_VARIABLE_ID = createId();
 const NEXT_BLOCK_ID = createId();
 const EMPTY_BLOCK_ID = createId();
 const THANKS_ENDING_ID = createId();
@@ -88,6 +89,17 @@ const SURVEY = {
         locked: false,
       },
       link: { storageKey: VARIABLE_ID },
+    },
+    {
+      field: {
+        key: null,
+        name: "Qualified",
+        source: "computed",
+        dataType: "boolean",
+        defaultValue: null,
+        locked: false,
+      },
+      link: { storageKey: BOOLEAN_VARIABLE_ID },
     },
     {
       field: {
@@ -454,6 +466,17 @@ describe("createLogicRenderer: actions and fallback", () => {
         value: { type: "hiddenField", value: "plan" },
       },
       "divide Total score by hidden field Plan",
+    ],
+    [
+      "True on a true/false field (ENG-6973)",
+      {
+        id: "a",
+        objective: "calculate",
+        variableId: BOOLEAN_VARIABLE_ID,
+        operator: "assign",
+        value: { type: "static", value: true },
+      },
+      "set Qualified to True",
     ],
     [
       "a jump to an ending",
