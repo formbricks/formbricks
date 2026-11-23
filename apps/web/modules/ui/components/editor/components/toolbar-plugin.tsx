@@ -15,6 +15,7 @@ import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
 import type { LexicalNode, RangeSelection } from "lexical";
 import {
+  $addUpdateTag,
   $createParagraphNode,
   $getRoot,
   $getSelection,
@@ -44,7 +45,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
-import { registerContentWriteBack } from "../lib/content-write-back";
+import { CONTENT_IMPORT_TAG, registerContentWriteBack } from "../lib/content-write-back";
 import { $insertTextAtCursor } from "../lib/insert-text";
 import type { TEditorToolbarActions, TextEditorProps } from "./editor";
 
@@ -253,6 +254,7 @@ export const ToolbarPlugin = (
         const root = $getRoot();
         if (root) {
           editor.update(() => {
+            $addUpdateTag(CONTENT_IMPORT_TAG);
             const parser = new DOMParser();
             // Create a new TextNode
             const dom = parser.parseFromString(props.getText(), "text/html");
@@ -281,6 +283,7 @@ export const ToolbarPlugin = (
     if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
       editor.update(() => {
+        $addUpdateTag(CONTENT_IMPORT_TAG);
         const parser = new DOMParser();
         const dom = parser.parseFromString(props.getText(), "text/html");
 
@@ -293,7 +296,7 @@ export const ToolbarPlugin = (
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time firstRender initialization; adding editor/props would re-seed the editor on unrelated changes
   }, []);
 
-  // Register text-saving update listener - always active for each editor instance
+  // Writes edits back to the owner. Loading the stored value (tagged above) and selection changes don't.
   useEffect(() => {
     return registerContentWriteBack(editor, (html) => setText.current(html), {
       keepEscapedText: props.keepEscapedText,
