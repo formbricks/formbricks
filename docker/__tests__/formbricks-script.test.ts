@@ -21,7 +21,7 @@ const dockerComposeTemplatePath = fileURLToPath(new URL("../docker-compose.yml",
 const legacyValkeyImage =
   "valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d";
 const multiArchValkeyImage =
-  "valkey/valkey@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd";
+  "valkey/valkey@sha256:1c2b25b09f354c66fe994733acdf12fcfd4bdf6f3bd92b88a93a70378d884056";
 
 const tempDirs: string[] = [];
 const dockerComposeOverrideKeys = [
