@@ -49,8 +49,8 @@ export const queueSsoRecoveryAuditEvent = ({
       ...(failureReason ? { failureReason } : {}),
       // The one moment an account can change hands, so record what was taken away rather than only that
       // recovery succeeded. Marker keys in `newObject` are the house idiom (`passwordResetMarker`,
-      // `twoFactorAuth: "disabled"`); `redactPII` matches exact lowercased keys, so these survive while
-      // `email` above is redacted.
+      // `twoFactorAuth: "disabled"`); `redactPII` masks listed keys and string values under names ending in
+      // token/secret/password/apiKey, so these counts and markers survive while `email` above is redacted.
       ...(reclaimed
         ? {
             credentialPasswordsCleared: reclaimed.credentialPasswordsCleared,

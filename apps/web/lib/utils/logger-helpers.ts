@@ -1,6 +1,9 @@
 import { isStringUrl } from "@/lib/utils/url";
 
-const SENSITIVE_KEYS = new Set([
+/** `accessToken`, `access_token`, `access-token` and `ACCESS_TOKEN` are one key (ENG-3269). */
+const normalizeKey = (key: string): string => key.toLowerCase().replaceAll(/[-_]/g, "");
+
+const SENSITIVE_KEY_NAMES = [
   "email",
   "name",
   "password",
@@ -33,7 +36,7 @@ const SENSITIVE_KEYS = new Set([
   "attributes",
   "pin",
   "image",
-  // Compared lower-cased below, so entries have to be lower-case to match at all.
+  // Matched after `normalizeKey`, so casing and `-`/`_` in these entries do not matter.
   "stripecustomerid",
   "filename",
   "state",
@@ -42,7 +45,29 @@ const SENSITIVE_KEYS = new Set([
   "useragent",
   "value_text",
   "translated_text",
-]);
+];
+
+const SENSITIVE_KEYS = new Set(SENSITIVE_KEY_NAMES.map(normalizeKey));
+
+/**
+ * A key ending in one of these names a credential (`clientSecret`, `refreshToken`, `x_api_key`,
+ * `hashedPassword`), so it is redacted without having to be listed. Matched as a suffix, not anywhere in
+ * the name: `passwordResetMarker` and `oauthAccessTokensRevoked` are audit markers and counts.
+ */
+const CREDENTIAL_SUFFIXES = ["token", "secret", "password", "apikey"];
+
+const isCredentialName = (normalizedKey: string): boolean =>
+  CREDENTIAL_SUFFIXES.some((suffix) => normalizedKey.endsWith(suffix));
+
+/**
+ * Listed keys are always redacted. A credential-named key is redacted unless its value cannot be a
+ * credential: a flag such as `allowOrganizationOnlyApiKey: true` or a count stays readable.
+ */
+const isRedactedKey = (normalizedKey: string, value: unknown): boolean => {
+  if (SENSITIVE_KEYS.has(normalizedKey)) return true;
+  if (!isCredentialName(normalizedKey)) return false;
+  return typeof value !== "boolean" && typeof value !== "number" && value !== null && value !== undefined;
+};
 
 /**
  * Keys whose value is respondent content rather than a field: a response's `data` and `variables`, a
@@ -54,7 +79,7 @@ const SENSITIVE_KEYS = new Set([
  */
 const CONTENT_CONTAINERS = new Set(["data", "variables", "contactattributes", "embeddeddata", "metadata"]);
 
-const URL_SENSITIVE_KEYS = ["token", "code", "state"];
+const URL_SENSITIVE_KEYS = new Set(["token", "code", "state"]);
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value) && !(value instanceof Date);
@@ -91,11 +116,11 @@ export function redactPII(obj: unknown, seen: WeakSet<object> = new WeakSet()): 
   if (obj && typeof obj === "object") {
     return Object.fromEntries(
       Object.entries(obj).map(([key, value]) => {
-        const lowerKey = key.toLowerCase();
-        if (SENSITIVE_KEYS.has(lowerKey)) {
+        const normalizedKey = normalizeKey(key);
+        if (isRedactedKey(normalizedKey, value)) {
           return [key, "********"];
         }
-        if (CONTENT_CONTAINERS.has(lowerKey) && isPlainObject(value)) {
+        if (CONTENT_CONTAINERS.has(normalizedKey) && isPlainObject(value)) {
           return [key, projectContent(value)];
         }
         return [key, redactPII(value, seen)];
@@ -138,7 +163,8 @@ export function deepDiff(oldObj: unknown, newObj: unknown): unknown {
 }
 
 /**
- * Sanitizes a URL for logging by redacting sensitive parameters.
+ * Sanitizes a URL for logging by masking `token`, `code`, `state` and any credential-named parameter
+ * (`access_token`, `apiKey`, `client_secret`, …), matched like object keys in `redactPII`.
  * @param url - The URL to sanitize.
  * @returns The sanitized URL.
  */
@@ -146,11 +172,12 @@ export const sanitizeUrlForLogging = (url: string): string => {
   try {
     const urlObj = new URL(url);
 
-    URL_SENSITIVE_KEYS.forEach((key) => {
-      if (urlObj.searchParams.has(key)) {
+    for (const key of new Set(urlObj.searchParams.keys())) {
+      const normalizedKey = normalizeKey(key);
+      if (URL_SENSITIVE_KEYS.has(normalizedKey) || isCredentialName(normalizedKey)) {
         urlObj.searchParams.set(key, "********");
       }
-    });
+    }
 
     return urlObj.origin + urlObj.pathname + (urlObj.search ? `${urlObj.search}` : "");
   } catch {
