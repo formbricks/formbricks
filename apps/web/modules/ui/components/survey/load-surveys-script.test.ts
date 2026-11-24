@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { CspNonceProvider } from "@/lib/csp/nonce";
 import {
   SurveysRendererNotInstalledError,
   isSurveysRendererReady,
@@ -17,7 +18,7 @@ const SCRIPT_URL = "https://app.example.com/js/surveys.umd.cjs?v=6.2.0";
 // while the test's `window` is Node's global. `document` is the one object both share, so the
 // stand-in finds the test's window there.
 const WHOLE_BUNDLE =
-  "(function (global) { global.formbricksSurveys = { renderSurvey: function () {} }; })(document.__testWindow);";
+  "(function (global) { global.formbricksSurveys = { renderSurvey: function () {}, setNonce: function (n) { global.rendererNonce = n; } }; })(document.__testWindow);";
 const TRUNCATED_BUNDLE = WHOLE_BUNDLE.slice(0, 40);
 
 const respondWith = (...bodies: string[]) => {
@@ -66,6 +67,17 @@ describe("loadSurveysScript", () => {
     expect(isSurveysRendererReady()).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(scriptErrors).toEqual([]);
+  });
+
+  test("runs the bundle with the page's CSP nonce and hands the nonce to the renderer", async () => {
+    // The provider sets the page's nonce as the root layout renders it.
+    CspNonceProvider({ nonce: "page-nonce", children: null });
+    respondWith(WHOLE_BUNDLE);
+
+    await loadSurveysScript(SCRIPT_URL);
+
+    expect(document.head.querySelector("script")?.nonce).toBe("page-nonce");
+    expect((window as unknown as { rendererNonce?: string }).rendererNonce).toBe("page-nonce");
   });
 
   test("re-fetches past the cache when the first body fails to parse, and resolves on the whole one", async () => {

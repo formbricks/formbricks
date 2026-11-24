@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useCspNonce } from "@/lib/csp/nonce";
 
 interface CustomScriptsInjectorProps {
   readonly workspaceScripts?: string | null;
@@ -23,6 +24,9 @@ export const CustomScriptsInjector = ({
   scriptsMode,
 }: CustomScriptsInjectorProps) => {
   const injectedRef = useRef(false);
+  // The page's CSP runs inline scripts and applies styles only with its nonce. These scripts are the
+  // workspace's own configuration, written by its owners, so they get it as the page's own code does.
+  const nonce = useCspNonce();
 
   useEffect(() => {
     // Prevent double injection in React strict mode
@@ -56,6 +60,8 @@ export const CustomScriptsInjector = ({
           newScript.setAttribute(attr.name, attr.value);
         });
 
+        if (nonce) newScript.nonce = nonce;
+
         // Copy inline script content
         if (script.textContent) {
           newScript.textContent = script.textContent;
@@ -68,6 +74,9 @@ export const CustomScriptsInjector = ({
       const nonScripts = container.querySelectorAll(":not(script)");
       nonScripts.forEach((el) => {
         const clonedEl = el.cloneNode(true) as Element;
+        if (nonce && (clonedEl instanceof HTMLStyleElement || clonedEl instanceof HTMLLinkElement)) {
+          clonedEl.nonce = nonce;
+        }
         document.head.appendChild(clonedEl);
       });
 
@@ -76,7 +85,7 @@ export const CustomScriptsInjector = ({
       // Log error but don't break the survey - self-hosted admins can check console
       console.warn("[Formbricks] Error injecting custom scripts:", error);
     }
-  }, [workspaceScripts, surveyScripts, scriptsMode]);
+  }, [workspaceScripts, surveyScripts, scriptsMode, nonce]);
 
   return null;
 };

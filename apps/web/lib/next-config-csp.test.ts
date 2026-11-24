@@ -2,11 +2,10 @@ import type { NextConfig } from "next";
 import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { mimeTypes } from "@formbricks/types/storage";
+import { getCspRoute } from "@/lib/csp/content-security-policy";
 
-// Guards ENG-3194. Sentry Session Replay compresses recordings in a `blob:` worker. Without an
-// explicit `worker-src`, browsers fall back to `script-src`, which has no `blob:`, so the worker is
-// blocked on every page and a console error is the only sign. Asserted on the `headers()` output
-// rather than the source, so every rule that sets a CSP is covered, including any added later.
+// Pages get their CSP from proxy.ts (lib/csp/content-security-policy.ts, whose tests guard ENG-3194's
+// `worker-src`); next.config.mjs keeps only the policies of uploaded files.
 
 // next.config.mjs validates the app env when it is imported. These are the vars with no default; CI
 // blanks REDIS_URL in its .env, so they are stubbed rather than read from the environment.
@@ -22,16 +21,8 @@ const REQUIRED_ENV = {
 
 let nextConfig: NextConfig;
 
-const getWorkerSources = (csp: string): string[] | undefined => {
-  const directive = csp
-    .split(";")
-    .map((part) => part.trim().split(/\s+/))
-    .find(([name]) => name === "worker-src");
-  return directive?.slice(1);
-};
-
-// A policy that runs no script at all needs no worker either: a bare `sandbox` (no `allow-scripts`),
-// or `default-src 'none'` with no `script-src` to override it.
+// A policy that runs no script at all, as the uploaded-file ones do: a bare `sandbox` (no
+// `allow-scripts`), or `default-src 'none'` with no `script-src` to override it.
 const isScriptless = (csp: string): boolean => {
   const directives = csp.split(";").map((part) => part.trim());
   return (
@@ -51,22 +42,20 @@ afterAll(() => {
   vi.unstubAllEnvs();
 });
 
-describe("CSP lets Sentry Replay start its blob: worker (ENG-3194)", () => {
-  test.each(["production", "development"])("every CSP allows blob: workers in %s", async (nodeEnv) => {
+describe("CSP for pages", () => {
+  // Browsers enforce every policy a response carries, so a page policy here could only block more than
+  // the proxy's, and scanners would still report its 'unsafe-inline' and `https:`.
+  test.each(["production", "development"])("next.config sets none on page routes in %s", async (nodeEnv) => {
     vi.stubEnv("NODE_ENV", nodeEnv);
 
     const rules = (await nextConfig.headers?.()) ?? [];
-    const policies = rules.flatMap((rule) =>
+    const pagePolicies = rules.flatMap((rule) =>
       rule.headers
         .filter((header) => header.key === "Content-Security-Policy" && !isScriptless(header.value))
-        .map((header) => ({ source: rule.source, workerSources: getWorkerSources(header.value) }))
+        .map(() => rule.source)
     );
 
-    // The app routes and the embeddable /s/ and /c/ survey routes each set their own CSP.
-    expect(policies.length).toBeGreaterThanOrEqual(2);
-    for (const { source, workerSources } of policies) {
-      expect(workerSources, `CSP for ${source}`).toEqual(expect.arrayContaining(["'self'", "blob:"]));
-    }
+    expect(pagePolicies).toEqual([]);
   });
 });
 
@@ -126,7 +115,7 @@ describe("CSP for uploaded files (ENG-7108)", () => {
   );
 
   test("does not touch app pages", async () => {
-    expect(isScriptless((await effectiveCsp("/workspaces/ws1/surveys")) ?? "")).toBe(false);
+    expect(await effectiveCsp("/workspaces/ws1/surveys")).toBeUndefined();
   });
 });
 
@@ -149,9 +138,8 @@ describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
 
   test("refuses every frame, same origin included", async () => {
     expect(await effectiveHeader("/sso-recovery/confirm", "X-Frame-Options")).toBe("DENY");
-    expect(await effectiveHeader("/sso-recovery/confirm", "Content-Security-Policy")).toMatch(
-      /frame-ancestors 'none'$/
-    );
+    // The proxy's per-request policy carries frame-ancestors.
+    expect(getCspRoute("/sso-recovery/confirm").frameAncestors).toBe("'none'");
   });
 
   test("leaves other app pages framable by their own origin", async () => {

@@ -332,6 +332,79 @@ describe("proxy", () => {
     expect(response.headers.get(FORMBRICKS_CLIENT_IP_HEADER)).toBeNull();
   });
 
+  // The page CSP is built per request around a nonce, which Next reads from the request's policy and
+  // puts on the scripts and styles it renders. Without it, the policy needs 'unsafe-inline'.
+  describe("Content-Security-Policy", () => {
+    const getPolicy = (response: Response) => response.headers.get("content-security-policy") ?? "";
+    const getNonce = (policy: string) => /'nonce-([^']+)'/.exec(policy)?.[1];
+
+    test("gives each page request its own nonce, on the response and the request Next renders", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+
+      const first = await proxy(new NextRequest("http://localhost:3000/auth/login"));
+      const second = await proxy(new NextRequest("http://localhost:3000/auth/login"));
+
+      const nonce = getNonce(getPolicy(first));
+      expect(nonce).toMatch(/^[A-Za-z0-9+/]{22}==$/);
+      expect(getNonce(getPolicy(second))).not.toBe(nonce);
+      expect(first.headers.get("x-middleware-request-x-nonce")).toBe(nonce);
+      expect(first.headers.get("x-middleware-request-content-security-policy")).toBe(getPolicy(first));
+    });
+
+    test("allows no inline script or style element and no whole scheme on the login page", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+
+      const policy = getPolicy(await proxy(new NextRequest("http://localhost:3000/auth/login")));
+      const directives = new Map(
+        policy.split(";").map((part) => {
+          const [name, ...sources] = part.trim().split(/\s+/);
+          return [name, sources];
+        })
+      );
+
+      expect(directives.get("script-src")).toEqual(expect.arrayContaining(["'strict-dynamic'"]));
+      for (const name of ["script-src", "style-src"]) {
+        expect(directives.get(name), name).not.toContain("'unsafe-inline'");
+      }
+      for (const [name, sources] of directives) {
+        expect(sources, name).not.toContain("https:");
+        expect(sources, name).not.toContain("*");
+      }
+      expect(directives.get("object-src")).toEqual(["'none'"]);
+    });
+
+    test("overwrites a nonce or policy the caller sends", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+
+      const response = await proxy(
+        new NextRequest("http://localhost:3000/auth/login", {
+          headers: { "x-nonce": "chosen", "content-security-policy": "script-src 'nonce-chosen'" },
+        })
+      );
+
+      expect(response.headers.get("x-middleware-request-x-nonce")).not.toBe("chosen");
+      expect(response.headers.get("x-middleware-request-content-security-policy")).not.toContain("chosen");
+    });
+
+    test("puts the policy on redirects too", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+
+      const response = await proxy(new NextRequest("http://localhost:3000/environments/test"));
+
+      expect(response.status).toBe(307);
+      expect(getPolicy(response)).toMatch(/script-src [^;]*'nonce-/);
+    });
+
+    test("leaves uploaded files to their own policy from next.config", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+
+      const response = await proxy(new NextRequest("http://localhost:3000/storage/ws1/public/a--fid--1.png"));
+
+      expect(response.headers.get("content-security-policy")).toBeNull();
+      expect(response.headers.get("x-middleware-request-content-security-policy")).toBeNull();
+    });
+  });
+
   describe("PostHog /ingest body limit", () => {
     const ingest = (path: string, headers: Record<string, string>) =>
       proxy(new NextRequest(`http://localhost:3000${path}`, { method: "POST", headers }));

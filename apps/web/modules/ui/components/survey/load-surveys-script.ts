@@ -1,3 +1,5 @@
+import { getClientCspNonce } from "@/lib/csp/nonce";
+
 /**
  * How often the loader fetches the renderer bundle before giving up. A body cut mid-transfer, or a
  * partially cached copy, fails to parse; the second fetch bypasses the HTTP cache (ENG-3601).
@@ -41,12 +43,18 @@ export const loadSurveysScript = async (scriptUrl: string, init: RequestInit = {
 
     const scriptContent = await response.text();
     const scriptElement = document.createElement("script");
+    // The page's CSP runs an inline script only with its nonce ('strict-dynamic' trusts only scripts
+    // loaded by URL).
+    const nonce = getClientCspNonce();
+    if (nonce) scriptElement.nonce = nonce;
 
     scriptElement.textContent = scriptContent;
 
     document.head.appendChild(scriptElement);
 
     if (isSurveysRendererReady()) {
+      // The renderer's own <style> elements need the nonce too.
+      window.formbricksSurveys.setNonce(nonce);
       return;
     }
 
