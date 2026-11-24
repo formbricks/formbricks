@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -97,6 +98,48 @@ describe("proxy", () => {
     expect(response.headers.get("location")).toBe(
       "http://localhost:3000/auth/login?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest"
     );
+  });
+
+  describe("root path without a session", () => {
+    test("redirects to login before any page renders", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue({ id: "user-1" } as never);
+
+      const response = await proxy(new NextRequest("http://localhost:3000/"));
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toBe("http://localhost:3000/auth/login");
+    });
+
+    test("redirects a fresh instance to the setup intro", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      const response = await proxy(new NextRequest("http://localhost:3000/"));
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toBe("http://localhost:3000/setup/intro");
+    });
+
+    test("still rejects an invalid callback URL", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+
+      const response = await proxy(
+        new NextRequest("http://localhost:3000/?callbackUrl=https%3A%2F%2Fevil.example")
+      );
+
+      expect(response.status).toBe(400);
+      expect(prisma.user.findFirst).not.toHaveBeenCalled();
+    });
+
+    test("lets a signed-in user through to the page", async () => {
+      mockGetProxySession.mockResolvedValue({ userId: "user-1", expires: new Date(Date.now() + 60_000) });
+
+      const response = await proxy(new NextRequest("http://localhost:3000/"));
+
+      expect(response.headers.get("location")).toBeNull();
+      expect(prisma.user.findFirst).not.toHaveBeenCalled();
+    });
   });
 
   test("rewrites ID-free marketing links to the single marketing-links route, keeping the query", async () => {
@@ -398,6 +441,11 @@ describe("proxy matcher", () => {
       expect(unstable_doesMiddlewareMatch({ config, url })).toBe(true);
     }
   );
+
+  // The logged-out root redirect runs in proxy, so it only holds while the matcher covers `/`.
+  test("includes the root path", () => {
+    expect(unstable_doesMiddlewareMatch({ config, url: "/" })).toBe(true);
+  });
 
   test("includes server-action requests", () => {
     expect(

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { logger } from "@formbricks/logger";
 import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middleware/domain-utils";
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
+import { getUnauthenticatedRootRedirectPath } from "@/app/middleware/root-redirect";
 import { TRUSTED_PROXY_HOP_COUNT, WEBAPP_URL } from "@/lib/constants";
 import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { FORMBRICKS_CLIENT_IP_HEADER, resolveClientIp } from "@/lib/utils/client-ip";
@@ -27,6 +28,11 @@ const handleAuth = async (request: NextRequest): Promise<NextResponse | null> =>
 
   if (session && validatedCallbackUrl) {
     return NextResponse.redirect(validatedCallbackUrl);
+  }
+
+  // `/` without a session only ever redirects; doing it here keeps the 307 free of a rendered body.
+  if (request.nextUrl.pathname === "/" && !session) {
+    return NextResponse.redirect(`${WEBAPP_URL}${await getUnauthenticatedRootRedirectPath()}`);
   }
 
   return null;
