@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { createId } from "@paralleldrive/cuid2";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ActionClass, Prisma, Survey } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -23,6 +23,10 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectoryId,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import { testInputValidation } from "@/vitestSetup";
@@ -79,6 +83,7 @@ vi.mock("@/lib/organization/service", () => ({
 // Every workspace here is on one contact directory, which its segments belong to (decision 24).
 const mockDirectoryId = "cldirectory0000000000001";
 vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  CONTACT_DIRECTORY_MISSING_MESSAGE: "A contact directory needs to be set up for this workspace.",
   getWorkspaceContactDirectoryId: vi.fn(async () => mockDirectoryId),
 }));
 
@@ -2326,6 +2331,41 @@ describe("Tests for createSurvey", () => {
     });
 
     // ENG-6870: a new app survey's targeting may only read surveys its creator can see.
+    // Decision 3: filters target contacts, and a workspace with no contact directory has none.
+    test("refuses seeded targeting in a workspace with no contact directory", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getWorkspaceContactDirectoryId).mockResolvedValue(null);
+      const filters = [
+        {
+          id: "clf01234567890123456789012",
+          connector: null,
+          resource: {
+            id: "clf11234567890123456789012",
+            root: { type: "attribute", contactAttributeKey: "plan" },
+            qualifier: { operator: "equals" },
+            value: "pro",
+          },
+        },
+      ] as unknown as TBaseFilters;
+
+      try {
+        await expect(
+          createSurvey(
+            mockWorkspaceId,
+            { ...mockCreateSurveyInput, type: "app" },
+            {
+              creationFacts: WORKSPACE_CREATION_FACTS,
+              targetingActor: OWNER_TARGETING_ACTOR,
+              privateSegmentFilters: filters,
+            }
+          )
+        ).rejects.toThrow(new InvalidInputError(CONTACT_DIRECTORY_MISSING_MESSAGE));
+        expect(prisma.survey.create).not.toHaveBeenCalled();
+      } finally {
+        vi.mocked(getWorkspaceContactDirectoryId).mockImplementation(async () => mockDirectoryId);
+      }
+    });
+
     test("refuses seeded targeting that names a survey hidden from the creator", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({
@@ -3357,5 +3397,80 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     await save(interaction([restrictedId]), {});
 
     expect(prisma.segment.updateMany).toHaveBeenCalled();
+  });
+});
+
+// Decision 3: a new workspace has no contact directory until an owner or manager assigns one. Its app
+// surveys still get a private segment, kept in the workspace, and it takes no filters.
+describe("app survey targeting in a workspace with no contact directory", () => {
+  const PLAN_FILTER = [
+    {
+      id: "clf01234567890123456789012",
+      connector: null,
+      resource: {
+        id: "clf11234567890123456789012",
+        root: { type: "attribute", contactAttributeKey: "plan" },
+        qualifier: { operator: "equals" },
+        value: "pro",
+      },
+    },
+  ] as unknown as TBaseFilters;
+
+  beforeEach(() => {
+    vi.mocked(getWorkspaceContactDirectoryId).mockResolvedValue(null);
+    vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+  });
+
+  afterEach(() => {
+    vi.mocked(getWorkspaceContactDirectoryId).mockImplementation(async () => mockDirectoryId);
+  });
+
+  const saveDraft = (filters: TBaseFilters) =>
+    updateSurveyInternal(
+      {
+        ...updateSurveyInput,
+        status: "draft",
+        type: "app",
+        segment: { ...OWN_PRIVATE_SEGMENT, filters },
+      } as never,
+      true
+    );
+
+  test("saves the survey's own private segment again", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: null,
+      workspaceId: updateSurveyInput.workspaceId,
+    } as never);
+    prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
+
+    await saveDraft([]);
+
+    expect(prisma.segment.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  test("refuses filters, which could match no contact", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: null,
+      workspaceId: updateSurveyInput.workspaceId,
+    } as never);
+
+    await expect(saveDraft(PLAN_FILTER)).rejects.toThrow(
+      new InvalidInputError(CONTACT_DIRECTORY_MISSING_MESSAGE)
+    );
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("still refuses another workspace's segment", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: null,
+      workspaceId: "clotherworkspace1234567890",
+    } as never);
+
+    await expect(saveDraft([])).rejects.toThrow(ResourceNotFoundError);
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
   });
 });

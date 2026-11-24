@@ -91,6 +91,7 @@ interface SurveyEditorProps {
   membershipRole?: OrganizationRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
+  hasContactDirectory: boolean;
   isSpamProtectionAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
@@ -134,6 +135,7 @@ export const SurveyEditor = ({
   membershipRole,
   colors,
   isUserTargetingAllowed = false,
+  hasContactDirectory,
   isSpamProtectionAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
@@ -498,6 +500,7 @@ export const SurveyEditor = ({
               finishedResponseCount={finishedResponseCount}
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
+              hasContactDirectory={hasContactDirectory}
               isSpamProtectionAllowed={isSpamProtectionAllowed}
               workspacePermission={workspacePermission}
               isFormbricksCloud={isFormbricksCloud}

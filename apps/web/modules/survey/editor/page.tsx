@@ -21,6 +21,7 @@ import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
 import { getWorkspaceCustomCssRecord, parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getSurveyLinkedCreatives } from "@/modules/ee/creatives/lib/survey-linked-creatives";
 import { getSurveyDataRetentionContext } from "@/modules/ee/data-retention/lib/survey-context";
@@ -97,6 +98,7 @@ export const SurveyEditorPage = async (props: {
     responseCount,
     finishedResponseCount,
     segments,
+    contactDirectoryId,
   ] = await Promise.all([
     getSurvey(params.surveyId),
     getWorkspaceWithTeamIds(params.workspaceId),
@@ -108,6 +110,7 @@ export const SurveyEditorPage = async (props: {
     getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
       getSegments(workspace.id, where)
     ),
+    getWorkspaceContactDirectoryId(workspace.id),
   ]);
 
   if (!workspaceWithTeamIds) {
@@ -191,6 +194,7 @@ export const SurveyEditorPage = async (props: {
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
+      hasContactDirectory={contactDirectoryId !== null}
       isSpamProtectionAllowed={isSpamProtectionAllowed}
       workspaceLanguages={workspaceLanguages}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}

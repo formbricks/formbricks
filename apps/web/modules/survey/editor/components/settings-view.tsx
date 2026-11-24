@@ -17,6 +17,7 @@ import { RecontactOptionsCard } from "@/modules/survey/editor/components/reconta
 import { ResponseOptionsCard } from "@/modules/survey/editor/components/response-options-card";
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
+import { TargetingNoDirectoryCard } from "@/modules/survey/editor/components/targeting-no-directory-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 import { type TSurveySchedulingConfig } from "@/modules/survey/scheduling/lib/config";
 import type { TSharedSegmentEdit } from "../lib/shared-segment-edit";
@@ -31,6 +32,8 @@ interface SettingsViewProps {
   finishedResponseCount: number;
   membershipRole?: OrganizationRole;
   isUserTargetingAllowed?: boolean;
+  /** False when the workspace has no contact directory, so it has no contacts to target (decision 13). */
+  hasContactDirectory: boolean;
   isSpamProtectionAllowed: boolean;
   workspacePermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
@@ -61,6 +64,7 @@ export const SettingsView = ({
   finishedResponseCount,
   membershipRole,
   isUserTargetingAllowed = false,
+  hasContactDirectory,
   isSpamProtectionAllowed,
   isQuotasAllowed,
   workspacePermission,
@@ -88,7 +92,10 @@ export const SettingsView = ({
 
       {localSurvey.type === "app" ? (
         <div>
-          {isUserTargetingAllowed ? (
+          {isUserTargetingAllowed && !hasContactDirectory && (
+            <TargetingNoDirectoryCard membershipRole={membershipRole} />
+          )}
+          {isUserTargetingAllowed && hasContactDirectory && (
             <div className="relative">
               <div className="blur-none">
                 <TargetingCard
@@ -103,7 +110,8 @@ export const SettingsView = ({
                 />
               </div>
             </div>
-          ) : (
+          )}
+          {!isUserTargetingAllowed && (
             <TargetingLockedCard
               isFormbricksCloud={isFormbricksCloud}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}

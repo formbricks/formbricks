@@ -69,7 +69,10 @@ import {
   readCustomCssPayloadSource,
   resolveCustomCssWriteOrThrow,
 } from "@/modules/custom-css/lib/service";
-import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectoryId,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import {
   assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
@@ -820,6 +823,11 @@ const updateAppSurveySegment = async (
     );
   }
 
+  assertNoSegmentFiltersWithoutDirectory(
+    await getWorkspaceContactDirectoryId(currentSurvey.workspaceId),
+    segment.filters
+  );
+
   await saveAppSurveySegment(currentSurvey, segment, options.targetingActor);
 };
 
@@ -1515,7 +1523,11 @@ const unlinkSurveySegment = async (
   }
 };
 
-/** A survey may use any segment of its workspace's contact directory (decision 24), and no other. */
+/**
+ * A survey may use any segment of its workspace's contact directory (decision 24), and no other. A
+ * workspace with no directory (decision 3) has only its app surveys' private segments, kept in the
+ * workspace until it gets a directory.
+ */
 const assertSurveySegmentBelongsToWorkspace = async (
   workspaceId: string,
   segment: { id?: string | null } | null | undefined,
@@ -1526,12 +1538,28 @@ const assertSurveySegmentBelongsToWorkspace = async (
   }
 
   const [existingSegment, directoryId] = await Promise.all([
-    client.segment.findUnique({ where: { id: segment.id }, select: { directoryId: true } }),
+    client.segment.findUnique({
+      where: { id: segment.id },
+      select: { directoryId: true, workspaceId: true },
+    }),
     getWorkspaceContactDirectoryId(workspaceId),
   ]);
 
-  if (!directoryId || existingSegment?.directoryId !== directoryId) {
+  const belongs = directoryId
+    ? existingSegment?.directoryId === directoryId
+    : existingSegment?.directoryId === null && existingSegment.workspaceId === workspaceId;
+  if (!belongs) {
     throw new ResourceNotFoundError("Segment", segment.id);
+  }
+};
+
+/**
+ * Segment filters target contacts, and a workspace with no contact directory has none: the SDK can't
+ * identify anyone there, so a filter would quietly match nobody. Refused until a directory is assigned.
+ */
+const assertNoSegmentFiltersWithoutDirectory = (directoryId: string | null, filters: unknown): void => {
+  if (!directoryId && Array.isArray(filters) && filters.length > 0) {
+    throw new InvalidInputError(CONTACT_DIRECTORY_MISSING_MESSAGE);
   }
 };
 
@@ -1709,6 +1737,7 @@ export const createSurvey = async (
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment, db);
     // Read before the survey's transaction: its private segment is created in the workspace's directory.
     const segmentDirectoryId = await getWorkspaceContactDirectoryId(parsedWorkspaceId);
+    assertNoSegmentFiltersWithoutDirectory(segmentDirectoryId, privateSegmentFilters);
     await assertCreateTargetingVisible(parsedWorkspaceId, segment, privateSegmentFilters, targetingActor, db);
 
     // ENG-1839: `existing` is empty because a create authors every name fresh — there is nothing to
