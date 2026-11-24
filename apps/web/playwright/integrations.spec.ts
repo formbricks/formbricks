@@ -94,4 +94,45 @@ test.describe("Integrations", () => {
       await expect.poll(stored).toBeNull();
     });
   });
+
+  test("reveals a webhook signing secret only on request, never in the page source", async ({
+    page,
+    users,
+  }) => {
+    const user = await users.create();
+    const { workspaceId } = user;
+    if (!workspaceId) throw new Error("Workspace not seeded for the test user");
+    const secret = "whsec_e2e_not_a_real_signing_secret";
+    await prisma.webhook.create({
+      data: {
+        name: "E2E webhook",
+        url: "https://hooks.example.com/formbricks",
+        source: "user",
+        triggers: ["responseFinished"],
+        surveyIds: [],
+        secret,
+        workspaceId,
+      },
+    });
+
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/integrations/webhooks`, {
+      waitUntil: "domcontentloaded",
+    });
+
+    // Only the presence of a secret leaves the server: the list render must not contain the value.
+    await expect(page.getByText("E2E webhook")).toBeVisible();
+    expect(await page.content()).not.toContain(secret);
+
+    await page.getByRole("button", { name: /E2E webhook/ }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("button", { name: "Settings" }).click();
+
+    const secretInput = dialog.getByLabel("Signing Secret");
+    await expect(secretInput).toHaveValue("••••••••••••••••••••••••");
+
+    await dialog.getByRole("button", { name: "Show" }).click();
+    await expect(secretInput).toHaveValue(secret);
+  });
 });
