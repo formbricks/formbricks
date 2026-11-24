@@ -1609,6 +1609,8 @@ describe("archiveV3Survey", () => {
     // Exact, so reverting either object to the pre-read fails (it carries `inProgress`).
     expect(auditLog.oldObject).toEqual(archivePrevious);
     expect(auditLog.newObject).toEqual({ id: "survey_1", status: "paused", archivedAt: expect.any(Date) });
+    // Archive is not a restore: an unconditional spread must not add the key (even as undefined).
+    expect(auditLog.newObject).not.toHaveProperty("retentionExemptionId");
   });
 
   test("skips an archive the service wrote nothing for, even when the pre-read saw it live", async () => {
@@ -1743,6 +1745,39 @@ describe("restoreV3Survey", () => {
       archivedAt: null,
       retentionExemptionId: null,
     });
+    expect(auditLog.newObject).toHaveProperty("retentionExemptionId", null);
+  });
+
+  test("audits a restore that wrote even though the pre-read saw it live", async () => {
+    // The pre-read is live; a concurrent archive landed before the service's lock, so it really restores.
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
+      survey,
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    });
+    const auditLog = {} as TV3AuditLog;
+    const archivedAt = new Date("2026-01-01T00:00:00.000Z");
+    vi.mocked(restoreSurvey).mockResolvedValue({
+      id: "survey_1",
+      status: "paused",
+      archivedAt: null,
+      retentionExemptionId: null,
+      changed: true,
+      previous: { id: "survey_1", status: "paused", archivedAt },
+    });
+
+    const response = await restoreV3Survey({
+      surveyId: "survey_1",
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+    expect(response.status).toBe(200);
+    expect(skipV3AuditLog).not.toHaveBeenCalled();
+    expect(auditLog.oldObject).toEqual({ id: "survey_1", status: "paused", archivedAt });
   });
 
   test("keeps a no-op restore out of the audit trail", async () => {

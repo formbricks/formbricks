@@ -469,7 +469,7 @@ describe("archiveSurvey", () => {
   });
 
   test("should map Prisma P2025 during archive to ResourceNotFoundError", async () => {
-    // Defensive mapping, matching restoreSurvey: a delete that committed before the lock surfaces as P2025.
+    // Defensive mapping, matching restoreSurvey: the lock makes a concurrent delete unreachable here.
     const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
       code: "P2025",
       clientVersion: "4.0.0",

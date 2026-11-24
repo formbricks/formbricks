@@ -226,8 +226,8 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Defensive: the row lock above means a concurrent delete cannot slip in after the read, but a
-      // delete that committed before it still surfaces as P2025. Match restoreSurvey: not found, not 500.
+      // Defensive only: the FOR UPDATE above holds the row, so a concurrent delete cannot reach this.
+      // A row that vanished for any other reason is a not-found, not a 500, matching restoreSurvey.
       if (error.code === "P2025") {
         logger.warn({ surveyId }, "Survey not found during archive");
         throw new ResourceNotFoundError("Survey", surveyId);
