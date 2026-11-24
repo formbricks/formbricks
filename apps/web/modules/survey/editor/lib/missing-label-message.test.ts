@@ -50,7 +50,7 @@ describe("describeMissingLabelIssue", () => {
         field: "common.note",
         languages: "Alemão, Japonês",
       })}`,
-      opensLanguageTab: true,
+      hasLanguageList: true,
     });
   });
 
@@ -68,7 +68,7 @@ describe("describeMissingLabelIssue", () => {
         field: "workspace.surveys.edit.button_label",
         endingNumber: 2,
       })}`,
-      opensLanguageTab: false,
+      hasLanguageList: false,
     });
   });
 
@@ -81,7 +81,7 @@ describe("describeMissingLabelIssue", () => {
         questionNumber: 1,
         blockNumber: 2,
       })}`,
-      opensLanguageTab: false,
+      hasLanguageList: false,
     });
   });
 

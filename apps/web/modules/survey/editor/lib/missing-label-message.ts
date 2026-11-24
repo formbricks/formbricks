@@ -1,5 +1,7 @@
 import type { TFunction } from "i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
+import { NUMBERED_COLLECTION_LABEL_KEYS, getElementFieldLabel } from "@/modules/survey/editor/lib/validation";
+import { getAddressFields, getContactInfoFields } from "@/modules/survey/editor/lib/validation-rules-helpers";
 
 /**
  * A label issue as the survey schema raises it (`validateElementLabels`, `validateCardFieldsForAllLanguages`):
@@ -13,43 +15,20 @@ interface TLabelIssue {
 
 interface TMissingLabelMessage {
   message: string;
-  /** True when the message lists languages, so the caller opens the tab where they are translated. */
-  opensLanguageTab: boolean;
+  /** True when the message names languages, so the caller can open the tab where they are translated. */
+  hasLanguageList: boolean;
 }
 
-const NUMBERED_COLLECTIONS = new Set(["choices", "rows", "columns"]);
+/** A contact-info or address subfield, keyed the way the schema puts it in the path ("firstname"). */
+const getSubfieldName = (pathKey: string, t: TFunction): string | undefined =>
+  [...getContactInfoFields(t), ...getAddressFields(t)].find((field) => field.value.toLowerCase() === pathKey)
+    ?.label;
 
 // Literal t() calls rather than a key table, because the translation scanner only sees literal keys.
-const getSubfieldName = (key: string, t: TFunction): string | undefined => {
-  switch (key) {
-    case "firstname":
-      return t("workspace.surveys.edit.first_name");
-    case "lastname":
-      return t("workspace.surveys.edit.last_name");
-    case "email":
-      return t("common.email");
-    case "phone":
-      return t("common.phone");
-    case "company":
-      return t("workspace.surveys.edit.company");
-    case "addressline1":
-      return t("workspace.surveys.edit.address_line_1");
-    case "addressline2":
-      return t("workspace.surveys.edit.address_line_2");
-    case "city":
-      return t("workspace.surveys.edit.city");
-    case "state":
-      return t("workspace.surveys.edit.state");
-    case "zip":
-      return t("workspace.surveys.edit.zip");
-    case "country":
-      return t("workspace.surveys.edit.country");
-    default:
-      return undefined;
-  }
-};
-
 const getNamedFieldLabel = (field: string, t: TFunction): string => {
+  const elementFieldLabel = getElementFieldLabel(field, t);
+  if (elementFieldLabel) return elementFieldLabel;
+
   switch (field) {
     case "headline":
       return t("workspace.surveys.edit.missing_label.question_text");
@@ -61,8 +40,6 @@ const getNamedFieldLabel = (field: string, t: TFunction): string => {
       return t("common.note");
     case "placeholder":
       return t("common.placeholder");
-    case "imageAltText":
-      return t("workspace.surveys.edit.image_alt_text");
     // The consent element's label is moved to `label`; the schema names it `consent.label`.
     case "label":
       return t("workspace.surveys.edit.checkbox_label");
@@ -85,14 +62,14 @@ const getNamedFieldLabel = (field: string, t: TFunction): string => {
 /** The field the label belongs to, read from the path after the card or element it sits in. */
 const getFieldLabel = (fieldPath: PropertyKey[], t: TFunction): string => {
   const [collection, index, nested] = fieldPath;
+  const collectionKey =
+    typeof collection === "string" ? NUMBERED_COLLECTION_LABEL_KEYS[collection] : undefined;
 
-  if (typeof collection === "string" && NUMBERED_COLLECTIONS.has(collection) && typeof index === "number") {
+  if (collectionKey && typeof index === "number") {
     const n = index + 1;
     if (nested === "imageAltText")
       return t("workspace.surveys.edit.missing_label.choice_image_alt_text", { n });
-    if (collection === "rows") return t("common.row_n", { n });
-    if (collection === "columns") return t("common.column_n", { n });
-    return t("common.choice_n", { n });
+    return t(collectionKey, { n });
   }
 
   return getNamedFieldLabel(String(collection), t);
@@ -105,6 +82,60 @@ const getLanguageList = (params: Record<string, unknown>, locale: string): strin
     .filter((code): code is string => typeof code === "string" && code !== "default")
     .map((code) => getLanguageLabel(code, locale) ?? code)
     .join(", ");
+};
+
+type TSentence = "in_question" | "on_welcome_card" | "on_ending_card";
+
+// Literal keys for the scanner: each sentence with and without its language list.
+const renderSentence = (
+  sentence: TSentence,
+  values: Record<string, string | number>,
+  languages: string,
+  t: TFunction
+): string => {
+  const withLanguages = { ...values, languages };
+  switch (sentence) {
+    case "in_question":
+      return languages
+        ? t("workspace.surveys.edit.missing_label.in_question_for_languages", withLanguages)
+        : t("workspace.surveys.edit.missing_label.in_question", values);
+    case "on_welcome_card":
+      return languages
+        ? t("workspace.surveys.edit.missing_label.on_welcome_card_for_languages", withLanguages)
+        : t("workspace.surveys.edit.missing_label.on_welcome_card", values);
+    case "on_ending_card":
+      return languages
+        ? t("workspace.surveys.edit.missing_label.on_ending_card_for_languages", withLanguages)
+        : t("workspace.surveys.edit.missing_label.on_ending_card", values);
+  }
+};
+
+/** Which sentence the path calls for, and what fills it besides the languages. */
+const locateLabel = (
+  path: PropertyKey[],
+  t: TFunction
+): { sentence: TSentence; values: Record<string, string | number> } | null => {
+  const [root, first, second, third, ...rest] = path;
+
+  if (root === "welcomeCard") {
+    return { sentence: "on_welcome_card", values: { field: getFieldLabel([first], t) } };
+  }
+
+  if (root === "endings" && typeof first === "number") {
+    return {
+      sentence: "on_ending_card",
+      values: { field: getFieldLabel([second], t), endingNumber: first + 1 },
+    };
+  }
+
+  if (root === "blocks" && typeof first === "number" && second === "elements" && typeof third === "number") {
+    return {
+      sentence: "in_question",
+      values: { field: getFieldLabel(rest, t), questionNumber: third + 1, blockNumber: first + 1 },
+    };
+  }
+
+  return null;
 };
 
 /**
@@ -121,51 +152,12 @@ export const describeMissingLabelIssue = (
 ): TMissingLabelMessage | null => {
   if (issue.params?.missingLabel !== true) return null;
 
+  const located = locateLabel(issue.path, t);
+  if (!located) return null;
+
   const languages = getLanguageList(issue.params, locale);
-  const opensLanguageTab = languages.length > 0;
-  const [root, first, second, third, ...rest] = issue.path;
-
-  if (root === "welcomeCard") {
-    const field = getFieldLabel([first], t);
-    return {
-      message: opensLanguageTab
-        ? t("workspace.surveys.edit.missing_label.on_welcome_card_for_languages", { field, languages })
-        : t("workspace.surveys.edit.missing_label.on_welcome_card", { field }),
-      opensLanguageTab,
-    };
-  }
-
-  if (root === "endings" && typeof first === "number") {
-    const field = getFieldLabel([second], t);
-    const endingNumber = first + 1;
-    return {
-      message: opensLanguageTab
-        ? t("workspace.surveys.edit.missing_label.on_ending_card_for_languages", {
-            field,
-            endingNumber,
-            languages,
-          })
-        : t("workspace.surveys.edit.missing_label.on_ending_card", { field, endingNumber }),
-      opensLanguageTab,
-    };
-  }
-
-  if (root === "blocks" && typeof first === "number" && second === "elements" && typeof third === "number") {
-    const field = getFieldLabel(rest, t);
-    const questionNumber = third + 1;
-    const blockNumber = first + 1;
-    return {
-      message: opensLanguageTab
-        ? t("workspace.surveys.edit.missing_label.in_question_for_languages", {
-            field,
-            questionNumber,
-            blockNumber,
-            languages,
-          })
-        : t("workspace.surveys.edit.missing_label.in_question", { field, questionNumber, blockNumber }),
-      opensLanguageTab,
-    };
-  }
-
-  return null;
+  return {
+    message: renderSentence(located.sentence, located.values, languages, t),
+    hasLanguageList: languages.length > 0,
+  };
 };

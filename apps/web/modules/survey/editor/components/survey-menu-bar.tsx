@@ -460,7 +460,7 @@ export const SurveyMenuBar = ({
     const missingLabel = describeMissingLabelIssue(firstError, t, locale);
     if (missingLabel) {
       toast.error(missingLabel.message, { className: "w-fit max-w-md!" });
-      if (missingLabel.opensLanguageTab) setActiveId("language");
+      if (missingLabel.hasLanguageList) setActiveId("language");
       return;
     }
 
