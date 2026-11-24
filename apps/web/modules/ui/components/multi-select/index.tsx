@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
 import { Badge } from "@/modules/ui/components/multi-select/badge";
+import { NO_AUTOFILL_PROPS } from "@/modules/ui/lib/no-autofill";
 import { cn } from "@/modules/ui/lib/utils";
 
 interface TOption<T> {
@@ -349,6 +350,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
           {readOnly ? null : (
             <CommandPrimitive.Input
               ref={inputRef}
+              {...NO_AUTOFILL_PROPS}
               id={inputId}
               aria-labelledby={ariaLabelledBy}
               maxLength={inputMaxLength}

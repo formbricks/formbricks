@@ -730,7 +730,8 @@
     "tags": "Etiquetas",
     "tags_field": {
       "add_new_value": "Adicionar \"{value}\"",
-      "add_value_placeholder": "Adicionar valor…"
+      "add_value_placeholder": "Escreve para adicionar um valor",
+      "no_values_yet": "Ainda não há valores. Escreve um para o adicionar."
     },
     "targeting": "Segmentação",
     "team": "Equipa",
@@ -4034,7 +4035,7 @@
         "values": "Valores"
       },
       "members": {
-        "attributes_help": "Separa os valores com Enter, uma vírgula ou um ponto e vírgula.",
+        "attributes_help": "Atribui ou cria valores de atributos para este membro.",
         "attributes_load_failed": "Não foi possível carregar os atributos dos membros.",
         "attributes_read_only_help": "Apenas os Proprietários e os Gestores podem alterar os atributos dos membros.",
         "csv_action": "Ação",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Estas colunas não correspondem a nenhum atributo de Membro e serão ignoradas: {columns}",
         "csv_update": "Atualizar",
         "delete_member": "Eliminar membro",
+        "download_member_list": "Transferir lista de membros",
         "invited": "Convidado",
         "member_actions": "Ações para {name}",
         "member_count": "{count, plural, one {# membro} other {# membros}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Consulta a função, as equipas e os atributos de Membro deste membro.",
         "member_settings_saved": "Definições do membro guardadas",
         "no_teams": "Não pertence a nenhuma equipa.",
-        "role_help": "Os Visualizadores de Dashboards só veem os dashboards dos espaços de trabalho a que as suas equipas têm acesso. Os Proprietários e os Gestores podem alterar funções.",
+        "role_help": "Os Visualizadores de Dashboards só veem os dashboards dos espaços de trabalho aos quais as respetivas equipas têm acesso.",
         "search_members": "Pesquisar membros",
         "sort_default": "Como listado",
         "sort_last_sign_in_newest": "Último início de sessão, mais recente primeiro",

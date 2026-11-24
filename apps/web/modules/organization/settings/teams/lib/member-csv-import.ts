@@ -187,3 +187,44 @@ export const buildMemberCsvTemplate = (attributeKeys: readonly TCsvAttributeKey[
     MEMBER_CSV_COLUMNS.teams[0],
     ...attributeKeys.map((key) => key.key),
   ]) + toCsvLine(["Jane Doe", "jane@example.com", "Member", "", ...attributeKeys.map(() => "")]);
+
+/** "dashboard_viewer" as the import reads it back: words, not the translated label. */
+const toRoleCell = (role: string): string =>
+  role
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+/**
+ * The member list in the import's own format: the template's columns, one row per member and pending
+ * invite, so it can be edited and uploaded again through Invite member. Several values in a cell are
+ * joined with ", ", which the import splits again. Cells go through `toCsvLine` (formula defanging).
+ */
+export const buildMemberCsvExport = (
+  rows: ReadonlyArray<{
+    name: string;
+    email: string;
+    role: string;
+    teams: ReadonlyArray<{ name: string }>;
+    attributes: Record<string, string[]>;
+  }>,
+  attributeKeys: readonly TCsvAttributeKey[]
+): string =>
+  toCsvLine([
+    MEMBER_CSV_COLUMNS.name[0],
+    MEMBER_CSV_COLUMNS.email[0],
+    MEMBER_CSV_COLUMNS.role[0],
+    MEMBER_CSV_COLUMNS.teams[0],
+    ...attributeKeys.map((key) => key.key),
+  ]) +
+  rows
+    .map((row) =>
+      toCsvLine([
+        row.name,
+        row.email,
+        toRoleCell(row.role),
+        row.teams.map((team) => team.name).join(", "),
+        ...attributeKeys.map((key) => (row.attributes[key.key] ?? []).join(", ")),
+      ])
+    )
+    .join("");

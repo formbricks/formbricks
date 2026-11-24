@@ -171,6 +171,7 @@ export const MemberAttributesSection = ({ organizationId }: Readonly<{ organizat
           />
           <div className="-mx-4">
             <ListTable
+              variant="embedded"
               table={table}
               testId="member-attributes-table"
               isLoading={query.isLoading}

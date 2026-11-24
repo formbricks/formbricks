@@ -294,6 +294,7 @@ export const MemberSettingsDialog = ({
                     maxSelected={MEMBER_ATTRIBUTE_MAX_VALUES_PER_KEY}
                     inputMaxLength={MEMBER_ATTRIBUTE_MAX_VALUE_LENGTH}
                     placeholder={t("common.tags_field.add_value_placeholder")}
+                    emptyMessage={t("common.tags_field.no_values_yet")}
                   />
                 </div>
               ))}

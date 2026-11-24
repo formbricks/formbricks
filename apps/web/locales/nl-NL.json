@@ -730,7 +730,8 @@
     "tags": "Labels",
     "tags_field": {
       "add_new_value": "\"{value}\" toevoegen",
-      "add_value_placeholder": "Waarde toevoegen…"
+      "add_value_placeholder": "Typ om een waarde toe te voegen",
+      "no_values_yet": "Nog geen waarden. Typ er een om toe te voegen."
     },
     "targeting": "Targeting",
     "team": "Team",
@@ -4034,7 +4035,7 @@
         "values": "Waarden"
       },
       "members": {
-        "attributes_help": "Scheid waarden met Enter, een komma of een puntkomma.",
+        "attributes_help": "Wijs attribuutwaarden toe aan dit lid of maak ze aan.",
         "attributes_load_failed": "Ledenattributen konden niet worden geladen.",
         "attributes_read_only_help": "Alleen eigenaren en managers kunnen ledenattributen wijzigen.",
         "csv_action": "Actie",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Deze kolommen komen met geen enkel lidkenmerk overeen en worden genegeerd: {columns}",
         "csv_update": "Bijwerken",
         "delete_member": "Lid verwijderen",
+        "download_member_list": "Ledenlijst downloaden",
         "invited": "Uitgenodigd",
         "member_actions": "Acties voor {name}",
         "member_count": "{count, plural, one {# lid} other {# leden}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Bekijk de rol, teams en lidkenmerken van dit lid.",
         "member_settings_saved": "Lidinstellingen opgeslagen",
         "no_teams": "Niet in een team.",
-        "role_help": "Dashboardkijkers zien alleen dashboards van workspaces waar hun teams toegang toe hebben. Eigenaren en beheerders kunnen rollen wijzigen.",
+        "role_help": "Dashboardbekijkers zien alleen dashboards van workspaces waartoe hun teams toegang hebben.",
         "search_members": "Leden zoeken",
         "sort_default": "Zoals weergegeven",
         "sort_last_sign_in_newest": "Laatste aanmelding, nieuwste eerst",

@@ -730,7 +730,8 @@
     "tags": "標籤",
     "tags_field": {
       "add_new_value": "新增「{value}」",
-      "add_value_placeholder": "新增值…"
+      "add_value_placeholder": "輸入以新增值",
+      "no_values_yet": "目前還沒有任何值,輸入後即可新增。"
     },
     "targeting": "目標設定",
     "team": "團隊",
@@ -4034,7 +4035,7 @@
         "values": "值"
       },
       "members": {
-        "attributes_help": "請以 Enter 鍵、逗號或分號分隔各個值。",
+        "attributes_help": "為此成員指派或建立屬性值。",
         "attributes_load_failed": "無法載入成員屬性。",
         "attributes_read_only_help": "只有擁有者和管理員可以變更成員屬性。",
         "csv_action": "動作",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "這些欄位與任何成員屬性都不相符，將會被忽略：{columns}",
         "csv_update": "更新",
         "delete_member": "刪除成員",
+        "download_member_list": "下載成員清單",
         "invited": "已邀請",
         "member_actions": "{name} 的操作",
         "member_count": "{count, plural, other {# 位成員}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "查看這位成員的角色、團隊和成員屬性。",
         "member_settings_saved": "成員設定已儲存",
         "no_teams": "不屬於任何團隊。",
-        "role_help": "儀表板檢視者只能看到其團隊有權存取的工作區中的儀表板。擁有者和管理員可以變更角色。",
+        "role_help": "儀表板檢視者只能查看其所屬團隊可存取的工作區中的儀表板。",
         "search_members": "搜尋成員",
         "sort_default": "依目前列出的順序",
         "sort_last_sign_in_newest": "上次登入時間，由新到舊",

@@ -730,7 +730,8 @@
     "tags": "タグ",
     "tags_field": {
       "add_new_value": "「{value}」を追加",
-      "add_value_placeholder": "値を追加…"
+      "add_value_placeholder": "入力して値を追加",
+      "no_values_yet": "まだ値がありません。入力して追加してください。"
     },
     "targeting": "ターゲティング",
     "team": "チーム",
@@ -4034,7 +4035,7 @@
         "values": "値"
       },
       "members": {
-        "attributes_help": "値はEnter、カンマ、またはセミコロンで区切ってください。",
+        "attributes_help": "このメンバーに属性値を割り当てるか、新しく作成します。",
         "attributes_load_failed": "メンバー属性を読み込めませんでした。",
         "attributes_read_only_help": "メンバー属性を変更できるのは、オーナーとマネージャーのみです。",
         "csv_action": "アクション",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "次の列はメンバー属性に一致しないため、無視されます: {columns}",
         "csv_update": "更新",
         "delete_member": "メンバーを削除",
+        "download_member_list": "メンバーリストをダウンロード",
         "invited": "招待済み",
         "member_actions": "{name}のアクション",
         "member_count": "{count, plural, other {#人のメンバー}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "このメンバーのロール、チーム、メンバー属性を確認できます。",
         "member_settings_saved": "メンバー設定を保存しました",
         "no_teams": "どのチームにも所属していません。",
-        "role_help": "ダッシュボード閲覧者は、所属チームがアクセスできるワークスペースのダッシュボードのみ表示できます。オーナーとマネージャーはロールを変更できます。",
+        "role_help": "ダッシュボード閲覧者は、所属チームがアクセスできるワークスペースのダッシュボードのみ表示できます。",
         "search_members": "メンバーを検索",
         "sort_default": "リスト順",
         "sort_last_sign_in_newest": "最終サインイン: 新しい順",

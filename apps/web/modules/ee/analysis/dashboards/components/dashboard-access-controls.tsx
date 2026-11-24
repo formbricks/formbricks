@@ -67,6 +67,16 @@ const useRoleLabel = () => {
 const formatAttributes = (attributes: TViewAsMember["attributes"]): string =>
   attributes.map(({ label, values }) => `${label}: ${values.join(", ")}`).join(" · ");
 
+/**
+ * The View as list's search: every word typed must appear in the member's name or email, as typed.
+ * cmdk's default matches letters in order anywhere, so "Anna" also listed Ola and Lars.
+ */
+export const matchesViewAsSearch = (_value: string, search: string, keywords: string[] = []): number => {
+  const haystack = keywords.join(" ").toLowerCase();
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+  return words.every((word) => haystack.includes(word)) ? 1 : 0;
+};
+
 /** The URL of this dashboard page viewed as `userId`, or as oneself again (`null`), with no filters. */
 const viewAsUrl = (userId: string | null): string => {
   const url = new URL(window.location.href);
@@ -114,7 +124,7 @@ export const ViewAsButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
-        <Command>
+        <Command filter={matchesViewAsSearch}>
           <CommandInput placeholder={t("workspace.analysis.dashboards.view_as_search")} />
           <CommandList>
             <CommandEmpty>
@@ -135,7 +145,8 @@ export const ViewAsButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
                 {members.map((member) => (
                   <CommandItem
                     key={member.userId}
-                    value={`${member.name} ${member.email} ${member.userId}`}
+                    value={member.userId}
+                    keywords={[member.name, member.email]}
                     onSelect={() => goViewAs(member.userId)}>
                     <div className="flex w-full min-w-0 items-center justify-between gap-2">
                       <div className="min-w-0">

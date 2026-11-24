@@ -730,7 +730,8 @@
     "tags": "Taggar",
     "tags_field": {
       "add_new_value": "Lägg till \"{value}\"",
-      "add_value_placeholder": "Lägg till värde…"
+      "add_value_placeholder": "Skriv för att lägga till värde",
+      "no_values_yet": "Inga värden ännu. Skriv ett för att lägga till det."
     },
     "targeting": "Målgrupp",
     "team": "Team",
@@ -4034,7 +4035,7 @@
         "values": "Värden"
       },
       "members": {
-        "attributes_help": "Separera värden med Enter, kommatecken eller semikolon.",
+        "attributes_help": "Tilldela eller skapa attributvärden för den här medlemmen.",
         "attributes_load_failed": "Det gick inte att läsa in medlemsattributen.",
         "attributes_read_only_help": "Endast ägare och chefer kan ändra medlemsattribut.",
         "csv_action": "Åtgärd",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Dessa kolumner matchar inget medlemsattribut och kommer att ignoreras: {columns}",
         "csv_update": "Uppdatera",
         "delete_member": "Ta bort medlem",
+        "download_member_list": "Ladda ner medlemslista",
         "invited": "Inbjuden",
         "member_actions": "Åtgärder för {name}",
         "member_count": "{count, plural, one {# medlem} other {# medlemmar}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Se den här medlemmens roll, team och medlemsattribut.",
         "member_settings_saved": "Medlemsinställningarna har sparats",
         "no_teams": "Ingår inte i något team.",
-        "role_help": "Dashboard-läsare ser bara dashboards i arbetsytor som deras team har åtkomst till. Ägare och chefer kan ändra roller.",
+        "role_help": "Dashboard Viewers ser bara dashboards i arbetsytor som deras team har åtkomst till.",
         "search_members": "Sök medlemmar",
         "sort_default": "Som i listan",
         "sort_last_sign_in_newest": "Senaste inloggning, nyaste först",

@@ -730,7 +730,8 @@
     "tags": "Etiketler",
     "tags_field": {
       "add_new_value": "\"{value}\" ekle",
-      "add_value_placeholder": "Değer ekle…"
+      "add_value_placeholder": "Değer eklemek için yazın",
+      "no_values_yet": "Henüz değer yok. Eklemek için bir değer yaz."
     },
     "targeting": "Hedefleme",
     "team": "Takım",
@@ -4034,7 +4035,7 @@
         "values": "Değerler"
       },
       "members": {
-        "attributes_help": "Değerleri Enter, virgül veya noktalı virgülle ayır.",
+        "attributes_help": "Bu üyeye öznitelik değerleri ata veya oluştur.",
         "attributes_load_failed": "Üye özellikleri yüklenemedi.",
         "attributes_read_only_help": "Üye özelliklerini yalnızca Sahipler ve Yöneticiler değiştirebilir.",
         "csv_action": "İşlem",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Bu sütunlar hiçbir Üye niteliğiyle eşleşmiyor ve yok sayılacak: {columns}",
         "csv_update": "Güncelle",
         "delete_member": "Üyeyi sil",
+        "download_member_list": "Üye listesini indir",
         "invited": "Davet edildi",
         "member_actions": "{name} için işlemler",
         "member_count": "{count, plural, one {# üye} other {# üye}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Bu üyenin rolünü, ekiplerini ve Üye niteliklerini gör.",
         "member_settings_saved": "Üye ayarları kaydedildi",
         "no_teams": "Hiçbir ekipte değil.",
-        "role_help": "Pano Görüntüleyenler yalnızca ekiplerinin erişebildiği çalışma alanlarındaki panoları görür. Sahipler ve Yöneticiler rolleri değiştirebilir.",
+        "role_help": "Pano Görüntüleyiciler yalnızca ekiplerinin erişebildiği çalışma alanlarının panolarını görür.",
         "search_members": "Üyelerde ara",
         "sort_default": "Listelendiği gibi",
         "sort_last_sign_in_newest": "Son giriş, en yeniden eskiye",

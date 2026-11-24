@@ -1,7 +1,8 @@
 "use client";
 
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { type ReactNode, useMemo, useState } from "react";
+import { DownloadIcon } from "lucide-react";
+import { type ReactNode, useMemo, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import type { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags, getOrganizationRoleLabels } from "@/lib/membership/utils";
@@ -13,6 +14,7 @@ import {
 } from "@/modules/ee/member-attributes/hooks/use-member-attributes";
 import { isRoleEditDisabled } from "@/modules/ee/role-management/lib/role-edit-rules";
 import { canActOnInvite, showDeleteButton } from "@/modules/organization/settings/teams/lib/member-controls";
+import { buildMemberCsvExport } from "@/modules/organization/settings/teams/lib/member-csv-import";
 import {
   type TMemberTableRow,
   type TMemberTeam,
@@ -25,6 +27,7 @@ import {
 } from "@/modules/organization/settings/teams/lib/sort-members";
 import { hasMoreThanOneActiveOwner } from "@/modules/organization/settings/teams/lib/utils";
 import type { TInvite } from "@/modules/organization/settings/teams/types/invites";
+import { Button } from "@/modules/ui/components/button";
 import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
 import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
@@ -62,6 +65,18 @@ type TMembersTableProps = Readonly<{
  * attribute key), status, and a row menu. Members and invites are read on the server as before; Member
  * attributes come from the v3 endpoints through TanStack Query.
  */
+/** Saves the member list as a CSV the Invite member import takes back (Owners and Managers only). */
+const downloadMemberList = (csv: string) => {
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `members-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const subscribeNoop = () => () => {};
+
 export const MembersTable = ({
   organizationId,
   members,
@@ -91,7 +106,17 @@ export const MembersTable = ({
 
   const keysQuery = useMemberAttributeKeys({ organizationId, enabled: canManageMemberAttributes });
   const valuesQuery = useMemberAttributeRows({ organizationId, enabled: canManageMemberAttributes });
-  const attributeKeys = useMemo(() => keysQuery.data ?? [], [keysQuery.data]);
+  // The server renders no attribute columns (their query runs in the browser), so the first client render
+  // must not either, even when the page's query cache already holds them, or React rebuilds the table.
+  const isHydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false
+  );
+  const attributeKeys = useMemo(
+    () => (isHydrated ? (keysQuery.data ?? []) : []),
+    [isHydrated, keysQuery.data]
+  );
 
   const allRows = useMemo(
     () =>
@@ -243,7 +268,29 @@ export const MembersTable = ({
           onChange: setSearch,
           placeholder: t("workspace.settings.members.search_members"),
         }}
-        actions={actions}
+        actions={
+          canManageMemberAttributes ? (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  downloadMemberList(
+                    buildMemberCsvExport(
+                      allRows,
+                      attributeKeys.map(({ key, label }) => ({ key, label }))
+                    )
+                  )
+                }>
+                <DownloadIcon aria-hidden="true" />
+                {t("workspace.settings.members.download_member_list")}
+              </Button>
+              {actions}
+            </div>
+          ) : (
+            actions
+          )
+        }
       />
       {canManageMemberAttributes && (keysQuery.isError || valuesQuery.isError) && (
         <p className="text-sm text-red-700" role="alert">
@@ -255,6 +302,7 @@ export const MembersTable = ({
       )}
       <div className="-mx-4">
         <ListTable
+          variant="embedded"
           table={table}
           testId="members-table"
           isLoading={false}

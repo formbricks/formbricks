@@ -730,7 +730,8 @@
     "tags": "Etichete",
     "tags_field": {
       "add_new_value": "Adaugă „{value}”",
-      "add_value_placeholder": "Adaugă o valoare…"
+      "add_value_placeholder": "Scrie pentru a adăuga o valoare",
+      "no_values_yet": "Nu există încă nicio valoare. Scrie una pentru a o adăuga."
     },
     "targeting": "Targetare",
     "team": "Echipă",
@@ -4034,7 +4035,7 @@
         "values": "Valori"
       },
       "members": {
-        "attributes_help": "Separă valorile cu Enter, o virgulă sau un punct și virgulă.",
+        "attributes_help": "Atribuie sau creează valori de atribut pentru acest membru.",
         "attributes_load_failed": "Atributele membrilor nu au putut fi încărcate.",
         "attributes_read_only_help": "Doar Proprietarii și Managerii pot modifica atributele membrilor.",
         "csv_action": "Acțiune",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Aceste coloane nu corespund niciunui atribut de membru și vor fi ignorate: {columns}",
         "csv_update": "Actualizează",
         "delete_member": "Șterge membrul",
+        "download_member_list": "Descarcă lista de membri",
         "invited": "Invitat",
         "member_actions": "Acțiuni pentru {name}",
         "member_count": "{count, plural, one {# membru} few {# membri} other {# de membri}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Vezi rolul, echipele și atributele de membru ale acestui membru.",
         "member_settings_saved": "Setările membrului au fost salvate",
         "no_teams": "Nu face parte din nicio echipă.",
-        "role_help": "Vizualizatorii de dashboard văd doar dashboardurile spațiilor de lucru la care au acces echipele lor. Proprietarii și Managerii pot schimba rolurile.",
+        "role_help": "Vizualizatorii de tablouri de bord văd doar tablourile de bord din spațiile de lucru la care au acces echipele lor.",
         "search_members": "Caută membri",
         "sort_default": "Ca în listă",
         "sort_last_sign_in_newest": "Ultima autentificare, cele mai recente primele",

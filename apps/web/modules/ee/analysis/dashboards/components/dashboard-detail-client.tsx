@@ -150,23 +150,34 @@ interface DashboardDetailClientProps {
   viewAsMember?: TViewAsMember | null;
 }
 
+const isEmptyImageBlock = (widget: TDashboardWidget): boolean =>
+  widget.kind === "image" && widget.content.fileUrl === null;
+
+const SIDE_RESIZE_HANDLES: LayoutItem["resizeHandles"] = ["e", "w"];
+
 const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] =>
-  widgets.map((widget) => ({
-    i: widget.id,
-    x: widget.layout.x,
-    y: widget.layout.y,
-    w: widget.layout.w,
-    h: widget.layout.h,
-    ...(widget.kind === "chart"
-      ? getWidgetMinSize(resolveChartType(widget.chart.type))
-      : getBlockMinSize(widget.kind)),
-    maxW: GRID_COLUMNS,
-    // A separator keeps its height, and an image or text block is as high as its content: a resize only
-    // changes their width.
-    ...(widget.kind === "chart"
-      ? { maxH: MAX_WIDGET_HEIGHT }
-      : { minH: widget.layout.h, maxH: widget.layout.h }),
-  }));
+  widgets.map((widget) => {
+    const minSize =
+      widget.kind === "chart"
+        ? getWidgetMinSize(resolveChartType(widget.chart.type))
+        : getBlockMinSize(widget.kind);
+    return {
+      i: widget.id,
+      x: widget.layout.x,
+      y: widget.layout.y,
+      w: Math.max(widget.layout.w, minSize.minW),
+      // The API and MCP tools take any size; a chart saved smaller than the editor allows is drawn at its
+      // minimum, so it stays readable (the next save keeps that size).
+      h: widget.kind === "chart" ? Math.max(widget.layout.h, minSize.minH) : widget.layout.h,
+      ...minSize,
+      maxW: GRID_COLUMNS,
+      // A separator keeps its height, and an image or text block is as high as its content: a resize only
+      // changes their width, so they only get the side handles.
+      ...(widget.kind === "chart"
+        ? { maxH: MAX_WIDGET_HEIGHT }
+        : { minH: widget.layout.h, maxH: widget.layout.h, resizeHandles: SIDE_RESIZE_HANDLES }),
+    };
+  });
 
 const applyLayoutToWidgets = (widgets: TDashboardWidget[], newLayout: Layout): TDashboardWidget[] => {
   let changed = false;
@@ -210,6 +221,7 @@ const MemoizedWidgetContent = memo(function WidgetContent({
     <DashboardWidgetData
       dashboardId={widget.dashboardId}
       chartId={widget.chartId}
+      isUnsaved={isDraftId(widget.id)}
       dateRange={dateRange}
       filters={filters}
       filterFieldLabel={filterFieldLabel}
@@ -470,7 +482,15 @@ function DashboardDetailView({
       return next;
     });
   }, []);
-  const displayedWidgets = useMemo(() => fitBlockHeights(pageWidgets, neededRows), [pageWidgets, neededRows]);
+  // An image block without a file is a placeholder for editors; viewers don't get an empty strip for it.
+  const displayedWidgets = useMemo(
+    () =>
+      fitBlockHeights(
+        isEditing ? pageWidgets : pageWidgets.filter((widget) => !isEmptyImageBlock(widget)),
+        neededRows
+      ),
+    [pageWidgets, neededRows, isEditing]
+  );
   /** Every widget with the heights its blocks are drawn at, as the save sends them. */
   const withFittedHeights = useCallback(
     (all: TDashboardWidget[]) => {

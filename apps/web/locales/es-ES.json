@@ -730,7 +730,8 @@
     "tags": "Etiquetas",
     "tags_field": {
       "add_new_value": "Añadir \"{value}\"",
-      "add_value_placeholder": "Añadir valor…"
+      "add_value_placeholder": "Escribe para añadir un valor",
+      "no_values_yet": "Aún no hay valores. Escribe uno para añadirlo."
     },
     "targeting": "Segmentación",
     "team": "Equipo",
@@ -4034,7 +4035,7 @@
         "values": "Valores"
       },
       "members": {
-        "attributes_help": "Separa los valores con Intro, una coma o un punto y coma.",
+        "attributes_help": "Asigna o crea valores de atributo para este miembro.",
         "attributes_load_failed": "No se han podido cargar los atributos de miembros.",
         "attributes_read_only_help": "Solo los propietarios y los administradores pueden cambiar los atributos de miembros.",
         "csv_action": "Acción",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Estas columnas no coinciden con ningún atributo de miembro y se ignorarán: {columns}",
         "csv_update": "Actualizar",
         "delete_member": "Eliminar miembro",
+        "download_member_list": "Descargar lista de miembros",
         "invited": "Invitado",
         "member_actions": "Acciones para {name}",
         "member_count": "{count, plural, one {# miembro} other {# miembros}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Consulta el rol, los equipos y los atributos de miembro de este miembro.",
         "member_settings_saved": "Ajustes del miembro guardados",
         "no_teams": "No pertenece a ningún equipo.",
-        "role_help": "Los lectores de paneles solo ven los paneles de los espacios de trabajo a los que pueden acceder sus equipos. Los propietarios y los administradores pueden cambiar los roles.",
+        "role_help": "Los espectadores de paneles solo ven los paneles de los espacios de trabajo a los que pueden acceder sus equipos.",
         "search_members": "Buscar miembros",
         "sort_default": "Según el listado",
         "sort_last_sign_in_newest": "Último inicio de sesión, más reciente primero",

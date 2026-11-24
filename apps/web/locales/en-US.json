@@ -730,7 +730,8 @@
     "tags": "Tags",
     "tags_field": {
       "add_new_value": "Add \"{value}\"",
-      "add_value_placeholder": "Add value…"
+      "add_value_placeholder": "Type to add value",
+      "no_values_yet": "No values yet. Type one to add it."
     },
     "targeting": "Targeting",
     "team": "Team",
@@ -4034,7 +4035,7 @@
         "values": "Values"
       },
       "members": {
-        "attributes_help": "Separate values with Enter, a comma or a semicolon.",
+        "attributes_help": "Assign or create attribute values for this member.",
         "attributes_load_failed": "Member attributes couldn't be loaded.",
         "attributes_read_only_help": "Only Owners and Managers can change Member attributes.",
         "csv_action": "Action",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "These columns match no Member attribute and will be ignored: {columns}",
         "csv_update": "Update",
         "delete_member": "Delete member",
+        "download_member_list": "Download member list",
         "invited": "Invited",
         "member_actions": "Actions for {name}",
         "member_count": "{count, plural, one {# member} other {# members}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "See this member's role, teams and Member attributes.",
         "member_settings_saved": "Member settings saved",
         "no_teams": "Not in any team.",
-        "role_help": "Dashboard Viewers only see dashboards of workspaces their teams can access. Owners and Managers can change roles.",
+        "role_help": "Dashboard Viewers only see dashboards of workspaces their teams can access.",
         "search_members": "Search members",
         "sort_default": "As listed",
         "sort_last_sign_in_newest": "Last sign-in, newest first",

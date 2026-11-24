@@ -107,6 +107,8 @@ export const MembersView = async ({
     <SettingsCard
       title={t("workspace.settings.members.title")}
       description={t("workspace.settings.members.member_count", { count: memberCount })}
+      // A column per member attribute needs the page width, not the settings card's 4xl cap.
+      className="max-w-none"
       bodyVariant="flush">
       {membershipRole && (
         <Suspense fallback={<MembersLoading />}>

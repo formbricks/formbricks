@@ -4,6 +4,7 @@ import { LockIcon, UserLockIcon, XIcon } from "lucide-react";
 import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { TruncationTooltip } from "@/modules/ui/components/info-tooltip";
 
 type TFilterChipProps = {
   readonly label: string;
@@ -117,8 +118,13 @@ export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
       <>
         <span className="shrink-0 whitespace-nowrap">{label}</span>
         {value && (
-          <span className="max-w-56 truncate rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-800">
-            {value}
+          // A long value list (a viewer's eight countries) is cut off; the whole list shows on hover, in
+          // the info tooltip, only while it is. `title=""` keeps the chip's own native title from showing
+          // a second tooltip over it.
+          <span title="" className="flex min-w-0">
+            <TruncationTooltip className="max-w-56 truncate rounded bg-slate-100 px-1.5 py-0.5 font-semibold text-slate-800">
+              {value}
+            </TruncationTooltip>
           </span>
         )}
       </>

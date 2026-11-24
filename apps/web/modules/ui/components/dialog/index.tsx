@@ -144,7 +144,9 @@ const DialogBody = ({
   ...props
 }: React.HTMLAttributes<HTMLElement> & { readonly unconstrained?: boolean }) => (
   <section
-    className={cn("flex-1 text-sm", !unconstrained && "overflow-y-auto", className)}
+    // A scrolling body clips on every side, so focus rings (ring + offset, about 4px outside a full-width
+    // field) were cut off. The negative margin and matching padding give them room without moving content.
+    className={cn("flex-1 text-sm", !unconstrained && "-m-1 overflow-y-auto p-1", className)}
     aria-label="Dialog content"
     {...props}
   />

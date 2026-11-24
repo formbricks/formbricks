@@ -730,7 +730,8 @@
     "tags": "Balises",
     "tags_field": {
       "add_new_value": "Ajouter « {value} »",
-      "add_value_placeholder": "Ajouter une valeur…"
+      "add_value_placeholder": "Saisis pour ajouter une valeur",
+      "no_values_yet": "Aucune valeur pour l'instant. Saisis-en une pour l'ajouter."
     },
     "targeting": "Ciblage",
     "team": "Équipe",
@@ -4034,7 +4035,7 @@
         "values": "Valeurs"
       },
       "members": {
-        "attributes_help": "Sépare les valeurs avec Entrée, une virgule ou un point-virgule.",
+        "attributes_help": "Attribue ou crée des valeurs d'attribut pour ce membre.",
         "attributes_load_failed": "Impossible de charger les attributs des membres.",
         "attributes_read_only_help": "Seuls les propriétaires et les gestionnaires peuvent modifier les attributs des membres.",
         "csv_action": "Action",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Ces colonnes ne correspondent à aucun attribut de membre et seront ignorées : {columns}",
         "csv_update": "Mettre à jour",
         "delete_member": "Supprimer le membre",
+        "download_member_list": "Télécharger la liste des membres",
         "invited": "Invité",
         "member_actions": "Actions pour {name}",
         "member_count": "{count, plural, one {# membre} many {# membres} other {# membres}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Consultez le rôle, les équipes et les attributs de ce membre.",
         "member_settings_saved": "Paramètres du membre enregistrés",
         "no_teams": "Dans aucune équipe.",
-        "role_help": "Les lecteurs de tableaux de bord ne voient que les tableaux de bord des espaces de travail auxquels leurs équipes ont accès. Les propriétaires et les gestionnaires peuvent modifier les rôles.",
+        "role_help": "Les lecteurs de tableaux de bord ne voient que les tableaux de bord des espaces de travail auxquels leurs équipes ont accès.",
         "search_members": "Rechercher des membres",
         "sort_default": "Ordre de la liste",
         "sort_last_sign_in_newest": "Dernière connexion, la plus récente d'abord",

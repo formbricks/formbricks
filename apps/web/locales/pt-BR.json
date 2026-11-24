@@ -730,7 +730,8 @@
     "tags": "Etiquetas",
     "tags_field": {
       "add_new_value": "Adicionar \"{value}\"",
-      "add_value_placeholder": "Adicionar valor…"
+      "add_value_placeholder": "Digite para adicionar um valor",
+      "no_values_yet": "Nenhum valor ainda. Digite um para adicioná-lo."
     },
     "targeting": "mirando",
     "team": "Equipe",
@@ -4034,7 +4035,7 @@
         "values": "Valores"
       },
       "members": {
-        "attributes_help": "Separe os valores com Enter, vírgula ou ponto e vírgula.",
+        "attributes_help": "Atribua ou crie valores de atributo para este membro.",
         "attributes_load_failed": "Não foi possível carregar os atributos dos membros.",
         "attributes_read_only_help": "Somente Proprietários e Gerentes podem alterar os atributos dos membros.",
         "csv_action": "Ação",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Estas colunas não correspondem a nenhum atributo de Membro e serão ignoradas: {columns}",
         "csv_update": "Atualizar",
         "delete_member": "Excluir membro",
+        "download_member_list": "Baixar lista de membros",
         "invited": "Convidado",
         "member_actions": "Ações para {name}",
         "member_count": "{count, plural, one {# membro} many {# de membros} other {# membros}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Veja a função, as equipes e os atributos de Membro deste membro.",
         "member_settings_saved": "Configurações do membro salvas",
         "no_teams": "Não está em nenhuma equipe.",
-        "role_help": "Visualizadores de Painel só veem os painéis dos espaços de trabalho que suas equipes podem acessar. Proprietários e Gerentes podem alterar funções.",
+        "role_help": "Visualizadores de Painel só veem os painéis dos workspaces que as equipes deles podem acessar.",
         "search_members": "Buscar membros",
         "sort_default": "Como listado",
         "sort_last_sign_in_newest": "Último login, mais recente primeiro",

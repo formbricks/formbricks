@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { MEMBER_ATTRIBUTE_MAX_BULK_ROWS } from "@/modules/ee/member-attributes/lib/limits";
-import { buildMemberCsvTemplate, planMemberCsvImport, toBulkAttributeRows } from "./member-csv-import";
+import {
+  buildMemberCsvExport,
+  buildMemberCsvTemplate,
+  planMemberCsvImport,
+  toBulkAttributeRows,
+} from "./member-csv-import";
 
 const attributeKeys = [
   { key: "country", label: "Country" },
@@ -116,5 +121,38 @@ describe("buildMemberCsvTemplate", () => {
     ]);
     const [header] = csv.split("\r\n");
     expect(header).toBe('"Full Name","Email Address","Organization Role","Teams","country","\'=cmd"');
+  });
+});
+
+describe("buildMemberCsvExport", () => {
+  test("writes the template's columns and one row per member, with values joined and roles as words", () => {
+    const csv = buildMemberCsvExport(
+      [
+        {
+          name: "Anna",
+          email: "anna@example.com",
+          role: "dashboard_viewer",
+          teams: [{ name: "Nordics" }, { name: "Support" }],
+          attributes: { country: ["Sweden", "Norway"] },
+        },
+        { name: "Tom", email: "tom@example.com", role: "member", teams: [], attributes: {} },
+      ],
+      [{ key: "country", label: "Country" }]
+    );
+    const lines = csv.trim().split(/\r?\n/);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toContain("country");
+    expect(lines[1]).toContain("Dashboard Viewer");
+    expect(lines[1]).toContain("Nordics, Support");
+    expect(lines[1]).toContain("Sweden, Norway");
+    expect(lines[2]).toContain("Member");
+  });
+
+  test("defangs a formula in a member's name", () => {
+    const csv = buildMemberCsvExport(
+      [{ name: "=cmd()", email: "x@example.com", role: "member", teams: [], attributes: {} }],
+      []
+    );
+    expect(csv).not.toMatch(/(^|,)=cmd/m);
   });
 });

@@ -204,6 +204,7 @@ export const TeamsTable = ({
         />
         <div className="-mx-4">
           <ListTable
+            variant="embedded"
             table={table}
             testId="teams-table"
             isLoading={false}

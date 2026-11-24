@@ -730,7 +730,8 @@
     "tags": "Címkék",
     "tags_field": {
       "add_new_value": "„{value}” hozzáadása",
-      "add_value_placeholder": "Érték hozzáadása…"
+      "add_value_placeholder": "Írja be az érték hozzáadásához",
+      "no_values_yet": "Még nincsenek értékek. Írjon be egyet a hozzáadásához."
     },
     "targeting": "Célzás",
     "team": "Csapat",
@@ -4034,7 +4035,7 @@
         "values": "Értékek"
       },
       "members": {
-        "attributes_help": "Az értékeket Enter billentyűvel, vesszővel vagy pontosvesszővel válassza el egymástól.",
+        "attributes_help": "Rendeljen hozzá attribútumértékeket ehhez a taghoz, vagy hozzon létre újakat.",
         "attributes_load_failed": "A tagattribútumokat nem sikerült betölteni.",
         "attributes_read_only_help": "A tagattribútumokat kizárólag a Tulajdonosok és a Menedzserek módosíthatják.",
         "csv_action": "Művelet",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Ezek az oszlopok egyetlen tagattribútumnak sem felelnek meg, ezért figyelmen kívül maradnak: {columns}",
         "csv_update": "Frissítés",
         "delete_member": "Tag törlése",
+        "download_member_list": "Tagok listájának letöltése",
         "invited": "Meghívva",
         "member_actions": "{name} műveletei",
         "member_count": "{count, plural, one {# tag} other {# tag}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Tekintse meg a tag szerepkörét, csapatait és tagattribútumait.",
         "member_settings_saved": "A tagbeállítások mentése megtörtént",
         "no_teams": "Egyetlen csapatnak sem tagja.",
-        "role_help": "Az irányítópult-megtekintők kizárólag azon munkaterületek irányítópultjait láthatják, amelyekhez csapataik hozzáféréssel rendelkeznek. A szerepköröket a tulajdonosok és a menedzserek módosíthatják.",
+        "role_help": "A Dashboard Viewer szerepkörű felhasználók kizárólag azon munkaterületek irányítópultjait tekinthetik meg, amelyekhez csapataik hozzáférnek.",
         "search_members": "Tagok keresése",
         "sort_default": "Eredeti sorrend",
         "sort_last_sign_in_newest": "Legutóbbi bejelentkezés, legújabb elöl",

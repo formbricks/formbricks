@@ -730,7 +730,8 @@
     "tags": "标签",
     "tags_field": {
       "add_new_value": "添加“{value}”",
-      "add_value_placeholder": "添加值…"
+      "add_value_placeholder": "输入以添加值",
+      "no_values_yet": "暂无值，输入内容即可添加。"
     },
     "targeting": "定位",
     "team": "团队",
@@ -4034,7 +4035,7 @@
         "values": "值"
       },
       "members": {
-        "attributes_help": "请用回车键、逗号或分号分隔各个值。",
+        "attributes_help": "为该成员分配或创建属性值。",
         "attributes_load_failed": "无法加载成员属性。",
         "attributes_read_only_help": "只有所有者和管理员可以更改成员属性。",
         "csv_action": "操作",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "以下列与任何成员属性都不匹配，将被忽略：{columns}",
         "csv_update": "更新",
         "delete_member": "删除成员",
+        "download_member_list": "下载成员列表",
         "invited": "已邀请",
         "member_actions": "{name} 的操作",
         "member_count": "{count, plural, other {# 位成员}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "查看该成员的角色、团队和成员属性。",
         "member_settings_saved": "成员设置已保存",
         "no_teams": "不属于任何团队。",
-        "role_help": "仪表板查看者只能查看其所属团队有权访问的工作区中的仪表板。所有者和管理员可以更改角色。",
+        "role_help": "仪表板查看者只能查看其所在团队有权访问的工作空间的仪表板。",
         "search_members": "搜索成员",
         "sort_default": "默认顺序",
         "sort_last_sign_in_newest": "最近登录时间，从新到旧",

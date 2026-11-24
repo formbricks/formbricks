@@ -87,7 +87,7 @@ export const DashboardViewerRoleSettings = ({
       <Collapsible.Trigger asChild>
         <button
           type="button"
-          className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-slate-800">
+          className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-medium text-slate-800 transition-colors hover:bg-slate-50 data-[state=open]:rounded-b-none">
           {t("workspace.settings.teams.dashboard_viewer_role_settings")}
           <ChevronDownIcon className={cn("size-4 transition-transform", open && "rotate-180")} />
         </button>

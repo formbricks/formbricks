@@ -730,7 +730,8 @@
     "tags": "Tags",
     "tags_field": {
       "add_new_value": "„{value}“ hinzufügen",
-      "add_value_placeholder": "Wert hinzufügen…"
+      "add_value_placeholder": "Wert eingeben und hinzufügen",
+      "no_values_yet": "Noch keine Werte. Gib einen ein, um ihn hinzuzufügen."
     },
     "targeting": "Targeting",
     "team": "Team",
@@ -4034,7 +4035,7 @@
         "values": "Werte"
       },
       "members": {
-        "attributes_help": "Trenne Werte mit der Eingabetaste, einem Komma oder einem Semikolon.",
+        "attributes_help": "Weise diesem Mitglied Attributwerte zu oder erstelle neue.",
         "attributes_load_failed": "Die Mitgliedsattribute konnten nicht geladen werden.",
         "attributes_read_only_help": "Nur Eigentümer und Manager können Mitgliedsattribute ändern.",
         "csv_action": "Aktion",
@@ -4051,6 +4052,7 @@
         "csv_unknown_columns": "Diese Spalten stimmen mit keinem Mitgliedsattribut überein und werden ignoriert: {columns}",
         "csv_update": "Aktualisieren",
         "delete_member": "Mitglied löschen",
+        "download_member_list": "Mitgliederliste herunterladen",
         "invited": "Eingeladen",
         "member_actions": "Aktionen für {name}",
         "member_count": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
@@ -4058,7 +4060,7 @@
         "member_settings_description": "Sieh Dir die Rolle, die Teams und die Mitgliedsattribute dieses Mitglieds an.",
         "member_settings_saved": "Mitgliedseinstellungen gespeichert",
         "no_teams": "In keinem Team.",
-        "role_help": "Dashboard-Betrachter sehen nur Dashboards von Workspaces, auf die ihre Teams zugreifen können. Inhaber und Manager können Rollen ändern.",
+        "role_help": "Dashboard-Betrachter sehen nur Dashboards von Workspaces, auf die ihre Teams Zugriff haben.",
         "search_members": "Mitglieder suchen",
         "sort_default": "Wie aufgelistet",
         "sort_last_sign_in_newest": "Letzte Anmeldung, neueste zuerst",
