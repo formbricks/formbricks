@@ -43,7 +43,7 @@ export interface TCspRoute {
 }
 
 // Link surveys (/s) and contact survey links (/c). Pretty URLs (/p) only redirect to /s.
-const SURVEY_PATH = /^\/(?:s|c)(?:\/|$)/;
+const SURVEY_PATH = /^\/[sc](?:\/|$)/;
 const WORKSPACE_PATH = /^\/workspaces(?:\/|$)/;
 const SSO_RECOVERY_PATH = /^\/sso-recovery(?:\/|$)/;
 
