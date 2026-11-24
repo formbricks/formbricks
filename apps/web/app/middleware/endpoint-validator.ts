@@ -46,6 +46,7 @@ export const isAuthProtectedRoute = (url: string): boolean => {
     "/environments",
     "/workspaces",
     "/account/settings",
+    "/attachment-exports",
     "/setup/organization",
     "/organizations",
   ];

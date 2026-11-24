@@ -37,11 +37,13 @@ import { auth } from "@/modules/auth/lib/auth";
 const isSessionLive = async (sessionToken: string, userId: string): Promise<boolean> => {
   const session = await prisma.session.findUnique({
     where: { sessionToken },
-    select: { userId: true, user: { select: { isActive: true } } },
+    select: { userId: true, expires: true, user: { select: { isActive: true } } },
   });
 
-  // A session whose user row is gone has no row either: the delete cascades.
-  return session?.userId === userId && session.user.isActive === true;
+  // A session whose user row is gone has no row either: the delete cascades. An expired row is signed out
+  // here as it is in proxy; were the two to disagree, `/` (proxy: to login) and the auth layout
+  // (getSession: back to `/`) would redirect into each other.
+  return session?.userId === userId && session.user.isActive === true && session.expires > new Date();
 };
 
 /**

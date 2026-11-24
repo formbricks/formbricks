@@ -9,6 +9,6 @@ import { prisma } from "@formbricks/database";
  * as a redirect leaking content (CWE-201).
  */
 export const getUnauthenticatedRootRedirectPath = async (): Promise<"/setup/intro" | "/auth/login"> => {
-  const anyUser = await prisma.user.findFirst({ select: { id: true } });
-  return anyUser ? "/auth/login" : "/setup/intro";
+  const existingUser = await prisma.user.findFirst({ select: { id: true } });
+  return existingUser ? "/auth/login" : "/setup/intro";
 };

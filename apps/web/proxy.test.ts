@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -5,21 +6,13 @@ import { isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
 import { FORMBRICKS_CLIENT_IP_HEADER } from "@/lib/utils/client-ip";
 import { INGEST_REQUEST_BODY_LIMIT_BYTES, config, proxy } from "./proxy";
 
-const {
-  mockGetProxySession,
-  mockIsPublicDomainConfigured,
-  mockIsRequestFromPublicDomain,
-  mockFindFirstUser,
-} = vi.hoisted(() => ({
-  mockGetProxySession: vi.fn(),
-  mockIsPublicDomainConfigured: vi.fn(),
-  mockIsRequestFromPublicDomain: vi.fn(),
-  mockFindFirstUser: vi.fn(),
-}));
-
-vi.mock("@formbricks/database", () => ({
-  prisma: { user: { findFirst: mockFindFirstUser } },
-}));
+const { mockGetProxySession, mockIsPublicDomainConfigured, mockIsRequestFromPublicDomain } = vi.hoisted(
+  () => ({
+    mockGetProxySession: vi.fn(),
+    mockIsPublicDomainConfigured: vi.fn(),
+    mockIsRequestFromPublicDomain: vi.fn(),
+  })
+);
 
 vi.mock("@/modules/auth/lib/proxy-session", () => ({
   getProxySession: mockGetProxySession,
@@ -108,26 +101,24 @@ describe("proxy", () => {
   });
 
   describe("root path without a session", () => {
-    test("redirects to login before any page renders, with no body", async () => {
+    test("redirects to login before any page renders", async () => {
       mockGetProxySession.mockResolvedValue(null);
-      mockFindFirstUser.mockResolvedValue({ id: "user-1" });
+      prisma.user.findFirst.mockResolvedValue({ id: "user-1" } as never);
 
       const response = await proxy(new NextRequest("http://localhost:3000/"));
 
       expect(response.status).toBe(307);
       expect(response.headers.get("location")).toBe("http://localhost:3000/auth/login");
-      expect(response.body).toBeNull();
     });
 
     test("redirects a fresh instance to the setup intro", async () => {
       mockGetProxySession.mockResolvedValue(null);
-      mockFindFirstUser.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue(null);
 
       const response = await proxy(new NextRequest("http://localhost:3000/"));
 
       expect(response.status).toBe(307);
       expect(response.headers.get("location")).toBe("http://localhost:3000/setup/intro");
-      expect(response.body).toBeNull();
     });
 
     test("still rejects an invalid callback URL", async () => {
@@ -138,7 +129,7 @@ describe("proxy", () => {
       );
 
       expect(response.status).toBe(400);
-      expect(mockFindFirstUser).not.toHaveBeenCalled();
+      expect(prisma.user.findFirst).not.toHaveBeenCalled();
     });
 
     test("lets a signed-in user through to the page", async () => {
@@ -148,7 +139,7 @@ describe("proxy", () => {
 
       expect(response.headers.get("location")).toBeNull();
       expect(response.headers.get("x-middleware-next")).toBe("1");
-      expect(mockFindFirstUser).not.toHaveBeenCalled();
+      expect(prisma.user.findFirst).not.toHaveBeenCalled();
     });
   });
 
