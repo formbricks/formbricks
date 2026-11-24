@@ -41,9 +41,11 @@ export const nameDirectories = (
     const takenInOrg = taken.get(organizationId) ?? new Set<string>();
     taken.set(organizationId, takenInOrg);
     let name = base;
-    for (let n = 2; takenInOrg.has(name); n++) {
+    let n = 2;
+    while (takenInOrg.has(name)) {
       const suffix = ` (${n})`;
       name = cutName(base, NAME_MAX_LENGTH - suffix.length) + suffix;
+      n += 1;
     }
     takenInOrg.add(name);
     names.set(id, name);
