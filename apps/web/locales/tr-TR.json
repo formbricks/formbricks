@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "“{name}” eylemi bu çalışma alanında yeni ve oluşturulacak.",
-          "attribute_key_created": "“{key}” özniteliği bu çalışma alanında yeni ve oluşturulacak.",
+          "attribute_key_created": "“{key}” özelliği bu kişi dizininde yeni ve oluşturulacak.",
           "choice_dropped": "Kimliği okunamadığı için bir seçenek dışarıda bırakıldı.",
           "choice_label_renamed": "Tekrarlanan seçenek etiketleri, her biri benzersiz olsun diye numaralandırıldı.",
           "content_only": "Stil, ayarlar, takip mesajları ve kotalar dosyaya dahil değildir.",

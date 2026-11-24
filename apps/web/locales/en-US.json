@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "The action “{name}” is new in this workspace and will be created.",
-          "attribute_key_created": "The attribute “{key}” is new in this workspace and will be created.",
+          "attribute_key_created": "The attribute “{key}” is new in this contact directory and will be created.",
           "choice_dropped": "An option was left out because its ID could not be read.",
           "choice_label_renamed": "Repeated option labels were numbered so each one is distinct.",
           "content_only": "Styling, settings, follow-ups and quotas are not part of the file.",

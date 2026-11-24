@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "A ação “{name}” é nova neste espaço de trabalho e será criada.",
-          "attribute_key_created": "O atributo “{key}” é novo neste espaço de trabalho e será criado.",
+          "attribute_key_created": "O atributo “{key}” é novo neste diretório de contactos e será criado.",
           "choice_dropped": "Uma opção foi omitida porque não foi possível ler o respetivo ID.",
           "choice_label_renamed": "As etiquetas de opções repetidas foram numeradas para que cada uma seja distinta.",
           "content_only": "O estilo, as definições, os acompanhamentos e as quotas não fazem parte do ficheiro.",

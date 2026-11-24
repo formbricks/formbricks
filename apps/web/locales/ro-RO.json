@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "Acțiunea „{name}” este nouă în acest spațiu de lucru și va fi creată.",
-          "attribute_key_created": "Atributul „{key}” este nou în acest spațiu de lucru și va fi creat.",
+          "attribute_key_created": "Atributul „{key}” este nou în acest director de contacte și va fi creat.",
           "choice_dropped": "O opțiune a fost omisă deoarece ID-ul ei nu a putut fi citit.",
           "choice_label_renamed": "Etichetele repetate ale opțiunilor au fost numerotate pentru ca fiecare să fie distinctă.",
           "content_only": "Stilul, setările, mesajele de follow-up și cotele nu fac parte din fișier.",

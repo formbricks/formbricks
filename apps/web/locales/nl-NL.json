@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "De actie “{name}” is nieuw in deze workspace en wordt aangemaakt.",
-          "attribute_key_created": "Het attribuut “{key}” is nieuw in deze workspace en wordt aangemaakt.",
+          "attribute_key_created": "Het attribuut “{key}” is nieuw in deze contactenmap en wordt aangemaakt.",
           "choice_dropped": "Een optie is weggelaten omdat de bijbehorende ID niet gelezen kon worden.",
           "choice_label_renamed": "Herhaalde optielabels zijn genummerd, zodat ze allemaal uniek zijn.",
           "content_only": "Opmaak, instellingen, vervolgacties en quota maken geen deel uit van het bestand.",

@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "操作“{name}”在此工作区中是新的,将会被创建。",
-          "attribute_key_created": "属性“{key}”在此工作区中是新的,将会被创建。",
+          "attribute_key_created": "属性“{key}”在此联系人目录中是新增的，将会被创建。",
           "choice_dropped": "有一个选项因无法读取其 ID 而被略过。",
           "choice_label_renamed": "重复的选项标签已添加编号，以便区分。",
           "content_only": "样式、设置、后续跟进和配额不包含在文件中。",

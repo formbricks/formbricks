@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "Åtgärden ”{name}” är ny i den här arbetsytan och kommer att skapas.",
-          "attribute_key_created": "Attributet ”{key}” är nytt i den här arbetsytan och kommer att skapas.",
+          "attribute_key_created": "Attributet “{key}” är nytt i den här kontaktkatalogen och kommer att skapas.",
           "choice_dropped": "Ett alternativ utelämnades eftersom dess ID inte gick att läsa.",
           "choice_label_renamed": "Alternativ med samma namn har numrerats så att alla blir unika.",
           "content_only": "Utseende, inställningar, uppföljningar och kvoter ingår inte i filen.",

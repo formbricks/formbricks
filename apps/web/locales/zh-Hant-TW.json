@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "動作「{name}」是此工作區中的新動作,將會被建立。",
-          "attribute_key_created": "屬性「{key}」是此工作區中的新屬性,將會被建立。",
+          "attribute_key_created": "屬性「{key}」在此聯絡人目錄中是新的，系統將會建立。",
           "choice_dropped": "有一個選項因無法讀取其 ID 而被略過。",
           "choice_label_renamed": "重複的選項標籤已加上編號,以便區分。",
           "content_only": "樣式、設定、後續追蹤和配額不包含在檔案中。",

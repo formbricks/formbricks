@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "L’action « {name} » est nouvelle dans cet espace de travail et sera créée.",
-          "attribute_key_created": "L’attribut « {key} » est nouveau dans cet espace de travail et sera créé.",
+          "attribute_key_created": "L’attribut « {key} » est nouveau dans cet annuaire de contacts et sera créé.",
           "choice_dropped": "Une option a été ignorée, car son identifiant n'a pas pu être lu.",
           "choice_label_renamed": "Les libellés d'options en double ont été numérotés pour que chacun soit unique.",
           "content_only": "Le style, les paramètres, les relances et les quotas ne font pas partie du fichier.",

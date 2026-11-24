@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "A(z) „{name}” művelet új ebben a munkaterületen, ezért létre fog jönni.",
-          "attribute_key_created": "A(z) „{key}” attribútum új ebben a munkaterületen, ezért létre fog jönni.",
+          "attribute_key_created": "A(z) „{key}” attribútum új ebben a névjegykönyvtárban, ezért létre fog jönni.",
           "choice_dropped": "Egy válaszlehetőség kimaradt, mivel az azonosítóját nem sikerült beolvasni.",
           "choice_label_renamed": "Az ismétlődő válaszlehetőség-címkék sorszámozásra kerültek, hogy mindegyik egyedi legyen.",
           "content_only": "A stílus, a beállítások, a követő üzenetek és a kvóták nem képezik a fájl részét.",

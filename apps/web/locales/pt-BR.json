@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "A ação “{name}” é nova neste workspace e será criada.",
-          "attribute_key_created": "O atributo “{key}” é novo neste workspace e será criado.",
+          "attribute_key_created": "O atributo “{key}” é novo neste diretório de contatos e será criado.",
           "choice_dropped": "Uma opção foi deixada de fora porque não foi possível ler o ID dela.",
           "choice_label_renamed": "Os rótulos de opções repetidos foram numerados para que cada um seja distinto.",
           "content_only": "Estilo, configurações, acompanhamentos e cotas não fazem parte do arquivo.",

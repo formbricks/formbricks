@@ -5314,7 +5314,7 @@
         },
         "issues": {
           "action_class_created": "Die Aktion „{name}“ ist in diesem Workspace neu und wird erstellt.",
-          "attribute_key_created": "Das Attribut „{key}“ ist in diesem Workspace neu und wird erstellt.",
+          "attribute_key_created": "Das Attribut „{key}“ ist in diesem Kontaktverzeichnis neu und wird erstellt.",
           "choice_dropped": "Eine Option wurde ausgelassen, weil ihre ID nicht gelesen werden konnte.",
           "choice_label_renamed": "Mehrfach vorkommende Optionsbezeichnungen wurden nummeriert, damit jede eindeutig ist.",
           "content_only": "Design, Einstellungen, Follow-ups und Kontingente sind nicht Teil der Datei.",
