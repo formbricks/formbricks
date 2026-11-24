@@ -281,15 +281,20 @@ export async function changeV3SurveyVisibility(
 
   try {
     // The route wrapper's custom limit never sees an MCP call, so the mutation charges its own budget
-    // here, once, for both surfaces: a loop of workspace → restricted must not be able to arm the
-    // deployment-wide freshness guard (ENG-3282).
+    // here, once, for both surfaces: a loop of workspace → restricted is capped at 10/min per actor,
+    // which is what keeps the deployment-wide freshness guard (ENG-3282) out of reach.
     const limited = await applyV3OperationRateLimit({
       config: rateLimitConfigs.api.v3SurveyVisibility,
       authentication: params.authentication,
       requestId,
       instance,
     });
-    if (limited) return limited;
+    if (limited) {
+      // The wrapper's own 429s are not audited (it builds the entry after limiting); match that, and
+      // keep an over-limit row from carrying an unknown organization and target.
+      skipV3AuditLog(auditLog);
+      return limited;
+    }
 
     const parsed = ZV3SurveyVisibilityBody.safeParse(body);
     if (!parsed.success) {

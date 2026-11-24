@@ -119,12 +119,14 @@ describe("POST …/visibility", () => {
     });
   });
 
-  test("answers its own 429 without reading the survey", async () => {
+  test("answers its own 429 without reading the survey, and does not audit it", async () => {
     const refused = new Response(null, { status: 429 });
+    const auditLog = {};
     vi.mocked(applyV3OperationRateLimit).mockResolvedValueOnce(refused);
 
-    expect(await post({ visibility: "restricted" })).toBe(refused);
+    expect(await post({ visibility: "restricted" }, session, auditLog)).toBe(refused);
     expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
+    expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
   });
 
   test("400 for a body with an unknown key, marked unsupported_field", async () => {
