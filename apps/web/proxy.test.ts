@@ -442,6 +442,11 @@ describe("proxy matcher", () => {
     }
   );
 
+  // The logged-out root redirect runs in proxy, so it only holds while the matcher covers `/`.
+  test("includes the root path", () => {
+    expect(unstable_doesMiddlewareMatch({ config, url: "/" })).toBe(true);
+  });
+
   test("includes server-action requests", () => {
     expect(
       unstable_doesMiddlewareMatch({

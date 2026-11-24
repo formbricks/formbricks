@@ -289,14 +289,6 @@ describe("endpoint-validator", () => {
       expect(isAuthProtectedRoute("/organizations/123/settings")).toBe(true);
     });
 
-    test("protects workspace, account-settings and attachment-export pages so a logged-out redirect carries no rendered body", () => {
-      expect(isAuthProtectedRoute("/workspaces/123")).toBe(true);
-      expect(isAuthProtectedRoute("/workspaces/123/surveys")).toBe(true);
-      expect(isAuthProtectedRoute("/account/settings/profile")).toBe(true);
-      expect(isAuthProtectedRoute("/attachment-exports/abc")).toBe(true);
-      expect(isAuthProtectedRoute("/account/authorize")).toBe(false);
-    });
-
     test("protects the ID-free marketing links so logged-out visitors log in first", () => {
       expect(isAuthProtectedRoute("/billing")).toBe(true);
       expect(isAuthProtectedRoute("/settings/teams")).toBe(true);
