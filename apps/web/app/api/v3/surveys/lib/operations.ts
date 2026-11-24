@@ -153,15 +153,15 @@ type TV3SurveyMutationParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
+};
+
+type TPatchV3SurveyParams = TV3SurveyMutationParams & {
+  body: unknown;
   /**
    * ENG-6930: MCP only. When set, a survey that is not a draft and has responses is left untouched
    * unless `confirmed`, and the caller gets the editor's caution text (428). REST never sets it.
    */
   writeConfirmation?: TV3SurveyWriteConfirmation;
-};
-
-type TPatchV3SurveyParams = TV3SurveyMutationParams & {
-  body: unknown;
 };
 
 type TValidateV3SurveyParams = {

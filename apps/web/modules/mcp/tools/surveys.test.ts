@@ -302,9 +302,12 @@ describe("registerSurveyTools", () => {
     // deleting the registration's outputSchema or weakening the shared schema fails here.
     expect(tools.get("archive_survey")?.config.outputSchema).toBe(ZMcpSurveyLifecycleOutput);
     expect(tools.get("restore_survey")?.config.outputSchema).toBe(ZMcpSurveyLifecycleOutput);
-    expect(ZMcpSurveyLifecycleOutput.safeParse({ data: { id: "clxx1234567890123456789012" } }).success).toBe(
-      false
-    );
+    // A complete ack: ids are cuid2, so a non-cuid2 id is rejected even when every other field is right.
+    const ack = { status: "paused" as const, archivedAt: null };
+    expect(
+      ZMcpSurveyLifecycleOutput.safeParse({ data: { id: "tz4a98xxat96iws9zmbrgj3a", ...ack } }).success
+    ).toBe(true);
+    expect(ZMcpSurveyLifecycleOutput.safeParse({ data: { id: "survey_1", ...ack } }).success).toBe(false);
   });
 
   /**
