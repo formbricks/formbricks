@@ -38,6 +38,18 @@ reconnected.
 - **A wrong key by mistake is recoverable.** Editing an affected integration's settings keeps the stored token as it
   is, so putting the previous `ENCRYPTION_KEY` back restores the integration without reconnecting.
 
+## Rate limits return without Envoy
+
+Without `ENVOY_RATE_LIMITING_ENABLED=1`, the app enforces the rate limits itself again:
+
+- `/api/v1/management/*` allows 100 requests per minute per API key.
+- `/api/v1/client/*` and the v2 routes that reuse them allow 100 requests per minute per IP, and uploads
+  5 per minute. These had no limit on installs without an edge gateway since 5.x.
+
+If your gateway already limits these routes, set `ENVOY_RATE_LIMITING_ENABLED=1` so the app leaves them to
+it. Otherwise, expect `429` once a shared address — an office or a school behind one NAT — crosses the
+budget.
+
 ## v1 API list limits
 
 The v1 list endpoints that take a management API key (`/api/v1/management/` surveys, responses, action classes,
