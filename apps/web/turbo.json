@@ -68,7 +68,6 @@
         "AUTHZED_ENDPOINT",
         "AUTHZED_INSECURE",
         "AUTHZED_SYSTEM_KEY",
-        "AWS_DEFAULT_REGION",
         "AWS_REGION",
         "AUTHZED_TOKEN",
         "AZUREAD_CLIENT_ID",

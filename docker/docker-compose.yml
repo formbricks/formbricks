@@ -167,7 +167,7 @@ x-environment: &environment
     # S3_SECRET_KEY:
     # S3_REGION:
     # S3_BUCKET_NAME:
-    # Without S3_REGION, the AWS SDK falls back to AWS_REGION (or AWS_DEFAULT_REGION)
+    # Without S3_REGION, the AWS SDK falls back to AWS_REGION
     # AWS_REGION:
 
     # Set a third party S3 compatible storage service endpoint like StorJ leave empty if you use Amazon S3

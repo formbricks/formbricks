@@ -24,7 +24,7 @@ const hosts = getCspHosts({
   s3EndpointUrl: S3_ENDPOINT_URL,
   s3BucketName: S3_BUCKET_NAME,
   s3Region: S3_REGION,
-  awsSdkRegion: env.AWS_REGION || env.AWS_DEFAULT_REGION,
+  awsSdkRegion: env.AWS_REGION,
   s3ForcePathStyle: S3_FORCE_PATH_STYLE,
   sentryDsn: SENTRY_DSN,
   allowLoopback: !IS_PRODUCTION || E2E_TESTING,

@@ -32,7 +32,7 @@ export interface TCspHostConfig {
   s3EndpointUrl?: string;
   s3BucketName?: string;
   s3Region?: string;
-  /** AWS_REGION / AWS_DEFAULT_REGION: where the storage client's AWS SDK resolves the region without S3_REGION. */
+  /** AWS_REGION: where the storage client's AWS SDK resolves the region without S3_REGION. */
   awsSdkRegion?: string;
   s3ForcePathStyle: boolean;
   sentryDsn?: string;

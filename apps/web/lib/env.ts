@@ -605,9 +605,8 @@ const parsedEnv = createEnv({
     AIRTABLE_CLIENT_ID: z.string().optional(),
     // Build-time asset host (next.config.mjs `assetPrefix`, inlined through its `env`); the page CSP allows it.
     ASSET_PREFIX_URL: z.string().optional(),
-    // The AWS SDK's own region variables, which the storage client falls back to without S3_REGION. Read
+    // The AWS SDK's own region variable, which the storage client falls back to without S3_REGION. Read
     // only so the page CSP allows the bucket the browser uploads to.
-    AWS_DEFAULT_REGION: z.string().optional(),
     AWS_REGION: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
@@ -888,7 +887,6 @@ const parsedEnv = createEnv({
     AI_MODEL: process.env.AI_MODEL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
     ASSET_PREFIX_URL: process.env.ASSET_PREFIX_URL,
-    AWS_DEFAULT_REGION: process.env.AWS_DEFAULT_REGION,
     AWS_REGION: process.env.AWS_REGION,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
