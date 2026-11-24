@@ -290,10 +290,9 @@ export async function getV3DashboardChartData({
       extraFilters: rules,
       respond,
       context,
-      viewerAccess: await getViewerAccessClaimForDataset(
-        getViewerAccessReader(access),
-        chart.feedbackDirectoryId
-      ),
+      viewerAccess:
+        (await getViewerAccessClaimForDataset(getViewerAccessReader(access), chart.feedbackDirectoryId)) ??
+        undefined,
     });
   } catch (error) {
     const { requestId, instance } = context;
