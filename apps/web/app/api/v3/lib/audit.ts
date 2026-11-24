@@ -42,8 +42,8 @@ const SKIPPED_AUDIT_LOGS = new WeakSet<TV3AuditLog>();
  * nothing it promises to audit — a visibility no-op (ENG-3282, contract §3). Only a successful no-op
  * should ever be skipped; a refusal stays audited as a failure. Two exceptions are the route's own
  * rate-limit refusals: a pre-login route's, which has no actor, and an authenticated operation's, which
- * the limiter already logs and which would carry no organization or target. Auditing them would only add
- * unbound rows.
+ * the limiter already logs and which would carry no target to attribute it to. Auditing them would only
+ * add unbound rows.
  */
 export function skipV3AuditLog(auditLog: TV3AuditLog | undefined): void {
   if (auditLog) SKIPPED_AUDIT_LOGS.add(auditLog);
