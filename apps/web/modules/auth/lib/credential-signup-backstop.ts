@@ -1,7 +1,11 @@
 import "server-only";
 import { BootstrapAdminMarker } from "@formbricks/database/prisma";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
-import { resolveUninvitedSignupAdmission, signupDisabledError } from "@/modules/auth/lib/signup-policy";
+import {
+  logClosedSignupRejection,
+  resolveUninvitedSignupAdmission,
+  signupDisabledError,
+} from "@/modules/auth/lib/signup-policy";
 import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 
 /**
@@ -48,6 +52,7 @@ export const enforceCredentialSignupBackstop = async (
   // email OTP, admin create) lands here, and on a closed instance it should not.
   const admission = await resolveUninvitedSignupAdmission();
   if (admission === "denied") {
+    logClosedSignupRejection("better-auth-user-create-backstop");
     throw signupDisabledError();
   }
 
