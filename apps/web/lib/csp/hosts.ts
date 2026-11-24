@@ -40,9 +40,17 @@ export interface TCspHostConfig {
   allowLoopback: boolean;
 }
 
+/** An IPv4 or bracketed IPv6 host, which takes no bucket subdomain: the SDK addresses it path-style. */
+const isIpLiteral = (hostname: string): boolean =>
+  hostname.startsWith("[") || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname);
+
+/** AWS China regions (cn-north-1, cn-northwest-1) live in their own partition and domain. */
+const awsDomainFor = (region: string | undefined): string =>
+  region?.startsWith("cn-") ? "amazonaws.com.cn" : "amazonaws.com";
+
 /**
  * Where the browser POSTs a presigned upload: the bucket's host on a custom endpoint (virtual-hosted
- * unless path style is forced), or on AWS when no endpoint is set.
+ * unless path style is forced or the endpoint is an IP address), or on AWS when no endpoint is set.
  */
 const getStorageOrigins = ({
   s3EndpointUrl,
@@ -53,14 +61,15 @@ const getStorageOrigins = ({
 }: TCspHostConfig): string[] => {
   const endpoint = toOrigin(s3EndpointUrl);
   if (endpoint) {
-    if (s3ForcePathStyle || !s3BucketName) return [endpoint];
     const url = new URL(endpoint);
+    if (s3ForcePathStyle || !s3BucketName || isIpLiteral(url.hostname)) return [endpoint];
     return [endpoint, `${url.protocol}//${s3BucketName}.${url.host}`];
   }
   if (!s3BucketName) return [];
   const region = s3Region || awsSdkRegion;
   const regional = region ? `s3.${region}` : "s3";
-  return [`https://${s3BucketName}.${regional}.amazonaws.com`, `https://${regional}.amazonaws.com`];
+  const domain = awsDomainFor(region);
+  return [`https://${s3BucketName}.${regional}.${domain}`, `https://${regional}.${domain}`];
 };
 
 /**

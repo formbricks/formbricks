@@ -46,6 +46,24 @@ describe("getCspHosts", () => {
     ]);
   });
 
+  test.each(["https://10.0.0.5:9000", "https://[2001:db8::1]:9000", "https://[::1]:9000"])(
+    "allows only the endpoint %s when it is an IP address, which takes no bucket subdomain",
+    (s3EndpointUrl) => {
+      const hosts = getCspHosts({ ...base, s3EndpointUrl, s3BucketName: "uploads", allowLoopback: true });
+
+      expect(hosts.storageOrigins).toEqual([new URL(s3EndpointUrl).origin]);
+    }
+  );
+
+  test("uses the amazonaws.com.cn domain for AWS China regions", () => {
+    const hosts = getCspHosts({ ...base, s3BucketName: "uploads", s3Region: "cn-north-1" });
+
+    expect(hosts.storageOrigins).toEqual([
+      "https://uploads.s3.cn-north-1.amazonaws.com.cn",
+      "https://s3.cn-north-1.amazonaws.com.cn",
+    ]);
+  });
+
   test("allows only the endpoint when path style is forced", () => {
     const hosts = getCspHosts({
       ...base,
