@@ -5,7 +5,10 @@
  */
 const ALLOWED_QUERY_PARAMS = new Set(["createdFrom"]);
 
-/** The allowlisted parameters are short slugs; a value that is not one is dropped rather than kept. */
+/**
+ * The allowlisted parameters are short slugs; a value that is not one is dropped rather than kept. A
+ * shape, not `V3_SURVEY_CREATED_FROM` itself, so the audit builder does not import the v3 survey schemas.
+ */
 const ALLOWED_QUERY_VALUE = /^[a-z0-9-]{1,32}$/;
 
 /**
@@ -25,8 +28,10 @@ export const sanitizeAuditApiUrl = (apiUrl: string | undefined): string | undefi
   let url: URL;
   try {
     url = new URL(apiUrl);
-  } catch {
-    return undefined;
+  } catch (error) {
+    // `new URL` throws a TypeError for a relative or malformed value; anything else is unexpected.
+    if (error instanceof TypeError) return undefined;
+    throw error;
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") return undefined;
 

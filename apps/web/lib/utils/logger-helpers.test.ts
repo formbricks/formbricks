@@ -152,6 +152,10 @@ describe("redactPII — content containers", () => {
         x_api_key: "g",
         suToken: "h",
         hashedPassword: "i",
+        passwordHash: "j",
+        tokenHash: "k",
+        secretKey: "l",
+        privateKey: "m",
       })
     ).toEqual({
       accessToken: "********",
@@ -163,6 +167,10 @@ describe("redactPII — content containers", () => {
       x_api_key: "********",
       suToken: "********",
       hashedPassword: "********",
+      passwordHash: "********",
+      tokenHash: "********",
+      secretKey: "********",
+      privateKey: "********",
     });
   });
 
@@ -325,10 +333,10 @@ describe("sanitizeUrlForLogging", () => {
   test("masks any credential-named parameter, not only token, code and state (ENG-3269)", () => {
     expect(
       sanitizeUrlForLogging(
-        "https://example.com/cb?access_token=a&apiKey=b&client_secret=c&refreshToken=d&page=2"
+        "https://example.com/cb?access_token=a&apiKey=b&client_secret=c&refreshToken=d&key=e&sig_signature=f&page=2"
       )
     ).toBe(
-      "https://example.com/cb?access_token=********&apiKey=********&client_secret=********&refreshToken=********&page=2"
+      "https://example.com/cb?access_token=********&apiKey=********&client_secret=********&refreshToken=********&key=********&sig_signature=********&page=2"
     );
   });
 

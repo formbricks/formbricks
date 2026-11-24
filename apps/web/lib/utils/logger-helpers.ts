@@ -50,20 +50,30 @@ const SENSITIVE_KEY_NAMES = [
 const SENSITIVE_KEYS = new Set(SENSITIVE_KEY_NAMES.map(normalizeKey));
 
 /**
- * A key ending in one of these names a credential (`clientSecret`, `refreshToken`, `x_api_key`,
- * `hashedPassword`), so it is redacted without having to be listed. Matched as a suffix, not anywhere in
- * the name: `passwordResetMarker` and `oauthAccessTokensRevoked` are audit markers and counts.
+ * A key containing one of these names a credential (`clientSecret`, `refreshToken`, `x_api_key`,
+ * `passwordHash`, `tokenHash`, `secretKey`, `privateKey`), so it is redacted without having to be listed.
+ * The same fragments as the integration credential pattern (`lib/integration/redact-credentials.ts`),
+ * plus `signature`; that one stays separate because it must keep `token_type` literals type-valid.
  */
-const CREDENTIAL_SUFFIXES = ["token", "secret", "password", "apikey"];
+const CREDENTIAL_FRAGMENTS = [
+  "token",
+  "secret",
+  "password",
+  "apikey",
+  "privatekey",
+  "credential",
+  "signature",
+];
 
 const isCredentialName = (normalizedKey: string): boolean =>
-  CREDENTIAL_SUFFIXES.some((suffix) => normalizedKey.endsWith(suffix));
+  CREDENTIAL_FRAGMENTS.some((fragment) => normalizedKey.includes(fragment));
 
 /**
  * Listed keys are always redacted. A credential-named key is redacted unless its value cannot be a
- * credential: a flag such as `allowOrganizationOnlyApiKey: true` or a count stays readable.
+ * credential: audit markers and counts such as `passwordResetMarker: true`,
+ * `allowOrganizationOnlyApiKey: false` and `oauthAccessTokensRevoked: 2` stay readable.
  */
-const isRedactedKey = (normalizedKey: string, value: unknown): boolean => {
+const shouldRedactEntry = (normalizedKey: string, value: unknown): boolean => {
   if (SENSITIVE_KEYS.has(normalizedKey)) return true;
   if (!isCredentialName(normalizedKey)) return false;
   return typeof value !== "boolean" && typeof value !== "number" && value !== null && value !== undefined;
@@ -79,7 +89,8 @@ const isRedactedKey = (normalizedKey: string, value: unknown): boolean => {
  */
 const CONTENT_CONTAINERS = new Set(["data", "variables", "contactattributes", "embeddeddata", "metadata"]);
 
-const URL_SENSITIVE_KEYS = new Set(["token", "code", "state"]);
+/** Query parameters masked in logged URLs on top of credential-named ones: OAuth `code`/`state`, a bare `key`. */
+const URL_SENSITIVE_KEYS = new Set(["code", "state", "key"]);
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value) && !(value instanceof Date);
@@ -117,7 +128,7 @@ export function redactPII(obj: unknown, seen: WeakSet<object> = new WeakSet()): 
     return Object.fromEntries(
       Object.entries(obj).map(([key, value]) => {
         const normalizedKey = normalizeKey(key);
-        if (isRedactedKey(normalizedKey, value)) {
+        if (shouldRedactEntry(normalizedKey, value)) {
           return [key, "********"];
         }
         if (CONTENT_CONTAINERS.has(normalizedKey) && isPlainObject(value)) {
@@ -163,8 +174,9 @@ export function deepDiff(oldObj: unknown, newObj: unknown): unknown {
 }
 
 /**
- * Sanitizes a URL for logging by masking `token`, `code`, `state` and any credential-named parameter
- * (`access_token`, `apiKey`, `client_secret`, …), matched like object keys in `redactPII`.
+ * Sanitizes a URL for logging by masking `code`, `state`, `key` and any credential-named parameter
+ * (`token`, `access_token`, `apiKey`, `client_secret`, `x_signature`, …), matched like object keys in
+ * `redactPII`.
  * @param url - The URL to sanitize.
  * @returns The sanitized URL.
  */
