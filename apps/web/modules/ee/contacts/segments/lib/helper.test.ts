@@ -187,7 +187,7 @@ describe("checkForRecursiveSegmentFilter", () => {
     expect(getSegmentsByIds).toHaveBeenCalledTimes(2);
   });
 
-  test("names a referenced segment that no longer exists", async () => {
+  test("ignores a referenced segment that no longer exists", async () => {
     const segmentId = "segment-123";
     const missing = "segment-gone";
     vi.mocked(getSegmentsByIds).mockResolvedValue([]);
@@ -198,7 +198,26 @@ describe("checkForRecursiveSegmentFilter", () => {
         segmentId,
         WORKSPACE_ID
       )
-    ).rejects.toThrow(new ResourceNotFoundError("segment", missing));
+    ).resolves.toBeUndefined();
+  });
+
+  test("keeps following the segments that still exist beside a missing one", async () => {
+    const segmentId = "segment-root";
+    const missing = "segment-gone";
+    const existing = "segment-existing";
+    vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
+      ids
+        .filter((id) => id === existing)
+        .map((id) => ({ id, filters: [segmentReference(segmentId)] as unknown as TBaseFilters }))
+    );
+
+    await expect(
+      checkForRecursiveSegmentFilter(
+        [segmentReference(missing), segmentReference(existing)] as unknown as TBaseFilters,
+        segmentId,
+        WORKSPACE_ID
+      )
+    ).rejects.toThrow(new InvalidInputError("Recursive segment filter is not allowed"));
   });
 });
 

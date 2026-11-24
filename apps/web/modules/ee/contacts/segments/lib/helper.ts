@@ -69,8 +69,8 @@ export const checkReferencedSegmentsForRecursion = async (
 
     const referencedSegments = await getSegmentsByIds(toRead, workspaceId);
     const filtersById = new Map(referencedSegments.map((segment) => [segment.id, segment.filters]));
-    const missing = toRead.find((id) => !filtersById.has(id));
-    if (missing) throw new ResourceNotFoundError("segment", missing);
+    // A segment named by a filter can be deleted after the filter was saved. Ignore the dangling id, as
+    // main did: a survey must stay saveable after one of its targeting segments is deleted.
 
     level = new Set(
       toRead.flatMap((id) => {
