@@ -259,7 +259,7 @@ test.describe("Dashboard Viewer access", () => {
 
     await expect(page.getByText(`Viewing as ${viewerName}`, { exact: false })).toBeVisible();
     await expect(page.getByRole("button", { name: "Managers only" })).toHaveCount(0);
-    await expect(filterChips(page).getByText("Web")).toBeVisible();
+    await expect(filterChips(page).getByText("Web", { exact: true })).toBeVisible();
     await expect(
       page.getByRole("toolbar", { name: "Action buttons" }).getByRole("button", { name: "Edit" })
     ).toHaveCount(0);
