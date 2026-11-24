@@ -8,6 +8,8 @@ import {
   ContactDirectoryWorkspacesCannotLeaveError,
   ContactDirectoryWorkspacesNotFoundError,
   ContactDirectoryWorkspacesNotMovableError,
+} from "./directory-errors";
+import {
   createContactDirectory,
   getContactDirectory,
   getSharedContactDirectoryName,

@@ -14,6 +14,8 @@ import {
   ContactDirectoryWorkspacesCannotLeaveError,
   ContactDirectoryWorkspacesNotFoundError,
   ContactDirectoryWorkspacesNotMovableError,
+} from "@/modules/ee/contacts/directories/lib/directory-errors";
+import {
   createContactDirectory,
   getContactDirectory,
   listContactDirectories,

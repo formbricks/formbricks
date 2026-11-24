@@ -47,7 +47,7 @@ const {
   ContactDirectoryNameRequiredError,
   ContactDirectoryWorkspacesCannotLeaveError,
   ContactDirectoryWorkspacesNotFoundError,
-} = await import("@/modules/ee/contacts/directories/lib/directory-service");
+} = await import("@/modules/ee/contacts/directories/lib/directory-errors");
 
 const ORG_ID = "clorg11111111111111111111";
 const USER_ID = "cluser1111111111111111111";

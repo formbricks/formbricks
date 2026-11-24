@@ -3,11 +3,8 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { updateUser } from "@/modules/ee/contacts/api/v1/client/[workspaceId]/user/lib/update-user";
 import { ContactDirectoryMissingError } from "@/modules/ee/contacts/lib/contact-directory";
-import {
-  ContactDirectoryWorkspacesNotMovableError,
-  createContactDirectory,
-  updateContactDirectory,
-} from "./directory-service";
+import { ContactDirectoryWorkspacesNotMovableError } from "./directory-errors";
+import { createContactDirectory, updateContactDirectory } from "./directory-service";
 
 /**
  * ENG-7498: a workspace with no contact directory, and what changes when it gets one. Real Postgres,
