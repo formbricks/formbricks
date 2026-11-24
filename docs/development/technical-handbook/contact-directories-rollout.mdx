@@ -145,7 +145,7 @@ WHERE cak.key = '<number key>' AND cak."directoryId" = :'dir' AND cak."dataType"
   AND ca."valueNumber" IS NULL AND ca.value ~ '^-?[0-9]+(\.[0-9]+)?$' AND ca.value::double precision > 10;
 ```
 
-**Contacts count on the settings page** (`directory-service.ts`, one `groupBy` per page). Expect `Contact_directoryId_idx`:
+**Contacts count on the settings page** (`getDirectoryContents` in `directory-move.ts`, one `groupBy` per page). Expect `Contact_directoryId_idx`:
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
