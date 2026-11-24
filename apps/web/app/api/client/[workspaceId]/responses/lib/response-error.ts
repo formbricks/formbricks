@@ -1,7 +1,7 @@
 import { Prisma } from "@formbricks/database/prisma";
 import type { PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
-import { DISPLAY_NOT_FOUND_MESSAGE } from "@/lib/display/errors";
+import { DISPLAY_REJECTED_MESSAGE } from "@/lib/display/errors";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 
 export const isPrismaKnownRequestError = (error: unknown): error is PrismaClientKnownRequestError =>
@@ -25,7 +25,7 @@ export const handleClientResponseCreateError = (error: unknown): never => {
     if (isDisplayIdUniqueConstraintError(error)) {
       // Same message as every other unusable display (assertDisplayOwnership), so a concurrent
       // claim can't be told apart from the rest (ENG-2240).
-      throw new InvalidInputError(DISPLAY_NOT_FOUND_MESSAGE);
+      throw new InvalidInputError(DISPLAY_REJECTED_MESSAGE);
     }
     if (isSingleUseIdUniqueConstraintError(error)) {
       throw new UniqueConstraintError("Response already submitted for this single-use link");

@@ -4,4 +4,4 @@
  * message per reason lets an anonymous caller probe whether a display exists and whom it belongs to
  * (ENG-2240). The reason is logged server-side instead.
  */
-export const DISPLAY_NOT_FOUND_MESSAGE = "Display not found";
+export const DISPLAY_REJECTED_MESSAGE = "Display not found";

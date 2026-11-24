@@ -401,10 +401,10 @@ describe("assertDisplayOwnership", () => {
   // read the same. Rejection-only tests above pass with the oracle intact.
   test("rejects every ownership failure with the same message, so the wire response can't tell them apart", async () => {
     const rejectionFor = async (
-      record: Awaited<ReturnType<typeof prisma.display.findUnique>>,
+      record: typeof mockDisplayRecord | null,
       args: [workspaceId: string, surveyId: string, contactId: string | null]
     ): Promise<Error> => {
-      vi.mocked(prisma.display.findUnique).mockResolvedValueOnce(record);
+      vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(record);
       return assertDisplayOwnership(mockDisplayId, ...args).then(
         () => {
           throw new Error("expected a rejection");
@@ -412,19 +412,20 @@ describe("assertDisplayOwnership", () => {
         (error: Error) => error
       );
     };
-    const record = mockDisplayRecord as unknown as Awaited<ReturnType<typeof prisma.display.findUnique>>;
 
     const missing = await rejectionFor(null, [mockWorkspaceId, mockSurveyId, null]);
-    const otherWorkspace = await rejectionFor(record, ["wrong-workspace", mockSurveyId, null]);
-    const otherSurvey = await rejectionFor(record, [mockWorkspaceId, "wrong-survey", null]);
-    const claimed = await rejectionFor(
-      { ...mockDisplayRecord, response: { id: mockResponseId } } as unknown as typeof record,
-      [mockWorkspaceId, mockSurveyId, null]
-    );
-    const otherContact = await rejectionFor(
-      { ...mockDisplayRecord, contactId: "contact-a" } as unknown as typeof record,
-      [mockWorkspaceId, mockSurveyId, "contact-b"]
-    );
+    const otherWorkspace = await rejectionFor(mockDisplayRecord, ["wrong-workspace", mockSurveyId, null]);
+    const otherSurvey = await rejectionFor(mockDisplayRecord, [mockWorkspaceId, "wrong-survey", null]);
+    const claimed = await rejectionFor({ ...mockDisplayRecord, response: { id: mockResponseId } }, [
+      mockWorkspaceId,
+      mockSurveyId,
+      null,
+    ]);
+    const otherContact = await rejectionFor({ ...mockDisplayRecord, contactId: "contact-a" }, [
+      mockWorkspaceId,
+      mockSurveyId,
+      "contact-b",
+    ]);
 
     for (const rejection of [otherWorkspace, otherSurvey, claimed, otherContact]) {
       expect(rejection).toBeInstanceOf(InvalidInputError);

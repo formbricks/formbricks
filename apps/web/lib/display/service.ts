@@ -8,7 +8,7 @@ import { ZId } from "@formbricks/types/common";
 import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
-import { DISPLAY_NOT_FOUND_MESSAGE } from "./errors";
+import { DISPLAY_REJECTED_MESSAGE } from "./errors";
 
 export const selectDisplay = {
   id: true,
@@ -208,16 +208,23 @@ export const assertDisplayOwnership = async (
   if (reason) {
     // The public client-response routes echo this error, so the reason stays in the log (ENG-2240).
     logger.warn({ displayId, workspaceId, surveyId, reason }, "Rejected displayId on response create");
-    throw new InvalidInputError(DISPLAY_NOT_FOUND_MESSAGE);
+    throw new InvalidInputError(DISPLAY_REJECTED_MESSAGE);
   }
 };
+
+type TDisplayRejectionReason =
+  | "not_found"
+  | "different_workspace"
+  | "different_survey"
+  | "already_linked"
+  | "different_contact";
 
 const getDisplayRejectionReason = (
   display: Awaited<ReturnType<typeof getDisplayForResponseValidation>>,
   workspaceId: string,
   surveyId: string,
   contactId: string | null
-): string | null => {
+): TDisplayRejectionReason | null => {
   if (!display) return "not_found";
   if (display.workspaceId !== workspaceId) return "different_workspace";
   if (display.surveyId !== surveyId) return "different_survey";
