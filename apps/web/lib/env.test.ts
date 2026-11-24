@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { isSecureCredentialUrl } from "@formbricks/ai";
+import { SETUP_TOKEN_MAX_LENGTH, SETUP_TOKEN_MIN_LENGTH } from "@formbricks/types/instance";
 
 const ORIGINAL_ENV = process.env;
 
@@ -175,6 +176,31 @@ describe("env", () => {
     const { env } = await import("./env");
 
     expect(env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES).toBe(45);
+  });
+
+  test("treats a blank SETUP_TOKEN as unset", async () => {
+    setTestEnv({ SETUP_TOKEN: "" });
+    const { env } = await import("./env");
+    expect(env.SETUP_TOKEN).toBeUndefined();
+  });
+
+  test("accepts a SETUP_TOKEN at both bounds", async () => {
+    for (const token of ["t".repeat(SETUP_TOKEN_MIN_LENGTH), "t".repeat(SETUP_TOKEN_MAX_LENGTH)]) {
+      vi.resetModules();
+      setTestEnv({ SETUP_TOKEN: token });
+      const { env } = await import("./env");
+      expect(env.SETUP_TOKEN).toBe(token);
+    }
+  });
+
+  test("refuses a SETUP_TOKEN shorter than the minimum", async () => {
+    setTestEnv({ SETUP_TOKEN: "t".repeat(SETUP_TOKEN_MIN_LENGTH - 1) });
+    await expect(import("./env")).rejects.toThrow("SETUP_TOKEN");
+  });
+
+  test("refuses a SETUP_TOKEN longer than the maximum", async () => {
+    setTestEnv({ SETUP_TOKEN: "t".repeat(SETUP_TOKEN_MAX_LENGTH + 1) });
+    await expect(import("./env")).rejects.toThrow("SETUP_TOKEN");
   });
 
   test("uses the default invite rate limit when env var is not set", async () => {

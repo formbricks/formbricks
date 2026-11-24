@@ -2,11 +2,14 @@ import type { TFunction } from "i18next";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SETUP_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
 
-export type TSignupErrorPlacement = { field: "email" | "password"; message: string } | { toast: string };
+export type TSignupErrorPlacement =
+  | { field: "email" | "password" | "setupToken"; message: string }
+  | { toast: string };
 
 /**
  * Map a failed sign-up to where the user should see it: the two field-level rejections go under the
@@ -23,6 +26,9 @@ export const getSignupErrorPlacement = (
       return { field: "email", message: t("auth.signup.company_email_required") };
     case PASSWORD_COMPROMISED_ERROR_CODE:
       return { field: "password", message: t("auth.password_compromised") };
+    case SETUP_TOKEN_INVALID_ERROR_CODE:
+      // ENG-7313: the fresh instance requires SETUP_TOKEN and the one entered was wrong or missing.
+      return { field: "setupToken", message: t("setup.signup.setup_token_invalid") };
     case INVITE_TOKEN_INVALID_ERROR_CODE:
       // Reachable when the invite expires or is revoked between the page rendering and the form being
       // submitted. Reuses the existing invite copy rather than naming the specific reason, matching the

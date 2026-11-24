@@ -16,7 +16,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getHasNoOrganizations } from "@/lib/instance/service";
+import { getHasNoOrganizations, getIsEligibleFirstOrganizationOwner } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import {
   createOrganization,
@@ -127,6 +127,14 @@ export async function deleteOrganizationOperation(context: TOrganizationRequestC
 export const MULTI_ORG_DISABLED_DETAIL =
   "Creating Multiple organization is restricted on your instance of Formbricks";
 
+/** The first organization belongs to the instance's bootstrap admin or its earliest user (ENG-7313). */
+export const FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL =
+  "Only the instance's first user can create its first organization.";
+
+type TOrganizationCreationPolicy =
+  | { refused: Response }
+  | { hasNoOrganizations: boolean; isMultiOrgEnabled: boolean };
+
 /**
  * Whether this caller may create an organization, by the flow's own rule: `setup` on a fresh instance or
  * under a multi-organization licence, `additional` only under that licence. Answers the 403 with the reason
@@ -135,16 +143,19 @@ export const MULTI_ORG_DISABLED_DETAIL =
 async function refuseOrganizationCreation(
   flow: NonNullable<TOrganizationCreateBody["flow"]>,
   { requestId, instance }: Pick<TOrganizationRequestContext, "requestId" | "instance">
-): Promise<{ refused: Response } | { hasNoOrganizations: boolean }> {
+): Promise<TOrganizationCreationPolicy> {
   if (flow === "additional") {
     if (!(await getIsMultiOrgEnabled())) {
       return { refused: problemForbidden(requestId, MULTI_ORG_DISABLED_DETAIL, instance) };
     }
-    return { hasNoOrganizations: false };
+    return { hasNoOrganizations: false, isMultiOrgEnabled: true };
   }
 
-  const hasNoOrganizations = await getHasNoOrganizations();
-  if (!hasNoOrganizations && !(await getIsMultiOrgEnabled())) {
+  const [hasNoOrganizations, isMultiOrgEnabled] = await Promise.all([
+    getHasNoOrganizations(),
+    getIsMultiOrgEnabled(),
+  ]);
+  if (!hasNoOrganizations && !isMultiOrgEnabled) {
     return {
       refused: problemForbidden(
         requestId,
@@ -153,7 +164,7 @@ async function refuseOrganizationCreation(
       ),
     };
   }
-  return { hasNoOrganizations };
+  return { hasNoOrganizations, isMultiOrgEnabled };
 }
 
 /**
@@ -186,6 +197,16 @@ export async function createOrganizationOperation({
   if ("refused" in allowed) return allowed.refused;
   // An additional organization is never the instance's first: the caller already belongs to one.
   const isFirstOrganization = flow === "setup" && allowed.hasNoOrganizations;
+
+  // ENG-7313: with no organization yet, being signed in is not enough to become the instance owner.
+  // Multi-org keeps the caller's own organization grant, so the instance-level rule does not apply.
+  if (
+    isFirstOrganization &&
+    !allowed.isMultiOrgEnabled &&
+    !(await getIsEligibleFirstOrganizationOwner(user.id))
+  ) {
+    return problemForbidden(requestId, FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL, instance);
+  }
 
   const organization = await createOrganization({ name: body.name });
   await createMembership(organization.id, user.id, { role: "owner", accepted: true });

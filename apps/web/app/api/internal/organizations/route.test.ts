@@ -4,7 +4,7 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { MULTI_ORG_DISABLED_DETAIL } from "./lib/operations";
+import { FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL, MULTI_ORG_DISABLED_DETAIL } from "./lib/operations";
 import { POST } from "./route";
 import { ORGANIZATION_NAME_MAX } from "./schemas";
 
@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(),
   applyRateLimit: vi.fn(),
   getHasNoOrganizations: vi.fn(),
+  getIsEligibleFirstOrganizationOwner: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
   createOrganization: vi.fn(),
   createMembership: vi.fn(),
@@ -29,7 +30,10 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: mocks.applyRateLimit,
   applyIPRateLimit: vi.fn(),
 }));
-vi.mock("@/lib/instance/service", () => ({ getHasNoOrganizations: mocks.getHasNoOrganizations }));
+vi.mock("@/lib/instance/service", () => ({
+  getHasNoOrganizations: mocks.getHasNoOrganizations,
+  getIsEligibleFirstOrganizationOwner: mocks.getIsEligibleFirstOrganizationOwner,
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: mocks.getIsMultiOrgEnabled }));
 vi.mock("@/lib/organization/service", () => ({
   createOrganization: mocks.createOrganization,
@@ -85,6 +89,7 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ id: USER_ID, email: "ada@example.com" });
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.getHasNoOrganizations.mockResolvedValue(true);
+  mocks.getIsEligibleFirstOrganizationOwner.mockResolvedValue(true);
   mocks.getIsMultiOrgEnabled.mockResolvedValue(false);
   mocks.createOrganization.mockResolvedValue(organization);
   mocks.createWorkspace.mockResolvedValue({ id: "clws111111111111111111111", name: "My Workspace" });
@@ -152,6 +157,43 @@ describe("POST /api/internal/organizations", () => {
       { organization_id: ORG_ID, is_first_org: true },
       expect.anything()
     );
+  });
+
+  describe("first organization on a single-organization instance (ENG-7313)", () => {
+    test("refuses a signed-in user who is not the bootstrap administrator or the earliest user", async () => {
+      mocks.getIsEligibleFirstOrganizationOwner.mockResolvedValue(false);
+
+      const response = await create();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe(FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL);
+      expect(mocks.getIsEligibleFirstOrganizationOwner).toHaveBeenCalledWith(USER_ID);
+      expect(mocks.createOrganization).not.toHaveBeenCalled();
+      expect(mocks.createMembership).not.toHaveBeenCalled();
+    });
+
+    test("allows the eligible first owner", async () => {
+      expect((await create()).status).toBe(201);
+      expect(mocks.getIsEligibleFirstOrganizationOwner).toHaveBeenCalledWith(USER_ID);
+      expect(mocks.createOrganization).toHaveBeenCalledTimes(1);
+    });
+
+    test("does not consult eligibility on a multi-organization instance", async () => {
+      mocks.getIsMultiOrgEnabled.mockResolvedValue(true);
+
+      expect((await create()).status).toBe(201);
+      expect(mocks.getIsEligibleFirstOrganizationOwner).not.toHaveBeenCalled();
+    });
+
+    test("does not consult eligibility once an organization exists (still refused)", async () => {
+      mocks.getHasNoOrganizations.mockResolvedValue(false);
+
+      const response = await create();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe("This action can only be performed on a fresh instance.");
+      expect(mocks.getIsEligibleFirstOrganizationOwner).not.toHaveBeenCalled();
+    });
   });
 
   describe("from the organization settings (flow: additional)", () => {
