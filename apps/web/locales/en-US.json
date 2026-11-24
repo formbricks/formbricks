@@ -3594,9 +3594,11 @@
         "nav_label": "Contact directories",
         "no_access": "Only organization owners and managers can manage contact directories.",
         "save_failed": "Couldn't save the directory. Please try again.",
+        "saving_moves_workspace": "Saving moves {workspaceName} here and deletes {directoryName}.",
         "select_workspaces_placeholder": "Select workspaces",
         "shared_contacts_note": "Workspaces in one directory share their contacts. The same userId is one contact.",
         "title": "Contact directories",
+        "workspace_moves_here": "Uses {directoryName}, which is empty. Adding it here deletes {directoryName}.",
         "workspace_uses_directory": "Uses {directoryName}. A workspace uses one directory.",
         "workspaces_help": "Choose which workspaces share this directory.",
         "workspaces_stay_note": "Once saved, a workspace can't be removed from its directory."

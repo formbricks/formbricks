@@ -3594,9 +3594,11 @@
         "nav_label": "Directorios de contactos",
         "no_access": "Solo los propietarios y los gestores de la organización pueden gestionar los directorios de contactos.",
         "save_failed": "No se ha podido guardar el directorio. Inténtalo de nuevo.",
+        "saving_moves_workspace": "Al guardar, {workspaceName} se mueve aquí y se elimina {directoryName}.",
         "select_workspaces_placeholder": "Selecciona espacios de trabajo",
         "shared_contacts_note": "Los espacios de trabajo de un mismo directorio comparten sus contactos. Un mismo userId corresponde a un único contacto.",
         "title": "Directorios de contactos",
+        "workspace_moves_here": "Usa {directoryName}, que está vacío. Si lo añades aquí, se elimina {directoryName}.",
         "workspace_uses_directory": "Usa {directoryName}. Un espacio de trabajo usa un solo directorio.",
         "workspaces_help": "Elige qué espacios de trabajo comparten este directorio.",
         "workspaces_stay_note": "Una vez guardado, un espacio de trabajo no se puede quitar de su directorio."

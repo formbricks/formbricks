@@ -206,6 +206,23 @@ describe("ContactDirectoryDialog", () => {
     expect(dialog().queryByText(`${K}.error_workspace_cannot_leave`)).toBeNull();
   });
 
+  // Decision 8: Brand Tracking's directory is empty, so picking it moves it here and deletes that directory.
+  test("says when picking a workspace moves it here and deletes its empty directory", async () => {
+    renderDialog({ directory: US });
+
+    fireEvent.focus(dialog().getByPlaceholderText(`${K}.select_workspaces_placeholder`));
+    expect(dialog().getByText(`${K}.workspace_moves_here {"directoryName":"Brand"}`)).toBeInTheDocument();
+    fireEvent.click(dialog().getByText("Brand Tracking"));
+    await settle();
+    await pick("HCP Relationship");
+
+    expect(
+      dialog()
+        .getAllByText(/saving_moves_workspace/)
+        .map((note) => note.textContent)
+    ).toEqual([`${K}.saving_moves_workspace {"workspaceName":"Brand Tracking","directoryName":"Brand"}`]);
+  });
+
   test("says a workspace stays once a workspace is picked for a new directory", async () => {
     renderDialog();
 

@@ -3594,9 +3594,11 @@
         "nav_label": "聯絡人目錄",
         "no_access": "只有組織擁有者和管理員可以管理聯絡人目錄。",
         "save_failed": "無法儲存目錄，請再試一次。",
+        "saving_moves_workspace": "儲存後會將 {workspaceName} 移至此處，並刪除 {directoryName}。",
         "select_workspaces_placeholder": "選取工作區",
         "shared_contacts_note": "同一個目錄中的工作區會共用聯絡人。相同的 userId 視為同一位聯絡人。",
         "title": "聯絡人目錄",
+        "workspace_moves_here": "目前使用的是 {directoryName}，而它是空的。若將它新增到此處，會刪除 {directoryName}。",
         "workspace_uses_directory": "使用「{directoryName}」。一個工作區只能使用一個通訊錄。",
         "workspaces_help": "選擇要共用此目錄的工作區。",
         "workspaces_stay_note": "儲存後,工作區就無法從其目錄中移除了。"

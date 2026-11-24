@@ -3594,9 +3594,11 @@
         "nav_label": "Directoare de contacte",
         "no_access": "Doar proprietarii și managerii organizației pot gestiona directoarele de contacte.",
         "save_failed": "Directorul nu a putut fi salvat. Încearcă din nou.",
+        "saving_moves_workspace": "Salvarea mută aici {workspaceName} și șterge {directoryName}.",
         "select_workspaces_placeholder": "Selectează spații de lucru",
         "shared_contacts_note": "Spațiile de lucru dintr-un director își partajează contactele. Același userId reprezintă un singur contact.",
         "title": "Directoare de contacte",
+        "workspace_moves_here": "Folosește {directoryName}, care este gol. Adăugarea acestuia aici șterge {directoryName}.",
         "workspace_uses_directory": "Folosește {directoryName}. Un spațiu de lucru folosește un singur director.",
         "workspaces_help": "Alege spațiile de lucru care partajează acest director.",
         "workspaces_stay_note": "După salvare, un spațiu de lucru nu mai poate fi eliminat din directorul său."

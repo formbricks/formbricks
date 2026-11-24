@@ -3594,9 +3594,11 @@
         "nav_label": "Kapcsolattartói címtárak",
         "no_access": "A kapcsolattartói címtárakat kizárólag a szervezet tulajdonosai és menedzserei kezelhetik.",
         "save_failed": "A címtár mentése nem sikerült. Kérjük, próbálja meg újra.",
+        "saving_moves_workspace": "A mentés során a(z) {workspaceName} munkaterület ide kerül áthelyezésre, a(z) {directoryName} címtár pedig törlésre kerül.",
         "select_workspaces_placeholder": "Munkaterületek kiválasztása",
         "shared_contacts_note": "Az egy címtárhoz tartozó munkaterületek megosztják egymással kapcsolattartóikat. Az azonos userId egyetlen kapcsolattartónak minősül.",
         "title": "Kapcsolattartói címtárak",
+        "workspace_moves_here": "A(z) {directoryName} címtárat használja, amely jelenleg üres. Az ide történő hozzáadása a(z) {directoryName} címtár törlését eredményezi.",
         "workspace_uses_directory": "Használt címtár: {directoryName}. Egy munkaterület egy címtárat használhat.",
         "workspaces_help": "Kérjük, válassza ki, mely munkaterületek használják közösen ezt a címtárat.",
         "workspaces_stay_note": "A mentést követően a munkaterület nem távolítható el a címtárból."

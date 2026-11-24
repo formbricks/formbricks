@@ -3463,9 +3463,11 @@ checksums:
     workspace/settings/contact_directories/nav_label: 85d9d4004b2bbff0ab18bda751fe8e86
     workspace/settings/contact_directories/no_access: c9a4abc581f95179dbcdc3de950351ed
     workspace/settings/contact_directories/save_failed: f932b241613a21094ce0cd1703b33f0e
+    workspace/settings/contact_directories/saving_moves_workspace: ec47dc4b994c60c924880884efa78063
     workspace/settings/contact_directories/select_workspaces_placeholder: 9fd43216ef3d15c9a7159c1a06cb807e
     workspace/settings/contact_directories/shared_contacts_note: 2bed5bcf9c6b1ec4ebac53bca9ac27e2
     workspace/settings/contact_directories/title: 85d9d4004b2bbff0ab18bda751fe8e86
+    workspace/settings/contact_directories/workspace_moves_here: cba59e44eecdeb801adb7ef734966b8e
     workspace/settings/contact_directories/workspace_uses_directory: 7e88b43c54696b10d36b47663f1f63dd
     workspace/settings/contact_directories/workspaces_help: ea6ac00199615eab4f00f14787506d7a
     workspace/settings/contact_directories/workspaces_stay_note: 89921d4483dc8955fc3aaa92782b3aec

@@ -33,8 +33,19 @@ export const getWorkspacePickerOptions = ({
       if (directory && directory.id === currentDirectoryId) {
         return { value: workspace.id, label: workspace.name, disabled: false, locked: true };
       }
-      if (!directory || directory.workspaceCanMove) {
+      if (!directory) {
         return { value: workspace.id, label: workspace.name, disabled: false };
+      }
+      // Its directory is empty: picking the workspace moves it here, and the move deletes that directory.
+      if (directory.workspaceCanMove) {
+        return {
+          value: workspace.id,
+          label: workspace.name,
+          disabled: false,
+          description: t("workspace.settings.contact_directories.workspace_moves_here", {
+            directoryName: directory.name,
+          }),
+        };
       }
       return {
         value: workspace.id,
@@ -46,4 +57,27 @@ export const getWorkspacePickerOptions = ({
       };
     })
     .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" }));
+};
+
+/**
+ * The picked workspaces that move here out of another directory, each with the directory the save deletes
+ * (decision 8: only an empty directory with one workspace can be left, and it goes when that workspace does).
+ */
+export const getMovingWorkspaces = ({
+  list,
+  workspaceIds,
+  currentDirectoryId,
+}: {
+  list: TContactDirectoryList;
+  workspaceIds: string[];
+  currentDirectoryId?: string;
+}): { workspaceName: string; directoryName: string }[] => {
+  const directoryById = new Map(list.directories.map((directory) => [directory.id, directory]));
+  const picked = new Set(workspaceIds);
+
+  return list.workspaces.flatMap((workspace) => {
+    const directory = workspace.directoryId ? directoryById.get(workspace.directoryId) : undefined;
+    if (!picked.has(workspace.id) || !directory || directory.id === currentDirectoryId) return [];
+    return [{ workspaceName: workspace.name, directoryName: directory.name }];
+  });
 };

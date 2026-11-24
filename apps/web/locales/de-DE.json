@@ -3594,9 +3594,11 @@
         "nav_label": "Kontaktverzeichnisse",
         "no_access": "Nur Organisationsinhaber und -manager können Kontaktverzeichnisse verwalten.",
         "save_failed": "Das Verzeichnis konnte nicht gespeichert werden. Bitte versuche es erneut.",
+        "saving_moves_workspace": "Beim Speichern wird {workspaceName} hierher verschoben und {directoryName} gelöscht.",
         "select_workspaces_placeholder": "Workspaces auswählen",
         "shared_contacts_note": "Workspaces in einem Verzeichnis teilen sich ihre Kontakte. Dieselbe userId entspricht einem Kontakt.",
         "title": "Kontaktverzeichnisse",
+        "workspace_moves_here": "Verwendet {directoryName}, das leer ist. Beim Hinzufügen an dieser Stelle wird {directoryName} gelöscht.",
         "workspace_uses_directory": "Verwendet {directoryName}. Ein Workspace nutzt ein Verzeichnis.",
         "workspaces_help": "Wähle aus, welche Workspaces dieses Verzeichnis gemeinsam nutzen.",
         "workspaces_stay_note": "Nach dem Speichern kann ein Workspace nicht mehr aus seinem Verzeichnis entfernt werden."

@@ -3594,9 +3594,11 @@
         "nav_label": "Kontaktkataloger",
         "no_access": "Endast organisationens ägare och administratörer kan hantera kontaktkataloger.",
         "save_failed": "Det gick inte att spara katalogen. Försök igen.",
+        "saving_moves_workspace": "Om du sparar flyttas {workspaceName} hit och {directoryName} raderas.",
         "select_workspaces_placeholder": "Välj arbetsytor",
         "shared_contacts_note": "Arbetsytor i samma katalog delar sina kontakter. Samma userId räknas som en kontakt.",
         "title": "Kontaktkataloger",
+        "workspace_moves_here": "Använder {directoryName}, som är tom. Om du lägger till den här raderas {directoryName}.",
         "workspace_uses_directory": "Använder {directoryName}. En arbetsyta kan bara använda en katalog.",
         "workspaces_help": "Välj vilka arbetsytor som delar den här katalogen.",
         "workspaces_stay_note": "När en arbetsyta har sparats kan den inte tas bort från sin katalog."

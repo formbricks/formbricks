@@ -3594,9 +3594,11 @@
         "nav_label": "コンタクトディレクトリ",
         "no_access": "コンタクトディレクトリを管理できるのは、組織のオーナーとマネージャーのみです。",
         "save_failed": "ディレクトリを保存できませんでした。もう一度お試しください。",
+        "saving_moves_workspace": "保存すると、{workspaceName}がここに移動し、{directoryName}は削除されます。",
         "select_workspaces_placeholder": "ワークスペースを選択",
         "shared_contacts_note": "同じディレクトリ内のワークスペースは、コンタクトを共有します。同じuserIdは1人のコンタクトとして扱われます。",
         "title": "連絡先ディレクトリ",
+        "workspace_moves_here": "空の{directoryName}を使用しています。ここに追加すると、{directoryName}は削除されます。",
         "workspace_uses_directory": "{directoryName}を使用しています。ワークスペースで使用できるディレクトリは1つです。",
         "workspaces_help": "このディレクトリを共有するワークスペースを選択してください。",
         "workspaces_stay_note": "一度保存すると、ワークスペースをディレクトリから削除することはできません。"

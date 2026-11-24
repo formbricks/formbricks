@@ -30,7 +30,7 @@ import {
   getContactDirectoryErrorMessage,
   getContactDirectoryFormSchema,
 } from "../lib/directory-form";
-import { getWorkspacePickerOptions } from "../lib/display";
+import { getMovingWorkspaces, getWorkspacePickerOptions } from "../lib/display";
 import type { TContactDirectory, TContactDirectoryList, TContactDirectoryMatchingKey } from "../types";
 
 const MATCHING_KEY_TOGGLE_ID = "contact-directory-matching-key";
@@ -78,6 +78,10 @@ export const ContactDirectoryDialog = ({
   const workspaceOptions = useMemo(
     () => getWorkspacePickerOptions({ list, t, currentDirectoryId: directory?.id }),
     [list, t, directory?.id]
+  );
+  const movingWorkspaces = useMemo(
+    () => getMovingWorkspaces({ list, workspaceIds, currentDirectoryId: directory?.id }),
+    [list, workspaceIds, directory?.id]
   );
 
   const isSaving = createDirectory.isPending || updateDirectory.isPending;
@@ -195,6 +199,14 @@ export const ContactDirectoryDialog = ({
                         {t("workspace.settings.contact_directories.shared_contacts_note")}
                       </p>
                     ) : null}
+                    {movingWorkspaces.map(({ workspaceName, directoryName }) => (
+                      <p key={workspaceName} className="text-xs text-amber-700">
+                        {t("workspace.settings.contact_directories.saving_moves_workspace", {
+                          workspaceName,
+                          directoryName,
+                        })}
+                      </p>
+                    ))}
                     {/* Decision 8: said before the first save, while workspaces are still being picked. */}
                     {directory || workspaceIds.length > 0 ? (
                       <p className="text-xs text-slate-500">

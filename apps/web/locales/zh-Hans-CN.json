@@ -3594,9 +3594,11 @@
         "nav_label": "联系人目录",
         "no_access": "只有组织所有者和管理员可以管理联系人目录。",
         "save_failed": "无法保存目录,请重试。",
+        "saving_moves_workspace": "保存后，{workspaceName}将移至此处，并删除{directoryName}。",
         "select_workspaces_placeholder": "选择工作区",
         "shared_contacts_note": "同一目录中的工作区共享其联系人。相同的 userId 视为同一个联系人。",
         "title": "联系人目录",
+        "workspace_moves_here": "将使用{directoryName}（该目录为空）。添加到此处后，{directoryName}将被删除。",
         "workspace_uses_directory": "使用的是 {directoryName}。一个工作区只能使用一个通讯录。",
         "workspaces_help": "选择哪些工作区共享此目录。",
         "workspaces_stay_note": "保存后，工作区将无法从其目录中移除。"

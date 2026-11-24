@@ -3594,9 +3594,11 @@
         "nav_label": "Contactmappen",
         "no_access": "Alleen organisatie-eigenaren en -managers kunnen contactmappen beheren.",
         "save_failed": "Kan de contactmap niet opslaan. Probeer het opnieuw.",
+        "saving_moves_workspace": "Als je opslaat, wordt {workspaceName} hierheen verplaatst en wordt {directoryName} verwijderd.",
         "select_workspaces_placeholder": "Kies werkruimtes",
         "shared_contacts_note": "Werkruimtes in dezelfde contactmap delen hun contacten. Dezelfde userId is één contact.",
         "title": "Contactmappen",
+        "workspace_moves_here": "Gebruikt {directoryName}, wat leeg is. Als je dit hier toevoegt, wordt {directoryName} verwijderd.",
         "workspace_uses_directory": "Gebruikt {directoryName}. Een werkruimte gebruikt één map.",
         "workspaces_help": "Kies welke workspaces deze map delen.",
         "workspaces_stay_note": "Zodra een werkruimte is opgeslagen, kan je deze niet meer uit de bijbehorende map verwijderen."
