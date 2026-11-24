@@ -14,10 +14,12 @@ const sharedDirectPinFiles = [
   ".github/workflows/docker-build-validation.yml",
   ".github/workflows/e2e.yml",
   ".github/workflows/integration-tests.yml",
+  "charts/formbricks/tests/envoy-kind-integration.sh",
   "docker-compose.dev.yml",
   "docker/docker-compose.yml",
   "docker/formbricks.sh",
   "docker/migrate-to-v4.sh",
+  "docker/smoke-release-image.sh",
 ];
 const mainOnlyDirectPinFile = ".github/workflows/api-v3-contract-tests.yml";
 
@@ -26,7 +28,16 @@ describe("bundled Valkey image", () => {
     ...sharedDirectPinFiles,
     ...(existsSync(join(repositoryRoot, mainOnlyDirectPinFile)) ? [mainOnlyDirectPinFile] : []),
   ])("uses the multi-architecture index in %s", (relativePath) => {
-    expect(readFileSync(join(repositoryRoot, relativePath), "utf8")).toContain(valkeyImage);
+    const pins = Array.from(
+      readFileSync(join(repositoryRoot, relativePath), "utf8").matchAll(
+        /valkey\/valkey@sha256:[a-f0-9]{64}/g
+      ),
+      (match) => match[0]
+    );
+
+    expect(pins).toContain(valkeyImage);
+    // Only the legacy 8.1.1 pin may sit beside the current one; any other digest is drift.
+    expect(new Set(pins.filter((pin) => pin !== legacyValkeyImage))).toEqual(new Set([valkeyImage]));
   });
 
   test("uses the same index in the Helm defaults and generated values table", () => {
