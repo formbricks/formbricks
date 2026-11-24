@@ -71,7 +71,7 @@ export type TNotShownRecordKey = "options" | "rows" | "columns";
 /**
  * The ids one per-element map lists for an element. Own keys only (ENG-6991): an element id such as
  * `constructor` would otherwise read the inherited member, which is not an array, and crash every
- * reader. `Object.hasOwn` is past this package's ES2021 target, hence the entries lookup.
+ * reader. `Object.hasOwn` is past this package's ES2021 target, hence `hasOwnProperty.call`.
  */
 export const getNotShownIds = (
   record: TResponseNotShown | null | undefined,
@@ -80,7 +80,7 @@ export const getNotShownIds = (
 ): string[] => {
   const map = record?.[recordKey];
   if (!map) return [];
-  return Object.entries(map).find(([key]) => key === elementId)?.[1] ?? [];
+  return Object.prototype.hasOwnProperty.call(map, elementId) ? (map[elementId] ?? []) : [];
 };
 
 /**
