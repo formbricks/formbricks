@@ -30,6 +30,7 @@ vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/lib/constants", () => ({
+  WEBAPP_URL: "http://localhost",
   AUTH_TRUSTED_ORIGINS: ["http://localhost"],
   BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
 }));
@@ -44,10 +45,15 @@ const makeRequest = (headers: Record<string, string> = {}): Request => {
   body.set("workspaceId", workspaceId);
   body.set("feedbackSourceId", feedbackSourceId);
   body.set("file", new File(["value\nexample"], "feedback.csv", { type: "text/csv" }));
+  // A browser sends Sec-Fetch-Site; only the cross-origin tests omit it on purpose.
+  const requestHeaders =
+    headers.origin === undefined && headers["sec-fetch-site"] === undefined
+      ? { "sec-fetch-site": "same-origin" }
+      : headers;
   return new Request("http://localhost/api/unify-feedback/sources/csv/import", {
     method: "POST",
     body,
-    headers,
+    headers: requestHeaders,
   });
 };
 
@@ -144,7 +150,7 @@ describe("CSV feedback source import authorization", () => {
     let cancelled = false;
     const request = new Request("http://localhost/api/unify-feedback/sources/csv/import", {
       method: "POST",
-      headers: { "content-type": "multipart/form-data; boundary=x" },
+      headers: { "content-type": "multipart/form-data; boundary=x", "sec-fetch-site": "same-origin" },
       body: new ReadableStream<Uint8Array>({
         pull(controller) {
           if (pulled >= 32 * 1024 * 1024) return controller.close();

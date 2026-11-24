@@ -115,6 +115,7 @@ describe("withV1ApiWrapper", () => {
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
+      WEBAPP_URL: "https://app.test",
       AUTH_TRUSTED_ORIGINS: ["https://app.test"],
       BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
     }));
@@ -466,6 +467,7 @@ describe("withV1ApiWrapper", () => {
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
+      WEBAPP_URL: "https://app.test",
       AUTH_TRUSTED_ORIGINS: ["https://app.test"],
       BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
     }));
@@ -504,6 +506,7 @@ describe("withV1ApiWrapper", () => {
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
+      WEBAPP_URL: "https://app.test",
       AUTH_TRUSTED_ORIGINS: ["https://app.test"],
       BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
     }));
@@ -731,7 +734,11 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Rate limit exceeded"));
 
     const handler = vi.fn();
-    const req = createMockRequest({ method: "POST", url: "https://api.test/api/v1/management/storage" });
+    const req = createMockRequest({
+      method: "POST",
+      url: "https://api.test/api/v1/management/storage",
+      headers: new Map([["sec-fetch-site", "same-origin"]]),
+    });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const customRateLimitConfig = { interval: 60, allowedPerInterval: 5, namespace: "storage:upload" };
     const wrapped = withV1ApiWrapper({ handler, customRateLimitConfig });
@@ -883,6 +890,7 @@ describe("withV1ApiWrapper", () => {
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: false,
+      WEBAPP_URL: "https://app.test",
       AUTH_TRUSTED_ORIGINS: ["https://app.test"],
       BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
     }));

@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { getCrossOriginRefusal, isJsonContentType, mediaTypeOf } from "./origin-check";
 
 vi.mock("@/lib/constants", () => ({
+  WEBAPP_URL: "https://app.example.com",
   AUTH_TRUSTED_ORIGINS: ["https://app.example.com", "https://legacy.example.com"],
   BETTER_AUTH_ENV_TRUSTED_ORIGINS: ["https://partner.example.com", "https://*.wild.example.com"],
 }));
@@ -14,11 +15,11 @@ describe("getCrossOriginRefusal", () => {
     expect(getCrossOriginRefusal(request(method, { "sec-fetch-site": "cross-site" }))).toBeNull();
   });
 
-  test.each(["same-origin", "none"])("Sec-Fetch-Site %s passes", (site) => {
-    expect(getCrossOriginRefusal(request("POST", { "sec-fetch-site": site }))).toBeNull();
+  test("Sec-Fetch-Site same-origin passes", () => {
+    expect(getCrossOriginRefusal(request("POST", { "sec-fetch-site": "same-origin" }))).toBeNull();
   });
 
-  test.each(["same-site", "cross-site", "bogus"])("Sec-Fetch-Site %s is refused", (site) => {
+  test.each(["none", "same-site", "cross-site", "bogus"])("Sec-Fetch-Site %s is refused", (site) => {
     expect(getCrossOriginRefusal(request("POST", { "sec-fetch-site": site }))).toBe("sec_fetch_site");
   });
 
@@ -82,8 +83,8 @@ describe("getCrossOriginRefusal", () => {
     );
   });
 
-  test("neither header is a non-browser caller (browsers always send Origin cross-origin) and passes", () => {
-    expect(getCrossOriginRefusal(request("POST"))).toBeNull();
+  test("neither header is refused: no non-browser caller may use a session route", () => {
+    expect(getCrossOriginRefusal(request("POST"))).toBe("no_origin");
   });
 });
 
