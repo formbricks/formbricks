@@ -32,6 +32,7 @@ export const selectContactAttributeKey = {
  * A key belongs to a contact directory, and its own `workspaceId` only records where it was created: it
  * is null for a directory's default keys and for keys whose workspace was deleted. A read made through a
  * workspace reports that workspace, so `TContactAttributeKey` and the API responses keep their shape.
+ * Unlike a contact (`withCreatingOrCallerWorkspace`), a key always reports the caller's workspace.
  */
 export const withCallerWorkspace = <T extends object>(
   key: T,

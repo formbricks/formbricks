@@ -24,7 +24,10 @@ import {
   whereDirectoryAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
-import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  whereContactsOfWorkspace,
+  withCreatingOrCallerWorkspace,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import type { TWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   CONTACTS_OLDEST_FIRST,
@@ -169,16 +172,6 @@ export const buildContactWhereClause = (workspaceId: string, search?: string): P
 };
 
 /**
- * A contact's `workspaceId` only records the workspace it was created from, and is null once that
- * workspace is deleted while the directory lives on. A read made through a workspace reports that
- * workspace instead, so `TContact.workspaceId` keeps its type.
- */
-const withReportedWorkspace = <T extends { workspaceId: string | null }>(
-  contact: T,
-  workspaceId: string
-): T & { workspaceId: string } => ({ ...contact, workspaceId: contact.workspaceId ?? workspaceId });
-
-/**
  * The contact, when it is in the workspace's contact directory; null otherwise, so a caller holding an
  * authorized workspace id cannot read a contact of another directory.
  */
@@ -194,7 +187,7 @@ export const getContactInWorkspace = reactCache(
         },
         select: selectContact,
       });
-      return contact ? withReportedWorkspace(contact, workspaceId) : null;
+      return contact ? withCreatingOrCallerWorkspace(contact, workspaceId) : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -244,7 +237,7 @@ export const deleteContactInWorkspace = async (contactId: string, workspaceId: s
       throw new ContactInSharedDirectoryError();
     }
 
-    return withReportedWorkspace(contact, workspaceId);
+    return withCreatingOrCallerWorkspace(contact, workspaceId);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

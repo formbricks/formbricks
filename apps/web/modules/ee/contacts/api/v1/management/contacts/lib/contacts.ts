@@ -4,7 +4,10 @@ import { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { getReportingWorkspaceByDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  getReportingWorkspaceByDirectory,
+  withCreatingOrCallerWorkspace,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { TContact } from "@/modules/ee/contacts/types/contact";
 
 /**
@@ -19,9 +22,8 @@ export const selectV1Contact = {
 } satisfies Prisma.ContactSelect;
 
 /**
- * A contact's `workspaceId` is the workspace it was created from, and is null once that workspace is
- * deleted while the directory lives on. v1 keeps the field non-null: it falls back to the caller's
- * workspace on the contact's directory.
+ * The v1 contact shape, reported through the caller's workspace on the contact's directory. Built field
+ * by field: a row read with more columns (`directoryId`) must not pass them through.
  */
 export const toV1Contact = (
   contact: Prisma.ContactGetPayload<{ select: typeof selectV1Contact }>,
@@ -30,7 +32,7 @@ export const toV1Contact = (
   id: contact.id,
   createdAt: contact.createdAt,
   updatedAt: contact.updatedAt,
-  workspaceId: contact.workspaceId ?? callerWorkspaceId,
+  workspaceId: withCreatingOrCallerWorkspace(contact, callerWorkspaceId).workspaceId,
 });
 
 /** Every contact of the contact directories the given workspaces use, each listed once. */

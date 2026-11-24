@@ -64,6 +64,19 @@ export const whereContactsOfWorkspace = (workspaceId: string): Pick<ContactWhere
 });
 
 /**
+ * The workspace a contact read through `callerWorkspaceId` reports. A contact's `workspaceId` records the
+ * workspace it was created from, and is null once that workspace is deleted while the directory lives
+ * on; the read then reports the caller's workspace, so `TContact.workspaceId` stays non-null.
+ *
+ * Contacts keep their creating workspace; attribute keys always report the caller's
+ * (`withCallerWorkspace`), because a directory's default keys were never created from a workspace.
+ */
+export const withCreatingOrCallerWorkspace = <T extends { workspaceId: string | null }>(
+  contact: T,
+  callerWorkspaceId: string
+): T & { workspaceId: string } => ({ ...contact, workspaceId: contact.workspaceId ?? callerWorkspaceId });
+
+/**
  * For listings that span the workspaces an API key can read: each contact directory those workspaces
  * use, mapped to the one workspace a row of that directory is reported under. Two of the key's
  * workspaces on one directory see the same rows, so each row is listed once, under the workspace with
