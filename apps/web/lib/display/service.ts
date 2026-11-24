@@ -3,10 +3,12 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
+import { DISPLAY_NOT_FOUND_MESSAGE } from "./errors";
 
 export const selectDisplay = {
   id: true,
@@ -202,14 +204,26 @@ export const assertDisplayOwnership = async (
   tx?: Prisma.TransactionClient
 ): Promise<void> => {
   const display = await getDisplayForResponseValidation(displayId, tx);
-  if (!display) throw new InvalidInputError(`Display ${displayId} not found`);
-  if (display.workspaceId !== workspaceId)
-    throw new InvalidInputError(`Display ${displayId} belongs to a different workspace`);
-  if (display.surveyId !== surveyId)
-    throw new InvalidInputError(`Display ${displayId} is associated with a different survey`);
-  if (display.responseId) throw new InvalidInputError(`Display ${displayId} is already linked to a response`);
-  if (display.contactId !== null && display.contactId !== contactId)
-    throw new InvalidInputError(`Display ${displayId} belongs to a different contact`);
+  const reason = getDisplayRejectionReason(display, workspaceId, surveyId, contactId);
+  if (reason) {
+    // The public client-response routes echo this error, so the reason stays in the log (ENG-2240).
+    logger.warn({ displayId, workspaceId, surveyId, reason }, "Rejected displayId on response create");
+    throw new InvalidInputError(DISPLAY_NOT_FOUND_MESSAGE);
+  }
+};
+
+const getDisplayRejectionReason = (
+  display: Awaited<ReturnType<typeof getDisplayForResponseValidation>>,
+  workspaceId: string,
+  surveyId: string,
+  contactId: string | null
+): string | null => {
+  if (!display) return "not_found";
+  if (display.workspaceId !== workspaceId) return "different_workspace";
+  if (display.surveyId !== surveyId) return "different_survey";
+  if (display.responseId) return "already_linked";
+  if (display.contactId !== null && display.contactId !== contactId) return "different_contact";
+  return null;
 };
 
 export const deleteDisplay = async (displayId: string, tx?: Prisma.TransactionClient): Promise<TDisplay> => {

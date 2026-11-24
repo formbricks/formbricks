@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { Prisma, type PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
+import { DISPLAY_NOT_FOUND_MESSAGE } from "@/lib/display/errors";
 import { handleClientResponseCreateError } from "./response-error";
 
 // Real Prisma 7 + adapter-pg P2002 shape (no meta.target; columns nested under the driver adapter).
@@ -12,9 +13,11 @@ const uniqueViolation = (fields: string[]): PrismaClientKnownRequestError =>
   });
 
 describe("handleClientResponseCreateError", () => {
-  test("maps a displayId unique violation to InvalidInputError (with the display id)", () => {
-    expect(() => handleClientResponseCreateError(uniqueViolation(["displayId"]), "disp_123")).toThrow(
-      new InvalidInputError("Display disp_123 is already linked to a response")
+  // ENG-2240: a display claimed by a concurrent submit must read like every other display rejection
+  // (assertDisplayOwnership), or the race becomes the oracle the ownership check no longer is.
+  test("maps a displayId unique violation to the same InvalidInputError as any other unusable display", () => {
+    expect(() => handleClientResponseCreateError(uniqueViolation(["displayId"]))).toThrow(
+      new InvalidInputError(DISPLAY_NOT_FOUND_MESSAGE)
     );
   });
 

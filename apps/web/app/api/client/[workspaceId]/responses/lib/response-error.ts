@@ -1,6 +1,7 @@
 import { Prisma } from "@formbricks/database/prisma";
 import type { PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
+import { DISPLAY_NOT_FOUND_MESSAGE } from "@/lib/display/errors";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 
 export const isPrismaKnownRequestError = (error: unknown): error is PrismaClientKnownRequestError =>
@@ -17,12 +18,14 @@ export const isDisplayIdUniqueConstraintError = (error: PrismaClientKnownRequest
  * client-response create paths share this exact mapping, so it lives here alongside the guards it
  * uses. Always throws — either a mapped domain error or the original error re-thrown.
  */
-export const handleClientResponseCreateError = (error: unknown, displayId?: string | null): never => {
+export const handleClientResponseCreateError = (error: unknown): never => {
   if (isPrismaKnownRequestError(error)) {
     // Captured before the P2002 guards: their negative branches narrow `error` to `never`.
     const { message } = error;
     if (isDisplayIdUniqueConstraintError(error)) {
-      throw new InvalidInputError(`Display ${displayId} is already linked to a response`);
+      // Same message as every other unusable display (assertDisplayOwnership), so a concurrent
+      // claim can't be told apart from the rest (ENG-2240).
+      throw new InvalidInputError(DISPLAY_NOT_FOUND_MESSAGE);
     }
     if (isSingleUseIdUniqueConstraintError(error)) {
       throw new UniqueConstraintError("Response already submitted for this single-use link");
