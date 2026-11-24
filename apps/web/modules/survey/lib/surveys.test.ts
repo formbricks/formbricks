@@ -410,10 +410,17 @@ describe("archiveSurvey", () => {
   });
 
   test("should archive an inProgress survey by pausing it, preserving publishOn, with the row locked", async () => {
+    const archivedAt = new Date("2026-11-24T10:00:00.000Z");
     const tx = archiveTx({ id: surveyId, status: "inProgress", archivedAt: null });
-    tx.survey.update.mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
+    tx.survey.update.mockResolvedValue({ id: surveyId, status: "paused", archivedAt });
 
-    await archiveSurvey(surveyId);
+    await expect(archiveSurvey(surveyId)).resolves.toEqual({
+      id: surveyId,
+      status: "paused",
+      archivedAt,
+      changed: true,
+      previous: { id: surveyId, status: "inProgress", archivedAt: null },
+    });
 
     const statement = String(tx.$queryRaw.mock.calls[0][0].join("?"));
     expect(statement).toContain('FROM "Survey"');
@@ -426,10 +433,17 @@ describe("archiveSurvey", () => {
   });
 
   test("should archive a paused survey without changing its status or publishOn", async () => {
+    const archivedAt = new Date("2026-11-24T10:00:00.000Z");
     const tx = archiveTx({ id: surveyId, status: "paused", archivedAt: null });
-    tx.survey.update.mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
+    tx.survey.update.mockResolvedValue({ id: surveyId, status: "paused", archivedAt });
 
-    await archiveSurvey(surveyId);
+    await expect(archiveSurvey(surveyId)).resolves.toEqual({
+      id: surveyId,
+      status: "paused",
+      archivedAt,
+      changed: true,
+      previous: { id: surveyId, status: "paused", archivedAt: null },
+    });
 
     expect(tx.survey.update).toHaveBeenCalledWith({
       where: { id: surveyId },

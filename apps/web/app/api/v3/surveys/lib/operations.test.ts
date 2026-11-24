@@ -1574,7 +1574,14 @@ describe("archiveV3Survey", () => {
     });
   });
 
-  test("archives an authorized survey and enriches the audit log", async () => {
+  test("archives an authorized survey and enriches the audit log from the locked row", async () => {
+    // The pre-read disagrees with what the service read under the lock; the audit must follow the service.
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
+      survey: { ...survey, status: "inProgress" },
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    });
     const auditLog = {} as TV3AuditLog;
 
     const response = await archiveV3Survey({
@@ -1598,8 +1605,10 @@ describe("archiveV3Survey", () => {
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",
-      oldObject: archivePrevious,
     });
+    // Exact, so reverting either object to the pre-read fails (it carries `inProgress`).
+    expect(auditLog.oldObject).toEqual(archivePrevious);
+    expect(auditLog.newObject).toEqual({ id: "survey_1", status: "paused", archivedAt: expect.any(Date) });
   });
 
   test("skips an archive the service wrote nothing for, even when the pre-read saw it live", async () => {
@@ -1623,6 +1632,7 @@ describe("archiveV3Survey", () => {
 
     expect(response.status).toBe(200);
     expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
+    expect(auditLog.oldObject).toEqual({ id: "survey_1", status: "paused", archivedAt });
   });
 
   test("audits an archive that wrote even though the pre-read saw it archived", async () => {
@@ -1693,7 +1703,14 @@ describe("restoreV3Survey", () => {
     });
   });
 
-  test("restores an authorized survey and enriches the audit log", async () => {
+  test("restores an authorized survey and enriches the audit log from the locked row", async () => {
+    // The pre-read disagrees with the service's locked row; the audit must follow the service.
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
+      survey: { ...archivedSurvey, status: "inProgress" },
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    });
     const auditLog = {} as TV3AuditLog;
 
     const response = await restoreV3Survey({
@@ -1713,7 +1730,18 @@ describe("restoreV3Survey", () => {
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",
-      oldObject: { id: "survey_1", status: "draft", archivedAt: archivedSurvey.archivedAt },
+    });
+    // Exact, so reverting either object to the pre-read fails (it carries `inProgress`).
+    expect(auditLog.oldObject).toEqual({
+      id: "survey_1",
+      status: "draft",
+      archivedAt: archivedSurvey.archivedAt,
+    });
+    expect(auditLog.newObject).toEqual({
+      id: "survey_1",
+      status: "paused",
+      archivedAt: null,
+      retentionExemptionId: null,
     });
   });
 
@@ -1744,6 +1772,7 @@ describe("restoreV3Survey", () => {
 
     expect(response.status).toBe(200);
     expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
+    expect(auditLog.oldObject).toEqual({ id: "survey_1", status: "draft", archivedAt: null });
   });
 
   test("records the signed-in user as the restorer, and the retention exemption in the audit log", async () => {
