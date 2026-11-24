@@ -46,7 +46,8 @@ export const getMemberTeamsByOrganizationId = async (
     };
     teamById.set(team.id, base);
     for (const teamUser of team.teamUsers) {
-      (teamsByUserId[teamUser.userId] ??= []).push({ ...base, role: teamUser.role });
+      teamsByUserId[teamUser.userId] ??= [];
+      teamsByUserId[teamUser.userId].push({ ...base, role: teamUser.role });
     }
   }
 

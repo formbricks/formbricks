@@ -2,15 +2,15 @@ import { MAX_EMBEDDED_KEY_LENGTH } from "@/modules/ee/analysis/lib/embedded-data
 import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
 import {
   type TViewerAccessJoin,
-  VIEWER_ACCESS_EMBEDDED_PREFIX,
   VIEWER_ACCESS_MAX_CONDITIONS,
   VIEWER_ACCESS_RECORD_FIELDS,
   getViewerAccessEmbeddedKey,
 } from "./viewer-access-fields";
 
+export { VIEWER_ACCESS_EMBEDDED_PREFIX } from "./viewer-access-fields";
+
 export {
   type TViewerAccessJoin,
-  VIEWER_ACCESS_EMBEDDED_PREFIX,
   VIEWER_ACCESS_MAX_CONDITIONS,
   VIEWER_ACCESS_RECORD_FIELDS,
   getViewerAccessEmbeddedKey,

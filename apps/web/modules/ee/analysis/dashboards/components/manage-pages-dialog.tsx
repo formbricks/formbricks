@@ -176,7 +176,7 @@ export function ManagePagesDialog({
           <table className="w-full table-fixed">
             <thead>
               <tr className="border-b border-slate-200 text-left text-xs font-medium text-slate-500">
-                <th className="w-8" aria-hidden="true" />
+                <th className="w-8" />
                 <th className="w-1/3 py-2 pr-3 font-medium">{t("workspace.analysis.dashboards.page")}</th>
                 <th className="py-2 pr-2 font-medium">
                   <span className="inline-flex items-center gap-1">
@@ -186,7 +186,7 @@ export function ManagePagesDialog({
                     </InfoTooltip>
                   </span>
                 </th>
-                <th className="w-10" aria-hidden="true" />
+                <th className="w-10" />
               </tr>
             </thead>
             <DndContext

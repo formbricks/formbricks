@@ -354,7 +354,8 @@ const toAttributeRecord = (
   for (const { attributeKeyId, value } of values) {
     const key = keyById.get(attributeKeyId);
     if (!key) continue;
-    (record[key] ??= []).push(value);
+    record[key] ??= [];
+    record[key].push(value);
   }
   return record;
 };

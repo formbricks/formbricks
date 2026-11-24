@@ -159,7 +159,7 @@ export const DashboardViewerAccessSection = ({
         <Muted className="block text-slate-500">
           {t("workspace.settings.feedback_directories.dashboard_viewer_access_description")}
         </Muted>
-        {current && current.conditions.length === 0 && (
+        {current?.conditions.length === 0 && (
           <Muted className="block text-slate-500">
             {t("workspace.settings.feedback_directories.dashboard_viewer_access_no_conditions")}
           </Muted>

@@ -314,7 +314,7 @@ const checkAnyOf = async (
         ]
       : []),
   ]);
-  const allowed = decisions.slice(0, checks.length).some((decision) => decision === true);
+  const allowed = decisions.slice(0, checks.length).includes(true);
   if (!mcpGrant) return allowed;
 
   const grantReaches = decisions[checks.length] === true;

@@ -41,7 +41,7 @@ type TAttributeKeyDialogProps = Readonly<{
 const getDatasetsInUse = (error: unknown): string[] | null => {
   if (!(error instanceof V3ApiError) || error.code !== "member_attribute_key_in_use") return null;
   const datasets = (error.details as { datasets?: { name?: unknown }[] } | undefined)?.datasets ?? [];
-  return datasets.map((dataset) => String(dataset.name ?? ""));
+  return datasets.map((dataset) => (typeof dataset.name === "string" ? dataset.name : ""));
 };
 
 /**

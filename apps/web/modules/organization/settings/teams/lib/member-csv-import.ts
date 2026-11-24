@@ -27,7 +27,7 @@ const MEMBER_COLUMN_NAMES = new Set(
 );
 
 /** A loose email check, so an obviously broken cell is shown as invalid before anything is sent. */
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 export type TCsvAttributeKey = { key: string; label: string };
 

@@ -175,7 +175,7 @@ export async function runV3ChartQuery({
   extraFilters?: TCubeFilter[];
   respond?: (data: TV3ChartData) => object;
   /** Dashboard Viewer access (ADR-0061) the query runs under; only dashboard-bound reads pass it. */
-  viewerAccess?: Parameters<typeof runChartQuery>[0]["viewerAccess"];
+  viewerAccess?: NonNullable<Parameters<typeof runChartQuery>[0]["viewerAccess"]>;
 }): Promise<Response> {
   // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
   // edited in the builder. Nothing is saved here; a write keeps such a range only if its chart already had it.

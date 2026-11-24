@@ -366,7 +366,7 @@ export type TAppDashboard = Pick<TV3DashboardResource, "id" | "workspaceId" | "n
   pages: TDashboardPage[];
   widgets: TDashboardWidget[];
   /** What the reader's Dashboard Viewer access leaves them (ENG-7478); only on a dashboard read. */
-  viewerAccess?: TV3DashboardResource["viewerAccess"];
+  viewerAccess?: NonNullable<TV3DashboardResource["viewerAccess"]>;
 };
 
 /**
