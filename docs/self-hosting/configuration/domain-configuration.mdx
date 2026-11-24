@@ -125,6 +125,14 @@ All other routes are restricted to the private domain (`WEBAPP_URL`) for securit
 
 A workflow's [Webhook Secret URL](/workflows/webhook-trigger) uses `PUBLIC_URL` when configured and otherwise falls back to `WEBAPP_URL`. Only the receiver is public: fetching or regenerating the Secret URL and all other workflow management operations stay on `WEBAPP_URL`. With domain split enabled, calls to the receiver on the admin domain return `404`. See [Workflow Webhook trigger behind a reverse proxy](/self-hosting/configuration/environment-variables#workflow-webhook-trigger-behind-a-reverse-proxy) for the headers and logging your proxy needs.
 
+<Note>
+If you already configured senders with `WEBAPP_URL`-based Secret URLs from a pre-release build and use
+`PUBLIC_URL`, coordinate deploying this change with updating those senders. External sender configurations
+are not updated automatically, and calls to the old admin-domain URLs return `404` after deployment.
+Copy each updated Secret URL from the workflow editor after deployment; regenerating its token is not
+required. Plan the sender updates alongside the deployment to avoid missed webhook calls.
+</Note>
+
 ### App URL SDK Configuration
 
 #### Multi-Domain Setup SDK Configuration
