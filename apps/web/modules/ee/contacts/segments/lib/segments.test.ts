@@ -22,6 +22,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import {
   ALL_SEGMENT_SURVEY_REFS,
   PrismaSegment,
+  SegmentSurveysChangedError,
   cloneSegment,
   compareValues,
   createSegment,
@@ -643,6 +644,7 @@ describe("Segment Service Tests", () => {
     beforeEach(() => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(segmentToDeletePrisma);
       vi.mocked(prisma.segment.delete).mockResolvedValue(segmentToDeletePrisma);
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
     });
 
     test("should delete a segment successfully", async () => {
@@ -666,6 +668,60 @@ describe("Segment Service Tests", () => {
     test("should throw OperationNotAllowedError if segment is linked to surveys", async () => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
       await expect(deleteSegment(segmentId)).rejects.toThrow(OperationNotAllowedError);
+      expect(prisma.segment.findMany).not.toHaveBeenCalled();
+    });
+
+    test("should throw OperationNotAllowedError if another segment's filters use it (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        {
+          id: "referencing-segment",
+          filters: [
+            {
+              id: "clfilter0000000000000001",
+              connector: null,
+              resource: {
+                id: "clresource00000000000001",
+                root: { type: "segment", segmentId },
+                qualifier: { operator: "userIsIn" },
+                value: "",
+              },
+            },
+          ],
+        },
+      ] as never);
+
+      await expect(deleteSegment(segmentId)).rejects.toThrow(
+        new OperationNotAllowedError("Cannot delete a segment that another segment's filters use")
+      );
+
+      expect(prisma.segment.findMany).toHaveBeenCalledWith({
+        where: { workspaceId, id: { not: segmentId } },
+        select: { id: true, filters: true },
+      });
+      expect(prisma.segment.delete).not.toHaveBeenCalled();
+    });
+
+    test("should delete a segment another segment's filters only read by another id (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        {
+          id: "referencing-segment",
+          filters: [
+            {
+              id: "clfilter0000000000000002",
+              connector: null,
+              resource: {
+                id: "clresource00000000000002",
+                root: { type: "segment", segmentId: "another-segment" },
+                qualifier: { operator: "userIsIn" },
+                value: "",
+              },
+            },
+          ],
+        },
+      ] as never);
+
+      await expect(deleteSegment(segmentId)).resolves.toEqual(segmentToDelete);
+      expect(prisma.segment.delete).toHaveBeenCalledOnce();
     });
 
     test("should throw DatabaseError on Prisma delete error", async () => {
@@ -795,6 +851,53 @@ describe("Segment Service Tests", () => {
       expect(validateInputs).toHaveBeenCalledWith(
         [segmentId, expect.any(Object)],
         [updateData, expect.any(Object)]
+      );
+    });
+
+    test("guards the write on the surveys the caller was authorized to target (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
+
+      await updateSegment(segmentId, updateData, { connectedSurveyIds: [surveyId, surveyId] });
+
+      expect(prisma.segment.update).toHaveBeenCalledWith({
+        where: { id: segmentId, surveys: { every: { id: { in: [surveyId] } } } },
+        data: { ...updateData, surveys: undefined },
+        select: selectSegment,
+      });
+    });
+
+    test("answers a changed connected set with SegmentSurveysChangedError (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
+      vi.mocked(prisma.segment.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("No record found", {
+          code: "P2025",
+          clientVersion: "test",
+        })
+      );
+
+      await expect(
+        updateSegment(segmentId, updateData, { connectedSurveyIds: [surveyId] })
+      ).rejects.toBeInstanceOf(SegmentSurveysChangedError);
+
+      expect(prisma.segment.findUnique).toHaveBeenLastCalledWith({
+        where: { id: segmentId },
+        select: { id: true },
+      });
+    });
+
+    test("answers a segment deleted under a guarded write with ResourceNotFoundError (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.findUnique)
+        .mockResolvedValueOnce(mockSegmentPrisma)
+        .mockResolvedValueOnce(null);
+      vi.mocked(prisma.segment.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("No record found", {
+          code: "P2025",
+          clientVersion: "test",
+        })
+      );
+
+      await expect(updateSegment(segmentId, updateData, { connectedSurveyIds: [surveyId] })).rejects.toThrow(
+        ResourceNotFoundError
       );
     });
 

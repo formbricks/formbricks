@@ -34,15 +34,16 @@ import {
   assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
-  assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   restoreHiddenSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
+  SegmentSurveysChangedError,
   cloneSegment,
   createSegment,
   deleteSegment,
+  getExistingWorkspaceSurveyIds,
   getSegment,
   getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap,
@@ -60,7 +61,8 @@ import {
  * Segments, for the segments page and the survey editor's targeting card, with the checks of the server
  * actions they replace, in their order: write (or read) access to the workspace, the workspace's
  * state-mutation budget for a write, then the advanced-targeting licence (403 with its reason). A survey a
- * write targets also needs `survey.write` (ENG-3282), and every survey the segment's filters read must be
+ * write targets — every survey a stored segment is connected to included (ENG-7269) — also needs
+ * `survey.write` (ENG-3282), and every survey the segment's filters read must be
  * visible to the caller (ENG-6870). The services' refusals answer 422 with their reason (filters that read a
  * survey the caller can't see, a survey from another workspace, a recursive filter), and a segment or
  * survey that is gone the uniform 403.
@@ -143,6 +145,23 @@ const requireSurveyWrite = async (
     : problemForbidden(requestId, undefined, instance);
 
 /**
+ * ENG-7269: `survey.write` on every survey a segment write targets, the ones it is already connected to
+ * included — its stored filters are their targeting. One batched, visibility-scoped lookup; a survey the
+ * caller cannot see, one that is gone, or a legacy link to another workspace answers the uniform 403.
+ */
+const requireTargetSurveyWrite = async (
+  surveyIds: ReadonlyArray<string>,
+  workspaceId: string,
+  visibleSurveyWhere: Awaited<ReturnType<typeof getUserVisibleSurveyWhere>>,
+  { requestId, instance }: TRequestContext
+): Promise<Response | null> => {
+  if (surveyIds.length === 0) return null;
+
+  const writable = await getExistingWorkspaceSurveyIds(workspaceId, [...surveyIds], visibleSurveyWhere);
+  return writable.size < surveyIds.length ? problemForbidden(requestId, undefined, instance) : null;
+};
+
+/**
  * `POST /api/internal/segments`: create a segment, optionally for one survey (the survey editor's private
  * segment, or "save as new segment"). Audited as `created`, captured in PostHog as `segment_created`.
  */
@@ -209,8 +228,9 @@ export async function createSegmentOperation({
 }
 
 /**
- * `PATCH /api/internal/segments/{segmentId}`: change a segment, or connect surveys to it. Every connected
- * survey must be in the segment's workspace (ENG-1920) and visible to the caller; the stored survey ids
+ * `PATCH /api/internal/segments/{segmentId}`: change a segment, or connect surveys to it. Every survey the
+ * segment is, or becomes, connected to needs `survey.write` (ENG-7269) — a segment's stored filters are
+ * the targeting of all of them — and must be in the segment's workspace (ENG-1920); the stored survey ids
  * the caller can't see are kept in its filters; the saved tree is held to the filter bounds and may not
  * refer to the segment itself. Audited as `updated`, from the segment as it was to the segment as saved.
  */
@@ -244,12 +264,17 @@ export async function updateSegmentOperation({
   let updated: TSegment;
   try {
     const visibleSurveyWhere = await getUserVisibleSurveyWhere(userId, organizationId);
-    const isVisibilityScoped = Object.keys(visibleSurveyWhere).length > 0;
-    if (body.surveys?.length && isVisibilityScoped) {
-      await assertSurveysInWorkspace(body.surveys, workspaceId, visibleSurveyWhere);
-    }
 
     oldObject = await getSegment(segmentId);
+
+    // ENG-7269: a segment's stored filters are the targeting of every survey it is connected to, so a
+    // write needs `survey.write` on each — the ones this body connects included. For a caller who passed
+    // `workspace.write`, the visibility predicate is exactly `survey.write` (ENG-3282), so the batched
+    // lookup below answers it without a round trip per survey.
+    const targetSurveyIds = [...new Set([...oldObject.surveys, ...(body.surveys ?? [])])];
+    const refused = await requireTargetSurveyWrite(targetSurveyIds, workspaceId, visibleSurveyWhere, context);
+    if (refused) return refused;
+
     const actor = await resolveSurveyActorContext({ type: "user", id: userId }, organizationId);
     const data: TSegmentUpdateInput = body.filters
       ? {
@@ -274,9 +299,12 @@ export async function updateSegmentOperation({
       );
     }
 
-    updated = await updateSegment(segmentId, data);
+    updated = await updateSegment(segmentId, data, { connectedSurveyIds: targetSurveyIds });
   } catch (error) {
     if (isSegmentTitleTaken(error)) return segmentTitleTaken(context);
+    if (error instanceof SegmentSurveysChangedError) {
+      return problemConflict(requestId, error.message, instance);
+    }
     return refusalOrThrow(error, context);
   }
 

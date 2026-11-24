@@ -44,6 +44,7 @@ import {
   searchForAttributeKeyInSegment,
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
+import { segmentFiltersReferenceSegment } from "./filter-survey-ids";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
 import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "./segment-errors";
 
@@ -465,6 +466,23 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
   }
 };
 
+/**
+ * ENG-7269: a segment another segment's `segment` filter still names. Deleting it would leave that
+ * reference dangling — evaluation then matches nobody on the Prisma path and throws in the in-memory
+ * one — so the delete is refused while any other segment of the workspace reads it. One workspace-scoped
+ * scan: deletes are rare, and a workspace's segments are already read whole elsewhere.
+ */
+const findSegmentReferencing = async (workspaceId: string, segmentId: string) => {
+  const segments = await prisma.segment.findMany({
+    where: { workspaceId, id: { not: segmentId } },
+    select: { id: true, filters: true },
+  });
+
+  return segments.find((segment) =>
+    segmentFiltersReferenceSegment(segment.filters as TBaseFilters, segmentId)
+  );
+};
+
 export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
   validateInputs([segmentId, ZId]);
 
@@ -476,6 +494,10 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
 
     if (currentSegment.surveys?.length) {
       throw new OperationNotAllowedError("Cannot delete a segment that is associated with a survey");
+    }
+
+    if (await findSegmentReferencing(currentSegment.workspaceId, segmentId)) {
+      throw new OperationNotAllowedError("Cannot delete a segment that another segment's filters use");
     }
 
     const segment = await prisma.segment.delete({
@@ -599,7 +621,34 @@ export const getSurveyWorkspaceIdMap = reactCache(
   }
 );
 
-export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput): Promise<TSegment> => {
+/**
+ * ENG-7269: a segment write whose connected surveys changed after the caller was authorized — a survey
+ * connected between the check and the write. A 409: the request is fine, the segment's state moved under
+ * it, so the caller re-reads and retries. Listed in the callers that map it (the internal segment route).
+ */
+export class SegmentSurveysChangedError extends Error {
+  readonly statusCode = 409;
+
+  constructor() {
+    super("The segment's connected surveys changed while saving. Reload and try again.");
+    this.name = "SegmentSurveysChangedError";
+  }
+}
+
+export type TSegmentUpdateOptions = Readonly<{
+  /**
+   * ENG-7269: the survey ids the caller was authorized to target. The write lands only while the segment
+   * is connected to no survey outside this set, so a survey connected after the caller's check refuses
+   * the write instead of being retargeted unawares.
+   */
+  connectedSurveyIds?: ReadonlyArray<string>;
+}>;
+
+export const updateSegment = async (
+  segmentId: string,
+  data: TSegmentUpdateInput,
+  { connectedSurveyIds }: TSegmentUpdateOptions = {}
+): Promise<TSegment> => {
   validateInputs([segmentId, ZId], [data, ZSegmentUpdateInput]);
 
   try {
@@ -630,6 +679,9 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
     const segment = await prisma.segment.update({
       where: {
         id: segmentId,
+        ...(connectedSurveyIds && {
+          surveys: { every: { id: { in: [...new Set(connectedSurveyIds)] } } },
+        }),
       },
       data: updatedInput,
       select: selectSegment,
@@ -639,6 +691,13 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
   } catch (error) {
     throwSegmentTitleTaken(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // The guarded update matched no row: the segment moved under the caller, or a survey outside the
+      // authorized set was connected to it since the check. Tell the two apart for the answer.
+      if (error.code === "P2025" && connectedSurveyIds) {
+        const existing = await prisma.segment.findUnique({ where: { id: segmentId }, select: { id: true } });
+        if (!existing) throw new ResourceNotFoundError("segment", segmentId);
+        throw new SegmentSurveysChangedError();
+      }
       throw new DatabaseError(error.message);
     }
 

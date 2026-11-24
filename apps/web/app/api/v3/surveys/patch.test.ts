@@ -1356,7 +1356,12 @@ describe("patchV3Survey", () => {
       type: "app",
       recontactDays: 7,
       triggers: [],
-      segment: { id: "clsg1234567890123456789012", filters: [] },
+      segment: {
+        id: "clsg1234567890123456789012",
+        isPrivate: true,
+        surveys: ["clsv1234567890123456789012"],
+        filters: [],
+      },
     } as unknown as TSurvey;
 
     const attributeFilters = [
@@ -1611,6 +1616,33 @@ describe("patchV3Survey", () => {
           { requestId: "req_app_no_segment", organizationId: "org_1" }
         )
       ).rejects.toThrow(V3SurveyReferenceValidationError);
+
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["shared", { isPrivate: false, surveys: ["clsv1234567890123456789012"] }],
+      [
+        "used by another survey",
+        { isPrivate: true, surveys: ["clsv1234567890123456789012", "clsvother000000000000000"] },
+      ],
+    ])("refuses a targeting change when the segment is %s (ENG-7269)", async (_label, segment) => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      const survey = {
+        ...appCurrentSurvey,
+        segment: { ...(appCurrentSurvey.segment ?? {}), ...segment },
+      } as unknown as TSurvey;
+
+      await expect(
+        patchV3Survey(
+          survey,
+          { targeting: { filters: attributeFilters } },
+          { requestId: "req_app_patch_shared", organizationId: "org_1" }
+        )
+      ).rejects.toMatchObject({
+        invalidParams: [{ name: "targeting.filters", reason: expect.stringContaining("shared segment") }],
+      });
 
       expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();

@@ -1,4 +1,9 @@
-import type { TBaseFilter, TBaseFilters, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
+import type {
+  TBaseFilter,
+  TBaseFilters,
+  TSegmentSegmentFilter,
+  TSegmentSurveyInteractionFilter,
+} from "@formbricks/types/segment";
 
 // The survey ids inside a segment's survey-interaction filters, and keeping the ones a caller may not
 // see out of what they read and in what they save (ENG-3282).
@@ -19,6 +24,26 @@ export function collectSegmentFilterSurveyIds(filters: TBaseFilters): string[] {
     else if (isSurveyInteraction(resource)) ids.push(...resource.value.surveyIds);
   }
   return ids;
+}
+
+const isNestedSegment = (resource: TBaseFilter["resource"]): resource is TSegmentSegmentFilter =>
+  !Array.isArray(resource) && resource.root.type === "segment";
+
+/**
+ * Whether any filter in the tree, at any depth (nested groups included), names `segmentId` as a nested
+ * segment. Used to keep a segment another segment reads from being deleted (ENG-7269): a dangling
+ * reference matches nobody in the Prisma path and throws in the in-memory evaluator.
+ */
+export function segmentFiltersReferenceSegment(filters: TBaseFilters, segmentId: string): boolean {
+  if (!Array.isArray(filters)) return false;
+  for (const { resource } of filters) {
+    if (isFilterGroup(resource)) {
+      if (segmentFiltersReferenceSegment(resource, segmentId)) return true;
+    } else if (isNestedSegment(resource) && resource.root.segmentId === segmentId) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

@@ -20,6 +20,7 @@ import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapp
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE } from "@/lib/survey/publish-rule";
+import { isOwnPrivateSegment } from "@/lib/survey/segment-ownership";
 import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
 import {
@@ -211,6 +212,19 @@ async function buildV3AppSurveyPatchWrites(params: {
       {
         name: "targeting.filters",
         reason: "Cannot apply contact targeting: this app survey has no segment to store filters on.",
+      },
+    ]);
+  }
+
+  // ENG-7269: only the survey's own private segment carries its targeting. A shared segment is the
+  // targeting of every survey on it, so it is written through the segment endpoints, which authorize each
+  // of those surveys and audit the segment change — never as a side effect of a survey PATCH.
+  if (!isOwnPrivateSegment(currentSurvey, segmentId)) {
+    throw new V3SurveyReferenceValidationError([
+      {
+        name: "targeting.filters",
+        reason:
+          "This survey's targeting uses a shared segment. Edit the segment from its targeting card (Save changes) or the Segments page.",
       },
     ]);
   }

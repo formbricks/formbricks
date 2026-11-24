@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TBaseFilter, TBaseFilters } from "@formbricks/types/segment";
-import { redactSegmentFilterSurveyIds, restoreHiddenSurveyIds } from "./filter-survey-ids";
+import {
+  redactSegmentFilterSurveyIds,
+  restoreHiddenSurveyIds,
+  segmentFiltersReferenceSegment,
+} from "./filter-survey-ids";
 
 const interaction = (id: string, surveyIds: string[]): TBaseFilter =>
   ({
@@ -50,5 +54,41 @@ describe("restoreHiddenSurveyIds", () => {
     const stored = [interaction("f1", ["visible", "hidden"])];
     const saved = [interaction("f1", [])];
     expect(surveyIdsOf(restoreHiddenSurveyIds(saved, stored, visible))).toEqual([["hidden"]]);
+  });
+});
+
+describe("segmentFiltersReferenceSegment", () => {
+  const nested = (id: string, segmentId: string): TBaseFilter =>
+    ({
+      id,
+      connector: null,
+      resource: {
+        id: `${id}-resource`,
+        root: { type: "segment", segmentId },
+        qualifier: { operator: "userIsIn" },
+        value: "",
+      },
+    }) as unknown as TBaseFilter;
+
+  test("a direct reference is found", () => {
+    expect(segmentFiltersReferenceSegment([nested("f1", "target")], "target")).toBe(true);
+  });
+
+  test("a reference inside a nested group is found", () => {
+    const filters: TBaseFilters = [
+      interaction("f1", ["survey"]),
+      { id: "g1", connector: "and", resource: [nested("f2", "target")] },
+    ];
+    expect(segmentFiltersReferenceSegment(filters, "target")).toBe(true);
+  });
+
+  test("another segment's id, a survey filter and an empty tree read nothing", () => {
+    expect(segmentFiltersReferenceSegment([nested("f1", "other")], "target")).toBe(false);
+    expect(segmentFiltersReferenceSegment([interaction("f1", ["target"])], "target")).toBe(false);
+    expect(segmentFiltersReferenceSegment([], "target")).toBe(false);
+  });
+
+  test("a malformed stored tree reads nothing instead of throwing", () => {
+    expect(segmentFiltersReferenceSegment(null as unknown as TBaseFilters, "target")).toBe(false);
   });
 });
