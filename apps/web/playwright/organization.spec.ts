@@ -26,12 +26,12 @@ test.describe("Invite, accept and remove organization member", async () => {
       await expect(page.getByRole("button", { name: "Invite member" })).toBeVisible();
       await page.getByRole("button", { name: "Invite member" }).click();
 
-      // Fill the member name and email form
-      await expect(page.getByLabel("Email")).toBeVisible();
-      await page.getByLabel("Full Name").fill(invites.addMember.name);
-
-      await expect(page.getByLabel("Email")).toBeVisible();
-      await page.getByLabel("Email").fill(inviteEmail);
+      // Fill the member name and email form, in the dialog: the page's Member attributes list has a
+      // "Copy email" badge too.
+      const inviteDialog = page.getByRole("dialog");
+      await expect(inviteDialog.getByLabel("Email")).toBeVisible();
+      await inviteDialog.getByLabel("Full Name").fill(invites.addMember.name);
+      await inviteDialog.getByLabel("Email").fill(inviteEmail);
 
       await page.getByRole("button", { name: "Invite", exact: true }).click();
 
@@ -146,7 +146,8 @@ test.describe("Create, update and delete team", async () => {
 
     await page.getByRole("button", { name: "Save" }).click();
 
-    await expect(page.getByRole("cell", { name: "E2E Updated" })).toBeVisible();
+    // The members table on the same page lists each member's teams too, so look in the teams table.
+    await expect(page.getByTestId("team-row").getByRole("cell", { name: "E2E Updated" })).toBeVisible();
 
     await page.getByRole("button", { name: "Manage team" }).click();
 
@@ -160,7 +161,7 @@ test.describe("Create, update and delete team", async () => {
 
     await expect(page.getByRole("heading", { name: "Teams", level: 1 })).toBeVisible();
 
-    await expect(page.getByRole("cell", { name: "E2E Updated" })).not.toBeVisible();
+    await expect(page.getByTestId("team-row").getByRole("cell", { name: "E2E Updated" })).not.toBeVisible();
   });
 });
 

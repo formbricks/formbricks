@@ -186,7 +186,11 @@ test.describe("Dashboard Viewer access", () => {
       },
     });
     await prisma.dashboardPage.create({ data: { dashboardId: hidden.id, name: "Overview", order: 0 } });
-    await prisma.teamDashboard.create({ data: { teamId: setup.teamId, dashboardId: setup.dashboardId } });
+    // As the limits write sets it: the selection and the team's `dashboardLimited` flag together.
+    await prisma.team.update({
+      where: { id: setup.teamId },
+      data: { dashboardLimited: true, dashboardLimits: { create: { dashboardId: setup.dashboardId } } },
+    });
 
     // A second page, limited to another team.
     const managers = await prisma.team.create({
@@ -230,8 +234,11 @@ test.describe("Dashboard Viewer access", () => {
     }
 
     await viewer.login();
-    await expect(page.getByRole("link", { name: setup.dashboardName, exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: hidden.name })).toHaveCount(0);
+    // A row's link also reads out its chart count, creator and dates, so find it by the name's title.
+    const dashboardLink = (name: string) =>
+      page.getByRole("link").filter({ has: page.getByTitle(name, { exact: true }) });
+    await expect(dashboardLink(setup.dashboardName)).toBeVisible();
+    await expect(dashboardLink(hidden.name)).toHaveCount(0);
 
     await page.goto(dashboardUrl(setup.workspaceId, setup.dashboardId));
     await expect(page.getByText(setup.chartName)).toBeVisible();

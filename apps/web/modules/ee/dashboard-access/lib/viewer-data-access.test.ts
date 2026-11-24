@@ -10,6 +10,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@/modules/ee/member-attributes/lib/service", () => ({ getMemberAttributeValuesByKey: vi.fn() }));
 vi.mock("@/modules/ee/analysis/lib/run-chart-query", () => ({ runChartQuery: vi.fn() }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
 
 const reader = { userId: "user_1", organizationId: "org_1" };
 const probe = { workspaceId: "ws_1", actor: { type: "user" as const, id: "user_1" } };
@@ -41,6 +42,11 @@ describe("getViewerAccessSummary", () => {
 
   test("stays restricted when at least one record matches", async () => {
     vi.mocked(runChartQuery).mockResolvedValue({ rows: [{ "FeedbackRecords.count": 3 }] } as never);
+    expect((await getViewerAccessSummary(reader, ["ds_1"], probe)).status).toBe("restricted");
+  });
+
+  test("stays restricted, and the read goes on, when the probe cannot reach Cube", async () => {
+    vi.mocked(runChartQuery).mockRejectedValue(new Error("fetch failed"));
     expect((await getViewerAccessSummary(reader, ["ds_1"], probe)).status).toBe("restricted");
   });
 

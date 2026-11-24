@@ -39,11 +39,13 @@ import {
 import { getV3Response, listV3Responses } from "@/app/api/v3/responses/lib/operations";
 import { getV3Survey, listV3Surveys } from "@/app/api/v3/surveys/lib/operations";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { cubeFake, resetCubeFake } from "@/integration/cube-fake";
 import { createTestDashboard, createTestWidget } from "@/integration/dashboard-rows";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { can } from "@/lib/authorization";
 import { cache } from "@/lib/cache";
 import { getWorkspaceMembers } from "@/lib/workspace/service";
+import { replaceTeamDashboardLimits } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { feedbackRecordsGatewayAuthorizer } from "@/modules/hub/feedback-records-gateway";
 import {
@@ -208,6 +210,7 @@ beforeAll(async () => {
 }, 120_000);
 
 beforeEach(() => {
+  resetCubeFake();
   entitlement.dashboards = true;
   entitlement.viewerRole = true;
 });
@@ -814,7 +817,7 @@ describe("team dashboard limits, page team limits and Dashboard Viewer access (E
     };
     limited.openChart = await chartOn("Open", limited.openPage);
     limited.closedChart = await chartOn("Closed", limited.closedPage);
-    await prisma.teamDashboard.create({ data: { teamId: limited.team, dashboardId: allowed.id } });
+    await replaceTeamDashboardLimits(fixture.organizationId, limited.team, [allowed.id]);
     // A granted workspace whose only dashboard the team's limit leaves out.
     limited.leftOutWorkspace = (
       await prisma.workspace.create({ data: { name: "Left out", organizationId: fixture.organizationId } })
@@ -876,6 +879,8 @@ describe("team dashboard limits, page team limits and Dashboard Viewer access (E
   });
 
   test("a dashboard read keeps only the pages the viewer opens, and says which records they see", async () => {
+    // The read probes the dataset under the viewer's claim; a record must match for access to read as set up.
+    cubeFake.rows = [{ "FeedbackRecords.count": 1 }];
     const response = await getV3Dashboard({ dashboardId: limited.allowed, ...ctx(limited.viewer) });
     expect(response.status, await response.clone().text()).toBe(200);
     const dashboard = await dashboardOf(response);

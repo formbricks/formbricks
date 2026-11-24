@@ -94,7 +94,7 @@ describe("AuthZed projection outbox triggers", () => {
            AND NOT tgisinternal) AS triggers
     `;
     expect(Number(catalog?.indexes)).toBe(3);
-    expect(Number(catalog?.triggers)).toBe(23);
+    expect(Number(catalog?.triggers)).toBe(24);
   });
 
   test("does not classify an accepted invite as a revocation", async () => {

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
+import { replaceTeamDashboardLimits } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 import { runAuthzedBackfill } from "./backfill";
 import { createAuthzedBackfillApply, createAuthzedBackfillNoopApply } from "./backfill-apply";
 import { getAuthzedClient } from "./client";
@@ -85,7 +86,12 @@ const seed = async () => {
   const two = await dashboard("Two");
   await drain();
 
-  return { blue, blueTeam, member, one, owner, red, redTeam, two, workspace };
+  /** Sets a team's dashboard limit the way the limits write does: its rows and `Team.dashboardLimited`. */
+  const limit = async (teamId: string, dashboardIds: ReadonlyArray<string>) => {
+    await replaceTeamDashboardLimits(organization.id, teamId, dashboardIds);
+  };
+
+  return { blue, blueTeam, limit, member, one, owner, red, redTeam, two, workspace };
 };
 
 beforeEach(async () => {
@@ -105,11 +111,12 @@ describe("dashboard and page projection through the outbox", () => {
   });
 
   test("a team's dashboard limit narrows its viewers, and lifting it widens them again", async () => {
-    const { blue, member, one, red, redTeam, two } = await seed();
+    const { blue, limit, member, one, red, redTeam, two } = await seed();
 
-    await prisma.teamDashboard.create({ data: { dashboardId: one.id, teamId: redTeam } });
-    // The team's first selection narrows its viewers: the marker is queued as a revocation.
-    expect(await queued()).toEqual(["dashboard:grant", "team:revocation"]);
+    await limit(redTeam, [one.id]);
+    // The team's first selection narrows its viewers: the marker is queued as a revocation, once by the
+    // selection row and once by `Team.dashboardLimited`.
+    expect(await queued()).toEqual(["dashboard:grant", "team:revocation", "team:revocation"]);
     await drain();
 
     await expect(canRead("dashboard", one.id, red)).resolves.toBe(true);
@@ -119,16 +126,17 @@ describe("dashboard and page projection through the outbox", () => {
     await expect(canRead("dashboard", two.id, member)).resolves.toBe(true);
     await expect(canRead("dashboard", two.id, blue)).resolves.toBe(true);
 
-    await prisma.teamDashboard.deleteMany({ where: { teamId: redTeam } });
-    expect(await queued()).toEqual(["dashboard:revocation", "team:grant"]);
+    await limit(redTeam, []);
+    // The flag's own trigger classifies any change as a revocation, the safe side for a lifted limit too.
+    expect(await queued()).toEqual(["dashboard:revocation", "team:grant", "team:revocation"]);
     await drain();
 
     await expect(canRead("dashboard", two.id, red)).resolves.toBe(true);
   });
 
   test("a selection counts only while the team holds the dashboard's workspace", async () => {
-    const { one, red, redTeam, workspace } = await seed();
-    await prisma.teamDashboard.create({ data: { dashboardId: one.id, teamId: redTeam } });
+    const { limit, one, red, redTeam, workspace } = await seed();
+    await limit(redTeam, [one.id]);
     await drain();
     await expect(canRead("dashboard", one.id, red)).resolves.toBe(true);
 
@@ -175,8 +183,8 @@ describe("dashboard and page projection through the outbox", () => {
   });
 
   test("deleting a dashboard queues no revocation and removes its and its pages' edges", async () => {
-    const { one, redTeam } = await seed();
-    await prisma.teamDashboard.create({ data: { dashboardId: one.id, teamId: redTeam } });
+    const { limit, one, redTeam } = await seed();
+    await limit(redTeam, [one.id]);
     await prisma.dashboardPageTeam.create({ data: { pageId: one.pageId, teamId: redTeam } });
     await drain();
 
@@ -197,8 +205,8 @@ describe("dashboard and page projection through the outbox", () => {
   });
 
   test("the backfill restores dashboards, pages and team markers into an emptied graph", async () => {
-    const { one, red, redTeam, two } = await seed();
-    await prisma.teamDashboard.create({ data: { dashboardId: one.id, teamId: redTeam } });
+    const { limit, one, red, redTeam, two } = await seed();
+    await limit(redTeam, [one.id]);
     await prisma.dashboardPageTeam.create({ data: { pageId: two.pageId, teamId: redTeam } });
     await drain();
 

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import type { TCubeQueryActor } from "@/modules/ee/analysis/api/lib/cube-config";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { getMemberAttributeValuesByKey } from "@/modules/ee/member-attributes/lib/service";
@@ -112,6 +113,28 @@ const hasMatchingRecord = async (
 };
 
 /**
+ * Whether the probe finds a record, or `true` when it cannot run (Cube unreachable or refusing). The probe
+ * only picks the message a viewer sees, and every chart read carries the claim itself, so a failed probe
+ * leaves the dashboard readable and each chart shows its own error, instead of failing the whole read.
+ */
+const probeMatchingRecord = async (
+  reader: NonNullable<TViewerAccessReader>,
+  datasetId: string,
+  resolved: TResolvedViewerAccess,
+  scope: TViewerAccessProbeScope
+): Promise<boolean> => {
+  try {
+    return await hasMatchingRecord(reader, datasetId, resolved, scope);
+  } catch (error) {
+    logger.warn(
+      { error, datasetId, organizationId: reader.organizationId },
+      "Dashboard Viewer access probe failed; treating the dataset as matched"
+    );
+    return true;
+  }
+};
+
+/**
  * The summary of `reader`'s access to the datasets a dashboard's visible pages read. With a probe scope,
  * a viewer whose values exist but match no record in any restricted dataset (a misspelt "Swedn") is
  * `unmatched` too, so they see "Your access hasn't been set up" rather than a page of empty charts.
@@ -130,7 +153,7 @@ export const getViewerAccessSummary = async (
     (entry): entry is [string, TResolvedViewerAccess] => entry[1] !== null
   );
   const matches = await Promise.all(
-    restricted.map(([datasetId, access]) => hasMatchingRecord(reader, datasetId, access, probe))
+    restricted.map(([datasetId, access]) => probeMatchingRecord(reader, datasetId, access, probe))
   );
   return matches.some(Boolean) ? summary : { ...summary, status: "unmatched" };
 };

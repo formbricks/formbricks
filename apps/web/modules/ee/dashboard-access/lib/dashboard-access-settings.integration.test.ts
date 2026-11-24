@@ -141,7 +141,11 @@ describe("a team's dashboard limits", () => {
     const read = await getV3TeamDashboardLimits({ teamId: ids.team, ...ctx(fixture.users.owner) });
     expect(((await read.json()) as { data: unknown }).data).toEqual({
       teamId: ids.team,
+      limited: true,
       dashboardIds: [ids.dashboard],
+      dashboards: [
+        { id: ids.dashboard, name: "Mine", workspaceId: fixture.workspaceId, workspaceName: "Dashboards" },
+      ],
     });
     expect((await getV3TeamDashboardLimits({ teamId: ids.team, ...ctx(fixture.users.editor) })).status).toBe(
       403

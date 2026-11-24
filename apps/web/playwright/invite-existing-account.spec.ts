@@ -30,8 +30,10 @@ test.describe("Invite sign-up with an address that already has an account @slow"
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
       await page.getByRole("button", { name: "Invite member" }).click();
-      await page.getByLabel("Full Name").fill("Existing Person");
-      await page.getByLabel("Email").fill(inviteeEmail);
+      // In the dialog: the page's Member attributes list has a "Copy email" badge too.
+      const inviteDialog = page.getByRole("dialog");
+      await inviteDialog.getByLabel("Full Name").fill("Existing Person");
+      await inviteDialog.getByLabel("Email").fill(inviteeEmail);
       await page.getByRole("button", { name: "Invite", exact: true }).click();
       await expect(page.locator(".formbricks__toast__success")).toBeVisible({ timeout: 15000 });
 
