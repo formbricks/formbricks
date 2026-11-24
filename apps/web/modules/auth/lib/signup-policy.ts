@@ -67,6 +67,23 @@ export const signupDisabledError = (): APIError =>
     code: SIGNUP_DISABLED_ERROR_CODE,
   });
 
+/** Where a closed-sign-up rejection was decided: one value per layer that enforces the policy. */
+export type TClosedSignupRejectionLayer =
+  | "sign-up-route"
+  | "better-auth-sign-up-hook"
+  | "better-auth-user-create-backstop";
+
+/**
+ * Leave a trace of a sign-up the closed-sign-up policy refused (ENG-2347). A log line, not an alert:
+ * the client-facing errors are kept out of Sentry on purpose (ENG-2037), so without this an operator of
+ * a closed instance had no sign that anyone was trying to create accounts on it. Every layer that
+ * enforces the policy calls it, so the line reads the same whichever one refused. The address is left
+ * out: it is unauthenticated input, and the layer is what an operator acts on.
+ */
+export const logClosedSignupRejection = (layer: TClosedSignupRejectionLayer): void => {
+  logger.warn({ layer }, "Rejected a sign-up under the closed-sign-up policy");
+};
+
 /**
  * Better Auth `before` hook: enforce the closed-sign-up policy on Better Auth's `/sign-up/email` endpoint
  * BEFORE the endpoint handler runs (ENG-2293).
@@ -100,9 +117,7 @@ export const signupPolicyBeforeHandler = async (ctx: AuthHookContext): Promise<v
   if (isSignupDomainAllowed()) return;
 
   if (!(await isUninvitedSignupAllowed())) {
-    // A log line, not an alert (ENG-2347): the client-facing APIError is kept out of Sentry on purpose
-    // (ENG-2037), and without this the rejection left no trace an operator could see.
-    logger.warn({ path: ctx.path }, "Rejected a credential sign-up under the closed-sign-up policy");
+    logClosedSignupRejection("better-auth-sign-up-hook");
     throw signupDisabledError();
   }
 };

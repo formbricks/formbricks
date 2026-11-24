@@ -442,6 +442,22 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       expect(provisionSsoUserMemberships).toHaveBeenCalledTimes(1);
     });
 
+    // A failed provisioning must not swallow the security signal: the account exists regardless.
+    test("still emits the signal when provisioning throws", async () => {
+      vi.mocked(provisionSsoUserMemberships).mockRejectedValueOnce(new Error("membership write failed"));
+
+      await expect(runAfter(false)).rejects.toThrow("membership write failed");
+      expect(loggerWarn).toHaveBeenCalledWith(
+        "SSO sign-up created an account the identity provider did not report as verified"
+      );
+      expect(queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "updated",
+          newObject: expect.objectContaining({ emailVerified: false }),
+        })
+      );
+    });
+
     // Observability must never be the reason a sign-up fails: this runs post-commit, so a throw here
     // would surface as a broken callback on an account that already exists.
     test.each([
@@ -486,7 +502,7 @@ describe("ssoDatabaseHooks.user.create.after", () => {
         targetId: "u1",
         organizationId: "org-1",
         status: "success",
-        newObject: { id: "u1", email: "a@b.com", emailVerified: true, identityProvider: "openid" },
+        newObject: { id: "u1", email: "a@b.com", emailVerified: true },
       });
       expect(vi.mocked(provisionSsoUserMemberships).mock.invocationCallOrder[0]).toBeLessThan(
         vi.mocked(queueAuditEventBackground).mock.invocationCallOrder[0]
@@ -503,6 +519,19 @@ describe("ssoDatabaseHooks.user.create.after", () => {
 
     // The account exists either way (the hook runs post-commit), so it is recorded either way — as a
     // failure, matching the credential sign-up route — and the provisioning error still propagates.
+    // The marker is an update to the user, so it must not reach the audit log before the user's creation.
+    test("records the creation before the unverified-address marker", async () => {
+      await runWithSsoRequestContext(async () => {
+        setSsoProvisioningDecision(provisionDecision);
+        await after({ id: "u1", email: "a@b.com", emailVerified: false } as never, callbackCtx as never);
+      });
+
+      expect(vi.mocked(queueAuditEventBackground).mock.calls.map(([event]) => event.action)).toEqual([
+        "created",
+        "updated",
+      ]);
+    });
+
     test("records a failure when provisioning throws, and rethrows", async () => {
       vi.mocked(provisionSsoUserMemberships).mockRejectedValueOnce(new Error("membership write failed"));
 

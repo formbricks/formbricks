@@ -87,7 +87,7 @@ describe("signupPolicyBeforeHandler", () => {
     await expect(signupPolicyBeforeHandler(unmarkedSignup)).rejects.toBeDefined();
     expect(loggerWarn).toHaveBeenCalledTimes(1);
     expect(loggerWarn).toHaveBeenCalledWith(
-      { path: "/sign-up/email" },
+      { layer: "better-auth-sign-up-hook" },
       expect.stringContaining("closed-sign-up policy")
     );
   });
