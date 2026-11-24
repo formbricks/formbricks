@@ -288,6 +288,17 @@ describe("SSO sign-in hint", () => {
   });
 });
 
+describe("verification email", () => {
+  test("keeps the verification and resend links without promising a fixed expiry", async () => {
+    const { verifyLink, verificationRequestLink } = exampleData.verificationEmail;
+    const html = await renderVerificationEmail({ verifyLink, verificationRequestLink, t });
+
+    expect(html).not.toContain("The link is valid for 24 hours.");
+    expect(html).toContain(`href="${verifyLink}"`);
+    expect(html).toContain(`href="${verificationRequestLink}"`);
+  });
+});
+
 describe("legal footer", () => {
   test("renders imprint and privacy links only when the legal props are supplied", async () => {
     const withLegal = await renderVerificationEmail({
