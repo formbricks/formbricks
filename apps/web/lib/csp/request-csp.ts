@@ -19,6 +19,7 @@ import { getCspHosts } from "./hosts";
 const hosts = getCspHosts({
   webappUrl: WEBAPP_URL,
   publicUrl: env.PUBLIC_URL?.trim(),
+  assetPrefixUrl: env.ASSET_PREFIX_URL,
   formbricksAppUrl: IS_FORMBRICKS_SURVEYS_CONFIGURED ? FORMBRICKS_APP_URL : undefined,
   s3EndpointUrl: S3_ENDPOINT_URL,
   s3BucketName: S3_BUCKET_NAME,

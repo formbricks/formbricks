@@ -25,6 +25,8 @@ const loopbackVariants = (origin: string): string[] => {
 export interface TCspHostConfig {
   webappUrl?: string;
   publicUrl?: string;
+  /** Where the build serves its scripts, styles and fonts from (ASSET_PREFIX_URL), when not this origin. */
+  assetPrefixUrl?: string;
   /** The Formbricks instance whose SDK runs in the app (FORMBRICKS_APP_URL), when it is configured. */
   formbricksAppUrl?: string;
   s3EndpointUrl?: string;
@@ -70,6 +72,7 @@ export const getCspHosts = (config: TCspHostConfig): TCspHosts => {
   const appOrigins = withoutDisallowedLoopback([
     toOrigin(config.webappUrl),
     toOrigin(config.publicUrl),
+    toOrigin(config.assetPrefixUrl),
     toOrigin(config.formbricksAppUrl),
   ]);
   const storageOrigins = withoutDisallowedLoopback(getStorageOrigins(config));

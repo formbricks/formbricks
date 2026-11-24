@@ -12,6 +12,7 @@ describe("getCspHosts", () => {
     const hosts = getCspHosts({
       ...base,
       publicUrl: "https://surveys.example.com/base",
+      assetPrefixUrl: "https://cdn.example.com/formbricks",
       formbricksAppUrl: "https://app.formbricks.com",
       sentryDsn: "https://key@o123.ingest.de.sentry.io/456",
     });
@@ -19,6 +20,7 @@ describe("getCspHosts", () => {
     expect(hosts.appOrigins).toEqual([
       "https://app.example.com",
       "https://surveys.example.com",
+      "https://cdn.example.com",
       "https://app.formbricks.com",
     ]);
     expect(hosts.sentryOrigins).toEqual(["https://o123.ingest.de.sentry.io"]);
