@@ -8,6 +8,7 @@ import type {
 } from "@modelcontextprotocol/server";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { problemForbidden } from "@/app/api/v3/lib/response";
 import { type TMcpReachOutcome, runRecordingMcpReach } from "@/lib/authorization/context";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import type { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
@@ -22,6 +23,7 @@ import {
   getMcpToolAuthInfo,
   isMcpDashboardViewerOnly,
 } from "../auth";
+import { MCP_API_ROUTE } from "../constants";
 import { mcpOutsideGrantResult, responseToMcpToolResult } from "../errors";
 import { describeMcpPermissionRequirement, mcpGrantAllows } from "../grant";
 import {
@@ -80,18 +82,33 @@ async function guardScopes(
   const refused = mode === "allOf" ? missing.length > 0 : missing.length === requirements.length;
   if (!refused) return null;
 
+  const needs = describeNeeds(missing, mode);
   // A Dashboard viewer's scopes are the role's, not the client's: a reconnect can't widen them.
   if (isMcpDashboardViewerOnly(authInfo)) {
     return await responseToMcpToolResult(
-      createMcpRoleNotPermittedResponse(requestId, describeNeeds(missing, mode), {
+      createMcpRoleNotPermittedResponse(requestId, needs, {
         readsThroughDashboard: DASHBOARD_VIEWER_READS.has(toolName),
       }),
       requestId
     );
   }
+
+  const authentication = getMcpAuthentication(authInfo);
+  if (authentication && "apiKeyId" in authentication) {
+    const scopes = toScopes(missing).join(", ");
+    return await responseToMcpToolResult(
+      problemForbidden(
+        requestId,
+        `Not permitted: this API key lacks ${needs} (${scopes}). Use an API key with this access.`,
+        MCP_API_ROUTE
+      ),
+      requestId
+    );
+  }
+
   return await responseToMcpToolResult(
     createMcpScopeNotPermittedResponse(requestId, {
-      needs: describeNeeds(missing, mode),
+      needs,
       missingScopes: toScopes(missing),
       challengeScopes: toScopes(requirements),
       anyOf: mode === "anyOf" && missing.length > 1,

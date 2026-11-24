@@ -133,11 +133,10 @@ a scope family, and the gate maps it to that family's scope at the declared leve
 needs `surveys:read`, Charts at `write` needs `dashboards:write` — so the table above still says which
 scope opens each tool. A tool cannot be registered without a permission: the type refuses an empty list,
 and a list that is empty or names a permission or level the registry does not offer throws at
-registration. A new tool inherits enforcement by construction — the gate refuses a token whose scopes
-don't reach a declared permission before the handler touches a v3 operation, with a 403 that names the
-permission, the missing scope and that the client must reconnect. That 403 is in the JSON-RPC tool result,
-which is what a client reads; the HTTP `insufficient_scope` challenge comes only from the transport-level
-refusal in `modules/mcp/auth.ts`, for a token without any MCP scope. The same gate then holds an OAuth
+registration. The gate refuses a missing scope before the handler runs. The JSON-RPC tool result carries
+a 403 with the permission and scope. It asks OAuth callers to reconnect and API-key callers to use a key
+with that access. The HTTP `insufficient_scope` challenge comes from the transport-level refusal in
+`modules/mcp/auth.ts` for a token without any MCP scope. The same gate then holds an OAuth
 call to the MCP client's **grant** (ADR-0041): each declared permission must be at least the declared
 level in the grant, or the call is refused with a 403 whose detail starts "Not permitted" and names the
 permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a

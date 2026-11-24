@@ -885,7 +885,7 @@ describe("every feedback-record tool is gated on its own scope", () => {
     expect([...tools.keys()].sort()).toEqual(TOOL_SCOPES.map(([tool]) => tool).sort());
   });
 
-  test.each(TOOL_SCOPES)("%s refuses a token holding only the other scope", async (tool, kind) => {
+  test.each(TOOL_SCOPES)("%s refuses a key holding only the other scope", async (tool, kind) => {
     const { tools } = createToolServer();
     const other = kind === "read" ? "feedbackRecords:write" : "feedbackRecords:read";
 
@@ -895,7 +895,7 @@ describe("every feedback-record tool is gated on its own scope", () => {
 
     expect(result.isError).toBe(true);
     expect((result.structuredContent as { error: { detail: string } }).error.detail).toContain(
-      `its OAuth token lacks the scope feedbackRecords:${kind}.`
+      `(feedbackRecords:${kind})`
     );
   });
 });

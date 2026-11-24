@@ -87,7 +87,15 @@ const readOnlyAuthInfo = {
   token: "oauth:user_1:client_1",
   clientId: "client_1",
   scopes: ["workflows:read"],
-  extra: { ...authInfo.extra, authMethod: "oauth", grant: FULL_MCP_GRANT },
+  extra: {
+    requestId: "req_tool",
+    authMethod: "oauth",
+    grant: FULL_MCP_GRANT,
+    formbricksAuthentication: {
+      user: { id: "user_1", email: "person@example.com", name: "Person" },
+      expires: "2026-07-01T00:00:00.000Z",
+    },
+  },
 };
 const noScopeAuthInfo = { ...readOnlyAuthInfo, scopes: [] as string[] };
 /**
@@ -97,13 +105,6 @@ const noScopeAuthInfo = { ...readOnlyAuthInfo, scopes: [] as string[] };
 const sessionAuthInfo = {
   ...readOnlyAuthInfo,
   scopes: ["workflows:read", "responses:read"],
-  extra: {
-    ...readOnlyAuthInfo.extra,
-    formbricksAuthentication: {
-      user: { id: "user_1", email: "person@example.com", name: "Person" },
-      expires: "2026-07-01T00:00:00.000Z",
-    },
-  },
 };
 /** {@link sessionAuthInfo} under a grant at Workflow runs: Read and nothing of Responses. */
 const runsOnlyGrantAuthInfo = {
