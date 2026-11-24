@@ -68,6 +68,7 @@
             "pages": [
               "platform/features/ai-features",
               "platform/features/contacts",
+              "platform/features/contact-directories",
               {
                 "group": "Integrations",
                 "icon": "bridge",
@@ -435,7 +436,10 @@
                   },
                   {
                     "group": "Upcoming changes",
-                    "pages": ["self-hosting/upgrade/versions/mcp-access"]
+                    "pages": [
+                      "self-hosting/upgrade/versions/mcp-access",
+                      "self-hosting/upgrade/versions/contact-directories"
+                    ]
                   }
                 ]
               },
@@ -538,6 +542,7 @@
               "development/technical-handbook/creatives",
               "development/technical-handbook/mcp-server",
               "development/technical-handbook/cube-tenant-isolation",
+              "development/technical-handbook/contact-directories-rollout",
               "development/technical-handbook/custom-css-rollout",
               "development/technical-handbook/database-model",
               "development/technical-handbook/email-sending",

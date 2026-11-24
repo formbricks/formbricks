@@ -1,0 +1,89 @@
+---
+title: "Contact directories"
+description: "A contact directory holds your contacts, their attributes and your segments. Workspaces that share a directory share their contacts."
+icon: "address-card"
+---
+
+A **contact directory** holds the people you survey: your contacts, their attributes and the segments built on them. It belongs to the organization, and one or more workspaces use it. A workspace uses at most one directory.
+
+Most teams never have to think about directories. Every workspace that existed before the upgrade got a directory of its own, so its contacts work exactly as before. Directories matter when two workspaces should know the same people, for example a web app and a mobile app for the same product.
+
+<Note>
+  Contacts and contact directories are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).
+</Note>
+
+## Manage directories
+
+Go to **Organization settings → Contact directories**. The list shows each directory with its workspaces, what it matches contacts by, and how many contacts it holds. A directory without a name shows the name of its workspace.
+
+Only organization **Owners** and **Managers** can create and change directories. Other members see a note saying so.
+
+- **Create a directory:** click **Create directory**, choose what it matches contacts by, and pick at least one workspace.
+- **Change a directory:** click its row, or **Manage directory** in the row menu (⋮). You can rename it and add workspaces.
+
+A directory that two or more workspaces use needs a name. Names are unique within the organization.
+
+A new directory starts with the default attributes `userId`, `email`, `firstName`, `lastName` and `language`, plus `externalId` if it matches by external ID.
+
+## Matching key
+
+Each directory matches contacts either by **email** or by **external ID**, your own ID for the person, such as the one in your CRM. You choose when you create the directory, and you can't change it later. Directories made by the upgrade match by email.
+
+The matching key decides which attribute identifies a contact when you add contacts in bulk:
+
+- **CSV upload** needs an `email` column in an email directory and an `externalId` column in an external ID directory. Each value can appear only once in the file.
+- **The API**, `POST /api/v2/management/contacts` and `PUT /api/v2/management/contacts/bulk`, needs `email` or `externalId` in the same way. Only an email directory checks that the value is a valid email address.
+
+The SDK doesn't change: it always identifies people by `userId`, set with `setUserId`. See [User Identification](/surveys/website-app-surveys/user-identification).
+
+## Share a directory between workspaces
+
+When two or more workspaces use one directory, they share:
+
+- **Contacts.** The same `userId` is one contact, whichever workspace's app sends it. The same goes for the matching key in CSV uploads and the API.
+- **Attributes.** Attribute keys belong to the directory. A key created from one workspace shows up in all of them. The limit of 150 attribute keys counts per directory.
+- **Segments.** Every workspace on the directory lists its segments, and anyone who can edit segments in one of those workspaces can edit them. A segment filter on a survey from another workspace shows as "Survey in another workspace".
+
+Surveys, responses and displays stay with their workspace. On a contact's page, each workspace sees only the responses to its own surveys. But anyone who can see contacts in one workspace sees every contact in the directory.
+
+The Contacts page shows the directory's name ("Northwind directory") when the directory is shared.
+
+<Warning>
+  You can't delete a contact in a shared directory. Deleting it would also delete its responses in the other workspaces. The Contacts page refuses, and `DELETE /api/v1/management/contacts/{id}` returns `403`.
+</Warning>
+
+## Which workspaces can join a directory
+
+A workspace can join a directory only if the directory it uses now:
+
+- isn't used by any other workspace,
+- has no contacts and no segments,
+- has no attributes beyond the defaults, and no survey filter on such an attribute.
+
+In other words, a workspace that already has contacts can't join another directory, and directories are never merged. The workspace picker greys such a workspace out and names the directory it uses. A workspace can't leave a shared directory either.
+
+When a workspace joins, its old, empty directory is deleted. Its surveys keep their targeting.
+
+## A workspace with no directory
+
+A new workspace starts without a directory. Until it gets one:
+
+- The Contacts page shows **No contact directory linked**. Owners and managers get a button to **Contact directories**. Other members are asked to have an owner or manager assign one. **Upload CSV** is disabled.
+- `setUserId` in the SDK and the contact APIs answer `403` with "A contact directory needs to be set up for this workspace before contacts are available." Nothing is created.
+- Surveys for anonymous visitors keep working. Only identifying people and working with contacts need a directory.
+
+To fix it, create a directory for the workspace or add it to an existing one. Identifying people works right away.
+
+## When a CSV row matches several contacts
+
+Older data can hold two contacts with the same email or external ID in one directory. When a CSV row or a bulk API row matches more than one, Formbricks updates the contact whose `userId` matches the row's `userId`. If none does, it updates the oldest one. It doesn't touch the others.
+
+After a CSV upload, a message tells you how many rows matched more than one contact. The bulk API doesn't report this.
+
+## Deleting a workspace
+
+Deleting the last workspace of a directory deletes the directory, with its contacts, attributes and segments, just as deleting a workspace did before. Deleting one workspace of a shared directory keeps the contacts and segments for the others.
+
+## Upgrading
+
+Self-hosting? The upgrade gives every existing workspace its own directory and needs no action for them. Workspaces created after the upgrade start without one. See [Contact directories](/self-hosting/upgrade/versions/contact-directories) in the upgrade guides.
