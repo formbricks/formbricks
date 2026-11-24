@@ -5,7 +5,6 @@ import { responses } from "@/modules/api/v2/lib/response";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
-import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   ZContactBulkUploadRequest,
   getContactBulkUploadRequestSchema,
@@ -75,11 +74,11 @@ export const PUT = async (request: Request) =>
         );
       }
 
-      const noDirectoryError = await checkContactDirectoryApiV2(workspaceId);
-      if (noDirectoryError) {
-        return handleApiError(request, noDirectoryError, auditLog);
+      const directoryResult = await checkContactDirectoryApiV2(workspaceId);
+      if (!directoryResult.ok) {
+        return handleApiError(request, directoryResult.error, auditLog);
       }
-      const directory = await requireWorkspaceContactDirectory(workspaceId);
+      const directory = directoryResult.data;
 
       // The identity attribute depends on the directory's matching key, known only now.
       const identityCheck = getContactBulkUploadRequestSchema(directory.matchingKey).safeParse(

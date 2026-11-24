@@ -1,7 +1,9 @@
 import "server-only";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import {
   CONTACT_DIRECTORY_MISSING_MESSAGE,
+  type TWorkspaceContactDirectory,
   getWorkspaceContactDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -32,11 +34,13 @@ export const checkContactsEnabledApiV2 = async (
 /**
  * The no-directory guard of the same APIs (spec decision 13): a workspace with no contact directory can't
  * hold contacts or attribute keys yet. Run it after the workspace check, so a caller without access never
- * learns whether the workspace has a directory, and before any write.
+ * learns whether the workspace has a directory, and before any write. Returns the directory, so the
+ * caller doesn't read it again.
  */
-export const checkContactDirectoryApiV2 = async (workspaceId: string): Promise<ApiErrorResponseV2 | null> => {
-  if (await getWorkspaceContactDirectory(workspaceId)) {
-    return null;
-  }
-  return { type: "forbidden", message: CONTACT_DIRECTORY_MISSING_MESSAGE };
+export const checkContactDirectoryApiV2 = async (
+  workspaceId: string
+): Promise<Result<TWorkspaceContactDirectory, ApiErrorResponseV2>> => {
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (directory) return ok(directory);
+  return err({ type: "forbidden", message: CONTACT_DIRECTORY_MISSING_MESSAGE });
 };

@@ -49,16 +49,22 @@ describe("checkContactDirectoryApiV2", () => {
     mocks.getWorkspaceContactDirectory.mockResolvedValue(null);
 
     await expect(checkContactDirectoryApiV2("ws1")).resolves.toEqual({
-      type: "forbidden",
-      message:
-        "A contact directory needs to be set up for this workspace before contacts are available. Ask an organization owner or manager to assign one.",
+      ok: false,
+      error: {
+        type: "forbidden",
+        message:
+          "A contact directory needs to be set up for this workspace before contacts are available. Ask an organization owner or manager to assign one.",
+      },
     });
     expect(mocks.getWorkspaceContactDirectory).toHaveBeenCalledWith("ws1");
   });
 
-  test("returns null when the workspace has a directory", async () => {
+  test("returns the workspace's directory when it has one", async () => {
     mocks.getWorkspaceContactDirectory.mockResolvedValue({ id: "dir1", matchingKey: "email" });
 
-    await expect(checkContactDirectoryApiV2("ws1")).resolves.toBeNull();
+    await expect(checkContactDirectoryApiV2("ws1")).resolves.toEqual({
+      ok: true,
+      data: { id: "dir1", matchingKey: "email" },
+    });
   });
 });

@@ -49,8 +49,8 @@ export async function listV3ContactAttributeKeys({
     // the UI and management API do, so an unentitled organization can't enumerate them through v3.
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
-    const noDirectory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
-    if (noDirectory) return noDirectory;
+    const directory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (directory instanceof Response) return directory;
 
     const keys = await getContactAttributeKeys(authResult.workspaceId);
     const { page, nextCursor, totalCount } = listContactAttributeKeysPage(

@@ -71,8 +71,8 @@ export async function listV3ContactAttributeValues({
 
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
-    const noDirectory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
-    if (noDirectory) return noDirectory;
+    const directory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (directory instanceof Response) return directory;
 
     // Resolved inside the authorized workspace's contact directory, so a key from another directory answers
     // exactly like an unknown one — and the value query below can only ever read this directory's rows.

@@ -113,6 +113,7 @@ describe("listV3Segments", () => {
     });
     expect(resolveV3VisibleSurveyWhere).toHaveBeenCalledWith(null, organizationId);
     expect(prisma.segment.count).toHaveBeenCalledWith({ where });
+    expect(getWorkspaceContactDirectory).toHaveBeenCalledTimes(1);
   });
 
   test("takes survey ids the caller cannot see out of survey-interaction filters", async () => {

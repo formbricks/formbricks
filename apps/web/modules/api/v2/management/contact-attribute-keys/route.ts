@@ -65,9 +65,9 @@ export const POST = async (request: NextRequest) =>
       }
 
       // The body's workspace was authorized by `resolveBodyIdsV2` above.
-      const noDirectoryError = await checkContactDirectoryApiV2(body.workspaceId);
-      if (noDirectoryError) {
-        return handleApiError(request, noDirectoryError, auditLog);
+      const directoryResult = await checkContactDirectoryApiV2(body.workspaceId);
+      if (!directoryResult.ok) {
+        return handleApiError(request, directoryResult.error, auditLog);
       }
 
       const createContactAttributeKeyResult = await createContactAttributeKey(body);

@@ -62,8 +62,8 @@ export async function listV3Contacts({
 
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
-    const noDirectory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
-    if (noDirectory) return noDirectory;
+    const directory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (directory instanceof Response) return directory;
 
     const { workspaceId } = authResult;
 

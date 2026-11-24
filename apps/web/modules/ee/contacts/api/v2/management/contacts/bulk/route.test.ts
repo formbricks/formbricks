@@ -94,5 +94,6 @@ describe("PUT /management/contacts/bulk", () => {
       data: { status: "success", message: "Contacts bulk upload successful" },
     });
     expect(mocks.upsertBulkContacts).toHaveBeenCalledWith(contacts, workspaceId, directory);
+    expect(mocks.getWorkspaceContactDirectory).toHaveBeenCalledTimes(1);
   });
 });
