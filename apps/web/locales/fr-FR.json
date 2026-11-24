@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "Les espaces de travail d'un même répertoire partagent leurs contacts. Un même userId correspond à un seul contact.",
         "title": "Répertoires de contacts",
         "workspace_uses_directory": "Utilise {directoryName}. Un espace de travail utilise un seul répertoire.",
-        "workspaces_help": "Choisis les espaces de travail qui partagent ce répertoire."
+        "workspaces_help": "Choisis les espaces de travail qui partagent ce répertoire.",
+        "workspaces_stay_note": "Une fois enregistré, un espace de travail ne peut plus être retiré de son répertoire."
       },
       "data_retention": {
         "add_exemption": "Ajouter une exemption",

@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "Az egy címtárhoz tartozó munkaterületek megosztják egymással kapcsolattartóikat. Az azonos userId egyetlen kapcsolattartónak minősül.",
         "title": "Kapcsolattartói címtárak",
         "workspace_uses_directory": "Használt címtár: {directoryName}. Egy munkaterület egy címtárat használhat.",
-        "workspaces_help": "Kérjük, válassza ki, mely munkaterületek használják közösen ezt a címtárat."
+        "workspaces_help": "Kérjük, válassza ki, mely munkaterületek használják közösen ezt a címtárat.",
+        "workspaces_stay_note": "A mentést követően a munkaterület nem távolítható el a címtárból."
       },
       "data_retention": {
         "add_exemption": "Kivétel hozzáadása",

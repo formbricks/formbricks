@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "Werkruimtes in dezelfde contactmap delen hun contacten. Dezelfde userId is één contact.",
         "title": "Contactmappen",
         "workspace_uses_directory": "Gebruikt {directoryName}. Een werkruimte gebruikt één map.",
-        "workspaces_help": "Kies welke workspaces deze map delen."
+        "workspaces_help": "Kies welke workspaces deze map delen.",
+        "workspaces_stay_note": "Zodra een werkruimte is opgeslagen, kan je deze niet meer uit de bijbehorende map verwijderen."
       },
       "data_retention": {
         "add_exemption": "Uitzondering toevoegen",

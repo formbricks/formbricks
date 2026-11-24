@@ -75,13 +75,15 @@ describe("getWorkspacePickerOptions", () => {
     ]);
   });
 
-  test("keeps the directory's own workspaces pickable when managing it", () => {
+  test("keeps the directory's own workspaces chosen and locked when managing it", () => {
     const options = getWorkspacePickerOptions({ list, t, currentDirectoryId: "d-shared" });
 
     expect(options.find((option) => option.value === "w-a")).toEqual({
       value: "w-a",
       label: "Market Access",
       disabled: false,
+      locked: true,
     });
+    expect(options.find((option) => option.value === "w-e")?.locked).toBeUndefined();
   });
 });

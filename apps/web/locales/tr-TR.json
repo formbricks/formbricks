@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "Aynı dizindeki çalışma alanları kişilerini paylaşır. Aynı userId tek bir kişidir.",
         "title": "Kişi dizinleri",
         "workspace_uses_directory": "{directoryName} kullanılıyor. Bir çalışma alanı tek bir rehber kullanır.",
-        "workspaces_help": "Bu dizini hangi çalışma alanlarının paylaşacağını seç."
+        "workspaces_help": "Bu dizini hangi çalışma alanlarının paylaşacağını seç.",
+        "workspaces_stay_note": "Kaydedildikten sonra bir çalışma alanı dizininden kaldırılamaz."
       },
       "data_retention": {
         "add_exemption": "İstisna ekle",

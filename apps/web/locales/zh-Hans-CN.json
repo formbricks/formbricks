@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "同一目录中的工作区共享其联系人。相同的 userId 视为同一个联系人。",
         "title": "联系人目录",
         "workspace_uses_directory": "使用的是 {directoryName}。一个工作区只能使用一个通讯录。",
-        "workspaces_help": "选择哪些工作区共享此目录。"
+        "workspaces_help": "选择哪些工作区共享此目录。",
+        "workspaces_stay_note": "保存后，工作区将无法从其目录中移除。"
       },
       "data_retention": {
         "add_exemption": "添加豁免",

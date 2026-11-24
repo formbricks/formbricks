@@ -9,6 +9,8 @@ export type TWorkspacePickerOption = {
   value: string;
   label: string;
   disabled: boolean;
+  /** Already uses the directory being managed: it stays chosen (decision 8, a workspace can't leave). */
+  locked?: boolean;
   description?: string;
 };
 
@@ -32,7 +34,10 @@ export const getWorkspacePickerOptions = ({
   return list.workspaces
     .map((workspace): TWorkspacePickerOption => {
       const directory = workspace.directoryId ? directoryById.get(workspace.directoryId) : undefined;
-      if (!directory || directory.id === currentDirectoryId || directory.workspaceCanMove) {
+      if (directory && directory.id === currentDirectoryId) {
+        return { value: workspace.id, label: workspace.name, disabled: false, locked: true };
+      }
+      if (!directory || directory.workspaceCanMove) {
         return { value: workspace.id, label: workspace.name, disabled: false };
       }
       return {

@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "Workspaces in einem Verzeichnis teilen sich ihre Kontakte. Dieselbe userId entspricht einem Kontakt.",
         "title": "Kontaktverzeichnisse",
         "workspace_uses_directory": "Verwendet {directoryName}. Ein Workspace nutzt ein Verzeichnis.",
-        "workspaces_help": "Wähle aus, welche Workspaces dieses Verzeichnis gemeinsam nutzen."
+        "workspaces_help": "Wähle aus, welche Workspaces dieses Verzeichnis gemeinsam nutzen.",
+        "workspaces_stay_note": "Nach dem Speichern kann ein Workspace nicht mehr aus seinem Verzeichnis entfernt werden."
       },
       "data_retention": {
         "add_exemption": "Ausnahme hinzufügen",

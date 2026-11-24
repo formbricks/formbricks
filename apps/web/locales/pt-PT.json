@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "Os espaços de trabalho num diretório partilham os seus contactos. O mesmo userId corresponde a um único contacto.",
         "title": "Diretórios de contactos",
         "workspace_uses_directory": "Usa {directoryName}. Um espaço de trabalho usa um diretório.",
-        "workspaces_help": "Escolhe que espaços de trabalho partilham este diretório."
+        "workspaces_help": "Escolhe que espaços de trabalho partilham este diretório.",
+        "workspaces_stay_note": "Depois de guardado, um espaço de trabalho não pode ser removido do respetivo diretório."
       },
       "data_retention": {
         "add_exemption": "Adicionar isenção",

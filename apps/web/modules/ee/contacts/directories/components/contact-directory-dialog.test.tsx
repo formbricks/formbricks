@@ -166,17 +166,39 @@ describe("ContactDirectoryDialog", () => {
     expect(dialog().getByLabelText(`${K}.external_id`)).toBeDisabled();
   });
 
-  test("won't let a workspace leave the directory it uses", async () => {
+  // Decision 8: a workspace can't leave the directory it uses, so its chip can't be removed.
+  test("locks the directory's own workspaces and says why", async () => {
     renderDialog({ directory: BRAND });
 
+    expect(dialog().getByText(`${K}.workspaces_stay_note`)).toBeInTheDocument();
+    expect(
+      dialog().queryByRole("button", { name: 'common.remove_item {"item":"Brand Tracking"}' })
+    ).toBeNull();
+
+    // A workspace added now can still be taken out before saving; Backspace skips the locked chip.
     await pick("HCP Relationship");
-    fireEvent.click(dialog().getByRole("button", { name: 'common.remove_item {"item":"Brand Tracking"}' }));
+    const hcpChipRemove = { name: 'common.remove_item {"item":"HCP Relationship"}' };
+    expect(dialog().getByRole("button", hcpChipRemove)).toBeInTheDocument();
+    const input = dialog().getByPlaceholderText(`${K}.select_workspaces_placeholder`);
+    fireEvent.keyDown(input, { key: "Backspace" });
+    await settle();
+    fireEvent.keyDown(input, { key: "Backspace" });
     await settle();
 
-    expect(await dialog().findByText(`${K}.error_workspace_cannot_leave`)).toBeInTheDocument();
-    submit("common.save");
-    await settle();
-    expect(requests("PATCH")).toHaveLength(0);
+    expect(dialog().queryByRole("button", hcpChipRemove)).toBeNull();
+    expect(dialog().getByText("Brand Tracking")).toBeInTheDocument();
+    expect(dialog().queryByText(`${K}.error_workspace_cannot_leave`)).toBeNull();
+  });
+
+  test("says a workspace stays once a workspace is picked for a new directory", async () => {
+    renderDialog();
+
+    expect(dialog().queryByText(`${K}.workspaces_stay_note`)).toBeNull();
+    await pick("Brand Tracking");
+    expect(dialog().getByText(`${K}.workspaces_stay_note`)).toBeInTheDocument();
+    expect(
+      dialog().getByRole("button", { name: 'common.remove_item {"item":"Brand Tracking"}' })
+    ).toBeInTheDocument();
   });
 
   test("shows a taken name on the name field", async () => {

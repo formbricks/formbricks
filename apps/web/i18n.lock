@@ -3468,6 +3468,7 @@ checksums:
     workspace/settings/contact_directories/title: 85d9d4004b2bbff0ab18bda751fe8e86
     workspace/settings/contact_directories/workspace_uses_directory: 7e88b43c54696b10d36b47663f1f63dd
     workspace/settings/contact_directories/workspaces_help: ea6ac00199615eab4f00f14787506d7a
+    workspace/settings/contact_directories/workspaces_stay_note: 89921d4483dc8955fc3aaa92782b3aec
     workspace/settings/data_retention/add_exemption: ffd32798505e9cbe470c6ef07e8940b9
     workspace/settings/data_retention/add_exemption_description: 36eb90ad00003f8e911556e9fd905fcf
     workspace/settings/data_retention/condition_created_before: caa54cfde5d47b4c39338c8390c769d4

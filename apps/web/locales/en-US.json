@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "Workspaces in one directory share their contacts. The same userId is one contact.",
         "title": "Contact directories",
         "workspace_uses_directory": "Uses {directoryName}. A workspace uses one directory.",
-        "workspaces_help": "Choose which workspaces share this directory."
+        "workspaces_help": "Choose which workspaces share this directory.",
+        "workspaces_stay_note": "Once saved, a workspace can't be removed from its directory."
       },
       "data_retention": {
         "add_exemption": "Add exemption",

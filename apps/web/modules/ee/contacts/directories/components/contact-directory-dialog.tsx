@@ -197,6 +197,12 @@ export const ContactDirectoryDialog = ({
                         {t("workspace.settings.contact_directories.shared_contacts_note")}
                       </p>
                     ) : null}
+                    {/* Decision 8: said before the first save, while workspaces are still being picked. */}
+                    {directory || workspaceIds.length > 0 ? (
+                      <p className="text-xs text-slate-500">
+                        {t("workspace.settings.contact_directories.workspaces_stay_note")}
+                      </p>
+                    ) : null}
                     {error?.message ? <FormError className="text-left">{error.message}</FormError> : null}
                   </FormItem>
                 )}

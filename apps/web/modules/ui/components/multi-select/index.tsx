@@ -20,6 +20,8 @@ interface TOption<T> {
   /** Optional icon shown in a box beside the section heading (take from the first option in a group). */
   groupIcon?: React.ReactNode;
   disabled?: boolean;
+  /** Chosen and can't be removed here: its chip has no remove button and Backspace skips it. */
+  locked?: boolean;
   icon?: React.ReactNode;
   /** Optional control shown inside the option's chip once chosen, before its remove button (e.g. rename). */
   badgeAction?: React.ReactNode;
@@ -104,7 +106,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
 
   const handleUnselect = React.useCallback(
     (option: TOption<T>) => {
-      if (disabled) return;
+      if (disabled || option.locked) return;
       isUserInitiatedRef.current = true; // Mark as user-initiated
       setSelected((prev) => prev.filter((s) => s.value !== option.value));
     },
@@ -124,19 +126,20 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       if (!input || disabled) return;
 
       if ((e.key === "Delete" || e.key === "Backspace") && input.value === "") {
+        // The last chip that may be removed, read from the options as passed (they carry `locked`).
+        const isLocked = (chosen: TOption<T>) =>
+          (options.find((o) => o.value === chosen.value) ?? chosen).locked === true;
+        const lastRemovable = selected.findLastIndex((chosen) => !isLocked(chosen));
+        if (lastRemovable === -1) return;
         isUserInitiatedRef.current = true; // Mark as user-initiated
-        setSelected((prev) => {
-          const newSelected = [...prev];
-          newSelected.pop();
-          return newSelected;
-        });
+        setSelected((prev) => prev.filter((_, index) => index !== lastRemovable));
       }
 
       if (e.key === "Escape") {
         input.blur();
       }
     },
-    [disabled]
+    [disabled, options, selected]
   );
 
   const selectableOptions = React.useMemo(() => {
@@ -256,22 +259,24 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                 ) : null}
                 <span className="truncate">{option.label}</span>
                 {disabled ? null : option.badgeAction}
-                <button
-                  type="button"
-                  aria-label={t("common.remove_item", { item: option.label })}
-                  className="ring-offset-background ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleUnselect(option);
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={() => handleUnselect(option)}>
-                  <X className="text-muted-foreground hover:text-foreground size-3" />
-                </button>
+                {option.locked ? null : (
+                  <button
+                    type="button"
+                    aria-label={t("common.remove_item", { item: option.label })}
+                    className="ring-offset-background ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleUnselect(option);
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={() => handleUnselect(option)}>
+                    <X className="text-muted-foreground hover:text-foreground size-3" />
+                  </button>
+                )}
               </Badge>
             ))}
           <CommandPrimitive.Input

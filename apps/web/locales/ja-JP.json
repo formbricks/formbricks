@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "同じディレクトリ内のワークスペースは、コンタクトを共有します。同じuserIdは1人のコンタクトとして扱われます。",
         "title": "連絡先ディレクトリ",
         "workspace_uses_directory": "{directoryName}を使用しています。ワークスペースで使用できるディレクトリは1つです。",
-        "workspaces_help": "このディレクトリを共有するワークスペースを選択してください。"
+        "workspaces_help": "このディレクトリを共有するワークスペースを選択してください。",
+        "workspaces_stay_note": "一度保存すると、ワークスペースをディレクトリから削除することはできません。"
       },
       "data_retention": {
         "add_exemption": "除外を追加",

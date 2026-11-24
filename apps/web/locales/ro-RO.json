@@ -3598,7 +3598,8 @@
         "shared_contacts_note": "Spațiile de lucru dintr-un director își partajează contactele. Același userId reprezintă un singur contact.",
         "title": "Directoare de contacte",
         "workspace_uses_directory": "Folosește {directoryName}. Un spațiu de lucru folosește un singur director.",
-        "workspaces_help": "Alege spațiile de lucru care partajează acest director."
+        "workspaces_help": "Alege spațiile de lucru care partajează acest director.",
+        "workspaces_stay_note": "După salvare, un spațiu de lucru nu mai poate fi eliminat din directorul său."
       },
       "data_retention": {
         "add_exemption": "Adaugă o excepție",
