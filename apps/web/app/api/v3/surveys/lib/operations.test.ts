@@ -1293,7 +1293,7 @@ describe("deleteV3Survey", () => {
 describe("patchV3SurveyResponse", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    // Not archived by default (survey fixture has no archivedAt) so the read-only guard lets patches through.
+    // The fixture is live (`archivedAt: null`), so the read-only guard lets patches through.
     vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
@@ -1556,6 +1556,7 @@ describe("patchV3SurveyResponse", () => {
 });
 
 describe("archiveV3Survey", () => {
+  const archivePrevious = { id: "survey_1", status: "draft" as const, archivedAt: null };
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
@@ -1568,6 +1569,8 @@ describe("archiveV3Survey", () => {
       id: "survey_1",
       status: "paused",
       archivedAt: new Date(),
+      changed: true,
+      previous: archivePrevious,
     });
   });
 
@@ -1592,19 +1595,23 @@ describe("archiveV3Survey", () => {
     });
     expect(vi.mocked(archiveSurvey)).toHaveBeenCalledWith("survey_1");
     expect(skipV3AuditLog).not.toHaveBeenCalled();
-    expect(auditLog).toMatchObject({ organizationId: "org_1", targetId: "survey_1", oldObject: survey });
+    expect(auditLog).toMatchObject({
+      organizationId: "org_1",
+      targetId: "survey_1",
+      oldObject: archivePrevious,
+    });
   });
 
-  test("keeps a no-op archive out of the audit trail", async () => {
+  test("skips an archive the service wrote nothing for, even when the pre-read saw it live", async () => {
     const auditLog = {} as TV3AuditLog;
     const archivedAt = new Date("2026-01-01T00:00:00.000Z");
-    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
-      survey: { ...survey, archivedAt },
-      authResult,
-      response: null,
-      visibility: RESOURCE_VISIBILITY,
+    vi.mocked(archiveSurvey).mockResolvedValue({
+      id: "survey_1",
+      status: "paused",
+      archivedAt,
+      changed: false,
+      previous: { id: "survey_1", status: "paused", archivedAt },
     });
-    vi.mocked(archiveSurvey).mockResolvedValue({ id: "survey_1", status: "paused", archivedAt });
 
     const response = await archiveV3Survey({
       surveyId: "survey_1",
@@ -1616,6 +1623,28 @@ describe("archiveV3Survey", () => {
 
     expect(response.status).toBe(200);
     expect(skipV3AuditLog).toHaveBeenCalledWith(auditLog);
+  });
+
+  test("audits an archive that wrote even though the pre-read saw it archived", async () => {
+    const auditLog = {} as TV3AuditLog;
+    const archivedAt = new Date("2026-01-01T00:00:00.000Z");
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
+      survey: { ...survey, archivedAt },
+      authResult,
+      response: null,
+      visibility: RESOURCE_VISIBILITY,
+    });
+
+    const response = await archiveV3Survey({
+      surveyId: "survey_1",
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+    expect(response.status).toBe(200);
+    expect(skipV3AuditLog).not.toHaveBeenCalled();
   });
 
   test("returns authorization responses from survey access", async () => {
@@ -1658,6 +1687,9 @@ describe("restoreV3Survey", () => {
       id: "survey_1",
       status: "paused",
       archivedAt: null,
+      retentionExemptionId: null,
+      changed: true,
+      previous: { id: "survey_1", status: "draft", archivedAt: archivedSurvey.archivedAt },
     });
   });
 
@@ -1681,7 +1713,7 @@ describe("restoreV3Survey", () => {
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",
-      oldObject: archivedSurvey,
+      oldObject: { id: "survey_1", status: "draft", archivedAt: archivedSurvey.archivedAt },
     });
   });
 
@@ -1691,6 +1723,14 @@ describe("restoreV3Survey", () => {
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
+    });
+    vi.mocked(restoreSurvey).mockResolvedValue({
+      id: "survey_1",
+      status: "paused",
+      archivedAt: null,
+      retentionExemptionId: null,
+      changed: false,
+      previous: { id: "survey_1", status: "draft", archivedAt: null },
     });
     const auditLog = {} as TV3AuditLog;
 
@@ -1712,6 +1752,8 @@ describe("restoreV3Survey", () => {
       status: "paused",
       archivedAt: null,
       retentionExemptionId: "exemption_1",
+      changed: true,
+      previous: { id: "survey_1", status: "draft", archivedAt: archivedSurvey.archivedAt },
     });
     const auditLog: TV3AuditLog = {} as TV3AuditLog;
 

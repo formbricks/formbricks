@@ -202,11 +202,12 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
+    const previous = { id: survey.id, status: survey.status, archivedAt: survey.archivedAt };
     if (survey.archivedAt) {
-      return survey;
+      return { ...previous, changed: false, previous };
     }
 
-    return await tx.survey.update({
+    const updated = await tx.survey.update({
       where: { id: surveyId },
       data: {
         archivedAt: new Date(),
@@ -214,6 +215,7 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
       },
       select: { id: true, status: true, archivedAt: true },
     });
+    return { ...updated, changed: true, previous };
   };
 
   try {
@@ -224,7 +226,8 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Match restoreSurvey's contract: a row deleted mid-transaction (P2025) is "not found", not a 500.
+      // Defensive: the row lock above means a concurrent delete cannot slip in after the read, but a
+      // delete that committed before it still surfaces as P2025. Match restoreSurvey: not found, not 500.
       if (error.code === "P2025") {
         logger.warn({ surveyId }, "Survey not found during archive");
         throw new ResourceNotFoundError("Survey", surveyId);
@@ -263,8 +266,16 @@ export const restoreSurvey = async (surveyId: string, options?: { restoredById?:
       }
       if (!locked.archivedAt) {
         // Nothing to restore: no write, which would bump updated_at (a "no changes" clock) for nothing.
-        return { id: surveyId, status: locked.status, archivedAt: null, retentionExemptionId: null };
+        return {
+          id: surveyId,
+          status: locked.status,
+          archivedAt: null,
+          retentionExemptionId: null,
+          changed: false,
+          previous: { id: surveyId, status: locked.status, archivedAt: null },
+        };
       }
+      const previous = { id: surveyId, status: locked.status, archivedAt: locked.archivedAt };
       const survey = await tx.survey.update({
         where: { id: surveyId },
         data: { archivedAt: null },
@@ -275,7 +286,7 @@ export const restoreSurvey = async (surveyId: string, options?: { restoredById?:
         organizationId: locked.organizationId,
         restoredById: options?.restoredById ?? null,
       });
-      return { ...survey, retentionExemptionId: exemptionId };
+      return { ...survey, retentionExemptionId: exemptionId, changed: true, previous };
     });
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {

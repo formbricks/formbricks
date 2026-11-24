@@ -54,6 +54,23 @@ describe("responseToMcpToolResult", () => {
     ]);
   });
 
+  test("omits a details value that is not a plain object", async () => {
+    // The advertised `details` is a record; a body carrying an array or a string must not surface a
+    // value the schema would then reject.
+    for (const details of [[], "not-an-object", null]) {
+      const response = new Response(
+        JSON.stringify({ title: "Conflict", status: 409, detail: "conflict", details }),
+        { status: 409, headers: { "content-type": "application/problem+json" } }
+      );
+
+      const result = await responseToMcpToolResult(response, "fb");
+      const payload = result.structuredContent as { error: Record<string, unknown> };
+
+      expect(payload.error).not.toHaveProperty("details");
+      expect(ZMcpToolError.safeParse(payload.error).success).toBe(true);
+    }
+  });
+
   test("falls back to the supplied requestId when the body carries none", async () => {
     const result = await responseToMcpToolResult(new Response("not json", { status: 500 }), "fallback_id");
 

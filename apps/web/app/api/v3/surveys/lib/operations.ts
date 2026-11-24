@@ -828,8 +828,21 @@ export async function deleteV3Survey({
   }
 }
 
-// archive and restore share the exact same flow (authorize readWrite → audit old → run the lifecycle
-// service → audit new → return a minimal lifecycle ack); only the service and log label differ.
+// archive and restore share the exact same flow (authorize readWrite → run the lifecycle service →
+// audit the locked previous row and the result → return a minimal lifecycle ack); only the service and
+// log label differ.
+type TV3SurveyLifecycleResult = Readonly<{
+  id: string;
+  status: string;
+  archivedAt: Date | null;
+  /** Whether the locked write actually changed anything; a no-op is not audited. */
+  changed: boolean;
+  /** The row as read under the write's lock, before it changed. */
+  previous: Readonly<{ id: string; status: string; archivedAt: Date | null }>;
+  /** The exemption a policy-archived restore made, when it made one. */
+  retentionExemptionId?: string | null;
+}>;
+
 async function runV3SurveyLifecycleMutation(
   { surveyId, authentication, requestId, instance, auditLog }: TV3SurveyMutationParams,
   {
@@ -837,10 +850,7 @@ async function runV3SurveyLifecycleMutation(
     mutate,
   }: {
     operation: "archive" | "restore";
-    mutate: (
-      id: string,
-      authentication: TV3Authentication
-    ) => Promise<{ id: string; status: string; archivedAt: Date | null }>;
+    mutate: (id: string, authentication: TV3Authentication) => Promise<TV3SurveyLifecycleResult>;
   }
 ): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
@@ -862,20 +872,25 @@ async function runV3SurveyLifecycleMutation(
     if (auditLog) {
       auditLog.targetId = survey.id;
       auditLog.organizationId = authResult.organizationId;
-      auditLog.oldObject = survey;
     }
 
-    const wasArchived = Boolean(survey.archivedAt);
     const mutatedSurvey = await mutate(surveyId, authentication);
 
-    // Both lifecycle operations are idempotent. When the survey was already in the requested state the
-    // service wrote nothing, so keep the no-op out of the audit trail instead of logging a change.
-    if (wasArchived === (operation === "archive")) {
-      skipV3AuditLog(auditLog);
-    }
-
+    // The write path decides whether anything changed, on the locked row. A concurrent lifecycle call
+    // between the authorization read and the lock can make the pre-read disagree with what was written.
     if (auditLog) {
-      auditLog.newObject = mutatedSurvey;
+      auditLog.oldObject = mutatedSurvey.previous;
+      auditLog.newObject = {
+        id: mutatedSurvey.id,
+        status: mutatedSurvey.status,
+        archivedAt: mutatedSurvey.archivedAt,
+        ...("retentionExemptionId" in mutatedSurvey
+          ? { retentionExemptionId: mutatedSurvey.retentionExemptionId }
+          : {}),
+      };
+    }
+    if (!mutatedSurvey.changed) {
+      skipV3AuditLog(auditLog);
     }
 
     // Intentional lifecycle ack, not the full document resource: archive/restore operate on any
