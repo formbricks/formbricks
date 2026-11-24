@@ -284,7 +284,7 @@ export const isSegmentOfWorkspace = async (
   workspaceId: string
 ): Promise<boolean> => {
   const directory = await getWorkspaceContactDirectory(workspaceId);
-  if (directory === null || segment.directoryId !== directory.id) return false;
+  if (segment.directoryId !== directory?.id) return false;
   return isSegmentVisibleToWorkspace(segment, workspaceId);
 };
 

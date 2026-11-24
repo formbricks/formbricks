@@ -82,7 +82,7 @@ export const ContactDirectoryDialog = ({
 
   // An unnamed directory (one the migration made) shows its workspace's name as the placeholder (decision 2).
   const namePlaceholder =
-    directory && directory.name === null
+    directory?.name === null
       ? getContactDirectoryDisplayName(directory)
       : t("workspace.settings.contact_directories.name_placeholder");
 

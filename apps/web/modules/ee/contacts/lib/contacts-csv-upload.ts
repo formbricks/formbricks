@@ -73,11 +73,11 @@ const resolveUserIdConflict = (
   existingContact: { id: string; attributes: { attributeKey: { key: string }; value: string }[] },
   existingUserIds: { value: string; contactId: string }[]
 ): Record<string, string> => {
-  const existingUserId = existingUserIds.find(
+  const userIdTakenByAnotherContact = existingUserIds.some(
     (attr) => attr.value === mappedRecord.userId && attr.contactId !== existingContact.id
   );
 
-  if (!existingUserId) {
+  if (!userIdTakenByAnotherContact) {
     return { ...mappedRecord };
   }
 
