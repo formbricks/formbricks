@@ -780,7 +780,8 @@ const parsedEnv = createEnv({
       .or(z.string().refine((str) => str === "")),
     RATE_LIMITING_DISABLED: z.enum(["1", "0"]).optional(),
     // Set to 1 only when an Envoy Gateway (or equivalent edge limiter) enforces the policies mirrored in
-    // modules/core/rate-limit/envoy-rate-limit-coverage.ts. The Helm chart sets it when envoy.enabled.
+    // modules/core/rate-limit/envoy-rate-limit-coverage.ts: the Helm chart sets it only when the
+    // management, webhooks, client, v2 client and storage route families all have a route and a policy.
     ENVOY_RATE_LIMITING_ENABLED: z.enum(["1", "0"]).optional(),
     // Number of reverse proxies in front of the app whose X-Forwarded-For entries can be believed.
     // Unset falls back to 1 (see TRUSTED_PROXY_HOP_COUNT in lib/constants.ts); an explicit 0 trusts no

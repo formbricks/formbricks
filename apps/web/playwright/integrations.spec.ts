@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
+import { decryptIntegrationConfig } from "@/lib/integration/credentials";
 import { test } from "./lib/fixtures";
 
 /**
@@ -63,10 +64,13 @@ test.describe("Integrations", () => {
       await expect
         .poll(async () => ((await stored())?.config as { data: unknown[] } | undefined)?.data)
         .toEqual([]);
-      // The stored credentials survive a mapping change: the page only ever saw them redacted.
-      expect(((await stored())?.config as { key: { access_token: string } }).key.access_token).toBe(
-        "xoxb-e2e-not-a-real-token"
-      );
+      // The stored credentials survive a mapping change: the page only ever saw them redacted. They are
+      // encrypted at rest (ENG-7311), so read them the way the app does.
+      const storedConfig = (await stored())?.config as { key: { access_token: string } };
+      const decrypted = decryptIntegrationConfig("slack", storedConfig) as {
+        key: { access_token: string };
+      };
+      expect(decrypted.key.access_token).toBe("xoxb-e2e-not-a-real-token");
     });
 
     await test.step("disconnect Slack", async () => {

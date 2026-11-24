@@ -1009,13 +1009,13 @@ Include this ONCE per render and reuse the value: the final branch is `randAlpha
 {{- end }}
 
 {{/*
-Non-empty when Envoy rate-limit policies cover every v1 route family the app would otherwise limit itself
-(management, webhooks, client). Drives ENVOY_RATE_LIMITING_ENABLED: without it the app keeps its own limiter,
-because its path matcher alone cannot tell whether a gateway is deployed.
+Non-empty when Envoy rate-limit policies cover every route family the app would otherwise limit itself
+(management, webhooks, client, v2 client, storage). Drives ENVOY_RATE_LIMITING_ENABLED: without it the app
+keeps its own limiter, because its path matcher alone cannot tell whether a gateway is deployed.
 */}}
 {{- define "formbricks.envoy.appRateLimitsDelegated" -}}
 {{- $f := .Values.envoy.formbricks -}}
-{{- if and .Values.envoy.enabled $f.policies.enabled $f.routes.v1Management $f.policies.v1Management $f.routes.v1Webhooks $f.policies.v1Webhooks $f.routes.v1Client $f.policies.v1Client -}}
+{{- if and .Values.envoy.enabled $f.policies.enabled $f.routes.v1Management $f.policies.v1Management $f.routes.v1Webhooks $f.policies.v1Webhooks $f.routes.v1Client $f.policies.v1Client $f.routes.v2Client $f.policies.v2Client $f.routes.storage $f.policies.storage -}}
 true
 {{- end -}}
 {{- end -}}

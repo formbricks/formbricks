@@ -1,4 +1,4 @@
-import { AUTH_TRUSTED_ORIGINS } from "@/lib/constants";
+import { AUTH_TRUSTED_ORIGINS, BETTER_AUTH_ENV_TRUSTED_ORIGINS } from "@/lib/constants";
 
 /**
  * Cross-site request forgery protection for requests that ride the session cookie (ENG-3380).
@@ -25,8 +25,25 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export const isSafeMethod = (method: string): boolean => SAFE_METHODS.has(method.toUpperCase());
 
-/** Origins the app serves itself from, reduced to the bare origin so they compare with `Origin`. */
-const TRUSTED_ORIGINS: ReadonlySet<string> = new Set(AUTH_TRUSTED_ORIGINS);
+/**
+ * Origins the app serves itself from, reduced to the bare origin so they compare with `Origin`. The
+ * `BETTER_AUTH_TRUSTED_ORIGINS` entries are included exactly as configured: a wildcard entry (`https://*.
+ * example.com`) is not a valid URL origin and drops out, so it stays sign-in-only.
+ */
+const toOrigin = (url: string): string | null => {
+  try {
+    const origin = new URL(url).origin;
+    return origin === "null" ? null : origin;
+  } catch {
+    return null;
+  }
+};
+
+const TRUSTED_ORIGINS: ReadonlySet<string> = new Set(
+  [...AUTH_TRUSTED_ORIGINS, ...BETTER_AUTH_ENV_TRUSTED_ORIGINS]
+    .map(toOrigin)
+    .filter((origin): origin is string => origin !== null)
+);
 
 /** Why a request was refused, for the log line. Never sent to the caller. */
 export type TCrossOriginRefusal = "sec_fetch_site" | "untrusted_origin";

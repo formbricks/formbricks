@@ -116,6 +116,7 @@ describe("withV1ApiWrapper", () => {
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
       AUTH_TRUSTED_ORIGINS: ["https://app.test"],
+      BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
     }));
 
     vi.clearAllMocks();
@@ -466,6 +467,7 @@ describe("withV1ApiWrapper", () => {
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
       AUTH_TRUSTED_ORIGINS: ["https://app.test"],
+      BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
     }));
 
     const { queueAuditEvent: mockedQueueAuditEvent } =
@@ -503,6 +505,7 @@ describe("withV1ApiWrapper", () => {
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
       AUTH_TRUSTED_ORIGINS: ["https://app.test"],
+      BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
     }));
 
     const { queueAuditEvent: mockedQueueAuditEvent } =
@@ -881,6 +884,7 @@ describe("withV1ApiWrapper", () => {
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: false,
       AUTH_TRUSTED_ORIGINS: ["https://app.test"],
+      BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
     }));
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =

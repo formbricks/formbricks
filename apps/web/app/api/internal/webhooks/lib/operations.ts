@@ -7,6 +7,7 @@ import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   noContentResponse,
   problemForbidden,
+  problemInternalError,
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -239,7 +240,15 @@ export async function getWebhookSecretOperation({
   if (access instanceof Response) return access;
 
   const secret = await getWebhookWithSecret(webhookId);
-  if (!secret.ok || secret.data.secret === null) return problemForbidden(requestId, undefined, instance);
+  if (!secret.ok) {
+    // A database fault is ours, not an authorization refusal; report it as such so it reaches the
+    // infrastructure-error path. A missing webhook (or a key without a secret) stays the uniform 403.
+    if (secret.error.type === "internal_server_error") {
+      return problemInternalError(requestId, "The webhook secret could not be read.", instance);
+    }
+    return problemForbidden(requestId, undefined, instance);
+  }
+  if (secret.data.secret === null) return problemForbidden(requestId, undefined, instance);
 
   return successResponse({ secret: secret.data.secret }, { requestId });
 }

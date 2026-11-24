@@ -671,9 +671,12 @@ const assertContactsLicence = async (workspaceId: string): Promise<void> => {
  *   filters, which the survey takes on whatever filters the client sent;
  * - anything else writes no targeting, so it is not checked.
  */
+/** The incoming segment of an app survey save; the draft path does not type its filters. */
+type TAppTargetingSegment = { id?: string | null; filters?: unknown } | null | undefined;
+
 const assertAppTargetingFiltersAllowed = async (
   currentSurvey: Pick<TSurvey, "id" | "workspaceId" | "segment">,
-  segment: { id?: string | null; filters?: unknown } | null | undefined
+  segment: TAppTargetingSegment
 ): Promise<void> => {
   if (!segment?.id) return;
 

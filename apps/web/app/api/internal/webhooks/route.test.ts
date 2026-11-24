@@ -534,6 +534,24 @@ describe("GET /api/internal/webhooks/{webhookId}/secret", () => {
     expect((await getSecret()).status).toBe(403);
   });
 
+  test("answers a missing webhook result with the same 403", async () => {
+    mocks.getWebhookWithSecret.mockResolvedValue({ ok: false, error: { type: "not_found", details: [] } });
+
+    expect((await getSecret()).status).toBe(403);
+  });
+
+  test("surfaces a lookup fault as a 500, not an authorization refusal", async () => {
+    mocks.getWebhookWithSecret.mockResolvedValue({
+      ok: false,
+      error: { type: "internal_server_error", details: [] },
+    });
+
+    const response = await getSecret();
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({ code: "internal_server_error" });
+  });
+
   test("is charged to the reveal budget before the secret is read", async () => {
     mocks.applyRateLimit.mockRejectedValue(new TooManyRequestsError("Maximum number of requests reached"));
 

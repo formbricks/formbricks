@@ -29,7 +29,10 @@ vi.mock("@/lib/user/service", () => ({ getUser: vi.fn() }));
 vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
-vi.mock("@/lib/constants", () => ({ AUTH_TRUSTED_ORIGINS: ["http://localhost"] }));
+vi.mock("@/lib/constants", () => ({
+  AUTH_TRUSTED_ORIGINS: ["http://localhost"],
+  BETTER_AUTH_ENV_TRUSTED_ORIGINS: [],
+}));
 
 const userId = "user_1";
 const workspaceId = "workspace_1";

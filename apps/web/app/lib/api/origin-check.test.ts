@@ -3,6 +3,7 @@ import { getCrossOriginRefusal, isJsonContentType, mediaTypeOf } from "./origin-
 
 vi.mock("@/lib/constants", () => ({
   AUTH_TRUSTED_ORIGINS: ["https://app.example.com", "https://legacy.example.com"],
+  BETTER_AUTH_ENV_TRUSTED_ORIGINS: ["https://partner.example.com", "https://*.wild.example.com"],
 }));
 
 const request = (method: string, headers: Record<string, string> = {}) =>
@@ -31,6 +32,16 @@ describe("getCrossOriginRefusal", () => {
 
   test("without Sec-Fetch-Site, a trusted Origin passes", () => {
     expect(getCrossOriginRefusal(request("POST", { origin: "https://legacy.example.com" }))).toBeNull();
+  });
+
+  test("an origin listed in BETTER_AUTH_TRUSTED_ORIGINS passes exactly", () => {
+    expect(getCrossOriginRefusal(request("POST", { origin: "https://partner.example.com" }))).toBeNull();
+  });
+
+  test("a wildcard entry stays sign-in-only and does not match a dashboard write", () => {
+    expect(getCrossOriginRefusal(request("POST", { origin: "https://tenant.wild.example.com" }))).toBe(
+      "untrusted_origin"
+    );
   });
 
   test("without Sec-Fetch-Site, an Origin naming the request's own host passes", () => {

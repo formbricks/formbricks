@@ -138,5 +138,9 @@ test "$(rate_limit_env --set envoy.enabled=true)" = 0
 test "$(rate_limit_env --set envoy.enabled=true --set envoy.formbricks.policies.enabled=true)" != 0
 test "$(rate_limit_env --set envoy.enabled=true --set envoy.formbricks.policies.enabled=true \
   --set envoy.formbricks.policies.v1Management=false)" = 0
+test "$(rate_limit_env --set envoy.enabled=true --set envoy.formbricks.policies.enabled=true \
+  --set envoy.formbricks.routes.storage=false)" = 0
+test "$(rate_limit_env --set envoy.enabled=true --set envoy.formbricks.policies.enabled=true \
+  --set envoy.formbricks.policies.v2Client=false)" = 0
 
 echo "Envoy Gateway Helm validation passed"

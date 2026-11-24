@@ -21,9 +21,9 @@ import {
  */
 const collectReferencedSegmentIds = (filters: TBaseFilters, found: Set<string> = new Set()): Set<string> => {
   // A queue, not a stack: ids come back in tree order, so batched reads and error messages are stable.
+  // `for...of` reads the live length, so children appended while iterating are visited too.
   const pending: unknown[] = [filters];
-  for (let index = 0; index < pending.length; index++) {
-    const current = pending[index];
+  for (const current of pending) {
     if (Array.isArray(current)) {
       for (const node of current) pending.push(node);
       continue;
