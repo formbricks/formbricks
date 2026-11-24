@@ -141,7 +141,7 @@ const getSurveyColumns = ({
     id: "status",
     header: t("common.status"),
     meta: { label: t("common.status") },
-    size: 140,
+    size: 160,
     cell: ({ row }) => {
       const state = rowStates.get(row.original.id);
       return (
@@ -157,14 +157,14 @@ const getSurveyColumns = ({
     id: "responses",
     header: t("workspace.surveys.completed_responses"),
     meta: { label: t("workspace.surveys.completed_responses") },
-    size: 110,
+    size: 125,
     cell: ({ row }) => <span className="text-slate-900">{row.original.completedResponseCount}</span>,
   },
   {
     id: "type",
     header: t("common.type"),
     meta: { label: t("common.type") },
-    size: 100,
+    size: 150,
     cell: ({ row }) => <SurveyTypeIndicator type={row.original.type} />,
   },
   {

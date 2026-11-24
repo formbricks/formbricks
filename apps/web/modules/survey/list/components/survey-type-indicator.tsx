@@ -19,8 +19,10 @@ export const SurveyTypeIndicator = ({ type }: SurveyTypeIndicatorProps) => {
 
   return (
     <div className="flex items-center gap-x-2 text-sm text-slate-600">
-      <Icon className="size-4" />
-      <span>{label}</span>
+      <Icon className="size-4 shrink-0" />
+      <span className="min-w-0 truncate" title={label}>
+        {label}
+      </span>
     </div>
   );
 };

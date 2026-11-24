@@ -169,29 +169,30 @@ export const SurveyStatusPill = ({
   label,
 }: Readonly<SurveyStatusPillProps>) => {
   const { t } = useTranslation();
+  const statusLabel =
+    label ?? (isArchived ? t("common.archived") : getSurveyStatusLabel(status, isScheduled, t));
   return (
     <div
       className={cn(
-        "col-span-1 flex w-fit items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm whitespace-nowrap text-slate-800",
+        "col-span-1 flex w-fit max-w-full items-center gap-2 rounded-full py-1 pr-2 pl-1 text-sm text-slate-800",
         isArchived && "bg-slate-100",
         !isArchived && status === "inProgress" && "bg-emerald-50",
         !isArchived && status === "completed" && "bg-slate-200",
         !isArchived && status === "draft" && "bg-slate-100",
         !isArchived && status === "paused" && "bg-slate-100"
       )}>
-      {isArchived ? (
-        <>
+      <div className="shrink-0">
+        {isArchived ? (
           <div className="rounded-full bg-slate-300 p-1">
             <ArchiveIcon className="size-3 text-slate-600" />
-          </div>{" "}
-          {label ?? t("common.archived")}
-        </>
-      ) : (
-        <>
-          <SurveyStatusIndicator status={status} isScheduled={isScheduled} />{" "}
-          {label ?? getSurveyStatusLabel(status, isScheduled, t)}{" "}
-        </>
-      )}
+          </div>
+        ) : (
+          <SurveyStatusIndicator status={status} isScheduled={isScheduled} />
+        )}
+      </div>
+      <span className="min-w-0 truncate" title={statusLabel}>
+        {statusLabel}
+      </span>
     </div>
   );
 };
