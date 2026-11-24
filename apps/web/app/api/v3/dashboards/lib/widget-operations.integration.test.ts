@@ -94,13 +94,13 @@ describe("POST /api/v3/dashboards/{dashboardId}/widgets", () => {
     const widget = (await bodyOf<{ data: TV3DashboardWidget }>(first)).data;
     firstWidgetId = widget.id;
     expect(first.headers.get("Location")).toBe(`/api/v3/dashboards/${dashboardId}/widgets/${widget.id}`);
-    expect(widget).toMatchObject({ chartId: charts.bar, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 });
+    expect(widget).toMatchObject({ chartId: charts.bar, layout: { x: 0, y: 0, w: 4, h: 16 }, order: 0 });
     expect(widget.chart?.id).toBe(charts.bar);
     expect(await updatedAt()).toBeGreaterThan(STALE.getTime());
 
     // Beside the bar chart, not below it, at the big number's own size.
     const second = (await bodyOf<{ data: TV3DashboardWidget }>(await add(charts.bigNumber))).data;
-    expect(second).toMatchObject({ layout: { x: 4, y: 0, w: 3, h: 2 }, order: 1 });
+    expect(second).toMatchObject({ layout: { x: 4, y: 0, w: 3, h: 8 }, order: 1 });
   });
 
   test("serves the widget its Location names to a reader, and nothing for a widget not on that dashboard", async () => {
@@ -328,14 +328,14 @@ describe("concurrent widget writes", () => {
 
 describe("layout bounds", () => {
   test("hold a layout to the 12-column grid and the grid's own size limits", () => {
-    const valid = { x: 8, y: 0, w: 4, h: 8 };
+    const valid = { x: 8, y: 0, w: 4, h: 32 };
     expect(ZV3WidgetLayoutInput.safeParse(valid).success).toBe(true);
     for (const invalid of [
       { ...valid, x: 9 }, // x + w past 12 columns
       { ...valid, w: 0 },
       { ...valid, w: 13, x: 0 },
-      { ...valid, h: 9 },
-      { ...valid, y: 1001 },
+      { ...valid, h: 33 },
+      { ...valid, y: 4001 },
       { ...valid, x: 1.5 },
       { ...valid, extra: 1 },
     ]) {
@@ -355,18 +355,18 @@ describe("PATCH /api/v3/dashboards/{dashboardId}/widgets/{widgetId}", () => {
     });
 
   test("moves a widget and moves updatedAt; refuses moving it onto another widget", async () => {
-    const moved = await update({ layout: { x: 0, y: 4, w: 6, h: 4 } });
+    const moved = await update({ layout: { x: 0, y: 16, w: 6, h: 16 } });
     expect(moved.status).toBe(200);
     expect((await bodyOf<{ data: TV3DashboardWidget }>(moved)).data.layout).toEqual({
       x: 0,
-      y: 4,
+      y: 16,
       w: 6,
-      h: 4,
+      h: 16,
     });
     expect(await updatedAt()).toBeGreaterThan(STALE.getTime());
 
     await markStale();
-    // The big number sits at x 4..7, y 0..2.
+    // The big number sits at x 4..7, y 0..8.
     expect((await update({ layout: { x: 3, y: 0, w: 4, h: 4 } })).status).toBe(422);
     expect(await updatedAt()).toBe(STALE.getTime());
   });
@@ -382,7 +382,7 @@ describe("PATCH /api/v3/dashboards/{dashboardId}/widgets/{widgetId}", () => {
     expect(repointed).toMatchObject({
       id: firstWidgetId,
       chartId: charts.spare,
-      layout: { x: 0, y: 4, w: 6, h: 4 },
+      layout: { x: 0, y: 16, w: 6, h: 16 },
     });
     expect(repointed.chart?.id).toBe(charts.spare);
     expect(await updatedAt()).toBeGreaterThan(STALE.getTime());
@@ -453,7 +453,7 @@ describe("the grid's last row", () => {
       data: chartIds.slice(0, 126).map(({ id }, index) => ({
         dashboardId: board.id,
         chartId: id,
-        layout: { x: 0, y: index * 8, w: 12, h: 8 },
+        layout: { x: 0, y: index * 32, w: 12, h: 32 },
         order: index,
       })),
     });

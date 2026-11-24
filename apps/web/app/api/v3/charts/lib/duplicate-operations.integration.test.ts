@@ -67,7 +67,7 @@ beforeEach(async () => {
         name: "Board",
         workspaceId: fixture.workspaceId,
         updatedAt: STALE,
-        widgets: { create: [{ chartId: sourceId, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }] },
+        widgets: { create: [{ chartId: sourceId, layout: { x: 0, y: 0, w: 6, h: 16 }, order: 0 }] },
       },
     })
   ).id;
@@ -111,7 +111,7 @@ describe("POST /api/v3/charts/{chartId}/duplicate", () => {
     expect(copy.dashboards).toEqual([{ id: dashboardId, name: "Board" }]);
 
     const widget = await prisma.dashboardWidget.findFirstOrThrow({ where: { chartId: copy.id } });
-    expect(widget).toMatchObject({ dashboardId, layout: { x: 6, y: 0, w: 4, h: 4 }, order: 1 });
+    expect(widget).toMatchObject({ dashboardId, layout: { x: 6, y: 0, w: 4, h: 16 }, order: 1 });
     expect(await dashboardUpdatedAt()).toBeGreaterThan(STALE.getTime());
   });
 

@@ -124,7 +124,7 @@ describe("a Feedback Dataset's Dashboard Viewer access", () => {
 });
 
 describe("a team's dashboard limits", () => {
-  test("names only dashboards of the team's workspaces", async () => {
+  test("refuses a dashboard outside the team's workspaces, and offers every dashboard of the organization", async () => {
     const refused = await replaceV3TeamDashboardLimits({
       teamId: ids.team,
       body: { dashboardIds: [ids.otherDashboard] },
@@ -145,6 +145,13 @@ describe("a team's dashboard limits", () => {
       dashboardIds: [ids.dashboard],
       dashboards: [
         { id: ids.dashboard, name: "Mine", workspaceId: fixture.workspaceId, workspaceName: "Dashboards" },
+        // The options span the organization: the team settings narrow them to the workspaces picked in the form.
+        {
+          id: ids.otherDashboard,
+          name: "Elsewhere",
+          workspaceId: fixture.otherWorkspaceId,
+          workspaceName: "Other",
+        },
       ],
     });
     expect((await getV3TeamDashboardLimits({ teamId: ids.team, ...ctx(fixture.users.editor) })).status).toBe(
