@@ -244,8 +244,8 @@ test.describe("Dashboard Viewer access", () => {
     await expect(page.getByText(setup.chartName)).toBeVisible();
     await expect(page.getByRole("button", { name: "Managers only" })).toHaveCount(0);
     const chips = filterChips(page);
-    await expect(chips.getByText("Source Name")).toBeVisible();
-    await expect(chips.getByText("Web")).toBeVisible();
+    await expect(chips.getByText("Source Name", { exact: true })).toBeVisible();
+    await expect(chips.getByText("Web", { exact: true })).toBeVisible();
     await expect(chips.getByTitle("Set by your data access, from your Region attribute")).toBeVisible();
 
     // The owner sees every page, and as the viewer sees what the viewer sees.
