@@ -16,7 +16,19 @@ function fixture() {
   directories.push(directory);
   mkdirSync(join(directory, "bin"));
   // Only expose tools this harness needs, even when a developer has native zed installed.
-  for (const tool of ["bash", "dirname", "touch", "cat", "tee", "python3", "cp", "mkdir"]) {
+  for (const tool of [
+    "bash",
+    "dirname",
+    "touch",
+    "cat",
+    "tee",
+    "python3",
+    "cp",
+    "mkdir",
+    "mktemp",
+    "rm",
+    "uname",
+  ]) {
     const path = execFileSync("/bin/sh", ["-c", `command -v ${tool}`], { encoding: "utf8" }).trim();
     symlinkSync(path, join(directory, "bin", tool));
   }
@@ -103,6 +115,15 @@ esac`
   const commands = readFileSync(join(directory, "commands"), "utf8").trim().split("\n");
   expect(commands.filter((line) => line.startsWith("pull "))).toHaveLength(2);
   expect(commands.filter((line) => line.startsWith("run "))).toHaveLength(1);
+  expect(commands.find((line) => line.startsWith("run "))).toContain("--pull never");
+});
+
+test("a cached AuthZed image runs validation without a registry pull", () => {
+  const { directory, env, command } = fixture();
+  command("docker", 'echo "$1" >> "$FIXTURE/commands"; [[ "$1" != pull ]]');
+  const result = spawnSync("bash", ["authzed/validate.sh"], { cwd: repository, env, encoding: "utf8" });
+  expect(result.status, result.stderr).toBe(0);
+  expect(readFileSync(join(directory, "commands"), "utf8").trim().split("\n")).toEqual(["image", "run"]);
 });
 
 test("a persistent apt failure stops setup before any browser install", () => {
@@ -139,43 +160,68 @@ esac`
   expect(commands.filter((line) => line === "run")).toHaveLength(failure === "pull" ? 0 : 1);
 });
 
-test("apt fallback rewrites Ubuntu mirrors in both source formats and preserves third-party sources", () => {
+test.each(["direct", "mirror-file"])(
+  "apt fallback handles %s Ubuntu sources and preserves third-party sources",
+  (format) => {
+    const { directory, env, command } = fixture();
+    command("sudo", 'exec "$@"');
+    const apt = join(directory, "apt");
+    mkdirSync(join(apt, "apt.conf.d"), { recursive: true });
+    mkdirSync(join(apt, "sources.list.d"));
+    const mirrorUri = "mirror+file:/etc/apt/apt-mirrors.txt";
+    const legacyUri = format === "direct" ? "http://us-east-2.ec2.archive.ubuntu.com/ubuntu" : mirrorUri;
+    const uris =
+      format === "direct"
+        ? "http://archive.ubuntu.com/ubuntu http://security.ubuntu.com/ubuntu"
+        : `${mirrorUri} ${mirrorUri}`;
+    writeFileSync(join(apt, "sources.list"), `deb ${legacyUri} noble main\n`);
+    const sources = join(apt, "sources.list.d/ubuntu.sources");
+    writeFileSync(
+      sources,
+      `URIs: ${uris}\nSuites: noble noble-security\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n`
+    );
+    const thirdParty = join(apt, "sources.list.d/docker.list");
+    const thirdPartyContents =
+      "deb https://download.docker.com/linux/ubuntu noble stable\ndeb mirror+file:/etc/apt/vendor-mirrors.txt noble stable\n";
+    writeFileSync(thirdParty, thirdPartyContents);
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source scripts/ci-network.sh; ci_configure_apt "$1"; ci_use_fallback_apt_mirror "$1"',
+        "test",
+        apt,
+      ],
+      { cwd: repository, env, encoding: "utf8" }
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(readFileSync(join(apt, "sources.list"), "utf8")).toContain(
+      "https://azure.archive.ubuntu.com/ubuntu noble main"
+    );
+    expect(readFileSync(sources, "utf8")).toBe(
+      "URIs: https://azure.archive.ubuntu.com/ubuntu https://azure.archive.ubuntu.com/ubuntu\nSuites: noble noble-security\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n"
+    );
+    expect(readFileSync(thirdParty, "utf8")).toBe(thirdPartyContents);
+    expect(readFileSync(join(apt, "apt.conf.d/99formbricks-ci"), "utf8")).toContain(
+      'APT::Update::Error-Mode "any";'
+    );
+  }
+);
+
+test("a kind download failure skips cluster diagnostics without an isolated kubeconfig", () => {
   const { directory, env, command } = fixture();
-  command("sudo", 'exec "$@"');
-  const apt = join(directory, "apt");
-  mkdirSync(join(apt, "apt.conf.d"), { recursive: true });
-  mkdirSync(join(apt, "sources.list.d"));
-  writeFileSync(join(apt, "sources.list"), "deb http://us-east-2.ec2.archive.ubuntu.com/ubuntu noble main\n");
-  const sources = join(apt, "sources.list.d/ubuntu.sources");
-  writeFileSync(
-    sources,
-    "URIs: http://archive.ubuntu.com/ubuntu http://security.ubuntu.com/ubuntu\nSuites: noble noble-security\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n"
-  );
-  const thirdParty = join(apt, "sources.list.d/docker.list");
-  writeFileSync(thirdParty, "deb https://download.docker.com/linux/ubuntu noble stable\n");
-  const result = spawnSync(
-    "bash",
-    [
-      "-c",
-      'source scripts/ci-network.sh; ci_configure_apt "$1"; ci_use_fallback_apt_mirror "$1"',
-      "test",
-      apt,
-    ],
-    { cwd: repository, env, encoding: "utf8" }
-  );
-  expect(result.status, result.stderr).toBe(0);
-  expect(readFileSync(join(apt, "sources.list"), "utf8")).toContain(
-    "https://azure.archive.ubuntu.com/ubuntu noble main"
-  );
-  expect(readFileSync(sources, "utf8")).toBe(
-    "URIs: https://azure.archive.ubuntu.com/ubuntu https://azure.archive.ubuntu.com/ubuntu\nSuites: noble noble-security\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n"
-  );
-  expect(readFileSync(thirdParty, "utf8")).toBe(
-    "deb https://download.docker.com/linux/ubuntu noble stable\n"
-  );
-  expect(readFileSync(join(apt, "apt.conf.d/99formbricks-ci"), "utf8")).toContain(
-    'APT::Update::Error-Mode "any";'
-  );
+  writeFileSync(join(directory, "commands"), "");
+  command("curl", "exit 22");
+  command("helm", 'echo helm >> "$FIXTURE/commands"; exit 1');
+  command("kubectl", 'echo kubectl >> "$FIXTURE/commands"; exit 1');
+  const result = spawnSync("bash", ["charts/formbricks/tests/envoy-kind-integration.sh"], {
+    cwd: repository,
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status).toBe(22);
+  expect(result.stderr).toContain("No isolated kind kubeconfig is available");
+  expect(readFileSync(join(directory, "commands"), "utf8")).toBe("");
 });
 
 test("artifact downloads recover from an HTTP 500", async () => {
