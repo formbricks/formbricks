@@ -1,14 +1,11 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError } from "@formbricks/types/errors";
-import { getContact, getContactByUserId } from "./contact";
+import { getContactByUserId } from "./contact";
 
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
   prisma: {
     contact: {
-      findUnique: vi.fn(),
       findFirst: vi.fn(),
     },
   },
@@ -30,53 +27,6 @@ const mockUserId = "test-user-id";
 describe("Contact API Lib", () => {
   afterEach(() => {
     vi.resetAllMocks();
-  });
-
-  describe("getContact", () => {
-    test("should return contact if found", async () => {
-      const mockContactData = {
-        id: mockContactId,
-        workspaceId: mockWorkspaceId,
-        directoryId: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContactData);
-
-      const contact = await getContact(mockContactId);
-
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-        where: { id: mockContactId },
-        select: { id: true },
-      });
-      expect(contact).toEqual(mockContactData);
-    });
-
-    test("should return null if contact not found", async () => {
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue(null);
-
-      const contact = await getContact(mockContactId);
-
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-        where: { id: mockContactId },
-        select: { id: true },
-      });
-      expect(contact).toBeNull();
-    });
-
-    test("should throw DatabaseError on Prisma error", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
-        code: "P2025",
-        clientVersion: "5.0.0",
-      });
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(prismaError);
-
-      await expect(getContact(mockContactId)).rejects.toThrow(DatabaseError);
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-        where: { id: mockContactId },
-        select: { id: true },
-      });
-    });
   });
 
   describe("getContactByUserId", () => {

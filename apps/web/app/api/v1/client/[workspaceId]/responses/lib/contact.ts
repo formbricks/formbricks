@@ -1,24 +1,7 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { DatabaseError } from "@formbricks/types/errors";
 import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
-
-export const getContact = reactCache(async (contactId: string) => {
-  try {
-    const contact = await prisma.contact.findUnique({
-      where: { id: contactId },
-      select: { id: true },
-    });
-
-    return contact;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-  }
-});
 
 export const getContactByUserId = reactCache(
   async (
