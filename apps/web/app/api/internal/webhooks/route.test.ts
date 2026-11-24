@@ -474,16 +474,18 @@ describe("POST /api/internal/webhooks/test-deliveries", () => {
     expect(mocks.testEndpoint).not.toHaveBeenCalled();
   });
 
-  test("signs with the stored secret only when the tested URL is the stored one", async () => {
+  test("signs every test with the stored secret, whatever URL is under test", async () => {
     await testDelivery({ url: settings.url, webhookId: WEBHOOK_ID });
     expect(mocks.testEndpoint).toHaveBeenCalledWith(settings.url, "whsec_stored");
 
     mocks.testEndpoint.mockClear();
-    const response = await testDelivery({ url: "https://attacker.example/hook", webhookId: WEBHOOK_ID });
+    const response = await testDelivery({ url: "https://new.example.com/hook", webhookId: WEBHOOK_ID });
 
-    // The stored secret must not be aimable at a URL the caller chooses.
-    expect(mocks.testEndpoint).toHaveBeenCalledWith("https://attacker.example/hook", "whsec_generated");
-    expect((await response.json()).data.secret).toBe("whsec_generated");
+    // A changed URL must still be testable: the endpoint verifies the secret deliveries carry, and a
+    // workspace writer can reveal that secret anyway.
+    expect(mocks.testEndpoint).toHaveBeenCalledWith("https://new.example.com/hook", "whsec_stored");
+    expect((await response.json()).data.secret).toBe("whsec_stored");
+    expect(mocks.generateWebhookSecret).not.toHaveBeenCalled();
   });
 
   test("charges the test delivery to the user's own budget", async () => {

@@ -255,9 +255,10 @@ export async function getWebhookSecretOperation({
 
 /**
  * Who may test `body.url`, and which secret signs it. With `webhookId` the caller must write to that
- * webhook's workspace and the stored secret signs only the stored URL; an unsaved URL gets a throwaway, so
- * it cannot be aimed at a URL of the caller's choosing. Without one, the caller must write to the workspace
- * the webhook is about to be created in, and the payload is signed with `secret` or a new one.
+ * webhook's workspace, and the stored secret signs the payload whatever the URL: the endpoint verifies the
+ * secret real deliveries will carry, and a writer can reveal that secret anyway. Without one, the caller
+ * must write to the workspace the webhook is about to be created in, and the payload is signed with
+ * `secret` or a new one.
  */
 async function resolveTestDeliverySecret(
   context: TRequestContext,
@@ -283,10 +284,9 @@ async function resolveTestDeliverySecret(
 
     const webhook = await getWebhookWithSecret(body.webhookId);
     if (!webhook.ok) return problemForbidden(requestId, undefined, instance);
-    return {
-      userId: access.userId,
-      secret: body.url === webhook.data.url ? (webhook.data.secret ?? undefined) : generateWebhookSecret(),
-    };
+    // A changed URL used to get a throwaway secret, so an endpoint that verifies the stored one rejected
+    // its own test and the form refused to save. Sign with the stored secret, as deliveries do.
+    return { userId: access.userId, secret: webhook.data.secret ?? undefined };
   }
 
   const access = await requireWorkspaceActionAccess({ ...context, workspaceId, action: "workspace.write" });
