@@ -36,6 +36,7 @@ import {
 import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
 import { getInvalidSurveyTargets, isFlowTabIssue } from "@/modules/survey/editor/lib/invalid-survey-targets";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
+import { describeMissingLabelIssue } from "@/modules/survey/editor/lib/missing-label-message";
 import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
@@ -451,6 +452,15 @@ export const SurveyMenuBar = ({
     if (codeMessage) {
       toast.error(codeMessage, { className: "w-fit max-w-md!" });
       setActiveId("elements");
+      return;
+    }
+
+    // A label missing in the default language or a translation: the schema's message is English for
+    // API callers, so word it in the editor's language instead (ENG-2621).
+    const missingLabel = describeMissingLabelIssue(firstError, t, locale);
+    if (missingLabel) {
+      toast.error(missingLabel.message, { className: "w-fit max-w-md!" });
+      if (missingLabel.opensLanguageTab) setActiveId("language");
       return;
     }
 

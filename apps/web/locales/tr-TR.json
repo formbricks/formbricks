@@ -4637,6 +4637,17 @@
         "max_file_size_limit_is_mb": "Maksimum dosya boyutu sınırı {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "Maksimum dosya boyutu sınırı {maxSize} MB. Daha fazlasına ihtiyacın varsa, lütfen <upgradeLink>planını yükselt</upgradeLink>.",
         "missing_first": "İlk eksik",
+        "missing_label": {
+          "choice_image_alt_text": "{n}. seçeneğin görsel alt metni",
+          "in_question": "{blockNumber}. bloktaki {questionNumber}. soruda {field} eksik",
+          "in_question_for_languages": "{blockNumber}. bloktaki {questionNumber}. soruda {field} şu diller için eksik: {languages}",
+          "on_ending_card": "{endingNumber}. Bitiş kartında {field} eksik",
+          "on_ending_card_for_languages": "{endingNumber}. Bitiş kartında {field} şu diller için eksik: {languages}",
+          "on_welcome_card": "Karşılama kartında {field} eksik",
+          "on_welcome_card_for_languages": "Karşılama kartında {field} şu diller için eksik: {languages}",
+          "question_text": "Soru metni",
+          "subfield_label": "{field} alanının etiketi"
+        },
         "mobile_preview": "Mobil önizleme",
         "move_question_to_block": "Soruyu bloğa taşı",
         "multiply": "Çarp",

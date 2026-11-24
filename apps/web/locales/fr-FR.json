@@ -4637,6 +4637,17 @@
         "max_file_size_limit_is_mb": "La taille maximale du fichier est de {maxSize} Mo.",
         "max_file_size_limit_is_mb_upgrade": "La taille maximale du fichier est de {maxSize} Mo. Si tu as besoin de plus, <upgradeLink>améliore ton forfait</upgradeLink>.",
         "missing_first": "Manquantes en premier",
+        "missing_label": {
+          "choice_image_alt_text": "Texte alternatif de l'image du choix {n}",
+          "in_question": "{field} manquant dans la question {questionNumber} du bloc {blockNumber}",
+          "in_question_for_languages": "{field} manquant dans la question {questionNumber} du bloc {blockNumber} pour les langues suivantes : {languages}",
+          "on_ending_card": "{field} manquant sur la carte de fin {endingNumber}",
+          "on_ending_card_for_languages": "{field} manquant sur la carte de fin {endingNumber} pour les langues suivantes : {languages}",
+          "on_welcome_card": "{field} manquant sur la carte de bienvenue",
+          "on_welcome_card_for_languages": "{field} manquant sur la carte de bienvenue pour les langues suivantes : {languages}",
+          "question_text": "Texte de la question",
+          "subfield_label": "Libellé du champ {field}"
+        },
         "mobile_preview": "Aperçu mobile",
         "move_question_to_block": "Déplacer la question vers le bloc",
         "multiply": "Multiplier",

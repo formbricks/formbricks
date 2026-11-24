@@ -4637,6 +4637,17 @@
         "max_file_size_limit_is_mb": "Maximale bestandsgrootte is {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "Maximale bestandsgrootte is {maxSize} MB. Heb je meer nodig? <upgradeLink>Upgrade je abonnement</upgradeLink>.",
         "missing_first": "Ontbrekende eerst",
+        "missing_label": {
+          "choice_image_alt_text": "Alt-tekst van afbeelding bij keuze {n}",
+          "in_question": "{field} bij vraag {questionNumber} van blok {blockNumber} ontbreekt",
+          "in_question_for_languages": "{field} bij vraag {questionNumber} van blok {blockNumber} ontbreekt voor de volgende talen: {languages}",
+          "on_ending_card": "{field} op eindkaart {endingNumber} ontbreekt",
+          "on_ending_card_for_languages": "{field} op eindkaart {endingNumber} ontbreekt voor de volgende talen: {languages}",
+          "on_welcome_card": "{field} op de welkomstkaart ontbreekt",
+          "on_welcome_card_for_languages": "{field} op de welkomstkaart ontbreekt voor de volgende talen: {languages}",
+          "question_text": "Vraagtekst",
+          "subfield_label": "Label voor veld {field}"
+        },
         "mobile_preview": "Mobiel voorbeeld",
         "move_question_to_block": "Vraag naar blok verplaatsen",
         "multiply": "Vermenigvuldigen",

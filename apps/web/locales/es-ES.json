@@ -4637,6 +4637,17 @@
         "max_file_size_limit_is_mb": "El límite de tamaño de archivo es de {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "El límite de tamaño de archivo es de {maxSize} MB. Si necesitas más, por favor <upgradeLink>actualiza tu plan</upgradeLink>.",
         "missing_first": "Faltantes primero",
+        "missing_label": {
+          "choice_image_alt_text": "Texto alternativo de la imagen de la opción {n}",
+          "in_question": "Falta {field} en la pregunta {questionNumber} del bloque {blockNumber}",
+          "in_question_for_languages": "Falta {field} en la pregunta {questionNumber} del bloque {blockNumber} para los siguientes idiomas: {languages}",
+          "on_ending_card": "Falta {field} en la tarjeta final {endingNumber}",
+          "on_ending_card_for_languages": "Falta {field} en la tarjeta final {endingNumber} para los siguientes idiomas: {languages}",
+          "on_welcome_card": "Falta {field} en la tarjeta de bienvenida",
+          "on_welcome_card_for_languages": "Falta {field} en la tarjeta de bienvenida para los siguientes idiomas: {languages}",
+          "question_text": "Texto de la pregunta",
+          "subfield_label": "Etiqueta del campo {field}"
+        },
         "mobile_preview": "Vista previa móvil",
         "move_question_to_block": "Mover pregunta al bloque",
         "multiply": "Multiplicar",

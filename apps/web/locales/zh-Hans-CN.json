@@ -4637,6 +4637,17 @@
         "max_file_size_limit_is_mb": "文件大小上限为 {maxSize} MB。",
         "max_file_size_limit_is_mb_upgrade": "文件大小上限为 {maxSize} MB。如需更大空间，请<upgradeLink>升级您的套餐</upgradeLink>。",
         "missing_first": "缺失优先",
+        "missing_label": {
+          "choice_image_alt_text": "选项 {n} 的图片替代文本",
+          "in_question": "区块 {blockNumber} 中第 {questionNumber} 题缺少{field}",
+          "in_question_for_languages": "区块 {blockNumber} 中第 {questionNumber} 题缺少以下语言的{field}：{languages}",
+          "on_ending_card": "结束卡片 {endingNumber} 缺少{field}",
+          "on_ending_card_for_languages": "结束卡片 {endingNumber} 缺少以下语言的{field}：{languages}",
+          "on_welcome_card": "欢迎卡片缺少{field}",
+          "on_welcome_card_for_languages": "欢迎卡片缺少以下语言的{field}：{languages}",
+          "question_text": "问题文本",
+          "subfield_label": "字段 {field} 的标签"
+        },
         "mobile_preview": "移动端预览",
         "move_question_to_block": "将问题移动到区块",
         "multiply": "乘以",

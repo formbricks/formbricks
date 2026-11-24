@@ -4637,6 +4637,17 @@
         "max_file_size_limit_is_mb": "O tamanho máximo do ficheiro é {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "O tamanho máximo do ficheiro é {maxSize} MB. Se precisares de mais, <upgradeLink>atualiza o teu plano</upgradeLink>.",
         "missing_first": "Em falta primeiro",
+        "missing_label": {
+          "choice_image_alt_text": "Texto alternativo da imagem da opção {n}",
+          "in_question": "Falta {field} na pergunta {questionNumber} do bloco {blockNumber}",
+          "in_question_for_languages": "Falta {field} na pergunta {questionNumber} do bloco {blockNumber} nos seguintes idiomas: {languages}",
+          "on_ending_card": "Falta {field} no cartão de encerramento {endingNumber}",
+          "on_ending_card_for_languages": "Falta {field} no cartão de encerramento {endingNumber} nos seguintes idiomas: {languages}",
+          "on_welcome_card": "Falta {field} no cartão de boas-vindas",
+          "on_welcome_card_for_languages": "Falta {field} no cartão de boas-vindas nos seguintes idiomas: {languages}",
+          "question_text": "Texto da pergunta",
+          "subfield_label": "Etiqueta do campo {field}"
+        },
         "mobile_preview": "Pré-visualização de telemóvel",
         "move_question_to_block": "Mover pergunta para o bloco",
         "multiply": "Multiplicar",
