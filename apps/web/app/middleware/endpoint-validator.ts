@@ -42,7 +42,13 @@ export const isIntegrationRoute = (url: string): boolean => {
 
 export const isAuthProtectedRoute = (url: string): boolean => {
   // List of routes that require authentication
-  const protectedRoutes = ["/environments", "/setup/organization", "/organizations"];
+  const protectedRoutes = [
+    "/environments",
+    "/workspaces",
+    "/account/settings",
+    "/setup/organization",
+    "/organizations",
+  ];
 
   // ID-free marketing links (/billing, /contacts, ...) resolve the user's organization, so they need a
   // session too; matched per path segment so /billing-confirmation stays public.

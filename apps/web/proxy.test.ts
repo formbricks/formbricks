@@ -5,13 +5,21 @@ import { isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
 import { FORMBRICKS_CLIENT_IP_HEADER } from "@/lib/utils/client-ip";
 import { INGEST_REQUEST_BODY_LIMIT_BYTES, config, proxy } from "./proxy";
 
-const { mockGetProxySession, mockIsPublicDomainConfigured, mockIsRequestFromPublicDomain } = vi.hoisted(
-  () => ({
-    mockGetProxySession: vi.fn(),
-    mockIsPublicDomainConfigured: vi.fn(),
-    mockIsRequestFromPublicDomain: vi.fn(),
-  })
-);
+const {
+  mockGetProxySession,
+  mockIsPublicDomainConfigured,
+  mockIsRequestFromPublicDomain,
+  mockFindFirstUser,
+} = vi.hoisted(() => ({
+  mockGetProxySession: vi.fn(),
+  mockIsPublicDomainConfigured: vi.fn(),
+  mockIsRequestFromPublicDomain: vi.fn(),
+  mockFindFirstUser: vi.fn(),
+}));
+
+vi.mock("@formbricks/database", () => ({
+  prisma: { user: { findFirst: mockFindFirstUser } },
+}));
 
 vi.mock("@/modules/auth/lib/proxy-session", () => ({
   getProxySession: mockGetProxySession,
@@ -97,6 +105,51 @@ describe("proxy", () => {
     expect(response.headers.get("location")).toBe(
       "http://localhost:3000/auth/login?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Ftest"
     );
+  });
+
+  describe("root path without a session", () => {
+    test("redirects to login before any page renders, with no body", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+      mockFindFirstUser.mockResolvedValue({ id: "user-1" });
+
+      const response = await proxy(new NextRequest("http://localhost:3000/"));
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toBe("http://localhost:3000/auth/login");
+      expect(response.body).toBeNull();
+    });
+
+    test("redirects a fresh instance to the setup intro", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+      mockFindFirstUser.mockResolvedValue(null);
+
+      const response = await proxy(new NextRequest("http://localhost:3000/"));
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toBe("http://localhost:3000/setup/intro");
+      expect(response.body).toBeNull();
+    });
+
+    test("still rejects an invalid callback URL", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+
+      const response = await proxy(
+        new NextRequest("http://localhost:3000/?callbackUrl=https%3A%2F%2Fevil.example")
+      );
+
+      expect(response.status).toBe(400);
+      expect(mockFindFirstUser).not.toHaveBeenCalled();
+    });
+
+    test("lets a signed-in user through to the page", async () => {
+      mockGetProxySession.mockResolvedValue({ userId: "user-1", expires: new Date(Date.now() + 60_000) });
+
+      const response = await proxy(new NextRequest("http://localhost:3000/"));
+
+      expect(response.headers.get("location")).toBeNull();
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+      expect(mockFindFirstUser).not.toHaveBeenCalled();
+    });
   });
 
   test("rewrites ID-free marketing links to the single marketing-links route, keeping the query", async () => {
