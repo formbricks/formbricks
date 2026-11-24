@@ -197,8 +197,8 @@ export const updateContactDirectory = async ({
       where: { contactDirectoryId: directoryId },
       select: { id: true },
     });
-    const currentIds = current.map(({ id }) => id).sort();
-    const nextIds = workspaceIds ? [...new Set(workspaceIds)].sort() : currentIds;
+    const currentIds = current.map(({ id }) => id).sort((a, b) => a.localeCompare(b));
+    const nextIds = workspaceIds ? [...new Set(workspaceIds)].sort((a, b) => a.localeCompare(b)) : currentIds;
 
     const leaving = currentIds.filter((id) => !nextIds.includes(id));
     if (leaving.length > 0) throw new ContactDirectoryWorkspacesCannotLeaveError(leaving);

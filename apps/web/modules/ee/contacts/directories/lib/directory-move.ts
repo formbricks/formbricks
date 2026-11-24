@@ -310,7 +310,7 @@ export const moveWorkspacesIntoDirectory = async (
     workspaceIds,
   }: { organizationId: string; directoryId: string; workspaceIds: string[] }
 ): Promise<void> => {
-  const ids = [...new Set(workspaceIds)].sort();
+  const ids = [...new Set(workspaceIds)].sort((a, b) => a.localeCompare(b));
   if (ids.length === 0) return;
 
   const locked = await tx.$queryRaw<{ id: string; contactDirectoryId: string | null }[]>`
@@ -327,7 +327,7 @@ export const moveWorkspacesIntoDirectory = async (
 
   const oldDirectoryIds = [
     ...new Set(moving.map((row) => row.contactDirectoryId).filter((id): id is string => id !== null)),
-  ].sort();
+  ].sort((a, b) => a.localeCompare(b));
   const directorylessWorkspaceIds = moving
     .filter((row) => row.contactDirectoryId === null)
     .map((row) => row.id);
