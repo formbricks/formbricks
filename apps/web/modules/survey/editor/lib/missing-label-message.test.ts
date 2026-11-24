@@ -144,4 +144,71 @@ describe("describeMissingLabelIssue", () => {
     ).toBeNull();
     expect(describeMissingLabelIssue({ path: ["questions", 0, "headline"] }, t, "en-US")).toBeNull();
   });
+
+  test("leaves a marked issue on the legacy questions path to its own handling", () => {
+    expect(
+      describeMissingLabelIssue(
+        { path: ["questions", 0, "headline"], params: { missingLabel: true } },
+        t,
+        "en-US"
+      )
+    ).toBeNull();
+  });
+
+  test("lists the languages a translated ending-card label is missing in", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "subheader",
+      { default: "Thanks", en: "Thanks", de: "", ja: "Arigato" },
+      languages,
+      "end",
+      0
+    );
+
+    expect(describeMissingLabelIssue(asParsed(issue), t, "en-US")).toEqual({
+      message: `workspace.surveys.edit.missing_label.on_ending_card_for_languages ${JSON.stringify({
+        field: "common.description",
+        endingNumber: 1,
+        languages: "German",
+      })}`,
+      hasLanguageList: true,
+    });
+  });
+
+  test.each([
+    [["placeholder"], "common.placeholder"],
+    [["label"], "workspace.surveys.edit.checkbox_label"],
+    [["upperLabel"], "workspace.surveys.edit.upper_label"],
+    [["lowerLabel"], "workspace.surveys.edit.lower_label"],
+    [["ctaButtonLabel"], "workspace.surveys.edit.button_label"],
+    [["imageAltText"], "workspace.surveys.edit.image_alt_text"],
+    [["rows", 0], `common.row_n ${JSON.stringify({ n: 1 })}`],
+    [["columns", 1], `common.column_n ${JSON.stringify({ n: 2 })}`],
+    [
+      ["addressline1"],
+      `workspace.surveys.edit.missing_label.subfield_label ${JSON.stringify({ field: "workspace.surveys.edit.address_line_1" })}`,
+    ],
+    [["somethingNew"], "somethingNew"],
+  ])("names the question field at %j as %s", (fieldPath, field) => {
+    const described = describeMissingLabelIssue(
+      { path: ["blocks", 0, "elements", 0, ...fieldPath], params: { missingLabel: true } },
+      t,
+      "en-US"
+    );
+
+    expect(described?.message).toBe(
+      `workspace.surveys.edit.missing_label.in_question ${JSON.stringify({ field, questionNumber: 1, blockNumber: 1 })}`
+    );
+  });
+
+  test("names the welcome card's next button", () => {
+    const described = describeMissingLabelIssue(
+      { path: ["welcomeCard", "buttonLabel"], params: { missingLabel: true } },
+      t,
+      "en-US"
+    );
+
+    expect(described?.message).toBe(
+      `workspace.surveys.edit.missing_label.on_welcome_card ${JSON.stringify({ field: "workspace.surveys.edit.next_button_label" })}`
+    );
+  });
 });
