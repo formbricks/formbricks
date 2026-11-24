@@ -3,6 +3,7 @@ import { prisma } from "@/lib/__mocks__/database";
 import { describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import {
   assertDisplayOwnership,
@@ -432,6 +433,39 @@ describe("assertDisplayOwnership", () => {
       expect(rejection.message).toBe(missing.message);
     }
     expect(missing.message).not.toContain(mockDisplayId);
+  });
+
+  // A displayId that isn't a cuid2 fails validation before the lookup. It must read like any other
+  // unusable display, not as "Validation failed" (v1) or an unmapped 500 (v2).
+  test("rejects a malformed displayId with the same message, without querying", async () => {
+    vi.mocked(prisma.display.findUnique).mockClear();
+    vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(null);
+    const missing = await assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, null).catch(
+      (error: Error) => error
+    );
+    vi.mocked(prisma.display.findUnique).mockClear();
+
+    const malformed = await assertDisplayOwnership("Not A Cuid!", mockWorkspaceId, mockSurveyId, null).catch(
+      (error: Error) => error
+    );
+
+    expect(malformed).toBeInstanceOf(InvalidInputError);
+    expect((malformed as Error).message).toBe((missing as Error).message);
+    expect(prisma.display.findUnique).not.toHaveBeenCalled();
+  });
+
+  test("logs at most 64 characters of the client-supplied displayId", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const oversized = "a".repeat(10_000);
+    vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(null);
+
+    await expect(assertDisplayOwnership(oversized, mockWorkspaceId, mockSurveyId, null)).rejects.toThrow(
+      InvalidInputError
+    );
+
+    const [fields] = warn.mock.calls[0] as unknown as [{ displayId: string }, string];
+    expect(fields.displayId).toHaveLength(64);
+    warn.mockRestore();
   });
 
   test("resolves without error when all ownership checks pass", async () => {

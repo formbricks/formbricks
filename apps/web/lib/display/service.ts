@@ -6,7 +6,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
-import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
 import { DISPLAY_REJECTED_MESSAGE } from "./errors";
 
@@ -203,16 +203,38 @@ export const assertDisplayOwnership = async (
   contactId: string | null,
   tx?: Prisma.TransactionClient
 ): Promise<void> => {
-  const display = await getDisplayForResponseValidation(displayId, tx);
-  const reason = getDisplayRejectionReason(display, workspaceId, surveyId, contactId);
+  const reason = await findDisplayRejectionReason(displayId, workspaceId, surveyId, contactId, tx);
   if (reason) {
     // The public client-response routes echo this error, so the reason stays in the log (ENG-2240).
-    logger.warn({ displayId, workspaceId, surveyId, reason }, "Rejected displayId on response create");
+    // The id is client-supplied and unbounded; a cuid is 25 characters.
+    logger.warn(
+      { displayId: displayId.slice(0, 64), workspaceId, surveyId, reason },
+      "Rejected displayId on response create"
+    );
     throw new InvalidInputError(DISPLAY_REJECTED_MESSAGE);
   }
 };
 
+const findDisplayRejectionReason = async (
+  displayId: string,
+  workspaceId: string,
+  surveyId: string,
+  contactId: string | null,
+  tx?: Prisma.TransactionClient
+): Promise<TDisplayRejectionReason | null> => {
+  let display: Awaited<ReturnType<typeof getDisplayForResponseValidation>>;
+  try {
+    display = await getDisplayForResponseValidation(displayId, tx);
+  } catch (error) {
+    // A malformed id fails the cuid2 check before the lookup, as in validateDisplayScope.
+    if (error instanceof ValidationError) return "malformed_id";
+    throw error;
+  }
+  return getDisplayRejectionReason(display, workspaceId, surveyId, contactId);
+};
+
 type TDisplayRejectionReason =
+  | "malformed_id"
   | "not_found"
   | "different_workspace"
   | "different_survey"
