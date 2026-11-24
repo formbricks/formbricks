@@ -22,14 +22,17 @@ export const LAYOUT_BLOCK_KINDS = [
   "separator",
 ] as const satisfies readonly TLayoutBlockKind[];
 
-/** The size a new block gets: an image a quarter row, a text block three quarters, a separator the full row. */
+/**
+ * The size a new block gets: an image a quarter row, a text block three quarters, a separator the full row.
+ * An image and a text block are refitted to their content once drawn, so their height is only a start.
+ */
 export const getDefaultBlockLayout = (kind: TLayoutBlockKind): TWidgetLayout => {
-  if (kind === "image") return { x: 0, y: 0, w: 3, h: 3 };
-  if (kind === "text") return { x: 0, y: 0, w: 9, h: 2 };
-  return { x: 0, y: 0, w: GRID_COLUMNS, h: 1 };
+  if (kind === "image") return { x: 0, y: 0, w: 3, h: 12 };
+  if (kind === "text") return { x: 0, y: 0, w: 9, h: 8 };
+  return { x: 0, y: 0, w: GRID_COLUMNS, h: 2 };
 };
 
-/** The smallest a block may be resized to. A separator stays one row high; height of the others follows content. */
+/** The smallest a block may be resized to; the height of an image or text block follows its content. */
 export const getBlockMinSize = (kind: TLayoutBlockKind): { minW: number; minH: number } => ({
   minW: kind === "separator" ? 1 : 2,
   minH: 1,
@@ -153,30 +156,20 @@ export const pixelsToGridRows = (
 };
 
 /**
- * Auto-height for image and text blocks: each takes the rows its measured content needs, and blocks that
- * start on the same grid row take the tallest of them, so a row of blocks lines up. Widgets without a
- * measurement (charts, separators, blocks not yet measured) keep their height. Returns the same array
- * when nothing changes, so a caller can skip a re-render.
+ * Auto-height for image and text blocks: each takes exactly the rows its measured content needs, never
+ * more, so a block has no empty space to drag away. A block beside a taller widget is not stretched to
+ * match it: a short text card next to an image ends where its text ends. Widgets without a measurement
+ * (charts, separators, blocks not yet measured) keep their height. Returns the same array when nothing
+ * changes, so a caller can skip a re-render.
  */
-export const fitBlockHeights = <
-  T extends { id: string; kind: TDashboardWidgetKind; layout: TWidgetLayout; pageId?: string },
->(
+export const fitBlockHeights = <T extends { id: string; kind: TDashboardWidgetKind; layout: TWidgetLayout }>(
   widgets: T[],
   neededRows: ReadonlyMap<string, number>
 ): T[] => {
-  // Rows are a page's own: blocks on different pages never line up with each other.
-  const rowKey = (widget: T) => `${widget.pageId ?? ""}:${widget.layout.y}`;
-  const tallestByRow = new Map<string, number>();
-  for (const widget of widgets) {
-    const rows = isAutoHeightBlock(widget.kind) ? neededRows.get(widget.id) : undefined;
-    if (rows === undefined) continue;
-    tallestByRow.set(rowKey(widget), Math.max(tallestByRow.get(rowKey(widget)) ?? 0, rows));
-  }
   let changed = false;
   const fitted = widgets.map((widget) => {
-    if (!isAutoHeightBlock(widget.kind) || !neededRows.has(widget.id)) return widget;
-    const h = tallestByRow.get(rowKey(widget)) ?? widget.layout.h;
-    if (h === widget.layout.h) return widget;
+    const h = isAutoHeightBlock(widget.kind) ? neededRows.get(widget.id) : undefined;
+    if (h === undefined || h === widget.layout.h) return widget;
     changed = true;
     return { ...widget, layout: { ...widget.layout, h } };
   });

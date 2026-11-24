@@ -15,10 +15,10 @@ const WORKSPACE = "clws000000000000000000001";
 const UPLOAD = `/storage/${WORKSPACE}/private/dashboards/cldb000000000000000000001/logo--fid--1.png`;
 
 describe("block defaults", () => {
-  test("an image is 3 columns, a text block 9, a separator the full row one row high", () => {
+  test("an image is 3 columns, a text block 9, a separator the full row 2 units high", () => {
     expect(getDefaultBlockLayout("image").w).toBe(3);
     expect(getDefaultBlockLayout("text").w).toBe(9);
-    expect(getDefaultBlockLayout("separator")).toEqual({ x: 0, y: 0, w: 12, h: 1 });
+    expect(getDefaultBlockLayout("separator")).toEqual({ x: 0, y: 0, w: 12, h: 2 });
   });
 
   test("a new image is empty, fitted and centred; a new text block empty; a separator has no content", () => {
@@ -35,11 +35,11 @@ describe("block defaults", () => {
 
 describe("placeNewBlock", () => {
   test("drops a block in the next free slot of the page", () => {
-    expect(placeNewBlock("image", [{ x: 0, y: 0, w: 9, h: 2 }])).toEqual({ x: 9, y: 0, w: 3, h: 3 });
+    expect(placeNewBlock("image", [{ x: 0, y: 0, w: 9, h: 2 }])).toEqual({ x: 9, y: 0, w: 3, h: 12 });
   });
 
   test("puts a separator on a row of its own below everything when no row is free", () => {
-    expect(placeNewBlock("separator", [{ x: 0, y: 0, w: 4, h: 4 }])).toEqual({ x: 0, y: 4, w: 12, h: 1 });
+    expect(placeNewBlock("separator", [{ x: 0, y: 0, w: 4, h: 4 }])).toEqual({ x: 0, y: 4, w: 12, h: 2 });
   });
 });
 
@@ -129,7 +129,7 @@ describe("fitBlockHeights", () => {
     layout: { x: 0, y, w: 3, h },
   });
 
-  test("gives each measured block the rows it needs, and a row of blocks the tallest of them", () => {
+  test("gives each measured block exactly the rows it needs, even beside a taller block on its row", () => {
     const widgets = [block("a", "text", 0), block("b", "image", 0), block("c", "text", 4)];
     const fitted = fitBlockHeights(
       widgets,
@@ -139,7 +139,7 @@ describe("fitBlockHeights", () => {
         ["c", 3],
       ])
     );
-    expect(fitted.map((widget) => widget.layout.h)).toEqual([4, 4, 3]);
+    expect(fitted.map((widget) => widget.layout.h)).toEqual([1, 4, 3]);
   });
 
   test("leaves charts, separators and unmeasured blocks alone", () => {
@@ -156,18 +156,6 @@ describe("fitBlockHeights", () => {
       ])
     );
     expect(fitted).toBe(widgets);
-  });
-
-  test("lines blocks up per page, never across pages", () => {
-    const widgets = [block("a", "text", 0, 2, "p1"), block("b", "text", 0, 2, "p2")];
-    const fitted = fitBlockHeights(
-      widgets,
-      new Map([
-        ["a", 1],
-        ["b", 5],
-      ])
-    );
-    expect(fitted.map((widget) => widget.layout.h)).toEqual([1, 5]);
   });
 
   test("returns the same array when nothing changes", () => {

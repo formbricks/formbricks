@@ -4,18 +4,21 @@ import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 /** Columns of the `lg` breakpoint, the one the stored layouts are expressed in. */
 export const GRID_COLUMNS = 12;
 
-/** The tallest a widget may be, in grid rows — the grid's own resize limit. */
-export const MAX_WIDGET_HEIGHT = 8;
+/**
+ * The tallest a widget may be, in grid rows — the grid's own resize limit. A row is 8px and rows are 16px
+ * apart, so one unit is 24px: 4 units are what one 80px row was before the grid was made finer.
+ */
+export const MAX_WIDGET_HEIGHT = 32;
 
 /** The lowest row a widget may start on; bounds a layout an API caller sends. */
-export const MAX_WIDGET_Y = 1000;
+export const MAX_WIDGET_Y = 4000;
 
 /** The size a chart's widget gets when nobody chose one. */
 export const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout => {
-  if (chartType === "big_number") return { x: 0, y: 0, w: 3, h: 2 };
+  if (chartType === "big_number") return { x: 0, y: 0, w: 3, h: 8 };
   // A grid of statements needs the width for its labels and the height for its rows.
-  if (chartType === "matrix") return { x: 0, y: 0, w: 6, h: 5 };
-  return { x: 0, y: 0, w: 4, h: 4 };
+  if (chartType === "matrix") return { x: 0, y: 0, w: 6, h: 20 };
+  return { x: 0, y: 0, w: 4, h: 16 };
 };
 
 /**
@@ -25,7 +28,7 @@ export const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout => 
  */
 export const getWidgetMinSize = (chartType: TChartType): { minW: number; minH: number } => ({
   minW: 2,
-  minH: chartType === "big_number" ? 2 : 3,
+  minH: chartType === "big_number" ? 8 : 12,
 });
 
 const overlaps = (a: TWidgetLayout, b: TWidgetLayout): boolean =>

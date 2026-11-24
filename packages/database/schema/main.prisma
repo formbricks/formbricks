@@ -1734,22 +1734,22 @@ model SurveyEmbeddedData {
 /// @property teamUsers - Users who are part of this team
 /// @property workspaceTeams - Workspaces this team has access to
 model Team {
-  id              String              @id @default(cuid())
-  createdAt       DateTime            @default(now()) @map(name: "created_at")
-  updatedAt       DateTime            @updatedAt @map(name: "updated_at")
-  name            String
-  organizationId  String
-  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  teamUsers       TeamUser[]
-  workspaceTeams  WorkspaceTeam[]
+  id               String              @id @default(cuid())
+  createdAt        DateTime            @default(now()) @map(name: "created_at")
+  updatedAt        DateTime            @updatedAt @map(name: "updated_at")
+  name             String
+  organizationId   String
+  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamUsers        TeamUser[]
+  workspaceTeams   WorkspaceTeam[]
   /// The dashboards this team's Dashboard Viewers are limited to (ENG-7469). None means every dashboard
   /// of the team's workspaces. A limit only narrows the team's own workspace grant (D5).
-  dashboardLimits TeamDashboard[]
+  dashboardLimits  TeamDashboard[]
   /// Whether the team's Dashboard Viewers are limited to `dashboardLimits` (ENG-7469). Set only by the
   /// limits write, never by a cascade: a team whose selected dashboards are all deleted stays limited and
   /// reaches no dashboard, rather than silently widening to every dashboard (fail closed).
-  dashboardLimited Boolean @default(false)
-  pageLimits      DashboardPageTeam[]
+  dashboardLimited Boolean             @default(false)
+  pageLimits       DashboardPageTeam[]
 
   @@unique([organizationId, name])
 }
@@ -1967,7 +1967,7 @@ model DashboardWidget {
   /// [DashboardWidgetContent]
   content     Json?
   /// [WidgetLayout] - Grid layout: { x, y, w, h }
-  layout      Json                @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
+  layout      Json                @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":12}")
   order       Int                 @default(0)
 
   @@unique([pageId, chartId])

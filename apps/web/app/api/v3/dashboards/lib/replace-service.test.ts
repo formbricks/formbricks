@@ -482,7 +482,7 @@ describe("planNewWidget", () => {
   test("refuses a slot below the grid's last row, which a whole-dashboard save could not carry", () => {
     const siblings = Array.from({ length: 126 }, (_, index) => ({
       id: `widget-${index.toString()}`,
-      layout: { x: 0, y: index * 8, w: 12, h: 8 },
+      layout: { x: 0, y: index * 32, w: 12, h: 32 },
       order: index,
     }));
     expect(planNewWidget({ siblings, widgetCount: 126, size })).toEqual({ kind: "noSpace" });

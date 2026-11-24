@@ -241,7 +241,7 @@ describe("addWidgetRow", () => {
     await addChart("clch_b", { size: getDefaultWidgetLayout("big_number") });
     expect(tx.dashboardWidget.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ layout: { x: 4, y: 0, w: 3, h: 2 }, order: 1 }),
+        data: expect.objectContaining({ layout: { x: 4, y: 0, w: 3, h: 8 }, order: 1 }),
       })
     );
   });
@@ -262,7 +262,7 @@ describe("addWidgetRow", () => {
           kind: "text",
           chartId: null,
           content,
-          layout: { x: 0, y: 0, w: 9, h: 2 },
+          layout: { x: 0, y: 0, w: 9, h: 8 },
         }),
       })
     );

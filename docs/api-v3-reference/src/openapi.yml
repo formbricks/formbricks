@@ -121,7 +121,7 @@ info:
       (`kind`). A page can be limited to selected teams (`teamIds`); the limit binds Dashboard Viewers
       only, and only a signed-in Owner or Manager with Access Control may change it.
     - **Grid.** Widgets sit on a page's 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
-      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed and overlaps on a page answer **422** naming the
+      `1 ≤ h ≤ 32`, `0 ≤ y ≤ 4000`). Gaps are allowed and overlaps on a page answer **422** naming the
       widget. A widget added without a layout takes the first open slot at its default size.
     - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name, the pages and every widget
       at once, creates the new ones and removes the ones left out. Send the `updatedAt` you read: if the dashboard changed since,

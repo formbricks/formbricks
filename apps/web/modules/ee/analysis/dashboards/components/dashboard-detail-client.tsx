@@ -122,7 +122,9 @@ import {
 } from "../lib/stale-save";
 import { GRID_COLUMNS, MAX_WIDGET_HEIGHT, findNextOpenSlot, getWidgetMinSize } from "../lib/widget-placement";
 
-const ROW_HEIGHT = 80;
+// Rows are 8px with 16px between them, so a unit is 24px: fine enough for a block to fit its content
+// (4 units are what one 80px row was).
+const ROW_HEIGHT = 8;
 const GRID_MARGIN = 16;
 
 /** The query parameter the selected page is kept in, so a link opens the same page. */
@@ -158,7 +160,7 @@ const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] =>
       ? getWidgetMinSize(resolveChartType(widget.chart.type))
       : getBlockMinSize(widget.kind)),
     maxW: GRID_COLUMNS,
-    // A separator is one row high, and an image or text block as high as its content: a resize only
+    // A separator keeps its height, and an image or text block is as high as its content: a resize only
     // changes their width.
     ...(widget.kind === "chart"
       ? { maxH: MAX_WIDGET_HEIGHT }
@@ -439,8 +441,8 @@ function DashboardDetailView({
   );
 
   // ── Auto-height of image and text blocks ─────────────────────────────────────────────────────
-  // Each block reports the pixels its content needs; that becomes grid rows, and blocks starting on the
-  // same row take the tallest of them (`fitBlockHeights`). Drawn always, saved with the edit.
+  // Each block reports the pixels its content needs; that becomes the grid rows it takes, no more
+  // (`fitBlockHeights`). Drawn always, saved with the edit.
   const [neededRows, setNeededRows] = useState<ReadonlyMap<string, number>>(new Map());
   const handleMeasure = useCallback((widgetId: string, px: number) => {
     const rows = pixelsToGridRows(px, ROW_HEIGHT, GRID_MARGIN);

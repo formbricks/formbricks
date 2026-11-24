@@ -204,7 +204,7 @@ describe("addV3DashboardWidget", () => {
       kind: "chart",
       chartId: CHART_ID,
       content: null,
-      size: { x: 0, y: 0, w: 3, h: 2 },
+      size: { x: 0, y: 0, w: 3, h: 8 },
       layout,
     });
   });
@@ -222,7 +222,7 @@ describe("addV3DashboardWidget", () => {
         kind: "text",
         pageId: PAGE_ID,
         content: { headline: "Q3", description: "" },
-        size: { x: 0, y: 0, w: 9, h: 2 },
+        size: { x: 0, y: 0, w: 9, h: 8 },
       })
     );
   });

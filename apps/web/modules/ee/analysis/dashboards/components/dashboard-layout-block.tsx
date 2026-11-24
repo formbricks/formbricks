@@ -27,10 +27,25 @@ import { TabToggle } from "@/modules/ui/components/tab-toggle";
 const IMAGE_ACCEPT = DASHBOARD_IMAGE_EXTENSIONS.map((extension) => `.${extension}`).join(",");
 
 /**
- * The card's own height outside its content: the 1px border on both sides and the 16px padding. What a
- * block reports for auto-height is its content plus this, the height its grid cell must have.
+ * The card's own height outside the content a block measures: the 1px border on both sides and the least
+ * vertical padding (`py-3`) above and below. What a block reports for auto-height is its content plus this.
+ * A grid cell only comes in 24px steps, so the cell is up to 23px taller than that; `BlockBody` centres
+ * the content, splitting the rest evenly above and below, instead of leaving it all under the content.
  */
-const CARD_CHROME_PX = 2 + 32;
+const CARD_CHROME_PX = 2 + 2 * 12;
+
+/** A block's padded body: fills the card and centres its content vertically (see `CARD_CHROME_PX`). */
+const BlockBody = ({
+  contentRef,
+  className,
+  children,
+}: Readonly<{ contentRef: React.Ref<HTMLDivElement>; className?: string; children: ReactNode }>) => (
+  <div className="flex h-full flex-col justify-center px-4 py-3">
+    <div ref={contentRef} className={className}>
+      {children}
+    </div>
+  </div>
+);
 
 /**
  * Reports the height `ref`'s element needs whenever it changes: its content's size depends on the
@@ -242,7 +257,7 @@ function ImageBlock({
           <RemoveBlockButton onClick={onRemove} />
         )
       }>
-      <div ref={ref} className="p-4">
+      <BlockBody contentRef={ref}>
         {hasImage ? (
           <div
             className={cn("flex", IMAGE_POSITION_CLASS[content.position])}
@@ -280,7 +295,7 @@ function ImageBlock({
             helpText={t("workspace.analysis.dashboards.image_types")}
           />
         ) : null}
-      </div>
+      </BlockBody>
     </BlockFrame>
   );
 }
@@ -294,9 +309,12 @@ function AutoGrowTextarea(props: Readonly<React.TextareaHTMLAttributes<HTMLTextA
     const element = ref.current;
     if (!element) return;
     element.style.height = "auto";
-    element.style.height = `${element.scrollHeight}px`;
+    // `scrollHeight` leaves out the border, which `border-box` sizing counts: without it the field is two
+    // pixels short and shows a scrollbar on a single line.
+    const border = element.offsetHeight - element.clientHeight;
+    element.style.height = `${element.scrollHeight + border}px`;
   }, [props.value]);
-  return <textarea ref={ref} rows={1} {...props} />;
+  return <textarea ref={ref} rows={1} {...props} className={cn("overflow-hidden", props.className)} />;
 }
 
 const DASHED_FIELD =
@@ -319,7 +337,7 @@ function TextBlock({ content, isEditing, onChange, onRemove, onMeasure }: Readon
   const ref = useReportHeight(onMeasure);
   return (
     <BlockFrame isEditing={isEditing} frame="always" controls={<ConfirmRemoveBlock onRemove={onRemove} />}>
-      <div ref={ref} className="space-y-1 p-4">
+      <BlockBody contentRef={ref} className="space-y-1">
         {isEditing ? (
           <>
             <input
@@ -352,7 +370,7 @@ function TextBlock({ content, isEditing, onChange, onRemove, onMeasure }: Readon
             )}
           </>
         )}
-      </div>
+      </BlockBody>
     </BlockFrame>
   );
 }

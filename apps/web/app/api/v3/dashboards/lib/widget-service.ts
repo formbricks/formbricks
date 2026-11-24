@@ -155,7 +155,7 @@ export const planNewWidget = ({
 
 /** Stored JSON for a block's content: `null` becomes the database NULL a chart or separator holds. */
 export const toContentInput = (content: unknown): Prisma.InputJsonValue | typeof Prisma.DbNull =>
-  content === null || content === undefined ? Prisma.DbNull : content;
+  content ?? Prisma.DbNull;
 
 /**
  * Put a widget on a dashboard page — the first page when `pageId` is omitted. A chart (`chartId`) appears

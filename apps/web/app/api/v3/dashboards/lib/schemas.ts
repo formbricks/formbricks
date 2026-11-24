@@ -17,11 +17,7 @@ import {
   ZLockedDashboardFilter,
   findDashboardFilterIssues,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
-import {
-  DEFAULT_DASHBOARD_PAGE_NAME,
-  MAX_DASHBOARD_PAGES,
-  MAX_PAGE_NAME_LENGTH,
-} from "@/modules/ee/analysis/dashboards/lib/page-names";
+import { MAX_DASHBOARD_PAGES, MAX_PAGE_NAME_LENGTH } from "@/modules/ee/analysis/dashboards/lib/page-names";
 import {
   GRID_COLUMNS,
   MAX_WIDGET_HEIGHT,
@@ -96,7 +92,11 @@ export const ZV3DashboardWidgetParams = z.object({ dashboardId: z.cuid2(), widge
 
 // ── Dashboard pages (ENG-7480) ──────────────────────────────────────────────────────────────
 
-export { DEFAULT_DASHBOARD_PAGE_NAME, MAX_DASHBOARD_PAGES, MAX_PAGE_NAME_LENGTH };
+export {
+  DEFAULT_DASHBOARD_PAGE_NAME,
+  MAX_DASHBOARD_PAGES,
+  MAX_PAGE_NAME_LENGTH,
+} from "@/modules/ee/analysis/dashboards/lib/page-names";
 
 /** The most teams one page may be limited to. */
 export const MAX_PAGE_TEAMS = 100;

@@ -49,7 +49,7 @@ info:
       (`kind`). A page can be limited to selected teams (`teamIds`); the limit binds Dashboard Viewers
       only, and only a signed-in Owner or Manager with Access Control may change it.
     - **Grid.** Widgets sit on a page's 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
-      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed and overlaps on a page answer **422** naming the
+      `1 ≤ h ≤ 32`, `0 ≤ y ≤ 4000`). Gaps are allowed and overlaps on a page answer **422** naming the
       widget. A widget added without a layout takes the first open slot at its default size.
     - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name, the pages and every widget
       at once, creates the new ones and removes the ones left out. Send the `updatedAt` you read: if the dashboard changed since,
@@ -17259,7 +17259,7 @@ components:
       additionalProperties: false
     WidgetLayout:
       type: object
-      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
+      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 32`, `0 ≤ y ≤ 4000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn. A unit of `y` and `h` is 24px, a quarter of the 96px a row occupied in earlier releases, so a height of 4 is what 1 used to be.'
       required:
         - x
         - 'y'
@@ -17273,7 +17273,7 @@ components:
         'y':
           type: integer
           minimum: 0
-          maximum: 1000
+          maximum: 4000
         w:
           type: integer
           minimum: 1
@@ -17281,7 +17281,7 @@ components:
         h:
           type: integer
           minimum: 1
-          maximum: 8
+          maximum: 32
       additionalProperties: false
     ChartDuplicateRequest:
       type: object

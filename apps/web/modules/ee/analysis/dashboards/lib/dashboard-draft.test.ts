@@ -104,7 +104,7 @@ describe("widgets in the draft", () => {
     const added = next.find((widget) => widget.id === widgetId);
     expect(added).toMatchObject({ kind: "text", pageId: "p1", content: { headline: "", description: "" } });
     // Nine columns do not fit beside the four-wide chart, so the block opens a row below it.
-    expect(added?.layout).toEqual({ x: 0, y: 4, w: 9, h: 2 });
+    expect(added?.layout).toEqual({ x: 0, y: 4, w: 9, h: 8 });
   });
 
   test("places picked charts on the page, skipping one already there, and allowing it on another page", () => {
@@ -112,7 +112,7 @@ describe("widgets in the draft", () => {
     const charts = [{ id: "c1", type: "bar" } as TChart, { id: "c2", type: "big_number" } as TChart];
     const onP1 = addDraftCharts(widgets, { charts, pageId: "p1", dashboardId: "d" });
     expect(onP1.map((widget) => widget.chartId)).toEqual(["c1", "c2"]);
-    expect(onP1[1].layout).toEqual({ x: 4, y: 0, w: 3, h: 2 });
+    expect(onP1[1].layout).toEqual({ x: 4, y: 0, w: 3, h: 8 });
     const onP2 = addDraftCharts(widgets, { charts, pageId: "p2", dashboardId: "d" });
     expect(onP2.filter((widget) => widget.pageId === "p2").map((widget) => widget.chartId)).toEqual([
       "c1",
@@ -146,8 +146,8 @@ describe("widgets in the draft", () => {
     });
     expect(toSavedWidgets(withChart)).toEqual([
       { widgetId: "w1", pageId: "p1", layout: existing.layout, order: 0 },
-      { kind: "separator", pageKey: pageId, layout: { x: 0, y: 0, w: 12, h: 1 }, order: 1 },
-      { kind: "chart", chartId: "c9", pageId: "p2", layout: { x: 0, y: 0, w: 4, h: 4 }, order: 2 },
+      { kind: "separator", pageKey: pageId, layout: { x: 0, y: 0, w: 12, h: 2 }, order: 1 },
+      { kind: "chart", chartId: "c9", pageId: "p2", layout: { x: 0, y: 0, w: 4, h: 16 }, order: 2 },
     ]);
   });
 });

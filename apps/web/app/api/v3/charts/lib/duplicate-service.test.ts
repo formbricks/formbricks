@@ -161,7 +161,7 @@ describe("duplicateChartRow onto a dashboard", () => {
         pageId,
         kind: "chart",
         chartId: copyId,
-        layout: { x: 6, y: 0, w: 4, h: 4 },
+        layout: { x: 6, y: 0, w: 4, h: 16 },
         order: 1,
       },
       select: { id: true },
