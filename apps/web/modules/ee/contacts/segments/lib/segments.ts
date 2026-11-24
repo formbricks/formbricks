@@ -2,34 +2,18 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
   DatabaseError,
-  InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
 import {
-  DATE_OPERATORS,
-  TAllOperators,
-  TBaseFilters,
-  TDateOperator,
-  TEvaluateSegmentUserAttributeData,
-  TEvaluateSegmentUserData,
   TSegment,
-  TSegmentAttributeFilter,
-  TSegmentConnector,
   TSegmentCreateInput,
-  TSegmentDeviceFilter,
-  TSegmentFilterValue,
-  TSegmentPersonFilter,
-  TSegmentSegmentFilter,
-  TSegmentSurveyInteractionFilter,
   TSegmentUpdateInput,
   TSegmentWithSurveyRefs,
-  ZRelativeDateValue,
   ZSegmentCreateInput,
   ZSegmentFilters,
   ZSegmentUpdateInput,
@@ -46,17 +30,20 @@ import {
 } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
-  isResourceFilter,
   searchForAttributeKeyInSegment,
 } from "@/modules/ee/contacts/segments/lib/utils";
-import { isSameDay, subtractTimeUnit } from "./date-utils";
-import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
 import {
   isSegmentVisibleToWorkspace,
   privateSegmentKey,
   whereSegmentsOfDirectoryOrWorkspace,
   whereSegmentsOfWorkspace,
 } from "./segment-scope";
+import {
+  assertPrivateSegmentKeepsTitle,
+  assertTitleIsNotSurveyId,
+  needsSurveyIdTitleCheck,
+  throwSegmentTitleTaken,
+} from "./segment-titles";
 
 export const selectSegment = {
   id: true,
@@ -302,18 +289,6 @@ export const isSegmentOfWorkspace = async (
 };
 
 /**
- * The surveys whose ids may title a segment of this directory, or of this workspace for a segment
- * without a directory (made before the workspace had one).
- */
-const surveysSharingTitles = (
-  directoryId: string | null,
-  workspaceId: string | null
-): Prisma.SurveyWhereInput =>
-  directoryId
-    ? { workspace: { contactDirectoryId: directoryId } }
-    : { workspaceId: workspaceId ?? undefined };
-
-/**
  * The subset of `surveyIds` that are surveys of another workspace on `workspaceId`'s contact directory. A
  * shared segment's survey-interaction filters can name them (decision 24); the editor shows each as
  * "Survey in another workspace" and keeps it. Ids only: the caller may not see those surveys, so their
@@ -349,59 +324,6 @@ export const getOtherWorkspaceSurveyIds = async (
       throw new DatabaseError(error.message);
     }
     throw error;
-  }
-};
-
-/**
- * ENG-6956: a survey's private targeting segment is stored under the survey's id as its title, and the
- * survey save finds (or connects to) it by that title. A segment a caller titles freely must therefore
- * never take the id of a survey whose private segment would share its title scope: any survey of the
- * directory, since titles are unique per directory (decision 24).
- */
-const assertTitleIsNotSurveyId = async (
-  directoryId: string | null,
-  workspaceId: string | null,
-  title: string
-): Promise<void> => {
-  const survey = await prisma.survey.findFirst({
-    where: { id: title, ...surveysSharingTitles(directoryId, workspaceId) },
-    select: { id: true },
-  });
-  if (survey) {
-    throw new InvalidInputError("A segment cannot be titled with the id of a survey");
-  }
-};
-
-const isRename = (data: TSegmentUpdateInput, current: TSegment): boolean =>
-  data.title !== undefined && data.title !== current.title;
-
-/**
- * A segment that stays private keeps its survey's id as title: the survey save finds it by that title, so
- * a renamed one would be left behind and a new one created (ENG-6956). Turning it shared may rename it.
- */
-const assertPrivateSegmentKeepsTitle = (data: TSegmentUpdateInput, current: TSegment): void => {
-  const staysPrivate = current.isPrivate && data.isPrivate !== false;
-  if (staysPrivate && isRename(data, current)) {
-    throw new InvalidInputError("A private segment keeps the id of its survey as title");
-  }
-};
-
-/**
- * A rename, or a private segment turned shared while it keeps its survey's id as title, stores a title
- * the caller chose for a segment the survey save may later pick up by that title (ENG-6956).
- */
-const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSegment): boolean => {
-  const becomesShared = current.isPrivate && data.isPrivate === false;
-  return isRename(data, current) || becomesShared;
-};
-
-/**
- * Titles are unique per directory, so a create or rename onto a title another segment holds (a survey's
- * private segment included) is the caller's input error, not a database fault.
- */
-const throwSegmentTitleTaken = (error: unknown): void => {
-  if (isUniqueConstraintError(error)) {
-    throw new InvalidInputError("A segment with this title already exists");
   }
 };
 
@@ -783,262 +705,3 @@ export const getSegmentsByAttributeKey = reactCache(async (workspaceId: string, 
     throw error;
   }
 });
-
-const evaluateAttributeFilter = (
-  attributes: TEvaluateSegmentUserAttributeData,
-  filter: TSegmentAttributeFilter
-): boolean => {
-  const { value, qualifier, root } = filter;
-  const { contactAttributeKey } = root;
-  const { operator } = qualifier;
-
-  const attributeValue = attributes[contactAttributeKey];
-
-  // Handle isSet and isNotSet operators first - they have special logic
-  if (operator === "isSet") {
-    // Return true if the attribute exists and has a truthy value
-    return attributeValue !== undefined && attributeValue !== null && attributeValue !== "";
-  }
-
-  if (operator === "isNotSet") {
-    // Return true if the attribute doesn't exist or has a falsy value
-    return attributeValue === undefined || attributeValue === null || attributeValue === "";
-  }
-
-  // For all other operators, if the attribute doesn't exist, return false
-  if (attributeValue === undefined || attributeValue === null) {
-    return false;
-  }
-
-  // Check if this is a date operator
-  if (isDateOperator(operator)) {
-    return evaluateDateFilter(String(attributeValue), value, operator);
-  }
-
-  // Use standard comparison for non-date operators
-  // For non-date operators, value is always string | number
-  const attResult = compareValues(attributeValue, value as string | number, operator);
-  return attResult;
-};
-
-const evaluatePersonFilter = (userId: string, filter: TSegmentPersonFilter): boolean => {
-  const { value, qualifier, root } = filter;
-  const { personIdentifier } = root;
-
-  if (personIdentifier === "userId") {
-    // For userId comparison, value is always string | number
-    const attResult = compareValues(userId, value as string | number, qualifier.operator);
-    return attResult;
-  }
-
-  return false;
-};
-
-const evaluateSegmentFilter = async (
-  userData: TEvaluateSegmentUserData,
-  filter: TSegmentSegmentFilter
-): Promise<boolean> => {
-  const { qualifier, root } = filter;
-  const { segmentId } = root;
-  const { operator } = qualifier;
-
-  const segment = await getSegment(segmentId);
-
-  if (!segment) {
-    return false;
-  }
-
-  const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-  if (!parsedFilters.success) {
-    return false;
-  }
-
-  const isInSegment = await evaluateSegment(userData, parsedFilters.data);
-
-  if (operator === "userIsIn") {
-    return isInSegment;
-  }
-
-  if (operator === "userIsNotIn") {
-    return !isInSegment;
-  }
-
-  return false;
-};
-
-const evaluateDeviceFilter = (device: "phone" | "desktop", filter: TSegmentDeviceFilter): boolean => {
-  const { value, qualifier } = filter;
-  // For device comparison, value is always string | number
-  return compareValues(device, value as string | number, qualifier.operator);
-};
-
-/**
- * Checks if an operator is a date-specific operator
- */
-const isDateOperator = (operator: TAllOperators): operator is TDateOperator => {
-  return DATE_OPERATORS.includes(operator as TDateOperator);
-};
-
-/**
- * Evaluates a date filter against an attribute value
- */
-const evaluateDateFilter = (
-  attributeValue: string,
-  filterValue: TSegmentFilterValue,
-  operator: TDateOperator
-): boolean => {
-  // Parse the attribute value as a date
-  const attrDate = new Date(attributeValue);
-
-  // Validate the attribute value is a valid date
-  if (Number.isNaN(attrDate.getTime())) {
-    return false;
-  }
-
-  // Check if filterValue is a relative date value (e.g., { amount: 30, unit: "days" })
-  const relativeDateParsed = ZRelativeDateValue.safeParse(filterValue);
-
-  if (relativeDateParsed.success) {
-    const now = new Date();
-    const threshold = subtractTimeUnit(now, relativeDateParsed.data.amount, relativeDateParsed.data.unit);
-    return operator === "isOlderThan" ? attrDate < threshold : attrDate >= threshold;
-  }
-
-  // Handle absolute date operators
-  switch (operator) {
-    case "isBefore":
-    case "isAfter":
-    case "isSameDay": {
-      if (typeof filterValue !== "string") return false;
-      const compareDate = new Date(filterValue);
-      if (operator === "isBefore") return attrDate < compareDate;
-      if (operator === "isAfter") return attrDate > compareDate;
-      return isSameDay(attrDate, compareDate);
-    }
-    case "isBetween": {
-      if (!Array.isArray(filterValue) || filterValue.length !== 2) return false;
-      const startDate = new Date(filterValue[0]);
-      const endDate = new Date(filterValue[1]);
-      return attrDate >= startDate && attrDate <= endDate;
-    }
-    default:
-      return false;
-  }
-};
-
-export const compareValues = (
-  a: string | number | undefined,
-  b: string | number,
-  operator: TAllOperators
-): boolean => {
-  switch (operator) {
-    case "equals":
-      return a === b;
-    case "notEquals":
-      return a !== b;
-    case "lessThan":
-      return (a as number) < (b as number);
-    case "lessEqual":
-      return (a as number) <= (b as number);
-    case "greaterThan":
-      return (a as number) > (b as number);
-    case "greaterEqual":
-      return (a as number) >= (b as number);
-    case "isSet":
-      return a !== undefined;
-    case "isNotSet":
-      return a === "" || a === null || a === undefined;
-    case "contains":
-      return (a as string).includes(b as string);
-    case "doesNotContain":
-      return !(a as string).includes(b as string);
-    case "startsWith":
-      return (a as string).startsWith(b as string);
-    case "endsWith":
-      return (a as string).endsWith(b as string);
-    default:
-      throw new Error(`Unexpected operator: ${operator}`);
-  }
-};
-
-type ResultConnectorPair = {
-  result: boolean;
-  connector: TSegmentConnector;
-};
-
-export const evaluateSegment = async (
-  userData: TEvaluateSegmentUserData,
-  filters: TBaseFilters
-): Promise<boolean> => {
-  if (!filters.length) {
-    // if there are no filters, the segment will be evaluated as true
-    return true;
-  }
-
-  const resultPairs: ResultConnectorPair[] = [];
-  const now = new Date();
-
-  try {
-    for (const filterItem of filters) {
-      const { resource } = filterItem;
-
-      let result: boolean;
-
-      if (isResourceFilter(resource)) {
-        const { type } = resource.root;
-
-        // Exhaustive switch: a new filter root type must be handled here or the `default` throws —
-        // this replaces an if-chain that silently dropped unhandled types (e.g. surveyInteraction),
-        // leaving `result` unassigned and corrupting segment membership.
-        switch (type) {
-          case "attribute":
-            result = evaluateAttributeFilter(userData.attributes, resource as TSegmentAttributeFilter);
-            break;
-          case "person":
-            result = evaluatePersonFilter(userData.userId, resource as TSegmentPersonFilter);
-            break;
-          case "segment":
-            result = await evaluateSegmentFilter(userData, resource as TSegmentSegmentFilter);
-            break;
-          case "device":
-            result = evaluateDeviceFilter(userData.deviceType, resource as TSegmentDeviceFilter);
-            break;
-          case "surveyInteraction":
-            // This in-process evaluator can only resolve interaction filters when the caller supplies
-            // the contact's interaction history. Throwing (rather than silently skipping) guarantees a
-            // surveyInteraction filter can never be dropped here; the contact-sync and Prisma paths
-            // evaluate these filters without needing this branch.
-            if (!userData.interactionData) {
-              throw new Error(
-                "Cannot evaluate a surveyInteraction filter without interactionData on userData; evaluate via the contact-sync in-memory path or the Prisma query path instead."
-              );
-            }
-            result = evaluateSurveyInteractionFilterInMemory(
-              resource as TSegmentSurveyInteractionFilter,
-              userData.interactionData,
-              now
-            );
-            break;
-          default:
-            throw new Error(`Unsupported segment filter root type: ${type as string}`);
-        }
-      } else {
-        // this is a sub-group and we need to evaluate the sub-group
-        result = await evaluateSegment(userData, resource);
-      }
-
-      resultPairs.push({
-        result,
-        connector: filterItem.connector,
-      });
-    }
-
-    // Combine the per-filter results with AND-before-OR precedence (shared with the in-memory
-    // survey-interaction evaluator so both paths agree on connector semantics).
-    return combineFilterResults(resultPairs);
-  } catch (error) {
-    logger.error(error instanceof Error ? error : new Error(String(error)), "Error evaluating segment");
-
-    throw error;
-  }
-};

@@ -22,15 +22,14 @@ import {
   ContactDirectoryMissingError,
   getWorkspaceContactDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
+import { compareValues, evaluateSegment } from "./evaluate-segment";
 import {
   ALL_SEGMENT_SURVEY_REFS,
   PrismaSegment,
   type TSegmentWithDirectory,
   cloneSegment,
-  compareValues,
   createSegment,
   deleteSegment,
-  evaluateSegment,
   getExistingWorkspaceSurveyIds,
   getOtherWorkspaceSurveyIds,
   getSegment,
