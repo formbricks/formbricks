@@ -145,32 +145,26 @@ export const MemberRowMenu = ({
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      {/* The dialogs portal out of the row, but React still bubbles their clicks to it: stop them here. */}
-      <div
-        className="contents"
-        role="presentation"
-        onClick={(event) => event.stopPropagation()}
-        onKeyDown={(event) => event.stopPropagation()}>
-        <DeleteDialog
-          open={isDeleteOpen}
-          setOpen={setIsDeleteOpen}
-          deleteWhat={t("workspace.settings.general.from_your_organization", {
-            memberName: row.name || row.email,
-          })}
-          onDelete={() => void handleDelete()}
-          isDeleting={isDeleting}
-          text={t("workspace.settings.general.delete_member_confirmation")}
+      {/* The dialogs portal out of the row; ListTable ignores events whose target is outside the row. */}
+      <DeleteDialog
+        open={isDeleteOpen}
+        setOpen={setIsDeleteOpen}
+        deleteWhat={t("workspace.settings.general.from_your_organization", {
+          memberName: row.name || row.email,
+        })}
+        onDelete={() => void handleDelete()}
+        isDeleting={isDeleting}
+        text={t("workspace.settings.general.delete_member_confirmation")}
+      />
+      {shareToken && (
+        <ShareInviteModal
+          inviteToken={shareToken}
+          open
+          setOpen={(open) => {
+            if (!open) setShareToken(null);
+          }}
         />
-        {shareToken && (
-          <ShareInviteModal
-            inviteToken={shareToken}
-            open
-            setOpen={(open) => {
-              if (!open) setShareToken(null);
-            }}
-          />
-        )}
-      </div>
+      )}
     </>
   );
 };
