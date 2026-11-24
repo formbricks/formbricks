@@ -530,6 +530,9 @@ const nextConfig = {
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
+    // `assetPrefix` above is fixed at build time, so the page CSP (lib/csp) reads the same build value
+    // rather than whatever the runtime environment holds.
+    ASSET_PREFIX_URL: process.env.ASSET_PREFIX_URL,
   },
 };
 

@@ -66,6 +66,26 @@ describe("getCspHosts", () => {
     ]);
   });
 
+  test("follows the region the AWS SDK resolves when S3_REGION is not set", () => {
+    const hosts = getCspHosts({ ...base, s3BucketName: "uploads", awsSdkRegion: "eu-west-3" });
+
+    expect(hosts.storageOrigins).toEqual([
+      "https://uploads.s3.eu-west-3.amazonaws.com",
+      "https://s3.eu-west-3.amazonaws.com",
+    ]);
+  });
+
+  test("prefers S3_REGION over the AWS SDK's region, as the storage client does", () => {
+    const hosts = getCspHosts({
+      ...base,
+      s3BucketName: "uploads",
+      s3Region: "us-east-2",
+      awsSdkRegion: "eu-west-3",
+    });
+
+    expect(hosts.storageOrigins[0]).toBe("https://uploads.s3.us-east-2.amazonaws.com");
+  });
+
   test("allows no storage host when storage is not configured", () => {
     expect(getCspHosts(base).storageOrigins).toEqual([]);
   });

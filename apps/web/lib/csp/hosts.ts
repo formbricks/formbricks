@@ -32,6 +32,8 @@ export interface TCspHostConfig {
   s3EndpointUrl?: string;
   s3BucketName?: string;
   s3Region?: string;
+  /** AWS_REGION / AWS_DEFAULT_REGION: where the storage client's AWS SDK resolves the region without S3_REGION. */
+  awsSdkRegion?: string;
   s3ForcePathStyle: boolean;
   sentryDsn?: string;
   /** Development and E2E builds: allow loopback origins (local S3, a second dev server). */
@@ -46,6 +48,7 @@ const getStorageOrigins = ({
   s3EndpointUrl,
   s3BucketName,
   s3Region,
+  awsSdkRegion,
   s3ForcePathStyle,
 }: TCspHostConfig): string[] => {
   const endpoint = toOrigin(s3EndpointUrl);
@@ -55,7 +58,8 @@ const getStorageOrigins = ({
     return [endpoint, `${url.protocol}//${s3BucketName}.${url.host}`];
   }
   if (!s3BucketName) return [];
-  const regional = s3Region ? `s3.${s3Region}` : "s3";
+  const region = s3Region || awsSdkRegion;
+  const regional = region ? `s3.${region}` : "s3";
   return [`https://${s3BucketName}.${regional}.amazonaws.com`, `https://${regional}.amazonaws.com`];
 };
 
