@@ -4,6 +4,7 @@ import {
   formatSnakeCaseToTitleCase,
   isLegacyIdCharset,
   isLegacyVariableName,
+  isObjectPrototypeName,
   isSafeIdentifier,
   matchDeclaredFieldName,
   toSafeIdentifier,
@@ -111,6 +112,16 @@ describe("safe-identifier", () => {
       expect(formatSnakeCaseToTitleCase("api_key_")).toBe("Api Key");
       expect(formatSnakeCaseToTitleCase("_legacy")).toBe("Legacy");
       expect(formatSnakeCaseToTitleCase("_")).toBe("");
+    });
+  });
+
+  describe("isObjectPrototypeName", () => {
+    test("matches every name a plain object inherits, exactly", () => {
+      for (const name of Object.getOwnPropertyNames(Object.prototype)) {
+        expect(isObjectPrototypeName(name)).toBe(true);
+      }
+      expect(isObjectPrototypeName("Constructor")).toBe(false);
+      expect(isObjectPrototypeName("brand")).toBe(false);
     });
   });
 

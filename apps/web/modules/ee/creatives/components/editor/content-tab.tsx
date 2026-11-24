@@ -88,36 +88,27 @@ const IconPicker = ({
   };
   const optionClass = (isSelected: boolean) =>
     cn(
-      "flex h-9 min-w-9 items-center justify-center rounded-md border px-2.5 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden",
+      "flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-md border px-2.5 text-sm transition-colors has-focus-visible:ring-2 has-focus-visible:ring-slate-400",
       isSelected
         ? "border-slate-900 bg-slate-900 text-white"
         : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
     );
   return (
     <div role="radiogroup" aria-labelledby={labelId} className="flex flex-wrap gap-1.5">
-      <button
-        type="button"
-        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a button styled as an option in a radiogroup; it has no native radio input to label
-        role="radio"
-        aria-checked={value === null}
-        className={optionClass(value === null)}
-        onClick={() => onChange(null)}>
-        {t("workspace.creatives.editor.icon_none")}
-      </button>
-      {ICON_OPTIONS.map((icon) => {
-        const Icon = ICONS[icon];
+      {[null, ...ICON_OPTIONS].map((icon) => {
+        const Icon = icon === null ? null : ICONS[icon];
         return (
-          <button
-            key={icon}
-            type="button"
-            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a button styled as an option in a radiogroup; it has no native radio input to label
-            role="radio"
-            aria-checked={value === icon}
-            aria-label={iconLabels[icon]}
-            className={optionClass(value === icon)}
-            onClick={() => onChange(icon)}>
-            <Icon className="size-4" />
-          </button>
+          <label key={icon ?? "none"} className={optionClass(value === icon)}>
+            <input
+              type="radio"
+              className="sr-only"
+              name={labelId}
+              checked={value === icon}
+              aria-label={icon === null ? undefined : iconLabels[icon]}
+              onChange={() => onChange(icon)}
+            />
+            {Icon ? <Icon className="size-4" /> : t("workspace.creatives.editor.icon_none")}
+          </label>
         );
       })}
     </div>

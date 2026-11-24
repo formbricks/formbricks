@@ -3,6 +3,7 @@ import { prisma } from "@/lib/__mocks__/database";
 import { describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import {
   assertDisplayOwnership,
@@ -15,7 +16,6 @@ import {
 const mockContactId = "clqnj99r9000008lebgf8734j";
 const mockWorkspaceId = "clqkr8dlv000308jybb08evgz";
 const mockResponseId = "clqnfg59i000208i426pb4wcv";
-const mockResponseIds = ["clqnfg59i000208i426pb4wcv", "clqnfg59i000208i426pb4wcw"];
 
 const mockDisplaysForContact = [
   {
@@ -56,6 +56,11 @@ const mockDisplaysWithContact = [
 
 describe("getDisplayCountBySurveyId", () => {
   describe("Happy Path", () => {
+    const dateRange = {
+      min: new Date("2024-01-01T00:00:00.000Z"),
+      max: new Date("2024-01-31T23:59:59.999Z"),
+    };
+
     test("counts displays by surveyId", async () => {
       vi.mocked(prisma.display.count).mockResolvedValue(5);
 
@@ -69,16 +74,11 @@ describe("getDisplayCountBySurveyId", () => {
       });
     });
 
-    test("combines createdAt and responseIds filters", async () => {
-      const createdAt = {
-        min: new Date("2024-01-01T00:00:00.000Z"),
-        max: new Date("2024-01-31T23:59:59.999Z"),
-      };
+    test("counts displays by date range when no response IDs are supplied", async () => {
       vi.mocked(prisma.display.count).mockResolvedValue(2);
 
       const result = await getDisplayCountBySurveyId(mockSurveyId, {
-        createdAt,
-        responseIds: mockResponseIds,
+        createdAt: dateRange,
       });
 
       expect(result).toBe(2);
@@ -86,18 +86,32 @@ describe("getDisplayCountBySurveyId", () => {
         where: {
           surveyId: mockSurveyId,
           createdAt: {
-            gte: createdAt.min,
-            lte: createdAt.max,
-          },
-          response: {
-            is: {
-              id: {
-                in: mockResponseIds,
-              },
-            },
+            gte: dateRange.min,
+            lte: dateRange.max,
           },
         },
       });
+    });
+
+    test.each([
+      { label: "no date bounds", createdAt: undefined },
+      { label: "both date bounds", createdAt: dateRange },
+    ])("binds response IDs as a single array with $label", async ({ createdAt }) => {
+      const responseIds = [mockResponseId, "clqnfg59i000208i426pb4wcw"];
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([{ count: 2n }]);
+
+      await expect(getDisplayCountBySurveyId(mockSurveyId, { createdAt, responseIds })).resolves.toBe(2);
+
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+      const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as [
+        TemplateStringsArray,
+        ...unknown[],
+      ];
+      expect(Prisma.sql(strings, ...values).values).toEqual([
+        mockSurveyId,
+        responseIds,
+        ...(createdAt ? [createdAt.min, createdAt.max] : []),
+      ]);
     });
 
     test("returns 0 without querying when responseIds filter is empty", async () => {
@@ -105,6 +119,7 @@ describe("getDisplayCountBySurveyId", () => {
 
       expect(result).toBe(0);
       expect(prisma.display.count).not.toHaveBeenCalled();
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
     });
   });
 
@@ -406,6 +421,76 @@ describe("assertDisplayOwnership", () => {
     await expect(
       assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, "contact-b")
     ).rejects.toThrow(InvalidInputError);
+  });
+
+  // ENG-2240: the public client-response routes echo this error's message, so every rejection must
+  // read the same. Rejection-only tests above pass with the oracle intact.
+  test("rejects every ownership failure with the same message, so the wire response can't tell them apart", async () => {
+    const rejectionFor = async (
+      record: typeof mockDisplayRecord | null,
+      args: [workspaceId: string, surveyId: string, contactId: string | null]
+    ): Promise<Error> => {
+      vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(record);
+      return assertDisplayOwnership(mockDisplayId, ...args).then(
+        () => {
+          throw new Error("expected a rejection");
+        },
+        (error: Error) => error
+      );
+    };
+
+    const missing = await rejectionFor(null, [mockWorkspaceId, mockSurveyId, null]);
+    const otherWorkspace = await rejectionFor(mockDisplayRecord, ["wrong-workspace", mockSurveyId, null]);
+    const otherSurvey = await rejectionFor(mockDisplayRecord, [mockWorkspaceId, "wrong-survey", null]);
+    const claimed = await rejectionFor({ ...mockDisplayRecord, response: { id: mockResponseId } }, [
+      mockWorkspaceId,
+      mockSurveyId,
+      null,
+    ]);
+    const otherContact = await rejectionFor({ ...mockDisplayRecord, contactId: "contact-a" }, [
+      mockWorkspaceId,
+      mockSurveyId,
+      "contact-b",
+    ]);
+
+    for (const rejection of [otherWorkspace, otherSurvey, claimed, otherContact]) {
+      expect(rejection).toBeInstanceOf(InvalidInputError);
+      expect(rejection.message).toBe(missing.message);
+    }
+    expect(missing.message).not.toContain(mockDisplayId);
+  });
+
+  // A displayId that isn't a cuid2 fails validation before the lookup. It must read like any other
+  // unusable display, not as "Validation failed" (v1) or an unmapped 500 (v2).
+  test("rejects a malformed displayId with the same message, without querying", async () => {
+    vi.mocked(prisma.display.findUnique).mockClear();
+    vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(null);
+    const missing = await assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, null).catch(
+      (error: Error) => error
+    );
+    vi.mocked(prisma.display.findUnique).mockClear();
+
+    const malformed = await assertDisplayOwnership("Not A Cuid!", mockWorkspaceId, mockSurveyId, null).catch(
+      (error: Error) => error
+    );
+
+    expect(malformed).toBeInstanceOf(InvalidInputError);
+    expect((malformed as Error).message).toBe((missing as Error).message);
+    expect(prisma.display.findUnique).not.toHaveBeenCalled();
+  });
+
+  test("logs at most 64 characters of the client-supplied displayId", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const oversized = "a".repeat(10_000);
+    vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(null);
+
+    await expect(assertDisplayOwnership(oversized, mockWorkspaceId, mockSurveyId, null)).rejects.toThrow(
+      InvalidInputError
+    );
+
+    const [fields] = warn.mock.calls[0] as unknown as [{ displayId: string }, string];
+    expect(fields.displayId).toHaveLength(64);
+    warn.mockRestore();
   });
 
   test("resolves without error when all ownership checks pass", async () => {

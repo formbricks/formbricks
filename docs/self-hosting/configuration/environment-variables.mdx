@@ -360,9 +360,10 @@ cluster instead, set `cube.enabled: false`, point `CUBEJS_API_URL` at your endpo
 
 #### Workflow Webhook trigger behind a reverse proxy
 
-A workflow's [Webhook Secret URL](/workflows/webhook-trigger) is served on `WEBAPP_URL`, not `PUBLIC_URL`, at
-`/api/v3/workflows/<workflowId>/webhook/<token>`. If your admin domain is private, the outside systems that call
-the URL must still be able to reach that path.
+A workflow's [Webhook Secret URL](/workflows/webhook-trigger) is served on `PUBLIC_URL` when configured,
+otherwise on `WEBAPP_URL`, at `/api/v3/workflows/<workflowId>/webhook/<token>`. The outside systems that call
+the URL must be able to reach that domain. Fetching or regenerating the Secret URL remains on the admin
+domain (`WEBAPP_URL`). Configure the proxy serving the receiver's domain as described below.
 
 Configure the proxy in front of Formbricks to:
 

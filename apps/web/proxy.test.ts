@@ -1,6 +1,7 @@
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
 import { FORMBRICKS_CLIENT_IP_HEADER } from "@/lib/utils/client-ip";
 import { INGEST_REQUEST_BODY_LIMIT_BYTES, config, proxy } from "./proxy";
 
@@ -60,6 +61,32 @@ describe("proxy", () => {
     mockIsPublicDomainConfigured.mockReturnValue(false);
     mockIsRequestFromPublicDomain.mockReturnValue(false);
   });
+
+  test.each([
+    { split: true, publicHost: true, suffix: "secret-token", status: 200 },
+    { split: true, publicHost: false, suffix: "secret-token", status: 404 },
+    { split: true, publicHost: true, suffix: "regenerate", status: 404 },
+    { split: true, publicHost: false, suffix: "regenerate", status: 200 },
+    { split: false, publicHost: false, suffix: "secret-token", status: 200 },
+    { split: false, publicHost: false, suffix: "regenerate", status: 200 },
+  ])(
+    "routes webhook $suffix with split=$split publicHost=$publicHost",
+    async ({ split, publicHost, suffix, status }) => {
+      const actual = await vi.importActual<typeof import("@/app/middleware/endpoint-validator")>(
+        "@/app/middleware/endpoint-validator"
+      );
+      vi.mocked(isRouteAllowedForDomain).mockImplementation(actual.isRouteAllowedForDomain);
+      mockIsPublicDomainConfigured.mockReturnValue(split);
+      mockIsRequestFromPublicDomain.mockReturnValue(publicHost);
+
+      const response = await proxy(
+        new NextRequest(`https://formbricks.example.com/api/v3/workflows/workflow123/webhook/${suffix}`, {
+          method: "POST",
+        })
+      );
+      expect(response.status).toBe(status);
+    }
+  );
 
   test("redirects unauthenticated protected routes to login with callbackUrl", async () => {
     mockGetProxySession.mockResolvedValue(null);
