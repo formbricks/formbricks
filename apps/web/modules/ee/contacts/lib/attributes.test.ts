@@ -820,15 +820,14 @@ describe("updateAttributes", () => {
 });
 
 describe("formatAttributeMessage", () => {
-  test("describes the duplicate email/userId checks as workspace-scoped", () => {
-    // The checks behind these two codes call hasEmailAttribute/hasUserIdAttribute with workspaceId,
-    // and the UI renders the same conditions via workspace.contacts.attributes_msg_* — so the
-    // English templates must not describe the scope as an environment.
+  test("describes the duplicate email/userId checks as directory-scoped", () => {
+    // Contacts belong to a contact directory, so the duplicate checks behind these two codes look across
+    // the directory, and the UI renders the same conditions via workspace.contacts.attributes_msg_*.
     expect(formatAttributeMessage({ code: "email_already_exists", params: {} })).toBe(
-      "The email already exists for this workspace and was not updated."
+      "The email already exists in this contact directory and was not updated."
     );
     expect(formatAttributeMessage({ code: "userid_already_exists", params: {} })).toBe(
-      "The userId already exists for this workspace and was not updated."
+      "The userId already exists in this contact directory and was not updated."
     );
   });
 
