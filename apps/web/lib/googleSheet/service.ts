@@ -29,6 +29,7 @@ import {
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { truncateText } from "../utils/strings";
 import { validateInputs } from "../utils/validate";
 
@@ -131,6 +132,12 @@ const getHeaderRowRange = (columnCount: number): string =>
  */
 const SHEET_WRITE_LOCK_TTL_MS = 30_000;
 const SHEET_WRITE_LOCK_RENEW_MS = 10_000;
+/**
+ * A holder stops writing once less than this is left of its last confirmed lease. A renewal that fails (Redis
+ * unreachable) confirms nothing, so after two missed renewals the holder writes nothing more, while the lock
+ * still has this long before another writer can take it.
+ */
+const SHEET_WRITE_LOCK_SAFETY_MS = 10_000;
 /** How long a write waits for another one on the same spreadsheet before it goes ahead without the lock. */
 const SHEET_WRITE_LOCK_WAIT_MS = 30_000;
 const SHEET_WRITE_LOCK_POLL_MS = 200;
@@ -143,21 +150,28 @@ const RENEW_LOCK_SCRIPT = `if redis.call("GET", KEYS[1]) == ARGV[1] then return 
 /** Called before each sheet write; throws once this writer has lost the lock to another one. */
 type TAssertLockHeld = () => void;
 
-const acquireSpreadsheetWriteLock = async (lockKey: string, token: string, spreadsheetId: string) => {
+/** Returns when the acquired lease expires at the latest, or `null` when the write goes ahead without it. */
+const acquireSpreadsheetWriteLock = async (
+  lockKey: string,
+  token: string,
+  spreadsheetId: string
+): Promise<number | null> => {
   const deadline = Date.now() + SHEET_WRITE_LOCK_WAIT_MS;
   for (;;) {
+    // Taken before the request, so the lease is never assumed to run longer than it does.
+    const requestedAt = Date.now();
     const locked = await cache.tryLock(lockKey, token, SHEET_WRITE_LOCK_TTL_MS);
     if (!locked.ok) {
       logger.warn({ spreadsheetId }, "Google Sheets write lock unavailable; writing without it");
-      return false;
+      return null;
     }
-    if (locked.data) return true;
+    if (locked.data) return requestedAt + SHEET_WRITE_LOCK_TTL_MS;
     if (Date.now() >= deadline) {
       logger.warn(
         { spreadsheetId },
         "Timed out waiting for the Google Sheets write lock; writing without it"
       );
-      return false;
+      return null;
     }
     await new Promise((resolve) => setTimeout(resolve, SHEET_WRITE_LOCK_POLL_MS));
   }
@@ -171,8 +185,10 @@ const runLockScript = (script: string, lockKey: string, args: string[]): Promise
  * response-pipeline jobs writing to one spreadsheet at once (several workers or replicas) could both read
  * the same header, and the later header write would drop the label the earlier one added. The whole
  * sequence therefore runs under a Redis lock per spreadsheet, whose lease the holder renews while it
- * writes. If a renewal finds another writer holding the lock (the lease lapsed, e.g. a long event-loop
- * stall), the next `assertLockHeld` throws, so a stale header snapshot is never written over theirs.
+ * writes. Before each sheet write, `assertLockHeld` throws if a renewal found another writer holding the lock,
+ * or if no renewal has been confirmed recently enough to leave `SHEET_WRITE_LOCK_SAFETY_MS` of the lease
+ * (renewals keep failing), so a stale header snapshot is not written over another writer's. Google Sheets
+ * has no conditional write, so a request already sent when the lease lapses still lands.
  * Without Redis, or after waiting `SHEET_WRITE_LOCK_WAIT_MS`, the write goes ahead unserialized: a failed
  * Sheets write is logged, not retried, so refusing would drop the response from the sheet.
  */
@@ -182,18 +198,24 @@ const withSpreadsheetWriteLock = async <T>(
 ): Promise<T> => {
   const lockKey = createCacheKey.integration.googleSheetWriteLock(spreadsheetId);
   const token = randomUUID();
-  const held = await acquireSpreadsheetWriteLock(lockKey, token, spreadsheetId);
-  if (!held) return await write(() => {});
+  const acquiredLeaseEnd = await acquireSpreadsheetWriteLock(lockKey, token, spreadsheetId);
+  if (acquiredLeaseEnd === null) return await write(() => {});
 
+  let leaseEnd = acquiredLeaseEnd;
   let lost = false;
   const renewal = setInterval(() => {
+    const requestedAt = Date.now();
     runLockScript(RENEW_LOCK_SCRIPT, lockKey, [token, String(SHEET_WRITE_LOCK_TTL_MS)])
       .then((renewed) => {
-        if (renewed !== 1) lost = true;
+        if (renewed === 1) leaseEnd = Math.max(leaseEnd, requestedAt + SHEET_WRITE_LOCK_TTL_MS);
+        else lost = true;
       })
       .catch((error: unknown) => {
-        // A missed renewal is not a lost lock yet: the lease still runs for SHEET_WRITE_LOCK_TTL_MS.
-        logger.warn({ error, spreadsheetId }, "Could not renew the Google Sheets write lock");
+        // Confirms nothing: the lease keeps its last known end, which assertLockHeld checks.
+        logger.warn(
+          { error: loggableError(error), spreadsheetId },
+          "Could not renew the Google Sheets write lock"
+        );
       });
   }, SHEET_WRITE_LOCK_RENEW_MS);
   renewal.unref?.();
@@ -201,6 +223,11 @@ const withSpreadsheetWriteLock = async <T>(
   const assertLockHeld: TAssertLockHeld = () => {
     if (lost) {
       throw new UnknownError("Lost the Google Sheets write lock to another writer; nothing more was written");
+    }
+    if (Date.now() >= leaseEnd - SHEET_WRITE_LOCK_SAFETY_MS) {
+      throw new UnknownError(
+        "Could not renew the Google Sheets write lock in time; nothing more was written"
+      );
     }
   };
 
@@ -212,7 +239,10 @@ const withSpreadsheetWriteLock = async <T>(
       await runLockScript(RELEASE_LOCK_SCRIPT, lockKey, [token]);
     } catch (error) {
       // The lock expires on its own after SHEET_WRITE_LOCK_TTL_MS; the write's outcome stands.
-      logger.warn({ error, spreadsheetId }, "Could not release the Google Sheets write lock");
+      logger.warn(
+        { error: loggableError(error), spreadsheetId },
+        "Could not release the Google Sheets write lock"
+      );
     }
   }
 };
