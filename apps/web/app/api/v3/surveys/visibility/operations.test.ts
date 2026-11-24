@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
+import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
 import { can } from "@/lib/authorization";
 import { lockSurveyVisibility, reconcileSurveyRelationships } from "@/lib/authzed/survey";
 import { unlinkSurveyCreatives } from "@/modules/ee/creatives/lib/linked-creatives";
@@ -20,6 +21,7 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() })) },
 }));
 vi.mock("@/app/api/v3/lib/audit", () => ({ queueV3AuditLog: vi.fn(), skipV3AuditLog: vi.fn() }));
+vi.mock("@/app/api/v3/lib/operation-rate-limit", () => ({ applyV3OperationRateLimit: vi.fn() }));
 vi.mock("@/modules/ee/creatives/lib/linked-creatives", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/creatives/lib/linked-creatives")>()),
   unlinkSurveyCreatives: vi.fn(),
@@ -102,9 +104,29 @@ beforeEach(() => {
   vi.mocked(getSurveyVisibilityImpact).mockResolvedValue({ memberCount: 3, responseCount: 7 });
   vi.mocked(reconcileSurveyRelationships).mockResolvedValue({ passes: 1, status: "projected" });
   vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user_1", name: "Ada" } as never);
+  vi.mocked(applyV3OperationRateLimit).mockResolvedValue(null);
 });
 
 describe("POST …/visibility", () => {
+  test("charges the mutation's own budget once, on both surfaces", async () => {
+    await post({ visibility: "restricted" });
+
+    expect(vi.mocked(applyV3OperationRateLimit)).toHaveBeenCalledExactlyOnceWith({
+      config: expect.objectContaining({ namespace: "api:v3:surveys:visibility", allowedPerInterval: 10 }),
+      authentication: session,
+      requestId,
+      instance,
+    });
+  });
+
+  test("answers its own 429 without reading the survey", async () => {
+    const refused = new Response(null, { status: 429 });
+    vi.mocked(applyV3OperationRateLimit).mockResolvedValueOnce(refused);
+
+    expect(await post({ visibility: "restricted" })).toBe(refused);
+    expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
+  });
+
   test("400 for a body with an unknown key, marked unsupported_field", async () => {
     const response = await post({ visibility: "restricted", owner: "someone" });
 

@@ -9,6 +9,7 @@ import {
   problemConfirmationRequired,
   problemConflict,
   problemForbidden,
+  problemProjectionPending,
   problemSurveyHasLinkedCreatives,
   problemVisibilityBlocked,
   successListResponse,
@@ -957,6 +958,37 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  test("set_survey_visibility relays a pending projection as a stored change to retry", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+    vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+      problemProjectionPending("req_pending", "/api/mcp")
+    );
+
+    const result = await tools
+      .get("set_survey_visibility")!
+      .handler({ surveyId, visibility: "workspace" }, { http: { authInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ status: 503, code: "projection_pending" });
+  });
+
+  test("get_survey_visibility is reachable with a read-only OAuth scope", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    vi.mocked(getV3SurveyVisibility).mockResolvedValue(
+      successResponse({ id: surveyId }, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("get_survey_visibility")!
+      .handler({ surveyId }, { http: { authInfo: readOnlyOAuthAuthInfo } });
+
+    expect(getV3SurveyVisibility).toHaveBeenCalled();
+    expect(result.isError).toBeUndefined();
+  });
+
   test("write tools return MCP errors for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
     const surveyId = "clxx1234567890123456789012";
@@ -966,7 +998,6 @@ describe("registerSurveyTools", () => {
       ["delete_survey", { surveyId }, deleteV3Survey],
       ["edit_survey_blocks", { surveyId, ops: [{ op: "remove", id: "blk_a" }] }, editV3SurveyBlocksResponse],
       ["set_survey_block_order", { surveyId, order: ["blk_a"] }, setV3SurveyBlockOrderResponse],
-      ["get_survey_visibility", { surveyId }, getV3SurveyVisibility],
       ["set_survey_visibility", { surveyId, visibility: "workspace" }, changeV3SurveyVisibility],
       // Writes nothing, but spends AI budget on the caller's behalf: Surveys: Write, like the REST route.
       ["generate_survey", { workspaceId: surveyId, prompt: "A survey about onboarding" }, generateV3Survey],
@@ -984,6 +1015,15 @@ describe("registerSurveyTools", () => {
         requestId: "req_tool",
       });
     }
+
+    // The refused visibility change is recorded: the tool's `audit` declaration is what makes the guard
+    // write it (ENG-2872). Dropping the declaration leaves no event and fails here.
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      readOnlyOAuthAuthInfo.extra.formbricksAuthentication,
+      "visibilityChanged",
+      "survey",
+      expect.any(String)
+    );
   });
 
   // Covers the MCP scope gate only — validateV3SurveyFromRawInput is mocked here, so this passed

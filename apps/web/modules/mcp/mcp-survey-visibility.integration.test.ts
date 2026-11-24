@@ -274,21 +274,32 @@ describe("survey visibility through MCP", () => {
     expect(problemOf(outcome)).toMatchObject({ status: 403, code: "forbidden" });
     // The grant allows Surveys: Write; the operation refuses because the writer may not manage visibility.
     expect(problemOf(outcome).detail).not.toMatch(/^Not permitted/);
+
+    // The read half uses the same operation gate: a writer who may not manage visibility is refused
+    // there, not by the MCP scope check (which the write grant already covers).
+    const readOutcome = await callMcpTool({ accessToken }, "get_survey_visibility", {
+      surveyId: survey.id,
+    });
+    expect(readOutcome.result?.isError, toolText(readOutcome)).toBe(true);
+    expect(problemOf(readOutcome)).toMatchObject({ status: 403, code: "forbidden" });
+    expect(problemOf(readOutcome).detail).not.toMatch(/^Not permitted/);
   });
 
-  test("a read grant is not permitted to read or change visibility", async () => {
+  test("a read grant can read visibility but not change it", async () => {
     await setGrant(setup, { surveys: "read" });
     const survey = await createSurvey(setup);
 
-    for (const [name, args] of [
-      ["get_survey_visibility", { surveyId: survey.id }],
-      ["set_survey_visibility", { surveyId: survey.id, visibility: "workspace" }],
-    ] as const) {
-      const outcome = await callMcpTool({ accessToken }, name, args);
-      expect(outcome.result?.isError, `${name}: ${toolText(outcome)}`).toBe(true);
-      expect(problemOf(outcome)).toMatchObject({ status: 403, code: "forbidden" });
-      expect(problemOf(outcome).detail).toContain("Surveys: Write");
-    }
+    const read = await callMcpTool({ accessToken }, "get_survey_visibility", { surveyId: survey.id });
+    expect(succeeded(read), toolText(read)).toBe(true);
+    expect(dataOf(read)).toMatchObject({ id: survey.id, visibility: "workspace" });
+
+    const write = await callMcpTool({ accessToken }, "set_survey_visibility", {
+      surveyId: survey.id,
+      visibility: "restricted",
+    });
+    expect(write.result?.isError, toolText(write)).toBe(true);
+    expect(problemOf(write)).toMatchObject({ status: 403, code: "forbidden" });
+    expect(problemOf(write).detail).toContain("Surveys: Write");
   });
 
   test("an id outside the grant answers like a made-up one and changes nothing", async () => {

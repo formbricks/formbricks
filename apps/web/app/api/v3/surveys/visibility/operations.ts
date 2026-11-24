@@ -5,6 +5,7 @@ import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   problemBadRequest,
   problemForbidden,
@@ -18,6 +19,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 import { lockSurveyVisibility, reconcileSurveyRelationships } from "@/lib/authzed/survey";
 import { getPendingVisibility } from "@/lib/survey/visibility/policy";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   type TLinkedCreative,
   toUnlinkedCreativeAuditEvents,
@@ -278,6 +280,17 @@ export async function changeV3SurveyVisibility(
   const log = logger.withContext({ requestId, surveyId });
 
   try {
+    // The route wrapper's custom limit never sees an MCP call, so the mutation charges its own budget
+    // here, once, for both surfaces: a loop of workspace → restricted must not be able to arm the
+    // deployment-wide freshness guard (ENG-3282).
+    const limited = await applyV3OperationRateLimit({
+      config: rateLimitConfigs.api.v3SurveyVisibility,
+      authentication: params.authentication,
+      requestId,
+      instance,
+    });
+    if (limited) return limited;
+
     const parsed = ZV3SurveyVisibilityBody.safeParse(body);
     if (!parsed.success) {
       return problemBadRequest(requestId, "Invalid request body", {

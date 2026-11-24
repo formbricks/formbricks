@@ -38,21 +38,28 @@ describe("ZMcpSurveyVisibilityStateOutput", () => {
           blockers: [],
           pending: "workspace",
           version: 3,
-          allowedTargets: ["workspace", "restricted"],
+          allowedTargets: ["workspace"],
         },
         requestId: "req_1",
       }).success
     ).toBe(true);
   });
 
-  test("rejects a state without blockers, and an unknown blocker type", () => {
+  test("rejects a state without blockers", () => {
     const { blockers: _blockers, ...withoutBlockers } = state;
     expect(ZMcpSurveyVisibilityStateOutput.safeParse({ data: withoutBlockers }).success).toBe(false);
+  });
+
+  test("parses an unknown blocker type and access path, which the contract keeps open", () => {
     expect(
       ZMcpSurveyVisibilityStateOutput.safeParse({
-        data: { ...state, blockers: [{ ...state.blockers[0], type: "webform" }] },
+        data: {
+          ...state,
+          access: { via: "namedPerson", canManageVisibility: true },
+          blockers: [{ ...state.blockers[0], type: "webform" }],
+        },
       }).success
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 

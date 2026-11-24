@@ -39,13 +39,18 @@ const ZMcpSurveyVisibilityOwner = z.object({ name: z.string() }).nullable();
 
 const ZMcpSurveyVisibilityAccess = z.object({
   canManageVisibility: z.boolean(),
-  via: z.enum(["organizationRole", "owner", "workspace"]),
+  // Open set, deliberately not an enum: named person and team sharing will add values, and a client
+  // treats an unknown string as "some other access path" instead of branching exhaustively.
+  via: z.string().describe("owner, organizationRole or workspace; more values may appear"),
 });
 
 const ZMcpSurveyVisibilityBlocker = z.object({
   id: z.string(),
   name: z.string(),
-  type: z.enum(["creative", "dashboard", "feedbackSource", "integration", "webhook", "workflow"]),
+  // Open set: new connection types may appear (`creative` was added in 6.2).
+  type: z
+    .string()
+    .describe("creative, dashboard, feedbackSource, integration, webhook or workflow; more may appear"),
 });
 
 export const ZMcpSurveyVisibilityStateOutput = mcpToolOutput(

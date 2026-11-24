@@ -439,9 +439,9 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Get survey visibility",
       description: [
-        "Read a survey's visibility and what changing it would do: the enforced value (restricted or workspace), its owner, whether you may manage it, the outbound connections that currently block restricting it, the people and responses a change affects, any change still in flight, and the values a change would act on now.",
+        "Read a survey's visibility and what changing it would do: the enforced value (restricted or workspace), its owner, whether you may manage it, the outbound connections that would block restricting it now (empty when the survey is already restricted), the people and responses a change affects, any change still in flight, and the values a change would act on now.",
         "Call this before set_survey_visibility and show the user the impact and any blockers first.",
-        "Visibility changes need the survey visibility feature (Access Control) and are limited to the survey's owner or an organization owner/manager. API-key connections cannot read or change visibility, and this tool needs Surveys: Write.",
+        "Visibility changes need the survey visibility feature (Access Control) and are limited to the survey's owner, while they still hold read access to its workspace, or an organization owner/manager. API-key connections cannot read or change visibility. This tool needs Surveys: Read.",
       ].join(" "),
       inputSchema: ZMcpSurveyVisibilityInput,
       outputSchema: ZMcpSurveyVisibilityStateOutput,
@@ -452,7 +452,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    [{ permission: "surveys", level: "write" }],
+    [{ permission: "surveys", level: "read" }],
     async (input: TMcpSurveyVisibilityInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -474,9 +474,9 @@ export function registerSurveyTools(server: McpServer): void {
       title: "Set survey visibility",
       description: [
         "Change a survey between workspace visibility (everyone in the workspace can see it) and restricted (only its owner and organization owners/managers can see it).",
-        "Call get_survey_visibility first and show the user the impact and blockers before restricting. A restriction is refused with a 409 while a webhook, integration, feedback source, draft or enabled workflow, or non-archived creative uses the survey; archived creatives are unlinked by the restriction. A survey with no owner cannot be restricted (422): duplicate it to get a restricted copy.",
+        "Call get_survey_visibility first and show the user the impact and blockers before restricting. A restriction is refused with a 409 while a webhook, integration, active feedback source, draft or enabled workflow, or non-archived creative uses the survey; archived creatives are unlinked by the restriction. A survey with no owner cannot be restricted (422): ask the user to duplicate it in the Formbricks app to get a restricted copy.",
         "A workspace change the graph has not acknowledged yet answers 503 projection_pending: the change is stored, retry in a few seconds; the survey stays restricted until the graph catches up.",
-        "Needs the survey visibility feature (Access Control) and the survey's owner or an organization owner/manager. API-key connections are refused, and a non-owner workspace writer is refused even with Surveys: Write.",
+        "Needs the survey visibility feature (Access Control) and the survey's owner, while they still hold read access to its workspace, or an organization owner/manager. API-key connections are refused, and a non-owner workspace writer is refused even with Surveys: Write.",
       ].join(" "),
       inputSchema: ZMcpSetSurveyVisibilityInput,
       outputSchema: ZMcpSurveyVisibilityChangeOutput,
