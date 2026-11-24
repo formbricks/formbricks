@@ -24,8 +24,8 @@ starts the workflow, decide which events qualify, and choose the actions Formbri
   </Card>
 
   <Card title="Logic" icon="code-branch">
-    Steps that decide what happens inside the run. An **If/else** sends the run down one of two branches, and
-    a **Switch** down one of several.
+    Steps that decide what happens inside the run. An **If/else** sends the run down one of two branches, a
+    **Switch** down one of several, and a **Filter** ends the run unless its conditions hold.
   </Card>
 
   <Card title="Action" icon="play">
@@ -61,12 +61,13 @@ today.
 | **Ending card filter**                  | Runs a Response completed workflow for all ending cards or only the selected ones.  |
 | [**If/else**](/workflows/if-else)       | Sends the run down its Then or Else branch depending on conditions.                 |
 | [**Switch**](/workflows/switch)         | Sends the run down the branch of the first case that matches one Variable, or Default. |
+| [**Filter**](/workflows/filter)         | Lets the run go on only when its conditions hold, and ends it otherwise.            |
 
 ### Actions
 
 | Action                                        | Description                                                                         |
 | --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| **Send email**                                | Sends an email, to a fixed address, a survey respondent or an [address from the payload](/workflows/email-payload-address). |
+| **Send email**                                | Sends an email, to a fixed address, a survey respondent or an [address from the payload](/workflows/send-email#send-to-an-address-from-the-payload). |
 | [**HTTP request**](/workflows/http-request)   | Calls an outside API and passes the response to later steps.                        |
 
 ## Current capabilities
@@ -74,7 +75,8 @@ today.
 You can currently use Workflows to:
 
 - Start when a response is completed for a selected survey, or when another system calls a Webhook Secret URL
-- Branch with If/else conditions on payload values, survey answers and earlier step results
+- Branch with If/else and Switch, or stop with a Filter, on payload values, survey answers and earlier step
+  results
 - Send an email, including a survey link that carries Embedded Data from the payload
 - Call an outside API and use its response in later steps
 - Try a workflow with a Test run before you enable it
