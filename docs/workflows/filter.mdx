@@ -1,0 +1,61 @@
+---
+title: "Filter"
+description: "Let a run go on only when conditions match, and end it quietly when they don't."
+icon: "filter"
+---
+
+A **Filter** step checks one or more conditions. When they hold, the run goes on to the next step. When they
+don't, the run ends there. Use it when only some events should go further, for example to email only customers on
+a paid plan, or to call your CRM only for tickets closed by phone.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+## Add a Filter
+
+<Steps>
+  <Step title="Add the step">
+    Select the **+** below the trigger or a step, then choose **Filter** under **Logic**.
+  </Step>
+
+  <Step title="Write the conditions">
+    Under **Continue when**, pick a [Variable](/workflows/variables) with `@`, choose an operator, and enter the
+    value to compare with, or pick another Variable. Join conditions with **and** or **or**, and group them to mix
+    both.
+  </Step>
+
+  <Step title="Add the steps that should run">
+    Select the **+** below the Filter and add the steps that run when the conditions hold.
+  </Step>
+</Steps>
+
+## When the conditions don't match
+
+The run ends at the Filter. It counts as **completed**, not failed: the run did what it was built to do. The steps
+after the Filter don't run, and run detail shows them as not taken.
+
+A Filter is like an [If/else](/workflows/if-else) with an empty Else branch, but it says what it does on the
+canvas and in run detail. Use an If/else when the other case should also do something.
+
+## Conditions
+
+A Filter uses the same conditions as an If/else: the same [operators](/workflows/if-else#operators), the same
+[rules for comparing values](/workflows/if-else#how-values-are-compared), and at most 20 conditions, nested
+groups included. A Filter offers no Variables to later steps.
+
+On the canvas, the Filter card reads its conditions as a sentence, as an If/else card does.
+
+## Move a Filter
+
+Moving a Filter moves every step after it too, so those steps keep running only when the Filter lets the run
+through. See [Add, move and remove steps](/workflows/build#add-move-and-remove-steps).
+
+## Run detail
+
+Run detail, including a [Test run](/workflows/test-runs), shows whether each condition matched, and either
+**Matched: the run went on** or **Didn't match: the run ended here**. See
+[Manage and monitor](/workflows/manage-and-monitor#inspect-run-details-and-logs).
+
+## In the API and MCP
+
+A Filter is a node with `type: "filter"`. Its `config.condition` is a condition group, written as an If/else's.
+It has one edge out, to the step that runs when the conditions hold.

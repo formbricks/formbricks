@@ -722,4 +722,14 @@ describe("option bases (ENG-6937)", () => {
 
     expect(cells()).toMatchObject({ q2_1: 1, q2_2: 0, q2_3: 0 });
   });
+  // ENG-6991: a question stored with a prototype-member id, from before such ids were refused.
+  test("a question id like `constructor` reads only the record's own keys", () => {
+    const legacyId = element({ ...services, id: "constructor" });
+    const { cells } = run(
+      [legacyId],
+      [response({ constructor: ["Netflix"] }, { notShown: { options: { e3: ["pb"] } } })]
+    );
+
+    expect(cells()).toMatchObject({ q2_1: 1, q2_2: 0, q2_3: 0 });
+  });
 });

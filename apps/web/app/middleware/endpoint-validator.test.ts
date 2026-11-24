@@ -11,6 +11,34 @@ import {
 } from "./endpoint-validator";
 
 describe("endpoint-validator", () => {
+  describe("workflow webhook domain split", () => {
+    test("serves the Secret URL receiver only on the public domain", () => {
+      const path = "/api/v3/workflows/workflow123/webhook/secret-token";
+      expect(isRouteAllowedForDomain(path, true)).toBe(true);
+      expect(isRouteAllowedForDomain(path, false)).toBe(false);
+    });
+
+    test.each([
+      "/api/v3/workflows/workflow123/webhook/regenerate",
+      "/api/v3/workflows/workflow123/webhook",
+      "/api/v3/workflows",
+      "/api/v3/workflows/workflow123/enable",
+    ])("keeps management route %s admin-only", (path) => {
+      expect(isRouteAllowedForDomain(path, true)).toBe(false);
+      expect(isRouteAllowedForDomain(path, false)).toBe(true);
+    });
+
+    test.each([
+      "/api/v3/workflows//webhook/token",
+      "/api/v3/workflows/workflow123/webhook/",
+      "/api/v3/workflows/workflow123/webhook/token/extra",
+      "/api/v3/workflows/workflow123/webhook/token/",
+      "/prefix/api/v3/workflows/workflow123/webhook/token",
+    ])("does not classify malformed receiver path %s as public", (path) => {
+      expect(isPublicDomainRoute(path)).toBe(false);
+    });
+  });
+
   describe("AuthenticationMethod enum", () => {
     test("should have correct values", () => {
       expect(AuthenticationMethod.ApiKey).toBe("apiKey");
