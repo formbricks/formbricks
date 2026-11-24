@@ -3,6 +3,7 @@
  * shared `ConditionsEditor`, so chart filters are drawn and edited exactly like survey logic.
  */
 import type { TFunction } from "i18next";
+import { BOOLEAN_DIMENSION_VALUES } from "@/modules/ee/analysis/charts/lib/dimension-value-label";
 import {
   ANSWER_IS_ANY_OF_OPERATOR,
   ANSWER_OPERATORS,
@@ -24,6 +25,7 @@ import {
 import {
   EMOTIONS_DIMENSION_ID,
   FEEDBACK_FIELDS,
+  type FieldDefinition,
   getFieldById,
   getFilterOperatorsForType,
   getTranslatedFieldLabel,
@@ -33,14 +35,12 @@ import type {
   TGenericCondition,
   TGenericConditionGroup,
 } from "@/modules/ui/components/conditions-editor/types";
-import type { TComboboxGroupedOption } from "@/modules/ui/components/input-combo-box";
+import type { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 
 /** The editor addresses the top-level list by this id; node ids are UUIDs, so it cannot collide. */
 export const CHART_FILTER_ROOT_ID = "root";
 
-type TFilterFieldType = "string" | "number" | "time" | "boolean";
-
-export function getFilterFieldType(fieldId: string): TFilterFieldType {
+export function getFilterFieldType(fieldId: string): FieldDefinition["type"] {
   const type = getFieldById(fieldId)?.type;
   // Count measures are never offered as filters, so a lookup miss and a count both fall back to text.
   return type === undefined || type === "count" ? "string" : type;
@@ -164,6 +164,15 @@ export function getQuestionValueOptions(
     options.push({ value: currentValue, label: currentValue });
   }
   return options;
+}
+
+export function getLegacyBooleanFilterValueOption(
+  value: NonNullable<TGenericCondition["rightOperand"]>["value"] | undefined
+): TComboboxOption | undefined {
+  // Free-text filters could store other spellings. Show the saved value until a user replaces it.
+  if (typeof value !== "string" && typeof value !== "number") return undefined;
+  if (value === "" || BOOLEAN_DIMENSION_VALUES.some((token) => token === value)) return undefined;
+  return { value, label: String(value), disabled: true };
 }
 
 export function getNpsSegmentLabel(segment: TNpsSegment, t: TFunction): string {
