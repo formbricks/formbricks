@@ -274,11 +274,12 @@ export type TMemberWithAttributes = {
 
 /**
  * Members with every attribute key and their values, by name then id. Bounded by `limit` (capped at the
- * list maximum); `search` matches name or email, ignoring case.
+ * list maximum); `search` matches name or email, ignoring case; `roles`, when given, keeps only members
+ * with one of them, before the limit is applied.
  */
 export const listMembersWithAttributes = async (
   organizationId: string,
-  { search, limit }: { search?: string; limit: number }
+  { search, limit, roles }: { search?: string; limit: number; roles?: readonly TOrganizationRole[] }
 ): Promise<TMemberWithAttributes[]> => {
   const take = Math.max(1, Math.min(limit, MEMBER_ATTRIBUTE_LIST_MAX_LIMIT));
   const term = search?.trim();
@@ -287,6 +288,7 @@ export const listMembersWithAttributes = async (
     prisma.membership.findMany({
       where: {
         organizationId,
+        ...(roles && { role: { in: [...roles] } }),
         ...(term && {
           user: {
             OR: [

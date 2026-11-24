@@ -66,13 +66,14 @@ export const getTeamDashboardLimits = async (
     : null;
 };
 
-/** The dashboards a team's limit can name: those of the workspaces the team is granted, by name. */
-export const listTeamDashboardOptions = async (
-  organizationId: string,
-  teamId: string
-): Promise<TTeamDashboardOption[]> => {
+/**
+ * The dashboards a team's limit can name, by workspace then name: every dashboard of the organization.
+ * The team settings narrow them to the workspaces picked in the form, which may not be saved yet; the
+ * save grants those workspaces before it writes the limit, which still refuses a dashboard outside them.
+ */
+export const listTeamDashboardOptions = async (organizationId: string): Promise<TTeamDashboardOption[]> => {
   const dashboards = await prisma.dashboard.findMany({
-    where: { workspace: { organizationId, workspaceTeams: { some: { teamId } } } },
+    where: { workspace: { organizationId } },
     select: { id: true, name: true, workspace: { select: { id: true, name: true } } },
     orderBy: [{ workspace: { name: "asc" } }, { name: "asc" }],
     take: 1000,

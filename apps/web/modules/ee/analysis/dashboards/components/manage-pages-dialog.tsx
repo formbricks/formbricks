@@ -33,7 +33,8 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
-import { AllChipMultiSelect } from "@/modules/ui/components/multi-select/all-chip-multi-select";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
+import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { PageNameInput } from "./page-name-input";
 
 interface ManagePagesDialogProps {
@@ -50,10 +51,16 @@ interface ManagePagesDialogProps {
   access: TDashboardPageAccess | undefined;
 }
 
+/** Who sees a page: every team, or the ones picked. Empty `teamIds` is stored as "all teams". */
+type TPageTeamsMode = "all" | "specific";
+
 function PageRow({
   page,
   canDelete,
   access,
+  mode,
+  showPickError,
+  onModeChange,
   onRenamePage,
   onDeletePage,
   onTeamsChange,
@@ -61,6 +68,10 @@ function PageRow({
   page: TDashboardPage;
   canDelete: boolean;
   access: TDashboardPageAccess | undefined;
+  mode: TPageTeamsMode;
+  /** "Specific teams" with none picked, after trying to close the dialog. */
+  showPickError: boolean;
+  onModeChange: (pageId: string, mode: TPageTeamsMode) => void;
   onRenamePage: ManagePagesDialogProps["onRenamePage"];
   onDeletePage: ManagePagesDialogProps["onDeletePage"];
   onTeamsChange: ManagePagesDialogProps["onTeamsChange"];
@@ -71,6 +82,8 @@ function PageRow({
     id: page.id,
   });
   const teams = access?.teams ?? [];
+  const canEdit = !!access?.canManageAccess;
+  const toggleId = `page-teams-${page.id}`;
 
   return (
     <tr
@@ -113,15 +126,48 @@ function PageRow({
         )}
       </td>
       <td className="py-2 pr-2 align-top">
-        <AllChipMultiSelect
-          ariaLabel={t("workspace.analysis.dashboards.page_visible_to", { page: page.name })}
-          allLabel={t("workspace.analysis.dashboards.all_teams")}
-          placeholder={t("workspace.analysis.dashboards.select_teams")}
-          options={teams.map((team) => ({ value: team.id, label: team.name, disabled: !team.selectable }))}
-          value={page.teamIds}
-          onChange={(teamIds) => onTeamsChange(page.id, teamIds)}
-          disabled={!access?.canManageAccess}
-        />
+        <div className="flex flex-col gap-2">
+          <span id={`${toggleId}-toggle-label`} className="sr-only">
+            {t("workspace.analysis.dashboards.page_visible_to", { page: page.name })}
+          </span>
+          <TabToggle
+            id={toggleId}
+            value={mode}
+            disabled={!canEdit}
+            options={[
+              { value: "all", label: t("workspace.analysis.dashboards.all_teams") },
+              { value: "specific", label: t("workspace.analysis.dashboards.specific_teams") },
+            ]}
+            onChange={(next) => {
+              onModeChange(page.id, next);
+              // "All teams" is stored as no teams; the picks are dropped with it.
+              if (next === "all" && page.teamIds.length > 0) onTeamsChange(page.id, []);
+            }}
+          />
+          {mode === "specific" && (
+            <MultiSelect
+              options={teams.map((team) => ({
+                value: team.id,
+                label: team.name,
+                disabled: !team.selectable,
+              }))}
+              value={page.teamIds}
+              onChange={(teamIds) => onTeamsChange(page.id, teamIds)}
+              placeholder={t("workspace.analysis.dashboards.select_teams")}
+              ariaLabelledBy={`${toggleId}-toggle-label`}
+              disabled={!canEdit}
+              readOnly={!canEdit}
+              emptyMessage={
+                teams.length === 0
+                  ? t("workspace.analysis.dashboards.access_no_teams")
+                  : t("workspace.analysis.dashboards.page_teams_no_match")
+              }
+            />
+          )}
+          {showPickError && (
+            <p className="text-xs text-amber-700">{t("workspace.analysis.dashboards.page_teams_pick_one")}</p>
+          )}
+        </div>
       </td>
       <td className="w-10 py-2 pr-2 align-top">
         <Button
@@ -141,8 +187,9 @@ function PageRow({
 
 /**
  * Manage pages (ENG-7480, ENG-7481): rename, reorder by drag, delete, and limit which Dashboard Viewers see
- * each page. Every change goes into the edit's draft and is saved with the dashboard. The team picker is
- * enabled only for whom the server says may change it; everyone else sees the limits as chips.
+ * each page: "All teams", or "Specific teams" picked from a list. Every change goes into the edit's draft
+ * and is saved with the dashboard. The toggle and picker are enabled only for whom the server says may
+ * change them; everyone else sees the limits read-only.
  */
 export function ManagePagesDialog({
   open,
@@ -156,6 +203,36 @@ export function ManagePagesDialog({
   access,
 }: Readonly<ManagePagesDialogProps>) {
   const { t } = useTranslation();
+  // "Specific teams" chosen with none picked yet: only here, since the stored limit is just the team ids.
+  const [pickingPageIds, setPickingPageIds] = useState<ReadonlySet<string>>(new Set());
+  const [triedToClose, setTriedToClose] = useState(false);
+  const modeOf = (page: TDashboardPage): TPageTeamsMode =>
+    page.teamIds.length > 0 || pickingPageIds.has(page.id) ? "specific" : "all";
+  const unpicked = pages.filter((page) => modeOf(page) === "specific" && page.teamIds.length === 0);
+
+  const handleModeChange = (pageId: string, mode: TPageTeamsMode) => {
+    setPickingPageIds((current) => {
+      const next = new Set(current);
+      if (mode === "specific") next.add(pageId);
+      else next.delete(pageId);
+      return next;
+    });
+  };
+
+  // Closing with a page on "Specific teams" and none picked would leave it open to all teams: keep the
+  // dialog open and say which page needs a team.
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && unpicked.length > 0) {
+      setTriedToClose(true);
+      return;
+    }
+    if (!nextOpen) {
+      setPickingPageIds(new Set());
+      setTriedToClose(false);
+    }
+    onOpenChange(nextOpen);
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -166,34 +243,35 @@ export function ManagePagesDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent width="wide">
         <DialogHeader>
           <DialogTitle>{t("workspace.analysis.dashboards.manage_pages")}</DialogTitle>
           <DialogDescription>{t("workspace.analysis.dashboards.manage_pages_description")}</DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <table className="w-full table-fixed">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs font-medium text-slate-500">
-                <th className="w-8" />
-                <th className="w-1/3 py-2 pr-3 font-medium">{t("workspace.analysis.dashboards.page")}</th>
-                <th className="py-2 pr-2 font-medium">
-                  <span className="inline-flex items-center gap-1">
-                    {t("workspace.analysis.dashboards.visible_to_dashboard_viewers_in")}
-                    <InfoTooltip label={t("workspace.analysis.dashboards.page_limits_info_label")}>
-                      {t("workspace.analysis.dashboards.page_limits_info")}
-                    </InfoTooltip>
-                  </span>
-                </th>
-                <th className="w-10" />
-              </tr>
-            </thead>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              modifiers={[restrictToVerticalAxis]}
-              onDragEnd={handleDragEnd}>
+          {/* Outside the table: DndContext renders its screen-reader hints as <div>s, invalid in a <table>. */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]}
+            onDragEnd={handleDragEnd}>
+            <table className="w-full table-fixed">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs font-medium text-slate-500">
+                  <th className="w-8" />
+                  <th className="w-1/3 py-2 pr-3 font-medium">{t("workspace.analysis.dashboards.page")}</th>
+                  <th className="py-2 pr-2 font-medium">
+                    <span className="inline-flex items-center gap-1">
+                      {t("workspace.analysis.dashboards.visible_to_dashboard_viewers_in")}
+                      <InfoTooltip label={t("workspace.analysis.dashboards.page_limits_info_label")}>
+                        {t("workspace.analysis.dashboards.page_limits_info")}
+                      </InfoTooltip>
+                    </span>
+                  </th>
+                  <th className="w-10" />
+                </tr>
+              </thead>
               <SortableContext items={pages.map((page) => page.id)} strategy={verticalListSortingStrategy}>
                 <tbody>
                   {pages.map((page) => (
@@ -202,6 +280,9 @@ export function ManagePagesDialog({
                       page={page}
                       canDelete={pages.length > 1}
                       access={access}
+                      mode={modeOf(page)}
+                      showPickError={triedToClose && unpicked.includes(page)}
+                      onModeChange={handleModeChange}
                       onRenamePage={onRenamePage}
                       onDeletePage={onDeletePage}
                       onTeamsChange={onTeamsChange}
@@ -209,15 +290,15 @@ export function ManagePagesDialog({
                   ))}
                 </tbody>
               </SortableContext>
-            </DndContext>
-          </table>
+            </table>
+          </DndContext>
         </DialogBody>
         <DialogFooter className="sm:justify-between">
           <Button type="button" variant="secondary" onClick={onAddPage}>
             <PlusIcon />
             {t("workspace.analysis.dashboards.add_page")}
           </Button>
-          <Button type="button" onClick={() => onOpenChange(false)}>
+          <Button type="button" onClick={() => handleOpenChange(false)}>
             {t("common.done")}
           </Button>
         </DialogFooter>

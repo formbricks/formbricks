@@ -726,6 +726,8 @@ export type TDashboardAccessOverview = {
     email: string;
     role: string;
     attributes: { label: string; values: string[] }[];
+    /** Whether they open this dashboard; viewing as someone who does not shows why not. */
+    hasAccess: boolean;
   }[];
 };
 

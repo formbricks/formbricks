@@ -13,6 +13,9 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { replaceTeamDashboardLimits } from "@/modules/ee/dashboard-access/lib/api-client";
 import {
   DashboardViewerRoleSettings,
+  type TDashboardLimitDraft,
+  dashboardLimitDraftIds,
+  isDashboardLimitDraftValid,
   useTeamDashboardLimits,
 } from "@/modules/ee/teams/team-list/components/team-settings/dashboard-viewer-role-settings";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
@@ -78,7 +81,7 @@ export const TeamSettingsModal = ({
   // limits (the v3 read refuses anyone else), so for others it stays empty and read-only.
   const showDashboardLimits = isDashboardAccessEnabled && (isOwnerRole || isManagerRole);
   const dashboardLimits = useTeamDashboardLimits(team.id, showDashboardLimits);
-  const [dashboardIdsDraft, setDashboardIdsDraft] = useState<string[] | null>(null);
+  const [dashboardLimitDraft, setDashboardLimitDraft] = useState<TDashboardLimitDraft | null>(null);
 
   const { isOwner, isManager, isMember } = getAccessFlags(membershipRole);
 
@@ -138,21 +141,27 @@ export const TeamSettingsModal = ({
   };
 
   /**
-   * Saves an edited dashboard limit after the team's workspaces: only dashboards of the workspaces the
-   * team keeps are sent, since losing a grant drops the limits there (ENG-7483).
+   * The draft limit as it would be saved with the team keeping `workspaceIds`: only dashboards of those
+   * workspaces, since losing a grant drops the limits there (ENG-7483). `null` when nothing changed.
    */
-  const saveDashboardLimits = async (workspaceIds: string[]): Promise<boolean> => {
-    if (!showDashboardLimits || dashboardIdsDraft === null || !dashboardLimits.data) return true;
+  const draftForWorkspaces = (workspaceIds: string[]): TDashboardLimitDraft | null => {
+    if (!showDashboardLimits || dashboardLimitDraft === null || !dashboardLimits.data) return null;
     const kept = new Set(
       (dashboardLimits.data.dashboards ?? [])
         .filter(({ workspaceId }) => workspaceIds.includes(workspaceId))
         .map(({ id }) => id)
     );
+    return {
+      mode: dashboardLimitDraft.mode,
+      dashboardIds: dashboardLimitDraft.dashboardIds.filter((id) => kept.has(id)),
+    };
+  };
+
+  /** Saves an edited dashboard limit after the team's workspaces (see `draftForWorkspaces`). */
+  const saveDashboardLimits = async (draft: TDashboardLimitDraft | null): Promise<boolean> => {
+    if (draft === null) return true;
     try {
-      await replaceTeamDashboardLimits(
-        team.id,
-        dashboardIdsDraft.filter((id) => kept.has(id))
-      );
+      await replaceTeamDashboardLimits(team.id, dashboardLimitDraftIds(draft));
       return true;
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
@@ -163,10 +172,17 @@ export const TeamSettingsModal = ({
   const handleUpdateTeam: SubmitHandler<TTeamSettingsFormSchema> = async (data) => {
     const members = data.members.filter((m) => m.userId);
     const workspaces = data.workspaces.filter((p) => p.workspaceId);
+    // "Specific dashboards" with none picked (or none left in the kept workspaces) would save as "All
+    // dashboards": refuse it before anything is saved.
+    const limitDraft = draftForWorkspaces(workspaces.map(({ workspaceId }) => workspaceId));
+    if (limitDraft && !isDashboardLimitDraftValid(limitDraft)) {
+      toast.error(t("workspace.settings.teams.dashboard_access_pick_one"));
+      return;
+    }
 
     try {
       await updateTeam({ teamId: team.id, body: { name: data.name, members, workspaces } });
-      const limitsSaved = await saveDashboardLimits(workspaces.map(({ workspaceId }) => workspaceId));
+      const limitsSaved = await saveDashboardLimits(limitDraft);
       if (!limitsSaved) return;
       toast.success(t("workspace.settings.teams.team_updated_successfully"));
       closeSettingsModal();
@@ -401,8 +417,8 @@ export const TeamSettingsModal = ({
                   canEdit={isOwnerOrManager}
                   limits={dashboardLimits.data}
                   selectedWorkspaceIds={selectedWorkspaceIds}
-                  value={dashboardIdsDraft}
-                  onChange={setDashboardIdsDraft}
+                  value={dashboardLimitDraft}
+                  onChange={setDashboardLimitDraft}
                 />
               )}
             </DialogBody>

@@ -44,17 +44,15 @@ describe("reads", () => {
     expect(await getTeamDashboardLimits(ORG, TEAM)).toBeNull();
   });
 
-  test("listTeamDashboardOptions lists the dashboards of the team's granted workspaces", async () => {
+  test("listTeamDashboardOptions lists every dashboard of the organization, not only granted workspaces", async () => {
     prisma.dashboard.findMany.mockResolvedValue([
       { id: "d1", name: "Board", workspace: { id: "ws_1", name: "Web" } },
     ] as never);
 
-    expect(await listTeamDashboardOptions(ORG, TEAM)).toEqual([
+    expect(await listTeamDashboardOptions(ORG)).toEqual([
       { id: "d1", name: "Board", workspaceId: "ws_1", workspaceName: "Web" },
     ]);
-    expect(prisma.dashboard.findMany.mock.calls[0][0]?.where).toEqual({
-      workspace: { organizationId: ORG, workspaceTeams: { some: { teamId: TEAM } } },
-    });
+    expect(prisma.dashboard.findMany.mock.calls[0][0]?.where).toEqual({ workspace: { organizationId: ORG } });
   });
 });
 

@@ -5,6 +5,7 @@ import { EyeIcon, InfoIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import {
   type TDashboardAccessOverview,
   VIEW_AS_PARAM,
@@ -29,6 +30,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { Skeleton } from "@/modules/ui/components/skeleton";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 /** The member a dashboard is being viewed as, as the banner names them. */
@@ -39,7 +41,8 @@ export type TViewAsMember = {
   attributes: { label: string; values: string[] }[];
 };
 
-const ROLE_ORDER = ["owner", "manager", "member", "dashboard_viewer", "billing"];
+// View as offers Members and Dashboard Viewers only; Owners and Managers open everything.
+const ROLE_ORDER = ["member", "dashboard_viewer"];
 
 const useRoleLabel = () => {
   const { t } = useTranslation();
@@ -84,7 +87,10 @@ const useAccessOverview = (dashboardId: string, enabled: boolean) =>
     enabled,
   });
 
-/** "View as": a searchable list of the organization's members, by role, to see the dashboard as one. */
+/**
+ * "View as": a searchable list of the organization's Members and Dashboard Viewers, by role, to see the
+ * dashboard as one. Those who cannot open it are listed greyed with "No access".
+ */
 export const ViewAsButton = ({ dashboardId }: Readonly<{ dashboardId: string }>) => {
   const { t } = useTranslation();
   const roleLabel = useRoleLabel();
@@ -116,19 +122,41 @@ export const ViewAsButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
                 ? t("common.loading")
                 : t("workspace.analysis.dashboards.view_as_no_members")}
             </CommandEmpty>
-            {groups.map(([role, members]) => (
-              <CommandGroup key={role} heading={roleLabel(role)}>
+            {groups.map(([role, members], index) => (
+              <CommandGroup
+                key={role}
+                // A role is a section, not a member to pick: small grey capitals, a rule above each but the first.
+                className={cn(index > 0 && "border-t border-slate-100")}
+                heading={
+                  <span className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                    {roleLabel(role)}
+                  </span>
+                }>
                 {members.map((member) => (
                   <CommandItem
                     key={member.userId}
                     value={`${member.name} ${member.email} ${member.userId}`}
                     onSelect={() => goViewAs(member.userId)}>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm text-slate-900">{member.name || member.email}</p>
-                      {member.attributes.length > 0 && (
-                        <p className="truncate text-xs text-slate-500">
-                          {formatAttributes(member.attributes)}
+                    <div className="flex w-full min-w-0 items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p
+                          className={cn(
+                            "truncate text-sm",
+                            member.hasAccess ? "text-slate-900" : "text-slate-400"
+                          )}>
+                          {member.name || member.email}
                         </p>
+                        {member.attributes.length > 0 && (
+                          <p className="truncate text-xs text-slate-500">
+                            {formatAttributes(member.attributes)}
+                          </p>
+                        )}
+                      </div>
+                      {/* Still pickable: viewing as them shows why they cannot open the dashboard. */}
+                      {!member.hasAccess && (
+                        <span className="shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+                          {t("workspace.analysis.dashboards.view_as_no_access_tag")}
+                        </span>
                       )}
                     </div>
                   </CommandItem>
@@ -194,7 +222,7 @@ export const AccessButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
             <DialogDescription>{t("workspace.analysis.dashboards.access_description")}</DialogDescription>
           </DialogHeader>
           <DialogBody>
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm" aria-busy={overview.isPending}>
               <thead className="text-xs text-slate-500">
                 <tr>
                   <th className="py-2 font-medium">{t("common.team")}</th>
@@ -228,7 +256,32 @@ export const AccessButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
                     <td className="py-2 text-slate-700">{team.memberCount}</td>
                   </tr>
                 ))}
-                {!overview.isPending && teams.length === 0 && (
+                {/* Rows as tall as a team row, so the dialog does not jump when the teams arrive. */}
+                {overview.isPending &&
+                  [0, 1, 2].map((row) => (
+                    <tr key={row} className="border-t border-slate-100" aria-hidden="true">
+                      {["w-24", "w-16", "w-20", "w-6"].map((width) => (
+                        <td key={width} className="py-3">
+                          <Skeleton className={cn("h-3 rounded-sm", width)} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                {overview.isError && (
+                  <tr>
+                    <td colSpan={4} className="py-4 text-center text-slate-500">
+                      {t("common.error_loading_data")}{" "}
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0"
+                        onClick={() => overview.refetch()}>
+                        {t("common.retry")}
+                      </Button>
+                    </td>
+                  </tr>
+                )}
+                {overview.isSuccess && teams.length === 0 && (
                   <tr>
                     <td colSpan={4} className="py-4 text-center text-slate-500">
                       {t("workspace.analysis.dashboards.access_no_teams")}
@@ -239,11 +292,16 @@ export const AccessButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
             </table>
           </DialogBody>
           <DialogFooter>
-            {overview.data && (
+            {/* Shown from the start, disabled until the organization is known, so the footer does not shift. */}
+            {overview.data ? (
               <Button variant="secondary" asChild>
                 <Link href={`/organizations/${overview.data.organizationId}/settings/teams`}>
                   {t("workspace.analysis.dashboards.manage_access")}
                 </Link>
+              </Button>
+            ) : (
+              <Button variant="secondary" disabled>
+                {t("workspace.analysis.dashboards.manage_access")}
               </Button>
             )}
             <Button onClick={() => setOpen(false)}>{t("common.done")}</Button>

@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
 import type { TDashboardImageContent, TDashboardTextContent } from "@formbricks/types/analysis";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
@@ -306,11 +307,27 @@ export function DashboardDetailClient(props: Readonly<DashboardDetailClientProps
     return (
       <PageContentWrapper>
         <GoBackButton url={`/workspaces/${props.workspaceId}/dashboards`} />
-        <ListLoadError
-          error={error}
-          onRetry={refetch}
-          title={t("workspace.analysis.dashboards.failed_to_load_dashboard")}
-        />
+        {/* Viewing as someone keeps the banner and its way back, whatever the read answered. */}
+        {props.viewAsMember && <ViewAsBanner member={props.viewAsMember} />}
+        {/* A 403 while viewing as someone is the answer, not a failure: they cannot see this dashboard. */}
+        {props.viewAsMember && error instanceof V3ApiError && error.status === 403 ? (
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <h2 className="text-base font-semibold text-slate-900">
+              {t("workspace.analysis.dashboards.view_as_no_access_title", {
+                member: props.viewAsMember.name,
+              })}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {t("workspace.analysis.dashboards.view_as_no_access_subtitle")}
+            </p>
+          </div>
+        ) : (
+          <ListLoadError
+            error={error}
+            onRetry={refetch}
+            title={t("workspace.analysis.dashboards.failed_to_load_dashboard")}
+          />
+        )}
       </PageContentWrapper>
     );
   }

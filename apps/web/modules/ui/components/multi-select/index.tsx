@@ -49,6 +49,11 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
   ariaLabelledBy?: string;
   /** Shows the chips alone: no input, no remove buttons. */
   readOnly?: boolean;
+  /**
+   * Shown in the open list when there is nothing to offer (no options left, or none matching the typed
+   * text), so a focused field never looks like a free-text input. Without it the list stays closed.
+   */
+  emptyMessage?: string;
 }
 
 /** The "Add …" entry for typed text; it never reaches `onChange` as such, only the text does. */
@@ -71,6 +76,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     inputId,
     ariaLabelledBy,
     readOnly = false,
+    emptyMessage,
   } = props;
   const { t } = useTranslation();
 
@@ -234,8 +240,9 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     return groups;
   }, [selectableOptions]);
 
+  const hasEntries = selectableOptions.length > 0 || createCandidate !== null;
   const isDropdownVisible =
-    open && (selectableOptions.length > 0 || createCandidate !== null) && !disabled && !readOnly && !isFull;
+    open && (hasEntries || emptyMessage !== undefined) && !disabled && !readOnly && !isFull;
 
   // Escape with the dropdown open closes only the dropdown. A Radix dialog around this component
   // listens for Escape on `document` in the capture phase, before the React handler above runs, so
@@ -413,6 +420,9 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                     ))}
                   </CommandGroup>
                 ))}
+                {!hasEntries && emptyMessage ? (
+                  <p className="px-3 py-2.5 text-sm text-slate-500">{emptyMessage}</p>
+                ) : null}
                 {createCandidate ? (
                   <CommandGroup>
                     <CommandItem

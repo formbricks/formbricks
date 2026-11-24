@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon, TrashIcon } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { type Ref, useId, useImperativeHandle, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -17,6 +17,7 @@ import {
   VIEWER_ACCESS_EMBEDDED_PREFIX,
   VIEWER_ACCESS_MAX_CONDITIONS,
   VIEWER_ACCESS_RECORD_FIELDS,
+  findRepeatedViewerConditions,
   getViewerAccessEmbeddedKey,
 } from "@/modules/ee/dashboard-access/lib/viewer-access-fields";
 import { listMemberAttributeKeys } from "@/modules/ee/member-attributes/lib/api-client";
@@ -59,22 +60,33 @@ const sameDraft = (a: TDraft, b: TDraft) =>
       condition.attributeKeyId === b.conditions[index].attributeKeyId
   );
 
+/** What the dataset settings dialog asks of the section when its Save is pressed. */
+export type TDashboardViewerAccessHandle = {
+  /** Why the edit cannot be saved, to show before anything is written; `null` when it can. */
+  validate: () => string | null;
+  /** Saves the edit, if any. `false` when it failed; the section has already said why. */
+  save: () => Promise<boolean>;
+};
+
 interface DashboardViewerAccessSectionProps {
   datasetId: string;
   organizationId: string;
   /** Owners and Managers, decided on the server. */
   canEdit: boolean;
+  /** The dialog's Save validates and saves the edit through this; the section has no Save of its own. */
+  ref?: Ref<TDashboardViewerAccessHandle>;
 }
 
 /**
  * "Dashboard Viewer access" in a Feedback Dataset's settings (ENG-7476): the conditions a record must meet
- * for a Dashboard Viewer to see it. Saved on its own, with the dataset's version, so a concurrent change
- * is reported instead of overwritten.
+ * for a Dashboard Viewer to see it. Saved with the dialog's Save (`ref`), with the dataset's version, so a
+ * concurrent change is reported instead of overwritten.
  */
 export const DashboardViewerAccessSection = ({
   datasetId,
   organizationId,
   canEdit,
+  ref,
 }: Readonly<DashboardViewerAccessSectionProps>) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -102,10 +114,10 @@ export const DashboardViewerAccessSection = ({
         conditions: value.conditions.map(({ field, attributeKeyId }) => ({ field, attributeKeyId })),
         expectedUpdatedAt: accessQuery.data?.updatedAt ?? "",
       }),
+    // The dialog reports success for the whole save; only failures are said here.
     onSuccess: (data) => {
       queryClient.setQueryData(dashboardAccessQueryKeys.dataset(datasetId), data);
       setDraft(null);
-      toast.success(t("workspace.settings.feedback_directories.dashboard_viewer_access_saved"));
     },
     onError: (error) => {
       if (error instanceof V3ApiError && error.status === 409) {
@@ -117,6 +129,39 @@ export const DashboardViewerAccessSection = ({
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     },
   });
+
+  const repeatedIds = new Set(
+    findRepeatedViewerConditions(current?.conditions ?? []).map((index) => current?.conditions[index].id)
+  );
+  const hasEmptyEmbeddedKey =
+    current?.conditions.some(({ field }) => (getViewerAccessEmbeddedKey(field) ?? "x").trim().length === 0) ??
+    false;
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      validate: () => {
+        if (!isDirty) return null;
+        if (hasEmptyEmbeddedKey) {
+          return t("workspace.settings.feedback_directories.dashboard_viewer_access_embedded_key_required");
+        }
+        if (repeatedIds.size > 0) {
+          return t("workspace.settings.feedback_directories.dashboard_viewer_access_repeated");
+        }
+        return null;
+      },
+      save: async () => {
+        if (!isDirty || !draft) return true;
+        try {
+          await save.mutateAsync(draft);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    }),
+    [isDirty, draft, hasEmptyEmbeddedKey, repeatedIds.size, save, t]
+  );
 
   if (accessQuery.isError) return null;
 
@@ -146,9 +191,6 @@ export const DashboardViewerAccessSection = ({
   };
 
   const disabled = !canEdit || save.isPending || !current;
-  const hasInvalidField = current?.conditions.some(
-    ({ field }) => (getViewerAccessEmbeddedKey(field) ?? "x").trim().length === 0
-  );
 
   return (
     <div className="space-y-3" aria-labelledby={`${sectionId}-title`}>
@@ -285,6 +327,11 @@ export const DashboardViewerAccessSection = ({
                   <TrashIcon className="size-4" />
                 </Button>
               )}
+              {repeatedIds.has(condition.id) && (
+                <Muted className="block w-full text-amber-700">
+                  {t("workspace.settings.feedback_directories.dashboard_viewer_access_repeated_row")}
+                </Muted>
+              )}
             </li>
           );
         })}
@@ -301,16 +348,6 @@ export const DashboardViewerAccessSection = ({
             <PlusIcon className="size-4" />
             {t("workspace.settings.feedback_directories.dashboard_viewer_access_add_condition")}
           </Button>
-          {isDirty && draft && (
-            <Button
-              type="button"
-              size="sm"
-              loading={save.isPending}
-              disabled={disabled || hasInvalidField}
-              onClick={() => save.mutate(draft)}>
-              {t("workspace.settings.feedback_directories.dashboard_viewer_access_save")}
-            </Button>
-          )}
         </div>
       )}
     </div>

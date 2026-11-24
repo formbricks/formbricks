@@ -8554,7 +8554,8 @@ paths:
         Replaces the join and every condition (at most 10). Send the `updatedAt` from your read as
         `expectedUpdatedAt`: if the dataset changed since, the request answers **409** and nothing is
         written. A field that is not a Feedback Record string field or `ed:<key>`, or a Member attribute of
-        another organization, answers **422**. Owners and Managers, or an API key with Access Control write;
+        another organization, answers **422**. A condition that repeats an earlier one (the same field
+        and the same Member attribute) answers **400**. Owners and Managers, or an API key with Access Control write;
         needs Access Control and Dashboards. Audited.
       tags:
         - V3 Dashboard Access
@@ -19956,7 +19957,7 @@ components:
             format: cuid2
         dashboards:
           type: array
-          description: 'Only on a read: the dashboards the limit can name, those of the workspaces the team is granted.'
+          description: 'Only on a read: the dashboards of the organization, to pick the limit from. A write still accepts only dashboards of the workspaces the team is granted.'
           maxItems: 1000
           items:
             type: object

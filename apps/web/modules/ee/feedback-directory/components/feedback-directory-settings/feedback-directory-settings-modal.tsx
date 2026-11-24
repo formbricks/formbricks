@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,10 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { ArchiveFeedbackDirectory } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory";
-import { DashboardViewerAccessSection } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/dashboard-viewer-access-section";
+import {
+  DashboardViewerAccessSection,
+  type TDashboardViewerAccessHandle,
+} from "@/modules/ee/feedback-directory/components/feedback-directory-settings/dashboard-viewer-access-section";
 import { PurgeFeedbackDirectoryData } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/purge-feedback-directory-data";
 import { FeedbackDirectoryQueryClientProvider } from "@/modules/ee/feedback-directory/components/query-client-provider";
 import { createFeedbackDataset, updateFeedbackDataset } from "@/modules/ee/feedback-directory/lib/api-client";
@@ -72,6 +75,8 @@ export const FeedbackDirectorySettingsModal = ({
   const [confirmAddDialogOpen, setConfirmAddDialogOpen] = useState(false);
   const [pendingAddData, setPendingAddData] = useState<TFeedbackDirectoryUpdateInput | null>(null);
   const [addedWorkspaceIds, setAddedWorkspaceIds] = useState<string[]>([]);
+  // Dashboard Viewer access is edited in its own section but saved with this dialog's Save.
+  const viewerAccessRef = useRef<TDashboardViewerAccessHandle>(null);
 
   const workspaceAccessMap = useMemo(
     () => new Map(workspaceAccessByWorkspace.map((assignment) => [assignment.workspaceId, assignment])),
@@ -170,6 +175,12 @@ export const FeedbackDirectorySettingsModal = ({
   const submitDirectory = async (data: TFeedbackDirectoryUpdateInput) => {
     try {
       if (isEdit && directory) {
+        // Dashboard Viewer access first: its write is checked against the dataset's `updatedAt`, which the
+        // dataset update below changes. The section reports its own failure (a conflict, a refused field);
+        // the dialog stays open and nothing else is saved.
+        if (viewerAccessRef.current && !(await viewerAccessRef.current.save())) {
+          return false;
+        }
         await updateFeedbackDataset(directory.id, { name: data.name, workspaceIds: data.workspaceIds });
       } else {
         await createFeedbackDataset(organizationId, {
@@ -213,6 +224,12 @@ export const FeedbackDirectorySettingsModal = ({
   const handleSubmitForm: SubmitHandler<TFeedbackDirectoryUpdateInput> = async (data) => {
     // Removing a workspace that still owns feedback sources is blocked (see blockedRemovals).
     if (blockedRemovals.length > 0) {
+      return;
+    }
+    // An invalid Dashboard Viewer access edit stops the save before anything is written.
+    const viewerAccessError = viewerAccessRef.current?.validate() ?? null;
+    if (viewerAccessError) {
+      toast.error(viewerAccessError);
       return;
     }
 
@@ -344,6 +361,7 @@ export const FeedbackDirectorySettingsModal = ({
               {isEdit && isDashboardViewerAccessEnabled && (
                 <FeedbackDirectoryQueryClientProvider>
                   <DashboardViewerAccessSection
+                    ref={viewerAccessRef}
                     datasetId={directory.id}
                     organizationId={organizationId}
                     canEdit={isOwnerOrManager}

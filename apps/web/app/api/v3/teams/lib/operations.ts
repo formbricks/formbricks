@@ -58,7 +58,7 @@ export async function getV3TeamDashboardLimits(params: TParams): Promise<Respons
   if (access instanceof Response) return access;
   const limits = await getTeamDashboardLimits(access.organizationId, params.teamId);
   if (!limits) return problemForbidden(params.requestId, FORBIDDEN_DETAIL, params.instance);
-  const dashboards = await listTeamDashboardOptions(access.organizationId, params.teamId);
+  const dashboards = await listTeamDashboardOptions(access.organizationId);
   return successResponse({ ...limits, dashboards }, { requestId: params.requestId });
 }
 

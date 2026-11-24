@@ -13,8 +13,8 @@ import { getDashboardWorkspaceRow } from "./service";
 
 /**
  * `GET /api/internal/dashboards/{dashboardId}/access` (ENG-7484): who opens the dashboard — the teams
- * with access to its workspace, without those limited to other dashboards — and the members an Owner or
- * Manager may View as. Only for whoever may manage the dashboard's access, on a plan with Access Control
+ * with access to its workspace, without those limited to other dashboards — and the Members and Dashboard
+ * Viewers an Owner or Manager may View as, each with whether they open the dashboard. Only for whoever may manage the dashboard's access, on a plan with Access Control
  * and Dashboards; anyone else gets the same 403 as for a dashboard they cannot see.
  */
 export async function getDashboardAccessOverview({
@@ -41,7 +41,7 @@ export async function getDashboardAccessOverview({
 
     const [teams, members] = await Promise.all([
       listDashboardAccessTeams(dashboardId, workspaceId),
-      listViewAsMembers(organizationId),
+      listViewAsMembers(organizationId, dashboardId, workspaceId),
     ]);
     return successResponse({ organizationId, teams, members }, { requestId });
   } catch (error) {

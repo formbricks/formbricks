@@ -26,7 +26,8 @@ properties:
   dashboards:
     type: array
     description: >-
-      Only on a read: the dashboards the limit can name, those of the workspaces the team is granted.
+      Only on a read: the dashboards of the organization, to pick the limit from. A write still accepts
+      only dashboards of the workspaces the team is granted.
     maxItems: 1000
     items:
       type: object
