@@ -8,10 +8,10 @@ Use the workflow builder to combine a trigger with the steps it should run. This
 completed** trigger and the **Send email** action as examples. The builder lists the options available in your
 Formbricks version. Changes to draft and disabled workflows are saved automatically.
 
-To start a workflow from another system, see [Webhook trigger](/workflows/webhook-trigger). The steps a workflow
-can run each have their own page: [If/else](/workflows/if-else), [Switch](/workflows/switch),
-[Filter](/workflows/filter), [HTTP request](/workflows/http-request) and
-[Send email to an address from the payload](/workflows/email-payload-address).
+Each trigger and step has its own page. Triggers: [Response completed](/workflows/response-completed) and
+[Webhook trigger](/workflows/webhook-trigger). Logic: [If/else](/workflows/if-else), [Filter](/workflows/filter)
+and [Switch](/workflows/switch). Actions: [Send an email](/workflows/send-email) and
+[HTTP request](/workflows/http-request).
 
 <Frame>
   <img
@@ -25,9 +25,8 @@ can run each have their own page: [If/else](/workflows/if-else), [Switch](/workf
 You need write or manage access to the workspace. For the **Response completed** example, you also need a
 survey in the same workspace as the workflow.
 
-If you use **Send email** and the message should go to an address collected from a response, configure at
-least one compatible recipient source in the survey, such as an email question, contact information, email
-verification, or a hidden field.
+If you use **Send email** and the message should go to an address collected from a response, the survey
+needs a compatible recipient source. See [Send an email](/workflows/send-email).
 
 ## Create a workflow
 
@@ -93,57 +92,6 @@ dragged). The **Layout** menu has:
 
 - **Auto layout**: tidies up the steps.
 - **Arrange left to right** or **Arrange top to bottom**: switches the direction the workflow is drawn in.
-
-## Configure the Response completed trigger
-
-If you choose the **Response completed** trigger, select the survey whose completed responses should start
-the workflow. Changing the linked survey clears any ending card and email recipient configuration that
-belonged to the previous survey.
-
-Under **Ending cards**, choose one of these scopes:
-
-- **All endings** runs the workflow for every completed response, including ending cards added later.
-- **Specific endings** runs it only when the respondent reaches one of the selected ending cards.
-
-
-## Configure the Send email action
-
-If you choose the **Send email** action, complete these fields in its configuration panel:
-
-| Field        | Configuration                                                                         |
-| ------------ | ------------------------------------------------------------------------------------- |
-| **Send to**  | Select one recipient source from the linked survey or workspace.                      |
-| **From**     | Shows the deployment sender address. This value is read-only in the workflow builder. |
-| **Reply to** | Enter one or more addresses that should receive replies.                              |
-| **Subject**  | Enter the email subject.                                                              |
-| **Body**     | Write the message and insert survey recall values where needed.                       |
-
-The **Send to** options are grouped:
-
-- **Questions**: the verified email address, when email verification is enabled for the survey, an Open Text
-  question configured for email input, and the email field of a Contact Info question.
-- **Embedded Data**: a field passed in with the response, by a link, a URL parameter or the SDK.
-- **Members**: a workspace member, including yourself.
-- **Expected payload**: with a Webhook trigger, an address from the payload. See
-  [Send email to an address from the payload](/workflows/email-payload-address).
-
-### Personalize the body
-
-Type `@` in the **Body** editor to insert recall values from the linked survey. You can recall answers,
-variables, and hidden fields to personalize the message for each run. Learn more about the available sources
-in [Recall Data](/surveys/general-features/recall).
-
-### Include response data
-
-Turn on **Attach response data** to include the triggering survey response with the email. You can then also
-turn on **Include Embedded Data**, which adds the response's Embedded Data: the fields passed in with it and the
-ones the survey computed.
-
-<Note>
-  In API v3 and MCP, **Include Embedded Data** is `includeEmbeddedData`. Its old name, `includeVariables`, is
-  deprecated: it is still accepted, stored and returned as written until Formbricks v7.0.0. Use one name or the
-  other in a step, not both.
-</Note>
 
 ## Check for problems and enable
 

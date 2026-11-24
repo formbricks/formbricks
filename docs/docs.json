@@ -332,19 +332,32 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["workflows/overview"]
+            "pages": ["workflows/overview", "workflows/build"]
           },
           {
-            "group": "Workflow Features",
+            "group": "Workflow Steps",
             "pages": [
-              "workflows/build",
-              "workflows/webhook-trigger",
+              {
+                "group": "Triggers",
+                "icon": "bolt",
+                "pages": ["workflows/response-completed", "workflows/webhook-trigger"]
+              },
+              {
+                "group": "Logic",
+                "icon": "code-branch",
+                "pages": ["workflows/if-else", "workflows/filter", "workflows/switch"]
+              },
+              {
+                "group": "Actions",
+                "icon": "play",
+                "pages": ["workflows/send-email", "workflows/http-request"]
+              }
+            ]
+          },
+          {
+            "group": "General Features",
+            "pages": [
               "workflows/variables",
-              "workflows/if-else",
-              "workflows/switch",
-              "workflows/filter",
-              "workflows/http-request",
-              "workflows/email-payload-address",
               "workflows/test-runs",
               "workflows/manage-and-monitor",
               "workflows/webhooks-vs-workflows",
@@ -658,6 +671,10 @@
     ]
   },
   "redirects": [
+    {
+      "destination": "/docs/workflows/send-email#send-to-an-address-from-the-payload",
+      "source": "/docs/workflows/email-payload-address"
+    },
     {
       "destination": "/docs/surveys/import-export/qualtrics",
       "source": "/docs/surveys/general-features/migrate-from-qualtrics"

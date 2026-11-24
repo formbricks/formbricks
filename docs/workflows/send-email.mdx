@@ -1,14 +1,62 @@
 ---
-title: "Email an address from the payload"
-description: "Send an email to an address the Webhook payload carries, with a survey link that records where the answer came from."
+title: "Send an email"
+description: "Email a survey respondent, a workspace member or an address from the Webhook payload."
 icon: "envelope"
 ---
+
+The **Send email** action sends an email each time a run reaches it: to an address collected in a survey
+response, to a workspace member, or, with a [Webhook trigger](/workflows/webhook-trigger), to an address the
+payload carries.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+## Configure the email
+
+Complete these fields in the step's configuration panel:
+
+| Field        | Configuration                                                                         |
+| ------------ | ------------------------------------------------------------------------------------- |
+| **Send to**  | Select one recipient source from the linked survey or workspace.                      |
+| **From**     | Shows the deployment sender address. This value is read-only in the workflow builder. |
+| **Reply to** | Enter one or more addresses that should receive replies.                              |
+| **Subject**  | Enter the email subject.                                                              |
+| **Body**     | Write the message and insert survey recall values where needed.                       |
+
+The **Send to** options are grouped:
+
+- **Questions**: the verified email address, when email verification is enabled for the survey, an Open Text
+  question configured for email input, and the email field of a Contact Info question.
+- **Embedded Data**: a field passed in with the response, by a link, a URL parameter or the SDK.
+- **Members**: a workspace member, including yourself.
+- **Expected payload**: with a Webhook trigger, an address from the payload. See
+  [Send to an address from the payload](#send-to-an-address-from-the-payload).
+
+To send to an address collected from a response, the survey needs at least one compatible recipient source, such
+as an email question, contact information, email verification, or a hidden field.
+
+### Personalize the body
+
+Type `@` in the **Body** editor to insert recall values from the linked survey. You can recall answers,
+variables, and hidden fields to personalize the message for each run. Learn more about the available sources
+in [Recall Data](/surveys/general-features/recall).
+
+### Include response data
+
+Turn on **Attach response data** to include the triggering survey response with the email. You can then also
+turn on **Include Embedded Data**, which adds the response's Embedded Data: the fields passed in with it and the
+ones the survey computed.
+
+<Note>
+  In API v3 and MCP, **Include Embedded Data** is `includeEmbeddedData`. Its old name, `includeVariables`, is
+  deprecated: it is still accepted, stored and returned as written until Formbricks v7.0.0. Use one name or the
+  other in a step, not both.
+</Note>
+
+## Send to an address from the payload
 
 A workflow with a [Webhook trigger](/workflows/webhook-trigger) can send its **Send email** action to an address
 from the payload, such as the customer in a closed support ticket. Add a link to a survey with Embedded Data, and
 each answer is tied to the event that sent the email.
-
-<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
 
 <Frame>
   <img
@@ -18,7 +66,7 @@ each answer is tied to the event that sent the email.
   />
 </Frame>
 
-## Example
+### Example
 
 A helpdesk calls the Webhook Secret URL when a ticket is closed:
 
@@ -30,7 +78,7 @@ The workflow emails `dana@example.com` a link like
 `https://surveys.example.com/s/<surveyId>?customer_id=CUST-48213&channel=phone`. When Dana answers, the response
 stores `customer_id` and `channel` as Embedded Data.
 
-## Set up the email
+### Set up the email
 
 <Steps>
   <Step title="Pick the recipient">
@@ -87,7 +135,7 @@ value inserts a step's output, or while **Attach response data** is on.
 - **Keys are matched without case,** so the same key can't be used twice with different spelling.
 - **Up to 30 Embedded Data rows,** each value at most 2 KB.
 
-## Sending limits
+### Sending limits
 
 An address from a Variable isn't checked against your workspace members, so it has its own limits:
 
@@ -101,5 +149,5 @@ not by its value.
 
 ## Test it
 
-A [Test run](/workflows/test-runs) of this workflow sends no email: run detail shows the address and the survey
-link the email would have used, so you can check both before you enable.
+A [Test run](/workflows/test-runs) sends no email: run detail shows the address and, for an address from the
+payload, the survey link the email would have used, so you can check both before you enable.
