@@ -1,28 +1,21 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
+const replaceSelection = (key: "run" | "step", value: string | null) => {
+  // The Test run result and step clicks can arrive before Next publishes new search params.
+  // Read the live URL and replace it synchronously so both updates survive.
+  const url = new URL(globalThis.window.location.href);
+  if (value) url.searchParams.set(key, value);
+  else url.searchParams.delete(key);
+  globalThis.window.history.replaceState(null, "", url);
+};
+
 export const useRunsViewSelection = () => {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const setUrl = useCallback(
-    (next: { run?: string | null; step?: string | null }) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(next)) {
-        if (value) params.set(key, value);
-        else params.delete(key);
-      }
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
-
-  const showRun = useCallback((runId: string) => setUrl({ run: runId }), [setUrl]);
-  const selectStep = useCallback((stepId: string | null) => setUrl({ step: stepId }), [setUrl]);
+  const showRun = useCallback((runId: string) => replaceSelection("run", runId), []);
+  const selectStep = useCallback((stepId: string | null) => replaceSelection("step", stepId), []);
 
   return { urlRunId: searchParams.get("run"), selectedStepId: searchParams.get("step"), showRun, selectStep };
 };
