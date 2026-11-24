@@ -42,9 +42,13 @@ reconnected.
 
 Without `ENVOY_RATE_LIMITING_ENABLED=1`, the app enforces the rate limits itself again:
 
-- `/api/v1/management/*` allows 100 requests per minute per API key.
-- `/api/v1/client/*` and the v2 routes that reuse them allow 100 requests per minute per IP, and uploads
-  5 per minute. These had no limit on installs without an edge gateway since 5.x.
+- `/api/v1/management/*` and `/api/v1/webhooks` allow 100 requests per minute per API key or signed-in
+  user; storage uploads allow 5 per minute.
+- The v2 routes that reuse the v1 handlers (`environment`, `storage`, `user`, `responses/[responseId]`)
+  and `/api/v1/client/*` allow 100 requests per minute per IP, and uploads 5 per minute. These had no
+  limit on installs without an edge gateway since 5.x.
+- The v2 client `responses` and `displays` handlers run their own code, not the v1 handlers. Without a
+  gateway they stay unlimited, as before.
 
 If your gateway already limits these routes, set `ENVOY_RATE_LIMITING_ENABLED=1` so the app leaves them to
 it. Otherwise, expect `429` once a shared address — an office or a school behind one NAT — crosses the
