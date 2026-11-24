@@ -1010,6 +1010,16 @@ codes or configured aliases.
 Creates a block-based link survey using the v3 survey document contract. The tool writes data and is
 not idempotent.
 
+`visibility` is optional and applies only when the survey is created — `patch_survey` does not take it,
+and a later change is a separate v3 visibility request. Omitted, the survey follows the rule the create
+always applied: a signed-in user's survey is `restricted` when the organization has survey visibility
+enabled and `workspace` otherwise, while one created with an API key is always `workspace`. Send
+`workspace` for a survey everyone with workspace access can read, or `restricted` for one only its owner
+and the organization's owners and managers can read. `restricted` needs a signed-in user and the
+feature: otherwise the call is refused with 403 `visibility_not_enabled` (feature off) or 422
+`visibility_change_not_allowed` (an API key owns no survey), and nothing is written. A refused
+`restricted` is never created as `workspace` instead.
+
 A block is `{ name, elements[], id? }`; an element is `{ id, type, headline, ... }`. The element
 `type` is one of `fileUpload`, `openText`, `multipleChoiceSingle`, `multipleChoiceMulti`, `nps`,
 `cta`, `rating`, `consent`, `pictureSelection`, `cal`, `date`, `matrix`, `address`, `ranking`,
@@ -1036,11 +1046,11 @@ ignoring case; answer codes are unique within their question, with a matrix's ro
 separately. A clash is reported as `invalid_params`, and `validate_survey` runs the same check.
 
 The same list is carried on the tool's own `blocks` description, generated from
-`TSurveyElementTypeEnum` so the two cannot drift. Per-type required fields are not restated here.
-`validate_survey` will reject an element that is missing them, but it reports the element **by its
-position** rather than naming the field: the element schema is an undiscriminated union, so a wrong
-or absent `type` makes every branch fail and the message is a generic `Invalid input`. Send the
-type's own fields with the element rather than expecting the validator to name them.
+`TSurveyElementTypeEnum` so the two cannot drift. The description also states each type's required
+fields: `rating`, `csat` and `ces` need `scale` (`number`, `smiley` or `star`); `rating`'s `range` is
+`3`, `4`, `5`, `6`, `7` or `10`, `csat`'s is always `5`, and `ces`'s is `5` or `7`; a
+`pictureSelection` needs two or more choices. `create_survey` and `validate_survey` report a missing or
+invalid field at its path, such as `blocks.0.elements.0.scale`, so fix the field the error names.
 
 An optional `startLogic` array holds the **rules before the first question**: the survey runs them as
 soon as it loads, before the welcome card and on start-at links. Each rule has the shape of a block's
@@ -1107,8 +1117,82 @@ Input:
 }
 ```
 
-Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
-`requestId`.
+Output is a **concise acknowledgement** by default: `id`, `updatedAt` — which is the next call's
+`expectedUpdatedAt` — `blockCount`, `visibility`, plus a top-level `warnings` array when the server
+processed and altered custom CSS, and the MCP `requestId`. `response_format: "detailed"` returns the
+full survey resource instead: the same shape as `GET /api/v3/surveys/{surveyId}`. REST always returns
+the full resource.
+
+#### Choice ids and the stored answer
+
+A condition names an option by its **id**; the answer a respondent submits stores its **label**. The
+same survey and response, end to end.
+
+`create_survey` (the two blocks that matter, with the rest of the body from the input example above):
+
+```json
+{
+  "blocks": [
+    {
+      "name": "Plan",
+      "elements": [
+        {
+          "id": "plan",
+          "type": "multipleChoiceSingle",
+          "headline": { "en-US": "Which plan are you on?" },
+          "required": false,
+          "choices": [
+            { "id": "clchoice0000000000000001", "label": { "en-US": "Free" } },
+            { "id": "clchoice0000000000000002", "label": { "en-US": "Pro" } }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pro follow-up",
+      "showIf": {
+        "id": "clshowifgroup00000000001",
+        "connector": "and",
+        "conditions": [
+          {
+            "id": "clshowifcond000000000001",
+            "leftOperand": { "type": "element", "value": "plan" },
+            "operator": "equals",
+            "rightOperand": { "type": "static", "value": "clchoice0000000000000002" }
+          }
+        ]
+      },
+      "elements": [
+        {
+          "id": "renewal",
+          "type": "openText",
+          "headline": { "en-US": "What would keep you on Pro?" },
+          "required": false
+        }
+      ]
+    }
+  ]
+}
+```
+
+`create_response` for a respondent who picked Pro:
+
+```json
+{
+  "data": {
+    "surveyId": "clsv1234567890123456789012",
+    "finished": true,
+    "language": "en-US",
+    "data": { "plan": "Pro" }
+  }
+}
+```
+
+The condition names the id because survey logic, option show-if and copied options compare ids, which
+survive translation and reordering; the answer stores the label because that is what a submitted response
+holds today. ENG-4020 will make the stored answer carry the option's identity, so what the `create_response`
+payload stores for `"plan"` is the part that changes then — the survey document and its condition stay as
+they are.
 
 #### Typed Embedded Data
 
@@ -1134,6 +1218,11 @@ where they differ, so an edit made in one format is never silently dropped.
 Validates a create or patch payload without writing survey changes. The tool is read-only and
 idempotent; workspace access is still checked when `workspaceId` is present, at `read` level —
 matching the `surveys:read` scope the tool declares.
+
+`valid: true` checks the document and its references, not permissions, entitlements, workspace limits,
+targeting resolution or feature gates. In particular, a create payload asking for
+`visibility: restricted` can validate and still be refused by `create_survey` with 403
+`visibility_not_enabled` or 422 `visibility_change_not_allowed`.
 
 Create validation input:
 
@@ -1261,8 +1350,11 @@ Input:
 }
 ```
 
-Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
-`requestId`.
+Output is a **concise acknowledgement** by default: `id`, `updatedAt` — which is the next call's
+`expectedUpdatedAt` — `blockCount`, `visibility`, plus a top-level `warnings` array when the server
+processed and altered custom CSS, and the MCP `requestId`. `response_format: "detailed"` returns the
+full survey resource instead: the same shape as `GET /api/v3/surveys/{surveyId}`. REST always returns
+the full resource.
 
 #### Confirmation on surveys with responses
 
@@ -1823,6 +1915,17 @@ writes the chart query itself.
 - **Write against the catalog.** `list_chart_fields` returns every field a chart query may use; the query
   validator refuses anything else with `invalid_params` naming each problem. `preview_chart` runs an unsaved
   chart so an agent can check it before `create_chart` saves it.
+- **Relative date ranges.** `preview_chart`, `get_chart_data` and `list_dashboard_filter_values` take
+  `dateRange` as a preset, `'all-time'`, `{ from, to }`, or `{ last, unit }` with `unit` one of `day`, `week`
+  or `month`. The tools resolve the relative form to an inclusive `{ from, to }` of `YYYY-MM-DD` before the v3
+  call (`modules/mcp/tools/chart-date-range.ts`), so neither the API contract nor Cube changes. It is a
+  trailing window ending today: `{ last: 8, unit: "week" }` is today plus the preceding 7 weeks (56 days), and
+  `{ last: 3, unit: "month" }` subtracts three calendar months with the day-of-month clamped. The window
+  covers at most 365 days: `last` is 1–365, and a week or month count that resolves past the cap is refused.
+  A 12-month window is 366 inclusive days (e.g. 2025-11-24 through 2026-11-24) and 367 when it spans a leap
+  day, so it is always refused: a full year needs `{ from, to }` or 11 months.
+  "Today" is the current UTC date — the MCP layer does not read the organization's time zone for the anchor —
+  while the resolved days are still read in the organization's time zone like every other chart range.
 - **A chart definition needs Charts: Read alone.** `list_charts` and `get_chart` return chart definitions,
   Charts data, so they declare Charts at `read` and nothing else; the chart write tools return the chart they
   wrote under Charts: Write, which includes Read.
@@ -1929,6 +2032,7 @@ Input:
   "field_group_id": "grp_1",
   "field_id": "q1",
   "field_type": ["text", "rating"],
+  "fields": ["field_label", "value_text"],
   "has_sentiment": true,
   "limit": 50,
   "order": "desc",
@@ -1949,6 +2053,13 @@ All filters are optional. They mirror the Hub's own `GET /v1/feedback-records` p
 named after the record field it filters — so filtering by a `user_id` you just read in a response is
 spelled the same way. An unknown filter key is rejected with a 422 rather than ignored, since a silently
 dropped filter would widen the result set without saying so.
+
+`fields` is not a filter: it projects each returned record down to the listed snake_case keys, always
+keeping `id`, so a scan that only needs the question and the answer does not pull every record's metadata
+and enrichment into the conversation. A field a record has no value for is omitted rather than sent as
+`null`; a name the feedback-record contract does not have is rejected rather than dropped, and `id` is
+not accepted because it is always returned. Omit `fields` for full records; an empty list is rejected
+rather than read as "id only".
 
 **How they combine.** Every identity filter accepts one value or a list of them. Repeating one filter
 **OR**s its values; different filters are **AND**ed. So `source_type: ["survey", "review"]` with
@@ -2173,11 +2284,13 @@ Input:
 }
 ```
 
-Output:
+Output is **concise by default**: the id of every created record, the same `meta` (counts, failures and
+the dataset), and the MCP `requestId`. The ids are what a retry needs alongside `meta.failures`.
+`response_format: "detailed"` returns each created record in full instead.
 
 ```json
 {
-  "data": [{ "dataset_id": "clfd…", "id": "019fa338-…", "value_text": "Asked for SSO." }],
+  "data": [{ "id": "019fa338-…" }],
   "meta": {
     "created": 1,
     "datasetId": "clfd1234567890123456789012",
@@ -2507,7 +2620,8 @@ query, like `create_feedback_record`.
   and no nested deep merge. Provided top-level objects and arrays replace their whole subtree and can
   remove omitted nested entries.
 - `validate_survey` validates payload shape and references; it does not create languages, survey
-  versions, or surveys.
+  versions, or surveys, and it does not check permissions, entitlements, workspace limits, targeting
+  resolution or feature gates (see [Validate survey](#validate-survey)).
 - Query-string credentials are rejected; use headers for API keys.
 - Large request bodies are rejected before the MCP handler using the same body-size policy as v3 APIs.
 - A whole MCP request may contain at most 50,000 object members and array entries combined, including

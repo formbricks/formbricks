@@ -27,9 +27,11 @@ import {
   noContentResponse,
   problemBadRequest,
   problemConflict,
+  problemCreateVisibilityChangeNotAllowed,
   problemForbidden,
   problemSurveyHasLinkedCreatives,
   problemUnprocessableContent,
+  problemVisibilityNotEnabled,
   problemWorkspaceSurveyLimit,
   successListResponse,
   successResponse,
@@ -40,6 +42,10 @@ import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getSurveysWithCustomCssAndOwnerName } from "@/lib/survey/service";
+import {
+  SurveyCreationVisibilityNotAllowedError,
+  SurveyCreationVisibilityNotEnabledError,
+} from "@/lib/survey/visibility/creation";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
@@ -70,6 +76,7 @@ import {
   V3SurveyInputValidationError,
   createV3Survey,
 } from "../create";
+import { getV3SurveyCreateInputInvalidParamsForDocument } from "../create-input";
 import { V3SurveyEmbeddedFieldsError } from "../embedded-fields";
 import { resolveV3EmbeddedFieldLibraryKeys } from "../embedded-fields-library";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
@@ -547,6 +554,20 @@ export function mapV3SurveyCreateError(
   if (err instanceof V3SurveyCreatePermissionError) {
     log.warn({ statusCode: 403, errorCode: err.name }, "Survey create permission check failed");
     return problemForbidden(requestId, err.message, instance);
+  }
+  // ENG-7508: a create that asked for `restricted` and cannot have it. Both are decided before any
+  // write, so neither leaves a survey behind. The 422's code is the visibility change's, with a
+  // create-specific detail: there is no survey to duplicate yet.
+  if (err instanceof SurveyCreationVisibilityNotEnabledError) {
+    log.warn(
+      { statusCode: 403, errorCode: err.name },
+      "Survey create asked for a visibility the organization does not have"
+    );
+    return problemVisibilityNotEnabled(requestId, instance);
+  }
+  if (err instanceof SurveyCreationVisibilityNotAllowedError) {
+    log.warn({ statusCode: 422, errorCode: err.name }, "Survey create asked for restricted without an owner");
+    return problemCreateVisibilityChangeNotAllowed(requestId, instance);
   }
   if (err instanceof InvalidInputError) {
     log.warn({ statusCode: 400, errorCode: err.name }, "Invalid survey input");
@@ -1568,8 +1589,27 @@ type TV3SurveyCreateValidationData = Extract<
 >["data"];
 
 /**
+ * ENG-7508: what the create would still refuse after the v3 document checks pass — the survey
+ * service's write schema (`ZSurveyCreateInput` + `surveyRefinement`), on the input the create builds.
+ * The create runs this same check right before writing, so without it here a document with duplicate
+ * choice labels or a `tel:` CTA `buttonUrl` came back valid from `validate_survey` and then answered
+ * 422 from the create.
+ */
+function withV3SurveyCreateInputIssues(
+  preparation: TV3SurveyPrepareResult<TV3CreateSurveyBody>
+): TV3SurveyPrepareResult<TV3CreateSurveyBody> {
+  if (!preparation.ok) {
+    return preparation;
+  }
+
+  const invalidParams = getV3SurveyCreateInputInvalidParamsForDocument(preparation.document);
+  return invalidParams.length > 0 ? { ok: false, validation: { valid: false, invalidParams } } : preparation;
+}
+
+/**
  * The create branch of {@link validateV3Survey}: read access to the workspace the body names, when it
- * names one, then the create's own preparation. Writes nothing.
+ * names one, the create's own preparation, and — from the prepared document — the write-schema check
+ * the create runs on top of it. Writes nothing.
  */
 async function validateV3SurveyCreatePayload(
   data: TV3SurveyCreateValidationData,
@@ -1604,12 +1644,14 @@ async function validateV3SurveyCreatePayload(
     ? await resolveV3EmbeddedFieldLibraryKeys(workspaceResult.data.workspaceId, data)
     : { ok: true as const, input: data };
 
+  const preparation: TV3SurveyPrepareResult<TV3CreateSurveyBody> = resolved.ok
+    ? prepareV3SurveyCreateInput(resolved.input)
+    : { ok: false, validation: { valid: false, invalidParams: resolved.invalidParams } };
+
   return successResponse(
     serializeValidationResult(
       "create",
-      resolved.ok
-        ? prepareV3SurveyCreateInput(resolved.input)
-        : { ok: false, validation: { valid: false, invalidParams: resolved.invalidParams } },
+      withV3SurveyCreateInputIssues(preparation),
       previewPayloadCustomCss(data)
     ),
     {

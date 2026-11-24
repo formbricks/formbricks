@@ -502,6 +502,22 @@ export function problemVisibilityChangeNotAllowed(requestId: string, instance?: 
 }
 
 /**
+ * ENG-7508: a create asked for `restricted` from a principal that can own nothing (an API key, or no
+ * principal). Same code as {@link problemVisibilityChangeNotAllowed} — one meaning: this caller cannot
+ * make a survey restricted — with the detail a create can act on. The change-side text tells the caller
+ * to duplicate the survey, which a create has not got yet.
+ */
+export function problemCreateVisibilityChangeNotAllowed(requestId: string, instance?: string): Response {
+  return problemResponse(
+    422,
+    "Unprocessable Content",
+    'A survey created without an owner can\'t be restricted: only a signed-in user can own a survey. Send visibility "workspace", or create it from the app as a signed-in user.',
+    requestId,
+    { code: "visibility_change_not_allowed", instance }
+  );
+}
+
+/**
  * ENG-3282: a grant was stored but the graph did not acknowledge it in-request. The survey stays
  * restricted until the outbox delivers it; retrying is safe.
  */

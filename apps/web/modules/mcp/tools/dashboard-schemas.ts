@@ -35,6 +35,7 @@ import {
   lockedValuesProblem,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
+import { ZMcpRelativeChartDateRange } from "./chart-date-range";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
 
 /**
@@ -116,10 +117,11 @@ export const ZMcpChartDateRange = z
         to: z.string().describe("Last day, YYYY-MM-DD, inclusive."),
       })
       .strict(),
+    ZMcpRelativeChartDateRange,
   ])
   .optional()
   .describe(
-    "Narrows the chart's date range on FeedbackRecords.collectedAt to the days both cover; ranges that do not overlap give no rows. Read in the organization's time zone."
+    "Narrows the chart's date range on FeedbackRecords.collectedAt to the days both cover; ranges that do not overlap give no rows. Also takes { last, unit } for a trailing window ending today, which may cover at most 365 days. Read in the organization's time zone."
   );
 
 export const ZMcpPreviewChartInput = z

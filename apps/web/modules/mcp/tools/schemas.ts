@@ -2,9 +2,18 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZCustomCssScope } from "@formbricks/types/custom-css";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import { ZSurveyRatingElement } from "@formbricks/types/surveys/elements";
+import {
+  ZSurveyCesElement,
+  ZSurveyCsatElement,
+  ZSurveyRatingElement,
+} from "@formbricks/types/surveys/elements";
 import { EXPRESSION_FUNCTIONS } from "@formbricks/types/surveys/expressions";
-import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
+import {
+  ZSurveyFilters,
+  ZSurveyStatus,
+  ZSurveyType,
+  ZSurveyVisibility,
+} from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
   ZV3FeedbackRecordCreateBodyFields,
@@ -15,6 +24,7 @@ import {
   ZV3FeedbackRecordSimilarityFilters,
   ZV3FeedbackRecordUpdateBodyFields,
 } from "@/app/api/v3/feedbackRecords/lib/schemas";
+import type { TV3FeedbackRecord } from "@/app/api/v3/feedbackRecords/lib/serializers";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
 import { ZV3SurveyEmbeddedField } from "@/app/api/v3/surveys/embedded-fields";
 import { ZV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
@@ -207,17 +217,24 @@ export const SURVEY_SHOW_IF_EXAMPLE = {
 };
 
 /**
- * A `rating`'s two extra fields, read off the element schema rather than restated.
+ * The per-type extra fields, read off the element schemas rather than restated.
  *
  * Restating them would reintroduce the drift this whole description exists to avoid, and would already
  * be wrong: `ZSurveyRatingElement.range` admits `6`, which the base element's optional `range` and
- * every prose description of it omit. Deriving keeps the advertised values equal to the accepted ones
- * by construction, the same rule `SURVEY_ELEMENT_TYPES` follows.
+ * every prose description of it omit, while CSAT's is the literal `5` and CES's is `5` or `7`.
+ * Deriving keeps the advertised values equal to the accepted ones by construction, the same rule
+ * `SURVEY_ELEMENT_TYPES` follows.
  */
 const RATING_SCALES = (ZSurveyRatingElement.shape.scale as unknown as { options: string[] }).options;
 const RATING_RANGES = (
   ZSurveyRatingElement.shape.range as unknown as { options: { value: number }[] }
 ).options.map((option) => option.value);
+const CSAT_SCALES = (ZSurveyCsatElement.shape.scale as unknown as { options: string[] }).options;
+const CSAT_RANGE = (ZSurveyCsatElement.shape.range as unknown as { value: number }).value;
+const CES_SCALES = (ZSurveyCesElement.shape.scale as unknown as { options: string[] }).options;
+const CES_RANGES = (ZSurveyCesElement.shape.range as unknown as { options: { value: number }[] }).options.map(
+  (option) => option.value
+);
 
 /**
  * Block logic and Set value expressions (ENG-6935, ADR 0030 / 0031), described for agents. The
@@ -285,10 +302,11 @@ const SURVEY_BLOCKS_DESCRIPTION = [
   "at launch cannot be deleted (`immutable_*` errors); new questions and options can still be added.",
   'Translatable fields are keyed by locale code — `{ "en-US": "..." }` — and',
   "must carry every configured language; the internal `default` key is rejected. Each element type adds",
-  `its own required fields — a \`rating\` needs \`scale\` (${RATING_SCALES.join("|")}) and \`range\``,
-  `(${RATING_RANGES.join("|")}), a \`pictureSelection\` needs two or more choices. An element that is`,
-  "missing one is reported by its position, not by the field name, so add the type's own fields before",
-  "retrying.",
+  `its own required fields: a \`rating\` needs \`scale\` (${RATING_SCALES.join("|")}) and \`range\``,
+  `(${RATING_RANGES.join("|")}); a \`csat\` needs \`scale\` (${CSAT_SCALES.join("|")}) and a \`range\` of`,
+  `${CSAT_RANGE}; a \`ces\` needs \`scale\` (${CES_SCALES.join("|")}) and a \`range\` of`,
+  `${CES_RANGES.join(" or ")}; a \`pictureSelection\` needs two or more choices. A missing or invalid`,
+  "field is reported at its path, such as `blocks.0.elements.0.scale`, so fix the field it names.",
   "Show-if: a block or an element may carry an optional `showIf`, a condition group in the block `logic`",
   "format (`{ id, connector: and|or, conditions: [{ id, leftOperand: { type: element|variable|hiddenField|reserved,",
   "value }, operator, rightOperand? } or a nested group] }`), and is shown only when it matches; an empty group",
@@ -373,12 +391,32 @@ const ZMcpSurveyWriteConfirm = z
     "Set true only after the user agreed. Required to change or delete a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
   );
 
+/**
+ * `response_format` on the write tools that would otherwise return a whole resource (ENG-3069 block
+ * editing, ENG-7508 create and patch, ENG-7508 feedback batches).
+ *
+ * It defaults to `concise` here but not on REST. A 31-block survey serializes to ~15k tokens, and
+ * returning that from every write would refill the agent's context as fast as the old whole-array
+ * patch did — the concise payload carries `updatedAt`, which is precisely the `expectedUpdatedAt` the
+ * next call needs, so edits chain without re-reading. The factory keeps the enum and default in one
+ * place while each tool names the payloads it actually returns.
+ */
+function responseFormat(concisePayload: string, detailedPayload: string) {
+  return z
+    .enum(["concise", "detailed"])
+    .default("concise")
+    .describe(`concise (default) returns ${concisePayload}. detailed returns ${detailedPayload}.`);
+}
+
 export const ZMcpCreateSurveyInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID where the survey should be created."),
     name: z.string().trim().min(1).describe("Survey name."),
     type: z.literal("link").optional().describe("Survey type. Only link surveys are supported."),
     status: ZSurveyStatus.optional().describe("Initial survey status. Defaults to draft."),
+    visibility: ZSurveyVisibility.optional().describe(
+      "Initial visibility, set only when the survey is created (patch_survey does not take it). Omitted: a survey created by a signed-in user follows the organization's setting (restricted when survey visibility is enabled, otherwise workspace); one created with an API key is workspace-visible. `workspace` is readable by everyone with workspace access. `restricted` is readable by the owner and the organization's owners and managers only; it needs a signed-in user and survey visibility enabled, else the call is refused with 403 visibility_not_enabled (feature off) or 422 visibility_change_not_allowed (an API key owns nothing). Changing it later is a separate v3 visibility request, not a survey patch."
+    ),
     defaultLanguage: z
       .string()
       .trim()
@@ -427,6 +465,10 @@ export const ZMcpCreateSurveyInput = z
       description: SURVEY_EMBEDDED_FIELDS_DESCRIPTION,
     }).optional(),
     customCss: ZV3SurveyCustomCss.optional(),
+    response_format: responseFormat(
+      "id, updatedAt (the next call's expectedUpdatedAt), blockCount, visibility and any warnings",
+      "the full survey resource"
+    ).optional(),
   })
   .strict();
 
@@ -439,34 +481,32 @@ export const ZMcpPatchSurveyInput = z
         `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. \`startLogic\` replaces every rule before the first question; null or [] removes them. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION} ${START_LOGIC_DESCRIPTION}`
       ),
     confirm: ZMcpSurveyWriteConfirm,
+    response_format: responseFormat(
+      "id, updatedAt (the next call's expectedUpdatedAt), blockCount, visibility and any warnings",
+      "the full survey resource"
+    ).optional(),
   })
   .strict();
 
 /**
  * Block-level editing (ENG-3069). The bodies are the v3 REST schemas plus `surveyId`, so the two
  * surfaces cannot drift: one Zod definition, one set of messages.
- *
- * `response_format` defaults to `concise` here but not on REST. A 31-block survey serializes to
- * ~15k tokens, and returning that from every edit would refill the agent's context as fast as the
- * old whole-array patch did — the concise payload carries `updatedAt`, which is precisely the
- * `expectedUpdatedAt` the next call needs, so edits chain without re-reading.
  */
-const ZMcpBlockResponseFormat = z
-  .enum(["concise", "detailed"])
-  .default("concise")
-  .describe(
-    "concise (default) returns id, updatedAt, blockCount and the ops applied. detailed returns the full survey resource."
-  );
-
 export const ZMcpEditSurveyBlocksInput = ZV3EditSurveyBlocksBody.extend({
   surveyId: z.cuid2().describe("Survey ID whose blocks should be edited."),
-  response_format: ZMcpBlockResponseFormat.optional(),
+  response_format: responseFormat(
+    "id, updatedAt, blockCount and the ops applied",
+    "the full survey resource"
+  ).optional(),
   confirm: ZMcpSurveyWriteConfirm,
 }).strict();
 
 export const ZMcpSetSurveyBlockOrderInput = ZV3SetSurveyBlockOrderBody.extend({
   surveyId: z.cuid2().describe("Survey ID whose block order should be set."),
-  response_format: ZMcpBlockResponseFormat.optional(),
+  response_format: responseFormat(
+    "id, updatedAt, blockCount and the order",
+    "the full survey resource"
+  ).optional(),
   confirm: ZMcpSurveyWriteConfirm,
 }).strict();
 
@@ -556,9 +596,54 @@ export const ZMcpListFeedbackDatasetsInput = z
   })
   .strict();
 
+/**
+ * The record fields a `fields` projection may name, by the snake_case spelling a list response uses.
+ *
+ * The source of truth is the outward DTO's allowlist (`TV3FeedbackRecord` in
+ * `app/api/v3/feedbackRecords/lib/serializers.ts`); the `satisfies` makes a renamed or removed field a
+ * compile error here instead of a projection that silently returns nothing. `id` is absent because the
+ * projection always keeps it.
+ */
+const MCP_FEEDBACK_RECORD_PROJECTION_FIELDS = [
+  "dataset_id",
+  "submission_id",
+  "source_type",
+  "source_id",
+  "source_name",
+  "field_id",
+  "field_type",
+  "field_label",
+  "field_group_id",
+  "field_group_label",
+  "user_id",
+  "language",
+  "value_text",
+  "value_number",
+  "value_boolean",
+  "value_date",
+  "value_id",
+  "metadata",
+  "sentiment",
+  "sentiment_score",
+  "emotions",
+  "translation_lang_key",
+  "value_text_translated",
+  "collected_at",
+  "created_at",
+  "updated_at",
+] as const satisfies readonly (keyof TV3FeedbackRecord)[];
+
 export const ZMcpListFeedbackRecordsInput = ZV3FeedbackRecordListFilters.extend({
   workspaceId: ZId.describe("Workspace ID whose feedback records should be listed."),
   datasetId: datasetIdField,
+  fields: lengthBoundedArray(z.enum(MCP_FEEDBACK_RECORD_PROJECTION_FIELDS), {
+    min: 1,
+    max: MCP_FEEDBACK_RECORD_PROJECTION_FIELDS.length,
+  })
+    .optional()
+    .describe(
+      'Project each returned record down to these fields, named as a record\'s own snake_case keys (the `data` shape of a list response), e.g. ["field_label", "value_text", "sentiment"]. `id` is always returned. Omit the argument for full records; an empty list is rejected.'
+    ),
 }).strict();
 
 export const ZMcpGetFeedbackRecordInput = z
@@ -599,6 +684,10 @@ export const ZMcpCreateFeedbackRecordsInput = z
       max: MAX_FEEDBACK_RECORDS_PER_BATCH,
       description: `Feedback records to create, 1–${MAX_FEEDBACK_RECORDS_PER_BATCH} per call. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch.`,
     }),
+    response_format: responseFormat(
+      "each created record's id plus meta — the requested/created/failed counts and the failures by index",
+      "the full created records"
+    ).optional(),
   })
   .strict();
 

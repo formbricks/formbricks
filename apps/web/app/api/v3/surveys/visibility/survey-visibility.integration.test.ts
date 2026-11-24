@@ -15,7 +15,8 @@ import { expectedSurveyRelationships } from "@/lib/authzed/survey-relationships"
 import { getSurveysWithCustomCssAndOwnerName } from "@/lib/survey/service";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
-import { listV3Surveys } from "../lib/operations";
+import { createV3SurveyResponse, listV3Surveys } from "../lib/operations";
+import { ZV3CreateSurveyBody } from "../schemas";
 import { changeV3SurveyVisibility, getV3SurveyVisibility } from "./operations";
 
 /**
@@ -247,6 +248,44 @@ describe("POST …/visibility against the real stack", () => {
       surveyId,
     });
     expect(byKey.status).toBe(403);
+  });
+});
+
+describe("POST /api/v3/surveys with visibility (ENG-7508)", () => {
+  test("an API-key create asking for restricted answers 422 and writes no survey", async () => {
+    const body = ZV3CreateSurveyBody.parse({
+      workspaceId: ids.workspace,
+      name: "Key restricted",
+      visibility: "restricted",
+      blocks: [
+        {
+          name: "Main",
+          elements: [
+            {
+              id: "feedback",
+              type: "openText",
+              headline: { "en-US": "What should we improve?" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = await createV3SurveyResponse({
+      body,
+      authentication: apiKeyAuthentication(),
+      requestId: "req",
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({
+      code: "visibility_change_not_allowed",
+      status: 422,
+    });
+    // A refused visibility is decided before the write, so not even a workspace-visible row exists.
+    expect(await prisma.survey.count({ where: { workspaceId: ids.workspace } })).toBe(0);
   });
 });
 

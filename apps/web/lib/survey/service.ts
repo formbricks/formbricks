@@ -1637,8 +1637,9 @@ const createPrivateSegmentForSurvey = async (
 
 export type TCreateSurveyOptions = Readonly<{
   /**
-   * ENG-3282: visibility and owner, from `resolveSurveyCreationFacts` — never from the request body,
-   * whose schema does not carry them. Required so no creation path can forget it.
+   * ENG-3282: visibility and owner, from `resolveSurveyCreationFacts` — never spread from the request
+   * body. A create body can only ask for a visibility (ENG-7508); the facts decide the stored value.
+   * Required so no creation path can forget it.
    */
   creationFacts: TSurveyCreationFacts;
   privateSegmentFilters?: TBaseFilters;

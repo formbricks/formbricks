@@ -18,6 +18,12 @@ post:
     or unsupported query parameters.
 
 
+    `data.valid: true` checks the document and its references, not permissions, entitlements, workspace
+    limits, targeting resolution or feature gates: a create payload with `visibility: restricted` can
+    validate and still be refused by `POST /api/v3/surveys` with 403 `visibility_not_enabled` or 422
+    `visibility_change_not_allowed`.
+
+
     **Custom CSS.** A create or patch payload that carries `customCss` is also run through the custom
     CSS processor; the result adds the compiled `customCss` and `warnings`, or `errors` and
     `valid=false`. `operation: customCss` validates CSS alone for a live preview — with

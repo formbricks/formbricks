@@ -75,35 +75,52 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
 /**
  * Project a successful survey-resource response down to what an editing agent actually needs.
  *
- * The full resource is ~15k tokens on a large survey; returning it from every edit would refill the
+ * The full resource is ~15k tokens on a large survey; returning it from every write would refill the
  * agent's context as fast as the whole-array patch it replaces. `updatedAt` is deliberately kept —
- * it is the `expectedUpdatedAt` for the next call, so edits chain without another read. REST keeps
- * the full resource (AIP-144); this projection is MCP-only, where context is the scarce resource.
+ * it is the `expectedUpdatedAt` for the next call, so edits chain without another read. `warnings`
+ * describes the request rather than the resource, so it stays a top-level sibling of `data` exactly
+ * as the v3 body carries it, and `visibility` rides along when the resource has it (it is how a caller
+ * learns a create landed restricted). REST keeps the full resource (AIP-144); this projection is
+ * MCP-only, where context is the scarce resource.
  */
 async function conciseSurveyResponse(
   response: Response,
-  applied: Record<string, unknown>
+  applied: Record<string, unknown> = {}
 ): Promise<Response> {
   if (!response.ok) {
     return response;
   }
 
-  const body = (await response.clone().json()) as { data?: Record<string, unknown>; requestId?: string };
-  const data = body.data ?? {};
-  const blocks = data.blocks;
+  try {
+    const body = (await response.clone().json()) as {
+      data?: Record<string, unknown> & { blocks?: unknown; visibility?: unknown };
+      requestId?: string;
+      warnings?: unknown;
+    };
+    const data = body.data ?? {};
+    const blocks = data.blocks;
 
-  return Response.json(
-    {
-      data: {
-        id: data.id,
-        updatedAt: data.updatedAt,
-        blockCount: Array.isArray(blocks) ? blocks.length : undefined,
-        ...applied,
+    return Response.json(
+      {
+        data: {
+          id: data.id,
+          updatedAt: data.updatedAt,
+          blockCount: Array.isArray(blocks) ? blocks.length : undefined,
+          ...(data.visibility === undefined ? {} : { visibility: data.visibility }),
+          ...applied,
+        },
+        ...(body.warnings === undefined ? {} : { warnings: body.warnings }),
+        requestId: body.requestId,
       },
-      requestId: body.requestId,
-    },
-    { status: response.status, headers: response.headers }
-  );
+      { status: response.status, headers: response.headers }
+    );
+  } catch {
+    // This runs inside the write's `run` callback, after the survey exists: a throw here would go
+    // through `runMcpMutation`'s catch and mark an already-committed create/update as a failed audit
+    // event. The v3 body is always valid JSON, so this is defensive — hand back the unprojected
+    // response rather than risk the audit record.
+    return response;
+  }
 }
 
 export function registerSurveyTools(server: McpServer): void {
@@ -173,7 +190,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Create survey",
       description:
-        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`. Declare Embedded Data with typed `embeddedFields` (library fields linked by `key`) or the legacy `variables` / `hiddenFields`. Optional `startLogic` holds rules that run before the first question (screen out to an ending, jump to a block, set a value from URL parameters).",
+        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`. Optional create-only `visibility` sets who can read it: omitted, a signed-in creator's survey is restricted when the organization has survey visibility enabled and workspace-visible otherwise, while an API key's is always workspace-visible; `workspace` is readable by everyone with workspace access; `restricted` needs a signed-in user and the feature, else the call is refused with 403 visibility_not_enabled or 422 visibility_change_not_allowed. Declare Embedded Data with typed `embeddedFields` (library fields linked by `key`) or the legacy `variables` / `hiddenFields`. Optional `startLogic` holds rules that run before the first question (screen out to an ending, jump to a block, set a value from URL parameters). Returns a concise acknowledgement by default — `id`, `updatedAt` (the next call's `expectedUpdatedAt`), `blockCount`, `visibility` and any `warnings`; pass response_format: detailed for the full survey resource.",
       inputSchema: ZMcpCreateSurveyInput,
       audit: { action: "created", targetType: "survey" },
       annotations: {
@@ -184,22 +201,30 @@ export function registerSurveyTools(server: McpServer): void {
       },
     },
     [{ permission: "surveys", level: "write" }],
-    async (input: TMcpCreateSurveyInput, ctx) =>
-      surveyResultForCaller(
+    async (input: TMcpCreateSurveyInput, ctx) => {
+      // `response_format` is an MCP projection switch, not part of the v3 survey document; forwarding it
+      // would rely on the v3 body parse stripping it.
+      const { response_format: responseFormat, ...body } = input;
+
+      return surveyResultForCaller(
         getMcpToolAuthInfo(ctx),
         await runMcpMutation(
           ctx,
           { action: "created", resource: "survey", logContext: { workspaceId: input.workspaceId } },
-          ({ authentication, requestId, auditLog }) =>
-            createV3SurveyResponseFromRawInput({
-              body: input,
+          async ({ authentication, requestId, auditLog }) => {
+            const response = await createV3SurveyResponseFromRawInput({
+              body,
               authentication,
               requestId,
               instance: MCP_API_ROUTE,
               auditLog,
-            })
+            });
+
+            return responseFormat === "detailed" ? response : conciseSurveyResponse(response);
+          }
         )
-      )
+      );
+    }
   );
 
   // Persists nothing, but declares Surveys: Write like the REST route (`readWrite` on the workspace):
@@ -284,6 +309,7 @@ export function registerSurveyTools(server: McpServer): void {
         "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",
         "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",
         "App surveys: `distribution.showConditions` limits when a triggered survey shows (page URL lists, referrer, query parameter, pages viewed, time on site, visited URLs, device, browser, window width); `distribution` replaces as a whole, so send the full object from get_survey.",
+        "Returns a concise acknowledgement by default — `id`, `updatedAt` (the next call's `expectedUpdatedAt`), `blockCount`, `visibility` and any `warnings`; pass response_format: detailed for the full survey resource.",
       ].join(" "),
       inputSchema: ZMcpPatchSurveyInput,
       audit: { action: "updated", targetType: "survey", targetIdArg: "surveyId" },
@@ -295,24 +321,31 @@ export function registerSurveyTools(server: McpServer): void {
       },
     },
     [{ permission: "surveys", level: "write" }],
-    async (input: TMcpPatchSurveyInput, ctx) =>
-      surveyResultForCaller(
+    async (input: TMcpPatchSurveyInput, ctx) => {
+      const { surveyId, data, response_format: responseFormat, confirm } = input;
+
+      return surveyResultForCaller(
         getMcpToolAuthInfo(ctx),
         await runMcpMutation(
           ctx,
-          { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
-          ({ authentication, requestId, auditLog }) =>
-            patchV3SurveyResponse({
-              surveyId: input.surveyId,
-              body: input.data,
+          { action: "updated", resource: "survey", logContext: { surveyId } },
+          async ({ authentication, requestId, auditLog }) => {
+            // `response_format` is a sibling of `data`, so the v3 patch body is already just the payload.
+            const response = await patchV3SurveyResponse({
+              surveyId,
+              body: data,
               authentication,
               requestId,
               instance: MCP_API_ROUTE,
               auditLog,
-              writeConfirmation: { confirmed: input.confirm === true },
-            })
+              writeConfirmation: { confirmed: confirm === true },
+            });
+
+            return responseFormat === "detailed" ? response : conciseSurveyResponse(response);
+          }
         )
-      )
+      );
+    }
   );
 
   registerMcpTool(

@@ -17,6 +17,10 @@ import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getSurveysWithCustomCssAndOwnerName } from "@/lib/survey/service";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import {
+  SurveyCreationVisibilityNotAllowedError,
+  SurveyCreationVisibilityNotEnabledError,
+} from "@/lib/survey/visibility/creation";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -714,6 +718,25 @@ describe("createV3SurveyResponse", () => {
     expect(await readJson(response)).toEqual({ data: serializedSurvey });
   });
 
+  // ENG-7508: the create-only visibility reaches the operation through the raw HTTP body path, where
+  // the v3 request schema is what admits it and nothing else strips it.
+  test("forwards a create body's visibility from the raw-input path", async () => {
+    await createV3SurveyResponseFromRawInput({
+      body: { ...createBody, visibility: "workspace" },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(vi.mocked(createV3Survey)).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, visibility: "workspace" }),
+      authentication,
+      requestId,
+      "org_1",
+      { report: {} }
+    );
+  });
+
   test("answers 201 for a survey that committed when only the work after its commit failed", async () => {
     vi.mocked(createV3Survey).mockRejectedValue(
       new SurveyWriteAfterCommitError(survey, new Error("response alert subscription failed"))
@@ -745,6 +768,45 @@ describe("createV3SurveyResponse", () => {
     });
 
     expect(response.status).toBe(422);
+  });
+
+  // ENG-7508: a create-only visibility that cannot be honoured. Both refusals happen before any write,
+  // and each keeps the code the visibility endpoints use so one client branch covers both paths.
+  test("answers a create asking for restricted where the feature is off with 403 visibility_not_enabled", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(new SurveyCreationVisibilityNotEnabledError());
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(403);
+    expect(await readJson(response)).toMatchObject({
+      status: 403,
+      code: "visibility_not_enabled",
+      detail: "Survey visibility is not enabled for this organization",
+    });
+  });
+
+  test("answers an ownerless create asking for restricted with 422 visibility_change_not_allowed", async () => {
+    vi.mocked(createV3Survey).mockRejectedValueOnce(new SurveyCreationVisibilityNotAllowedError());
+
+    const response = await createV3SurveyResponse({
+      body: parsedCreateBody,
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    const body = await readJson(response);
+    expect(body).toMatchObject({ status: 422, code: "visibility_change_not_allowed" });
+    expect(body.detail).toContain('visibility "workspace"');
+    // The change endpoint's detail tells the caller to duplicate the survey; a create has none to
+    // duplicate, so that wording must not leak here.
+    expect(body.detail).not.toContain("Duplicate it");
   });
 
   test.each(["template", "import"] as const)(
@@ -1713,6 +1775,7 @@ describe("validateV3Survey", () => {
     });
     vi.mocked(prepareV3SurveyCreateInput, { partial: true, deep: true }).mockReturnValue({
       ok: true,
+      document: parsedCreateBody,
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
     });
     vi.mocked(prepareV3SurveyPatchInput, { partial: true, deep: true }).mockReturnValue({
@@ -1798,6 +1861,90 @@ describe("validateV3Survey", () => {
 
     expect(response.status).toBe(403);
     expect(vi.mocked(prepareV3SurveyCreateInput)).not.toHaveBeenCalled();
+  });
+
+  // ENG-7508: the dry run stopped at the v3 document checks while the create also runs the survey
+  // service's write schema, so these documents came back valid here and then 422 from the create.
+  test("fails a create document the create's write schema refuses, naming what create names", async () => {
+    const actualPrepare = await vi.importActual<typeof import("../prepare")>("../prepare");
+    vi.mocked(prepareV3SurveyCreateInput).mockImplementation(actualPrepare.prepareV3SurveyCreateInput);
+
+    const cases = [
+      {
+        elements: [
+          {
+            id: "duplicate_choices",
+            type: "multipleChoiceSingle",
+            headline: { "en-US": "Pick one" },
+            required: false,
+            choices: [
+              { id: "c1", label: { "en-US": "Same" } },
+              { id: "c2", label: { "en-US": "Same" } },
+            ],
+          },
+        ],
+        expected: {
+          name: "blocks.0.elements.0.choices",
+          reason: "Element 1 in block 1 has duplicate choice labels for the following languages:",
+        },
+      },
+      {
+        elements: [
+          {
+            id: "tel_cta",
+            type: "cta",
+            headline: { "en-US": "Call us" },
+            required: false,
+            buttonExternal: true,
+            buttonUrl: "tel:+123456789",
+            ctaButtonLabel: { "en-US": "Call" },
+          },
+        ],
+        expected: {
+          name: "blocks.0.elements.0.buttonUrl",
+          reason: "Element 1 in block 1: URL must start with https:// or mailto:",
+        },
+      },
+    ];
+
+    for (const { elements, expected } of cases) {
+      const response = await validateV3Survey({
+        body: {
+          operation: "create",
+          data: { ...createBody, blocks: [{ ...createBody.blocks[0], elements }] },
+        },
+        authentication,
+        requestId,
+        instance,
+      });
+
+      expect(response.status).toBe(200);
+      expect((await readJson(response)).data).toEqual({
+        valid: false,
+        operation: "create",
+        // No `code`: the write schema reports both through the refinement, as create's 422 does.
+        invalid_params: [expected],
+      });
+    }
+  });
+
+  test("still reports a create document the create accepts as valid", async () => {
+    const actualPrepare = await vi.importActual<typeof import("../prepare")>("../prepare");
+    vi.mocked(prepareV3SurveyCreateInput).mockImplementation(actualPrepare.prepareV3SurveyCreateInput);
+
+    const response = await validateV3Survey({
+      body: { operation: "create", data: createBody },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(200);
+    expect((await readJson(response)).data).toMatchObject({
+      valid: true,
+      operation: "create",
+      invalid_params: [],
+    });
   });
 
   test("validates patch input against the authorized survey", async () => {
@@ -2502,6 +2649,7 @@ describe("custom CSS (ENG-3641)", () => {
     });
     vi.mocked(prepareV3SurveyCreateInput).mockReturnValue({
       ok: true,
+      document: parsedCreateBody,
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
     } as never);
     vi.mocked(prepareV3SurveyPatchInput).mockReturnValue({ ok: true, languageRequests: [] } as never);

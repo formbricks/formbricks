@@ -18,6 +18,8 @@ import {
   V3_SURVEY_MAX_TRIGGERS,
   V3_SURVEY_MAX_VARIABLES,
   ZV3CreateSurveyBody,
+  ZV3CreateSurveyDocument,
+  ZV3CreateSurveyDocumentInput,
   ZV3CreateSurveyQuery,
   ZV3EditSurveyBlocksBody,
   ZV3PatchSurveyBody,
@@ -1802,9 +1804,11 @@ describe("block operation bodies are bounded (ENG-1652)", () => {
 });
 
 // ENG-3282 (contract §2): visibility is decided by the principal on create and changed only through
-// `POST …/visibility`, so both write bodies refuse it — and the owner — as an unsupported field.
-describe("survey visibility is not writable through the survey document", () => {
-  test.each(["visibility", "ownerId", "owner"])("create refuses `%s` with unsupported_field", (field) => {
+// `POST …/visibility`. ENG-7508 adds an explicit create-only request: the create body takes it, the
+// Formbricks file document must not (a file carries survey content, not an authorization fact), and
+// PATCH still refuses it. The owner is never writable through a document.
+describe("survey visibility is create-only and never part of a document", () => {
+  test.each(["ownerId", "owner"])("create refuses `%s` with unsupported_field", (field) => {
     const result = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, [field]: "restricted" });
 
     expect(result.success).toBe(false);
@@ -1812,6 +1816,37 @@ describe("survey visibility is not writable through the survey document", () => 
     expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: field, code: "unsupported_field" })])
     );
+  });
+
+  test.each(["workspace", "restricted"] as const)("create accepts `visibility: %s`", (visibility) => {
+    const result = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, visibility });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.visibility).toBe(visibility);
+  });
+
+  test("create leaves visibility undefined when it is omitted", () => {
+    const result = ZV3CreateSurveyBody.safeParse(validCreateBody);
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.visibility).toBeUndefined();
+  });
+
+  test("the Formbricks file document refuses `visibility` with unsupported_field", () => {
+    const { workspaceId: _workspaceId, ...document } = validCreateBody;
+    const fileSurvey = { ...document, visibility: "restricted" };
+
+    const result = ZV3CreateSurveyDocumentInput.safeParse(fileSurvey);
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(formatV3ZodInvalidParams(result.error, "survey")).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "visibility", code: "unsupported_field" })])
+    );
+
+    // The plain schema the file's JSON Schema is published from does not carry it either.
+    expect(ZV3CreateSurveyDocument.safeParse(fileSurvey).success).toBe(false);
   });
 
   test.each(["visibility", "ownerId", "owner"])("PATCH refuses `%s` with unsupported_field", (field) => {

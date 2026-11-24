@@ -1194,6 +1194,7 @@ describe("createV3Survey", () => {
       expect(resolveSurveyCreationFacts).toHaveBeenCalledWith({
         actor: { type: "user", id: "user_1" },
         organizationId: "org_1",
+        requestedVisibility: undefined,
       });
       expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.anything(), {
         creationFacts: { ownerId: "user_1", visibility: "restricted" },
@@ -1201,6 +1202,58 @@ describe("createV3Survey", () => {
         targetingActor: expect.anything(),
         customCss: null,
       });
+    });
+
+    // ENG-7508: `visibility` is accepted on create alone and reaches the creation facts as sent.
+    test.each(["workspace", "restricted"] as const)(
+      "passes a requested %s visibility to the creation facts",
+      async (requestedVisibility) => {
+        vi.mocked(resolveSurveyCreationFacts).mockResolvedValueOnce({
+          ownerId: "user_1",
+          visibility: requestedVisibility,
+        });
+
+        await createV3Survey(
+          { ...createBody, visibility: requestedVisibility },
+          { user: { id: "user_1", email: "user@example.com", name: "User" }, expires: "2026-05-01" },
+          "req_visibility",
+          "org_1"
+        );
+
+        expect(resolveSurveyCreationFacts).toHaveBeenCalledWith({
+          actor: { type: "user", id: "user_1" },
+          organizationId: "org_1",
+          requestedVisibility,
+        });
+        expect(createSurvey).toHaveBeenCalledWith(
+          workspaceId,
+          expect.anything(),
+          expect.objectContaining({ creationFacts: { ownerId: "user_1", visibility: requestedVisibility } })
+        );
+      }
+    );
+
+    // A refused visibility must land before the language upserts; otherwise a 403/422 would still have
+    // written language rows, and the caller would retry against a half-applied create.
+    test.each([
+      "SurveyCreationVisibilityNotEnabledError",
+      "SurveyCreationVisibilityNotAllowedError",
+    ] as const)("writes nothing when the creation facts refuse with %s", async (name) => {
+      const refusal = new Error(name);
+      refusal.name = name;
+      vi.mocked(resolveSurveyCreationFacts).mockRejectedValueOnce(refusal);
+
+      await expect(
+        createV3Survey(
+          { ...createBody, visibility: "restricted" },
+          { user: { id: "user_1", email: "user@example.com", name: "User" }, expires: "2026-05-01" },
+          "req_visibility_refused",
+          "org_1"
+        )
+      ).rejects.toBe(refusal);
+
+      expect(prisma.language.upsert).not.toHaveBeenCalled();
+      expect(createSurvey).not.toHaveBeenCalled();
     });
 
     test("checks the workspace cap before writing anything", async () => {

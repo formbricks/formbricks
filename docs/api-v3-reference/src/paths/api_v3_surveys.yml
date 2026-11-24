@@ -496,7 +496,11 @@ post:
         Contacts entitlement for app-survey targeting, or workspace does not
         exist (404 not used; avoids existence leak). Survey custom CSS on an
         organization without the Scale plan (Formbricks Cloud) is refused with
-        `code: custom_css_plan_required`.
+        `code: custom_css_plan_required`. A create asking for
+        `visibility: restricted` while survey visibility is not enabled for the
+        organization (or the deployment's readiness marker is unset) is refused
+        with `code: visibility_not_enabled`; nothing is written, and the survey
+        is never silently created as `workspace` instead.
       content:
         application/problem+json:
           schema:
@@ -523,6 +527,11 @@ post:
         the maximum number of surveys. That problem carries no `invalid_params`; instead `details`
         is `{ count, limit }` — the workspace's current survey count and the limit it has reached —
         so a client can tell the user how many surveys to archive or delete before retrying.
+
+        Also returned with `code: visibility_change_not_allowed` when the create asks for
+        `visibility: restricted` from an API key (or any caller that can own no survey): a survey
+        without an author cannot be restricted, and nothing is written. Send `visibility: workspace`,
+        or create the survey from the app as a signed-in user.
       content:
         application/problem+json:
           schema:
