@@ -65,6 +65,24 @@ export const ZResponseNotShown = z.object({
 
 export type TResponseNotShown = z.infer<typeof ZResponseNotShown>;
 
+/** The record's per-element maps. */
+export type TNotShownRecordKey = "options" | "rows" | "columns";
+
+/**
+ * The ids one per-element map lists for an element. Own keys only (ENG-6991): an element id such as
+ * `constructor` would otherwise read the inherited member, which is not an array, and crash every
+ * reader. `Object.hasOwn` is past this package's ES2021 target, hence the entries lookup.
+ */
+export const getNotShownIds = (
+  record: TResponseNotShown | null | undefined,
+  recordKey: TNotShownRecordKey,
+  elementId: string
+): string[] => {
+  const map = record?.[recordKey];
+  if (!map) return [];
+  return Object.entries(map).find(([key]) => key === elementId)?.[1] ?? [];
+};
+
 /**
  * How each option list of an element is named outside the element: `recordKey`, its map in the
  * not-shown record (json-shapes §8), and `noun`, one item of it, as a shown / not shown filter targets
@@ -126,8 +144,8 @@ export const getElementOptionsNotShownFromRecord = (
   const notShown: TElementOptionsNotShown = {};
   if (!record) return notShown;
   for (const listKey of OPTION_LIST_KEYS) {
-    const ids = record[OPTION_LIST_NAMES[listKey].recordKey]?.[elementId];
-    if (ids && ids.length > 0) notShown[listKey] = ids;
+    const ids = getNotShownIds(record, OPTION_LIST_NAMES[listKey].recordKey, elementId);
+    if (ids.length > 0) notShown[listKey] = ids;
   }
   return notShown;
 };

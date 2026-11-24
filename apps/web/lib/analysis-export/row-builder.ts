@@ -18,7 +18,11 @@ import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { EXPORT_COLUMN_NAMES } from "@formbricks/types/surveys/codes";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
-import { type TResponseNotShown, getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
+import {
+  type TResponseNotShown,
+  getNotShownElementIds,
+  getNotShownIds,
+} from "@formbricks/types/surveys/not-shown";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLanguageCode } from "@/lib/i18n/utils";
@@ -97,19 +101,15 @@ type TQuestionOptionsNotShown = { options: string[]; rows: string[]; columns: st
 
 const NOTHING_NOT_SHOWN: TQuestionOptionsNotShown = { options: [], rows: [], columns: [] };
 
-// Own keys only: a question id such as `constructor` would otherwise read the inherited member.
-const ownIds = (ids: Record<string, string[]> | undefined, questionId: string): string[] =>
-  ids && Object.hasOwn(ids, questionId) ? (ids[questionId] ?? []) : [];
-
 const getQuestionOptionsNotShown = (
   record: TResponseNotShown | null | undefined,
   questionId: string
 ): TQuestionOptionsNotShown =>
   record
     ? {
-        options: ownIds(record.options, questionId),
-        rows: ownIds(record.rows, questionId),
-        columns: ownIds(record.columns, questionId),
+        options: getNotShownIds(record, "options", questionId),
+        rows: getNotShownIds(record, "rows", questionId),
+        columns: getNotShownIds(record, "columns", questionId),
       }
     : NOTHING_NOT_SHOWN;
 
