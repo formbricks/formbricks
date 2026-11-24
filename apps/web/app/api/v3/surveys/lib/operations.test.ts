@@ -1764,7 +1764,7 @@ describe("restoreV3Survey", () => {
       archivedAt: null,
       retentionExemptionId: null,
       changed: true,
-      previous: { id: "survey_1", status: "paused", archivedAt },
+      previous: { id: "survey_1", status: "draft", archivedAt },
     });
 
     const response = await restoreV3Survey({
@@ -1777,7 +1777,8 @@ describe("restoreV3Survey", () => {
 
     expect(response.status).toBe(200);
     expect(skipV3AuditLog).not.toHaveBeenCalled();
-    expect(auditLog.oldObject).toEqual({ id: "survey_1", status: "paused", archivedAt });
+    // A concurrent archive of the pre-read draft sets archivedAt but leaves status `draft`.
+    expect(auditLog.oldObject).toEqual({ id: "survey_1", status: "draft", archivedAt });
   });
 
   test("keeps a no-op restore out of the audit trail", async () => {
