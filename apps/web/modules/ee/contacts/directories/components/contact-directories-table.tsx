@@ -4,22 +4,18 @@ import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import type { TContactDirectory } from "../types";
-import { ContactDirectoryRowMenu } from "./contact-directory-row-menu";
 
-/** Module level: an inline `cell` returning JSX reads as a nested component to Sonar (typescript:S6478). */
 const getContactDirectoryColumns = ({
   t,
   locale,
-  onManage,
 }: Readonly<{
   t: TFunction;
   locale: string;
-  onManage: (directory: TContactDirectory) => void;
 }>): TSettingsTableColumn<TContactDirectory>[] => [
   {
     id: "name",
     header: t("workspace.settings.contact_directories.directory_name"),
-    headerClassName: "w-[38%]",
+    headerClassName: "w-[46%]",
     cellClassName: "font-medium text-slate-900",
     skeletonWidth: "w-32",
     cell: (directory) => directory.name,
@@ -50,20 +46,6 @@ const getContactDirectoryColumns = ({
     skeletonWidth: "w-12",
     cell: (directory) => directory.contactCount.toLocaleString(locale),
   },
-  {
-    id: "actions",
-    header: null,
-    srLabel: t("common.actions"),
-    headerClassName: "w-[8%]",
-    stopRowClick: true,
-    skeletonWidth: "w-8",
-    // Flex on a wrapper, not on `cellClassName`, which would stop the `<td>` being a table cell.
-    cell: (directory) => (
-      <div className="flex justify-end">
-        <ContactDirectoryRowMenu onManage={() => onManage(directory)} />
-      </div>
-    ),
-  },
 ];
 
 interface ContactDirectoriesTableProps {
@@ -74,7 +56,7 @@ interface ContactDirectoriesTableProps {
 
 /**
  * The list, as Feedback Sources draws it (spec decision 20): a `SettingsTable` with its own frame straight
- * under the page header. A row click opens Manage, and so does the menu at the end of the row.
+ * under the page header. A row click (or the name's button, by keyboard) opens Manage.
  */
 export const ContactDirectoriesTable = ({
   directories,
@@ -85,7 +67,7 @@ export const ContactDirectoriesTable = ({
 
   return (
     <SettingsTable
-      columns={getContactDirectoryColumns({ t, locale: i18n.language, onManage })}
+      columns={getContactDirectoryColumns({ t, locale: i18n.language })}
       rows={directories}
       getRowId={(directory) => directory.id}
       emptyMessage={t("workspace.settings.contact_directories.empty_state")}
