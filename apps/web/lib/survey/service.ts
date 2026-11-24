@@ -1394,7 +1394,7 @@ export class SurveySegmentChangedError extends Error {
  * ENG-6957: whether `segment` is the survey's own private segment: the one it is targeted with, private,
  * and used by no other survey. It is the only segment a survey save writes. A shared segment changes the
  * targeting of every survey that uses it, so it is edited through the segment endpoints, which hold
- * `workspace.write` and check each survey (`updateSegmentAction`).
+ * `workspace.write` and check each survey (`PATCH /api/internal/segments/{segmentId}`).
  */
 const isOwnPrivateSegment = (
   survey: Pick<TSurvey, "id" | "segment">,

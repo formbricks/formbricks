@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getEndpointAccessibleClassName, getNewWebhookInputProblem } from "./utils";
+import { getEndpointStatusClassName, getNewWebhookInputProblem } from "./utils";
 
 const complete = {
   url: "https://example.com/hook",
@@ -42,10 +42,12 @@ describe("getNewWebhookInputProblem", () => {
   });
 });
 
-describe("getEndpointAccessibleClassName", () => {
-  test("marks a reachable endpoint green, an unreachable one red, and an unchecked one neutral", () => {
-    expect(getEndpointAccessibleClassName(true)).toBe("border-green-500 bg-green-50");
-    expect(getEndpointAccessibleClassName(false)).toBe("border-red-200 bg-red-50");
-    expect(getEndpointAccessibleClassName(undefined)).toBe("border-slate-200 bg-white");
+describe("getEndpointStatusClassName", () => {
+  test.each([
+    [true, "border-green-500 bg-green-50"],
+    [false, "border-red-200 bg-red-50"],
+    [undefined, "border-slate-200 bg-white"],
+  ])("styles an endpoint test result of %s", (result, className) => {
+    expect(getEndpointStatusClassName(result)).toBe(className);
   });
 });

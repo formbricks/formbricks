@@ -6,9 +6,9 @@ import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteContactAction } from "@/modules/ee/contacts/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditContactAttributesModal } from "@/modules/ee/contacts/components/edit-contact-attributes-modal";
+import { deleteContact } from "@/modules/ee/contacts/lib/api-client";
 import { getTranslatedContactDeleteError } from "@/modules/ee/contacts/lib/contact-delete-errors";
 import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -58,13 +58,18 @@ export const ContactControlBar = ({
 
   const handleDeletePerson = async () => {
     setIsDeletingPerson(true);
-    const deletePersonResponse = await deleteContactAction({ contactId, workspaceId });
-    if (deletePersonResponse?.data) {
+    try {
+      await deleteContact(contactId, workspaceId);
       router.refresh();
       router.push(`${workspaceBasePath}/contacts`);
       toast.success(t("workspace.contacts.contact_deleted_successfully"));
-    } else {
-      toast.error(getTranslatedContactDeleteError(getFormattedErrorMessage(deletePersonResponse), t));
+    } catch (error) {
+      toast.error(
+        getTranslatedContactDeleteError(
+          getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
     }
     setIsDeletingPerson(false);
     setDeleteDialogOpen(false);

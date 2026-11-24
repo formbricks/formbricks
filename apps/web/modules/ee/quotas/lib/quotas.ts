@@ -14,6 +14,7 @@ import {
 } from "@formbricks/types/surveys/matrix-conditions";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
+import { QuotaNameTakenError } from "@/modules/ee/quotas/lib/errors";
 
 export const getQuota = reactCache(async (quotaId: string): Promise<TSurveyQuota> => {
   try {
@@ -134,7 +135,7 @@ export const createQuota = async (quota: TSurveyQuotaInput): Promise<TSurveyQuot
     return newQuota;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      throw new InvalidInputError("Quota with this name already exists");
+      throw new QuotaNameTakenError();
     }
     throw error;
   }
@@ -155,7 +156,7 @@ export const updateQuota = async (quota: TSurveyQuotaInput, id: string): Promise
     return updatedQuota;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      throw new InvalidInputError("Quota with this name already exists");
+      throw new QuotaNameTakenError();
     }
     if (isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)) {
       throw new ResourceNotFoundError("Quota", id);

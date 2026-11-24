@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as postSignup } from "@/app/api/internal/signups/route";
+import { flushAfter } from "@/integration/after";
+import { postToPreLoginRoute, withoutEmailToken } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { createInviteToken } from "@/lib/jwt";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
-import { createUserAction } from "@/modules/auth/signup/actions";
+import { SIGNUP_INTENT_COOKIE_NAME, readSignupIntent } from "@/modules/auth/lib/signup-intent";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/email";
 
 /**
- * Invite sign-up at the ACTION boundary: the real `createUserAction` + real Better Auth + real
+ * Invite sign-up at the ROUTE boundary: the real `POST /api/internal/signups` + real Better Auth + real
  * Postgres, driven exactly the way the sign-up form drives it (name/email/password + inviteToken).
  *
  * The second test is the ENG-2091 regression: because Better Auth answers a duplicate email with a
@@ -16,11 +19,26 @@ import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/em
  * every post-creation side effect against the pre-existing account.
  */
 
+const cookieJar = vi.hoisted(() => ({ sets: [] as { name: string; value: string }[] }));
+
 // The action reads/deletes the attribution cookie; there is no Next request scope under vitest.
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ get: () => undefined, delete: () => undefined })),
+  cookies: vi.fn(async () => ({
+    get: () => undefined,
+    getAll: () => [],
+    set: (name: string, value: string) => {
+      cookieJar.sets.push({ name, value });
+    },
+    delete: () => undefined,
+  })),
   headers: vi.fn(async () => new Headers()),
 }));
+
+// `after()` needs a Next request scope. Sign-up defers the verification send and all new-account work
+// to it (ENG-7094), so the suite flushes it after each call, as a finished request would.
+vi.mock("next/server", async (importOriginal) =>
+  (await import("@/integration/after")).withAfterMock(await importOriginal<typeof import("next/server")>())
+);
 
 /**
  * Cloud-shaped instance: public sign-up open and multi-org licensed. That is the environment ENG-2091
@@ -48,6 +66,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>();
   return { ...actual, queueAuditEventBackground: vi.fn(async () => undefined) };
 });
+
+/** The sign-up form's request, through the real `POST /api/internal/signups`. */
+const createSignup = (body: Record<string, unknown>) =>
+  postToPreLoginRoute(postSignup, "/api/internal/signups", body);
 
 const INVITED_EMAIL = "invitee@corporate-example.com";
 const PASSWORD = "Passw0rd!";
@@ -90,20 +112,22 @@ const seedInvite = async ({
 beforeEach(async () => {
   await resetDb();
   vi.clearAllMocks();
+  cookieJar.sets.length = 0;
 });
 
 describe("ENG-2091: accepting an invite via sign-up", () => {
   test("brand-new invitee: verification email sent, invite accepted", async () => {
     const { inviteToken, organizationId } = await seedInvite();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Invitee",
       email: INVITED_EMAIL,
       password: PASSWORD,
       inviteToken,
     });
+    await flushAfter();
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(sendVerificationLinkEmail).toHaveBeenCalledTimes(1);
 
     const user = await prisma.user.findUnique({ where: { email: INVITED_EMAIL }, select: { id: true } });
@@ -124,19 +148,20 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     });
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Someone Else",
       email: INVITED_EMAIL,
       password: "SomeOtherPassword1!",
       userLocale: "en-US",
       inviteToken,
     });
+    await flushAfter();
 
     // ENG-2099: the response must be indistinguishable from a brand-new address — an earlier version
     // routed this case to login, which turned the invite flow into an account-existence lookup. The
     // verification-requested screen it lands on says "if there is an account associated with …" and
     // carries an unconditional log-in link, so this visitor still has a way out.
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     // No verification email is sent, because no account was created.
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
@@ -187,13 +212,14 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
           });
         }
         vi.mocked(sendVerificationLinkEmail).mockResolvedValue(mailerReturns);
-        const result = await createUserAction({
+        const result = await createSignup({
           name: "Invitee",
           email: INVITED_EMAIL,
           password: PASSWORD,
           inviteToken,
         });
-        return { data: result?.data, serverError: result?.serverError };
+        await flushAfter();
+        return withoutEmailToken(result);
       };
 
       expect(await signUp(true)).toEqual(await signUp(false));
@@ -208,17 +234,18 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     const attackerEmail = "attacker@other-example.com";
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Attacker",
       email: attackerEmail,
       password: "AttackerPassword1!",
       inviteToken,
     });
+    await flushAfter();
 
     // Rejected with the stable code the form maps to the generic invite copy — one code for
     // expired / revoked / wrong-address, so it can't be used to probe which invites exist.
-    expect(result?.data).toBeUndefined();
-    expect(result?.serverError).toContain("invite_token_invalid");
+    expect(result.data).toBeUndefined();
+    expect(result.error).toContain("invite_token_invalid");
 
     // Nothing was written: no account for the attacker, no membership, and the invite survives for
     // its real recipient.
@@ -236,15 +263,16 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     });
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Invitee",
       email: INVITED_EMAIL,
       password: PASSWORD,
       inviteToken,
     });
+    await flushAfter();
 
-    expect(result?.data).toBeUndefined();
-    expect(result?.serverError).toContain("invite_token_invalid");
+    expect(result.data).toBeUndefined();
+    expect(result.error).toContain("invite_token_invalid");
     expect(await prisma.user.count({ where: { email: INVITED_EMAIL } })).toBe(0);
     expect(await prisma.membership.count({ where: { organizationId } })).toBe(0);
   });
@@ -257,16 +285,17 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
     });
     const orgsBefore = await prisma.organization.count();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Attacker",
       email: "victim@corporate-example.com",
       password: "AttackerPassword1!",
     });
+    await flushAfter();
 
     // No invite, so nothing is disclosed: the response is byte-identical to a real new sign-up, and
     // the user lands on the generic "confirm your email" screen (whose copy carries a generic
     // "already have an account? log in" line). This is the enumeration-safety boundary.
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
     // On Formbricks Cloud getIsMultiOrgEnabled() is true, so before the fix this branch created an
     // organization + owner membership on someone else's account, once per request.
@@ -275,5 +304,30 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
       memberships: await prisma.membership.count({ where: { userId: existing.id } }),
     }).toEqual({ orgs: orgsBefore, memberships: 0 });
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
+  });
+
+  // ENG-7094: the unit test pins the decoy's length against a `createId()` fixture. This drives a REAL
+  // Better Auth-generated id through the real route, so a change in how BA mints user ids cannot make
+  // the decoy distinguishable from the cookie a new account gets while every other suite stays green.
+  test("gives the duplicate a decoy of the created cookie's length (real Better Auth id)", async () => {
+    const email = "duplicate-parity@corporate-example.com";
+
+    const createdResponse = await createSignup({ name: "First", email, password: PASSWORD });
+    await flushAfter();
+    const created = cookieJar.sets.find((cookie) => cookie.name === SIGNUP_INTENT_COOKIE_NAME);
+
+    cookieJar.sets.length = 0;
+    const duplicateResponse = await createSignup({ name: "Second", email, password: PASSWORD });
+    await flushAfter();
+    const decoy = cookieJar.sets.find((cookie) => cookie.name === SIGNUP_INTENT_COOKIE_NAME);
+
+    // Same answer both times, token included (ENG-2099).
+    expect(createdResponse.data).toEqual({ success: true, emailToken: expect.any(String) });
+    expect(duplicateResponse.data).toEqual({ success: true, emailToken: expect.any(String) });
+    expect(created).toBeDefined();
+    expect(decoy).toBeDefined();
+    expect(decoy!.value).toHaveLength(created!.value.length);
+    expect(readSignupIntent(created!.value)).toMatchObject({ reason: "valid" });
+    expect(readSignupIntent(decoy!.value)).toEqual({ userId: null, reason: "absent" });
   });
 });

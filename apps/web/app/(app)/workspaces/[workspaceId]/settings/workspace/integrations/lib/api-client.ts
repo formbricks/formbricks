@@ -1,12 +1,63 @@
-import type { TIntegrationByType, TIntegrationType } from "@formbricks/types/integration";
-import { parseV3ApiError } from "@/modules/api/lib/v3-client";
+import type { TIntegrationByType, TIntegrationItem, TIntegrationType } from "@formbricks/types/integration";
+import {
+  type TIntegrationConnectionResource,
+  type TIntegrationMappingsByType,
+  type TIntegrationTypeParam,
+  toIntegrationMappingBody,
+} from "@/app/api/internal/integrations/schemas";
+import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
+
+/**
+ * Client fetchers for the integration settings pages. An integration is addressed by workspace and type.
+ * Every call throws a `V3ApiError` on a refusal; a provider read that needs the integration reconnected
+ * carries the reason in `details.reason` (read it with `getV3ApiErrorReason`).
+ */
+
+const BASE_PATH = "/api/internal/integrations";
+
+const integrationUrl = (workspaceId: string, type: TIntegrationTypeParam, suffix = "") =>
+  buildApiUrl(`${BASE_PATH}/${type}${suffix}`, { workspaceId });
+
+/**
+ * Replace an integration's mappings. Only the mappings are sent: the credentials and the connected
+ * account stay as the OAuth callback stored them.
+ */
+export const saveIntegrationMappings = <T extends TIntegrationTypeParam>(
+  workspaceId: string,
+  type: T,
+  mappings: TIntegrationMappingsByType[T][]
+): Promise<{ id: string }> =>
+  sendApiRequest<{ id: string }>(integrationUrl(workspaceId, type), {
+    method: "PUT",
+    body: { config: { data: mappings.map((mapping) => toIntegrationMappingBody(type, mapping)) } },
+  });
+
+export const disconnectIntegration = (workspaceId: string, type: TIntegrationTypeParam) =>
+  sendApiRequest<void>(integrationUrl(workspaceId, type), { method: "DELETE" });
+
+/** Whether the workspace's Google Sheets grant still works. */
+export const getGoogleSheetsConnection = async (workspaceId: string) =>
+  (
+    await getApiData<TIntegrationConnectionResource>(
+      integrationUrl(workspaceId, "googleSheets", "/connection")
+    )
+  ).status;
+
+/** A spreadsheet's name, read with the workspace's Google Sheets grant. */
+export const getSpreadsheet = (workspaceId: string, spreadsheetId: string) =>
+  getApiData<{ id: string; name: string }>(
+    integrationUrl(workspaceId, "googleSheets", `/spreadsheets/${encodeURIComponent(spreadsheetId)}`)
+  );
+
+/** The Slack channels a mapping can post to. */
+export const getSlackChannels = (workspaceId: string) =>
+  getApiData<TIntegrationItem[]>(integrationUrl(workspaceId, "slack", "/channels"));
 
 type TIntegrationWithData = { config: { data: { createdAt: Date | string }[] } };
 
 /**
- * JSON carries each mapping's `createdAt` as a string, but the integration schemas type it as a `Date` —
- * and the mapping UI echoes every mapping back to `createOrUpdateIntegrationAction`, whose `z.date()`
- * would reject a string. Revive it here so the query cache holds the same shape the server page passes.
+ * JSON carries each mapping's `createdAt` as a string, but the integration types hold a `Date`. Revive it so
+ * the query cache holds the same shape the server page passes.
  */
 export const reviveIntegrationDates = <T extends TIntegrationWithData>(integration: T): T => ({
   ...integration,
@@ -16,20 +67,15 @@ export const reviveIntegrationDates = <T extends TIntegrationWithData>(integrati
   },
 });
 
-/** Client fetcher for the internal integration route. Forwards the TanStack `signal`. */
+/** The workspace's integration of one type, credentials redacted, or `null` when it has none. */
 export async function getIntegration<T extends TIntegrationType>(params: {
   workspaceId: string;
   type: T;
   signal?: AbortSignal;
 }): Promise<TIntegrationByType<T> | null> {
-  const response = await fetch(`/api/workspaces/${params.workspaceId}/integrations/${params.type}`, {
-    method: "GET",
-    cache: "no-store",
-    signal: params.signal,
-  });
-  if (!response.ok) {
-    throw await parseV3ApiError(response);
-  }
-  const { data } = (await response.json()) as { data: TIntegrationByType<T> | null };
+  const data = await getApiData<TIntegrationByType<T> | null>(
+    `/api/workspaces/${encodeURIComponent(params.workspaceId)}/integrations/${params.type}`,
+    { signal: params.signal }
+  );
   return data ? reviveIntegrationDates(data) : null;
 }

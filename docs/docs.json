@@ -437,6 +437,7 @@
                   {
                     "group": "Upcoming changes",
                     "pages": [
+                      "self-hosting/upgrade/versions/session-cookie-writes",
                       "self-hosting/upgrade/versions/mcp-access",
                       "self-hosting/upgrade/versions/contact-directories"
                     ]

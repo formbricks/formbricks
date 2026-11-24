@@ -3,6 +3,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TSegment, TSegmentUpdateInput } from "@formbricks/types/segment";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "./segment-errors";
 
 /**
  * The surveys whose ids may title a segment of this directory, or of this workspace for a segment
@@ -65,6 +66,6 @@ export const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSeg
  */
 export const throwSegmentTitleTaken = (error: unknown): void => {
   if (isUniqueConstraintError(error)) {
-    throw new InvalidInputError("A segment with this title already exists");
+    throw new InvalidInputError(SEGMENT_TITLE_TAKEN_ERROR_MESSAGE);
   }
 };

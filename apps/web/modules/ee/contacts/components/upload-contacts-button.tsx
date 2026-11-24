@@ -11,9 +11,10 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/strings";
-import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
 import type { TContactDirectoryMatchingKey } from "@/modules/ee/contacts/directories/types";
+import { importContacts } from "@/modules/ee/contacts/lib/api-client";
 import { RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
   findUnmappableCsvColumns,
@@ -21,7 +22,11 @@ import {
 } from "@/modules/ee/contacts/lib/csv-attribute-mapping";
 import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
 import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
-import { TContactCSVRecords, getContactCSVUploadSchema } from "@/modules/ee/contacts/types/contact";
+import {
+  TContactCSVRecords,
+  ZContactCSVAttributeMap,
+  getContactCSVUploadSchema,
+} from "@/modules/ee/contacts/types/contact";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { CsvTable } from "@/modules/ui/components/csv-table";
@@ -190,6 +195,14 @@ export const UploadContactsCSVButton = ({
       return;
     }
 
+    // The import's caps on the map (entries, key lengths), as the route checks them.
+    const parsedAttributeMap = ZContactCSVAttributeMap.safeParse(attributeMap);
+    if (!parsedAttributeMap.success) {
+      setError(parsedAttributeMap.error.issues[0].message);
+      setLoading(false);
+      return;
+    }
+
     const transformedCsvData = csvResponse.map((record) => {
       const newRecord: Record<string, string> = {};
       for (const [key, value] of Object.entries(record)) {
@@ -211,65 +224,47 @@ export const UploadContactsCSVButton = ({
       return newRecord;
     });
 
-    const result = await createContactsFromCSVAction({
-      csvData: transformedCsvData,
-      duplicateContactsAction,
-      attributeMap,
-      workspaceId,
-    });
+    let result: Awaited<ReturnType<typeof importContacts>>;
+    try {
+      result = await importContacts(workspaceId, {
+        csvData: transformedCsvData,
+        duplicateContactsAction,
+        attributeMap,
+      });
+    } catch (importError) {
+      // A refused record or cap names itself; anything without a message gets the generic one.
+      setError(getV3ApiErrorMessage(importError, t("workspace.contacts.upload_contacts_error_generic")));
+      setLoading(false);
+      return;
+    }
 
-    if (result?.data) {
-      if ("validationErrors" in result.data) {
-        const { validationErrors } = result.data;
-        const errorMessages = validationErrors.map((err) => {
-          const sampleInvalid = err.invalidValues.slice(0, 3).join(", ");
-          const additionalCount = err.invalidValues.length - 3;
-          const suffix = additionalCount > 0 ? ` (${additionalCount.toString()} more)` : "";
-          return t("workspace.contacts.upload_contacts_error_attribute_type_mismatch", {
-            key: err.key,
-            dataType: err.dataType,
-            values: `${sampleInvalid}${suffix}`,
-          });
+    if ("validationErrors" in result) {
+      const { validationErrors } = result;
+      const errorMessages = validationErrors.map((err) => {
+        const sampleInvalid = err.invalidValues.slice(0, 3).join(", ");
+        const additionalCount = err.invalidValues.length - 3;
+        const suffix = additionalCount > 0 ? ` (${additionalCount.toString()} more)` : "";
+        return t("workspace.contacts.upload_contacts_error_attribute_type_mismatch", {
+          key: err.key,
+          dataType: err.dataType,
+          values: `${sampleInvalid}${suffix}`,
         });
-        setError(errorMessages.join("\n"));
-        setLoading(false);
-        return;
-      }
-
-      setError("");
-      toast.success(t("workspace.contacts.upload_contacts_success"));
-      if (result.data.multiMatchCount > 0) {
-        toast(t("workspace.contacts.upload_contacts_multi_match", { count: result.data.multiMatchCount }));
-      }
-      resetState(true);
-
-      router.refresh();
-      // The lists read through TanStack Query, which a router refresh does not reach.
-      void queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
-      return;
-    }
-
-    if (result?.serverError) {
-      setError(result.serverError);
+      });
+      setError(errorMessages.join("\n"));
       setLoading(false);
       return;
     }
 
-    if (result?.validationErrors) {
-      const csvDataErrors = Array.isArray(result.validationErrors.csvData)
-        ? result.validationErrors.csvData[0]?._errors?.[0]
-        : result.validationErrors.csvData?._errors?.[0];
-
-      if (csvDataErrors) {
-        setError(csvDataErrors);
-      } else {
-        setError(t("workspace.contacts.upload_contacts_error_generic"));
-      }
-      setLoading(false);
-      return;
+    setError("");
+    toast.success(t("workspace.contacts.upload_contacts_success"));
+    if (result.multiMatchCount > 0) {
+      toast(t("workspace.contacts.upload_contacts_multi_match", { count: result.multiMatchCount }));
     }
+    resetState(true);
 
-    setLoading(false);
+    router.refresh();
+    // The lists read through TanStack Query, which a router refresh does not reach.
+    void queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
   };
 
   // A new CSV (or a new set of attribute keys) re-runs the column auto-match. Adjusted during render.

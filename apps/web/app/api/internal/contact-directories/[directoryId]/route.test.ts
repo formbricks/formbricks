@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { GET, PATCH } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -73,7 +74,7 @@ const patch = (body: unknown) =>
   PATCH(
     new NextRequest(url, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
       body: JSON.stringify(body),
     }),
     context

@@ -1,18 +1,20 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TSegment, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
 import { SurveyInteractionFilter } from "./survey-interaction-filter";
 
 const mocks = vi.hoisted(() => ({
-  getSurveysForSegmentFilterAction: vi.fn(),
+  listSegmentFilterSurveys: vi.fn(),
 }));
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-vi.mock("../actions", () => ({
-  getSurveysForSegmentFilterAction: mocks.getSurveysForSegmentFilterAction,
+vi.mock("../lib/api-client", () => ({
+  getContactAttributeKeyValues: vi.fn(),
+  listSegmentFilterSurveys: mocks.listSegmentFilterSurveys,
 }));
 
 vi.mock("@/app/(app)/workspaces/[workspaceId]/context/workspace-context", () => ({
@@ -48,25 +50,25 @@ const segment: TSegment = {
 
 const renderFilter = () =>
   render(
-    <SurveyInteractionFilter
-      connector={null}
-      onAddFilterBelow={vi.fn()}
-      onCreateGroup={vi.fn()}
-      onDeleteFilter={vi.fn()}
-      onMoveFilter={vi.fn()}
-      resource={resource}
-      segment={segment}
-      setSegment={vi.fn()}
-    />
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <SurveyInteractionFilter
+        connector={null}
+        onAddFilterBelow={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onDeleteFilter={vi.fn()}
+        onMoveFilter={vi.fn()}
+        resource={resource}
+        segment={segment}
+        setSegment={vi.fn()}
+      />
+    </QueryClientProvider>
   );
 
 describe("SurveyInteractionFilter", () => {
   beforeEach(() => {
-    mocks.getSurveysForSegmentFilterAction.mockResolvedValue({
-      data: {
-        surveys: [{ id: ownSurveyId, name: "Onboarding survey", status: "inProgress" }],
-        otherWorkspaceSurveyIds: [otherWorkspaceSurveyId],
-      },
+    mocks.listSegmentFilterSurveys.mockResolvedValue({
+      surveys: [{ id: ownSurveyId, name: "Onboarding survey", status: "inProgress" }],
+      otherWorkspaceSurveyIds: [otherWorkspaceSurveyId],
     });
   });
 
@@ -79,10 +81,11 @@ describe("SurveyInteractionFilter", () => {
     renderFilter();
 
     await waitFor(() => {
-      expect(mocks.getSurveysForSegmentFilterAction).toHaveBeenCalledWith({
-        workspaceId: "ws-b",
-        surveyIds: [ownSurveyId, otherWorkspaceSurveyId],
-      });
+      expect(mocks.listSegmentFilterSurveys).toHaveBeenCalledWith(
+        "ws-b",
+        [ownSurveyId, otherWorkspaceSurveyId],
+        expect.anything()
+      );
     });
   });
 

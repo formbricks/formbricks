@@ -3,8 +3,6 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
-  getFeedbackSource,
-  getIntegration,
   getInvite,
   getLanguage,
   getQuota,
@@ -63,15 +61,6 @@ export const getOrganizationIdFromActionClassId = async (actionClassId: string) 
   }
 
   return await getOrganizationIdFromWorkspaceId(actionClass.workspaceId);
-};
-
-export const getOrganizationIdFromIntegrationId = async (integrationId: string) => {
-  const integration = await getIntegration(integrationId);
-  if (!integration) {
-    throw new ResourceNotFoundError("integration", integrationId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(integration.workspaceId);
 };
 
 export const getOrganizationIdFromWebhookId = async (webhookId: string) => {
@@ -171,15 +160,6 @@ export const getWorkspaceIdFromResponseId = async (responseId: string) => {
   return await getWorkspaceIdFromSurveyId(response.surveyId);
 };
 
-export const getWorkspaceIdFromIntegrationId = async (integrationId: string) => {
-  const integration = await getIntegration(integrationId);
-  if (!integration) {
-    throw new ResourceNotFoundError("integration", integrationId);
-  }
-
-  return integration.workspaceId;
-};
-
 export const getWorkspaceIdFromWebhookId = async (webhookId: string) => {
   const webhook = await getWebhook(webhookId);
   if (!webhook) {
@@ -199,14 +179,4 @@ export const getWorkspaceIdFromQuotaId = async (quotaId: string) => {
   const quota = await getQuota(quotaId);
 
   return await getWorkspaceIdFromSurveyId(quota.surveyId);
-};
-
-// FeedbackSource helpers
-export const getOrganizationIdFromFeedbackSourceId = async (feedbackSourceId: string) => {
-  const feedbackSource = await getFeedbackSource(feedbackSourceId);
-  if (!feedbackSource) {
-    throw new ResourceNotFoundError("feedbackSource", feedbackSourceId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(feedbackSource.workspaceId);
 };

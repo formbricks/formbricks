@@ -7,12 +7,11 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
-import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import {
   SWITCHER_DROPDOWN_CONTENT_CLASS_NAME,
   SwitcherDropdownBody,
 } from "@/modules/settings/components/switcher-dropdown-body";
-import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
+import { useOrganizationSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { getOrganizationSwitchPath } from "@/modules/settings/lib/organization-switch";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
@@ -54,22 +53,21 @@ export const OrganizationBreadcrumb = ({
   const currentOrganization = workspaceContext?.organization ?? null;
   const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
-  const organizationSwitcher = useSwitcherData(
-    () => getOrganizationsForSwitcherAction(),
-    t("common.failed_to_load_organizations"),
-    (message) => {
+  const organizationSwitcher = useOrganizationSwitcherData({
+    fallbackError: t("common.failed_to_load_organizations"),
+    onError: (message) => {
       const error = new Error(message);
       logger.error(error, "Failed to load organizations");
       Sentry.captureException(error);
     },
-    organizationName
-  );
+    reloadKey: organizationName,
+  });
   const { load: loadOrganizations } = organizationSwitcher;
 
-  // Lazy-load organizations when dropdown opens (the hook guards against duplicate/looping loads).
+  // Lazy-load organizations when the dropdown first opens; later opens read the shared cache.
   useEffect(() => {
     if (isOrganizationDropdownOpen) {
-      void loadOrganizations();
+      loadOrganizations();
     }
   }, [isOrganizationDropdownOpen, loadOrganizations]);
 

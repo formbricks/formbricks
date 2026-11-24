@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { GET, POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -73,7 +74,7 @@ const post = (body: unknown, query = `organizationId=${ORG_ID}`) =>
   POST(
     new NextRequest(`${URL_BASE}?${query}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
       body: JSON.stringify(body),
     }),
     {}

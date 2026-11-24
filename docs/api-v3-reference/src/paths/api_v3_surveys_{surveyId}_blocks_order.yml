@@ -14,7 +14,7 @@ put:
 
 
     Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see
-    the **409** response. Session cookie or x-api-key.
+    the **409** response. `x-api-key` or a Bearer token.
   tags:
     - V3 Surveys
   parameters:

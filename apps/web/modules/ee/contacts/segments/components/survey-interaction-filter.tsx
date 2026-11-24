@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   SURVEY_INTERACTION_OPERATORS,
@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { getSurveysForSegmentFilterAction } from "../actions";
+import { useSegmentFilterSurveys } from "../hooks/use-segment-editor-options";
 import {
   SegmentFilterItemConnector,
   SegmentFilterItemContextMenu,
@@ -53,39 +53,19 @@ export function SurveyInteractionFilter({
   // Pin to the concrete value type: the filter's `value` field is inferred from a refined Zod schema,
   // which TypeScript does not treat as a plain (spreadable) object without this annotation.
   const value: TSegmentSurveyInteractionFilterValue = resource.value;
-  const [surveys, setSurveys] = useState<{ id: string; name: string; status: string }[]>([]);
-  const [otherWorkspaceSurveyIds, setOtherWorkspaceSurveyIds] = useState<string[]>([]);
   // The workspace the editor is open in. A shared segment may have been made in another workspace of
   // the directory (decision 24), so `segment.workspaceId` is not the one whose surveys to pick from.
   const { workspace } = useWorkspace();
-  const workspaceId = workspace?.id ?? segment.workspaceId;
+  const workspaceId = workspace?.id ?? segment.workspaceId ?? "";
   // The ids named when the filter loaded, so a selection change does not refetch.
   const [initialSurveyIds] = useState(value.surveyIds);
-
-  // Load the workspace's surveys once so the "specific surveys" picker is ready the moment the user
-  // switches scope. Self-fetching here avoids prop-drilling surveys through the four SegmentEditor
-  // render sites.
-  useEffect(() => {
-    if (!workspaceId) return;
-    let active = true;
-    const loadSurveys = async () => {
-      try {
-        const result = await getSurveysForSegmentFilterAction({ workspaceId, surveyIds: initialSurveyIds });
-        if (active && result?.data) {
-          setSurveys(result.data.surveys);
-          setOtherWorkspaceSurveyIds(result.data.otherWorkspaceSurveyIds);
-        }
-      } catch (error) {
-        // Non-fatal: the picker just stays empty. Log so a failing action is observable rather than
-        // silently swallowed.
-        console.error("Failed to load surveys for segment filter", error);
-      }
-    };
-    void loadSurveys();
-    return () => {
-      active = false;
-    };
-  }, [workspaceId, initialSurveyIds]);
+  // The workspace's surveys, loaded once so the "specific surveys" picker is ready the moment the user
+  // switches scope, plus the named ids that are surveys of another workspace on the directory. Self-fetching
+  // here avoids prop-drilling surveys through the four SegmentEditor render sites. Non-fatal on failure: the
+  // picker just stays empty.
+  const { data } = useSegmentFilterSurveys(workspaceId, initialSurveyIds);
+  const surveys = data?.surveys ?? [];
+  const otherWorkspaceSurveyIds = data?.otherWorkspaceSurveyIds ?? [];
 
   const commitValue = (newValue: TSegmentSurveyInteractionFilterValue) => {
     const updatedSegment = structuredClone(segment);

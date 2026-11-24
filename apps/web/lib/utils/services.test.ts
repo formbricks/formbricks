@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import {
   ActionClass,
   ApiKey,
-  Integration,
   Invite,
   Language,
   Prisma,
@@ -21,8 +20,6 @@ import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 import {
   getActionClass,
   getApiKey,
-  getFeedbackSource,
-  getIntegration,
   getInvite,
   getLanguage,
   getQuota,
@@ -47,9 +44,6 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
     },
     apiKey: {
-      findUnique: vi.fn(),
-    },
-    integration: {
       findUnique: vi.fn(),
     },
     invite: {
@@ -83,16 +77,7 @@ vi.mock("@formbricks/database", () => ({
     document: {
       findUnique: vi.fn(),
     },
-    contact: {
-      findUnique: vi.fn(),
-    },
-    feedbackSource: {
-      findUnique: vi.fn(),
-    },
     surveyQuota: {
-      findUnique: vi.fn(),
-    },
-    contactAttributeKey: {
       findUnique: vi.fn(),
     },
   },
@@ -160,33 +145,6 @@ describe("Service Functions", () => {
       );
 
       await expect(getApiKey(apiKeyId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getIntegration", () => {
-    const integrationId = "int123";
-
-    test("returns the integration when found", async () => {
-      const mockIntegration = { workspaceId: "ws123" } as unknown as Integration;
-      vi.mocked(prisma.integration.findUnique).mockResolvedValue(mockIntegration);
-
-      const result = await getIntegration(integrationId);
-      expect(prisma.integration.findUnique).toHaveBeenCalledWith({
-        where: { id: integrationId },
-        select: { workspaceId: true },
-      });
-      expect(result).toEqual(mockIntegration);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.integration.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getIntegration(integrationId)).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -498,48 +456,6 @@ describe("Service Functions", () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
       await expect(isTeamPartOfOrganization(organizationId, teamId)).rejects.toThrow(ResourceNotFoundError);
-    });
-  });
-
-  describe("getFeedbackSource", () => {
-    const feedbackSourceId = "feedback_source_123";
-
-    test("returns the feedbackSource when found", async () => {
-      const mockFeedbackSource = { workspaceId: "ws123" };
-      vi.mocked(prisma.feedbackSource.findUnique).mockResolvedValue(mockFeedbackSource as never);
-
-      const result = await getFeedbackSource(feedbackSourceId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.feedbackSource.findUnique).toHaveBeenCalledWith({
-        where: { id: feedbackSourceId },
-        select: { workspaceId: true },
-      });
-      expect(result).toEqual(mockFeedbackSource);
-    });
-
-    test("returns null when feedbackSource not found", async () => {
-      vi.mocked(prisma.feedbackSource.findUnique).mockResolvedValue(null);
-
-      const result = await getFeedbackSource(feedbackSourceId);
-      expect(result).toBeNull();
-    });
-
-    test("throws DatabaseError when Prisma throws a known request error", async () => {
-      vi.mocked(prisma.feedbackSource.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getFeedbackSource(feedbackSourceId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("rethrows unknown errors", async () => {
-      const unknownError = new Error("Something unexpected");
-      vi.mocked(prisma.feedbackSource.findUnique).mockRejectedValue(unknownError);
-
-      await expect(getFeedbackSource(feedbackSourceId)).rejects.toThrow(unknownError);
     });
   });
 });

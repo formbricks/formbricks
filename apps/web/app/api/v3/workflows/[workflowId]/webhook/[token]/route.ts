@@ -16,6 +16,9 @@ export const POST = withV3ApiWrapper<undefined, TWebhookRouteProps>({
   auth: "none",
   rateLimit: false,
   handlerReadsBody: true,
+  // Servers call it, with no Origin, and the token in the path is its only credential: no browser
+  // credential rides on it, so the cross-origin check for pre-login writes has nothing to protect.
+  allowCrossOrigin: true,
   redactPath: redactWebhookTokens,
   handler: async ({ req, props, requestId, instance }) => {
     const { workflowId, token } = await props.params;

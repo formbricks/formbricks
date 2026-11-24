@@ -6,10 +6,10 @@ import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-conte
 
 /**
  * ENG-3189 at the FRAMEWORK boundary: Better Auth's native `POST /update-user` against a real
- * Postgres, with no `updateUserAction` in the way.
+ * Postgres, with no `PATCH /api/internal/users/me` in the way.
  *
  * That endpoint is where the bug lived, so it is the boundary the regression test drives. The SSO name
- * lock is enforced in `updateUserAction`, and the profile form renders the input disabled — but
+ * lock is enforced in `PATCH /api/internal/users/me`, and the profile form renders the input disabled — but
  * `app/api/auth/[...all]/route.ts` mounts `auth.handler` raw, so Better Auth served `/update-user`
  * beside our own surface and an authenticated `fetch` from the browser console wrote the name anyway
  * (200, unaudited), or threw an unhandled 500 on `image`, which `User` has no column for.
@@ -92,7 +92,7 @@ describe("raw Better Auth /update-user (real Postgres)", () => {
 
   /**
    * The lock is on the endpoint, not on who is calling it. A credential user has no more business
-   * writing their profile here than an SSO one does: `updateUserAction` is what owns the audit entry,
+   * writing their profile here than an SSO one does: `PATCH /api/internal/users/me` is what owns the audit entry,
    * and a write that lands through this route leaves none (the ENG-2347 class).
    */
   test("refuses a credential user's name write too", async () => {

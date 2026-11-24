@@ -6,6 +6,7 @@ import { ZId } from "@formbricks/types/common";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
+import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   getReservedFutureDefaultAttributeKeyIssue,
@@ -221,7 +222,9 @@ const validateAndAdjustCsvAttributeTypes = (
 };
 
 /**
- * Creates missing attribute keys in the database
+ * Creates missing attribute keys in the database, refusing (`ValidationError`, before anything is written)
+ * keys that aren't safe identifiers, reserved keys, and an import that would take the contact directory past
+ * `MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT` keys, the cap every other path that creates keys holds.
  */
 const createMissingAttributeKeys = async (
   csvKeys: Set<string>,
@@ -255,6 +258,13 @@ const createMissingAttributeKeys = async (
     if (!uniqueMissingKeys.has(lowerKey)) {
       uniqueMissingKeys.set(lowerKey, key);
     }
+  }
+
+  // `attributeKeyMap` holds every key the directory has, read with the import's other lookups.
+  if (attributeKeyMap.size + uniqueMissingKeys.size > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+    throw new ValidationError(
+      `Importing these contacts adds ${uniqueMissingKeys.size} attribute keys, past the ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} a contact directory can have`
+    );
   }
 
   await prisma.contactAttributeKey.createMany({

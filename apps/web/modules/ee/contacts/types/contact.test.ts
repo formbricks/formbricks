@@ -1,6 +1,12 @@
 import { describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 import {
+  CSV_IMPORT_MAX_COLUMNS,
+  CSV_IMPORT_MAX_KEY_LENGTH,
+  CSV_IMPORT_MAX_RECORDS,
+  CSV_IMPORT_MAX_VALUE_LENGTH,
+} from "../lib/csv-import-limits";
+import {
   ZContact,
   ZContactBulkUploadRequest,
   ZContactCSVAttributeMap,
@@ -203,6 +209,104 @@ describe("ZContactCSVAttributeMap", () => {
       email: "email",
     };
     expect(() => ZContactCSVAttributeMap.parse(invalidMap)).toThrow(ZodError);
+  });
+});
+
+describe("the CSV import's caps", () => {
+  const csvSchema = getContactCSVUploadSchema("email");
+  const issues = (result: { success: boolean; error?: ZodError }) =>
+    result.error?.issues.map(({ message, path }) => ({ message, path })) ?? [];
+  const record = (extra: Record<string, string> = {}) => ({ email: "ada@example.com", ...extra });
+  /** A record of `count` columns, the email among them. */
+  const columns = (count: number) =>
+    record(Object.fromEntries(Array.from({ length: count - 1 }, (_, i) => [`column_${i}`, "x"])));
+
+  test(`takes ${CSV_IMPORT_MAX_RECORDS} records and refuses one more with the existing message`, () => {
+    const records = (count: number) =>
+      Array.from({ length: count }, (_, i) => ({ email: `user${i}@example.com` }));
+
+    expect(csvSchema.safeParse(records(CSV_IMPORT_MAX_RECORDS)).success).toBe(true);
+    expect(issues(csvSchema.safeParse(records(CSV_IMPORT_MAX_RECORDS + 1)))).toEqual([
+      { message: "Maximum 10000 records allowed at a time.", path: [] },
+    ]);
+  });
+
+  test.each([
+    [
+      "columns",
+      columns(CSV_IMPORT_MAX_COLUMNS),
+      columns(CSV_IMPORT_MAX_COLUMNS + 1),
+      "A record may have at most 160 entries (record 1)",
+    ],
+    [
+      "a column name's length",
+      record({ ["k".repeat(CSV_IMPORT_MAX_KEY_LENGTH)]: "x" }),
+      record({ ["k".repeat(CSV_IMPORT_MAX_KEY_LENGTH + 1)]: "x" }),
+      "A column name must be at most 255 characters (record 1)",
+    ],
+    [
+      "a value's length",
+      record({ note: "v".repeat(CSV_IMPORT_MAX_VALUE_LENGTH) }),
+      record({ note: "v".repeat(CSV_IMPORT_MAX_VALUE_LENGTH + 1) }),
+      "A value must be at most 10000 characters (record 1)",
+    ],
+    [
+      "NUL in a value",
+      record({ note: "a" }),
+      record({ note: "a\u0000" }),
+      "A value must not contain NUL characters (record 1)",
+    ],
+    [
+      "NUL in a column name",
+      record({ note: "a" }),
+      record({ "no\u0000te": "a" }),
+      "A column name must not contain NUL characters (record 1)",
+    ],
+  ])("refuses %s just past the cap, naming it, with one issue", (_label, atLimit, pastLimit, message) => {
+    expect(csvSchema.safeParse([atLimit]).success).toBe(true);
+    expect(issues(csvSchema.safeParse([record(), pastLimit]))).toEqual([
+      { message: message.replace("record 1", "record 2"), path: [1] },
+    ]);
+  });
+
+  test("reports one issue however many cells break a cap, before the typed schema runs", () => {
+    const bad = Array.from({ length: 50 }, (_, i) => ({
+      email: `u${i}@example.com`,
+      note: 1 as unknown as string,
+    }));
+
+    expect(issues(csvSchema.safeParse(bad))).toEqual([
+      { message: "A value must be text (record 1)", path: [0] },
+    ]);
+  });
+
+  test.each([
+    [
+      "entries",
+      columns(CSV_IMPORT_MAX_COLUMNS),
+      columns(CSV_IMPORT_MAX_COLUMNS + 1),
+      "The attribute map may have at most 160 entries",
+    ],
+    [
+      "a column name's length",
+      { ["k".repeat(CSV_IMPORT_MAX_KEY_LENGTH)]: "a" },
+      { ["k".repeat(CSV_IMPORT_MAX_KEY_LENGTH + 1)]: "a" },
+      "A column name must be at most 255 characters",
+    ],
+    [
+      "a mapped attribute's length",
+      { name: "a".repeat(CSV_IMPORT_MAX_KEY_LENGTH) },
+      { name: "a".repeat(CSV_IMPORT_MAX_KEY_LENGTH + 1) },
+      "A mapped attribute must be at most 255 characters",
+    ],
+    ["NUL", { name: "a" }, { name: "a\u0000" }, "A mapped attribute must not contain NUL characters"],
+  ])("refuses an attribute map past its %s cap", (_label, atLimit, pastLimit, message) => {
+    // `columns()` repeats "x" as every value; the map refuses duplicate values on its own.
+    const distinct = (map: Record<string, string>) =>
+      Object.fromEntries(Object.keys(map).map((key, i) => [key, map[key] === "x" ? `attr_${i}` : map[key]]));
+
+    expect(ZContactCSVAttributeMap.safeParse(distinct(atLimit)).success).toBe(true);
+    expect(issues(ZContactCSVAttributeMap.safeParse(distinct(pastLimit)))).toEqual([{ message, path: [] }]);
   });
 });
 

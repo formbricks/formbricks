@@ -6,7 +6,7 @@ import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-k
 import type { TContactDirectoryMatchingKey } from "@/modules/ee/contacts/directories/types";
 import { UploadContactsCSVButton } from "./upload-contacts-button";
 
-const mocks = vi.hoisted(() => ({ createContactsFromCSVAction: vi.fn() }));
+const mocks = vi.hoisted(() => ({ importContacts: vi.fn() }));
 
 // A stable `t`, as the real hook gives: the component re-validates when `t` changes identity.
 vi.mock("react-i18next", () => {
@@ -15,9 +15,7 @@ vi.mock("react-i18next", () => {
   return { useTranslation: () => ({ t }) };
 });
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock("@/modules/ee/contacts/actions", () => ({
-  createContactsFromCSVAction: mocks.createContactsFromCSVAction,
-}));
+vi.mock("@/modules/ee/contacts/lib/api-client", () => ({ importContacts: mocks.importContacts }));
 vi.mock("react-hot-toast", () => {
   const toastFn = Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() });
   return { default: toastFn };
@@ -64,7 +62,7 @@ describe("UploadContactsCSVButton", () => {
   });
 
   test("reports rows that matched several contacts after the upload", async () => {
-    mocks.createContactsFromCSVAction.mockResolvedValue({ data: { contacts: [], multiMatchCount: 2 } });
+    mocks.importContacts.mockResolvedValue({ contacts: [], multiMatchCount: 2 });
     renderButton("email");
 
     pickCsv("email\na@example.com");
@@ -80,7 +78,7 @@ describe("UploadContactsCSVButton", () => {
   });
 
   test("shows no multi-match note when every row matched at most one contact", async () => {
-    mocks.createContactsFromCSVAction.mockResolvedValue({ data: { contacts: [], multiMatchCount: 0 } });
+    mocks.importContacts.mockResolvedValue({ contacts: [], multiMatchCount: 0 });
     renderButton("email");
 
     pickCsv("email\na@example.com");

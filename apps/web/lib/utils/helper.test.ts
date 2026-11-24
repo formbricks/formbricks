@@ -4,8 +4,6 @@ import * as services from "@/lib/utils/services";
 import {
   getOrganizationIdFromActionClassId,
   getOrganizationIdFromApiKeyId,
-  getOrganizationIdFromFeedbackSourceId,
-  getOrganizationIdFromIntegrationId,
   getOrganizationIdFromInviteId,
   getOrganizationIdFromLanguageId,
   getOrganizationIdFromQuotaId,
@@ -16,7 +14,6 @@ import {
   getOrganizationIdFromWebhookId,
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromActionClassId,
-  getWorkspaceIdFromIntegrationId,
   getWorkspaceIdFromLanguageId,
   getWorkspaceIdFromQuotaId,
   getWorkspaceIdFromResponseId,
@@ -32,14 +29,12 @@ vi.mock("@/lib/utils/services", () => ({
   getResponse: vi.fn(),
   getQuota: vi.fn(),
   getActionClass: vi.fn(),
-  getIntegration: vi.fn(),
   getWebhook: vi.fn(),
   getApiKey: vi.fn(),
   getInvite: vi.fn(),
   getLanguage: vi.fn(),
   getTeam: vi.fn(),
   getTag: vi.fn(),
-  getFeedbackSource: vi.fn(),
 }));
 
 describe("Helper Utilities", () => {
@@ -141,23 +136,6 @@ describe("Helper Utilities", () => {
       await expect(getOrganizationIdFromActionClassId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("getOrganizationIdFromIntegrationId returns organization ID correctly", async () => {
-      vi.mocked(services.getIntegration).mockResolvedValueOnce({
-        workspaceId: "workspace1",
-      });
-      vi.mocked(services.getWorkspace).mockResolvedValueOnce({
-        organizationId: "org1",
-      });
-
-      const orgId = await getOrganizationIdFromIntegrationId("integration1");
-      expect(orgId).toBe("org1");
-    });
-
-    test("getOrganizationIdFromIntegrationId throws error when integration not found", async () => {
-      vi.mocked(services.getIntegration).mockResolvedValueOnce(null);
-      await expect(getOrganizationIdFromIntegrationId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
     test("getOrganizationIdFromWebhookId returns organization ID correctly", async () => {
       vi.mocked(services.getWebhook).mockResolvedValueOnce({
         workspaceId: "workspace1",
@@ -250,29 +228,6 @@ describe("Helper Utilities", () => {
       const orgId = await getOrganizationIdFromQuotaId("quota1");
       expect(orgId).toBe("org1");
     });
-
-    test("getOrganizationIdFromFeedbackSourceId returns organization ID through workspace", async () => {
-      vi.mocked(services.getFeedbackSource).mockResolvedValueOnce({
-        workspaceId: "workspace1",
-      });
-      vi.mocked(services.getWorkspace).mockResolvedValueOnce({
-        organizationId: "org1",
-      });
-
-      const orgId = await getOrganizationIdFromFeedbackSourceId("feedbackSource1");
-      expect(orgId).toBe("org1");
-      expect(services.getFeedbackSource).toHaveBeenCalledWith("feedbackSource1");
-      expect(services.getWorkspace).toHaveBeenCalledWith("workspace1");
-    });
-
-    test("getOrganizationIdFromFeedbackSourceId throws error when feedbackSource not found", async () => {
-      vi.mocked(services.getFeedbackSource).mockResolvedValueOnce(null);
-
-      await expect(getOrganizationIdFromFeedbackSourceId("nonexistent")).rejects.toThrow(
-        ResourceNotFoundError
-      );
-      expect(services.getFeedbackSource).toHaveBeenCalledWith("nonexistent");
-    });
   });
 
   describe("Workspace ID retrieval functions", () => {
@@ -350,20 +305,6 @@ describe("Helper Utilities", () => {
     test("getWorkspaceIdFromResponseId throws error when response not found", async () => {
       vi.mocked(services.getResponse).mockResolvedValueOnce(null);
       await expect(getWorkspaceIdFromResponseId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("getWorkspaceIdFromIntegrationId returns workspace ID correctly", async () => {
-      vi.mocked(services.getIntegration).mockResolvedValueOnce({
-        workspaceId: "workspace1",
-      });
-
-      const workspaceId = await getWorkspaceIdFromIntegrationId("integration1");
-      expect(workspaceId).toBe("workspace1");
-    });
-
-    test("getWorkspaceIdFromIntegrationId throws error when integration not found", async () => {
-      vi.mocked(services.getIntegration).mockResolvedValueOnce(null);
-      await expect(getWorkspaceIdFromIntegrationId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("getWorkspaceIdFromWebhookId returns workspace ID correctly", async () => {
