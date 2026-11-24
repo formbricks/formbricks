@@ -1,5 +1,6 @@
 import "server-only";
 import { APIError } from "better-auth/api";
+import { logger } from "@formbricks/logger";
 import { SIGNUP_DISABLED_ERROR_CODE } from "@formbricks/types/errors";
 import { SIGNUP_ENABLED } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
@@ -99,6 +100,9 @@ export const signupPolicyBeforeHandler = async (ctx: AuthHookContext): Promise<v
   if (isSignupDomainAllowed()) return;
 
   if (!(await isUninvitedSignupAllowed())) {
+    // A log line, not an alert (ENG-2347): the client-facing APIError is kept out of Sentry on purpose
+    // (ENG-2037), and without this the rejection left no trace an operator could see.
+    logger.warn({ path: ctx.path }, "Rejected a credential sign-up under the closed-sign-up policy");
     throw signupDisabledError();
   }
 };

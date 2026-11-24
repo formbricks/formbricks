@@ -14,6 +14,8 @@ vi.mock("@/lib/constants", () => ({
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
 vi.mock("@/modules/auth/lib/signup-request-context", () => ({ isSignupDomainAllowed: vi.fn() }));
+const { loggerWarn } = vi.hoisted(() => ({ loggerWarn: vi.fn() }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: loggerWarn } }));
 
 /** A closed self-hosted instance: SIGNUP_ENABLED is always false there, and it already has users. */
 const closeTheInstance = (): void => {
@@ -75,6 +77,24 @@ describe("signupPolicyBeforeHandler", () => {
       status: "FORBIDDEN",
       body: { code: SIGNUP_DISABLED_ERROR_CODE },
     });
+  });
+
+  // ENG-2347: the rejection is the only signal an operator of a closed instance gets that someone tried
+  // to create an account outside the sign-up route, and the client-facing APIError is kept out of Sentry
+  // on purpose (ENG-2037), so it needs a log line of its own.
+  test("logs a warning when it rejects a sign-up", async () => {
+    closeTheInstance();
+    await expect(signupPolicyBeforeHandler(unmarkedSignup)).rejects.toBeDefined();
+    expect(loggerWarn).toHaveBeenCalledTimes(1);
+    expect(loggerWarn).toHaveBeenCalledWith(
+      { path: "/sign-up/email" },
+      expect.stringContaining("closed-sign-up policy")
+    );
+  });
+
+  test("logs nothing when it allows a sign-up", async () => {
+    await expect(signupPolicyBeforeHandler(unmarkedSignup)).resolves.toBeUndefined();
+    expect(loggerWarn).not.toHaveBeenCalled();
   });
 
   test("ignores every path other than the credential sign-up route", async () => {

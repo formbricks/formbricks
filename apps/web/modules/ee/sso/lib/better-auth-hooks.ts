@@ -108,9 +108,9 @@ const recordUnverifiedSsoSignup = ({
     // rather than fail this one sign-up, and this runs post-commit on the sign-in path.
     void queueAuditEventBackground({
       // `updated` + a marker key, not `created`: this records a PROPERTY of a user creation, and it is
-      // emitted only for the unverified subset. An `action: "created"` / `targetType: "user"` pair
-      // exists nowhere else, so a consumer counting account creations off it would silently see only
-      // the accounts an IdP declined to vouch for. The marker idiom is the house convention for
+      // emitted only for the unverified subset. The creation itself is recorded as `created` /
+      // `user` for every SSO sign-up (`recordSsoUserCreated`), so a second `created` here would count
+      // the accounts an IdP declined to vouch for twice. The marker idiom is the house convention for
       // auth-internal events (`passwordResetMarker`, `verificationSessionWithheldMarker`).
       action: "updated",
       targetType: "user",
@@ -192,6 +192,51 @@ export const ssoProfileSyncUpdateBefore = async (
       name: normalizedName || undefined,
     },
   };
+};
+
+/**
+ * The `created` / `user` audit event for an SSO sign-up (ENG-2347). An SSO account is created by the
+ * database hooks below, never by the sign-up route (`POST /api/internal/signups`) that records this
+ * event for a credential account, so without it an audit log's account history missed every SSO
+ * account. Emitted here, in the SSO after-hook, rather than in a generic `user.create.after`: the
+ * credential path already records the event itself — after its own provisioning, with that outcome as
+ * the status — and a generic hook would record those accounts twice.
+ *
+ * The actor is the new user: the IdP has just authenticated them, unlike a credential sign-up, whose
+ * caller has no session and is recorded as unknown. `status` follows the credential path's rule: the
+ * account exists either way, and a failed provisioning leaves it without its organization.
+ *
+ * Never throws and is not awaited: this runs post-commit on the sign-in path (see
+ * `recordUnverifiedSsoSignup`, which follows the same rule).
+ */
+const recordSsoUserCreated = ({
+  user,
+  identityProvider,
+  organizationId,
+  provisioningFailed,
+}: {
+  user: { id: string } & Record<string, unknown>;
+  identityProvider: TSsoIdentityProvider;
+  organizationId: string | null;
+  provisioningFailed: boolean;
+}): void => {
+  try {
+    void queueAuditEventBackground({
+      action: "created",
+      targetType: "user",
+      userId: user.id,
+      userType: "user",
+      targetId: user.id,
+      organizationId: organizationId ?? UNKNOWN_DATA,
+      status: provisioningFailed ? "failure" : "success",
+      // `redactPII` masks the email and name before the event is written, as on the credential path.
+      newObject: { ...user, identityProvider },
+    }).catch((error: unknown) => {
+      logger.warn({ error, userId: user.id }, "Failed to audit an SSO sign-up");
+    });
+  } catch (error) {
+    logger.warn({ error, userId: user.id }, "Failed to audit an SSO sign-up");
+  }
 };
 
 /**
@@ -312,18 +357,32 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
           });
         }
 
-        await provisionSsoUserMemberships({
-          userId: user.id,
-          email: user.email,
-          name: user.name,
-          provider: identityProvider,
-          organizationId: decision.organizationId,
-          assignToDefaultTeam: decision.assignToDefaultTeam,
-          signupSource: decision.signupSource,
-          useDefaultOrganization: decision.useDefaultOrganization,
-          inviteRole: decision.inviteRole,
-          attributionProperties: getSsoAttributionProperties(),
-        });
+        let provisioningFailed = false;
+        try {
+          await provisionSsoUserMemberships({
+            userId: user.id,
+            email: user.email,
+            name: user.name,
+            provider: identityProvider,
+            organizationId: decision.organizationId,
+            assignToDefaultTeam: decision.assignToDefaultTeam,
+            signupSource: decision.signupSource,
+            useDefaultOrganization: decision.useDefaultOrganization,
+            inviteRole: decision.inviteRole,
+            attributionProperties: getSsoAttributionProperties(),
+          });
+        } catch (error) {
+          provisioningFailed = true;
+          throw error;
+        } finally {
+          // The account is committed either way, so it is recorded either way.
+          recordSsoUserCreated({
+            user,
+            identityProvider,
+            organizationId: decision.organizationId,
+            provisioningFailed,
+          });
+        }
 
         // Mark the new SSO user as identified in PostHog (parity with the credentials sign-up
         // path). provisionSsoUserMemberships only emits a bare `user_signed_up` capture, which
