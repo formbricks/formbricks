@@ -12,8 +12,6 @@ import {
 } from "@/modules/ui/components/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 
-export { TagsField, type TTagsFieldProps } from "./components/tags-field";
-
 interface ITagsComboboxProps {
   readonly tags: Tag[];
   readonly currentTags: Tag[];

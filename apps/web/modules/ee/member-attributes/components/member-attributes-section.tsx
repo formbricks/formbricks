@@ -10,7 +10,9 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { IdBadge } from "@/modules/ui/components/id-badge";
-import { ListTable } from "@/modules/ui/components/table-toolbar";
+import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
+import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
+import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { useMemberAttributeKeys } from "../hooks/use-member-attributes";
 import type { TMemberAttributeKeyItem } from "../lib/api-client";
 import { MEMBER_ATTRIBUTE_MAX_KEYS_PER_ORGANIZATION } from "../lib/limits";
@@ -67,6 +69,13 @@ const getAttributeKeyColumns = (t: TFunction): ColumnDef<TAttributeTableRow>[] =
   },
 ];
 
+/** The built-in Email row matches on its label or key; a custom attribute on its label or key. */
+const matchesAttributeSearch = (row: TAttributeTableRow, query: string, emailLabel: string): boolean => {
+  if (query === "") return true;
+  const [label, key] = row.kind === "email" ? [emailLabel, "email"] : [row.key.label, row.key.key];
+  return label.toLowerCase().includes(query) || key.toLowerCase().includes(query);
+};
+
 /**
  * Organization settings' Member attributes section (ENG-7474): the built-in Email first (not editable),
  * then the organization's keys. Owners and Managers create, edit and delete them; the data comes from the
@@ -79,10 +88,20 @@ export const MemberAttributesSection = ({ organizationId }: Readonly<{ organizat
   const [editing, setEditing] = useState<TMemberAttributeKeyItem | null>(null);
   const keys = query.data;
 
-  const rows = useMemo<TAttributeTableRow[]>(
+  const [search, setSearch] = useState("");
+  const allRows = useMemo<TAttributeTableRow[]>(
     () => [{ kind: "email" }, ...(keys ?? []).map((key) => ({ kind: "key" as const, key }))],
     [keys]
   );
+  const searchQuery = search.trim().toLowerCase();
+  const rows = useMemo(
+    () => allRows.filter((row) => matchesAttributeSearch(row, searchQuery, t("common.email"))),
+    [allRows, searchQuery, t]
+  );
+  const columnState = useTableColumnState({
+    storagePrefix: `${organizationId}-member-attributes`,
+    columnIds: ["label", "key", "values", "setFor"],
+  });
 
   const columns = useMemo(() => getAttributeKeyColumns(t), [t]);
 
@@ -91,24 +110,27 @@ export const MemberAttributesSection = ({ organizationId }: Readonly<{ organizat
     columns,
     getRowId: (row) => (row.kind === "email" ? "email" : row.key.id),
     getCoreRowModel: getCoreRowModel(),
+    state: {
+      columnOrder: columnState.columnOrder,
+      columnVisibility: columnState.columnVisibility,
+      columnSizing: columnState.columnSizing,
+    },
+    ...columnState.sizingOptions,
   });
+  const columnLabels = [
+    { id: "label", label: t("common.label") },
+    { id: "key", label: t("common.key") },
+    { id: "values", label: t("workspace.settings.member_attributes.values") },
+    { id: "setFor", label: t("workspace.settings.member_attributes.set_for") },
+  ];
 
   const atLimit = (keys?.length ?? 0) >= MEMBER_ATTRIBUTE_MAX_KEYS_PER_ORGANIZATION;
 
   return (
     <SettingsCard
       title={t("workspace.settings.member_attributes.title")}
-      description={t("workspace.settings.member_attributes.attribute_count", { count: rows.length })}
-      bodyVariant="flush"
-      cta={
-        <Button
-          variant="secondary"
-          size="sm"
-          disabled={atLimit || !keys}
-          onClick={() => setIsCreateOpen(true)}>
-          {t("workspace.settings.member_attributes.create_attribute")}
-        </Button>
-      }>
+      description={t("workspace.settings.member_attributes.attribute_count", { count: allRows.length })}
+      bodyVariant="flush">
       {query.isError ? (
         <div className="flex flex-col items-center gap-3 px-4 py-10 text-sm text-slate-600">
           <p>{getV3ApiErrorMessage(query.error, t("common.something_went_wrong_please_try_again"))}</p>
@@ -117,17 +139,50 @@ export const MemberAttributesSection = ({ organizationId }: Readonly<{ organizat
           </Button>
         </div>
       ) : (
-        <ListTable
-          table={table}
-          testId="member-attributes-table"
-          isLoading={query.isLoading}
-          hasFilters={false}
-          onClearFilters={() => undefined}
-          isRowClickable={(row) => row.original.kind === "key"}
-          onRowClick={(row) => {
-            if (row.original.kind === "key") setEditing(row.original.key);
-          }}
-        />
+        <div className="space-y-3 px-4 pt-4">
+          <TableToolbar
+            settings={{
+              columns: {
+                items: buildColumnSettings(
+                  columnLabels,
+                  columnState.columnOrder,
+                  columnState.columnVisibility,
+                  ["label"]
+                ),
+                onVisibilityChange: (id, visible) =>
+                  columnState.setColumnVisibility((current) => ({ ...current, [id]: visible })),
+                onMove: columnState.moveColumn,
+              },
+            }}
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: t("workspace.settings.member_attributes.search_attributes"),
+            }}
+            actions={
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={atLimit || !keys}
+                onClick={() => setIsCreateOpen(true)}>
+                {t("workspace.settings.member_attributes.create_attribute")}
+              </Button>
+            }
+          />
+          <div className="-mx-4">
+            <ListTable
+              table={table}
+              testId="member-attributes-table"
+              isLoading={query.isLoading}
+              hasFilters={searchQuery !== ""}
+              onClearFilters={() => setSearch("")}
+              isRowClickable={(row) => row.original.kind === "key"}
+              onRowClick={(row) => {
+                if (row.original.kind === "key") setEditing(row.original.key);
+              }}
+            />
+          </div>
+        </div>
       )}
       {isCreateOpen && (
         <AttributeKeyDialog organizationId={organizationId} open={isCreateOpen} setOpen={setIsCreateOpen} />

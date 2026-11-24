@@ -65,6 +65,17 @@ export const getMemberAttributeKeyProblem = (key: string): TMemberAttributeKeyPr
   return null;
 };
 
+/** Strips underscores from the end of `value`, and from its start too when `leading`; a loop, not a backtracking regex. */
+const trimUnderscores = (value: string, leading: boolean): string => {
+  let start = 0;
+  let end = value.length;
+  if (leading) {
+    while (start < end && value[start] === "_") start++;
+  }
+  while (end > start && value[end - 1] === "_") end--;
+  return value.slice(start, end);
+};
+
 /**
  * The key the Create attribute dialog suggests for a label until the person edits the key: "Sales
  * region" → `sales_region`, "Größe" → `grosse`. Accents are folded, anything else that is not a letter or
@@ -72,12 +83,12 @@ export const getMemberAttributeKeyProblem = (key: string): TMemberAttributeKeyPr
  * a valid key unless the label has no letters or digits at all (then it is "").
  */
 export const suggestMemberAttributeKey = (label: string): string => {
-  const folded = label.normalize("NFKD").replace(/\p{M}/gu, "").replace(/ß/g, "ss").toLowerCase();
-  const key = folded
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, MEMBER_ATTRIBUTE_MAX_KEY_LENGTH);
+  const folded = label.normalize("NFKD").replace(/\p{M}/gu, "").replaceAll("ß", "ss").toLowerCase();
+  const key = trimUnderscores(folded.replace(/[^a-z0-9]+/g, "_"), true).slice(
+    0,
+    MEMBER_ATTRIBUTE_MAX_KEY_LENGTH
+  );
   if (key === "") return "";
   const withLetter = /^\d/.test(key) ? `a_${key}` : key;
-  return withLetter.slice(0, MEMBER_ATTRIBUTE_MAX_KEY_LENGTH).replace(/_+$/g, "");
+  return trimUnderscores(withLetter.slice(0, MEMBER_ATTRIBUTE_MAX_KEY_LENGTH), false);
 };

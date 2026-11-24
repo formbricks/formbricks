@@ -730,9 +730,7 @@
     "tags": "タグ",
     "tags_field": {
       "add_new_value": "「{value}」を追加",
-      "add_value_placeholder": "値を追加…",
-      "remove_value": "{value}を削除",
-      "selected_values": "選択した値"
+      "add_value_placeholder": "値を追加…"
     },
     "targeting": "ターゲティング",
     "team": "チーム",
@@ -4021,6 +4019,7 @@
         "label_required": "ラベルを入力してください。",
         "member_count": "{count, plural, other {#人のメンバー}}",
         "one_value": "単一の値",
+        "search_attributes": "属性を検索",
         "set_for": "設定対象",
         "several_values": "複数の値",
         "title": "メンバー属性",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "新しいワークスペースを追加するには、すべてのフィールドを入力してください。",
         "read": "読み取り",
         "read_write": "読み書き",
+        "search_teams": "チームを検索",
         "select_dashboards": "ダッシュボードを選択",
         "team_admin": "チーム管理者",
         "team_created_successfully": "チームを正常に作成しました。",

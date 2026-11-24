@@ -1,7 +1,8 @@
 "use client";
 
+import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import type { TFunction } from "i18next";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -21,7 +22,9 @@ import {
 } from "@/modules/ee/teams/team-list/types/team";
 import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import { Badge } from "@/modules/ui/components/badge";
-import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
+import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
+import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
+import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 
 /** A team plus whether the current user is in it — the only thing the two source lists differ by. */
 type TTeamRow = { team: TUserTeam; isMember: true } | { team: TOtherTeam; isMember: false };
@@ -59,46 +62,40 @@ const getTeamColumns = ({
   t: TFunction;
   isOwnerOrManager: boolean;
   onManage: (teamId: string) => void;
-}>): TSettingsTableColumn<TTeamRow>[] => [
+}>): ColumnDef<TTeamRow>[] => [
   {
     id: "name",
     header: t("workspace.settings.teams.team_name"),
-    headerClassName: "w-[40%]",
-    cell: (row) => row.team.name,
+    size: 260,
+    cell: ({ row }) => <span className="truncate font-medium text-slate-900">{row.original.team.name}</span>,
   },
   {
     id: "size",
     header: t("common.size"),
-    headerClassName: "w-[20%]",
-    cell: (row) => t("common.count_members", { count: row.team.memberCount }),
+    size: 140,
+    cell: ({ row }) => t("common.count_members", { count: row.original.team.memberCount }),
   },
   {
     id: "membership",
-    header: null,
     // A column header is announced for every row in the column, so it has to be neutral —
     // "You are a member" would claim membership on the rows that have no badge.
-    srLabel: t("common.membership"),
-    headerClassName: "w-[20%]",
-    cell: (row) =>
-      row.isMember ? (
+    header: t("common.membership"),
+    size: 160,
+    cell: ({ row }) =>
+      row.original.isMember ? (
         <Badge type="success" size="tiny" text={t("workspace.settings.teams.you_are_a_member")} />
       ) : null,
   },
   {
     id: "actions",
-    header: null,
-    srLabel: t("common.actions"),
-    headerClassName: "w-[20%]",
-    stopRowClick: true,
-    // The flex goes on a wrapper inside the cell, not on `cellClassName`: that class lands on the `<td>`,
-    // and `display: flex` there stops it being a table-cell, which kills the shared `align-middle` and
-    // leaves the button baseline-aligned. `align: "right"` is no help either — the wrapper is block-level.
-    cell: (row) => (
-      <div className="flex justify-end">
+    header: () => <span className="sr-only">{t("common.actions")}</span>,
+    size: 140,
+    cell: ({ row }) => (
+      <div className="flex w-full justify-end">
         <ManageTeamButton
-          disabled={isManageDisabled(row, isOwnerOrManager)}
+          disabled={isManageDisabled(row.original, isOwnerOrManager)}
           onClick={() => {
-            onManage(row.team.id);
+            onManage(row.original.team.id);
           }}
         />
       </div>
@@ -141,31 +138,85 @@ export const TeamsTable = ({
   // One row list, tagged with whether the current user belongs to the team. The two lists used to be
   // mapped separately into a shared <TableBody>, which meant duplicating all four cells to vary two of
   // them; the tag lets the membership badge and the manage-permission rule branch per row instead.
-  const rows: TTeamRow[] = [
-    ...userTeams.map((team) => ({ team, isMember: true as const })),
-    ...otherTeams.map((team) => ({ team, isMember: false as const })),
+  const rows = useMemo<TTeamRow[]>(
+    () => [
+      ...userTeams.map((team) => ({ team, isMember: true as const })),
+      ...otherTeams.map((team) => ({ team, isMember: false as const })),
+    ],
+    [userTeams, otherTeams]
+  );
+
+  const [search, setSearch] = useState("");
+  const query = search.trim().toLowerCase();
+  // Memoized: the table treats a new `data` array as new data and resets its state, which re-renders
+  // and builds another array — an endless loop that freezes the page.
+  const filteredRows = useMemo(
+    () => (query === "" ? rows : rows.filter((row) => row.team.name.toLowerCase().includes(query))),
+    [rows, query]
+  );
+
+  const columnIds = ["name", "size", "membership", "actions"];
+  const columnState = useTableColumnState({ storagePrefix: `${organizationId}-teams`, columnIds });
+  const columns = getTeamColumns({ t, isOwnerOrManager, onManage: handleManageTeam });
+
+  const table = useReactTable({
+    data: filteredRows,
+    columns,
+    getRowId: (row) => row.team.id,
+    getCoreRowModel: getCoreRowModel(),
+    state: {
+      columnOrder: columnState.columnOrder,
+      columnVisibility: columnState.columnVisibility,
+      columnSizing: columnState.columnSizing,
+    },
+    ...columnState.sizingOptions,
+  });
+
+  const columnLabels = [
+    { id: "name", label: t("workspace.settings.teams.team_name") },
+    { id: "size", label: t("common.size") },
+    { id: "membership", label: t("common.membership") },
   ];
 
   return (
     <>
-      {isOwnerOrManager && (
-        // The table is edge-to-edge, so the control above it carries the card's gutter itself.
-        <div className="mb-4 flex justify-end px-4 pt-4">
-          <CreateTeamButton organizationId={organizationId} />
+      <div className="space-y-3 px-4 pt-4">
+        <TableToolbar
+          settings={{
+            columns: {
+              items: buildColumnSettings(
+                columnLabels,
+                columnState.columnOrder,
+                columnState.columnVisibility,
+                ["name"]
+              ),
+              onVisibilityChange: (id, visible) =>
+                columnState.setColumnVisibility((current) => ({ ...current, [id]: visible })),
+              onMove: columnState.moveColumn,
+            },
+          }}
+          search={{
+            value: search,
+            onChange: setSearch,
+            placeholder: t("workspace.settings.teams.search_teams"),
+          }}
+          actions={isOwnerOrManager ? <CreateTeamButton organizationId={organizationId} /> : undefined}
+        />
+        <div className="-mx-4">
+          <ListTable
+            table={table}
+            testId="teams-table"
+            isLoading={false}
+            hasFilters={query !== ""}
+            onClearFilters={() => setSearch("")}
+            emptyContent={
+              <p className="px-4 py-10 text-center text-sm text-slate-500">
+                {t("workspace.settings.teams.empty_teams_state")}
+              </p>
+            }
+          />
         </div>
-      )}
-
-      <SettingsTable
-        columns={getTeamColumns({ t, isOwnerOrManager, onManage: handleManageTeam })}
-        rows={rows}
-        getRowId={(row) => row.team.id}
-        emptyMessage={t("workspace.settings.teams.empty_teams_state")}
-        // A constant testid, not one built from the team name: names are user-supplied and not unique,
-        // so a name-keyed testid would reintroduce the collision that dropping `id={team.name}` fixed.
-        // Specs narrow by row text instead.
-        getRowProps={() => ({ "data-testid": "team-row" })}
-        aria-label={t("common.teams")}
-      />
+      </div>
       {openSettingsModal && selectedTeam && (
         <TeamsQueryClientProvider>
           <TeamSettingsModal

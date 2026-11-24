@@ -730,9 +730,7 @@
     "tags": "Etichete",
     "tags_field": {
       "add_new_value": "Adaugă „{value}”",
-      "add_value_placeholder": "Adaugă o valoare…",
-      "remove_value": "Elimină {value}",
-      "selected_values": "Valori selectate"
+      "add_value_placeholder": "Adaugă o valoare…"
     },
     "targeting": "Targetare",
     "team": "Echipă",
@@ -4021,6 +4019,7 @@
         "label_required": "Introdu o etichetă.",
         "member_count": "{count, plural, one {# membru} few {# membri} other {# de membri}}",
         "one_value": "O singură valoare",
+        "search_attributes": "Caută atribute",
         "set_for": "Setat pentru",
         "several_values": "Mai multe valori",
         "title": "Atributele membrilor",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "Vă rugăm să completați toate câmpurile pentru a adăuga un nou spațiu de lucru.",
         "read": "Citește",
         "read_write": "Citire & Scriere",
+        "search_teams": "Caută echipe",
         "select_dashboards": "Selectează tablourile de bord",
         "team_admin": "Administrator Echipe",
         "team_created_successfully": "Echipă creată cu succes",

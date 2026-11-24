@@ -730,9 +730,7 @@
     "tags": "Теги",
     "tags_field": {
       "add_new_value": "Добавить «{value}»",
-      "add_value_placeholder": "Добавить значение…",
-      "remove_value": "Удалить {value}",
-      "selected_values": "Выбранные значения"
+      "add_value_placeholder": "Добавить значение…"
     },
     "targeting": "Таргетинг",
     "team": "Команда",
@@ -4021,6 +4019,7 @@
         "label_required": "Введи название.",
         "member_count": "{count, plural, one {# участник} few {# участника} many {# участников} other {# участника}}",
         "one_value": "Одно значение",
+        "search_attributes": "Поиск атрибутов",
         "set_for": "Назначить для",
         "several_values": "Несколько значений",
         "title": "Атрибуты участников",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "Пожалуйста, заполните все поля для добавления нового рабочего пространства.",
         "read": "Чтение",
         "read_write": "Чтение и запись",
+        "search_teams": "Поиск команд",
         "select_dashboards": "Выберите дашборды",
         "team_admin": "Администратор команды",
         "team_created_successfully": "Команда успешно создана.",

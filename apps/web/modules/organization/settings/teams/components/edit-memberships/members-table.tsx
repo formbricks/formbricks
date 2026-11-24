@@ -170,13 +170,17 @@ export const MembersTable = ({
     onOpenSettings: (row) => setSettingsRowId(row.id),
   });
 
+  // The row menu stays the last column: a saved order from before an attribute key existed would
+  // otherwise leave the new attribute column after it.
+  const actionsLastOrder = [...columnState.columnOrder.filter((id) => id !== "actions"), "actions"];
+
   const table = useReactTable({
     data: rows,
     columns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
     state: {
-      columnOrder: columnState.columnOrder,
+      columnOrder: actionsLastOrder,
       columnVisibility: columnState.columnVisibility,
       columnSizing: columnState.columnSizing,
     },

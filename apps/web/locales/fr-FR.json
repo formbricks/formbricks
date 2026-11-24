@@ -730,9 +730,7 @@
     "tags": "Balises",
     "tags_field": {
       "add_new_value": "Ajouter « {value} »",
-      "add_value_placeholder": "Ajouter une valeur…",
-      "remove_value": "Retirer {value}",
-      "selected_values": "Valeurs sélectionnées"
+      "add_value_placeholder": "Ajouter une valeur…"
     },
     "targeting": "Ciblage",
     "team": "Équipe",
@@ -4021,6 +4019,7 @@
         "label_required": "Saisis un libellé.",
         "member_count": "{count, plural, one {# membre} many {# de membres} other {# membres}}",
         "one_value": "Une seule valeur",
+        "search_attributes": "Rechercher des attributs",
         "set_for": "Défini pour",
         "several_values": "Plusieurs valeurs",
         "title": "Attributs des membres",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "Veuillez remplir tous les champs pour ajouter un nouvel espace de travail.",
         "read": "Lire",
         "read_write": "Lire et Écrire",
+        "search_teams": "Rechercher des équipes",
         "select_dashboards": "Sélectionner des tableaux de bord",
         "team_admin": "Administrateur d'équipe",
         "team_created_successfully": "Équipe créée avec succès.",

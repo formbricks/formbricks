@@ -730,9 +730,7 @@
     "tags": "Tags",
     "tags_field": {
       "add_new_value": "„{value}“ hinzufügen",
-      "add_value_placeholder": "Wert hinzufügen…",
-      "remove_value": "{value} entfernen",
-      "selected_values": "Ausgewählte Werte"
+      "add_value_placeholder": "Wert hinzufügen…"
     },
     "targeting": "Targeting",
     "team": "Team",
@@ -4021,6 +4019,7 @@
         "label_required": "Gib eine Bezeichnung ein.",
         "member_count": "{count, plural, one {# Mitglied} other {# Mitglieder}}",
         "one_value": "Ein Wert",
+        "search_attributes": "Attribute durchsuchen",
         "set_for": "Festlegen für",
         "several_values": "Mehrere Werte",
         "title": "Mitgliedsattribute",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "Bitte fülle alle Felder aus, um einen neuen Workspace hinzuzufügen.",
         "read": "Lesen",
         "read_write": "Lesen & Schreiben",
+        "search_teams": "Teams durchsuchen",
         "select_dashboards": "Dashboards auswählen",
         "team_admin": "Team-Admin",
         "team_created_successfully": "Team erfolgreich erstellt",

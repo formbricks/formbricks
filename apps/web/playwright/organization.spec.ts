@@ -128,7 +128,7 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
     await page.getByRole("button", { name: "Create" }).click();
-    await expect(page.getByTestId("team-row").filter({ hasText: "E2E" })).toBeVisible();
+    await expect(page.getByTestId("teams-table").getByRole("row").filter({ hasText: "E2E" })).toBeVisible();
 
     await page.getByRole("button", { name: "Manage team" }).click();
 
@@ -147,7 +147,9 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("button", { name: "Save" }).click();
 
     // The members table on the same page lists each member's teams too, so look in the teams table.
-    await expect(page.getByTestId("team-row").getByRole("cell", { name: "E2E Updated" })).toBeVisible();
+    await expect(
+      page.getByTestId("teams-table").getByRole("row").getByRole("cell", { name: "E2E Updated" })
+    ).toBeVisible();
 
     await page.getByRole("button", { name: "Manage team" }).click();
 
@@ -161,7 +163,9 @@ test.describe("Create, update and delete team", async () => {
 
     await expect(page.getByRole("heading", { name: "Teams", level: 1 })).toBeVisible();
 
-    await expect(page.getByTestId("team-row").getByRole("cell", { name: "E2E Updated" })).not.toBeVisible();
+    await expect(
+      page.getByTestId("teams-table").getByRole("row").getByRole("cell", { name: "E2E Updated" })
+    ).not.toBeVisible();
   });
 });
 

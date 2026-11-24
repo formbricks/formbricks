@@ -730,9 +730,7 @@
     "tags": "Etiketler",
     "tags_field": {
       "add_new_value": "\"{value}\" ekle",
-      "add_value_placeholder": "Değer ekle…",
-      "remove_value": "{value} değerini kaldır",
-      "selected_values": "Seçili değerler"
+      "add_value_placeholder": "Değer ekle…"
     },
     "targeting": "Hedefleme",
     "team": "Takım",
@@ -4021,6 +4019,7 @@
         "label_required": "Bir etiket gir.",
         "member_count": "{count, plural, one {# üye} other {# üye}}",
         "one_value": "Tek değer",
+        "search_attributes": "Öznitelikleri ara",
         "set_for": "Ayarlanacak kişi",
         "several_values": "Birden fazla değer",
         "title": "Üye özellikleri",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "Yeni çalışma alanı eklemek için lütfen tüm alanları doldur.",
         "read": "Okuma",
         "read_write": "Okuma ve Yazma",
+        "search_teams": "Takımları ara",
         "select_dashboards": "Panoları seç",
         "team_admin": "Takım Yöneticisi",
         "team_created_successfully": "Takım başarıyla oluşturuldu",

@@ -730,9 +730,7 @@
     "tags": "Taggar",
     "tags_field": {
       "add_new_value": "Lägg till \"{value}\"",
-      "add_value_placeholder": "Lägg till värde…",
-      "remove_value": "Ta bort {value}",
-      "selected_values": "Valda värden"
+      "add_value_placeholder": "Lägg till värde…"
     },
     "targeting": "Målgrupp",
     "team": "Team",
@@ -4021,6 +4019,7 @@
         "label_required": "Ange en etikett.",
         "member_count": "{count, plural, one {# medlem} other {# medlemmar}}",
         "one_value": "Ett värde",
+        "search_attributes": "Sök attribut",
         "set_for": "Gäller för",
         "several_values": "Flera värden",
         "title": "Medlemsattribut",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "Fyll i alla fält för att lägga till en ny arbetsyta.",
         "read": "Läs",
         "read_write": "Läs och skriv",
+        "search_teams": "Sök team",
         "select_dashboards": "Välj instrumentpaneler",
         "team_admin": "Teamadministratör",
         "team_created_successfully": "Team skapat.",

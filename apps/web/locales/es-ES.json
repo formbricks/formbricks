@@ -730,9 +730,7 @@
     "tags": "Etiquetas",
     "tags_field": {
       "add_new_value": "Añadir \"{value}\"",
-      "add_value_placeholder": "Añadir valor…",
-      "remove_value": "Quitar {value}",
-      "selected_values": "Valores seleccionados"
+      "add_value_placeholder": "Añadir valor…"
     },
     "targeting": "Segmentación",
     "team": "Equipo",
@@ -4021,6 +4019,7 @@
         "label_required": "Introduce una etiqueta.",
         "member_count": "{count, plural, one {# miembro} other {# miembros}}",
         "one_value": "Un valor",
+        "search_attributes": "Buscar atributos",
         "set_for": "Establecido para",
         "several_values": "Varios valores",
         "title": "Atributos de miembros",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "Por favor, rellena todos los campos para añadir un nuevo espacio de trabajo.",
         "read": "Lectura",
         "read_write": "Lectura y escritura",
+        "search_teams": "Buscar equipos",
         "select_dashboards": "Seleccionar paneles",
         "team_admin": "Administrador de equipo",
         "team_created_successfully": "Equipo creado con éxito.",

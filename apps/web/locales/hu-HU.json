@@ -730,9 +730,7 @@
     "tags": "Címkék",
     "tags_field": {
       "add_new_value": "„{value}” hozzáadása",
-      "add_value_placeholder": "Érték hozzáadása…",
-      "remove_value": "{value} eltávolítása",
-      "selected_values": "Kiválasztott értékek"
+      "add_value_placeholder": "Érték hozzáadása…"
     },
     "targeting": "Célzás",
     "team": "Csapat",
@@ -4021,6 +4019,7 @@
         "label_required": "Kérjük, adjon meg egy címkét.",
         "member_count": "{count, plural, one {# tag} other {# tag}}",
         "one_value": "Egy érték",
+        "search_attributes": "Attribútumok keresése",
         "set_for": "Beállítva ehhez",
         "several_values": "Több érték",
         "title": "Tagattribútumok",
@@ -4154,6 +4153,7 @@
         "please_fill_all_workspace_fields": "Töltse ki az összes mezőt egy új munkaterület hozzáadásához.",
         "read": "Olvasás",
         "read_write": "Olvasás és írás",
+        "search_teams": "Csapatok keresése",
         "select_dashboards": "Irányítópultok kiválasztása",
         "team_admin": "Csapatadminisztrátor",
         "team_created_successfully": "A csapat sikeresen létrehozva",

@@ -29,6 +29,7 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
   Select,
   SelectContent,
@@ -37,7 +38,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { TagsField } from "@/modules/ui/components/tags-combobox";
 import { Muted } from "@/modules/ui/components/typography";
 import { useBulkSetMemberAttributes } from "../hooks/use-member-attributes";
 import { MEMBER_ATTRIBUTE_MAX_VALUES_PER_KEY, MEMBER_ATTRIBUTE_MAX_VALUE_LENGTH } from "../lib/limits";
@@ -223,7 +223,7 @@ export const MemberSettingsDialog = ({
           <div className="space-y-2">
             <Label>{t("common.teams")}</Label>
             {row.teams.length === 0 ? (
-              <Muted className="text-slate-500">{t("workspace.settings.members.no_teams")}</Muted>
+              <Muted className="block text-slate-500">{t("workspace.settings.members.no_teams")}</Muted>
             ) : (
               <div className="overflow-hidden rounded-md border border-slate-200">
                 <Table>
@@ -278,15 +278,22 @@ export const MemberSettingsDialog = ({
                   <Label id={`${fieldId}-${key}-label`} htmlFor={`${fieldId}-${key}`}>
                     {label}
                   </Label>
-                  <TagsField
-                    id={`${fieldId}-${key}`}
-                    aria-labelledby={`${fieldId}-${key}-label`}
+                  <MultiSelect
+                    inputId={`${fieldId}-${key}`}
+                    ariaLabelledBy={`${fieldId}-${key}-label`}
                     value={attributes[key] ?? []}
                     onChange={(values) => setAttributes((current) => ({ ...current, [key]: values }))}
-                    suggestions={canEditAttributes ? getAttributeSuggestions(allRows, key) : []}
+                    options={(canEditAttributes ? getAttributeSuggestions(allRows, key) : []).map(
+                      (suggestion) => ({
+                        value: suggestion,
+                        label: suggestion,
+                      })
+                    )}
+                    creatable
                     readOnly={!canEditAttributes}
-                    maxValues={MEMBER_ATTRIBUTE_MAX_VALUES_PER_KEY}
-                    maxLength={MEMBER_ATTRIBUTE_MAX_VALUE_LENGTH}
+                    maxSelected={MEMBER_ATTRIBUTE_MAX_VALUES_PER_KEY}
+                    inputMaxLength={MEMBER_ATTRIBUTE_MAX_VALUE_LENGTH}
+                    placeholder={t("common.tags_field.add_value_placeholder")}
                   />
                 </div>
               ))}

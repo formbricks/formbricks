@@ -1,7 +1,7 @@
 "use client";
 
 import { Command as CommandPrimitive } from "cmdk";
-import { X } from "lucide-react";
+import { PlusIcon, X } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -34,12 +34,44 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
   containerClassName?: string;
   /** Focus the input on mount, which opens the options list. */
   focusOnMount?: boolean;
+  /**
+   * Lets the person add a value that is not among `options`: while typing, an "Add …" entry appears, and a
+   * chosen value no option matches still shows as a chip. For free-text lists such as a Member attribute's
+   * values, where `options` are only suggestions.
+   */
+  creatable?: boolean;
+  /** Caps the characters of the input, e.g. a value's maximum length. */
+  inputMaxLength?: number;
+  /** Stops offering options once this many are chosen. */
+  maxSelected?: number;
+  /** The input's id and label, for a field with a visible `<label>`. */
+  inputId?: string;
+  ariaLabelledBy?: string;
+  /** Shows the chips alone: no input, no remove buttons. */
+  readOnly?: boolean;
 }
+
+/** The "Add …" entry for typed text; it never reaches `onChange` as such, only the text does. */
+type TCreateOption = { value: string; isCreate: true };
 
 export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   props: Readonly<MultiSelectProps<T, K>>
 ) {
-  const { options, value, onChange, disabled = false, placeholder, containerClassName, focusOnMount } = props;
+  const {
+    options,
+    value,
+    onChange,
+    disabled = false,
+    placeholder,
+    containerClassName,
+    focusOnMount,
+    creatable = false,
+    inputMaxLength,
+    maxSelected,
+    inputId,
+    ariaLabelledBy,
+    readOnly = false,
+  } = props;
   const { t } = useTranslation();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -48,9 +80,16 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     if (focusOnMount) inputRef.current?.focus();
   }, [focusOnMount]);
 
+  // A chosen value no option matches is dropped, unless the field is creatable: then it is a typed value.
+  const resolveOption = React.useCallback(
+    (val: T): TOption<T> | undefined =>
+      options.find((o) => o.value === val) ?? (creatable ? { value: val, label: val } : undefined),
+    [options, creatable]
+  );
+
   const [selected, setSelected] = React.useState<TOption<T>[]>(() => {
     if (value) {
-      return value.map((val) => options.find((o) => o.value === val)).filter((o): o is TOption<T> => !!o);
+      return value.map((val) => resolveOption(val)).filter((o): o is TOption<T> => !!o);
     }
     return [];
   });
@@ -66,9 +105,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
 
   React.useEffect(() => {
     if (value) {
-      const newSelected = value
-        .map((val) => options.find((o) => o.value === val))
-        .filter((o): o is TOption<T> => !!o);
+      const newSelected = value.map((val) => resolveOption(val)).filter((o): o is TOption<T> => !!o);
       // Only update if different (avoid unnecessary updates)
       const currentValues = selected.map((s) => s.value);
       const newValues = newSelected.map((s) => s.value);
@@ -81,7 +118,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- syncs the `value` prop into local state; `selected` is only read for comparison, depending on it would re-run on every user selection
-  }, [value, options]);
+  }, [value, options, resolveOption]);
 
   // Sync user-initiated selected changes to parent via onChange (deferred to avoid render issues)
   const prevSelectedRef = React.useRef(selected);
@@ -117,8 +154,17 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     [disabled]
   );
 
-  const handleSelect = (option: TOption<T>) => {
-    if (disabled || option.disabled) return;
+  const isFull = maxSelected !== undefined && selected.length >= maxSelected;
+
+  const handleSelect = (option: TOption<T> | TCreateOption) => {
+    if (disabled || readOnly || isFull) return;
+    if ("isCreate" in option) {
+      isUserInitiatedRef.current = true; // Mark as user-initiated
+      setSelected((prev) => [...prev, { value: option.value as T, label: option.value }]);
+      setInputValue("");
+      return;
+    }
+    if (option.disabled) return;
     isUserInitiatedRef.current = true; // Mark as user-initiated
     setSelected((prev) => [...prev, option]);
     setInputValue("");
@@ -157,6 +203,16 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       });
   }, [options, selected, inputValue]);
 
+  // The typed text as a value of its own, unless it is already chosen or is exactly an offered option.
+  const createCandidate = React.useMemo((): TCreateOption | null => {
+    const text = inputValue.trim();
+    if (!creatable || text === "") return null;
+    const needle = text.toLowerCase();
+    const taken = [...selected.map((s) => s.value as string), ...selectableOptions.map((o) => o.label)];
+    if (taken.some((existing) => existing.toLowerCase() === needle)) return null;
+    return { value: text, isCreate: true };
+  }, [creatable, inputValue, selected, selectableOptions]);
+
   // Cluster consecutive options that share a `group` into labelled sections, preserving the caller's
   // ordering. Options without a group form a single unlabelled section. Because empty groups are
   // never created, filtering hides section headers that have no matches.
@@ -178,7 +234,8 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     return groups;
   }, [selectableOptions]);
 
-  const isDropdownVisible = open && selectableOptions.length > 0 && !disabled;
+  const isDropdownVisible =
+    open && (selectableOptions.length > 0 || createCandidate !== null) && !disabled && !readOnly && !isFull;
 
   // Escape with the dropdown open closes only the dropdown. A Radix dialog around this component
   // listens for Escape on `document` in the capture phase, before the React handler above runs, so
@@ -262,34 +319,41 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                 ) : null}
                 <span className="truncate">{option.label}</span>
                 {disabled ? null : option.badgeAction}
-                <button
-                  type="button"
-                  aria-label={t("common.remove_item", { item: option.label })}
-                  className="ring-offset-background ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleUnselect(option);
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={() => handleUnselect(option)}>
-                  <X className="text-muted-foreground hover:text-foreground size-3" />
-                </button>
+                {readOnly ? null : (
+                  <button
+                    type="button"
+                    aria-label={t("common.remove_item", { item: option.label })}
+                    className="ring-offset-background ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleUnselect(option);
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={() => handleUnselect(option)}>
+                    <X className="text-muted-foreground hover:text-foreground size-3" />
+                  </button>
+                )}
               </Badge>
             ))}
-          <CommandPrimitive.Input
-            ref={inputRef}
-            value={inputValue}
-            onValueChange={setInputValue}
-            onBlur={() => setOpen(false)}
-            onFocus={() => setOpen(true)}
-            placeholder={placeholder}
-            disabled={disabled}
-            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-hidden"
-          />
+          {readOnly ? null : (
+            <CommandPrimitive.Input
+              ref={inputRef}
+              id={inputId}
+              aria-labelledby={ariaLabelledBy}
+              maxLength={inputMaxLength}
+              value={inputValue}
+              onValueChange={setInputValue}
+              onBlur={() => setOpen(false)}
+              onFocus={() => setOpen(true)}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-hidden"
+            />
+          )}
         </div>
       </div>
       {isDropdownVisible &&
@@ -349,6 +413,23 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                     ))}
                   </CommandGroup>
                 ))}
+                {createCandidate ? (
+                  <CommandGroup>
+                    <CommandItem
+                      key={`create-${createCandidate.value}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onSelect={() => handleSelect(createCandidate)}
+                      className="cursor-pointer items-start gap-2">
+                      <PlusIcon className="mt-0.5 size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+                      <span className="truncate text-slate-900">
+                        {t("common.tags_field.add_new_value", { value: createCandidate.value })}
+                      </span>
+                    </CommandItem>
+                  </CommandGroup>
+                ) : null}
               </div>
             </CommandList>
           </div>,
