@@ -924,8 +924,8 @@ export const SurveyMenuBar = ({
   };
 
   return (
-    <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
-      <div className="flex h-full items-center gap-x-2 whitespace-nowrap">
+    <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-3">
+      <div className="flex h-full min-w-0 flex-wrap items-center gap-2 whitespace-nowrap">
         {!isCxMode && (
           <Button
             size="sm"
@@ -962,7 +962,7 @@ export const SurveyMenuBar = ({
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
+      <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2 sm:ms-auto sm:mt-0">
         <AutoSaveIndicator
           isDraft={localSurvey.status === "draft"}
           // Scheduled drafts are not auto-saved (the interval is torn down), so the badge says paused.
