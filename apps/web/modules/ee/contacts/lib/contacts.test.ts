@@ -14,12 +14,12 @@ import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   ContactInSharedDirectoryError,
   buildContactWhereClause,
-  createContactsFromCSV,
   deleteContactInWorkspace,
   generatePersonalLinks,
   getContactInWorkspace,
   getContactsInSegment,
 } from "./contacts";
+import { createContactsFromCSV } from "./contacts-csv-upload";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {

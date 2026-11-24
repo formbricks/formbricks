@@ -15,11 +15,8 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE } from "@/modules/ee/contacts/lib/contact-delete-errors";
 import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
-import {
-  ContactInSharedDirectoryError,
-  createContactsFromCSV,
-  deleteContactInWorkspace,
-} from "./lib/contacts";
+import { ContactInSharedDirectoryError, deleteContactInWorkspace } from "./lib/contacts";
+import { createContactsFromCSV } from "./lib/contacts-csv-upload";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
 import { ZContactCSVAttributeMap, ZContactCSVDuplicateAction, ZContactCSVRecords } from "./types/contact";
 

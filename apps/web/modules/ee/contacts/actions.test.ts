@@ -9,11 +9,8 @@ import {
 } from "@/modules/ee/contacts/lib/contact-directory";
 import { createContactsFromCSVAction, deleteContactAction, updateContactAttributesAction } from "./actions";
 import { CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE } from "./lib/contact-delete-errors";
-import {
-  ContactInSharedDirectoryError,
-  createContactsFromCSV,
-  deleteContactInWorkspace,
-} from "./lib/contacts";
+import { ContactInSharedDirectoryError, deleteContactInWorkspace } from "./lib/contacts";
+import { createContactsFromCSV } from "./lib/contacts-csv-upload";
 import { updateContactAttributes } from "./lib/update-contact-attributes";
 
 vi.mock("server-only", () => ({}));
@@ -39,9 +36,9 @@ vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) =>
 vi.mock("./lib/contacts", async (importOriginal) => ({
   ContactInSharedDirectoryError: (await importOriginal<typeof import("./lib/contacts")>())
     .ContactInSharedDirectoryError,
-  createContactsFromCSV: vi.fn(),
   deleteContactInWorkspace: vi.fn(),
 }));
+vi.mock("./lib/contacts-csv-upload", () => ({ createContactsFromCSV: vi.fn() }));
 vi.mock("./lib/update-contact-attributes", () => ({ updateContactAttributes: vi.fn() }));
 
 type TActionArgs = { ctx: object; parsedInput: object };
