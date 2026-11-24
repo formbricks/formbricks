@@ -529,8 +529,9 @@ export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.e
 }).strict();
 
 /**
- * Visibility reads and writes take only the survey id; the setter adds the target value. Both need
- * Surveys: Write, because the operation behind them is limited to whoever may manage visibility.
+ * Visibility reads and writes take only the survey id; the setter adds the target value. The read tool
+ * declares Surveys: Read and the setter Surveys: Write; the operation behind both is limited to whoever
+ * may manage visibility, so the scope cannot widen it.
  */
 export const ZMcpSurveyVisibilityInput = z
   .object({
