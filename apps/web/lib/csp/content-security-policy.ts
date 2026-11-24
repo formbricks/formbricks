@@ -42,7 +42,8 @@ export interface TCspRoute {
   frameAncestors: TFrameAncestors;
 }
 
-const SURVEY_PATH = /^\/(?:s|c|p)(?:\/|$)/;
+// Link surveys (/s) and contact survey links (/c). Pretty URLs (/p) only redirect to /s.
+const SURVEY_PATH = /^\/(?:s|c)(?:\/|$)/;
 const WORKSPACE_PATH = /^\/workspaces(?:\/|$)/;
 const SSO_RECOVERY_PATH = /^\/sso-recovery(?:\/|$)/;
 
@@ -53,7 +54,7 @@ const SSO_RECOVERY_PATH = /^\/sso-recovery(?:\/|$)/;
  */
 export const getCspRoute = (pathname: string): TCspRoute => {
   if (SURVEY_PATH.test(pathname)) {
-    return { profile: "survey", frameAncestors: /^\/(?:s|c)(?:\/|$)/.test(pathname) ? "*" : "'self'" };
+    return { profile: "survey", frameAncestors: "*" };
   }
   if (SSO_RECOVERY_PATH.test(pathname)) return { profile: "app", frameAncestors: "'none'" };
   if (WORKSPACE_PATH.test(pathname)) return { profile: "workspace", frameAncestors: "'self'" };

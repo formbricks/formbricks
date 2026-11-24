@@ -11,6 +11,10 @@ const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 jiti("./lib/env");
 
+// The policy of the paths proxy.ts does not run on (see the first `headers()` rules).
+const ASSET_PATH_CSP =
+  "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
+
 // Shared by every cacheable `/js/*` rule below (the bundles, the locale JSON, the signature font), so a
 // change to how they are cached or shared cross-origin lands on all of them at once.
 const JS_ASSET_CACHE_CONTROL =
@@ -198,6 +202,22 @@ const nextConfig = {
       // Pages get their Content-Security-Policy from proxy.ts, built per request around a nonce
       // (lib/csp/content-security-policy.ts), including `frame-ancestors`. X-Frame-Options mirrors it for
       // browsers without CSP framing support.
+      {
+        // The paths proxy.ts's matcher skips (static assets) get no nonce policy, yet a missing one still
+        // renders the app's 404 page. This policy runs none of its inline code (the page stays readable,
+        // unhydrated) and loads only from this origin. Asset responses (scripts, styles, fonts, images)
+        // ignore a CSP. Mirrors the matcher, so no path gets two policies.
+        source: "/:prefix(js|css|images|fonts|icons|public|animated-bgs)/:path*",
+        headers: [{ key: "Content-Security-Policy", value: ASSET_PATH_CSP }],
+      },
+      {
+        source: "/_next/:kind(static|image)/:path*",
+        headers: [{ key: "Content-Security-Policy", value: ASSET_PATH_CSP }],
+      },
+      {
+        source: String.raw`/:file(favicon\.ico|sitemap\.xml|robots\.txt)`,
+        headers: [{ key: "Content-Security-Policy", value: ASSET_PATH_CSP }],
+      },
       {
         // Surveys (/s/*) and contact survey links (/c/*) are embedded in iframes on any domain.
         source: "/((?!s/|c/).*)",

@@ -181,10 +181,10 @@ jobs:
         timeout-minutes: 12
         env:
           # Turborepo hashes its own process environment, not the `.env` file this value
-          # is otherwise written to. E2E_TESTING changes the emitted CSP
-          # (apps/web/next.config.mjs), so it has to be visible here — otherwise any
-          # shared or remote Turbo cache would happily replay the non-E2E build for this
-          # job. No behavioural change today: Next already reads the same value via dotenv.
+          # is otherwise written to. E2E_TESTING is in the web build's `build.env`
+          # (apps/web/turbo.json), so it has to be visible here — otherwise any shared or
+          # remote Turbo cache would happily replay the non-E2E build for this job. The
+          # page CSP no longer depends on it at build time: proxy.ts reads it per request.
           E2E_TESTING: "1"
         run: |
           set -euo pipefail

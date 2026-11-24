@@ -62,18 +62,18 @@ const getStorageOrigins = ({
  * production builds that do not run E2E tests, the same rule the previous static CSP applied.
  */
 export const getCspHosts = (config: TCspHostConfig): TCspHosts => {
-  const keep = (origins: (string | undefined)[]): string[] =>
+  const withoutDisallowedLoopback = (origins: (string | undefined)[]): string[] =>
     origins.filter(
       (origin): origin is string => Boolean(origin) && (config.allowLoopback || !isLoopback(origin!))
     );
 
-  const appOrigins = keep([
+  const appOrigins = withoutDisallowedLoopback([
     toOrigin(config.webappUrl),
     toOrigin(config.publicUrl),
     toOrigin(config.formbricksAppUrl),
   ]);
-  const storageOrigins = keep(getStorageOrigins(config));
-  const sentryOrigins = keep([toOrigin(config.sentryDsn)]);
+  const storageOrigins = withoutDisallowedLoopback(getStorageOrigins(config));
+  const sentryOrigins = withoutDisallowedLoopback([toOrigin(config.sentryDsn)]);
 
   // Any local port over plain HTTP (local S3, a second dev server), plus both spellings of configured
   // loopback origins, which may be HTTPS.

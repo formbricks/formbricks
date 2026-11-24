@@ -30,6 +30,17 @@ vi.mock("@/app/middleware/endpoint-validator", () => ({
 vi.mock("@/lib/constants", () => ({
   TRUSTED_PROXY_HOP_COUNT: 1,
   WEBAPP_URL: "http://localhost:3000",
+  // What lib/csp/request-csp.ts reads: a production instance with no optional integrations.
+  E2E_TESTING: false,
+  FORMBRICKS_APP_URL: "https://app.formbricks.com",
+  IS_DEVELOPMENT: false,
+  IS_FORMBRICKS_SURVEYS_CONFIGURED: false,
+  IS_PRODUCTION: true,
+  S3_BUCKET_NAME: undefined,
+  S3_ENDPOINT_URL: undefined,
+  S3_FORCE_PATH_STYLE: false,
+  S3_REGION: undefined,
+  SENTRY_DSN: undefined,
 }));
 
 vi.mock("@/lib/utils/url", () => ({

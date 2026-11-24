@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { CspNonceProvider } from "@/lib/csp/nonce";
+import { resolveDocumentNonce } from "@/lib/csp/client-nonce";
 import {
   SurveysRendererNotInstalledError,
   isSurveysRendererReady,
@@ -70,8 +70,8 @@ describe("loadSurveysScript", () => {
   });
 
   test("runs the bundle with the page's CSP nonce and hands the nonce to the renderer", async () => {
-    // The provider sets the page's nonce as the root layout renders it.
-    CspNonceProvider({ nonce: "page-nonce", children: null });
+    // The root layout's provider records the page's nonce as it renders.
+    resolveDocumentNonce("page-nonce");
     respondWith(WHOLE_BUNDLE);
 
     await loadSurveysScript(SCRIPT_URL);

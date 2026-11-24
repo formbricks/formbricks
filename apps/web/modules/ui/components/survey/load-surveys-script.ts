@@ -1,4 +1,4 @@
-import { getClientCspNonce } from "@/lib/csp/nonce";
+import { getClientCspNonce } from "@/lib/csp/client-nonce";
 
 /**
  * How often the loader fetches the renderer bundle before giving up. A body cut mid-transfer, or a

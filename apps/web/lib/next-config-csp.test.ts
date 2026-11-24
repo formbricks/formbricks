@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { mimeTypes } from "@formbricks/types/storage";
-import { getCspRoute } from "@/lib/csp/content-security-policy";
 
 // Pages get their CSP from proxy.ts (lib/csp/content-security-policy.ts, whose tests guard ENG-3194's
 // `worker-src`); next.config.mjs keeps only the policies of uploaded files.
@@ -43,20 +42,59 @@ afterAll(() => {
 });
 
 describe("CSP for pages", () => {
+  /** The value the last matching rule sets, which is the one Next sends. */
+  const effectiveCspOf = async (pathname: string): Promise<string | undefined> => {
+    const rules = (await nextConfig.headers?.()) ?? [];
+    let csp: string | undefined;
+    for (const rule of rules) {
+      const matches = getPathMatch(rule.source, {
+        strict: true,
+        removeUnnamedParams: true,
+        sensitive: false,
+      });
+      const header = rule.headers.find((h) => h.key === "Content-Security-Policy");
+      if (header && matches(pathname) !== false) csp = header.value;
+    }
+    return csp;
+  };
+
   // Browsers enforce every policy a response carries, so a page policy here could only block more than
-  // the proxy's, and scanners would still report its 'unsafe-inline' and `https:`.
+  // the proxy's nonce policy, and scanners would still report it.
   test.each(["production", "development"])("next.config sets none on page routes in %s", async (nodeEnv) => {
     vi.stubEnv("NODE_ENV", nodeEnv);
 
-    const rules = (await nextConfig.headers?.()) ?? [];
-    const pagePolicies = rules.flatMap((rule) =>
-      rule.headers
-        .filter((header) => header.key === "Content-Security-Policy" && !isScriptless(header.value))
-        .map(() => rule.source)
-    );
-
-    expect(pagePolicies).toEqual([]);
+    for (const pathname of [
+      "/",
+      "/auth/login",
+      "/workspaces/ws1/surveys",
+      "/s/survey1",
+      "/c/token",
+      "/api/v1/x",
+    ]) {
+      expect(await effectiveCspOf(pathname), pathname).toBeUndefined();
+    }
   });
+
+  // proxy.ts does not run on asset paths, yet a missing asset there still renders the app's 404 page.
+  test.each([
+    "/js/missing.js",
+    "/images/missing",
+    "/animated-bgs/missing",
+    "/_next/static/missing.js",
+    "/_next/image",
+    "/favicon.ico",
+    "/robots.txt",
+  ])(
+    "gives %s, which the proxy skips, a policy with no inline code and no other origin",
+    async (pathname) => {
+      const csp = await effectiveCspOf(pathname);
+
+      expect(csp).toMatch(/script-src 'self';/);
+      expect(csp).not.toMatch(/(script|style)-src [^;]*'unsafe-inline'/);
+      expect(csp).not.toContain("https:");
+      expect(csp).toContain("object-src 'none'");
+    }
+  );
 });
 
 // Guards ENG-7108. A route handler cannot set its own CSP (the config's replaces it), so the policy for
@@ -137,9 +175,8 @@ describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
   };
 
   test("refuses every frame, same origin included", async () => {
+    // X-Frame-Options here; `frame-ancestors 'none'` comes with the proxy's policy (lib/csp).
     expect(await effectiveHeader("/sso-recovery/confirm", "X-Frame-Options")).toBe("DENY");
-    // The proxy's per-request policy carries frame-ancestors.
-    expect(getCspRoute("/sso-recovery/confirm").frameAncestors).toBe("'none'");
   });
 
   test("leaves other app pages framable by their own origin", async () => {

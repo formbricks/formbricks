@@ -1,22 +1,31 @@
+import {
+  E2E_TESTING,
+  FORMBRICKS_APP_URL,
+  IS_DEVELOPMENT,
+  IS_FORMBRICKS_SURVEYS_CONFIGURED,
+  IS_PRODUCTION,
+  S3_BUCKET_NAME,
+  S3_ENDPOINT_URL,
+  S3_FORCE_PATH_STYLE,
+  S3_REGION,
+  SENTRY_DSN,
+  WEBAPP_URL,
+} from "@/lib/constants";
 import { env } from "@/lib/env";
 import { buildContentSecurityPolicy, createCspNonce, getCspRoute } from "./content-security-policy";
 import { getCspHosts } from "./hosts";
 
-const isDevelopment = env.NODE_ENV === "development";
-
 // Read once: these come from the environment the server started with.
 const hosts = getCspHosts({
-  webappUrl: env.WEBAPP_URL?.trim() || "http://localhost:3000",
+  webappUrl: WEBAPP_URL,
   publicUrl: env.PUBLIC_URL?.trim(),
-  formbricksAppUrl: env.FORMBRICKS_WORKSPACE_ID
-    ? env.FORMBRICKS_APP_URL || "https://app.formbricks.com"
-    : undefined,
-  s3EndpointUrl: env.S3_ENDPOINT_URL,
-  s3BucketName: env.S3_BUCKET_NAME,
-  s3Region: env.S3_REGION,
-  s3ForcePathStyle: env.S3_FORCE_PATH_STYLE === "1",
-  sentryDsn: env.SENTRY_DSN,
-  allowLoopback: env.NODE_ENV !== "production" || env.E2E_TESTING === "1",
+  formbricksAppUrl: IS_FORMBRICKS_SURVEYS_CONFIGURED ? FORMBRICKS_APP_URL : undefined,
+  s3EndpointUrl: S3_ENDPOINT_URL,
+  s3BucketName: S3_BUCKET_NAME,
+  s3Region: S3_REGION,
+  s3ForcePathStyle: S3_FORCE_PATH_STYLE,
+  sentryDsn: SENTRY_DSN,
+  allowLoopback: !IS_PRODUCTION || E2E_TESTING,
 });
 
 /**
@@ -37,6 +46,11 @@ export const getRequestCsp = (pathname: string): TRequestCsp => {
   if (STORAGE_PATH.test(pathname)) return { nonce };
   return {
     nonce,
-    policy: buildContentSecurityPolicy({ nonce, route: getCspRoute(pathname), hosts, isDevelopment }),
+    policy: buildContentSecurityPolicy({
+      nonce,
+      route: getCspRoute(pathname),
+      hosts,
+      isDevelopment: IS_DEVELOPMENT,
+    }),
   };
 };

@@ -131,7 +131,7 @@ describe("getCspRoute", () => {
     ["/workspaces/ws1/surveys", "workspace", "'self'"],
     ["/s/survey1", "survey", "*"],
     ["/c/token", "survey", "*"],
-    ["/p/pretty-slug", "survey", "'self'"],
+    ["/p/pretty-slug", "app", "'self'"],
     // Prefixes only match whole segments.
     ["/sso-recoveryx", "app", "'self'"],
     ["/share/x", "app", "'self'"],
