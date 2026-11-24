@@ -3,6 +3,7 @@
 set -euo pipefail
 
 readonly CHART_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${CHART_DIR}/../../scripts/ci-network.sh"
 readonly KIND_VERSION=v0.33.0
 readonly NODE_IMAGE='kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d'
 readonly CLUSTER_NAME="formbricks-envoy-$$-${RANDOM}"
@@ -16,6 +17,12 @@ context="kind-${CLUSTER_NAME}"
 kubectl_test() { kubectl --context "$context" "$@"; }
 
 diagnostics() {
+  # Download/build failures occur before a cluster exists. Do not misreport those as a
+  # disappeared kind context or accidentally query the operator's default cluster.
+  if [[ ! -s "$KUBECONFIG" ]]; then
+    printf '\nNo isolated kind kubeconfig is available; skipping Kubernetes diagnostics.\n' >&2
+    return
+  fi
   printf '\nHelm releases:\n' >&2
   helm list -A >&2 || true
   printf '\nPod state:\n' >&2
@@ -57,7 +64,7 @@ case "$(uname -s)-$(uname -m)" in
     ;;
   *) printf 'Unsupported kind test platform: %s-%s\n' "$(uname -s)" "$(uname -m)" >&2; exit 1 ;;
 esac
-curl --fail --silent --show-error --location --retry 3 \
+ci_download \
   "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-${platform}" \
   --output "$kind_bin"
 printf '%s  %s\n' "$checksum" "$kind_bin" | shasum -a 256 --check
@@ -68,11 +75,12 @@ chmod 700 "$kind_bin"
 # forbid registry fallback and ensure the deployed image is this candidate.
 echo 'Building the Cube candidate for the kind lifecycle test'
 docker build --tag formbricks-cube:envoy-kind "${CHART_DIR}/../../docker/cube-image"
+ci_pull_image "$NODE_IMAGE"
 "$kind_bin" create cluster --name "$CLUSTER_NAME" --image "$NODE_IMAGE" --wait 120s
 "$kind_bin" load docker-image formbricks-cube:envoy-kind --name "$CLUSTER_NAME"
 
 # The platform installs Gateway API Standard and the matching Envoy CRDs as separate ownership units.
-curl --fail --silent --show-error --location --retry 3 \
+ci_download \
   https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml \
   --output "${temp_dir}/gateway-standard.yaml"
 kubectl_test apply --server-side --field-manager=platform-gateway-api -f "${temp_dir}/gateway-standard.yaml"
