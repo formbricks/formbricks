@@ -553,6 +553,8 @@ describe("POST /api/mcp", () => {
       "patch_survey",
       "edit_survey_blocks",
       "set_survey_block_order",
+      "get_survey_visibility",
+      "set_survey_visibility",
       "delete_survey",
       "list_workflows",
       "get_workflow",
@@ -669,6 +671,20 @@ describe("POST /api/mcp", () => {
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: false,
+      },
+    });
+    expect(message.result.tools.find((tool) => tool.name === "get_survey_visibility")).toMatchObject({
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      },
+    });
+    expect(message.result.tools.find((tool) => tool.name === "set_survey_visibility")).toMatchObject({
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
       },
     });
     expect(message.result.tools.find((tool) => tool.name === "delete_survey")).toMatchObject({

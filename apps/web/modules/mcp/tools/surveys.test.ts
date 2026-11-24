@@ -10,6 +10,7 @@ import {
   problemConflict,
   problemForbidden,
   problemSurveyHasLinkedCreatives,
+  problemVisibilityBlocked,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -24,6 +25,8 @@ import {
   setV3SurveyBlockOrderResponse,
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
+import { changeV3SurveyVisibility, getV3SurveyVisibility } from "@/app/api/v3/surveys/visibility/operations";
+import { ZMcpSurveyVisibilityChangeOutput, ZMcpSurveyVisibilityStateOutput } from "./survey-output-schemas";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
 import {
   FULL_MCP_GRANT,
@@ -60,6 +63,11 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
 }));
 
 vi.mock("@/app/api/v3/surveys/generate/operations", () => ({ generateV3Survey: vi.fn() }));
+
+vi.mock("@/app/api/v3/surveys/visibility/operations", () => ({
+  changeV3SurveyVisibility: vi.fn(),
+  getV3SurveyVisibility: vi.fn(),
+}));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
@@ -187,7 +195,7 @@ describe("registerSurveyTools", () => {
   test("registers survey tools with planning annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(9);
+    expect(server.registerTool).toHaveBeenCalledTimes(11);
     expect(tools.get("list_surveys")?.config).toMatchObject({
       title: "List surveys",
       annotations: {
@@ -269,6 +277,30 @@ describe("registerSurveyTools", () => {
         idempotentHint: false,
       },
     });
+    expect(tools.get("get_survey_visibility")?.config).toMatchObject({
+      title: "Get survey visibility",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      },
+    });
+    expect(tools.get("set_survey_visibility")?.config).toMatchObject({
+      title: "Set survey visibility",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+      },
+    });
+    expect(tools.get("get_survey_visibility")?.config.outputSchema).toBe(ZMcpSurveyVisibilityStateOutput);
+    expect(tools.get("set_survey_visibility")?.config.outputSchema).toBe(ZMcpSurveyVisibilityChangeOutput);
+    expect(
+      ZMcpSurveyVisibilityStateOutput.safeParse({ data: { id: "clxx1234567890123456789012" } }).success
+    ).toBe(false);
+    expect(
+      ZMcpSurveyVisibilityChangeOutput.safeParse({ data: { id: "clxx1234567890123456789012" } }).success
+    ).toBe(false);
     expect(tools.get("delete_survey")?.config).toMatchObject({
       title: "Delete survey",
       annotations: {
@@ -832,6 +864,99 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  test("get_survey_visibility reads the state without auditing and returns it", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const state = {
+      id: surveyId,
+      visibility: "workspace",
+      owner: { name: "Ada" },
+      access: { canManageVisibility: true, via: "owner" },
+      blockers: [],
+      impact: { memberCount: 2, responseCount: 5 },
+      pending: null,
+      version: 1,
+      allowedTargets: ["restricted"],
+    };
+    vi.mocked(getV3SurveyVisibility).mockResolvedValue(successResponse(state, { requestId: "req_tool" }));
+
+    const result = await tools.get("get_survey_visibility")!.handler({ surveyId }, { http: { authInfo } });
+
+    expect(getV3SurveyVisibility).toHaveBeenCalledWith({
+      surveyId,
+      authentication: apiKeyAuth,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+    });
+    expect(buildV3AuditLog).not.toHaveBeenCalled();
+    expect(result.structuredContent).toEqual({ data: state, requestId: "req_tool" });
+    expect(ZMcpSurveyVisibilityStateOutput.safeParse(result.structuredContent).success).toBe(true);
+  });
+
+  test("set_survey_visibility changes the value, queues a visibilityChanged audit and returns the result", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const auditLog = { status: "failure" as const };
+    const changed = {
+      id: surveyId,
+      visibility: "workspace",
+      owner: { name: "Ada" },
+      access: { canManageVisibility: true, via: "owner" },
+      version: 2,
+      pending: null,
+      changedAt: "2026-11-24T10:00:00.000Z",
+      changedBy: { type: "user", id: "user_1", name: "Ada" },
+    };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
+    vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+      successResponse(changed, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("set_survey_visibility")!
+      .handler({ surveyId, visibility: "workspace" }, { http: { authInfo } });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      apiKeyAuth,
+      "visibilityChanged",
+      "survey",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
+    expect(changeV3SurveyVisibility).toHaveBeenCalledWith({
+      surveyId,
+      body: { visibility: "workspace" },
+      authentication: apiKeyAuth,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+      auditLog,
+    });
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+    expect(result.structuredContent).toEqual({ data: changed, requestId: "req_tool" });
+    expect(ZMcpSurveyVisibilityChangeOutput.safeParse(result.structuredContent).success).toBe(true);
+  });
+
+  test("set_survey_visibility relays the blocker list on a refused restriction", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const blockers = [{ id: "clwh1234567890123456789012", name: "Zapier", type: "webhook" }];
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+    vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+      problemVisibilityBlocked("req_conflict", blockers, "/api/mcp")
+    );
+
+    const result = await tools
+      .get("set_survey_visibility")!
+      .handler({ surveyId, visibility: "restricted" }, { http: { authInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({
+      status: 409,
+      code: "visibility_blocked_by_connections",
+      details: { blockers },
+    });
+  });
+
   test("write tools return MCP errors for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
     const surveyId = "clxx1234567890123456789012";
@@ -841,6 +966,8 @@ describe("registerSurveyTools", () => {
       ["delete_survey", { surveyId }, deleteV3Survey],
       ["edit_survey_blocks", { surveyId, ops: [{ op: "remove", id: "blk_a" }] }, editV3SurveyBlocksResponse],
       ["set_survey_block_order", { surveyId, order: ["blk_a"] }, setV3SurveyBlockOrderResponse],
+      ["get_survey_visibility", { surveyId }, getV3SurveyVisibility],
+      ["set_survey_visibility", { surveyId, visibility: "workspace" }, changeV3SurveyVisibility],
       // Writes nothing, but spends AI budget on the caller's behalf: Surveys: Write, like the REST route.
       ["generate_survey", { workspaceId: surveyId, prompt: "A survey about onboarding" }, generateV3Survey],
     ];
@@ -959,6 +1086,22 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
     expect(outcome.result?.isError).toBe(true);
     expect(errorText(outcome)).toContain(expected);
     expect(listV3Surveys).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["get_survey_visibility", { surveyId: "clxx1234567890123456789012", visible: true }, "visible"],
+    [
+      "set_survey_visibility",
+      { surveyId: "clxx1234567890123456789012", visibility: "workspace", confirm: true },
+      "confirm",
+    ],
+  ])("%s rejects an undeclared argument instead of silently dropping it", async (name, args, expected) => {
+    const outcome = await callTool(name, args);
+
+    expect(outcome.result?.isError).toBe(true);
+    expect(errorText(outcome)).toContain(expected);
+    expect(getV3SurveyVisibility).not.toHaveBeenCalled();
+    expect(changeV3SurveyVisibility).not.toHaveBeenCalled();
   });
 
   test("accepts the declared spelling and reaches the operation", async () => {

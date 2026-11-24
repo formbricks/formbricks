@@ -4,7 +4,12 @@ import { ZCustomCssScope } from "@formbricks/types/custom-css";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { ZSurveyRatingElement } from "@formbricks/types/surveys/elements";
 import { EXPRESSION_FUNCTIONS } from "@formbricks/types/surveys/expressions";
-import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
+import {
+  ZSurveyFilters,
+  ZSurveyStatus,
+  ZSurveyType,
+  ZSurveyVisibility,
+} from "@formbricks/types/surveys/types";
 import {
   MAX_FEEDBACK_RECORDS_PER_BATCH,
   ZV3FeedbackRecordCreateBodyFields,
@@ -523,6 +528,25 @@ export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.e
   workspaceId: ZId.describe("Workspace ID whose shared survey CSS should be saved or cleared."),
 }).strict();
 
+/**
+ * Visibility reads and writes take only the survey id; the setter adds the target value. Both need
+ * Surveys: Write, because the operation behind them is limited to whoever may manage visibility.
+ */
+export const ZMcpSurveyVisibilityInput = z
+  .object({
+    surveyId: z.cuid2().describe("Survey ID."),
+  })
+  .strict();
+
+export const ZMcpSetSurveyVisibilityInput = z
+  .object({
+    surveyId: z.cuid2().describe("Survey ID."),
+    visibility: ZSurveyVisibility.describe(
+      "`workspace` shares the survey with the whole workspace; `restricted` limits it to its owner and organization owners/managers."
+    ),
+  })
+  .strict();
+
 export const ZMcpDeleteSurveyInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID to delete."),
@@ -652,6 +676,8 @@ export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrde
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpGenerateSurveyInput = z.infer<typeof ZMcpGenerateSurveyInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
+export type TMcpSurveyVisibilityInput = z.infer<typeof ZMcpSurveyVisibilityInput>;
+export type TMcpSetSurveyVisibilityInput = z.infer<typeof ZMcpSetSurveyVisibilityInput>;
 export type TMcpGetWorkspaceCustomCssInput = z.infer<typeof ZMcpGetWorkspaceCustomCssInput>;
 export type TMcpPatchWorkspaceCustomCssInput = z.infer<typeof ZMcpPatchWorkspaceCustomCssInput>;
 export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatasetsInput>;
