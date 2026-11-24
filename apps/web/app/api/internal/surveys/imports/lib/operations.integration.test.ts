@@ -5,6 +5,7 @@ import { exportSurveyOperation } from "@/app/api/internal/surveys/[surveyId]/exp
 import { streamSurveyImport } from "@/app/api/internal/surveys/import/lib/operations";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { cache } from "@/lib/cache";
 import { openSurveyImportUploadInProcess } from "@/modules/survey/import/core/__fixtures__/in-process-upload";
@@ -507,11 +508,10 @@ describe("a Formbricks file imported into another organization", () => {
       where: { id: fixture.foreignWorkspaceId },
       select: { organizationId: true },
     });
-    const target = (
-      await prisma.workspace.create({
-        data: { name: "Linked headlines", organizationId: organization.organizationId },
-      })
-    ).id;
+    const { workspaceId: target } = await createWorkspaceWithContactDirectory(
+      organization.organizationId,
+      "Linked headlines"
+    );
     await synchronizeAuthzedIntegrationFixture();
     const done = await previewDone(target, exportedFile);
     const payload = structuredClone(done.payload) as typeof done.payload & {
@@ -622,23 +622,24 @@ describe("a Formbricks file imported into another organization", () => {
       where: { id: fixture.foreignWorkspaceId },
       select: { organizationId: true },
     });
-    const empty = await prisma.workspace.create({
-      data: { name: "Empty", organizationId: organization.organizationId },
-    });
+    const { workspaceId: empty } = await createWorkspaceWithContactDirectory(
+      organization.organizationId,
+      "Empty"
+    );
     await synchronizeAuthzedIntegrationFixture();
-    const done = await previewDone(empty.id, exportedFile);
-    const before = await countReferences(empty.id);
+    const done = await previewDone(empty, exportedFile);
+    const before = await countReferences(empty);
     surveyLimit.fail = true;
 
     const response = await commit({
-      workspaceId: empty.id,
+      workspaceId: empty,
       payload: done.payload,
       references: done.references,
     });
 
     expect(response.status).toBe(422);
     expect(await response.json()).toMatchObject({ code: "workspace_survey_limit_reached" });
-    expect(await countReferences(empty.id)).toEqual(before);
+    expect(await countReferences(empty)).toEqual(before);
     expect(before).toMatchObject({ surveys: 0, actionClasses: 0, attributeKeys: 0, languages: 0 });
   });
 });
@@ -652,15 +653,12 @@ describe("the action classes a Formbricks file brings", () => {
       where: { id: fixture.foreignWorkspaceId },
       select: { organizationId: true },
     });
-    const workspace = await prisma.workspace.create({
-      data: { name: createId(), organizationId },
-      select: { id: true },
-    });
+    const { workspaceId } = await createWorkspaceWithContactDirectory(organizationId, createId());
     await prisma.actionClass.createMany({
-      data: actionClasses.map((actionClass) => ({ ...actionClass, workspaceId: workspace.id })),
+      data: actionClasses.map((actionClass) => ({ ...actionClass, workspaceId })),
     });
     await synchronizeAuthzedIntegrationFixture();
-    return workspace.id;
+    return workspaceId;
   };
 
   /** The exported file with its triggers replaced by one on each of these actions. */

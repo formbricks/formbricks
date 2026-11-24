@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import {
   type TMcpToolCallOutcome,
   callMcpTool,
@@ -73,18 +74,16 @@ const setUp = async (): Promise<TSetup> => {
   await prisma.membership.create({
     data: { userId, organizationId: organization.id, role: "owner", accepted: true },
   });
-  const workspace = await prisma.workspace.create({
-    data: { name: "Audience", organizationId: organization.id },
-  });
+  const { workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "Audience");
   const emailKey = await prisma.contactAttributeKey.create({
-    data: { key: "email", name: "Email", type: "default", workspaceId: workspace.id },
+    data: { key: "email", name: "Email", type: "default", workspaceId },
   });
   const planKey = await prisma.contactAttributeKey.create({
-    data: { key: "plan", name: "Plan", workspaceId: workspace.id },
+    data: { key: "plan", name: "Plan", workspaceId },
   });
   const contact = await prisma.contact.create({
     data: {
-      workspaceId: workspace.id,
+      workspaceId,
       attributes: {
         create: [
           { attributeKeyId: emailKey.id, value: "ada@example.com" },
@@ -94,25 +93,26 @@ const setUp = async (): Promise<TSetup> => {
     },
   });
   const segment = await prisma.segment.create({
-    data: { title: "Pro users", isPrivate: false, filters: [], workspaceId: workspace.id },
+    data: { title: "Pro users", isPrivate: false, filters: [], workspaceId },
   });
   const actionClass = await prisma.actionClass.create({
-    data: { name: "Checkout", type: "code", key: "checkout", workspaceId: workspace.id },
+    data: { name: "Checkout", type: "code", key: "checkout", workspaceId },
   });
 
   const foreignOrganization = await prisma.organization.create({ data: { name: "Someone else's" } });
-  const foreignWorkspace = await prisma.workspace.create({
-    data: { name: "Foreign", organizationId: foreignOrganization.id },
-  });
-  await prisma.contact.create({ data: { workspaceId: foreignWorkspace.id } });
+  const { workspaceId: foreignWorkspaceId } = await createWorkspaceWithContactDirectory(
+    foreignOrganization.id,
+    "Foreign"
+  );
+  await prisma.contact.create({ data: { workspaceId: foreignWorkspaceId } });
 
   await synchronizeAuthzedIntegrationFixture();
   const clientId = await registerClient("audience client");
   return {
     cookie,
     userId,
-    workspaceId: workspace.id,
-    foreignWorkspaceId: foreignWorkspace.id,
+    workspaceId,
+    foreignWorkspaceId,
     clientId,
     contactId: contact.id,
     segmentId: segment.id,
