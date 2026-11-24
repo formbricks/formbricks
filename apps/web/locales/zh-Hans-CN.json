@@ -3578,7 +3578,7 @@
         "directory_name": "目录名称",
         "directory_updated": "目录已更新",
         "empty_state": "暂无联系人目录。",
-        "error_name_required": "请添加名称。被两个或更多工作区使用的目录必须设置名称。",
+        "error_name_required": "请输入名称。",
         "error_name_taken": "已存在同名的联系人目录。",
         "error_name_too_long": "请使用不超过 {max} 个字符。",
         "error_workspace_cannot_leave": "工作区无法退出其所在的目录。",

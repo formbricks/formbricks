@@ -3578,7 +3578,7 @@
         "directory_name": "Nome do diretório",
         "directory_updated": "Diretório atualizado",
         "empty_state": "Ainda não há diretórios de contatos.",
-        "error_name_required": "Adicione um nome. Um diretório usado por dois ou mais workspaces precisa de um.",
+        "error_name_required": "Adicione um nome.",
         "error_name_taken": "Já existe um diretório de contatos com esse nome.",
         "error_name_too_long": "Use {max} caracteres ou menos.",
         "error_workspace_cannot_leave": "Um workspace não pode sair do próprio diretório.",

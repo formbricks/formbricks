@@ -2113,8 +2113,8 @@ enum ContactDirectoryMatchingKey {
 /// An organization-level home for contacts, their attribute keys and segments. Workspaces link to one
 /// directory (or none); several workspaces can share one.
 ///
-/// @property name - Optional, unique per organization. A directory made by the 6.3 migration has none,
-///                  and the app shows its workspace's name instead.
+/// @property name - Required, unique per organization. The 6.3 migration names each directory after its
+///                  workspace.
 /// @property matchingKey - How a contact is matched: email or external ID. Chosen at creation, never changed.
 /// @property workspaces - Workspaces that use this directory. A Workspace AFTER DELETE trigger deletes the
 ///                        directory when its last workspace goes.
@@ -2122,7 +2122,7 @@ model ContactDirectory {
   id             String                      @id @default(cuid())
   createdAt      DateTime                    @default(now()) @map(name: "created_at")
   updatedAt      DateTime                    @updatedAt @map(name: "updated_at")
-  name           String?
+  name           String
   matchingKey    ContactDirectoryMatchingKey
   organizationId String
   organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)

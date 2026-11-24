@@ -3578,7 +3578,7 @@
         "directory_name": "Verzeichnisname",
         "directory_updated": "Verzeichnis aktualisiert",
         "empty_state": "Noch keine Kontaktverzeichnisse vorhanden.",
-        "error_name_required": "Gib einen Namen ein. Ein Verzeichnis, das von zwei oder mehr Workspaces genutzt wird, braucht einen.",
+        "error_name_required": "Gib einen Namen ein.",
         "error_name_taken": "Ein Kontaktverzeichnis mit diesem Namen existiert bereits.",
         "error_name_too_long": "Verwende maximal {max} Zeichen.",
         "error_workspace_cannot_leave": "Ein Workspace kann sein Verzeichnis nicht verlassen.",

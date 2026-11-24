@@ -3578,7 +3578,7 @@
         "directory_name": "Directory name",
         "directory_updated": "Directory updated",
         "empty_state": "No contact directories yet.",
-        "error_name_required": "Add a name. A directory used by two or more workspaces needs one.",
+        "error_name_required": "Add a name.",
         "error_name_taken": "A contact directory with this name already exists.",
         "error_name_too_long": "Use {max} characters or fewer.",
         "error_workspace_cannot_leave": "A workspace can't leave its directory.",

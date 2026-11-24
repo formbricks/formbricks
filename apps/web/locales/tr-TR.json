@@ -3578,7 +3578,7 @@
         "directory_name": "Dizin adı",
         "directory_updated": "Dizin güncellendi",
         "empty_state": "Henüz kişi dizini yok.",
-        "error_name_required": "Bir ad ekle. İki veya daha fazla çalışma alanı tarafından kullanılan bir dizin için ad gereklidir.",
+        "error_name_required": "Bir ad ekle.",
         "error_name_taken": "Bu ada sahip bir kişi dizini zaten var.",
         "error_name_too_long": "En fazla {max} karakter kullan.",
         "error_workspace_cannot_leave": "Bir çalışma alanı dizininden ayrılamaz.",

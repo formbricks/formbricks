@@ -14,7 +14,7 @@ export class ContactDirectoryNameTakenError extends Error {
 
 export class ContactDirectoryNameRequiredError extends Error {
   constructor() {
-    super("A contact directory used by two or more workspaces needs a name");
+    super("A contact directory needs a name");
     this.name = "ContactDirectoryNameRequiredError";
   }
 }

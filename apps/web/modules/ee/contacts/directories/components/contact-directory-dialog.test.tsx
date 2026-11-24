@@ -17,7 +17,7 @@ const K = "workspace.settings.contact_directories";
 
 const directory = (id: string, extra: Partial<TContactDirectory>): TContactDirectory => ({
   id,
-  name: null,
+  name: id,
   matchingKey: "email",
   workspaces: [],
   contactCount: 0,
@@ -26,6 +26,7 @@ const directory = (id: string, extra: Partial<TContactDirectory>): TContactDirec
 });
 
 const BRAND = directory("d-brand", {
+  name: "Brand",
   workspaces: [{ id: "w-brand", name: "Brand Tracking" }],
   workspaceCanMove: true,
 });
@@ -124,18 +125,33 @@ describe("ContactDirectoryDialog", () => {
     ).toBeNull();
   });
 
-  test("shows the shared-contacts line once two workspaces are picked, and asks for a name before saving", async () => {
+  test("shows the shared-contacts line once two workspaces are picked", async () => {
     renderDialog();
 
     await pick("Brand Tracking");
     expect(dialog().queryByText(`${K}.shared_contacts_note`)).toBeNull();
     await pick("HCP Relationship");
     expect(dialog().getByText(`${K}.shared_contacts_note`)).toBeInTheDocument();
+  });
 
+  test("asks for a name before creating a directory with one workspace", async () => {
+    renderDialog();
+
+    await pick("Brand Tracking");
     submit(`${K}.create_directory`);
 
     expect(await dialog().findByText(`${K}.error_name_required`)).toBeInTheDocument();
     expect(requests("POST")).toHaveLength(0);
+  });
+
+  test("won't save a directory whose name was cleared", async () => {
+    renderDialog({ directory: BRAND });
+
+    fireEvent.change(dialog().getByLabelText("common.name"), { target: { value: "   " } });
+    submit("common.save");
+
+    expect(await dialog().findByText(`${K}.error_name_required`)).toBeInTheDocument();
+    expect(requests("PATCH")).toHaveLength(0);
   });
 
   test("creates an external-ID directory with the picked workspaces and closes", async () => {
@@ -158,10 +174,10 @@ describe("ContactDirectoryDialog", () => {
     expect(toast.success).toHaveBeenCalledWith(`${K}.directory_created`);
   });
 
-  test("manages an unnamed directory: its workspace's name is the placeholder and the matching key is fixed", () => {
+  test("manages a directory: its name is filled in and the matching key is fixed", () => {
     renderDialog({ directory: BRAND });
 
-    expect(dialog().getByLabelText("common.name")).toHaveAttribute("placeholder", "Brand Tracking");
+    expect(dialog().getByLabelText("common.name")).toHaveValue("Brand");
     expect(dialog().getByLabelText("common.email")).toBeDisabled();
     expect(dialog().getByLabelText(`${K}.external_id`)).toBeDisabled();
   });

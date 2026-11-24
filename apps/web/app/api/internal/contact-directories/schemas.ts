@@ -14,19 +14,18 @@ export const ZContactDirectoryParams = z.object({ directoryId: z.cuid2() }).stri
 /** The `[directoryId]` routes take no query: the organization comes from the directory. */
 export const ZContactDirectoryQuery = z.object({}).strict();
 
-/** Null or blank means "no name"; the service trims it. Whether one is required is a rule (422), not a shape. */
+/** Every directory has a name (spec decision 2). The service trims it and refuses a blank one (422). */
 const ZDirectoryName = z
   .string()
   .max(CONTACT_DIRECTORY_NAME_MAX_LENGTH)
-  .refine((name) => !name.includes("\u0000"), { message: "Must not contain NUL characters." })
-  .nullable();
+  .refine((name) => !name.includes("\u0000"), { message: "Must not contain NUL characters." });
 
 const ZWorkspaceIds = z.array(z.cuid2()).min(1).max(CONTACT_DIRECTORY_WORKSPACES_MAX);
 
-/** At least one workspace (spec decision 21): a directory is never created empty. */
+/** A name and at least one workspace (spec decisions 2 and 21): a directory is never created empty. */
 export const ZContactDirectoryCreateBody = z
   .object({
-    name: ZDirectoryName.optional(),
+    name: ZDirectoryName,
     matchingKey: z.enum(CONTACT_DIRECTORY_MATCHING_KEYS),
     workspaceIds: ZWorkspaceIds,
   })
@@ -36,7 +35,7 @@ export type TContactDirectoryCreateBody = z.infer<typeof ZContactDirectoryCreate
 
 /**
  * Name and workspaces only. `matchingKey` is not accepted (strict), because it never changes after creation
- * (spec decision 1). `workspaceIds` is the directory's full list.
+ * (spec decision 1). A name left out stays as it is. `workspaceIds` is the directory's full list.
  */
 export const ZContactDirectoryUpdateBody = z
   .object({

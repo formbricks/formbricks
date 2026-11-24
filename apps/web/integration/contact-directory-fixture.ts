@@ -12,8 +12,9 @@ export const createWorkspaceWithContactDirectory = async (
   organizationId: string,
   name = "Workspace"
 ): Promise<{ workspaceId: string; directoryId: string }> => {
+  // Named after its workspace, as the migration names every directory.
   const directory = await prisma.contactDirectory.create({
-    data: { organizationId, matchingKey: "email" },
+    data: { organizationId, name, matchingKey: "email" },
     select: { id: true },
   });
   const workspace = await prisma.workspace.create({

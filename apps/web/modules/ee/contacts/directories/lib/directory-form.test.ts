@@ -11,8 +11,10 @@ const messagesOf = (result: { success: boolean; error?: { issues: { message: str
 describe("getContactDirectoryFormSchema", () => {
   const schema = getContactDirectoryFormSchema(t, []);
 
-  test("accepts one unnamed workspace", () => {
-    expect(schema.safeParse({ name: "", matchingKey: "email", workspaceIds: ["w1"] }).success).toBe(true);
+  test("accepts a named directory with one workspace, trimming the name", () => {
+    const result = schema.safeParse({ name: "  EU  ", matchingKey: "email", workspaceIds: ["w1"] });
+
+    expect(result.data?.name).toBe("EU");
   });
 
   test("requires at least one workspace", () => {
@@ -21,10 +23,14 @@ describe("getContactDirectoryFormSchema", () => {
     ]);
   });
 
-  test("requires a name once two workspaces are picked", () => {
-    expect(
-      messagesOf(schema.safeParse({ name: "  ", matchingKey: "externalId", workspaceIds: ["w1", "w2"] }))
-    ).toEqual(["workspace.settings.contact_directories.error_name_required"]);
+  test.each(["", "   "])("requires a name with one workspace, on create and on manage (%j)", (name) => {
+    const manage = getContactDirectoryFormSchema(t, ["w1"]);
+
+    for (const form of [schema, manage]) {
+      expect(messagesOf(form.safeParse({ name, matchingKey: "externalId", workspaceIds: ["w1"] }))).toEqual([
+        "workspace.settings.contact_directories.error_name_required",
+      ]);
+    }
   });
 
   test("refuses to let a workspace the directory already has leave it", () => {

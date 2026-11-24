@@ -33,7 +33,7 @@ test.describe("Contact directories settings", () => {
     await expect(createButton).toBeEnabled({ timeout: 30_000 });
 
     const table = page.getByRole("table", { name: "Contact directories" });
-    // The fixture's directory has no name yet, so the list shows it under its workspace's name.
+    // The fixture names its directory after the workspace, as the migration does.
     await expect(table.getByRole("row").filter({ hasText: workspaceA.name })).toBeVisible();
 
     await createButton.click();

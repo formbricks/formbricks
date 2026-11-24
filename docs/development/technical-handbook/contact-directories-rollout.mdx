@@ -167,7 +167,7 @@ Write the measured total time into the upgrade note for the release, and the bat
 Run on a Cloud-size clone or staging, as noted.
 
 **Migration (clone)**
-- Every workspace has a directory, with no name and matching key `email`.
+- Every workspace has a directory named after it (cut to 100 characters, with a ` (2)` suffix where two cut names clash) and matching key `email`.
 - `SELECT count(*) FROM "Contact" WHERE "directoryId" IS NULL` returns 0, and the `report` log line matches the counts per directory.
 - The four new indexes are valid.
 

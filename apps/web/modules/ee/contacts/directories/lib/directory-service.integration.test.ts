@@ -68,7 +68,7 @@ describe("a workspace without a contact directory", () => {
 
     const { id: directoryId } = await createContactDirectory({
       organizationId,
-      name: null,
+      name: "Customers",
       matchingKey: "email",
       workspaceIds: [workspaceId],
     });
@@ -97,7 +97,7 @@ describe("a workspace without a contact directory", () => {
 
     const { id: directoryId } = await createContactDirectory({
       organizationId,
-      name: null,
+      name: "Customers",
       matchingKey: "email",
       workspaceIds: [workspaceId],
     });
@@ -213,7 +213,7 @@ describe("a survey's private segment keeps its keys when its workspace moves", (
     const workspaceId = await createWorkspaceWithoutDirectory(organizationId);
     const { id: oldDirectoryId } = await createContactDirectory({
       organizationId,
-      name: null,
+      name: "Old",
       matchingKey: "externalId",
       workspaceIds: [workspaceId],
     });
@@ -230,7 +230,7 @@ describe("a survey's private segment keeps its keys when its workspace moves", (
     await expect(
       createContactDirectory({
         organizationId,
-        name: null,
+        name: "New",
         matchingKey: "email",
         workspaceIds: [workspaceId],
       })
@@ -245,7 +245,7 @@ describe("a survey's private segment keeps its keys when its workspace moves", (
     const workspaceId = await createWorkspaceWithoutDirectory(organizationId);
     await createContactDirectory({
       organizationId,
-      name: null,
+      name: "Old",
       matchingKey: "externalId",
       workspaceIds: [workspaceId],
     });
@@ -263,7 +263,7 @@ describe("a survey's private segment keeps its keys when its workspace moves", (
 
     const { id: directoryId } = await createContactDirectory({
       organizationId,
-      name: null,
+      name: "New",
       matchingKey: "externalId",
       workspaceIds: [workspaceId],
     });

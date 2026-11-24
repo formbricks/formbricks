@@ -45,8 +45,11 @@ vi.mock("@formbricks/logger", () => ({
 }));
 vi.mock("server-only", () => ({}));
 
-const { ContactDirectoryNameTakenError, ContactDirectoryWorkspacesNotMovableError } =
-  await import("@/modules/ee/contacts/directories/lib/directory-errors");
+const {
+  ContactDirectoryNameRequiredError,
+  ContactDirectoryNameTakenError,
+  ContactDirectoryWorkspacesNotMovableError,
+} = await import("@/modules/ee/contacts/directories/lib/directory-errors");
 
 const ORG_ID = "clorg11111111111111111111";
 const USER_ID = "cluser1111111111111111111";
@@ -154,11 +157,22 @@ describe("POST /api/internal/contact-directories", () => {
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
-  test("rejects a body without a workspace, with an unknown matching key or with extra fields", async () => {
+  test("rejects a body without a name or a workspace, with an unknown matching key or with extra fields", async () => {
+    const { name: _name, ...unnamed } = body;
+    expect((await post(unnamed)).status).toBe(400);
+    expect((await post({ ...body, name: null })).status).toBe(400);
     expect((await post({ ...body, workspaceIds: [] })).status).toBe(400);
     expect((await post({ ...body, matchingKey: "phone" })).status).toBe(400);
     expect((await post({ ...body, archived: true })).status).toBe(400);
     expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  test("answers 422 for a blank name", async () => {
+    mocks.create.mockRejectedValueOnce(new ContactDirectoryNameRequiredError());
+    const blank = await post({ ...body, name: "   " });
+
+    expect(blank.status).toBe(422);
+    expect((await blank.json()).code).toBe("contact_directory_name_required");
   });
 
   test("answers 409 for a taken name and for a workspace that can no longer move", async () => {

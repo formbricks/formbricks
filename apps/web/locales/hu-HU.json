@@ -3578,7 +3578,7 @@
         "directory_name": "A címtár neve",
         "directory_updated": "A címtár frissítése megtörtént",
         "empty_state": "Még nincsenek kapcsolattartói címtárak.",
-        "error_name_required": "Kérjük, adjon meg egy nevet. A két vagy több munkaterület által használt címtárhoz név megadása szükséges.",
+        "error_name_required": "Kérjük, adjon meg egy nevet.",
         "error_name_taken": "Ilyen nevű kapcsolattartói címtár már létezik.",
         "error_name_too_long": "Kérjük, legfeljebb {max} karaktert használjon.",
         "error_workspace_cannot_leave": "A munkaterület nem hagyhatja el a saját címtárát.",

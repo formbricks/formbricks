@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS "ContactDirectory" (
     "id" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-    "name" TEXT,
+    "name" TEXT NOT NULL,
     "matchingKey" "ContactDirectoryMatchingKey" NOT NULL,
     "organizationId" TEXT NOT NULL,
 

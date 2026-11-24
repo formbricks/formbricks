@@ -81,12 +81,16 @@ const SCHEMA_6_2 = `
 // 30,000 contacts, ids interleaved across workspaces: three large workspaces hold 80%.
 const LARGE_WORKSPACES = ["ws_big_1", "ws_big_2", "ws_big_3"];
 const SEED = `
-  INSERT INTO "Organization" VALUES ('org_a', 'Acme'), ('org_b', 'Beta');
+  INSERT INTO "Organization" VALUES ('org_a', 'Acme'), ('org_b', 'Beta'), ('org_long', 'Long names');
   INSERT INTO "Workspace" VALUES
     ('ws_small_0', 'Small 0', 'org_a'), ('ws_small_1', 'Small 1', 'org_a'), ('ws_small_2', 'Small 2', 'org_a'),
     ('ws_small_3', 'Small 3', 'org_a'), ('ws_small_4', 'Small 4', 'org_a'),
     ('ws_big_1', 'Big 1', 'org_a'), ('ws_big_2', 'Big 2', 'org_a'), ('ws_big_3', 'Big 3', 'org_a'),
-    ('ws_empty', 'No contacts', 'org_a'), ('ws_beta', 'Beta', 'org_b');
+    ('ws_empty', 'No contacts', 'org_a'), ('ws_beta', 'Beta', 'org_b'),
+    -- Names longer than a directory name may be: two share their first 100 characters, and a third is
+    -- exactly those 100 characters, so it keeps them although its id sorts last.
+    ('ws_long_1', repeat('L', 100) || ' one', 'org_long'), ('ws_long_2', repeat('L', 100) || ' two', 'org_long'),
+    ('ws_long_z', repeat('L', 100), 'org_long');
   INSERT INTO "Contact" ("id", "updated_at", "workspaceId")
   SELECT 'c' || lpad(n::text, 8, '0'), now(), CASE
       WHEN n % 10 = 0 THEN 'ws_small_' || ((n / 10) % 5)::text
@@ -180,38 +184,46 @@ describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", ()
     ).toBeNull();
   });
 
-  test("every workspace gets its own unnamed directory, with its keys and segments", async () => {
+  test("every workspace gets its own directory named after it, with its keys and segments", async () => {
     await runCreateDirectories();
     await runCreateDirectories();
 
     const directories = await rows<{
       id: string;
-      name: string | null;
+      name: string;
       matchingKey: string;
       organizationId: string;
       workspaceId: string;
+      workspaceName: string;
       workspaceOrganizationId: string;
     }>(
       `SELECT d."id", d."name", d."matchingKey"::text AS "matchingKey", d."organizationId",
-              w."id" AS "workspaceId", w."organizationId" AS "workspaceOrganizationId"
+              w."id" AS "workspaceId", w."name" AS "workspaceName", w."organizationId" AS "workspaceOrganizationId"
        FROM "ContactDirectory" d JOIN "Workspace" w ON w."contactDirectoryId" = d."id"`
     );
-    // Ten workspaces, the one with no contacts included; a second run made none.
-    expect(await rows(`SELECT 1 FROM "ContactDirectory"`)).toHaveLength(10);
-    expect(directories).toHaveLength(10);
-    expect(new Set(directories.map((d) => d.id)).size).toBe(10);
+    // Thirteen workspaces, the ones with no contacts included; a second run made none.
+    expect(await rows(`SELECT 1 FROM "ContactDirectory"`)).toHaveLength(13);
+    expect(directories).toHaveLength(13);
+    expect(new Set(directories.map((d) => d.id)).size).toBe(13);
+    const nameOf = Object.fromEntries(directories.map((d) => [d.workspaceId, d.name]));
     for (const directory of directories) {
-      expect(directory.name).toBeNull();
+      if (directory.organizationId !== "org_long") expect(directory.name).toBe(directory.workspaceName);
       expect(directory.matchingKey).toBe("email");
       expect(directory.organizationId).toBe(directory.workspaceOrganizationId);
       expect(directory.id).toMatch(/^[0-9a-z]+$/);
     }
+    // Cut to 100 characters; the exact match keeps them, the others take a suffix in id order.
+    expect(nameOf).toMatchObject({
+      ws_long_z: "L".repeat(100),
+      ws_long_1: `${"L".repeat(96)} (2)`,
+      ws_long_2: `${"L".repeat(96)} (3)`,
+    });
 
     expect(await misplaced("ContactAttributeKey")).toEqual([]);
     expect(await misplaced("Segment")).toEqual([]);
     expect(await rows(`SELECT 1 FROM "Segment" WHERE "directoryId" IS NULL`)).toHaveLength(0);
     expect(logger.info).toHaveBeenCalledWith(
-      expect.objectContaining({ directoriesCreated: 10 }),
+      expect.objectContaining({ directoriesCreated: 13 }),
       expect.any(String)
     );
   });

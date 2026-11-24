@@ -1,9 +1,5 @@
 import type { TFunction } from "i18next";
-import type { TContactDirectory, TContactDirectoryList } from "../types";
-
-/** An unnamed directory (one the migration made) shows its workspace's name (spec decision 2). */
-export const getContactDirectoryDisplayName = (directory: TContactDirectory): string =>
-  directory.name ?? directory.workspaces[0]?.name ?? "";
+import type { TContactDirectoryList } from "../types";
 
 export type TWorkspacePickerOption = {
   value: string;
@@ -45,7 +41,7 @@ export const getWorkspacePickerOptions = ({
         label: workspace.name,
         disabled: true,
         description: t("workspace.settings.contact_directories.workspace_uses_directory", {
-          directoryName: getContactDirectoryDisplayName(directory),
+          directoryName: directory.name,
         }),
       };
     })

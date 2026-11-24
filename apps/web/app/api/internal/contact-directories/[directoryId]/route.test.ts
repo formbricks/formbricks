@@ -58,7 +58,7 @@ const WS_2 = "clws222222222222222222222";
 
 const DIRECTORY = {
   id: DIRECTORY_ID,
-  name: null,
+  name: "HCP",
   matchingKey: "externalId",
   workspaces: [{ id: WS_1, name: "HCP" }],
   contactCount: 12,
@@ -122,7 +122,7 @@ describe("GET /api/internal/contact-directories/{directoryId}", () => {
 describe("PATCH /api/internal/contact-directories/{directoryId}", () => {
   test("renames and adds workspaces as an owner or manager, auditing before and after", async () => {
     mocks.update.mockResolvedValue({
-      previous: { name: null, workspaceIds: [WS_1] },
+      previous: { name: "Northwind", workspaceIds: [WS_1] },
       next: { name: "Northwind EU", workspaceIds: [WS_1, WS_2] },
     });
 
@@ -142,7 +142,7 @@ describe("PATCH /api/internal/contact-directories/{directoryId}", () => {
       targetId: DIRECTORY_ID,
       organizationId: ORG_ID,
       status: "success",
-      oldObject: { name: null, workspaceIds: [WS_1] },
+      oldObject: { name: "Northwind", workspaceIds: [WS_1] },
       newObject: { name: "Northwind EU", workspaceIds: [WS_1, WS_2] },
     });
   });
@@ -154,16 +154,17 @@ describe("PATCH /api/internal/contact-directories/{directoryId}", () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
-  test("rejects a matching key change, an empty body and an empty workspace list", async () => {
+  test("rejects a matching key change, an empty body, an empty workspace list and a null name", async () => {
     expect((await patch({ matchingKey: "email" })).status).toBe(400);
+    expect((await patch({ name: null })).status).toBe(400);
     expect((await patch({})).status).toBe(400);
     expect((await patch({ workspaceIds: [] })).status).toBe(400);
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
-  test("answers 422 for a missing name, a workspace leaving and a workspace not in the organization", async () => {
+  test("answers 422 for a blank name, a workspace leaving and a workspace not in the organization", async () => {
     mocks.update.mockRejectedValueOnce(new ContactDirectoryNameRequiredError());
-    const nameRequired = await patch({ workspaceIds: [WS_1, WS_2] });
+    const nameRequired = await patch({ name: "   " });
     expect(nameRequired.status).toBe(422);
     expect(await nameRequired.json()).toMatchObject({
       code: "contact_directory_name_required",

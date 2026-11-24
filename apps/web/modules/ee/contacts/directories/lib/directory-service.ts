@@ -22,14 +22,15 @@ import {
   moveWorkspacesIntoDirectory,
 } from "./directory-move";
 
-/** Trims a name; an empty one means "no name" (spec decision 2). */
-const normalizeName = (name: string | null | undefined): string | null => {
-  const trimmed = name?.trim() ?? "";
-  return trimmed === "" ? null : trimmed;
+/** Trims a name. Every directory has one (spec decision 2), so a blank name is refused. */
+const normalizeName = (name: string): string => {
+  const trimmed = name.trim();
+  if (trimmed === "") throw new ContactDirectoryNameRequiredError();
+  return trimmed;
 };
 
 const toContactDirectory = (
-  directory: { id: string; name: string | null; matchingKey: TContactDirectoryMatchingKey },
+  directory: { id: string; name: string; matchingKey: TContactDirectoryMatchingKey },
   workspaces: TContactDirectoryWorkspaceRef[],
   contents: TDirectoryContents | undefined,
   leavable: Set<string>
@@ -141,14 +142,11 @@ export const createContactDirectory = async ({
   workspaceIds,
 }: {
   organizationId: string;
-  name: string | null;
+  name: string;
   matchingKey: TContactDirectoryMatchingKey;
   workspaceIds: string[];
 }): Promise<{ id: string }> => {
   const directoryName = normalizeName(name);
-  if (new Set(workspaceIds).size >= CONTACT_DIRECTORY_SHARED_MIN_WORKSPACES && !directoryName) {
-    throw new ContactDirectoryNameRequiredError();
-  }
 
   return runDirectoryTransaction(async (tx) => {
     const directory = await tx.contactDirectory.create({
@@ -167,7 +165,7 @@ export const createContactDirectory = async ({
   });
 };
 
-type TDirectorySnapshot = { name: string | null; workspaceIds: string[] };
+type TDirectorySnapshot = { name: string; workspaceIds: string[] };
 
 /**
  * Renames a directory and adds workspaces to it. `workspaceIds` is the full list: it must keep every
@@ -182,11 +180,13 @@ export const updateContactDirectory = async ({
 }: {
   organizationId: string;
   directoryId: string;
-  name?: string | null;
+  name?: string;
   workspaceIds?: string[];
-}): Promise<{ previous: TDirectorySnapshot; next: TDirectorySnapshot }> =>
-  runDirectoryTransaction(async (tx) => {
-    const [directory] = await tx.$queryRaw<{ id: string; name: string | null }[]>`
+}): Promise<{ previous: TDirectorySnapshot; next: TDirectorySnapshot }> => {
+  const nameChange = name === undefined ? undefined : normalizeName(name);
+
+  return runDirectoryTransaction(async (tx) => {
+    const [directory] = await tx.$queryRaw<{ id: string; name: string }[]>`
       SELECT "id", "name" FROM "ContactDirectory"
       WHERE "organizationId" = ${organizationId} AND "id" = ${directoryId}
       FOR UPDATE
@@ -203,11 +203,7 @@ export const updateContactDirectory = async ({
     const leaving = currentIds.filter((id) => !nextIds.includes(id));
     if (leaving.length > 0) throw new ContactDirectoryWorkspacesCannotLeaveError(leaving);
 
-    const nextName = name === undefined ? directory.name : normalizeName(name);
-    if (nextIds.length >= CONTACT_DIRECTORY_SHARED_MIN_WORKSPACES && !nextName) {
-      throw new ContactDirectoryNameRequiredError();
-    }
-
+    const nextName = nameChange ?? directory.name;
     if (nextName !== directory.name) {
       await tx.contactDirectory.update({ where: { id: directoryId }, data: { name: nextName } });
     }
@@ -220,6 +216,7 @@ export const updateContactDirectory = async ({
       next: { name: nextName, workspaceIds: nextIds },
     };
   });
+};
 
 /** The name of the workspace's directory when other workspaces share it, for the Contacts page line. */
 export const getSharedContactDirectoryName = async (workspaceId: string): Promise<string | null> => {

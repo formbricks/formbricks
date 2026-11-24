@@ -3578,7 +3578,7 @@
         "directory_name": "Katalognamn",
         "directory_updated": "Katalogen har uppdaterats",
         "empty_state": "Inga kontaktkataloger än.",
-        "error_name_required": "Lägg till ett namn. En katalog som används av två eller fler arbetsytor måste ha ett.",
+        "error_name_required": "Lägg till ett namn.",
         "error_name_taken": "Det finns redan en kontaktkatalog med det här namnet.",
         "error_name_too_long": "Använd högst {max} tecken.",
         "error_workspace_cannot_leave": "En arbetsyta kan inte lämna sin katalog.",

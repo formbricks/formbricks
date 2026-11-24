@@ -50,7 +50,7 @@ type TWorkspaceRow = { id: string; name: string; organizationId: string; contact
 type TDirectoryRow = {
   id: string;
   organizationId: string;
-  name: string | null;
+  name: string;
   matchingKey: "email" | "externalId";
   contacts?: number;
   blockingKeys?: number;
@@ -134,7 +134,7 @@ const setup = ({
     return { id: created.id };
   });
   db.contactDirectory.update.mockImplementation(
-    async ({ where, data }: { where: { id: string }; data: { name: string | null } }) => {
+    async ({ where, data }: { where: { id: string }; data: { name: string } }) => {
       log.push(`rename ${where.id}`);
       const directory = directories.find((d) => d.id === where.id)!;
       directory.name = data.name;
@@ -261,7 +261,7 @@ const ws = (id: string, contactDirectoryId: string | null, organizationId = ORG)
 const dir = (id: string, extra: Partial<TDirectoryRow> = {}): TDirectoryRow => ({
   id,
   organizationId: ORG,
-  name: null,
+  name: `Directory ${id}`,
   matchingKey: "email",
   ...extra,
 });
@@ -305,7 +305,7 @@ describe("listContactDirectories", () => {
     expect(list.directories).toEqual([
       {
         id: "d1",
-        name: null,
+        name: "Directory d1",
         matchingKey: "email",
         workspaces: [{ id: "w1", name: "Workspace w1" }],
         contactCount: 0,
@@ -324,7 +324,7 @@ describe("listContactDirectories", () => {
       },
       {
         id: "d3",
-        name: null,
+        name: "Directory d3",
         matchingKey: "externalId",
         workspaces: [{ id: "w4", name: "Workspace w4" }],
         contactCount: 3,
@@ -436,7 +436,7 @@ describe("createContactDirectory", () => {
 
     await createContactDirectory({
       organizationId: ORG,
-      name: null,
+      name: "EU",
       matchingKey: "email",
       workspaceIds: ["w1"],
     });
@@ -460,7 +460,7 @@ describe("createContactDirectory", () => {
     });
 
     await expect(
-      createContactDirectory({ organizationId: ORG, name: null, matchingKey: "email", workspaceIds: ["w1"] })
+      createContactDirectory({ organizationId: ORG, name: "EU", matchingKey: "email", workspaceIds: ["w1"] })
     ).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotMovableError);
     expect(db.contactDirectory.deleteMany).not.toHaveBeenCalled();
   });
@@ -470,7 +470,7 @@ describe("createContactDirectory", () => {
 
     await createContactDirectory({
       organizationId: ORG,
-      name: null,
+      name: "EU",
       matchingKey: "email",
       workspaceIds: ["w1"],
     });
@@ -496,7 +496,7 @@ describe("createContactDirectory", () => {
 
     await createContactDirectory({
       organizationId: ORG,
-      name: null,
+      name: "EU",
       matchingKey: "externalId",
       workspaceIds: ["w1"],
     });
@@ -526,7 +526,7 @@ describe("createContactDirectory", () => {
     setup({ ws: [ws("w1", "d1"), ws("w2", "d1")], dirs: [dir("d1", { name: "Shared" })] });
 
     await expect(
-      createContactDirectory({ organizationId: ORG, name: null, matchingKey: "email", workspaceIds: ["w1"] })
+      createContactDirectory({ organizationId: ORG, name: "EU", matchingKey: "email", workspaceIds: ["w1"] })
     ).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotMovableError);
   });
 
@@ -545,19 +545,17 @@ describe("createContactDirectory", () => {
     expect(db.workspace.updateMany).not.toHaveBeenCalled();
   });
 
-  test("requires a name for two or more workspaces, before writing anything", async () => {
-    setup({ ws: [ws("w1", null), ws("w2", null)], dirs: [] });
+  test.each(["", "   "])(
+    "requires a name even for one workspace, before writing anything (%j)",
+    async (name) => {
+      setup({ ws: [ws("w1", null)], dirs: [] });
 
-    await expect(
-      createContactDirectory({
-        organizationId: ORG,
-        name: "   ",
-        matchingKey: "email",
-        workspaceIds: ["w1", "w2"],
-      })
-    ).rejects.toBeInstanceOf(ContactDirectoryNameRequiredError);
-    expect(db.contactDirectory.create).not.toHaveBeenCalled();
-  });
+      await expect(
+        createContactDirectory({ organizationId: ORG, name, matchingKey: "email", workspaceIds: ["w1"] })
+      ).rejects.toBeInstanceOf(ContactDirectoryNameRequiredError);
+      expect(db.contactDirectory.create).not.toHaveBeenCalled();
+    }
+  );
 
   test("reports a name the organization already uses", async () => {
     setup({ ws: [ws("w1", null)], dirs: [] });
@@ -588,17 +586,18 @@ describe("updateContactDirectory", () => {
 
     expect(log.slice(0, 2)).toEqual(["lock directories d1", "rename d1"]);
     expect(result).toEqual({
-      previous: { name: null, workspaceIds: ["w1"] },
+      previous: { name: "Directory d1", workspaceIds: ["w1"] },
       next: { name: "Northwind", workspaceIds: ["w1"] },
     });
   });
 
-  test("an empty name keeps a one-workspace directory unnamed", async () => {
+  test.each(["", "   "])("refuses to clear the name of a one-workspace directory (%j)", async (name) => {
     setup({ ws: [ws("w1", "d1")], dirs: [dir("d1", { name: "Old" })] });
 
-    const result = await updateContactDirectory({ organizationId: ORG, directoryId: "d1", name: "" });
-
-    expect(result.next.name).toBeNull();
+    await expect(
+      updateContactDirectory({ organizationId: ORG, directoryId: "d1", name })
+    ).rejects.toBeInstanceOf(ContactDirectoryNameRequiredError);
+    expect(db.contactDirectory.update).not.toHaveBeenCalled();
   });
 
   test("adds a workspace whose own directory is empty and deletes that directory, after locking the target first", async () => {
@@ -617,24 +616,6 @@ describe("updateContactDirectory", () => {
     expect(workspaces.map((w) => w.contactDirectoryId)).toEqual(["d1", "d1"]);
     expect(directories.map((d) => d.id)).toEqual(["d1"]);
     expect(result.next.workspaceIds).toEqual(["w1", "w2"]);
-  });
-
-  test("requires a name before a second workspace joins", async () => {
-    setup({ ws: [ws("w1", "d1"), ws("w2", null)], dirs: [dir("d1")] });
-
-    await expect(
-      updateContactDirectory({ organizationId: ORG, directoryId: "d1", workspaceIds: ["w1", "w2"] })
-    ).rejects.toBeInstanceOf(ContactDirectoryNameRequiredError);
-    expect(db.workspace.updateMany).not.toHaveBeenCalled();
-  });
-
-  test("refuses to clear the name of a shared directory", async () => {
-    setup({ ws: [ws("w1", "d1"), ws("w2", "d1")], dirs: [dir("d1", { name: "Shared" })] });
-
-    await expect(
-      updateContactDirectory({ organizationId: ORG, directoryId: "d1", name: "" })
-    ).rejects.toBeInstanceOf(ContactDirectoryNameRequiredError);
-    expect(db.contactDirectory.update).not.toHaveBeenCalled();
   });
 
   test("refuses to let a workspace leave the directory", async () => {

@@ -899,7 +899,7 @@ async function main(): Promise<void> {
   let contactDirectoryId = workspace.contactDirectoryId;
   if (!contactDirectoryId) {
     const contactDirectory = await prisma.contactDirectory.create({
-      data: { organizationId: organization.id, matchingKey: "email" },
+      data: { organizationId: organization.id, name: workspace.name, matchingKey: "email" },
       select: { id: true },
     });
     contactDirectoryId = contactDirectory.id;

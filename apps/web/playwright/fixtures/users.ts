@@ -135,7 +135,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
           // the contacts, segments and SDK specs have somewhere to write. The keys keep the workspace as
           // their origin, the shape the directories migration leaves, because specs look them up by it.
           const contactDirectory = await prisma.contactDirectory.create({
-            data: { organizationId: workspace.organizationId, matchingKey: "email" },
+            data: { organizationId: workspace.organizationId, name: workspace.name, matchingKey: "email" },
             select: { id: true },
           });
           await prisma.contactAttributeKey.createMany({

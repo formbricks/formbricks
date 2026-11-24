@@ -1,28 +1,19 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TContactDirectory, TContactDirectoryList } from "../types";
-import { getContactDirectoryDisplayName, getWorkspacePickerOptions } from "./display";
+import { getWorkspacePickerOptions } from "./display";
 
 const t = ((key: string, values?: Record<string, string>) =>
   values ? `${key} ${JSON.stringify(values)}` : key) as unknown as TFunction;
 
 const directory = (id: string, extra: Partial<TContactDirectory>): TContactDirectory => ({
   id,
-  name: null,
+  name: id,
   matchingKey: "email",
   workspaces: [],
   contactCount: 0,
   workspaceCanMove: false,
   ...extra,
-});
-
-describe("getContactDirectoryDisplayName", () => {
-  test("shows the name, or the workspace's name for an unnamed directory", () => {
-    expect(getContactDirectoryDisplayName(directory("d1", { name: "Northwind EU" }))).toBe("Northwind EU");
-    expect(
-      getContactDirectoryDisplayName(directory("d2", { workspaces: [{ id: "w1", name: "Brand Tracking" }] }))
-    ).toBe("Brand Tracking");
-  });
 });
 
 describe("getWorkspacePickerOptions", () => {
@@ -36,7 +27,11 @@ describe("getWorkspacePickerOptions", () => {
         ],
       }),
       directory("d-empty", { workspaces: [{ id: "w-c", name: "Brand Tracking" }], workspaceCanMove: true }),
-      directory("d-full", { workspaces: [{ id: "w-d", name: "Patient Support" }], contactCount: 9 }),
+      directory("d-full", {
+        name: "Patient Support",
+        workspaces: [{ id: "w-d", name: "Patient Support" }],
+        contactCount: 9,
+      }),
     ],
     workspaces: [
       { id: "w-a", name: "Market Access", directoryId: "d-shared" },

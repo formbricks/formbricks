@@ -3578,7 +3578,7 @@
         "directory_name": "目錄名稱",
         "directory_updated": "目錄已更新",
         "empty_state": "尚無聯絡人目錄。",
-        "error_name_required": "請輸入名稱。有兩個以上工作區共用的目錄必須要有名稱。",
+        "error_name_required": "請輸入名稱。",
         "error_name_taken": "已有相同名稱的聯絡人目錄。",
         "error_name_too_long": "請使用 {max} 個字元以內。",
         "error_workspace_cannot_leave": "工作區無法離開其所屬的目錄。",

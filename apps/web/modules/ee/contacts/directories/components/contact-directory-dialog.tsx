@@ -30,7 +30,7 @@ import {
   getContactDirectoryErrorMessage,
   getContactDirectoryFormSchema,
 } from "../lib/directory-form";
-import { getContactDirectoryDisplayName, getWorkspacePickerOptions } from "../lib/display";
+import { getWorkspacePickerOptions } from "../lib/display";
 import type { TContactDirectory, TContactDirectoryList, TContactDirectoryMatchingKey } from "../types";
 
 const MATCHING_KEY_TOGGLE_ID = "contact-directory-matching-key";
@@ -80,12 +80,6 @@ export const ContactDirectoryDialog = ({
     [list, t, directory?.id]
   );
 
-  // An unnamed directory (one the migration made) shows its workspace's name as the placeholder (decision 2).
-  const namePlaceholder =
-    directory?.name === null
-      ? getContactDirectoryDisplayName(directory)
-      : t("workspace.settings.contact_directories.name_placeholder");
-
   const isSaving = createDirectory.isPending || updateDirectory.isPending;
 
   const handleSaved = () => {
@@ -108,7 +102,7 @@ export const ContactDirectoryDialog = ({
   };
 
   const onSubmit: SubmitHandler<TContactDirectoryFormData> = (data) => {
-    const name = data.name.trim() === "" ? null : data.name.trim();
+    const name = data.name.trim();
     const callbacks = { onSuccess: handleSaved, onError: handleSaveError };
     if (directory) {
       updateDirectory.mutate(
@@ -147,7 +141,11 @@ export const ContactDirectoryDialog = ({
                   <FormItem>
                     <FormLabel>{t("common.name")}</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder={namePlaceholder} {...field} />
+                      <Input
+                        type="text"
+                        placeholder={t("workspace.settings.contact_directories.name_placeholder")}
+                        {...field}
+                      />
                     </FormControl>
                     {error?.message ? <FormError className="text-left">{error.message}</FormError> : null}
                   </FormItem>

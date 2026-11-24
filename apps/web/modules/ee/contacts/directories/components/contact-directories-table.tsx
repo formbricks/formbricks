@@ -3,7 +3,6 @@
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
-import { getContactDirectoryDisplayName } from "../lib/display";
 import type { TContactDirectory } from "../types";
 import { ContactDirectoryRowMenu } from "./contact-directory-row-menu";
 
@@ -23,7 +22,7 @@ const getContactDirectoryColumns = ({
     headerClassName: "w-[38%]",
     cellClassName: "font-medium text-slate-900",
     skeletonWidth: "w-32",
-    cell: (directory) => getContactDirectoryDisplayName(directory),
+    cell: (directory) => directory.name,
   },
   {
     id: "workspaces",
@@ -94,7 +93,7 @@ export const ContactDirectoriesTable = ({
       isLoading={isLoading}
       aria-label={t("workspace.settings.contact_directories.title")}
       onRowClick={onManage}
-      getRowLabel={(directory) => getContactDirectoryDisplayName(directory)}
+      getRowLabel={(directory) => directory.name}
     />
   );
 };

@@ -6,7 +6,7 @@ export const CONTACT_DIRECTORY_NAME_MAX_LENGTH = 100;
 /** Most workspaces one create or update may name; far above any organization's real count. */
 export const CONTACT_DIRECTORY_WORKSPACES_MAX = 1000;
 
-/** From this many workspaces on, a directory needs a name (spec decision 2). */
+/** From this many workspaces on, a directory is shared, and the Contacts page names it. */
 export const CONTACT_DIRECTORY_SHARED_MIN_WORKSPACES = 2;
 
 type TDefaultAttributeKey = {

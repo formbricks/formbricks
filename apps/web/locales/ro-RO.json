@@ -3578,7 +3578,7 @@
         "directory_name": "Numele directorului",
         "directory_updated": "Director actualizat",
         "empty_state": "Încă nu există directoare de contacte.",
-        "error_name_required": "Adaugă un nume. Un director folosit de două sau mai multe spații de lucru are nevoie de unul.",
+        "error_name_required": "Adaugă un nume.",
         "error_name_taken": "Există deja un director de contacte cu acest nume.",
         "error_name_too_long": "Folosește cel mult {max} caractere.",
         "error_workspace_cannot_leave": "Un spațiu de lucru nu poate părăsi directorul său.",

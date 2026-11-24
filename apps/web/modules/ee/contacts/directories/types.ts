@@ -10,8 +10,7 @@ export type TContactDirectoryWorkspaceRef = {
 /** A contact directory as `/api/internal/contact-directories` returns it. */
 export type TContactDirectory = {
   id: string;
-  /** Null for a directory the 6.3 migration made; the UI shows its workspace's name instead. */
-  name: string | null;
+  name: string;
   matchingKey: TContactDirectoryMatchingKey;
   workspaces: TContactDirectoryWorkspaceRef[];
   contactCount: number;
@@ -34,13 +33,13 @@ export type TContactDirectoryList = {
 };
 
 export type TContactDirectoryCreateInput = {
-  name: string | null;
+  name: string;
   matchingKey: TContactDirectoryMatchingKey;
   workspaceIds: string[];
 };
 
 /** Name and workspaces only: the matching key is fixed once the directory exists. */
 export type TContactDirectoryUpdateInput = {
-  name?: string | null;
+  name?: string;
   workspaceIds?: string[];
 };

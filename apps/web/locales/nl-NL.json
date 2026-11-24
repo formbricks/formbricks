@@ -3578,7 +3578,7 @@
         "directory_name": "Naam van de contactmap",
         "directory_updated": "Contactmap bijgewerkt",
         "empty_state": "Nog geen contactmappen.",
-        "error_name_required": "Voeg een naam toe. Een contactmap die door twee of meer werkruimtes wordt gebruikt, heeft een naam nodig.",
+        "error_name_required": "Voeg een naam toe.",
         "error_name_taken": "Er bestaat al een contactmap met deze naam.",
         "error_name_too_long": "Gebruik maximaal {max} tekens.",
         "error_workspace_cannot_leave": "Een werkruimte kan zijn contactmap niet verlaten.",

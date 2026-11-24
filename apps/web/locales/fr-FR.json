@@ -3578,7 +3578,7 @@
         "directory_name": "Nom du répertoire",
         "directory_updated": "Répertoire mis à jour",
         "empty_state": "Aucun répertoire de contacts pour le moment.",
-        "error_name_required": "Ajoute un nom. Un répertoire utilisé par au moins deux espaces de travail doit en avoir un.",
+        "error_name_required": "Ajoute un nom.",
         "error_name_taken": "Un répertoire de contacts portant ce nom existe déjà.",
         "error_name_too_long": "Utilise {max} caractères maximum.",
         "error_workspace_cannot_leave": "Un espace de travail ne peut pas quitter son répertoire.",

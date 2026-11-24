@@ -3578,7 +3578,7 @@
         "directory_name": "ディレクトリ名",
         "directory_updated": "ディレクトリを更新しました",
         "empty_state": "コンタクトディレクトリはまだありません。",
-        "error_name_required": "名前を入力してください。2つ以上のワークスペースで使用するディレクトリには名前が必要です。",
+        "error_name_required": "名前を入力してください。",
         "error_name_taken": "この名前のコンタクトディレクトリはすでに存在します。",
         "error_name_too_long": "{max}文字以内で入力してください。",
         "error_workspace_cannot_leave": "ワークスペースをディレクトリから外すことはできません。",

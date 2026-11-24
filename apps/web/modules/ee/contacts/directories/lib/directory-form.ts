@@ -2,35 +2,32 @@ import type { TFunction } from "i18next";
 import { z } from "zod";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { CONTACT_DIRECTORY_MATCHING_KEYS } from "../types";
-import { CONTACT_DIRECTORY_NAME_MAX_LENGTH, CONTACT_DIRECTORY_SHARED_MIN_WORKSPACES } from "./constants";
+import { CONTACT_DIRECTORY_NAME_MAX_LENGTH } from "./constants";
 
 /**
- * The create and manage dialog's rules, the same ones the route enforces: at least one workspace
- * (decision 21), a name from the second workspace on (decision 2), and no workspace leaving the directory
- * it already uses (decision 8). `initialWorkspaceIds` is empty when creating.
+ * The create and manage dialog's rules, the same ones the route enforces: a name (decision 2), at least one
+ * workspace (decision 21), and no workspace leaving the directory it already uses (decision 8).
+ * `initialWorkspaceIds` is empty when creating.
  */
 export const getContactDirectoryFormSchema = (t: TFunction, initialWorkspaceIds: string[]) =>
   z
     .object({
-      name: z.string().max(
-        CONTACT_DIRECTORY_NAME_MAX_LENGTH,
-        t("workspace.settings.contact_directories.error_name_too_long", {
-          max: CONTACT_DIRECTORY_NAME_MAX_LENGTH,
-        })
-      ),
+      name: z
+        .string()
+        .trim()
+        .min(1, t("workspace.settings.contact_directories.error_name_required"))
+        .max(
+          CONTACT_DIRECTORY_NAME_MAX_LENGTH,
+          t("workspace.settings.contact_directories.error_name_too_long", {
+            max: CONTACT_DIRECTORY_NAME_MAX_LENGTH,
+          })
+        ),
       matchingKey: z.enum(CONTACT_DIRECTORY_MATCHING_KEYS),
       workspaceIds: z
         .array(z.string())
         .min(1, t("workspace.settings.contact_directories.error_workspace_required")),
     })
     .superRefine((data, ctx) => {
-      if (data.workspaceIds.length >= CONTACT_DIRECTORY_SHARED_MIN_WORKSPACES && data.name.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          path: ["name"],
-          message: t("workspace.settings.contact_directories.error_name_required"),
-        });
-      }
       if (initialWorkspaceIds.some((id) => !data.workspaceIds.includes(id))) {
         ctx.addIssue({
           code: "custom",

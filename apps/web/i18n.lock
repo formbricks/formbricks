@@ -3447,7 +3447,7 @@ checksums:
     workspace/settings/contact_directories/directory_name: de393976bf41ff3fd9da30dc177ba8f1
     workspace/settings/contact_directories/directory_updated: 5bee2a13ebcbed7904a1cb577765a90b
     workspace/settings/contact_directories/empty_state: a04cb9d758aac4a649758d8a1b5446a8
-    workspace/settings/contact_directories/error_name_required: e242a455b99b774852f824880caab854
+    workspace/settings/contact_directories/error_name_required: 1781e369d6c49129a26f0315287e6bc9
     workspace/settings/contact_directories/error_name_taken: 9b825dd2dd3c9d41fa800bf59802fa2f
     workspace/settings/contact_directories/error_name_too_long: dab19384e71239a8ae0202d7880130e4
     workspace/settings/contact_directories/error_workspace_cannot_leave: 991545f5ef53180b72beb3a3fdf9ab61

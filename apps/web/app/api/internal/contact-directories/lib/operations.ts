@@ -107,7 +107,7 @@ export async function createContactDirectoryOperation({
   try {
     created = await createContactDirectory({
       organizationId: access.organizationId,
-      name: body.name ?? null,
+      name: body.name,
       matchingKey: body.matchingKey,
       workspaceIds: body.workspaceIds,
     });

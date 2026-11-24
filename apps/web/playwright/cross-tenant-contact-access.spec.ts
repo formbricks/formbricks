@@ -31,13 +31,13 @@ const getContactDirectoryId = async (workspaceId: string): Promise<string> => {
 const addWorkspace = async (organizationId: string, label: string, directoryId?: string) => {
   const workspace = await prisma.workspace.create({
     data: { name: `${label} Workspace ${Date.now()}`, organizationId },
-    select: { id: true },
+    select: { id: true, name: true },
   });
 
   let contactDirectoryId = directoryId;
   if (!contactDirectoryId) {
     const directory = await prisma.contactDirectory.create({
-      data: { organizationId, matchingKey: "email" },
+      data: { organizationId, name: workspace.name, matchingKey: "email" },
       select: { id: true },
     });
     contactDirectoryId = directory.id;
