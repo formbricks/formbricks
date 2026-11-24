@@ -6,7 +6,13 @@ import {
   ZV3DashboardChartDataQuery,
   ZV3DashboardFilterValuesQuery,
   ZV3DashboardFilters,
+  ZV3DashboardLayoutBody,
   ZV3DashboardReplaceBody,
+  ZV3PageTeamIds,
+  ZV3PageUpdateBody,
+  ZV3WidgetCreateBody,
+  ZV3WidgetLayoutInput,
+  ZV3WidgetUpdateBody,
 } from "./schemas";
 
 const body = (widgets: { widgetId: string; order: number }[]) => ({
@@ -85,5 +91,194 @@ describe("dashboard filter picks (C6, C15)", () => {
         },
       ]).success
     ).toBe(false);
+  });
+});
+
+const ID_1 = "clid000000000000000000001";
+const ID_2 = "clid000000000000000000002";
+const LAYOUT = { x: 0, y: 0, w: 3, h: 2 };
+const TEXT = { headline: "Hello", description: "" };
+const IMAGE = { fileUrl: null, fit: "fit", position: "center", alt: "" };
+
+const issuePaths = (result: { success: boolean; error?: { issues: { path: PropertyKey[] }[] } }) =>
+  (result.error?.issues ?? []).map((issue) => issue.path.map(String).join("."));
+
+describe("ZV3WidgetLayoutInput", () => {
+  test("takes a layout inside the grid", () => {
+    expect(ZV3WidgetLayoutInput.safeParse({ x: 9, y: 0, w: 3, h: 1 }).success).toBe(true);
+  });
+
+  test("refuses a layout running past the last column, naming w", () => {
+    const result = ZV3WidgetLayoutInput.safeParse({ x: 10, y: 0, w: 3, h: 1 });
+    expect(issuePaths(result)).toEqual(["w"]);
+  });
+});
+
+describe("page schemas", () => {
+  test("takes no limit, an empty limit and distinct teams", () => {
+    expect(ZV3PageTeamIds.safeParse(null).success).toBe(true);
+    expect(ZV3PageTeamIds.safeParse([]).success).toBe(true);
+    expect(ZV3PageTeamIds.safeParse([ID_1, ID_2]).success).toBe(true);
+  });
+
+  test("refuses a team listed twice, at its second position", () => {
+    expect(issuePaths(ZV3PageTeamIds.safeParse([ID_1, ID_2, ID_1]))).toEqual(["2"]);
+  });
+
+  test("an update needs a name or teamIds", () => {
+    expect(ZV3PageUpdateBody.safeParse({ name: " Page " }).data).toEqual({ name: "Page" });
+    expect(ZV3PageUpdateBody.safeParse({ teamIds: null }).success).toBe(true);
+    expect(ZV3PageUpdateBody.safeParse({}).success).toBe(false);
+    expect(ZV3PageUpdateBody.safeParse({ name: "   " }).success).toBe(false);
+  });
+});
+
+describe("ZV3WidgetCreateBody", () => {
+  test("takes a chart, a text block, an image block and a separator", () => {
+    expect(ZV3WidgetCreateBody.safeParse({ chartId: ID_1, layout: LAYOUT }).success).toBe(true);
+    expect(ZV3WidgetCreateBody.safeParse({ kind: "text", content: TEXT }).success).toBe(true);
+    expect(ZV3WidgetCreateBody.safeParse({ kind: "image", content: IMAGE }).success).toBe(true);
+    expect(ZV3WidgetCreateBody.safeParse({ kind: "image" }).success).toBe(true);
+    expect(ZV3WidgetCreateBody.safeParse({ kind: "separator", content: null }).success).toBe(true);
+  });
+
+  test("refuses a chart without its chartId, or with content", () => {
+    expect(issuePaths(ZV3WidgetCreateBody.safeParse({}))).toEqual(["chartId"]);
+    expect(issuePaths(ZV3WidgetCreateBody.safeParse({ chartId: ID_1, content: TEXT }))).toEqual(["content"]);
+  });
+
+  test("refuses a text block without content, and a block naming a chart", () => {
+    expect(issuePaths(ZV3WidgetCreateBody.safeParse({ kind: "text" }))).toEqual(["content"]);
+    expect(issuePaths(ZV3WidgetCreateBody.safeParse({ kind: "image", chartId: ID_1 }))).toEqual(["chartId"]);
+  });
+
+  test("refuses a separator with content", () => {
+    expect(issuePaths(ZV3WidgetCreateBody.safeParse({ kind: "separator", content: TEXT }))).toEqual([
+      "content",
+    ]);
+  });
+
+  test("refuses block content of the wrong shape, naming the field", () => {
+    expect(
+      issuePaths(ZV3WidgetCreateBody.safeParse({ kind: "text", content: { headline: " ", description: "" } }))
+    ).toEqual(["content"]);
+    expect(
+      issuePaths(ZV3WidgetCreateBody.safeParse({ kind: "image", content: { ...IMAGE, fit: "stretch" } }))
+    ).toEqual(["content.fit"]);
+  });
+
+  test("refuses an argument it does not take", () => {
+    expect(ZV3WidgetCreateBody.safeParse({ chartId: ID_1, extra: true }).success).toBe(false);
+  });
+});
+
+describe("ZV3WidgetUpdateBody", () => {
+  test("takes any one change and refuses none", () => {
+    expect(ZV3WidgetUpdateBody.safeParse({ layout: LAYOUT }).success).toBe(true);
+    expect(ZV3WidgetUpdateBody.safeParse({ pageId: ID_1 }).success).toBe(true);
+    expect(ZV3WidgetUpdateBody.safeParse({ content: TEXT }).success).toBe(true);
+    expect(ZV3WidgetUpdateBody.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("ZV3DashboardLayoutBody", () => {
+  test("refuses a widget listed twice", () => {
+    const result = ZV3DashboardLayoutBody.safeParse({
+      expectedUpdatedAt: "2026-10-26T10:00:00.000Z",
+      widgets: [
+        { widgetId: ID_1, layout: LAYOUT },
+        { widgetId: ID_1, layout: LAYOUT },
+      ],
+    });
+    expect(issuePaths(result)).toEqual(["widgets.1"]);
+  });
+});
+
+describe("ZV3DashboardReplaceBody pages and new widgets", () => {
+  const replace = (extra: { pages?: unknown[]; widgets?: unknown[] }) => ({
+    name: "Board",
+    expectedUpdatedAt: "2026-10-26T10:00:00.000Z",
+    widgets: [],
+    ...extra,
+  });
+  const widget = (fields: Record<string, unknown>) => ({ layout: LAYOUT, order: 0, ...fields });
+
+  test("takes existing and new pages with new widgets of each kind placed on them", () => {
+    const result = ZV3DashboardReplaceBody.safeParse(
+      replace({
+        pages: [
+          { pageId: ID_1, name: "One", order: 0 },
+          { key: "new-page", name: "Two", order: 1, teamIds: [ID_2] },
+        ],
+        widgets: [
+          widget({ widgetId: ID_1, pageKey: "new-page" }),
+          widget({ kind: "chart", chartId: ID_2, pageId: ID_1 }),
+          widget({ kind: "text", content: TEXT }),
+          widget({ kind: "separator" }),
+          widget({ widgetId: ID_2, kind: "image", content: IMAGE }),
+        ],
+      })
+    );
+    expect(result.success).toBe(true);
+  });
+
+  test("refuses a page sent with both or neither of pageId and key", () => {
+    const result = ZV3DashboardReplaceBody.safeParse(
+      replace({
+        pages: [
+          { pageId: ID_1, key: "k", name: "One", order: 0 },
+          { name: "Two", order: 1 },
+        ],
+      })
+    );
+    expect(issuePaths(result)).toEqual(["pages.0", "pages.1"]);
+  });
+
+  test("refuses a page listed twice, existing or new", () => {
+    const result = ZV3DashboardReplaceBody.safeParse(
+      replace({
+        pages: [
+          { pageId: ID_1, name: "One", order: 0 },
+          { pageId: ID_1, name: "One again", order: 1 },
+          { key: "k", name: "New", order: 2 },
+          { key: "k", name: "New again", order: 3 },
+        ],
+      })
+    );
+    expect(issuePaths(result)).toEqual(["pages.1", "pages.3"]);
+  });
+
+  test("refuses a widget naming both page fields, or a pageKey that is no new page", () => {
+    const result = ZV3DashboardReplaceBody.safeParse(
+      replace({
+        pages: [{ key: "k", name: "New", order: 0 }],
+        widgets: [
+          widget({ widgetId: ID_1, pageId: ID_2, pageKey: "k" }),
+          widget({ widgetId: ID_2, pageKey: "missing" }),
+        ],
+      })
+    );
+    expect(issuePaths(result)).toEqual(["widgets.0", "widgets.1.pageKey"]);
+  });
+
+  test("refuses repointing an existing widget's chart, and checks a kind it is sent with", () => {
+    const result = ZV3DashboardReplaceBody.safeParse(
+      replace({
+        widgets: [
+          widget({ widgetId: ID_1, chartId: ID_2 }),
+          widget({ widgetId: ID_2, kind: "separator", content: TEXT }),
+        ],
+      })
+    );
+    expect(issuePaths(result)).toEqual(["widgets.0.chartId", "widgets.1.content"]);
+  });
+
+  test("refuses a new widget without a kind, a chart without chartId and a text block without content", () => {
+    const result = ZV3DashboardReplaceBody.safeParse(
+      replace({
+        widgets: [widget({}), widget({ kind: "chart" }), widget({ kind: "text" })],
+      })
+    );
+    expect(issuePaths(result)).toEqual(["widgets.0.kind", "widgets.1.chartId", "widgets.2.content"]);
   });
 });
