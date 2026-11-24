@@ -423,9 +423,10 @@ const nextConfig = {
           },
         ],
       },
-      // SVG files (icons, logos) - long cache since they're usually static
+      // SVG files (icons, logos) - long cache since they're usually static. Skips /favicon/, whose
+      // rule above deliberately sends no CORS header; this later rule would otherwise add it back.
       {
-        source: String.raw`/(.*)\.svg`,
+        source: String.raw`/((?!favicon/).*)\.svg`,
         headers: [
           {
             key: "Cache-Control",
