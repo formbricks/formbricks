@@ -20,32 +20,39 @@ export const getDisplayCountBySurveyId = reactCache(
   async (surveyId: string, filters?: TDisplayFilters): Promise<number> => {
     validateInputs([surveyId, ZId], [filters, ZDisplayFilters.optional()]);
 
-    if (filters?.responseIds?.length === 0) {
+    const { createdAt, responseIds } = filters ?? {};
+    if (responseIds?.length === 0) {
       return 0;
     }
 
     try {
-      const displayCount = await prisma.display.count({
+      if (responseIds) {
+        const min = createdAt?.min;
+        const max = createdAt?.max;
+        // Bind the selection as one array so the parameter count stays fixed as it grows.
+        const [result] = await prisma.$queryRaw<[{ count: bigint }]>`
+          SELECT COUNT(*) AS count
+          FROM "Display" d
+          JOIN "Response" r ON r."displayId" = d.id
+          WHERE d."surveyId" = ${surveyId}
+            AND r.id = ANY(${responseIds}::text[])
+            ${min ? Prisma.sql`AND d."created_at" >= ${min}` : Prisma.empty}
+            ${max ? Prisma.sql`AND d."created_at" <= ${max}` : Prisma.empty}
+        `;
+        return Number(result.count);
+      }
+
+      return await prisma.display.count({
         where: {
           surveyId,
-          ...(filters?.createdAt && {
+          ...(createdAt && {
             createdAt: {
-              gte: filters.createdAt.min,
-              lte: filters.createdAt.max,
-            },
-          }),
-          ...(filters?.responseIds && {
-            response: {
-              is: {
-                id: {
-                  in: filters.responseIds,
-                },
-              },
+              gte: createdAt.min,
+              lte: createdAt.max,
             },
           }),
         },
       });
-      return displayCount;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

@@ -1028,7 +1028,10 @@ describe("widget-file", () => {
       consoleSpy.mockRestore();
     });
 
-    test("rejects when script loads but surveys global never becomes available (timeout)", async () => {
+    test.each([
+      ["missing", undefined],
+      ["empty", {}],
+    ])("fails when the loaded script leaves the renderer %s", async (_label, renderer) => {
       getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
       widget.setIsSurveyRunning(false);
 
@@ -1042,7 +1045,7 @@ describe("widget-file", () => {
 
       const scriptEl = getAppendedScript();
 
-      // Script loaded but window.formbricksSurveys is never set
+      Object.assign(window, { formbricksSurveys: renderer });
       (scriptEl.onload as () => void)();
 
       // Advance past the 10s timeout (polls every 200ms)
@@ -1050,16 +1053,15 @@ describe("widget-file", () => {
 
       await renderPromise;
 
+      vi.useRealTimers();
       expect(consoleSpy).toHaveBeenCalledWith(
         "Failed to load Formbricks Surveys library:",
         expect.any(Error)
       );
-
-      vi.useRealTimers();
       consoleSpy.mockRestore();
     });
 
-    test("resolves after polling when surveys global becomes available and applies stored nonce", async () => {
+    test("retries after a partial load and applies the stored nonce when the renderer is ready", async () => {
       getInstanceConfigMock.mockReturnValue(scriptLoadMockConfig as unknown as Config);
       widget.setIsSurveyRunning(false);
 
@@ -1068,6 +1070,7 @@ describe("widget-file", () => {
 
       vi.useFakeTimers();
 
+      Object.assign(window, { formbricksSurveys: {} });
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
@@ -1137,10 +1140,15 @@ describe("widget-file", () => {
     });
   });
 
-  test("prefetchSurveysScript adds a prefetch link and deduplicates subsequent calls", () => {
+  test("prefetches when the renderer is incomplete and deduplicates subsequent calls", () => {
     const createElementSpy = vi.spyOn(document, "createElement");
     const appendChildSpy = vi.spyOn(document.head, "appendChild");
 
+    window.formbricksSurveys = createMockFormbricksSurveys();
+    widget.prefetchSurveysScript("https://fake.app");
+    expect(appendChildSpy).not.toHaveBeenCalled();
+
+    Object.assign(window, { formbricksSurveys: {} });
     widget.prefetchSurveysScript("https://fake.app");
 
     expect(createElementSpy).toHaveBeenCalledWith("link");
