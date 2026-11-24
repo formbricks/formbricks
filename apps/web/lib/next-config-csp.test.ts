@@ -130,23 +130,23 @@ describe("CSP for uploaded files (ENG-7108)", () => {
   });
 });
 
-describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
-  /** The value the last matching rule sets, which is the one Next sends. */
-  const effectiveHeader = async (pathname: string, key: string): Promise<string | undefined> => {
-    const rules = (await nextConfig.headers?.()) ?? [];
-    let value: string | undefined;
-    for (const rule of rules) {
-      const matches = getPathMatch(rule.source, {
-        strict: true,
-        removeUnnamedParams: true,
-        sensitive: false,
-      });
-      const header = rule.headers.find((h) => h.key === key);
-      if (header && matches(pathname) !== false) value = header.value;
-    }
-    return value;
-  };
+/** The value the last matching rule sets, which is the one Next sends. */
+const effectiveHeader = async (pathname: string, key: string): Promise<string | undefined> => {
+  const rules = (await nextConfig.headers?.()) ?? [];
+  let value: string | undefined;
+  for (const rule of rules) {
+    const matches = getPathMatch(rule.source, {
+      strict: true,
+      removeUnnamedParams: true,
+      sensitive: false,
+    });
+    const header = rule.headers.find((h) => h.key === key);
+    if (header && matches(pathname) !== false) value = header.value;
+  }
+  return value;
+};
 
+describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
   test("refuses every frame, same origin included", async () => {
     expect(await effectiveHeader("/sso-recovery/confirm", "X-Frame-Options")).toBe("DENY");
     expect(await effectiveHeader("/sso-recovery/confirm", "Content-Security-Policy")).toMatch(
@@ -156,5 +156,11 @@ describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
 
   test("leaves other app pages framable by their own origin", async () => {
     expect(await effectiveHeader("/auth/login", "X-Frame-Options")).toBe("SAMEORIGIN");
+  });
+});
+
+describe("favicons carry no wildcard CORS header (cross-domain misconfiguration, ZAP 10098)", () => {
+  test.each(["/favicon.ico", "/favicon/favicon-32x32.png"])("%s", async (pathname) => {
+    expect(await effectiveHeader(pathname, "Access-Control-Allow-Origin")).toBeUndefined();
   });
 });

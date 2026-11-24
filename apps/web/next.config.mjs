@@ -401,17 +401,15 @@ const nextConfig = {
           },
         ],
       },
-      // Favicon files - long cache since they rarely change
+      // Favicon files - long cache since they rarely change. No CORS header: browsers load icons
+      // through <link rel="icon"> and <img>, which never need one, and a wildcard origin is flagged
+      // by scanners as a cross-domain misconfiguration (OWASP ZAP 10098).
       {
         source: "/favicon/(.*)",
         headers: [
           {
             key: "Cache-Control",
             value: "public, max-age=2592000, s-maxage=31536000, immutable",
-          },
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*",
           },
         ],
       },
@@ -422,10 +420,6 @@ const nextConfig = {
           {
             key: "Cache-Control",
             value: "public, max-age=2592000, s-maxage=31536000, immutable",
-          },
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*",
           },
         ],
       },
