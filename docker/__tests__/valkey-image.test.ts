@@ -30,14 +30,15 @@ describe("bundled Valkey image", () => {
   ])("uses the multi-architecture index in %s", (relativePath) => {
     const pins = Array.from(
       readFileSync(join(repositoryRoot, relativePath), "utf8").matchAll(
-        /valkey\/valkey@sha256:[a-f0-9]{64}/g
+        /valkey\/valkey@sha256:[a-f0-9]{64}/gi
       ),
       (match) => match[0]
     );
+    // Only the one-click updater keeps the legacy 8.1.1 pin beside the current one.
+    const allowedPins =
+      relativePath === "docker/formbricks.sh" ? [valkeyImage, legacyValkeyImage] : [valkeyImage];
 
-    expect(pins).toContain(valkeyImage);
-    // Only the legacy 8.1.1 pin may sit beside the current one; any other digest is drift.
-    expect(new Set(pins.filter((pin) => pin !== legacyValkeyImage))).toEqual(new Set([valkeyImage]));
+    expect(new Set(pins)).toEqual(new Set(allowedPins));
   });
 
   test("uses the same index in the Helm defaults and generated values table", () => {
