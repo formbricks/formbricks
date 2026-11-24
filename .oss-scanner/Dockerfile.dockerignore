@@ -1,0 +1,58 @@
+# Build context for .oss-scanner/Dockerfile (the Anthropic OSS Scanner image).
+#
+# BuildKit uses <Dockerfile>.dockerignore instead of the repository's root .dockerignore when
+# both exist. The root one is an allowlist for the production image; the scanner needs the whole
+# repository (docs, charts, scripts, agent notes) so an offline agent can read it, minus caches,
+# generated output and anything machine-local or secret.
+
+.git
+.gitignore
+
+# Dependencies and build output
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+**/build
+**/out
+**/coverage
+**/test-results
+**/playwright-report
+**/blob-report
+**/.pnpm-store
+**/*.tsbuildinfo
+**/next-env.d.ts
+**/*vite.config.*.timestamp*
+
+# Local environment and credentials
+**/.env
+**/.env.*
+**/*.pem
+**/gcp*.json
+**/service-account*.json
+**/*-credentials.json
+g.json
+
+# Machine-local agent state and editor files
+.claude
+.codex
+.cursor
+.vscode
+.idea
+.local
+**/.DS_Store
+**/*.log
+
+# Generated at build time, or not useful to an offline audit
+apps/web/uploads
+apps/web/saml-connection
+apps/web/certificates
+apps/web/public/js
+packages/database/generated
+packages/database/.prisma-migrations
+packages/database/schema-test-boolean
+# Storybook's manifest stays: it is a workspace importer in the lockfile.
+apps/storybook/**
+!apps/storybook/package.json
+apps/deployment-check/report
+apps/web/playwright
