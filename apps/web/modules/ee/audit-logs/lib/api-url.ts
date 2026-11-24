@@ -1,15 +1,27 @@
 /**
- * Query parameters an audit event may keep. Everything else a caller put in the query string (filter
- * values, emails, ids, a secret passed by mistake) is dropped, whatever its name (ENG-3269).
- * `createdFrom` records where a v3-created survey came from (`ZV3CreateSurveyQuery`).
+ * The one query parameter an audit event keeps: `createdFrom` on `/api/v3/surveys` (behind `BASE_PATH` on
+ * a sub-path deployment), which records where a created survey came from. Only the values that route's
+ * query schema accepts are kept. Every other parameter, on every route, is dropped whatever its name or
+ * value (ENG-3269). Listed here rather than imported, so the audit builder does not load the v3 survey
+ * schemas; `api-url.test.ts` keeps the list equal to `V3_SURVEY_CREATED_FROM`.
  */
-const ALLOWED_QUERY_PARAMS = new Set(["createdFrom"]);
+const CREATED_FROM_ROUTE_SUFFIX = "/api/v3/surveys";
+export const AUDIT_CREATED_FROM_VALUES: ReadonlySet<string> = new Set([
+  "blank",
+  "template",
+  "xm-template",
+  "ai",
+  "import",
+]);
 
-/**
- * The allowlisted parameters are short slugs; a value that is not one is dropped rather than kept. A
- * shape, not `V3_SURVEY_CREATED_FROM` itself, so the audit builder does not import the v3 survey schemas.
- */
-export const ALLOWED_QUERY_VALUE = /^[a-z0-9-]{1,32}$/;
+const keepAllowedQuery = (url: URL): URLSearchParams => {
+  const kept = new URLSearchParams();
+  if (!url.pathname.endsWith(CREATED_FROM_ROUTE_SUFFIX)) return kept;
+  const createdFrom = url.searchParams.get("createdFrom");
+  if (createdFrom !== null && AUDIT_CREATED_FROM_VALUES.has(createdFrom))
+    kept.set("createdFrom", createdFrom);
+  return kept;
+};
 
 /**
  * The file delete route is `/storage/<workspaceId>/<accessType>/<...filePath>`, behind `BASE_PATH` on a
@@ -42,10 +54,7 @@ export const sanitizeAuditApiUrl = (apiUrl: string | undefined): string | undefi
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") return undefined;
 
-  const kept = new URLSearchParams();
-  for (const [name, value] of url.searchParams) {
-    if (ALLOWED_QUERY_PARAMS.has(name) && ALLOWED_QUERY_VALUE.test(value)) kept.append(name, value);
-  }
+  const kept = keepAllowedQuery(url);
 
   const pathname = redactStorageFilePath(url.pathname);
   const search = kept.size > 0 ? `?${kept.toString()}` : "";

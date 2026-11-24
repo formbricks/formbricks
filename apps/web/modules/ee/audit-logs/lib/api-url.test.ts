@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { V3_SURVEY_CREATED_FROM } from "@/app/api/v3/surveys/schemas";
-import { ALLOWED_QUERY_VALUE, sanitizeAuditApiUrl } from "./api-url";
+import { AUDIT_CREATED_FROM_VALUES, sanitizeAuditApiUrl } from "./api-url";
 
 describe("sanitizeAuditApiUrl", () => {
   test("keeps origin and path and drops every query parameter outside the allowlist", () => {
@@ -15,10 +15,22 @@ describe("sanitizeAuditApiUrl", () => {
     );
   });
 
-  test("accepts every createdFrom value the v3 survey create schema allows", () => {
-    // The audit builder checks the value's shape instead of importing the v3 survey schemas; this keeps
-    // a new enum value from silently dropping out of the audit trail.
-    expect(V3_SURVEY_CREATED_FROM.every((value) => ALLOWED_QUERY_VALUE.test(value))).toBe(true);
+  test("keeps exactly the createdFrom values the v3 survey create schema allows", () => {
+    // Listed in the audit builder instead of imported from the v3 survey schemas; this keeps the two
+    // from drifting, so a new value neither drops out of the audit trail nor lets an unvalidated one in.
+    expect([...AUDIT_CREATED_FROM_VALUES].sort()).toEqual([...V3_SURVEY_CREATED_FROM].sort());
+  });
+
+  test("drops createdFrom on any route other than survey creation", () => {
+    expect(
+      sanitizeAuditApiUrl("https://app.example.com/api/v1/management/responses?createdFrom=template")
+    ).toBe("https://app.example.com/api/v1/management/responses");
+  });
+
+  test("drops a slug-shaped createdFrom value the survey route does not accept", () => {
+    expect(sanitizeAuditApiUrl("https://app.example.com/api/v3/surveys?createdFrom=sk-live-abc123")).toBe(
+      "https://app.example.com/api/v3/surveys"
+    );
   });
 
   test("drops a createdFrom value that is not a short slug", () => {
