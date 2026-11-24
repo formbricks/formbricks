@@ -425,6 +425,8 @@ describe("GET …/visibility", () => {
       version: 2,
       visibility: "workspace",
     });
+    // Reads spend nothing: the budget is for mutations, which are what can arm the freshness guard.
+    expect(vi.mocked(applyV3OperationRateLimit)).not.toHaveBeenCalled();
   });
 
   test.each([

@@ -45,11 +45,13 @@ type TScopeGate =
 type TDeclaredGate = TScopeGate;
 
 /**
- * The scope gate of every tool before ENG-7148, in registration order. One deliberate change since: the
+ * The scope gate of every tool before ENG-7148, in registration order. Deliberate changes since: the
  * dashboard and widget writes that answer with charts also need `dashboards:read` (Charts: Read), as
  * `get_dashboard` does, so a dashboards write can't read chart definitions a read would withhold; and
  * `list_charts` / `get_chart` need only `dashboards:read` (Charts: Read is the one bar for a chart
- * definition, D2), where they needed `feedbackRecords:read` too.
+ * definition, D2), where they needed `feedbackRecords:read` too. `get_survey_visibility` is read-only but
+ * was first gated at Surveys: Write; ENG-4109 lowers it to Read because the operation's
+ * `survey.change_visibility` gate is what limits who may read its payload.
  */
 const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_surveys: ["surveys:read"],

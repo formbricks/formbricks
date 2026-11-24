@@ -1420,8 +1420,8 @@ Output matches `edit_survey_blocks`: concise by default, echoing the applied `or
 Reads a survey's visibility and what a change would do: the enforced value (`restricted` or `workspace`),
 its owner, your `access.canManageVisibility`, the `blockers[]` that currently make `restricted` refusable,
 `impact.memberCount` and `impact.responseCount`, any `pending` change, the `version`, and the
-`allowedTargets[]` a change would act on now (`blockers[]` is empty on a survey that is already restricted).
-Read-only and idempotent, but it needs **Surveys: Read** and is limited to the survey's owner while they still
+`allowedTargets[]` a change would act on now (`blockers[]` is empty once the survey is settled at restricted
+with no change in flight). Read-only and idempotent, and it needs **Surveys: Read**; it is limited to the survey's owner while they still
 hold read access to its workspace, or an organization owner/manager; API keys are refused. It also requires the
 survey visibility feature (Access Control), or it answers `403 visibility_not_enabled`.
 
@@ -1455,6 +1455,8 @@ The operation's rules apply unchanged:
   Formbricks app to get a restricted copy.
 - A `restricted → workspace` change the graph has not acknowledged answers `503 projection_pending`: the change
   is stored, retry in a few seconds, and the survey stays restricted until it takes effect.
+- Changes are limited to **10 per minute per actor**, on REST and MCP alike; an over-limit call answers `429`
+  with `Retry-After`. A client that retries a `503` every 5 seconds reaches that budget after about 45 seconds.
 - Setting the value the survey already has is a `200` no-op and is not audited.
 
 Input:

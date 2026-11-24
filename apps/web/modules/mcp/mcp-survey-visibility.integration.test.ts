@@ -25,8 +25,9 @@ import { lockMcpGrant, writeMcpGrant } from "./grant-store";
 
 /**
  * ENG-4109 through `/api/mcp`, against real Postgres, SpiceDB and the real OAuth flow: an owner can
- * share a survey they created, a restriction waits for its outbound connections, and everyone else —
- * a non-owner writer, a read-only grant, an API-key connection, an id outside the grant — is refused.
+ * share a survey they created, a restriction waits for its outbound connections, a read grant can read but
+ * not change visibility, and everyone else — a non-owner writer, an API-key connection, an id outside the
+ * grant — is refused.
  *
  * The visibility feature is an Enterprise entitlement and a projection readiness marker. The entitlement
  * is mocked on (this suite is about enforcement); the marker is set per test because `resetDb` clears it.

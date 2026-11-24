@@ -34,6 +34,11 @@ export const ZMcpGeneratedSurveyOutput = mcpToolOutput(
  * for them (the visibility contract is hand-authored), so there is no resource schema to build from.
  * `survey-visibility-schemas.test.ts` parses representative payloads and pins the shapes; keep both in
  * step with `docs/api-v3-reference/openapi.yml` when the visibility contract changes.
+ *
+ * Two fields are deliberately wider than the published contract: `access.via` and `blockers[].type` are
+ * open strings, because the contract says new values may appear (and `SurveyVisibilityBlocker` still
+ * carries a closed enum). A published-value superset means a new sharing path or connection type does
+ * not fail `tools/list` consumers or reject a result the tool itself sent.
  */
 const ZMcpSurveyVisibilityOwner = z.object({ name: z.string() }).nullable();
 
@@ -47,7 +52,8 @@ const ZMcpSurveyVisibilityAccess = z.object({
 const ZMcpSurveyVisibilityBlocker = z.object({
   id: z.string(),
   name: z.string(),
-  // Open set: new connection types may appear (`creative` was added in 6.2).
+  // Open set, deliberately a superset of the published enum: new connection types may appear (`creative`
+  // was added in 6.2), and a closed schema here would reject the tool's own future result.
   type: z
     .string()
     .describe("creative, dashboard, feedbackSource, integration, webhook or workflow; more may appear"),
