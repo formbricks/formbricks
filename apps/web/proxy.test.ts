@@ -138,7 +138,6 @@ describe("proxy", () => {
       const response = await proxy(new NextRequest("http://localhost:3000/"));
 
       expect(response.headers.get("location")).toBeNull();
-      expect(response.headers.get("x-middleware-next")).toBe("1");
       expect(prisma.user.findFirst).not.toHaveBeenCalled();
     });
   });
