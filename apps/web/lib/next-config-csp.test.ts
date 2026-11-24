@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match";
+import { readdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { mimeTypes } from "@formbricks/types/storage";
 
@@ -7,6 +10,8 @@ import { mimeTypes } from "@formbricks/types/storage";
 // explicit `worker-src`, browsers fall back to `script-src`, which has no `blob:`, so the worker is
 // blocked on every page and a console error is the only sign. Asserted on the `headers()` output
 // rather than the source, so every rule that sets a CSP is covered, including any added later.
+// The file also guards other security headers from that output: framing (ENG-7395) and the absence
+// of a wildcard CORS header on favicons, which scanners flag as a cross-domain misconfiguration.
 
 // next.config.mjs validates the app env when it is imported. These are the vars with no default; CI
 // blanks REDIS_URL in its .env, so they are stubbed rather than read from the environment.
@@ -38,6 +43,22 @@ const isScriptless = (csp: string): boolean => {
     directives.includes("sandbox") ||
     (directives.includes("default-src 'none'") && !directives.some((d) => d.startsWith("script-src")))
   );
+};
+
+/** The value the last matching rule sets, which is the one Next sends. */
+const effectiveHeader = async (pathname: string, key: string): Promise<string | undefined> => {
+  const rules = (await nextConfig.headers?.()) ?? [];
+  let value: string | undefined;
+  for (const rule of rules) {
+    const matches = getPathMatch(rule.source, {
+      strict: true,
+      removeUnnamedParams: true,
+      sensitive: false,
+    });
+    const header = rule.headers.find((h) => h.key === key);
+    if (header && matches(pathname) !== false) value = header.value;
+  }
+  return value;
 };
 
 beforeAll(async () => {
@@ -131,22 +152,6 @@ describe("CSP for uploaded files (ENG-7108)", () => {
 });
 
 describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
-  /** The value the last matching rule sets, which is the one Next sends. */
-  const effectiveHeader = async (pathname: string, key: string): Promise<string | undefined> => {
-    const rules = (await nextConfig.headers?.()) ?? [];
-    let value: string | undefined;
-    for (const rule of rules) {
-      const matches = getPathMatch(rule.source, {
-        strict: true,
-        removeUnnamedParams: true,
-        sensitive: false,
-      });
-      const header = rule.headers.find((h) => h.key === key);
-      if (header && matches(pathname) !== false) value = header.value;
-    }
-    return value;
-  };
-
   test("refuses every frame, same origin included", async () => {
     expect(await effectiveHeader("/sso-recovery/confirm", "X-Frame-Options")).toBe("DENY");
     expect(await effectiveHeader("/sso-recovery/confirm", "Content-Security-Policy")).toMatch(
@@ -156,5 +161,23 @@ describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
 
   test("leaves other app pages framable by their own origin", async () => {
     expect(await effectiveHeader("/auth/login", "X-Frame-Options")).toBe("SAMEORIGIN");
+  });
+});
+
+describe("favicons carry no wildcard CORS header (cross-domain misconfiguration, ZAP 10098)", () => {
+  // Every shipped favicon file, so a broader rule matching one of them (the .svg rule did) is caught.
+  const faviconPaths = [
+    "/favicon.ico",
+    ...readdirSync(join(dirname(fileURLToPath(import.meta.url)), "../public/favicon")).map(
+      (file) => `/favicon/${file}`
+    ),
+  ];
+
+  test.each(faviconPaths)("%s", async (pathname) => {
+    expect(await effectiveHeader(pathname, "Access-Control-Allow-Origin")).toBeUndefined();
+  });
+
+  test("other SVGs keep the shared SVG rule", async () => {
+    expect(await effectiveHeader("/images/logo.svg", "Content-Type")).toBe("image/svg+xml");
   });
 });
