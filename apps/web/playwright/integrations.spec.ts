@@ -1,7 +1,24 @@
 import { expect } from "@playwright/test";
+import { createDecipheriv } from "node:crypto";
 import { prisma } from "@formbricks/database";
-import { symmetricDecrypt } from "@/lib/crypto";
 import { test } from "./lib/fixtures";
+
+/**
+ * The app's AES-256-GCM at-rest format (`<iv>:<ciphertext>:<tag>`, hex). Kept local on purpose: every app
+ * module that reaches the key imports `lib/constants`, which is `server-only` and cannot load in the
+ * Playwright process. Strict GCM decryption also fails if the row is still plaintext.
+ */
+const decryptAtRest = (payload: string): string => {
+  const key = process.env.ENCRYPTION_KEY ?? "";
+  const [iv, ciphertext, tag] = payload.split(":");
+  const decipher = createDecipheriv(
+    "aes-256-gcm",
+    Buffer.from(key, key.length === 32 ? "latin1" : "hex"),
+    Buffer.from(iv, "hex")
+  );
+  decipher.setAuthTag(Buffer.from(tag, "hex"));
+  return decipher.update(ciphertext, "hex", "utf8") + decipher.final("utf8");
+};
 
 /**
  * Integration settings, driven through Slack: remove a channel mapping, then disconnect. The integration
@@ -67,9 +84,7 @@ test.describe("Integrations", () => {
       // The stored credentials survive a mapping change: the page only ever saw them redacted. They are
       // encrypted at rest (ENG-7311), so decrypt the stored ciphertext before comparing.
       const storedToken = ((await stored())?.config as { key: { access_token: string } }).key.access_token;
-      expect(symmetricDecrypt(storedToken, process.env.ENCRYPTION_KEY as string)).toBe(
-        "xoxb-e2e-not-a-real-token"
-      );
+      expect(decryptAtRest(storedToken)).toBe("xoxb-e2e-not-a-real-token");
     });
 
     await test.step("disconnect Slack", async () => {
