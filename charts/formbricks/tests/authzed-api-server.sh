@@ -3,6 +3,7 @@
 set -euo pipefail
 
 readonly CHART_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${CHART_DIR}/../../scripts/ci-network.sh"
 readonly KIND_VERSION=v0.33.0
 readonly NODE_IMAGE='kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d'
 readonly CLUSTER_NAME="formbricks-chart-test-$$-${RANDOM}"
@@ -29,11 +30,12 @@ case "$(uname -s)-$(uname -m)" in
     ;;
   *) printf '%s\n' 'This pinned API-server check supports Linux x64 and macOS arm64.' >&2; exit 1 ;;
 esac
-curl --fail --silent --show-error --location --retry 3 \
+ci_download \
   "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-${platform}" \
   --output "${temp_dir}/kind"
 printf '%s  %s\n' "${checksum}" "${temp_dir}/kind" | shasum -a 256 --check
 chmod 700 "${temp_dir}/kind"
+ci_pull_image "${NODE_IMAGE}"
 "${temp_dir}/kind" create cluster --name "${CLUSTER_NAME}" --image "${NODE_IMAGE}" --wait 120s
 
 render_operator() {
