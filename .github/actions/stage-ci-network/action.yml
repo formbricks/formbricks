@@ -1,0 +1,10 @@
+name: Stage CI network helpers
+description: Preserve the workflow revision's network helpers before checking out an older PR head
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        mkdir -p "$RUNNER_TEMP/formbricks-ci"
+        cp "$GITHUB_ACTION_PATH/../../../scripts/ci-network.sh" \
+          "$GITHUB_ACTION_PATH/../../../scripts/install-playwright-ci.sh" "$RUNNER_TEMP/formbricks-ci/"
