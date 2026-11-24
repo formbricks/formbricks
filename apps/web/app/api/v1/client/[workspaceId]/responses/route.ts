@@ -22,7 +22,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
-import { applyIngestContractToResponseData } from "@/lib/response/ingest";
+import { applyIngestContractToResponseInput } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -48,7 +48,22 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-const validateResponse = (responseInputData: TClientResponseInput, survey: TSurvey) => {
+const validateResponse = (
+  responseInputData: TClientResponseInput,
+  survey: TSurvey,
+  invalidCalElementId: string | undefined
+) => {
+  // A booking holding a value Postgres cannot store (see `applyIngestContractToResponseInput`).
+  if (invalidCalElementId) {
+    return {
+      response: responses.badRequestResponse(
+        "Invalid booking details",
+        { elementId: invalidCalElementId },
+        true
+      ),
+    };
+  }
+
   // Validate response data against validation rules
   const validationErrors = validateResponseData(
     survey.blocks,
@@ -207,7 +222,7 @@ const applySingleUseValidation = (
 
 /** The finished response this submission repeats, if it can fold into one (ENG-1147). */
 const findFoldableDuplicate = async (
-  responseInputData: ReturnType<(typeof ZClientResponseInput)["parse"]>,
+  responseInputData: TClientResponseInput,
   survey: TSurvey,
   workspaceId: string
 ) => {
@@ -222,6 +237,7 @@ const findFoldableDuplicate = async (
     contactId: contact?.id,
     data: responseInputData.data,
     finished: responseInputData.finished,
+    calBookings: responseInputData.calBookings,
   });
 };
 
@@ -284,7 +300,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const responseInputData = responseInputValidation.data;
+    const responseInputData: TClientResponseInput = responseInputValidation.data;
 
     if (responseInputData.userId && !(await isUserIdentificationAllowed(workspaceId))) {
       return {
@@ -310,8 +326,9 @@ export const POST = withV1ApiWrapper({
     // so both see the values that will be stored, and ahead of the verified-email gate below, which
     // has to be the last writer: `verifiedEmail` is a forbidden field name, so no survey declares it
     // and the contract would drop it.
-    const ingestResult = applyIngestContractToResponseData(survey, responseInputData.data);
-    responseInputData.data = ingestResult.data;
+    // The same step splits a Cal element's booking record out of `data` (the stored answer stays the
+    // string "booked"), before validation, the duplicate fold and quotas.
+    const ingestResult = applyIngestContractToResponseInput(survey, responseInputData);
 
     // Email verification, like the PIN above, has to be enforced here and not only in the renderer:
     // this endpoint is public, so a caller could otherwise submit with any `verifiedEmail` they like.
@@ -353,7 +370,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const validationResult = validateResponse(responseInputData, survey);
+    const validationResult = validateResponse(responseInputData, survey, ingestResult.invalidCalElementId);
     if (validationResult) {
       return validationResult;
     }

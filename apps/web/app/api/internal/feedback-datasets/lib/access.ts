@@ -31,9 +31,8 @@ export async function requireFeedbackDatasetMutationAccess(
   datasetId: string,
   requestId: string,
   instance?: string
-): Promise<Response | { organizationId: string }> {
-  const userId = getSessionUserId(authentication);
-  if (!userId) {
+): Promise<Response | { organizationId: string; userId: string }> {
+  if (!getSessionUserId(authentication)) {
     return problemUnauthorized(requestId, "Session required", instance);
   }
 
@@ -53,15 +52,34 @@ export async function requireFeedbackDatasetMutationAccess(
     throw err;
   }
 
-  // Authorization before entitlement, so a non-member never learns anything about the owning
-  // organization — including whether it holds an Enterprise license.
+  return requireFeedbackDatasetOrganizationAccess(authentication, organizationId, requestId, instance);
+}
+
+/**
+ * Authorize managing feedback datasets in one organization — the check behind every dataset route,
+ * and the whole check for creating one, where the organization is named rather than derived.
+ *
+ * Owners and managers only (ENG-1770, above). Authorization before entitlement, so a non-member never
+ * learns anything about the organization — including whether it holds an Enterprise license.
+ */
+export async function requireFeedbackDatasetOrganizationAccess(
+  authentication: TV3Authentication,
+  organizationId: string,
+  requestId: string,
+  instance?: string
+): Promise<Response | { organizationId: string; userId: string }> {
+  const userId = getSessionUserId(authentication);
+  if (!userId) {
+    return problemUnauthorized(requestId, "Session required", instance);
+  }
+
   if (
     !(await can({ type: "user", id: userId }, "organization.manage", {
       type: "organization",
       id: organizationId,
     }))
   ) {
-    return denied;
+    return problemForbidden(requestId, "You are not authorized to access this resource", instance);
   }
 
   if (!(await getIsFeedbackDirectoriesEnabled(organizationId))) {
@@ -72,7 +90,7 @@ export async function requireFeedbackDatasetMutationAccess(
     );
   }
 
-  return { organizationId };
+  return { organizationId, userId };
 }
 
 /** Extract the session user id. Present because this route is session-auth. */

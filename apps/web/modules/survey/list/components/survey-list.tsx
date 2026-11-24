@@ -209,7 +209,7 @@ export const SurveysList = ({
   const [isDeleteBlockedDialogOpen, setDeleteBlockedDialogOpen] = useState(false);
   const [deleteBlockers, setDeleteBlockers] = useState<TSurveyVisibilityBlocker[]>([]);
 
-  useEffect(() => removeStaleFilterStorage(globalThis.window?.localStorage), []);
+  useEffect(() => removeStaleFilterStorage(), []);
 
   const filterProperties = getSurveyFilterProperties(t, {
     channel: currentWorkspaceChannel,

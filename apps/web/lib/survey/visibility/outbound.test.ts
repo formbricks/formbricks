@@ -90,6 +90,17 @@ describe("newly attached surveys", () => {
     expect(vi.mocked(prisma.survey.findMany).mock.calls[0][0]?.where?.id).toEqual({ in: ["added"] });
   });
 
+  test("reads the surveys through the client it is given, so a transaction needs no second connection", async () => {
+    const tx = { survey: { findMany: vi.fn().mockResolvedValue([{ id: "added" }]) } };
+
+    await expect(
+      assertNewlyAttachedSurveysWorkspaceVisible(["kept", "added"], ["kept"], tx as never)
+    ).rejects.toBeInstanceOf(OperationNotAllowedError);
+
+    expect(tx.survey.findMany.mock.calls[0][0]?.where?.id).toEqual({ in: ["added"] });
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+
   test("refuses the server action with the outbound-block copy", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "added" }] as never);
 

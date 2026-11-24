@@ -50,7 +50,7 @@ export interface TPostWorkspaceDeletionDestination {
  * managers can delete a workspace, so navigating straight to the surviving workspace has to run the
  * same gate — otherwise deleting a workspace would be the one way to skip onboarding.
  *
- * Called from the delete action, *after* the deletion, so both the surviving-workspace list and the
+ * Called from the delete route, *after* the deletion, so both the surviving-workspace list and the
  * gate's survey count are read at the moment we navigate. Resolving this when the settings page
  * rendered instead would freeze both into the page: the chosen workspace could have been deleted in
  * the meantime (landing the user on an error page right after a successful delete), and the gate's

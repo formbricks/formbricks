@@ -7,12 +7,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { inviteOrganizationMemberAction } from "@/modules/setup/organization/[organizationId]/invite/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
   type TInviteMembersFormSchema,
   ZInviteMembersFormSchema,
 } from "@/modules/setup/organization/[organizationId]/invite/types/invites";
+import { inviteOnboardingMember } from "@/modules/setup/organization/lib/api-client";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
@@ -40,21 +40,16 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
 
   const inviteTeamMembers = async (data: TInviteMembersFormSchema) => {
     for (const member of Object.values(data)) {
+      if (!member.email) continue;
       try {
-        if (!member.email) continue;
-        const inviteResponse = await inviteOrganizationMemberAction({
+        await inviteOnboardingMember({
           email: member.email.toLowerCase(),
           name: member.name,
           organizationId,
         });
-        if (inviteResponse?.data) {
-          toast.success(t("setup.invite.invitation_sent_to_email", { email: member.email }));
-        } else {
-          const errorMessage = getFormattedErrorMessage(inviteResponse);
-          toast.error(errorMessage);
-        }
-      } catch {
-        toast.error(`${t("setup.invite.failed_to_invite")} ${member.email}.`);
+        toast.success(t("setup.invite.invitation_sent_to_email", { email: member.email }));
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, `${t("setup.invite.failed_to_invite")} ${member.email}.`));
       }
     }
 

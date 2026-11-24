@@ -317,7 +317,7 @@ export function ElementConditional({
           <CalElement
             key={element.id}
             element={element}
-            value={textOrEmpty}
+            value={value}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}

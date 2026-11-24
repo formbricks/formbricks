@@ -1,6 +1,7 @@
 import "server-only";
 import { isDeepStrictEqual } from "node:util";
 import { prisma } from "@formbricks/database";
+import type { TCalBookingsByQuestionId } from "@formbricks/types/cal-booking";
 import type { TResponseData } from "@formbricks/types/responses";
 import type { TSurveyType } from "@formbricks/types/surveys/types";
 
@@ -16,7 +17,12 @@ import type { TSurveyType } from "@formbricks/types/surveys/types";
  */
 export const DUPLICATE_RESPONSE_WINDOW_MS = 60_000;
 
-type TDuplicateCandidate = { id: string; data: unknown; finished: boolean };
+type TDuplicateCandidate = {
+  id: string;
+  data: unknown;
+  finished: boolean;
+  calBookings?: TCalBookingsByQuestionId | null;
+};
 
 /**
  * A candidate the new submission can be folded into: both finished, with the same answers.
@@ -30,9 +36,12 @@ type TDuplicateCandidate = { id: string; data: unknown; finished: boolean };
  */
 export const isDuplicateOfCandidate = (
   candidate: TDuplicateCandidate,
-  submission: { data: TResponseData; finished: boolean }
+  submission: { data: TResponseData; finished: boolean; calBookings?: TCalBookingsByQuestionId }
 ): boolean => {
   if (!candidate.finished || !submission.finished) return false;
+  // `data` holds only "booked" for a Cal question, so the booking itself decides: a retry of one booking
+  // folds into the response that kept it, a different booking never does.
+  if (!isDeepStrictEqual(candidate.calBookings ?? {}, submission.calBookings ?? {})) return false;
   return isDeepStrictEqual(candidate.data, submission.data);
 };
 
@@ -55,6 +64,7 @@ export const findRecentDuplicateResponse = async ({
   contactId,
   data,
   finished,
+  calBookings,
   now = new Date(),
 }: {
   surveyId: string;
@@ -62,6 +72,8 @@ export const findRecentDuplicateResponse = async ({
   contactId: string | null | undefined;
   data: TResponseData;
   finished: boolean;
+  /** The booking details the submission carries; they live outside `data`, so they are compared too. */
+  calBookings?: TCalBookingsByQuestionId;
   now?: Date;
 }): Promise<{ id: string } | null> => {
   if (!contactId || !canFoldSubmission({ surveyType, finished })) return null;
@@ -78,11 +90,13 @@ export const findRecentDuplicateResponse = async ({
       createdAt: { gte: new Date(now.getTime() - DUPLICATE_RESPONSE_WINDOW_MS) },
       quotaLinks: { none: { status: "screenedOut" } },
     },
-    select: { id: true, data: true, finished: true },
+    select: { id: true, data: true, finished: true, calBookings: true },
     orderBy: { createdAt: "desc" },
     take: 10,
   });
 
-  const duplicate = candidates.find((candidate) => isDuplicateOfCandidate(candidate, { data, finished }));
+  const duplicate = candidates.find((candidate) =>
+    isDuplicateOfCandidate(candidate, { data, finished, calBookings })
+  );
   return duplicate ? { id: duplicate.id } : null;
 };

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { POST } from "./route";
 
 /**
@@ -35,7 +36,10 @@ vi.mock("@formbricks/logger", () => ({
 
 const WORKFLOW_ID = "cm9zr4t2b000208l8h2m1aq3c";
 const request = (id = WORKFLOW_ID, headers: Record<string, string> = {}) =>
-  new NextRequest(`http://localhost/api/v3/workflows/${id}/webhook/regenerate`, { method: "POST", headers });
+  new NextRequest(`http://localhost/api/v3/workflows/${id}/webhook/regenerate`, {
+    method: "POST",
+    headers: { ...SAME_ORIGIN_HEADERS, ...headers },
+  });
 const props = (id = WORKFLOW_ID) => ({ params: Promise.resolve({ workflowId: id }) }) as never;
 
 describe("POST /api/v3/workflows/{workflowId}/webhook/regenerate", () => {

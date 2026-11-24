@@ -24,7 +24,7 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
 
   // ENG-2409: was `currentUserMembership.role === "owner" || "manager"` followed by a bare
   // `throw new Error(...)`. `organization.manage_api_keys` is the same set, and it is the exact
-  // question `createApiKeyAction` already asks — so the page and the mutation behind it cannot drift
+  // question `POST /api/internal/api-keys` already asks — so the page and the mutation behind it cannot drift
   // if that permission is ever split from `organization.manage`.
   //
   // Two deliberate changes beyond the routing:
@@ -43,7 +43,7 @@ export const APIKeysPage = async (props: Readonly<{ params: Promise<{ organizati
 
   // ENG-3075: the organization-access *write* toggle mints a key that can manage the organization's
   // users, teams and workspace-team grants, so it is offered only to someone who clears
-  // USER_MANAGEMENT_MINIMUM_ROLE. `createApiKeyAction` asks the same question — this only keeps the UI
+  // USER_MANAGEMENT_MINIMUM_ROLE. `POST /api/internal/api-keys` asks the same question — this only keeps the UI
   // from offering what the mutation would refuse.
   const [workspaces, locale, canGrantWriteAccess] = await Promise.all([
     getWorkspacesByOrganizationId(organization.id),

@@ -6,14 +6,16 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { getAIUnavailableMessage, getAIUnavailableMessageForErrorCode } from "@/lib/ai/availability";
+import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { translateSurveyFieldsAction } from "@/modules/ee/ai-translation/lib/actions";
+import { translateSurveyFields } from "@/modules/ee/ai-translation/lib/api-client";
+import {
+  getAITranslationErrorCodeMessage,
+  getAITranslationErrorMessage,
+} from "@/modules/ee/ai-translation/lib/error-message";
 import {
   AI_TRANSLATION_ACTIONS_PER_RUN,
-  AI_TRANSLATION_FIELD_TOO_LONG,
   createTranslationActionBatches,
   partitionTranslationFieldsByLength,
 } from "@/modules/ee/ai-translation/lib/translation-batches";
@@ -180,55 +182,28 @@ export const ManageTranslationsModal = ({
     });
   }, [strings, draftTranslations]);
 
-  const getAIErrorMessage = useCallback(
-    (errorCode: string): string => {
-      const aiUnavailableMessage = getAIUnavailableMessageForErrorCode(errorCode, t);
-      if (aiUnavailableMessage) {
-        return aiUnavailableMessage;
-      }
-
-      if (errorCode === "ai_quota_exceeded") {
-        return t("workspace.surveys.edit.ai_translation_quota_exceeded");
-      }
-
-      if (errorCode === "ai_output_too_long") {
-        return t("workspace.surveys.edit.ai_translation_output_too_long");
-      }
-
-      if (errorCode.includes(AI_TRANSLATION_FIELD_TOO_LONG)) {
-        return t("workspace.surveys.edit.ai_translation_field_too_long");
-      }
-
-      // Fall back to the generic failure message rather than leaking a raw error code to the user.
-      return t("workspace.surveys.edit.ai_translation_failed");
-    },
-    [t]
-  );
-
   const translateBatches = async (
     batches: ReturnType<typeof createTranslationActionBatches>,
     runId: number
   ): Promise<string | undefined> => {
     for (const batch of batches) {
-      const result = await translateSurveyFieldsAction({
-        workspaceId,
-        fields: batch,
-        sourceLanguage: defaultLanguageName,
-        targetLanguage: languageName,
-      });
+      let result: Awaited<ReturnType<typeof translateSurveyFields>>;
+      try {
+        result = await translateSurveyFields(workspaceId, {
+          fields: batch,
+          sourceLanguage: defaultLanguageName,
+          targetLanguage: languageName,
+        });
+      } catch (error) {
+        if (runId !== translationRunId.current) return;
+        return getAITranslationErrorMessage(error, t);
+      }
       if (runId !== translationRunId.current) return;
 
-      const translations = result?.data?.translations;
-      if (!translations) {
-        const errorMessage = getFormattedErrorMessage(result);
-        return errorMessage
-          ? getAIErrorMessage(errorMessage)
-          : t("workspace.surveys.edit.ai_translation_failed");
-      }
-
-      setDraftTranslations((prev) => ({ ...prev, ...translations }));
-      if (result?.data?.errorCode) {
-        return getAIErrorMessage(result.data.errorCode);
+      setDraftTranslations((prev) => ({ ...prev, ...result.translations }));
+      // Some of the batch's model calls failed: what did translate is kept, and the reason is shown.
+      if (result.errorCode) {
+        return getAITranslationErrorCodeMessage(result.errorCode, t);
       }
     }
   };

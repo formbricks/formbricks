@@ -6,11 +6,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
 import { ManageTeamButton } from "@/modules/ee/teams/team-list/components/manage-team-button";
 import { TeamSettingsModal } from "@/modules/ee/teams/team-list/components/team-settings/team-settings-modal";
+import { getTeam } from "@/modules/ee/teams/team-list/lib/api-client";
 import {
   TOrganizationMember,
   TOtherTeam,
@@ -121,17 +121,14 @@ export const TeamsTable = ({
   const isOwnerOrManager = isOwner || isManager;
 
   const handleManageTeam = async (teamId: string) => {
-    const teamDetailsResponse = await getTeamDetailsAction({ teamId });
-    const teamRoleResult = await getTeamRoleAction({ teamId });
-
-    setUserTeamRole(teamRoleResult?.data ?? undefined);
-
-    if (teamDetailsResponse?.data) {
-      setSelectedTeam(teamDetailsResponse.data);
+    try {
+      // One read carries the team and the current user's role in it.
+      const { currentUserRole, ...team } = await getTeam(teamId);
+      setUserTeamRole(currentUserRole ?? undefined);
+      setSelectedTeam(team);
       setOpenSettingsModal(true);
-    } else {
-      const errorMessage = getFormattedErrorMessage(teamDetailsResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

@@ -7,6 +7,10 @@ import {
 import { encodeFilterRule } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
+import {
+  EmbeddedKeysNotReadyError,
+  RareEmbeddedKeysConflictError,
+} from "@/modules/ee/analysis/lib/embedded-keys-errors";
 import { getV3DashboardChartData } from "./chart-data-operations";
 import { ZV3DashboardChartDataQuery } from "./schemas";
 import { getDashboardChartsRow } from "./service";
@@ -207,6 +211,20 @@ describe("the dashboard's locked filters", () => {
     expect(response.status).toBe(500);
     expect(((await response.json()) as { detail: string }).detail).toContain("cldb000000000000000000001");
     expect(runV3ChartQuery).not.toHaveBeenCalled();
+  });
+});
+
+describe("a refusal of the chart's embedded-data fields", () => {
+  test.each([
+    ["rare keys of several buckets", new RareEmbeddedKeysConflictError(), "Remove one of them"],
+    ["keys the catalog has not caught up with", new EmbeddedKeysNotReadyError(), "not available yet"],
+  ])("answers 409 naming why (%s), never 500", async (_, refusal, detail) => {
+    vi.mocked(runV3ChartQuery).mockRejectedValueOnce(refusal);
+
+    const response = await read({});
+
+    expect(response.status).toBe(409);
+    expect(((await response.json()) as { detail: string }).detail).toContain(detail);
   });
 });
 

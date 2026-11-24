@@ -22,6 +22,10 @@ x-environment: &environment
     # Set BETTER_AUTH_URL on a new install; this one needs no value.
     NEXTAUTH_URL:
 
+    # Optional comma-separated extra origins trusted for sign-in, and for dashboard writes from clients that
+    # send no Sec-Fetch-Site header. Browsers that send it must be same-origin with the app.
+    # BETTER_AUTH_TRUSTED_ORIGINS:
+
     # PostgreSQL DB for Formbricks to connect to
     <<: *formbricks-database
 
