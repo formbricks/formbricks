@@ -41,10 +41,7 @@ const targetingMocks = vi.hoisted(() => ({
 }));
 // Each workspace is on a contact directory of its own, `dir_<workspaceId>`, unless a test says otherwise.
 vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
-  getWorkspaceContactDirectory: vi.fn(async (workspaceId: string) => ({
-    id: `dir_${workspaceId}`,
-    matchingKey: "email",
-  })),
+  getWorkspaceContactDirectoryId: vi.fn(async (workspaceId: string) => `dir_${workspaceId}`),
 }));
 
 vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({

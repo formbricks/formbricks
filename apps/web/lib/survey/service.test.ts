@@ -79,7 +79,7 @@ vi.mock("@/lib/organization/service", () => ({
 // Every workspace here is on one contact directory, which its segments belong to (decision 24).
 const mockDirectoryId = "cldirectory0000000000001";
 vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
-  getWorkspaceContactDirectory: vi.fn(async () => ({ id: mockDirectoryId, matchingKey: "email" })),
+  getWorkspaceContactDirectoryId: vi.fn(async () => mockDirectoryId),
 }));
 
 vi.mock("@/lib/actionClass/service", () => ({

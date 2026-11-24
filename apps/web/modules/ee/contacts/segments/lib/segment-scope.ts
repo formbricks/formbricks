@@ -23,6 +23,15 @@ export const isSegmentVisibleToWorkspace = (
 ): boolean => !segment.isPrivate || segment.workspaceId === workspaceId;
 
 /**
+ * The segments of a contact directory, or of the workspace while it has none (decision 3): a workspace
+ * with no directory keeps its segments in the workspace until a directory is picked for it.
+ */
+export const whereSegmentsOfDirectoryOrWorkspace = (
+  directoryId: string | null,
+  workspaceId: string
+): SegmentWhereInput => (directoryId ? { directoryId } : { workspaceId });
+
+/**
  * Where a survey's private segment is found: its title, the survey's id, in the workspace's directory.
  * A workspace with no directory (decision 3) still gives its app surveys a private segment, keyed in the
  * workspace until a directory is picked for it.

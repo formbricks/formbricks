@@ -69,7 +69,7 @@ import {
   readCustomCssPayloadSource,
   resolveCustomCssWriteOrThrow,
 } from "@/modules/custom-css/lib/service";
-import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
@@ -823,15 +823,11 @@ const updateAppSurveySegment = async (
   await saveAppSurveySegment(currentSurvey, segment, options.targetingActor);
 };
 
-/** The id of the workspace's contact directory, which its segments belong to; null while it has none. */
-const getSegmentDirectoryId = async (workspaceId: string): Promise<string | null> =>
-  (await getWorkspaceContactDirectory(workspaceId))?.id ?? null;
-
 /** An app survey without a segment gets its own private one, in its workspace's directory. */
 const ensureAppSurveySegment = async (currentSurvey: TSurvey, surveyId: string): Promise<void> => {
   if (!currentSurvey.segment) {
     const workspaceId = currentSurvey.workspaceId;
-    const directoryId = await getSegmentDirectoryId(workspaceId);
+    const directoryId = await getWorkspaceContactDirectoryId(workspaceId);
     await prisma.survey.update({
       where: {
         id: surveyId,
@@ -1464,7 +1460,7 @@ const saveAppSurveySegment = async (
   if (segment.id === survey.segment?.id || !segment.surveys?.includes(survey.id)) return;
 
   // A shared segment of the directory, whichever workspace made it (decision 24).
-  const directoryId = await getSegmentDirectoryId(survey.workspaceId);
+  const directoryId = await getWorkspaceContactDirectoryId(survey.workspaceId);
   const target = directoryId
     ? await prisma.segment.findFirst({
         where: { id: segment.id, directoryId },
@@ -1531,7 +1527,7 @@ const assertSurveySegmentBelongsToWorkspace = async (
 
   const [existingSegment, directoryId] = await Promise.all([
     client.segment.findUnique({ where: { id: segment.id }, select: { directoryId: true } }),
-    getSegmentDirectoryId(workspaceId),
+    getWorkspaceContactDirectoryId(workspaceId),
   ]);
 
   if (!directoryId || existingSegment?.directoryId !== directoryId) {
@@ -1712,7 +1708,7 @@ export const createSurvey = async (
     await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages, db);
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment, db);
     // Read before the survey's transaction: its private segment is created in the workspace's directory.
-    const segmentDirectoryId = await getSegmentDirectoryId(parsedWorkspaceId);
+    const segmentDirectoryId = await getWorkspaceContactDirectoryId(parsedWorkspaceId);
     await assertCreateTargetingVisible(parsedWorkspaceId, segment, privateSegmentFilters, targetingActor, db);
 
     // ENG-1839: `existing` is empty because a create authors every name fresh — there is nothing to
@@ -1905,7 +1901,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
     }
 
     // Any segment of the workspace's contact directory, whichever workspace made it (decision 24).
-    const directoryId = await getSegmentDirectoryId(currentSurvey.workspaceId);
+    const directoryId = await getWorkspaceContactDirectoryId(currentSurvey.workspaceId);
     const newSegment = directoryId
       ? await prisma.segment.findFirst({
           where: { id: newSegmentId, directoryId },

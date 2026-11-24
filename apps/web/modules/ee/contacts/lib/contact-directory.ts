@@ -41,6 +41,10 @@ export const getWorkspaceContactDirectory = reactCache(
   }
 );
 
+/** The id of the workspace's contact directory, or null when it has none. */
+export const getWorkspaceContactDirectoryId = async (workspaceId: string): Promise<string | null> =>
+  (await getWorkspaceContactDirectory(workspaceId))?.id ?? null;
+
 /** The workspace's contact directory; throws {@link ContactDirectoryMissingError} when it has none. */
 export const requireWorkspaceContactDirectory = async (
   workspaceId: string

@@ -6,6 +6,7 @@ import {
   ContactDirectoryMissingError,
   getReportingWorkspaceByDirectory,
   getWorkspaceContactDirectory,
+  getWorkspaceContactDirectoryId,
   getWorkspacesOnDirectory,
   requireWorkspaceContactDirectory,
   whereContactsOfWorkspace,
@@ -48,6 +49,22 @@ describe("getWorkspaceContactDirectory", () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
     await expect(getWorkspaceContactDirectory(workspaceId)).resolves.toBeNull();
+  });
+});
+
+describe("getWorkspaceContactDirectoryId", () => {
+  test("returns the id of the workspace's directory", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      contactDirectory: { id: "dir-1", matchingKey: "email" },
+    } as never);
+
+    await expect(getWorkspaceContactDirectoryId(workspaceId)).resolves.toBe("dir-1");
+  });
+
+  test("returns null for a workspace with no directory", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ contactDirectory: null } as never);
+
+    await expect(getWorkspaceContactDirectoryId(workspaceId)).resolves.toBeNull();
   });
 });
 

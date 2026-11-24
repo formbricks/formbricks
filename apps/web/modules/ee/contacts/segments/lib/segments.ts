@@ -41,6 +41,7 @@ import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   getWorkspaceContactDirectory,
+  getWorkspaceContactDirectoryId,
   requireWorkspaceContactDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 import {
@@ -50,7 +51,12 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
-import { isSegmentVisibleToWorkspace, privateSegmentKey, whereSegmentsOfWorkspace } from "./segment-scope";
+import {
+  isSegmentVisibleToWorkspace,
+  privateSegmentKey,
+  whereSegmentsOfDirectoryOrWorkspace,
+  whereSegmentsOfWorkspace,
+} from "./segment-scope";
 
 export const selectSegment = {
   id: true,
@@ -412,7 +418,7 @@ const upsertPrivateSegment = async ({
   description,
   filters,
 }: Pick<TSegmentCreateInput, "workspaceId" | "surveyId" | "description" | "filters">) => {
-  const directoryId = (await getWorkspaceContactDirectory(workspaceId))?.id ?? null;
+  const directoryId = await getWorkspaceContactDirectoryId(workspaceId);
   const upsert = () =>
     prisma.segment.upsert({
       // A shared segment holding the title, or a private one other surveys also use (only possible
@@ -599,7 +605,7 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
     throw new ResourceNotFoundError("survey", surveyId);
   }
 
-  const directoryId = (await getWorkspaceContactDirectory(survey.workspaceId))?.id ?? null;
+  const directoryId = await getWorkspaceContactDirectoryId(survey.workspaceId);
 
   try {
     return await prisma.$transaction(async (tx) => {
@@ -607,7 +613,7 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
       // another directory can hold a private segment titled with this survey's id (ENG-7389).
       const segment = await tx.segment.findFirst({
         where: {
-          ...(directoryId ? { directoryId } : { workspaceId: survey.workspaceId }),
+          ...whereSegmentsOfDirectoryOrWorkspace(directoryId, survey.workspaceId),
           title: surveyId,
           isPrivate: true,
         },

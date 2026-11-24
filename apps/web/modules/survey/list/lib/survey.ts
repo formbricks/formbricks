@@ -29,8 +29,9 @@ import { type TSurveyVisibilityFilter, buildSurveyAccessWhere } from "@/lib/surv
 import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveCopiedSurveyCustomCss } from "@/modules/custom-css/lib/service";
-import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
 import { assertSegmentSurveyFiltersVisible } from "@/modules/ee/contacts/segments/lib/helper";
+import { whereSegmentsOfDirectoryOrWorkspace } from "@/modules/ee/contacts/segments/lib/segment-scope";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { assertCanWriteCustomHeadScripts } from "@/modules/survey/lib/custom-head-scripts-permission";
@@ -454,7 +455,7 @@ const buildCopiedSegment = async (
     where: {
       title: segment.title,
       isPrivate: false,
-      ...(targetDirectoryId ? { directoryId: targetDirectoryId } : { workspaceId: targetWorkspaceId }),
+      ...whereSegmentsOfDirectoryOrWorkspace(targetDirectoryId, targetWorkspaceId),
     },
   });
 
@@ -553,7 +554,7 @@ export const copySurveyToOtherWorkspace = async (
       isSameWorkspace,
       targetWorkspaceId,
       targetDirectoryId: existingSurvey.segment
-        ? ((await getWorkspaceContactDirectory(targetWorkspaceId))?.id ?? null)
+        ? await getWorkspaceContactDirectoryId(targetWorkspaceId)
         : null,
     };
     if (existingSurvey.segment) {

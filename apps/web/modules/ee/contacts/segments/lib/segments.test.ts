@@ -78,6 +78,8 @@ vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) =>
   return {
     ...actual,
     getWorkspaceContactDirectory,
+    getWorkspaceContactDirectoryId: async (id: string) =>
+      (await getWorkspaceContactDirectory(id))?.id ?? null,
     requireWorkspaceContactDirectory: async (id: string) => {
       const directory = await getWorkspaceContactDirectory(id);
       if (!directory) throw new actual.ContactDirectoryMissingError();
