@@ -35,8 +35,9 @@ const queueSsoUserAuditEvent = ({
   newObject: Record<string, unknown>;
   failureMessage: string;
 }): void => {
-  try {
-    void queueAuditEventBackground({
+  // `Promise.try` turns a synchronous throw into a rejection too, so the one `.catch` covers both.
+  void Promise.try(() =>
+    queueAuditEventBackground({
       action,
       targetType: "user",
       userId,
@@ -45,12 +46,10 @@ const queueSsoUserAuditEvent = ({
       organizationId: organizationId ?? UNKNOWN_DATA,
       status,
       newObject,
-    }).catch((error: unknown) => {
-      logger.warn({ ...loggableError(error), userId }, failureMessage);
-    });
-  } catch (error) {
+    })
+  ).catch((error: unknown) => {
     logger.warn({ ...loggableError(error), userId }, failureMessage);
-  }
+  });
 };
 
 /**
