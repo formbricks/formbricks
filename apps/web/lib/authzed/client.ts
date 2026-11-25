@@ -491,7 +491,7 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
     : v1.ClientSecurity.SECURE;
   // The SDK appends its own 30s deadline interceptor last, and that interceptor only sets a deadline
   // when none is present — so whatever is installed here wins for every call on this channel.
-  // The reconnect backoff is shortened so a dropped connection recovers inside the retry budget.
+  // The reconnect backoff is shortened so a dropped connection recovers inside the retry budget (ENG-7003).
   const sdkClient = v1.NewClient(config.token, config.endpoint, security, undefined, {
     ...AUTHZED_CHANNEL_OPTIONS,
     interceptors: [deadlineInterceptor(requestTimeoutMs)],

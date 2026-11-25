@@ -67,21 +67,25 @@ const echo = (client: TEchoClient): Promise<Buffer> =>
  * failure after this point is the channel's backoff alone.
  */
 const dropConnectionThenRecover = async (
-  options: ChannelOptions | undefined
-): Promise<{ client: TEchoClient; server: Server }> => {
+  options: ChannelOptions | undefined,
+  onCleanup: (fn: () => void) => void
+): Promise<TEchoClient> => {
   const first = await startServer(0);
+  onCleanup(() => first.server.forceShutdown());
   const client = new EchoClient(
     `127.0.0.1:${first.port}`,
     credentials.createInsecure(),
     options
   ) as TEchoClient;
+  onCleanup(() => client.close());
   await echo(client);
 
   first.server.forceShutdown();
   await expect(echo(client)).rejects.toMatchObject({ code: status.UNAVAILABLE });
 
   const second = await startServer(first.port);
-  return { client, server: second.server };
+  onCleanup(() => second.server.forceShutdown());
+  return client;
 };
 
 describe("AuthZed channel recovery after a dropped connection", () => {
@@ -92,17 +96,21 @@ describe("AuthZed channel recovery after a dropped connection", () => {
     loggerMocks.warn.mockReset();
   });
 
+  // Each resource is registered as it is created, so a failure halfway through setup still releases it,
+  // and one teardown that throws does not stop the rest.
   afterEach(() => {
-    cleanup.forEach((fn) => fn());
+    for (const fn of cleanup.reverse()) {
+      try {
+        fn();
+      } catch {
+        // Already closed.
+      }
+    }
     cleanup = [];
   });
 
   test("the request-path retry outlives the channel's reconnect backoff once SpiceDB is back", async () => {
-    const { client, server } = await dropConnectionThenRecover(AUTHZED_CHANNEL_OPTIONS);
-    cleanup.push(
-      () => client.close(),
-      () => server.forceShutdown()
-    );
+    const client = await dropConnectionThenRecover(AUTHZED_CHANNEL_OPTIONS, (fn) => cleanup.push(fn));
 
     // The production retry policy, real sleeps and all. With grpc-js's default 1 s initial backoff all three
     // attempts land inside it and fail with UNAVAILABLE; the authorization check then 500s (ENG-7003).
@@ -111,15 +119,12 @@ describe("AuthZed channel recovery after a dropped connection", () => {
     );
   });
 
-  test("the slowest first reconnect fits before the last retry's earliest start", () => {
-    // The invariant the test above exercises, stated without a clock: even with grpc-js's ±20% jitter on the
-    // first backoff, the channel is reconnecting before the final attempt, however the retry jitter falls.
-    const firstBackoffMaxMs = AUTHZED_CHANNEL_OPTIONS["grpc.initial_reconnect_backoff_ms"] * 1.2;
-    const lastAttemptEarliestMs = AUTHZED_RETRY_BASE_DELAYS_MS.reduce(
-      (total, delay) => total + delay * (1 - AUTHZED_RETRY_JITTER_RATIO),
-      0
-    );
+  test("the channel starts reconnecting before the first retry, however the retry jitter falls", () => {
+    // The invariant the test above exercises, stated without a clock. grpc-js runs its first reconnect
+    // backoff at exactly the configured delay (jitter applies from the second on), so the second attempt
+    // already finds a channel that has tried to reconnect, and the third has a further retry delay of margin.
+    const firstRetryEarliestMs = AUTHZED_RETRY_BASE_DELAYS_MS[0] * (1 - AUTHZED_RETRY_JITTER_RATIO);
 
-    expect(firstBackoffMaxMs).toBeLessThan(lastAttemptEarliestMs);
+    expect(AUTHZED_CHANNEL_OPTIONS["grpc.initial_reconnect_backoff_ms"]).toBeLessThan(firstRetryEarliestMs);
   });
 });
