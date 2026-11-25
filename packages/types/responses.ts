@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { TWithCalBookings } from "./cal-booking";
 import { ZId } from "./common";
+import { ISO_COUNTRY_CODES } from "./country-codes";
 import { ZSurveyQuota } from "./quota";
 import { MAX_NOT_SHOWN_ID_LENGTH, ZResponseNotShown, ZResponseNotShownInput } from "./surveys/not-shown";
 import { ZSurvey } from "./surveys/types";
@@ -815,14 +816,15 @@ export const pickAutoCapturedResponseMeta = (meta: TResponseMeta | undefined): T
 
 /**
  * A country set from outside — a link survey's `?country=`, or `country` handed to `setEmbeddedData` or
- * `track({ hiddenFields })` — as a two-letter ISO 3166-1 alpha-2 code, upper-cased. Anything else is
+ * `track({ hiddenFields })` — as an assigned ISO 3166-1 alpha-2 code, upper-cased. Anything else is
  * `undefined`, so the ingest routes fall back to the CDN header: a name like `Germany` would sit next to
- * the CDN's `DE` as a second value for the same country in every filter, chart and export.
+ * the CDN's `DE` as a second value for the same country in every filter, chart and export, and an
+ * unassigned code like `ZZ` would replace a real CDN value with one that is no country at all.
  */
 export const normalizeCountryCode = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
   const code = value.trim().toUpperCase();
-  return /^[A-Z]{2}$/.test(code) ? code : undefined;
+  return ISO_COUNTRY_CODES.has(code) ? code : undefined;
 };
 
 export const ZResponse = z.object({

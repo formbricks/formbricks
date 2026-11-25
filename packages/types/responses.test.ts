@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { ISO_COUNTRY_CODES } from "./country-codes";
 import {
   MAX_RESPONSE_DATA_ENTRIES,
   MAX_RESPONSE_DATA_KEYS,
@@ -448,13 +449,29 @@ describe("response input caps", () => {
 });
 
 describe("normalizeCountryCode", () => {
-  test("keeps a two-letter code, trimmed and upper-cased", () => {
+  test("keeps an assigned code, trimmed and upper-cased", () => {
     expect(normalizeCountryCode("DE")).toBe("DE");
     expect(normalizeCountryCode(" us ")).toBe("US");
+    expect(normalizeCountryCode("gb")).toBe("GB");
+  });
+
+  test("keeps XK, the code Cloudflare reports for Kosovo", () => {
+    expect(normalizeCountryCode("xk")).toBe("XK");
+  });
+
+  test("holds exactly the 249 ISO 3166-1 codes plus XK", () => {
+    expect(ISO_COUNTRY_CODES.size).toBe(250);
+    for (const code of ISO_COUNTRY_CODES) expect(code).toMatch(/^[A-Z]{2}$/);
   });
 
   test("refuses anything else, so the ingest routes fall back to the CDN header", () => {
     for (const value of ["Germany", "D", "DEU", "D1", "", 49, null, undefined, ["DE"]]) {
+      expect(normalizeCountryCode(value)).toBeUndefined();
+    }
+  });
+
+  test("refuses well-formed codes that name no country: unassigned, deprecated, groupings", () => {
+    for (const value of ["ZZ", "XX", "QQ", "UK", "SU", "EU", "UN", "T1"]) {
       expect(normalizeCountryCode(value)).toBeUndefined();
     }
   });

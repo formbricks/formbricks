@@ -17,12 +17,13 @@ describe("resolveResponseCountry", () => {
     expect(resolveResponseCountry(" fr ", new Headers({ "CF-IPCountry": "DE" }))).toBe("FR");
   });
 
-  test("a client value that is not a two-letter code falls back to the CDN header", () => {
+  test("a client value that is not an assigned country code falls back to the CDN header", () => {
     const headers = new Headers({ "CF-IPCountry": "DE" });
 
     expect(resolveResponseCountry("Germany", headers)).toBe("DE");
     expect(resolveResponseCountry("D", headers)).toBe("DE");
     expect(resolveResponseCountry(49, headers)).toBe("DE");
+    expect(resolveResponseCountry("ZZ", headers)).toBe("DE");
   });
 
   test("works without any CDN when the client set one", () => {
