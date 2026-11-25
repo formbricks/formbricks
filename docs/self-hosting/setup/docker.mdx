@@ -113,7 +113,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 
    If the server is reachable from the internet before you finish setup, also add a setup token now, before the
    first start. Until the first administrator exists, anyone who can reach the instance can create that account;
-   with `SETUP_TOKEN` set, the setup form asks for it. Leave it out to keep the default open setup.
+   with `SETUP_TOKEN` set (at least 16 characters), the setup form asks for it. Leave it out to keep the default
+   open setup.
 
    ```bash
    echo "SETUP_TOKEN=$(openssl rand -hex 16)" >> .env

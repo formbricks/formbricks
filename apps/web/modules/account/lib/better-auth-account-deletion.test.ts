@@ -99,7 +99,8 @@ describe("accountDeletionBeforeDelete", () => {
       targetUserId: "user-1",
       oldUser: expect.objectContaining({ id: "user-1" }),
     });
-    // throws before any destructive cleanup
+    // throws before any destructive cleanup, and before the setup marker write the allowed path makes
+    expect(markInstanceSetupCompleted).not.toHaveBeenCalled();
     expect(deleteOrganization).not.toHaveBeenCalled();
     expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
     expect(requestEmailAuditErasureBeforeUserDeletion).not.toHaveBeenCalled();
