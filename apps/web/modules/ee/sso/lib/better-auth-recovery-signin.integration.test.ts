@@ -8,6 +8,7 @@ import { createToken } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
 import { syncSsoIdentityForUser } from "@/modules/ee/sso/lib/account-linking";
 import { consumeSsoRecoveryIntent, createSsoRecoveryIntent } from "@/modules/ee/sso/lib/recovery-intent";
+import { getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/recovery-outcomes";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME, isValidSsoRecoveryProof } from "@/modules/ee/sso/lib/recovery-proof";
 import { proofCookieOf } from "@/modules/ee/sso/lib/tests/recovery-cookies";
 
@@ -50,9 +51,18 @@ const startRecovery = async (userId: string): Promise<string> => {
 };
 
 /** Spends a recovery the way Link and Cancel do. */
-const spend = async (stateId: string): Promise<string> => {
-  expect(await consumeSsoRecoveryIntent(stateId)).toBe(true);
+const spendRecovery = async (stateId: string): Promise<string> => {
+  if (!(await consumeSsoRecoveryIntent(stateId))) throw new Error("fixture: recovery was not stored");
   return stateId;
+};
+
+const completionUrlFor = (stateId: string) => `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=${stateId}`;
+
+/** The link `startSsoRecovery` mails: a token bound to a live recovery, and that recovery's completion URL. */
+const mailedRecoveryLink = async (userId: string) => {
+  const stateId = await startRecovery(userId);
+  const token = createToken(userId, { purpose: "sso_recovery", ssoRecoveryStateId: stateId });
+  return { stateId, token, callbackUrl: completionUrlFor(stateId) };
 };
 
 const otherUserRecovery = async (): Promise<string> => {
@@ -71,9 +81,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     ["the 2FA path", { emailVerified: true, twoFactorEnabled: true }],
   ])("sets a proof bound to this user and recovery on %s", async (_label, flags) => {
     const user = await prisma.user.create({ data: { email: "proof@example.com", name: "Proof", ...flags } });
-    const stateId = await startRecovery(user.id);
-    const token = createToken(user.id, { purpose: "sso_recovery", ssoRecoveryStateId: stateId });
-    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=${stateId}`;
+    const { stateId, token, callbackUrl } = await mailedRecoveryLink(user.id);
 
     const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
 
@@ -93,11 +101,8 @@ describe("SSO recovery sign-in (real Postgres)", () => {
    */
   test("sets no proof for a token bound to another recovery", async () => {
     const user = await prisma.user.create({ data: { email: "unbound@example.com", name: "Unbound" } });
-    const token = createToken(user.id, {
-      purpose: "sso_recovery",
-      ssoRecoveryStateId: await startRecovery(user.id),
-    });
-    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=${await startRecovery(user.id)}`;
+    const { token } = await mailedRecoveryLink(user.id);
+    const callbackUrl = completionUrlFor(await startRecovery(user.id));
 
     const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
 
@@ -109,8 +114,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
   test("sets no proof when the callback is not a recovery completion", async () => {
     const user = await prisma.user.create({ data: { email: "noproof@example.com", name: "No Proof" } });
     // Bound to the state in the callback, so only the path check can withhold the proof.
-    const stateId = await startRecovery(user.id);
-    const token = createToken(user.id, { purpose: "sso_recovery", ssoRecoveryStateId: stateId });
+    const { stateId, token } = await mailedRecoveryLink(user.id);
 
     const res = await auth.api.ssoRecoverySignIn({
       query: { token, callbackUrl: `${WEBAPP_URL}/environments/env_1?state=${stateId}` },
@@ -136,11 +140,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     const user = await prisma.user.create({
       data: { email: "recover@example.com", name: "Recover", emailVerified: true },
     });
-    const token = createToken(user.id, {
-      purpose: "sso_recovery",
-      ssoRecoveryStateId: await startRecovery(user.id),
-    });
-    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state`;
+    const { token, callbackUrl } = await mailedRecoveryLink(user.id);
 
     const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
 
@@ -165,11 +165,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
         twoFactorEnabled: true,
       },
     });
-    const token = createToken(user.id, {
-      purpose: "sso_recovery",
-      ssoRecoveryStateId: await startRecovery(user.id),
-    });
-    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state`;
+    const { token, callbackUrl } = await mailedRecoveryLink(user.id);
 
     const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
 
@@ -192,12 +188,9 @@ describe("SSO recovery sign-in (real Postgres)", () => {
         twoFactorEnabled: true,
       },
     });
-    const token = createToken(user.id, {
-      purpose: "sso_recovery",
-      ssoRecoveryStateId: await startRecovery(user.id),
-    });
+    const { token, callbackUrl } = await mailedRecoveryLink(user.id);
 
-    await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl: WEBAPP_URL }, asResponse: true });
+    await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
 
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(1);
   });
@@ -216,11 +209,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
         twoFactorEnabled: true,
       },
     });
-    const token = createToken(user.id, {
-      purpose: "sso_recovery",
-      ssoRecoveryStateId: await startRecovery(user.id),
-    });
-    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state`;
+    const { token, callbackUrl } = await mailedRecoveryLink(user.id);
 
     constants.emailAuthEnabled.value = false;
     try {
@@ -240,10 +229,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     const user = await prisma.user.create({
       data: { email: "twofa-evil@example.com", name: "TwoFa", emailVerified: true, twoFactorEnabled: true },
     });
-    const token = createToken(user.id, {
-      purpose: "sso_recovery",
-      ssoRecoveryStateId: await startRecovery(user.id),
-    });
+    const { token } = await mailedRecoveryLink(user.id);
 
     const res = await auth.api.ssoRecoverySignIn({
       query: { token, callbackUrl: "https://evil.example/phish" },
@@ -264,18 +250,15 @@ describe("SSO recovery sign-in (real Postgres)", () => {
         isActive: false,
       },
     });
-    const token = createToken(user.id, {
-      purpose: "sso_recovery",
-      ssoRecoveryStateId: await startRecovery(user.id),
-    });
+    const { token, callbackUrl } = await mailedRecoveryLink(user.id);
 
     const res = await auth.api.ssoRecoverySignIn({
-      query: { token, callbackUrl: `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state` },
+      query: { token, callbackUrl },
       asResponse: true,
     });
 
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
-    expect(new URL(res.headers.get("location") ?? "").searchParams.get("error")).not.toBeNull();
+    expect(res.headers.get("location")).toBe(getSsoRecoveryFailureRedirectUrl(callbackUrl));
   });
 
   test("a token with a non-recovery purpose creates no session", async () => {
@@ -297,12 +280,9 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     const user = await prisma.user.create({
       data: { email: "inactive@example.com", name: "Inactive", emailVerified: true, isActive: false },
     });
-    const token = createToken(user.id, {
-      purpose: "sso_recovery",
-      ssoRecoveryStateId: await startRecovery(user.id),
-    });
+    const { token, callbackUrl } = await mailedRecoveryLink(user.id);
 
-    await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl: WEBAPP_URL }, asResponse: true });
+    await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
 
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
   });
@@ -314,7 +294,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
    */
   test.each([
     ["bound to no recovery", (_userId: string) => Promise.resolve(undefined)],
-    ["bound to a recovery that is spent", (userId: string) => startRecovery(userId).then(spend)],
+    ["bound to a recovery that is spent", (userId: string) => startRecovery(userId).then(spendRecovery)],
     ["bound to another user's recovery", () => otherUserRecovery()],
   ])("a token %s signs nobody in", async (_label, bindTo) => {
     const user = await prisma.user.create({
@@ -322,13 +302,13 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     });
     const ssoRecoveryStateId = await bindTo(user.id);
     const token = createToken(user.id, { purpose: "sso_recovery", ssoRecoveryStateId });
-    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=${ssoRecoveryStateId ?? "none"}`;
+    const callbackUrl = completionUrlFor(ssoRecoveryStateId ?? "none");
 
     const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
 
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
     expect(proofCookieOf(res)).toBeNull();
-    expect(new URL(res.headers.get("location") ?? "").searchParams.get("error")).not.toBeNull();
+    expect(res.headers.get("location")).toBe(getSsoRecoveryFailureRedirectUrl(callbackUrl));
   });
 });
 

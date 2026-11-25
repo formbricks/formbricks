@@ -90,10 +90,10 @@ export const ssoRecoverySignInPlugin = {
           // in this same browser, after the login page.
           //
           // Only for the recovery this token was mailed for: the state is read from the unsigned
-          // `callbackUrl`, so it must match the one signed into the token. A token minted before that
-          // claim existed gets no proof; its holder can only start recovery again for a new link.
+          // `callbackUrl`, so it must match the one signed into the token, which the live-intent check
+          // above has already tied to this user.
           const stateId = getSsoRecoveryStateIdFromCompletionUrl(callbackUrl, WEBAPP_URL);
-          if (stateId && stateId === ssoRecoveryStateId) {
+          if (stateId === ssoRecoveryStateId) {
             ctx.setCookie(
               SSO_RECOVERY_PROOF_COOKIE_NAME,
               createSsoRecoveryProof(id, stateId),

@@ -8,6 +8,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { getSession } from "@/modules/auth/lib/session";
 import { ssoRecoveryAfterHandler } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { cancelSsoRecovery } from "@/modules/ee/sso/lib/recovery-authorize";
+import { getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/recovery-outcomes";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
 import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { captureSsoIdentity, runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
@@ -313,17 +314,18 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
 
     // A scanner's fetch, then the person's click: both land while the recovery is live.
     await openEmailedRecoveryLink(user.id, completionUrl);
-    const recoveryProof = proofCookieOf(await openEmailedRecoveryLink(user.id, completionUrl)) ?? undefined;
+    const recoveryProof = proofCookieOf(await openEmailedRecoveryLink(user.id, completionUrl));
+    expect(recoveryProof).not.toBeNull();
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(2);
 
-    await finish({ stateId, recoveryProof, sessionUserId: user.id });
+    await finish({ stateId, recoveryProof: recoveryProof ?? undefined, sessionUserId: user.id });
 
     const replay = await openEmailedRecoveryLink(user.id, completionUrl);
 
     expect(await prisma.session.count({ where: { userId: user.id } })).toBe(2);
     expect(replay.headers.getSetCookie().some((cookie) => cookie.includes("session_token"))).toBe(false);
     expect(proofCookieOf(replay)).toBeNull();
-    expect(new URL(replay.headers.get("location") ?? "").searchParams.get("error")).not.toBeNull();
+    expect(replay.headers.get("location")).toBe(getSsoRecoveryFailureRedirectUrl(completionUrl));
   });
 
   /**
