@@ -49,6 +49,7 @@ export const RichTextTranslationInput = ({
       <Editor
         key={`${path}-${editorKey}`}
         disableLists
+        unwrapSingleCellTables
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
         setFirstRender={setFirstRender}

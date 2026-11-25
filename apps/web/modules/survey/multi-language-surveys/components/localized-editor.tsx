@@ -63,6 +63,7 @@ export function LocalizedEditor({
       <Editor
         id={id}
         disableLists
+        unwrapSingleCellTables
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
         focusOnMount={focusOnMount}
