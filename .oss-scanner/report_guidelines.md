@@ -12,7 +12,8 @@ more. Sections, in this order:
 4. **Attacker starting position** — anonymous, or an organization role
    (`owner`, `manager`, `member`, `billing`, `dashboard_viewer`) plus, for a
    `member` or `dashboard_viewer`, the team permission on the target workspace
-   (`read`, `readWrite`, `manage`).
+   (`read`, `readWrite`, `manage`); or an API key with its workspace and
+   organization permissions; or an MCP client and what its grant selects.
 5. **Reproduction** — the smallest sequence that demonstrates the issue:
    request(s), payload, test, or code excerpt. Prefer a runnable unit test.
 6. **Impact** — what the attacker gains, and which tenant or role boundary is

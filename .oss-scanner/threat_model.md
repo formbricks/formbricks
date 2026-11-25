@@ -8,17 +8,24 @@ packages (`packages/*`). It is deployed self-hosted or as Formbricks Cloud.
 
 One instance serves many **organizations**. Each organization contains one or
 more **workspaces**; a workspace holds surveys, contacts, responses, segments,
-actions, integrations, dashboards and stored files, and API keys are granted
-per workspace.
+actions, integrations, dashboards and stored files.
 
 - A user's **organization role** is `owner`, `manager`, `member`, `billing` or
   `dashboard_viewer`. Owners and managers reach every workspace in the
-  organization. `billing` manages the subscription only. `dashboard_viewer`
-  reads the saved dashboards of the workspaces its teams are granted, and never
-  surveys, responses, contacts or feedback records.
+  organization. `billing` (Formbricks Cloud only) sees the organization and
+  manages its subscription, and never sees product data. `dashboard_viewer`
+  reads a workspace's data only through dashboard-bound operations: the
+  dashboards of workspaces its teams are assigned, a saved chart's data on
+  them, and the filter value lists for keys some chart on the dashboard groups
+  by. It never reaches the free-form chart query or field-value routes, and
+  never reads surveys, responses or contacts directly.
 - `member` and `dashboard_viewer` reach a workspace only through a **team**. A
-  team is granted `read`, `readWrite` or `manage` on each workspace, and a
-  user's **team role** is `admin` or `contributor`.
+  team holds `read`, `readWrite` or `manage` on each workspace it is assigned,
+  and a user's **team role** is `admin` or `contributor`.
+- An **API key** holds `read`, `write` or `manage` on each workspace it
+  lists, and optionally organization access-control `read` or `write` (teams
+  and workspace-team assignments). An **MCP OAuth client** acts for a user,
+  limited to the organizations or workspaces its grant selects.
 
 The application is multi-tenant. **Both the organization and the workspace are
 tenant boundaries**: a user must not reach another organization, nor a
@@ -70,8 +77,8 @@ Treat all of the following as adversarial:
   file handling, model calls, background jobs.
 
 Lower priority (still in scope, but rate findings accordingly):
-`apps/deployment-check`, `docker/`, `charts/`, `docs/`, `scripts/`, generated
-Prisma output, translations and test fixtures.
+`apps/deployment-check`, `docker/`, `charts/`, `docs/`, `scripts/`,
+translations and test fixtures.
 
 ## How to exercise it
 
@@ -99,13 +106,16 @@ internet, with more than one tenant on the instance.
   scope; a public survey endpoint that lets an anonymous attacker take over a
   workspace.
 - **High** — IDOR or data leak across organizations, or into a workspace of
-  the same organization that none of the attacker's teams is granted;
-  privilege escalation to organization owner/manager; authenticated RCE; SSRF reaching internal
-  services or cloud metadata; stored XSS in another user's admin session;
+  the same organization that none of the attacker's teams, API key or MCP
+  grant reaches; privilege escalation to organization owner/manager;
+  authenticated RCE; SSRF reaching internal services or cloud metadata; stored XSS in another user's admin session;
   disclosure of API keys, secrets or session tokens; account takeover through
   auth logic.
-- **Medium** — IDOR between roles or team permissions inside one workspace
-  the attacker can already reach; stored XSS whose impact stays
+- **Medium** — escalation between roles, team permissions or API-key
+  permissions inside the organization, without crossing into an unreached
+  workspace: for example `read` writing, `billing` reading product data, or
+  `dashboard_viewer` reading raw responses in a workspace its team is
+  assigned; stored XSS whose impact stays
   inside the attacker's own session/workspace; CSRF on state-changing actions;
   open redirect; rate-limit bypass enabling response or invitation spam;
   authenticated DoS.
@@ -117,7 +127,9 @@ Do not inflate severity based on a hypothetical misconfiguration. State the
 attacker's starting position explicitly: anonymous, an organization role
 (`owner`, `manager`, `member`, `billing`, `dashboard_viewer`), and for a
 `member` or `dashboard_viewer` the team permission on the target workspace
-(`read`, `readWrite`, `manage`). A finding that requires the server operator or
+(`read`, `readWrite`, `manage`); or an API key with its workspace and
+organization permissions; or an MCP client and what its grant selects. A
+finding that requires the server operator or
 database owner to be malicious is not a vulnerability.
 
 ## Out of scope

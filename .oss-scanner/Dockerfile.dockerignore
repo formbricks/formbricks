@@ -4,7 +4,7 @@
 # both exist. The root one is an allowlist for the production image; the scanner needs the source
 # tree (docs, charts, scripts, AGENTS.md) so an offline agent can read it. Left out: caches,
 # generated output, anything machine-local or secret, editor and agent tooling (.claude, .cursor),
-# and code that cannot run offline or is not shipped (Playwright E2E specs, Storybook stories).
+# and code that cannot run offline or is not shipped (Playwright E2E specs, the Storybook app in apps/storybook).
 
 .git
 .gitignore
