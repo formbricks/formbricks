@@ -5,7 +5,7 @@ import { WEBAPP_URL } from "@/lib/constants";
 import { ssoRecoveryAfterHandler } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { captureSsoIdentity, runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 import { sendVerificationEmail } from "@/modules/email";
-import { applyEmailRateLimits } from "@/modules/email/lib/email-rate-limits";
+import { applyEmailRateLimits, emailRateLimits } from "@/modules/email/lib/email-rate-limits";
 
 /**
  * ENG-2558 end to end, through the hook the IdP callback runs, against real Postgres and real Redis.
@@ -42,7 +42,8 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => ({
 
 // Unique per run: the per-recipient counter lives in Redis for an hour.
 const ACCOUNT_EMAIL = `retry-cap-${Date.now()}@example.com`;
-const RECOVERY_EMAILS_PER_HOUR = 5;
+const RECOVERY_EMAILS_PER_HOUR =
+  emailRateLimits.sso_recovery_verification.recipient?.total?.allowedPerInterval ?? 0;
 const CALLBACK_URL = `${WEBAPP_URL}/organizations/org_retry/workspaces/ws_retry/surveys`;
 
 /** One SSO sign-in attempt that collides with the existing account. Returns where the browser is sent. */
@@ -75,11 +76,9 @@ describe("SSO recovery past the recovery-email cap (real Postgres + Redis + emai
     await resetDb();
     vi.clearAllMocks();
     mocks.getOAuthState.mockResolvedValue({ callbackURL: CALLBACK_URL });
-    vi.mocked(sendVerificationEmail).mockImplementation(async ({ email, purpose }) => {
-      await applyEmailRateLimits(
-        purpose === "sso_recovery" ? "sso_recovery_verification" : "email_verification",
-        email
-      );
+    // Recovery sends with `purpose: "sso_recovery"`, which `sendVerificationEmail` sends as this type.
+    vi.mocked(sendVerificationEmail).mockImplementation(async ({ email }) => {
+      await applyEmailRateLimits("sso_recovery_verification", email);
       return true;
     });
   });
@@ -93,7 +92,9 @@ describe("SSO recovery past the recovery-email cap (real Postgres + Redis + emai
       expect(await retrySignIn(attempt)).toContain("/auth/verification-requested");
     }
 
+    expect(RECOVERY_EMAILS_PER_HOUR).toBeGreaterThan(0);
     expect(sendVerificationEmail).toHaveBeenCalledTimes(RECOVERY_EMAILS_PER_HOUR);
+    expect(sendVerificationEmail).toHaveBeenCalledWith(expect.objectContaining({ purpose: "sso_recovery" }));
 
     const failure = new URL(await retrySignIn(RECOVERY_EMAILS_PER_HOUR));
     expect(failure.pathname).toBe("/auth/login");

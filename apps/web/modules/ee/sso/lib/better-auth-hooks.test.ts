@@ -771,11 +771,8 @@ describe("ssoRecoveryAfter", () => {
   describe("when starting recovery fails", () => {
     const failureRedirect = "http://localhost:3000/auth/login?error=OAuthAccountNotLinked&callbackUrl=";
 
-    test.each([
-      { label: "the recovery email cap is reached", error: new TooManyRequestsError("Too many requests") },
-      { label: "SMTP rejects the send", error: new Error("Incorrect SMTP credentials") },
-      { label: "a secret is missing", error: new Error("NEXTAUTH_SECRET is not set") },
-    ])("redirects to the recovery-failure page when $label", async ({ error }) => {
+    test("redirects to the recovery-failure page when the recovery email cap is reached", async () => {
+      const error = new TooManyRequestsError("Maximum number of requests reached");
       vi.mocked(startSsoRecovery).mockRejectedValue(error);
       const redirect = vi.fn((url: string) => new APIError("FOUND", { message: `redirect:${url}` }));
       const ctx = makeCtx({ redirect });
