@@ -3,8 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
-
-const INSTANCE_SETUP_ID = "instance";
+import { INSTANCE_SETUP_ID } from "@formbricks/types/instance";
 
 const rethrowAsDatabaseError = (error: unknown): never => {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {

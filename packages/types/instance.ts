@@ -6,3 +6,6 @@
  */
 export const SETUP_TOKEN_MIN_LENGTH = 16;
 export const SETUP_TOKEN_MAX_LENGTH = 512;
+
+/** Primary key of the singleton `InstanceSetup` row that records the instance has been set up (ENG-7313). */
+export const INSTANCE_SETUP_ID = "instance";
