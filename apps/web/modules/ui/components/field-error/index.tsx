@@ -20,8 +20,8 @@ interface FieldErrorProps {
 export const FieldError = ({ id, message, className }: FieldErrorProps) => (
   <div id={id} aria-live="polite" aria-atomic="true" className={className}>
     {message ? (
-      <p className={cn("mb-2 flex items-start gap-1 text-start text-sm text-error")}>
-        <AlertCircleIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <p className={cn("mb-2 flex items-start gap-1 text-start text-sm text-error-foreground")}>
+        <AlertCircleIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-error" />
         <span>{message}</span>
       </p>
     ) : null}

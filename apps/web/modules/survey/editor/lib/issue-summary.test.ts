@@ -39,9 +39,9 @@ const survey = {
 } as unknown as TSurvey;
 
 describe("issue summary helpers", () => {
-  test("merges the same message in the same place into one counted entry, in summary order", () => {
+  test("merges the same message in the same place into one counted entry, keeping the order given", () => {
     const flow = issue({ tab: "flow", message: "Pick a value" });
-    const merged = mergeRepeatedIssues([flow, issue({ key: "a" }), issue({ key: "b" })]);
+    const merged = mergeRepeatedIssues([issue({ key: "a" }), issue({ key: "b" }), flow]);
 
     expect(merged.map(({ issue: found, count }) => [found.tab, count])).toEqual([
       ["elements", 2],

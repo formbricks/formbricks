@@ -90,7 +90,6 @@ import {
   isComputedDateField,
   scrollElementCardIntoView,
 } from "@/modules/survey/editor/lib/utils";
-import { getFieldIssue } from "@/modules/survey/editor/lib/validation-issues";
 import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
@@ -173,6 +172,17 @@ export const FlowView = ({
   const textFormat = { locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US" };
   const outline = useMemo(() => buildFlowOutline(localSurvey), [localSurvey]);
   const elementIcons = useMemo(() => getElementIconMap(t), [t]);
+
+  // A block's row says what is wrong with its show-if; when it is folded over other problems, how many.
+  const getBlockErrorMessages = (blockId: string, hiddenProblemCount: number): string[] => {
+    const showIfMessages = issues
+      .filter((issue) => issue.tab === "flow" && issue.targetId === blockId && issue.field === "showIf")
+      .map((issue) => issue.message);
+    if (showIfMessages.length > 0) return showIfMessages;
+    return hiddenProblemCount > 0
+      ? [t("workspace.surveys.edit.issue_card_problems", { count: hiddenProblemCount })]
+      : [];
+  };
 
   // The show-if popovers and the info tooltips stay inside the editor column rather than spill over
   // the preview or cover the editor's header.
@@ -325,7 +335,9 @@ export const FlowView = ({
           tone={row.type}
           icon={<RuleTypeIcon type={row.type} />}
           isInvalid={invalidElements?.includes(row.id) ?? false}
-          errorMessage={getFieldIssue(issues, row.id, null)?.message}
+          errorMessages={issues
+            .filter((issue) => issue.tab === "flow" && issue.targetId === row.id)
+            .map((issue) => issue.message)}
           readOnlyLabel={row.editable ? undefined : t("workspace.surveys.edit.flow.read_only")}
           onToggle={row.editable ? () => toggleRow(row.id) : undefined}
           ariaLabel={row.editable ? sentence : undefined}
@@ -787,12 +799,7 @@ export const FlowView = ({
                       (block.rules.some((row) => invalidElements?.includes(row.id)) ||
                         surveyBlock.elements.some((element) => invalidElements?.includes(element.id))))
                   }
-                  errorMessage={
-                    getFieldIssue(issues, block.id, "showIf")?.message ??
-                    (hiddenProblemCount > 0
-                      ? t("workspace.surveys.edit.issue_card_problems", { count: hiddenProblemCount })
-                      : undefined)
-                  }
+                  errorMessages={getBlockErrorMessages(block.id, hiddenProblemCount)}
                   body={isExpanded ? renderQuestionTable(block) : null}>
                   <span className="shrink-0 text-xs font-medium text-slate-500">
                     {t("workspace.surveys.edit.block_n", { blockNumber: block.blockIdx + 1 })}

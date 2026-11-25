@@ -2,15 +2,15 @@ import { TFunction } from "i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { TEditorIssue, sortIssuesForSummary } from "./validation-issues";
+import { TEditorIssue } from "./validation-issues";
 
 /**
  * The same thing wrong in several places of one question ("Enter an option", five times) reads as one entry.
- * Entries keep the summary's order: by tab, then survey order.
+ * Entries keep the order the issues arrive in, which `collectEditorIssues` has already put in survey order.
  */
 export const mergeRepeatedIssues = (issues: TEditorIssue[]): { issue: TEditorIssue; count: number }[] => {
   const repeats = new Map<string, { issue: TEditorIssue; count: number }>();
-  for (const issue of sortIssuesForSummary(issues)) {
+  for (const issue of issues) {
     const repeatKey = [issue.tab, issue.targetId, issue.location, issue.message].join("|");
     const seen = repeats.get(repeatKey);
     if (seen) seen.count += 1;

@@ -26,6 +26,7 @@ import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
+import type { TRevealRequest } from "@/modules/survey/editor/components/block-card";
 import { BlocksDroppable } from "@/modules/survey/editor/components/blocks-droppable";
 import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
 import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
@@ -70,6 +71,8 @@ interface ElementsViewProps {
   setActiveElementId: (elementId: string | null) => void;
   workspace: TWorkspaceWithoutCustomCss;
   invalidElements: string[] | null;
+  /** A new request each time an issue's link is followed; the card holding that question opens. */
+  revealRequest?: TRevealRequest | null;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -90,6 +93,7 @@ export const ElementsView = ({
   persistedSurvey,
   workspace,
   invalidElements,
+  revealRequest,
   isFormbricksCloud,
   isCxMode,
   locale,
@@ -691,6 +695,7 @@ export const ElementsView = ({
           activeElementId={activeElementId}
           setActiveElementId={setActiveElementId}
           invalidElements={invalidElements}
+          revealRequest={revealRequest}
           addElement={stableAddElement}
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}

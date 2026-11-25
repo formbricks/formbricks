@@ -202,6 +202,37 @@ const mapCardIssue = (
   });
 };
 
+/**
+ * A rule whose jump has no usable destination is reported by the schema up to three times ("cannot be empty",
+ * "is not a valid block id", "no longer exists"). It is one thing to fix, so all three say the same, and the
+ * duplicates fall away on their identical key.
+ */
+const DESTINATION_ISSUE_PATTERN =
+  /target block id (cannot be empty|is not a valid block id)|jump destination in .* no longer exists/i;
+
+const getDestinationMessage = (
+  issue: TDescribableIssue,
+  survey: TSurvey,
+  ruleIds: string[],
+  t: TFunction
+): string | null => {
+  const missing = getLogicDestinationErrorMessage(issue as never, survey.blocks, t);
+  const isDestinationIssue = missing !== null || DESTINATION_ISSUE_PATTERN.test(issue.message);
+  if (!isDestinationIssue) return null;
+
+  // A destination that was never picked is "choose one"; one that was deleted says which block lost it.
+  const blocks = survey.blocks;
+  const rules = [...(survey.startLogic ?? []), ...blocks.flatMap((block) => block.logic ?? [])];
+  const hasEmptyJump = rules
+    .filter((rule) => ruleIds.includes(rule.id))
+    .some((rule) =>
+      rule.actions.some((action) => action.objective === "jumpToBlock" && action.target.trim() === "")
+    );
+  return hasEmptyJump || missing === null
+    ? t("workspace.surveys.edit.issue_rule_choose_destination")
+    : missing;
+};
+
 const mapRuleIssue = (
   issue: TDescribableIssue,
   survey: TSurvey,
@@ -209,7 +240,7 @@ const mapRuleIssue = (
   t: TFunction
 ): TEditorIssue[] => {
   const message =
-    getLogicDestinationErrorMessage(issue as never, survey.blocks, t) ??
+    getDestinationMessage(issue, survey, ruleIds, t) ??
     getConditionMessage(issue.message, t) ??
     toFlowTabMessage(issue.message, t("workspace.surveys.edit.flow.tab"));
 
@@ -634,7 +665,10 @@ export const collectEditorIssues = (context: TCollectIssuesContext, t: TFunction
 
   // The same problem can come up twice (two schema issues on one field).
   const seen = new Set<string>();
-  return issues.filter((issue) => !seen.has(issue.key) && !!seen.add(issue.key));
+  return sortIssuesForSummary(
+    issues.filter((issue) => !seen.has(issue.key) && !!seen.add(issue.key)),
+    context.survey
+  );
 };
 
 /** What decides whether two issues are "the same place": the card it sits on, else the tab and field. */
@@ -661,9 +695,40 @@ export const getIssueTargetIds = (issues: TEditorIssue[]): string[] => [
 
 const TAB_ORDER: TIssueTab[] = ["elements", "flow", "settings", "styling", "language", "followUps"];
 
-/** Issues in the order a person would work through the editor, tabs left to right, then survey order. */
-export const sortIssuesForSummary = (issues: TEditorIssue[]): TEditorIssue[] =>
-  [...issues].sort((a, b) => TAB_ORDER.indexOf(a.tab) - TAB_ORDER.indexOf(b.tab));
+/** Where each card, block or rule sits in the survey, top to bottom: the welcome card, the blocks, the endings. */
+const getTargetPositions = (survey: TSurvey): Map<string, number> => {
+  const positions = new Map<string, number>();
+  const add = (id: string) => {
+    if (!positions.has(id)) positions.set(id, positions.size);
+  };
+
+  add("start");
+  survey.startLogic?.forEach((rule) => add(rule.id));
+  for (const block of survey.blocks) {
+    add(block.id);
+    block.elements.forEach((element) => add(element.id));
+    block.logic?.forEach((rule) => add(rule.id));
+  }
+  survey.endings.forEach((ending) => add(ending.id));
+  return positions;
+};
+
+/**
+ * Issues in the order a person would work through the editor: tabs left to right, then top to bottom in the
+ * survey. The schema reports problems in its own order, which is not the page's, so "first" would not be.
+ * Issues with no card to sit on (a Settings problem) follow the ones that have one, in the order they came.
+ */
+export const sortIssuesForSummary = (issues: TEditorIssue[], survey: TSurvey): TEditorIssue[] => {
+  const positions = getTargetPositions(survey);
+  const positionOf = (issue: TEditorIssue) =>
+    issue.targetId === null
+      ? Number.MAX_SAFE_INTEGER
+      : (positions.get(issue.targetId) ?? Number.MAX_SAFE_INTEGER);
+
+  return [...issues].sort(
+    (a, b) => TAB_ORDER.indexOf(a.tab) - TAB_ORDER.indexOf(b.tab) || positionOf(a) - positionOf(b)
+  );
+};
 
 /** How many issues each tab has, in the order the summary lists the tabs; tabs with none are left out. */
 export const countIssuesByTab = (issues: TEditorIssue[]): { tab: TIssueTab; count: number }[] =>

@@ -7,6 +7,9 @@ import { ERROR_LINK_CLASS, type TErrorSummaryItem } from "./error-list";
 
 export type { TErrorSummaryItem } from "./error-list";
 
+/** Up to this many problems are spelled out in the bar itself; more go to the full list. */
+const MAX_INLINE_ITEMS = 2;
+
 /** How many problems one place has, e.g. a tab; selecting it opens the full list for that place. */
 export interface TErrorSummaryGroup {
   readonly key: string;
@@ -20,7 +23,7 @@ interface ErrorSummaryProps {
   readonly groups?: readonly TErrorSummaryGroup[];
   /** Says how many problems there are: "There is a problem", "There are 6 problems". */
   readonly heading: string;
-  /** One entry per problem; the bar jumps to the first. */
+  /** One entry per problem. A few are listed in the bar; with more, the bar jumps to the first. */
   readonly items?: readonly TErrorSummaryItem[];
   /** A message with no place to go to, e.g. a failed save. */
   readonly description?: string;
@@ -63,6 +66,8 @@ export const ErrorSummary = ({
     onFocused?.(heading);
   }, [shouldFocus, onFocused]);
 
+  const isInline = items.length > 0 && items.length <= MAX_INLINE_ITEMS;
+
   return (
     // A labelled section, not role="alert": focus moves to the heading, which is what announces it.
     <section
@@ -81,7 +86,7 @@ export const ErrorSummary = ({
           {heading}
           {description ? <span className="font-normal text-error-foreground">: {description}</span> : null}
         </h2>
-        {groups.length > 1 ? (
+        {groups.length > 1 && !isInline ? (
           <ul className="flex flex-wrap items-center gap-1.5">
             {groups.map((group) => (
               <li key={group.key}>
@@ -96,7 +101,19 @@ export const ErrorSummary = ({
           </ul>
         ) : null}
       </div>
-      {items.length > 0 ? (
+      {isInline ? (
+        // Few enough to read here: each is a link to its place, so there is nothing more to open.
+        <ul className="flex basis-full flex-col items-start gap-0.5 ps-7">
+          {items.map((item) => (
+            <li key={item.key}>
+              <button type="button" className={ERROR_LINK_CLASS} onClick={item.onSelect}>
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {items.length > MAX_INLINE_ITEMS ? (
         <div className="flex shrink-0 items-center gap-4">
           <button type="button" className={ERROR_LINK_CLASS} onClick={items[0].onSelect}>
             {goToFirstLabel}

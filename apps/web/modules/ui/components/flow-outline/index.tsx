@@ -149,8 +149,8 @@ interface FlowOutlineRowProps {
   readonly body?: ReactNode;
   /** Flagged by validation: a red border. */
   readonly isInvalid?: boolean;
-  /** What is wrong and what to do, shown under the header of a flagged row. */
-  readonly errorMessage?: string;
+  /** What is wrong and what to do, one line each, shown under the header of a flagged row. */
+  readonly errorMessages?: readonly string[];
   /** Shown but not editable here (written through the API with something this editor can't edit yet). */
   readonly readOnlyLabel?: string;
   /** Controls at the right of the header (move, duplicate, delete), as on a question card's header. */
@@ -172,7 +172,7 @@ export const FlowOutlineRow = ({
   details,
   body,
   isInvalid = false,
-  errorMessage,
+  errorMessages = [],
   readOnlyLabel,
   actions,
   showChevron = false,
@@ -210,7 +210,7 @@ export const FlowOutlineRow = ({
           role={onToggle ? "button" : undefined}
           tabIndex={onToggle ? 0 : undefined}
           aria-expanded={onToggle ? isOpen : undefined}
-          aria-describedby={errorMessage ? errorId : undefined}
+          aria-describedby={errorMessages.length > 0 ? errorId : undefined}
           aria-label={ariaLabel}
           {...headerData}
           onClick={onToggle}
@@ -251,7 +251,11 @@ export const FlowOutlineRow = ({
             </div>
           )}
         </div>
-        {errorMessage ? <FieldError id={errorId} message={errorMessage} className="px-3" /> : null}
+        <div id={errorId} aria-live="polite" className="px-3 empty:hidden">
+          {errorMessages.map((message) => (
+            <FieldError key={message} message={message} />
+          ))}
+        </div>
         {body && <div className="px-3 pb-2">{body}</div>}
         {/* Rounded to the card's inner corner (its radius less its border) rather than clipped by the
             card: overflow-hidden would also cut the focus rings at the card's edges. */}

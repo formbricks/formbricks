@@ -54,6 +54,11 @@ import { FieldError } from "@/modules/ui/components/field-error";
 import { Input } from "@/modules/ui/components/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 
+/** A fresh object for every followed issue link: the card sees a new request, whatever else is unchanged. */
+export interface TRevealRequest {
+  readonly request: number;
+}
+
 interface BlockCardProps {
   localSurvey: TSurvey;
   /** The survey as last saved. The published lock is read from it, not from the working copy. */
@@ -76,6 +81,8 @@ interface BlockCardProps {
   lastElement: boolean;
   lastElementIndex: number;
   invalidElements?: string[];
+  /** Set when an issue's link was followed: the card that owns the question opens, even if it was folded. */
+  revealRequest?: TRevealRequest | null;
   addElement: (element: TSurveyElement, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
@@ -94,6 +101,22 @@ interface BlockCardProps {
   onInteract: (blockId: string) => void;
 }
 
+/**
+ * Following an issue's link opens the card it is in, even one the author folded by hand: nothing else about
+ * the card changes then, so the request itself is what says "open now". Adjusted during render rather than
+ * in an effect, so the field is mounted before the scroll looks for it.
+ */
+const useRevealOnRequest = (
+  revealRequest: TRevealRequest | null | undefined,
+  isBlockOpen: boolean,
+  onReveal: () => void
+) => {
+  const [lastReveal, setLastReveal] = useState(revealRequest);
+  if (lastReveal === revealRequest) return;
+  setLastReveal(revealRequest);
+  if (revealRequest && isBlockOpen) onReveal();
+};
+
 const BlockCardComponent = ({
   localSurvey,
   persistedSurvey,
@@ -111,6 +134,7 @@ const BlockCardComponent = ({
   lastElement,
   lastElementIndex,
   invalidElements,
+  revealRequest,
   addElement,
   isFormbricksCloud,
   isCxMode,
@@ -171,6 +195,11 @@ const BlockCardComponent = ({
     setLastIssueCheck({ invalidElements, hasQuestionsTabIssue });
     if (hasQuestionsTabIssue) setBlockTab("questions");
   }
+
+  useRevealOnRequest(revealRequest, isBlockOpen, () => {
+    setIsBlockCollapsed(false);
+    setBlockTab("questions");
+  });
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 

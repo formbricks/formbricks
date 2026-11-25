@@ -44,6 +44,7 @@ import type { TSurveyLinkedCreative } from "@/modules/ee/creatives/lib/survey-si
 import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/types";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import type { TRevealRequest } from "@/modules/survey/editor/components/block-card";
 import { EditorIssueBar } from "@/modules/survey/editor/components/editor-issue-bar";
 import { EditorIssuesProvider } from "@/modules/survey/editor/components/editor-issues-context";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
@@ -242,6 +243,8 @@ export const SurveyEditor = ({
   const [focusedSummaryRequest, setFocusedSummaryRequest] = useState(0);
   // Set when the review tab was opened from one of the bar's tab chips; it then lists only that tab's problems.
   const [reviewFilter, setReviewFilter] = useState<TIssueTab | null>(null);
+  // Bumped when an issue's link is followed, so a question card the author folded opens again.
+  const [revealRequest, setRevealRequest] = useState<TRevealRequest | null>(null);
   // The Flow tab's open blocks, kept here because the tab unmounts on every switch: coming back keeps
   // what was opened and closed. It opens with every block collapsed.
   // The rule a Review entry points at: the Flow tab opens it, so its fields exist when focus goes there.
@@ -497,7 +500,10 @@ export const SurveyEditor = ({
       focusActiveTab();
       return;
     }
-    if (issue.tab === "elements") setActiveElementId(getElementToOpen(localSurvey, issue.targetId));
+    if (issue.tab === "elements") {
+      setActiveElementId(getElementToOpen(localSurvey, issue.targetId));
+      setRevealRequest((previous) => ({ request: (previous?.request ?? 0) + 1 }));
+    }
     // The Flow tab opens the block that holds the rule, the show-if's question, or is the show-if's own block.
     const owner = issue.tab === "flow" ? findIssueOwnerBlock(localSurvey, issue.targetId) : undefined;
     if (owner) setFlowExpandedBlockIds((current) => new Set(current).add(owner.id));
@@ -616,6 +622,7 @@ export const SurveyEditor = ({
               setActiveElementId={setActiveElementId}
               workspace={localWorkspace}
               invalidElements={invalidElements}
+              revealRequest={revealRequest}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}

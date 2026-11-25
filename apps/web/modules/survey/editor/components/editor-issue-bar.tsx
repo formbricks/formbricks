@@ -36,10 +36,18 @@ export const EditorIssueBar = ({
 
   if (!systemError && (items.length === 0 || isReviewOpen)) return null;
 
+  // A bar that lists its problems says where each one is, since there is no list to read that from.
+  const barItems = items.map((item) => ({
+    ...item,
+    label: item.location
+      ? t("workspace.surveys.edit.issue_inline_entry", { location: item.location, message: item.label })
+      : item.label,
+  }));
+
   return (
     <ErrorSummary
       heading={t("workspace.surveys.edit.issue_summary_heading", { count: systemError ? 1 : problemCount })}
-      items={systemError ? [] : items}
+      items={systemError ? [] : barItems}
       groups={systemError ? [] : groups}
       description={systemError ?? undefined}
       goToFirstLabel={t("workspace.surveys.edit.issue_summary_go_to_first")}

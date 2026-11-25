@@ -33,7 +33,7 @@ interface SurveyEditorTabsProps {
   isFollowUpsTabVisible?: boolean;
   isCxMode: boolean;
   hasLanguageErrors?: boolean;
-  /** How many problems the review tab would list; shown as a red count once a save has been refused. */
+  /** How many problems the review tab lists; the tab and its red count show only while there are some. */
   reviewIssueCount?: number;
 }
 
@@ -93,9 +93,11 @@ export const SurveyEditorTabs = ({
     return tabs.filter((tab) => {
       if (tab.id === "styling") return !!isStylingTabVisible;
       if (tab.id === "followUps") return !!isFollowUpsTabVisible;
+      // Nothing to review is not a step: the tab shows only while there are problems, or while it is open.
+      if (tab.id === "review") return activeId === "review" || !!reviewIssueCount;
       return true;
     });
-  }, [isStylingTabVisible, isFollowUpsTabVisible, t, hasLanguageErrors, reviewIssueCount]);
+  }, [isStylingTabVisible, isFollowUpsTabVisible, t, hasLanguageErrors, reviewIssueCount, activeId]);
 
   const cxModeHiddenTabIds = new Set<TSurveyEditorTabs>(["settings", "language", "followUps"]);
   const tabsToDisplay = isCxMode

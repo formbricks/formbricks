@@ -445,6 +445,87 @@ describe("getSchemaIssues", () => {
     ]);
   });
 
+  const ruleWithJump = (target: string, withValue: boolean) => ({
+    id: "rule1",
+    conditions: {
+      id: "cl9dsxhzt0000qz0h5z6z6c01",
+      connector: "and",
+      conditions: [
+        {
+          id: "cl9dsxhzt0000qz0h5z6z6c02",
+          leftOperand: { type: "element", value: "q1" },
+          operator: "equals",
+          ...(withValue ? { rightOperand: { type: "static", value: "x" } } : {}),
+        },
+      ],
+    },
+    actions: [{ id: "cl9dsxhzt0000qz0h5z6z6c03", objective: "jumpToBlock", target }],
+  });
+
+  test("says a jump with no destination once, however many ways the schema objects to it", () => {
+    const survey = buildSurvey([
+      { ...block([openText({ default: "Name?", de: "Name?" })]), logic: [ruleWithJump("", true)] },
+    ]);
+
+    const found = getSchemaIssues(survey, t, "en-US").filter((issue) => issue.targetId === "rule1");
+
+    expect(new Set(found.map((issue) => issue.message))).toEqual(
+      new Set(["workspace.surveys.edit.issue_rule_choose_destination"])
+    );
+    // They share one key, so the collected list keeps a single entry.
+    expect(new Set(found.map((issue) => issue.key)).size).toBe(1);
+  });
+
+  test("keeps a rule's missing value and missing destination as two different problems on the rule", () => {
+    const survey = buildSurvey([
+      { ...block([openText({ default: "Name?", de: "Name?" })]), logic: [ruleWithJump("", false)] },
+    ]);
+
+    const messages = new Set(
+      getSchemaIssues(survey, t, "en-US")
+        .filter((issue) => issue.targetId === "rule1")
+        .map((issue) => issue.message)
+    );
+
+    expect(messages).toEqual(
+      new Set([
+        "workspace.surveys.edit.issue_show_if_value",
+        "workspace.surveys.edit.issue_rule_choose_destination",
+      ])
+    );
+  });
+
+  test("says a rule before the first question once too, in the author's words", () => {
+    const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])], {
+      startLogic: [{ ...ruleWithJump("", true), id: "start1" }],
+    });
+
+    const messages = getSchemaIssues(survey, t, "en-US")
+      .filter((issue) => issue.targetId === "start1")
+      .map((issue) => issue.message);
+
+    expect(messages).toContain("workspace.surveys.edit.issue_rule_choose_destination");
+    expect(messages.some((message) => /no longer exists/i.test(message))).toBe(false);
+  });
+
+  test("names the block when the destination was deleted", () => {
+    const survey = buildSurvey([
+      {
+        ...block([openText({ default: "Name?", de: "Name?" })]),
+        logic: [ruleWithJump("deletedblock", true)],
+      },
+    ]);
+
+    const messages = getSchemaIssues(survey, t, "en-US")
+      .filter((issue) => issue.targetId === "rule1")
+      .map((issue) => issue.message);
+
+    expect(messages.length).toBeGreaterThan(0);
+    expect(
+      messages.every((message) => message.startsWith("workspace.surveys.edit.logic_jump_destination_missing"))
+    ).toBe(true);
+  });
+
   test("keeps duplicate choice labels out of the missing-translation count", () => {
     const survey = buildSurvey([
       block([
@@ -753,7 +834,8 @@ describe("collectEditorIssues", () => {
 
     const issues = collectEditorIssues({ ...context, survey, isCustomCssBlocking: true }, t);
 
-    expect(issues.map((found) => found.field)).toEqual(["trigger", "customCss", "headline"]);
+    // In the order of the tabs, then top to bottom: Questions, Settings, Styling.
+    expect(issues.map((found) => found.field)).toEqual(["headline", "trigger", "customCss"]);
   });
 
   test("does not ask a draft for a trigger", () => {
@@ -799,13 +881,18 @@ describe("keeping issues in step with edits", () => {
     ).toEqual(["q1", "q2"]);
   });
 
-  test("orders the summary by tab, keeping survey order inside a tab", () => {
+  test("orders the summary by tab, then top to bottom in the survey, whatever order the issues came in", () => {
+    const survey = buildSurvey([
+      { id: "block1", name: "Block 1", elements: [openText({ default: "A" })] },
+      { id: "block2", name: "Block 2", elements: [{ ...openText({ default: "B" }), id: "q2" }] },
+    ]);
     const language = issue({ tab: "language", languageCode: "de" });
     const flow = issue({ tab: "flow", targetId: "rule1" });
 
-    expect(sortIssuesForSummary([language, trigger, flow, secondHeadline, headline])).toEqual([
-      secondHeadline,
+    // The second question's problem arrives first, as the schema can report it.
+    expect(sortIssuesForSummary([language, trigger, flow, secondHeadline, headline], survey)).toEqual([
       headline,
+      secondHeadline,
       flow,
       trigger,
       language,
