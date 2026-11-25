@@ -245,8 +245,9 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
   join the counted set while it waits.
 - State outside Postgres races the same way. A read-modify-write on Redis or a third-party API is
   serialized across workers or replaced by one atomic or conditional write; idempotency makes a retry safe
-  but does not prevent a lost update. A write under a lease-based lock carries a fencing token or checks
-  ownership atomically with the write, because a check made before it can go stale.
+  but does not prevent a lost update. A write under a lease-based lock checks ownership atomically with the
+  write, or carries a fencing token the destination rejects when it is older than the latest one accepted; a
+  check made before the write can go stale.
 - `ON DELETE CASCADE` reaches only Postgres. Deleting a survey, response, workspace, organization or account
   also deletes its storage objects (under the `workspaceId` prefix and the legacy `environmentId` one), its
   Hub records and its pending invites, and its test asserts those deletes.
