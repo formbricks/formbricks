@@ -25,4 +25,13 @@ describe("visibility route rate limiting", () => {
     }
     expect(captured.configs.some((config) => config.action === "visibilityChanged")).toBe(true);
   });
+
+  test("spends only the operation's visibility budget on a change, not the general v3 budget too", () => {
+    const post = captured.configs.find((config) => config.action === "visibilityChanged");
+    const get = captured.configs.find((config) => config.action !== "visibilityChanged");
+
+    expect(post).toMatchObject({ rateLimit: false });
+    // The read has no budget of its own, so it keeps the wrapper's default.
+    expect(get).not.toHaveProperty("rateLimit");
+  });
 });

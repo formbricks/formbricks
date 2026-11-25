@@ -13,9 +13,12 @@ export const GET = withV3ApiWrapper({
 });
 
 // The body's shape and the mutation's own rate limit are in the operation rather than here: it owns the
-// 400's `unsupported_field` codes, and the MCP surface calls it without this wrapper.
+// 400's `unsupported_field` codes, and the MCP surface calls it without this wrapper. `rateLimit: false`
+// because the operation charges the visibility budget itself, so a REST call spends one budget, as an MCP
+// call does, rather than that one plus the general v3 budget.
 export const POST = withV3ApiWrapper({
   auth: "both",
+  rateLimit: false,
   action: "visibilityChanged",
   targetType: "survey",
   schemas: { params: surveyParamsSchema, query: ZV3EmptyQuery, body: z.unknown() },
