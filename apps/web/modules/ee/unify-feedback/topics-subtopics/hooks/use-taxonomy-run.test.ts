@@ -1,10 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, focusManager } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { makeQueryClient } from "@/modules/api/lib/query-client";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { isTaxonomyRunGone, useTaxonomyRun } from "./use-taxonomy-run";
 
@@ -16,6 +17,12 @@ function createWrapper(queryClient: QueryClient) {
 }
 
 const createQueryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+const problemResponse = (status: number) =>
+  new Response(JSON.stringify({ title: "Refused", status, detail: "refused" }), {
+    status,
+    headers: { "Content-Type": "application/problem+json" },
+  });
 
 describe("useTaxonomyRun", () => {
   beforeEach(() => {
@@ -87,19 +94,18 @@ describe("useTaxonomyRun", () => {
    * A run reaped by the orphan cleaner, or a stale id after a regenerate. Both were treated as "status
    * unknown" before, so the interval kept firing at ~12 requests a minute while the UI showed "generating".
    *
-   * Run under both retry policies on purpose: the suite's default is `retry: false`, but the provider that
-   * actually ships (`topics-subtopics/query-client-provider.tsx`) uses `retry: 1`, and React Query only
-   * commits the error once retries are exhausted — so only the second case proves the poll terminates in the
-   * configuration users get.
+   * Run under both retry policies on purpose: the suite's default is `retry: false`, but the page ships under
+   * the house client (`makeQueryClient`), and React Query only commits the error once retries are exhausted —
+   * so only the second case proves the poll terminates in the configuration users get.
    *
    * The request count is asserted as an equality rather than an upper bound: "no more than N" would also
    * hold at zero requests, so a hook that never fetched at all — a broken fixture, `enabled` off — would
    * pass while proving nothing.
    */
   test.each([
-    { policy: "with retries disabled", retry: false as const, expected: 1 },
-    { policy: "under the app's retry: 1 policy", retry: 1, expected: 2 },
-  ])("stops polling once the run is gone (404), $policy", async ({ retry, expected }) => {
+    { policy: "with retries disabled", createClient: createQueryClient, expected: 1 },
+    { policy: "under the house query client", createClient: () => makeQueryClient(), expected: 1 },
+  ])("stops polling once the run is gone (404), $policy", async ({ createClient, expected }) => {
     vi.useFakeTimers();
     try {
       const fetchMock = vi.mocked(global.fetch);
@@ -111,7 +117,7 @@ describe("useTaxonomyRun", () => {
       );
 
       renderHook(() => useTaxonomyRun({ workspaceId: "w", directoryId: "d", runId: "run-1" }), {
-        wrapper: createWrapper(new QueryClient({ defaultOptions: { queries: { retry } } })),
+        wrapper: createWrapper(createClient()),
       });
 
       // Long enough for any retry to have been made (React Query's first retry delay is 1s).
@@ -126,6 +132,84 @@ describe("useTaxonomyRun", () => {
       });
       expect(fetchMock).toHaveBeenCalledTimes(expected);
     } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  /**
+   * ENG-2254: an expired session (401) or revoked access (403) is not a transient blip — before, the tab
+   * kept asking every five seconds for as long as it stayed open. Under the house client, so the request
+   * count also proves a 4xx is not retried.
+   */
+  test.each([401, 403])("stops polling on a %i under the house query client", async (status) => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.mocked(global.fetch);
+      fetchMock.mockResolvedValue(problemResponse(status));
+
+      renderHook(() => useTaxonomyRun({ workspaceId: "w", directoryId: "d", runId: "run-1" }), {
+        wrapper: createWrapper(makeQueryClient()),
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  /**
+   * Stopping is not giving up for good: a 401 can clear when the user signs in again in another tab. The
+   * next fetch the client makes on its own (here a window refocus) re-evaluates the interval, and a run
+   * that is still going resumes polling.
+   */
+  test("resumes polling after a 401 once a refocus refetch succeeds", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.mocked(global.fetch);
+      fetchMock.mockResolvedValue(problemResponse(401));
+
+      const { result } = renderHook(
+        () => useTaxonomyRun({ workspaceId: "w", directoryId: "d", runId: "run-1" }),
+        { wrapper: createWrapper(makeQueryClient()) }
+      );
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      // A fresh Response per call: a body can be read only once, and a reused one would make the later
+      // polls fail while still counting as requests.
+      fetchMock.mockImplementation(
+        async () =>
+          new Response(JSON.stringify({ data: { id: "run-1", status: "running" } }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          })
+      );
+      await act(async () => {
+        focusManager.setFocused(false);
+        focusManager.setFocused(true);
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(result.current.data?.status).toBe("running");
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(result.current.isError).toBe(false);
+      expect(result.current.data?.status).toBe("running");
+    } finally {
+      focusManager.setFocused(undefined);
       vi.useRealTimers();
     }
   });

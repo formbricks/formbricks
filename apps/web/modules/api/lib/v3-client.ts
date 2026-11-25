@@ -97,6 +97,16 @@ export const v3RetryDelay = (failureCount: number, error: unknown): number =>
     ? (error.retryAfter as number) * 1000 + Math.floor(Math.random() * 500)
     : Math.min(1000 * 2 ** failureCount, 30_000);
 
+/**
+ * A refusal of the caller rather than of the request: the session is gone (401) or its access is (403).
+ * A poll that sees one stops its interval (`refetchInterval` returns `false`) instead of asking again every
+ * few seconds for as long as the tab stays open. Stopping is not giving up for good: a 401 can clear when
+ * the user signs in again elsewhere, and the next fetch the client makes on its own — a refocus, a remount,
+ * an invalidation — re-evaluates the interval, so a poll whose data still calls for it resumes.
+ */
+export const isAuthFailure = (error: unknown): boolean =>
+  error instanceof V3ApiError && (error.status === 401 || error.status === 403);
+
 /** The wrapper's schema-validation details (`api-wrapper.ts`): they name no field, so the field's reason says more. */
 const GENERIC_VALIDATION_DETAILS = new Set([
   "Invalid request body",
