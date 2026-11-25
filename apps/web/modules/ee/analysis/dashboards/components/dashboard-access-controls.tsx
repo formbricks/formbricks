@@ -267,10 +267,11 @@ export const AccessButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
                     <td className="py-2 text-slate-700">{team.memberCount}</td>
                   </tr>
                 ))}
-                {/* Rows as tall as a team row, so the dialog does not jump when the teams arrive. */}
+                {/* Rows as tall as a team row, so the dialog does not jump when the teams arrive. They hold
+                    no text, and the table is `aria-busy` meanwhile, so nothing extra is announced. */}
                 {overview.isPending &&
                   [0, 1, 2].map((row) => (
-                    <tr key={row} className="border-t border-slate-100" aria-hidden="true">
+                    <tr key={row} className="border-t border-slate-100">
                       {["w-24", "w-16", "w-20", "w-6"].map((width) => (
                         <td key={width} className="py-3">
                           <Skeleton className={cn("h-3 rounded-sm", width)} />

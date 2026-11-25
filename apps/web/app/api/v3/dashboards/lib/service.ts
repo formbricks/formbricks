@@ -175,7 +175,8 @@ export const listReadableDashboardRows = async ({
       if (kept.length > limit) return kept;
     }
     if (batch.length < READABLE_SCAN_BATCH) return kept;
-    const last = batch[batch.length - 1];
+    const last = batch.at(-1);
+    if (!last) return kept;
     scanCursor = { value: last.createdAt.toISOString(), id: last.id };
   }
 };
