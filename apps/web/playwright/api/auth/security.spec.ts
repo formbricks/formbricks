@@ -232,6 +232,8 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
     }) => {
       const user = await users.create();
       await user.login();
+      // A page only a signed-in member can open: with a dead session, the proxy sends it to login.
+      const protectedUrl = new URL(`/workspaces/${user.workspaceId}/surveys`, baseURL).toString();
 
       // Better Auth's signed session cookie is `formbricks.session_token` (or the browser-enforced
       // `__Secure-` prefix on HTTPS); replaces the NextAuth `next-auth.session-token` cookie (ENG-1054).
@@ -245,7 +247,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       try {
         await preLogoutContext.addCookies([sessionCookie!]);
         const preLogoutPage = await preLogoutContext.newPage();
-        await preLogoutPage.goto(new URL("/", baseURL).toString());
+        await preLogoutPage.goto(protectedUrl);
         await expect(preLogoutPage).not.toHaveURL(/\/auth\/login/);
       } finally {
         await preLogoutContext.close();
@@ -279,7 +281,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       try {
         await replayContext.addCookies([sessionCookie!]);
         const replayPage = await replayContext.newPage();
-        await replayPage.goto(new URL("/", baseURL).toString());
+        await replayPage.goto(protectedUrl);
         await expect(replayPage).toHaveURL(/\/auth\/login/);
       } finally {
         await replayContext.close();

@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { setHeadersInFlight } from "@/integration/next-headers";
-import { BASE_URL } from "@/integration/oauth-flow";
+import { BASE_URL, signIn as signInForCookie } from "@/integration/oauth-flow";
 import { hashSecret } from "@/lib/crypto";
-import { auth } from "@/modules/auth/lib/auth";
 import { createApiKey } from "@/modules/organization/settings/api-keys/lib/api-key";
 
 /**
@@ -50,7 +50,7 @@ export const callRoute = async (handler: unknown, request: TRouteRequest): Promi
   if (request.apiKey) headers.set("x-api-key", request.apiKey);
   if (request.cookie) {
     headers.set("cookie", request.cookie);
-    headers.set("sec-fetch-site", "same-origin");
+    for (const [name, value] of Object.entries(SAME_ORIGIN_HEADERS)) headers.set(name, value);
   }
   if (request.body !== undefined) headers.set("content-type", "application/json");
   setHeadersInFlight(headers);
@@ -148,16 +148,5 @@ export const createOwnerApiKey = async (owner: TApiOwner): Promise<string> => {
 };
 
 /** Signs in through Better Auth and returns the `Cookie` header a browser would then send. */
-export const signIn = async (owner: Pick<TApiOwner, "email" | "password">): Promise<string> => {
-  const response = await auth.api.signInEmail({
-    body: { email: owner.email, password: owner.password },
-    asResponse: true,
-  });
-  if (response.status !== 200) {
-    throw new Error(`Sign-in failed with HTTP ${response.status}`);
-  }
-  return response.headers
-    .getSetCookie()
-    .map((cookie) => cookie.split(";")[0])
-    .join("; ");
-};
+export const signIn = async (owner: Pick<TApiOwner, "email" | "password">): Promise<string> =>
+  (await signInForCookie(owner.email, owner.password)).cookie;
