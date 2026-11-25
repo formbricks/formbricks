@@ -4,7 +4,11 @@ import { Metadata, status } from "@grpc/grpc-js";
 import { beforeEach, describe, expect, test } from "vitest";
 import { isMcpReachMissingFromSchema } from "@/lib/authorization/mcp-reach";
 import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
-import { AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS, AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE } from "./constants";
+import {
+  AUTHZED_CHANNEL_OPTIONS,
+  AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS,
+  AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE,
+} from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 describe("AuthZed client facade", () => {
@@ -74,7 +78,7 @@ describe("AuthZed client facade", () => {
       envMock.AUTHZED_ENDPOINT,
       expectedSecurity,
       undefined,
-      { interceptors: [{ timeoutMs: 1_000 }] }
+      { ...AUTHZED_CHANNEL_OPTIONS, interceptors: [{ timeoutMs: 1_000 }] }
     );
     expect(sdkMocks.deadlineInterceptor).toHaveBeenCalledWith(1_000);
   });
@@ -91,7 +95,7 @@ describe("AuthZed client facade", () => {
       "spicedb:50051",
       2,
       undefined,
-      { interceptors: [{ timeoutMs: 1_000 }] }
+      { ...AUTHZED_CHANNEL_OPTIONS, interceptors: [{ timeoutMs: 1_000 }] }
     );
     expect(client).not.toHaveProperty("token");
   });
@@ -141,7 +145,7 @@ describe("AuthZed client facade", () => {
       envMock.AUTHZED_ENDPOINT,
       2,
       undefined,
-      { interceptors: [{ timeoutMs: 30_000 }] }
+      { ...AUTHZED_CHANNEL_OPTIONS, interceptors: [{ timeoutMs: 30_000 }] }
     );
   });
 
