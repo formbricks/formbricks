@@ -21,7 +21,7 @@ import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
 import { getWorkspaceCustomCssRecord, parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getSegments, redactSurveySegmentForViewer } from "@/modules/ee/contacts/segments/lib/segments";
 import { getSurveyLinkedCreatives } from "@/modules/ee/creatives/lib/survey-linked-creatives";
 import { getSurveyDataRetentionContext } from "@/modules/ee/data-retention/lib/survey-context";
 import {
@@ -88,9 +88,10 @@ export const SurveyEditorPage = async (props: {
   } = await getSurveyAuth(params.workspaceId, params.surveyId);
 
   const t = await getTranslate();
+  const visibleSurveyWhere = await getUserVisibleSurveyWhere(session.user.id, organization.id);
 
   const [
-    survey,
+    storedSurvey,
     workspaceWithTeamIds,
     actionClasses,
     contactAttributeKeys,
@@ -105,10 +106,10 @@ export const SurveyEditorPage = async (props: {
     getResponseCountBySurveyId(params.surveyId),
     getFinishedResponseCountBySurveyId(params.surveyId),
     // ENG-3282: segments reach the browser, so their survey references name only surveys this viewer sees.
-    getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
-      getSegments(workspace.id, where)
-    ),
+    getSegments(workspace.id, visibleSurveyWhere),
   ]);
+  // ENG-7353: and so does the survey's own segment; a save puts the survey ids it leaves out back.
+  const survey = storedSurvey && (await redactSurveySegmentForViewer(storedSurvey, visibleSurveyWhere));
 
   if (!workspaceWithTeamIds) {
     return notFound();

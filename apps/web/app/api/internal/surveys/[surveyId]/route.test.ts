@@ -53,6 +53,8 @@ const mocks = vi.hoisted(() => {
     updateSurvey: vi.fn(),
     updateSurveyDraft: vi.fn(),
     resolveSurveyActorContext: vi.fn(),
+    getUserVisibleSurveyWhere: vi.fn(),
+    redactSurveySegmentForViewer: vi.fn(),
     getSurveyCount: vi.fn(),
   };
 });
@@ -77,7 +79,11 @@ vi.mock("@/lib/utils/helper", () => ({
   getWorkspaceIdFromSurveyId: mocks.getWorkspaceIdFromSurveyId,
 }));
 vi.mock("@/lib/survey/visibility/actor-context", () => ({
+  getUserVisibleSurveyWhere: mocks.getUserVisibleSurveyWhere,
   resolveSurveyActorContext: mocks.resolveSurveyActorContext,
+}));
+vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
+  redactSurveySegmentForViewer: mocks.redactSurveySegmentForViewer,
 }));
 vi.mock("@/modules/survey/lib/permission", () => ({
   checkSpamProtectionPermission: mocks.checkSpamProtectionPermission,
@@ -116,6 +122,7 @@ vi.mock("server-only", () => ({}));
 const USER_ID = "cluser1111111111111111111";
 const ORG_ID = "clorg11111111111111111111";
 const ACTOR_CONTEXT = { kind: "user", userId: USER_ID };
+const VISIBLE_WHERE = { OR: [{ visibility: "workspace" }, { ownerId: USER_ID }] };
 
 type TRoute = typeof PUT;
 
@@ -178,6 +185,8 @@ beforeEach(() => {
   mocks.checkExternalUrlsPermission.mockResolvedValue(undefined);
   mocks.checkSpamProtectionPermission.mockResolvedValue(undefined);
   mocks.resolveSurveyActorContext.mockResolvedValue(ACTOR_CONTEXT);
+  mocks.getUserVisibleSurveyWhere.mockResolvedValue(VISIBLE_WHERE);
+  mocks.redactSurveySegmentForViewer.mockImplementation(async (survey: unknown) => survey);
   mocks.updateSurvey.mockImplementation(async (survey: TSurvey) => ({ ...survey, updatedAt: new Date() }));
   mocks.updateSurveyDraft.mockImplementation(async (survey: TSurvey) => ({
     ...survey,
@@ -336,6 +345,64 @@ describe("PUT /api/internal/surveys/{surveyId}", () => {
 
       expect(mocks.getSurveyCount).not.toHaveBeenCalled();
     });
+  });
+});
+
+// ENG-7353: the save keeps the surveys the editor couldn't see in the segment; its answer must not name them.
+describe.each(ROUTES)("%s answers the survey's segment as the saver may see it", (_label, route, url) => {
+  const SEGMENT_ID = "clsegment1111111111111111";
+  const segment = (surveyIds: string[]) => ({
+    id: SEGMENT_ID,
+    createdAt: new Date("2026-10-01T10:00:00.000Z"),
+    updatedAt: new Date("2026-10-01T10:00:00.000Z"),
+    title: SURVEY_ID,
+    description: null,
+    isPrivate: true,
+    workspaceId: WORKSPACE_ID,
+    surveys: [SURVEY_ID],
+    filters: [
+      {
+        id: "clfilter0000000000000001",
+        connector: null,
+        resource: {
+          id: "clresource00000000000001",
+          root: { type: "surveyInteraction" },
+          qualifier: { operator: "haveNotSeen" },
+          value: { surveyScope: "specific", surveyIds, within: null },
+        },
+      },
+    ],
+  });
+
+  test("with the surveys hidden from the saver taken out of its filters", async () => {
+    const saved = {
+      ...storedSurvey(),
+      segment: segment(["clvisible0000000000000001", "clhidden00000000000000001"]),
+    };
+    const redacted = segment(["clvisible0000000000000001"]);
+    mocks.updateSurvey.mockResolvedValue(saved);
+    mocks.updateSurveyDraft.mockResolvedValue(saved);
+    mocks.redactSurveySegmentForViewer.mockResolvedValue({ ...saved, segment: redacted });
+
+    const response = await send(route, url, buildSavedSurvey());
+
+    expect(response.status).toBe(200);
+    const { data } = await response.json();
+    expect(data.segment.filters).toEqual(redacted.filters);
+    expect(mocks.redactSurveySegmentForViewer).toHaveBeenCalledWith(saved, VISIBLE_WHERE);
+    expect(mocks.getUserVisibleSurveyWhere).toHaveBeenCalledWith(USER_ID, ORG_ID);
+  });
+
+  test("looks nothing up for a survey without a segment", async () => {
+    const saved = { ...storedSurvey(), segment: null };
+    mocks.updateSurvey.mockResolvedValue(saved);
+    mocks.updateSurveyDraft.mockResolvedValue(saved);
+
+    const response = await send(route, url, buildSavedSurvey());
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data.segment).toBeNull();
+    expect(mocks.redactSurveySegmentForViewer).not.toHaveBeenCalled();
   });
 });
 

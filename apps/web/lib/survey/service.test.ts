@@ -3279,6 +3279,8 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     vi.clearAllMocks();
     vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+    // ENG-7353: a member's save looks up which stored surveys they see; the restricted one isn't.
+    vi.mocked(prisma.survey.findMany, { partial: true }).mockResolvedValue([]);
   });
 
   test("refuses a member adding a restricted survey to the targeting", async () => {
@@ -3348,5 +3350,92 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     await save(interaction([restrictedId]), {});
 
     expect(prisma.segment.updateMany).toHaveBeenCalled();
+  });
+});
+
+// ENG-7353: a signed-in editor only holds the private segment's tree without the surveys they can't see.
+describe("a save of the survey's own private segment keeps the surveys its editor couldn't see", () => {
+  const restrictedId = "clrestricted00000000000001";
+  const visibleId = "clvisible0000000000000001";
+  const segmentId = "clownsegment000000000001";
+  const filterId = "clf01234567890123456789012";
+  const interaction = (surveyIds: string[]) => [
+    {
+      id: filterId,
+      connector: null,
+      resource: {
+        id: "clf11234567890123456789012",
+        root: { type: "surveyInteraction" },
+        qualifier: { operator: "haveNotSeen" },
+        value: { surveyScope: "specific", surveyIds, within: null },
+      },
+    },
+  ];
+  const privateSegment = (filters: unknown, surveys: unknown[]) => ({
+    id: segmentId,
+    title: "seg",
+    description: null,
+    isPrivate: true,
+    filters,
+    workspaceId: updateSurveyInput.workspaceId,
+    surveys,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  const save = (filters: unknown, options: Parameters<typeof updateSurveyInternal>[2]) =>
+    updateSurveyInternal(
+      {
+        ...updateSurveyInput,
+        status: "draft",
+        type: "app",
+        segment: privateSegment(filters, [updateSurveyInput.id]),
+      } as Parameters<typeof updateSurveyInternal>[0],
+      true,
+      options
+    );
+  const storeFilters = (storedFilters: unknown) => {
+    prisma.survey.findUnique.mockResolvedValueOnce({
+      ...mockSurveyOutput,
+      status: "draft",
+      segment: privateSegment(storedFilters, [{ id: updateSurveyInput.id }]),
+    } as never);
+    prisma.segment.findUnique.mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as never);
+    prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
+  };
+  const writtenFilters = () => {
+    const [args] = prisma.segment.updateMany.mock.calls[0] ?? [];
+    return (args as { data: { filters: unknown } } | undefined)?.data.filters;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+    prisma.segment.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  test("puts a restricted survey back into the filter it came from when a member saves the tree without it", async () => {
+    storeFilters(interaction([visibleId, restrictedId]));
+    prisma.survey.findMany.mockResolvedValueOnce([{ id: visibleId }] as never);
+
+    await save(interaction([visibleId]), { targetingActor: MEMBER_TARGETING_ACTOR });
+
+    expect(writtenFilters()).toEqual(interaction([visibleId, restrictedId]));
+  });
+
+  test("writes an organization administrator's tree as sent, since they saw every survey", async () => {
+    storeFilters(interaction([visibleId, restrictedId]));
+
+    await save(interaction([visibleId]), { targetingActor: OWNER_TARGETING_ACTOR });
+
+    expect(writtenFilters()).toEqual(interaction([visibleId]));
+  });
+
+  test("writes an API key's tree as sent", async () => {
+    storeFilters(interaction([visibleId, restrictedId]));
+
+    await save(interaction([visibleId]), { targetingActor: { enforced: true, kind: "apiKey" } });
+
+    expect(writtenFilters()).toEqual(interaction([visibleId]));
   });
 });

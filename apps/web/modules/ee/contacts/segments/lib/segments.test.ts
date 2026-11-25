@@ -32,6 +32,8 @@ import {
   getSegments,
   getSegmentsByAttributeKey,
   getSurveyWorkspaceIdMap,
+  redactSegmentsForViewer,
+  redactSurveySegmentForViewer,
   resetSegmentInSurvey,
   selectSegment,
   transformPrismaSegment,
@@ -81,6 +83,20 @@ const workspaceId = "workspace-id-mock";
 const segmentId = "test-segment-id";
 const surveyId = "test-survey-id";
 const attributeKey = "email";
+
+const viewerWhere = { OR: [{ visibility: "workspace" as const }, { ownerId: "user-1" }] };
+
+const interactionFilter = (id: string, surveyIds: string[]) =>
+  ({
+    id,
+    connector: null,
+    resource: {
+      id: `${id}-resource`,
+      root: { type: "surveyInteraction" },
+      qualifier: { operator: "haveNotSeen" },
+      value: { surveyScope: "specific", surveyIds, within: null },
+    },
+  }) as unknown as TBaseFilters[number];
 
 const mockSegmentPrisma = {
   id: segmentId,
@@ -184,6 +200,22 @@ describe("Segment Service Tests", () => {
       });
     });
 
+    // ENG-7353: and so do their filters, which must not name a survey the viewer can't see.
+    test("takes the surveys the viewer can't see out of each segment's filters", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        { ...mockSegmentPrisma, filters: [interactionFilter("f1", ["visible-survey", "hidden-survey"])] },
+      ]);
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([
+        { id: "visible-survey", workspaceId } as unknown as Awaited<
+          ReturnType<typeof prisma.survey.findMany>
+        >[0],
+      ]);
+
+      const [segment] = await getSegments(workspaceId, viewerWhere);
+
+      expect(segment.filters).toEqual([interactionFilter("f1", ["visible-survey"])]);
+    });
+
     test("should return an empty array if no segments found", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
       const segments = await getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS);
@@ -193,6 +225,107 @@ describe("Segment Service Tests", () => {
     test("should throw DatabaseError on Prisma error", async () => {
       vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("DB error"));
       await expect(getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS)).rejects.toThrow(Error);
+    });
+  });
+
+  // ENG-7353: every segment a browser receives names only the surveys its viewer can see.
+  describe("redactSegmentsForViewer", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    const visibleSurveys = (...surveys: { id: string; workspaceId: string }[]) =>
+      vi
+        .mocked(prisma.survey.findMany)
+        .mockResolvedValue(surveys as unknown as Awaited<ReturnType<typeof prisma.survey.findMany>>);
+
+    test("takes hidden surveys out of every filter, nested groups included, in one lookup", async () => {
+      visibleSurveys({ id: "visible-survey", workspaceId });
+      const segments = [
+        {
+          workspaceId,
+          filters: [
+            interactionFilter("f1", ["visible-survey", "hidden-survey"]),
+            { id: "g1", connector: "and", resource: [interactionFilter("f2", ["hidden-survey"])] },
+          ] as TBaseFilters,
+        },
+        { workspaceId, filters: [interactionFilter("f3", ["hidden-survey-2"])] },
+      ];
+
+      const redacted = await redactSegmentsForViewer(segments, viewerWhere);
+
+      expect(redacted.map((segment) => segment.filters)).toEqual([
+        [
+          interactionFilter("f1", ["visible-survey"]),
+          { id: "g1", connector: "and", resource: [interactionFilter("f2", [])] },
+        ],
+        [interactionFilter("f3", [])],
+      ]);
+      expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: { AND: [{ id: { in: ["visible-survey", "hidden-survey", "hidden-survey-2"] } }, viewerWhere] },
+        select: { id: true, workspaceId: true },
+      });
+    });
+
+    test("treats a survey of another workspace as hidden", async () => {
+      visibleSurveys({ id: "foreign-survey", workspaceId: "other-workspace" });
+
+      const [segment] = await redactSegmentsForViewer(
+        [{ workspaceId, filters: [interactionFilter("f1", ["foreign-survey"])] }],
+        viewerWhere
+      );
+
+      expect(segment.filters).toEqual([interactionFilter("f1", [])]);
+    });
+
+    test("looks nothing up for a viewer who sees every survey", async () => {
+      const segments = [{ workspaceId, filters: [interactionFilter("f1", ["hidden-survey"])] }];
+
+      expect(await redactSegmentsForViewer(segments, ALL_SEGMENT_SURVEY_REFS)).toBe(segments);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    });
+
+    // A draft save stores a survey's private segment unvalidated, and the editor page still has to load.
+    test("leaves a half-built filter as it is", async () => {
+      const halfBuilt = [
+        { id: "f1", connector: null, resource: { root: { type: "surveyInteraction" } } },
+        { id: "f2", connector: null, resource: { root: { type: "attribute" } } },
+      ] as unknown as TBaseFilters;
+
+      const [segment] = await redactSegmentsForViewer([{ workspaceId, filters: halfBuilt }], viewerWhere);
+
+      expect(segment.filters).toEqual(halfBuilt);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("redactSurveySegmentForViewer", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    test("redacts the segment the survey is targeted with and keeps the rest of the survey", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
+      const survey = {
+        id: surveyId,
+        name: "Editor survey",
+        segment: { ...mockSegment, filters: [interactionFilter("f1", ["hidden-survey"])] },
+      };
+
+      const redacted = await redactSurveySegmentForViewer(survey, viewerWhere);
+
+      expect(redacted).toEqual({
+        ...survey,
+        segment: { ...survey.segment, filters: [interactionFilter("f1", [])] },
+      });
+    });
+
+    test("leaves a survey without a segment untouched", async () => {
+      const survey = { id: surveyId, segment: null };
+
+      expect(await redactSurveySegmentForViewer(survey, viewerWhere)).toBe(survey);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
     });
   });
 

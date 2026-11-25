@@ -46,6 +46,7 @@ const mocks = vi.hoisted(() => ({
   deleteSegment: vi.fn(),
   cloneSegment: vi.fn(),
   resetSegmentInSurvey: vi.fn(),
+  redactSegmentsForViewer: vi.fn(),
   getSurveyRefsForWorkspace: vi.fn(),
   loadNewSegmentInSurvey: vi.fn(),
   getDistinctAttributeValues: vi.fn(),
@@ -77,6 +78,7 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   getSegment: mocks.getSegment,
   getSurveyRefsForWorkspace: mocks.getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap: mocks.getSurveyWorkspaceIdMap,
+  redactSegmentsForViewer: mocks.redactSegmentsForViewer,
   resetSegmentInSurvey: mocks.resetSegmentInSurvey,
   updateSegment: mocks.updateSegment,
 }));
@@ -241,6 +243,7 @@ beforeEach(() => {
   mocks.getUserVisibleSurveyWhere.mockResolvedValue(visibleWhere);
   mocks.resolveSurveyActorContext.mockResolvedValue(memberActor);
   mocks.restoreHiddenSegmentSurveyIds.mockImplementation(async (filters: unknown) => filters);
+  mocks.redactSegmentsForViewer.mockImplementation(async (segments: unknown) => segments);
   mocks.getSegment.mockResolvedValue(storedSegment());
   mocks.createSegment.mockResolvedValue(storedSegment());
   mocks.updateSegment.mockResolvedValue(storedSegment({ title: "Renamed" }));
@@ -670,6 +673,49 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
   ])("answers 400 for %s", async (_label, body) => {
     expect((await update(body)).status).toBe(400);
     expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+});
+
+// ENG-7353: the stored tree keeps the surveys an edit couldn't see; the answer must not name them.
+describe("a segment write answers the filters without the surveys the caller can't see", () => {
+  const REDACTED_FILTERS = [{ id: "clfilter0000000000000002", connector: null, resource: FILTERS }];
+
+  test("PATCH answers the redacted tree of the segment as saved", async () => {
+    const saved = storedSegment({ title: "Renamed" });
+    mocks.updateSegment.mockResolvedValue(saved);
+    mocks.redactSegmentsForViewer.mockResolvedValue([{ ...saved, filters: REDACTED_FILTERS }]);
+
+    const response = await update({ title: "Renamed" });
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual(serialized({ title: "Renamed", filters: REDACTED_FILTERS }));
+    expect(mocks.redactSegmentsForViewer).toHaveBeenCalledWith([saved], visibleWhere);
+    expect(mocks.getUserVisibleSurveyWhere).toHaveBeenCalledWith(USER_ID, ORG_ID);
+  });
+
+  test.each([
+    ["POST /segments", () => create(createBody()), (data: { filters: unknown }) => data.filters],
+    ["POST /segments/{id}/copies", () => copy(), (data: { filters: unknown }) => data.filters],
+    [
+      "PUT /surveys/{id}/segment",
+      () => attach(),
+      (data: { segment: { filters: unknown } }) => data.segment.filters,
+    ],
+    [
+      "POST /surveys/{id}/segment/resets",
+      () => reset(),
+      (data: { segment: { filters: unknown } }) => data.segment.filters,
+    ],
+  ])("%s answers the redacted tree", async (_label, call, filtersOf) => {
+    mocks.redactSegmentsForViewer.mockImplementation(async (segments: object[]) =>
+      segments.map((segment) => ({ ...segment, filters: REDACTED_FILTERS }))
+    );
+
+    const response = await call();
+
+    expect(response.ok).toBe(true);
+    expect(filtersOf((await response.json()).data)).toEqual(REDACTED_FILTERS);
+    expect(mocks.redactSegmentsForViewer).toHaveBeenCalledWith([expect.any(Object)], visibleWhere);
   });
 });
 

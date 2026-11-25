@@ -46,12 +46,14 @@ import {
   getSegment,
   getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap,
+  redactSegmentsForViewer,
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
 import type { TSegmentCreateBody, TSegmentUpdateBody } from "../schemas";
 import {
   type TSegmentFilterSurveyResource,
+  type TSegmentResource,
   type TSurveySegmentResource,
   serializeSegment,
 } from "../serializers";
@@ -84,6 +86,22 @@ const isSegmentTitleTaken = (error: unknown): boolean =>
 
 const segmentTitleTaken = ({ requestId, instance }: TRequestContext): Response =>
   problemConflict(requestId, SEGMENT_TITLE_TAKEN, instance);
+
+/**
+ * ENG-7353: a segment as a write answers it, its filters naming only the surveys this caller sees. The
+ * stored tree can keep ids they can't see (an edit restores them); the answer must not show them.
+ */
+const serializeSegmentForUser = async (
+  segment: TSegment,
+  userId: string,
+  organizationId: string
+): Promise<TSegmentResource> => {
+  const [redacted] = await redactSegmentsForViewer(
+    [segment],
+    await getUserVisibleSurveyWhere(userId, organizationId)
+  );
+  return serializeSegment(redacted);
+};
 
 const refusalOrThrow = (error: unknown, { requestId, instance }: TRequestContext): Response => {
   const refused = refusalResponse(error, requestId, instance);
@@ -205,7 +223,10 @@ export async function createSegmentOperation({
     { organizationId, workspaceId }
   );
 
-  return successResponse(serializeSegment(segment), { requestId, status: 201 });
+  return successResponse(await serializeSegmentForUser(segment, userId, organizationId), {
+    requestId,
+    status: 201,
+  });
 }
 
 /**
@@ -286,7 +307,7 @@ export async function updateSegmentOperation({
     auditLog.oldObject = oldObject;
     auditLog.newObject = updated;
   }
-  return successResponse(serializeSegment(updated), { requestId });
+  return successResponse(await serializeSegmentForUser(updated, userId, organizationId), { requestId });
 }
 
 /**
@@ -387,7 +408,10 @@ export async function copySegmentOperation({
   }
 
   if (auditLog) auditLog.newObject = copy;
-  return successResponse(serializeSegment(copy), { requestId, status: 201 });
+  return successResponse(await serializeSegmentForUser(copy, access.userId, access.organizationId), {
+    requestId,
+    status: 201,
+  });
 }
 
 /**
@@ -452,7 +476,10 @@ export async function attachSurveySegmentOperation({
   if (auditLog) auditLog.newObject = survey;
   // The survey keeps the segment just connected; none would mean it was changed meanwhile.
   if (!survey.segment) return problemForbidden(requestId, undefined, instance);
-  const resource: TSurveySegmentResource = { surveyId, segment: serializeSegment(survey.segment) };
+  const resource: TSurveySegmentResource = {
+    surveyId,
+    segment: await serializeSegmentForUser(survey.segment, access.userId, access.organizationId),
+  };
   return successResponse(resource, { requestId });
 }
 
@@ -491,7 +518,10 @@ export async function resetSurveySegmentOperation({
     auditLog.newObject = segment;
     auditLog.targetId = segment.id;
   }
-  const resource: TSurveySegmentResource = { surveyId, segment: serializeSegment(segment) };
+  const resource: TSurveySegmentResource = {
+    surveyId,
+    segment: await serializeSegmentForUser(segment, access.userId, organizationId),
+  };
   return successResponse(resource, { requestId });
 }
 

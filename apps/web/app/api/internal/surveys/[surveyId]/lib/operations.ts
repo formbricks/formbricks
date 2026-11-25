@@ -16,9 +16,10 @@ import { problemBadRequest, problemConflict, successResponse } from "@/app/api/v
 import { IS_FORMBRICKS_SURVEYS_CONFIGURED, POSTHOG_KEY } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SurveySegmentChangedError } from "@/lib/survey/service";
-import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { getUserVisibleSurveyWhere, resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { redactSurveySegmentForViewer } from "@/modules/ee/contacts/segments/lib/segments";
 import { SurveyLinkedCreativesError } from "@/modules/ee/creatives/lib/linked-creatives";
 import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
 import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/survey";
@@ -172,6 +173,15 @@ const writeOptions = async ({ userId, organizationId }: TSaveScope) => ({
   targetingActor: await resolveSurveyActorContext({ type: "user", id: userId }, organizationId),
 });
 
+/**
+ * ENG-7353: the saved survey as the editor receives it, its segment's filters naming only the surveys the
+ * saver can see. The stored tree keeps the others (the save restored them); the answer must not show them.
+ */
+const forSaver = async ({ userId, organizationId }: TSaveScope, saved: TSurvey): Promise<TSurvey> =>
+  saved.segment
+    ? redactSurveySegmentForViewer(saved, await getUserVisibleSurveyWhere(userId, organizationId))
+    : saved;
+
 /** Runs a save, answering a refusal from its checks or its write with `saveRefusal`. */
 async function runSave(context: TSaveContext, save: () => Promise<Response>): Promise<Response> {
   try {
@@ -264,7 +274,10 @@ export async function saveSurveyOperation({
 
     revalidatePath(`/workspaces/${saved.workspaceId}/surveys/${saved.id}`);
 
-    return successResponse({ ...saved, isSecondPublish: secondPublish }, { requestId: context.requestId });
+    return successResponse(
+      { ...(await forSaver(scope, saved)), isSecondPublish: secondPublish },
+      { requestId: context.requestId }
+    );
   });
 }
 
@@ -298,6 +311,6 @@ export async function saveSurveyDraftOperation({
       workspaceId: saved.workspaceId,
     });
 
-    return successResponse(saved, { requestId: context.requestId });
+    return successResponse(await forSaver(scope, saved), { requestId: context.requestId });
   });
 }

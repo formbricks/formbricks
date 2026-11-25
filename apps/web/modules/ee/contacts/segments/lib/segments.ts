@@ -44,6 +44,7 @@ import {
   searchForAttributeKeyInSegment,
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
+import { collectSegmentFilterSurveyIds, redactSegmentFilterSurveyIds } from "./filter-survey-ids";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
 import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "./segment-errors";
 
@@ -153,7 +154,11 @@ export const getSegments = reactCache(
         return [];
       }
 
-      return segments.map((segment) => transformPrismaSegment(segment));
+      // ENG-7353: the filters reach the browser as well, so they name only surveys this viewer sees.
+      return await redactSegmentsForViewer(
+        segments.map((segment) => transformPrismaSegment(segment)),
+        visibleSurveyWhere
+      );
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -163,6 +168,46 @@ export const getSegments = reactCache(
     }
   }
 );
+
+/**
+ * ENG-7353: `segments` with the survey ids their survey-interaction filters name that the viewer may not
+ * see taken out (`redactSegmentFilterSurveyIds`), as `/api/v3/segments` answers. For every segment a
+ * browser receives: the stored trees keep those ids, and the writes put them back
+ * (`restoreHiddenSegmentSurveyIds`). A survey of another workspace counts as hidden. One query over all the
+ * ids, and none when `visibleSurveyWhere` hides nothing (`ALL_SEGMENT_SURVEY_REFS`, or an organization
+ * owner or manager).
+ */
+export const redactSegmentsForViewer = async <T extends Pick<TSegment, "workspaceId" | "filters">>(
+  segments: T[],
+  visibleSurveyWhere: Prisma.SurveyWhereInput
+): Promise<T[]> => {
+  if (Object.keys(visibleSurveyWhere).length === 0) return segments;
+  const surveyIds = [
+    ...new Set(segments.flatMap((segment) => collectSegmentFilterSurveyIds(segment.filters))),
+  ];
+  if (surveyIds.length === 0) return segments;
+
+  const visibleSurveys = await prisma.survey.findMany({
+    where: { AND: [{ id: { in: surveyIds } }, visibleSurveyWhere] },
+    select: { id: true, workspaceId: true },
+  });
+  return segments.map((segment) => {
+    const visibleSurveyIds = new Set(
+      visibleSurveys.filter((survey) => survey.workspaceId === segment.workspaceId).map((survey) => survey.id)
+    );
+    return { ...segment, filters: redactSegmentFilterSurveyIds(segment.filters, visibleSurveyIds) };
+  });
+};
+
+/** `redactSegmentsForViewer` for the segment a survey is targeted with, as the survey reaches a browser. */
+export const redactSurveySegmentForViewer = async <T extends { segment: TSegment | null }>(
+  survey: T,
+  visibleSurveyWhere: Prisma.SurveyWhereInput
+): Promise<T> => {
+  if (!survey.segment) return survey;
+  const [segment] = await redactSegmentsForViewer([survey.segment], visibleSurveyWhere);
+  return { ...survey, segment };
+};
 
 export interface TSurveyFilterRef {
   id: string;

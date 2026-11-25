@@ -6,14 +6,21 @@ import type { TBaseFilter, TBaseFilters, TSegmentSurveyInteractionFilter } from 
 const isFilterGroup = (resource: TBaseFilter["resource"]): resource is TBaseFilters =>
   Array.isArray(resource);
 
+/**
+ * Read defensively: a survey's private segment can hold a half-built node, since draft saves skip filter
+ * validation, and a node without its survey ids names no survey.
+ */
 const isSurveyInteraction = (
   resource: TBaseFilter["resource"]
-): resource is TSegmentSurveyInteractionFilter =>
-  !Array.isArray(resource) && resource.root.type === "surveyInteraction";
+): resource is TSegmentSurveyInteractionFilter => {
+  if (Array.isArray(resource) || resource?.root?.type !== "surveyInteraction") return false;
+  return Array.isArray((resource as Partial<TSegmentSurveyInteractionFilter>).value?.surveyIds);
+};
 
 /** Every survey id a segment's survey-interaction filters name, at any depth. */
 export function collectSegmentFilterSurveyIds(filters: TBaseFilters): string[] {
   const ids: string[] = [];
+  if (!Array.isArray(filters)) return ids;
   for (const { resource } of filters) {
     if (isFilterGroup(resource)) ids.push(...collectSegmentFilterSurveyIds(resource));
     else if (isSurveyInteraction(resource)) ids.push(...resource.value.surveyIds);
@@ -30,6 +37,7 @@ export function redactSegmentFilterSurveyIds(
   filters: TBaseFilters,
   visibleSurveyIds: ReadonlySet<string>
 ): TBaseFilters {
+  if (!Array.isArray(filters)) return filters;
   return filters.map((filter) => {
     const { resource } = filter;
     if (isFilterGroup(resource)) {

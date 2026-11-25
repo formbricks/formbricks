@@ -57,7 +57,11 @@ import {
 } from "@/lib/organization/service";
 import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
-import { andVisibleSurveys, buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
+import {
+  andVisibleSurveys,
+  buildHiddenSurveyWhere,
+  buildVisibleSurveyWhere,
+} from "@/lib/survey/visibility/predicate";
 import {
   SURVEY_WRITE_TRANSACTION_OPTIONS,
   SurveyWriteAfterCommitError,
@@ -73,6 +77,7 @@ import {
   assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
   getAddedSegmentSurveyIds,
+  restoreHiddenSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import {
   assertNoLinkedCreatives,
@@ -1378,6 +1383,22 @@ const assertTargetingAddsNoHiddenSurvey = async (
   await assertAddedSegmentSurveyFiltersVisible(filters, storedFilters, workspaceId, actor, segmentId);
 };
 
+/**
+ * ENG-7353: the filters a save of the survey's own private segment stores. A signed-in editor only ever
+ * held the tree without the survey ids they can't see (`redactSegmentsForViewer`), so those ids are put
+ * back into the filters they came from, as an edit through the segment endpoints does; otherwise the save
+ * would narrow a positive rule and widen a negative one. Any other caller sent the tree as stored.
+ */
+const withHiddenSurveyIdsRestored = async (
+  filters: TBaseFilters,
+  storedFilters: TBaseFilters,
+  workspaceId: string,
+  actor: TSurveyActorContext | undefined
+): Promise<TBaseFilters> => {
+  if (actor?.kind !== "user" || !buildHiddenSurveyWhere(actor)) return filters;
+  return restoreHiddenSegmentSurveyIds(filters, storedFilters, workspaceId, buildVisibleSurveyWhere(actor));
+};
+
 /** ENG-6957: a private segment belongs to its own survey, so no other survey may be linked to it. */
 const SHARED_SEGMENT_ONLY_MESSAGE = "A survey can only be linked to a shared segment";
 
@@ -1436,6 +1457,12 @@ const saveAppSurveySegment = async (
       actor,
       segment.id
     );
+    const filters = await withHiddenSurveyIdsRestored(
+      segment.filters,
+      survey.segment.filters,
+      survey.workspaceId,
+      actor
+    );
     let written: { count: number };
     try {
       // Only the filters: the title names the survey (`connectOrCreate` finds the segment by it), and a
@@ -1450,7 +1477,7 @@ const saveAppSurveySegment = async (
           // The filters the visibility check compared against: a segment changed since is left alone.
           filters: { equals: survey.segment.filters as unknown as Prisma.InputJsonValue },
         },
-        data: { filters: segment.filters },
+        data: { filters },
       });
     } catch (error) {
       logger.error(loggableError(error), "Error updating survey");
