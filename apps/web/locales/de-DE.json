@@ -5963,7 +5963,7 @@
       "feedback_directory": "Feedback-Datensatz",
       "feedback_record_deleted_successfully": "Feedback-Eintrag erfolgreich gelöscht",
       "feedback_record_details": "Details zum Feedback-Eintrag",
-      "feedback_record_details_description": "Überprüfe und aktualisiere die Felder des Feedback-Eintrags.",
+      "feedback_record_details_description": "Sieh dir die Felder des Feedback-Eintrags an.",
       "feedback_record_mcp": "MCP-Server verwenden",
       "feedback_records": "Feedback-Einträge",
       "feedback_records_count_selected": "{count, plural, one {{count, number} Feedback-Eintrag ausgewählt} other {{count, number} Feedback-Einträge ausgewählt}}",

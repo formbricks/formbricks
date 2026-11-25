@@ -5963,7 +5963,7 @@
       "feedback_directory": "Geri Bildirim Veri Kümesi",
       "feedback_record_deleted_successfully": "Geri bildirim kaydı başarıyla silindi",
       "feedback_record_details": "Geri bildirim kaydı ayrıntıları",
-      "feedback_record_details_description": "Geri bildirim kayıt alanlarını inceleyin ve güncelleyin.",
+      "feedback_record_details_description": "Geri bildirim kaydının alanlarını incele.",
       "feedback_record_mcp": "MCP sunucusunu kullan",
       "feedback_records": "Geri Bildirim Kayıtları",
       "feedback_records_count_selected": "{count, plural, one {{count, number} geri bildirim kaydı seçildi} other {{count, number} geri bildirim kaydı seçildi}}",

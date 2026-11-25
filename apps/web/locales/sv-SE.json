@@ -5963,7 +5963,7 @@
       "feedback_directory": "Feedbackdataset",
       "feedback_record_deleted_successfully": "Feedbackposten har tagits bort",
       "feedback_record_details": "Feedbackpostdetaljer",
-      "feedback_record_details_description": "Granska och uppdatera fält för feedbackposter.",
+      "feedback_record_details_description": "Granska fälten i feedbackposten.",
       "feedback_record_mcp": "Använd MCP-server",
       "feedback_records": "Feedbackposter",
       "feedback_records_count_selected": "{count, plural, one {{count, number} feedbackpost vald} other {{count, number} feedbackposter valda}}",

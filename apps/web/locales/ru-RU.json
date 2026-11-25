@@ -5963,7 +5963,7 @@
       "feedback_directory": "Датасет обратной связи",
       "feedback_record_deleted_successfully": "Запись обратной связи успешно удалена",
       "feedback_record_details": "Детали записи обратной связи",
-      "feedback_record_details_description": "Просмотрите и обновите поля записи отзыва.",
+      "feedback_record_details_description": "Просмотрите поля записи обратной связи.",
       "feedback_record_mcp": "Использовать MCP-сервер",
       "feedback_records": "Записи отзывов",
       "feedback_records_count_selected": "{count, plural, one {Выбрана {count, number} запись отзыва} few {Выбрано {count, number} записи отзывов} many {Выбрано {count, number} записей отзывов} other {Выбрано {count, number} записи отзывов}}",

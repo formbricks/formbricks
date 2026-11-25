@@ -5963,7 +5963,7 @@
       "feedback_directory": "Ensemble de données de feedback",
       "feedback_record_deleted_successfully": "Enregistrement de commentaire supprimé avec succès",
       "feedback_record_details": "Détails de l'enregistrement des commentaires",
-      "feedback_record_details_description": "Examiner et mettre à jour les champs d’enregistrement des commentaires.",
+      "feedback_record_details_description": "Consulte les champs de l'enregistrement de feedback.",
       "feedback_record_mcp": "Utiliser le serveur MCP",
       "feedback_records": "Enregistrements de feedback",
       "feedback_records_count_selected": "{count, plural, one {{count, number} enregistrement de feedback sélectionné} other {{count, number} enregistrements de feedback sélectionnés}}",

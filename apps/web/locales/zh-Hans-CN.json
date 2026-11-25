@@ -5963,7 +5963,7 @@
       "feedback_directory": "反馈数据集",
       "feedback_record_deleted_successfully": "反馈记录已成功删除",
       "feedback_record_details": "反馈记录详情",
-      "feedback_record_details_description": "查看并更新反馈记录字段。",
+      "feedback_record_details_description": "查看反馈记录的各个字段。",
       "feedback_record_mcp": "使用 MCP 服务器",
       "feedback_records": "反馈记录",
       "feedback_records_count_selected": "{count, plural, other {已选择 {count, number} 条反馈记录}}",

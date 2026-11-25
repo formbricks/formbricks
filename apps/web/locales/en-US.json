@@ -5963,7 +5963,7 @@
       "feedback_directory": "Feedback Dataset",
       "feedback_record_deleted_successfully": "Feedback record deleted successfully",
       "feedback_record_details": "Feedback record details",
-      "feedback_record_details_description": "Review and update feedback record fields.",
+      "feedback_record_details_description": "Review feedback record fields.",
       "feedback_record_mcp": "Use MCP server",
       "feedback_records": "Feedback Records",
       "feedback_records_count_selected": "{count, plural, one {{count, number} feedback record selected} other {{count, number} feedback records selected}}",

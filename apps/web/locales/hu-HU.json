@@ -5963,7 +5963,7 @@
       "feedback_directory": "Visszajelzési adathalmaz",
       "feedback_record_deleted_successfully": "A visszajelzési rekord sikeresen törölve",
       "feedback_record_details": "Visszajelzési rekord részletei",
-      "feedback_record_details_description": "Visszajelzési rekord mezőinek értékelése és frissítése.",
+      "feedback_record_details_description": "Tekintse át a visszajelzési rekord mezőit.",
       "feedback_record_mcp": "MCP-kiszolgáló használata",
       "feedback_records": "Visszajelzési rekordok",
       "feedback_records_count_selected": "{count, plural, one {{count, number} visszajelzési rekord kiválasztva} other {{count, number} visszajelzési rekord kiválasztva}}",

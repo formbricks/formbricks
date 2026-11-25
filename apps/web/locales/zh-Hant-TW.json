@@ -5963,7 +5963,7 @@
       "feedback_directory": "意見回饋資料集",
       "feedback_record_deleted_successfully": "意見回饋記錄已成功刪除",
       "feedback_record_details": "反饋記錄詳情",
-      "feedback_record_details_description": "查看並更新回饋記錄欄位。",
+      "feedback_record_details_description": "查看意見回饋記錄的欄位。",
       "feedback_record_mcp": "使用 MCP 伺服器",
       "feedback_records": "回饋紀錄",
       "feedback_records_count_selected": "{count, plural, other {已選取 {count, number} 筆回饋紀錄}}",

@@ -5963,7 +5963,7 @@
       "feedback_directory": "Set de date de feedback",
       "feedback_record_deleted_successfully": "Înregistrarea de feedback a fost ștearsă cu succes",
       "feedback_record_details": "Detaliile înregistrării feedback-ului",
-      "feedback_record_details_description": "Examinați și actualizați câmpurile pentru înregistrarea de feedback.",
+      "feedback_record_details_description": "Consultă câmpurile înregistrării de feedback.",
       "feedback_record_mcp": "Folosește serverul MCP",
       "feedback_records": "Înregistrări de feedback",
       "feedback_records_count_selected": "{count, plural, one {{count, number} înregistrare de feedback selectată} few {{count, number} înregistrări de feedback selectate} other {{count, number} de înregistrări de feedback selectate}}",

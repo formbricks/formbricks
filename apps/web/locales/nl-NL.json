@@ -5963,7 +5963,7 @@
       "feedback_directory": "Feedback-dataset",
       "feedback_record_deleted_successfully": "Feedbackrecord succesvol verwijderd",
       "feedback_record_details": "Details van feedbackrecord",
-      "feedback_record_details_description": "Controleer en update de feedbackrecordvelden.",
+      "feedback_record_details_description": "Bekijk de velden van het feedbackrecord.",
       "feedback_record_mcp": "Gebruik MCP-server",
       "feedback_records": "Feedbackrecords",
       "feedback_records_count_selected": "{count, plural, one {{count, number} feedbackrecord geselecteerd} other {{count, number} feedbackrecords geselecteerd}}",

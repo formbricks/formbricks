@@ -5963,7 +5963,7 @@
       "feedback_directory": "Conjunto de Datos de Feedback",
       "feedback_record_deleted_successfully": "Registro de comentarios eliminado correctamente",
       "feedback_record_details": "Detalles del registro de comentarios",
-      "feedback_record_details_description": "Revise y actualice los campos del registro de comentarios.",
+      "feedback_record_details_description": "Revisa los campos del registro de comentarios.",
       "feedback_record_mcp": "Usar servidor MCP",
       "feedback_records": "Registros de comentarios",
       "feedback_records_count_selected": "{count, plural, one {{count, number} registro de feedback seleccionado} other {{count, number} registros de feedback seleccionados}}",

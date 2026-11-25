@@ -5963,7 +5963,7 @@
       "feedback_directory": "フィードバックデータセット",
       "feedback_record_deleted_successfully": "フィードバック記録を削除しました",
       "feedback_record_details": "フィードバック記録の詳細",
-      "feedback_record_details_description": "フィードバック レコード フィールドを確認して更新します。",
+      "feedback_record_details_description": "フィードバックレコードのフィールドを確認します。",
       "feedback_record_mcp": "MCPサーバーを使用",
       "feedback_records": "フィードバックレコード",
       "feedback_records_count_selected": "{count, plural, other {{count, number}件のフィードバック記録を選択中}}",
