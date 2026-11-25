@@ -20,8 +20,8 @@ export const DEFAULT_POOL_ACQUIRE_TIMEOUT_MS = 5_000;
 const IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM = "idle_in_transaction_session_timeout";
 // Postgres stores the setting as a 32-bit int of milliseconds and refuses the connection otherwise.
 const MAX_POSTGRES_TIMEOUT_MS = 2_147_483_647;
-// The longest delay Node's setTimeout honours; pg-pool arms its acquire timer with one.
-const MAX_TIMER_MS = 2_147_483_647;
+/** The longest delay Node's setTimeout honours; pg-pool and Prisma arm their wait timers with one. */
+export const MAX_TIMER_MS = 2_147_483_647;
 
 const PRISMA_ONLY_PARAMS = new Set([
   "connection_limit",
