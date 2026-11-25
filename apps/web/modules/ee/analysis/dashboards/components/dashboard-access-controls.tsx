@@ -147,23 +147,18 @@ export const ViewAsButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
                     key={member.userId}
                     value={member.userId}
                     keywords={[member.name, member.email]}
+                    // Nobody to view as: they cannot open this dashboard, so the row only says so.
+                    disabled={!member.hasAccess}
                     onSelect={() => goViewAs(member.userId)}>
                     <div className="flex w-full min-w-0 items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p
-                          className={cn(
-                            "truncate text-sm",
-                            member.hasAccess ? "text-slate-900" : "text-slate-400"
-                          )}>
-                          {member.name || member.email}
-                        </p>
+                        <p className="truncate text-sm text-slate-900">{member.name || member.email}</p>
                         {member.attributes.length > 0 && (
                           <p className="truncate text-xs text-slate-500">
                             {formatAttributes(member.attributes)}
                           </p>
                         )}
                       </div>
-                      {/* Still pickable: viewing as them shows why they cannot open the dashboard. */}
                       {!member.hasAccess && (
                         <span className="shrink-0 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
                           {t("workspace.analysis.dashboards.view_as_no_access_tag")}

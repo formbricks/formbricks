@@ -155,7 +155,10 @@ const isEmptyImageBlock = (widget: TDashboardWidget): boolean =>
 
 const SIDE_RESIZE_HANDLES: LayoutItem["resizeHandles"] = ["e", "w"];
 
-const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] =>
+const widgetsToLayout = (
+  widgets: TDashboardWidget[],
+  neededRows: ReadonlyMap<string, number>
+): LayoutItem[] =>
   widgets.map((widget) => {
     const minSize =
       widget.kind === "chart"
@@ -171,11 +174,15 @@ const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] =>
       h: widget.kind === "chart" ? Math.max(widget.layout.h, minSize.minH) : widget.layout.h,
       ...minSize,
       maxW: GRID_COLUMNS,
-      // A separator keeps its height, and an image or text block is as high as its content: a resize only
-      // changes their width, so they only get the side handles.
-      ...(widget.kind === "chart"
-        ? { maxH: MAX_WIDGET_HEIGHT }
-        : { minH: widget.layout.h, maxH: widget.layout.h, resizeHandles: SIDE_RESIZE_HANDLES }),
+      // A separator keeps its height, so a resize only changes its width and it only gets the side
+      // handles. An image or text block can be made taller to line up with its neighbours, never shorter
+      // than its content.
+      ...(widget.kind === "separator"
+        ? { minH: widget.layout.h, maxH: widget.layout.h, resizeHandles: SIDE_RESIZE_HANDLES }
+        : {
+            maxH: MAX_WIDGET_HEIGHT,
+            ...(widget.kind === "chart" ? {} : { minH: neededRows.get(widget.id) ?? minSize.minH }),
+          }),
     };
   });
 
@@ -470,7 +477,7 @@ function DashboardDetailView({
   );
 
   // ── Auto-height of image and text blocks ─────────────────────────────────────────────────────
-  // Each block reports the pixels its content needs; that becomes the grid rows it takes, no more
+  // Each block reports the pixels its content needs; that becomes the fewest grid rows it takes
   // (`fitBlockHeights`). Drawn always, saved with the edit.
   const [neededRows, setNeededRows] = useState<ReadonlyMap<string, number>>(new Map());
   const handleMeasure = useCallback((widgetId: string, px: number) => {
@@ -506,7 +513,7 @@ function DashboardDetailView({
     return widgetsChanged(draftWidgets, dashboard.widgets);
   }, [draftName, draftPages, draftWidgets, dashboard]);
 
-  const layout = useMemo(() => widgetsToLayout(displayedWidgets), [displayedWidgets]);
+  const layout = useMemo(() => widgetsToLayout(displayedWidgets, neededRows), [displayedWidgets, neededRows]);
 
   const handleInteractionEnd = useCallback(
     (finalLayout: Layout) => {
@@ -1088,7 +1095,7 @@ function DashboardDetailView({
       {/* The filters and the date range only act on existing charts, so the bar is hidden on a dashboard
           without any, and while editing, where the layout is what changes. The same table toolbar the
           responses page has: the filters an editor locked for everyone first, then this person's own, with
-          the date range — always this person's own — as its action. */}
+          the date range — always this person's own — beside the Filter button. */}
       {!isEditing && hasCharts && !isUnmatched && (
         <TableToolbar
           filter={{
@@ -1098,6 +1105,7 @@ function DashboardDetailView({
             locked: toolbarLocked,
             simpleRules: true,
           }}
+          controls={<DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />}
           actions={
             <>
               {lockedFilters.canLock && (
@@ -1114,7 +1122,6 @@ function DashboardDetailView({
                   onClick={() => void lockedFilters.unlockAllFilters()}
                 />
               )}
-              <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />
             </>
           }
         />

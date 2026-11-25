@@ -129,8 +129,8 @@ describe("fitBlockHeights", () => {
     layout: { x: 0, y, w: 3, h },
   });
 
-  test("gives each measured block exactly the rows it needs, even beside a taller block on its row", () => {
-    const widgets = [block("a", "text", 0), block("b", "image", 0), block("c", "text", 4)];
+  test("grows a block to the rows its content needs and keeps a block made taller than that", () => {
+    const widgets = [block("a", "text", 0, 6), block("b", "image", 0), block("c", "text", 4)];
     const fitted = fitBlockHeights(
       widgets,
       new Map([
@@ -139,7 +139,7 @@ describe("fitBlockHeights", () => {
         ["c", 3],
       ])
     );
-    expect(fitted.map((widget) => widget.layout.h)).toEqual([1, 4, 3]);
+    expect(fitted.map((widget) => widget.layout.h)).toEqual([6, 4, 3]);
   });
 
   test("leaves charts, separators and unmeasured blocks alone", () => {

@@ -32,7 +32,7 @@ export const getDefaultBlockLayout = (kind: TLayoutBlockKind): TWidgetLayout => 
   return { x: 0, y: 0, w: GRID_COLUMNS, h: 2 };
 };
 
-/** The smallest a block may be resized to; the height of an image or text block follows its content. */
+/** The smallest a block may be resized to; an image or text block is never shorter than its content. */
 export const getBlockMinSize = (kind: TLayoutBlockKind): { minW: number; minH: number } => ({
   minW: kind === "separator" ? 1 : 2,
   minH: 1,
@@ -156,11 +156,10 @@ export const pixelsToGridRows = (
 };
 
 /**
- * Auto-height for image and text blocks: each takes exactly the rows its measured content needs, never
- * more, so a block has no empty space to drag away. A block beside a taller widget is not stretched to
- * match it: a short text card next to an image ends where its text ends. Widgets without a measurement
- * (charts, separators, blocks not yet measured) keep their height. Returns the same array when nothing
- * changes, so a caller can skip a re-render.
+ * Auto-height for image and text blocks: each is at least as tall as its measured content, so nothing is
+ * clipped. A block someone made taller keeps that height, so it can line up with the widgets beside it.
+ * Widgets without a measurement (charts, separators, blocks not yet measured) keep their height. Returns
+ * the same array when nothing changes, so a caller can skip a re-render.
  */
 export const fitBlockHeights = <T extends { id: string; kind: TDashboardWidgetKind; layout: TWidgetLayout }>(
   widgets: T[],
@@ -168,8 +167,9 @@ export const fitBlockHeights = <T extends { id: string; kind: TDashboardWidgetKi
 ): T[] => {
   let changed = false;
   const fitted = widgets.map((widget) => {
-    const h = isAutoHeightBlock(widget.kind) ? neededRows.get(widget.id) : undefined;
-    if (h === undefined || h === widget.layout.h) return widget;
+    const needed = isAutoHeightBlock(widget.kind) ? neededRows.get(widget.id) : undefined;
+    if (needed === undefined || needed <= widget.layout.h) return widget;
+    const h = needed;
     changed = true;
     return { ...widget, layout: { ...widget.layout, h } };
   });

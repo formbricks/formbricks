@@ -9,6 +9,7 @@ import { logger } from "@formbricks/logger";
 import { getQRCodeOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/get-qr-code-options";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface QRCodeTabProps {
   readonly surveyUrl: string;
@@ -77,7 +78,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
     <>
       {isLoading && (
         <div className="flex flex-col items-center gap-2">
-          <LoaderCircle className="size-8 animate-spin text-slate-500" />
+          <LoadingSpinner />
           <p className="text-sm text-slate-500">{t("workspace.surveys.summary.generating_qr_code")}</p>
         </div>
       )}

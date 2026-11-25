@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -23,6 +22,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface AddExistingChartsDialogProps {
   open: boolean;
@@ -108,7 +108,7 @@ export function AddExistingChartsDialog({
     if (isPending) {
       return (
         <div className="flex items-center justify-center py-6">
-          <Loader2Icon className="size-5 animate-spin text-slate-400" aria-hidden="true" />
+          <LoadingSpinner />
           <span className="sr-only">{t("common.loading")}</span>
         </div>
       );
