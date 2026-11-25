@@ -53,12 +53,58 @@ describe("UploadContactsCSVButton", () => {
     cleanup();
   });
 
+  const upload = async () => {
+    await screen.findByText("workspace.contacts.upload_contacts_modal_preview");
+    fireEvent.click(
+      screen.getByRole("button", { name: "workspace.contacts.upload_contacts_modal_upload_btn" })
+    );
+  };
+
   test("an external-ID directory asks for an externalId column", async () => {
     renderButton("externalId");
 
     pickCsv("email\na@example.com");
+    await upload();
 
     expect(await screen.findByText("Missing externalId field for one or more records")).toBeInTheDocument();
+    expect(mocks.importContacts).not.toHaveBeenCalled();
+  });
+
+  // The matching column is read through the column mapping, as userId and every other key are: a CRM's
+  // "External ID" header maps to the externalId key, and is checked there.
+  test("accepts a matching column whose header maps to the key, like External ID", async () => {
+    mocks.importContacts.mockResolvedValue({ contacts: [], multiMatchCount: 0 });
+    renderButton("externalId");
+
+    pickCsv("External ID,email\nCRM-1,a@example.com\nCRM-2,b@example.com");
+    await upload();
+
+    await waitFor(() => expect(mocks.importContacts).toHaveBeenCalled());
+    expect(mocks.importContacts.mock.calls[0][1].csvData).toEqual([
+      { externalId: "CRM-1", email: "a@example.com" },
+      { externalId: "CRM-2", email: "b@example.com" },
+    ]);
+  });
+
+  test("refuses a repeated matching value under a mapped header, before uploading", async () => {
+    renderButton("externalId");
+
+    pickCsv("external_id,email\nCRM-1,a@example.com\nCRM-1,b@example.com");
+    await upload();
+
+    expect(await screen.findByText("Duplicate externalIds found in the records")).toBeInTheDocument();
+    expect(mocks.importContacts).not.toHaveBeenCalled();
+  });
+
+  test("accepts an email column headed E-mail in an email directory", async () => {
+    mocks.importContacts.mockResolvedValue({ contacts: [], multiMatchCount: 0 });
+    renderButton("email");
+
+    pickCsv("E-mail\na@example.com");
+    await upload();
+
+    await waitFor(() => expect(mocks.importContacts).toHaveBeenCalled());
+    expect(mocks.importContacts.mock.calls[0][1].csvData).toEqual([{ email: "a@example.com" }]);
   });
 
   test("reports rows that matched several contacts after the upload", async () => {

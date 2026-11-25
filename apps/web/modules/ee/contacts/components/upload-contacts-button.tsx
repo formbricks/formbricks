@@ -25,6 +25,7 @@ import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
 import {
   TContactCSVRecords,
   ZContactCSVAttributeMap,
+  ZContactCSVRecords,
   getContactCSVUploadSchema,
 } from "@/modules/ee/contacts/types/contact";
 import { Alert } from "@/modules/ui/components/alert";
@@ -98,7 +99,9 @@ export const UploadContactsCSVButton = ({
       try {
         const records = parseContactsCSV(csv);
 
-        const parsedRecords = getContactCSVUploadSchema(matchingKey).safeParse(records);
+        // Only the file's shape and size here. The matching column is checked on Upload, once columns are
+        // mapped: a header like "External ID" or "E-mail" maps to its key there.
+        const parsedRecords = ZContactCSVRecords.safeParse(records);
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
           setError(parsedRecords.error.issues[0].message);
@@ -223,6 +226,16 @@ export const UploadContactsCSVButton = ({
 
       return newRecord;
     });
+
+    // The directory's matching column (and userId) present, filled in and unique, read through the mapping:
+    // the same check the import route runs on these rows.
+    const identityCheck = getContactCSVUploadSchema(matchingKey).safeParse(transformedCsvData);
+    if (!identityCheck.success) {
+      setError(identityCheck.error.issues[0].message);
+      errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setLoading(false);
+      return;
+    }
 
     let result: Awaited<ReturnType<typeof importContacts>>;
     try {
