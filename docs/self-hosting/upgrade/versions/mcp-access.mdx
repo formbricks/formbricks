@@ -28,8 +28,10 @@ new ones start.
   type `mcp_grant`.
 - New MCP tools `archive_survey` and `restore_survey`, and `list_surveys` can include archived surveys.
   The `delete_survey` MCP tool is deprecated and will be removed in Formbricks 7.0: it works as before
-  until then, but move any client, prompt or automation that calls it to `archive_survey`. Deleting a
-  survey stays in the app and the REST API.
+  until then, but move any client, prompt or automation that calls it to `archive_survey`. Archiving does
+  not delete: the survey and its responses are kept for at least 30 days and can be restored until
+  Formbricks purges them. An automation that needs the data gone at once deletes the survey in the app or
+  through the REST API (`DELETE /api/v3/surveys/{surveyId}`).
 
 ## Apply the permission schema
 

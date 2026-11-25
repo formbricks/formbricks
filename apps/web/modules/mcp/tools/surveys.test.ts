@@ -929,12 +929,17 @@ describe("registerSurveyTools", () => {
     expect(ZMcpSurveyLifecycleOutput.safeParse(result.structuredContent).success).toBe(true);
   });
 
-  test("archive_survey and restore_survey take only the survey id", () => {
+  test("archive_survey and restore_survey take only a valid survey id", () => {
     const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
 
     for (const name of ["archive_survey", "restore_survey"]) {
-      const schema = tools.get(name)!.config.inputSchema as z.ZodObject<z.ZodRawShape>;
-      expect(Object.keys(schema.shape), name).toEqual(["surveyId"]);
+      const schema = tools.get(name)!.config.inputSchema as z.ZodType;
+      expect(schema.safeParse({ surveyId }).success, name).toBe(true);
+      expect(schema.safeParse({}).success, name).toBe(false);
+      expect(schema.safeParse({ surveyId: "not-a-cuid" }).success, name).toBe(false);
+      // No confirmation argument: archive and restore are reversible, and an unknown key is refused.
+      expect(schema.safeParse({ surveyId, confirm: true }).success, name).toBe(false);
       expect(String(tools.get(name)!.config.description), name).not.toMatch(/confirm/i);
     }
   });
