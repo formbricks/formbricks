@@ -271,8 +271,8 @@ test.describe("Contact directories (ENG-7495)", () => {
       await deleteButton.hover();
       await expect(reason).toBeVisible({ timeout: 1000 });
     }).toPass();
-    // Playwright treats aria-disabled as disabled, so the click is forced to prove it opens nothing.
-    await deleteButton.click({ force: true });
+    // Activated from the keyboard (Playwright won't click an aria-disabled button), it still opens nothing.
+    await deleteButton.press("Enter");
     await expect(page.getByRole("dialog")).toBeHidden();
 
     // The server refuses it too, for a caller that skips the button.
