@@ -1,12 +1,21 @@
 "use client";
 
 import { CheckIcon, ClockIcon, EyeOffIcon, type LucideIcon, ScissorsIcon } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type { TEmbeddedDataSource } from "@formbricks/types/embedded-data";
-import type { TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
+import type {
+  TReservedFieldCapturedWhen,
+  TReservedFieldPrivacy,
+} from "@formbricks/types/embedded-data-resolver";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import type { TAutoCapturedAvailability } from "../lib/auto-captured-fields";
-import { SOURCE_ICONS, getAvailabilityLabel, getPrivacyLabel, getSourceLabel } from "../lib/field-labels";
+import {
+  SOURCE_ICONS,
+  getAvailabilityLabel,
+  getCapturedWhenLabel,
+  getPrivacyLabel,
+  getSourceLabel,
+} from "../lib/field-labels";
 
 /**
  * The Embedded Data tables' status cells: a glyph and a tooltip where a sentence used to sit.
@@ -82,6 +91,33 @@ export const FieldPrivacyIcon = ({ privacy }: Readonly<{ privacy: TReservedField
   const { t } = useTranslation();
 
   return <StatusIcon icon={PRIVACY_ICONS[privacy]} label={getPrivacyLabel(privacy, t)} />;
+};
+
+/**
+ * What has to be true for an auto-captured field to carry a value, in words rather than a glyph: the
+ * answer is a condition ("Link or page URL has ?source="), and no icon says that without a hover.
+ *
+ * A URL parameter is set as one unbreakable code token, so `?utm_campaign=` never wraps after the `?`
+ * and reads as the exact text to put on the link.
+ */
+export const FieldCapturedWhen = ({
+  capturedWhen,
+}: Readonly<{ capturedWhen: TReservedFieldCapturedWhen }>) => {
+  const { t } = useTranslation();
+
+  if (capturedWhen.kind === "urlParam") {
+    return (
+      <Trans
+        i18nKey="workspace.embedded_data.captured_url_param"
+        values={{ param: `?${capturedWhen.param}=` }}
+        components={{
+          code: <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs whitespace-nowrap" />,
+        }}
+      />
+    );
+  }
+
+  return <>{getCapturedWhenLabel(capturedWhen, t)}</>;
 };
 
 /**

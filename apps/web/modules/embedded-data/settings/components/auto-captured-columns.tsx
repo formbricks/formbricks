@@ -4,7 +4,7 @@ import type { TFunction } from "i18next";
 import { DataTypeBadge } from "@/modules/ui/components/data-type-badge";
 import type { TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import type { TAutoCapturedField } from "../lib/auto-captured-fields";
-import { FieldAvailabilityIcon, FieldPrivacyIcon } from "./field-status";
+import { FieldAvailabilityIcon, FieldCapturedWhen, FieldPrivacyIcon } from "./field-status";
 
 /**
  * The Auto-captured table's columns.
@@ -19,27 +19,34 @@ export const getAutoCapturedColumns = (t: TFunction): TSettingsTableColumn<TAuto
   {
     id: "name",
     header: t("common.name"),
-    headerClassName: "w-[34%]",
+    headerClassName: "w-[24%]",
     cellClassName: "font-medium text-slate-800",
     cell: (field) => field.label,
   },
   {
     id: "dataType",
     header: t("common.type"),
-    headerClassName: "w-[22%]",
+    headerClassName: "w-[14%]",
     hideBelow: "sm",
     cell: (field) => <DataTypeBadge dataType={field.dataType} />,
   },
   {
+    id: "capturedWhen",
+    header: t("workspace.embedded_data.captured_when"),
+    headerClassName: "w-[30%]",
+    cellClassName: "text-slate-600",
+    cell: (field) => <FieldCapturedWhen capturedWhen={field.capturedWhen} />,
+  },
+  {
     id: "availability",
     header: t("workspace.embedded_data.in_logic_and_recall"),
-    headerClassName: "w-[22%] whitespace-nowrap",
+    headerClassName: "w-[16%] whitespace-nowrap",
     cell: (field) => <FieldAvailabilityIcon availability={field.availability} />,
   },
   {
     id: "privacy",
     header: t("workspace.embedded_data.when_anonymized"),
-    headerClassName: "w-[22%] whitespace-nowrap",
+    headerClassName: "w-[16%] whitespace-nowrap",
     hideBelow: "sm",
     cell: (field) => <FieldPrivacyIcon privacy={field.privacy} />,
   },

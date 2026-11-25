@@ -19,7 +19,7 @@ icon: "user"
 
 ## Metadata Captured
 
-- **Source**: Where the respondent came from. A link survey opened with `?source=` records that value; without one it records the survey's type, `link` or `app`. See [Source Tracking](/surveys/link-surveys/source-tracking).
+- **Source**: Where the respondent came from, taken from the `?source=` parameter of the survey link (or, for an app survey, of the page it ran on). Without the parameter it stays empty. See [Source Tracking](/surveys/link-surveys/source-tracking).
 
 - **URL**: The URL of the page where the user filled the survey.
 
@@ -29,7 +29,7 @@ icon: "user"
 
 - **Device**: The device used by the user to fill the survey.
 
-- **Country**: The country of the user.
+- **Country**: The country of the user, from a geo-IP header that Cloudflare or AWS CloudFront adds in front of Formbricks. Without one it stays empty, and a `?country=` link parameter does not fill it.
 
 - **Action**: The action that triggered the survey. This is only available for App surveys.
 

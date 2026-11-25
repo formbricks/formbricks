@@ -7,6 +7,7 @@ import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 import {
   SOURCE_ICONS,
   getAvailabilityLabel,
+  getCapturedWhenLabel,
   getDataTypeLabel,
   getPrivacyLabel,
   getSourceLabel,
@@ -22,6 +23,34 @@ const t = ((key: string) => key) as unknown as TFunction;
  * mappers lived in a `.tsx`, where CODING_STANDARDS.md's no-component-test rule and Sonar's `**‍/*.tsx`
  * coverage exclusion both applied — so swapping "Kept" and "Not stored" passed the whole suite.
  */
+/**
+ * The column that answers "why is this field empty on my responses?" (Electrolux, 25 Nov 2026:
+ * Source and Country blank on a link survey whose settings page called them auto-captured). Each
+ * condition needs its own words, or two different reasons for an empty column read as one.
+ */
+describe("getCapturedWhenLabel", () => {
+  test("names each condition with its own key", () => {
+    expect(getCapturedWhenLabel({ kind: "always" }, t)).toBe("workspace.embedded_data.captured_always");
+    expect(getCapturedWhenLabel({ kind: "referrer" }, t)).toBe("workspace.embedded_data.captured_referrer");
+    expect(getCapturedWhenLabel({ kind: "geoIpHeader" }, t)).toBe(
+      "workspace.embedded_data.captured_geo_ip_header"
+    );
+    expect(getCapturedWhenLabel({ kind: "appSurvey" }, t)).toBe(
+      "workspace.embedded_data.captured_app_survey"
+    );
+    expect(getCapturedWhenLabel({ kind: "ipCapture" }, t)).toBe(
+      "workspace.embedded_data.captured_ip_capture"
+    );
+    expect(getCapturedWhenLabel({ kind: "websiteVisit" }, t)).toBe(
+      "workspace.embedded_data.captured_website_visit"
+    );
+    expect(getCapturedWhenLabel({ kind: "creative" }, t)).toBe("workspace.embedded_data.captured_creative");
+    expect(getCapturedWhenLabel({ kind: "finishedResponse" }, t)).toBe(
+      "workspace.embedded_data.captured_finished_response"
+    );
+  });
+});
+
 describe("getPrivacyLabel", () => {
   test("names each treatment with its own key", () => {
     expect(getPrivacyLabel("keep", t)).toBe("workspace.embedded_data.privacy_kept");

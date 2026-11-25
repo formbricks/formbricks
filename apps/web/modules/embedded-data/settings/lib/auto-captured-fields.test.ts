@@ -34,6 +34,18 @@ describe("getAutoCapturedFields", () => {
     }
   });
 
+  test("says what each field needs before a response carries it", () => {
+    // The two Electrolux found blank on a link survey: neither fills itself.
+    expect(byName("source")?.capturedWhen).toEqual({ kind: "urlParam", param: "source" });
+    expect(byName("country")?.capturedWhen).toEqual({ kind: "geoIpHeader" });
+    expect(byName("action")?.capturedWhen).toEqual({ kind: "appSurvey" });
+    expect(byName("ipAddress")?.capturedWhen).toEqual({ kind: "ipCapture" });
+    expect(byName("utmCampaign")?.capturedWhen).toEqual({ kind: "urlParam", param: "utm_campaign" });
+    expect(byName("visitUrls")?.capturedWhen).toEqual({ kind: "websiteVisit" });
+    expect(byName("url")?.capturedWhen).toEqual({ kind: "always" });
+    expect(byName("browser")?.capturedWhen).toEqual({ kind: "always" });
+  });
+
   test("carries the catalog's anonymization verdict through unchanged", () => {
     expect(byName("action")?.privacy).toBe("keep");
     expect(byName("country")?.privacy).toBe("drop");

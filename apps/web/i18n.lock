@@ -2727,8 +2727,18 @@ checksums:
     workspace/embedded_data/add_to_library_description: c70fe00588478cbd5e4020e83c46432a
     workspace/embedded_data/after_response_submitted: c1d7212d9014fe4217463b7a49c5efe7
     workspace/embedded_data/auto_captured: a21afd34cbc5054022951191a68ff3b5
-    workspace/embedded_data/auto_captured_description: e0c6e41e63553da8baafa916927edc98
+    workspace/embedded_data/auto_captured_description: fa8182ff4eb9f2d1f0a3bcead8dfce23
     workspace/embedded_data/calculated_type_hint: 2109eec37bf50199709bc33271ba3c4d
+    workspace/embedded_data/captured_always: 1e1afee98f88029400e67f97a036f17f
+    workspace/embedded_data/captured_app_survey: 118414ff37499ee7949ac64cefd7d5c0
+    workspace/embedded_data/captured_creative: 687d7f55c84cf948d8e130ed2470373b
+    workspace/embedded_data/captured_finished_response: 4b70ce1d1db013353387e39f3272a4c6
+    workspace/embedded_data/captured_geo_ip_header: 2a92a9b9ce73455f60d8b24eefedffc7
+    workspace/embedded_data/captured_ip_capture: f84fa9611df716e4b9950a3d26ec5151
+    workspace/embedded_data/captured_referrer: d0230c543786012ed9967762e57dd7ee
+    workspace/embedded_data/captured_url_param: c97b08b422383ddd24d4abbbef48fccc
+    workspace/embedded_data/captured_website_visit: 3544135e9cd9e6646854a26a8106897a
+    workspace/embedded_data/captured_when: edf176c5a80cd10d34d2cfe349fc7cd8
     workspace/embedded_data/card_description: 18af7f8467441ce3dd0de429f2d7dc80
     workspace/embedded_data/card_empty_state: 343ec83854e15c2b792b90040a5b75c9
     workspace/embedded_data/change_type: 6dca99e3f1f2949403c3228879802d8d

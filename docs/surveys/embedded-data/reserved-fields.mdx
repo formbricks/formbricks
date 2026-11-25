@@ -17,7 +17,7 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 
 | Field             | Type      | Captured by     | What it holds                                                                 |
 | ----------------- | --------- | --------------- | ----------------------------------------------------------------------------- |
-| `source`          | `string`  | Browser         | How the response was collected: `link`, `app`, …                              |
+| `source`          | `string`  | Browser         | The page URL's `?source=` value. Empty when the link carries none             |
 | `url`             | `string`  | Browser         | The page URL the survey ran on. Always read back without its query string     |
 | `pagePath`        | `string`  | Browser         | The same page without the query string, to group by page rather than by visit |
 | `pageReferrer`    | `string`  | Browser         | Where the respondent came from. Also read back without its query string       |
@@ -143,7 +143,7 @@ That is deliberate: a recall token can end up interpolated into a redirect URL o
 
 **In exports**, the column set is derived from the catalog rather than from whatever the first response happened to carry, so it is stable for the survey: every response gets every column, and absent values export as empty. `Response ID`, `Survey ID`, `Finished` and the timestamp already have fixed basic columns, so they are not repeated. Turning **Anonymize responses** on removes no column: `Country`, `Browser`, `Os` and `Device Type` stay, responses collected before the toggle keep their values in them, and anonymized responses export them empty. `Ip Address` is only a column when the survey captures it.
 
-**In Settings → Workspace → Embedded Data**, a read-only **Auto-captured fields** card lists every one of them with its type, whether it can be used in logic and recall mid-survey, and what **Anonymize responses** does to it. It is the one place the whole catalog is visible without opening a response, and nothing on it is editable — every survey already has these fields.
+**In Settings → Workspace → Embedded Data**, a read-only **Auto-captured fields** card lists every one of them with its type, **Captured when** (what has to be true for a response to carry it, such as `?source=` on the link or a geo-IP header for `country`), whether it can be used in logic and recall mid-survey, and what **Anonymize responses** does to it. It is the one place the whole catalog is visible without opening a response, and nothing on it is editable — every survey already has these fields.
 
 <Note>
   Export headers are Title Case renderings of the field name (`Page Path`, `Utm Source`) and are deliberately

@@ -117,6 +117,7 @@ const countryEntry: TReservedFieldCatalogEntry = {
   availability: "server",
   privacy: "drop",
   display: "none",
+  capturedWhen: { kind: "always" },
   read: (r) => r.meta.country,
 };
 const browserEntry: TReservedFieldCatalogEntry = {
@@ -125,6 +126,7 @@ const browserEntry: TReservedFieldCatalogEntry = {
   availability: "server",
   privacy: "drop",
   display: "none",
+  capturedWhen: { kind: "always" },
   read: (r) => r.meta.userAgent?.browser,
 };
 const totalTimeEntry: TReservedFieldCatalogEntry = {
@@ -133,6 +135,7 @@ const totalTimeEntry: TReservedFieldCatalogEntry = {
   availability: "server",
   privacy: "keep",
   display: "none",
+  capturedWhen: { kind: "always" },
   read: (r) => r.ttc?._total,
 };
 const languageEntry: TReservedFieldCatalogEntry = {
@@ -141,6 +144,7 @@ const languageEntry: TReservedFieldCatalogEntry = {
   availability: "both",
   privacy: "keep",
   display: "none",
+  capturedWhen: { kind: "always" },
   read: (r) => r.language,
 };
 const completedEntry: TReservedFieldCatalogEntry = {
@@ -149,6 +153,7 @@ const completedEntry: TReservedFieldCatalogEntry = {
   availability: "server",
   privacy: "keep",
   display: "none",
+  capturedWhen: { kind: "always" },
   read: (r) => r.finished,
 };
 const startedAtEntry: TReservedFieldCatalogEntry = {
@@ -157,6 +162,7 @@ const startedAtEntry: TReservedFieldCatalogEntry = {
   availability: "server",
   privacy: "keep",
   display: "none",
+  capturedWhen: { kind: "always" },
   read: (r) => r.createdAt,
 };
 const actionEntry: TReservedFieldCatalogEntry = {
@@ -165,6 +171,7 @@ const actionEntry: TReservedFieldCatalogEntry = {
   availability: "client",
   privacy: "keep",
   display: "none",
+  capturedWhen: { kind: "always" },
   read: (r) => r.meta.action,
 };
 
@@ -260,6 +267,7 @@ describe("resolveEmbeddedValue", () => {
         availability: "client",
         privacy: "redactQuery",
         display: "none",
+        capturedWhen: { kind: "always" },
         read: (r) => new URL(r.meta.url ?? "").hostname,
       };
       // sparseResponse has no meta.url, so the accessor throws on `new URL("")` — the resolver must
@@ -604,6 +612,7 @@ describe("projectReservedValues", () => {
       availability: "server",
       privacy: "keep",
       display: "none",
+      capturedWhen: { kind: "always" },
       read: (r) => r.meta.source, // "web" — present, but not a number; projecting it would invent data
     };
     expect(projectReservedValues([miscastEntry], response)).toStrictEqual({});
@@ -616,6 +625,7 @@ describe("projectReservedValues", () => {
       availability: "client",
       privacy: "keep",
       display: "none",
+      capturedWhen: { kind: "always" },
       read: () => "",
     };
     const zeroTimeEntry: TReservedFieldCatalogEntry = {
@@ -624,6 +634,7 @@ describe("projectReservedValues", () => {
       availability: "server",
       privacy: "keep",
       display: "none",
+      capturedWhen: { kind: "always" },
       read: () => 0,
     };
 
@@ -644,6 +655,7 @@ describe("projectReservedValues", () => {
       availability: "client",
       privacy: "redactQuery",
       display: "none",
+      capturedWhen: { kind: "always" },
       read: (r) => new URL(r.meta.url ?? "").hostname,
     };
 
@@ -719,7 +731,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
     return entry;
   };
 
-  test("declares exactly the Tier-1 entries, with their dataType, availability, privacy and display", () => {
+  test("declares exactly the Tier-1 entries, with their dataType, availability, privacy, display and capture condition", () => {
     // The catalog is a product decision, so it is pinned as a table rather than probed field by
     // field: adding, removing or reclassifying an entry has to be a deliberate edit here too.
     // `status` is absent on purpose — `Response` has no status column and `finished` already carries
@@ -727,53 +739,158 @@ describe("RESERVED_FIELD_CATALOG", () => {
     //
     // `display` (ENG-2540) is in the table for that reason: a new entry cannot reach the response
     // card and the response table without someone deciding how prominent it is.
+    //
+    // `capturedWhen` is here for the same reason: it is what the settings page tells an author about
+    // an empty column, so reclassifying a field's condition is a product edit, not a refactor.
     expect(
-      RESERVED_FIELD_CATALOG.map(({ name, dataType, availability, privacy, display }) => ({
+      RESERVED_FIELD_CATALOG.map(({ name, dataType, availability, privacy, display, capturedWhen }) => ({
         name,
         dataType,
         availability,
         privacy,
         display,
+        capturedWhen,
       }))
     ).toStrictEqual([
-      { name: "source", dataType: "string", availability: "client", privacy: "keep", display: "primary" },
-      { name: "url", dataType: "string", availability: "client", privacy: "redactQuery", display: "primary" },
-      { name: "country", dataType: "string", availability: "server", privacy: "drop", display: "primary" },
-      { name: "action", dataType: "string", availability: "client", privacy: "keep", display: "primary" },
-      { name: "browser", dataType: "string", availability: "server", privacy: "drop", display: "primary" },
-      { name: "os", dataType: "string", availability: "server", privacy: "drop", display: "primary" },
-      { name: "deviceType", dataType: "string", availability: "server", privacy: "drop", display: "primary" },
+      {
+        name: "source",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "primary",
+        capturedWhen: { kind: "urlParam", param: "source" },
+      },
+      {
+        name: "url",
+        dataType: "string",
+        availability: "client",
+        privacy: "redactQuery",
+        display: "primary",
+        capturedWhen: { kind: "always" },
+      },
+      {
+        name: "country",
+        dataType: "string",
+        availability: "server",
+        privacy: "drop",
+        display: "primary",
+        capturedWhen: { kind: "geoIpHeader" },
+      },
+      {
+        name: "action",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "primary",
+        capturedWhen: { kind: "appSurvey" },
+      },
+      {
+        name: "browser",
+        dataType: "string",
+        availability: "server",
+        privacy: "drop",
+        display: "primary",
+        capturedWhen: { kind: "always" },
+      },
+      {
+        name: "os",
+        dataType: "string",
+        availability: "server",
+        privacy: "drop",
+        display: "primary",
+        capturedWhen: { kind: "always" },
+      },
+      {
+        name: "deviceType",
+        dataType: "string",
+        availability: "server",
+        privacy: "drop",
+        display: "primary",
+        capturedWhen: { kind: "always" },
+      },
       {
         name: "ipAddress",
         dataType: "string",
         availability: "server",
         privacy: "drop",
         display: "secondary",
+        capturedWhen: { kind: "ipCapture" },
       },
-      { name: "finished", dataType: "boolean", availability: "server", privacy: "keep", display: "none" },
-      { name: "language", dataType: "string", availability: "both", privacy: "keep", display: "none" },
-      { name: "responseId", dataType: "string", availability: "server", privacy: "keep", display: "none" },
-      { name: "surveyId", dataType: "string", availability: "server", privacy: "keep", display: "none" },
+      {
+        name: "finished",
+        dataType: "boolean",
+        availability: "server",
+        privacy: "keep",
+        display: "none",
+        capturedWhen: { kind: "always" },
+      },
+      {
+        name: "language",
+        dataType: "string",
+        availability: "both",
+        privacy: "keep",
+        display: "none",
+        capturedWhen: { kind: "always" },
+      },
+      {
+        name: "responseId",
+        dataType: "string",
+        availability: "server",
+        privacy: "keep",
+        display: "none",
+        capturedWhen: { kind: "always" },
+      },
+      {
+        name: "surveyId",
+        dataType: "string",
+        availability: "server",
+        privacy: "keep",
+        display: "none",
+        capturedWhen: { kind: "always" },
+      },
       {
         name: "durationSeconds",
         dataType: "number",
         availability: "server",
         privacy: "keep",
         display: "none",
+        capturedWhen: { kind: "finishedResponse" },
       },
-      { name: "startedAt", dataType: "date", availability: "server", privacy: "keep", display: "none" },
-      { name: "finishedAt", dataType: "date", availability: "server", privacy: "keep", display: "none" },
+      {
+        name: "startedAt",
+        dataType: "date",
+        availability: "server",
+        privacy: "keep",
+        display: "none",
+        capturedWhen: { kind: "always" },
+      },
+      {
+        name: "finishedAt",
+        dataType: "date",
+        availability: "server",
+        privacy: "keep",
+        display: "none",
+        capturedWhen: { kind: "always" },
+      },
       // Browser-runtime context (ENG-1841). All `client`: the renderer captures them itself, so a
       // mid-survey picker may offer them. `pageReferrer` is `redactQuery` because a URL's query
       // string is where an identifier hides; the rest carry nothing identifying on their own. There
       // is no `pageUrl` - it read the same `location.href` as `url`, so the two were identical.
-      { name: "pagePath", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      {
+        name: "pagePath",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+        capturedWhen: { kind: "always" },
+      },
       {
         name: "pageReferrer",
         dataType: "string",
         availability: "client",
         privacy: "redactQuery",
         display: "secondary",
+        capturedWhen: { kind: "referrer" },
       },
       {
         name: "utmSource",
@@ -781,6 +898,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "urlParam", param: "utm_source" },
       },
       {
         name: "utmMedium",
@@ -788,6 +906,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "urlParam", param: "utm_medium" },
       },
       {
         name: "utmCampaign",
@@ -795,14 +914,23 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "urlParam", param: "utm_campaign" },
       },
-      { name: "utmTerm", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      {
+        name: "utmTerm",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+        capturedWhen: { kind: "urlParam", param: "utm_term" },
+      },
       {
         name: "utmContent",
         dataType: "string",
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "urlParam", param: "utm_content" },
       },
       {
         name: "screenWidth",
@@ -810,6 +938,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "always" },
       },
       {
         name: "screenHeight",
@@ -817,6 +946,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "always" },
       },
       {
         name: "viewportWidth",
@@ -824,6 +954,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "always" },
       },
       {
         name: "viewportHeight",
@@ -831,15 +962,31 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "always" },
       },
-      { name: "timezone", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
-      { name: "locale", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      {
+        name: "timezone",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+        capturedWhen: { kind: "always" },
+      },
+      {
+        name: "locale",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+        capturedWhen: { kind: "always" },
+      },
       {
         name: "visitPagesViewed",
         dataType: "number",
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "websiteVisit" },
       },
       {
         name: "visitUniquePagesViewed",
@@ -847,6 +994,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "websiteVisit" },
       },
       {
         name: "visitTimeOnSite",
@@ -854,6 +1002,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "websiteVisit" },
       },
       {
         name: "visitEntryReferrer",
@@ -861,6 +1010,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "redactQuery",
         display: "secondary",
+        capturedWhen: { kind: "websiteVisit" },
       },
       {
         name: "visitUrls",
@@ -868,6 +1018,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "client",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "websiteVisit" },
       },
       // Opened by creative (ENG-4001). `server`: the ingest routes check the creative and
       // stamp both, so no mid-survey picker offers them. `keep`: a creative's id and name are the
@@ -878,6 +1029,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "server",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "creative" },
       },
       {
         name: "openedByCreativeName",
@@ -885,6 +1037,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "server",
         privacy: "keep",
         display: "secondary",
+        capturedWhen: { kind: "creative" },
       },
     ]);
   });
@@ -1107,6 +1260,7 @@ describe("projectClientReservedValues", () => {
           availability: "server",
           privacy: "keep",
           display: "none",
+          capturedWhen: { kind: "always" },
           read: serverRead,
         },
         {
@@ -1115,6 +1269,7 @@ describe("projectClientReservedValues", () => {
           availability: "client",
           privacy: "keep",
           display: "none",
+          capturedWhen: { kind: "always" },
           read: clientRead,
         },
         {
@@ -1123,6 +1278,7 @@ describe("projectClientReservedValues", () => {
           availability: "both",
           privacy: "keep",
           display: "none",
+          capturedWhen: { kind: "always" },
           read: bothRead,
         },
       ],
@@ -1406,6 +1562,7 @@ describe("listReadableFields", () => {
       availability: "server",
       privacy: "keep",
       display: "none",
+      capturedWhen: { kind: "always" },
       read: () => undefined,
     };
     const fields = listReadableFields({
