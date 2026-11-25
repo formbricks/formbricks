@@ -1552,7 +1552,8 @@ creatives. Call `get_survey_visibility` first and ask the user.
 Sharing (`visibility: "workspace"`) confirms first through the delete gate (see "Confirmation and untrusted
 text"): it shows the survey's responses to every workspace member, and restricting it again cannot take
 back what they read. `confirm` counts only where the client cannot show the prompt. Restricting does not
-ask, and an API key gets the operation's `403` without a prompt.
+ask, and an API key gets the operation's `403` without a prompt. Each sharing call asks again, including a retry after
+`503 projection_pending` and a survey that is already shared.
 
 The operation's rules apply unchanged:
 
@@ -1589,7 +1590,8 @@ in-progress survey is paused) and becomes read-only until restored. Formbricks p
 archived survey and its responses at least 30 days after it was archived, unless a data-retention
 exemption holds it longer. It confirms first through the delete gate, drafts included, like
 `delete_survey`: archiving pauses a live survey, responses that would have arrived meanwhile are lost, and
-the purge is permanent. `confirm` counts only where the client cannot show the prompt. Archiving is idempotent: a second call changes nothing and does not restart that clock. The tool is
+the purge is permanent. `confirm` counts only where the client cannot show the prompt. Archiving is
+idempotent: a second call changes nothing and does not restart that clock. The tool is
 destructive because it removes the survey from default reads.
 
 To find an archived survey again, list with `filter.status.in: ["archived"]`. Agents should archive

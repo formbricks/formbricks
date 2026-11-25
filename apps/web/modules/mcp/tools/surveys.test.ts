@@ -119,6 +119,8 @@ const authInfo = {
   clientId: "key_1",
   scopes: ["surveys:read", "surveys:write"],
   extra: {
+    // As `createApiKeyMcpAuthInfo` builds it: the auth method is what the confirmation gate reads.
+    authMethod: "apiKey",
     formbricksAuthentication: apiKeyAuth,
     requestId: "req_tool",
   },
@@ -1070,6 +1072,65 @@ describe("registerSurveyTools", () => {
     expect(JSON.stringify(result.structuredContent)).toContain(
       "Archiving was not confirmed, so nothing was archived."
     );
+  });
+
+  describe("set_survey_visibility sharing confirmation", () => {
+    const surveyId = "clxx1234567890123456789012";
+    const userAuthInfo = { ...readOnlyOAuthAuthInfo, scopes: ["surveys:read", "surveys:write"] };
+    const answered = (state: { tool: string; resourceId: string }) => {
+      const context = elicitingOAuthContext(userAuthInfo);
+      return {
+        ...context,
+        mcpReq: {
+          ...context.mcpReq,
+          inputResponses: { confirm: { action: "accept", content: { confirm: true } } },
+          requestState: () => state,
+        },
+      };
+    };
+
+    beforeEach(() => {
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+      vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+        successResponse({ id: surveyId, visibility: "workspace" }, { requestId: "req_tool" })
+      );
+    });
+
+    test("shares once the user accepts the prompt for this survey", async () => {
+      const result = await createToolServer()
+        .tools.get("set_survey_visibility")!
+        .handler(
+          { surveyId, visibility: "workspace" },
+          answered({ tool: "set_survey_visibility", resourceId: `${surveyId}->workspace` })
+        );
+
+      expect(result.isError).toBeFalsy();
+      expect(changeV3SurveyVisibility).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([
+      ["another tool", { tool: "archive_survey", resourceId: surveyId }],
+      [
+        "another survey",
+        { tool: "set_survey_visibility", resourceId: "clyy1234567890123456789012->workspace" },
+      ],
+    ])("refuses an agreement sealed for %s", async (_label, state) => {
+      const result = await createToolServer()
+        .tools.get("set_survey_visibility")!
+        .handler({ surveyId, visibility: "workspace" }, answered(state));
+
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.structuredContent)).toContain("the survey's visibility did not change");
+      expect(changeV3SurveyVisibility).not.toHaveBeenCalled();
+    });
+
+    test("an API key is never prompted: the operation answers it directly", async () => {
+      await createToolServer()
+        .tools.get("set_survey_visibility")!
+        .handler({ surveyId, visibility: "workspace" }, { http: { authInfo } });
+
+      expect(changeV3SurveyVisibility).toHaveBeenCalledTimes(1);
+    });
   });
 
   // Sharing exposes the responses to the whole workspace, which a later restriction cannot take back.

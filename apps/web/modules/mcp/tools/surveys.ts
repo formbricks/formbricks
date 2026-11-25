@@ -17,6 +17,7 @@ import { changeV3SurveyVisibility, getV3SurveyVisibility } from "@/app/api/v3/su
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import { isApiKeyCaller } from "./confirm-gate";
 import { runConfirmedDelete } from "./delete-confirmation";
 import { registerMcpTool } from "./guard-permissions";
 import { mapJsonResponseBody } from "./json-response";
@@ -54,7 +55,6 @@ import {
   ZMcpSurveyVisibilityStateOutput,
 } from "./survey-output-schemas";
 import { surveyResultForCaller } from "./survey-targeting";
-import { toolContext } from "./tool-context";
 
 export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSearchParams {
   const searchParams = new URLSearchParams();
@@ -500,7 +500,7 @@ export function registerSurveyTools(server: McpServer): void {
         "Call get_survey_visibility first and show the user the impact and blockers before restricting. A restriction is refused with a 409 while a webhook, integration, active feedback source, draft or enabled workflow, or non-archived creative uses the survey; archived creatives are unlinked by the restriction. A survey with no owner cannot be restricted (422): ask the user to duplicate it in the Formbricks app to get a restricted copy.",
         "A workspace change the graph has not acknowledged yet answers 503 projection_pending: the change is stored, retry in a few seconds; the survey stays restricted until the graph catches up. Changes are limited to 10 per minute; a 429 asks you to wait before retrying.",
         "Needs the survey visibility feature (Access Control) and the survey's owner, while they still hold read access to its workspace, or an organization owner/manager. API-key connections are refused, and a non-owner workspace writer is refused even with Surveys: Write.",
-        "Sharing with the workspace (visibility workspace) shows the survey's responses to every member and cannot be taken back once read, so the user is asked to confirm first; `confirm` counts only when the client cannot show that prompt. Restricting needs no confirmation.",
+        "Sharing with the workspace (visibility workspace) shows the survey's responses to every member and cannot be taken back once read, so the user is asked to confirm first; `confirm` counts only when the client cannot show that prompt. Restricting needs no confirmation. Each sharing call asks again, a retry after 503 or a survey already shared with the workspace included.",
       ].join(" "),
       inputSchema: ZMcpSetSurveyVisibilityInput,
       outputSchema: ZMcpSurveyVisibilityChangeOutput,
@@ -533,7 +533,7 @@ export function registerSurveyTools(server: McpServer): void {
 
       // Restricting narrows who can read; an API key is refused by the operation either way, so it gets
       // that 403 now rather than a prompt it cannot answer.
-      if (input.visibility !== "workspace" || "apiKeyId" in (toolContext(ctx).authentication ?? {})) {
+      if (input.visibility !== "workspace" || isApiKeyCaller(ctx)) {
         return change();
       }
 

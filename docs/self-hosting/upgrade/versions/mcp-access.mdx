@@ -33,8 +33,8 @@ new ones start.
   Formbricks purges them. An automation that needs the data gone at once deletes the survey in the app or
   through the REST API (`DELETE /api/v3/surveys/{surveyId}`).
 - `archive_survey`, and `set_survey_visibility` when it shares a survey with the workspace, ask the user to
-  confirm first, as the delete tools do. An API key or a client that cannot show the prompt passes
-  `confirm: true` instead.
+  confirm first, as the delete tools do. A client that cannot show the prompt passes `confirm: true`
+  instead, as does an API key on `archive_survey` (API keys cannot change visibility).
 
 ## Apply the permission schema
 
