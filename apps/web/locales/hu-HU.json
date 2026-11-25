@@ -4638,6 +4638,17 @@
         "max_file_size_limit_is_mb": "A maximális fájlméret {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "A maximális fájlméret {maxSize} MB. Amennyiben többre van szüksége, kérjük, <upgradeLink>frissítse csomagját</upgradeLink>.",
         "missing_first": "Hiányzók először",
+        "missing_label": {
+          "choice_image_alt_text": "A(z) {n}. választási lehetőség képének alternatív szövege",
+          "in_question": "A(z) {field} hiányzik a(z) {blockNumber}. blokk {questionNumber}. kérdésében",
+          "in_question_for_languages": "A(z) {field} hiányzik a(z) {blockNumber}. blokk {questionNumber}. kérdésében a következő nyelvekhez: {languages}",
+          "on_ending_card": "A(z) {field} hiányzik a(z) {endingNumber}. záró kártyáról",
+          "on_ending_card_for_languages": "A(z) {field} hiányzik a(z) {endingNumber}. záró kártyáról a következő nyelvekhez: {languages}",
+          "on_welcome_card": "A(z) {field} hiányzik az üdvözlőkártyáról",
+          "on_welcome_card_for_languages": "A(z) {field} hiányzik az üdvözlőkártyáról a következő nyelvekhez: {languages}",
+          "question_text": "A kérdés szövege",
+          "subfield_label": "A(z) {field} mező címkéje"
+        },
         "mobile_preview": "Mobil előnézet",
         "move_question_to_block": "Kérdés áthelyezése egy blokkba",
         "multiply": "Szorzás",

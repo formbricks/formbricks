@@ -4638,6 +4638,17 @@
         "max_file_size_limit_is_mb": "Limita maximă a dimensiunii fișierului este {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "Limita maximă a dimensiunii fișierului este {maxSize} MB. Dacă ai nevoie de mai mult, te rugăm să <upgradeLink>îți actualizezi planul</upgradeLink>.",
         "missing_first": "Lipsă întâi",
+        "missing_label": {
+          "choice_image_alt_text": "Text alternativ al imaginii pentru opțiunea {n}",
+          "in_question": "Lipsește {field} din întrebarea {questionNumber} a blocului {blockNumber}",
+          "in_question_for_languages": "Lipsește {field} din întrebarea {questionNumber} a blocului {blockNumber} pentru următoarele limbi: {languages}",
+          "on_ending_card": "Lipsește {field} de pe cardul de încheiere {endingNumber}",
+          "on_ending_card_for_languages": "Lipsește {field} de pe cardul de încheiere {endingNumber} pentru următoarele limbi: {languages}",
+          "on_welcome_card": "Lipsește {field} de pe cardul de bun venit",
+          "on_welcome_card_for_languages": "Lipsește {field} de pe cardul de bun venit pentru următoarele limbi: {languages}",
+          "question_text": "Textul întrebării",
+          "subfield_label": "Eticheta pentru câmpul {field}"
+        },
         "mobile_preview": "Previzualizare mobil",
         "move_question_to_block": "Mută întrebarea în bloc",
         "multiply": "Înmulțește",

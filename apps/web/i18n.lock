@@ -4483,6 +4483,15 @@ checksums:
     workspace/surveys/edit/max_file_size_limit_is_mb: 183aecf2f5bb17cd13cf048a2a725b4a
     workspace/surveys/edit/max_file_size_limit_is_mb_upgrade: 6bbebb9deb49fd351babcc39cd76b47c
     workspace/surveys/edit/missing_first: a0c8802636ade7bac86a0dacba00b8d4
+    workspace/surveys/edit/missing_label/choice_image_alt_text: b3c79212f5df722f5c28e8503cbe2fb7
+    workspace/surveys/edit/missing_label/in_question: 851bfe3a4369309e943eeacaa9d736a4
+    workspace/surveys/edit/missing_label/in_question_for_languages: 8a3e755711485669bfa89599ef2ebff8
+    workspace/surveys/edit/missing_label/on_ending_card: 49d1ab850ca7afd3d0db5d3dc5677b2d
+    workspace/surveys/edit/missing_label/on_ending_card_for_languages: 96e1f61eacebbedc4716fbf98ad7e43f
+    workspace/surveys/edit/missing_label/on_welcome_card: d688fe2a6b0b087e77337a318df5c4b5
+    workspace/surveys/edit/missing_label/on_welcome_card_for_languages: 8fe9dfa282b2292ece8f6d53cd4d285f
+    workspace/surveys/edit/missing_label/question_text: 659f1e0bbc4e96f5320a5b1992c4b61f
+    workspace/surveys/edit/missing_label/subfield_label: ef6fd9dec55f2979b69423e542a50b5d
     workspace/surveys/edit/mobile_preview: 7f21be8b4113adfa0dc16748923b5b55
     workspace/surveys/edit/move_question_to_block: e8d7ef1e2f727921cb7f5788849492ad
     workspace/surveys/edit/multiply: 8f11f66eb447d2f7e4a81648baf1abc3

@@ -4638,6 +4638,17 @@
         "max_file_size_limit_is_mb": "Максимальный размер файла — {maxSize} МБ.",
         "max_file_size_limit_is_mb_upgrade": "Максимальный размер файла — {maxSize} МБ. Если вам нужно больше, <upgradeLink>обновите свой тариф</upgradeLink>.",
         "missing_first": "Сначала отсутствующие",
+        "missing_label": {
+          "choice_image_alt_text": "Альтернативный текст изображения для варианта {n}",
+          "in_question": "Не заполнено поле «{field}» в вопросе {questionNumber} блока {blockNumber}",
+          "in_question_for_languages": "Не заполнено поле «{field}» в вопросе {questionNumber} блока {blockNumber} для следующих языков: {languages}",
+          "on_ending_card": "Не заполнено поле «{field}» на заключительной карточке {endingNumber}",
+          "on_ending_card_for_languages": "Не заполнено поле «{field}» на заключительной карточке {endingNumber} для следующих языков: {languages}",
+          "on_welcome_card": "Не заполнено поле «{field}» на приветственной карточке",
+          "on_welcome_card_for_languages": "Не заполнено поле «{field}» на приветственной карточке для следующих языков: {languages}",
+          "question_text": "Текст вопроса",
+          "subfield_label": "Подпись для поля {field}"
+        },
         "mobile_preview": "Предварительный просмотр на мобильном устройстве",
         "move_question_to_block": "Переместить вопрос в блок",
         "multiply": "Умножить",

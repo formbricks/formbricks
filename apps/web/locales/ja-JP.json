@@ -4638,6 +4638,17 @@
         "max_file_size_limit_is_mb": "ファイルサイズの上限は{maxSize} MBです。",
         "max_file_size_limit_is_mb_upgrade": "ファイルサイズの上限は{maxSize} MBです。さらに必要な場合は、<upgradeLink>プランをアップグレード</upgradeLink>してください。",
         "missing_first": "未翻訳を優先",
+        "missing_label": {
+          "choice_image_alt_text": "選択肢{n}の画像の代替テキスト",
+          "in_question": "ブロック{blockNumber}の質問{questionNumber}の{field}が未入力です",
+          "in_question_for_languages": "ブロック{blockNumber}の質問{questionNumber}の{field}が、次の言語で未入力です:{languages}",
+          "on_ending_card": "終了カード{endingNumber}の{field}が未入力です",
+          "on_ending_card_for_languages": "終了カード{endingNumber}の{field}が、次の言語で未入力です:{languages}",
+          "on_welcome_card": "ウェルカムカードの{field}が未入力です",
+          "on_welcome_card_for_languages": "ウェルカムカードの{field}が、次の言語で未入力です:{languages}",
+          "question_text": "質問文",
+          "subfield_label": "{field}フィールドのラベル"
+        },
         "mobile_preview": "モバイルプレビュー",
         "move_question_to_block": "質問をブロックに移動",
         "multiply": "乗算",

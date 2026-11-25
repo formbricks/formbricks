@@ -4638,6 +4638,17 @@
         "max_file_size_limit_is_mb": "Maximal filstorleksgräns är {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "Maximal filstorleksgräns är {maxSize} MB. Om du behöver mer kan du <upgradeLink>uppgradera din plan</upgradeLink>.",
         "missing_first": "Saknade först",
+        "missing_label": {
+          "choice_image_alt_text": "Alternativ text för bilden för alternativ {n}",
+          "in_question": "{field} saknas i fråga {questionNumber} i block {blockNumber}",
+          "in_question_for_languages": "{field} saknas i fråga {questionNumber} i block {blockNumber} för följande språk: {languages}",
+          "on_ending_card": "{field} saknas på avslutningskort {endingNumber}",
+          "on_ending_card_for_languages": "{field} saknas på avslutningskort {endingNumber} för följande språk: {languages}",
+          "on_welcome_card": "{field} saknas på välkomstkortet",
+          "on_welcome_card_for_languages": "{field} saknas på välkomstkortet för följande språk: {languages}",
+          "question_text": "Frågetext",
+          "subfield_label": "Etikett för fältet {field}"
+        },
         "mobile_preview": "Förhandsvisning på mobil",
         "move_question_to_block": "Flytta fråga till block",
         "multiply": "Multiplicera",

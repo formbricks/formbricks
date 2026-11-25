@@ -64,6 +64,7 @@ export const validateElementLabels = (
       input: fieldLabel,
       message,
       path: ["blocks", blockIndex, "elements", elementIndex, field],
+      params: { missingLabel: true },
     };
   }
 
@@ -79,6 +80,7 @@ export const validateElementLabels = (
         input: fieldLabel,
         message: `The ${field} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)} is not present for the following languages: ${language.language.code}`,
         path: ["blocks", blockIndex, "elements", elementIndex, field],
+        params: { missingLabel: true, invalidLanguageCodes: [language.language.code] },
       };
     }
   }
@@ -89,7 +91,7 @@ export const validateElementLabels = (
       input: fieldLabel,
       message,
       path: ["blocks", blockIndex, "elements", elementIndex, field],
-      params: { invalidLanguageCodes },
+      params: { missingLabel: true, invalidLanguageCodes },
     };
   }
 
