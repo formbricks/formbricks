@@ -1,14 +1,25 @@
 import { describe, expect, test } from "vitest";
-import { type TOneStepOperandValue, getOneStepOperand } from "./one-step-operand";
+import type { TEmbeddedDataType } from "../embedded-data";
+import {
+  type TOneStepOperandSources,
+  type TOneStepOperandValue,
+  getOneStepOperand,
+} from "./one-step-operand";
 
-const sources = {
-  data: { q1: "42", plan: "gold", blank: "  " },
+const sources: Omit<TOneStepOperandSources, "dataType"> = {
+  data: { q1: "42", plan: "gold", blank: "  ", huge: "1e999", inf: "Infinity" },
   variables: { score: 7, label: "vip", flag: true },
-  reservedValues: { visitPagesViewed: 6, pagePath: "/pricing", url: "https://example.com/pricing" },
+  reservedValues: {
+    visitPagesViewed: 6,
+    pagePath: "/pricing",
+    url: "https://example.com/pricing",
+    screenWidth: "1280",
+    huge: "1e999",
+  },
 };
 
 describe("getOneStepOperand", () => {
-  test.each<[string, TOneStepOperandValue, string, string | number]>([
+  test.each<[string, TOneStepOperandValue, TEmbeddedDataType, string | number]>([
     ["a static number", { type: "static", value: 3 }, "number", 3],
     ["a static text", { type: "static", value: "x" }, "string", "x"],
     ["a variable", { type: "variable", value: "score" }, "number", 7],
@@ -20,6 +31,7 @@ describe("getOneStepOperand", () => {
     ["a reserved field as text", { type: "reserved", value: "pagePath" }, "string", "/pricing"],
     // Stored as text, as the formula form stores a number reserved field in a text field.
     ["a number reserved field as text", { type: "reserved", value: "visitPagesViewed" }, "string", "6"],
+    ["numeric reserved text as a number", { type: "reserved", value: "screenWidth" }, "number", 1280],
   ])("reads %s", (_label, operand, dataType, expected) => {
     expect(getOneStepOperand(operand, { ...sources, dataType })).toBe(expected);
   });
@@ -34,6 +46,10 @@ describe("getOneStepOperand", () => {
     ["a text reserved field for a number field", { type: "reserved", value: "url" }],
     ["a lowercased reserved name", { type: "reserved", value: "visitpagesviewed" }],
     ["an inherited object key", { type: "reserved", value: "constructor" }],
+    // Text that reads as a number that is not finite: the formula form reads it as empty.
+    ["reserved text past the number range", { type: "reserved", value: "huge" }],
+    ["an answer past the number range", { type: "element", value: "huge" }],
+    ["a hidden field reading Infinity", { type: "hiddenField", value: "inf" }],
   ])("has nothing to apply for %s", (_label, operand) => {
     expect(getOneStepOperand(operand, { ...sources, dataType: "number" })).toBeUndefined();
   });
@@ -52,7 +68,7 @@ describe("getOneStepOperand", () => {
 
   test.each([Number.NaN, Number.POSITIVE_INFINITY])("treats a reserved %s as nothing to apply", (value) => {
     const reservedValues = { visitPagesViewed: value };
-    for (const dataType of ["number", "string"]) {
+    for (const dataType of ["number", "string"] as const) {
       expect(
         getOneStepOperand(
           { type: "reserved", value: "visitPagesViewed" },

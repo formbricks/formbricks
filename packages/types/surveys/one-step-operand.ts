@@ -1,3 +1,5 @@
+import type { TEmbeddedDataType } from "../embedded-data";
+import { coerceToEmbeddedDataType } from "../embedded-data-resolver";
 import type { TResponseData, TResponseVariables } from "../responses";
 import type { TActionCalculate as TBlockActionCalculate } from "./blocks";
 import type { TActionCalculate as TLegacyActionCalculate } from "./types";
@@ -5,7 +7,7 @@ import type { TActionCalculate as TLegacyActionCalculate } from "./types";
 /**
  * Every operand a one-step Set value can carry, from the schemas themselves (block logic and the legacy
  * question logic), so an operand kind added there fails the exhaustive switch below at compile time
- * instead of being ignored at run time, which is how ENG-7431 happened. Type-only: nothing is bundled.
+ * instead of being ignored at run time. Type-only: nothing is bundled.
  */
 export type TOneStepOperandValue = Exclude<
   (TBlockActionCalculate | TLegacyActionCalculate)["value"],
@@ -24,7 +26,7 @@ export interface TOneStepOperandSources {
    */
   reservedValues?: TResponseData;
   /** The target field's data type: a `number` target reads a numeric text operand as a number. */
-  dataType: string;
+  dataType: TEmbeddedDataType;
 }
 
 /**
@@ -36,27 +38,28 @@ const isNumericOperand = (value: string | number): boolean =>
   typeof value === "number" || (value.trim() !== "" && !Number.isNaN(Number(value)));
 
 /**
- * A read field as an operand: text or a number, numeric text as a number for a `number` target. A number
- * that is not finite is nothing to apply, as the formula form reads it as empty.
+ * An answer or passed-in field as an operand: text or a number, numeric text as a number for a `number`
+ * target. A value that is, or reads as, a number that is not finite (`"1e999"`) is nothing to apply, as
+ * the formula form reads it as empty; other text keeps its text, as it always has.
  */
-const asOperand = (value: unknown, dataType: string): string | number | undefined => {
-  if (typeof value === "number" && !Number.isFinite(value)) return undefined;
+const asOperand = (value: unknown, dataType: TEmbeddedDataType): string | number | undefined => {
   if (typeof value !== "number" && typeof value !== "string") return undefined;
-  return dataType === "number" && isNumericOperand(value) ? Number(value) : value;
+  if (dataType !== "number" || !isNumericOperand(value)) {
+    return typeof value === "number" && !Number.isFinite(value) ? undefined : value;
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
 };
 
 /**
- * A reserved field as an operand. Most reserved fields are text (a URL, a browser, a timestamp), and
- * nothing at save ties a reserved operand's type to the target's, so a number target reads a value that
- * is not a number as nothing to apply: `"https://…" + 1` would be NaN, which a response cannot store, and
- * an assign would put text into a number field. A text target takes the value as text.
+ * A reserved field as an operand, coerced to the target's type by the same rule every other reserved read
+ * uses (`coerceToEmbeddedDataType`): a number target takes only a finite number or numeric text, so a URL
+ * or a timestamp is nothing to apply rather than NaN in the response; a text target takes text, a number
+ * as its text and true/false as "true"/"false", as the formula form stores them.
  */
-const asReservedOperand = (value: unknown, dataType: string): string | number | undefined => {
-  const operand = asOperand(value, dataType);
-  if (dataType === "number") return typeof operand === "number" ? operand : undefined;
-  // A number-typed reserved field (pages viewed) into a text field is stored as text, as the formula
-  // form stores it.
-  return typeof operand === "number" ? String(operand) : operand;
+const asReservedOperand = (value: unknown, dataType: TEmbeddedDataType): string | number | undefined => {
+  const coerced = coerceToEmbeddedDataType(value, dataType);
+  return typeof coerced === "string" || typeof coerced === "number" ? coerced : undefined;
 };
 
 /**
