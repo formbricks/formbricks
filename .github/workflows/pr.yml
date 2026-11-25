@@ -47,8 +47,12 @@ jobs:
         with:
           egress-policy: audit
 
+      # The commit the unit tests ran on (test.yml checks out the PR head through
+      # dangerous-git-checkout), so the lcov line numbers match the sources Sonar reads. Empty on
+      # `merge_group`, where both check out the queued merge commit.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
           persist-credentials: false
 

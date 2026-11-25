@@ -65,7 +65,7 @@ jobs:
           key: turbo-unit-${{ runner.os }}-packages-${{ github.sha }}
 
   web:
-    name: Unit Tests (web ${{ matrix.shard }}/3)
+    name: Unit Tests (web ${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -74,7 +74,7 @@ jobs:
       # One failing shard must not cancel the others: their failures are part of the answer.
       fail-fast: false
       matrix:
-        # Raising the count means changing the `/3` here and in the job name, nothing else.
+        # The shard count is this list's length (`strategy.job-total`); nothing else names it.
         shard: [1, 2, 3]
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -105,7 +105,7 @@ jobs:
       - name: Test
         run: >
           pnpm --filter @formbricks/web run ${{ inputs.coverage && 'test:coverage' || 'test' }}
-          --shard=${{ matrix.shard }}/3
+          --shard=${{ matrix.shard }}/${{ strategy.job-total }}
           --reporter=default --reporter=github-actions
           ${{ inputs.coverage && '--reporter=blob' || '' }}
 

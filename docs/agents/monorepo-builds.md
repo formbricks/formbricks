@@ -97,9 +97,10 @@ their `exports` map, so `apps/web` imports the build, not `src/`. `git switch`, 
 usually meet it, iterating on one test file. The root `pnpm test` and `pnpm typecheck` are safe:
 `@formbricks/web#test` and `@formbricks/web#typecheck` in `turbo.json` each declare `dependsOn` on
 `@formbricks/ai#build`, `@formbricks/database#build` and five more, so turbo rebuilds them before the
-suite runs. That is also why the unit-test workflow (`test.yml`) stays green with no build step of its
-own — do **not** read "green on CI, red locally" as evidence of a stale `dist/`; both run the same
-graph. In CI those builds are usually cache hits: each unit-test job restores the Turborepo cache that
+suite runs. The unit-test workflow (`test.yml`) builds through the same graph: its packages job runs
+`turbo run test:coverage`, and each web shard runs `turbo run build --filter='@formbricks/web^...'`
+before Vitest — do **not** read "green on CI, red locally" as evidence of a stale `dist/`; both build
+from the same graph. In CI those builds are usually cache hits: each unit-test job restores the Turborepo cache that
 the last push to `main` saved (`.github/actions/setup-unit-tests`), so a pull request rebuilds only
 the packages whose inputs it changed. A build output missing from a task's `outputs` is therefore
 missing from a CI cache hit too.
