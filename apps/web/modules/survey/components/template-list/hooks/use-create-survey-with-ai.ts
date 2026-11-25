@@ -3,8 +3,8 @@
 import { type SyntheticEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
+import { isV3SurveyGeneratePromptDetailed } from "@/app/api/v3/surveys/generate/prompt-detail";
 import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
-import { AI_SURVEY_PROMPT_MIN_LENGTH } from "@/modules/survey/components/template-list/lib/ai-create-utils";
 import { streamSurveyGeneration } from "@/modules/survey/components/template-list/lib/ai-generate-stream-client";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { type TDraftStreamHandlers, useDraftCreation } from "./use-draft-creation";
@@ -22,7 +22,7 @@ type UseCreateSurveyWithAIProps = {
 /**
  * Create with AI: a prompt in, a reviewed draft out. The machinery — state machine, snapshot
  * buffering, abort, unload guard — lives in `useDraftCreation`; this hook only supplies the prompt
- * textarea state, the generation stream and the length gate.
+ * textarea state, the generation stream and the prompt-detail gate.
  */
 export const useCreateSurveyWithAI = ({
   workspaceId,
@@ -38,8 +38,12 @@ export const useCreateSurveyWithAI = ({
   // treats as binding — unlike `language`, which only breaks a tie (ENG-3882).
   const [surveyLanguage, setSurveyLanguage] = useState<string | null>(null);
 
-  // What both entry points need: AI on, and a prompt worth sending.
-  const hasUsablePrompt = isAIAvailable && prompt.trim().length >= AI_SURVEY_PROMPT_MIN_LENGTH;
+  // What both entry points need: AI on, and a prompt worth sending. The server's own rule, so Create
+  // is never enabled for a prompt the generate route always refuses (ENG-2187).
+  const isPromptDetailed = isV3SurveyGeneratePromptDetailed(prompt);
+  const hasUsablePrompt = isAIAvailable && isPromptDetailed;
+  // Started but too thin: the form says what to add, so a disabled Create is never unexplained.
+  const promptNeedsMoreDetail = prompt.trim().length > 0 && !isPromptDetailed;
 
   const stream = useCallback(
     (body: TV3SurveyGenerateBody, handlers: TDraftStreamHandlers) => streamSurveyGeneration(body, handlers),
@@ -119,6 +123,7 @@ export const useCreateSurveyWithAI = ({
     /** The prompt the draft on screen came from, which is not always the one in the textarea. */
     submittedPrompt: draft.sourceLabel,
     canCreate: draft.canCreate,
+    promptNeedsMoreDetail,
     errorMessage: draft.errorMessage,
     generatingMessages,
     statusIndex,

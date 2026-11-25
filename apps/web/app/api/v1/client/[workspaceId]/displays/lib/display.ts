@@ -14,6 +14,28 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   const { workspaceId, userId, surveyId, creativeId } = displayInput;
 
   try {
+    // The survey is checked before anything else, because a `userId` below may create a contact: this
+    // endpoint is public, so a missing or closed survey must not let a caller add contacts.
+    // Status only: this runs once per survey shown, so it never loads the survey's content or its
+    // stored custom CSS. The creative lookup only runs when a creative's click opened the survey.
+    const [survey, openedBy] = await Promise.all([
+      prisma.survey.findUnique({
+        where: {
+          id: surveyId,
+          workspaceId,
+        },
+        select: { status: true },
+      }),
+      creativeId ? getCreativeAttribution({ creativeId, workspaceId, surveyId }) : null,
+    ]);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    if (survey.status !== "inProgress") {
+      throw new InvalidInputError("Survey is not accepting submissions");
+    }
+
     let contact: { id: string } | null = null;
     if (userId) {
       // Throws for a workspace with no directory, before anything is created.
@@ -35,26 +57,6 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
           },
         });
       }
-    }
-
-    // Status only: this runs once per survey shown, so it never loads the survey's content or its
-    // stored custom CSS. The creative lookup only runs when a creative's click opened the survey.
-    const [survey, openedBy] = await Promise.all([
-      prisma.survey.findUnique({
-        where: {
-          id: surveyId,
-          workspaceId,
-        },
-        select: { status: true },
-      }),
-      creativeId ? getCreativeAttribution({ creativeId, workspaceId, surveyId }) : null,
-    ]);
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", surveyId);
-    }
-
-    if (survey.status !== "inProgress") {
-      throw new InvalidInputError("Survey is not accepting submissions");
     }
 
     const display = await prisma.display.create({
