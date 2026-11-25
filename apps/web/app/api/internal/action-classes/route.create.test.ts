@@ -143,8 +143,8 @@ describe("POST /api/internal/action-classes", () => {
     );
   });
 
-  // The editor offers these two as a bare radio choice with no settings of their own; this is their only
-  // coverage since the browser suite stopped creating one of each (ENG-7517).
+  // The editor offers these two as a bare radio choice with no settings of their own, so the route accepting
+  // them and reporting their trigger type is all there is to guard; no E2E spec creates one.
   test.each(["exitIntent", "fiftyPercentScroll"] as const)(
     "creates a %s action, which carries no settings beyond its URL filters",
     async (triggerType) => {
