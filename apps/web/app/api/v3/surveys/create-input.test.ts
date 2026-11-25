@@ -2,11 +2,12 @@ import { describe, expect, test } from "vitest";
 import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import {
   V3SurveyCreateValidationDocumentNotPreparedError,
+  buildV3AppSurveyScalarFields,
   buildV3SurveyCreateInput,
   getV3SurveyCreateInputInvalidParams,
   getV3SurveyCreateInputInvalidParamsForDocument,
 } from "./create-input";
-import { ZV3CreateSurveyBody } from "./schemas";
+import { type TV3SurveyDistribution, ZV3CreateSurveyBody } from "./schemas";
 
 const parse = (blocks: unknown[]) =>
   ZV3CreateSurveyBody.parse({
@@ -24,6 +25,44 @@ const element = (labels: string[]) => ({
 });
 
 const languages: TSurveyLanguage[] = [];
+
+describe("buildV3AppSurveyScalarFields", () => {
+  const distribution = {
+    displayOption: "displaySome",
+    displayPercentage: 50,
+    displayLimit: null,
+    recontactDays: null,
+    autoClose: null,
+    keepEndingCardOpen: false,
+    autoComplete: null,
+    delay: 0,
+    showConditions: null,
+    triggers: [{ actionClassId: "claa1234567890123456789012" }],
+  } satisfies TV3SurveyDistribution;
+  const base = parse([{ name: "Block", elements: [element(["A", "B"])] }]);
+
+  // The dry run hands the write schema the same scalars the create does (ENG-7508); triggers are
+  // resolved later by the create and stand in empty.
+  test("maps an app survey's distribution to its scalars with no triggers yet", () => {
+    expect(buildV3AppSurveyScalarFields({ ...base, type: "app", distribution })).toEqual({
+      displayOption: "displaySome",
+      displayPercentage: 50,
+      displayLimit: null,
+      recontactDays: null,
+      autoClose: null,
+      keepEndingCardOpen: false,
+      autoComplete: null,
+      delay: 0,
+      showConditions: null,
+      triggers: [],
+    });
+  });
+
+  test("adds nothing for a link survey or an app survey without a distribution", () => {
+    expect(buildV3AppSurveyScalarFields(base)).toEqual({});
+    expect(buildV3AppSurveyScalarFields({ ...base, type: "app", distribution: undefined })).toEqual({});
+  });
+});
 
 describe("buildV3SurveyCreateInput", () => {
   test("maps the document onto the service's create input, overrides last", () => {

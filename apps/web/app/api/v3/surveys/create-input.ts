@@ -3,6 +3,7 @@ import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resol
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import type { TSurveyCreateInput, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyEmbeddedField, toLinkedEmbeddedFields } from "./embedded-fields";
 import { deriveV3SurveyLanguageRequests } from "./languages";
 import { type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "./schemas";
@@ -51,6 +52,19 @@ export function buildV3SurveyCreateInput(
     createdBy: fields.createdBy,
     ...fields.overrides,
   };
+}
+
+/**
+ * The app-survey distribution as create-input fields, before triggers are resolved: the display scalars,
+ * with an empty trigger list. A link survey, or an app survey without a `distribution`, adds nothing.
+ * Pure, so the create and its dry run hand the write schema the same scalars; the create then resolves
+ * the triggers to action classes, which needs a read.
+ */
+export function buildV3AppSurveyScalarFields(input: TV3CreateSurveyBody): Partial<TSurveyCreateInput> {
+  if (input.type !== "app" || !input.distribution) {
+    return {};
+  }
+  return { ...v3DistributionToScalars(input.distribution), triggers: [] };
 }
 
 /**
@@ -114,6 +128,7 @@ export function getV3SurveyCreateInputInvalidParamsForDocument(
       languages,
       createdBy: null,
       embeddedFields: toDryRunEmbeddedFields(document.embeddedFields),
+      overrides: buildV3AppSurveyScalarFields(document),
     })
   );
 }
