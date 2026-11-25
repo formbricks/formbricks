@@ -53,11 +53,18 @@ Treat all of the following as adversarial:
 - **Public REST APIs** — `/api/v1`, `/api/v2`, `/api/v3`, authenticated with
   workspace API keys. The key is a credential, but every request body, query
   parameter, header and path segment is still attacker-controlled.
-- **Session-authenticated app API** — `/api/internal/**` (what the web UI
-  calls) and the remaining server actions. The caller can hold any
-  organization role or team permission, and every body, query and path
-  segment is attacker-controlled. Most role, team-permission and
-  cross-workspace checks live here.
+- **App API** — `/api/internal/**` (what the web UI calls), the routes in
+  the `apps/web/app/api/(internal)` group (survey exports, attachments,
+  workspace integrations, organization usage) and the remaining server
+  actions. Routes declare their auth in `withV3ApiWrapper`, except the
+  gateway auth hooks (`envoy-auth`, `traefik-auth`) and the feedback CSV
+  import, which check it in their own handlers. Most are
+  `auth: "session"`: the caller can hold any organization role or team
+  permission, and most role, team-permission and cross-workspace checks live
+  here. The ones declared `auth: "none"` (sign-up, password reset,
+  verification emails, link-survey PIN and email verification) are public
+  endpoints and rated as such. Every body, query and path segment is
+  attacker-controlled.
 - **Auth and identity surfaces** — credentials and sessions (Better Auth),
   OAuth/OIDC callbacks, SAML assertions (EE), email verification, password
   reset, invite links, 2FA (EE), and the MCP OAuth endpoints
@@ -141,8 +148,8 @@ internet, with more than one tenant on the instance.
   open redirect; rate-limit bypass enabling response or invitation spam;
   authenticated DoS, including a crash or memory exhaustion that needs an
   account. Self-hosted sign-up is closed by default, and Formbricks Cloud
-  only admits company email domains (no free or disposable mail), so the
-  attacker is a customer or a trial user on a domain they control.
+  blocks common free providers and known disposable domains at sign-up, so
+  the attacker is a customer or a trial user.
 - **Low** — information disclosure without sensitive data; self-XSS; missing
   security headers; an anonymous request that only slows its own response,
   with no crash, memory exhaustion or amplification;
