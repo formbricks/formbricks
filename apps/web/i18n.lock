@@ -2355,6 +2355,7 @@ checksums:
     workspace/contacts/data_type_description: 800bf4935df15e6cb14269e1b60c506e
     workspace/contacts/date_value_required: f70908e22f962731635c0bc9026da1c4
     workspace/contacts/delete_attribute_confirmation: 01d99b89eb3d27ff468d0db1b4aeb394
+    workspace/contacts/delete_attribute_shared_directory_warning: 62f0c58c1a521df065c10618154070ae
     workspace/contacts/delete_contact_confirmation: 2d45579e0bb4bc40fb1ee75b43c0e7a4
     workspace/contacts/delete_contact_confirmation_with_quotas: d3d17f13ae46ce04c126c82bf01299ac
     workspace/contacts/delete_contact_shared_directory: c1ca8f9213204ca6d3208bf334b63781

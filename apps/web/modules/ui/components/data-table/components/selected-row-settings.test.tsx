@@ -43,6 +43,27 @@ describe("SelectedRowSettings Delete", () => {
     expect((await screen.findAllByText("Main is shared with other workspaces")).length).toBeGreaterThan(0);
   });
 
+  test("shows a delete warning in the dialog, with Delete still enabled", () => {
+    const deleteAction = vi.fn(async () => undefined);
+    render(
+      <SelectedRowSettings
+        table={table}
+        updateRowList={vi.fn()}
+        type="attribute"
+        deleteAction={deleteAction}
+        isQuotasAllowed={false}
+        deleteWarning="Main is shared with other workspaces"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "common.delete" }));
+
+    expect(screen.getByRole("status").textContent).toContain("Main is shared with other workspaces");
+    expect(screen.getAllByRole("button", { name: "common.delete" }).at(-1)?.hasAttribute("disabled")).toBe(
+      false
+    );
+  });
+
   test("opens the confirmation when nothing blocks the delete", () => {
     const { deleteButton } = renderSettings();
 

@@ -34,6 +34,8 @@ interface AttributesTableProps {
   isReadOnly: boolean;
   workspaceId: string;
   locale: TUserLocale;
+  /** Set when other workspaces use this directory too: deleting a key reaches them as well. */
+  sharedDirectoryName?: string | null;
 }
 
 /** Only custom attributes can be deleted, so a default one shows no checkbox at all. */
@@ -61,7 +63,12 @@ const withCustomOnlySelection = (
   );
 
 /** Contact attributes on the shared table toolbar, filtered and sorted on the server. */
-export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<AttributesTableProps>) => {
+export const AttributesTable = ({
+  isReadOnly,
+  workspaceId,
+  locale,
+  sharedDirectoryName,
+}: Readonly<AttributesTableProps>) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
@@ -207,6 +214,14 @@ export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<At
               type="attribute"
               deleteAction={deleteAttribute}
               isQuotasAllowed={false}
+              deleteWarning={
+                sharedDirectoryName
+                  ? t("workspace.contacts.delete_attribute_shared_directory_warning", {
+                      directoryName: sharedDirectoryName,
+                      count: table.getFilteredSelectedRowModel().rows.length,
+                    })
+                  : undefined
+              }
             />
           ) : undefined
         }

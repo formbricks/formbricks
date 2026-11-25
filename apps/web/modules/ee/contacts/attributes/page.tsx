@@ -1,6 +1,7 @@
 import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
+import { getSharedContactDirectoryName } from "@/modules/ee/contacts/directories/lib/directory-service";
 import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -21,6 +22,7 @@ export const AttributesPage = async ({
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
   const hasContactDirectory = Boolean(await getWorkspaceContactDirectory(workspace.id));
+  const sharedDirectoryName = hasContactDirectory ? await getSharedContactDirectoryName(workspace.id) : null;
 
   return (
     <ContactsPageLayout
@@ -33,7 +35,12 @@ export const AttributesPage = async ({
       hasContactDirectory={hasContactDirectory}
       isOwnerOrManager={isOwner || isManager}
       cta={hasContactDirectory ? <CreateAttributeModal workspaceId={workspace.id} /> : undefined}>
-      <AttributesTable isReadOnly={isReadOnly} workspaceId={params.workspaceId} locale={locale} />
+      <AttributesTable
+        isReadOnly={isReadOnly}
+        workspaceId={params.workspaceId}
+        locale={locale}
+        sharedDirectoryName={sharedDirectoryName}
+      />
     </ContactsPageLayout>
   );
 };
