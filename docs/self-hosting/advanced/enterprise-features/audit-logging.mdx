@@ -58,6 +58,7 @@ Examples:
 
 | Request Path | `TRUSTED_PROXY_HOP_COUNT` |
 | --- | ---: |
+| Client → Formbricks, nothing in front | `0` |
 | Client → ingress → Formbricks | `1` |
 | Client → load balancer → Envoy → Formbricks | `2` |
 | Client → CDN/WAF → load balancer → Envoy → Formbricks | `3` |
@@ -67,6 +68,12 @@ Examples:
   let a client prepend and spoof the selected address. A value lower than the real chain selects an intermediate
   proxy instead of the client. A missing, malformed, or shorter-than-configured chain fails closed to
   `untrusted-client-ip`. This setting also affects IP-based rate limits and captured response IP metadata.
+  Every request must reach Formbricks through the counted proxies: a client that can connect to the app port
+  directly writes `X-Forwarded-For` itself. With Docker Compose, publish the port on `127.0.0.1` only (see
+  [Client IP addresses](/self-hosting/setup/docker#client-ip-addresses)). With the Helm chart, keep the Service on
+  `ClusterIP` and `deployment.hostNetwork` off; pods in the cluster can still call the Service directly, so
+  restrict them with a NetworkPolicy if they are not trusted. `0` makes every client one address, so a single
+  client can use up the sign-in limits for everyone: use it only while nothing sits in front.
 </Warning>
 
 With the Helm chart, configure the values under `deployment.env`:

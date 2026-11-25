@@ -82,7 +82,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 
    Store your configuration in `.env`. Docker Compose reads this file for variable interpolation, and the
    Formbricks container also loads it at startup. For a local install, use `http://localhost:3000`. For a server
-   install, replace both URL values with your public HTTPS URL before starting the stack.
+   install, replace both URL values with your public HTTPS URL before starting the stack, and set up
+   [client IP addresses](#client-ip-addresses) for how visitors reach it.
 
    ```bash
    POSTGRES_PASSWORD=$(openssl rand -hex 32)
@@ -259,6 +260,32 @@ networks:
 Then recreate the network with `docker compose down` and `docker compose up -d`. The
 [one-click setup](/self-hosting/setup/one-click#ipv6-visitors) adds this for you. A reverse proxy that runs on the
 host itself and forwards to `127.0.0.1:3000` does not need it.
+
+## Client IP addresses
+
+Formbricks reads each visitor's IP address from the `X-Forwarded-For` header and uses it for IP-based rate limits
+(sign-in, sign-up, password reset), audit logs and response metadata. `TRUSTED_PROXY_HOP_COUNT` (default `1`) is
+the number of proxies in front of Formbricks that append to that header, and Formbricks reads the entry the
+outermost of them appended. That only holds when every request passes through those proxies. This stack publishes
+port `3000` on every interface, and Docker's published ports bypass host firewalls such as `ufw`, so a client
+that connects to it directly can send the header itself and pick a new address for each request: a fresh rate
+limit every time, and a forged IP in the audit log.
+
+Set it up for how Formbricks is reached:
+
+| How Formbricks is reached | What to configure |
+| --- | --- |
+| Only from this machine, at `http://localhost:3000` | Publish port `3000` on `127.0.0.1` only: under the `formbricks` service, change `- 3000:3000` to `- 127.0.0.1:3000:3000`. |
+| Through a reverse proxy on this machine, such as one that terminates HTTPS | Keep `TRUSTED_PROXY_HOP_COUNT` at `1` and publish port `3000` on `127.0.0.1` only, as above. A proxy running in this Compose project reaches `formbricks:3000` over the Compose network and needs no published port at all. |
+| Through a proxy or load balancer on another host | Keep `TRUSTED_PROXY_HOP_COUNT` at `1` and let only that proxy reach port `3000`: publish it on the private address the proxy connects to (`- 10.0.0.5:3000:3000`) and allow only the proxy there, in your cloud firewall or a `DOCKER-USER` iptables rule. |
+| Directly on port `3000` from other machines, with nothing in front | Set `TRUSTED_PROXY_HOP_COUNT=0` in `.env`. Formbricks then trusts no forwarding header and counts every visitor as one address, so one client can use up the sign-in, sign-up and password-reset limits for everyone, and audit logs carry no client IP. Use it only until a reverse proxy is in front. |
+
+Then run `docker compose up -d`. Docker Engine 28.3.3 or later keeps a port published on `127.0.0.1` off the
+local network; older versions can expose it. For a chain of several proxies, such as a CDN in front of your
+reverse proxy, see [Configure trusted proxy hops](/self-hosting/advanced/enterprise-features/audit-logging#configure-trusted-proxy-hops).
+New [one-click](/self-hosting/setup/one-click) installs already run behind Traefik with port `3000` on
+`127.0.0.1`; the one-click update narrows the port on existing installs (see
+[one-click update details](/self-hosting/upgrade/one-click-details)).
 
 <span id="optional-add-rustfs-for-file-storage" />
 <span id="quick-start-repository-development-stack" />

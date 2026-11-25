@@ -139,7 +139,10 @@ deployment:
     # is the last X-Forwarded-For entry. Pinned here rather than relying on the code default (also 1) so
     # the assumption is visible next to the ingress it describes. Raise it if you put further proxies —
     # a CDN, a corporate load balancer — in front of the ingress; setting it higher than the real chain
-    # lets callers spoof their address by prepending entries.
+    # lets callers spoof their address by prepending entries. It also assumes every request comes through the
+    # ingress: with service.type NodePort or LoadBalancer (or hostNetwork) and no proxy appending
+    # X-Forwarded-For in front, a client writes the header itself. "0" stops that but makes every client one
+    # address, so one client can use up the sign-in limits for everyone: a stopgap until a proxy is in front.
     TRUSTED_PROXY_HOP_COUNT: "1"
 
   # Additional pod volumes and app container mounts. These are useful for custom CA bundles and
