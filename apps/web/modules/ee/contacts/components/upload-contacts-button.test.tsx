@@ -73,7 +73,11 @@ describe("UploadContactsCSVButton", () => {
   // The matching column is read through the column mapping, as userId and every other key are: a CRM's
   // "External ID" header maps to the externalId key, and is checked there.
   test("accepts a matching column whose header maps to the key, like External ID", async () => {
-    mocks.importContacts.mockResolvedValue({ contacts: [], multiMatchCount: 0 });
+    mocks.importContacts.mockResolvedValue({
+      contacts: [],
+      multiMatchCount: 0,
+      leftOutCounts: { email: 0, userId: 0 },
+    });
     renderButton("externalId");
 
     pickCsv("External ID,email\nCRM-1,a@example.com\nCRM-2,b@example.com");
@@ -97,7 +101,11 @@ describe("UploadContactsCSVButton", () => {
   });
 
   test("accepts an email column headed E-mail in an email directory", async () => {
-    mocks.importContacts.mockResolvedValue({ contacts: [], multiMatchCount: 0 });
+    mocks.importContacts.mockResolvedValue({
+      contacts: [],
+      multiMatchCount: 0,
+      leftOutCounts: { email: 0, userId: 0 },
+    });
     renderButton("email");
 
     pickCsv("E-mail\na@example.com");
@@ -108,7 +116,11 @@ describe("UploadContactsCSVButton", () => {
   });
 
   test("reports rows that matched several contacts after the upload", async () => {
-    mocks.importContacts.mockResolvedValue({ contacts: [], multiMatchCount: 2 });
+    mocks.importContacts.mockResolvedValue({
+      contacts: [],
+      multiMatchCount: 2,
+      leftOutCounts: { email: 0, userId: 0 },
+    });
     renderButton("email");
 
     pickCsv("email\na@example.com");
@@ -124,7 +136,11 @@ describe("UploadContactsCSVButton", () => {
   });
 
   test("shows no multi-match note when every row matched at most one contact", async () => {
-    mocks.importContacts.mockResolvedValue({ contacts: [], multiMatchCount: 0 });
+    mocks.importContacts.mockResolvedValue({
+      contacts: [],
+      multiMatchCount: 0,
+      leftOutCounts: { email: 0, userId: 0 },
+    });
     renderButton("email");
 
     pickCsv("email\na@example.com");
@@ -135,5 +151,22 @@ describe("UploadContactsCSVButton", () => {
 
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     expect(toast).not.toHaveBeenCalled();
+  });
+
+  test("says how many rows were imported without an email or userId another contact holds", async () => {
+    mocks.importContacts.mockResolvedValue({
+      contacts: [],
+      multiMatchCount: 0,
+      leftOutCounts: { email: 2, userId: 1 },
+    });
+    renderButton("externalId");
+
+    pickCsv("externalId,email\nCRM-1,a@example.com");
+    await upload();
+
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith('workspace.contacts.upload_contacts_emails_left_out {"count":2}')
+    );
+    expect(toast).toHaveBeenCalledWith('workspace.contacts.upload_contacts_user_ids_left_out {"count":1}');
   });
 });

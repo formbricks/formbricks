@@ -2488,6 +2488,7 @@
       "system_attributes": "Atributos del sistema",
       "unlock_contacts_description": "Gestiona contactos y envía encuestas dirigidas",
       "unlock_contacts_title": "Desbloquea contactos con un plan superior",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} fila tenía un correo electrónico que otro contacto de este directorio ya tiene. Se importó sin ese correo electrónico.} other {{count} filas tenían correos electrónicos que otros contactos de este directorio ya tienen. Se importaron sin esos correos electrónicos.}}",
       "upload_contacts_error_attribute_type_mismatch": "El atributo “{key}” está tipado como “{dataType}” pero el CSV contiene valores no válidos: {values}",
       "upload_contacts_error_duplicate_mappings": "Se encontraron mapeos duplicados para los siguientes atributos: {attributes}",
       "upload_contacts_error_file_too_large": "El tamaño del archivo supera el límite máximo de 800 KB",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Aquí tienes una vista previa de tus datos.",
       "upload_contacts_modal_upload_btn": "Subir contactos",
       "upload_contacts_multi_match": "{count, plural, one {{count} fila coincidió con más de un contacto. Se actualizó el contacto con el mismo userId o, si no había ninguno, el más antiguo.} many {{count} filas coincidieron con más de un contacto. Cada una actualizó el contacto con el mismo userId o, si no había ninguno, el más antiguo.} other {{count} filas coincidieron con más de un contacto. Cada una actualizó el contacto con el mismo userId o, si no había ninguno, el más antiguo.}}",
-      "upload_contacts_success": "Contactos subidos correctamente"
+      "upload_contacts_success": "Contactos subidos correctamente",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} fila tenía un userId que otro contacto de este directorio ya tiene. Se importó sin ese userId.} other {{count} filas tenían userIds que otros contactos de este directorio ya tienen. Se importaron sin esos userIds.}}"
     },
     "creatives": {
       "archive_anyway": "Archivar de todos modos",

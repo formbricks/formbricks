@@ -2488,6 +2488,7 @@
       "system_attributes": "Systeemkenmerken",
       "unlock_contacts_description": "Beheer contacten en verstuur gerichte enquêtes",
       "unlock_contacts_title": "Ontgrendel contacten met een hoger abonnement",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} rij had een e-mailadres dat een ander contact in deze map al heeft. Deze rij is geïmporteerd zonder dat e-mailadres.} other {{count} rijen hadden e-mailadressen die andere contacten in deze map al hebben. Deze rijen zijn geïmporteerd zonder die e-mailadressen.}}",
       "upload_contacts_error_attribute_type_mismatch": "Attribuut “{key}” is getypeerd als “{dataType}” maar CSV bevat ongeldige waarden: {values}",
       "upload_contacts_error_duplicate_mappings": "Dubbele koppelingen gevonden voor de volgende attributen: {attributes}",
       "upload_contacts_error_file_too_large": "Bestandsgrootte overschrijdt de maximale limiet van 800KB",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Hier ziet u een voorbeeld van uw gegevens.",
       "upload_contacts_modal_upload_btn": "Contacten uploaden",
       "upload_contacts_multi_match": "{count, plural, one {{count} rij kwam overeen met meer dan één contact. Hierbij is het contact met dezelfde userId bijgewerkt, of anders het oudste contact.} other {{count} rijen kwamen overeen met meer dan één contact. Hierbij is telkens het contact met dezelfde userId bijgewerkt, of anders het oudste contact.}}",
-      "upload_contacts_success": "Contacten succesvol geüpload"
+      "upload_contacts_success": "Contacten succesvol geüpload",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} rij had een userId dat een ander contact in deze map al heeft. Deze rij is geïmporteerd zonder dat userId.} other {{count} rijen hadden userIds die andere contacten in deze map al hebben. Deze rijen zijn geïmporteerd zonder die userIds.}}"
     },
     "creatives": {
       "archive_anyway": "Toch archiveren",

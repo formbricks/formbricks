@@ -2488,6 +2488,7 @@
       "system_attributes": "Atributos do sistema",
       "unlock_contacts_description": "Gerir contactos e enviar inquéritos direcionados",
       "unlock_contacts_title": "Desbloqueia os contactos com um plano superior",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} linha tinha um e-mail que outro contacto neste diretório já tem. Foi importada sem esse e-mail.} many {{count} de linhas tinham e-mails que outros contactos neste diretório já têm. Foram importadas sem esses e-mails.} other {{count} linhas tinham e-mails que outros contactos neste diretório já têm. Foram importadas sem esses e-mails.}}",
       "upload_contacts_error_attribute_type_mismatch": "O atributo “{key}” está definido como “{dataType}” mas o CSV contém valores inválidos: {values}",
       "upload_contacts_error_duplicate_mappings": "Foram encontrados mapeamentos duplicados para os seguintes atributos: {attributes}",
       "upload_contacts_error_file_too_large": "O tamanho do ficheiro excede o limite máximo de 800KB",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Aqui está uma pré-visualização dos teus dados.",
       "upload_contacts_modal_upload_btn": "Carregar contactos",
       "upload_contacts_multi_match": "{count, plural, one {{count} linha correspondeu a mais do que um contacto. Atualizou o contacto com o mesmo userId ou, caso não exista, o mais antigo.} many {{count} de linhas corresponderam a mais do que um contacto. Cada uma atualizou o contacto com o mesmo userId ou, caso não exista, o mais antigo.} other {{count} linhas corresponderam a mais do que um contacto. Cada uma atualizou o contacto com o mesmo userId ou, caso não exista, o mais antigo.}}",
-      "upload_contacts_success": "Contactos carregados com sucesso"
+      "upload_contacts_success": "Contactos carregados com sucesso",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} linha tinha um userId que outro contacto neste diretório já tem. Foi importada sem esse userId.} many {{count} de linhas tinham userIds que outros contactos neste diretório já têm. Foram importadas sem esses userIds.} other {{count} linhas tinham userIds que outros contactos neste diretório já têm. Foram importadas sem esses userIds.}}"
     },
     "creatives": {
       "archive_anyway": "Arquivar mesmo assim",

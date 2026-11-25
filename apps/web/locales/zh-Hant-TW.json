@@ -2488,6 +2488,7 @@
       "system_attributes": "系統屬性",
       "unlock_contacts_description": "管理聯絡人並發送目標問卷",
       "unlock_contacts_title": "使用更高等級的方案解鎖聯絡人",
+      "upload_contacts_emails_left_out": "{count, plural, other {有 {count} 列資料的電子郵件地址已存在於此目錄中的其他聯絡人。這些資料已匯入，但未包含該電子郵件地址。}}",
       "upload_contacts_error_attribute_type_mismatch": "屬性「{key}」的型別為「{dataType}」，但 CSV 包含無效值：{values}",
       "upload_contacts_error_duplicate_mappings": "以下屬性有重複對應：{attributes}",
       "upload_contacts_error_file_too_large": "檔案大小超過 800KB 的上限",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "這是您的資料預覽。",
       "upload_contacts_modal_upload_btn": "上傳聯絡人",
       "upload_contacts_multi_match": "{count, plural, other {有 {count} 列資料符合多位聯絡人。系統已更新 userId 相同的聯絡人,若沒有則更新建立時間最早的聯絡人。}}",
-      "upload_contacts_success": "聯絡人已成功上傳"
+      "upload_contacts_success": "聯絡人已成功上傳",
+      "upload_contacts_user_ids_left_out": "{count, plural, other {有 {count} 列資料的 userId 已存在於此目錄中的其他聯絡人。這些資料已匯入，但未包含該 userId。}}"
     },
     "creatives": {
       "archive_anyway": "仍要封存",

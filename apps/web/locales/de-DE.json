@@ -2488,6 +2488,7 @@
       "system_attributes": "Systemattribute",
       "unlock_contacts_description": "Verwalte Kontakte und versende gezielte Umfragen",
       "unlock_contacts_title": "Schalte Kontakte mit einem höheren Tarif frei",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} Zeile enthielt eine E-Mail-Adresse, die bereits bei einem anderen Kontakt in diesem Verzeichnis vorhanden ist. Sie wurde ohne diese E-Mail-Adresse importiert.} other {{count} Zeilen enthielten E-Mail-Adressen, die bereits bei anderen Kontakten in diesem Verzeichnis vorhanden sind. Sie wurden ohne diese E-Mail-Adressen importiert.}}",
       "upload_contacts_error_attribute_type_mismatch": "Attribut \"{key}\" ist als \"{dataType}\" definiert, aber die CSV enthält ungültige Werte: {values}",
       "upload_contacts_error_duplicate_mappings": "Doppelte Zuordnungen für folgende Attribute gefunden: {attributes}",
       "upload_contacts_error_file_too_large": "Dateigröße überschreitet das maximale Limit von 800KB",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Hier ist eine Vorschau deiner Daten.",
       "upload_contacts_modal_upload_btn": "Kontakte hochladen",
       "upload_contacts_multi_match": "{count, plural, one {{count} Zeile hat mehr als einem Kontakt entsprochen. Es wurde der Kontakt mit derselben userId aktualisiert, andernfalls der älteste.} other {{count} Zeilen haben mehr als einem Kontakt entsprochen. Dabei wurde jeweils der Kontakt mit derselben userId aktualisiert, andernfalls der älteste.}}",
-      "upload_contacts_success": "Kontakte erfolgreich hochgeladen"
+      "upload_contacts_success": "Kontakte erfolgreich hochgeladen",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} Zeile enthielt eine userId, die bereits bei einem anderen Kontakt in diesem Verzeichnis vorhanden ist. Sie wurde ohne diese userId importiert.} other {{count} Zeilen enthielten userIds, die bereits bei anderen Kontakten in diesem Verzeichnis vorhanden sind. Sie wurden ohne diese userIds importiert.}}"
     },
     "creatives": {
       "archive_anyway": "Trotzdem archivieren",

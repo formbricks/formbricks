@@ -2488,6 +2488,7 @@
       "system_attributes": "Sistem Özellikleri",
       "unlock_contacts_description": "Kişileri yönet ve hedeflenmiş anketler gönder",
       "unlock_contacts_title": "Daha yüksek bir planla kişilerin kilidini aç",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} satırdaki e-posta adresi bu dizindeki başka bir kişide zaten var. Bu satır, söz konusu e-posta adresi olmadan içe aktarıldı.} other {{count} satırdaki e-posta adresleri bu dizindeki diğer kişilerde zaten var. Bu satırlar, söz konusu e-posta adresleri olmadan içe aktarıldı.}}",
       "upload_contacts_error_attribute_type_mismatch": "\"{key}\" özelliği \"{dataType}\" olarak tanımlanmış ancak CSV geçersiz değerler içeriyor: {values}",
       "upload_contacts_error_duplicate_mappings": "Şu özellikler için yinelenen eşleştirmeler bulundu: {attributes}",
       "upload_contacts_error_file_too_large": "Dosya boyutu maksimum 800KB limitini aşıyor",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "İşte verilerinin önizlemesi.",
       "upload_contacts_modal_upload_btn": "Kişileri yükle",
       "upload_contacts_multi_match": "{count, plural, one {{count} satır birden fazla kişiyle eşleşti. Aynı userId'ye sahip kişi güncellendi, yoksa en eski kişi güncellendi.} other {{count} satır birden fazla kişiyle eşleşti. Her biri için aynı userId'ye sahip kişi güncellendi, yoksa en eski kişi güncellendi.}}",
-      "upload_contacts_success": "Kişiler başarıyla yüklendi"
+      "upload_contacts_success": "Kişiler başarıyla yüklendi",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} satırdaki userId bu dizindeki başka bir kişide zaten var. Bu satır, söz konusu userId olmadan içe aktarıldı.} other {{count} satırdaki userId değerleri bu dizindeki diğer kişilerde zaten var. Bu satırlar, söz konusu userId değerleri olmadan içe aktarıldı.}}"
     },
     "creatives": {
       "archive_anyway": "Yine de arşivle",

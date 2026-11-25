@@ -2488,6 +2488,7 @@
       "system_attributes": "Systemattribut",
       "unlock_contacts_description": "Hantera kontakter och skicka ut riktade enkäter",
       "unlock_contacts_title": "Lås upp kontakter med en högre plan",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} rad hade en e-postadress som en annan kontakt i den här katalogen redan har. Raden importerades utan den e-postadressen.} other {{count} rader hade e-postadresser som andra kontakter i den här katalogen redan har. De importerades utan de e-postadresserna.}}",
       "upload_contacts_error_attribute_type_mismatch": "Attributet ”{key}” är av typen ”{dataType}” men CSV-filen innehåller ogiltiga värden: {values}",
       "upload_contacts_error_duplicate_mappings": "Dubblettmappningar hittades för följande attribut: {attributes}",
       "upload_contacts_error_file_too_large": "Filstorleken överskrider maxgränsen på 800 KB",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Här är en förhandsgranskning av dina data.",
       "upload_contacts_modal_upload_btn": "Ladda upp kontakter",
       "upload_contacts_multi_match": "{count, plural, one {{count} rad matchade mer än en kontakt. Den uppdaterade kontakten med samma userId, annars den äldsta.} other {{count} rader matchade mer än en kontakt. Varje rad uppdaterade kontakten med samma userId, annars den äldsta.}}",
-      "upload_contacts_success": "Kontakter uppladdade"
+      "upload_contacts_success": "Kontakter uppladdade",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} rad hade ett userId som en annan kontakt i den här katalogen redan har. Raden importerades utan det userId:t.} other {{count} rader hade userId som andra kontakter i den här katalogen redan har. De importerades utan dessa userId.}}"
     },
     "creatives": {
       "archive_anyway": "Arkivera ändå",

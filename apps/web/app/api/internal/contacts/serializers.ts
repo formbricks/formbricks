@@ -24,6 +24,8 @@ export type TContactImportResource =
       contacts: { id: string }[];
       /** Records that matched several contacts of the directory and updated one of them (decision 5). */
       multiMatchCount: number;
+      /** Records imported without their email or userId, because another contact already holds it. */
+      leftOutCounts: { email: number; userId: number };
     }
   | {
       validationErrors: { key: string; dataType: TContactAttributeDataType; invalidValues: string[] }[];
@@ -31,7 +33,11 @@ export type TContactImportResource =
 
 export const serializeContactImport = (result: TCreateContactsFromCSVResult): TContactImportResource =>
   "contacts" in result
-    ? { contacts: result.contacts.map(({ id }) => ({ id })), multiMatchCount: result.multiMatchCount }
+    ? {
+        contacts: result.contacts.map(({ id }) => ({ id })),
+        multiMatchCount: result.multiMatchCount,
+        leftOutCounts: result.leftOutCounts,
+      }
     : {
         validationErrors: result.validationErrors.map(({ key, dataType, invalidValues }) => ({
           key,

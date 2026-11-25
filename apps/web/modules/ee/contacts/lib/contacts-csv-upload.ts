@@ -67,29 +67,43 @@ const createAttributeConnections = (
     };
   });
 
-// Helper to handle userId conflicts when updating/overwriting contacts
-const resolveUserIdConflict = (
-  mappedRecord: Record<string, string>,
-  existingContact: { id: string; attributes: { attributeKey: { key: string }; value: string }[] },
-  existingUserIds: { value: string; contactId: string }[]
-): Record<string, string> => {
-  const userIdTakenByAnotherContact = existingUserIds.some(
-    (attr) => attr.value === mappedRecord.userId && attr.contactId !== existingContact.id
-  );
+/**
+ * Keys whose value at most one contact of a directory holds, as identify keeps them: `userId`, and `email`
+ * unless it is the directory's matching key (then the email picks the contact rather than clashing with it).
+ */
+export const getUniqueValueKeys = (identityKey: string): TUniqueValueKey[] =>
+  identityKey === "email" ? ["userId"] : ["userId", "email"];
 
-  if (!userIdTakenByAnotherContact) {
-    return { ...mappedRecord };
+type TUniqueValueKey = "userId" | "email";
+
+/** For each unique key, the contacts already holding each value the upload names. */
+type TTakenValues = Map<TUniqueValueKey, Map<string, Set<string>>>;
+
+/**
+ * The row without the unique values another contact already holds, and the keys it left out. A row for an
+ * existing contact keeps that contact's own value in their place, so an overwrite doesn't clear it. The
+ * rest of the row is still imported, as identify does when an email or userId is taken.
+ */
+const leaveOutValuesOfOtherContacts = (
+  record: Record<string, string>,
+  existingContact: TExistingContactFromCsv | null,
+  takenValues: TTakenValues
+): { record: Record<string, string>; leftOut: TUniqueValueKey[] } => {
+  const result = { ...record };
+  const leftOut: TUniqueValueKey[] = [];
+
+  for (const [key, holdersByValue] of takenValues) {
+    const value = result[key];
+    const holders = value ? holdersByValue.get(value) : undefined;
+    if (!holders || holders.size === 0 || (existingContact && holders.has(existingContact.id))) continue;
+
+    delete result[key];
+    leftOut.push(key);
+    const ownValue = existingContact?.attributes.find((attr) => attr.attributeKey.key === key)?.value;
+    if (ownValue) result[key] = ownValue;
   }
 
-  const { userId: _userId, ...rest } = mappedRecord;
-  const existingContactUserId = existingContact.attributes.find(
-    (attr) => attr.attributeKey.key === "userId"
-  )?.value;
-
-  return {
-    ...rest,
-    ...(existingContactUserId && { userId: existingContactUserId }),
-  };
+  return { record: result, leftOut };
 };
 
 /**
@@ -100,12 +114,10 @@ const extractCsvMetadata = (
   identityKey: string
 ): {
   csvIdentityValues: string[];
-  csvUserIds: string[];
   csvKeys: Set<string>;
   attributeValuesByKey: Map<string, string[]>;
 } => {
   const csvIdentityValues = Array.from(new Set(csvData.map((r) => r[identityKey]).filter(Boolean)));
-  const csvUserIds = Array.from(new Set(csvData.map((r) => r.userId).filter(Boolean)));
   const csvKeys = new Set<string>();
   const attributeValuesByKey = new Map<string, string[]>();
 
@@ -121,7 +133,7 @@ const extractCsvMetadata = (
     }
   }
 
-  return { csvIdentityValues, csvUserIds, csvKeys, attributeValuesByKey };
+  return { csvIdentityValues, csvKeys, attributeValuesByKey };
 };
 
 /**
@@ -300,14 +312,12 @@ type TExistingContactFromCsv = {
   attributes: { attributeKey: { key: string; id: string }; value: string }[];
 };
 
-type TExistingUserId = { value: string; contactId: string };
-
 type TCsvProcessingContext = {
   lowercaseToActualKeyMap: Map<string, string>;
   /** Existing contacts by identity value, oldest first. One value can match several contacts. */
   identityToContactsMap: Map<string, TExistingContactFromCsv[]>;
   identityKey: string;
-  existingUserIds: TExistingUserId[];
+  takenValues: TTakenValues;
   attributeKeyMap: Map<string, string>;
   attributeTypeMap: Map<string, TAttributeTypeInfo>;
   duplicateContactsAction: "skip" | "update" | "overwrite";
@@ -319,6 +329,8 @@ type TCsvRecordResult = {
   contact: TContact | null;
   /** The row matched several contacts and updated one of them (spec decision 5). */
   updatedOneOfSeveral: boolean;
+  /** Unique values the row named that another contact already holds, so they weren't written. */
+  leftOut: TUniqueValueKey[];
 };
 
 const missingIdentityMessage = (identityKey: string): string =>
@@ -337,7 +349,7 @@ const processCsvRecord = async (
     lowercaseToActualKeyMap,
     identityToContactsMap,
     identityKey,
-    existingUserIds,
+    takenValues,
     attributeKeyMap,
     attributeTypeMap,
     duplicateContactsAction,
@@ -363,52 +375,58 @@ const processCsvRecord = async (
   const existingContact = pickContactForRow(matches, mappedRecord.userId);
 
   if (!existingContact) {
+    // A new contact can't take another contact's userId (or email, outside an email directory).
+    const { record: recordToCreate, leftOut } = leaveOutValuesOfOtherContacts(
+      mappedRecord,
+      null,
+      takenValues
+    );
     // Create new contact in the directory; the workspace records where it was created.
     const created = await prisma.contact.create({
       data: {
         directoryId,
         workspaceId,
         attributes: {
-          create: createAttributeConnections(mappedRecord, attributeKeyMap, attributeTypeMap),
+          create: createAttributeConnections(recordToCreate, attributeKeyMap, attributeTypeMap),
         },
       },
       include: contactAttributesInclude,
     });
     // Written for this workspace, so `workspaceId` is set.
-    return { contact: { ...created, workspaceId }, updatedOneOfSeveral: false };
+    return { contact: { ...created, workspaceId }, updatedOneOfSeveral: false, leftOut };
   }
 
-  // Handle duplicate based on action
-  const contact = await handleDuplicateContact(
+  if (duplicateContactsAction === "skip") {
+    return { contact: null, updatedOneOfSeveral: false, leftOut: [] };
+  }
+
+  const { record: recordToProcess, leftOut } = leaveOutValuesOfOtherContacts(
     mappedRecord,
     existingContact,
-    existingUserIds,
+    takenValues
+  );
+  const contact = await handleDuplicateContact(
+    recordToProcess,
+    existingContact,
     attributeKeyMap,
     attributeTypeMap,
     duplicateContactsAction,
     workspaceId
   );
-  return { contact, updatedOneOfSeveral: contact !== null && matches.length > 1 };
+  return { contact, updatedOneOfSeveral: matches.length > 1, leftOut };
 };
 
 /**
- * Handles duplicate contact based on the specified action
+ * Updates or overwrites the matched contact with the row, already cleared of values other contacts hold.
  */
 const handleDuplicateContact = async (
-  mappedRecord: Record<string, string>,
+  recordToProcess: Record<string, string>,
   existingContact: TExistingContactFromCsv,
-  existingUserIds: TExistingUserId[],
   attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
-  duplicateContactsAction: "skip" | "update" | "overwrite",
+  duplicateContactsAction: "update" | "overwrite",
   workspaceId: string
-): Promise<TContact | null> => {
-  if (duplicateContactsAction === "skip") {
-    return null;
-  }
-
-  const recordToProcess = resolveUserIdConflict(mappedRecord, existingContact, existingUserIds);
-
+): Promise<TContact> => {
   if (duplicateContactsAction === "update") {
     const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => {
       const dataType = attributeTypeMap.get(key)?.dataType ?? "string";
@@ -470,6 +488,8 @@ export type TCreateContactsFromCSVResult =
       contacts: TContact[];
       /** Rows that matched several contacts and updated one of them (spec decision 5). */
       multiMatchCount: number;
+      /** Rows imported without their email or userId, because another contact already holds it. */
+      leftOutCounts: Record<TUniqueValueKey, number>;
     }
   | { validationErrors: TCsvAttributeValidationError[] };
 
@@ -499,13 +519,11 @@ export const createContactsFromCSV = async (
 
   try {
     // Step 2: Extract metadata from CSV data
-    const { csvIdentityValues, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(
-      csvData,
-      identityKey
-    );
+    const { csvIdentityValues, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData, identityKey);
+    const uniqueValueKeys = getUniqueValueKeys(identityKey);
 
     // Step 3: Fetch existing data from database
-    const [existingContactsByIdentity, existingUserIds, existingAttributeKeys] = await Promise.all([
+    const [existingContactsByIdentity, existingUniqueValues, existingAttributeKeys] = await Promise.all([
       prisma.contact.findMany({
         where: {
           directoryId: directory.id,
@@ -522,12 +540,15 @@ export const createContactsFromCSV = async (
         },
         orderBy: CONTACTS_OLDEST_FIRST,
       }),
+      // Who already holds each userId (and email, outside an email directory) the file names.
       prisma.contactAttribute.findMany({
         where: {
-          attributeKey: whereDirectoryAttributeKey(directory.id, "userId"),
-          value: { in: csvUserIds },
+          OR: uniqueValueKeys.map((key) => ({
+            attributeKey: whereDirectoryAttributeKey(directory.id, key),
+            value: { in: Array.from(new Set(csvData.map((row) => row[key]).filter(Boolean))) },
+          })),
         },
-        select: { value: true, contactId: true },
+        select: { value: true, contactId: true, attributeKey: { select: { key: true } } },
       }),
       prisma.contactAttributeKey.findMany({
         where: whereAttributeKeysOfDirectory(directory.id),
@@ -537,6 +558,15 @@ export const createContactsFromCSV = async (
 
     // Step 3: Build lookup maps
     const identityToContactsMap = groupContactsByIdentity(existingContactsByIdentity, identityKey);
+
+    const takenValues: TTakenValues = new Map(uniqueValueKeys.map((key) => [key, new Map()]));
+    for (const { value, contactId, attributeKey } of existingUniqueValues) {
+      const holdersByValue = takenValues.get(attributeKey.key as TUniqueValueKey);
+      if (!holdersByValue) continue;
+      const holders = holdersByValue.get(value) ?? new Set<string>();
+      holders.add(contactId);
+      holdersByValue.set(value, holders);
+    }
 
     const attributeKeyMap = new Map<string, string>();
     const lowercaseToActualKeyMap = new Map<string, string>();
@@ -571,7 +601,7 @@ export const createContactsFromCSV = async (
       lowercaseToActualKeyMap,
       identityToContactsMap,
       identityKey,
-      existingUserIds,
+      takenValues,
       attributeKeyMap,
       attributeTypeMap,
       duplicateContactsAction,
@@ -595,6 +625,10 @@ export const createContactsFromCSV = async (
         .map(({ contact }) => contact)
         .filter((contact): contact is TContact => contact !== null),
       multiMatchCount: allResults.filter(({ updatedOneOfSeveral }) => updatedOneOfSeveral).length,
+      leftOutCounts: {
+        userId: allResults.filter(({ leftOut }) => leftOut.includes("userId")).length,
+        email: allResults.filter(({ leftOut }) => leftOut.includes("email")).length,
+      },
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

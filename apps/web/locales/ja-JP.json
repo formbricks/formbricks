@@ -2488,6 +2488,7 @@
       "system_attributes": "システム属性",
       "unlock_contacts_description": "連絡先を管理し、特定のアンケートを送信します",
       "unlock_contacts_title": "上位プランで連絡先をアンロック",
+      "upload_contacts_emails_left_out": "{count, plural, other {{count}行に、このディレクトリ内の他の連絡先がすでに使用しているメールアドレスが含まれていました。それらのメールアドレスを除いてインポートされました。}}",
       "upload_contacts_error_attribute_type_mismatch": "属性“{key}”は“{dataType}”型ですが、CSVに無効な値が含まれています：{values}",
       "upload_contacts_error_duplicate_mappings": "次の属性に重複したマッピングが見つかりました：{attributes}",
       "upload_contacts_error_file_too_large": "ファイルサイズが最大制限の800KBを超えています",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "データのプレビューです。",
       "upload_contacts_modal_upload_btn": "連絡先をアップロード",
       "upload_contacts_multi_match": "{count, plural, other {{count}行が複数のコンタクトに一致しました。同じuserIdのコンタクトが更新され、該当するものがない場合は最も古いコンタクトが更新されました。}}",
-      "upload_contacts_success": "連絡先のアップロードに成功しました"
+      "upload_contacts_success": "連絡先のアップロードに成功しました",
+      "upload_contacts_user_ids_left_out": "{count, plural, other {{count}行に、このディレクトリ内の他の連絡先がすでに使用しているuserIdが含まれていました。それらのuserIdを除いてインポートされました。}}"
     },
     "creatives": {
       "archive_anyway": "それでもアーカイブする",

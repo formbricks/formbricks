@@ -2488,6 +2488,7 @@
       "system_attributes": "System Attributes",
       "unlock_contacts_description": "Manage contacts and send out targeted surveys",
       "unlock_contacts_title": "Unlock contacts with a higher plan",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} row had an email that another contact in this directory already has. It was imported without that email.} other {{count} rows had emails that other contacts in this directory already have. They were imported without those emails.}}",
       "upload_contacts_error_attribute_type_mismatch": "Attribute “{key}” is typed as “{dataType}” but CSV contains invalid values: {values}",
       "upload_contacts_error_duplicate_mappings": "Duplicate mappings found for the following attributes: {attributes}",
       "upload_contacts_error_file_too_large": "File size exceeds the maximum limit of 800KB",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Here is a preview of your data.",
       "upload_contacts_modal_upload_btn": "Upload contacts",
       "upload_contacts_multi_match": "{count, plural, one {{count} row matched more than one contact. It updated the contact with the same userId, or else the oldest one.} other {{count} rows matched more than one contact. Each updated the contact with the same userId, or else the oldest one.}}",
-      "upload_contacts_success": "Contacts uploaded successfully"
+      "upload_contacts_success": "Contacts uploaded successfully",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} row had a userId that another contact in this directory already has. It was imported without that userId.} other {{count} rows had userIds that other contacts in this directory already have. They were imported without those userIds.}}"
     },
     "creatives": {
       "archive_anyway": "Archive anyway",

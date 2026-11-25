@@ -191,6 +191,30 @@ describe("getContactCSVUploadSchema (email directory)", () => {
   });
 });
 
+describe("getContactCSVUploadSchema (external ID directory)", () => {
+  const schema = getContactCSVUploadSchema("externalId");
+
+  // An email belongs to one contact of a directory, as identify keeps it, whatever the directory matches by.
+  test("refuses two rows with one email", () => {
+    const result = schema.safeParse([
+      { externalId: "CRM-1", email: "shared@example.com" },
+      { externalId: "CRM-2", email: "shared@example.com" },
+    ]);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe("Duplicate emails found in the records");
+  });
+
+  test("accepts distinct emails, and rows without one", () => {
+    const rows = [
+      { externalId: "CRM-1", email: "a@example.com" },
+      { externalId: "CRM-2", email: "b@example.com" },
+      { externalId: "CRM-3", email: "" },
+      { externalId: "CRM-4", email: "" },
+    ];
+    expect(schema.safeParse(rows).success).toBe(true);
+  });
+});
+
 describe("ZContactCSVAttributeMap", () => {
   test("should validate valid attribute map", () => {
     const validMap = {

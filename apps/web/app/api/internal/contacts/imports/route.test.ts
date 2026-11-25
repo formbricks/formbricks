@@ -126,7 +126,11 @@ beforeEach(() => {
   mocks.getIsContactsEnabled.mockResolvedValue(true);
   mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(ORG_ID);
   mocks.contactCount.mockResolvedValue(40);
-  mocks.createContactsFromCSV.mockResolvedValue({ contacts: importedContacts, multiMatchCount: 0 });
+  mocks.createContactsFromCSV.mockResolvedValue({
+    contacts: importedContacts,
+    multiMatchCount: 0,
+    leftOutCounts: { email: 0, userId: 0 },
+  });
   mocks.requireWorkspaceContactDirectory.mockResolvedValue(DIRECTORY);
 });
 
@@ -227,7 +231,11 @@ describe("POST /api/internal/contacts/imports: the import", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      data: { contacts: importedContacts.map(({ id }) => ({ id })), multiMatchCount: 0 },
+      data: {
+        contacts: importedContacts.map(({ id }) => ({ id })),
+        multiMatchCount: 0,
+        leftOutCounts: { email: 0, userId: 0 },
+      },
     });
     expect(mocks.createContactsFromCSV).toHaveBeenCalledWith(
       sent.csvData,
@@ -262,7 +270,11 @@ describe("POST /api/internal/contacts/imports: the import", () => {
   });
 
   test("answers how many records matched several contacts of the directory", async () => {
-    mocks.createContactsFromCSV.mockResolvedValue({ contacts: importedContacts, multiMatchCount: 3 });
+    mocks.createContactsFromCSV.mockResolvedValue({
+      contacts: importedContacts,
+      multiMatchCount: 3,
+      leftOutCounts: { email: 0, userId: 0 },
+    });
 
     expect((await (await post(body())).json()).data.multiMatchCount).toBe(3);
   });

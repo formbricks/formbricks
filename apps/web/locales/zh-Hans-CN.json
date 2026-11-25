@@ -2488,6 +2488,7 @@
       "system_attributes": "系统属性",
       "unlock_contacts_description": "管理 联系人 并 发送 定向 调查",
       "unlock_contacts_title": "通过 更 高级 划解锁 联系人",
+      "upload_contacts_emails_left_out": "{count, plural, other {有 {count} 行的邮箱与此通讯录中其他联系人的邮箱重复，已在不导入该邮箱的情况下完成导入。}}",
       "upload_contacts_error_attribute_type_mismatch": "属性“{key}”的数据类型为“{dataType}”，但CSV中包含无效值：{values}",
       "upload_contacts_error_duplicate_mappings": "以下属性存在重复映射：{attributes}",
       "upload_contacts_error_file_too_large": "文件大小超过最大限制 800KB",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "这是 你 的 数据 预览。",
       "upload_contacts_modal_upload_btn": "上传 联系人",
       "upload_contacts_multi_match": "{count, plural, other {有 {count} 行匹配到多个联系人。系统已更新 userId 相同的联系人;如果没有,则更新最早创建的联系人。}}",
-      "upload_contacts_success": "联系人上传成功"
+      "upload_contacts_success": "联系人上传成功",
+      "upload_contacts_user_ids_left_out": "{count, plural, other {有 {count} 行的 userId 与此通讯录中其他联系人的 userId 重复，已在不导入该 userId 的情况下完成导入。}}"
     },
     "creatives": {
       "archive_anyway": "仍然归档",

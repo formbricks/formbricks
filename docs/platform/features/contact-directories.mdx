@@ -31,7 +31,8 @@ Each directory matches contacts either by **email** or by **external ID**, your 
 
 The matching key decides which attribute identifies a contact when you add contacts in bulk:
 
-- **CSV upload** needs an `email` column in an email directory and an `externalId` column in an external ID directory. Each value can appear only once in the file.
+- **CSV upload** needs an `email` column in an email directory and an `externalId` column in an external ID directory. A header that maps to the attribute works too, such as `External ID` or `E-mail`. Each value can appear only once in the file, and so can each `userId` and, in an external ID directory, each `email`.
+- An email or `userId` belongs to one contact of a directory. A CSV row that names one another contact already has is imported without it, and a message after the upload says how many rows that happened to.
 - **The API**, `POST /api/v2/management/contacts` and `PUT /api/v2/management/contacts/bulk`, needs `email` or `externalId` in the same way. Only an email directory checks that the value is a valid email address.
 
 The SDK doesn't change: it always identifies people by `userId`, set with `setUserId`. See [User Identification](/surveys/website-app-surveys/user-identification).

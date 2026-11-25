@@ -166,6 +166,18 @@ export const getContactCSVUploadSchema = (identityKey: TContactDirectoryMatching
         return;
       }
     }
+
+    // An email belongs to one contact of a directory, as identify keeps it. When the directory matches by
+    // email the identity check above already covered it; otherwise two rows can't share one either.
+    if (identityKey !== "email") {
+      const emails = data.map((record) => record.email).filter(Boolean);
+      if (emails.length !== new Set(emails).size) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Duplicate emails found in the records",
+        });
+      }
+    }
   });
 
 /** The column-to-attribute map's caps, checked before the typed schema as for the records. */

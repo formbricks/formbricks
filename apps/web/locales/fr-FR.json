@@ -2488,6 +2488,7 @@
       "system_attributes": "Attributs système",
       "unlock_contacts_description": "Gérer les contacts et envoyer des enquêtes ciblées",
       "unlock_contacts_title": "Débloquez des contacts avec un plan supérieur.",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} ligne contenait une adresse e-mail déjà associée à un autre contact de ce répertoire. Elle a été importée sans cette adresse e-mail.} many {{count} lignes contenaient des adresses e-mail déjà associées à d'autres contacts de ce répertoire. Elles ont été importées sans ces adresses e-mail.} other {{count} lignes contenaient des adresses e-mail déjà associées à d'autres contacts de ce répertoire. Elles ont été importées sans ces adresses e-mail.}}",
       "upload_contacts_error_attribute_type_mismatch": "L'attribut “{key}” est de type “{dataType}” mais le CSV contient des valeurs invalides : {values}",
       "upload_contacts_error_duplicate_mappings": "Mappages en double trouvés pour les attributs suivants : {attributes}",
       "upload_contacts_error_file_too_large": "La taille du fichier dépasse la limite maximale de 800 Ko",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Voici un aperçu de vos données.",
       "upload_contacts_modal_upload_btn": "Importer des contacts",
       "upload_contacts_multi_match": "{count, plural, one {{count} ligne correspond à plusieurs contacts. Elle a mis à jour le contact avec le même userId, ou à défaut le plus ancien.} many {{count} de lignes correspondent à plusieurs contacts. Chacune a mis à jour le contact avec le même userId, ou à défaut le plus ancien.} other {{count} lignes correspondent à plusieurs contacts. Chacune a mis à jour le contact avec le même userId, ou à défaut le plus ancien.}}",
-      "upload_contacts_success": "Contacts téléchargés avec succès"
+      "upload_contacts_success": "Contacts téléchargés avec succès",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} ligne contenait un userId déjà associé à un autre contact de ce répertoire. Elle a été importée sans ce userId.} many {{count} lignes contenaient des userId déjà associés à d'autres contacts de ce répertoire. Elles ont été importées sans ces userId.} other {{count} lignes contenaient des userId déjà associés à d'autres contacts de ce répertoire. Elles ont été importées sans ces userId.}}"
     },
     "creatives": {
       "archive_anyway": "Archiver quand même",

@@ -696,6 +696,7 @@ describe("Contacts Lib", () => {
       const conflictingUserId = {
         value: "user-1",
         contactId: "other-contact-id",
+        attributeKey: { key: "userId" },
       };
 
       vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
@@ -740,6 +741,7 @@ describe("Contacts Lib", () => {
       const conflictingUserId = {
         value: "user-1",
         contactId: "other-contact-id",
+        attributeKey: { key: "userId" },
       };
 
       vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
@@ -958,7 +960,7 @@ describe("Contacts Lib", () => {
       );
 
       expect(prisma.contact.update).not.toHaveBeenCalled();
-      expect(result).toEqual({ contacts: [], multiMatchCount: 0 });
+      expect(result).toEqual({ contacts: [], multiMatchCount: 0, leftOutCounts: { email: 0, userId: 0 } });
     });
 
     test("an external-ID directory matches rows on externalId", async () => {

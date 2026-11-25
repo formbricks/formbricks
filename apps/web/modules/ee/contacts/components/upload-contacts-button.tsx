@@ -273,6 +273,14 @@ export const UploadContactsCSVButton = ({
     if (result.multiMatchCount > 0) {
       toast(t("workspace.contacts.upload_contacts_multi_match", { count: result.multiMatchCount }));
     }
+    if (result.leftOutCounts.email > 0) {
+      toast(t("workspace.contacts.upload_contacts_emails_left_out", { count: result.leftOutCounts.email }));
+    }
+    if (result.leftOutCounts.userId > 0) {
+      toast(
+        t("workspace.contacts.upload_contacts_user_ids_left_out", { count: result.leftOutCounts.userId })
+      );
+    }
     resetState(true);
 
     router.refresh();

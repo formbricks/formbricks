@@ -2488,6 +2488,7 @@
       "system_attributes": "Atribute de sistem",
       "unlock_contacts_description": "Gestionează contactele și trimite sondaje țintite",
       "unlock_contacts_title": "Deblocați contactele cu un plan superior.",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} rând avea o adresă de e-mail pe care o are deja alt contact din această agendă. A fost importat fără acea adresă de e-mail.} few {{count} rânduri aveau adrese de e-mail pe care le au deja alte contacte din această agendă. Au fost importate fără acele adrese de e-mail.} other {{count} de rânduri aveau adrese de e-mail pe care le au deja alte contacte din această agendă. Au fost importate fără acele adrese de e-mail.}}",
       "upload_contacts_error_attribute_type_mismatch": "Atributul „{key}” are tipul „{dataType}”, dar fișierul CSV conține valori invalide: {values}",
       "upload_contacts_error_duplicate_mappings": "Au fost găsite mapări duplicate pentru următoarele atribute: {attributes}",
       "upload_contacts_error_file_too_large": "Dimensiunea fișierului depășește limita maximă de 800KB",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Iată o previzualizare a datelor tale.",
       "upload_contacts_modal_upload_btn": "Încărcați contacte",
       "upload_contacts_multi_match": "{count, plural, one {{count} rând corespunde mai multor contacte. A actualizat contactul cu același userId sau, în lipsa acestuia, pe cel mai vechi.} few {{count} rânduri corespund mai multor contacte. Fiecare a actualizat contactul cu același userId sau, în lipsa acestuia, pe cel mai vechi.} other {{count} de rânduri corespund mai multor contacte. Fiecare a actualizat contactul cu același userId sau, în lipsa acestuia, pe cel mai vechi.}}",
-      "upload_contacts_success": "Contactele au fost încărcate cu succes"
+      "upload_contacts_success": "Contactele au fost încărcate cu succes",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} rând avea un userId pe care îl are deja alt contact din această agendă. A fost importat fără acel userId.} few {{count} rânduri aveau userId-uri pe care le au deja alte contacte din această agendă. Au fost importate fără acele userId-uri.} other {{count} de rânduri aveau userId-uri pe care le au deja alte contacte din această agendă. Au fost importate fără acele userId-uri.}}"
     },
     "creatives": {
       "archive_anyway": "Arhivează oricum",

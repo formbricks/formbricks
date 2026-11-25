@@ -2488,6 +2488,7 @@
       "system_attributes": "Rendszerattribútumok",
       "unlock_contacts_description": "Partnerek kezelése és célzott kérdőívek kiküldése",
       "unlock_contacts_title": "Partnerek feloldása egy magasabb csomaggal",
+      "upload_contacts_emails_left_out": "{count, plural, one {{count} sor olyan e-mail-címet tartalmazott, amely egy másik kapcsolattartó adatai között már szerepel ebben a címtárban. A sor importálása ezen e-mail-cím nélkül történt meg.} other {{count} sor olyan e-mail-címet tartalmazott, amely más kapcsolattartók adatai között már szerepel ebben a címtárban. A sorok importálása ezen e-mail-címek nélkül történt meg.}}",
       "upload_contacts_error_attribute_type_mismatch": "A(z) „{key}” attribútum „{dataType}” típusként van megadva, de a CSV érvénytelen értékeket tartalmaz: {values}",
       "upload_contacts_error_duplicate_mappings": "Kettőzött leképezések találhatók a következő attribútumoknál: {attributes}",
       "upload_contacts_error_file_too_large": "A fájlméret túllépi a 800 KB-os legnagyobb méretet",
@@ -2514,7 +2515,8 @@
       "upload_contacts_modal_preview": "Itt van az adatok előnézete.",
       "upload_contacts_modal_upload_btn": "Partnerek feltöltése",
       "upload_contacts_multi_match": "{count, plural, one {{count} sor egynél több névjegyre illeszkedett. A rendszer az azonos userId-val rendelkező névjegyet frissítette, ennek hiányában a legrégebbit.} other {{count} sor egynél több névjegyre illeszkedett. A rendszer mindegyik esetben az azonos userId-val rendelkező névjegyet frissítette, ennek hiányában a legrégebbit.}}",
-      "upload_contacts_success": "A partnerek sikeresen feltöltve"
+      "upload_contacts_success": "A partnerek sikeresen feltöltve",
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} sor olyan userId-t tartalmazott, amely egy másik kapcsolattartó adatai között már szerepel ebben a címtárban. A sor importálása ezen userId nélkül történt meg.} other {{count} sor olyan userId-t tartalmazott, amely más kapcsolattartók adatai között már szerepel ebben a címtárban. A sorok importálása ezen userId-k nélkül történt meg.}}"
     },
     "creatives": {
       "archive_anyway": "Archiválás mindenképpen",
