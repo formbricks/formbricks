@@ -49,5 +49,5 @@ export function touchesStagedCode(message, ranges) {
  * the PR, a repo rule with a backlog (`formbricks/…`) only that the line is new code.
  */
 export function stagedLinesLabel(ruleId) {
-  return ruleId?.startsWith("formbricks/") ? "error (new code)" : "error (SonarCloud, new code)";
+  return ruleId.startsWith("formbricks/") ? "error (new code)" : "error (SonarCloud, new code)";
 }

@@ -1,3 +1,6 @@
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, test } from "vitest";
 import { STAGED_LINES_RULE_IDS } from "@formbricks/config-oxlint/sonar-parity";
@@ -153,6 +156,28 @@ export const run = (work: () => Promise<void>) =>
     (error: unknown) => logger.error({ error }, "work failed")
   );
 `,
+  "concat-left.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.error(String(error) + " - work failed");
+  }
+};
+`,
+  "destructured-catch.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch ({ message }) {
+    logger.error({ message }, "work failed");
+  }
+};
+`,
+  "destructured-handler.ts": `import { logger } from "@formbricks/logger";
+export const run = (work: () => Promise<void>) =>
+  work().catch(({ message }: Error) => logger.error({ message }, "work failed"));
+`,
 };
 
 // None of these reports.
@@ -196,6 +221,42 @@ export const run = async (work: () => Promise<string[]>) => {
   // The first handler of `.then` receives the value, not a rejection.
   "then-fulfilled.ts": `import { logger } from "@formbricks/logger";
 export const run = (work: () => Promise<string>) => work().then((error) => logger.info({ error }, "done"));
+`,
+  // Members other than message, stack and cause carry no user text.
+  "harmless-member.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.error({ name: (error as Error).name }, "work failed");
+    throw error;
+  }
+};
+`,
+  // Only `+` builds a string; a comparison yields a boolean.
+  "comparison.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.warn({ timedOut: error === "timeout" }, "work failed");
+    throw error;
+  }
+};
+`,
+  // A function declared inside the handler binds its own parameter.
+  "function-declaration-shadow.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    function describe(error: string) {
+      logger.info({ error }, "item");
+    }
+    describe("a");
+    throw error;
+  }
+};
 `,
 };
 
@@ -255,4 +316,27 @@ describe("formbricks/loggable-error", () => {
       expect(ruleReports(wholeRepo.get(workspace)![`${dir}/shorthand.ts`])).toEqual([]);
     });
   });
+});
+
+/*
+ * The pre-commit runner, end to end: a file git does not track yet is new code throughout, so a raw log in
+ * it fails the commit, labelled as new code rather than as a SonarCloud finding.
+ */
+describe("the pre-commit runner", () => {
+  test("fails a new file that logs a caught error raw, as new code", () => {
+    const dir = mkdtempSync(path.join(root, "apps/web/modules/loggable-error-hook-"));
+    const file = path.join(dir, "raw.ts");
+    writeFileSync(file, raw["shorthand.ts"]);
+    try {
+      const { status, stdout } = spawnSync(process.execPath, ["scripts/lint-staged-oxlint.mjs", file], {
+        cwd: root,
+        encoding: "utf8",
+      });
+      expect(stdout).toContain("error (new code)");
+      expect(stdout).toContain(RULE);
+      expect(status).toBe(1);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 120_000);
 });

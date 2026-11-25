@@ -363,7 +363,8 @@ const preferReadOnlyProps = {
  * raw. pino writes an error's message, stack header and causes, and a message can carry prompts, file
  * text, OAuth codes or respondent answers (CODING_STANDARDS.md, "Errors").
  * - A caught error is a `catch (error)` binding, the first parameter of a `.catch(fn)` handler, or the
- *   first parameter of the rejection handler in `.then(onFulfilled, onRejected)`. A nested function
+ *   first parameter of the rejection handler in `.then(onFulfilled, onRejected)`. A destructured binding
+ *   (`catch ({ message })`) catches the `message`, `stack` and `cause` it names. A nested function
  *   parameter of the same name shadows it.
  * - A logger is an identifier named `logger`, `log` or `…Logger`, or a `withContext(…)` call on one.
  * - A logger-method argument leaks when it is the caught error, reads its `message`, `stack` or `cause`,
@@ -398,14 +399,28 @@ const isStringifier = (callee) =>
     callee.object.type === "Identifier" &&
     callee.object.name === "JSON");
 
-/** The parameter a promise handler receives the rejection in, or null when `fn` is no such handler. */
-const rejectionParam = (fn) => {
+/** The names a binding of the caught error puts in scope: the error itself, or what a pattern takes from it. */
+const caughtNames = (param) => {
+  if (param?.type === "Identifier") return new Set([param.name]);
+  if (param?.type !== "ObjectPattern") return new Set();
+  const names = param.properties
+    .filter(
+      (property) =>
+        property.type === "Property" &&
+        property.key.type === "Identifier" &&
+        LEAKY_MEMBERS.has(property.key.name) &&
+        property.value.type === "Identifier"
+    )
+    .map((property) => property.value.name);
+  return new Set(names);
+};
+
+/** Whether `fn` is the handler a promise passes its rejection to. */
+const isRejectionHandler = (fn) => {
   const call = fn.parent;
-  if (call?.type !== "CallExpression") return null;
+  if (call?.type !== "CallExpression") return false;
   const method = memberName(call.callee);
-  const isHandler = method === "catch" || (method === "then" && call.arguments[1] === fn);
-  const param = fn.params[0];
-  return isHandler && param?.type === "Identifier" ? param.name : null;
+  return method === "catch" || (method === "then" && call.arguments[1] === fn);
 };
 
 const paramNames = (fn) => new Set(fn.params.filter((p) => p.type === "Identifier").map((p) => p.name));
@@ -422,7 +437,7 @@ const loggableErrorRule = {
     const isCaught = (node) => {
       if (node.type !== "Identifier") return false;
       for (let index = frames.length - 1; index >= 0; index -= 1) {
-        if (frames[index].caught === node.name) return true;
+        if (frames[index].caught.has(node.name)) return true;
         if (frames[index].binds.has(node.name)) return false;
       }
       return false;
@@ -439,7 +454,7 @@ const loggableErrorRule = {
         case "BinaryExpression":
           return node.operator === "+" && (leaks(node.left) || leaks(node.right));
         case "CallExpression":
-          return isStringifier(node.callee) && node.arguments.length > 0 && leaks(node.arguments[0]);
+          return isStringifier(node.callee) && node.arguments.some(leaks);
         case "ObjectExpression":
           return node.properties.some((property) => property.type === "Property" && leaks(property.value));
         default:
@@ -448,14 +463,14 @@ const loggableErrorRule = {
     };
 
     const enterFunction = (fn) => {
-      const caught = rejectionParam(fn);
-      frames.push({ caught, binds: caught ? new Set() : paramNames(fn) });
+      const caught = isRejectionHandler(fn) ? caughtNames(fn.params[0]) : new Set();
+      frames.push({ caught, binds: paramNames(fn) });
     };
     const leave = () => frames.pop();
 
     return {
       CatchClause(node) {
-        frames.push({ caught: node.param?.type === "Identifier" ? node.param.name : null, binds: new Set() });
+        frames.push({ caught: caughtNames(node.param), binds: new Set() });
       },
       "CatchClause:exit": leave,
       ArrowFunctionExpression: enterFunction,
@@ -465,7 +480,7 @@ const loggableErrorRule = {
       FunctionDeclaration: enterFunction,
       "FunctionDeclaration:exit": leave,
       CallExpression(node) {
-        if (!frames.some((frame) => frame.caught)) return;
+        if (!frames.some((frame) => frame.caught.size > 0)) return;
         if (!LOG_METHODS.has(memberName(node.callee)) || !isLogger(node.callee.object)) return;
         for (const argument of node.arguments) {
           if (!leaks(argument)) continue;

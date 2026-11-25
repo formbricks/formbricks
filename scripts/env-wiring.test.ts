@@ -26,24 +26,52 @@ const readEnvKeys = () => {
 
 const mentions = (text: string, key: string) => new RegExp(`(?<![A-Z0-9_])${key}(?![A-Z0-9_])`).test(text);
 
+/** The variables `env.ts` reads that `text` does not mention and the baseline does not already list. */
+const unwired = (keys: string[], text: string, listed: string[]) =>
+  keys.filter((key) => !mentions(text, key) && !listed.includes(key));
+
+/** Baseline entries to delete: wired since, or no longer read by `env.ts`. */
+const stale = (keys: string[], text: string, listed: string[]) =>
+  listed.filter((key) => mentions(text, key) || !keys.includes(key));
+
 const keys = readEnvKeys();
-const wiredFiles = Object.keys(baseline) as (keyof typeof baseline)[];
+
+// Fixed here rather than read from the baseline, so a file whose gaps are all fixed is still checked.
+const WIRED_FILES = [
+  ".env.example",
+  "docker/docker-compose.yml",
+  "docs/self-hosting/configuration/environment-variables.mdx",
+] as const;
+const listedFor = (file: (typeof WIRED_FILES)[number]): string[] =>
+  (baseline as Record<string, string[] | undefined>)[file] ?? [];
 
 describe("environment variable wiring", () => {
   test("finds the variables, so the checks below are checking something", () => {
     expect(keys.length).toBeGreaterThan(100);
   });
 
-  test.each(wiredFiles)("%s: every variable the app reads is wired, or already in the baseline", (file) => {
-    const text = read(file);
-    const known = new Set<string>(baseline[file]);
-    const missing = keys.filter((key) => !mentions(text, key) && !known.has(key));
+  test("the baseline names only the files checked here", () => {
+    expect(Object.keys(baseline).sort()).toEqual([...WIRED_FILES].sort());
+  });
+
+  test.each(WIRED_FILES)("%s: every variable the app reads is wired, or already in the baseline", (file) => {
+    const missing = unwired(keys, read(file), listedFor(file));
     expect(missing, `wire these through ${file} (docs/agents/self-hosting-config.md)`).toEqual([]);
   });
 
-  test.each(wiredFiles)("%s: the baseline lists no variable that is wired or gone", (file) => {
-    const text = read(file);
-    const stale = baseline[file].filter((key) => mentions(text, key) || !keys.includes(key));
-    expect(stale, `delete these from scripts/env-wiring-baseline.json`).toEqual([]);
+  test.each(WIRED_FILES)("%s: the baseline lists no variable that is wired or gone", (file) => {
+    expect(
+      stale(keys, read(file), listedFor(file)),
+      "delete these from scripts/env-wiring-baseline.json"
+    ).toEqual([]);
+  });
+
+  test("a new variable fails; a wired or removed one is reported as a stale baseline entry", () => {
+    const text = "SMTP_HOST=\n";
+    expect(unwired(["SMTP_HOST", "NEW_SETTING"], text, [])).toEqual(["NEW_SETTING"]);
+    expect(stale(["SMTP_HOST"], text, ["SMTP_HOST", "REMOVED_SETTING"])).toEqual([
+      "SMTP_HOST",
+      "REMOVED_SETTING",
+    ]);
   });
 });
