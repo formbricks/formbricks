@@ -38,6 +38,30 @@ describe("getOneStepOperand", () => {
     expect(getOneStepOperand(operand, { ...sources, dataType: "number" })).toBeUndefined();
   });
 
+  // A survey that was not re-parsed can carry an operand the types rule out; it must apply nothing
+  // rather than write the object (assign), NaN (add) or "[object Object]" (concat) into the field.
+  test.each([
+    ["an operand kind this version does not know", { type: "futureKind", value: "x" }],
+    ["a static object", { type: "static", value: { nested: true } }],
+    ["a reference whose id is not text", { type: "hiddenField", value: 42 }],
+  ])("has nothing to apply for %s", (_label, operand) => {
+    expect(
+      getOneStepOperand(operand as unknown as TOneStepOperandValue, { ...sources, dataType: "string" })
+    ).toBeUndefined();
+  });
+
+  test.each([Number.NaN, Number.POSITIVE_INFINITY])("treats a reserved %s as nothing to apply", (value) => {
+    const reservedValues = { visitPagesViewed: value };
+    for (const dataType of ["number", "string"]) {
+      expect(
+        getOneStepOperand(
+          { type: "reserved", value: "visitPagesViewed" },
+          { data: {}, variables: {}, reservedValues, dataType }
+        )
+      ).toBeUndefined();
+    }
+  });
+
   test("reads nothing from reserved fields when the evaluator has none", () => {
     expect(
       getOneStepOperand(

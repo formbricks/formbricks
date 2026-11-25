@@ -35,8 +35,12 @@ export interface TOneStepOperandSources {
 const isNumericOperand = (value: string | number): boolean =>
   typeof value === "number" || (value.trim() !== "" && !Number.isNaN(Number(value)));
 
-/** A read field as an operand: text or a number, numeric text as a number for a `number` target. */
+/**
+ * A read field as an operand: text or a number, numeric text as a number for a `number` target. A number
+ * that is not finite is nothing to apply, as the formula form reads it as empty.
+ */
 const asOperand = (value: unknown, dataType: string): string | number | undefined => {
+  if (typeof value === "number" && !Number.isFinite(value)) return undefined;
   if (typeof value !== "number" && typeof value !== "string") return undefined;
   return dataType === "number" && isNumericOperand(value) ? Number(value) : value;
 };
@@ -75,23 +79,33 @@ export const getOneStepOperand = (
   operand: TOneStepOperandValue,
   { data, variables, reservedValues, dataType }: TOneStepOperandSources
 ): string | number | undefined => {
+  // The types say what a parsed survey holds; the runtime checks below hold for one that was not
+  // re-parsed (a stored or cached survey, a bundle older than the schema), so a malformed operand is
+  // nothing to apply rather than an object written into a field.
   switch (operand.type) {
     case "static":
-      return typeof operand.value === "boolean" ? undefined : operand.value;
+      return typeof operand.value === "string" || typeof operand.value === "number"
+        ? operand.value
+        : undefined;
     case "variable": {
+      if (typeof operand.value !== "string") return undefined;
       const variable = variables[operand.value];
       return typeof variable === "number" || typeof variable === "string" ? variable : undefined;
     }
     case "element":
     case "hiddenField":
-      return asOperand(data[operand.value], dataType);
+      return typeof operand.value === "string" ? asOperand(data[operand.value], dataType) : undefined;
     case "reserved":
-      return asReservedOperand(reservedValues?.[operand.value], dataType);
+      return typeof operand.value === "string"
+        ? asReservedOperand(reservedValues?.[operand.value], dataType)
+        : undefined;
     case "question":
       return undefined;
     default: {
+      // Compile time: an operand kind added to the schema must be handled here (ENG-7431).
       const unhandled: never = operand;
-      return unhandled;
+      void unhandled;
+      return undefined;
     }
   }
 };
