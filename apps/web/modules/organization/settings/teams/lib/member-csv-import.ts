@@ -219,12 +219,29 @@ export const splitAttributeCell = (cell: string): string[] => {
     }
   }
   values.push(current);
-  return values.map((value) => value.trim()).filter((value) => value !== "");
+  return values.map((value) => unprotectFormula(value.trim())).filter((value) => value !== "");
 };
 
-/** `splitAttributeCell` reversed: values joined with "; ", each one with a separator or quote quoted. */
+/**
+ * Spreadsheet formula protection that survives the round trip. A value that starts like a formula
+ * (`=Paris`), or with apostrophes before one (`'=Paris`), gets one more apostrophe on download, so a
+ * spreadsheet shows it as text; the import takes exactly one apostrophe off such a value again. An
+ * apostrophe before anything else (`'tis`) is left alone both ways.
+ */
+const PROTECTED_FORMULA = /^'*[=+\-@]/;
+const protectFormula = (value: string): string => (PROTECTED_FORMULA.test(value) ? `'${value}` : value);
+const unprotectFormula = (value: string): string =>
+  value.startsWith("'") && PROTECTED_FORMULA.test(value) ? value.slice(1) : value;
+
+/**
+ * `splitAttributeCell` reversed: values joined with "; ", each one with a separator or quote quoted, and
+ * formula-leading values protected (see `protectFormula`).
+ */
 export const joinAttributeCell = (values: readonly string[]): string =>
-  values.map((value) => (/[,;"\n\r\t]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value)).join("; ");
+  values
+    .map(protectFormula)
+    .map((value) => (/[,;"\n\r\t]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value))
+    .join("; ");
 
 /** "dashboard_viewer" as the import reads it back: words, not the translated label. */
 const toRoleCell = (role: string): string =>

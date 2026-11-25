@@ -88,13 +88,39 @@ export const getViewerAccessClaimForDataset = async (
 /** Where a summary's record probe runs: the workspace the dashboard reads from, as the caller. */
 export type TViewerAccessProbeScope = { workspaceId: string; actor: TCubeQueryActor };
 
+/** Probes run at once for one dashboard read, and how long a probe's answer is reused. */
+export const VIEWER_ACCESS_PROBE_CONCURRENCY = 4;
+const PROBE_CACHE_TTL_MS = 60_000;
+const PROBE_CACHE_MAX_ENTRIES = 10_000;
+
+/**
+ * Answers of recent probes, per viewer, dataset and claim, on this server. A dashboard read with many
+ * restricted datasets probes each at most once a minute for a viewer, so repeated reads (every open,
+ * every refresh) don't repeat the count queries. A changed attribute or row rule changes the claim, and
+ * with it the key, so it is never answered from an older claim.
+ */
+const probeCache = new Map<string, { matched: boolean; expiresAt: number }>();
+
+const readProbeCache = (key: string): boolean | undefined => {
+  const entry = probeCache.get(key);
+  if (!entry) return undefined;
+  if (entry.expiresAt > Date.now()) return entry.matched;
+  probeCache.delete(key);
+  return undefined;
+};
+
+const writeProbeCache = (key: string, matched: boolean) => {
+  if (probeCache.size >= PROBE_CACHE_MAX_ENTRIES) probeCache.clear();
+  probeCache.set(key, { matched, expiresAt: Date.now() + PROBE_CACHE_TTL_MS });
+};
+
+/** Clears the probe answers; for tests. */
+export const resetViewerAccessProbeCache = () => probeCache.clear();
+
 /**
  * Whether `reader` sees at least one record of `datasetId` under their access: one count query carrying
  * the same claim every chart read carries, so "matches nothing" means exactly what the charts would show.
  */
-/** The most restricted datasets one dashboard read probes for the "unmatched" state. */
-export const MAX_VIEWER_ACCESS_PROBES = 3;
-
 const hasMatchingRecord = async (
   reader: NonNullable<TViewerAccessReader>,
   datasetId: string,
@@ -126,8 +152,13 @@ const probeMatchingRecord = async (
   resolved: TResolvedViewerAccess,
   scope: TViewerAccessProbeScope
 ): Promise<boolean> => {
+  const key = JSON.stringify([reader.userId, datasetId, buildViewerAccessClaim(resolved)]);
+  const cached = readProbeCache(key);
+  if (cached !== undefined) return cached;
   try {
-    return await hasMatchingRecord(reader, datasetId, resolved, scope);
+    const matched = await hasMatchingRecord(reader, datasetId, resolved, scope);
+    writeProbeCache(key, matched);
+    return matched;
   } catch (error) {
     logger.warn(
       { error, datasetId, organizationId: reader.organizationId },
@@ -155,11 +186,19 @@ export const getViewerAccessSummary = async (
   const restricted = [...resolved.entries()].filter(
     (entry): entry is [string, TResolvedViewerAccess] => entry[1] !== null
   );
-  // One count query at a time, stopping at the first match, and at most `MAX_VIEWER_ACCESS_PROBES` per
-  // read: the probe only picks a message, so past the cap the viewer counts as matched and each chart
-  // shows what its own (claim-carrying) read returns.
-  for (const [datasetId, access] of restricted.slice(0, MAX_VIEWER_ACCESS_PROBES)) {
-    if (await probeMatchingRecord(reader, datasetId, access, probe)) return summary;
-  }
-  return restricted.length > MAX_VIEWER_ACCESS_PROBES ? summary : { ...summary, status: "unmatched" };
+  // Every restricted dataset is probed until one matches, so "unmatched" is only ever said when none
+  // does: a few at a time (`VIEWER_ACCESS_PROBE_CONCURRENCY`), no new probe once one matched, and each
+  // answer reused for a minute, so a dashboard with many datasets doesn't repeat them on every read.
+  let matched = false;
+  let next = 0;
+  const worker = async () => {
+    while (!matched && next < restricted.length) {
+      const [datasetId, access] = restricted[next++];
+      if (await probeMatchingRecord(reader, datasetId, access, probe)) matched = true;
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(VIEWER_ACCESS_PROBE_CONCURRENCY, restricted.length) }, worker)
+  );
+  return matched ? summary : { ...summary, status: "unmatched" };
 };

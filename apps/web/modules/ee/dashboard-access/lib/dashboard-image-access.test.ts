@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
-import { canReadDashboardImageFile, getDashboardImageFileDashboardId } from "./dashboard-image-access";
+import {
+  IMAGE_REFERENCE_MAX_ROUNDS,
+  canReadDashboardImageFile,
+  getDashboardImageFileDashboardId,
+} from "./dashboard-image-access";
 import { filterReadablePageIds } from "./spicedb-access";
 
 vi.mock("server-only", () => ({}));
@@ -55,5 +59,36 @@ describe("dashboard image downloads (ENG-7482)", () => {
     vi.mocked(filterReadablePageIds).mockResolvedValue(new Set(["page-1"]));
     vi.mocked(getIsDashboardViewerRoleEnabled).mockResolvedValueOnce(false);
     await expect(canReadDashboardImageFile("user-1", "ws-1", FILE)).resolves.toBe(false);
+  });
+
+  test("pages past the first batch of references until one is on a readable page", async () => {
+    const batch = (from: number, count: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `w${String(from + i).padStart(4, "0")}`,
+        pageId: `p${from + i}`,
+      }));
+    vi.mocked(prisma.dashboardWidget.findMany)
+      .mockReset()
+      .mockResolvedValueOnce(batch(0, 100) as never)
+      .mockResolvedValueOnce(batch(100, 100) as never);
+    vi.mocked(filterReadablePageIds)
+      .mockResolvedValueOnce(new Set())
+      .mockResolvedValueOnce(new Set(["p150"]));
+
+    await expect(canReadDashboardImageFile("user-1", "ws-1", FILE)).resolves.toBe(true);
+    expect(vi.mocked(prisma.dashboardWidget.findMany).mock.calls[1][0]).toMatchObject({
+      where: { id: { gt: "w0099" } },
+      orderBy: { id: "asc" },
+    });
+  });
+
+  test("stops at the request ceiling", async () => {
+    vi.mocked(prisma.dashboardWidget.findMany)
+      .mockReset()
+      .mockResolvedValue(Array.from({ length: 100 }, (_, i) => ({ id: `w${i}`, pageId: `p${i}` })) as never);
+    vi.mocked(filterReadablePageIds).mockResolvedValue(new Set());
+
+    await expect(canReadDashboardImageFile("user-1", "ws-1", FILE)).resolves.toBe(false);
+    expect(prisma.dashboardWidget.findMany).toHaveBeenCalledTimes(IMAGE_REFERENCE_MAX_ROUNDS);
   });
 });

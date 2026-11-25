@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import {
+  getDashboardReadSubject,
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
@@ -31,6 +32,7 @@ import {
   getDashboardResourceRow,
   getDashboardWorkspaceRow,
   listDashboardRows,
+  listReadableDashboardRows,
   renameDashboardRow,
 } from "./service";
 
@@ -182,6 +184,21 @@ describe("listV3Dashboards", () => {
       }
     );
     expect(listDashboardRows).not.toHaveBeenCalled();
+  });
+
+  test("a Dashboard Viewer's list walks readable rows, and resumes after the scan ceiling", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValue({ ...granted, asDashboardViewer: true } as never);
+    vi.mocked(getDashboardReadSubject).mockReturnValueOnce({ type: "user", id: "viewer-1" } as never);
+    const last = listRow("clda000000000000000000099", "2026-02-01T00:00:00.000Z");
+    vi.mocked(listReadableDashboardRows).mockResolvedValue({ rows: [], resumeAfter: last });
+
+    const response = await list();
+
+    expect(response.status).toBe(200);
+    expect(listDashboardRows).not.toHaveBeenCalled();
+    const body = await response.json();
+    expect(body.data).toEqual([]);
+    expect(typeof body.meta.nextCursor).toBe("string");
   });
 
   test("scopes the read to the authorized workspace and serializes a widget count", async () => {

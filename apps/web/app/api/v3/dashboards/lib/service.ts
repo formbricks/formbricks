@@ -143,14 +143,17 @@ export const listDashboardRows = ({
   });
 };
 
-/** Candidates read per round while filling a Dashboard Viewer's list page. */
+/** Candidates read per round while filling a Dashboard Viewer's list page, and the most rounds per request. */
 const READABLE_SCAN_BATCH = 100;
+export const READABLE_SCAN_MAX_ROUNDS = 10;
 
 /**
  * A list page for a caller who may not open every dashboard (a Dashboard Viewer): walks candidate rows
  * in list order, a batch at a time, and keeps the ones `readable` allows until the page (plus one, for
- * the next cursor) is full or the candidates run out. Each round is one bounded query and one bounded
- * bulk check, so no request builds an ID set of the whole workspace.
+ * the next cursor) is full or the candidates run out. One request reads at most
+ * `READABLE_SCAN_MAX_ROUNDS` batches (1,000 candidates): when that ceiling stops the walk first,
+ * `resumeAfter` is the last candidate read, and the next page starts after it — a page can then be short,
+ * even empty, and still have a next cursor.
  */
 export const listReadableDashboardRows = async ({
   filter,
@@ -162,23 +165,23 @@ export const listReadableDashboardRows = async ({
   cursor: { value: string; id: string } | null;
   limit: number;
   readable: (ids: readonly string[]) => Promise<ReadonlySet<string>>;
-}): Promise<TDashboardListRow[]> => {
-  const kept: TDashboardListRow[] = [];
+}): Promise<{ rows: TDashboardListRow[]; resumeAfter: TDashboardListRow | null }> => {
+  const rows: TDashboardListRow[] = [];
   let scanCursor = cursor;
-  for (;;) {
+  for (let round = 0; round < READABLE_SCAN_MAX_ROUNDS; round++) {
     // `listDashboardRows` reads `limit + 1`; one more than the batch tells whether candidates remain.
     const batch = await listDashboardRows({ filter, cursor: scanCursor, limit: READABLE_SCAN_BATCH - 1 });
-    if (batch.length === 0) return kept;
-    const allowed = await readable(batch.map(({ id }) => id));
+    const allowed = batch.length > 0 ? await readable(batch.map(({ id }) => id)) : new Set<string>();
     for (const row of batch) {
-      if (allowed.has(row.id)) kept.push(row);
-      if (kept.length > limit) return kept;
+      if (allowed.has(row.id)) rows.push(row);
+      if (rows.length > limit) return { rows, resumeAfter: null };
     }
-    if (batch.length < READABLE_SCAN_BATCH) return kept;
     const last = batch.at(-1);
-    if (!last) return kept;
+    if (!last || batch.length < READABLE_SCAN_BATCH) return { rows, resumeAfter: null };
+    if (round === READABLE_SCAN_MAX_ROUNDS - 1) return { rows, resumeAfter: last };
     scanCursor = { value: last.createdAt.toISOString(), id: last.id };
   }
+  return { rows, resumeAfter: null };
 };
 
 /** A new dashboard, with its first page ("Overview"): every dashboard has at least one. */

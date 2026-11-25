@@ -12,6 +12,10 @@ export const getDashboardImageFileDashboardId = (fileName: string): string | nul
   return dashboardId;
 };
 
+/** Image blocks read per round when authorizing a download, and the most rounds per request. */
+const IMAGE_REFERENCE_BATCH = 100;
+export const IMAGE_REFERENCE_MAX_ROUNDS = 20;
+
 /**
  * Whether `userId` may download a dashboard image upload (ENG-7482) without reading the workspace: a
  * Dashboard Viewer may, when an image block on a page they open (`dashboardPage.read`), on any dashboard
@@ -30,20 +34,36 @@ export const canReadDashboardImageFile = async (
   // Any image block of this workspace showing exactly this file counts, not only blocks on the dashboard
   // that uploaded it: a duplicated dashboard, or an API/MCP save, may show another dashboard's upload,
   // and widget writes accept any dashboard upload of the workspace (`isDashboardImageUrl`).
-  const [workspace, widgets] = await Promise.all([
-    prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
-    prisma.dashboardWidget.findMany({
-      where: { kind: "image", content: { path: ["fileUrl"], equals: fileUrl }, dashboard: { workspaceId } },
-      select: { pageId: true },
-      take: 50,
-    }),
-  ]);
-  if (!workspace || widgets.length === 0) return false;
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { organizationId: true },
+  });
+  if (!workspace) return false;
   if (!(await getIsDashboardViewerRoleEnabled(workspace.organizationId))) return false;
 
-  const readable = await filterReadablePageIds(
-    { type: "user", id: userId },
-    widgets.map(({ pageId }) => pageId)
-  );
-  return readable.size > 0;
+  // Every block showing the file is a way in, so the references are paged (in id order) until one is on a
+  // readable page. The ceiling bounds one request; a file shown on more pages than that is refused past it.
+  let afterId: string | undefined;
+  for (let round = 0; round < IMAGE_REFERENCE_MAX_ROUNDS; round++) {
+    const widgets = await prisma.dashboardWidget.findMany({
+      where: {
+        kind: "image",
+        content: { path: ["fileUrl"], equals: fileUrl },
+        dashboard: { workspaceId },
+        ...(afterId ? { id: { gt: afterId } } : {}),
+      },
+      select: { id: true, pageId: true },
+      orderBy: { id: "asc" },
+      take: IMAGE_REFERENCE_BATCH,
+    });
+    if (widgets.length === 0) return false;
+    const readable = await filterReadablePageIds(
+      { type: "user", id: userId },
+      widgets.map(({ pageId }) => pageId)
+    );
+    if (readable.size > 0) return true;
+    if (widgets.length < IMAGE_REFERENCE_BATCH) return false;
+    afterId = widgets.at(-1)?.id;
+  }
+  return false;
 };

@@ -7,7 +7,8 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
 import { Badge } from "@/modules/ui/components/multi-select/badge";
-import { addChips, hasChipSeparator, splitChipInput } from "@/modules/ui/components/tags-combobox/lib/chips";
+import { splitPastedInput, splitTypedInput } from "@/modules/ui/components/multi-select/lib/typed-input";
+import { addChips } from "@/modules/ui/components/tags-combobox/lib/chips";
 import { NO_AUTOFILL_PROPS } from "@/modules/ui/lib/no-autofill";
 import { cn } from "@/modules/ui/lib/utils";
 
@@ -210,23 +211,21 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   const splitsTyping = creatable && splitOnSeparators;
 
   const handleInputChange = (next: string) => {
-    if (!splitsTyping || !hasChipSeparator(next)) {
+    if (!splitsTyping) {
       setInputValue(next);
       return;
     }
-    // Everything before the last separator is done; what follows it is still being typed.
-    const parts = next.split(/[,;\n\r\t]/);
-    const rest = parts.pop() ?? "";
-    addTypedValues(parts);
-    setInputValue(rest.trimStart());
+    const { commit, rest } = splitTypedInput(next);
+    if (commit.length > 0) addTypedValues(commit);
+    setInputValue(rest);
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     if (!splitsTyping) return;
-    const pasted = e.clipboardData.getData("text");
-    if (!hasChipSeparator(pasted)) return;
+    const values = splitPastedInput(inputValue, e.clipboardData.getData("text"));
+    if (!values) return;
     e.preventDefault();
-    addTypedValues(splitChipInput(`${inputValue}${pasted}`));
+    addTypedValues(values);
     setInputValue("");
   };
 

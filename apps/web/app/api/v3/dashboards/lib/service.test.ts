@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
+  READABLE_SCAN_MAX_ROUNDS,
   createDashboardRow,
   deleteDashboardRow,
   duplicateDashboardRow,
@@ -345,8 +346,14 @@ describe("duplicateDashboardRow", () => {
 });
 
 describe("listReadableDashboardRows", () => {
-  const row = (n: number) => ({ id: `dash-${n}`, createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, 1000 - n)) });
+  const row = (n: number) => ({ id: `dash-${n}`, createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, 5000 - n)) });
   const rows = (from: number, count: number) => Array.from({ length: count }, (_, i) => row(from + i));
+  const args = (limit: number, readable: (ids: readonly string[]) => Promise<ReadonlySet<string>>) => ({
+    filter: { workspaceId: WORKSPACE_ID },
+    cursor: null,
+    limit,
+    readable,
+  });
 
   beforeEach(() => {
     vi.mocked(prisma.dashboard.findMany).mockReset();
@@ -361,14 +368,10 @@ describe("listReadableDashboardRows", () => {
       async (ids: readonly string[]) => new Set(ids.filter((id) => Number(id.slice(5)) % 40 === 0))
     );
 
-    const result = await listReadableDashboardRows({
-      filter: { workspaceId: WORKSPACE_ID },
-      cursor: null,
-      limit: 4,
-      readable,
-    });
+    const result = await listReadableDashboardRows(args(4, readable));
 
-    expect(result.map(({ id }) => id)).toEqual(["dash-0", "dash-40", "dash-80", "dash-120", "dash-160"]);
+    expect(result.rows.map(({ id }) => id)).toEqual(["dash-0", "dash-40", "dash-80", "dash-120", "dash-160"]);
+    expect(result.resumeAfter).toBeNull();
     expect(readable).toHaveBeenCalledTimes(2);
     expect(readable.mock.calls[0][0]).toHaveLength(100);
     expect(vi.mocked(prisma.dashboard.findMany).mock.calls[1][0]!.where).toMatchObject({
@@ -378,16 +381,28 @@ describe("listReadableDashboardRows", () => {
 
   test("stops when the candidates run out", async () => {
     vi.mocked(prisma.dashboard.findMany).mockResolvedValueOnce(rows(0, 3) as never);
-    const readable = vi.fn(async () => new Set(["dash-1"]));
-
-    const result = await listReadableDashboardRows({
-      filter: { workspaceId: WORKSPACE_ID },
-      cursor: null,
-      limit: 20,
-      readable,
-    });
-
-    expect(result.map(({ id }) => id)).toEqual(["dash-1"]);
+    const result = await listReadableDashboardRows(
+      args(
+        20,
+        vi.fn(async () => new Set(["dash-1"]))
+      )
+    );
+    expect(result).toEqual({ rows: [row(1)], resumeAfter: null });
     expect(prisma.dashboard.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  test("reads at most READABLE_SCAN_MAX_ROUNDS batches, and says where to resume", async () => {
+    for (let round = 0; round < READABLE_SCAN_MAX_ROUNDS + 2; round++) {
+      vi.mocked(prisma.dashboard.findMany).mockResolvedValueOnce(rows(round * 100, 100) as never);
+    }
+    const result = await listReadableDashboardRows(
+      args(
+        20,
+        vi.fn(async () => new Set<string>())
+      )
+    );
+    expect(prisma.dashboard.findMany).toHaveBeenCalledTimes(READABLE_SCAN_MAX_ROUNDS);
+    expect(result.rows).toEqual([]);
+    expect(result.resumeAfter).toEqual(row(READABLE_SCAN_MAX_ROUNDS * 100 - 1));
   });
 });

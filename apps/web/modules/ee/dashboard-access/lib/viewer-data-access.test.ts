@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { getMemberAttributeValuesByKey } from "@/modules/ee/member-attributes/lib/service";
-import { MAX_VIEWER_ACCESS_PROBES, getViewerAccessSummary } from "./viewer-data-access";
+import {
+  VIEWER_ACCESS_PROBE_CONCURRENCY,
+  getViewerAccessSummary,
+  resetViewerAccessProbeCache,
+} from "./viewer-data-access";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({
@@ -17,6 +21,7 @@ const probe = { workspaceId: "ws_1", actor: { type: "user" as const, id: "user_1
 
 describe("getViewerAccessSummary", () => {
   beforeEach(() => {
+    resetViewerAccessProbeCache();
     vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue([
       {
         id: "ds_1",
@@ -72,20 +77,30 @@ describe("getViewerAccessSummary", () => {
 
     beforeEach(() => vi.mocked(runChartQuery).mockReset());
 
-    test("probes one dataset at a time and stops at the first match", async () => {
-      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue(datasets(3) as never);
+    test("starts no new probe once one dataset matched", async () => {
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue(datasets(20) as never);
       vi.mocked(runChartQuery).mockResolvedValue({ rows: [{ "FeedbackRecords.count": 1 }] } as never);
-      const ids = ["ds_0", "ds_1", "ds_2"];
+      const ids = Array.from({ length: 20 }, (_, i) => `ds_${i}`);
       expect((await getViewerAccessSummary(reader, ids, probe)).status).toBe("restricted");
-      expect(runChartQuery).toHaveBeenCalledTimes(1);
+      expect(runChartQuery).toHaveBeenCalledTimes(VIEWER_ACCESS_PROBE_CONCURRENCY);
     });
 
-    test("runs at most MAX_VIEWER_ACCESS_PROBES probes, and stays restricted past them", async () => {
-      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue(datasets(250) as never);
+    test("is unmatched when none of many restricted datasets matches", async () => {
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue(datasets(12) as never);
       vi.mocked(runChartQuery).mockResolvedValue({ rows: [{ "FeedbackRecords.count": 0 }] } as never);
-      const ids = Array.from({ length: 250 }, (_, i) => `ds_${i}`);
-      expect((await getViewerAccessSummary(reader, ids, probe)).status).toBe("restricted");
-      expect(runChartQuery).toHaveBeenCalledTimes(MAX_VIEWER_ACCESS_PROBES);
+      const ids = Array.from({ length: 12 }, (_, i) => `ds_${i}`);
+      expect((await getViewerAccessSummary(reader, ids, probe)).status).toBe("unmatched");
+      expect(runChartQuery).toHaveBeenCalledTimes(12);
+    });
+
+    test("reuses recent probe answers on the next read", async () => {
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue(datasets(12) as never);
+      vi.mocked(runChartQuery).mockResolvedValue({ rows: [{ "FeedbackRecords.count": 0 }] } as never);
+      const ids = Array.from({ length: 12 }, (_, i) => `ds_${i}`);
+      await getViewerAccessSummary(reader, ids, probe);
+      vi.mocked(runChartQuery).mockClear();
+      expect((await getViewerAccessSummary(reader, ids, probe)).status).toBe("unmatched");
+      expect(runChartQuery).not.toHaveBeenCalled();
     });
   });
 });

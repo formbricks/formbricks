@@ -60,7 +60,10 @@ interface BulkInviteTabProps {
 type TAttributeImportContext = {
   keys: TCsvAttributeKey[];
   existingEmails: string[];
+  /** True until both reads succeeded: also while one failed, so no plan is built from empty lists. */
   isLoading: boolean;
+  /** One of the reads failed: the preview and the import stay blocked, with an error. */
+  hasLoadError: boolean;
   applyAttributes: (
     rows: { email: string; attributes: Record<string, string[]> }[]
   ) => Promise<{ updatedMembers: number; updatedInvites: number; unknownEmails: number; invalid: number }>;
@@ -176,10 +179,21 @@ const BulkInviteTabWithAttributes = (props: Readonly<BulkInviteTabProps>) => {
     () => ({
       keys: (keysQuery.data ?? []).map(({ key, label }) => ({ key, label })),
       existingEmails: (rowsQuery.data ?? []).map((row) => row.email),
-      isLoading: keysQuery.isLoading || rowsQuery.isLoading,
+      // A failed read would read as "no attribute keys" or "nobody exists yet": real columns would be
+      // ignored and existing members invited again. Only successful reads build a plan.
+      isLoading: !keysQuery.isSuccess || !rowsQuery.isSuccess,
+      hasLoadError: keysQuery.isError || rowsQuery.isError,
       applyAttributes: async (rows) => (await bulkMutation.mutateAsync(rows)).summary,
     }),
-    [keysQuery.data, keysQuery.isLoading, rowsQuery.data, rowsQuery.isLoading, bulkMutation]
+    [
+      keysQuery.data,
+      keysQuery.isSuccess,
+      keysQuery.isError,
+      rowsQuery.data,
+      rowsQuery.isSuccess,
+      rowsQuery.isError,
+      bulkMutation,
+    ]
   );
   return <BulkInviteTabBody {...props} attributeContext={context} />;
 };
@@ -278,7 +292,7 @@ const BulkInviteTabBody = ({
   // the preview and the import.
   const plan: TMemberCsvPlan | null = useMemo(
     () =>
-      attributeContext && previewRows.length > 0
+      attributeContext && !attributeContext.isLoading && previewRows.length > 0
         ? planMemberCsvImport({
             headers,
             rows: previewRows,
@@ -314,7 +328,13 @@ const BulkInviteTabBody = ({
   };
 
   const onImport = async () => {
-    if (!csvFile || !previewRows.length || !isBulkInviteAllowed || isImporting) {
+    if (
+      !csvFile ||
+      !previewRows.length ||
+      !isBulkInviteAllowed ||
+      isImporting ||
+      attributeContext?.isLoading
+    ) {
       return;
     }
 
@@ -412,6 +432,13 @@ const BulkInviteTabBody = ({
             </AlertDescription>
           </Alert>
         )}
+        {attributeContext?.hasLoadError ? (
+          <Alert variant="error">
+            <AlertDescription className="whitespace-normal">
+              {t("workspace.settings.members.attributes_load_failed")}
+            </AlertDescription>
+          </Alert>
+        ) : null}
         {error ? (
           <Alert variant="error">
             <AlertDescription className="break-words whitespace-normal">{error}</AlertDescription>

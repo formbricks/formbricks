@@ -15,9 +15,11 @@ import {
 } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
+  CURSOR_VERSION,
   buildKeysetPage,
   computeFilterFingerprint,
   decodeKeysetCursor,
+  encodeKeysetCursor,
 } from "@/app/api/v3/lib/keyset-cursor";
 import {
   createdResponse,
@@ -139,17 +141,29 @@ export async function listV3Dashboards({
       }
     }
 
-    const rows = readable
+    const scan = readable
       ? await listReadableDashboardRows({ filter, cursor, limit: query.limit, readable })
-      : await listDashboardRows({ filter, cursor, limit: query.limit });
-    const { page, nextCursor } = buildKeysetPage({
-      rows,
+      : { rows: await listDashboardRows({ filter, cursor, limit: query.limit }), resumeAfter: null };
+    const built = buildKeysetPage({
+      rows: scan.rows,
       limit: query.limit,
       kind: DASHBOARDS_CURSOR_KIND,
       sortBy: DASHBOARDS_SORT,
       fp,
       sortValue: (row) => row.createdAt,
     });
+    // A Dashboard Viewer's walk stopped at its ceiling: the next page resumes after the last candidate read.
+    const page = built.page;
+    const nextCursor = scan.resumeAfter
+      ? encodeKeysetCursor({
+          version: CURSOR_VERSION,
+          kind: DASHBOARDS_CURSOR_KIND,
+          sortBy: DASHBOARDS_SORT,
+          fp,
+          value: scan.resumeAfter.createdAt.toISOString(),
+          id: scan.resumeAfter.id,
+        })
+      : built.nextCursor;
 
     return successListResponse(
       page.map(serializeV3DashboardListItem),

@@ -1,3 +1,4 @@
+import Papa from "papaparse";
 import { describe, expect, test } from "vitest";
 import { MEMBER_ATTRIBUTE_MAX_BULK_ROWS } from "@/modules/ee/member-attributes/lib/limits";
 import {
@@ -179,5 +180,34 @@ describe("attribute cells", () => {
     const values = ["Washington, D.C.", "Oslo", 'A "quoted"; value', "Tab\there"];
     expect(splitAttributeCell(joinAttributeCell(values))).toEqual(values);
     expect(joinAttributeCell(["Sweden", "Norway"])).toBe("Sweden; Norway");
+  });
+});
+
+describe("member list download → CSV → import", () => {
+  test("re-importing an untouched download keeps every value exactly, formula-leading ones too", () => {
+    const values = {
+      city: ["=Paris", "Washington, D.C.", "'=Quoted", "-5", "'tis", 'Say "hi"'],
+      country: ["+Sweden"],
+    };
+    const keys = [
+      { key: "city", label: "City" },
+      { key: "country", label: "Country" },
+    ];
+    const csv = buildMemberCsvExport(
+      [{ name: "Anna", email: "anna@example.com", role: "member", teams: [], attributes: values }],
+      keys
+    );
+    // A spreadsheet sees no formula: every protected cell starts with an apostrophe.
+    expect(csv).not.toMatch(/(^|,)"[=+\-@]/m);
+
+    const parsed = Papa.parse<Record<string, string>>(csv, { header: true, skipEmptyLines: true });
+    const plan = planMemberCsvImport({
+      headers: parsed.meta.fields ?? [],
+      rows: parsed.data,
+      attributeKeys: keys,
+      existingEmails: ["anna@example.com"],
+    });
+
+    expect(plan.entries[0].attributes).toEqual(values);
   });
 });
