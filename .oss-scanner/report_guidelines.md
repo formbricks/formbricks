@@ -9,8 +9,10 @@ more. Sections, in this order:
 2. **Summary** — what is wrong and why it matters, in two or three sentences.
 3. **Affected code** — file paths and function names, plus the deployment
    configuration the finding needs (self-hosted or Cloud, feature flags, plan).
-4. **Attacker starting position** — anonymous, workspace member, workspace
-   admin, organization owner, instance admin.
+4. **Attacker starting position** — anonymous, or an organization role
+   (`owner`, `manager`, `member`, `billing`, `dashboard_viewer`) plus, for a
+   `member` or `dashboard_viewer`, the team permission on the target workspace
+   (`read`, `readWrite`, `manage`).
 5. **Reproduction** — the smallest sequence that demonstrates the issue:
    request(s), payload, test, or code excerpt. Prefer a runnable unit test.
 6. **Impact** — what the attacker gains, and which tenant or role boundary is
@@ -21,8 +23,9 @@ more. Sections, in this order:
 
 - Whether the bug is reachable unauthenticated.
 - The exact endpoint or UI route that reaches the faulty code.
-- Which boundary it crosses (anonymous → user, user → user, workspace →
-  workspace, role escalation) or that it is contained in one workspace.
+- Which boundary it crosses (anonymous → user, user → user, organization →
+  organization, into an ungranted workspace of the same organization, role or
+  team-permission escalation) or that it is contained in one workspace.
 - Any precondition: an enabled feature, a configured integration, a non-default
   environment variable.
 

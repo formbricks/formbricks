@@ -10,7 +10,8 @@
 - Do not add dependencies. Do not change database migrations unless the
   vulnerability requires it.
 - Keep the existing tenant scoping and authorization helpers
-  (`lib/workspace/auth`, `lib/authzed`, `lib/api`); a patch that bypasses them
+  (`apps/web/lib/workspace/auth.ts`, `apps/web/lib/authzed`,
+  `apps/web/modules/api/lib/api-key-auth.ts`); a patch that bypasses them
   is not acceptable even if it fixes the symptom.
 
 ## Code style

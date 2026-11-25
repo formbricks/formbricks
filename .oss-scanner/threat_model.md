@@ -4,14 +4,28 @@
 
 Formbricks is an experience-management platform: a Next.js web app
 (`apps/web`), a deployment-check app (`apps/deployment-check`), and shared
-packages (`packages/*`). It is deployed self-hosted or as Formbricks Cloud. One
-instance serves many organizations ("workspaces"): each organization has an
-owner, managers, members and a billing role; each workspace holds surveys,
-contacts, responses, segments, actions, integrations, API keys and members.
+packages (`packages/*`). It is deployed self-hosted or as Formbricks Cloud.
 
-The application is multi-tenant. The **workspace/organization is the tenant
-boundary**, and the database, Redis, S3-compatible storage and SpiceDB (AuthZed)
-are shared by every tenant.
+One instance serves many **organizations**. Each organization contains one or
+more **workspaces**; a workspace holds surveys, contacts, responses, segments,
+actions, integrations, dashboards and stored files, and API keys are granted
+per workspace.
+
+- A user's **organization role** is `owner`, `manager`, `member`, `billing` or
+  `dashboard_viewer`. Owners and managers reach every workspace in the
+  organization. `billing` manages the subscription only. `dashboard_viewer`
+  reads the saved dashboards of the workspaces its teams are granted, and never
+  surveys, responses, contacts or feedback records.
+- `member` and `dashboard_viewer` reach a workspace only through a **team**. A
+  team is granted `read`, `readWrite` or `manage` on each workspace, and a
+  user's **team role** is `admin` or `contributor`.
+
+The application is multi-tenant. **Both the organization and the workspace are
+tenant boundaries**: a user must not reach another organization, nor a
+workspace in their own organization that none of their teams is granted. The
+database, Redis, S3-compatible storage and SpiceDB (AuthZed) are shared by
+every tenant. There is no in-app instance-admin role; whoever operates the
+server is trusted.
 
 ## Where untrusted input enters
 
@@ -55,7 +69,7 @@ Treat all of the following as adversarial:
 - `packages/storage`, `packages/ai`, `packages/jobs`, `packages/workflows` —
   file handling, model calls, background jobs.
 
-Lower priority (still in scope, but rate findings accordingly): `apps/storybook`,
+Lower priority (still in scope, but rate findings accordingly):
 `apps/deployment-check`, `docker/`, `charts/`, `docs/`, `scripts/`, generated
 Prisma output, translations and test fixtures.
 
@@ -63,9 +77,11 @@ Prisma output, translations and test fixtures.
 
 - Dependencies are installed and the library packages are built, including the Prisma
   client and the survey/JS bundles. The web app is audited from source: its production
-  `next build` needs more than 8 GB and is deliberately not part of the image.
-- Run unit tests with `pnpm --filter <package> test`, for example
-  `pnpm --filter @formbricks/web test`.
+  `next build` is not part of the image.
+- Prove a finding with a focused unit test, for example
+  `pnpm --filter @formbricks/web exec vitest run lib/membership/utils.test.ts`.
+  Library suites run whole with `pnpm --filter <package> test`; the full
+  `@formbricks/web` suite (about 1,700 files) is slow on a small machine.
 - The stack cannot be started offline: Postgres, Redis, SpiceDB and an S3
   endpoint are not available inside the scanner. Do not report "cannot connect
   to <service>" as a vulnerability, and do not assume E2E/integration tests can
@@ -82,12 +98,14 @@ internet, with more than one tenant on the instance.
   with data exfiltration; arbitrary file read/write outside the intended upload
   scope; a public survey endpoint that lets an anonymous attacker take over a
   workspace.
-- **High** — cross-workspace IDOR or data leak; privilege escalation to
-  organization owner/manager; authenticated RCE; SSRF reaching internal
+- **High** — IDOR or data leak across organizations, or into a workspace of
+  the same organization that none of the attacker's teams is granted;
+  privilege escalation to organization owner/manager; authenticated RCE; SSRF reaching internal
   services or cloud metadata; stored XSS in another user's admin session;
   disclosure of API keys, secrets or session tokens; account takeover through
   auth logic.
-- **Medium** — same-tenant IDOR between roles; stored XSS whose impact stays
+- **Medium** — IDOR between roles or team permissions inside one workspace
+  the attacker can already reach; stored XSS whose impact stays
   inside the attacker's own session/workspace; CSRF on state-changing actions;
   open redirect; rate-limit bypass enabling response or invitation spam;
   authenticated DoS.
@@ -96,9 +114,11 @@ internet, with more than one tenant on the instance.
   issues that only exist in dev-only packages or test fixtures.
 
 Do not inflate severity based on a hypothetical misconfiguration. State the
-attacker's starting position explicitly (anonymous, workspace member, workspace
-admin, instance admin). A finding that requires the instance admin or database
-owner to be malicious is not a vulnerability.
+attacker's starting position explicitly: anonymous, an organization role
+(`owner`, `manager`, `member`, `billing`, `dashboard_viewer`), and for a
+`member` or `dashboard_viewer` the team permission on the target workspace
+(`read`, `readWrite`, `manage`). A finding that requires the server operator or
+database owner to be malicious is not a vulnerability.
 
 ## Out of scope
 

@@ -1,9 +1,10 @@
 # Build context for .oss-scanner/Dockerfile (the Anthropic OSS Scanner image).
 #
 # BuildKit uses <Dockerfile>.dockerignore instead of the repository's root .dockerignore when
-# both exist. The root one is an allowlist for the production image; the scanner needs the whole
-# repository (docs, charts, scripts, agent notes) so an offline agent can read it, minus caches,
-# generated output and anything machine-local or secret.
+# both exist. The root one is an allowlist for the production image; the scanner needs the source
+# tree (docs, charts, scripts, AGENTS.md) so an offline agent can read it. Left out: caches,
+# generated output, anything machine-local or secret, editor and agent tooling (.claude, .cursor),
+# and code that cannot run offline or is not shipped (Playwright E2E specs, Storybook stories).
 
 .git
 .gitignore

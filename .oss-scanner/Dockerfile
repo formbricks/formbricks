@@ -2,7 +2,10 @@
 #
 # The scanner builds this image with network access, then runs its audit offline, so every
 # dependency, generated client and build artifact an agent needs must be produced here.
-# Toolchain mirrors apps/web/Dockerfile: Node 26 (see .nvmrc) and pnpm 11.7.0 (packageManager).
+# Node follows the floating 26 tag on purpose: this image has no Dependabot entry and is not covered
+# by apps/web/lib/node-version-alignment.test.ts, so it takes the latest 26.x that satisfies
+# `engines` instead of an exact pin (.nvmrc, apps/web/Dockerfile) that would silently go stale.
+# pnpm 11.7.0 matches `packageManager` in the root package.json.
 
 FROM node:26-bookworm-slim
 
@@ -23,8 +26,9 @@ RUN npm install --global --ignore-scripts pnpm@11.7.0
 COPY . /src
 WORKDIR /src
 
-# Build-time placeholders only. `prisma generate` and `next build` validate that these are
-# present; nothing in the image connects to the services they point at (the audit is offline).
+# Placeholders only, for the build tasks and unit tests that read them; nothing in the image
+# connects to the services they point at (the audit is offline). NEXTAUTH_SECRET is the legacy
+# name Better Auth still accepts.
 ENV DATABASE_URL=postgresql://test:test@localhost:5432/formbricks \
     ENCRYPTION_KEY=0123456789abcdef0123456789abcdef \
     NEXTAUTH_SECRET=build-time-placeholder \
@@ -45,10 +49,10 @@ RUN pnpm install --frozen-lockfile
 # Build every library workspace the way CI does, including @formbricks/database#generate
 # (Prisma client) and the bundles the web app serves. Two tasks at a time keeps memory bounded.
 #
-# The web app's production `next build` is deliberately not run here: it asks V8 for an 8192 MB
-# heap (apps/web/package.json) and Turbopack needs more than an 8 GB machine, while the audit
-# reads and tests the TypeScript sources directly. Run it yourself if a finding needs it:
-#   pnpm --filter @formbricks/web build
+# The web app's production `next build` is deliberately not run here: the audit reads and unit-tests
+# the TypeScript sources directly, and the build output adds nothing it needs. The build also asks
+# V8 for an 8192 MB heap (apps/web/package.json), more than the audit machine has, so do not run it
+# during the audit either.
 RUN pnpm build --filter='!@formbricks/web' --concurrency=2
 
 # Sanity-check the image with the cheap unit suites. Failures are warnings, per the scanner
