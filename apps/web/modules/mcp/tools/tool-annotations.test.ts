@@ -7,14 +7,23 @@ import { describe, expect, test, vi } from "vitest";
  * `docs/development/technical-handbook/mcp-server.mdx` did not hold them: new write tools shipped with
  * `destructiveHint: false` on overwrites and removals (`update_chart`, `remove_chart_from_dashboard`,
  * `archive_workflow`), which tells MCP clients they need no confirmation. This walks every registration
- * across the tool modules, so a new tool is checked without anyone adding it to a list.
+ * across the tool modules, so a new tool is checked without anyone adding it to a list. It requires all
+ * four hints to be present, not just the two with name-derived rules; which value each one takes stays
+ * the author's call.
  */
 
 type TPermission = { permission: string; level: string };
 
 type TRegistration = {
   name: string;
-  annotations: { readOnlyHint?: unknown; destructiveHint?: unknown } | undefined;
+  annotations:
+    | {
+        readOnlyHint?: unknown;
+        destructiveHint?: unknown;
+        idempotentHint?: unknown;
+        openWorldHint?: unknown;
+      }
+    | undefined;
   permissions: TPermission[];
 };
 
@@ -103,6 +112,13 @@ describe("MCP tool annotations", () => {
       const found: string[] = [];
       if (typeof readOnly !== "boolean" || typeof destructive !== "boolean") {
         found.push(`${name}: readOnlyHint and destructiveHint must both be set`);
+        return found;
+      }
+      if (
+        typeof annotations?.idempotentHint !== "boolean" ||
+        typeof annotations?.openWorldHint !== "boolean"
+      ) {
+        found.push(`${name}: idempotentHint and openWorldHint must both be set`);
         return found;
       }
       if (!readOnly && !permissions.some(({ level }) => level === "write")) {
