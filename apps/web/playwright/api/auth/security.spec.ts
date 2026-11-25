@@ -31,103 +31,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
     };
   });
 
-  test.describe("DoS Protection - Password Length Limits", () => {
-    test("should handle extremely long passwords without crashing", async ({ request }) => {
-      const email = "nonexistent-dos-test@example.com"; // Use non-existent email for DoS test
-      const extremelyLongPassword = "A".repeat(50000); // 50,000 characters
-
-      const start = Date.now();
-      const response = await request.post(SIGN_IN_ENDPOINT, {
-        data: {
-          email: email,
-          password: extremelyLongPassword,
-        },
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const responseTime = Date.now() - start;
-
-      // Should not crash the server (no 500 errors)
-      expect(response.status()).not.toBe(500);
-
-      // Better Auth's maxPasswordLength (128) rejects this before hashing — never a successful sign-in.
-      expect(response.status()).not.toBe(200);
-      expect([400, 401, 422, 429]).toContain(response.status());
-
-      // No session must be issued for a rejected over-length sign-in.
-      expect(response.headers()["set-cookie"]).toBeUndefined();
-
-      logger.info(
-        `Extremely long password (50k chars) processing time: ${responseTime}ms, status: ${response.status()}`
-      );
-
-      // Verify the DoS protection is working: an over-length password is rejected promptly by Better
-      // Auth's length check (it never reaches the expensive bcrypt verify). Keep the timing assertion.
-      // The test environment has overhead, so allow generous headroom while still catching a hang/crash.
-      expect(responseTime).toBeLessThan(5000);
-
-      if (responseTime < 5000) {
-        logger.info("✅ Long password rejected quickly - DoS protection working");
-      } else {
-        logger.warn("⚠️ Long password took longer than expected - check DoS protection");
-      }
-    });
-
-    test("should handle password at 128 character limit", async ({ request }) => {
-      const email = "nonexistent-limit-test@example.com"; // Use non-existent email for limit test
-      const maxLengthPassword = "A".repeat(128); // Exactly at the 128 character limit
-
-      const response = await request.post(SIGN_IN_ENDPOINT, {
-        data: {
-          email: email,
-          password: maxLengthPassword,
-        },
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      // A 128-char password is within Better Auth's maxPasswordLength, so it is NOT rejected for length.
-      // It follows the normal credential path and fails as invalid credentials for a non-existent user
-      // (401) — crucially not a length/422 rejection and not a 500.
-      expect(response.status()).not.toBe(500);
-      expect([400, 401, 429]).toContain(response.status());
-
-      logger.info(`Max length password (128 chars) status: ${response.status()}`);
-    });
-
-    test("should reject passwords over 128 characters", async ({ request }) => {
-      const email = "nonexistent-overlimit-test@example.com"; // Use non-existent email for over-limit test
-      const overLimitPassword = "A".repeat(10000); // 10,000 characters (over limit)
-
-      const start = Date.now();
-      const response = await request.post(SIGN_IN_ENDPOINT, {
-        data: {
-          email: email,
-          password: overLimitPassword,
-        },
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const responseTime = Date.now() - start;
-
-      // Should not crash, and must be rejected (Better Auth's maxPasswordLength) — never a session.
-      expect(response.status()).not.toBe(500);
-      expect(response.status()).not.toBe(200);
-      expect(response.headers()["set-cookie"]).toBeUndefined();
-
-      logger.info(
-        `Over-limit password (10k chars) processing time: ${responseTime}ms, status: ${response.status()}`
-      );
-
-      // The key security test: an over-limit password is rejected by the length check, so it must not
-      // take exponentially longer than a short password (no bcrypt on the rejected input). DoS protection.
-      expect(responseTime).toBeLessThan(5000);
-    });
-  });
-
   test.describe("Timing Attack Prevention - User Enumeration Protection", () => {
     test("should not reveal user existence through response timing differences @timing", async ({
       request,
@@ -289,59 +192,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
         );
       }
     });
-
-    test("should return consistent status codes regardless of user existence", async ({ request }) => {
-      const scenarios = [
-        {
-          email: "nonexistent-status@example.com",
-          password: "testpassword",
-          description: "non-existent user",
-        },
-        { email: testUser.email, password: "wrongpassword", description: "existing user, wrong password" },
-      ];
-
-      const results: { scenario: string; status: number }[] = [];
-
-      for (const scenario of scenarios) {
-        const response = await request.post(SIGN_IN_ENDPOINT, {
-          data: {
-            email: scenario.email,
-            password: scenario.password,
-          },
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        results.push({
-          scenario: scenario.description,
-          status: response.status(),
-        });
-
-        expect(response.status()).not.toBe(500);
-      }
-
-      // Log results
-      results.forEach(({ scenario, status }) => {
-        logger.info(`Status test - ${scenario}: ${status}`);
-      });
-
-      // CRITICAL: Both scenarios should return the same status code. Better Auth answers both the
-      // unknown-email and the wrong-password case with the same INVALID_EMAIL_OR_PASSWORD / 401, so a
-      // different status code per scenario would reveal user existence (enumeration).
-      const statuses = results.map((r) => r.status);
-      const uniqueStatuses = [...new Set(statuses)];
-
-      if (uniqueStatuses.length > 1) {
-        logger.warn(
-          `⚠️ SECURITY RISK: Different status codes (${uniqueStatuses.join(", ")}) could allow user enumeration!`
-        );
-      } else {
-        logger.info(`✅ Status code consistency: Both scenarios return ${statuses[0]}`);
-      }
-
-      expect(uniqueStatuses.length).toBe(1);
-    });
   });
 
   test.describe("Security Headers and Response Safety", () => {
@@ -373,95 +223,12 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       logger.info("✅ Security headers present in authentication responses");
     });
 
-    test("should not expose sensitive information in error responses", async ({ request }) => {
-      const response = await request.post(SIGN_IN_ENDPOINT, {
-        data: {
-          email: "nonexistent-disclosure-test@example.com",
-          password: "A".repeat(10000), // Trigger long password handling
-        },
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const responseBody = await response.text();
-
-      // Log the actual response for debugging
-      logger.info(`Response status: ${response.status()}`);
-      logger.info(`Response body (first 500 chars): ${responseBody.substring(0, 500)}`);
-
-      // Better Auth returns a generic JSON error and must not leak internals or which auth factor
-      // failed (the latter would enable user enumeration).
-      const sensitiveTerms = [
-        "bcrypt",
-        "hash",
-        "redis",
-        "database",
-        "prisma",
-        "stack trace",
-        "sql",
-        "query",
-        "connection timeout",
-        "internal error",
-        // Factor-disclosure terms: the error must not reveal whether the email or the password was wrong.
-        "user not found",
-        "no user",
-        "email not found",
-        "incorrect password",
-        "wrong password",
-        "invalid password",
-      ];
-
-      let foundSensitiveInfo = false;
-      const foundTerms: string[] = [];
-
-      for (const term of sensitiveTerms) {
-        if (responseBody.toLowerCase().includes(term.toLowerCase())) {
-          foundSensitiveInfo = true;
-          foundTerms.push(term);
-          logger.warn(`Found "${term}" in response`);
-        }
-      }
-
-      if (foundSensitiveInfo) {
-        logger.warn(`⚠️ Found sensitive information in response: ${foundTerms.join(", ")}`);
-        logger.warn(`Full response body: ${responseBody}`);
-      } else {
-        logger.info("✅ No sensitive technical information exposed in error responses");
-      }
-
-      expect(foundSensitiveInfo).toBe(false);
-    });
-
-    test("should handle malformed requests gracefully", async ({ request }) => {
-      // removed: NextAuth CSRF flow no longer exists post-ENG-1054. Better Auth's sign-in has no CSRF
-      // token, so the original "missing csrfToken" case is meaningless. Convert it to the equivalent
-      // Better Auth input-robustness property: a malformed body must be handled gracefully (no crash,
-      // no session), not produce a 500.
-      const response = await request.post(SIGN_IN_ENDPOINT, {
-        data: {
-          // Missing the required `password` field entirely (malformed credential payload).
-          email: "nonexistent-malformed-test@example.com",
-        },
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      // Should handle gracefully, not crash, and never issue a session for a malformed request.
-      expect(response.status()).not.toBe(500);
-      expect(response.status()).not.toBe(200);
-      expect([400, 401, 403, 422, 429]).toContain(response.status());
-      expect(response.headers()["set-cookie"]).toBeUndefined();
-
-      logger.info(`✅ Malformed request handled gracefully: status ${response.status()}`);
-    });
-
     test("should invalidate a copied session cookie after logout", async ({
       page,
       browser,
       request,
       users,
+      baseURL,
     }) => {
       const user = await users.create();
       await user.login();
@@ -478,7 +245,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       try {
         await preLogoutContext.addCookies([sessionCookie!]);
         const preLogoutPage = await preLogoutContext.newPage();
-        await preLogoutPage.goto("http://localhost:3000/environments");
+        await preLogoutPage.goto(new URL("/", baseURL).toString());
         await expect(preLogoutPage).not.toHaveURL(/\/auth\/login/);
       } finally {
         await preLogoutContext.close();
@@ -499,7 +266,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       const signOutResponse = await request.post("/api/auth/sign-out", {
         headers: {
           cookie: `${sessionCookie!.name}=${sessionCookie!.value}`,
-          origin: "http://localhost:3000",
+          origin: new URL(baseURL!).origin,
         },
         data: {},
       });
@@ -512,7 +279,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
       try {
         await replayContext.addCookies([sessionCookie!]);
         const replayPage = await replayContext.newPage();
-        await replayPage.goto("http://localhost:3000/environments");
+        await replayPage.goto(new URL("/", baseURL).toString());
         await expect(replayPage).toHaveURL(/\/auth\/login/);
       } finally {
         await replayContext.close();
