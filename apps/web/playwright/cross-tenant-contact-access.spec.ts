@@ -247,9 +247,10 @@ test.describe("Contact directories (ENG-7495)", () => {
     const user = await users.create({ organizationName: "shared-delete Org", skipSurveySeed: true });
     if (!user.workspaceId) throw new Error("Workspace not seeded for test");
     const directoryId = await getContactDirectoryId(user.workspaceId);
+    const directoryName = `Shared delete ${Date.now()}`;
     await prisma.contactDirectory.update({
       where: { id: directoryId },
-      data: { name: `Shared delete ${Date.now()}` },
+      data: { name: directoryName },
     });
     const workspaceB = await addWorkspace(user.organizationId, "shared-delete-b", directoryId);
     const { contactId, pii } = await seedContact(user.workspaceId, directoryId, "shared-delete");
@@ -258,15 +259,22 @@ test.describe("Contact directories (ENG-7495)", () => {
     await gotoContact(page, workspaceB, contactId);
     await expect(page.getByRole("heading", { name: pii.email })).toBeVisible();
 
+    // The dialog says why up front and offers no Delete.
     await page.getByRole("button", { name: "Delete", exact: true }).click();
     const dialog = page.getByRole("dialog");
-    await dialog.getByRole("button", { name: "Delete" }).click();
-
     await expect(
-      page.getByText("Contacts in a directory that other workspaces use can't be deleted.")
+      dialog.getByText(`${directoryName} is shared with other workspaces, so its contacts can't be deleted.`)
     ).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Delete" })).toBeDisabled();
+    await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(dialog).toBeHidden();
-    await expect(page).toHaveURL(new RegExp(`/contacts/${contactId}$`));
+
+    // The server refuses it too, for a caller that skips the dialog.
+    const response = await page.request.delete(
+      `/api/internal/contacts/${contactId}?workspaceId=${workspaceB}`,
+      { headers: { Origin: new URL(page.url()).origin } }
+    );
+    expect(response.status()).toBe(403);
     expect(await prisma.contact.count({ where: { id: contactId } })).toBe(1);
   });
 });
