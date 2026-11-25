@@ -1,5 +1,8 @@
 # How we would like patches made
 
+Patches arrive as a diff inside the emailed report, and we apply them
+ourselves after triage. The scanner never opens pull requests.
+
 ## Size and scope
 
 - As narrow as the bug allows: change the faulty function and its direct
