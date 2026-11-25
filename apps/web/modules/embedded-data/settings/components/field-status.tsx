@@ -93,6 +93,9 @@ export const FieldPrivacyIcon = ({ privacy }: Readonly<{ privacy: TReservedField
   return <StatusIcon icon={PRIVACY_ICONS[privacy]} label={getPrivacyLabel(privacy, t)} />;
 };
 
+/** A parameter or SDK call inside a "Captured when" label, kept on one line as the exact text to use. */
+const CODE_TOKEN = <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs whitespace-nowrap" />;
+
 /**
  * What has to be true for an auto-captured field to carry a value, in words rather than a glyph: the
  * answer is a condition ("Link or page URL has ?source="), and no icon says that without a hover.
@@ -110,9 +113,17 @@ export const FieldCapturedWhen = ({
       <Trans
         i18nKey="workspace.embedded_data.captured_url_param"
         values={{ param: `?${capturedWhen.param}=` }}
-        components={{
-          code: <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-xs whitespace-nowrap" />,
-        }}
+        components={{ code: CODE_TOKEN }}
+      />
+    );
+  }
+
+  if (capturedWhen.kind === "hostOrCdnCountry") {
+    return (
+      <Trans
+        i18nKey="workspace.embedded_data.captured_host_or_cdn_country"
+        values={{ param: "?country=", sdkCall: "setEmbeddedData" }}
+        components={{ code: CODE_TOKEN }}
       />
     );
   }

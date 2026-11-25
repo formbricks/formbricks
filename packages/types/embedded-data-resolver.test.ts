@@ -774,7 +774,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         availability: "server",
         privacy: "drop",
         display: "primary",
-        capturedWhen: { kind: "geoIpHeader" },
+        capturedWhen: { kind: "hostOrCdnCountry" },
       },
       {
         name: "action",

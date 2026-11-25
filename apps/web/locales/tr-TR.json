@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Yalnızca uygulama anketleri",
       "captured_creative": "Bir kreatif anketi açtı",
       "captured_finished_response": "Yalnızca tamamlanmış yanıtlar",
-      "captured_geo_ip_header": "Barındırma hizmeti ülke bilgisini iletir (Cloudflare veya CloudFront)",
+      "captured_host_or_cdn_country": "<code>{param}</code> veya <code>{sdkCall}</code> değerini sen iletirsin, aksi halde Cloudflare ya da CloudFront gönderir",
       "captured_ip_capture": "“IP adresini yakala” açık",
       "captured_referrer": "Yanıtlayan başka bir sayfadan geldi",
       "captured_url_param": "Bağlantı veya sayfa URL’sinde <code>{param}</code> var",

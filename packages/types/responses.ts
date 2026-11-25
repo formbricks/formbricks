@@ -807,11 +807,23 @@ export type TResponseMeta = z.infer<typeof ZResponseMeta>;
  * cannot fall behind the shape it is supposed to mirror.
  *
  * Only the keys a browser can honestly observe live here. `country`, `userAgent` and `ipAddress`
- * stay out: the routes derive those from the request itself and must keep overriding whatever the
- * client claimed.
+ * stay out: the routes derive those from the request itself. `country` is the one a client may also
+ * set (see {@link normalizeCountryCode}), and the routes handle that explicitly.
  */
 export const pickAutoCapturedResponseMeta = (meta: TResponseMeta | undefined): TAutoCapturedResponseMeta =>
   ZAutoCapturedResponseMeta.parse(meta ?? {});
+
+/**
+ * A country set from outside — a link survey's `?country=`, or `country` handed to `setEmbeddedData` or
+ * `track({ hiddenFields })` — as a two-letter ISO 3166-1 alpha-2 code, upper-cased. Anything else is
+ * `undefined`, so the ingest routes fall back to the CDN header: a name like `Germany` would sit next to
+ * the CDN's `DE` as a second value for the same country in every filter, chart and export.
+ */
+export const normalizeCountryCode = (value: unknown): string | undefined => {
+  if (typeof value !== "string") return undefined;
+  const code = value.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : undefined;
+};
 
 export const ZResponse = z.object({
   id: z.cuid2(),
@@ -858,7 +870,8 @@ export const ZResponseInput = z.object({
   // The same shape as the stored `ZResponseMeta`, and now literally it: this used to be a hand-copied
   // duplicate, which is how a field added to one could pass review and still fail to parse on the way
   // in. The ingest routes rebuild `meta` from a whitelist afterwards, so accepting a key here is not
-  // the same as trusting it — `country`, `userAgent` and `ipAddress` are always re-derived server-side.
+  // the same as trusting it — `userAgent` and `ipAddress` are always re-derived server-side, and a
+  // client `country` is kept only as a two-letter code (`normalizeCountryCode`).
   meta: ZResponseMeta.optional(),
 });
 
@@ -934,12 +947,14 @@ export const ZResponseUpdate = z.object({
   language: z.string().optional(),
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtcInput.optional(),
-  // Only what a browser can actually observe. The server-derived keys (`country`, `userAgent`,
-  // `ipAddress`) stay out on purpose: this is the renderer-to-queue shape, and the renderer has no
-  // business claiming a value the ingest route derives from the request itself.
+  // Only what a browser can actually observe, plus `country` when the host set one explicitly. The
+  // other server-derived keys (`userAgent`, `ipAddress`) stay out on purpose: this is the
+  // renderer-to-queue shape, and the renderer has no business claiming a value the ingest route
+  // derives from the request itself.
   meta: ZAutoCapturedResponseMeta.extend({
     url: z.string().optional(),
     source: z.string().optional(),
+    country: z.string().optional(),
     action: z.string().optional(),
     // The id only: the ingest routes check it and stamp the name (ENG-4001).
     openedByCreativeId: z.string().optional(),

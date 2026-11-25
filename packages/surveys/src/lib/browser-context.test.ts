@@ -1,6 +1,11 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { createWebSurveyMetaSnapshot, readDeviceContextMeta, readPageContextMeta } from "./browser-context";
+import {
+  createWebSurveyMetaSnapshot,
+  readDeviceContextMeta,
+  readExplicitCountry,
+  readPageContextMeta,
+} from "./browser-context";
 
 /**
  * A real DOM environment, so these exercise the accessors rather than a mock of them. Each test sets
@@ -348,5 +353,92 @@ describe("createWebSurveyMetaSnapshot — the visit group", () => {
     expect(meta).not.toHaveProperty("visitUrls");
     expect(meta).not.toHaveProperty("visitPagesViewed");
     expect(meta.visitTimeOnSite).toBe(125);
+  });
+});
+
+describe("readExplicitCountry", () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  test("takes `country` from the host's bag, upper-cased, in any key casing", () => {
+    expect(
+      readExplicitCountry({
+        hiddenFieldsRecord: { Country: " de " },
+        isLinkSurvey: false,
+        shadowingNames: [],
+      })
+    ).toBe("DE");
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("reads `?country=` on a link survey's own URL", () => {
+    setLocation("/s/abc?country=fr");
+
+    expect(readExplicitCountry({ hiddenFieldsRecord: {}, isLinkSurvey: true, shadowingNames: [] })).toBe(
+      "FR"
+    );
+  });
+
+  test("ignores `?country=` on an app survey: that URL is the customer's page, not a statement", () => {
+    setLocation("/shop?country=fr");
+
+    expect(
+      readExplicitCountry({ hiddenFieldsRecord: undefined, isLinkSurvey: false, shadowingNames: [] })
+    ).toBeUndefined();
+  });
+
+  test("the bag beats the URL on a link survey", () => {
+    setLocation("/s/abc?country=fr");
+
+    expect(
+      readExplicitCountry({ hiddenFieldsRecord: { country: "AT" }, isLinkSurvey: true, shadowingNames: [] })
+    ).toBe("AT");
+  });
+
+  test("drops anything but a two-letter code, with a warning, so the CDN value still applies", () => {
+    expect(
+      readExplicitCountry({
+        hiddenFieldsRecord: { country: "Germany" },
+        isLinkSurvey: false,
+        shadowingNames: [],
+      })
+    ).toBeUndefined();
+    expect(
+      readExplicitCountry({ hiddenFieldsRecord: { country: 49 }, isLinkSurvey: false, shadowingNames: [] })
+    ).toBeUndefined();
+
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+    expect(warnSpy.mock.calls[0][0]).toContain('"Germany" was ignored');
+  });
+
+  test("leaves a survey's own `country` field alone: its value is not the respondent's country", () => {
+    setLocation("/s/abc?country=fr");
+    const args = { hiddenFieldsRecord: { country: "Germany" }, isLinkSurvey: true };
+
+    expect(readExplicitCountry({ ...args, shadowingNames: ["plan", "Country"] })).toBeUndefined();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("nothing set is no country and no warning", () => {
+    setLocation("/s/abc");
+
+    expect(
+      readExplicitCountry({ hiddenFieldsRecord: { plan: "pro" }, isLinkSurvey: true, shadowingNames: [] })
+    ).toBeUndefined();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("the snapshot carries the country and freezes it with the rest", () => {
+    const getMeta = createWebSurveyMetaSnapshot(true, undefined, "DE");
+
+    expect(getMeta().country).toBe("DE");
+    expect(createWebSurveyMetaSnapshot(true)()).not.toHaveProperty("country");
   });
 });

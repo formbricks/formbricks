@@ -57,7 +57,7 @@ const mockSurvey = {
 const mockTenantId = "cmp2f6428000504la7iyh87h1";
 
 // Populated the way the public response endpoint populates it: source/url/action come from the
-// client, userAgent/country/ipAddress are derived server-side.
+// client, userAgent/ipAddress are derived server-side, and country is the client's code or the CDN's.
 const mockMeta = {
   source: "link",
   url: "https://app.example.com/s/survey-1?token=secret",

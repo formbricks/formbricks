@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Solo en encuestas de aplicación",
       "captured_creative": "Un anuncio ha abierto la encuesta",
       "captured_finished_response": "Solo respuestas completadas",
-      "captured_geo_ip_header": "El alojamiento transmite el país (Cloudflare o CloudFront)",
+      "captured_host_or_cdn_country": "Tú pasas <code>{param}</code> o <code>{sdkCall}</code>; si no, lo envía Cloudflare o CloudFront",
       "captured_ip_capture": "«Capturar dirección IP» está activado",
       "captured_referrer": "El encuestado llegó desde otra página",
       "captured_url_param": "El enlace o la URL de la página contiene <code>{param}</code>",

@@ -38,6 +38,13 @@ const INGEST_FLAG_MESSAGES: Record<TIngestFlagReason, string> = {
 const SELF_INJECTED_KEYS = new Set(["verifiedemail"]);
 
 /**
+ * Keys the renderer takes out of the bag for the response's `meta` rather than for an Embedded Data
+ * field, so "ignored" would be false. `country` set through `setEmbeddedData` or `track({ hiddenFields })`
+ * becomes `meta.country` (see `readExplicitCountry`), which also says when a value was not a valid code.
+ */
+const BAG_KEYS_TAKEN_FOR_META = new Set(["country"]);
+
+/**
  * Surfaces the ingest contract's verdicts, so a developer wiring up Embedded Data sees why a value
  * did not show up instead of guessing. Warnings, never errors: nothing here blocks a response.
  *
@@ -47,6 +54,7 @@ const SELF_INJECTED_KEYS = new Set(["verifiedemail"]);
 export const logIngestResult = ({ dropped, flags }: TIngestResult): void => {
   for (const { key, reason } of dropped) {
     if (SELF_INJECTED_KEYS.has(key.toLowerCase())) continue;
+    if (reason === "unknown_key" && BAG_KEYS_TAKEN_FOR_META.has(key.toLowerCase())) continue;
     console.warn(`Formbricks: "${key}" ${INGEST_DROP_MESSAGES[reason]}, so the value was ignored.`);
   }
   for (const { key, reason } of flags) {

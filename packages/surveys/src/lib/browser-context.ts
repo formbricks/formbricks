@@ -1,4 +1,4 @@
-import type { TResponseUpdate } from "@formbricks/types/responses";
+import { type TResponseUpdate, normalizeCountryCode } from "@formbricks/types/responses";
 import type { TVisitSnapshot } from "@formbricks/types/show-conditions";
 import { VISIT_URLS_SEPARATOR } from "@formbricks/types/visit";
 
@@ -139,6 +139,57 @@ const readVisitContextMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta
   });
 };
 
+const readRawCountry = (
+  hiddenFieldsRecord: Record<string, unknown> | undefined,
+  isLinkSurvey: boolean
+): unknown => {
+  const bagKey = Object.keys(hiddenFieldsRecord ?? {}).find((key) => key.toLowerCase() === "country");
+  if (bagKey !== undefined) return hiddenFieldsRecord?.[bagKey];
+  if (!isLinkSurvey) return undefined;
+  return readString(() => new URL(window.location.href).searchParams.get("country"));
+};
+
+/**
+ * The respondent's country, when the host set it explicitly — for surveys behind no CDN that reports
+ * one, or when the host simply knows better than an IP guess. The ingest routes prefer it over the CDN
+ * header. Two inputs, checked in this order:
+ *
+ * - `country` in the bag the host handed over (`setEmbeddedData`, `track({ hiddenFields })`, the mobile
+ *   SDKs), matched case-insensitively like every other bag key.
+ * - On a link survey, `?country=` on the survey's own URL. Only there: an app survey's page URL is the
+ *   customer's page, where `?country=` may well be a shop filter rather than a statement about the
+ *   respondent.
+ *
+ * Only a two-letter ISO code is kept (`DE`, `us` → `US`). Anything else is dropped with a warning, so
+ * the CDN value still applies and the developer learns why theirs did not.
+ *
+ * A survey that declares its own `country` field, or a question with that id, keeps the name: the value
+ * fills that field as before (say, a target market rather than where the respondent is), so it must not
+ * also become the respondent's country. `shadowingNames` is `listShadowingNames` for the survey.
+ */
+export const readExplicitCountry = ({
+  hiddenFieldsRecord,
+  isLinkSurvey,
+  shadowingNames,
+}: {
+  hiddenFieldsRecord: Record<string, unknown> | undefined;
+  isLinkSurvey: boolean;
+  shadowingNames: readonly string[];
+}): string | undefined => {
+  if (shadowingNames.some((name) => name.toLowerCase() === "country")) return undefined;
+
+  const raw = readRawCountry(hiddenFieldsRecord, isLinkSurvey);
+  if (raw === undefined || raw === null) return undefined;
+
+  const country = normalizeCountryCode(raw);
+  if (country === undefined) {
+    console.warn(
+      `Formbricks: "country" must be a two-letter country code such as "DE", so ${JSON.stringify(raw)} was ignored.`
+    );
+  }
+  return country;
+};
+
 /**
  * **Snapshot at display, then freeze.**
  *
@@ -166,12 +217,15 @@ const readVisitContextMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta
  */
 export const createWebSurveyMetaSnapshot = (
   isWebEnvironment: boolean,
-  visit?: TVisitSnapshot
+  visit?: TVisitSnapshot,
+  country?: string
 ): (() => TWebSurveyMeta) => {
   const snapshot: TWebSurveyMeta = {
     ...(isWebEnvironment ? readPageContextMeta() : {}),
     ...readDeviceContextMeta(),
     ...readVisitContextMeta(visit),
+    // From `readExplicitCountry`, frozen with the rest: the host's value at display is the answer.
+    ...(country === undefined ? {} : { country }),
   };
   return () => snapshot;
 };

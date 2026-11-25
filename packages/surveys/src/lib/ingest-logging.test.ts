@@ -47,6 +47,19 @@ describe("logIngestResult", () => {
     expect(warnSpy.mock.calls[0][0]).toContain("is not an ingested Embedded Data field");
   });
 
+  test("mutes `country` as an unknown key — the renderer takes it for the response's meta", () => {
+    logIngestResult({
+      data: {},
+      dropped: [
+        { key: "country", reason: "unknown_key" },
+        { key: "Country", reason: "unknown_key" },
+      ],
+      flags: [],
+    });
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
   test("names the drop reason for ordinary keys", () => {
     logIngestResult({
       data: {},

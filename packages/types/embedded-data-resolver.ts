@@ -126,7 +126,7 @@ export type TReservedFieldDisplay = "primary" | "secondary" | "none";
  * this column empty?".
  *
  * "Auto-captured" means nobody declares the field, not that every response fills it: `source` only
- * exists when the page URL carries `?source=`, `country` only when the hosting adds a geo-IP header,
+ * exists when the page URL carries `?source=`, `country` only when the host sets it or a CDN reports it,
  * `action` only on app surveys. The settings page lists this beside each field, because a link-survey
  * team reading "auto-captured" next to `Source` and `Country` expected both to fill themselves.
  *
@@ -135,9 +135,10 @@ export type TReservedFieldDisplay = "primary" | "secondary" | "none";
  * - `urlParam` — read from the query string of the page the survey runs on: the survey link for a link
  *   survey, the host page for an app survey. `param` is the parameter's name.
  * - `referrer` — the browser reported a referring page; email clients and direct visits do not.
- * - `geoIpHeader` — the request passed through Cloudflare (`CF-IPCountry`) or AWS CloudFront
- *   (`CloudFront-Viewer-Country`). Formbricks runs no geo-IP lookup of its own, and no URL parameter
- *   fills it.
+ * - `hostOrCdnCountry` — the host set a two-letter code (`?country=` on a link survey, `country` in
+ *   `setEmbeddedData` or `track({ hiddenFields })` on an app survey), or the request passed through
+ *   Cloudflare (`CF-IPCountry`) or AWS CloudFront (`CloudFront-Viewer-Country`). Formbricks runs no
+ *   GeoIP lookup of its own, so with neither the field stays empty.
  * - `appSurvey` — only an app survey has a triggering action.
  * - `ipCapture` — the survey has Capture IP address on.
  * - `websiteVisit` — the web SDK's visit store: app surveys on websites, not link surveys or mobile.
@@ -148,7 +149,7 @@ export type TReservedFieldCapturedWhen =
   | { kind: "always" }
   | { kind: "urlParam"; param: string }
   | { kind: "referrer" }
-  | { kind: "geoIpHeader" }
+  | { kind: "hostOrCdnCountry" }
   | { kind: "appSurvey" }
   | { kind: "ipCapture" }
   | { kind: "websiteVisit" }
@@ -272,7 +273,9 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     read: (r) => r.meta.url,
   },
   /**
-   * Geo-IP country, resolved from the request in the ingest routes — nothing client-side knows it.
+   * A two-letter code the host set (`?country=` on a link survey, `country` in `setEmbeddedData`), else
+   * the CDN request header (`CF-IPCountry` or `CloudFront-Viewer-Country`). Both are resolved in the
+   * ingest routes, so it stays `server`: a running survey has no CDN value. No GeoIP lookup.
    */
   {
     name: "country",
@@ -280,7 +283,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "drop",
     display: "primary",
-    capturedWhen: { kind: "geoIpHeader" },
+    capturedWhen: { kind: "hostOrCdnCountry" },
     read: (r) => r.meta.country,
   },
   /** The action that triggered an app survey. */

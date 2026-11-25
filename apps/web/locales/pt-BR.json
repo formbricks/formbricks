@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Somente pesquisas de app",
       "captured_creative": "Um criativo abriu a pesquisa",
       "captured_finished_response": "Somente respostas concluídas",
-      "captured_geo_ip_header": "A hospedagem informa o país (Cloudflare ou CloudFront)",
+      "captured_host_or_cdn_country": "Você passa <code>{param}</code> ou <code>{sdkCall}</code>; caso contrário, o Cloudflare ou o CloudFront envia o valor",
       "captured_ip_capture": "“Capturar endereço IP” está ativado",
       "captured_referrer": "O respondente veio de outra página",
       "captured_url_param": "O link ou a URL da página tem <code>{param}</code>",

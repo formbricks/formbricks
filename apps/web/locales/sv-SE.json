@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Endast appenkäter",
       "captured_creative": "En annonsmaterial öppnade enkäten",
       "captured_finished_response": "Endast slutförda svar",
-      "captured_geo_ip_header": "Hostingen skickar med landet (Cloudflare eller CloudFront)",
+      "captured_host_or_cdn_country": "Du skickar med <code>{param}</code> eller <code>{sdkCall}</code>, annars skickas det av Cloudflare eller CloudFront",
       "captured_ip_capture": "”Fånga IP-adress” är aktiverat",
       "captured_referrer": "Respondenten kom från en annan sida",
       "captured_url_param": "Länken eller sidans URL innehåller <code>{param}</code>",

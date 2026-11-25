@@ -35,9 +35,9 @@ describe("getAutoCapturedFields", () => {
   });
 
   test("says what each field needs before a response carries it", () => {
-    // The two Electrolux found blank on a link survey: neither fills itself.
+    // The two Electrolux found blank on a link survey: neither fills itself, both can be passed in.
     expect(byName("source")?.capturedWhen).toEqual({ kind: "urlParam", param: "source" });
-    expect(byName("country")?.capturedWhen).toEqual({ kind: "geoIpHeader" });
+    expect(byName("country")?.capturedWhen).toEqual({ kind: "hostOrCdnCountry" });
     expect(byName("action")?.capturedWhen).toEqual({ kind: "appSurvey" });
     expect(byName("ipAddress")?.capturedWhen).toEqual({ kind: "ipCapture" });
     expect(byName("utmCampaign")?.capturedWhen).toEqual({ kind: "urlParam", param: "utm_campaign" });

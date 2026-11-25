@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Alleen in-app-enquêtes",
       "captured_creative": "Een creatief heeft de enquête geopend",
       "captured_finished_response": "Alleen voltooide reacties",
-      "captured_geo_ip_header": "De hostingprovider geeft het land door (Cloudflare of CloudFront)",
+      "captured_host_or_cdn_country": "Jij geeft <code>{param}</code> of <code>{sdkCall}</code> mee, anders stuurt Cloudflare of CloudFront het mee",
       "captured_ip_capture": "“IP-adres vastleggen” staat aan",
       "captured_referrer": "Respondent kwam van een andere pagina",
       "captured_url_param": "Link of pagina-URL bevat <code>{param}</code>",

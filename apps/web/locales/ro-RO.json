@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Doar sondajele din aplicație",
       "captured_creative": "Un material creativ a deschis sondajul",
       "captured_finished_response": "Doar răspunsurile finalizate",
-      "captured_geo_ip_header": "Găzduirea transmite țara (Cloudflare sau CloudFront)",
+      "captured_host_or_cdn_country": "Tu transmiți <code>{param}</code> sau <code>{sdkCall}</code>, altfel îl trimite Cloudflare sau CloudFront",
       "captured_ip_capture": "Opțiunea „Captează adresa IP” este activată",
       "captured_referrer": "Respondentul a venit de pe altă pagină",
       "captured_url_param": "Linkul sau URL-ul paginii conține <code>{param}</code>",

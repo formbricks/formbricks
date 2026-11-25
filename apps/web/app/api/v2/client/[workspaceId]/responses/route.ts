@@ -11,6 +11,7 @@ import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-
 import { responses } from "@/app/lib/api/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { resolveResponseCountry } from "@/lib/response/country";
 import { applyIngestContractToResponseInput } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
@@ -40,9 +41,6 @@ type TValidatedResponseInputResult =
       responseInputData: TResponseInputV2;
     }
   | { response: Response };
-
-const getCountry = (requestHeaders: Headers): string | undefined =>
-  requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
 
 const getUnexpectedPublicErrorResponse = (): Response =>
   responses.internalServerErrorResponse("Something went wrong. Please try again.", true);
@@ -251,7 +249,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   const { responseInputData } = validatedInput;
-  const country = getCountry(request.headers);
+  const country = resolveResponseCountry(responseInputData.meta?.country, request.headers);
 
   try {
     const contactsDisabledResponse = await getContactsDisabledResponse(

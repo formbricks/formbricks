@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Kizárólag alkalmazáson belüli felmérések esetén",
       "captured_creative": "Egy kreatív elem megnyitotta a felmérést",
       "captured_finished_response": "Kizárólag befejezett válaszok esetén",
-      "captured_geo_ip_header": "A tárhelyszolgáltató továbbítja az országot (Cloudflare vagy CloudFront)",
+      "captured_host_or_cdn_country": "Ön megadja a következők egyikét: <code>{param}</code> vagy <code>{sdkCall}</code>; ellenkező esetben a Cloudflare vagy a CloudFront küldi el",
       "captured_ip_capture": "Az „IP-cím rögzítése” funkció be van kapcsolva",
       "captured_referrer": "A válaszadó egy másik oldalról érkezett",
       "captured_url_param": "A hivatkozás vagy az oldal URL-címe tartalmazza a következőt: <code>{param}</code>",

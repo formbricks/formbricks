@@ -32,9 +32,6 @@ describe("getCapturedWhenLabel", () => {
   test("names each condition with its own key", () => {
     expect(getCapturedWhenLabel({ kind: "always" }, t)).toBe("workspace.embedded_data.captured_always");
     expect(getCapturedWhenLabel({ kind: "referrer" }, t)).toBe("workspace.embedded_data.captured_referrer");
-    expect(getCapturedWhenLabel({ kind: "geoIpHeader" }, t)).toBe(
-      "workspace.embedded_data.captured_geo_ip_header"
-    );
     expect(getCapturedWhenLabel({ kind: "appSurvey" }, t)).toBe(
       "workspace.embedded_data.captured_app_survey"
     );

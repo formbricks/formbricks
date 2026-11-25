@@ -2837,7 +2837,7 @@
       "captured_app_survey": "僅限應用程式問卷",
       "captured_creative": "由廣告素材開啟問卷時",
       "captured_finished_response": "僅限已完成的回覆",
-      "captured_geo_ip_header": "主機服務會傳遞國家資訊（Cloudflare 或 CloudFront）",
+      "captured_host_or_cdn_country": "由你透過 <code>{param}</code> 或 <code>{sdkCall}</code> 傳入，否則會由 Cloudflare 或 CloudFront 傳送",
       "captured_ip_capture": "已開啟「擷取 IP 位址」",
       "captured_referrer": "受訪者是從其他頁面進入",
       "captured_url_param": "連結或頁面網址包含 <code>{param}</code>",

@@ -70,11 +70,11 @@ export const getPrivacyLabel = (privacy: TReservedFieldPrivacy, t: TFunction): s
  * Written for the reader whose column is empty: each label names the one thing that has to be true,
  * so a link-survey team can tell "Source needs ?source= on the link" from "Country needs the hosting".
  *
- * `urlParam` is not here: its label sets the parameter as code, so it is rendered through `<Trans>`
- * by `FieldCapturedWhen` (field-status.tsx) rather than returned as a string.
+ * `urlParam` and `hostOrCdnCountry` are not here: their labels set a parameter or an SDK call as code,
+ * so `FieldCapturedWhen` (field-status.tsx) renders them through `<Trans>` rather than as a string.
  */
 export const getCapturedWhenLabel = (
-  capturedWhen: Exclude<TReservedFieldCapturedWhen, { kind: "urlParam" }>,
+  capturedWhen: Exclude<TReservedFieldCapturedWhen, { kind: "urlParam" | "hostOrCdnCountry" }>,
   t: TFunction
 ): string => {
   switch (capturedWhen.kind) {
@@ -82,8 +82,6 @@ export const getCapturedWhenLabel = (
       return t("workspace.embedded_data.captured_always");
     case "referrer":
       return t("workspace.embedded_data.captured_referrer");
-    case "geoIpHeader":
-      return t("workspace.embedded_data.captured_geo_ip_header");
     case "appSurvey":
       return t("workspace.embedded_data.captured_app_survey");
     case "ipCapture":

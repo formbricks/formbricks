@@ -371,6 +371,52 @@ describe("POST /api/v1/client/[workspaceId]/responses — opened by creative (EN
   });
 });
 
+describe("POST /api/v1/client/[workspaceId]/responses — country", () => {
+  const persistedMeta = () => mocks.createResponseWithQuotaEvaluation.mock.calls[0][0].meta;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
+    mocks.getSurvey.mockResolvedValue(getSurveyWithFields([]));
+    mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
+    mocks.enforceVerifiedEmailGate.mockReturnValue(null);
+    mocks.verifyResponseRecaptcha.mockResolvedValue(null);
+    mocks.validateSingleUseResponseInput.mockReturnValue(undefined);
+    mocks.validateClientFileUploads.mockReturnValue(true);
+    mocks.validateResponseData.mockReturnValue(null);
+    mocks.createQuotaFullObject.mockReturnValue({});
+    mocks.findRecentDuplicateResponse.mockResolvedValue(null);
+    mocks.createResponseWithQuotaEvaluation.mockResolvedValue({
+      id: responseId,
+      surveyId,
+      finished: false,
+      quotaFull: undefined,
+    });
+  });
+
+  test("stores a country the client set, upper-cased, with no CDN header in front", async () => {
+    const result = await postRawBody({ q1: "answer" }, { meta: { country: "de" } });
+
+    expect(result.response.status).toBe(200);
+    expect(persistedMeta()).toEqual(expect.objectContaining({ country: "DE" }));
+  });
+
+  test("drops a client country that is not a two-letter code", async () => {
+    await postRawBody({ q1: "answer" }, { meta: { country: "Germany" } });
+
+    expect(persistedMeta().country).toBeUndefined();
+  });
+
+  test("drops even an explicit country when the survey anonymizes responses", async () => {
+    mocks.getSurvey.mockResolvedValue({ ...getSurveyWithFields([]), isAnonymizeResponsesEnabled: true });
+
+    await postRawBody({ q1: "answer" }, { meta: { country: "DE" } });
+
+    expect(persistedMeta()).not.toHaveProperty("country");
+  });
+});
+
 describe("POST /api/v1/client/[workspaceId]/responses — Cal booking details", () => {
   const calSurvey = () => ({
     ...getSurveyWithFields([]),

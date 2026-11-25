@@ -2837,7 +2837,7 @@
       "captured_app_survey": "仅限应用内问卷",
       "captured_creative": "通过广告素材打开了问卷",
       "captured_finished_response": "仅限已完成的回复",
-      "captured_geo_ip_header": "托管服务会传递国家/地区信息（Cloudflare 或 CloudFront）",
+      "captured_host_or_cdn_country": "由你通过 <code>{param}</code> 或 <code>{sdkCall}</code> 传入;如果没有传入,则由 Cloudflare 或 CloudFront 发送",
       "captured_ip_capture": "已开启“捕获 IP 地址”",
       "captured_referrer": "受访者来自其他页面",
       "captured_url_param": "链接或页面 URL 包含 <code>{param}</code>",

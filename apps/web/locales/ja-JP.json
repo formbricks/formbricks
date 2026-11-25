@@ -2837,7 +2837,7 @@
       "captured_app_survey": "アプリ内アンケートのみ",
       "captured_creative": "クリエイティブからアンケートが開かれた場合",
       "captured_finished_response": "完了した回答のみ",
-      "captured_geo_ip_header": "ホスティング環境から国情報が渡される場合（CloudflareまたはCloudFront）",
+      "captured_host_or_cdn_country": "<code>{param}</code> または <code>{sdkCall}</code> を渡さない場合は、CloudflareまたはCloudFrontから送信されます",
       "captured_ip_capture": "「IPアドレスを取得」がオンの場合",
       "captured_referrer": "回答者が別のページから来た場合",
       "captured_url_param": "リンクまたはページのURLに<code>{param}</code>が含まれている場合",

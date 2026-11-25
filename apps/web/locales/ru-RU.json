@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Только в опросах в приложении",
       "captured_creative": "Опрос открыт из креатива",
       "captured_finished_response": "Только в завершённых ответах",
-      "captured_geo_ip_header": "Хостинг передаёт страну (Cloudflare или CloudFront)",
+      "captured_host_or_cdn_country": "Вы передаёте <code>{param}</code> или <code>{sdkCall}</code>, а если нет — страну отправляет Cloudflare или CloudFront",
       "captured_ip_capture": "Включена опция «Фиксировать IP-адрес»",
       "captured_referrer": "Респондент пришёл с другой страницы",
       "captured_url_param": "В ссылке или URL страницы есть <code>{param}</code>",

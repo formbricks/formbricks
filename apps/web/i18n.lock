@@ -2733,7 +2733,7 @@ checksums:
     workspace/embedded_data/captured_app_survey: 118414ff37499ee7949ac64cefd7d5c0
     workspace/embedded_data/captured_creative: 687d7f55c84cf948d8e130ed2470373b
     workspace/embedded_data/captured_finished_response: 4b70ce1d1db013353387e39f3272a4c6
-    workspace/embedded_data/captured_geo_ip_header: 2a92a9b9ce73455f60d8b24eefedffc7
+    workspace/embedded_data/captured_host_or_cdn_country: 15979f0cbfe534e2f1ff58b71c6fd032
     workspace/embedded_data/captured_ip_capture: f84fa9611df716e4b9950a3d26ec5151
     workspace/embedded_data/captured_referrer: d0230c543786012ed9967762e57dd7ee
     workspace/embedded_data/captured_url_param: c97b08b422383ddd24d4abbbef48fccc

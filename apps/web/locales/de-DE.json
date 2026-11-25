@@ -2837,7 +2837,7 @@
       "captured_app_survey": "Nur In-App-Umfragen",
       "captured_creative": "Eine Creative hat die Umfrage geöffnet",
       "captured_finished_response": "Nur abgeschlossene Antworten",
-      "captured_geo_ip_header": "Das Hosting übermittelt das Land (Cloudflare oder CloudFront)",
+      "captured_host_or_cdn_country": "Du übergibst <code>{param}</code> oder <code>{sdkCall}</code>, ansonsten sendet Cloudflare oder CloudFront es",
       "captured_ip_capture": "„IP-Adresse erfassen“ ist aktiviert",
       "captured_referrer": "Die befragte Person kam von einer anderen Seite",
       "captured_url_param": "Link oder Seiten-URL enthält <code>{param}</code>",

@@ -84,7 +84,7 @@ export class EmbeddedDataStore {
     // documented use of this bag includes hashed identity fields.
     const removedSegment = removed.length > 0 ? `, removed [${removed.join(", ")}]` : "";
     this.logger.debug(
-      `setEmbeddedData: set [${set.join(", ")}]${removedSegment} — the bag now holds [${[...this.data.keys()].join(", ")}]. Keys land on a response only if the survey declares them as ingested Embedded Data fields.`
+      `setEmbeddedData: set [${set.join(", ")}]${removedSegment} — the bag now holds [${[...this.data.keys()].join(", ")}]. Keys land on a response only if the survey declares them as ingested Embedded Data fields; a two-letter \`country\` becomes the response's country.`
     );
   }
 

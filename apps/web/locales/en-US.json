@@ -2837,7 +2837,7 @@
       "captured_app_survey": "App surveys only",
       "captured_creative": "A creative opened the survey",
       "captured_finished_response": "Finished responses only",
-      "captured_geo_ip_header": "Hosting passes the country (Cloudflare or CloudFront)",
+      "captured_host_or_cdn_country": "You pass <code>{param}</code> or <code>{sdkCall}</code>, else Cloudflare or CloudFront sends it",
       "captured_ip_capture": "“Capture IP address” is on",
       "captured_referrer": "Respondent came from another page",
       "captured_url_param": "Link or page URL has <code>{param}</code>",

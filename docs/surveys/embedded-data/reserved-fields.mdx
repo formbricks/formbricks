@@ -39,7 +39,7 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 | `visitEntryReferrer`     | `string`  | Browser (website) | Where the visit started. Read back without its query string |
 | `visitUrls`              | `string`  | Browser (website) | The paths taken in this visit, in order, joined by ` · ` (the first page and the last 49 steps). Lowercase, without a trailing slash |
 | `language`        | `string`  | Browser, Server | The language the respondent is **answering in**                               |
-| `country`         | `string`  | Server          | Country from the CDN request header. Formbricks runs no GeoIP lookup          |
+| `country`         | `string`  | Browser, Server | Two-letter code you set, else the CDN request header. No GeoIP lookup         |
 | `browser`         | `string`  | Server          | Parsed from the `user-agent` request header                                   |
 | `os`              | `string`  | Server          | Parsed from the `user-agent` request header                                   |
 | `deviceType`      | `string`  | Server          | Parsed from the `user-agent` request header                                   |
@@ -61,9 +61,13 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 </Note>
 
 <Note>
-  **`country` is only set through your CDN.** Formbricks reads it from the `CF-IPCountry` (Cloudflare) or
-  `CloudFront-Viewer-Country` (AWS CloudFront) request header and runs no GeoIP lookup of its own. If
-  requests don't pass through a CDN that sets one of these headers, `country` stays empty.
+  **Where `country` comes from.** Formbricks runs no GeoIP lookup of its own. A country you set yourself comes
+  first: `?country=DE` on a link survey's URL, or `country` passed to `setEmbeddedData` or
+  `track({ hiddenFields })` for an app survey. It must be a two-letter ISO 3166-1 code (`de` is stored as
+  `DE`); anything else is ignored with a console warning. Without one, Formbricks reads the `CF-IPCountry`
+  (Cloudflare) or `CloudFront-Viewer-Country` (AWS CloudFront) request header, and with neither `country`
+  stays empty. A value you set wins over the CDN's, and a respondent can edit a URL, so treat `country` as
+  analytics rather than proof of location. See [CDN](/self-hosting/configuration/cdn#respondent-country).
 </Note>
 
 <Note>
@@ -143,7 +147,7 @@ That is deliberate: a recall token can end up interpolated into a redirect URL o
 
 **In exports**, the column set is derived from the catalog rather than from whatever the first response happened to carry, so it is stable for the survey: every response gets every column, and absent values export as empty. `Response ID`, `Survey ID`, `Finished` and the timestamp already have fixed basic columns, so they are not repeated. Turning **Anonymize responses** on removes no column: `Country`, `Browser`, `Os` and `Device Type` stay, responses collected before the toggle keep their values in them, and anonymized responses export them empty. `Ip Address` is only a column when the survey captures it.
 
-**In Settings → Workspace → Embedded Data**, a read-only **Auto-captured fields** card lists every one of them with its type, **Captured when** (what has to be true for a response to carry it, such as `?source=` on the link or a geo-IP header for `country`), whether it can be used in logic and recall mid-survey, and what **Anonymize responses** does to it. It is the one place the whole catalog is visible without opening a response, and nothing on it is editable — every survey already has these fields.
+**In Settings → Workspace → Embedded Data**, a read-only **Auto-captured fields** card lists every one of them with its type, **Captured when** (what has to be true for a response to carry it, such as `?source=` on the link, or for `country` a value you pass or a CDN header), whether it can be used in logic and recall mid-survey, and what **Anonymize responses** does to it. It is the one place the whole catalog is visible without opening a response, and nothing on it is editable — every survey already has these fields.
 
 <Note>
   Export headers are Title Case renderings of the field name (`Page Path`, `Utm Source`) and are deliberately
