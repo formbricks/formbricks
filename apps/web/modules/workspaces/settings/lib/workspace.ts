@@ -15,7 +15,8 @@ import { reconcileFeedbackDirectoryRelationships } from "@/lib/authzed/feedback-
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_LOCALE } from "@/lib/constants";
-import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
+import { isPrismaKnownRequestError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { getWorkspaceLegacyStoragePrefixes } from "@/lib/workspace/service";
 import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
@@ -195,6 +196,15 @@ const deleteOrphanedWorkspaceLogoFile = async (
   }
 };
 
+const WORKSPACE_NAME_TAKEN = "A workspace with this name already exists in your organization";
+
+/**
+ * The organization's `(organizationId, name)` key refused a write: a create or rename to a name the
+ * organization already uses. That is the caller's input, not a database fault (ENG-7509).
+ */
+const isWorkspaceNameTaken = (error: unknown): boolean =>
+  isUniqueConstraintError(error) && getUniqueConstraintFields(error).includes("name");
+
 export const updateWorkspace = async (
   workspaceId: string,
   inputWorkspace: TWorkspaceUpdateInput
@@ -267,10 +277,8 @@ export const updateWorkspace = async (
       });
     }
   } catch (error) {
-    // The only unique key a workspace update can hit is `(organizationId, name)`: a rename to a name the
-    // organization already uses. That is the caller's input, not a database fault (ENG-7509).
-    if (isUniqueConstraintError(error)) {
-      throw new InvalidInputError("A workspace with this name already exists in your organization");
+    if (isWorkspaceNameTaken(error)) {
+      throw new InvalidInputError(WORKSPACE_NAME_TAKEN);
     }
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
@@ -459,8 +467,8 @@ export const createWorkspace = async (
       return workspace;
     })) as TWorkspace;
   } catch (error) {
-    if (isUniqueConstraintError(error)) {
-      throw new InvalidInputError("A workspace with this name already exists in your organization");
+    if (isWorkspaceNameTaken(error)) {
+      throw new InvalidInputError(WORKSPACE_NAME_TAKEN);
     }
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
