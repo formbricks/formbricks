@@ -702,9 +702,9 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         existingContact,
       ]);
-      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([conflictingUserId] as Awaited<
-        ReturnType<typeof prisma.contactAttribute.findMany>
-      >);
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
+        conflictingUserId,
+      ] as unknown as Awaited<ReturnType<typeof prisma.contactAttribute.findMany>>);
       vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
@@ -747,9 +747,9 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         existingContact,
       ]);
-      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([conflictingUserId] as Awaited<
-        ReturnType<typeof prisma.contactAttribute.findMany>
-      >);
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
+        conflictingUserId,
+      ] as unknown as Awaited<ReturnType<typeof prisma.contactAttribute.findMany>>);
       vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
