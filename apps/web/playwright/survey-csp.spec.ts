@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { expect, test } from "@playwright/test";
+import { type BrowserContext, expect, test } from "@playwright/test";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
@@ -312,6 +312,42 @@ test.describe("Survey renderer under a customer-style CSP", () => {
   });
 });
 
+// Positive control for the violation collector: a resource hint the policy forbids must be recorded, or a
+// collector that stopped recording would let every `expectNoCspViolations` pass. It runs in its own page
+// so its deliberate violation never reaches the console messages the calling test expects to be empty.
+const expectCollectorRecordsViolation = async (context: BrowserContext, origin: string) => {
+  const control = await context.newPage();
+  try {
+    await control.route(`${origin}/csp-control`, (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        headers: { "Content-Security-Policy": "default-src 'none'" },
+        body: "<!doctype html><title>CSP control</title>",
+      })
+    );
+    await collectCspViolations(control);
+    await control.goto(`${origin}/csp-control`);
+    const bundleUrl = `${origin}/js/surveys.umd.cjs?csp-control`;
+    await control.evaluate((url) => {
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.href = url;
+      document.head.appendChild(link);
+    }, bundleUrl);
+    await expect
+      .poll(() =>
+        control.evaluate(() =>
+          (
+            window as unknown as { __cspViolations: { directive: string; blockedURI: string }[] }
+          ).__cspViolations.map(({ directive, blockedURI }) => ({ directive, blockedURI }))
+        )
+      )
+      .toContainEqual({ directive: "default-src", blockedURI: bundleUrl });
+  } finally {
+    await control.close();
+  }
+};
+
 // The renderer-only gate above cannot see resource hints emitted by SDK setup. Exercise that entry
 // point too, with real built bundles on a different origin and only the client API responses stubbed.
 test.describe("SDK setup under a host CSP", () => {
@@ -334,6 +370,11 @@ test.describe("SDK setup under a host CSP", () => {
     test(`${strict ? "strict default-src with prefetch disabled" : "prefetch-permitting default policy"}: setup to visible survey`, async ({
       page,
     }) => {
+      if (strict) {
+        await test.step("the violation collector records a forbidden resource hint", () =>
+          expectCollectorRecordsViolation(page.context(), assets.origin));
+      }
+
       const host = await serveSdkHostPage({
         appUrl: assets.origin,
         getWorkspaceId: () => WORKSPACE_ID,
