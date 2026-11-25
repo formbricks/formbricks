@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
-import { normalizeAuthorizationOperationalError } from "./operational-error";
+import { AuthorizationFailureCause, normalizeAuthorizationOperationalError } from "./operational-error";
 
 describe("authorization operational error normalization", () => {
   test("preserves stable AuthZed fields while replacing the operation", () => {
@@ -21,10 +21,17 @@ describe("authorization operational error normalization", () => {
     });
   });
 
-  // ENG-7041: Sentry follows `cause`, and it is the only place the gRPC status, the transport details
-  // or our own TypeError survive. Dropping it made every failure read as a bare `authzed_internal`.
-  test("keeps the original failure as the cause of a normalized AuthZed error", () => {
-    const grpcError = Object.assign(new Error("13 INTERNAL: Received RST_STREAM with code 2"), { code: 13 });
+  // ENG-7041: Sentry and the API error reporter follow `cause`, so it carries what tells a SpiceDB
+  // transport fault from a bug of ours (the original name, gRPC status and frames) and nothing else.
+  const everythingReported = (error: Error): string =>
+    JSON.stringify({ message: error.message, stack: error.stack, fields: { ...error } });
+
+  test("reports the gRPC failure under an AuthZed error by name, status and frames only", () => {
+    const grpcError = Object.assign(new Error("13 INTERNAL: Received RST_STREAM with code 2"), {
+      code: 13,
+      details: "Received RST_STREAM with code 2",
+      metadata: { "x-request-id": "private-trailer" },
+    });
     const source = new AuthzedError({
       attempts: 1,
       cause: grpcError,
@@ -34,10 +41,15 @@ describe("authorization operational error normalization", () => {
       retryable: false,
     });
 
-    expect(normalizeAuthorizationOperationalError(source, "authorization").cause).toBe(grpcError);
+    const { cause } = normalizeAuthorizationOperationalError(source, "authorization");
+
+    expect(cause).toBeInstanceOf(AuthorizationFailureCause);
+    expect(cause).toMatchObject({ originalName: "Error", grpcStatus: 13 });
+    expect((cause as Error).stack).toMatch(/\n\s+at /);
+    expect(everythingReported(cause as Error)).not.toMatch(/RST_STREAM|private-trailer|metadata/);
   });
 
-  test("keeps the AuthZed error itself as the cause when it carries none", () => {
+  test("reports the AuthZed error itself as the cause when it wraps nothing", () => {
     const source = new AuthzedError({
       attempts: 1,
       code: AUTHZED_ERROR_CODES.DISABLED,
@@ -45,7 +57,11 @@ describe("authorization operational error normalization", () => {
       retryable: false,
     });
 
-    expect(normalizeAuthorizationOperationalError(source, "authorization").cause).toBe(source);
+    const { cause } = normalizeAuthorizationOperationalError(source, "authorization");
+
+    expect(cause).toBeInstanceOf(AuthorizationFailureCause);
+    expect(cause).not.toBe(source);
+    expect(cause).toMatchObject({ originalName: "AuthzedError" });
   });
 
   test("sanitizes unexpected failures as non-retryable internal errors", () => {
@@ -64,12 +80,22 @@ describe("authorization operational error normalization", () => {
     expect(normalized.stack ?? "").not.toContain("private raw message");
   });
 
-  test("keeps an unexpected failure as the cause, so our own bug is not read as a SpiceDB fault", () => {
-    const bug = new TypeError("Cannot read properties of undefined (reading 'id')");
+  test("reports an unexpected failure by name and frames, so our own bug is not read as a SpiceDB fault", () => {
+    const bug = new TypeError("Cannot read properties of undefined (reading 'private raw message')");
 
     const normalized = normalizeAuthorizationOperationalError(bug, "authorization");
 
     expect(normalized.code).toBe(AUTHZED_ERROR_CODES.INTERNAL);
-    expect(normalized.cause).toBe(bug);
+    expect(normalized.cause).toBeInstanceOf(AuthorizationFailureCause);
+    expect(normalized.cause).toMatchObject({ originalName: "TypeError" });
+    expect((normalized.cause as Error).stack).toMatch(/\n\s+at /);
+    expect(everythingReported(normalized.cause as Error)).not.toContain("private raw message");
+  });
+
+  test("reports a thrown non-Error by its type", () => {
+    const normalized = normalizeAuthorizationOperationalError("private raw message", "authorization");
+
+    expect(normalized.cause).toMatchObject({ originalName: "string" });
+    expect(everythingReported(normalized.cause as Error)).not.toContain("private raw message");
   });
 });

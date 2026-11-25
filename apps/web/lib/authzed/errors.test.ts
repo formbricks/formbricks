@@ -44,6 +44,7 @@ describe("mapAuthzedError", () => {
   test.each([
     "Received RST_STREAM with code 2 (Internal server error)",
     "Received RST_STREAM with code 0 (Call ended without gRPC status)",
+    "Received RST_STREAM with code 1",
   ])("classifies an INTERNAL stream reset (%s) as a retryable unavailable error", (details) => {
     const sourceError = Object.assign(new Error(`13 INTERNAL: ${details}`), {
       code: status.INTERNAL,
@@ -62,18 +63,14 @@ describe("mapAuthzedError", () => {
     expect(result.cause).toBe(sourceError);
   });
 
-  test.each([status.UNKNOWN, status.DATA_LOSS])(
-    "keeps a stream-reset message on gRPC status %i non-retryable",
-    (grpcStatus) => {
-      const result = mapAuthzedError(
-        { code: grpcStatus, details: "Received RST_STREAM with code 2 (Internal server error)" },
-        "check_permission",
-        1
-      );
+  test.each([
+    [status.UNKNOWN, "Received RST_STREAM with code 2 (Internal server error)"],
+    [status.INTERNAL, "Received RST_STREAM with code 2 triggered by internal client error: write EPIPE"],
+  ])("keeps gRPC status %i with details %j non-retryable", (grpcStatus, details) => {
+    const result = mapAuthzedError({ code: grpcStatus, details }, "check_permission", 1);
 
-      expect(result).toMatchObject({ code: AUTHZED_ERROR_CODES.INTERNAL, retryable: false });
-    }
-  );
+    expect(result).toMatchObject({ code: AUTHZED_ERROR_CODES.INTERNAL, retryable: false });
+  });
 
   test.each([new Error("socket failure"), "string failure", null, { code: "14" }])(
     "maps a non-gRPC error to an internal error",
