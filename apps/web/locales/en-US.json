@@ -4071,6 +4071,7 @@
         "prompt_helper_pmf": "Measure product-market fit and learn what users would miss most",
         "prompt_helper_pmf_label": "Product-market fit",
         "prompt_label": "Describe the survey you need",
+        "prompt_needs_more_detail": "Describe the survey goal, audience, or topic in a sentence so the AI can create a useful draft.",
         "prompt_placeholder": "Describe the survey you need, e.g. Understand why new users stop during onboarding and what would help them finish setup",
         "provider_auth_failed": "The AI provider rejected this instance's credentials. Ask your administrator to check the AI configuration.",
         "regenerate": "Regenerate",

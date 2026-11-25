@@ -4071,6 +4071,7 @@
         "prompt_helper_pmf": "衡量产品市场契合度，了解用户最舍不得失去的功能",
         "prompt_helper_pmf_label": "产品市场契合度",
         "prompt_label": "描述你需要的问卷",
+        "prompt_needs_more_detail": "用一句话描述一下问卷的目标、受众或主题，这样 AI 才能生成一份实用的草稿。",
         "prompt_placeholder": "描述你需要的调查，例如：了解新用户在引导过程中为何停止以及哪些因素能帮助他们完成设置",
         "provider_auth_failed": "AI 提供商拒绝了此实例的凭据。请联系你的管理员检查 AI 配置。",
         "regenerate": "重新生成",

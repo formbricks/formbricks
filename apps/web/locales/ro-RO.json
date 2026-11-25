@@ -4071,6 +4071,7 @@
         "prompt_helper_pmf": "Măsoară potrivirea produs-piață și află ce ar lipsi cel mai mult utilizatorilor",
         "prompt_helper_pmf_label": "Potrivire produs-piață",
         "prompt_label": "Descrie chestionarul de care ai nevoie",
+        "prompt_needs_more_detail": "Descrie într-o propoziție scopul chestionarului, publicul țintă sau subiectul, ca AI-ul să poată crea o ciornă utilă.",
         "prompt_placeholder": "Descrie chestionarul de care ai nevoie, de ex. Înțelege de ce utilizatorii noi se opresc în timpul onboarding-ului și ce i-ar ajuta să finalizeze configurarea",
         "provider_auth_failed": "Furnizorul AI a respins acreditările acestei instanțe. Cere administratorului să verifice configurația AI.",
         "regenerate": "Regenerează",

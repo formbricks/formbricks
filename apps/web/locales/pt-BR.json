@@ -4071,6 +4071,7 @@
         "prompt_helper_pmf": "Meça o product-market fit e descubra o que os usuários mais sentiriam falta",
         "prompt_helper_pmf_label": "Adequação produto-mercado",
         "prompt_label": "Descreva a pesquisa que você precisa",
+        "prompt_needs_more_detail": "Descreva o objetivo, o público ou o tema da pesquisa em uma frase para que a IA possa criar um rascunho útil.",
         "prompt_placeholder": "Descreva a pesquisa que você precisa, por exemplo: Entender por que novos usuários abandonam durante a integração e o que os ajudaria a concluir a configuração",
         "provider_auth_failed": "O provedor de IA rejeitou as credenciais desta instância. Peça ao seu administrador para verificar a configuração de IA.",
         "regenerate": "Gerar novamente",

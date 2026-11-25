@@ -4071,6 +4071,7 @@
         "prompt_helper_pmf": "Mät product-market fit och ta reda på vad användarna skulle sakna mest",
         "prompt_helper_pmf_label": "Produkt-marknadsanpassning",
         "prompt_label": "Beskriv enkäten du behöver",
+        "prompt_needs_more_detail": "Beskriv enkätens mål, målgrupp eller ämne i en mening så att AI:n kan skapa ett användbart utkast.",
         "prompt_placeholder": "Beskriv den enkät du behöver, t.ex. Förstå varför nya användare avbryter under onboarding och vad som skulle hjälpa dem att slutföra konfigurationen",
         "provider_auth_failed": "AI-leverantören avvisade den här instansens autentiseringsuppgifter. Be din administratör att kontrollera AI-konfigurationen.",
         "regenerate": "Generera om",

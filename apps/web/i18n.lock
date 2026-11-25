@@ -3920,6 +3920,7 @@ checksums:
     workspace/surveys/ai_create/prompt_helper_pmf: 2b723fab80c2b865276a47e89e04d37e
     workspace/surveys/ai_create/prompt_helper_pmf_label: e47851c38ac0ee43597b4288d21500f8
     workspace/surveys/ai_create/prompt_label: 7d6d9969f13a0fb453cd63e239dec385
+    workspace/surveys/ai_create/prompt_needs_more_detail: 0b6fabb3fac8934bb548f1e5a9857583
     workspace/surveys/ai_create/prompt_placeholder: 75155ac1c57f46766b8e9c8531a9b25f
     workspace/surveys/ai_create/provider_auth_failed: 3c6539beae89a928a23c532dd330e4f7
     workspace/surveys/ai_create/regenerate: 79bc737effc16d0546c048c6aa2ec415
