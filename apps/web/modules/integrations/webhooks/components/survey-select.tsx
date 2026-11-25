@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import {
   getWebhookSurveyOptions,
   mergePickedSurveyIds,
@@ -58,11 +59,6 @@ export const SurveySelect = ({
         />
         <span className="ml-2">{t("workspace.integrations.webhooks.all_current_and_new_surveys")}</span>
       </label>
-      {surveyVisibilityEnabled && selectedAllSurveys && (
-        <p className="text-xs text-slate-500">
-          {t("workspace.surveys.visibility.all_surveys_skip_restricted")}
-        </p>
-      )}
       <MultiSelect
         options={options}
         value={selectedAllSurveys ? [] : selectedSurveys}
@@ -78,12 +74,24 @@ export const SurveySelect = ({
         disabled={selectedAllSurveys || !allowChanges}
         placeholder={t("workspace.surveys.search_by_survey_name")}
       />
-      {!selectedAllSurveys && (
-        <RestrictedSurveysNote
-          surveyVisibilityEnabled={surveyVisibilityEnabled}
-          surveys={surveys}
-          attachedSurveyIds={attachedSurveyIds}
-        />
+      {surveyVisibilityEnabled && (
+        // Keep space for both notes so toggling the checkbox doesn't move the centered dialog.
+        <div className="grid">
+          <p
+            className={cn(
+              "col-start-1 row-start-1 m-1 text-xs text-slate-500",
+              !selectedAllSurveys && "invisible"
+            )}>
+            {t("workspace.surveys.visibility.all_surveys_skip_restricted")}
+          </p>
+          <div className={cn("col-start-1 row-start-1", selectedAllSurveys && "invisible")}>
+            <RestrictedSurveysNote
+              surveyVisibilityEnabled={surveyVisibilityEnabled}
+              surveys={surveys}
+              attachedSurveyIds={attachedSurveyIds}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
