@@ -1,4 +1,7 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
+import type { z } from "zod";
+import type { TSurveyVisibilityBlocker } from "@/app/api/v3/surveys/visibility/blockers";
+import type { TV3SurveyVisibilityChangeResult } from "@/app/api/v3/surveys/visibility/operations";
 import { ZMcpSurveyVisibilityChangeOutput, ZMcpSurveyVisibilityStateOutput } from "./survey-output-schemas";
 
 /**
@@ -90,11 +93,31 @@ describe("ZMcpSurveyVisibilityChangeOutput", () => {
       access: { via: "workspace", canManageVisibility: true },
       version: 3,
       pending: null,
-      changedAt: null,
-      changedBy: { type: "apiKey", id: "key_1", name: "Key" },
+      changedAt: "2026-11-24T10:00:00.000Z",
+      changedBy: { type: "user", id: "user_1", name: "Alice Example" },
     };
-    expect(ZMcpSurveyVisibilityChangeOutput.safeParse({ data }).success).toBe(false);
+    // Each case breaks one field of an otherwise valid result, so it fails for that field alone.
+    expect(ZMcpSurveyVisibilityChangeOutput.safeParse({ data }).success).toBe(true);
+    expect(
+      ZMcpSurveyVisibilityChangeOutput.safeParse({
+        data: { ...data, changedBy: { type: "apiKey", id: "key_1", name: "Key" } },
+      }).success
+    ).toBe(false);
     const { version: _version, ...withoutVersion } = data;
     expect(ZMcpSurveyVisibilityChangeOutput.safeParse({ data: withoutVersion }).success).toBe(false);
+  });
+});
+
+// The hand-typed schemas are also pinned to the server's own types, so a serializer change breaks the
+// typecheck rather than only the MCP call at runtime.
+describe("visibility output schemas against the server types", () => {
+  test("the change result and a blocker fit what the tools advertise", () => {
+    type TChangeData = NonNullable<z.input<typeof ZMcpSurveyVisibilityChangeOutput>["data"]>;
+    type TStateBlocker = NonNullable<
+      z.input<typeof ZMcpSurveyVisibilityStateOutput>["data"]
+    >["blockers"][number];
+
+    expectTypeOf<TV3SurveyVisibilityChangeResult>().toExtend<TChangeData>();
+    expectTypeOf<TSurveyVisibilityBlocker>().toExtend<TStateBlocker>();
   });
 });

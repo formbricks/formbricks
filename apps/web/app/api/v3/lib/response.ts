@@ -490,28 +490,27 @@ export function problemSurveyHasLinkedCreatives(
   );
 }
 
-/** ENG-3282: `restricted` refused because the survey has no owner (Decision log #3). */
-export function problemVisibilityChangeNotAllowed(requestId: string, instance?: string): Response {
-  return problemResponse(
-    422,
-    "Unprocessable Content",
-    "A survey without an author can't be restricted. Duplicate it to get a restricted copy you own.",
-    requestId,
-    { code: "visibility_change_not_allowed", instance }
-  );
-}
-
 /**
- * ENG-7508: a create asked for `restricted` from a principal that can own nothing (an API key, or no
- * principal). Same code as {@link problemVisibilityChangeNotAllowed} — one meaning: this caller cannot
- * make a survey restricted — with the detail a create can act on. The change-side text tells the caller
- * to duplicate the survey, which a create has not got yet.
+ * One code, one meaning — this caller cannot make the survey restricted — with the detail each request
+ * can act on. A change is told to duplicate the survey; a create (ENG-7508: `restricted` asked by a
+ * principal that can own nothing, such as an API key) has no survey to duplicate yet.
  */
-export function problemCreateVisibilityChangeNotAllowed(requestId: string, instance?: string): Response {
+const VISIBILITY_CHANGE_NOT_ALLOWED_DETAIL = {
+  change: "A survey without an author can't be restricted. Duplicate it to get a restricted copy you own.",
+  create:
+    'A survey created without an owner can\'t be restricted: only a signed-in user can own a survey. Send visibility "workspace", or create it from the app as a signed-in user.',
+} as const;
+
+/** ENG-3282: `restricted` refused because the survey has no owner (Decision log #3). */
+export function problemVisibilityChangeNotAllowed(
+  requestId: string,
+  instance?: string,
+  context: "change" | "create" = "change"
+): Response {
   return problemResponse(
     422,
     "Unprocessable Content",
-    'A survey created without an owner can\'t be restricted: only a signed-in user can own a survey. Send visibility "workspace", or create it from the app as a signed-in user.',
+    VISIBILITY_CHANGE_NOT_ALLOWED_DETAIL[context],
     requestId,
     { code: "visibility_change_not_allowed", instance }
   );

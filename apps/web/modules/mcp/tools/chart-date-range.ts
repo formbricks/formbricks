@@ -32,7 +32,7 @@ export const ZMcpRelativeChartDateRange = z
       .min(1)
       .max(MAX_RELATIVE_CHART_RANGE_DAYS)
       .describe(
-        "Day and week windows count inclusively from today; a month window subtracts this many calendar months from today. Must be between 1 and 365."
+        "Day and week windows count inclusively from today; a month window subtracts this many calendar months from today. At most 365 days, 52 weeks or 11 months: a window longer than 365 days is refused."
       ),
     unit: z.enum(["day", "week", "month"]).describe("The unit last counts: day, week or month."),
   })

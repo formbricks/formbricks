@@ -1017,7 +1017,7 @@ Creates a block-based link survey using the v3 survey document contract. The too
 not idempotent.
 
 `visibility` is optional and applies only when the survey is created — `patch_survey` does not take it,
-and a later change is a separate v3 visibility request. Omitted, the survey follows the rule the create
+and a later change goes through `set_survey_visibility`. Omitted, the survey follows the rule the create
 always applied: a signed-in user's survey is `restricted` when the organization has survey visibility
 enabled and `workspace` otherwise, while one created with an API key is always `workspace`. Send
 `workspace` for a survey everyone with workspace access can read, or `restricted` for one only its owner
@@ -2151,8 +2151,8 @@ dropped filter would widen the result set without saying so.
 
 `fields` is not a filter: it projects each returned record down to the listed snake_case keys, always
 keeping `id`, so a scan that only needs the question and the answer does not pull every record's metadata
-and enrichment into the conversation. A field a record has no value for is omitted rather than sent as
-`null`; a name the feedback-record contract does not have is rejected rather than dropped, and `id` is
+and enrichment into the conversation. A key the record does not carry is omitted; one it carries as `null` is
+returned as `null`. A name the feedback-record contract does not have is rejected rather than dropped, and `id` is
 not accepted because it is always returned. Omit `fields` for full records; an empty list is rejected
 rather than read as "id only".
 

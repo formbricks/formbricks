@@ -409,6 +409,12 @@ function responseFormat(concisePayload: string, detailedPayload: string) {
     .describe(`concise (default) returns ${concisePayload}. detailed returns ${detailedPayload}.`);
 }
 
+/** `response_format` on `create_survey` and `patch_survey`, which acknowledge a write the same way. */
+const ZMcpSurveyWriteResponseFormat = responseFormat(
+  "id, updatedAt (the next call's expectedUpdatedAt), blockCount, visibility and any warnings",
+  "the full survey resource"
+).optional();
+
 export const ZMcpCreateSurveyInput = z
   .object({
     workspaceId: ZId.describe("Workspace ID where the survey should be created."),
@@ -416,7 +422,7 @@ export const ZMcpCreateSurveyInput = z
     type: z.literal("link").optional().describe("Survey type. Only link surveys are supported."),
     status: ZSurveyStatus.optional().describe("Initial survey status. Defaults to draft."),
     visibility: ZSurveyVisibility.optional().describe(
-      "Initial visibility, set only when the survey is created (patch_survey does not take it). Omitted: a survey created by a signed-in user follows the organization's setting (restricted when survey visibility is enabled, otherwise workspace); one created with an API key is workspace-visible. `workspace` is readable by everyone with workspace access. `restricted` is readable by the owner and the organization's owners and managers only; it needs a signed-in user and survey visibility enabled, else the call is refused with 403 visibility_not_enabled (feature off) or 422 visibility_change_not_allowed (an API key owns nothing). Changing it later is a separate v3 visibility request, not a survey patch."
+      "Initial visibility, set only when the survey is created (patch_survey does not take it). Omitted: a survey created by a signed-in user follows the organization's setting (restricted when survey visibility is enabled, otherwise workspace); one created with an API key is workspace-visible. `workspace` is readable by everyone with workspace access. `restricted` is readable by the owner and the organization's owners and managers only; it needs a signed-in user and survey visibility enabled, else the call is refused with 403 visibility_not_enabled (feature off) or 422 visibility_change_not_allowed (an API key owns nothing). Change it later with set_survey_visibility, not patch_survey."
     ),
     defaultLanguage: z
       .string()
@@ -466,10 +472,7 @@ export const ZMcpCreateSurveyInput = z
       description: SURVEY_EMBEDDED_FIELDS_DESCRIPTION,
     }).optional(),
     customCss: ZV3SurveyCustomCss.optional(),
-    response_format: responseFormat(
-      "id, updatedAt (the next call's expectedUpdatedAt), blockCount, visibility and any warnings",
-      "the full survey resource"
-    ).optional(),
+    response_format: ZMcpSurveyWriteResponseFormat,
   })
   .strict();
 
@@ -482,10 +485,7 @@ export const ZMcpPatchSurveyInput = z
         `Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree. \`customCss\` is \`{ light, dark }\` source (both keys) or null to clear; omit it to keep the current CSS. \`startLogic\` replaces every rule before the first question; null or [] removes them. \`embeddedFields\`: ${SURVEY_EMBEDDED_FIELDS_DESCRIPTION} ${SURVEY_BLOCKS_DESCRIPTION} ${START_LOGIC_DESCRIPTION}`
       ),
     confirm: ZMcpSurveyWriteConfirm,
-    response_format: responseFormat(
-      "id, updatedAt (the next call's expectedUpdatedAt), blockCount, visibility and any warnings",
-      "the full survey resource"
-    ).optional(),
+    response_format: ZMcpSurveyWriteResponseFormat,
   })
   .strict();
 
@@ -575,14 +575,11 @@ export const ZMcpSurveyVisibilityInput = z
   })
   .strict();
 
-export const ZMcpSetSurveyVisibilityInput = z
-  .object({
-    surveyId: z.cuid2().describe("Survey ID."),
-    visibility: ZSurveyVisibility.describe(
-      "`workspace` shares the survey with the whole workspace; `restricted` limits it to its owner and organization owners/managers."
-    ),
-  })
-  .strict();
+export const ZMcpSetSurveyVisibilityInput = ZMcpSurveyVisibilityInput.extend({
+  visibility: ZSurveyVisibility.describe(
+    "`workspace` shares the survey with the whole workspace; `restricted` limits it to its owner and organization owners/managers."
+  ),
+}).strict();
 
 export const ZMcpDeleteSurveyInput = z
   .object({

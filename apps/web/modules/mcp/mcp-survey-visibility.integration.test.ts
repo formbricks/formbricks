@@ -183,10 +183,8 @@ describe("survey visibility through MCP", () => {
       blocks: BLOCKS,
     });
     expect(succeeded(created), toolText(created)).toBe(true);
-    expect(dataOf(created)).toMatchObject({
-      visibility: "restricted",
-      access: { canManageVisibility: true },
-    });
+    // The concise create ack carries the visibility the create landed on; access is read below.
+    expect(dataOf(created)).toMatchObject({ visibility: "restricted" });
     const surveyId = dataOf(created).id as string;
     await drainAuthzedOutbox();
 
@@ -266,6 +264,10 @@ describe("survey visibility through MCP", () => {
     await synchronizeAuthzedIntegrationFixture();
 
     const survey = await createSurvey(setup, { ownerId: otherOwner.id });
+    const before = await prisma.survey.findUniqueOrThrow({
+      where: { id: survey.id },
+      select: { visibility: true, visibilityVersion: true },
+    });
     const outcome = await callMcpTool({ accessToken }, "set_survey_visibility", {
       surveyId: survey.id,
       visibility: "restricted",
@@ -273,6 +275,12 @@ describe("survey visibility through MCP", () => {
 
     expect(outcome.result?.isError, toolText(outcome)).toBe(true);
     expect(problemOf(outcome)).toMatchObject({ status: 403, code: "forbidden" });
+    expect(
+      await prisma.survey.findUniqueOrThrow({
+        where: { id: survey.id },
+        select: { visibility: true, visibilityVersion: true },
+      })
+    ).toEqual(before);
     // The grant allows Surveys: Write; the operation refuses because the writer may not manage visibility.
     expect(problemOf(outcome).detail).not.toMatch(/^Not permitted/);
 

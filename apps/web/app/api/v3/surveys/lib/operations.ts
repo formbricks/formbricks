@@ -27,10 +27,10 @@ import {
   noContentResponse,
   problemBadRequest,
   problemConflict,
-  problemCreateVisibilityChangeNotAllowed,
   problemForbidden,
   problemSurveyHasLinkedCreatives,
   problemUnprocessableContent,
+  problemVisibilityChangeNotAllowed,
   problemVisibilityNotEnabled,
   problemWorkspaceSurveyLimit,
   successListResponse,
@@ -567,7 +567,7 @@ export function mapV3SurveyCreateError(
   }
   if (err instanceof SurveyCreationVisibilityNotAllowedError) {
     log.warn({ statusCode: 422, errorCode: err.name }, "Survey create asked for restricted without an owner");
-    return problemCreateVisibilityChangeNotAllowed(requestId, instance);
+    return problemVisibilityChangeNotAllowed(requestId, instance, "create");
   }
   if (err instanceof InvalidInputError) {
     log.warn({ statusCode: 400, errorCode: err.name }, "Invalid survey input");

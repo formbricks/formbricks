@@ -911,7 +911,7 @@ describe("create_feedback_records", () => {
    * wrapper queues them on the way out, and the catch queues again on a throw, so running the projection
    * before `queueOutcome` is what keeps a projection failure from duplicating every creation.
    */
-  test("does not queue a creation twice when the response cannot be projected", async () => {
+  test("queues a committed creation once, as a success, when its response cannot be projected", async () => {
     const built: Partial<TV3AuditLog>[] = [];
     vi.mocked(buildV3AuditLog, { partial: true }).mockImplementation(() => {
       const auditLog = makeAuditLog();
@@ -921,16 +921,17 @@ describe("create_feedback_records", () => {
     vi.mocked(createV3FeedbackRecords).mockImplementation(async ({ auditLogs }) => {
       const [created] = auditLogs ?? [];
       if (created) created.targetId = "rec-1";
-      // A 200 whose body is not JSON: the concise projection throws, which is the path under test.
+      // A 200 whose body is not JSON: the concise projection cannot read it and hands it back unchanged.
       return new Response("not json", { status: 200 });
     });
     const { tools } = createToolServer();
 
-    await expect(
-      tools.get("create_feedback_records")!.handler(input, { http: { authInfo } })
-    ).rejects.toThrow();
+    const result = await tools.get("create_feedback_records")!.handler(input, { http: { authInfo } });
 
-    // One event, once: the stamped creation, queued by the catch because the call failed after it.
+    // Not reported as a failure: the write committed, and the caller can list the records it made.
+    expect(result.isError).toBeFalsy();
+
+    // The records exist, so the event says so, once.
     expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
     expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toBe(built[0]);
     expect(built[0].status).toBe("success");

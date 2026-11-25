@@ -21,6 +21,7 @@ import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpTool
 import { responseToMcpToolResult } from "../errors";
 import { runConfirmedDelete } from "./delete-confirmation";
 import { registerMcpTool } from "./guard-permissions";
+import { mapJsonResponseBody } from "./json-response";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCountFeedbackRecordsInput,
@@ -94,40 +95,37 @@ function writeHandler<TInput extends { workspaceId: string }>(
 /**
  * Project a successful list-shaped response down to the record fields the caller asked for, always
  * keeping `id`. The fields are the outward snake_case names (`TV3FeedbackRecord`), so this is the same
- * vocabulary the filter arguments and the records themselves use. A field the record does not carry is
- * left out rather than emitted as `null`, and `meta`/`requestId` pass through untouched. An empty
+ * vocabulary the filter arguments and the records themselves use. A key the record does not carry is
+ * left out, while one it carries as `null` stays `null`, and `meta`/`requestId` pass through untouched. An empty
  * `fields` keeps only `id`, which is the concise batch-create answer; the `fields` tool argument
  * requires at least one name, so that case is internal.
  *
  * MCP-only: a page of full records is expensive in an agent's context, and a scan usually needs two or
  * three keys. REST keeps the full records.
  */
-async function projectFeedbackRecordFields(response: Response, fields: readonly string[]): Promise<Response> {
-  if (!response.ok) {
-    return response;
-  }
-
-  const body = (await response.clone().json()) as { data?: unknown };
-  if (!Array.isArray(body.data)) {
-    return response;
-  }
-
-  const projected = body.data.map((record) => {
-    if (typeof record !== "object" || record === null) {
-      return record;
+function projectFeedbackRecordFields(response: Response, fields: readonly string[]): Promise<Response> {
+  return mapJsonResponseBody<{ data?: unknown }>(response, (body) => {
+    if (!Array.isArray(body.data)) {
+      return undefined;
     }
 
-    const source = record as Record<string, unknown>;
-    const picked: Record<string, unknown> = { id: source.id };
-    for (const field of fields) {
-      if (field in source) {
-        picked[field] = source[field];
+    const projected = body.data.map((record) => {
+      if (typeof record !== "object" || record === null) {
+        return record;
       }
-    }
-    return picked;
-  });
 
-  return Response.json({ ...body, data: projected }, { status: response.status, headers: response.headers });
+      const source = record as Record<string, unknown>;
+      const picked: Record<string, unknown> = { id: source.id };
+      for (const field of fields) {
+        if (field in source) {
+          picked[field] = source[field];
+        }
+      }
+      return picked;
+    });
+
+    return { ...body, data: projected };
+  });
 }
 
 /**
@@ -186,22 +184,17 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     // `fields` is the one MCP-only argument: it is projected off the response here and must not reach
     // the operation, which would otherwise hand an unknown parameter to the Hub.
     [{ permission: "feedbackRecords", level: "read" }],
-    async (input: TMcpListFeedbackRecordsInput, ctx) => {
-      const authInfo = getMcpToolAuthInfo(ctx);
-      const requestId = getMcpRequestId(authInfo);
-      const { fields, ...filters } = input;
-      const response = await listV3FeedbackRecords({
-        ...filters,
-        authentication: getMcpAuthentication(authInfo),
-        requestId,
-        instance: MCP_API_ROUTE,
-      });
-
-      return await responseToMcpToolResult(
-        fields === undefined ? response : await projectFeedbackRecordFields(response, fields),
-        requestId
-      );
-    }
+    readOnlyHandler<TMcpListFeedbackRecordsInput>(
+      async ({ fields, ...filters }, authentication, requestId) => {
+        const response = await listV3FeedbackRecords({
+          ...filters,
+          authentication,
+          requestId,
+          instance: MCP_API_ROUTE,
+        });
+        return fields === undefined ? response : await projectFeedbackRecordFields(response, fields);
+      }
+    )
   );
 
   registerMcpTool(
@@ -289,7 +282,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     {
       title: "Create feedback records",
       description:
-        "Create several feedback records in one call — use this instead of calling create_feedback_record repeatedly when importing a batch. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch. If the feedback service rejects some records (a duplicate submission, say), the created ones are returned and meta.failures lists the rest by index, so only those need retrying; check meta.failed. Records in one call are NOT automatically treated as one submission: each record without a submission_id gets its own generated one, so to record several answers given together (a survey response, a call with a rating and a comment) set the same submission_id on all of them. Returns each created record's id plus meta (the counts and failures) by default; pass response_format: detailed for the full created records.",
+        "Create several feedback records in one call — use this instead of calling create_feedback_record repeatedly when importing a batch. Every record is validated before any is written, so an invalid record fails the whole call rather than storing part of the batch. If the feedback service rejects some records (a duplicate submission, say), the created ones are returned and meta.failures lists the rest by index, so only those need retrying; check meta.failed. Records in one call are NOT automatically treated as one submission: each record without a submission_id gets its own generated one, so to record several answers given together (a survey response, a call with a rating and a comment) set the same submission_id on all of them. Returns each created record's id, in input order with the indexes in meta.failures skipped, plus meta (the counts and failures) by default; pass response_format: detailed for the full created records.",
       inputSchema: ZMcpCreateFeedbackRecordsInput,
       audit: { action: "created", targetType: "feedbackRecord" },
       annotations: {

@@ -17,6 +17,7 @@ import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../au
 import { responseToMcpToolResult } from "../errors";
 import { runConfirmedDelete } from "./delete-confirmation";
 import { registerMcpTool } from "./guard-permissions";
+import { mapJsonResponseBody } from "./json-response";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateSurveyInput,
@@ -93,44 +94,25 @@ export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSe
  * learns a create landed restricted). REST keeps the full resource (AIP-144); this projection is
  * MCP-only, where context is the scarce resource.
  */
-async function conciseSurveyResponse(
-  response: Response,
-  applied: Record<string, unknown> = {}
-): Promise<Response> {
-  if (!response.ok) {
-    return response;
-  }
-
-  try {
-    const body = (await response.clone().json()) as {
-      data?: Record<string, unknown> & { blocks?: unknown; visibility?: unknown };
-      requestId?: string;
-      warnings?: unknown;
-    };
+function conciseSurveyResponse(response: Response, applied: Record<string, unknown> = {}): Promise<Response> {
+  return mapJsonResponseBody<{
+    data?: Record<string, unknown> & { blocks?: unknown; visibility?: unknown };
+    requestId?: string;
+    warnings?: unknown;
+  }>(response, (body) => {
     const data = body.data ?? {};
-    const blocks = data.blocks;
-
-    return Response.json(
-      {
-        data: {
-          id: data.id,
-          updatedAt: data.updatedAt,
-          blockCount: Array.isArray(blocks) ? blocks.length : undefined,
-          ...(data.visibility === undefined ? {} : { visibility: data.visibility }),
-          ...applied,
-        },
-        ...(body.warnings === undefined ? {} : { warnings: body.warnings }),
-        requestId: body.requestId,
+    return {
+      data: {
+        id: data.id,
+        updatedAt: data.updatedAt,
+        blockCount: Array.isArray(data.blocks) ? data.blocks.length : undefined,
+        ...(data.visibility === undefined ? {} : { visibility: data.visibility }),
+        ...applied,
       },
-      { status: response.status, headers: response.headers }
-    );
-  } catch {
-    // This runs inside the write's `run` callback, after the survey exists: a throw here would go
-    // through `runMcpMutation`'s catch and mark an already-committed create/update as a failed audit
-    // event. The v3 body is always valid JSON, so this is defensive — hand back the unprojected
-    // response rather than risk the audit record.
-    return response;
-  }
+      ...(body.warnings === undefined ? {} : { warnings: body.warnings }),
+      requestId: body.requestId,
+    };
+  });
 }
 
 export function registerSurveyTools(server: McpServer): void {
@@ -200,7 +182,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Create survey",
       description:
-        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`. Optional create-only `visibility` sets who can read it: omitted, a signed-in creator's survey is restricted when the organization has survey visibility enabled and workspace-visible otherwise, while an API key's is always workspace-visible; `workspace` is readable by everyone with workspace access; `restricted` needs a signed-in user and the feature, else the call is refused with 403 visibility_not_enabled or 422 visibility_change_not_allowed. Declare Embedded Data with typed `embeddedFields` (library fields linked by `key`) or the legacy `variables` / `hiddenFields`. Optional `startLogic` holds rules that run before the first question (screen out to an ending, jump to a block, set a value from URL parameters). Returns a concise acknowledgement by default — `id`, `updatedAt` (the next call's `expectedUpdatedAt`), `blockCount`, `visibility` and any `warnings`; pass response_format: detailed for the full survey resource.",
+        "Create a Formbricks link survey using the v3 Surveys API contract. Optional `customCss` source is processed by the server; removed constructs come back as top-level `warnings`. Optional create-only `visibility` sets who can read it (see the field). Declare Embedded Data with typed `embeddedFields` (library fields linked by `key`) or the legacy `variables` / `hiddenFields`. Optional `startLogic` holds rules that run before the first question (screen out to an ending, jump to a block, set a value from URL parameters). Returns a concise acknowledgement by default — `id`, `updatedAt` (the next call's `expectedUpdatedAt`), `blockCount`, `visibility` and any `warnings`; pass response_format: detailed for the full survey resource.",
       inputSchema: ZMcpCreateSurveyInput,
       audit: { action: "created", targetType: "survey" },
       annotations: {

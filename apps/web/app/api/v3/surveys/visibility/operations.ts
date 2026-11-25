@@ -273,6 +273,9 @@ const toChangeResult = async (row: TVisibilityRow, visibility: TV3SurveyResource
   changedBy: await serializeChangedBy(row),
 });
 
+/** The `POST …/visibility` result; the MCP output schema is checked against it at compile time. */
+export type TV3SurveyVisibilityChangeResult = Awaited<ReturnType<typeof toChangeResult>>;
+
 export async function changeV3SurveyVisibility(
   params: TVisibilityOperationParams & Readonly<{ auditLog?: TV3AuditLog; body: unknown }>
 ): Promise<Response> {
