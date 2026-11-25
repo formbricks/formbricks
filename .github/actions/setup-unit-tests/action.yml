@@ -1,0 +1,54 @@
+name: Set up a unit-test job
+description: >
+  Installs pnpm, Node and the dependencies, writes the CI `.env`, and restores the Turborepo cache of
+  package builds that a run on `main` saved, so a pull request that leaves a package untouched does
+  not build it again.
+inputs:
+  cache-scope:
+    description: >
+      Which job's builds to restore: each unit-test job builds a different set of packages, so each
+      saves and restores its own cache entry.
+    required: true
+  restore-build-cache:
+    description: >
+      "false" on a run that saves the cache (pushes to `main`), so the saved entry holds this commit's
+      builds only instead of every build ever restored into it.
+    required: false
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+    - name: Setup Node.js (version from .nvmrc)
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: ".nvmrc"
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
+
+    - name: Create .env
+      shell: bash
+      run: pnpm dev:setup
+
+    - name: Adjust CI-specific env values
+      shell: bash
+      run: sed -i "s|REDIS_URL=.*|REDIS_URL=|" .env
+
+    # Restore only: a pull request or merge-queue run never writes the cache, so nothing a pull request
+    # builds can be replayed into another run. Entries come from pushes to `main` (sonarqube.yml), and
+    # every branch may read the default branch's caches. Turbo still hashes each task's inputs, so an
+    # entry whose package changed is a miss and the package builds as before; fork pull requests
+    # restore the same way, since reading a cache needs no secret.
+    - name: Restore the package build cache
+      if: inputs.restore-build-cache == 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: .turbo/cache
+        key: turbo-unit-${{ runner.os }}-${{ inputs.cache-scope }}-${{ github.sha }}
+        restore-keys: |
+          turbo-unit-${{ runner.os }}-${{ inputs.cache-scope }}-

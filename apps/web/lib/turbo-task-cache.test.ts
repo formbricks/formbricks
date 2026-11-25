@@ -9,9 +9,9 @@ import { describe, expect, test } from "vitest";
 //
 //   test / test:coverage — cache: false
 //     Tests are side-effectful (network, file system, timing) and produce no deterministic
-//     outputs. Caching would hide flaky failures and regressions. The root package.json
-//     already runs `turbo run test --no-cache`; making it explicit in turbo.json removes
-//     ambiguity and prevents accidental cached runs when invoking turbo directly.
+//     outputs. Caching would hide flaky failures and regressions. This is the only thing that
+//     keeps them uncached: the root `pnpm test` dropped `--no-cache` (ENG-7529) so the package
+//     builds those tasks depend on are cached, and CI restores them from a run on `main`.
 //
 //   db:seed — cache: false
 //     Seeding is stateful and target-dependent: a cached run against one database replays as a

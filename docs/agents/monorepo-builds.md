@@ -99,7 +99,10 @@ usually meet it, iterating on one test file. The root `pnpm test` and `pnpm type
 `@formbricks/ai#build`, `@formbricks/database#build` and five more, so turbo rebuilds them before the
 suite runs. That is also why the unit-test workflow (`test.yml`) stays green with no build step of its
 own — do **not** read "green on CI, red locally" as evidence of a stale `dist/`; both run the same
-graph.
+graph. In CI those builds are usually cache hits: each unit-test job restores the Turborepo cache that
+the last push to `main` saved (`.github/actions/setup-unit-tests`), so a pull request rebuilds only
+the packages whose inputs it changed. A build output missing from a task's `outputs` is therefore
+missing from a CI cache hit too.
 
 The failure looks nothing like a stale build. A symbol added on the branch you just checked out is
 absent from `dist/`, so depending on what is missing the import either resolves to `undefined` or fails

@@ -1,19 +1,31 @@
 name: SonarQube
+# Pushes to `main` only. Pull requests and the merge queue scan in pr.yml's `SonarQube` job, from the
+# coverage its unit-test run already produced, so the suite runs once per pull request (ENG-7529).
+# This run is also the one that saves the Turborepo cache of package builds that pull requests restore.
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-  pull_request:
-    types: [opened, synchronize, reopened]
-  merge_group:
 permissions:
   contents: read
   pull-requests: read
 jobs:
+  test:
+    name: Run Unit Tests
+    uses: ./.github/workflows/test.yml
+    with:
+      coverage: true
+      save-build-cache: true
+
   sonarqube:
     name: SonarQube
+    needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -23,45 +35,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+          persist-credentials: false
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-
-      - name: Setup Node.js (version from .nvmrc)
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: ./.github/actions/sonarqube-scan
         with:
-          node-version-file: ".nvmrc"
-          cache: pnpm
-
-      - name: Setup Java 21
-        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
-        with:
-          distribution: temurin
-          java-version: "21"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
-
-      - name: Create .env
-        run: pnpm dev:setup
-
-      - name: Adjust CI-specific env values
-        run: |
-          sed -i "s|REDIS_URL=.*|REDIS_URL=|" .env
-
-      # Backport PRs (base `release/*`) deliberately don't carry tests, so skip the coverage run and
-      # tell Sonar to ignore coverage for them (see the scan args). `github.base_ref` is empty on
-      # `push` and `merge_group`, so `main` is analysed as before.
-      - name: Run tests with coverage
-        if: ${{ !startsWith(github.base_ref, 'release/') }}
-        run: |
-          pnpm test:coverage
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
-        with:
-          args: >
-            -Dsonar.verbose=true
-            ${{ startsWith(github.base_ref, 'release/') && '-Dsonar.coverage.exclusions=**/*' || '' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          coverage: "true"
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

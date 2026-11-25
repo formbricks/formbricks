@@ -1,7 +1,4 @@
 // mock these globally used functions
-import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
-import ResizeObserver from "resize-observer-polyfill";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ValidationError } from "@formbricks/types/errors";
 
@@ -11,12 +8,6 @@ vi.mock("@/modules/auth/hooks/use-sign-out", () => ({
     signOut: vi.fn().mockResolvedValue(undefined),
   }),
 }));
-
-// Make ResizeObserver available globally (Vitest/Jest environment)
-// This is used by radix-ui
-if (!global.ResizeObserver) {
-  global.ResizeObserver = ResizeObserver;
-}
 
 // Mock useIsMobile hook that depends on window.matchMedia
 vi.mock("@/modules/ui/hooks/use-mobile", () => ({
@@ -168,6 +159,24 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
+// The DOM tooling loads only where there is a DOM: the `components` project (jsdom) and `.test.ts`
+// files that opt into jsdom with a `@vitest-environment` pragma. Over 1,700 of the suite's files run
+// in Node and render nothing, and loading jest-dom, React Testing Library (and with it react-dom) and
+// the ResizeObserver polyfill before each of them was a large share of the suite's setup time
+// (ENG-7529). A Node file that needs one of them imports it itself.
+let cleanupRenderedTrees: (() => void) | undefined;
+if (typeof document !== "undefined") {
+  await import("@testing-library/jest-dom/vitest");
+  ({ cleanup: cleanupRenderedTrees } = await import("@testing-library/react"));
+
+  // Make ResizeObserver available globally (Vitest/Jest environment)
+  // This is used by radix-ui
+  if (!globalThis.ResizeObserver) {
+    const { default: ResizeObserver } = await import("resize-observer-polyfill");
+    globalThis.ResizeObserver = ResizeObserver;
+  }
+}
+
 beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();
@@ -181,7 +190,7 @@ afterEach(() => {
   // and keep calling shared module mocks, so a later test's assertions can count work it never did.
   // Called here rather than as its own afterEach so the order against clearAllMocks is explicit:
   // unmount first, while mock implementations are still in place for any cleanup effects.
-  cleanup();
+  cleanupRenderedTrees?.();
   vi.clearAllMocks();
 });
 
