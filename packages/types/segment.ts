@@ -407,6 +407,14 @@ export const MAX_SEGMENT_FILTERS_PER_TREE = 1000;
 export const MAX_SEGMENT_FILTER_DEPTH = 50;
 
 /**
+ * Maximum nesting of any container in the raw tree, values included. The filter-depth bound only follows
+ * filter groups, but recursive consumers (the draft save's equality check included) walk every object, so a
+ * deep `value` must be refused before them too. 200 is far above anything the editor shapes (a tree at the
+ * filter-depth limit nests its leaf and value about 100 levels) and far below the stack limit.
+ */
+export const MAX_RAW_FILTER_NESTING = 200;
+
+/**
  * Maximum total surveyIds across every survey-interaction filter in the tree. The per-filter cap
  * (100) times the node cap would still admit 100k ids in one request — hundreds of sequential
  * batched lookups, each holding a pooled DB connection. 1000 total ids means at most a handful of
@@ -424,6 +432,72 @@ const countLeafSurveyInteractionIds = (resource: unknown): number => {
   return Array.isArray(surveyIds) ? surveyIds.length : 0;
 };
 
+/** A malformed chain object where a filter belongs: `resource: { resource: … }`, no `root` of its own. */
+const isResourceChain = (value: unknown): value is { resource?: unknown } =>
+  typeof value === "object" &&
+  value !== null &&
+  !Array.isArray(value) &&
+  !("root" in value) &&
+  "resource" in value;
+
+/**
+ * Follows a `resource` chain up to the depth limit. Returns the depth it reached and, when the chain ends
+ * in an array, the group that array forms. Capped so a 20k-link chain costs `MAX_SEGMENT_FILTER_DEPTH`.
+ */
+const measureResourceChain = (
+  resource: unknown,
+  level: number
+): { depth: number; nextGroup?: { group: unknown[]; level: number } } => {
+  let link = resource;
+  let chainDepth = level + 1;
+  let nextGroup: { group: unknown[]; level: number } | undefined;
+
+  while (chainDepth <= MAX_SEGMENT_FILTER_DEPTH && isResourceChain(link)) {
+    const next = link.resource;
+    if (Array.isArray(next)) {
+      nextGroup = { group: next, level: chainDepth + 1 };
+      break;
+    }
+    link = next;
+    chainDepth += 1;
+  }
+
+  return { depth: chainDepth, nextGroup };
+};
+
+type TPendingFilterGroup = { group: unknown[]; level: number };
+
+/**
+ * Queues every nested group `node` opens and returns the survey-interaction ids it references as a leaf,
+ * plus the depth a malformed `resource` chain reached. A node that is itself an array where a filter
+ * belongs (`[[…]]`) opens a group too, so its contents stay under the node cap.
+ */
+const queueFilterNodeGroups = (
+  node: unknown,
+  level: number,
+  pending: TPendingFilterGroup[]
+): { surveyInteractionIds: number; depth: number } => {
+  if (Array.isArray(node)) {
+    pending.push({ group: node, level: level + 1 });
+    return { surveyInteractionIds: 0, depth: 0 };
+  }
+
+  const resource =
+    typeof node === "object" && node !== null ? (node as { resource?: unknown }).resource : undefined;
+  if (Array.isArray(resource)) {
+    pending.push({ group: resource, level: level + 1 });
+    return { surveyInteractionIds: 0, depth: 0 };
+  }
+  if (isResourceChain(resource)) {
+    // A `resource` chain where a filter belongs is malformed but still walked by recursive consumers, so
+    // its links count toward depth. A filter leaf carries `root` and is not nesting.
+    const chain = measureResourceChain(resource, level);
+    if (chain.nextGroup) pending.push(chain.nextGroup);
+    return { surveyInteractionIds: 0, depth: chain.depth };
+  }
+  return { surveyInteractionIds: countLeafSurveyInteractionIds(resource), depth: 0 };
+};
+
 /**
  * Measures the raw (untrusted, unparsed) filter tree in one linear pass: total nodes, max nesting
  * depth, and total survey-interaction surveyIds. Iterative (explicit stack) on purpose — this walk
@@ -437,7 +511,7 @@ const measureSegmentFilterTree = (
   let depth = 0;
   let surveyInteractionIds = 0;
 
-  const pending: { group: unknown[]; level: number }[] = [];
+  const pending: TPendingFilterGroup[] = [];
   if (Array.isArray(raw)) {
     pending.push({ group: raw, level: 1 });
   }
@@ -448,18 +522,39 @@ const measureSegmentFilterTree = (
     depth = Math.max(depth, level);
     for (const node of group) {
       nodes += 1;
-      const resource =
-        typeof node === "object" && node !== null ? (node as { resource?: unknown }).resource : undefined;
-      if (Array.isArray(resource)) {
-        pending.push({ group: resource, level: level + 1 });
-      } else {
-        surveyInteractionIds += countLeafSurveyInteractionIds(resource);
-      }
+      const opened = queueFilterNodeGroups(node, level, pending);
+      depth = Math.max(depth, opened.depth);
+      surveyInteractionIds += opened.surveyInteractionIds;
     }
     entry = pending.pop();
   }
 
   return { nodes, depth, surveyInteractionIds };
+};
+
+/**
+ * Depth of every container in the raw tree, values included. A deep `value` never opens a filter group,
+ * so the filter measure cannot see it, but recursive consumers (the draft save's equality check) do.
+ * Iterative, so measuring a deep tree cannot itself overflow.
+ */
+const measureRawContainerDepth = (raw: unknown): number => {
+  let deepest = 0;
+  const pending: { value: unknown; level: number }[] = [{ value: raw, level: 0 }];
+
+  let entry = pending.pop();
+  while (entry) {
+    const { value, level } = entry;
+    const isArray = Array.isArray(value);
+    const isObject = !isArray && typeof value === "object" && value !== null;
+    if (isArray || isObject) {
+      deepest = Math.max(deepest, level);
+      const children: unknown[] = isArray ? value : Object.values(value);
+      for (const child of children) pending.push({ value: child, level: level + 1 });
+    }
+    entry = pending.pop();
+  }
+
+  return deepest;
 };
 
 /**
@@ -473,6 +568,9 @@ export const getSegmentFilterTreeBoundsViolation = (raw: unknown): string | null
 
   if (depth > MAX_SEGMENT_FILTER_DEPTH) {
     return `Segment filters are nested too deeply: at most ${MAX_SEGMENT_FILTER_DEPTH} levels are supported`;
+  }
+  if (measureRawContainerDepth(raw) > MAX_RAW_FILTER_NESTING) {
+    return `Filter values are nested too deeply: at most ${MAX_RAW_FILTER_NESTING} levels are supported`;
   }
   if (nodes > MAX_SEGMENT_FILTERS_PER_TREE) {
     return `Too many filters: a segment supports at most ${MAX_SEGMENT_FILTERS_PER_TREE} filters in total`;

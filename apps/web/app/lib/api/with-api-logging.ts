@@ -4,6 +4,7 @@ import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { getRateLimitErrorResponse } from "@/app/lib/api/client-rate-limit";
+import { getCrossOriginRefusal } from "@/app/lib/api/origin-check";
 import { responses } from "@/app/lib/api/response";
 import {
   AuthenticationMethod,
@@ -12,6 +13,7 @@ import {
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { ENVOY_RATE_LIMITING_ENABLED } from "@/lib/constants";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
 import {
@@ -105,11 +107,14 @@ const handleRateLimiting = async (
     return responses.internalServerErrorResponse("Invalid authentication configuration");
   }
 
-  const isEnvoyManagedRateLimit = isRouteRateLimitedByEnvoy({
-    pathname: req.nextUrl.pathname,
-    method: req.method,
-    authType,
-  });
+  // The matcher is static, so it only says "Envoy would limit this" when Envoy is actually deployed.
+  const isEnvoyManagedRateLimit =
+    ENVOY_RATE_LIMITING_ENABLED &&
+    isRouteRateLimitedByEnvoy({
+      pathname: req.nextUrl.pathname,
+      method: req.method,
+      authType,
+    });
 
   try {
     if (authentication && !isEnvoyManagedRateLimit) {
@@ -333,6 +338,20 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
         return res;
       }
       return responses.notAuthenticatedResponse();
+    }
+
+    // === Cross-origin refusal (session cookie only) ===
+    // `SameSite=Lax` still attaches the session cookie to a sibling subdomain's POST, and route handlers get
+    // no `Origin` check from Next.js. API-key callers send their credential on purpose and are never checked.
+    if (authentication && "user" in authentication) {
+      const refusal = getCrossOriginRefusal(req);
+      if (refusal) {
+        logger.warn(
+          { refusal, statusCode: 403, method: req.method, path: req.nextUrl.pathname },
+          "V1 API cross-origin session request refused"
+        );
+        return responses.forbiddenResponse("Cross-origin request refused");
+      }
     }
 
     // === Audit Log Enhancement ===

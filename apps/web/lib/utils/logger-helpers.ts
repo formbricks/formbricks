@@ -24,6 +24,7 @@ const SENSITIVE_KEY_NAMES = [
   "address",
   "phone",
   "hashedkey",
+  "lookuphash",
   "apikey",
   "createdby",
   "lastusedat",

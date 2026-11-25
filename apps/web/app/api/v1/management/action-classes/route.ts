@@ -1,5 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
+import { parseV1Pagination } from "@/app/api/v1/management/lib/pagination";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
@@ -12,17 +13,18 @@ import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/pe
 import { getActionClasses } from "./lib/action-classes";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }) => {
+  handler: async ({ req, authentication }) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }
 
     try {
+      const { limit, offset } = parseV1Pagination(req.nextUrl.searchParams);
       const workspaceIds = [
         ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
-      const actionClasses = await getActionClasses(workspaceIds);
+      const actionClasses = await getActionClasses(workspaceIds, limit, offset);
 
       return {
         response: responses.successResponse(actionClasses),

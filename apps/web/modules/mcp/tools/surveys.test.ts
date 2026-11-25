@@ -30,6 +30,7 @@ import {
   type TToolHandler,
   type ToolCallEra,
   callToolOverHttp,
+  elicitingOAuthContext,
   errorText,
 } from "./test-utils";
 
@@ -38,6 +39,10 @@ import {
 // invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
 // with z.url() and drops the whole event otherwise.
 const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
+
+// vitestSetup stubs createHash, which the sealed confirmation state depends on.
+vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
+vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   createV3SurveyResponseFromRawInput: vi.fn(),
@@ -674,7 +679,6 @@ describe("registerSurveyTools", () => {
         setV3SurveyBlockOrderResponse,
         { body: { order: ["blk_a"] } },
       ],
-      ["delete_survey", { surveyId }, deleteV3Survey, {}],
     ];
 
     test("every tool that changes a survey takes `confirm` and hands it to the operation, not the body", async () => {
@@ -755,6 +759,40 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  // Finding 07: deleting a survey removes its responses for good, so a client that can show a prompt is
+  // asked first and the model's own `confirm: true` does not skip it.
+  test("delete_survey asks a client that can show a prompt before deleting, whatever the model passes", async () => {
+    const { tools } = createToolServer();
+
+    for (const input of [
+      { surveyId: "clxx1234567890123456789012" },
+      { surveyId: "clxx1234567890123456789012", confirm: true },
+    ]) {
+      const result = (await tools
+        .get("delete_survey")!
+        .handler(input, elicitingOAuthContext(authInfo))) as Record<string, unknown>;
+      expect(result.resultType).toBe("input_required");
+    }
+    expect(deleteV3Survey).not.toHaveBeenCalled();
+  });
+
+  test("delete_survey passes the user's agreement to the operation", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+    vi.mocked(deleteV3Survey).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
+
+    await tools
+      .get("delete_survey")!
+      .handler({ surveyId: "clxx1234567890123456789012", confirm: true }, { http: { authInfo } });
+
+    expect(deleteV3Survey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        surveyId: "clxx1234567890123456789012",
+        writeConfirmation: { confirmed: true },
+      })
+    );
+  });
+
   test("delete_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
     const auditLog = { status: "failure" as const };
@@ -764,6 +802,7 @@ describe("registerSurveyTools", () => {
     const result = await tools.get("delete_survey")!.handler(
       {
         surveyId: "clxx1234567890123456789012",
+        confirm: true,
       },
       { http: { authInfo } }
     );
@@ -774,7 +813,7 @@ describe("registerSurveyTools", () => {
       requestId: "req_tool",
       instance: "/api/mcp",
       auditLog,
-      writeConfirmation: { confirmed: false },
+      writeConfirmation: { confirmed: true },
     });
     expect(auditLog.status).toBe("success");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
@@ -794,6 +833,7 @@ describe("registerSurveyTools", () => {
     const result = await tools.get("delete_survey")!.handler(
       {
         surveyId: "clxx1234567890123456789012",
+        confirm: true,
       },
       { http: { authInfo } }
     );
@@ -822,7 +862,7 @@ describe("registerSurveyTools", () => {
 
     const result = await tools
       .get("delete_survey")!
-      .handler({ surveyId: "clxx1234567890123456789012" }, { http: { authInfo } });
+      .handler({ surveyId: "clxx1234567890123456789012", confirm: true }, { http: { authInfo } });
 
     expect(result.isError).toBe(true);
     expect(result.structuredContent.error).toMatchObject({
@@ -838,7 +878,7 @@ describe("registerSurveyTools", () => {
     // Every write tool, so a new one registered under `surveys:read` by mistake fails here. For an
     // OAuth user who holds the write role, this scope is the only barrier.
     const cases: [string, Record<string, unknown>, unknown][] = [
-      ["delete_survey", { surveyId }, deleteV3Survey],
+      ["delete_survey", { surveyId, confirm: true }, deleteV3Survey],
       ["edit_survey_blocks", { surveyId, ops: [{ op: "remove", id: "blk_a" }] }, editV3SurveyBlocksResponse],
       ["set_survey_block_order", { surveyId, order: ["blk_a"] }, setV3SurveyBlockOrderResponse],
       // Writes nothing, but spends AI budget on the caller's behalf: Surveys: Write, like the REST route.

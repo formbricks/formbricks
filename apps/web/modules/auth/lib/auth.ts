@@ -14,7 +14,6 @@ import type { TUserLocale } from "@formbricks/types/user";
 import {
   AUTH_SECRET,
   AUTH_TRUSTED_ORIGINS,
-  AUTH_URL,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   PASSWORD_RESET_DISABLED,
@@ -43,17 +42,20 @@ import {
   betterAuthLogger,
   signInAuditPlugin,
 } from "./better-auth-observability";
+import { passwordByteLimitBeforeHandler } from "./better-auth-password-bytes";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
+import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
+import { trustDeviceBeforeHandler } from "./better-auth-trust-device-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
 import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
-import { revokeOAuthConsentBeforeHandler } from "./mcp-grant-revocation";
+import { revokeOAuthConsentBeforeHandler, revokeOAuthGrantsAfterPasswordReset } from "./mcp-grant-revocation";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
 import { recordOAuthConsentWrites } from "./oauth-consent-writes";
 import { boundOAuthRecordsBeforeHandler } from "./oauth-record-bounds";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
-import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
+import { getAuthBaseUrl, getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { createTemplateKeyedRateLimitStorage } from "./rate-limit-template-key";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -160,7 +162,7 @@ export const auth = betterAuth({
   // outage. Note a falsy value here does NOT stop BA falling through to its own hardcoded default
   // secret — `assertAuthRuntimeConfiguration` in lib/env.ts is what prevents that, by refusing to boot.
   secret: AUTH_SECRET,
-  baseURL: AUTH_URL,
+  baseURL: getAuthBaseUrl(),
   // `/update-user` is served over HTTP for nobody (ENG-3189). Better Auth mounts it beside our own
   // profile surface, and every field it can reach is one Formbricks does not let a client write there:
   //
@@ -194,12 +196,52 @@ export const auth = betterAuth({
   // spend that address's verification-email cap so the user's own resend went nowhere. Nothing calls it
   // over HTTP: `POST /api/internal/verification-emails` uses `auth.api.sendVerificationEmail` in-process and limits
   // each account, and the resend on sign-in runs inside `/sign-in/email`.
+  //
+  // The account-security routes (ENG-7268). Each has a stricter in-app counterpart that calls
+  // `auth.api.*` in-process, and a raw POST with a stolen or borrowed session cookie skipped it:
+  //
+  //  - `/two-factor/disable` removed 2FA with the password alone, where `disableTwoFactorAuthAction`
+  //    also asks for a TOTP or backup code; `/two-factor/generate-backup-codes` minted fresh codes the
+  //    same way. `/two-factor/enable`, `/get-totp-uri`, `/send-otp` and `/verify-otp` likewise have no
+  //    caller (the login form needs only `/two-factor/verify-totp` and `/verify-backup-code`, which stay).
+  //  - `/verify-password` answered valid or invalid at Better Auth's default ~100 per 10 s, around the
+  //    5-per-hour limit on account deletion that exists so a stolen session cannot brute-force the password.
+  //  - `/change-password` skipped the HIBP check and `ZUserPassword` (ENG-4042); `/change-email` skipped
+  //    the verified email-change flow.
+  //  - `/link-social` and `/unlink-account` fight `accountLinking.enabled: false` and the verify-before-
+  //    link recovery flow.
+  //  - `/oauth2/create-client`, `/update-client`, `/delete-client` and `/client/rotate-secret` (ENG-3253)
+  //    are the session-authenticated client CRUD. No screen calls them, and they skip the redirect
+  //    allowlist that guards `/oauth2/register` (ENG-3086, ENG-3471): any account could mint a client
+  //    for its own `https` redirect URI, or repoint one with `update-client`, then phish a consent.
+  //    Closed by path rather than with `clientPrivileges`, because the plugin also asserts that hook
+  //    on `/oauth2/register` whenever a session cookie rides along, which would break MCP
+  //    self-registration from a signed-in browser. `/admin/oauth2/*` is `SERVER_ONLY` upstream, so it
+  //    is never routable. Registration stays `/oauth2/register` only.
+  //
+  // Whatever Better Auth adds next is not open by default: `native-endpoints.integration.test.ts`
+  // fails on any declared route that is neither listed here nor on its explicit allow-list (ADR 0017).
   disabledPaths: [
     "/token",
     "/update-user",
     "/request-password-reset",
     "/sign-up/email",
     "/send-verification-email",
+    "/verify-password",
+    "/change-password",
+    "/change-email",
+    "/two-factor/enable",
+    "/two-factor/disable",
+    "/two-factor/generate-backup-codes",
+    "/two-factor/get-totp-uri",
+    "/two-factor/send-otp",
+    "/two-factor/verify-otp",
+    "/link-social",
+    "/unlink-account",
+    "/oauth2/create-client",
+    "/oauth2/update-client",
+    "/oauth2/delete-client",
+    "/oauth2/client/rotate-secret",
   ],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
@@ -224,7 +266,7 @@ export const auth = betterAuth({
     // account that still carried a password could sign in around the IdP — and around whatever the IdP
     // enforces, such as MFA, conditional access, or deprovisioning.
     enabled: EMAIL_AUTH_ENABLED,
-    // Matches ZUserPassword (min 8 / max 128); the upper+digit composition rule stays enforced
+    // Matches ZUserCurrentPassword (min 8 / max 128; ZUserPassword adds the 72-byte bcrypt limit); the upper+digit composition rule stays enforced
     // by ZUserPassword at the app layer (deferred policy modernization → design doc §10.6).
     minPasswordLength: 8,
     maxPasswordLength: 128,
@@ -259,8 +301,12 @@ export const auth = betterAuth({
     },
     // After a successful reset, send the security notification (parity with the retired
     // completePasswordReset) and audit it. Better Auth already revoked sessions
-    // (revokeSessionsOnPasswordReset above). Both are best-effort — never fail the completed reset.
+    // (revokeSessionsOnPasswordReset above); the OAuth grants it leaves are revoked here (ENG-7364).
+    // All of it is best-effort — never fail the completed reset. The revocation starts first and overlaps
+    // the notification and audit; it is still awaited because a dropped promise would leave 30-day refresh
+    // tokens alive in a serverless runtime, and its transaction carries its own timeout.
     onPasswordReset: async ({ user }) => {
+      const revocation = revokeOAuthGrantsAfterPasswordReset(user.id);
       try {
         const { sendPasswordResetNotifyEmail } = await import("@/modules/email");
         await sendPasswordResetNotifyEmail({ email: user.email, locale: await getUserLocale(user.id) });
@@ -268,6 +314,7 @@ export const auth = betterAuth({
         logger.error({ error, userId: user.id }, "Failed to send password-reset notification email");
       }
       await auditPasswordReset(user.id);
+      await revocation;
     },
   },
 
@@ -427,6 +474,9 @@ export const auth = betterAuth({
       // an anonymous sign-in writes, the authorization-code record authorize writes) before anything else
       // runs. See oauth-record-bounds.ts.
       boundOAuthRecordsBeforeHandler(ctx);
+      // SEC-18: refuse a password sign-in once the account's wrong-password budget is spent. Right after the
+      // record bounds, so a locked account costs no further work. See better-auth-sign-in-budget.ts.
+      await signInBudgetBeforeHandler(ctx);
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
@@ -440,6 +490,10 @@ export const auth = betterAuth({
       // Ordered ahead of the breach check so a sign-up on a closed instance costs no outbound HIBP call.
       // Path-disjoint from the reset gate above, so their relative order is not load-bearing.
       await signupPolicyBeforeHandler(ctx);
+      // bcrypt ignores everything past byte 72: refuse such a password on the native password-set path
+      // (`/reset-password`) the way `ZUserPassword` does in the action. See better-auth-password-bytes.ts.
+      passwordByteLimitBeforeHandler(ctx);
+      // Ahead of the breach check: it is cheaper, and a rejected password then costs no outbound HIBP call.
       // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
       // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
       // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
@@ -447,6 +501,11 @@ export const auth = betterAuth({
       // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
       // so only a request every gate above let through can write. See credential-issuer-heal.ts.
       await healCredentialAccountIssuerBeforeHandler(ctx);
+      // SEC-17 / ENG-3990: "trust this device" is off for real: refuse `trustDevice` on the 2FA verify
+      // paths and drop an already-issued `trust_device` cookie at sign-in. Path-disjoint from everything
+      // below (verify / sign-in vs consent). See better-auth-trust-device-gate.ts.
+      const trustDevice = trustDeviceBeforeHandler(ctx);
+      if (trustDevice) return trustDevice;
       // ENG-7150: an approval carrying the consent screen's grant must carry a valid one, refused before
       // the provider writes the consent. See mcp-grant-consent.ts.
       requireValidMcpGrantOnConsentBeforeHandler(ctx);
@@ -552,8 +611,8 @@ export const auth = betterAuth({
     // oauthProvider() resumed a pending MCP authorization with that session and minted an authorization
     // code for a password alone (ENG-3933).
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
-    // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
-    // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
+    // backup codes. Trusted-device is off and enforced server-side (`hooks.before`, SEC-17): Better Auth
+    // has no option to disable it, so 2FA is required every login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
     // User.twoFactorSecret|backupCodes into the twoFactor table, and move the login-time TOTP/
     // backup challenge out of the credentials authorize into Better Auth's flow.
     twoFactor({

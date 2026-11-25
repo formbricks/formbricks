@@ -2,19 +2,19 @@
 
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type TUserLocale } from "@formbricks/types/user";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
+import type { TWebhookListItem } from "@/modules/integrations/webhooks/types/webhooks";
 import { Label } from "@/modules/ui/components/label";
 
 interface ActivityTabProps {
-  readonly webhook: Webhook;
+  readonly webhook: TWebhookListItem;
   readonly surveys: TSurvey[];
   readonly locale: TUserLocale;
 }
 
-const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): string[] => {
+const getSurveyNamesForWebhook = (webhook: TWebhookListItem, allSurveys: TSurvey[]): string[] => {
   if (webhook.surveyIds.length === 0) {
     return allSurveys.map((survey) => survey.name);
   } else {

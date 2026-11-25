@@ -262,6 +262,30 @@ const getDisplayRejectionReason = (
   return null;
 };
 
+/**
+ * Whether a caller-supplied `displayId` names a display of `surveyId`. A display belongs to exactly one
+ * survey, so matching it against the survey the response is written to is the tightest check there is
+ * without requiring more than the management APIs know.
+ *
+ * Display <-> Response is one-to-one, so connecting a display of another workspace either fails or moves
+ * that display onto this response and corrupts the other tenant's display and completion counts.
+ * "Does not exist" and "belongs elsewhere" are deliberately the same `false`: telling them apart would
+ * make the endpoint a cross-tenant existence oracle for display ids. Callers map `false` to one uniform
+ * not-found. The client APIs use `assertDisplayOwnership` instead, whose distinct messages are fine for
+ * an unauthenticated respondent that already holds the display id.
+ */
+export const isDisplayOfSurvey = async (
+  displayId: string,
+  surveyId: string,
+  tx?: Prisma.TransactionClient
+): Promise<boolean> => {
+  const display = await (tx ?? prisma).display.findUnique({
+    where: { id: displayId },
+    select: { surveyId: true },
+  });
+  return display?.surveyId === surveyId;
+};
+
 export const deleteDisplay = async (displayId: string, tx?: Prisma.TransactionClient): Promise<TDisplay> => {
   validateInputs([displayId, ZId]);
   try {

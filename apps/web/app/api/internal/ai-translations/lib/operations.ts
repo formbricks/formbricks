@@ -25,6 +25,7 @@ import {
   AI_TRANSLATION_OUTPUT_TOO_LONG,
   translateFields,
 } from "@/modules/ee/ai-translation/lib/translate-fields";
+import { getAITranslationLanguageName } from "@/modules/ee/ai-translation/lib/translation-languages";
 import type { TAITranslationBody } from "../schemas";
 import type { TAITranslationAvailabilityResource, TAITranslationResource } from "../serializers";
 
@@ -120,8 +121,8 @@ export async function translateSurveyFieldsOperation({
       workspaceId: access.workspaceId,
       userId,
       fields: body.fields,
-      sourceLanguage: body.sourceLanguage,
-      targetLanguage: body.targetLanguage,
+      sourceLanguage: getAITranslationLanguageName(body.sourceLanguage),
+      targetLanguage: getAITranslationLanguageName(body.targetLanguage),
     });
 
     const resource: TAITranslationResource = outcome;

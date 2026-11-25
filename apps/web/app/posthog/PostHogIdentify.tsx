@@ -2,8 +2,8 @@
 
 import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
-import { maskWebhookNetworkRequests } from "@/app/posthog/mask-webhook-network-requests";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
+import { getPostHogConfig } from "./posthog-config";
 
 interface PostHogIdentifyProps {
   readonly posthogKey: string;
@@ -17,17 +17,7 @@ export const PostHogIdentify = ({ posthogKey, userId, email, name }: PostHogIden
 
   useEffect(() => {
     if (!posthog.__loaded) {
-      posthog.init(posthogKey, {
-        api_host: "/ingest",
-        ui_host: "https://eu.i.posthog.com",
-        defaults: "2026-01-30",
-        capture_exceptions: true,
-        debug: IS_DEVELOPMENT_BUILD,
-        session_recording: {
-          blockSelector: "iframe[src*='cdn-plain']",
-          maskCapturedNetworkRequestFn: maskWebhookNetworkRequests,
-        },
-      });
+      posthog.init(posthogKey, getPostHogConfig(IS_DEVELOPMENT_BUILD));
     }
 
     if (lastIdentifiedUserId.current && lastIdentifiedUserId.current !== userId) {
