@@ -35,6 +35,7 @@ import {
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
+import { getOneStepOperand } from "@formbricks/types/surveys/one-step-operand";
 import { TActionCalculate, TSurveyLogicAction } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
@@ -671,43 +672,6 @@ export const performActions = (
 };
 
 /**
- * Whether an answer or hidden field reads as a number. Blank text is not one: `Number("")` is 0, which
- * would turn an empty field into a real 0 and stop an `isSkipped` condition from seeing it. Same rule
- * as the survey bundle (packages/surveys/src/lib/logic.ts).
- */
-const isNumericOperand = (val: string | number): boolean =>
-  typeof val === "number" || (val.trim() !== "" && !Number.isNaN(Number(val)));
-
-/** The value a one-step calculation applies: a static value, a variable, or an answer. */
-const getCalculationOperand = (
-  action: TActionCalculate | TBlockActionCalculate,
-  data: TResponseData,
-  calculations: TResponseVariables,
-  dataType: string
-): string | number | undefined => {
-  // Determine the operand value based on the action.value type
-  switch (action.value.type) {
-    case "static":
-      // True and False belong to a true/false field, handled in performCalculation.
-      return typeof action.value.value === "boolean" ? undefined : action.value.value;
-    case "variable": {
-      const value = calculations[action.value.value];
-      return typeof value === "number" || typeof value === "string" ? value : undefined;
-    }
-    // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
-    // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
-    // the calculation returns undefined, exactly as before.
-    case "element":
-    case "hiddenField": {
-      const val = data[action.value.value];
-      if (typeof val !== "number" && typeof val !== "string") return undefined;
-      return dataType === "number" && isNumericOperand(val) ? Number(val) : val;
-    }
-  }
-  return undefined;
-};
-
-/**
  * A field's value as a one-step operator starts from: `0` / `""` when unset. A stored true/false is
  * not a number, so a number field starts from 0 rather than `Number("true")` (NaN); a text field
  * reads it as its text. Same rule as the survey bundle's `withDefaultValue`
@@ -775,7 +739,12 @@ const performCalculation = (
   }
 
   const currentValue = getOneStepCurrentValue(calculations[action.variableId], dataType);
-  const operandValue = getCalculationOperand(action, data, calculations, dataType);
+  const operandValue = getOneStepOperand(action, {
+    data,
+    variables: calculations,
+    reservedValues: context.embeddedValues,
+    dataType,
+  });
   if (operandValue === undefined || operandValue === null) return undefined;
 
   return applyCalculationOperator(action.operator, currentValue, operandValue);

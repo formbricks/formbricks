@@ -714,6 +714,63 @@ describe("surveyLogic", () => {
     expect(performActions(survey, actions, { plan: "" }, {}).calculations).toEqual({ score: "" });
   });
 
+  // ENG-7431: the one-step "set to a metadata value" shape the API accepts. It used to write nothing on
+  // the server too; the server reads the same reserved values the expression form reads.
+  test("performActions assigns and adds a reserved (metadata) field like the survey bundle (ENG-7431)", () => {
+    const survey: TJsWorkspaceStateSurvey = {
+      ...mockSurvey,
+      embeddedFields: embeddedFieldsFromLegacyInput({
+        variables: [
+          { id: "pages", name: "pages", type: "number", value: 0 },
+          { id: "total", name: "total", type: "number", value: 0 },
+          { id: "path", name: "path", type: "text", value: "" },
+          { id: "where", name: "where", type: "text", value: "" },
+        ],
+      }),
+    };
+    const actions: TSurveyBlockLogicAction[] = [
+      {
+        id: "a1",
+        objective: "calculate",
+        variableId: "pages",
+        operator: "assign",
+        value: { type: "reserved", value: "visitpagesviewed" },
+      },
+      {
+        id: "a2",
+        objective: "calculate",
+        variableId: "total",
+        operator: "add",
+        value: { type: "reserved", value: "visitpagesviewed" },
+      },
+      {
+        id: "a3",
+        objective: "calculate",
+        variableId: "path",
+        operator: "assign",
+        value: { type: "reserved", value: "pagepath" },
+      },
+      // Not in the map this evaluator was given: the field keeps its value, nothing is manufactured.
+      {
+        id: "a4",
+        objective: "calculate",
+        variableId: "where",
+        operator: "assign",
+        value: { type: "reserved", value: "country" },
+      },
+    ];
+
+    expect(
+      performActions(
+        survey,
+        actions,
+        {},
+        { total: 2 },
+        { embeddedValues: { visitpagesviewed: "6", pagepath: "/pricing" } }
+      ).calculations
+    ).toEqual({ pages: 6, total: 8, path: "/pricing" });
+  });
+
   test("getUpdatedActionBody returns same action if objective matches", () => {
     const base: TSurveyLogicAction = { id: "A", objective: "requireAnswer", target: "q" };
     expect(getUpdatedActionBody(base, "requireAnswer")).toBe(base);

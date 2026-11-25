@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { buildV3SurveyCreateInput, getV3SurveyCreateInputInvalidParams } from "./create-input";
+import { prepareV3SurveyCreateInput } from "./prepare";
 import { ZV3CreateSurveyBody } from "./schemas";
 
 const parse = (blocks: unknown[]) =>
@@ -91,5 +92,55 @@ describe("buildV3SurveyCreateInput start logic (ENG-6932)", () => {
 
     expect(buildV3SurveyCreateInput(withRules, { languages, createdBy: null }).startLogic).toEqual([rule]);
     expect(buildV3SurveyCreateInput(parse(blocks), { languages, createdBy: null }).startLogic).toBeNull();
+  });
+});
+
+// ENG-7431: the one-step "set to a metadata value" shape an API or MCP client sends. The evaluators now
+// read it; this pins that the create accepts it and hands it to the write schema unchanged.
+describe("a one-step Set value from a reserved (metadata) field", () => {
+  const action = {
+    id: "act1",
+    objective: "calculate",
+    variableId: "pagesseen",
+    operator: "assign",
+    value: { type: "reserved", value: "visitpagesviewed" },
+  };
+  const body = {
+    workspaceId: "clxx1234567890123456789012",
+    name: "Pages seen",
+    variables: [{ id: "pagesseen", name: "pages_seen", type: "number", value: 0 }],
+    blocks: [
+      {
+        name: "Block",
+        elements: [element(["A", "B"])],
+        logic: [
+          {
+            id: "logic1",
+            conditions: {
+              id: "group1",
+              connector: "and",
+              conditions: [
+                {
+                  id: "cond1",
+                  leftOperand: { type: "element", value: "q1" },
+                  operator: "isSubmitted",
+                },
+              ],
+            },
+            actions: [action],
+          },
+        ],
+      },
+    ],
+  };
+
+  test("is accepted by the create and reaches the write input unchanged", () => {
+    const prepared = prepareV3SurveyCreateInput(body);
+    if (!prepared.ok) throw new Error(JSON.stringify(prepared.validation.invalidParams));
+
+    const createInput = buildV3SurveyCreateInput(prepared.document, { languages, createdBy: null });
+
+    expect(getV3SurveyCreateInputInvalidParams(createInput)).toEqual([]);
+    expect(createInput.blocks?.[0].logic?.[0].actions[0]).toMatchObject(action);
   });
 });

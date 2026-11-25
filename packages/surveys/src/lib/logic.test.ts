@@ -2165,6 +2165,71 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
       });
     });
 
+    // ENG-7431: the one-step shape the API accepts for "set to a metadata value". It used to write nothing,
+    // so pages viewed stored 0 however many pages the visit had.
+    describe("a reserved (metadata) operand", () => {
+      const fromReserved = (operator: "assign" | "add", name: string): TSurveyBlockLogicAction => ({
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator,
+        value: { type: "reserved", value: name },
+      });
+      const run = (
+        survey: TJsWorkspaceStateSurvey,
+        action: TSurveyBlockLogicAction,
+        calculations: TResponseVariables,
+        embeddedValues: TResponseData
+      ) => performActions(survey, [action], {}, calculations, { embeddedValues }).calculations;
+
+      test("assign stores the pages a visit viewed", () => {
+        expect(
+          run(
+            buildSurvey([], computedRow("number", 0)),
+            fromReserved("assign", "visitpagesviewed"),
+            {},
+            {
+              visitpagesviewed: 6,
+            }
+          )
+        ).toEqual({ [STORAGE_KEY]: 6 });
+      });
+
+      test("a number field reads a numeric text as a number, and add sums it", () => {
+        expect(
+          run(
+            buildSurvey([], computedRow("number", 0)),
+            fromReserved("add", "visitpagesviewed"),
+            { [STORAGE_KEY]: 1 },
+            {
+              visitpagesviewed: "4",
+            }
+          )
+        ).toEqual({ [STORAGE_KEY]: 5 });
+      });
+
+      test("a text field keeps the text", () => {
+        expect(
+          run(
+            buildSurvey([], computedRow("string", "")),
+            fromReserved("assign", "pagepath"),
+            {},
+            {
+              pagepath: "/pricing",
+            }
+          )
+        ).toEqual({ [STORAGE_KEY]: "/pricing" });
+      });
+
+      // A server-derived name (country, …) is not in the client's map: the field keeps its value rather
+      // than gaining a manufactured 0 or "".
+      test("a field the evaluator does not have writes nothing", () => {
+        expect(
+          run(buildSurvey([], computedRow("number", 3)), fromReserved("assign", "country"), {}, {})
+        ).toEqual({});
+      });
+    });
+
     test('a legacy "question" operand stays unresolved', () => {
       expect(
         calculate(

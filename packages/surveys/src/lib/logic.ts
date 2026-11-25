@@ -26,6 +26,7 @@ import {
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
+import { getOneStepOperand } from "@formbricks/types/surveys/one-step-operand";
 import { getElementsFromSurveyBlocks } from "./utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -433,52 +434,6 @@ const withDefaultValue = (
   return value ?? (dataType === "number" ? 0 : "");
 };
 
-/**
- * Whether an answer or hidden field reads as a number. Blank text is not one: `Number("")` is 0, which
- * would turn an empty field into a real 0 and stop an `isSkipped` condition from seeing it.
- */
-const isNumericOperand = (val: string | number): boolean =>
-  typeof val === "number" || (val.trim() !== "" && !Number.isNaN(Number(val)));
-
-/** The value a one-step calculation applies: a static value, a variable, or an answer. */
-const getCalculationOperand = (
-  action: TActionCalculate,
-  data: TResponseData,
-  calculations: TResponseVariables,
-  dataType: string
-): TCalculationValue | undefined => {
-  let operandValue: TCalculationValue | undefined;
-
-  // Determine the operand value based on the action.value type
-  switch (action.value.type) {
-    case "static":
-      // True and False belong to a true/false field, handled in performCalculation.
-      if (typeof action.value.value !== "boolean") operandValue = action.value.value;
-      break;
-    case "variable": {
-      const value = calculations[action.value.value];
-      if (typeof value === "number" || typeof value === "string") {
-        operandValue = value;
-      }
-      break;
-    }
-    // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
-    // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
-    // the calculation returns undefined, exactly as before.
-    case "element":
-    case "hiddenField": {
-      const val = data[action.value.value];
-      if (typeof val === "number" || typeof val === "string") {
-        // A number field takes a numeric answer or hidden field as a number; anything else, blank
-        // included, keeps its text. Same rule as the server evaluator (apps/web/lib/surveyLogic/utils.ts).
-        operandValue = dataType === "number" && isNumericOperand(val) ? Number(val) : val;
-      }
-      break;
-    }
-  }
-  return operandValue;
-};
-
 /** Applies a one-step operator; `undefined` for a division by zero. */
 const applyCalculationOperator = (
   operator: TActionCalculate["operator"],
@@ -531,7 +486,12 @@ const performCalculation = (
   }
 
   const currentValue = withDefaultValue(calculations[action.variableId], dataType);
-  const operandValue = getCalculationOperand(action, data, calculations, dataType);
+  const operandValue = getOneStepOperand(action, {
+    data,
+    variables: calculations,
+    reservedValues: context.embeddedValues,
+    dataType,
+  });
   if (operandValue === undefined || operandValue === null) return undefined;
 
   return applyCalculationOperator(action.operator, currentValue, operandValue);
