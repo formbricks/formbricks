@@ -7500,7 +7500,9 @@ paths:
       description: |
         Returns a workspace's segments, searched, sorted and counted on the server. Private segments
         (survey-local targeting drafts) are never listed. A segment's survey references — including the
-        `surveyIds` of its survey-interaction filters — only name surveys the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
+        `surveyIds` of its survey-interaction filters — only name surveys the caller may see. The one exception:
+        filter `surveyIds` also keep ids of other workspaces' surveys on the same contact directory, since a
+        shared segment can target them. Requires the Contacts entitlement (**403** without it). The cursor is bound to
         `sortBy` and `filter[title][contains]`; changing either while paging → **400** naming `cursor`. Unknown query
         parameters → **400**. `x-api-key` or a Bearer token.
       tags:
@@ -10902,7 +10904,7 @@ components:
               $ref: '#/components/schemas/SegmentFilterValue'
           additionalProperties: false
         - title: SurveyInteractionFilter
-          description: Matches on how the contact interacted with surveys within a time window. `surveyIds` only names surveys the caller may see; ids of other surveys the segment targets are left out.
+          description: Matches on how the contact interacted with surveys within a time window. `surveyIds` names the surveys of the listed workspace the caller may see, and surveys of other workspaces on the same contact directory (ids only); ids of other surveys the segment targets are left out.
           type: object
           required:
             - id

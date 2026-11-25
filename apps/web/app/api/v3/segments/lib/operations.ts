@@ -23,18 +23,29 @@ import {
 } from "./segments-where";
 
 /**
- * Which of the surveys the page's survey-interaction filters name the caller may see — one query for
- * the whole page, bounded by the filter tree's survey-id cap times the page size.
+ * Which of the survey ids the page's survey-interaction filters name stay in the response — one query for
+ * the whole page, bounded by the filter tree's survey-id cap times the page size. Two kinds stay:
+ * - the caller's own workspace's surveys they may see (ENG-3282);
+ * - any survey of another workspace on the same directory. A shared segment can name those (decision 24);
+ *   the editor shows each as "Survey in another workspace" by id only, and a save keeps what it does not
+ *   remove (`restoreHiddenSegmentSurveyIds`). Taking them out here made the editor drop them on save.
  */
 const resolveVisibleFilterSurveyIds = async (
   surveyIds: readonly string[],
   workspaceId: string,
+  directoryId: string,
   visibleSurveyWhere: Prisma.SurveyWhereInput
 ): Promise<Set<string>> => {
   const ids = [...new Set(surveyIds)];
   if (ids.length === 0) return new Set();
   const surveys = await prisma.survey.findMany({
-    where: { AND: [{ workspaceId, id: { in: ids } }, visibleSurveyWhere] },
+    where: {
+      id: { in: ids },
+      OR: [
+        { AND: [{ workspaceId }, visibleSurveyWhere] },
+        { workspaceId: { not: workspaceId }, workspace: { contactDirectoryId: directoryId } },
+      ],
+    },
     select: { id: true },
   });
   return new Set(surveys.map((survey) => survey.id));
@@ -134,6 +145,7 @@ export async function listV3Segments({
     const visibleSurveyIds = await resolveVisibleFilterSurveyIds(
       segments.flatMap((segment) => collectSegmentFilterSurveyIds(segment.filters)),
       authResult.workspaceId,
+      directory.id,
       visibleSurveyWhere
     );
 

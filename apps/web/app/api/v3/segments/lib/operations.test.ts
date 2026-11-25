@@ -143,7 +143,13 @@ describe("listV3Segments", () => {
     const body = await (await call()).json();
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { AND: [{ workspaceId, id: { in: [visibleId, hiddenId] } }, visibleSurveyWhere] },
+      where: {
+        id: { in: [visibleId, hiddenId] },
+        OR: [
+          { AND: [{ workspaceId }, visibleSurveyWhere] },
+          { workspaceId: { not: workspaceId }, workspace: { contactDirectoryId: directoryId } },
+        ],
+      },
       select: { id: true },
     });
     const [filter, group] = body.data[0].filters;
