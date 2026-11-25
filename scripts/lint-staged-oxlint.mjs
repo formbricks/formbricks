@@ -15,12 +15,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { STAGED_LINES_RULE_IDS } from "../packages/config-oxlint/sonar-parity.mjs";
 import { missingBuildsHint, missingLintBuilds } from "./lint-builds.mjs";
-import {
-  decodeSonarMessage,
-  parseStagedLineRanges,
-  stagedLinesLabel,
-  touchesStagedCode,
-} from "./staged-lines.mjs";
+import { decodeSonarMessage, parseStagedLineRanges, touchesStagedCode } from "./staged-lines.mjs";
 
 // oxlint doesn't export its bin, but package.json is exported, so go through it to get an
 // absolute path to the CLI entry point.
@@ -32,9 +27,8 @@ const OXLINT_CLI = path.join(
 
 /*
  * SonarCloud judges a pull request's new code only, and existing code is still over some of its
- * limits; some repo rules (`formbricks/loggable-error`) have a backlog too. A commit fails on such a rule
- * (`STAGED_LINES_RULE_IDS`, packages/config-oxlint/sonar-parity.mjs) only inside the lines it stages, as
- * Sonar would on the PR.
+ * limits. A commit fails on such a rule (`STAGED_LINES_RULE_IDS`, packages/config-oxlint/sonar-parity.mjs)
+ * only inside the lines it stages, as Sonar would on the PR.
  */
 const STAGED_LINES_RULES = new Set(STAGED_LINES_RULE_IDS);
 
@@ -96,9 +90,9 @@ function runOxlint(paths) {
       maxBuffer: 64 * 1024 * 1024,
       env: {
         ...process.env,
-        // The staged-lines rules are off for the whole-repo lint until their backlog is fixed. Here
-        // they report as warnings, and the loop below fails the commit on one only inside the
-        // staged lines.
+        // The staged-lines rules (none today) are off for the whole-repo lint until their backlog is
+        // fixed. Here they report as warnings, and the loop below fails the commit on one only inside
+        // the staged lines.
         OXLINT_SONAR_PARITY: "warn",
         // oxlint.config.ts in a package without "type": "module" makes Node print a warning per run.
         NODE_OPTIONS: [process.env.NODE_OPTIONS, "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON"]
@@ -139,7 +133,7 @@ for (const diagnostic of runs.flatMap((run) => run.diagnostics)) {
       rangesByFile.set(diagnostic.filename, stagedLineRanges(diagnostic.filename));
     }
     if (touchesStagedCode(message, rangesByFile.get(diagnostic.filename))) {
-      console.log(format(diagnostic.filename, message, stagedLinesLabel(message.ruleId)));
+      console.log(format(diagnostic.filename, message, "error (SonarCloud, new code)"));
       failed = true;
     }
   }

@@ -29,21 +29,18 @@ this file, so the review blocks on them before a person looks.
   breaks it. The review passes only once every blocking finding is fixed. One that cannot be fixed in this
   PR goes under Open gaps with the reason, and stays blocking until a reviewer other than the author
   accepts it there. A smell or taste call that cites no rule is non-blocking and says so.
-- Every new or changed test goes **red** in review, not just in principle: the reviewer flips each line it
-  guards, runs the test, and sees it fail (the **red** rule under "Testing Guidelines"). A review that
-  pushes nothing still mutates, in a scratch copy or a file it restores afterwards. A test that stays
-  green is a blocking finding that Open gaps cannot hold: fix the test or delete it. A review that could
-  not run the tests says so, and has not passed.
-- A finding names its class, and the fix covers the class. On every re-review, rerun the search "A fix
-  names its siblings" describes for each earlier finding (the same call, predicate or literal, and the
-  entry points the gate list under "API Design" names) rather than rechecking the flagged line alone:
-  most second review rounds were a variant the first fix left open.
+- A new or changed test is checked against the **red** rule under "Testing Guidelines": the reviewer
+  reverts the line it guards (in a scratch copy when the review pushes nothing), runs it, and sees it fail.
+  A test that cannot go red is fixed or deleted; it never waits under Open gaps. A review that could not
+  run the tests says so and has not passed.
+- A finding names its class, and the fix covers the class. A re-review repeats the sibling search ("A fix
+  names its siblings") for each earlier finding instead of rechecking only the flagged line: most second
+  review rounds were a variant the first fix left open.
 - The PR description is reviewed like the code once it exists. Coverage rows, "still covered by" claims,
   the breaking-changes box and Open gaps are claims about the diff, and a claim the code contradicts is a
   finding.
-- The ticket does not override this file. Where a ticket asks for something a rule here forbids (deleting
-  the only control for an assertion, removing a shipped field outside a major), quote both and treat it as
-  a blocking finding until the ticket's author decides.
+- The ticket does not override this file. Where a ticket asks for something a rule here forbids, quote
+  both and treat it as a blocking finding until the ticket's author decides.
 
 ## Conventions Awaiting Automated Enforcement
 
@@ -69,15 +66,13 @@ These remain review checks until their enforcement handles the repository's exis
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
-- A change that replaces a mechanism keeps every behaviour the old one carried, implicit ones included, or
-  lists what it drops under Open gaps. For a tool that is its script flags, inline config comments and
-  per-package overrides; for a server action moved to `fetch`, the revalidation and serialization the action
-  did for free; for a refactor, what it did with missing or malformed input (skipping a deleted segment is
-  not the same as throwing on it).
-- One rule, one source. A check enforced in two places (client and server validation, an allowlist copied
-  from another module, a setting wired through each file `docs/agents/self-hosting-config.md` lists) reads
-  one shared definition, or a test keeps the copies equal (`scripts/env-wiring.test.ts` does it for
-  `.env.example`, the compose file and the docs table). A client that accepts what the server rejects is a finding.
+- A change that replaces a mechanism (a tool, a library, a data-fetching path, a refactor) keeps every
+  behaviour the old one carried, implicit ones included, or lists what it drops under Open gaps: config
+  flags and overrides, cache revalidation and serialization, and the handling of missing or malformed
+  input.
+- One rule, one source. A rule enforced in two places (client and server validation, an allowlist copied
+  from another module) reads one shared definition, or a test keeps the copies equal. A client that
+  accepts what the server rejects is a finding.
 - Prose follows the code. Docs, code comments, OpenAPI descriptions, ADRs, `AGENTS.md` and the PR
   description that describe behaviour the diff changes are updated in the same PR, and every path or
   symbol they name exists.
@@ -119,12 +114,11 @@ These remain review checks until their enforcement handles the repository's exis
   endpoints mounted raw at `/api/auth/*` ([ADR-0017](docs/adr/0017-better-auth-native-endpoints-closed.md)),
   public client routes and `/storage`, MCP tools and API-key paths, and the write side of a read-gated
   module. A gate on fewer paths than reach the data is a finding, and so is a second copy of the predicate.
-- A security check judges what is actually enforced. A validator for content rendered or consumed later
-  runs on the output of the same transform the consumer uses (one shared helper), not on its own parse of
-  the raw input. A role or privilege grant rests on verified evidence (a signed token, a verified email),
-  never on an attribute the caller controls. A placeholder token inserted into user-controlled text is
-  unguessable or escaped, so the text cannot spell it. A lookup keyed by caller input uses `Object.hasOwn`
-  or a `Map`, never `in`, which matches `__proto__` and `toString`.
+- A security check validates what is actually used. Input is normalized before it is checked, and
+  content that is rendered or consumed later is checked on the output of the same transform the consumer
+  runs, not on a separate parse of the raw input. A role or privilege grant rests on verified evidence (a
+  signed token, a verified email), never on a value the caller controls. A lookup keyed by caller input
+  uses `Object.hasOwn` or a `Map`, never `in`, which also matches inherited keys such as `__proto__`.
 - Unknown query parameters and body keys are rejected with 400 at every nesting level: `.strict()` on nested
   objects too, and MCP tools register the schema, not its `.shape`. A dropped typo returns a confidently
   wrong answer.
@@ -190,17 +184,16 @@ Downloads:
   at `error`.
 - A `catch` that carries on names the errors it expects. Infrastructure errors (pool exhaustion, timeouts)
   propagate to the retry that owns them.
-- A retry repeats only the step that failed, and only on a retryable error: a 4xx from a provider is final,
-  and a step that already committed is not run twice. A call that reports failure in its result (a
-  `{ status: "failed" }`, a `Result` error) is checked like a thrown one.
-- A security check fails closed. When it hits an iteration or size cap, gets partial input, or misses an
-  optional header (Origin, Fetch Metadata), it denies rather than treating the gap as a pass; abuse limits
-  stay closed when Redis is down ([ADR-0016](docs/adr/0016-abuse-limits-fail-closed.md)).
-- Log a caught error through `loggableError` (`@formbricks/logger/loggable-error`; apps/web re-exports it
-  from `apps/web/lib/utils/loggable-error.ts`): its name and frames, never its message. A message can carry
-  prompts, file text, OAuth codes or respondent answers. `formbricks/loggable-error` fails a commit that
-  logs a caught error raw on a line it changes; an error that cannot carry user content disables the rule
-  on its line with the reason.
+- Retries cover transient failures only (network errors, timeouts, 408, 429, 5xx), with backoff and a
+  bounded number of attempts; other client errors are final. A retried operation is idempotent or repeats
+  only the step that failed. A call that reports failure in its return value is checked like one that
+  throws.
+- A security check fails closed: when it hits a cap, gets partial input or misses a header it relies on,
+  it denies rather than treating the gap as a pass. Abuse limits stay closed when Redis is down
+  ([ADR-0016](docs/adr/0016-abuse-limits-fail-closed.md)).
+- Log a caught error through `loggableError` (`apps/web/lib/utils/loggable-error.ts`): its name and frames,
+  never its message. A message can carry prompts, file text, OAuth codes or respondent answers, so a new
+  `logger.*({ error })` on a path that handles such content is a finding.
 
 ## Performance in Review
 
@@ -249,11 +242,10 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
   audit logs and "previous value" diffs are read under that lock too.
 - Inside an interactive transaction every query goes through `tx`; a query on the global `prisma` waits for
   a second pool connection and can deadlock the pool. A lock that guards a count also covers rows that can
-  join the counted set while it waits (an owner promoted concurrently).
-- State outside Postgres races the same way. A read-modify-write on Redis or a third-party API (a sheet's
-  header row, a lease) is serialized across workers or made idempotent; a lock renews its lease and rechecks
-  that it still holds it before each write. A multi-key Redis script puts its keys in one hash tag, or it
-  fails on cluster Redis.
+  join the counted set while it waits.
+- State outside Postgres races the same way. A read-modify-write on Redis or a third-party API is
+  serialized across workers or made idempotent, and a lease-based lock confirms it still holds the lease
+  before each write.
 - `ON DELETE CASCADE` reaches only Postgres. Deleting a survey, response, workspace, organization or account
   also deletes its storage objects (under the `workspaceId` prefix and the legacy `environmentId` one), its
   Hub records and its pending invites, and its test asserts those deletes.
@@ -349,8 +341,8 @@ Do:
 - Merging, narrowing, or deleting an E2E spec is legitimate work — record it in the PR's Coverage table
   like any other change, and name in each row the test that still covers the behaviour, or "none".
   A test that is the only way another test can go red stays, as a `test.step` in a test that survives: the
-  positive control for an assertion helper (the violation collector behind `expectNoCspViolations`), or the
-  allowed half of an allowed/denied pair whose denied half asserts an absence.
+  positive control for an assertion helper, or the allowed half of an allowed/denied pair whose denied half
+  asserts an absence.
 
 Do not:
 

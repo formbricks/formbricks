@@ -44,12 +44,9 @@ const sonarRules = {
   "unicorn-js/prefer-string-raw": "error",
 };
 
-// Rules that still have a backlog, held only to the staged lines (see above). Not only Sonar mirrors: a
-// repo rule with a backlog of its own sits here too.
-const stagedLinesRules = (severity) => ({
-  // About 450 existing calls log a caught error raw (CODING_STANDARDS.md, "Errors").
-  "formbricks/loggable-error": severity,
-});
+// Rules that still have a backlog, held only to the staged lines (see above). None today.
+// eslint-disable-next-line no-unused-vars -- the severity each rule here takes, once there is one
+const stagedLinesRules = (severity) => ({});
 
 const testRules = { "vitest/prefer-to-have-length": "error" };
 

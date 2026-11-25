@@ -17,10 +17,6 @@ A variable the web app reads goes in every one of these:
 | `docker/docker-compose.yml`                                 | The `x-environment` block, commented when optional.                                                                                                                                      |
 | `docs/self-hosting/configuration/environment-variables.mdx` | The table row: meaning, required or optional, default.                                                                                                                                   |
 
-`scripts/env-wiring.test.ts` (`pnpm test:root`) fails when a variable in `lib/env.ts` is missing from
-`.env.example`, the compose file or the docs table, unless `scripts/env-wiring-baseline.json` already lists
-it. That baseline only shrinks: wiring a listed variable deletes its line.
-
 `NEXT_PUBLIC_*` variables are inlined into the bundle at build time, so a prebuilt image cannot be
 configured with one. A setting self-hosters change at runtime is read on the server and passed down.
 
