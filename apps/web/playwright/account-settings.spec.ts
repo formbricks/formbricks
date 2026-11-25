@@ -1,10 +1,11 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
+import { clickUntilURL } from "./utils/click-until";
 
 /**
- * The personal account settings end to end: email alerts, the profile, and an email change. One journey with
- * `test.step` phases — the email change signs the user out, so it goes last.
+ * The personal account settings end to end: the way back to the workspace, email alerts, the profile, and an
+ * email change. One journey with `test.step` phases — the email change signs the user out, so it goes last.
  *
  * Asserted at feature level — what the page shows and what the database holds — never how the page talks to
  * the server, so the same spec holds before and after these pages moved from server actions onto
@@ -21,7 +22,10 @@ const storedUser = (id: string) =>
   });
 
 test.describe("Account settings", () => {
-  test("changes email alerts, the profile name and the email address", async ({ page, users }) => {
+  test("returns to the workspace, changes email alerts, the profile name and the email address", async ({
+    page,
+    users,
+  }) => {
     const run = stamp();
     // The fixture's password is the name, and the password field wants an uppercase letter and a digit.
     const name = `Account-${run}`;
@@ -46,6 +50,28 @@ test.describe("Account settings", () => {
 
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+
+    // ENG-1700: the settings sidebar's back arrow router.push-es the workspace the settings shell resolved.
+    // Visiting a second workspace first points the proxy's formbricks-workspace-id cookie at it, while the
+    // no-cookie fallback is the first-created workspace, so landing back on the second one proves the cookie
+    // wins.
+    await test.step("the back arrow returns to the workspace you came from", async () => {
+      const secondWorkspace = await prisma.workspace.create({
+        data: { name: `Account Second Workspace ${run}`, organizationId },
+        select: { id: true },
+      });
+      const secondSurveys = new RegExp(`/workspaces/${secondWorkspace.id}/surveys`);
+
+      await page.goto(`/workspaces/${secondWorkspace.id}/surveys`, { waitUntil: "domcontentloaded" });
+      await expect(page).toHaveURL(secondSurveys);
+      await page.goto("/account/settings/profile", { waitUntil: "domcontentloaded" });
+
+      // Retried: a click that lands before the page hydrates is dropped and the page stays put.
+      await clickUntilURL(
+        page.getByRole("complementary").getByRole("button", { name: "Back", exact: true }),
+        secondSurveys
+      );
+    });
 
     const alertSwitch = () =>
       page
@@ -124,68 +150,4 @@ test.describe("Account settings", () => {
       await expect.poll(async () => (await storedUser(user.id)).email).toBe(newEmail);
     });
   });
-});
-
-test("keeps the current organization when opening account settings", async ({ page, users }) => {
-  const timestamp = Date.now();
-
-  // Created before the user's own organization so it is the first row the (createdAt-ordered)
-  // organization query returns — the organization account settings switched to before the fix.
-  const otherOrganization = await prisma.organization.create({
-    data: {
-      name: `Other Organization ${timestamp}`,
-      billing: {
-        create: {
-          limits: { workspaces: 3, monthly: { responses: 1500 } },
-          stripeCustomerId: null,
-          usageCycleAnchor: new Date(),
-        },
-      },
-      workspaces: { create: { name: `Other Organization Workspace ${timestamp}` } },
-    },
-    select: { id: true, workspaces: { select: { id: true } } },
-  });
-
-  const user = await users.create({
-    email: `account-settings-org-${timestamp}@example.com`,
-    name: `account-settings-org-${timestamp}`,
-    workspaceName: `Own Workspace ${timestamp}`,
-  });
-
-  if (!user.workspaceId || !user.organizationId) {
-    throw new Error("Workspace or organization not seeded for test user");
-  }
-
-  await prisma.membership.create({
-    data: { userId: user.id, organizationId: otherOrganization.id, role: "owner", accepted: true },
-  });
-
-  // The other organization needs a survey so the onboarding redirect does not interfere with login.
-  await prisma.survey.create({
-    data: {
-      workspaceId: otherOrganization.workspaces[0].id,
-      createdBy: user.id,
-      name: "Other Organization Seed Survey",
-      status: "draft",
-      type: "link",
-    },
-  });
-
-  await user.login();
-  // Login lands on "/", which client-side redirects into a workspace — of the other organization, as
-  // it owns the first workspace id "/" collects. Let it settle so it cannot race the navigation below.
-  await page.waitForURL("**/workspaces/**");
-
-  // Visiting the workspace makes it the active one (the proxy stores it in a cookie).
-  await page.goto(`/workspaces/${user.workspaceId}/surveys`, { waitUntil: "domcontentloaded" });
-  await page.goto("/account/settings/profile", { waitUntil: "domcontentloaded" });
-
-  // The sidebar's organization links carry the organization the settings shell resolved.
-  await expect(
-    page.locator(`a[href^="/organizations/${user.organizationId}/settings/"]`).first()
-  ).toBeVisible();
-  await expect(page.locator(`a[href^="/organizations/${otherOrganization.id}/"]`)).toHaveCount(0);
-
-  // The workspace section still shows the workspace we came from, not another organization's.
-  await expect(page.locator(`a[href^="/workspaces/${user.workspaceId}/settings/"]`).first()).toBeVisible();
 });

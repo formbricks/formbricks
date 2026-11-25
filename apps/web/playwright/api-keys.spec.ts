@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
+import { ROLES_API_URL } from "./api/constants";
 import { test } from "./lib/fixtures";
 
 /**
@@ -59,11 +60,16 @@ test.describe("Organization API keys settings", () => {
       expect(stored.apiKeyWorkspaces).toEqual([expect.objectContaining({ workspaceId, permission: "read" })]);
     });
 
-    await test.step("the minted key opens the public API for its workspace", async () => {
+    await test.step("the minted key opens the public API for its workspace and its organization", async () => {
       const response = await page.request.get(`/api/v3/surveys?workspaceId=${workspaceId}`, {
         headers: { "x-api-key": apiKey },
       });
       expect(response.status()).toBe(200);
+
+      // The roles endpoint is organization-level: any valid key reads it, whatever its workspace access.
+      const roles = await page.request.get(ROLES_API_URL, { headers: { "x-api-key": apiKey } });
+      expect(roles.status()).toBe(200);
+      expect((await roles.json()).data).toEqual(expect.arrayContaining([expect.any(String)]));
     });
 
     await test.step("a reload shows the key without its secret", async () => {

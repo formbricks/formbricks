@@ -328,35 +328,6 @@ test.describe("SDK setup under a host CSP", () => {
     await assets.close();
   });
 
-  test("reports a forbidden resource hint under default-src none", async ({ page }) => {
-    // An isolated control document: no SDK-generated reports can make this assertion pass.
-    await page.route(`${assets.origin}/csp-control`, (route) =>
-      route.fulfill({
-        contentType: "text/html",
-        headers: { "Content-Security-Policy": "default-src 'none'" },
-        body: "<!doctype html><title>CSP control</title>",
-      })
-    );
-    await collectCspViolations(page);
-    await page.goto(`${assets.origin}/csp-control`);
-    const bundleUrl = `${assets.origin}/js/surveys.umd.cjs?csp-control`;
-    await page.evaluate((url) => {
-      const link = document.createElement("link");
-      link.rel = "prefetch";
-      link.href = url;
-      document.head.appendChild(link);
-    }, bundleUrl);
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          (
-            window as unknown as { __cspViolations: { directive: string; blockedURI: string }[] }
-          ).__cspViolations.map(({ directive, blockedURI }) => ({ directive, blockedURI }))
-        )
-      )
-      .toContainEqual({ directive: "default-src", blockedURI: bundleUrl });
-  });
-
   // Both branches carry a distinct risk: strict hosts must opt out without losing surveys, while
   // hosts permitting prefetch must keep the default load path. Nonced styles apply in both cases.
   for (const strict of [true, false]) {

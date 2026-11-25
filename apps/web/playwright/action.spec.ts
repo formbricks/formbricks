@@ -1,449 +1,122 @@
-import { Page, expect } from "@playwright/test";
-import { actions } from "@/playwright/utils/mock";
+import { type Page, expect } from "@playwright/test";
+import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 
-const createNoCodeClickAction = async ({
-  page,
-  name,
-  description,
-  selector,
-}: {
-  page: Page;
-  name: string;
-  description: string;
-  selector: string;
-}) => {
-  await page.goto("/");
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-  const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-  await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
+/**
+ * The user actions settings page end to end: create one action of each kind the form builds differently
+ * (a click on a CSS selector, a page view limited to matching URLs, a code action), rename one, delete
+ * another. One journey with `test.step` phases, since each phase starts from the previous one's table.
+ *
+ * Exit intent and 50% scroll are a bare radio choice with no fields of their own, so they are covered by
+ * `app/api/internal/action-classes/route.create.test.ts` rather than here.
+ *
+ * Asserted at feature level: what the table shows after a reload, and what the database holds.
+ */
 
-  // Add Action button
+const stamp = () => `${Date.now()}-${Math.round(Math.random() * 1e6)}`;
+
+const actionTitle = (page: Page, name: string) => page.getByTitle(name, { exact: true });
+
+const startNewAction = async (page: Page, name: string, description: string) => {
   await page.getByRole("button", { name: "Add Action" }).click();
-
-  // User fills the action name and description
-  await expect(page.getByLabel("What did your user do?")).toBeVisible();
   await page.getByLabel("What did your user do?").fill(name);
-
-  await expect(page.getByLabel("Description")).toBeVisible();
   await page.getByLabel("Description").fill(description);
+};
 
-  // User toggles the CSS Selector action type
-
-  await expect(page.locator("#CssSelector")).toBeVisible();
-  await page.locator("#CssSelector").click();
-
-  // User fills the CSS Selector to track
-  await expect(page.locator("[name='noCodeConfig.elementSelector.cssSelector']")).toBeVisible();
-  await page.locator("[name='noCodeConfig.elementSelector.cssSelector']").fill(selector);
+const submitNewAction = async (page: Page, name: string) => {
   await page.getByRole("button", { name: "Create action", exact: true }).click();
-
-  const successToast = await page.waitForSelector(".formbricks__toast__success");
-  expect(successToast).toBeTruthy();
-
-  const actionButton = page.getByTitle(name);
-  await expect(actionButton).toBeVisible();
+  await expect(actionTitle(page, name)).toBeVisible({ timeout: 15000 });
 };
 
-const createNoCodePageViewAction = async ({
-  page,
-  name,
-  description,
-  matcher,
-  noCodeType,
-}: {
-  page: Page;
-  name: string;
-  description: string;
-  matcher: {
-    label: string;
-    value: string;
-  };
-  noCodeType: string;
-}) => {
-  await page.goto("/");
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-  const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-  await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-
-  // Add Action button
-  await page.getByRole("button", { name: "Add Action" }).click();
-
-  // User fills the action name and description
-  await expect(page.getByLabel("What did your user do?")).toBeVisible();
-  await page.getByLabel("What did your user do?").fill(name);
-
-  await expect(page.getByLabel("Description")).toBeVisible();
-  await page.getByLabel("Description").fill(description);
-
-  await expect(page.getByText(noCodeType)).toBeVisible();
-  await page.getByText(noCodeType).click();
-
-  // User toggles the url Filters to specific pages
-  await page.getByText("Limit to specific pages").click();
-
-  // User opens the dropdown and selects the URL match type
-  await expect(page.locator("[name='noCodeConfig.urlFilters.0.rule']")).toBeVisible();
-  await page.locator("[name='noCodeConfig.urlFilters.0.rule']").selectOption({ label: matcher.label });
-
-  // User fills the Page URL to track
-  await page.locator("[name='noCodeConfig.urlFilters.0.value']").fill(matcher.value);
-
-  // User clicks the Create Action button
-  await page.getByRole("button", { name: "Create action", exact: true }).click();
-
-  const successToast = await page.waitForSelector(".formbricks__toast__success");
-  expect(successToast).toBeTruthy();
-
-  const actionButton = page.getByTitle(name);
-  await expect(actionButton).toBeVisible();
+const openActionSettings = async (page: Page, name: string) => {
+  await actionTitle(page, name).click();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
 };
 
-const createNoCodeAction = async ({
-  name,
-  description,
-  noCodeType,
-  page,
-}: {
-  page: Page;
-  name: string;
-  description: string;
-  noCodeType: string;
-}) => {
-  await page.goto("/");
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-  const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-  await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
+test.describe("User actions settings", () => {
+  test("creates click, page view and code actions, renames one and deletes one", async ({ page, users }) => {
+    const run = stamp();
+    const user = await users.create({ workspaceName: `Actions Workspace ${run}` });
+    const { workspaceId } = user;
+    if (!workspaceId) throw new Error("Workspace not seeded for the test user");
 
-  // Add Action button
-  await page.getByRole("button", { name: "Add Action" }).click();
+    const click = { name: `Clicked upgrade ${run}`, selector: ".upgrade-button" };
+    const pageView = { name: `Viewed pricing ${run}`, urlContains: "pricing" };
+    const code = { name: `Signed up ${run}`, key: `signed-up-${run}` };
+    const renamedClick = `Clicked upgrade, renamed ${run}`;
 
-  // User fills the action name and description
-  await expect(page.getByLabel("What did your user do?")).toBeVisible();
-  await page.getByLabel("What did your user do?").fill(name);
-
-  await expect(page.getByLabel("Description")).toBeVisible();
-  await page.getByLabel("Description").fill(description);
-
-  await expect(page.getByText(noCodeType)).toBeVisible();
-  await page.getByText(noCodeType).click();
-
-  // User clicks the Create Action button
-  await page.getByRole("button", { name: "Create action", exact: true }).click();
-
-  const successToast = await page.waitForSelector(".formbricks__toast__success");
-  expect(successToast).toBeTruthy();
-
-  const actionButton = page.getByTitle(name);
-  await expect(actionButton).toBeVisible();
-};
-
-const createCodeAction = async ({
-  description,
-  key,
-  name,
-  page,
-}: {
-  page: Page;
-  name: string;
-  description: string;
-  key: string;
-}) => {
-  const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-  await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-
-  // Add Action button
-  await page.getByRole("button", { name: "Add Action" }).click();
-
-  await expect(page.getByLabel("What did your user do?")).toBeVisible();
-  await page.getByLabel("What did your user do?").fill(name);
-
-  await expect(page.getByLabel("Description")).toBeVisible();
-  await page.getByLabel("Description").fill(description);
-
-  // User selects the Code tab
-  await page.getByText("Code", { exact: true }).click();
-
-  await expect(page.getByLabel("Key")).toBeVisible();
-  await page.getByLabel("Key").fill(key);
-
-  await page.getByRole("button", { name: "Create action", exact: true }).click();
-
-  const successToast = await page.waitForSelector(".formbricks__toast__success", { timeout: 15000 });
-  expect(successToast).toBeTruthy();
-
-  // Wait for the action to be fully created and committed to the database
-  await page.waitForLoadState("networkidle", { timeout: 15000 });
-
-  const actionButton = page.getByTitle(name);
-  await expect(actionButton).toBeVisible({ timeout: 10000 });
-};
-
-const getActionButtonLocator = (page: Page, actionName: string) => {
-  return page.getByTitle(actionName);
-};
-
-test.describe("Create and Edit No Code Click Action", async () => {
-  test.beforeEach(async ({ page, users }) => {
-    const user = await users.create();
     await user.login();
-
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-    await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-  });
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`, { waitUntil: "load" });
 
-  test("Create and Edit No Code Click Action by CSS Selector", async ({ page }) => {
-    await test.step("Create No Code Click Action", async () => {
-      await createNoCodeClickAction({
-        page,
-        name: actions.create.noCode.click.name,
-        description: actions.create.noCode.click.description,
-        selector: actions.create.noCode.click.selector,
-      });
+    await test.step("create a click action on a CSS selector", async () => {
+      await startNewAction(page, click.name, "Click on the upgrade button");
+      await page.locator("#CssSelector").click();
+      await page.locator("[name='noCodeConfig.elementSelector.cssSelector']").fill(click.selector);
+      await submitNewAction(page, click.name);
     });
 
-    await test.step("Edit No Code Click Action", async () => {
-      const actionButton = getActionButtonLocator(page, actions.create.noCode.click.name);
-      await expect(actionButton).toBeVisible();
-      await actionButton.click();
+    await test.step("create a page view action limited to matching URLs", async () => {
+      await startNewAction(page, pageView.name, "Opened the pricing page");
+      await page.getByText("Page View", { exact: true }).click();
+      await page.getByText("Limit to specific pages").click();
+      await page.locator("[name='noCodeConfig.urlFilters.0.rule']").selectOption({ label: "Contains" });
+      await page.locator("[name='noCodeConfig.urlFilters.0.value']").fill(pageView.urlContains);
+      await submitNewAction(page, pageView.name);
+    });
 
-      await page.getByRole("button", { name: "Settings", exact: true }).click();
+    await test.step("create a code action", async () => {
+      await startNewAction(page, code.name, "Tracked from the app");
+      await page.getByText("Code", { exact: true }).click();
+      await page.getByLabel("Key").fill(code.key);
+      await submitNewAction(page, code.name);
+    });
 
-      await expect(page.getByLabel("What did your user do?")).toBeVisible();
-      await page.getByLabel("What did your user do?").fill(actions.edit.noCode.click.name);
+    await test.step("the three actions are stored with the settings they were given", async () => {
+      const stored = await prisma.actionClass.findMany({
+        where: { workspaceId, name: { in: [click.name, pageView.name, code.name] } },
+        select: { name: true, type: true, key: true, noCodeConfig: true },
+      });
+      const byName = Object.fromEntries(stored.map((action) => [action.name, action]));
 
-      await expect(page.getByLabel("Description")).toBeVisible();
-      await page.getByLabel("Description").fill(actions.edit.noCode.click.description);
+      expect(byName[click.name]).toMatchObject({
+        type: "noCode",
+        noCodeConfig: { type: "click", elementSelector: { cssSelector: click.selector } },
+      });
+      expect(byName[pageView.name]).toMatchObject({
+        type: "noCode",
+        noCodeConfig: { type: "pageView", urlFilters: [{ rule: "contains", value: pageView.urlContains }] },
+      });
+      expect(byName[code.name]).toMatchObject({ type: "code", key: code.key });
+    });
 
-      await expect(page.locator("[name='noCodeConfig.elementSelector.cssSelector']")).toBeVisible();
-      await page
-        .locator("[name='noCodeConfig.elementSelector.cssSelector']")
-        .fill(actions.edit.noCode.click.selector);
-
+    await test.step("rename the click action: the new name survives a reload", async () => {
+      await openActionSettings(page, click.name);
+      await page.getByLabel("What did your user do?").fill(renamedClick);
       await page.getByRole("button", { name: "Save changes", exact: true }).click();
-    });
-  });
-});
+      await expect(actionTitle(page, renamedClick)).toBeVisible({ timeout: 15000 });
 
-test.describe("Create and Edit No Code Page view Action", async () => {
-  test.beforeEach(async ({ page, users }) => {
-    const user = await users.create();
-    await user.login();
-
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-  });
-
-  test("Create and Edit No Code Page view Action", async ({ page }) => {
-    await test.step("Create No Code Page view Action", async () => {
-      await createNoCodePageViewAction({
-        page,
-        name: actions.create.noCode.pageView.name,
-        description: actions.create.noCode.pageView.description,
-        matcher: actions.create.noCode.pageView.matcher,
-        noCodeType: "Page View",
-      });
+      await page.reload({ waitUntil: "load" });
+      await expect(actionTitle(page, renamedClick)).toBeVisible({ timeout: 15000 });
+      await expect(actionTitle(page, click.name)).toHaveCount(0);
     });
 
-    await test.step("Edit No Code Page view Action", async () => {
-      const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-      await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-
-      const actionButton = getActionButtonLocator(page, actions.create.noCode.pageView.name);
-      await expect(actionButton).toBeVisible();
-      await actionButton.click();
-
-      await page.getByRole("button", { name: "Settings", exact: true }).click();
-
-      await expect(page.getByLabel("What did your user do?")).toBeVisible();
-      await page.getByLabel("What did your user do?").fill(actions.edit.noCode.pageView.name);
-
-      await expect(page.getByLabel("Description")).toBeVisible();
-      await page.getByLabel("Description").fill(actions.edit.noCode.pageView.description);
-
-      await expect(page.locator("[name='noCodeConfig.urlFilters.0.rule']")).toBeVisible();
-      await page
-        .locator("[name='noCodeConfig.urlFilters.0.rule']")
-        .selectOption({ label: actions.edit.noCode.pageView.matcher.label });
-
-      await page
-        .locator("[name='noCodeConfig.urlFilters.0.value']")
-        .fill(actions.edit.noCode.pageView.matcher.value);
-
-      await page
-        .locator("[name='noCodeConfig.urlFilters.testUrl']")
-        .fill(actions.edit.noCode.pageView.testURL);
-      await page.getByRole("button", { name: "Test Match", exact: true }).click();
-      await page.getByRole("button", { name: "Save changes", exact: true }).click();
-    });
-  });
-});
-
-test.describe("Create and Edit No Code Exit Intent Action", async () => {
-  test.beforeEach(async ({ page, users }) => {
-    const user = await users.create();
-    await user.login();
-
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-  });
-
-  test("Create and Edit No Code Exit Intent Action", async ({ page }) => {
-    await test.step("Create No Code Exit Intent Action", async () => {
-      await createNoCodeAction({
-        page,
-        name: actions.create.noCode.exitIntent.name,
-        description: actions.create.noCode.exitIntent.description,
-        noCodeType: "Exit Intent",
-      });
-    });
-
-    await test.step("Edit No Code Exit Intent Action", async () => {
-      const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-      await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-
-      const actionButton = getActionButtonLocator(page, actions.create.noCode.exitIntent.name);
-      await expect(actionButton).toBeVisible();
-      await actionButton.click();
-
-      await page.getByRole("button", { name: "Settings", exact: true }).click();
-
-      await expect(page.getByLabel("What did your user do?")).toBeVisible();
-      await page.getByLabel("What did your user do?").fill(actions.edit.noCode.exitIntent.name);
-
-      await expect(page.getByLabel("Description")).toBeVisible();
-      await page.getByLabel("Description").fill(actions.edit.noCode.exitIntent.description);
-
-      await page.getByRole("button", { name: "Save changes", exact: true }).click();
-    });
-  });
-});
-
-test.describe("Create and Edit No Code 50% scroll Action", async () => {
-  test.beforeEach(async ({ page, users }) => {
-    const user = await users.create();
-    await user.login();
-
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-    await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-  });
-
-  test("Create and Edit No Code 50% scroll Action", async ({ page }) => {
-    await test.step("Create No Code 50% scroll Action", async () => {
-      await createNoCodeAction({
-        page,
-        name: actions.create.noCode["fiftyPercentScroll"].name,
-        description: actions.create.noCode["fiftyPercentScroll"].description,
-        noCodeType: "50% Scroll",
-      });
-    });
-
-    await test.step("Edit No Code 50% scroll Action", async () => {
-      const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-      await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-
-      const actionButton = getActionButtonLocator(page, actions.create.noCode["fiftyPercentScroll"].name);
-      await expect(actionButton).toBeVisible();
-      await actionButton.click();
-
-      await page.getByRole("button", { name: "Settings", exact: true }).click();
-
-      await expect(page.getByLabel("What did your user do?")).toBeVisible();
-      await page.getByLabel("What did your user do?").fill(actions.edit.noCode["fiftyPercentScroll"].name);
-
-      await expect(page.getByLabel("Description")).toBeVisible();
-      await page.getByLabel("Description").fill(actions.edit.noCode["fiftyPercentScroll"].description);
-
-      await page.getByRole("button", { name: "Save changes", exact: true }).click();
-    });
-  });
-});
-
-test.describe("Create and Edit Code Action", async () => {
-  test.beforeEach(async ({ page, users }) => {
-    const user = await users.create();
-    await user.login();
-
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-    await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-  });
-
-  test("Create and Edit Code Action", async ({ page }) => {
-    await test.step("Create Code Action", async () => {
-      await createCodeAction({
-        page,
-        name: actions.create.code.name,
-        description: actions.create.code.description,
-        key: actions.create.code.key,
-      });
-    });
-
-    await test.step("Edit Code Action", async () => {
-      const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-      await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-
-      const actionButton = getActionButtonLocator(page, actions.create.code.name);
-      await expect(actionButton).toBeVisible();
-      await actionButton.click();
-
-      await page.getByRole("button", { name: "Settings", exact: true }).click();
-
-      await expect(page.getByLabel("Description")).toBeVisible();
-      await page.getByLabel("Description").fill(actions.edit.code.description);
-
-      await page.getByRole("button", { name: "Save changes", exact: true }).click();
-    });
-  });
-});
-
-test.describe("Create and Delete Action", async () => {
-  test.beforeEach(async ({ page, users }) => {
-    const user = await users.create();
-    await user.login();
-
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-    await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-  });
-
-  test("Create and Delete Action", async ({ page }) => {
-    await test.step("Create action", async () => {
-      await createNoCodeClickAction({
-        page,
-        name: actions.delete.noCode.name,
-        description: actions.delete.noCode.description,
-        selector: actions.delete.noCode.selector,
-      });
-    });
-
-    await test.step("Delete Action", async () => {
-      const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-      await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
-
-      const actionButton = getActionButtonLocator(page, actions.delete.noCode.name);
-      await expect(actionButton).toBeVisible();
-      await actionButton.click();
-
-      await page.getByRole("button", { name: "Settings", exact: true }).click();
-
-      await expect(page.locator("#deleteActionModalTrigger")).toBeVisible();
+    await test.step("delete the page view action: it is gone after a reload", async () => {
+      await openActionSettings(page, pageView.name);
       await page.locator("#deleteActionModalTrigger").click();
+      await page
+        .getByRole("dialog", { name: "Delete Action" })
+        .getByRole("button", { name: "Delete", exact: true })
+        .click();
+      await expect(actionTitle(page, pageView.name)).toHaveCount(0, { timeout: 15000 });
 
-      await page.getByRole("button", { name: "Delete", exact: true }).click();
+      await page.reload({ waitUntil: "load" });
+      await expect(actionTitle(page, renamedClick)).toBeVisible({ timeout: 15000 });
+      await expect(actionTitle(page, pageView.name)).toHaveCount(0);
+      await expect(actionTitle(page, code.name)).toBeVisible();
+      await expect
+        .poll(() => prisma.actionClass.count({ where: { workspaceId, name: pageView.name } }))
+        .toBe(0);
     });
   });
 });
