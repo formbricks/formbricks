@@ -364,6 +364,7 @@ describe("sso-recovery", () => {
       "Failed to start SSO recovery"
     );
     expect(JSON.stringify(failedLogError.mock.calls)).not.toContain("john.doe@example.com");
+    expect(JSON.stringify(failedLogError.mock.calls)).not.toContain("550 rejected");
   });
 
   test("reclaims unverified local auth factors before linking SSO", async () => {
