@@ -149,8 +149,10 @@ operator or database owner to be malicious is not a vulnerability.
 - Vulnerabilities that live only in third-party dependencies. Report them only
   when Formbricks's own code misuses the dependency in a way that creates the
   issue.
-- Generated code (`packages/database/generated`, generated Zod schemas, build
-  outputs) and vendored/third-party assets.
+- Generated code (`packages/database/generated`, build outputs) and
+  vendored/third-party assets. The generated API v3 Zod schemas
+  (`packages/api-v3-schemas`) stay in scope: they validate request input, so
+  rate a gap in them by the route that uses them.
 - Infrastructure or deployment misconfiguration of a specific installation
   (Helm values, cloud IAM, reverse-proxy or TLS settings) unless the repository
   enables it by default.
