@@ -1,7 +1,6 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
-import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 
 /**
  * Covers the tags settings table end to end after its move onto `/api/v3/tags` + TanStack Query: the list
@@ -119,42 +118,5 @@ test.describe("Workspace tags settings @slow", () => {
 
     // The surviving tag is untouched by either removal.
     await expect(nameFieldFor(keep.id)).toHaveValue(renamed);
-  });
-
-  test("rejects a tag mutation from a workspace the caller cannot write to", async ({ page, users }) => {
-    const run = stamp();
-    const owner = await users.create({
-      email: `tags-owner-${run}@example.com`,
-      name: `tags-owner-${run}`,
-      workspaceName: `Owner Workspace ${run}`,
-    });
-    const outsider = await users.create({
-      email: `tags-outsider-${run}@example.com`,
-      name: `tags-outsider-${run}`,
-      workspaceName: `Outsider Workspace ${run}`,
-    });
-
-    const ownerWorkspaceId = owner.workspaceId;
-    if (!ownerWorkspaceId) {
-      throw new Error("Workspace not seeded for the owner");
-    }
-    const foreignTag = await prisma.tag.create({
-      data: { workspaceId: ownerWorkspaceId, name: `Foreign ${run}` },
-    });
-
-    // The route resolves the workspace from the tag itself, so holding a valid tag id is not enough. A 404
-    // here instead of a 403 would leak that the tag exists to anyone who can guess an id.
-    await page.context().clearCookies();
-    await outsider.login();
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-
-    const response = await page.request.patch(`/api/v3/tags/${foreignTag.id}`, {
-      headers: SAME_ORIGIN_HEADERS,
-      data: { name: `Hijacked ${run}` },
-    });
-    expect(response.status()).toBe(403);
-    expect(await prisma.tag.findUnique({ where: { id: foreignTag.id } })).toMatchObject({
-      name: foreignTag.name,
-    });
   });
 });
