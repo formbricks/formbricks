@@ -326,6 +326,46 @@ describe("sso-recovery", () => {
     );
   });
 
+  test("logs a failed recovery start by error name and frames, without its message", async () => {
+    const failedLogError = vi.fn();
+    const withContext = vi.mocked(logger.withContext);
+    const original = withContext.getMockImplementation();
+    withContext.mockImplementation(((context: { event?: string }) => ({
+      error: context.event === "sso_recovery_failed" ? failedLogError : vi.fn(),
+      info: vi.fn(),
+    })) as never);
+    // The message of a mailer error can carry the recipient or SMTP response text.
+    vi.mocked(sendVerificationEmail).mockRejectedValue(new Error("550 rejected john.doe@example.com"));
+
+    try {
+      await expect(
+        startSsoRecovery({
+          existingUser: {
+            id: "user_1",
+            email: "john.doe@example.com",
+            locale: "en-US",
+            emailVerified: false,
+            isActive: true,
+            identityProvider: "email",
+            identityProviderAccountId: null,
+            twoFactorEnabled: false,
+          },
+          provider: "google",
+          account: { type: "oauth", provider: "google", providerAccountId: "provider-account-1" },
+          callbackUrl: "",
+        })
+      ).rejects.toThrow("550 rejected");
+    } finally {
+      withContext.mockImplementation(original!);
+    }
+
+    expect(failedLogError).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error", userId: "user_1", provider: "google" }),
+      "Failed to start SSO recovery"
+    );
+    expect(JSON.stringify(failedLogError.mock.calls)).not.toContain("john.doe@example.com");
+  });
+
   test("reclaims unverified local auth factors before linking SSO", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user_1",
