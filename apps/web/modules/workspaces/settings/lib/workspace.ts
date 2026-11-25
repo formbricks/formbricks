@@ -267,6 +267,11 @@ export const updateWorkspace = async (
       });
     }
   } catch (error) {
+    // The only unique key a workspace update can hit is `(organizationId, name)`: a rename to a name the
+    // organization already uses. That is the caller's input, not a database fault (ENG-7509).
+    if (isUniqueConstraintError(error)) {
+      throw new InvalidInputError("A workspace with this name already exists in your organization");
+    }
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }
