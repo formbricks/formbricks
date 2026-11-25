@@ -10,4 +10,4 @@ runs:
     - shell: bash
       run: pnpm install --frozen-lockfile --ignore-scripts
     - shell: bash
-      run: timeout 420 pnpm exec playwright install chromium --with-deps
+      run: timeout --kill-after=10s 420 bash scripts/install-playwright-ci.sh chromium

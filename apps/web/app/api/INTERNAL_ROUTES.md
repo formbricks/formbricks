@@ -137,6 +137,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/verification-emails` | POST | none | dashboard | `/api/internal` | `app/api/internal/verification-emails/route.ts` |
 | `/api/internal/webhooks` | POST | session | dashboard | `/api/internal` | `app/api/internal/webhooks/route.ts` |
 | `/api/internal/webhooks/{webhookId}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/webhooks/[webhookId]/route.ts` |
+| `/api/internal/webhooks/{webhookId}/secret` | GET | session | dashboard | `/api/internal` | `app/api/internal/webhooks/[webhookId]/secret/route.ts` |
 | `/api/internal/webhooks/test-deliveries` | POST | session | dashboard | `/api/internal` | `app/api/internal/webhooks/test-deliveries/route.ts` |
 | `/api/internal/workflows/{workflowId}/published-version` | GET | session | dashboard | `/api/internal` | `app/api/internal/workflows/[workflowId]/published-version/route.ts` |
 | `/api/internal/workflows/{workflowId}/runs/{runId}/definition` | GET | session | dashboard | `/api/internal` | `app/api/internal/workflows/[workflowId]/runs/[runId]/definition/route.ts` |

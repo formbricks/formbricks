@@ -600,6 +600,7 @@ describe("@formbricks/jobs queue helpers", () => {
     ["creativeStatsFlush", "creative-stats.flush:global:creative-stats-flush"],
     ["dataRetentionSweep", "data-retention.sweep:global:daily-data-retention-sweep"],
     ["deletionCleanupDrain", "deletion-cleanup.drain:global:deletion-cleanup-drain"],
+    ["oauthClientCleanup", "oauth-client.cleanup:global:oauth-client-cleanup"],
     ["surveyArchivePurge", "survey-archive-purge.process:global:daily-survey-archive-purge"],
     ["surveyScheduling", "survey-scheduling.reconcile:global:daily-survey-scheduling"],
     ["usageTelemetry", "usage-telemetry.process:global:daily-usage-telemetry"],

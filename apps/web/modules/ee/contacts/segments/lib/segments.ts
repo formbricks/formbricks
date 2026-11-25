@@ -10,6 +10,7 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import {
+  TBaseFilters,
   TSegment,
   TSegmentCreateInput,
   TSegmentUpdateInput,
@@ -126,6 +127,38 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
     throw error;
   }
 });
+
+/**
+ * The filters of several segments in one read, for the recursion check: a level of references costs one
+ * query instead of one per segment. Scoped to the segments the workspace reaches, like every other
+ * nested-segment read: its directory's shared segments and its own private ones (decision 24), or its own
+ * segments while it has no directory (decision 3). A tree naming a segment outside that is refused rather
+ * than followed. Only ids that exist come back; the caller reports a missing one, so it names the id its
+ * walk met.
+ */
+export const getSegmentsByIds = async (
+  segmentIds: string[],
+  workspaceId: string
+): Promise<{ id: string; filters: TBaseFilters }[]> => {
+  validateInputs([segmentIds, z.array(ZId)], [workspaceId, ZId]);
+  try {
+    const directory = await getWorkspaceContactDirectory(workspaceId);
+    const segments = await prisma.segment.findMany({
+      where: {
+        id: { in: segmentIds },
+        ...(directory ? whereSegmentsOfWorkspace(workspaceId, directory.id) : { workspaceId }),
+      },
+      select: { id: true, filters: true },
+    });
+    return segments.map((segment) => ({ id: segment.id, filters: segment.filters as TBaseFilters }));
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
 
 /**
  * `getSegments`' survey-reference scope for the server-side callers that need every survey of the workspace

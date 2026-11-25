@@ -57,7 +57,7 @@ catalog:
   dotenv: 17.3.1
   dotenv-cli: 11.0.0
   cross-env: 10.1.0
-  glob: 13.0.6
+  glob: 14.0.6
   # Read by scripts/check-catalog.mjs; also a packages/workflows dev dep.
   js-yaml: 4.3.2
   "@playwright/test": 1.60.0
@@ -96,6 +96,8 @@ catalog:
   "@radix-ui/react-popover": 1.1.15
   "@radix-ui/react-radio-group": 1.3.8
   "@radix-ui/react-slot": 1.2.4
+  # The nonce for the scroll lock Radix menus and dialogs inject (react-style-singleton reads it here).
+  get-nonce: 1.0.1
   i18next: 25.8.20
   i18next-icu: 2.4.3
   react-i18next: 16.5.8
@@ -229,7 +231,11 @@ overrides:
   # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx).
   node-forge: 1.4.3
   # Webpack / linting / schema validation chains.
-  minimatch@10: 10.2.5 # GHSA-7r86-cg39-jmmj + GHSA-23c5-xmqv-rm74: 10.0.0–10.2.2 vulnerable, patched in 10.2.3. load-bearing: @microsoft/api-extractor pins 10.2.1.
+  # GHSA-7r86-cg39-jmmj + GHSA-23c5-xmqv-rm74: 10.0.0–10.2.2 vulnerable, patched in 10.2.3. load-bearing: @microsoft/api-extractor pins 10.2.1.
+  # GHSA-g3hv-75wg-m249 (ENG-6986): 7.0.0-11.0.0 also vulnerable, patched in 11.0.1, so this moves to 11.0.8 (11.0.9 is still inside the release cooldown)
+  # (same `minimatch`/`Minimatch` exports and engines as 10). load-bearing: archiver>readdir-glob@3 (runtime,
+  # apps/web, ^10.0.0) and eslint-plugin-sonarjs (dev).
+  minimatch@10: 11.0.8
   # GHSA-r28c-9q8g-f849 and GHSA-fxqj-rqcc-2cmp: postcss path traversal and parser
   # denial-of-service findings are patched in 8.5.23.
   # load-bearing: next pins 8.4.31 and @tailwindcss/postcss pins 8.5.15.
@@ -490,6 +496,21 @@ overrides:
   # load-bearing: @boxyhq/saml-jackson's typeorm>sqlite3>node-gyp chain (runtime) resolves the vulnerable
   # 1.x line; the eslint plugin graph (dev) is on the same line.
   brace-expansion@1: 1.1.21
+  # ENG-6907 / GHSA-3g3m-2fjr-6pw4 (Dependabot #984): glob 9.0.0-14.0.1 lets an AbortSignal cancellation be
+  # bypassed, so the filesystem walk continues after the timeout; patched in 14.0.2. ENG-6986 /
+  # GHSA-g3hv-75wg-m249 (Dependabot #986): minimatch 7.0.0-11.0.0 has a DoS via globparts amplification;
+  # patched in 11.0.1. glob 14 depends on minimatch ^11, so the glob override also moves its minimatch.
+  # The 10.x line is the last of its kind (`legacy-v10` is 10.5.0), so there is no patched 10.x to pin to;
+  # this is a cross-major override. Both consumers call only `glob.sync`/`glob`/`globSync`, which 14 still exports:
+  # typeorm's DirectoryExportedClassesLoader (`glob.sync`, entity globs from config, never request input) and rimraf 5
+  # (`glob(path, options.glob)`). Scoped to 10 so the other majors are left to their own consumers.
+  # load-bearing: @boxyhq/saml-jackson>typeorm (^10.5.0) and googleapis/@googleapis/admin>googleapis-common>
+  # google-auth-library>gaxios>rimraf@5 (^10.3.7), both runtime in apps/web.
+  "glob@10": 14.0.6
+  # glob 13.0.x is vulnerable to the same advisory (13.0.7 is the last 13.x, still covered). Same API use as
+  # above (named `glob`/`globSync`). load-bearing: @sentry/nextjs>@sentry/bundler-plugins and react-email
+  # (runtime, apps/web and @formbricks/email) ask for ^13. The workspace's own `glob` catalog entry is on 14.0.6.
+  "glob@13": 14.0.6
   # load-bearing: @boxyhq/saml-jackson resolves the vulnerable 2.x line both directly (typeorm>glob) and
   # via googleapis/@googleapis/admin (runtime, apps/web and packages/ai `dependencies`); @redocly/cli and
   # vite-plugin-dts>@vue/language-core (dev) are on the same line.

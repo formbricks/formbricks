@@ -4,7 +4,7 @@ The application rate limiter keeps its counters in Redis. When it cannot reach R
 
 - **Email-sending.** Every limit in `sendEmail`'s `applyEmailRateLimits`, plus forgot-password, verification resend, email change, invites, follow-ups, account deletion and the link-survey email. A Redis outage must not reopen INC-5, where a script sent about 13,000 invite emails and damaged our sender reputation.
 - **Account and organization creation.** Sign-up and organization creation. Throwaway accounts and organizations are how INC-5 got fresh per-organization budgets.
-- **Brute-force guards.** Survey PIN, password-reset and email-change token redemption, the email-token endpoint (which reveals whether an address is registered), and failed MCP authentication.
+- **Brute-force guards.** Survey PIN, password-reset and email-change token redemption, and failed MCP authentication.
 
 Throughput limits (the v1/v2/v3 and client APIs, `stateMutation`, storage, custom CSS), AI and paid-API spend, and the SAML callback stay fail-open. Refusing those would turn a Redis blip into a full outage of the app and of every customer's surveys, and none of them guards an irreversible abuse. The cost of failing closed is small: Redis is already required at boot, and sign-up verification tokens and response processing (BullMQ) stop working without it anyway.
 

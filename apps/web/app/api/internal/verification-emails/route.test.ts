@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, after } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE, TooManyRequestsError } from "@formbricks/types/errors";
 import { PRE_LOGIN_BODY_LIMIT_BYTES } from "@/app/api/internal/lib/limits";
@@ -19,6 +19,23 @@ vi.mock("@/modules/email", () => ({ sendVerificationEmail: vi.fn() }));
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: { api: { sendVerificationEmail: vi.fn() } } }));
 
 const cookieMocks = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn() }));
+
+// `after()` work (the per-account budget and the send) is deferred: the tests that expect a delivery run
+// the queued callbacks, and the ones that expect silence never do.
+const afterTasks = vi.hoisted(() => [] as (() => Promise<unknown>)[]);
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return {
+    ...actual,
+    after: vi.fn((task: () => unknown) => {
+      afterTasks.push(task as () => Promise<unknown>);
+    }),
+  };
+});
+
+const flushAfter = async () => {
+  while (afterTasks.length > 0) await afterTasks.shift()?.();
+};
 
 vi.mock("next/headers", () => ({
   headers: vi.fn(() => Promise.resolve(new Headers())),
@@ -104,6 +121,10 @@ const auditEvents = () => vi.mocked(queueAuditEvent).mock.calls.map(([event]) =>
 
 beforeEach(() => {
   vi.resetAllMocks();
+  afterTasks.length = 0;
+  vi.mocked(after).mockImplementation(((task: () => unknown) => {
+    afterTasks.push(task as () => Promise<unknown>);
+  }) as never);
   vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   vi.mocked(queueAuditEvent).mockResolvedValue(undefined);
   vi.mocked(getUserByEmail).mockResolvedValue(mockUser as never);
@@ -144,14 +165,18 @@ describe("POST /api/internal/verification-emails — rate limiting", () => {
   // many IPs must not spend the recipient's whole cap and leave the user's own resend with none (ENG-3823).
   test("counts each resend against the account", async () => {
     await resend();
+    await flushAfter();
 
     expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmailPerAccount, mockUser.id);
   });
 
-  test("sends nothing, and fails, when the per-account limiter itself fails", async () => {
+  // The budget runs after the answer, so a limiter failure is logged and skips the send rather than
+  // turning into a 500 the caller could use to tell addresses apart.
+  test("answers 204 and skips the send when the per-account limiter itself fails", async () => {
     vi.mocked(applyRateLimit).mockRejectedValue(new Error("redis down"));
 
-    expect((await resend()).status).toBe(500);
+    expect((await resend()).status).toBe(204);
+    await flushAfter();
     expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
     expect(sendVerificationEmail).not.toHaveBeenCalled();
   });
@@ -165,6 +190,7 @@ describe("POST /api/internal/verification-emails — rate limiting", () => {
     );
 
     expect((await resend()).status).toBe(204);
+    await flushAfter();
     expect(signupIntentMocks.createDecoySignupIntentToken).toHaveBeenCalledTimes(1);
     expect(cookieMocks.set).toHaveBeenCalledWith(
       "formbricks.signup_intent",
@@ -178,7 +204,7 @@ describe("POST /api/internal/verification-emails — rate limiting", () => {
   test("spends the IP budget even when the user doesn't exist", async () => {
     vi.mocked(getUserByEmail).mockResolvedValue(null);
 
-    expect((await resend()).status).toBe(422);
+    expect((await resend()).status).toBe(204);
     expect(applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmail);
   });
 });
@@ -186,6 +212,7 @@ describe("POST /api/internal/verification-emails — rate limiting", () => {
 describe("POST /api/internal/verification-emails — resend flow", () => {
   test("sends the verification email through Better Auth when the address is not yet verified", async () => {
     const response = await resend();
+    await flushAfter();
 
     expect(response.status).toBe(204);
     expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
@@ -198,6 +225,7 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
 
   test("preserves a valid callback URL", async () => {
     await resend({ ...validInput, callbackUrl: "http://localhost:3000/invite?token=invite-token" });
+    await flushAfter();
 
     expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
       body: { email: mockUser.email, callbackURL: "http://localhost:3000/invite?token=invite-token" },
@@ -207,6 +235,7 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
 
   test("discards an invalid callback URL", async () => {
     await resend({ ...validInput, callbackUrl: "https://evil.example/phish" });
+    await flushAfter();
 
     expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
       body: { email: mockUser.email, callbackURL: undefined },
@@ -230,6 +259,7 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
     recoveryIntentMocks.getSsoRecoveryPairedTtlSeconds.mockReturnValue(777);
 
     const response = await resend({ ...validInput, callbackUrl: RECOVERY_CALLBACK });
+    await flushAfter();
 
     // The link and the intent have to get ONE lifetime, or the survivor of the two ends recovery on its
     // own: a longer-lived link signs the user in and then reports failure. `777` is not a TTL either call
@@ -264,6 +294,7 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
     recoveryIntentMocks.readSsoRecoveryIntent.mockResolvedValue(liveIntent());
 
     await resend({ ...validInput, callbackUrl });
+    await flushAfter();
 
     expect(sendVerificationEmail).toHaveBeenCalledWith(expect.objectContaining({ purpose: "sso_recovery" }));
     expect(recoveryIntentMocks.refreshSsoRecoveryIntent).toHaveBeenCalled();
@@ -292,6 +323,7 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
     recoveryIntentMocks.readSsoRecoveryIntent.mockResolvedValue({ ...liveIntent("other@example.com") });
 
     const response = await resend({ ...validInput, callbackUrl: RECOVERY_CALLBACK });
+    await flushAfter();
 
     expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
       body: { email: mockUser.email, callbackURL: RECOVERY_CALLBACK },
@@ -300,18 +332,21 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
     expect(response.status).toBe(204);
   });
 
-  // ENG-7092 will change this answer; until then it is the server action's, message included.
-  test("answers an unknown address as the server action did", async () => {
+  // ENG-7092: unknown, verified, unverified and budget-spent all answer the same, so the page is not a
+  // lookup. The decoy cookie keeps the answer shaped like a resend too (ENG-7094).
+  test("answers an unknown address exactly like a resend, with a decoy cookie", async () => {
     vi.mocked(getUserByEmail).mockResolvedValue(null);
 
     const response = await resend();
+    await flushAfter();
 
-    expect(response.status).toBe(422);
-    expect(await response.json()).toEqual(
-      expect.objectContaining({
-        detail: "user with ID test@example.com not found",
-        details: { reason: "user_not_found" },
-      })
+    expect(response.status).toBe(204);
+    expect(await response.text()).toBe("");
+    expect(signupIntentMocks.createDecoySignupIntentToken).toHaveBeenCalledTimes(1);
+    expect(cookieMocks.set).toHaveBeenCalledWith(
+      "formbricks.signup_intent",
+      "fresh-decoy-token",
+      expect.anything()
     );
     expect(sendVerificationEmail).not.toHaveBeenCalled();
     expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
@@ -384,6 +419,7 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
 describe("POST /api/internal/verification-emails — audit record", () => {
   test("records the send against the account it went to", async () => {
     await resend();
+    await flushAfter();
 
     expect(auditEvents()).toEqual([
       expect.objectContaining({
@@ -395,20 +431,20 @@ describe("POST /api/internal/verification-emails — audit record", () => {
     ]);
   });
 
-  test("names no account when the address is already verified and nothing was sent", async () => {
+  test("records nothing when the address is already verified and nothing was sent", async () => {
     vi.mocked(getUserByEmail).mockResolvedValue(mockVerifiedUser as never);
 
     await resend();
 
-    expect(auditEvents()).toEqual([expect.objectContaining({ targetId: "unknown", status: "success" })]);
+    expect(auditEvents()).toEqual([]);
   });
 
-  test("records an unknown address as a failure", async () => {
+  test("records nothing for an unknown address", async () => {
     vi.mocked(getUserByEmail).mockResolvedValue(null);
 
     await resend();
 
-    expect(auditEvents()).toEqual([expect.objectContaining({ targetId: "unknown", status: "failure" })]);
+    expect(auditEvents()).toEqual([]);
   });
 });
 
@@ -420,10 +456,11 @@ describe("POST /api/internal/verification-emails — errors and input", () => {
     expect(applyIPRateLimit).toHaveBeenCalled();
   });
 
-  test("lets a send failure through as a 500", async () => {
+  test("answers 204 when the send fails after the response", async () => {
     vi.mocked(auth.api.sendVerificationEmail).mockRejectedValue(new Error("Email service error"));
 
-    expect((await resend()).status).toBe(500);
+    expect((await resend()).status).toBe(204);
+    await flushAfter();
     expect(getUserByEmail).toHaveBeenCalled();
   });
 

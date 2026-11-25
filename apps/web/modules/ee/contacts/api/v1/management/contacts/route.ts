@@ -1,3 +1,4 @@
+import { parseV1Pagination } from "@/app/api/v1/management/lib/pagination";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -6,7 +7,7 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getContacts } from "./lib/contacts";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }) => {
+  handler: async ({ req, authentication }) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }
@@ -21,6 +22,7 @@ export const GET = withV1ApiWrapper({
         };
       }
 
+      const { limit, offset } = parseV1Pagination(req.nextUrl.searchParams);
       const workspaceIds = [
         ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
@@ -29,7 +31,7 @@ export const GET = withV1ApiWrapper({
       // contact routes answer; a key for several lists what their directories hold.
       if (workspaceIds.length === 1) await requireWorkspaceContactDirectory(workspaceIds[0]);
 
-      const contacts = await getContacts(workspaceIds);
+      const contacts = await getContacts(workspaceIds, limit, offset);
 
       return {
         response: responses.successResponse(contacts),

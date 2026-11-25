@@ -4,6 +4,7 @@ import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 import { ResponsiveContainer, Tooltip } from "recharts";
 import { cn } from "@/lib/cn";
+import { useCspNonce } from "@/lib/csp/nonce";
 
 // Format: { THEME_NAME: CSS_VARIABLE }
 const THEMES = { light: "", dark: ".dark" } as const;
@@ -288,6 +289,8 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
 }
 
 const ChartStyle = ({ id, config }: Readonly<{ id: string; config: ChartConfig }>) => {
+  // The page's CSP applies a <style> element only with its nonce.
+  const nonce = useCspNonce();
   const colorConfig = Object.entries(config).filter(([, c]) => c.theme || c.color);
 
   if (!colorConfig.length) {
@@ -296,6 +299,7 @@ const ChartStyle = ({ id, config }: Readonly<{ id: string; config: ChartConfig }
 
   return (
     <style
+      nonce={nonce}
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(

@@ -186,7 +186,7 @@ checksums:
     auth/signup/log_in: 9fb886eff8d1d67d8bb79f5c3f78edde
     auth/signup/password_requirements: 58d15c4e16b28c51b83977d0c2af17bc
     auth/signup/password_validation_contain_at_least_1_number: 58fb33a486aa4dadfc05e3242fc7ea0b
-    auth/signup/password_validation_minimum_8_and_maximum_128_characters: ec704690a454c7f01e59856c39206259
+    auth/signup/password_validation_minimum_8_characters_and_maximum_72_bytes: 4a97a8bfd5bf9048b3896657145f9b74
     auth/signup/password_validation_uppercase_and_lowercase: ae98b485024dbff1022f6048e22443cd
     auth/signup/please_verify_captcha: 12938ca7ca13e3f933737dd5436fa1c0
     auth/signup/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
@@ -399,6 +399,7 @@ checksums:
     common/hidden: fa290c6ada5869d744ed35e9cca64699
     common/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
     common/hidden_fields: 3de6cfd308293a826cb8679fd1d49972
+    common/hide: a6088b934651055bb27314d111be510b
     common/hide_password: dd9813264cfc4a7ae515cd5644943c1b
     common/html: f750870203043349d570d8f5865ca0f8
     common/id: c8886d38aeea2ed5f785aba4fc96784b

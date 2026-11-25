@@ -692,10 +692,9 @@ async function authenticateMcpOAuthBearer(
   }
 
   try {
-    await applyRateLimit(
-      rateLimitConfigs.api.v3,
-      `oauth:${sessionAuthentication.user.id}:${authInfo.clientId}`
-    );
+    // Per user, not per client: registration is free, so a per-client bucket would hand a user who
+    // authorises N clients N times the budget (ENG-7314).
+    await applyRateLimit(rateLimitConfigs.api.v3, `oauth:${sessionAuthentication.user.id}`);
   } catch (error) {
     log.warn({ error, statusCode: 429, clientId: authInfo.clientId }, "MCP OAuth rate limit exceeded");
     return {

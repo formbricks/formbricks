@@ -1,4 +1,5 @@
 import { logger } from "@formbricks/logger";
+import { parseV1Pagination } from "@/app/api/v1/management/lib/pagination";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
@@ -14,7 +15,7 @@ import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }) => {
+  handler: async ({ req, authentication }) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }
@@ -27,11 +28,12 @@ export const GET = withV1ApiWrapper({
         };
       }
 
+      const { limit, offset } = parseV1Pagination(req.nextUrl.searchParams);
       const workspaceIds = [
         ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
-      const contactAttributeKeys = await getContactAttributeKeys(workspaceIds);
+      const contactAttributeKeys = await getContactAttributeKeys(workspaceIds, limit, offset);
 
       return {
         response: responses.successResponse(contactAttributeKeys),

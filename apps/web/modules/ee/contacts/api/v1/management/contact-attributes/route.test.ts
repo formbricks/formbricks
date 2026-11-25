@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { V1_MANAGEMENT_MAX_LIMIT } from "@/app/api/v1/management/lib/pagination";
 import { CONTACT_DIRECTORY_MISSING_MESSAGE } from "@/modules/ee/contacts/lib/contact-directory";
 import { getContactAttributes } from "./lib/contact-attributes";
 import { GET } from "./route";
@@ -17,6 +18,7 @@ vi.mock("@formbricks/database", () => ({ prisma: { workspace: { findUnique: vi.f
 const get = (workspaceIds: string[]) =>
   (GET as unknown as (params: Record<string, unknown>) => Promise<{ response: Response }>)({
     props: {},
+    req: { nextUrl: new URL("http://localhost/api/v1/management/contacts") },
     authentication: {
       type: "apiKey",
       apiKeyId: "apiKey123",
@@ -54,7 +56,11 @@ describe("GET /api/v1/management/contact-attributes", () => {
     const { response } = await get(["clws0000000000000000000001"]);
 
     expect(response.status).toBe(200);
-    expect(getContactAttributes).toHaveBeenCalledWith(["clws0000000000000000000001"]);
+    expect(getContactAttributes).toHaveBeenCalledWith(
+      ["clws0000000000000000000001"],
+      V1_MANAGEMENT_MAX_LIMIT,
+      0
+    );
   });
 
   test("lists for a key of several workspaces, whether or not each has a directory", async () => {
@@ -62,9 +68,10 @@ describe("GET /api/v1/management/contact-attributes", () => {
 
     expect(response.status).toBe(200);
     expect(prisma.workspace.findUnique).not.toHaveBeenCalled();
-    expect(getContactAttributes).toHaveBeenCalledWith([
-      "clws0000000000000000000001",
-      "clws0000000000000000000002",
-    ]);
+    expect(getContactAttributes).toHaveBeenCalledWith(
+      ["clws0000000000000000000001", "clws0000000000000000000002"],
+      V1_MANAGEMENT_MAX_LIMIT,
+      0
+    );
   });
 });

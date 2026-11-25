@@ -47,7 +47,7 @@ describe("getActionClasses", () => {
     // Mock the prisma findMany response
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue(mockActionClasses);
 
-    const result = await getActionClasses(mockWorkspaceIds);
+    const result = await getActionClasses(mockWorkspaceIds, 25, 50);
 
     expect(result).toEqual(mockActionClasses);
     expect(prisma.actionClass.findMany).toHaveBeenCalledWith({
@@ -55,9 +55,9 @@ describe("getActionClasses", () => {
         workspaceId: { in: mockWorkspaceIds },
       },
       select: expect.any(Object),
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      take: 25,
+      skip: 50,
     });
   });
 
@@ -65,14 +65,14 @@ describe("getActionClasses", () => {
     // Mock the prisma findMany to throw an error
     vi.mocked(prisma.actionClass.findMany).mockRejectedValue(new Error("Database error"));
 
-    await expect(getActionClasses(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
+    await expect(getActionClasses(mockWorkspaceIds, 25, 50)).rejects.toThrow(DatabaseError);
   });
 
   test("handles empty workspace IDs array", async () => {
     // Mock the prisma findMany response
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
 
-    const result = await getActionClasses([]);
+    const result = await getActionClasses([], 25, 50);
 
     expect(result).toEqual([]);
     expect(prisma.actionClass.findMany).toHaveBeenCalledWith({
@@ -80,9 +80,9 @@ describe("getActionClasses", () => {
         workspaceId: { in: [] },
       },
       select: expect.any(Object),
-      orderBy: {
-        createdAt: "asc",
-      },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      take: 25,
+      skip: 50,
     });
   });
 });

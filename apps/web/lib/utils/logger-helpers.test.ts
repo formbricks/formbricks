@@ -50,6 +50,15 @@ describe("redactPII", () => {
     const input = { email: "test@example.com", name: "John", foo: "bar" };
     expect(redactPII(input)).toEqual({ email: "********", name: "********", foo: "bar" });
   });
+  test("redacts API key hashes", () => {
+    const input = { id: "k1", hashedKey: "$2a$12$x", lookupHash: "abc123", label: "CI" };
+    expect(redactPII(input)).toEqual({
+      id: "k1",
+      hashedKey: "********",
+      lookupHash: "********",
+      label: "CI",
+    });
+  });
   test("redacts nested sensitive keys", () => {
     const input = { user: { password: "secret", profile: { address: "123 St" } } };
     expect(redactPII(input)).toEqual({ user: { password: "********", profile: { address: "********" } } });
@@ -138,6 +147,52 @@ describe("redactPII — content containers", () => {
     });
     expect(redacted.value_text).toBe("********");
     expect(redacted.translated_text).toBe("********");
+  });
+
+  test("matches credential keys whatever their casing or separators (ENG-3269)", () => {
+    expect(
+      redactPII({
+        accessToken: "a",
+        "access-token": "b",
+        ACCESS_TOKEN: "c",
+        refreshToken: "d",
+        clientSecret: "e",
+        client_secret: "f",
+        x_api_key: "g",
+        suToken: "h",
+        hashedPassword: "i",
+        passwordHash: "j",
+        tokenHash: "k",
+        secretKey: "l",
+        privateKey: "m",
+      })
+    ).toEqual({
+      accessToken: "********",
+      "access-token": "********",
+      ACCESS_TOKEN: "********",
+      refreshToken: "********",
+      clientSecret: "********",
+      client_secret: "********",
+      x_api_key: "********",
+      suToken: "********",
+      hashedPassword: "********",
+      passwordHash: "********",
+      tokenHash: "********",
+      secretKey: "********",
+      privateKey: "********",
+    });
+  });
+
+  test("keeps counts, flags and markers whose names only mention a credential (ENG-3269)", () => {
+    const kept = {
+      oauthAccessTokensRevoked: 2,
+      credentialPasswordsCleared: 1,
+      passwordResetMarker: true,
+      allowOrganizationOnlyApiKey: false,
+      hasToken: true,
+      tokenCount: 3,
+    };
+    expect(redactPII(kept)).toEqual(kept);
   });
 
   test("matches the two camelCase entries that were listed in the wrong case", () => {
@@ -282,6 +337,16 @@ describe("sanitizeUrlForLogging", () => {
     expect(
       sanitizeUrlForLogging("https://example.com?token=1234567890&code=1234567890&state=1234567890")
     ).toBe("https://example.com/?token=********&code=********&state=********");
+  });
+
+  test("masks any credential-named parameter, not only token, code and state (ENG-3269)", () => {
+    expect(
+      sanitizeUrlForLogging(
+        "https://example.com/cb?access_token=a&apiKey=b&client_secret=c&refreshToken=d&key=e&sig_signature=f&page=2"
+      )
+    ).toBe(
+      "https://example.com/cb?access_token=********&apiKey=********&client_secret=********&refreshToken=********&key=********&sig_signature=********&page=2"
+    );
   });
 
   test("returns sanitized URL without query params", () => {

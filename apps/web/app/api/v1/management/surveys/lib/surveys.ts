@@ -14,8 +14,8 @@ import { validateInputs } from "@/lib/utils/validate";
 export const getSurveys = reactCache(
   async (
     workspaceIds: string[],
-    limit?: number,
-    offset?: number,
+    limit: number,
+    offset: number,
     /** ENG-3282: the API key's visibility clause; `{}` while survey visibility is not enforced. */
     visibleSurveyWhere: Prisma.SurveyWhereInput = {}
   ): Promise<TSurvey[]> => {
@@ -28,9 +28,7 @@ export const getSurveys = reactCache(
           ...andVisibleSurveys(visibleSurveyWhere),
         },
         select: selectSurvey,
-        orderBy: {
-          updatedAt: "desc",
-        },
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
         take: limit,
         skip: offset,
       });

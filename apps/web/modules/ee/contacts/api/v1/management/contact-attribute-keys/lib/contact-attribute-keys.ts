@@ -25,7 +25,7 @@ import {
  * directory see the same keys, so each key is listed once, under one of them.
  */
 export const getContactAttributeKeys = reactCache(
-  async (workspaceIds: string[]): Promise<TContactAttributeKey[]> => {
+  async (workspaceIds: string[], limit: number, offset: number): Promise<TContactAttributeKey[]> => {
     try {
       const workspaceByDirectory = await getReportingWorkspaceByDirectory(workspaceIds);
       if (workspaceByDirectory.size === 0) return [];
@@ -33,6 +33,9 @@ export const getContactAttributeKeys = reactCache(
       const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
         where: { directoryId: { in: [...workspaceByDirectory.keys()] } },
         select: { ...selectContactAttributeKey, directoryId: true },
+        orderBy: { id: "asc" },
+        take: limit,
+        skip: offset,
       });
 
       return contactAttributeKeys.flatMap(({ directoryId, ...key }) => {

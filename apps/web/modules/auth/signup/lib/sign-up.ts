@@ -40,7 +40,7 @@ import {
   createDecoySignupIntentToken,
   createSignupIntentToken,
 } from "@/modules/auth/lib/signup-intent";
-import { resolveUninvitedSignupAdmission } from "@/modules/auth/lib/signup-policy";
+import { logClosedSignupRejection, resolveUninvitedSignupAdmission } from "@/modules/auth/lib/signup-policy";
 import {
   markBootstrapAdminSignup,
   markSignupDomainAllowed,
@@ -374,6 +374,7 @@ async function assertSignupPolicyAllows(
   // native /sign-up/email open after this flow was fixed (ENG-2073 → ENG-2293).
   const admission = await resolveUninvitedSignupAdmission();
   if (admission === "denied") {
+    logClosedSignupRejection("sign-up-route");
     throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
   }
 

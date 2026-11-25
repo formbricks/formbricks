@@ -167,6 +167,8 @@ x-environment: &environment
     # S3_SECRET_KEY:
     # S3_REGION:
     # S3_BUCKET_NAME:
+    # Without S3_REGION, the AWS SDK falls back to AWS_REGION
+    # AWS_REGION:
 
     # Set a third party S3 compatible storage service endpoint like StorJ leave empty if you use Amazon S3
     # S3_ENDPOINT_URL:
@@ -580,7 +582,7 @@ services:
   vllm:
     restart: always
     profiles: ["qwen"]
-    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.33.0}
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.34.0}
     deploy:
       resources:
         reservations:

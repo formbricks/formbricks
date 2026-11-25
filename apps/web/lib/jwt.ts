@@ -46,6 +46,7 @@ const requireAuthSecret = (): string => {
 export const LINK_SURVEY_EMAIL_VERIFICATION_PURPOSE = "link_survey_email_verification";
 export const EMAIL_DISPLAY_TOKEN_PURPOSE = "email_display";
 export const EMAIL_CHANGE_TOKEN_PURPOSE = "email_change";
+export const INVITE_TOKEN_PURPOSE = "invite";
 
 const LINK_SURVEY_TOKEN_TTL = "7d";
 const EMAIL_DISPLAY_TOKEN_TTL = "1d";
@@ -75,12 +76,22 @@ type TVerificationTokenOptions = SignOptions & {
 
 const DEFAULT_VERIFICATION_TOKEN_PURPOSE: TVerificationTokenPurpose = "email_verification";
 
+/**
+ * An absent `purpose` is a token minted before the claim existed and stays an email verification, so
+ * links already in flight keep working. A *present* purpose that is not a verification purpose belongs
+ * to another flow (email change, gateway, invite, ...) and is refused: defaulting it here let an
+ * email-change token, which carries an encrypted `id` too, be spent as proof of email verification.
+ */
 const getVerificationTokenPurpose = (purpose: unknown): TVerificationTokenPurpose => {
-  if (purpose && VERIFICATION_TOKEN_PURPOSES.includes(purpose as TVerificationTokenPurpose)) {
+  if (purpose === undefined) {
+    return DEFAULT_VERIFICATION_TOKEN_PURPOSE;
+  }
+
+  if (VERIFICATION_TOKEN_PURPOSES.includes(purpose as TVerificationTokenPurpose)) {
     return purpose as TVerificationTokenPurpose;
   }
 
-  return DEFAULT_VERIFICATION_TOKEN_PURPOSE;
+  throw new Error("Invalid token");
 };
 
 export const createToken = (userId: string, options: TVerificationTokenOptions = {}): string => {
@@ -334,6 +345,19 @@ export const createEmailToken = (email: string): string => {
   });
 };
 
+/**
+ * Display tokens minted before the purpose claim existed carry nothing but `email`. Accept a missing
+ * purpose only for that shape: "no purpose" alone also describes invite tokens issued before they got
+ * one, which hold `inviteId` and must not resolve here (ENG-2124).
+ */
+const isEmailDisplayPayload = (payload: JwtPayload & { purpose?: string }): boolean => {
+  if (payload.purpose !== undefined) {
+    return payload.purpose === EMAIL_DISPLAY_TOKEN_PURPOSE;
+  }
+
+  return !("inviteId" in payload) && !("surveyId" in payload) && !("id" in payload);
+};
+
 export const getEmailFromEmailToken = (token: string): string => {
   const authSecret = requireAuthSecret();
 
@@ -346,9 +370,7 @@ export const getEmailFromEmailToken = (token: string): string => {
     purpose?: string;
   };
 
-  // Tokens minted before the purpose claim existed have none; anything else was issued for a
-  // different flow and must not resolve to an email here.
-  if (payload.purpose !== undefined && payload.purpose !== EMAIL_DISPLAY_TOKEN_PURPOSE) {
+  if (!isEmailDisplayPayload(payload)) {
     throw new Error("Invalid token");
   }
 
@@ -364,7 +386,11 @@ export const createInviteToken = (inviteId: string, email: string, options = {})
 
   const encryptedInviteId = symmetricEncrypt(inviteId, ENCRYPTION_KEY);
   const encryptedEmail = symmetricEncrypt(email, ENCRYPTION_KEY);
-  return jwt.sign({ inviteId: encryptedInviteId, email: encryptedEmail }, authSecret, options);
+  return jwt.sign(
+    { inviteId: encryptedInviteId, email: encryptedEmail, purpose: INVITE_TOKEN_PURPOSE },
+    authSecret,
+    { algorithm: "HS256", ...options }
+  );
 };
 
 export const verifyTokenForLinkSurvey = (token: string, surveyId: string): string | null => {
@@ -386,7 +412,8 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
         surveyId: string;
       };
     } catch (primaryError) {
-      logger.error(primaryError, "Token verification failed with primary method");
+      // Expected for every legacy token, and for any junk an anonymous caller sends: not an error.
+      logger.debug({ err: primaryError }, "Token verification failed with primary method");
 
       // Fallback to legacy method (surveyId-based secret)
       try {
@@ -395,7 +422,7 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
         };
         isBoundBySigningKey = true;
       } catch (legacyError) {
-        logger.error(legacyError, "Token verification failed with legacy method");
+        logger.debug({ err: legacyError }, "Token verification failed with legacy method");
         throw new Error("Invalid token");
       }
     }
@@ -425,7 +452,8 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
 
     return decryptWithFallback(email, ENCRYPTION_KEY);
   } catch (error) {
-    logger.error(error, "Survey link token verification failed");
+    // Public survey routes feed attacker-supplied tokens in here; a rejected token is routine.
+    logger.warn({ err: error }, "Survey link token verification failed");
     return null;
   }
 };
@@ -446,7 +474,7 @@ const getUserEmailForLegacyVerification = async (
       typeof decoded.id !== "string" ||
       decoded.id.trim() === ""
     ) {
-      logger.error("Invalid token: missing or invalid user ID");
+      logger.warn("Invalid token: missing or invalid user ID");
       throw new Error("Invalid token");
     }
 
@@ -457,7 +485,7 @@ const getUserEmailForLegacyVerification = async (
 
   // Validate decrypted ID before database query
   if (!decryptedId || typeof decryptedId !== "string" || decryptedId.trim() === "") {
-    logger.error("Invalid token: missing or invalid user ID");
+    logger.warn("Invalid token: missing or invalid user ID");
     throw new Error("Invalid token");
   }
 
@@ -467,7 +495,7 @@ const getUserEmailForLegacyVerification = async (
 
   if (!foundUser) {
     const errorMessage = "User not found";
-    logger.error(errorMessage);
+    logger.warn(errorMessage);
     throw new Error(errorMessage);
   }
 
@@ -486,7 +514,7 @@ export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> =
       id: string;
     };
   } catch (newMethodError) {
-    logger.error(newMethodError, "Token verification failed with new method");
+    logger.debug({ err: newMethodError }, "Token verification failed with new method");
 
     // Get user email for legacy verification
     userData = await getUserEmailForLegacyVerification(token);
@@ -499,7 +527,7 @@ export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> =
         id: string;
       };
     } catch (legacyMethodError) {
-      logger.error(legacyMethodError, "Token verification failed with legacy method");
+      logger.warn({ err: legacyMethodError }, "Token verification failed with legacy method");
       throw new Error("Invalid token");
     }
   }
@@ -534,7 +562,14 @@ export const verifyInviteToken = (token: string): { inviteId: string; email: str
     const payload = jwt.verify(token, authSecret, { algorithms: ["HS256"] }) as JwtPayload & {
       inviteId: string;
       email: string;
+      purpose?: string;
     };
+
+    // Tokens issued before the purpose claim existed have none and stay valid until they expire;
+    // anything minted for another flow with the shared auth secret is refused.
+    if (payload.purpose !== undefined && payload.purpose !== INVITE_TOKEN_PURPOSE) {
+      throw new Error("Invalid token");
+    }
 
     const { inviteId: encryptedInviteId, email: encryptedEmail } = payload;
 
@@ -551,7 +586,9 @@ export const verifyInviteToken = (token: string): { inviteId: string; email: str
       email: decryptedEmail,
     };
   } catch (error) {
-    logger.error(error, "Error verifying invite token");
+    // Reachable with an arbitrary `?token=` from anonymous callers, so a bad token is a warning, not an
+    // error: junk must not fill the error log and Sentry.
+    logger.warn({ err: error }, "Error verifying invite token");
     throw new Error("Invalid or expired invite token");
   }
 };

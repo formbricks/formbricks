@@ -4,19 +4,24 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { whereAttributeKeysOfWorkspaces } from "@/modules/ee/contacts/lib/attribute-key-scope";
 
-export const getContactAttributes = reactCache(async (workspaceIds: string[]) => {
-  try {
-    const contactAttributeKeys = await prisma.contactAttribute.findMany({
-      where: {
-        attributeKey: whereAttributeKeysOfWorkspaces(workspaceIds),
-      },
-    });
+export const getContactAttributes = reactCache(
+  async (workspaceIds: string[], limit: number, offset: number) => {
+    try {
+      const contactAttributeKeys = await prisma.contactAttribute.findMany({
+        where: {
+          attributeKey: whereAttributeKeysOfWorkspaces(workspaceIds),
+        },
+        orderBy: { id: "asc" },
+        take: limit,
+        skip: offset,
+      });
 
-    return contactAttributeKeys;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+      return contactAttributeKeys;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
   }
-});
+);

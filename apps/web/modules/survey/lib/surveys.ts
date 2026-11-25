@@ -189,20 +189,25 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
   validateInputs([surveyId, ZId]);
 
   const archive = async (tx: Prisma.TransactionClient) => {
-    const survey = await tx.survey.findUnique({
-      where: { id: surveyId },
-      select: { id: true, status: true, archivedAt: true },
-    });
+    // Lock the row like restoreSurvey does, so two concurrent archives cannot each write an
+    // archivedAt: the second waits, then sees the first one's timestamp and becomes a no-op.
+    const [survey] = await tx.$queryRaw<{ id: string; status: SurveyStatus; archivedAt: Date | null }[]>`
+      SELECT "id", "status", "archivedAt"
+      FROM "Survey"
+      WHERE "id" = ${surveyId}
+      FOR UPDATE
+    `;
 
     if (!survey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
+    const previous = { id: survey.id, status: survey.status, archivedAt: survey.archivedAt };
     if (survey.archivedAt) {
-      return survey;
+      return { ...previous, changed: false, previous };
     }
 
-    return await tx.survey.update({
+    const updated = await tx.survey.update({
       where: { id: surveyId },
       data: {
         archivedAt: new Date(),
@@ -210,6 +215,7 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
       },
       select: { id: true, status: true, archivedAt: true },
     });
+    return { ...updated, changed: true, previous };
   };
 
   try {
@@ -220,7 +226,8 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Match restoreSurvey's contract: a row deleted mid-transaction (P2025) is "not found", not a 500.
+      // Defensive only: the FOR UPDATE above holds the row, so a concurrent delete cannot reach this.
+      // A row that vanished for any other reason is a not-found, not a 500, matching restoreSurvey.
       if (error.code === "P2025") {
         logger.warn({ surveyId }, "Survey not found during archive");
         throw new ResourceNotFoundError("Survey", surveyId);
@@ -259,8 +266,16 @@ export const restoreSurvey = async (surveyId: string, options?: { restoredById?:
       }
       if (!locked.archivedAt) {
         // Nothing to restore: no write, which would bump updated_at (a "no changes" clock) for nothing.
-        return { id: surveyId, status: locked.status, archivedAt: null, retentionExemptionId: null };
+        return {
+          id: surveyId,
+          status: locked.status,
+          archivedAt: null,
+          retentionExemptionId: null,
+          changed: false,
+          previous: { id: surveyId, status: locked.status, archivedAt: null },
+        };
       }
+      const previous = { id: surveyId, status: locked.status, archivedAt: locked.archivedAt };
       const survey = await tx.survey.update({
         where: { id: surveyId },
         data: { archivedAt: null },
@@ -271,7 +286,7 @@ export const restoreSurvey = async (surveyId: string, options?: { restoredById?:
         organizationId: locked.organizationId,
         restoredById: options?.restoredById ?? null,
       });
-      return { ...survey, retentionExemptionId: exemptionId };
+      return { ...survey, retentionExemptionId: exemptionId, changed: true, previous };
     });
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {

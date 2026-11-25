@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
@@ -42,6 +42,13 @@ const BLOCKS = [
     ],
   },
 ];
+
+// These tests are about which segment a save may write or link (ENG-6957), on an organization that
+// may use advanced targeting. The Contacts-licence rule on those writes (ENG-7267) has its own tests.
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsContactsEnabled: async () => true,
+}));
 
 const EMAIL_FILTER = [
   {

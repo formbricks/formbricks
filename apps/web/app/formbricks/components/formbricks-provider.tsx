@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import formbricks from "@formbricks/js";
 import { consumeChurnSurveyMarker } from "@/lib/churn-survey";
+import { useCspNonce } from "@/lib/csp/nonce";
 
 interface FormbricksProviderProps {
   workspaceId: string;
@@ -25,12 +26,16 @@ export const FormbricksProvider = ({
   userName,
 }: Readonly<FormbricksProviderProps>) => {
   const pathname = usePathname();
+  const nonce = useCspNonce();
 
   // Set up the SDK and identify the user.
   useEffect(() => {
     if (!workspaceId) return;
 
     const setupFormbricks = async () => {
+      // The page's CSP applies the survey renderer's styles only with its nonce. Before setup(), as the
+      // SDK requires.
+      if (nonce) await formbricks.setNonce(nonce);
       await formbricks.setup({ workspaceId, appUrl });
 
       if (userId) {
@@ -54,7 +59,7 @@ export const FormbricksProvider = ({
     setupFormbricks().catch((error) => {
       console.error("Formbricks setup failed:", error);
     });
-  }, [workspaceId, appUrl, userId, userEmail, userName]);
+  }, [workspaceId, appUrl, userId, userEmail, userName, nonce]);
 
   // Track client-side navigations for page-triggered surveys.
   useEffect(() => {

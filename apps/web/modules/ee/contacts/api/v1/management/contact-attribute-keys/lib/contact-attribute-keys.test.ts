@@ -56,11 +56,14 @@ describe("getContactAttributeKeys", () => {
       { id: "key2", key: "keyTwo", name: "Key Two", directoryId: "dir-2", ...keyColumns },
     ] as never);
 
-    const result = await getContactAttributeKeys(["ws3", "ws2", "ws1"]);
+    const result = await getContactAttributeKeys(["ws3", "ws2", "ws1"], 25, 50);
 
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
       where: { directoryId: { in: ["dir-1", "dir-2"] } },
       select: expect.objectContaining({ id: true, key: true, directoryId: true }),
+      orderBy: { id: "asc" },
+      take: 25,
+      skip: 50,
     });
     expect(result).toStrictEqual([
       { id: "key1", key: "keyOne", name: "Key One", workspaceId: "ws1", ...keyColumns },
@@ -71,7 +74,7 @@ describe("getContactAttributeKeys", () => {
   test("lists nothing when none of the workspaces has a directory", async () => {
     vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
 
-    await expect(getContactAttributeKeys(["ws1"])).resolves.toEqual([]);
+    await expect(getContactAttributeKeys(["ws1"], 25, 50)).resolves.toEqual([]);
     expect(prisma.contactAttributeKey.findMany).not.toHaveBeenCalled();
   });
 
@@ -82,7 +85,7 @@ describe("getContactAttributeKeys", () => {
       new Prisma.PrismaClientKnownRequestError(errorMessage, { code: "P1000", clientVersion: "test" })
     );
 
-    await expect(getContactAttributeKeys(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
+    await expect(getContactAttributeKeys(mockWorkspaceIds, 25, 50)).rejects.toThrow(DatabaseError);
   });
 
   test("should throw generic error if non-Prisma error occurs", async () => {
@@ -94,14 +97,14 @@ describe("getContactAttributeKeys", () => {
       code: PrismaErrorType.UniqueConstraintViolation,
     });
     vi.mocked(prisma.contactAttributeKey.findMany).mockRejectedValue(errToThrow);
-    await expect(getContactAttributeKeys(mockWorkspaceIds)).rejects.toThrow(errorMessage);
+    await expect(getContactAttributeKeys(mockWorkspaceIds, 25, 50)).rejects.toThrow(errorMessage);
   });
 
   test("should re-throw non-Prisma errors", async () => {
     const mockWorkspaceIds = ["ws1"];
     const errorMessage = "boom";
     vi.mocked(prisma.contactAttributeKey.findMany).mockRejectedValue(new Error(errorMessage));
-    await expect(getContactAttributeKeys(mockWorkspaceIds)).rejects.toThrow(errorMessage);
+    await expect(getContactAttributeKeys(mockWorkspaceIds, 25, 50)).rejects.toThrow(errorMessage);
   });
 });
 

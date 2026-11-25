@@ -3,6 +3,8 @@
 import { z } from "zod";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "./lib/two-factor-auth";
@@ -15,6 +17,7 @@ export const setupTwoFactorAuthAction = authenticatedActionClient
   .inputSchema(ZSetupTwoFactorAuthAction)
   .action(
     withAuditLogging("updated", "twoFactorAuth", async ({ ctx, parsedInput }) => {
+      await applyRateLimit(rateLimitConfigs.actions.twoFactorManage, ctx.user.id);
       const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
       if (!isTwoFactorAuthEnabled) {
         throw new OperationNotAllowedError("Two factor auth is not available on your instance");
@@ -34,6 +37,7 @@ export const enableTwoFactorAuthAction = authenticatedActionClient
   .inputSchema(ZEnableTwoFactorAuthAction)
   .action(
     withAuditLogging("updated", "twoFactorAuth", async ({ ctx, parsedInput }) => {
+      await applyRateLimit(rateLimitConfigs.actions.twoFactorManage, ctx.user.id);
       const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
       if (!isTwoFactorAuthEnabled) {
         throw new OperationNotAllowedError("Two factor auth is not available on your instance");
@@ -60,6 +64,7 @@ export const disableTwoFactorAuthAction = authenticatedActionClient
   .inputSchema(ZDisableTwoFactorAuthAction)
   .action(
     withAuditLogging("updated", "twoFactorAuth", async ({ ctx, parsedInput }) => {
+      await applyRateLimit(rateLimitConfigs.actions.twoFactorManage, ctx.user.id);
       const result = await disableTwoFactorAuth(ctx.user.id, parsedInput);
       ctx.auditLoggingCtx.userId = ctx.user.id;
       ctx.auditLoggingCtx.newObject = { twoFactorAuth: "disabled" };
