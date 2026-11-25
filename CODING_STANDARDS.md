@@ -184,10 +184,10 @@ Downloads:
   at `error`.
 - A `catch` that carries on names the errors it expects. Infrastructure errors (pool exhaustion, timeouts)
   propagate to the retry that owns them.
-- Retries cover transient failures only (network errors, timeouts, 408, 429, 5xx), with backoff and a
-  bounded number of attempts; other client errors are final. A retried operation is idempotent or repeats
-  only the step that failed. A call that reports failure in its return value is checked like one that
-  throws.
+- Retries cover transient failures only (network errors, timeouts, 408, 429, 5xx), with backoff that
+  honours `Retry-After` when present and a bounded number of attempts; other client errors are final. A
+  timeout leaves the outcome unknown, so a retried write is idempotent, deduplicated, or first confirmed not
+  to have committed. A call that reports failure in its return value is checked like one that throws.
 - A security check fails closed: when it hits a cap, gets partial input or misses a header it relies on,
   it denies rather than treating the gap as a pass. Abuse limits stay closed when Redis is down
   ([ADR-0016](docs/adr/0016-abuse-limits-fail-closed.md)).
@@ -244,8 +244,9 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
   a second pool connection and can deadlock the pool. A lock that guards a count also covers rows that can
   join the counted set while it waits.
 - State outside Postgres races the same way. A read-modify-write on Redis or a third-party API is
-  serialized across workers or made idempotent, and a lease-based lock confirms it still holds the lease
-  before each write.
+  serialized across workers or replaced by one atomic or conditional write; idempotency makes a retry safe
+  but does not prevent a lost update. A write under a lease-based lock carries a fencing token or checks
+  ownership atomically with the write, because a check made before it can go stale.
 - `ON DELETE CASCADE` reaches only Postgres. Deleting a survey, response, workspace, organization or account
   also deletes its storage objects (under the `workspaceId` prefix and the legacy `environmentId` one), its
   Hub records and its pending invites, and its test asserts those deletes.
