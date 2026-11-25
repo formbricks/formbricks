@@ -67,7 +67,7 @@ describe("getContactAttributes", () => {
       mockContactAttributes
     );
 
-    const result = await getContactAttributes(mockWorkspaceIds);
+    const result = await getContactAttributes(mockWorkspaceIds, 25, 50);
 
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: {
@@ -75,6 +75,9 @@ describe("getContactAttributes", () => {
           workspaceId: { in: mockWorkspaceIds },
         },
       },
+      orderBy: { id: "asc" },
+      take: 25,
+      skip: 50,
     });
     expect(result).toEqual(mockContactAttributes);
   });
@@ -86,20 +89,20 @@ describe("getContactAttributes", () => {
     });
     vi.mocked(prisma.contactAttribute.findMany).mockRejectedValue(prismaError);
 
-    await expect(getContactAttributes(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
+    await expect(getContactAttributes(mockWorkspaceIds, 25, 50)).rejects.toThrow(DatabaseError);
   });
 
   test("should throw generic error when an unknown error occurs", async () => {
     const genericError = new Error("Test Generic Error");
     vi.mocked(prisma.contactAttribute.findMany).mockRejectedValue(genericError);
 
-    await expect(getContactAttributes(mockWorkspaceIds)).rejects.toThrow(genericError);
+    await expect(getContactAttributes(mockWorkspaceIds, 25, 50)).rejects.toThrow(genericError);
   });
 
   test("should return empty array when no contact attributes are found", async () => {
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
 
-    const result = await getContactAttributes(mockWorkspaceIds);
+    const result = await getContactAttributes(mockWorkspaceIds, 25, 50);
 
     expect(result).toEqual([]);
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
@@ -108,6 +111,9 @@ describe("getContactAttributes", () => {
           workspaceId: { in: mockWorkspaceIds },
         },
       },
+      orderBy: { id: "asc" },
+      take: 25,
+      skip: 50,
     });
   });
 });

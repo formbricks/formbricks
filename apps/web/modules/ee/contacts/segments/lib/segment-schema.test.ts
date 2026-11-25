@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
 import {
+  MAX_RAW_FILTER_NESTING,
   MAX_SEGMENT_FILTERS_PER_TREE,
   MAX_SEGMENT_FILTER_DEPTH,
   MAX_SEGMENT_SURVEYS,
@@ -230,6 +231,46 @@ describe("segment filter tree bounds", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  test("bounds a malformed array nested where a filter belongs, not only resource arrays", () => {
+    // `[[…]]` is not a filter group, but a recursive consumer would still walk it: the measure must.
+    let deep: unknown = [];
+    for (let level = 0; level <= MAX_SEGMENT_FILTER_DEPTH; level++) deep = [deep];
+
+    const result = ZSegmentFilters.safeParse(deep);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      `Segment filters are nested too deeply: at most ${MAX_SEGMENT_FILTER_DEPTH} levels are supported`
+    );
+  });
+
+  test("refuses filter values nested past the raw nesting bound", () => {
+    let value: unknown = "x";
+    for (let level = 0; level <= MAX_RAW_FILTER_NESTING; level++) value = { value };
+    const filters = [{ ...validFilters[0], resource: { ...validFilters[0].resource, value } }] as unknown;
+
+    const result = ZSegmentFilters.safeParse(filters);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      `Filter values are nested too deeply: at most ${MAX_RAW_FILTER_NESTING} levels are supported`
+    );
+  });
+
+  test("counts filters hidden inside malformed nesting toward the node cap", () => {
+    // The array sits where a filter belongs, but its contents are still filters: the cap must see them.
+    const filters = [
+      { id: createId(), connector: null, resource: { resource: flatTree(MAX_SEGMENT_FILTERS_PER_TREE) } },
+    ];
+
+    const result = ZSegmentFilters.safeParse(filters);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      `Too many filters: a segment supports at most ${MAX_SEGMENT_FILTERS_PER_TREE} filters in total`
+    );
   });
 
   test("a deep left-spine tree within the node cap fails with a clean depth issue, not a RangeError", () => {

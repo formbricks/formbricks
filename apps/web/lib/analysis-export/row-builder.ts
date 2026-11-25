@@ -18,7 +18,11 @@ import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { EXPORT_COLUMN_NAMES } from "@formbricks/types/surveys/codes";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
-import { type TResponseNotShown, getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
+import {
+  type TResponseNotShown,
+  getNotShownElementIds,
+  getNotShownIds,
+} from "@formbricks/types/surveys/not-shown";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLanguageCode } from "@/lib/i18n/utils";
@@ -103,9 +107,9 @@ const getQuestionOptionsNotShown = (
 ): TQuestionOptionsNotShown =>
   record
     ? {
-        options: record.options?.[questionId] ?? [],
-        rows: record.rows?.[questionId] ?? [],
-        columns: record.columns?.[questionId] ?? [],
+        options: getNotShownIds(record, "options", questionId),
+        rows: getNotShownIds(record, "rows", questionId),
+        columns: getNotShownIds(record, "columns", questionId),
       }
     : NOTHING_NOT_SHOWN;
 

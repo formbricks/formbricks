@@ -26,9 +26,10 @@ new ones start.
   a grant's organization or workspace selection down to every resource below it. Grants that select
   organizations or workspaces are written to SpiceDB through the AuthZed outbox, with the new outbox target
   type `mcp_grant`.
-- The `delete_survey` MCP tool is removed; `archive_survey` and `restore_survey` replace it. A client,
-  prompt or automation that calls `delete_survey` now gets the unknown-tool error and must archive instead.
-  Deleting a survey stays in the app and the REST API.
+- New MCP tools `archive_survey` and `restore_survey`, and `list_surveys` can include archived surveys.
+  The `delete_survey` MCP tool is deprecated and will be removed in Formbricks 7.0: it works as before
+  until then, but move any client, prompt or automation that calls it to `archive_survey`. Deleting a
+  survey stays in the app and the REST API.
 
 ## Apply the permission schema
 

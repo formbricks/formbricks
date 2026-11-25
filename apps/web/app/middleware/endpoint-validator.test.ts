@@ -11,6 +11,34 @@ import {
 } from "./endpoint-validator";
 
 describe("endpoint-validator", () => {
+  describe("workflow webhook domain split", () => {
+    test("serves the Secret URL receiver only on the public domain", () => {
+      const path = "/api/v3/workflows/workflow123/webhook/secret-token";
+      expect(isRouteAllowedForDomain(path, true)).toBe(true);
+      expect(isRouteAllowedForDomain(path, false)).toBe(false);
+    });
+
+    test.each([
+      "/api/v3/workflows/workflow123/webhook/regenerate",
+      "/api/v3/workflows/workflow123/webhook",
+      "/api/v3/workflows",
+      "/api/v3/workflows/workflow123/enable",
+    ])("keeps management route %s admin-only", (path) => {
+      expect(isRouteAllowedForDomain(path, true)).toBe(false);
+      expect(isRouteAllowedForDomain(path, false)).toBe(true);
+    });
+
+    test.each([
+      "/api/v3/workflows//webhook/token",
+      "/api/v3/workflows/workflow123/webhook/",
+      "/api/v3/workflows/workflow123/webhook/token/extra",
+      "/api/v3/workflows/workflow123/webhook/token/",
+      "/prefix/api/v3/workflows/workflow123/webhook/token",
+    ])("does not classify malformed receiver path %s as public", (path) => {
+      expect(isPublicDomainRoute(path)).toBe(false);
+    });
+  });
+
   describe("AuthenticationMethod enum", () => {
     test("should have correct values", () => {
       expect(AuthenticationMethod.ApiKey).toBe("apiKey");
@@ -259,6 +287,42 @@ describe("endpoint-validator", () => {
       expect(isAuthProtectedRoute("/organizations")).toBe(true);
       expect(isAuthProtectedRoute("/organizations/something")).toBe(true);
       expect(isAuthProtectedRoute("/organizations/123/settings")).toBe(true);
+    });
+
+    test("protects the authenticated app surface (app/(app) route tree) and its deep links", () => {
+      expect(isAuthProtectedRoute("/workspaces")).toBe(true);
+      expect(isAuthProtectedRoute("/workspaces/abc123/surveys/xyz/summary")).toBe(true);
+      expect(isAuthProtectedRoute("/workspaces/abc123/settings/workspace/general")).toBe(true);
+      expect(isAuthProtectedRoute("/account/settings/profile")).toBe(true);
+      expect(isAuthProtectedRoute("/account/authorize")).toBe(true);
+      expect(isAuthProtectedRoute("/attachment-exports/abc123")).toBe(true);
+      expect(isAuthProtectedRoute("/organizations/abc/workspaces/new/survey")).toBe(true);
+    });
+
+    test("matches on a path-segment boundary, ignoring case and a trailing slash", () => {
+      expect(isAuthProtectedRoute("/workspaces/")).toBe(true);
+      expect(isAuthProtectedRoute("/Workspaces/abc")).toBe(true);
+      expect(isAuthProtectedRoute("/ACCOUNT/settings")).toBe(true);
+      expect(isAuthProtectedRoute("/workspace")).toBe(false);
+      expect(isAuthProtectedRoute("/workspaces-foo")).toBe(false);
+      expect(isAuthProtectedRoute("/accounting")).toBe(false);
+      expect(isAuthProtectedRoute("/account-deleted")).toBe(false);
+      expect(isAuthProtectedRoute("/organizations-x")).toBe(false);
+      expect(isAuthProtectedRoute("/environmentsfoo")).toBe(false);
+      expect(isAuthProtectedRoute("/setup/organization-x")).toBe(false);
+      expect(isAuthProtectedRoute("/setup/organizationX/create")).toBe(false);
+    });
+
+    test("leaves public routes under similar prefixes alone", () => {
+      expect(isAuthProtectedRoute("/s/workspaces")).toBe(false);
+      expect(isAuthProtectedRoute("/c/account")).toBe(false);
+      expect(isAuthProtectedRoute("/auth/account-deleted")).toBe(false);
+      expect(isAuthProtectedRoute("/auth/verify-email")).toBe(false);
+      expect(isAuthProtectedRoute("/invite")).toBe(false);
+      expect(isAuthProtectedRoute("/share/abc")).toBe(false);
+      expect(isAuthProtectedRoute("/api/v1/management/workspaces")).toBe(false);
+      expect(isAuthProtectedRoute("/api/v3/workspaces/abc")).toBe(false);
+      expect(isAuthProtectedRoute("/setup")).toBe(false);
     });
 
     test("protects the ID-free marketing links so logged-out visitors log in first", () => {
@@ -642,7 +706,8 @@ describe("endpoint-validator", () => {
         expect(isPublicDomainRoute("/s/survey%20123")).toBe(true);
         expect(isPublicDomainRoute("/c/jwt%2Etoken")).toBe(true);
         expect(isPublicDomainRoute("/p/pretty%20123")).toBe(true);
-        expect(isAuthProtectedRoute("/environments%2F123")).toBe(true);
+        // %2F is not a separator: this is one segment, not /environments/123
+        expect(isAuthProtectedRoute("/environments%2F123")).toBe(false);
         expect(isManagementApiRoute("/api/v1/management/test%20route")).toEqual({
           isManagementApi: true,
           authenticationMethod: AuthenticationMethod.ApiKey,
@@ -673,7 +738,7 @@ describe("endpoint-validator", () => {
     });
 
     describe("case sensitivity", () => {
-      test("should be case sensitive for route patterns", () => {
+      test("should be case sensitive for route patterns, except the auth check", () => {
         // These should not match due to case sensitivity
         expect(isPublicDomainRoute("/S/survey123")).toBe(false);
         expect(isPublicDomainRoute("/C/jwt-token")).toBe(false);
@@ -687,7 +752,8 @@ describe("endpoint-validator", () => {
           authenticationMethod: AuthenticationMethod.ApiKey,
         });
         expect(isIntegrationRoute("/API/V1/INTEGRATIONS/test")).toBe(false);
-        expect(isAuthProtectedRoute("/ENVIRONMENTS/123")).toBe(false);
+        // Next matches routes case-insensitively, so the protection check must too
+        expect(isAuthProtectedRoute("/ENVIRONMENTS/123")).toBe(true);
       });
     });
   });

@@ -1,6 +1,8 @@
 import { Metadata } from "next";
 import React from "react";
 import { NoScriptWarning } from "@/app/components/NoScriptWarning";
+import { CspNonceProvider } from "@/lib/csp/nonce";
+import { getServerCspNonce } from "@/lib/csp/server-nonce";
 import { SentryClientConfigScript } from "@/lib/sentry/SentryClientConfigScript";
 import { I18nProvider } from "@/lingodotdev/client";
 import { getLocale } from "@/lingodotdev/language";
@@ -16,19 +18,21 @@ export const metadata: Metadata = {
 };
 
 const RootLayout = async ({ children }: { readonly children: React.ReactNode }) => {
-  const locale = await getLocale();
+  const [locale, nonce] = await Promise.all([getLocale(), getServerCspNonce()]);
 
   return (
     <html lang={locale} translate="no">
       <body className="flex h-dvh flex-col transition-all ease-in-out">
         {/* First in the document so instrumentation-client.ts can start Sentry as early as possible. */}
-        <SentryClientConfigScript />
+        <SentryClientConfigScript nonce={nonce} />
         <NoScriptWarning locale={locale} />
-        <I18nProvider language={locale}>
-          {children}
-          {/* After the page, so keyboard users reach the notices by tabbing on from its content. */}
-          <ServerActionNotices />
-        </I18nProvider>
+        <CspNonceProvider nonce={nonce}>
+          <I18nProvider language={locale}>
+            {children}
+            {/* After the page, so keyboard users reach the notices by tabbing on from its content. */}
+            <ServerActionNotices />
+          </I18nProvider>
+        </CspNonceProvider>
       </body>
     </html>
   );

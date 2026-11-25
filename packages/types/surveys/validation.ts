@@ -2,7 +2,7 @@ import { parse } from "node-html-parser";
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
 import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
-import { isLegacyIdCharset, isSafeIdentifier } from "../safe-identifier";
+import { isLegacyIdCharset, isObjectPrototypeName, isSafeIdentifier } from "../safe-identifier";
 import { FORBIDDEN_IDS, RESERVED_DECLARED_FIELD_NAMES } from "./link-survey-params";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
@@ -375,7 +375,7 @@ export const validateId = (
     ? RESERVED_DECLARED_FIELD_NAMES.has(field.toLowerCase()) || RESERVED_FIELD_NAMES.has(field.toLowerCase())
     : FORBIDDEN_IDS.includes(field);
 
-  if (isReserved) {
+  if (isReserved || isObjectPrototypeName(field)) {
     return { code: TValidateIdErrorCode.Reserved, field };
   }
 

@@ -8,8 +8,8 @@ import { AttachmentExportDownload } from "./components/AttachmentExportDownload"
 /**
  * `/attachment-exports/{exportId}`: where the "your attachments are ready" email points (ENG-6862).
  *
- * Kept outside `/workspaces/…`, whose layout sends a signed-out visitor to login without a way back; this
- * page keeps the link as the callback, so signing in lands here again. The export shows only to its
+ * A signed-out visitor is sent to login with this page as the callback, so signing in lands here again:
+ * proxy does it before render, and this page's own redirect is the fallback. The export shows only to its
  * requester while they can read the survey; the download goes through the audited download route, which
  * mints a fresh presigned URL.
  */

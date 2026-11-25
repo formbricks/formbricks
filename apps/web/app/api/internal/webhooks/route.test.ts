@@ -12,6 +12,7 @@ import { MAX_SEGMENT_SURVEYS } from "@formbricks/types/segment";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { DELETE, PUT } from "./[webhookId]/route";
+import { GET as SECRET } from "./[webhookId]/secret/route";
 import { POST as CREATE } from "./route";
 import { POST as TEST_DELIVERY } from "./test-deliveries/route";
 
@@ -471,5 +472,92 @@ describe("POST /api/internal/webhooks/test-deliveries", () => {
     expect((await testDelivery({})).status).toBe(400);
     expect((await testDelivery({ url, workspaceId: WORKSPACE_ID })).status).toBe(400);
     expect(mocks.testEndpoint).not.toHaveBeenCalled();
+  });
+
+  test("signs every test with the stored secret, whatever URL is under test", async () => {
+    await testDelivery({ url: settings.url, webhookId: WEBHOOK_ID });
+    expect(mocks.testEndpoint).toHaveBeenCalledWith(settings.url, "whsec_stored");
+
+    mocks.testEndpoint.mockClear();
+    const response = await testDelivery({ url: "https://new.example.com/hook", webhookId: WEBHOOK_ID });
+
+    // A changed URL must still be testable: the endpoint verifies the secret deliveries carry, and a
+    // workspace writer can reveal that secret anyway.
+    expect(mocks.testEndpoint).toHaveBeenCalledWith("https://new.example.com/hook", "whsec_stored");
+    expect((await response.json()).data.secret).toBe("whsec_stored");
+    expect(mocks.generateWebhookSecret).not.toHaveBeenCalled();
+  });
+
+  test("charges the test delivery to the user's own budget", async () => {
+    mocks.applyRateLimit.mockImplementation((config: unknown) =>
+      config === rateLimitConfigs.actions.webhookTest
+        ? Promise.reject(new TooManyRequestsError("Maximum number of requests reached"))
+        : Promise.resolve(undefined)
+    );
+
+    const response = await testDelivery({ url });
+
+    expect(response.status).toBe(429);
+    expect(mocks.testEndpoint).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/internal/webhooks/{webhookId}/secret", () => {
+  const getSecret = (id = WEBHOOK_ID) =>
+    SECRET(request("GET", `/api/internal/webhooks/${id}/secret`), {
+      params: Promise.resolve({ webhookId: id }),
+    });
+
+  test("returns the secret to a writer who can write to its workspace", async () => {
+    const response = await getSecret();
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual({ secret: "whsec_stored" });
+    workspaceWriteOn(WORKSPACE_ID);
+  });
+
+  test("refuses a caller without workspace.write and never reads the secret", async () => {
+    mocks.can.mockResolvedValue(false);
+
+    expect((await getSecret()).status).toBe(403);
+    expect(mocks.getWebhookWithSecret).not.toHaveBeenCalled();
+  });
+
+  test("answers a missing webhook with the same 403", async () => {
+    mocks.getWorkspaceIdFromWebhookId.mockRejectedValue(new ResourceNotFoundError("webhook", WEBHOOK_ID));
+
+    expect((await getSecret("clhook2222222222222222222")).status).toBe(403);
+    expect(mocks.getWebhookWithSecret).not.toHaveBeenCalled();
+  });
+
+  test("answers a key without a secret with the same 403", async () => {
+    mocks.getWebhookWithSecret.mockResolvedValue({ ok: true, data: { ...storedWebhook, secret: null } });
+
+    expect((await getSecret()).status).toBe(403);
+  });
+
+  test("answers a missing webhook result with the same 403", async () => {
+    mocks.getWebhookWithSecret.mockResolvedValue({ ok: false, error: { type: "not_found", details: [] } });
+
+    expect((await getSecret()).status).toBe(403);
+  });
+
+  test("surfaces a lookup fault as a 500, not an authorization refusal", async () => {
+    mocks.getWebhookWithSecret.mockResolvedValue({
+      ok: false,
+      error: { type: "internal_server_error", details: [] },
+    });
+
+    const response = await getSecret();
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({ code: "internal_server_error" });
+  });
+
+  test("is charged to the reveal budget before the secret is read", async () => {
+    mocks.applyRateLimit.mockRejectedValue(new TooManyRequestsError("Maximum number of requests reached"));
+
+    expect((await getSecret()).status).toBe(429);
+    expect(mocks.getWebhookWithSecret).not.toHaveBeenCalled();
   });
 });

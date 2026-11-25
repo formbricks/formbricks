@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { PipelineTriggers, Webhook } from "@formbricks/database/prisma-browser";
+import { PipelineTriggers } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -19,11 +19,13 @@ import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { deleteWebhook, testWebhookEndpoint, updateWebhook } from "../lib/api-client";
-import { TWebhookInput } from "../types/webhooks";
+import { deleteWebhook, getWebhookSecret, testWebhookEndpoint, updateWebhook } from "../lib/api-client";
+import { TWebhookInput, TWebhookListItem } from "../types/webhooks";
+
+const MASKED_SECRET = "••••••••••••••••••••••••";
 
 interface WebhookSettingsTabProps {
-  webhook: Webhook;
+  webhook: TWebhookListItem;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
@@ -60,8 +62,33 @@ export const WebhookSettingsTab = ({
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(webhook.surveyIds.length === 0);
   const [showSecret, setShowSecret] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Fetched only when a writer asks to reveal or copy it: the list never carries the secret.
+  const [secret, setSecret] = useState<string | null>(null);
 
-  const handleCopySecret = async (text: string) => {
+  const loadSecret = async (): Promise<string | null> => {
+    if (secret !== null) return secret;
+    try {
+      const { secret: loaded } = await getWebhookSecret(webhook.id);
+      if (!loaded) {
+        toast.error(t("common.something_went_wrong_please_try_again"));
+        return null;
+      }
+      setSecret(loaded);
+      return loaded;
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      return null;
+    }
+  };
+
+  const handleToggleSecret = async () => {
+    if (!showSecret && (await loadSecret()) === null) return;
+    setShowSecret(!showSecret);
+  };
+
+  const handleCopySecret = async () => {
+    const text = await loadSecret();
+    if (text === null) return;
     if (!(await copyToClipboard(text))) {
       toast.error(t("common.failed_to_copy_to_clipboard"));
       return;
@@ -208,22 +235,23 @@ export const WebhookSettingsTab = ({
           </div>
         </div>
 
-        {webhook.secret && (
+        {!isReadOnly && webhook.hasSecret && (
           <div className="col-span-1">
             <Label htmlFor="secret">{t("workspace.integrations.webhooks.signing_secret")}</Label>
             <div className="mt-1 flex">
               <div className="relative flex-1">
                 <Input
-                  type={showSecret ? "text" : "password"}
+                  type="text"
                   id="secret"
                   readOnly
-                  value={webhook.secret}
+                  value={showSecret ? (secret ?? "") : MASKED_SECRET}
                   className="pr-10 font-mono text-sm"
                 />
                 <button
                   type="button"
+                  aria-label={showSecret ? t("common.hide") : t("common.show")}
                   className="absolute top-1/2 right-3 -translate-y-1/2 transform"
-                  onClick={() => setShowSecret(!showSecret)}>
+                  onClick={handleToggleSecret}>
                   {showSecret ? (
                     <EyeOff className="size-5 text-slate-400" />
                   ) : (
@@ -235,7 +263,7 @@ export const WebhookSettingsTab = ({
                 type="button"
                 variant="secondary"
                 className="ml-2 whitespace-nowrap"
-                onClick={() => handleCopySecret(webhook.secret ?? "")}>
+                onClick={handleCopySecret}>
                 {copied ? (
                   <>
                     <CheckIcon className="size-4" />

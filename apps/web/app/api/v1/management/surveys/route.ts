@@ -1,6 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { collectDeclaredFieldNames } from "@formbricks/types/surveys/declared-field-guard";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
+import { parseV1Pagination } from "@/app/api/v1/management/lib/pagination";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
 import { loggableError } from "@/app/api/v3/lib/loggable-error";
@@ -45,8 +46,7 @@ export const GET = withV1ApiWrapper({
 
     try {
       const searchParams = new URL(req.url).searchParams;
-      const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
-      const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
+      const { limit, offset } = parseV1Pagination(searchParams, { offsetParam: "offset" });
 
       const workspaceIds = [
         ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),

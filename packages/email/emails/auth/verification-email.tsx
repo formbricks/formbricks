@@ -29,7 +29,6 @@ export function VerificationEmail({
         <Link className="text-sm break-all text-black" href={verifyLink}>
           {verifyLink}
         </Link>
-        <Text className="text-sm font-bold">{t("emails.verification_email_link_valid_for_24_hours")}</Text>
         <Text className="text-sm">
           {t("emails.verification_email_if_expired_request_new_token")}
           <Link className="text-sm text-black underline" href={verificationRequestLink}>

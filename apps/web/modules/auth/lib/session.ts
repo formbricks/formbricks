@@ -2,10 +2,10 @@ import "server-only";
 import { isAPIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { cache } from "react";
-import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { Session } from "@formbricks/types/auth";
 import { auth } from "@/modules/auth/lib/auth";
+import { getActiveSessionByToken } from "@/modules/auth/lib/proxy-session";
 
 /**
  * Request-scoped session read — the single identity choke point for the app (ENG-1054 DAL).
@@ -31,17 +31,14 @@ import { auth } from "@/modules/auth/lib/auth";
  * was deactivated, after signing in. `rejectInactiveUserOnSessionCreate` only gates session *creation*.
  * Without this read a deactivated user keeps full access — server actions, v3 session routes, storage —
  * for the life of a rolling 1-day session, and a session whose row is gone (a user-delete cascade, a bare
- * `prisma.session.deleteMany()`, a restore) stays valid until its Redis TTL (ENG-3418). It is the same
- * lookup `getProxySession` makes for the middleware, so the two cannot disagree on who is signed in.
+ * `prisma.session.deleteMany()`, a restore) stays valid until its Redis TTL (ENG-3418). It is the lookup
+ * `getProxySession` makes for proxy, so the two cannot disagree on who is signed in; were they to, `/`
+ * (proxy: to login) and the auth layout (getSession: back to `/`) would redirect into each other.
  */
 const isSessionLive = async (sessionToken: string, userId: string): Promise<boolean> => {
-  const session = await prisma.session.findUnique({
-    where: { sessionToken },
-    select: { userId: true, user: { select: { isActive: true } } },
-  });
-
   // A session whose user row is gone has no row either: the delete cascades.
-  return session?.userId === userId && session.user.isActive === true;
+  const session = await getActiveSessionByToken(sessionToken);
+  return session?.userId === userId;
 };
 
 /**

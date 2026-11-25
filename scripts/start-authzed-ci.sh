@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/ci-network.sh"
 
 readonly CONTAINER_NAME="formbricks-authzed-ci"
 readonly SPICEDB_IMAGE="${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}"
@@ -16,6 +17,8 @@ if [[ -z "${AUTHZED_TOKEN}" ]]; then
 fi
 readonly AUTHZED_TOKEN
 
+ci_pull_image "${SPICEDB_IMAGE}"
+ci_pull_image "${ZED_IMAGE}"
 docker rm --force "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 
 docker run --detach \

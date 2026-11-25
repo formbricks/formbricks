@@ -30,6 +30,7 @@ import {
   ZV3SurveyCustomCss,
 } from "@/app/api/v3/surveys/schemas";
 import { ZV3WorkspaceCustomCssPatchBody } from "@/app/api/v3/workspaces/lib/custom-css-schemas";
+import { confirmArgument } from "./confirm-argument";
 
 /**
  * Every array argument is declared through `lengthBoundedArray`, never a bare `z.array().max()`: the
@@ -534,6 +535,12 @@ export const ZMcpSurveyIdInput = z
   })
   .strict();
 
+/** Deprecated with `delete_survey` (ENG-6575): removed in 7.0, prefer `archive_survey`. */
+export const ZMcpDeleteSurveyInput = ZMcpSurveyIdInput.extend({
+  surveyId: z.cuid2().describe("Survey ID to delete."),
+  confirm: confirmArgument,
+}).strict();
+
 // list_workspaces takes no arguments — it returns the workspaces the authenticated caller can access.
 //
 // The one schema where `.strict()` buys no ENG-2256 protection: with no declared keys there is nothing to
@@ -632,6 +639,7 @@ export const ZMcpDeleteFeedbackRecordInput = z
     workspaceId: ZId.describe("Workspace ID that owns the feedback record."),
     feedbackRecordId: z.uuid().describe("Feedback record ID (UUID) to delete permanently."),
     datasetId: datasetIdField,
+    confirm: confirmArgument,
   })
   .strict();
 
@@ -656,6 +664,7 @@ export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrde
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpGenerateSurveyInput = z.infer<typeof ZMcpGenerateSurveyInput>;
 export type TMcpSurveyIdInput = z.infer<typeof ZMcpSurveyIdInput>;
+export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
 export type TMcpGetWorkspaceCustomCssInput = z.infer<typeof ZMcpGetWorkspaceCustomCssInput>;
 export type TMcpPatchWorkspaceCustomCssInput = z.infer<typeof ZMcpPatchWorkspaceCustomCssInput>;
 export type TMcpListFeedbackDatasetsInput = z.infer<typeof ZMcpListFeedbackDatasetsInput>;

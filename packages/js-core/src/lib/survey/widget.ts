@@ -531,17 +531,24 @@ const getSurveysScriptUrl = (appUrl: string): string => {
   return `${appUrl}/js/surveys.umd.cjs?v=${version}`;
 };
 
+// The UMD wrapper publishes an empty global before evaluating the renderer bundle.
+const getReadySurveysRenderer = (): TFormbricksSurveys | undefined => {
+  const renderer = globalThis.window.formbricksSurveys;
+  return typeof renderer?.renderSurvey === "function" ? renderer : undefined;
+};
+
 const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
 
     const check = (): void => {
-      if (globalThis.window.formbricksSurveys) {
+      const renderer = getReadySurveysRenderer();
+      if (renderer) {
         const storedNonce = globalThis.window.__formbricksNonce;
         if (storedNonce) {
-          globalThis.window.formbricksSurveys.setNonce?.(storedNonce);
+          renderer.setNonce?.(storedNonce);
         }
-        resolve(globalThis.window.formbricksSurveys);
+        resolve(renderer);
         return;
       }
 
@@ -558,8 +565,9 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
 };
 
 export const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
-  if (globalThis.window.formbricksSurveys) {
-    return Promise.resolve(globalThis.window.formbricksSurveys);
+  const renderer = getReadySurveysRenderer();
+  if (renderer) {
+    return Promise.resolve(renderer);
   }
 
   if (surveysLoadPromise) {
@@ -604,7 +612,7 @@ let isPrefetched = false;
  */
 export const prefetchSurveysScript = (appUrl: string): void => {
   // Don't prefetch if already loaded or already prefetching
-  if (globalThis.window.formbricksSurveys) return;
+  if (getReadySurveysRenderer()) return;
   if (isPrefetched) return;
 
   isPrefetched = true;

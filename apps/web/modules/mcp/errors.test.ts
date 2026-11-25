@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { problemConflict, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import { mcpOutsideGrantResult, responseToMcpToolResult } from "./errors";
+import { ZMcpToolError } from "./tools/output-schemas";
 
 describe("responseToMcpToolResult", () => {
   test("returns structured success content with the resolved requestId", async () => {
@@ -34,6 +35,9 @@ describe("responseToMcpToolResult", () => {
         },
       },
     });
+    // The advertised error schema knows the field too, so a client typing `tools/list` can read it.
+    const error = (result.structuredContent as { error: unknown }).error;
+    expect(ZMcpToolError.safeParse(error).success).toBe(true);
   });
 
   test("omits details when the problem has none, and still forwards invalid_params", async () => {
@@ -48,6 +52,23 @@ describe("responseToMcpToolResult", () => {
     expect(payload.error.invalid_params).toEqual([
       { name: "ops.0.id", reason: "unknown block", code: "dangling_reference" },
     ]);
+  });
+
+  test("omits a details value that is not a plain object", async () => {
+    // The advertised `details` is a record; a body carrying an array or a string must not surface a
+    // value the schema would then reject.
+    for (const details of [[], "not-an-object", null]) {
+      const response = new Response(
+        JSON.stringify({ title: "Conflict", status: 409, detail: "conflict", details }),
+        { status: 409, headers: { "content-type": "application/problem+json" } }
+      );
+
+      const result = await responseToMcpToolResult(response, "fb");
+      const payload = result.structuredContent as { error: Record<string, unknown> };
+
+      expect(payload.error).not.toHaveProperty("details");
+      expect(ZMcpToolError.safeParse(payload.error).success).toBe(true);
+    }
   });
 
   test("falls back to the supplied requestId when the body carries none", async () => {

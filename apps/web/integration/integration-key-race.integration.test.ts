@@ -5,6 +5,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import type { TIntegrationGoogleSheetsConfig } from "@formbricks/types/integration/google-sheet";
 import { waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
+import { decryptIntegrationConfig } from "@/lib/integration/credentials";
 import { saveIntegrationKeepingStoredKey } from "@/lib/integration/service";
 
 /**
@@ -84,7 +85,8 @@ const storedConfig = async (workspaceId: string): Promise<TIntegrationGoogleShee
   const stored = await prisma.integration.findUniqueOrThrow({
     where: { type_workspaceId: { type: "googleSheets", workspaceId } },
   });
-  return stored.config as TIntegrationGoogleSheetsConfig;
+  // The row holds ciphertext (ENG-7311); read it the way the app does.
+  return decryptIntegrationConfig("googleSheets", stored.config);
 };
 
 beforeEach(async () => {
@@ -115,6 +117,12 @@ describe("saveIntegrationKeepingStoredKey (real Postgres)", () => {
     expect(config.key.access_token).toBe("fresh");
     expect(config.key.refresh_token).toBe("refresh-fresh");
     expect(config.data.map((entry) => entry.surveyId)).toEqual([surveyId]);
+
+    // The save encrypts the key it kept: the fresh token is not stored in plaintext.
+    const raw = await prisma.integration.findUniqueOrThrow({
+      where: { type_workspaceId: { type: "googleSheets", workspaceId } },
+    });
+    expect((raw.config as TIntegrationGoogleSheetsConfig).key.access_token).not.toBe("fresh");
   });
 
   test("a settings save with no stored row fails rather than overwrite a callback's new connection", async () => {

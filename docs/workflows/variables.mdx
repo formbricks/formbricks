@@ -10,9 +10,13 @@ pick one.
 
 <Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
 
-{/* SCREENSHOT PLACEHOLDER: variable-picker.webp. The @ picker open in an HTTP request body, listing Expected payload
-and step Variables with their types. Save to /images/platform/workflows/variable-picker.webp and replace this
-comment with a <Frame>. */}
+<Frame>
+  <img
+    src="/images/platform/workflows/variable-picker.webp"
+    alt="The @ picker in an HTTP request body, listing payload Variables and the HTTP request · Look up customer group with status and body fields"
+    style={{ maxWidth: "420px" }}
+  />
+</Frame>
 
 ## Where Variables come from
 
@@ -22,13 +26,30 @@ comment with a <Frame>. */}
 | **Response**      | `response.<id>`            | The workflow has a **Response completed** trigger.                              |
 | **An earlier step** | `steps.<stepId>.status`, `steps.<stepId>.body.order.id` | The step is an [HTTP request](/workflows/http-request) that runs before this one on the same branch. |
 
-`response.<id>` covers a survey's answers and its Embedded Data: fields filled by links, URL parameters or
-the SDK, and fields computed by Set value rules, such as a score. The `@` picker lists them by question
-title or field name.
+### Survey Variables
 
-The picker lists the Variables of the trigger's **expected payload**, so set it in the trigger first. It lists
-the first 500 values of the payload. For an HTTP request step, it lists `status` and the values of the step's
-**expected response body**.
+With a **Response completed** trigger, the `@` picker lists the survey's values in four groups, in the same order
+as the survey editor's pickers:
+
+| Group             | What it holds                                                                                   | Path                  |
+| ----------------- | ----------------------------------------------------------------------------------------------- | --------------------- |
+| **Questions**     | Each question's answer, shown as `code · question`. A question without a code shows its ID.     | `response.<questionId>` |
+| **Hidden fields** | Embedded Data passed in with the response: by a link, a URL parameter or the SDK.               | `response.<key>`      |
+| **Embedded Data** | Embedded Data the survey computed with Set value rules, such as a score.                        | `response.<key>`      |
+| **Survey info**   | Values Formbricks records with every response, such as the page URL, language, country, device type and UTM parameters. | `response.<name>`, such as `response.url`, `response.language`, `response.utmSource` |
+
+When the survey has its own field with the same name as a Survey info value, such as `country`, the picker lists
+only the survey's field.
+
+### Payload and step Variables
+
+With a Webhook trigger, the picker lists the Variables of the trigger's **expected payload** under **Expected
+payload**, so set it in the trigger first. It lists the first 500 values of the payload.
+
+Each earlier HTTP request step set to **Wait and use it** has its own group, named **HTTP request · ** and the
+step's name. A step set to **Don't wait** offers no Variables. The group lists
+`status` and the values of the step's [expected response body](/workflows/http-request#expected-response-body),
+so fill that card first.
 
 Steps are named by their ID in a path, so renaming a step never breaks a Variable that uses it.
 

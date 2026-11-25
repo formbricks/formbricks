@@ -4,7 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
-import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   type TV3SurveyWriteReport,
@@ -153,15 +153,15 @@ type TV3SurveyMutationParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
-};
-
-type TPatchV3SurveyParams = TV3SurveyMutationParams & {
-  body: unknown;
   /**
    * ENG-6930: MCP only. When set, a survey that is not a draft and has responses is left untouched
    * unless `confirmed`, and the caller gets the editor's caution text (428). REST never sets it.
    */
   writeConfirmation?: TV3SurveyWriteConfirmation;
+};
+
+type TPatchV3SurveyParams = TV3SurveyMutationParams & {
+  body: unknown;
 };
 
 type TValidateV3SurveyParams = {
@@ -772,6 +772,7 @@ export async function deleteV3Survey({
   requestId,
   instance,
   auditLog,
+  writeConfirmation,
 }: TV3SurveyMutationParams): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
 
@@ -787,6 +788,16 @@ export async function deleteV3Survey({
     if (response) {
       log.warn({ statusCode: 403 }, "Survey not found or not accessible");
       return response;
+    }
+
+    const refusal = await getV3SurveyWriteConfirmationRefusal(survey, writeConfirmation, {
+      action: "delete",
+      requestId,
+      instance,
+    });
+    if (refusal) {
+      log.warn({ statusCode: 428 }, "Survey delete awaits confirmation");
+      return refusal;
     }
 
     if (auditLog) {
@@ -817,8 +828,21 @@ export async function deleteV3Survey({
   }
 }
 
-// archive and restore share the exact same flow (authorize readWrite → audit old → run the lifecycle
-// service → audit new → return a minimal lifecycle ack); only the service and log label differ.
+// archive and restore share the exact same flow (authorize readWrite → run the lifecycle service →
+// audit the locked previous row and the result → return a minimal lifecycle ack); only the service and
+// log label differ.
+type TV3SurveyLifecycleResult = Readonly<{
+  id: string;
+  status: string;
+  archivedAt: Date | null;
+  /** Whether the locked write actually changed anything; a no-op is not audited. */
+  changed: boolean;
+  /** The row as read under the write's lock, before it changed. */
+  previous: Readonly<{ id: string; status: string; archivedAt: Date | null }>;
+  /** The exemption a policy-archived restore made, when it made one. */
+  retentionExemptionId?: string | null;
+}>;
+
 async function runV3SurveyLifecycleMutation(
   { surveyId, authentication, requestId, instance, auditLog }: TV3SurveyMutationParams,
   {
@@ -826,10 +850,7 @@ async function runV3SurveyLifecycleMutation(
     mutate,
   }: {
     operation: "archive" | "restore";
-    mutate: (
-      id: string,
-      authentication: TV3Authentication
-    ) => Promise<{ id: string; status: string; archivedAt: Date | null }>;
+    mutate: (id: string, authentication: TV3Authentication) => Promise<TV3SurveyLifecycleResult>;
   }
 ): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
@@ -851,13 +872,25 @@ async function runV3SurveyLifecycleMutation(
     if (auditLog) {
       auditLog.targetId = survey.id;
       auditLog.organizationId = authResult.organizationId;
-      auditLog.oldObject = survey;
     }
 
     const mutatedSurvey = await mutate(surveyId, authentication);
 
+    // The write path decides whether anything changed, on the locked row. A concurrent lifecycle call
+    // between the authorization read and the lock can make the pre-read disagree with what was written.
     if (auditLog) {
-      auditLog.newObject = mutatedSurvey;
+      auditLog.oldObject = mutatedSurvey.previous;
+      auditLog.newObject = {
+        id: mutatedSurvey.id,
+        status: mutatedSurvey.status,
+        archivedAt: mutatedSurvey.archivedAt,
+        ...("retentionExemptionId" in mutatedSurvey
+          ? { retentionExemptionId: mutatedSurvey.retentionExemptionId }
+          : {}),
+      };
+    }
+    if (!mutatedSurvey.changed) {
+      skipV3AuditLog(auditLog);
     }
 
     // Intentional lifecycle ack, not the full document resource: archive/restore operate on any
@@ -1268,6 +1301,7 @@ async function runV3SurveyDocumentMutation({
     assertV3SurveyPrecondition(survey, effectivePrecondition);
 
     const refusal = await getV3SurveyWriteConfirmationRefusal(survey, writeConfirmation, {
+      action: "change",
       requestId,
       instance,
     });

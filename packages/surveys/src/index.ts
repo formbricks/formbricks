@@ -1,3 +1,4 @@
+import { setNonce as setStyleSingletonNonce } from "get-nonce";
 import { type ComponentChild, type FunctionComponent, h, render } from "preact";
 import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { SurveyPortalContainerContext } from "@formbricks/survey-ui";
@@ -180,11 +181,15 @@ export const renderSurveyModal = renderSurvey;
 
 /**
  * Sets the CSP nonce for every style element the renderer owns, including the custom CSS ones, which
- * are re-applied so a stylesheet the browser refused without the nonce gets it now.
+ * are re-applied so a stylesheet the browser refused without the nonce gets it now, and the scroll
+ * lock of its menus.
  */
 export const setNonce = (nonce: string | undefined): void => {
   setStyleNonce(nonce);
   syncCustomCssNonce();
+  // The scroll lock of survey-ui's menus injects its own <style> (react-style-singleton), which reads
+  // the nonce from get-nonce.
+  setStyleSingletonNonce(nonce ?? "");
 };
 
 /**

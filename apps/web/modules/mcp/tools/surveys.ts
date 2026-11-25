@@ -3,6 +3,7 @@ import { generateV3Survey } from "@/app/api/v3/surveys/generate/operations";
 import {
   archiveV3Survey,
   createV3SurveyResponseFromRawInput,
+  deleteV3Survey,
   editV3SurveyBlocksResponse,
   getV3Survey,
   listV3Surveys,
@@ -15,10 +16,12 @@ import {
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import { runConfirmedDelete } from "./delete-confirmation";
 import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateSurveyInput,
+  type TMcpDeleteSurveyInput,
   type TMcpEditSurveyBlocksInput,
   type TMcpGenerateSurveyInput,
   type TMcpGetSurveyInput,
@@ -28,6 +31,7 @@ import {
   type TMcpSurveyIdInput,
   type TMcpValidateSurveyInput,
   ZMcpCreateSurveyInput,
+  ZMcpDeleteSurveyInput,
   ZMcpEditSurveyBlocksInput,
   ZMcpGenerateSurveyInput,
   ZMcpGetSurveyInput,
@@ -428,11 +432,55 @@ export function registerSurveyTools(server: McpServer): void {
 
   registerMcpTool(
     server,
+    "delete_survey",
+    {
+      title: "Delete survey (deprecated)",
+      description:
+        "Deprecated: removed in Formbricks 7.0. Use archive_survey instead, which is reversible. Delete a Formbricks survey and all of its responses using the v3 Surveys API contract. The user is asked to confirm first; it cannot be undone. Refused with a 409 (code survey_has_linked_creatives, listing them in details.creatives) while non-archived creatives open the survey: delete those first (pausing or closing one keeps it linked).",
+      inputSchema: ZMcpDeleteSurveyInput,
+      audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    [{ permission: "surveys", level: "write" }],
+    // Finding 07: deleting a survey removes its responses for good, so the user confirms first and the
+    // model's own `confirm` counts only where the client cannot ask (see `runConfirmedDelete`).
+    async (input: TMcpDeleteSurveyInput, ctx) =>
+      runConfirmedDelete({
+        tool: "delete_survey",
+        resourceKey: input.surveyId,
+        prompt: `Permanently delete survey ${input.surveyId} and all of its responses? This cannot be undone.`,
+        confirm: input.confirm,
+        ctx,
+        run: () =>
+          runMcpMutation(
+            ctx,
+            { action: "deleted", resource: "survey", logContext: { surveyId: input.surveyId } },
+            ({ authentication, requestId, auditLog }) =>
+              deleteV3Survey({
+                surveyId: input.surveyId,
+                authentication,
+                requestId,
+                instance: MCP_API_ROUTE,
+                auditLog,
+                // Reached only after the user agreed, through the prompt or a client that cannot ask.
+                writeConfirmation: { confirmed: true },
+              })
+          ),
+      })
+  );
+
+  registerMcpTool(
+    server,
     "archive_survey",
     {
       title: "Archive survey",
       description:
-        'Archive a survey: it leaves the default list, stops collecting responses (an in-progress survey is paused) and becomes read-only until restored. Ask the user before archiving a survey that is not a draft and already has responses. Formbricks permanently deletes an archived survey and its responses at least 30 days after it was archived, unless a data-retention exemption holds it longer. Find it again with list_surveys and filter.status.in: ["archived"], then use restore_survey. Works on any survey, including legacy question-based ones, and archiving an already-archived survey changes nothing. Deleting a survey stays in the app and the REST API; MCP only archives.',
+        'Archive a survey: it leaves the default list, stops collecting responses (an in-progress survey is paused) and becomes read-only until restored. Ask the user before archiving a survey that is not a draft and already has responses. Formbricks permanently deletes an archived survey and its responses at least 30 days after it was archived, unless a data-retention exemption holds it longer. Find it again with list_surveys and filter.status.in: ["archived"], then use restore_survey. Works on any survey, including legacy question-based ones, and archiving an already-archived survey changes nothing. Prefer this over the deprecated delete_survey.',
       inputSchema: ZMcpSurveyIdInput,
       outputSchema: ZMcpSurveyLifecycleOutput,
       audit: { action: "archived", targetType: "survey", targetIdArg: "surveyId" },

@@ -3,6 +3,7 @@ import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -26,6 +27,7 @@ vi.mock("@/app/api/v3/lib/auth", async (importOriginal) => {
   return { getV3AuthorizationActor, getV3SessionUserId, requireV3WorkspaceAccess: vi.fn() };
 });
 vi.mock("@/lib/survey/visibility/actor-context", () => ({ resolveSurveyActorContext: vi.fn() }));
+vi.mock("@/lib/getPublicUrl", () => ({ getPublicDomain: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 const visibility = vi.hoisted(() => ({ ready: false }));
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: async () => visibility.ready }));
@@ -60,11 +62,21 @@ const apiKeyAuth = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(getPublicDomain).mockReturnValue("https://test-webapp-url.com");
   // Entitled by default so authorization-focused tests exercise the workspace-access behavior.
   vi.mocked(getIsWorkflowsEnabled).mockResolvedValue(true);
 });
 
 describe("buildWorkflowApiContext", () => {
+  test.each(["https://surveys.example.com", "https://test-webapp-url.com"])(
+    "builds webhook URLs on the resolved public domain %s",
+    (baseUrl) => {
+      vi.mocked(getPublicDomain).mockReturnValue(baseUrl);
+      const ctx = buildWorkflowApiContext(apiKeyAuth, "req_1", "/api/mcp");
+      expect(ctx.webhookBaseUrl).toBe(baseUrl);
+    }
+  );
+
   test("derives userId from a session", () => {
     const ctx = buildWorkflowApiContext(sessionAuth, "req_1", "https://app.formbricks.com");
     expect(ctx.userId).toBe("cm9zr52kh000508l8e3q7bw9j");
