@@ -13,11 +13,16 @@ import {
 import { POST } from "./route";
 
 const support = vi.hoisted(() => () => import("../route-test.mock"));
-const stripeMocks = vi.hoisted(() => ({ paymentIntentsRetrieve: vi.fn() }));
+const stripeMocks = vi.hoisted(() => ({ paymentIntentsRetrieve: vi.fn(), configured: true }));
 
-// Stripe at its boundary: the route asks it about the payment intent the page sends.
+// Stripe at its boundary: the route asks it about the payment intent the page sends. `configured: false`
+// stands for an instance without a Stripe key, whose client is null.
 vi.mock("@/modules/ee/billing/lib/stripe-client", () => ({
-  stripeClient: { paymentIntents: { retrieve: stripeMocks.paymentIntentsRetrieve } },
+  get stripeClient() {
+    return stripeMocks.configured
+      ? { paymentIntents: { retrieve: stripeMocks.paymentIntentsRetrieve } }
+      : null;
+  },
 }));
 
 vi.mock("server-only", () => ({}));
@@ -70,6 +75,7 @@ const stripeResourceMissing = () =>
 
 beforeEach(() => {
   resetBillingMocks();
+  stripeMocks.configured = true;
   stripeMocks.paymentIntentsRetrieve.mockResolvedValue(paymentIntent());
 });
 
@@ -146,6 +152,14 @@ describe("POST /api/internal/organizations/{organizationId}/billing/payment-issu
 
     expect((await send()).status).toBe(500);
     expect(mocks.setOrganizationPaymentAttemptError).not.toHaveBeenCalled();
+  });
+
+  test("records nothing when Stripe isn't configured", async () => {
+    stripeMocks.configured = false;
+
+    expect((await send()).status).toBe(204);
+    expect(mocks.setOrganizationPaymentAttemptError).not.toHaveBeenCalled();
+    expect(queuedAudit().newObject).toBeUndefined();
   });
 
   test("refuses an organization with no Stripe customer, asking Stripe nothing", async () => {
