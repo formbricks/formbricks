@@ -8,6 +8,7 @@ import { logger } from "@formbricks/logger";
 import { EMAIL_AUTH_ENABLED, WEBAPP_URL } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { readSsoRecoveryIntent } from "@/modules/ee/sso/lib/recovery-intent";
 import {
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
@@ -19,6 +20,36 @@ import {
   createSsoRecoveryProof,
   getSsoRecoveryStateIdFromCompletionUrl,
 } from "@/modules/ee/sso/lib/recovery-proof";
+
+/** Whether the recovery a token names is still live and belongs to the token's user (ENG-7422). */
+const isRecoveryLiveFor = async (stateId: string | undefined, userId: string): Promise<boolean> =>
+  (await readSsoRecoveryIntent(stateId))?.userId === userId;
+
+/**
+ * Creates the recovery session and sets its cookie. A Link can commit between the caller's intent read
+ * and the session write, then sweep the account's sessions before this one existed. So the intent is
+ * checked again once the session exists: still live means Link has not spent it yet, and its sweep runs
+ * after this session and covers it; gone means the session is taken back.
+ */
+const signInRecoveringUser = async (
+  ctx: Parameters<typeof setSessionCookie>[0],
+  userId: string,
+  stateId: string | undefined
+): Promise<void> => {
+  const user = await ctx.context.internalAdapter.findUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  const session = await ctx.context.internalAdapter.createSession(user.id, false);
+  if (!session) {
+    throw new Error("Failed to create recovery session");
+  }
+  if (!(await isRecoveryLiveFor(stateId, userId))) {
+    await ctx.context.internalAdapter.deleteSession(session.token);
+    throw new Error("SSO recovery was spent while its session was being created");
+  }
+  await setSessionCookie(ctx, { session, user });
+};
 
 /**
  * SSO-recovery magic-link sign-in (ENG-1054, Phase 7) — the Better Auth replacement for the NextAuth
@@ -35,8 +66,10 @@ import {
  *
  * Failures (invalid/expired token, inactive user) are logged and redirected to the recovery failure
  * page; the security-critical outcome — the account link — is audited by `completeSsoRecovery`, and
- * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The token is replayable until it
- * expires (`VERIFICATION_LINK_TTL_SECONDS`), matching the legacy `"token"` provider (not single-use).
+ * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The link works only while the recovery
+ * intent its token names is live and belongs to the token's user (ENG-7422). Link and Cancel both spend
+ * that intent, so a link that has done its job, or was cancelled, signs nobody in. Until then it may be
+ * opened more than once, because mail scanners fetch it before the person does.
  *
  * The link proves mailbox access only, so it must not stand in for a second factor (ENG-7266). A user
  * with a verified email and 2FA gets no session here: they are sent to the login page with the
@@ -75,15 +108,21 @@ export const ssoRecoverySignInPlugin = {
           if (!dbUser || dbUser.isActive === false) {
             throw new Error("User not found or inactive");
           }
+          // The link is good only while the recovery it was mailed for is live (ENG-7422). Link and
+          // Cancel both spend that recovery, so from then on the link signs nobody in. Read, not
+          // consumed: mail scanners open the link before the person does (see `readSsoRecoveryIntent`).
+          if (!(await isRecoveryLiveFor(ssoRecoveryStateId, id))) {
+            throw new Error("SSO recovery is spent, expired or not this user's");
+          }
           // The mailbox is proven here and nowhere else, so this is where the browser that will finish
           // recovery gets its proof (ENG-7310). Set before either branch: the 2FA one completes too,
           // in this same browser, after the login page.
           //
           // Only for the recovery this token was mailed for: the state is read from the unsigned
-          // `callbackUrl`, so it must match the one signed into the token. A token minted before that
-          // claim existed gets no proof; its holder can only start recovery again for a new link.
+          // `callbackUrl`, so it must match the one signed into the token, which the live-intent check
+          // above has already tied to this user.
           const stateId = getSsoRecoveryStateIdFromCompletionUrl(callbackUrl, WEBAPP_URL);
-          if (stateId && stateId === ssoRecoveryStateId) {
+          if (stateId === ssoRecoveryStateId) {
             ctx.setCookie(
               SSO_RECOVERY_PROOF_COOKIE_NAME,
               createSsoRecoveryProof(id, stateId),
@@ -103,15 +142,7 @@ export const ssoRecoverySignInPlugin = {
               ? getSsoRecoverySecondFactorRedirectUrl(callbackUrl)
               : getSsoRecoverySecondFactorUnavailableRedirectUrl(callbackUrl);
           } else {
-            const user = await ctx.context.internalAdapter.findUserById(id);
-            if (!user) {
-              throw new Error("User not found");
-            }
-            const session = await ctx.context.internalAdapter.createSession(user.id, false);
-            if (!session) {
-              throw new Error("Failed to create recovery session");
-            }
-            await setSessionCookie(ctx, { session, user });
+            await signInRecoveringUser(ctx, id, ssoRecoveryStateId);
             destination = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL) ?? WEBAPP_URL;
           }
         } catch (err) {
