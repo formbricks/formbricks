@@ -14,6 +14,9 @@ export type TOneStepOperandValue = Exclude<
   { type: "expression" }
 >;
 
+/** A value a one-step operator applies: text or a number. */
+export type TOneStepOperand = string | number;
+
 /** What a one-step operand reads besides the action: the run's answers, fields and metadata. */
 export interface TOneStepOperandSources {
   /** Answers and passed-in (hidden) fields, by id. */
@@ -34,7 +37,7 @@ export interface TOneStepOperandSources {
  * `Number("")` is 0, which would turn an empty field into a real 0 and stop an `isSkipped` condition
  * from seeing it.
  */
-const isNumericOperand = (value: string | number): boolean =>
+const isNumericOperand = (value: TOneStepOperand): boolean =>
   typeof value === "number" || (value.trim() !== "" && !Number.isNaN(Number(value)));
 
 /**
@@ -42,7 +45,7 @@ const isNumericOperand = (value: string | number): boolean =>
  * target. A value that is, or reads as, a number that is not finite (`"1e999"`) is nothing to apply, as
  * the formula form reads it as empty; other text keeps its text, as it always has.
  */
-const asOperand = (value: unknown, dataType: TEmbeddedDataType): string | number | undefined => {
+const asOperand = (value: unknown, dataType: TEmbeddedDataType): TOneStepOperand | undefined => {
   if (typeof value !== "number" && typeof value !== "string") return undefined;
   if (dataType !== "number" || !isNumericOperand(value)) {
     return typeof value === "number" && !Number.isFinite(value) ? undefined : value;
@@ -57,10 +60,17 @@ const asOperand = (value: unknown, dataType: TEmbeddedDataType): string | number
  * or a timestamp is nothing to apply rather than NaN in the response; a text target takes text, a number
  * as its text and true/false as "true"/"false", as the formula form stores them.
  */
-const asReservedOperand = (value: unknown, dataType: TEmbeddedDataType): string | number | undefined => {
+const asReservedOperand = (value: unknown, dataType: TEmbeddedDataType): TOneStepOperand | undefined => {
   const coerced = coerceToEmbeddedDataType(value, dataType);
   return typeof coerced === "string" || typeof coerced === "number" ? coerced : undefined;
 };
+
+/**
+ * The exhaustive switch's last arm. Compile time: an operand kind added to the schema is not `never`, so
+ * the call fails to typecheck until the switch handles it. Run time: an operand the types rule out (a
+ * survey that was not re-parsed) is nothing to apply.
+ */
+const unhandledOperand = (_operand: never): undefined => undefined;
 
 /**
  * The value a one-step Set value applies (add, subtract, multiply, divide, assign, concat), shared by
@@ -81,7 +91,7 @@ const asReservedOperand = (value: unknown, dataType: TEmbeddedDataType): string 
 export const getOneStepOperand = (
   operand: TOneStepOperandValue,
   { data, variables, reservedValues, dataType }: TOneStepOperandSources
-): string | number | undefined => {
+): TOneStepOperand | undefined => {
   // The types say what a parsed survey holds; the runtime checks below hold for one that was not
   // re-parsed (a stored or cached survey, a bundle older than the schema), so a malformed operand is
   // nothing to apply rather than an object written into a field.
@@ -104,11 +114,7 @@ export const getOneStepOperand = (
         : undefined;
     case "question":
       return undefined;
-    default: {
-      // Compile time: an operand kind added to the schema must be handled here (ENG-7431).
-      const unhandled: never = operand;
-      void unhandled;
-      return undefined;
-    }
+    default:
+      return unhandledOperand(operand);
   }
 };
