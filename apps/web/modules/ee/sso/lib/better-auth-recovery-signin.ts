@@ -8,6 +8,7 @@ import { logger } from "@formbricks/logger";
 import { EMAIL_AUTH_ENABLED, WEBAPP_URL } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { readSsoRecoveryIntent } from "@/modules/ee/sso/lib/recovery-intent";
 import {
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
@@ -35,8 +36,10 @@ import {
  *
  * Failures (invalid/expired token, inactive user) are logged and redirected to the recovery failure
  * page; the security-critical outcome — the account link — is audited by `completeSsoRecovery`, and
- * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The token is replayable until it
- * expires (`VERIFICATION_LINK_TTL_SECONDS`), matching the legacy `"token"` provider (not single-use).
+ * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The link works only while the recovery
+ * intent its token names is live and belongs to the token's user (ENG-7422). Link and Cancel both spend
+ * that intent, so a link that has done its job, or was cancelled, signs nobody in. Until then it may be
+ * opened more than once, because mail scanners fetch it before the person does.
  *
  * The link proves mailbox access only, so it must not stand in for a second factor (ENG-7266). A user
  * with a verified email and 2FA gets no session here: they are sent to the login page with the
@@ -74,6 +77,13 @@ export const ssoRecoverySignInPlugin = {
           });
           if (!dbUser || dbUser.isActive === false) {
             throw new Error("User not found or inactive");
+          }
+          // The link is good only while the recovery it was mailed for is live (ENG-7422). Link and
+          // Cancel both spend that recovery, so from then on the link signs nobody in. Read, not
+          // consumed: mail scanners open the link before the person does (see `readSsoRecoveryIntent`).
+          const intent = await readSsoRecoveryIntent(ssoRecoveryStateId);
+          if (intent?.userId !== id) {
+            throw new Error("SSO recovery is spent, expired or not this user's");
           }
           // The mailbox is proven here and nowhere else, so this is where the browser that will finish
           // recovery gets its proof (ENG-7310). Set before either branch: the 2FA one completes too,

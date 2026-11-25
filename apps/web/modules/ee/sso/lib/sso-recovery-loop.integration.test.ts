@@ -297,6 +297,36 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
   });
 
   /**
+   * ENG-7422, as reported: once the recovery is linked or cancelled, the mailed link is spent. Another
+   * browser opening the same link (a forwarded mail, a scanner's log, a shared machine's history) gets
+   * the recovery failure page and no session. Opening it again while the recovery is live still works,
+   * because mail scanners fetch the link before the person does.
+   */
+  test.each([
+    ["linked", completeSsoRecovery],
+    ["cancelled", cancelSsoRecovery],
+  ] as const)("the emailed link signs nobody in once the recovery is %s", async (_label, finish) => {
+    const user = await seedUser();
+    const verificationRequestedUrl = await runOneRecoveryAttempt(WEBAPP_URL, "google-sub-replay");
+    const completionUrl = new URL(verificationRequestedUrl).searchParams.get("callbackUrl")!;
+    const stateId = new URL(completionUrl).searchParams.get("state")!;
+
+    // A scanner's fetch, then the person's click: both land while the recovery is live.
+    await openEmailedRecoveryLink(user.id, completionUrl);
+    const recoveryProof = proofCookieOf(await openEmailedRecoveryLink(user.id, completionUrl)) ?? undefined;
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(2);
+
+    await finish({ stateId, recoveryProof, sessionUserId: user.id });
+
+    const replay = await openEmailedRecoveryLink(user.id, completionUrl);
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(2);
+    expect(replay.headers.getSetCookie().some((cookie) => cookie.includes("session_token"))).toBe(false);
+    expect(proofCookieOf(replay)).toBeNull();
+    expect(new URL(replay.headers.get("location") ?? "").searchParams.get("error")).not.toBeNull();
+  });
+
+  /**
    * Link and Cancel clicked together, against real Postgres and Redis. Exactly one acts: either the
    * identity is linked and the cancel is refused, or the cancel spends the recovery and nothing links.
    * Never both, which is what authorizing first and writing after used to allow.
