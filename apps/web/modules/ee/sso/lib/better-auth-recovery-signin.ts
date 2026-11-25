@@ -21,6 +21,36 @@ import {
   getSsoRecoveryStateIdFromCompletionUrl,
 } from "@/modules/ee/sso/lib/recovery-proof";
 
+/** Whether the recovery a token names is still live and belongs to the token's user (ENG-7422). */
+const isRecoveryLiveFor = async (stateId: string | undefined, userId: string): Promise<boolean> =>
+  (await readSsoRecoveryIntent(stateId))?.userId === userId;
+
+/**
+ * Creates the recovery session and sets its cookie. A Link can commit between the caller's intent read
+ * and the session write, then sweep the account's sessions before this one existed. So the intent is
+ * checked again once the session exists: still live means Link has not spent it yet, and its sweep runs
+ * after this session and covers it; gone means the session is taken back.
+ */
+const signInRecoveringUser = async (
+  ctx: Parameters<typeof setSessionCookie>[0],
+  userId: string,
+  stateId: string | undefined
+): Promise<void> => {
+  const user = await ctx.context.internalAdapter.findUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  const session = await ctx.context.internalAdapter.createSession(user.id, false);
+  if (!session) {
+    throw new Error("Failed to create recovery session");
+  }
+  if (!(await isRecoveryLiveFor(stateId, userId))) {
+    await ctx.context.internalAdapter.deleteSession(session.token);
+    throw new Error("SSO recovery was spent while its session was being created");
+  }
+  await setSessionCookie(ctx, { session, user });
+};
+
 /**
  * SSO-recovery magic-link sign-in (ENG-1054, Phase 7) — the Better Auth replacement for the NextAuth
  * `"token"` CredentialsProvider's `sso_recovery` path. Verifies the `sso_recovery` JWT, establishes a
@@ -81,8 +111,7 @@ export const ssoRecoverySignInPlugin = {
           // The link is good only while the recovery it was mailed for is live (ENG-7422). Link and
           // Cancel both spend that recovery, so from then on the link signs nobody in. Read, not
           // consumed: mail scanners open the link before the person does (see `readSsoRecoveryIntent`).
-          const intent = await readSsoRecoveryIntent(ssoRecoveryStateId);
-          if (intent?.userId !== id) {
+          if (!(await isRecoveryLiveFor(ssoRecoveryStateId, id))) {
             throw new Error("SSO recovery is spent, expired or not this user's");
           }
           // The mailbox is proven here and nowhere else, so this is where the browser that will finish
@@ -113,15 +142,7 @@ export const ssoRecoverySignInPlugin = {
               ? getSsoRecoverySecondFactorRedirectUrl(callbackUrl)
               : getSsoRecoverySecondFactorUnavailableRedirectUrl(callbackUrl);
           } else {
-            const user = await ctx.context.internalAdapter.findUserById(id);
-            if (!user) {
-              throw new Error("User not found");
-            }
-            const session = await ctx.context.internalAdapter.createSession(user.id, false);
-            if (!session) {
-              throw new Error("Failed to create recovery session");
-            }
-            await setSessionCookie(ctx, { session, user });
+            await signInRecoveringUser(ctx, id, ssoRecoveryStateId);
             destination = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL) ?? WEBAPP_URL;
           }
         } catch (err) {

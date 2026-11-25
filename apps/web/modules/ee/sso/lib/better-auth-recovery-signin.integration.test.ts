@@ -288,6 +288,36 @@ describe("SSO recovery sign-in (real Postgres)", () => {
   });
 
   /**
+   * ENG-7422 review. A Link can commit and run its session sweep between this endpoint's intent read and
+   * its session write. The session written in that window would outlive the sweep, so the endpoint
+   * checks the intent again after writing and takes the session back when the recovery is gone.
+   */
+  test("a recovery spent while the session is being created leaves no session behind", async () => {
+    const user = await prisma.user.create({
+      data: { email: "race@example.com", name: "Race", emailVerified: true },
+    });
+    const { stateId, token, callbackUrl } = await mailedRecoveryLink(user.id);
+    const { internalAdapter } = await auth.$context;
+    const createSession = internalAdapter.createSession.bind(internalAdapter);
+    const spy = vi.spyOn(internalAdapter, "createSession").mockImplementationOnce(async (...args) => {
+      const session = await createSession(...args);
+      await spendRecovery(stateId); // Link commits and spends the intent right after the write
+      return session;
+    });
+
+    try {
+      const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
+
+      expect(spy).toHaveBeenCalledOnce();
+      expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+      expect(res.headers.getSetCookie().some((c) => c.includes("session_token"))).toBe(false);
+      expect(res.headers.get("location")).toBe(getSsoRecoveryFailureRedirectUrl(callbackUrl));
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  /**
    * ENG-7422. The link works only while the recovery it was mailed for is live, and Link and Cancel both
    * spend that recovery. So a link the token does not tie to a live recovery of this user signs nobody
    * in: the recovery behind it is spent or expired, or was never this user's.
