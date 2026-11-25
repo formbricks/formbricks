@@ -27,8 +27,9 @@ const OXLINT_CLI = path.join(
 
 /*
  * SonarCloud judges a pull request's new code only, and existing code is still over some of its
- * limits. A commit fails on such a rule (`STAGED_LINES_RULE_IDS`, packages/config-oxlint/sonar-parity.mjs)
- * only inside the lines it stages, as Sonar would on the PR.
+ * limits; some repo rules (`formbricks/loggable-error`) have a backlog too. A commit fails on such a rule
+ * (`STAGED_LINES_RULE_IDS`, packages/config-oxlint/sonar-parity.mjs) only inside the lines it stages, as
+ * Sonar would on the PR.
  */
 const STAGED_LINES_RULES = new Set(STAGED_LINES_RULE_IDS);
 
@@ -90,8 +91,7 @@ function runOxlint(paths) {
       maxBuffer: 64 * 1024 * 1024,
       env: {
         ...process.env,
-        // The staged-lines rules (none today) are off for the whole-repo lint until their backlog is
-        // fixed. Here they report as warnings, and the loop below fails the commit on one only inside
+        // The staged-lines rules are off for the whole-repo lint until their backlog is fixed. Here they report as warnings, and the loop below fails the commit on one only inside
         // the staged lines.
         OXLINT_SONAR_PARITY: "warn",
         // oxlint.config.ts in a package without "type": "module" makes Node print a warning per run.
@@ -133,7 +133,10 @@ for (const diagnostic of runs.flatMap((run) => run.diagnostics)) {
       rangesByFile.set(diagnostic.filename, stagedLineRanges(diagnostic.filename));
     }
     if (touchesStagedCode(message, rangesByFile.get(diagnostic.filename))) {
-      console.log(format(diagnostic.filename, message, "error (SonarCloud, new code)"));
+      const label = message.ruleId.startsWith("formbricks/")
+        ? "error (new code)"
+        : "error (SonarCloud, new code)";
+      console.log(format(diagnostic.filename, message, label));
       failed = true;
     }
   }

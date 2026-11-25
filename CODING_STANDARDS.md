@@ -20,6 +20,26 @@ hardening first for literal `ubuntu-*` runner labels, including version and arch
 still judge whether requested token permissions are minimal and whether runner choices outside this
 check need hardening.
 
+## The Review Gate
+
+A review is a gate, not advice. Most findings human reviewers raise on merged PRs break a rule already in
+this file, so the review blocks on them before a person looks.
+
+- A finding that cites a rule in this file is **blocking**: it names the rule's section and the hunk that
+  breaks it, and the review passes only once every blocking finding is fixed or the PR lists it under Open
+  gaps with a reason. A smell or taste call that cites no rule is non-blocking and says so.
+- Every new or changed test goes **red** in review, not just in principle: flip the line it guards, run the
+  test, and see it fail (see "Testing Guidelines"). A test that stays green is a blocking finding.
+- A finding names its class, and the fix covers the class. On every re-review, recheck each earlier
+  finding's whole class (each caller, sibling and entry point) rather than the flagged line alone: most
+  second review rounds were a variant the first fix left open.
+- The PR description is reviewed like the code once it exists. Coverage rows, "still covered by" claims,
+  the breaking-changes box and Open gaps are claims about the diff, and a claim the code contradicts is a
+  finding.
+- The ticket does not override this file. Where a ticket asks for something a rule here forbids (deleting
+  the only control for an assertion, removing a shipped field outside a major), quote both and treat it as
+  a blocking finding until the ticket's author decides.
+
 ## Conventions Awaiting Automated Enforcement
 
 These remain review checks until their enforcement handles the repository's existing patterns:
@@ -44,8 +64,18 @@ These remain review checks until their enforcement handles the repository's exis
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
-- A change that replaces a tool keeps every behaviour the old setup carried (script flags, inline config
-  comments, per-package overrides) or lists what it drops under Open gaps.
+- A change that replaces a mechanism keeps every behaviour the old one carried, implicit ones included, or
+  lists what it drops under Open gaps. For a tool that is its script flags, inline config comments and
+  per-package overrides; for a server action moved to `fetch`, the revalidation and serialization the action
+  did for free; for a refactor, what it did with missing or malformed input (skipping a deleted segment is
+  not the same as throwing on it).
+- One rule, one source. A check enforced in two places (client and server validation, an allowlist copied
+  from another module, a setting wired through each file `docs/agents/self-hosting-config.md` lists) reads
+  one shared definition, or a test keeps the copies equal. A client that accepts what the server rejects
+  is a finding.
+- Prose follows the code. Docs, code comments, OpenAPI descriptions, ADRs, `AGENTS.md` and the PR
+  description that describe behaviour the diff changes are updated in the same PR, and every path or
+  symbol they name exists.
 
 ## Existing Patterns
 
@@ -84,11 +114,20 @@ These remain review checks until their enforcement handles the repository's exis
   endpoints mounted raw at `/api/auth/*` ([ADR-0017](docs/adr/0017-better-auth-native-endpoints-closed.md)),
   public client routes and `/storage`, MCP tools and API-key paths, and the write side of a read-gated
   module. A gate on fewer paths than reach the data is a finding, and so is a second copy of the predicate.
+- A security check judges what is actually enforced. A validator for content rendered or consumed later
+  runs on the output of the same transform the consumer uses (one shared helper), not on its own parse of
+  the raw input. A role or privilege grant rests on verified evidence (a signed token, a verified email),
+  never on an attribute the caller controls. A placeholder token inserted into user-controlled text is
+  unguessable or escaped, so the text cannot spell it. A lookup keyed by caller input uses `Object.hasOwn`
+  or a `Map`, never `in`, which matches `__proto__` and `toString`.
 - Unknown query parameters and body keys are rejected with 400 at every nesting level: `.strict()` on nested
   objects too, and MCP tools register the schema, not its `.shape`. A dropped typo returns a confidently
   wrong answer.
 - A change to a shared schema, the API wrapper, or a key's scope changes every route that uses it. A new 400
-  or 422, a renamed `meta` field or a widened scope gets a breaking-change entry like any route edit.
+  or 422, a renamed `meta` field or a widened scope gets a breaking-change entry like any route edit. So
+  does removing a released route or MCP tool, changing the type of a value already stored or emitted, and
+  moving anything a caller stored (a webhook URL, a token, a config key); outside a major release the old
+  one is deprecated beside the new one, not removed.
   Shipped mobile SDKs, js-core's cached environment state and the Zapier app read `/api/v1` and the client
   API without updating, so a field there is renamed only by adding the new one beside the old.
 - Unreleased code has no compatibility obligation: released is the line, not merged. Self-hosters and Cloud
@@ -146,9 +185,16 @@ Downloads:
   at `error`.
 - A `catch` that carries on names the errors it expects. Infrastructure errors (pool exhaustion, timeouts)
   propagate to the retry that owns them.
+- A retry repeats only the step that failed, and only on a retryable error: a 4xx from a provider is final,
+  and a step that already committed is not run twice. A call that reports failure in its result (a
+  `{ status: "failed" }`, a `Result` error) is checked like a thrown one.
+- A security check fails closed. When it hits an iteration or size cap, gets partial input, or misses an
+  optional header (Origin, Fetch Metadata), it denies rather than treating the gap as a pass; abuse limits
+  stay closed when Redis is down ([ADR-0016](docs/adr/0016-abuse-limits-fail-closed.md)).
 - Log a caught error through `loggableError` (`apps/web/lib/utils/loggable-error.ts`): its name and frames,
-  never its message. A message can carry prompts, file text, OAuth codes or respondent answers, so a new
-  `logger.*({ error })` on a path that handles such content is a finding.
+  never its message. A message can carry prompts, file text, OAuth codes or respondent answers.
+  `formbricks/loggable-error` fails a commit that logs a caught error raw on a line it changes; an error
+  that cannot carry user content disables the rule on its line with the reason.
 
 ## Performance in Review
 
@@ -195,6 +241,13 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
   transaction as the write, either on a row read `FOR UPDATE` or as the write's own `WHERE`
   (`DELETE … WHERE "archivedAt" IS NOT NULL`). A check read before the transaction is a race. Snapshots for
   audit logs and "previous value" diffs are read under that lock too.
+- Inside an interactive transaction every query goes through `tx`; a query on the global `prisma` waits for
+  a second pool connection and can deadlock the pool. A lock that guards a count also covers rows that can
+  join the counted set while it waits (an owner promoted concurrently).
+- State outside Postgres races the same way. A read-modify-write on Redis or a third-party API (a sheet's
+  header row, a lease) is serialized across workers or made idempotent; a lock renews its lease and rechecks
+  that it still holds it before each write. A multi-key Redis script puts its keys in one hash tag, or it
+  fails on cluster Redis.
 - `ON DELETE CASCADE` reaches only Postgres. Deleting a survey, response, workspace, organization or account
   also deletes its storage objects (under the `workspaceId` prefix and the legacy `environmentId` one), its
   Hub records and its pending invites, and its test asserts those deletes.
@@ -288,7 +341,10 @@ Do:
   expected answer, not a new spec.
 - Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows.
 - Merging, narrowing, or deleting an E2E spec is legitimate work — record it in the PR's Coverage table
-  like any other change.
+  like any other change, and name in each row the test that still covers the behaviour, or "none".
+  A test that is the only way another test can go red stays, as a `test.step` in a test that survives: the
+  positive control for an assertion helper (the violation collector behind `expectNoCspViolations`), or the
+  allowed half of an allowed/denied pair whose denied half asserts an absence.
 
 Do not:
 
