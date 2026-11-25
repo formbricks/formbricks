@@ -14,6 +14,7 @@ import {
   ZResponseUpdate,
   ZResponseUpdateInput,
   checkResponseDataSize,
+  normalizeCountryCode,
   pickAutoCapturedResponseMeta,
 } from "./responses";
 
@@ -124,20 +125,27 @@ describe("ZResponseUpdate.meta", () => {
   });
 
   test("strips the server-derived keys a renderer has no business claiming", () => {
-    // `country`, `userAgent` and `ipAddress` are derived from the request by the ingest routes. A
-    // client asserting them would be asserting something it cannot know.
+    // `userAgent` and `ipAddress` are derived from the request by the ingest routes. A client
+    // asserting them would be asserting something it cannot know.
     const parsed = ZResponseUpdate.parse({
       finished: true,
       data: {},
       meta: {
         pagePath: "/checkout",
-        country: "XX",
         ipAddress: "203.0.113.7",
         userAgent: { browser: "Chrome" },
       },
     });
 
     expect(parsed.meta).toStrictEqual({ pagePath: "/checkout" });
+  });
+
+  test("keeps `country`: the host may set it, and the ingest routes check it", () => {
+    // `?country=` or `setEmbeddedData({ country })`, carried as `meta.country`. The routes keep only a
+    // two-letter code and otherwise fall back to the CDN header (`resolveResponseCountry`).
+    const parsed = ZResponseUpdate.parse({ finished: true, data: {}, meta: { country: "DE" } });
+
+    expect(parsed.meta).toStrictEqual({ country: "DE" });
   });
 });
 
@@ -436,5 +444,18 @@ describe("response input caps", () => {
 
     expect(issues).toHaveLength(1);
     expect(issues[0].path).toEqual(path);
+  });
+});
+
+describe("normalizeCountryCode", () => {
+  test("keeps a two-letter code, trimmed and upper-cased", () => {
+    expect(normalizeCountryCode("DE")).toBe("DE");
+    expect(normalizeCountryCode(" us ")).toBe("US");
+  });
+
+  test("refuses anything else, so the ingest routes fall back to the CDN header", () => {
+    for (const value of ["Germany", "D", "DEU", "D1", "", 49, null, undefined, ["DE"]]) {
+      expect(normalizeCountryCode(value)).toBeUndefined();
+    }
   });
 });
