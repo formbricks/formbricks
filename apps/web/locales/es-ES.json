@@ -4070,6 +4070,7 @@
         "prompt_helper_pmf": "Mide el ajuste producto-mercado y descubre qué echarían más de menos los usuarios",
         "prompt_helper_pmf_label": "Ajuste producto-mercado",
         "prompt_label": "Describe la encuesta que necesitas",
+        "prompt_needs_more_detail": "Describe en una frase el objetivo, el público o el tema de la encuesta para que la IA pueda crear un borrador útil.",
         "prompt_placeholder": "Describe la encuesta que necesitas, por ejemplo: Entender por qué los nuevos usuarios abandonan durante la incorporación y qué les ayudaría a completar la configuración",
         "provider_auth_failed": "El proveedor de IA rechazó las credenciales de esta instancia. Pide a tu administrador que revise la configuración de IA.",
         "regenerate": "Regenerar",

@@ -4070,6 +4070,7 @@
         "prompt_helper_pmf": "Ürün-pazar uyumunu ölçün ve kullanıcıların en çok neleri özleyeceğini öğrenin",
         "prompt_helper_pmf_label": "Ürün-pazar uyumu",
         "prompt_label": "İhtiyacın olan anketi açıkla",
+        "prompt_needs_more_detail": "Yapay zekâ işe yarar bir taslak oluşturabilsin diye anketin amacını, hedef kitlesini veya konusunu bir cümleyle anlat.",
         "prompt_placeholder": "İhtiyacın olan anketi tanımla, örneğin: Yeni kullanıcıların neden onboarding sırasında durduğunu ve kurulumu tamamlamalarına neyin yardımcı olacağını anla",
         "provider_auth_failed": "Yapay zeka sağlayıcısı bu örneğin kimlik bilgilerini reddetti. Yöneticinizden yapay zeka yapılandırmasını kontrol etmesini isteyin.",
         "regenerate": "Yeniden oluştur",
