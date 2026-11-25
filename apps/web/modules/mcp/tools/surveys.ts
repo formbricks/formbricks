@@ -11,6 +11,7 @@ import {
   validateV3SurveyFromRawInput,
   withGeneratedInsertIds,
 } from "@/app/api/v3/surveys/lib/operations";
+import { changeV3SurveyVisibility, getV3SurveyVisibility } from "@/app/api/v3/surveys/visibility/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
@@ -25,6 +26,8 @@ import {
   type TMcpListSurveysInput,
   type TMcpPatchSurveyInput,
   type TMcpSetSurveyBlockOrderInput,
+  type TMcpSetSurveyVisibilityInput,
+  type TMcpSurveyVisibilityInput,
   type TMcpValidateSurveyInput,
   ZMcpCreateSurveyInput,
   ZMcpDeleteSurveyInput,
@@ -34,9 +37,15 @@ import {
   ZMcpListSurveysInput,
   ZMcpPatchSurveyInput,
   ZMcpSetSurveyBlockOrderInput,
+  ZMcpSetSurveyVisibilityInput,
+  ZMcpSurveyVisibilityInput,
   ZMcpValidateSurveyInput,
 } from "./schemas";
-import { ZMcpGeneratedSurveyOutput } from "./survey-output-schemas";
+import {
+  ZMcpGeneratedSurveyOutput,
+  ZMcpSurveyVisibilityChangeOutput,
+  ZMcpSurveyVisibilityStateOutput,
+} from "./survey-output-schemas";
 import { surveyResultForCaller } from "./survey-targeting";
 
 export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSearchParams {
@@ -454,6 +463,80 @@ export function registerSurveyTools(server: McpServer): void {
               : conciseSurveyResponse(response, { order: body.order });
           }
         )
+      )
+  );
+
+  registerMcpTool(
+    server,
+    "get_survey_visibility",
+    {
+      title: "Get survey visibility",
+      description: [
+        "Read a survey's visibility and what changing it would do: the enforced value (restricted or workspace), its owner, whether you may manage it, the outbound connections that would block restricting it now (empty once the survey is settled at restricted with no change in flight), the people and responses a change affects, any change still in flight, and the values a change would act on now.",
+        "Call this before set_survey_visibility and show the user the impact and any blockers first.",
+        "Visibility changes need the survey visibility feature (Access Control) and are limited to the survey's owner, while they still hold read access to its workspace, or an organization owner/manager. API-key connections cannot read or change visibility. This tool needs Surveys: Read.",
+      ].join(" "),
+      inputSchema: ZMcpSurveyVisibilityInput,
+      outputSchema: ZMcpSurveyVisibilityStateOutput,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    [{ permission: "surveys", level: "read" }],
+    async (input: TMcpSurveyVisibilityInput, ctx) => {
+      const authInfo = getMcpToolAuthInfo(ctx);
+      const requestId = getMcpRequestId(authInfo);
+      const response = await getV3SurveyVisibility({
+        surveyId: input.surveyId,
+        authentication: getMcpAuthentication(authInfo),
+        requestId,
+        instance: MCP_API_ROUTE,
+      });
+
+      return await responseToMcpToolResult(response, requestId);
+    }
+  );
+
+  registerMcpTool(
+    server,
+    "set_survey_visibility",
+    {
+      title: "Set survey visibility",
+      description: [
+        "Change a survey between workspace visibility (everyone in the workspace can see it) and restricted (only its owner and organization owners/managers can see it).",
+        "Call get_survey_visibility first and show the user the impact and blockers before restricting. A restriction is refused with a 409 while a webhook, integration, active feedback source, draft or enabled workflow, or non-archived creative uses the survey; archived creatives are unlinked by the restriction. A survey with no owner cannot be restricted (422): ask the user to duplicate it in the Formbricks app to get a restricted copy.",
+        "A workspace change the graph has not acknowledged yet answers 503 projection_pending: the change is stored, retry in a few seconds; the survey stays restricted until the graph catches up. Changes are limited to 10 per minute; a 429 asks you to wait before retrying.",
+        "Needs the survey visibility feature (Access Control) and the survey's owner, while they still hold read access to its workspace, or an organization owner/manager. API-key connections are refused, and a non-owner workspace writer is refused even with Surveys: Write.",
+      ].join(" "),
+      inputSchema: ZMcpSetSurveyVisibilityInput,
+      outputSchema: ZMcpSurveyVisibilityChangeOutput,
+      audit: { action: "visibilityChanged", targetType: "survey", targetIdArg: "surveyId" },
+      annotations: {
+        readOnlyHint: false,
+        // Can take a survey away from the workspace, and a restriction unlinks archived creatives.
+        destructiveHint: true,
+        // The same value is a no-op.
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    [{ permission: "surveys", level: "write" }],
+    async (input: TMcpSetSurveyVisibilityInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        { action: "visibilityChanged", resource: "survey", logContext: { surveyId: input.surveyId } },
+        ({ authentication, requestId, auditLog }) =>
+          changeV3SurveyVisibility({
+            surveyId: input.surveyId,
+            body: { visibility: input.visibility },
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          })
       )
   );
 

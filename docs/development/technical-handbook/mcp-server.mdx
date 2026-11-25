@@ -114,8 +114,8 @@ Supported scopes:
 
 | Scope                   | Use                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `surveys:read`          | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`                                                                                                                                                                                                                                                                                   |
-| `surveys:write`         | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`                                                                                                                                               |
+| `surveys:read`          | `list_surveys`, `get_survey`, `get_survey_visibility`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`                                                                                                                                                                                                                                                                                   |
+| `surveys:write`         | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `set_survey_visibility`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`                                                                                                                                               |
 | `workflows:read`        | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`                                                                                                                                                                                                                                                                                                                           |
 | `workflows:write`       | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, the enable/disable/archive/unarchive mutations, and the Webhook trigger tools `get_webhook_url`, `regenerate_webhook_url`, `set_sample_payload`, `send_test_request`, `set_expected_response`, and `run_test`                                                                                                                                                                                                                                                                                      |
 | `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`                                                                                                                                                                                                                                                        |
@@ -352,6 +352,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `patch_survey`                                                                                                                                                                                              | `write` or `manage`                                                                                                                                                           |
 | `edit_survey_blocks`                                                                                                                                                                                        | `write` or `manage`                                                                                                                                                           |
 | `set_survey_block_order`                                                                                                                                                                                    | `write` or `manage`                                                                                                                                                           |
+| `get_survey_visibility`, `set_survey_visibility`                                                                                                                                                            | not available: visibility needs a signed-in owner or organization owner/manager, so both tools refuse API keys                                                                |
 | `delete_survey`                                                                                                                                                                                             | `write` or `manage`                                                                                                                                                           |
 | `get_workspace_custom_css`                                                                                                                                                                                  | `read`                                                                                                                                                                        |
 | `patch_workspace_custom_css`                                                                                                                                                                                | `manage` for an API key; an organization owner or manager for an OAuth user — stricter than `surveys:write`                                                                   |
@@ -1356,6 +1357,13 @@ processed and altered custom CSS, and the MCP `requestId`. `response_format: "de
 full survey resource instead: the same shape as `GET /api/v3/surveys/{surveyId}`. REST always returns
 the full resource.
 
+<Note>
+  Visibility is not a patch field. `PATCH /api/v3/surveys/{surveyId}` accepts `visibility` only as the
+  exact value `get_survey` returned (a fetched survey round-trips); a different value is a `422`
+  `unsupported_field`. Change it with [`set_survey_visibility`](#set_survey_visibility), after reading
+  [`get_survey_visibility`](#get_survey_visibility).
+</Note>
+
 #### Confirmation on surveys with responses
 
 `patch_survey`, `edit_survey_blocks`, `set_survey_block_order` and `delete_survey` take an optional
@@ -1498,6 +1506,62 @@ Input:
 ```
 
 Output matches `edit_survey_blocks`: concise by default, echoing the applied `order`.
+
+### get_survey_visibility
+
+Reads a survey's visibility and what a change would do: the enforced value (`restricted` or `workspace`),
+its owner, your `access.canManageVisibility`, the `blockers[]` that currently make `restricted` refusable,
+`impact.memberCount` and `impact.responseCount`, any `pending` change, the `version`, and the
+`allowedTargets[]` a change would act on now (`blockers[]` is empty once the survey is settled at restricted
+with no change in flight). Read-only and idempotent, and it needs **Surveys: Read**; it is limited to the survey's owner while they still
+hold read access to its workspace, or an organization owner/manager; API keys are refused. It also requires the
+survey visibility feature (Access Control), or it answers `403 visibility_not_enabled`.
+
+Use it before `set_survey_visibility` and show the user the impact and any blockers first.
+
+Input:
+
+```json
+{
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+Output mirrors `GET /api/v3/surveys/{surveyId}/visibility`. The output schema is hand-typed from the contract
+because the visibility components are not in the generated Zod bundle.
+
+### set_survey_visibility
+
+Changes a survey between `workspace` (everyone in the workspace can see it) and `restricted` (only its owner
+and organization owners/managers). Destructive: a restriction can remove access and unlinks archived
+creatives. Call `get_survey_visibility` first and ask the user.
+
+The operation's rules apply unchanged:
+
+- It needs **Surveys: Write** and the survey's owner while they still hold read access to its workspace, or an
+  organization owner/manager; API keys are refused.
+- `workspace → restricted` answers `409 visibility_blocked_by_connections` with `details.blockers` while a
+  webhook, integration, active feedback source, draft or enabled workflow, or non-archived creative uses the
+  survey. Archived creatives do not block; the restriction unlinks them.
+- A survey without an owner answers `422 visibility_change_not_allowed`; ask the user to duplicate it in the
+  Formbricks app to get a restricted copy.
+- A `restricted → workspace` change the graph has not acknowledged answers `503 projection_pending`: the change
+  is stored, retry in a few seconds, and the survey stays restricted until it takes effect.
+- Changes are limited to **10 per minute per actor**, on REST and MCP alike; an over-limit call answers `429`
+  with `Retry-After`. A client that retries a `503` every 5 seconds reaches that budget after about 45 seconds.
+- Setting the value the survey already has is a `200` no-op and is not audited.
+
+Input:
+
+```json
+{
+  "surveyId": "clsv1234567890123456789012",
+  "visibility": "workspace"
+}
+```
+
+Output mirrors `POST /api/v3/surveys/{surveyId}/visibility`: `id`, `visibility`, `owner`, `access`, `version`,
+`pending`, `changedAt`, `changedBy`. Each real change is audit-logged as `visibilityChanged`.
 
 ### delete_survey
 
@@ -2530,6 +2594,8 @@ survey operations used by the REST routes:
 | `patch_survey`               | `PATCH /api/v3/surveys/{surveyId}`                  |
 | `edit_survey_blocks`         | `PATCH /api/v3/surveys/{surveyId}/blocks`           |
 | `set_survey_block_order`     | `PUT /api/v3/surveys/{surveyId}/blocks/order`       |
+| `get_survey_visibility`      | `GET /api/v3/surveys/{surveyId}/visibility`         |
+| `set_survey_visibility`      | `POST /api/v3/surveys/{surveyId}/visibility`        |
 | `delete_survey`              | `DELETE /api/v3/surveys/{surveyId}`                 |
 | `get_workspace_custom_css`   | `GET /api/v3/workspaces/{workspaceId}/custom-css`   |
 | `patch_workspace_custom_css` | `PATCH /api/v3/workspaces/{workspaceId}/custom-css` |
