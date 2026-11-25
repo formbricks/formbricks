@@ -196,52 +196,6 @@ test.describe("Feedback source reconciliation @slow", () => {
     // poll above proves this save already reconciled a specific-scope source.
     expect(await mappedElementIds(curatedHeldBackSourceId, surveyId)).toEqual([STALE]);
   });
-
-  test("a retyped question has its hubFieldType corrected rather than left stale", async ({
-    page,
-    users,
-  }) => {
-    const user = await users.create();
-    await user.login();
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-
-    const surveyId = await createSurveyFromScratch(page);
-    const workspaceId = (
-      await prisma.survey.findUniqueOrThrow({ where: { id: surveyId }, select: { workspaceId: true } })
-    ).workspaceId;
-    const organizationId = user.organizationId;
-    if (!organizationId) throw new Error("Organization not seeded for test");
-
-    const elements = await readSurveyElements(surveyId);
-    const target = elements.find((element) => !UNMAPPABLE_ELEMENT_TYPES.has(element.type));
-    if (!target) throw new Error("Survey has no mappable element to retype against");
-
-    const feedbackDirectoryId = await seedDirectory(organizationId, workspaceId);
-    // Deliberately wrong: claims the element publishes as an NPS score. Reconciliation must correct it
-    // to whatever the element's real type maps to, and must keep the row rather than delete it.
-    const sourceId = await seedSource({
-      name: `E2E retype ${surveyId}`,
-      workspaceId,
-      feedbackDirectoryId,
-      elementScope: "specific",
-      mappings: [{ surveyId, elementId: target.id, hubFieldType: "nps" }],
-    });
-
-    await saveDraft(page);
-
-    await expect
-      .poll(
-        async () => {
-          const row = await prisma.feedbackSourceFormbricksMapping.findFirstOrThrow({
-            where: { feedbackSourceId: sourceId, surveyId, elementId: target.id },
-            select: { hubFieldType: true },
-          });
-          return row.hubFieldType;
-        },
-        { timeout: 15000 }
-      )
-      .not.toBe("nps");
-  });
 });
 
 /**

@@ -24,12 +24,13 @@ import { mockStorageUploads } from "./utils/helper";
  * Accessibility gate for the rendered link survey (axe-core).
  *
  * Self-seeds + publishes a kitchen-sink survey, then walks every question card in
- * nine variants (desktop / mobile / tablet, forced-colors, reduced-motion, dark,
- * empty-submit, back-nav, and a multi-language RTL pass) and asserts zero WCAG 2.1
- * / 2.2 AA violations. A silent stall fails the test rather than passing as "clean":
+ * seven variants (desktop / mobile, forced-colors, dark, empty-submit, back-nav, and
+ * a multi-language RTL pass) and asserts zero WCAG 2.1 / 2.2 AA violations. Tablet
+ * and reduced-motion walks were dropped (ENG-7517): both scanned the same DOM as the
+ * desktop walk. A silent stall fails the test rather than passing as "clean":
  * the walker proves it advanced and reached the ending card.
  *
- * A tenth variant scans the second, "answered states" fixture (ENG-1298): the cards
+ * An eighth variant scans the second, "answered states" fixture (ENG-1298): the cards
  * whose DOM only exists after an interaction, which the walker — which scans each card
  * once, before answering it — structurally cannot reach, plus the Cal.com scheduler
  * wrapper, which cannot live in the kitchen sink at all.
@@ -540,7 +541,6 @@ const reportAndAssert = (variant: string, failSink: ViolationRow[]): void => {
 };
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
-const TABLET_VIEWPORT = { width: 820, height: 1180 };
 
 test.describe("Survey accessibility (axe-core) @slow", () => {
   // Seeded once per WORKER process and reused by every test in it: seeding writes
@@ -762,28 +762,12 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     reportAndAssert("mobile", violations);
   });
 
-  test("tablet: full walk has no WCAG AA violations", async ({ page }) => {
-    test.setTimeout(180_000);
-    await page.setViewportSize(TABLET_VIEWPORT);
-    const violations: ViolationRow[] = [];
-    await walkAndScan(page, "tablet", surveys().surveyUrl, violations);
-    reportAndAssert("tablet", violations);
-  });
-
   test("forced-colors (high contrast): full walk has no WCAG AA violations", async ({ page }) => {
     test.setTimeout(180_000);
     await page.emulateMedia({ forcedColors: "active" });
     const violations: ViolationRow[] = [];
     await walkAndScan(page, "forced-colors", surveys().surveyUrl, violations);
     reportAndAssert("forced-colors", violations);
-  });
-
-  test("reduced-motion: full walk has no WCAG AA violations", async ({ page }) => {
-    test.setTimeout(180_000);
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    const violations: ViolationRow[] = [];
-    await walkAndScan(page, "reduced-motion", surveys().surveyUrl, violations);
-    reportAndAssert("reduced-motion", violations);
   });
 
   test.describe("dark color scheme", () => {

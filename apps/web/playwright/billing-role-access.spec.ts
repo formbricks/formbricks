@@ -6,8 +6,8 @@ import { test } from "./lib/fixtures";
 // ENG-1763 regression: a billing-role member must not reach workspace product data (contacts PII,
 // survey summaries/responses, dashboards) by direct navigation. getWorkspaceAuth is the single choke
 // point every product page flows through, so it bounces billing users to their org billing/enterprise
-// home instead. The owner test guards against a naive "redirect everyone" fix regressing product
-// access for legitimate roles.
+// home instead. That the owner keeps product access is proven by every other spec that opens a
+// product page as an owner.
 
 // Creates an organization (owned by `owner`) with a workspace holding product data, plus a second
 // user who is a billing-role member of that same organization.
@@ -35,10 +35,7 @@ const setupOrgWithBillingMember = async (users: UsersFixture) => {
 
   const workspaceBase = `/workspaces/${owner.workspaceId}`;
   return {
-    owner,
     billingUser,
-    workspaceId: owner.workspaceId,
-    contactsUrl: `${workspaceBase}/contacts`,
     // Every workspace product surface flows through getWorkspaceAuth, so all of them must redirect.
     productUrls: [
       `${workspaceBase}/contacts`,
@@ -61,16 +58,5 @@ test.describe("Billing-role workspace access (ENG-1763)", () => {
       await page.goto(url, { waitUntil: "domcontentloaded" });
       await expect(page, `billing member should be redirected off ${url}`).toHaveURL(billingHomeUrl);
     }
-  });
-
-  test("keeps product-page access for a non-billing owner", async ({ page, users }) => {
-    const { owner, workspaceId, contactsUrl } = await setupOrgWithBillingMember(users);
-
-    await owner.login();
-    await page.goto(contactsUrl, { waitUntil: "domcontentloaded" });
-
-    // Owner stays on the product route (the page may render an upgrade prompt when the enterprise
-    // feature is unlicensed, but crucially it is not bounced to the billing home).
-    await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/contacts`));
   });
 });

@@ -143,6 +143,27 @@ describe("POST /api/internal/action-classes", () => {
     );
   });
 
+  // The editor offers these two as a bare radio choice with no settings of their own, so the route accepting
+  // them and reporting their trigger type is all there is to guard; no E2E spec creates one.
+  test.each(["exitIntent", "fiftyPercentScroll"] as const)(
+    "creates a %s action, which carries no settings beyond its URL filters",
+    async (triggerType) => {
+      const input = noCodeInput({ noCodeConfig: { type: triggerType, urlFilters: [] } });
+
+      expect((await post(input)).status).toBe(201);
+      expect(mocks.createActionClass).toHaveBeenCalledWith(WORKSPACE_ID, {
+        ...input,
+        workspaceId: WORKSPACE_ID,
+      });
+      expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+        USER_ID,
+        "action_class_created",
+        expect.objectContaining({ type: "noCode", trigger_type: triggerType }),
+        expect.anything()
+      );
+    }
+  );
+
   test("reports a code action's trigger type as codeAction", async () => {
     await post({
       name: "Signed up",

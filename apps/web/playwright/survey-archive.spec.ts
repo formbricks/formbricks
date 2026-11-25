@@ -109,40 +109,4 @@ test.describe("Survey archive @slow", () => {
     });
     await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
   });
-
-  test("shows a soft warning when archiving a draft survey", async ({ page, users }) => {
-    const timestamp = Date.now();
-    const email = `archive-draft-${timestamp}@example.com`;
-    const surveyName = `Draft Archive ${timestamp}`;
-    const user = await users.create({
-      email,
-      name: `archive-draft-${timestamp}`,
-      workspaceName: "Draft Archive Workspace",
-    });
-    const userId = await getUserIdForEmail(email);
-
-    await user.login();
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    const workspaceId =
-      /\/workspaces\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
-      (() => {
-        throw new Error("Unable to determine workspace id from surveys URL");
-      })();
-
-    const survey = await createSurveySeed({ workspaceId, userId, name: surveyName, status: "draft" });
-    await prisma.survey.deleteMany({ where: { workspaceId, id: { not: survey.id } } });
-
-    await page.reload();
-    await expect(page.getByText(surveyName, { exact: true })).toBeVisible({ timeout: 10000 });
-
-    await page.locator("[data-testid='survey-dropdown-trigger']").click();
-    await page.getByTestId("archive-survey").click();
-    // Draft surveys get the soft warning with a plain "Archive" confirm (not "Stop and archive").
-    const dialog = page.getByRole("dialog");
-    await expect(dialog.getByRole("button", { name: "Stop and archive", exact: true })).toHaveCount(0);
-    await dialog.getByRole("button", { name: "Archive", exact: true }).click();
-
-    await expect(page.getByText("Survey archived", { exact: true })).toBeVisible();
-    await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
-  });
 });

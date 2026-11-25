@@ -35,8 +35,8 @@ const getActionClassColumns = ({
     skeletonWidth: "w-64",
     cell: (actionClass) => (
       // `title` is load-bearing, not decoration: `action.spec.ts` locates every row with
-      // `getByTitle(name)` — five call sites, four of which click it to open the detail modal. The click
-      // bubbles from here through the row activator to the row's own handler.
+      // `getByTitle(name)` and clicks it to open the detail modal. The click bubbles from here through the
+      // row activator to the row's own handler.
       <div className="flex items-center gap-4" title={actionClass.name}>
         <div className="size-5 shrink-0 text-slate-500">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
         <div className="text-left">
