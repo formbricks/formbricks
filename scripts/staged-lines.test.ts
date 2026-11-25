@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   decodeSonarMessage,
   parseStagedLineRanges,
+  stagedLinesLabel,
   touchesStagedCode,
   touchesStagedLines,
 } from "./staged-lines.mjs";
@@ -79,5 +80,15 @@ describe("decodeSonarMessage and touchesStagedCode", () => {
     const decoded = decodeSonarMessage({ line: 12, message: "Extract this nested ternary." });
     expect(decoded).toEqual({ line: 12, message: "Extract this nested ternary.", secondaryLocations: [] });
     expect(touchesStagedCode(decoded, ranges)).toBe(true);
+  });
+});
+
+describe("stagedLinesLabel", () => {
+  test("names SonarCloud for a Sonar mirror, which the PR's Sonar check would flag too", () => {
+    expect(stagedLinesLabel("sonarjs/cognitive-complexity")).toBe("error (SonarCloud, new code)");
+  });
+
+  test("names only new code for a repo rule with a backlog", () => {
+    expect(stagedLinesLabel("formbricks/loggable-error")).toBe("error (new code)");
   });
 });

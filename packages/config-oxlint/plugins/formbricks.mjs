@@ -362,19 +362,20 @@ const preferReadOnlyProps = {
  * `loggable-error`: a caught error reaches the logger through `loggableError` (@formbricks/logger), never
  * raw. pino writes an error's message, stack header and causes, and a message can carry prompts, file
  * text, OAuth codes or respondent answers (CODING_STANDARDS.md, "Errors").
- * - A caught error is a `catch (error)` binding or the first parameter of a `.catch(fn)` handler.
- * - A logger is an identifier named `logger`, `log` or `…Logger`, or a `withContext(…)`/`child(…)` call
- *   on one.
- * - Each logger-method argument that is the caught error, holds it as a property value (`{ error }`,
- *   `{ err: error }`), or reads its `message` or `stack` is reported. Anything passed through a call,
- *   `loggableError(error)` included, is not looked into.
- * A binding shadowed inside the handler is still treated as the caught error. An error that cannot carry
- * user content is logged raw with the rule disabled on the line and the reason.
+ * - A caught error is a `catch (error)` binding, the first parameter of a `.catch(fn)` handler, or the
+ *   first parameter of the rejection handler in `.then(onFulfilled, onRejected)`. A nested function
+ *   parameter of the same name shadows it.
+ * - A logger is an identifier named `logger`, `log` or `…Logger`, or a `withContext(…)` call on one.
+ * - A logger-method argument leaks when it is the caught error, reads its `message`, `stack` or `cause`,
+ *   interpolates or concatenates one of those into a string, passes one through `String(…)` or
+ *   `JSON.stringify(…)`, or holds one as a property value at any depth (`{ error }`, `{ ctx: { err } }`).
+ *   Any other call, `loggableError(error)` included, is not looked into. A value copied into a variable
+ *   first (`const msg = error.message`) is not followed.
+ * An error that cannot carry user content is logged raw with the rule disabled on the line and the reason.
  */
 const LOG_METHODS = new Set(["trace", "debug", "info", "warn", "error", "fatal"]);
 const LOGGER_NAME = /^(?:logger|log|\w+Logger)$/;
-const LOGGER_FACTORIES = new Set(["withContext", "child"]);
-const LEAKY_MEMBERS = new Set(["message", "stack"]);
+const LEAKY_MEMBERS = new Set(["message", "stack", "cause"]);
 
 const memberName = (node) =>
   node?.type === "MemberExpression" && !node.computed && node.property.type === "Identifier"
@@ -383,75 +384,96 @@ const memberName = (node) =>
 
 const isLogger = (node) => {
   if (node.type === "Identifier") return LOGGER_NAME.test(node.name);
-  if (node.type === "CallExpression" && LOGGER_FACTORIES.has(memberName(node.callee))) {
+  if (node.type === "CallExpression" && memberName(node.callee) === "withContext") {
     return isLogger(node.callee.object);
   }
   return false;
 };
 
-const unwrap = (node) =>
-  node.type === "TSAsExpression" ||
-  node.type === "TSNonNullExpression" ||
-  node.type === "ParenthesizedExpression"
-    ? unwrap(node.expression)
-    : node;
+const unwrap = (node) => (node.type === "TSAsExpression" ? unwrap(node.expression) : node);
 
-const isPromiseCatchHandler = (fn) =>
-  fn.parent?.type === "CallExpression" &&
-  fn.parent.arguments[0] === fn &&
-  memberName(fn.parent.callee) === "catch";
+const isStringifier = (callee) =>
+  (callee.type === "Identifier" && callee.name === "String") ||
+  (memberName(callee) === "stringify" &&
+    callee.object.type === "Identifier" &&
+    callee.object.name === "JSON");
 
-const loggableError = {
+/** The parameter a promise handler receives the rejection in, or null when `fn` is no such handler. */
+const rejectionParam = (fn) => {
+  const call = fn.parent;
+  if (call?.type !== "CallExpression") return null;
+  const method = memberName(call.callee);
+  const isHandler = method === "catch" || (method === "then" && call.arguments[1] === fn);
+  const param = fn.params[0];
+  return isHandler && param?.type === "Identifier" ? param.name : null;
+};
+
+const paramNames = (fn) => new Set(fn.params.filter((p) => p.type === "Identifier").map((p) => p.name));
+
+const loggableErrorRule = {
   meta: {
     type: "problem",
     docs: { description: "Log a caught error through loggableError, never raw." },
     schema: [],
   },
   create(context) {
-    const caught = [];
-    const isCaught = (node) => node.type === "Identifier" && caught.includes(node.name);
-    const leaks = (value) => {
-      const node = unwrap(value);
-      if (isCaught(node)) return true;
-      if (node.type === "MemberExpression") {
-        return LEAKY_MEMBERS.has(memberName(node)) && isCaught(unwrap(node.object));
+    // One frame per catch clause and function: the error it catches, if any, and the names it binds.
+    const frames = [];
+    const isCaught = (node) => {
+      if (node.type !== "Identifier") return false;
+      for (let index = frames.length - 1; index >= 0; index -= 1) {
+        if (frames[index].caught === node.name) return true;
+        if (frames[index].binds.has(node.name)) return false;
       }
       return false;
     };
-    const report = (node) =>
-      context.report({
-        node,
-        message:
-          "Log a caught error as `{ err: loggableError(error) }` (@formbricks/logger/loggable-error): pino writes its message, which can carry user content. If this error cannot, disable formbricks/loggable-error on the line with the reason.",
-      });
-
-    const enterHandler = (fn) => {
-      const param = fn.params[0];
-      caught.push(isPromiseCatchHandler(fn) && param?.type === "Identifier" ? param.name : null);
+    const leaks = (value) => {
+      const node = unwrap(value);
+      switch (node.type) {
+        case "Identifier":
+          return isCaught(node);
+        case "MemberExpression":
+          return LEAKY_MEMBERS.has(memberName(node)) && isCaught(unwrap(node.object));
+        case "TemplateLiteral":
+          return node.expressions.some(leaks);
+        case "BinaryExpression":
+          return node.operator === "+" && (leaks(node.left) || leaks(node.right));
+        case "CallExpression":
+          return isStringifier(node.callee) && node.arguments.length > 0 && leaks(node.arguments[0]);
+        case "ObjectExpression":
+          return node.properties.some((property) => property.type === "Property" && leaks(property.value));
+        default:
+          return false;
+      }
     };
-    const leaveHandler = () => caught.pop();
+
+    const enterFunction = (fn) => {
+      const caught = rejectionParam(fn);
+      frames.push({ caught, binds: caught ? new Set() : paramNames(fn) });
+    };
+    const leave = () => frames.pop();
 
     return {
       CatchClause(node) {
-        caught.push(node.param?.type === "Identifier" ? node.param.name : null);
+        frames.push({ caught: node.param?.type === "Identifier" ? node.param.name : null, binds: new Set() });
       },
-      "CatchClause:exit": leaveHandler,
-      ArrowFunctionExpression: enterHandler,
-      "ArrowFunctionExpression:exit": leaveHandler,
-      FunctionExpression: enterHandler,
-      "FunctionExpression:exit": leaveHandler,
+      "CatchClause:exit": leave,
+      ArrowFunctionExpression: enterFunction,
+      "ArrowFunctionExpression:exit": leave,
+      FunctionExpression: enterFunction,
+      "FunctionExpression:exit": leave,
+      FunctionDeclaration: enterFunction,
+      "FunctionDeclaration:exit": leave,
       CallExpression(node) {
-        if (caught.every((name) => name === null)) return;
-        const method = memberName(node.callee);
-        if (!LOG_METHODS.has(method) || !isLogger(node.callee.object)) return;
+        if (!frames.some((frame) => frame.caught)) return;
+        if (!LOG_METHODS.has(memberName(node.callee)) || !isLogger(node.callee.object)) return;
         for (const argument of node.arguments) {
-          if (leaks(argument)) {
-            report(argument);
-          } else if (argument.type === "ObjectExpression") {
-            for (const property of argument.properties) {
-              if (property.type === "Property" && leaks(property.value)) report(property);
-            }
-          }
+          if (!leaks(argument)) continue;
+          context.report({
+            node: argument,
+            message:
+              "Log a caught error as `{ err: loggableError(error) }` (@formbricks/logger/loggable-error): pino writes its message, which can carry user content. If this error cannot, disable formbricks/loggable-error on the line with the reason.",
+          });
         }
       },
     };
@@ -461,7 +483,7 @@ const loggableError = {
 export default {
   meta: { name: "formbricks" },
   rules: {
-    "loggable-error": loggableError,
+    "loggable-error": loggableErrorRule,
     "no-inline-lint-config": noInlineLintConfig,
     "prefer-read-only-props": preferReadOnlyProps,
     "restricted-syntax": restrictedSyntax,

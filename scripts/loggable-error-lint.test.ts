@@ -66,6 +66,93 @@ export const run = async (work: () => Promise<void>) => {
 export const run = (work: () => Promise<void>) =>
   work().catch((error: unknown) => logger.error({ error }, "work failed"));
 `,
+  "stack.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.error({ trace: (error as Error).stack }, "work failed");
+  }
+};
+`,
+  "cause.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.error({ cause: (error as Error).cause }, "work failed");
+  }
+};
+`,
+  "template.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.error(\`work failed: \${(error as Error).message}\`);
+  }
+};
+`,
+  "concat.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.error("work failed: " + String(error));
+  }
+};
+`,
+  "stringify.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.error({ detail: JSON.stringify(error) }, "work failed");
+  }
+};
+`,
+  "nested.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    logger.error({ ctx: { attempt: 1, error } }, "work failed");
+  }
+};
+`,
+  "log-name.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    const log = logger.withContext({ job: "sync" });
+    log.error({ error }, "work failed");
+  }
+};
+`,
+  "context-logger.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<void>) => {
+  try {
+    await work();
+  } catch (error) {
+    const contextLogger = logger.withContext({ job: "sync" });
+    contextLogger.warn({ error }, "work failed");
+  }
+};
+`,
+  "function-handler.ts": `import { logger } from "@formbricks/logger";
+export const run = (work: () => Promise<void>) =>
+  work().catch(function onFailure(error: unknown) {
+    logger.error({ error }, "work failed");
+  });
+`,
+  "then-rejection.ts": `import { logger } from "@formbricks/logger";
+export const run = (work: () => Promise<void>) =>
+  work().then(
+    () => logger.info("work done"),
+    (error: unknown) => logger.error({ error }, "work failed")
+  );
+`,
 };
 
 // None of these reports.
@@ -94,6 +181,21 @@ export const report = (error: { code: string }) => {
     throw new Error("work failed", { cause: error });
   }
 };
+`,
+  // A nested parameter of the same name is not the caught error.
+  "shadowed.ts": `import { logger } from "@formbricks/logger";
+export const run = async (work: () => Promise<string[]>) => {
+  try {
+    await work();
+  } catch (error) {
+    ["a", "b"].forEach((error) => logger.info({ error }, "item"));
+    throw error;
+  }
+};
+`,
+  // The first handler of `.then` receives the value, not a rejection.
+  "then-fulfilled.ts": `import { logger } from "@formbricks/logger";
+export const run = (work: () => Promise<string>) => work().then((error) => logger.info({ error }, "done"));
 `,
 };
 

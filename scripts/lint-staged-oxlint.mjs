@@ -15,7 +15,12 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { STAGED_LINES_RULE_IDS } from "../packages/config-oxlint/sonar-parity.mjs";
 import { missingBuildsHint, missingLintBuilds } from "./lint-builds.mjs";
-import { decodeSonarMessage, parseStagedLineRanges, touchesStagedCode } from "./staged-lines.mjs";
+import {
+  decodeSonarMessage,
+  parseStagedLineRanges,
+  stagedLinesLabel,
+  touchesStagedCode,
+} from "./staged-lines.mjs";
 
 // oxlint doesn't export its bin, but package.json is exported, so go through it to get an
 // absolute path to the CLI entry point.
@@ -91,8 +96,9 @@ function runOxlint(paths) {
       maxBuffer: 64 * 1024 * 1024,
       env: {
         ...process.env,
-        // The staged-lines rules are off for the whole-repo lint until their backlog is fixed. Here they report as warnings, and the loop below fails the commit on one only inside
-        // the staged lines.
+        // The staged-lines rules are off for the whole-repo lint until their backlog is fixed. Here
+        // they report as warnings, and the loop below fails the commit on one only inside the
+        // staged lines.
         OXLINT_SONAR_PARITY: "warn",
         // oxlint.config.ts in a package without "type": "module" makes Node print a warning per run.
         NODE_OPTIONS: [process.env.NODE_OPTIONS, "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON"]
@@ -133,10 +139,7 @@ for (const diagnostic of runs.flatMap((run) => run.diagnostics)) {
       rangesByFile.set(diagnostic.filename, stagedLineRanges(diagnostic.filename));
     }
     if (touchesStagedCode(message, rangesByFile.get(diagnostic.filename))) {
-      const label = message.ruleId.startsWith("formbricks/")
-        ? "error (new code)"
-        : "error (SonarCloud, new code)";
-      console.log(format(diagnostic.filename, message, label));
+      console.log(format(diagnostic.filename, message, stagedLinesLabel(message.ruleId)));
       failed = true;
     }
   }

@@ -26,13 +26,17 @@ A review is a gate, not advice. Most findings human reviewers raise on merged PR
 this file, so the review blocks on them before a person looks.
 
 - A finding that cites a rule in this file is **blocking**: it names the rule's section and the hunk that
-  breaks it, and the review passes only once every blocking finding is fixed or the PR lists it under Open
-  gaps with a reason. A smell or taste call that cites no rule is non-blocking and says so.
-- Every new or changed test goes **red** in review, not just in principle: flip the line it guards, run the
-  test, and see it fail (see "Testing Guidelines"). A test that stays green is a blocking finding.
-- A finding names its class, and the fix covers the class. On every re-review, recheck each earlier
-  finding's whole class (each caller, sibling and entry point) rather than the flagged line alone: most
-  second review rounds were a variant the first fix left open.
+  breaks it. The review passes only once every blocking finding is fixed. One that cannot be fixed in this
+  PR goes under Open gaps with the reason, and stays blocking until a reviewer other than the author
+  accepts it there. A smell or taste call that cites no rule is non-blocking and says so.
+- Every new or changed test goes **red** in review, not just in principle: the reviewer flips each line it
+  guards, runs the test, and sees it fail (the **red** rule under "Testing Guidelines"). A test that stays
+  green is a blocking finding that Open gaps cannot hold: fix the test or delete it. A review that could
+  not run the tests says so, and has not passed.
+- A finding names its class, and the fix covers the class. On every re-review, rerun the search "A fix
+  names its siblings" describes for each earlier finding (the same call, predicate or literal, and the
+  entry points the gate list under "API Design" names) rather than rechecking the flagged line alone:
+  most second review rounds were a variant the first fix left open.
 - The PR description is reviewed like the code once it exists. Coverage rows, "still covered by" claims,
   the breaking-changes box and Open gaps are claims about the diff, and a claim the code contradicts is a
   finding.
@@ -71,8 +75,8 @@ These remain review checks until their enforcement handles the repository's exis
   not the same as throwing on it).
 - One rule, one source. A check enforced in two places (client and server validation, an allowlist copied
   from another module, a setting wired through each file `docs/agents/self-hosting-config.md` lists) reads
-  one shared definition, or a test keeps the copies equal. A client that accepts what the server rejects
-  is a finding.
+  one shared definition, or a test keeps the copies equal (`scripts/env-wiring.test.ts` does it for the
+  deployment files). A client that accepts what the server rejects is a finding.
 - Prose follows the code. Docs, code comments, OpenAPI descriptions, ADRs, `AGENTS.md` and the PR
   description that describe behaviour the diff changes are updated in the same PR, and every path or
   symbol they name exists.
@@ -191,8 +195,8 @@ Downloads:
 - A security check fails closed. When it hits an iteration or size cap, gets partial input, or misses an
   optional header (Origin, Fetch Metadata), it denies rather than treating the gap as a pass; abuse limits
   stay closed when Redis is down ([ADR-0016](docs/adr/0016-abuse-limits-fail-closed.md)).
-- Log a caught error through `loggableError` (`apps/web/lib/utils/loggable-error.ts`): its name and frames,
-  never its message. A message can carry prompts, file text, OAuth codes or respondent answers.
+- Log a caught error through `loggableError` (`@formbricks/logger/loggable-error`; apps/web re-exports it
+  from `apps/web/lib/utils/loggable-error.ts`): its name and frames, never its message. A message can carry prompts, file text, OAuth codes or respondent answers.
   `formbricks/loggable-error` fails a commit that logs a caught error raw on a line it changes; an error
   that cannot carry user content disables the rule on its line with the reason.
 

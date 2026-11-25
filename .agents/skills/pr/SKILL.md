@@ -21,8 +21,7 @@ the diff and the checks you actually ran.
 ### 1. Review before you write
 
 Run the `code-review` skill against the merge-base. Every Standards and Spec finding is fixed or listed
-under Open gaps before the body is written; a finding that cites a `CODING_STANDARDS.md` rule is blocking
-("The Review Gate"), so it goes under Open gaps only with the reason it cannot be fixed here.
+under Open gaps before the body is written, as "The Review Gate" in `CODING_STANDARDS.md` sets out.
 
 ### 2. Fill the template
 

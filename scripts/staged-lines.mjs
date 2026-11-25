@@ -43,3 +43,11 @@ export function decodeSonarMessage(message) {
 export function touchesStagedCode(message, ranges) {
   return [message, ...message.secondaryLocations].some((location) => touchesStagedLines(location, ranges));
 }
+
+/**
+ * How the pre-commit runner labels a staged-lines finding: a Sonar mirror says SonarCloud will flag it on
+ * the PR, a repo rule with a backlog (`formbricks/…`) only that the line is new code.
+ */
+export function stagedLinesLabel(ruleId) {
+  return ruleId?.startsWith("formbricks/") ? "error (new code)" : "error (SonarCloud, new code)";
+}
