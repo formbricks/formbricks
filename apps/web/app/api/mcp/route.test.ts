@@ -792,7 +792,8 @@ describe("POST /api/mcp", () => {
         }),
       })
     );
-    expect(applyRateLimit).toHaveBeenCalledWith(expect.any(Object), "oauth:user_1:client_1");
+    // Per user, not per client (ENG-7314).
+    expect(applyRateLimit).toHaveBeenCalledWith(expect.any(Object), "oauth:user_1");
     await readMcpResponse(response);
     expect(listV3Surveys).toHaveBeenCalledWith(
       expect.objectContaining({

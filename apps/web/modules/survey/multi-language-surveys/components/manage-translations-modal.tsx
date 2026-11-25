@@ -55,6 +55,7 @@ interface ManageTranslationsModalProps {
   readonly languageCode: string;
   readonly languageName: string;
   readonly defaultLanguageName: string;
+  readonly defaultLanguageCode: string;
   readonly workspaceId: string;
   readonly isAIAvailable: boolean;
   readonly aiUnavailableReason?: TAIUnavailableReason;
@@ -95,6 +96,7 @@ export const ManageTranslationsModal = ({
   languageCode,
   languageName,
   defaultLanguageName,
+  defaultLanguageCode,
   workspaceId,
   isAIAvailable,
   aiUnavailableReason,
@@ -191,8 +193,8 @@ export const ManageTranslationsModal = ({
       try {
         result = await translateSurveyFields(workspaceId, {
           fields: batch,
-          sourceLanguage: defaultLanguageName,
-          targetLanguage: languageName,
+          sourceLanguage: defaultLanguageCode,
+          targetLanguage: languageCode,
         });
       } catch (error) {
         if (runId !== translationRunId.current) return;

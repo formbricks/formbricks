@@ -7,6 +7,7 @@ import {
   ZWorkflowStatus,
 } from "@formbricks/workflows";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import { confirmArgument } from "./confirm-argument";
 
 // Array arguments go through `lengthBoundedArray`, as in `./schemas.ts` (ENG-3384).
 const MCP_MAX_FILTER_VALUES = 10;
@@ -181,3 +182,6 @@ export const ZMcpWorkflowIdInput = z
   })
   .strict();
 export type TMcpWorkflowIdInput = z.infer<typeof ZMcpWorkflowIdInput>;
+
+export const ZMcpDeleteWorkflowInput = ZMcpWorkflowIdInput.extend({ confirm: confirmArgument }).strict();
+export type TMcpDeleteWorkflowInput = z.infer<typeof ZMcpDeleteWorkflowInput>;

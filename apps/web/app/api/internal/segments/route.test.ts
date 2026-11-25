@@ -566,7 +566,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       WORKSPACE_ID,
       visibleWhere
     );
-    expect(mocks.checkForRecursiveSegmentFilter).toHaveBeenCalledWith(stored, SEGMENT_ID);
+    expect(mocks.checkForRecursiveSegmentFilter).toHaveBeenCalledWith(stored, SEGMENT_ID, WORKSPACE_ID);
     expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, { filters: stored });
   });
 

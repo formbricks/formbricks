@@ -1631,6 +1631,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 250,
+              "maximum": 250,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items to skip",
+            "in": "query",
+            "name": "skip",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -2422,6 +2443,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 250,
+              "maximum": 250,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items to skip",
+            "in": "query",
+            "name": "skip",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -2656,6 +2698,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 250,
+              "maximum": 250,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items to skip",
+            "in": "query",
+            "name": "skip",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -2735,6 +2798,27 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 250,
+              "maximum": 250,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items to skip",
+            "in": "query",
+            "name": "skip",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
             }
           }
         ],
@@ -3120,21 +3204,22 @@
             }
           },
           {
-            "description": "Number of items to return",
-            "example": "{{limit}}",
+            "description": "Number of items to return. Defaults to 25; a value above 250 is refused with 400 Bad Request.",
             "in": "query",
             "name": "limit",
             "schema": {
-              "minimum": 0,
+              "default": 25,
+              "maximum": 250,
+              "minimum": 1,
               "type": "integer"
             }
           },
           {
             "description": "Number of items to skip",
-            "example": "{{skip}}",
             "in": "query",
             "name": "skip",
             "schema": {
+              "default": 0,
               "minimum": 0,
               "type": "integer"
             }
@@ -4514,6 +4599,27 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 250,
+              "maximum": 250,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items to skip",
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
             }
           }
         ],
@@ -6359,6 +6465,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 250,
+              "maximum": 250,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items to skip",
+            "in": "query",
+            "name": "skip",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -6850,8 +6977,14 @@
                 "example": {
                   "deviceType": "phone",
                   "events": [
-                    { "creativeId": "clcr1234567890123456789012", "type": "impression" },
-                    { "creativeId": "clcr1234567890123456789012", "type": "click" }
+                    {
+                      "creativeId": "clcr1234567890123456789012",
+                      "type": "impression"
+                    },
+                    {
+                      "creativeId": "clcr1234567890123456789012",
+                      "type": "click"
+                    }
                   ],
                   "page": "example.com/pricing"
                 },

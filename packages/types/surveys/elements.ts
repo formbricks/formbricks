@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZStorageUrl, isSafeLinkUrl } from "../common";
 import { ZI18nString } from "../i18n";
+import { isObjectPrototypeName } from "../safe-identifier";
 import { ZAllowedFileExtension } from "../storage";
 import { TSurveyElementTypeEnum } from "./constants";
 import { ZConditionGroup } from "./logic";
@@ -20,7 +21,7 @@ export { TSurveyElementTypeEnum } from "./constants";
 
 // Element ID validation (same rules as questions - USER EDITABLE)
 export const ZSurveyElementId = z.string().superRefine((id, ctx) => {
-  if (FORBIDDEN_IDS.includes(id)) {
+  if (FORBIDDEN_IDS.includes(id) || isObjectPrototypeName(id)) {
     ctx.addIssue({
       code: "custom",
       message: `Element id is not allowed`,

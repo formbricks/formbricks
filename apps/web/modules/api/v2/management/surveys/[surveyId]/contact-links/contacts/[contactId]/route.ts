@@ -1,6 +1,6 @@
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
-import { canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
+import { SURVEY_ACTION_FOR_METHOD, canApiKeyReachSurveyResource } from "@/lib/survey/visibility/api-key";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -45,14 +45,18 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
 
       const { workspaceId } = workspaceIdResult.data;
 
+      // Checked at write level despite being a GET: this endpoint *mints* credentials rather than reading
+      // anything. Each returned link carries a signed contact token that opens the survey as that contact and
+      // submits a response for them, so a reporting-only (read) key must not be able to create them.
       if (
         !(await can(
           { type: "apiKey", id: authentication.apiKeyId },
-          getWorkspaceAuthorizationActionForMethod("GET"),
+          getWorkspaceAuthorizationActionForMethod("POST"),
           { type: "workspace", id: workspaceId }
         )) ||
-        // ENG-3282: a personal link to a restricted survey is out of an API key's reach.
-        !(await canApiKeyReachSurveyResource(authentication.apiKeyId, "survey.read", {
+        // ENG-3282: a personal link to a restricted survey is out of an API key's reach, at the same level
+        // as a response write.
+        !(await canApiKeyReachSurveyResource(authentication.apiKeyId, SURVEY_ACTION_FOR_METHOD.POST, {
           type: "survey",
           id: params.surveyId,
         }))

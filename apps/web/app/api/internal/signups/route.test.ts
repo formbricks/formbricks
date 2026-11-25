@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
@@ -630,6 +631,16 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
       expect(response.status).toBe(422);
       expect(await reasonOf(response)).toBe(SIGNUP_DISABLED_ERROR_CODE);
       expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+    });
+
+    // ENG-2347: the response is the only thing the caller sees; the operator gets a log line.
+    test("logs the rejection for the operator", async () => {
+      await signUp();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        { layer: "sign-up-route" },
+        expect.stringContaining("closed-sign-up policy")
+      );
     });
 
     test("still allows the first administrator during fresh-instance setup", async () => {

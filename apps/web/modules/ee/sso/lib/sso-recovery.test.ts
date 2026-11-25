@@ -1562,6 +1562,7 @@ describe("sso-recovery", () => {
     expect(getSsoRecoverySecondFactorRedirectUrl("https://evil.example/phish")).toBe(
       "http://localhost:3000/auth/login"
     );
+    expect(getSsoRecoverySecondFactorRedirectUrl()).toBe("http://localhost:3000/auth/login");
   });
 
   test("names the dead end when credential sign-in is off, filtering callbacks the same way", () => {

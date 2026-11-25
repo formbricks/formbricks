@@ -1,0 +1,67 @@
+---
+title: "6.3: Security hardening"
+description: "Security changes in 6.3 that change how an instance is configured, rolled back or operated."
+icon: "shield-halved"
+---
+
+**Applies to:** the upgrade to 6.3.
+
+## Auth base URL falls back to `WEBAPP_URL`
+
+Formbricks resolves the URL that sign-in links, OAuth redirects and the cross-site request check are built from as
+`BETTER_AUTH_URL`, then `NEXTAUTH_URL`, then (new in 6.3) `WEBAPP_URL`. `WEBAPP_URL` also joins the trusted origins.
+
+Before 6.3, an instance that set only `WEBAPP_URL` took that URL from each request's `Host` header, so a proxy that
+forwards any `Host` let the caller choose it. Nothing to do if you set `BETTER_AUTH_URL` or `NEXTAUTH_URL`. If you set
+neither, check that `WEBAPP_URL` is the public URL your users sign in on.
+
+## Integration tokens are encrypted at rest
+
+From 6.3, Formbricks encrypts the Slack, Google Sheets and Airtable access and refresh tokens with `ENCRYPTION_KEY`
+(Notion's were already encrypted). The upgrade's data migration encrypts every stored token, so nothing has to be
+reconnected.
+
+- **`ENCRYPTION_KEY` must be set when the migration runs.** It refuses to start without the key while there are
+  tokens to encrypt. Keep the same key you already use for Notion and the rest of Formbricks.
+- **During a rolling upgrade, pods of the previous version can't use the encrypted tokens.** Their Slack, Google
+  Sheets and Airtable deliveries fail until they are replaced; nothing is disconnected or deleted, and the next
+  response delivers normally once only 6.3 pods serve. Upgrade during a quiet period if a missed delivery matters.
+
+- **Rolling back is one-way for these integrations.** A version before 6.3 can't read an encrypted token, and the
+  upgrade encrypts all of them. If you go back after upgrading, reconnect Slack, Google Sheets and Airtable in each
+  workspace that uses them.
+- **Changing `ENCRYPTION_KEY` disconnects them.** A token encrypted with the old key can't be read with the new
+  one. That integration stops sending responses and reads as having no token, and the log shows
+  `Integration credentials no longer decrypt` with its id. The workspace's other integrations keep working.
+  Reconnect each one that is affected. Notion tokens and other data encrypted with the key stop working too, so
+  keep `ENCRYPTION_KEY` unchanged unless you plan to reconnect.
+- **A wrong key by mistake is recoverable.** Editing an affected integration's settings keeps the stored token as it
+  is, so putting the previous `ENCRYPTION_KEY` back restores the integration without reconnecting.
+
+## Rate limits return without Envoy
+
+Without `ENVOY_RATE_LIMITING_ENABLED=1`, the app enforces the rate limits itself again:
+
+- `/api/v1/management/*` and `/api/v1/webhooks` allow 100 requests per minute per API key or signed-in
+  user; storage uploads allow 5 per minute.
+- The v2 routes that reuse the v1 handlers (`environment`, `storage`, `user`, `responses/[responseId]`)
+  and `/api/v1/client/*` allow 100 requests per minute per IP, and uploads 5 per minute. These had no
+  limit on installs without an edge gateway since 5.x.
+- The v2 client `responses` and `displays` handlers run their own code, not the v1 handlers. Without a
+  gateway they stay unlimited, as before.
+
+If your gateway already limits these routes, set `ENVOY_RATE_LIMITING_ENABLED=1` so the app leaves them to
+it. Otherwise, expect `429` once a shared address — an office or a school behind one NAT — crosses the
+budget.
+
+## v1 API list limits
+
+The v1 list endpoints that take a management API key (`/api/v1/management/` surveys, responses, action classes,
+contacts, contact attributes and contact attribute keys, plus `/api/v1/webhooks`) return at most 250 items per
+request:
+
+- A request with `limit` above 250 now gets `400 Bad Request` instead of a result.
+- A request without `limit` used to return every row. It now returns the first page: 25 responses on
+  `/api/v1/management/responses`, 250 items on the others. Nothing in the response says more rows exist.
+- To read everything, page with `limit` of 250 or less and `skip` (`offset` on surveys) until a page comes back
+  shorter than `limit`.

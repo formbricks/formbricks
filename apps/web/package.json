@@ -133,6 +133,7 @@
     "dompurify": "3.4.17",
     "fflate": "0.8.3",
     "framer-motion": "12.35.2",
+    "get-nonce": "catalog:",
     "googleapis": "171.4.0",
     "heic-convert": "2.1.0",
     "i18next": "catalog:",

@@ -13,7 +13,11 @@ export const getSessionTokenFromRequest = (request: TRequestWithCookies): string
   return getSessionTokenFromCookieStore(request.cookies);
 };
 
-const getActiveSessionByToken = async (sessionToken: string | null) => {
+/**
+ * The live session row for a token: present, unexpired, and its user active. Proxy and `getSession` both
+ * decide "signed in" with this one lookup, so they cannot disagree on who is signed in.
+ */
+export const getActiveSessionByToken = async (sessionToken: string | null) => {
   if (!sessionToken) {
     return null;
   }

@@ -5,6 +5,7 @@ import { CopyIcon, SendIcon } from "lucide-react";
 import { type SyntheticEvent, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { useCspNonce } from "@/lib/csp/nonce";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -42,6 +43,8 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     return DOMPurify.sanitize(emailHtmlPreview, { ADD_ATTR: ["bgcolor", "target"] });
   }, [emailHtmlPreview]);
 
+  // A srcDoc frame inherits the page's CSP, which applies its <style> only with the page's nonce.
+  const nonce = useCspNonce();
   const emailPreviewDocument = useMemo(() => {
     if (!sanitizedEmailHtml) return "";
 
@@ -53,7 +56,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     <meta name="color-scheme" content="only light" />
     <meta name="supported-color-schemes" content="light" />
     <base target="_blank" />
-    <style>
+    <style${nonce ? ` nonce="${nonce}"` : ""}>
       :root {
         color-scheme: only light;
         supported-color-schemes: light;
@@ -69,7 +72,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   </head>
   <body>${sanitizedEmailHtml}</body>
 </html>`;
-  }, [sanitizedEmailHtml]);
+  }, [sanitizedEmailHtml, nonce]);
 
   const tabs = [
     {

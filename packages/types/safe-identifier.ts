@@ -13,6 +13,16 @@ const LEGACY_ID_CHARSET_REGEX = /^[a-zA-Z0-9_-]+$/;
 const LEGACY_VARIABLE_NAME_REGEX = /^[a-z0-9_]+$/;
 
 /**
+ * Names every plain object already has (`__proto__`, `constructor`, `toString`, ...). Answers,
+ * hidden field values and variables are keyed by declared id in plain objects, so an id with one of
+ * these names reads the inherited member instead of the stored value. Matched exactly: object keys
+ * are case-sensitive, so `Constructor` is harmless.
+ */
+const OBJECT_PROTOTYPE_NAMES: ReadonlySet<string> = new Set(Object.getOwnPropertyNames(Object.prototype));
+
+export const isObjectPrototypeName = (value: string): boolean => OBJECT_PROTOTYPE_NAMES.has(value);
+
+/**
  * Validates that a string is a safe identifier.
  * Safe identifiers can only contain lowercase letters, numbers, and underscores.
  * They cannot start with a number.

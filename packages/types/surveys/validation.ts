@@ -2,7 +2,7 @@ import { parse } from "node-html-parser";
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
 import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
-import { isLegacyIdCharset, isSafeIdentifier } from "../safe-identifier";
+import { isLegacyIdCharset, isObjectPrototypeName, isSafeIdentifier } from "../safe-identifier";
 import { FORBIDDEN_IDS, RESERVED_DECLARED_FIELD_NAMES } from "./link-survey-params";
 import type { TConditionGroup, TSingleCondition } from "./logic";
 import type {
@@ -192,6 +192,7 @@ export const validateCardFieldsForAllLanguages = (
       input: fieldLabel,
       message,
       path,
+      params: { missingLabel: true },
     };
   }
 
@@ -209,6 +210,7 @@ export const validateCardFieldsForAllLanguages = (
         input: fieldLabel,
         message: `The ${field} in ${cardTypeLabel} is not present for the following languages: ${language.language.code}`,
         path,
+        params: { missingLabel: true, invalidLanguageCodes: [language.language.code] },
       };
     }
   }
@@ -219,7 +221,7 @@ export const validateCardFieldsForAllLanguages = (
       input: fieldLabel,
       message,
       path,
-      params: { invalidLanguageCodes },
+      params: { missingLabel: true, invalidLanguageCodes },
     };
   }
 
@@ -375,7 +377,7 @@ export const validateId = (
     ? RESERVED_DECLARED_FIELD_NAMES.has(field.toLowerCase()) || RESERVED_FIELD_NAMES.has(field.toLowerCase())
     : FORBIDDEN_IDS.includes(field);
 
-  if (isReserved) {
+  if (isReserved || isObjectPrototypeName(field)) {
     return { code: TValidateIdErrorCode.Reserved, field };
   }
 

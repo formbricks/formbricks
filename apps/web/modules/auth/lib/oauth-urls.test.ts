@@ -32,6 +32,39 @@ describe("OAuth URL helpers", () => {
     constantsMock.AUTH_URL = undefined;
   });
 
+  describe("getAuthBaseUrl (Better Auth baseURL)", () => {
+    test("is undefined when no URL is configured, so Better Auth is not pinned to a guessed localhost", async () => {
+      const { getAuthBaseUrl } = await loadOAuthUrls();
+
+      expect(getAuthBaseUrl()).toBeUndefined();
+    });
+
+    test("passes a configured auth URL through verbatim", async () => {
+      constantsMock.AUTH_URL = "https://auth.example.com/custom/api/auth";
+      envMock.WEBAPP_URL = "https://app.example.com";
+
+      const { getAuthBaseUrl } = await loadOAuthUrls();
+
+      expect(getAuthBaseUrl()).toBe("https://auth.example.com/custom/api/auth");
+    });
+
+    test("falls back to WEBAPP_URL with the auth base path, never the request Host", async () => {
+      envMock.WEBAPP_URL = "https://app.example.com/";
+
+      const { getAuthBaseUrl } = await loadOAuthUrls();
+
+      expect(getAuthBaseUrl()).toBe("https://app.example.com/api/auth");
+    });
+
+    test("keeps a WEBAPP_URL subpath in the fallback", async () => {
+      envMock.WEBAPP_URL = "https://app.example.com/custom-path";
+
+      const { getAuthBaseUrl } = await loadOAuthUrls();
+
+      expect(getAuthBaseUrl()).toBe("https://app.example.com/custom-path/api/auth");
+    });
+  });
+
   test("preserves custom WEBAPP_URL subpaths for the MCP resource", async () => {
     envMock.WEBAPP_URL = "https://app.example.com/formbricks/";
 
@@ -79,6 +112,20 @@ describe("OAuth URL helpers", () => {
     const { getAuthIssuerUrl } = await loadOAuthUrls();
 
     expect(getAuthIssuerUrl()).toBe("https://admin.example.com/app/api/auth");
+  });
+
+  // ENG-7315: the SAML connection allows exactly this URL, so it must be what Better Auth sends, whatever AUTH_URL is.
+  test.each([
+    ["https://admin.example.com", "https://admin.example.com/api/auth/oauth2/callback/saml"],
+    ["https://auth.example.com/custom", "https://auth.example.com/custom/api/auth/oauth2/callback/saml"],
+    ["https://admin.example.com/app/api/auth", "https://admin.example.com/app/api/auth/oauth2/callback/saml"],
+  ])("pins the SSO callback under the auth issuer for AUTH_URL %s", async (authUrl, expected) => {
+    envMock.WEBAPP_URL = "https://admin.example.com";
+    constantsMock.AUTH_URL = authUrl;
+
+    const { getSsoCallbackUrl } = await loadOAuthUrls();
+
+    expect(getSsoCallbackUrl("saml")).toBe(expected);
   });
 
   // The MCP resource server allow-lists this exact string as the second permitted `aud` value, so

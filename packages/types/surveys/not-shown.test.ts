@@ -6,6 +6,7 @@ import {
   ZResponseNotShownInput,
   getElementOptionsNotShownFromRecord,
   getNotShownElementIds,
+  getNotShownIds,
   getOptionListKeyOfNoun,
 } from "./not-shown";
 import { SURVEY_FLOW_FIXTURE_IDS, surveyFlowFixtureNotShown } from "./test-fixtures/survey-flow-fixture";
@@ -112,4 +113,15 @@ describe("getElementOptionsNotShownFromRecord", () => {
     expect(getElementOptionsNotShownFromRecord({ options: { q2: ["b"] } }, "q1")).toEqual({});
     expect(getElementOptionsNotShownFromRecord({ rows: { q1: [] } }, "q1")).toEqual({});
   });
+
+  // ENG-6991: response ingestion spreads these lists, so an inherited member answered 500.
+  test.each(["constructor", "toString", "__proto__"])(
+    "reads only the record's own keys for an element id `%s`",
+    (elementId) => {
+      const record = { options: { q2: ["b"] }, rows: { q2: ["r"] }, columns: { q2: ["c"] } };
+
+      expect(getElementOptionsNotShownFromRecord(record, elementId)).toEqual({});
+      expect(getNotShownIds(record, "options", elementId)).toEqual([]);
+    }
+  );
 });

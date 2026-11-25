@@ -425,18 +425,37 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       );
     });
 
-    // The verified case is the overwhelming majority; emitting for it would bury the signal.
+    // The verified case is the overwhelming majority; emitting for it would bury the signal. The
+    // `created` event every sign-up records (ENG-2347) is a different event and is still expected.
     test("says nothing for a verified sign-up", async () => {
       await runAfter(true);
 
       expect(loggerWarn).not.toHaveBeenCalled();
-      expect(queueAuditEventBackground).not.toHaveBeenCalled();
+      expect(queueAuditEventBackground).not.toHaveBeenCalledWith(
+        expect.objectContaining({ action: "updated" })
+      );
     });
 
     test("provisions the user either way", async () => {
       await runAfter(false);
 
       expect(provisionSsoUserMemberships).toHaveBeenCalledTimes(1);
+    });
+
+    // A failed provisioning must not swallow the security signal: the account exists regardless.
+    test("still emits the signal when provisioning throws", async () => {
+      vi.mocked(provisionSsoUserMemberships).mockRejectedValueOnce(new Error("membership write failed"));
+
+      await expect(runAfter(false)).rejects.toThrow("membership write failed");
+      expect(loggerWarn).toHaveBeenCalledWith(
+        "SSO sign-up created an account the identity provider did not report as verified"
+      );
+      expect(queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "updated",
+          newObject: expect.objectContaining({ emailVerified: false }),
+        })
+      );
     });
 
     // Observability must never be the reason a sign-up fails: this runs post-commit, so a throw here
@@ -456,6 +475,93 @@ describe("ssoDatabaseHooks.user.create.after", () => {
 
       await expect(runAfter(false)).resolves.not.toThrow();
       expect(provisionSsoUserMemberships).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  /**
+   * ENG-2347. An SSO sign-up creates its user through these database hooks, never through the sign-up
+   * route that records `created` for credential accounts, so without this an audit log's account
+   * history silently missed every SSO account.
+   */
+  describe("the `created` audit event", () => {
+    const runAfter = (decision: Parameters<typeof setSsoProvisioningDecision>[0] = provisionDecision) =>
+      runWithSsoRequestContext(async () => {
+        setSsoProvisioningDecision(decision);
+        await after({ id: "u1", email: "a@b.com", emailVerified: true } as never, callbackCtx as never);
+      });
+
+    test("records the account creation once provisioning has run", async () => {
+      await runAfter();
+
+      expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+      expect(queueAuditEventBackground).toHaveBeenCalledWith({
+        action: "created",
+        targetType: "user",
+        userId: "u1",
+        userType: "user",
+        targetId: "u1",
+        organizationId: "org-1",
+        status: "success",
+        newObject: { id: "u1", email: "a@b.com", emailVerified: true },
+      });
+      expect(vi.mocked(provisionSsoUserMemberships).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(queueAuditEventBackground).mock.invocationCallOrder[0]
+      );
+    });
+
+    test("falls back to the unknown-organization marker when no organization was provisioned", async () => {
+      await runAfter({ ...provisionDecision, organizationId: null });
+
+      expect(queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "created", organizationId: "unknown" })
+      );
+    });
+
+    // The account exists either way (the hook runs post-commit), so it is recorded either way — as a
+    // failure, matching the credential sign-up route — and the provisioning error still propagates.
+    // The marker is an update to the user, so it must not reach the audit log before the user's creation.
+    test("records the creation before the unverified-address marker", async () => {
+      await runWithSsoRequestContext(async () => {
+        setSsoProvisioningDecision(provisionDecision);
+        await after({ id: "u1", email: "a@b.com", emailVerified: false } as never, callbackCtx as never);
+      });
+
+      expect(vi.mocked(queueAuditEventBackground).mock.calls.map(([event]) => event.action)).toEqual([
+        "created",
+        "updated",
+      ]);
+    });
+
+    test("records a failure when provisioning throws, and rethrows", async () => {
+      vi.mocked(provisionSsoUserMemberships).mockRejectedValueOnce(new Error("membership write failed"));
+
+      await expect(runAfter()).rejects.toThrow("membership write failed");
+      expect(queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({ action: "created", targetId: "u1", status: "failure" })
+      );
+    });
+
+    test.each([
+      {
+        label: "throws synchronously",
+        impl: () => {
+          throw new Error("audit sink unavailable");
+        },
+      },
+      { label: "rejects asynchronously", impl: async () => Promise.reject(new Error("audit sink down")) },
+    ])("a failing audit sink that $label does not break the sign-up", async ({ impl }) => {
+      vi.mocked(queueAuditEventBackground).mockImplementation(impl);
+
+      await expect(runAfter()).resolves.toBeUndefined();
+      expect(identifyPostHogPerson).toHaveBeenCalledTimes(1);
+    });
+
+    test("records nothing for a user creation that is not an SSO sign-up", async () => {
+      await runWithSsoRequestContext(() =>
+        after({ id: "u1", email: "a@b.com" } as never, { path: "/sign-up/email" } as never)
+      );
+
+      expect(queueAuditEventBackground).not.toHaveBeenCalled();
     });
   });
 

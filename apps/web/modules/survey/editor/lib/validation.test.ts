@@ -176,8 +176,9 @@ describe("survey schema multilingual label validation", () => {
       code: "custom",
       message: "The note on the Welcome card is missing",
       path: ["welcomeCard", "cardHeadline"],
+      params: { missingLabel: true },
     });
-    expect(issue?.params).toBeUndefined();
+    expect(issue?.params).not.toHaveProperty("invalidLanguageCodes");
   });
 
   test("returns language params when only a translated welcome card headline is missing", () => {
@@ -192,7 +193,7 @@ describe("survey schema multilingual label validation", () => {
       code: "custom",
       message: "The note on the Welcome card is missing for the following languages:  -fLang- de",
       path: ["welcomeCard", "cardHeadline"],
-      params: { invalidLanguageCodes: ["de"] },
+      params: { missingLabel: true, invalidLanguageCodes: ["de"] },
     });
   });
 
@@ -209,8 +210,9 @@ describe("survey schema multilingual label validation", () => {
       code: "custom",
       message: "The note on the Ending card 3 is missing",
       path: ["endings", 2, "cardHeadline"],
+      params: { missingLabel: true },
     });
-    expect(issue?.params).toBeUndefined();
+    expect(issue?.params).not.toHaveProperty("invalidLanguageCodes");
   });
 
   test("returns all invalid language params for mixed valid and invalid ending card translations", () => {
@@ -227,7 +229,7 @@ describe("survey schema multilingual label validation", () => {
       message:
         "The button label on the Ending card 2 is missing for the following languages:  -fLang- de, fr",
       path: ["endings", 1, "endingCardButtonLabel"],
-      params: { invalidLanguageCodes: ["de", "fr"] },
+      params: { missingLabel: true, invalidLanguageCodes: ["de", "fr"] },
     });
   });
 
@@ -243,8 +245,9 @@ describe("survey schema multilingual label validation", () => {
     expect(issue).toMatchObject({
       message: "The question in question 1 of block 2 is missing",
       path: ["blocks", 1, "elements", 0, "headline"],
+      params: { missingLabel: true },
     });
-    expect(issue?.params).toBeUndefined();
+    expect(issue?.params).not.toHaveProperty("invalidLanguageCodes");
   });
 
   test("returns a block-editor issue when a question default headline is missing", () => {
@@ -274,7 +277,36 @@ describe("survey schema multilingual label validation", () => {
     expect(issue).toMatchObject({
       message: "The question in question 1 of block 2 is missing for the following languages:  -fLang- de",
       path: ["blocks", 1, "elements", 0, "headline"],
-      params: { invalidLanguageCodes: ["de"] },
+      params: { missingLabel: true, invalidLanguageCodes: ["de"] },
+    });
+  });
+
+  test("names the language a block element label has no key for, like an empty translation", () => {
+    const issue = validateElementLabels(
+      "headline",
+      { default: "Question", en: "Question" },
+      surveyLanguagesEnabled,
+      0,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      path: ["blocks", 0, "elements", 0, "headline"],
+      params: { missingLabel: true, invalidLanguageCodes: ["de"] },
+    });
+  });
+
+  test("names the language a card label has no key for, like an empty translation", () => {
+    const issue = validateCardFieldsForAllLanguages(
+      "cardHeadline",
+      { default: "Welcome", en: "Welcome" },
+      surveyLanguagesEnabled,
+      "welcome"
+    );
+
+    expect(issue).toMatchObject({
+      path: ["welcomeCard", "cardHeadline"],
+      params: { missingLabel: true, invalidLanguageCodes: ["de"] },
     });
   });
 });
