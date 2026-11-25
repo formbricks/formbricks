@@ -5,6 +5,8 @@ import { isPublicDomainConfigured, isRequestFromPublicDomain } from "@/app/middl
 import { isAuthProtectedRoute, isRouteAllowedForDomain } from "@/app/middleware/endpoint-validator";
 import { getUnauthenticatedRootRedirectPath } from "@/app/middleware/root-redirect";
 import { TRUSTED_PROXY_HOP_COUNT, WEBAPP_URL } from "@/lib/constants";
+import { CSP_HEADER, CSP_NONCE_HEADER } from "@/lib/csp/content-security-policy";
+import { type TRequestCsp, getRequestCsp } from "@/lib/csp/request-csp";
 import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
 import { FORMBRICKS_CLIENT_IP_HEADER, resolveClientIp } from "@/lib/utils/client-ip";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
@@ -121,6 +123,18 @@ const isPrefetchRequest = (request: NextRequest): boolean =>
  * `lib/next-proxy-body.test.ts` enforces both halves.
  */
 export const proxy = async (originalRequest: NextRequest) => {
+  // Every response gets this request's policy: pages so their scripts and styles run only with its
+  // nonce, redirects and errors so no response from here goes out without one.
+  const csp = getRequestCsp(originalRequest.nextUrl.pathname);
+  const response = await handleRequest(originalRequest, csp);
+  if (csp.policy) response.headers.set(CSP_HEADER, csp.policy);
+  return response;
+};
+
+const handleRequest = async (
+  originalRequest: NextRequest,
+  { nonce, policy }: TRequestCsp
+): Promise<NextResponse> => {
   // Handle domain-aware routing first
   const domainResponse = handleDomainAwareRouting(originalRequest);
   if (domainResponse) return domainResponse;
@@ -141,6 +155,12 @@ export const proxy = async (originalRequest: NextRequest) => {
     // trust boundary; downstream code must never see an identity Proxy did not establish itself.
     request.headers.delete(FORMBRICKS_CLIENT_IP_HEADER);
   }
+
+  // Next reads the nonce from the request's policy and puts it on the scripts and styles it renders;
+  // server components read it from CSP_NONCE_HEADER. Set (or cleared) here so a caller cannot choose it.
+  request.headers.set(CSP_NONCE_HEADER, nonce);
+  if (policy) request.headers.set(CSP_HEADER, policy);
+  else request.headers.delete(CSP_HEADER);
 
   request.headers.set("x-request-id", uuidv4());
   request.headers.set("x-start-time", Date.now().toString());

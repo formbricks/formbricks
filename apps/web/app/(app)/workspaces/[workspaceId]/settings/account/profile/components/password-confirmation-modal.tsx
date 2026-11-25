@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { ZUserPassword } from "@formbricks/types/user";
+import { ZUserCurrentPassword } from "@formbricks/types/user";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -27,7 +27,7 @@ interface PasswordConfirmationModalProps {
 }
 
 const PasswordConfirmationSchema = z.object({
-  password: ZUserPassword,
+  password: ZUserCurrentPassword,
 });
 
 type FormValues = z.infer<typeof PasswordConfirmationSchema>;

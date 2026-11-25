@@ -11,6 +11,7 @@ import {
   TIntegrationInput,
   ZIntegrationType,
 } from "@formbricks/types/integration";
+import { decryptIntegrationConfig, encryptIntegrationConfig } from "@/lib/integration/credentials";
 import { withStoredIntegrationKey } from "@/lib/integration/redact-credentials";
 import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import { loggableError } from "@/lib/utils/loggable-error";
@@ -28,10 +29,22 @@ const getIntegrationSurveyIds = (config: unknown): string[] => {
 };
 
 const transformIntegration = (integration: TIntegration): TIntegration => {
+  // Every read of a stored integration passes through here, so callers always get usable tokens. A token that
+  // no longer decrypts reads as "" (reconnect) for this integration only; the others of the workspace still load.
+  let undecryptable = false;
+  const config = decryptIntegrationConfig(integration.type, integration.config, () => {
+    undecryptable = true;
+  });
+  if (undecryptable) {
+    logger.warn(
+      { integrationId: integration.id, workspaceId: integration.workspaceId, type: integration.type },
+      "Integration credentials no longer decrypt with ENCRYPTION_KEY; the integration needs reconnecting"
+    );
+  }
   return {
     ...integration,
     config: {
-      ...integration.config,
+      ...config,
       data: integration.config.data.map((data) => ({
         ...data,
         createdAt: new Date(data.createdAt),
@@ -108,10 +121,16 @@ export const createOrUpdateIntegration = async (
   await assertMappedSurveysVisible(integrationData, existing?.config);
 
   try {
+    // ENG-7311: tokens are encrypted before they reach the database. The returned row is the stored
+    // one (ciphertext), which is what the audit log should see; read it back through the getters.
+    const storedData = {
+      ...integrationData,
+      config: encryptIntegrationConfig(integrationData.type, integrationData.config),
+    } as TIntegrationInput;
     return await prisma.integration.upsert({
       where: { type_workspaceId: { workspaceId, type: integrationData.type } },
-      update: integrationWrite(workspaceId, integrationData),
-      create: integrationWrite(workspaceId, integrationData),
+      update: integrationWrite(workspaceId, storedData),
+      create: integrationWrite(workspaceId, storedData),
     });
   } catch (error) {
     throw toDatabaseError(error);
@@ -133,6 +152,11 @@ export const createOrUpdateIntegration = async (
  * With no stored row there is nothing to lock or keep, so the save only creates one: a callback that
  * inserts the row meanwhile makes it fail on the unique key rather than be overwritten with the
  * client's key.
+ *
+ * The locked read takes the stored `config` as persisted, credentials still encrypted: reading it through
+ * the decrypting getter would blank a token that no longer decrypts, and writing "" back would erase the
+ * ciphertext for good, so fixing a wrong `ENCRYPTION_KEY` could not recover it. Ciphertext passes through
+ * `encryptIntegrationConfig` unchanged, so the save is lossless.
  */
 export const saveIntegrationKeepingStoredKey = async (
   workspaceId: string,
@@ -154,9 +178,17 @@ export const saveIntegrationKeepingStoredKey = async (
       await assertNewlyMappedSurveysInWorkspace(tx, workspaceId, merged, stored?.config);
       await assertMappedSurveysVisible(merged, stored?.config, tx);
 
+      // ENG-7311: encrypt before the write. The stored key comes from the raw read above, so ciphertext
+      // passes through unchanged (a token that no longer decrypts is not blanked) and a legacy plaintext
+      // token is upgraded on save.
+      const storedData = {
+        ...merged,
+        config: encryptIntegrationConfig(merged.type, merged.config),
+      } as TIntegrationInput;
+
       return stored
-        ? tx.integration.update({ where, data: integrationWrite(workspaceId, merged) })
-        : tx.integration.create({ data: integrationWrite(workspaceId, merged) });
+        ? tx.integration.update({ where, data: integrationWrite(workspaceId, storedData) })
+        : tx.integration.create({ data: integrationWrite(workspaceId, storedData) });
     });
   } catch (error) {
     throw toDatabaseError(error);

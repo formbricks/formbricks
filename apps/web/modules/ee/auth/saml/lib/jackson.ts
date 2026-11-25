@@ -124,6 +124,10 @@ export default async function init() {
       // logs each failure with its identifiers instead (issuer, response ID, InResponseTo), and jackson's own
       // lines go through `jacksonLogger`.
       ssoTraces: { disable: true },
+      // Jackson compares only the origin of a redirect_uri with the connection's `redirectUrl` unless told to match
+      // the path as well. Formbricks has one callback, so only that exact path may receive an authorization code
+      // (ENG-7315).
+      openid: { redirectExactMatch: true },
       // `idpEnabled` stays unset (off): the callback route only gives the parse worker jackson's key for responses to
       // sign-ins jackson started, which are the only ones it decrypts (ENG-4051). Turning IdP-initiated sign-in on
       // needs that route changed first, or encrypted IdP-initiated assertions reach jackson unmeasured.

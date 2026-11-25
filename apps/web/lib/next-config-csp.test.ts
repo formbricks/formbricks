@@ -6,12 +6,11 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { mimeTypes } from "@formbricks/types/storage";
 
-// Guards ENG-3194. Sentry Session Replay compresses recordings in a `blob:` worker. Without an
-// explicit `worker-src`, browsers fall back to `script-src`, which has no `blob:`, so the worker is
-// blocked on every page and a console error is the only sign. Asserted on the `headers()` output
-// rather than the source, so every rule that sets a CSP is covered, including any added later.
-// The file also guards other security headers from that output: framing (ENG-7395) and the absence
-// of a wildcard CORS header on favicons, which scanners flag as a cross-domain misconfiguration.
+// Pages get their CSP from proxy.ts (lib/csp/content-security-policy.ts, whose tests guard ENG-3194's
+// `worker-src`); next.config.mjs keeps only the policies of uploaded files and of the asset paths the
+// proxy skips. The file also guards other security headers from the `headers()` output: framing
+// (ENG-7395) and the absence of a wildcard CORS header on favicons, which scanners flag as a
+// cross-domain misconfiguration.
 
 // next.config.mjs validates the app env when it is imported. These are the vars with no default; CI
 // blanks REDIS_URL in its .env, so they are stubbed rather than read from the environment.
@@ -27,16 +26,8 @@ const REQUIRED_ENV = {
 
 let nextConfig: NextConfig;
 
-const getWorkerSources = (csp: string): string[] | undefined => {
-  const directive = csp
-    .split(";")
-    .map((part) => part.trim().split(/\s+/))
-    .find(([name]) => name === "worker-src");
-  return directive?.slice(1);
-};
-
-// A policy that runs no script at all needs no worker either: a bare `sandbox` (no `allow-scripts`),
-// or `default-src 'none'` with no `script-src` to override it.
+// A policy that runs no script at all, as the uploaded-file ones do: a bare `sandbox` (no
+// `allow-scripts`), or `default-src 'none'` with no `script-src` to override it.
 const isScriptless = (csp: string): boolean => {
   const directives = csp.split(";").map((part) => part.trim());
   return (
@@ -72,23 +63,46 @@ afterAll(() => {
   vi.unstubAllEnvs();
 });
 
-describe("CSP lets Sentry Replay start its blob: worker (ENG-3194)", () => {
-  test.each(["production", "development"])("every CSP allows blob: workers in %s", async (nodeEnv) => {
+describe("CSP for pages", () => {
+  const effectiveCspOf = (pathname: string) => effectiveHeader(pathname, "Content-Security-Policy");
+
+  // Browsers enforce every policy a response carries, so a page policy here could only block more than
+  // the proxy's nonce policy, and scanners would still report it.
+  test.each(["production", "development"])("next.config sets none on page routes in %s", async (nodeEnv) => {
     vi.stubEnv("NODE_ENV", nodeEnv);
 
-    const rules = (await nextConfig.headers?.()) ?? [];
-    const policies = rules.flatMap((rule) =>
-      rule.headers
-        .filter((header) => header.key === "Content-Security-Policy" && !isScriptless(header.value))
-        .map((header) => ({ source: rule.source, workerSources: getWorkerSources(header.value) }))
-    );
-
-    // The app routes and the embeddable /s/ and /c/ survey routes each set their own CSP.
-    expect(policies.length).toBeGreaterThanOrEqual(2);
-    for (const { source, workerSources } of policies) {
-      expect(workerSources, `CSP for ${source}`).toEqual(expect.arrayContaining(["'self'", "blob:"]));
+    for (const pathname of [
+      "/",
+      "/auth/login",
+      "/workspaces/ws1/surveys",
+      "/s/survey1",
+      "/c/token",
+      "/api/v1/x",
+    ]) {
+      expect(await effectiveCspOf(pathname), pathname).toBeUndefined();
     }
   });
+
+  // proxy.ts does not run on asset paths, yet a missing asset there still renders the app's 404 page.
+  test.each([
+    "/js/missing.js",
+    "/images/missing",
+    "/animated-bgs/missing",
+    "/_next/static/missing.js",
+    "/_next/image",
+    "/favicon.ico",
+    "/robots.txt",
+  ])(
+    "gives %s, which the proxy skips, a policy with no inline code and no other origin",
+    async (pathname) => {
+      const csp = await effectiveCspOf(pathname);
+
+      expect(csp).toMatch(/script-src 'self';/);
+      expect(csp).not.toMatch(/(script|style)-src [^;]*'unsafe-inline'/);
+      expect(csp).not.toContain("https:");
+      expect(csp).toContain("object-src 'none'");
+    }
+  );
 });
 
 // Guards ENG-7108. A route handler cannot set its own CSP (the config's replaces it), so the policy for
@@ -147,16 +161,14 @@ describe("CSP for uploaded files (ENG-7108)", () => {
   );
 
   test("does not touch app pages", async () => {
-    expect(isScriptless((await effectiveCsp("/workspaces/ws1/surveys")) ?? "")).toBe(false);
+    expect(await effectiveCsp("/workspaces/ws1/surveys")).toBeUndefined();
   });
 });
 
 describe("framing of the SSO recovery confirmation (ENG-7395)", () => {
   test("refuses every frame, same origin included", async () => {
+    // X-Frame-Options here; `frame-ancestors 'none'` comes with the proxy's policy (lib/csp).
     expect(await effectiveHeader("/sso-recovery/confirm", "X-Frame-Options")).toBe("DENY");
-    expect(await effectiveHeader("/sso-recovery/confirm", "Content-Security-Policy")).toMatch(
-      /frame-ancestors 'none'$/
-    );
   });
 
   test("leaves other app pages framable by their own origin", async () => {

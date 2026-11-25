@@ -99,6 +99,25 @@ export const FULL_MCP_GRANT: TMcpGrant = {
   ) as TMcpGrantPermissions,
 };
 
+/**
+ * A `tools/call` context for a person's OAuth token on a client that declared the `elicitation`
+ * capability: the case where the user can be asked, so the model's own `confirm: true` must not count.
+ * Carries `FULL_MCP_GRANT`, so the grant gate lets the call through to the confirmation step.
+ */
+export const elicitingOAuthContext = (authInfo: { extra: Record<string, unknown> }) => ({
+  http: {
+    authInfo: {
+      ...authInfo,
+      token: "oauth:user_1:client_1",
+      extra: { ...authInfo.extra, authMethod: "oauth", grant: FULL_MCP_GRANT },
+    },
+  },
+  mcpReq: {
+    method: "tools/call",
+    envelope: { "io.modelcontextprotocol/clientCapabilities": { elicitation: { form: {} } } },
+  },
+});
+
 /** What a registered tool handler returns, as the handler-level tool tests read it. */
 export type TToolResult = {
   isError?: boolean;

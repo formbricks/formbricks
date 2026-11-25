@@ -1,7 +1,6 @@
 import type { TFunction } from "i18next";
 import { BarChart3Icon, type LucideIcon, MousePointerClickIcon, UsersIcon } from "lucide-react";
 
-export const AI_SURVEY_PROMPT_MIN_LENGTH = 4;
 export const AI_SURVEY_PROMPT_MAX_LENGTH = 1200;
 
 export const getHelperPrompts = (

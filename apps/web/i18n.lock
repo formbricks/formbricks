@@ -186,7 +186,7 @@ checksums:
     auth/signup/log_in: 9fb886eff8d1d67d8bb79f5c3f78edde
     auth/signup/password_requirements: 58d15c4e16b28c51b83977d0c2af17bc
     auth/signup/password_validation_contain_at_least_1_number: 58fb33a486aa4dadfc05e3242fc7ea0b
-    auth/signup/password_validation_minimum_8_and_maximum_128_characters: ec704690a454c7f01e59856c39206259
+    auth/signup/password_validation_minimum_8_characters_and_maximum_72_bytes: 4a97a8bfd5bf9048b3896657145f9b74
     auth/signup/password_validation_uppercase_and_lowercase: ae98b485024dbff1022f6048e22443cd
     auth/signup/please_verify_captcha: 12938ca7ca13e3f933737dd5436fa1c0
     auth/signup/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
@@ -399,6 +399,7 @@ checksums:
     common/hidden: fa290c6ada5869d744ed35e9cca64699
     common/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
     common/hidden_fields: 3de6cfd308293a826cb8679fd1d49972
+    common/hide: a6088b934651055bb27314d111be510b
     common/hide_password: dd9813264cfc4a7ae515cd5644943c1b
     common/html: f750870203043349d570d8f5865ca0f8
     common/id: c8886d38aeea2ed5f785aba4fc96784b
@@ -3919,6 +3920,7 @@ checksums:
     workspace/surveys/ai_create/prompt_helper_pmf: 2b723fab80c2b865276a47e89e04d37e
     workspace/surveys/ai_create/prompt_helper_pmf_label: e47851c38ac0ee43597b4288d21500f8
     workspace/surveys/ai_create/prompt_label: 7d6d9969f13a0fb453cd63e239dec385
+    workspace/surveys/ai_create/prompt_needs_more_detail: 0b6fabb3fac8934bb548f1e5a9857583
     workspace/surveys/ai_create/prompt_placeholder: 75155ac1c57f46766b8e9c8531a9b25f
     workspace/surveys/ai_create/provider_auth_failed: 3c6539beae89a928a23c532dd330e4f7
     workspace/surveys/ai_create/regenerate: 79bc737effc16d0546c048c6aa2ec415
@@ -4013,9 +4015,9 @@ checksums:
     workspace/surveys/edit/app_survey_description: bdfacfce478e97f70b700a1382dfa687
     workspace/surveys/edit/assign: 0554da40e5fa892a47d93ddf6639b654
     workspace/surveys/edit/audience: a4d9fab4214a641e2d358fbb28f010e0
+    workspace/surveys/edit/auto_advance_after_one_answer: 66b6aea3191a357d0e46dc7fdcad05df
+    workspace/surveys/edit/auto_advance_after_one_answer_description: bb22de4e66b5b83f72f928bc8c1c0679
     workspace/surveys/edit/auto_close_on_inactivity: 093db516799315ccd4242a3675693012
-    workspace/surveys/edit/auto_progress_rating_and_nps: 76b98e95a5b850850baa0ccc3c7fbf7c
-    workspace/surveys/edit/auto_progress_rating_and_nps_description: cd0cba45fea0157aee460914da3879b4
     workspace/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
     workspace/surveys/edit/auto_save_disabled_tooltip: d2dcdbb63a8e5db40fff711f85dd4dbd
     workspace/surveys/edit/auto_save_failed: 460812aa4bf51b7888dc7d78bcadad9c
@@ -4482,6 +4484,15 @@ checksums:
     workspace/surveys/edit/max_file_size_limit_is_mb: 183aecf2f5bb17cd13cf048a2a725b4a
     workspace/surveys/edit/max_file_size_limit_is_mb_upgrade: 6bbebb9deb49fd351babcc39cd76b47c
     workspace/surveys/edit/missing_first: a0c8802636ade7bac86a0dacba00b8d4
+    workspace/surveys/edit/missing_label/choice_image_alt_text: b3c79212f5df722f5c28e8503cbe2fb7
+    workspace/surveys/edit/missing_label/in_question: 851bfe3a4369309e943eeacaa9d736a4
+    workspace/surveys/edit/missing_label/in_question_for_languages: 8a3e755711485669bfa89599ef2ebff8
+    workspace/surveys/edit/missing_label/on_ending_card: 49d1ab850ca7afd3d0db5d3dc5677b2d
+    workspace/surveys/edit/missing_label/on_ending_card_for_languages: 96e1f61eacebbedc4716fbf98ad7e43f
+    workspace/surveys/edit/missing_label/on_welcome_card: d688fe2a6b0b087e77337a318df5c4b5
+    workspace/surveys/edit/missing_label/on_welcome_card_for_languages: 8fe9dfa282b2292ece8f6d53cd4d285f
+    workspace/surveys/edit/missing_label/question_text: 659f1e0bbc4e96f5320a5b1992c4b61f
+    workspace/surveys/edit/missing_label/subfield_label: ef6fd9dec55f2979b69423e542a50b5d
     workspace/surveys/edit/mobile_preview: 7f21be8b4113adfa0dc16748923b5b55
     workspace/surveys/edit/move_question_to_block: e8d7ef1e2f727921cb7f5788849492ad
     workspace/surveys/edit/multiply: 8f11f66eb447d2f7e4a81648baf1abc3

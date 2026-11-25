@@ -2,8 +2,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
-import { CONTROL_HASH } from "@/lib/constants";
-import { hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
+import { hashSha256, isApiKeyLookupHashMatch, parseApiKeyV2 } from "@/lib/crypto";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
@@ -29,12 +28,12 @@ const apiKeySelect = {
       permission: true,
     },
   },
-  hashedKey: true,
+  lookupHash: true,
 };
 
 type ApiKeyData = {
   id: string;
-  hashedKey: string;
+  lookupHash: string | null;
   organizationId: string;
   lastUsedAt: Date | null;
   apiKeyWorkspaces: Array<{
@@ -79,13 +78,10 @@ const validateV2ApiKey = async (v2Parsed: { secret: string }): Promise<ApiKeyDat
     select: apiKeySelect,
   });
 
-  // Step 2: Security verification with bcrypt
-  // Always perform bcrypt verification to prevent timing attacks
-  // Use a control hash when API key doesn't exist to maintain constant timing
-  const hashToVerify = apiKeyData?.hashedKey || CONTROL_HASH;
-  const isValid = await verifySecret(v2Parsed.secret, hashToVerify);
-
-  if (!apiKeyData || !isValid) return null;
+  // Step 2: a row found by SHA-256(secret) already proves possession of the 32-byte random secret
+  // (see getApiKeyWithPermissions); no bcrypt, so random keys cannot burn CPU. Constant-time check
+  // as defense-in-depth.
+  if (!apiKeyData || !isApiKeyLookupHashMatch(apiKeyData.lookupHash, lookupHash)) return null;
 
   return apiKeyData;
 };

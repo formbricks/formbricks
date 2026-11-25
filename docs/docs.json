@@ -125,6 +125,7 @@
                 "icon": "wrench",
                 "pages": [
                   "surveys/general-features/add-image-or-video-question",
+                  "surveys/general-features/auto-advance",
                   "surveys/general-features/flow-tab",
                   "surveys/general-features/set-value",
                   "surveys/general-features/show-if",
@@ -414,7 +415,8 @@
                       "self-hosting/upgrade/versions/attachment-exports",
                       "self-hosting/upgrade/versions/valkey-9",
                       "self-hosting/upgrade/versions/cube-memory",
-                      "self-hosting/upgrade/versions/helm-bundled-database"
+                      "self-hosting/upgrade/versions/helm-bundled-database",
+                      "self-hosting/upgrade/versions/6.3-security-hardening"
                     ]
                   },
                   {

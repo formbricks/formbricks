@@ -15,6 +15,7 @@ import { changeV3SurveyVisibility, getV3SurveyVisibility } from "@/app/api/v3/su
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import { runConfirmedDelete } from "./delete-confirmation";
 import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
@@ -546,7 +547,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Delete survey",
       description:
-        "Delete a Formbricks survey using the v3 Surveys API contract. Refused with a 409 (code survey_has_linked_creatives, listing them in details.creatives) while non-archived creatives open the survey: delete those first (pausing or closing one keeps it linked). A survey that is not a draft and has responses is deleted with them only when you pass confirm: true, after the user agreed; without it the call returns the warning to show them.",
+        "Delete a Formbricks survey and all of its responses using the v3 Surveys API contract. The user is asked to confirm first; it cannot be undone. Refused with a 409 (code survey_has_linked_creatives, listing them in details.creatives) while non-archived creatives open the survey: delete those first (pausing or closing one keeps it linked).",
       inputSchema: ZMcpDeleteSurveyInput,
       audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
@@ -557,19 +558,30 @@ export function registerSurveyTools(server: McpServer): void {
       },
     },
     [{ permission: "surveys", level: "write" }],
+    // Finding 07: deleting a survey removes its responses for good, so the user confirms first and the
+    // model's own `confirm` counts only where the client cannot ask (see `runConfirmedDelete`).
     async (input: TMcpDeleteSurveyInput, ctx) =>
-      runMcpMutation(
+      runConfirmedDelete({
+        tool: "delete_survey",
+        resourceKey: input.surveyId,
+        prompt: `Permanently delete survey ${input.surveyId} and all of its responses? This cannot be undone.`,
+        confirm: input.confirm,
         ctx,
-        { action: "deleted", resource: "survey", logContext: { surveyId: input.surveyId } },
-        ({ authentication, requestId, auditLog }) =>
-          deleteV3Survey({
-            surveyId: input.surveyId,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-            writeConfirmation: { confirmed: input.confirm === true },
-          })
-      )
+        run: () =>
+          runMcpMutation(
+            ctx,
+            { action: "deleted", resource: "survey", logContext: { surveyId: input.surveyId } },
+            ({ authentication, requestId, auditLog }) =>
+              deleteV3Survey({
+                surveyId: input.surveyId,
+                authentication,
+                requestId,
+                instance: MCP_API_ROUTE,
+                auditLog,
+                // Reached only after the user agreed, through the prompt or a client that cannot ask.
+                writeConfirmation: { confirmed: true },
+              })
+          ),
+      })
   );
 }

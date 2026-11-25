@@ -146,7 +146,7 @@ const renameSurvey = (accessToken: string, setup: TSetup) =>
   callMcpTool({ accessToken }, "patch_survey", { surveyId: setup.surveyId, data: { name: "Renamed" } });
 
 const deleteSurvey = (accessToken: string, setup: TSetup) =>
-  callMcpTool({ accessToken }, "delete_survey", { surveyId: setup.surveyId });
+  callMcpTool({ accessToken }, "delete_survey", { surveyId: setup.surveyId, confirm: true });
 
 /** The problem a refused tool answered with; a tool result carries it under `error`. */
 const problemOf = (outcome: TMcpToolCallOutcome) =>

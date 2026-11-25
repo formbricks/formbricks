@@ -11,6 +11,7 @@ import {
   getDisplayForResponseValidation,
   getDisplaysByContactId,
   getDisplaysBySurveyIdWithContact,
+  isDisplayOfSurvey,
 } from "../service";
 
 const mockContactId = "clqnj99r9000008lebgf8734j";
@@ -490,5 +491,34 @@ describe("assertDisplayOwnership", () => {
     await expect(
       assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, mockContactId)
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("isDisplayOfSurvey", () => {
+  test("is true for a display of the survey", async () => {
+    vi.mocked(prisma.display.findUnique, { partial: true }).mockResolvedValue({ surveyId: mockSurveyId });
+    await expect(isDisplayOfSurvey(mockDisplayId, mockSurveyId)).resolves.toBe(true);
+    expect(prisma.display.findUnique).toHaveBeenCalledWith({
+      where: { id: mockDisplayId },
+      select: { surveyId: true },
+    });
+  });
+
+  // One `false` for both, so callers cannot turn this into a display-id existence oracle.
+  test.each([
+    ["belongs to another survey", { surveyId: "other-survey" }],
+    ["does not exist", null],
+  ])("is false for a display that %s", async (_label, row) => {
+    vi.mocked(prisma.display.findUnique, { partial: true }).mockResolvedValue(row);
+    await expect(isDisplayOfSurvey(mockDisplayId, mockSurveyId)).resolves.toBe(false);
+  });
+
+  test("reads through the transaction client when given one", async () => {
+    const tx = { display: { findUnique: vi.fn().mockResolvedValue({ surveyId: mockSurveyId }) } };
+    await expect(
+      isDisplayOfSurvey(mockDisplayId, mockSurveyId, tx as unknown as Prisma.TransactionClient)
+    ).resolves.toBe(true);
+    expect(tx.display.findUnique).toHaveBeenCalledTimes(1);
+    expect(prisma.display.findUnique).not.toHaveBeenCalled();
   });
 });
