@@ -227,8 +227,12 @@ more so you can approve `audience:read`. API keys have no grant and work as befo
 
 Feedback records can be filtered by source, question, submission, end user, chosen option, language, date
 range, and by enrichment output — sentiment, emotions and whether a record has been enriched or translated
-at all. Any filter accepts several values, which are OR-ed, while different filters are AND-ed, and the
-listing can be ordered by when feedback was collected or when it was stored. `count_feedback_records`
+at all. A filter on ids, types, sources, questions, languages, options, sentiment or emotions accepts
+several values, which are OR-ed; the date and number bounds (`since`/`until`, `created_*`, `updated_*`,
+`value_date_*`, `value_number_*`, `sentiment_score_*`) and the `has_*` switches take one value each. Different filters are
+AND-ed. Dates are RFC 3339 date-times such as `2026-10-05T00:00:00Z`; a date alone is refused. The listing
+can be ordered by when feedback was collected, when it was stored, or when it last changed
+(`sort: updated_at`, which pairs with `updated_since`). `count_feedback_records`
 answers "how many" without fetching the records themselves — so an agent can report totals without pulling
 anyone's feedback text into the conversation.
 
