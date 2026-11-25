@@ -89,6 +89,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
   return (
     <PageContentWrapper>
       <PageHeader
+        wrapCta
         pageTitle={survey.name}
         cta={
           <SurveyAnalysisCTA
