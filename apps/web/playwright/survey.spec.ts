@@ -1017,6 +1017,90 @@ test.describe("Testing Survey with advanced logic", async () => {
   });
 });
 
+test("opens responses and contacts from the summary with the keyboard", async ({ page, users }) => {
+  const user = await users.create({ skipSurveySeed: true });
+  if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
+  const workspaceId = user.workspaceId;
+  const elementId = createId();
+  const block: TSurveyBlock = {
+    id: createId(),
+    name: "Feedback",
+    elements: [
+      {
+        id: elementId,
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: { default: "How was your visit?" },
+        required: false,
+        inputType: "text",
+        charLimit: { enabled: false },
+      },
+    ],
+  };
+  const email = "respondent@example.com";
+  const answer = "The instructions were easy to follow.";
+  const [survey, contact] = await Promise.all([
+    prisma.survey.create({
+      data: {
+        workspaceId,
+        createdBy: user.id,
+        name: "Visit feedback",
+        type: "link",
+        status: "inProgress",
+        blocks: [block] as unknown as Prisma.InputJsonValue[],
+      },
+    }),
+    prisma.contact.create({
+      data: {
+        workspaceId,
+        attributes: {
+          create: {
+            value: email,
+            attributeKey: { connect: { key_workspaceId: { key: "email", workspaceId } } },
+          },
+        },
+      },
+    }),
+  ]);
+  await prisma.response.create({
+    data: {
+      surveyId: survey.id,
+      contactId: contact.id,
+      contactAttributes: { email },
+      finished: true,
+      data: { [elementId]: answer },
+    },
+  });
+
+  await user.login();
+  await page.goto(`/workspaces/${workspaceId}/surveys/${survey.id}/summary`);
+  const row = page.getByRole("button", { name: "Open response details" }).filter({ hasText: answer });
+  const responseDialog = page.getByRole("dialog", { name: "Response", exact: true });
+
+  await test.step("Enter and Space on the response row open its details", async () => {
+    for (const key of ["Enter", "Space"]) {
+      // The server renders the row before its keyboard handler hydrates.
+      await expect(async () => {
+        if (!(await responseDialog.isVisible())) await row.press(key, { timeout: 3000 });
+        await expect(responseDialog).toBeVisible({ timeout: 3000 });
+      }).toPass({ timeout: 15000 });
+      await expect(responseDialog.getByText(answer, { exact: true })).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(responseDialog).toBeHidden();
+    }
+  });
+
+  await test.step("Tab into the contact link and follow it with Enter", async () => {
+    const contactLink = row.getByRole("link", { name: email });
+    await row.focus();
+    await page.keyboard.press("Tab");
+    await expect(contactLink).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(`/workspaces/${workspaceId}/contacts/${contact.id}`);
+    await expect(page.getByRole("heading", { name: email, exact: true })).toBeVisible();
+    await expect(responseDialog).toBeHidden();
+  });
+});
+
 // One card with two upload questions and a text question. Seeded through Prisma because the editor
 // puts each new question on its own card, and the race below needs them on the same one.
 const seedOverlappingUploadsSurvey = async (workspaceId: string, userId: string) => {

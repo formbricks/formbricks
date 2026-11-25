@@ -12,11 +12,11 @@ import {
   ensureStripeCustomerForOrganization,
   getProTrialDays,
   reconcileCloudStripeSubscriptionsForOrganization,
-  setOrganizationPaymentAttemptError,
   switchOrganizationToCloudPlan,
   syncOrganizationBillingFromStripe,
   undoPendingOrganizationPlanChange,
 } from "@/modules/ee/billing/lib/organization-billing";
+import { recordAbandonedUpgradeAuthentication } from "@/modules/ee/billing/lib/upgrade-payment-issue";
 import type {
   TBillingPaymentIssueBody,
   TBillingPlanChangeBody,
@@ -238,7 +238,10 @@ export async function undoPendingPlanChangeOperation(context: TBillingRequestCon
 /**
  * `POST …/billing/payment-issues`: record that on-session authentication of an upgrade's payment was
  * abandoned or declined, so the billing page shows the payment-failure banner (Stripe does not promptly
- * emit `payment_intent.canceled` when the 3D Secure modal is closed).
+ * emit `payment_intent.canceled` when the 3D Secure modal is closed). The payment intent is checked against
+ * the organization's Stripe customer first (`recordAbandonedUpgradeAuthentication`); one that isn't theirs,
+ * or isn't waiting for authentication, records nothing and gets the same 204, so the answer says nothing
+ * about an id from another account.
  */
 export async function reportUpgradePaymentIssueOperation({
   body,
@@ -252,13 +255,15 @@ export async function reportUpgradePaymentIssueOperation({
   if (access instanceof Response) return access;
 
   return answerRefusals(context, async () => {
-    await setOrganizationPaymentAttemptError(organizationId, {
-      type: "requires_action",
+    const billing = await getBillingCustomerOrRefuse(context);
+    if (billing instanceof Response) return billing;
+
+    const recorded = await recordAbandonedUpgradeAuthentication({
+      organizationId,
+      customerId: billing.customerId,
       paymentIntentId: body.paymentIntentId,
-      message: "Payment authentication was not completed. Please try again or contact support.",
-      createdAt: new Date().toISOString(),
     });
-    if (auditLog) auditLog.newObject = { paymentAttemptError: "requires_action" };
+    if (recorded && auditLog) auditLog.newObject = { paymentAttemptError: "requires_action" };
     return noContentResponse({ requestId });
   });
 }

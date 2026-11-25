@@ -17,8 +17,6 @@ import {
   isNpsSegment,
 } from "./question-filter";
 
-export type TFilterFieldType = "string" | "number" | "time";
-
 export interface FilterRow {
   id: string;
   field: string;

@@ -69,6 +69,8 @@ export const OpenTextSummary = ({
                   className="cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
                   onClick={() => setSelectedResponseId(response.id)}
                   onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
                       setSelectedResponseId(response.id);

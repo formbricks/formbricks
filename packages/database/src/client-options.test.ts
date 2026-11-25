@@ -19,6 +19,12 @@ describe("getAppTransactionOptions", () => {
     expect(getAppTransactionOptions(0).maxWait).toBe(6_000);
   });
 
+  // Node clamps a timer above 2^31-1 ms to 1 ms, which would abandon every transaction start at once.
+  test("caps maxWait at Node's timer limit when the acquire timeout is near it", () => {
+    expect(getAppTransactionOptions(2_147_483_000).maxWait).toBe(2_147_483_647);
+    expect(getAppTransactionOptions(3_000).maxWait).toBe(4_000);
+  });
+
   test("raises the execution budget above Prisma's 5 s default", () => {
     expect(APP_TRANSACTION_TIMEOUT_MS).toBeGreaterThan(5_000);
   });

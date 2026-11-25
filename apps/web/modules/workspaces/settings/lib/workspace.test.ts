@@ -462,6 +462,31 @@ describe("workspace lib", () => {
       await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow(DatabaseError);
     });
 
+    test("throws InvalidInputError when the new name is already taken in the organization (ENG-7509)", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError(
+        "Unique constraint failed on the constraint: `Workspace_organizationId_name_key`",
+        { code: "P2002", clientVersion: "5.0.0", meta: { target: ["organizationId", "name"] } }
+      );
+      vi.mocked(prisma.workspace.update).mockRejectedValueOnce(prismaError);
+
+      const rename = updateWorkspace("p1", { name: "Workspace 1" });
+
+      await expect(rename).rejects.toThrow(InvalidInputError);
+      await expect(rename).rejects.toThrow("A workspace with this name already exists in your organization");
+      expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
+    });
+
+    test("keeps a unique violation on any other key a DatabaseError", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["legacyEnvironmentId"] },
+      });
+      vi.mocked(prisma.workspace.update).mockRejectedValueOnce(prismaError);
+
+      await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow(DatabaseError);
+    });
+
     test("rethrows non-Prisma errors", async () => {
       vi.mocked(prisma.workspace.update).mockRejectedValueOnce(new Error("boom"));
       await expect(updateWorkspace("p1", { name: "Workspace 1" })).rejects.toThrow("boom");
@@ -662,6 +687,7 @@ describe("workspace lib", () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Test Prisma Error", {
         code: "P2002",
         clientVersion: "5.0.0",
+        meta: { target: ["organizationId", "name"] },
       });
       vi.mocked(prisma.workspace.create).mockRejectedValueOnce(prismaError);
       await expect(createWorkspace("org1", { name: "Workspace 1" }, NEW_ORGANIZATION)).rejects.toThrow(

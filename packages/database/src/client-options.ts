@@ -1,4 +1,4 @@
-import { DEFAULT_POOL_ACQUIRE_TIMEOUT_MS, createPrismaPgAdapter } from "./prisma-adapter";
+import { DEFAULT_POOL_ACQUIRE_TIMEOUT_MS, MAX_TIMER_MS, createPrismaPgAdapter } from "./prisma-adapter";
 
 /**
  * Columns a read without a `select` must not return — passed as `omit` to every Prisma client that
@@ -46,11 +46,15 @@ export const TRANSACTION_MAX_WAIT_HEADROOM_MS = 1_000;
 export const getAppTransactionOptions = (
   poolAcquireTimeoutMillis: number
 ): { maxWait: number; timeout: number } => ({
-  // connect_timeout=0 turns pg-pool's acquire timeout off, and Prisma rejects maxWait <= 0, so fall back
-  // to the default bound; Prisma is then the only limit on the wait, as it was before this existed.
-  maxWait:
+  // A timeout of 0 (pool_timeout=0, or connect_timeout=0 without pool_timeout) turns pg-pool's acquire
+  // timeout off, and Prisma rejects maxWait <= 0, so fall back to the default bound; Prisma is then the
+  // only limit on the wait, as it was before this existed.
+  // Capped at Node's timer limit: above it, setTimeout fires after 1 ms and abandons every start.
+  maxWait: Math.min(
     (poolAcquireTimeoutMillis > 0 ? poolAcquireTimeoutMillis : DEFAULT_POOL_ACQUIRE_TIMEOUT_MS) +
-    TRANSACTION_MAX_WAIT_HEADROOM_MS,
+      TRANSACTION_MAX_WAIT_HEADROOM_MS,
+    MAX_TIMER_MS
+  ),
   timeout: APP_TRANSACTION_TIMEOUT_MS,
 });
 
