@@ -3382,7 +3382,11 @@ describe("a save of the survey's own private segment keeps the surveys its edito
     createdAt: new Date(),
     updatedAt: new Date(),
   });
-  const save = (filters: unknown, options: Parameters<typeof updateSurveyInternal>[2]) =>
+  const save = (
+    filters: unknown,
+    options: Parameters<typeof updateSurveyInternal>[2],
+    skipValidation = true
+  ) =>
     updateSurveyInternal(
       {
         ...updateSurveyInput,
@@ -3390,7 +3394,7 @@ describe("a save of the survey's own private segment keeps the surveys its edito
         type: "app",
         segment: privateSegment(filters, [updateSurveyInput.id]),
       } as Parameters<typeof updateSurveyInternal>[0],
-      true,
+      skipValidation,
       options
     );
   const storeFilters = (storedFilters: unknown) => {

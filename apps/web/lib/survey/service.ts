@@ -797,17 +797,29 @@ const updateAppSurveySegment = async (
   skipValidation: boolean,
   options: TUpdateSurveyOptions
 ): Promise<void> => {
+  // ENG-7353: the tree the save would store, with the surveys its editor couldn't see put back, is the one
+  // checked below; a filter that named only hidden surveys reached the editor empty.
+  const filters =
+    segment.id && isOwnPrivateSegment(currentSurvey, segment.id)
+      ? await withHiddenSurveyIdsRestored(
+          segment.filters,
+          currentSurvey.segment.filters,
+          currentSurvey.workspaceId,
+          options.targetingActor
+        )
+      : segment.filters;
+
   // ENG-2305: tree bounds are enforced UNCONDITIONALLY — the draft save (skipValidation)
   // deliberately skips full semantic validation so half-built filters can be saved, but an
   // over-bounds tree persisted through it would break every consumer that parses the row
   // back (publish validation, clone, evaluation).
-  const boundsViolation = getSegmentFilterTreeBoundsViolation(segment.filters);
+  const boundsViolation = getSegmentFilterTreeBoundsViolation(filters);
   if (boundsViolation) {
     throw new InvalidInputError(boundsViolation);
   }
 
   // parse the segment filters:
-  const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
+  const parsedFilters = ZSegmentFilters.safeParse(filters);
   if (!skipValidation && !parsedFilters.success) {
     throw new InvalidInputError("Invalid user segment filters");
   }
@@ -823,7 +835,7 @@ const updateAppSurveySegment = async (
     );
   }
 
-  await saveAppSurveySegment(currentSurvey, segment, options.targetingActor);
+  await saveAppSurveySegment(currentSurvey, { ...segment, filters }, options.targetingActor);
 };
 
 /** An app survey without a segment gets its own private one. */
@@ -1384,7 +1396,7 @@ const assertTargetingAddsNoHiddenSurvey = async (
 };
 
 /**
- * ENG-7353: the filters a save of the survey's own private segment stores. A signed-in editor only ever
+ * ENG-7353: the filters a save of the survey's own private segment stores and validates. A signed-in editor only ever
  * held the tree without the survey ids they can't see (`redactSegmentsForViewer`), so those ids are put
  * back into the filters they came from, as an edit through the segment endpoints does; otherwise the save
  * would narrow a positive rule and widen a negative one. Any other caller sent the tree as stored.
@@ -1457,12 +1469,6 @@ const saveAppSurveySegment = async (
       actor,
       segment.id
     );
-    const filters = await withHiddenSurveyIdsRestored(
-      segment.filters,
-      survey.segment.filters,
-      survey.workspaceId,
-      actor
-    );
     let written: { count: number };
     try {
       // Only the filters: the title names the survey (`connectOrCreate` finds the segment by it), and a
@@ -1477,7 +1483,7 @@ const saveAppSurveySegment = async (
           // The filters the visibility check compared against: a segment changed since is left alone.
           filters: { equals: survey.segment.filters as unknown as Prisma.InputJsonValue },
         },
-        data: { filters },
+        data: { filters: segment.filters },
       });
     } catch (error) {
       logger.error(loggableError(error), "Error updating survey");
