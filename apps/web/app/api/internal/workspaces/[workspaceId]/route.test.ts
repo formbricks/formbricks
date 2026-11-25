@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { WORKSPACE_DELETION_CONFIRMATION_MAX } from "../schemas";
@@ -253,6 +253,16 @@ describe("PATCH /api/internal/workspaces/{workspaceId}", () => {
 
     expect(response.status).toBe(409);
     expect((await response.json()).detail).toBe(stale);
+  });
+
+  test("answers 409 naming the conflict when the new name is already taken (ENG-7509)", async () => {
+    const taken = "A workspace with this name already exists in your organization";
+    mocks.updateWorkspace.mockRejectedValueOnce(new InvalidInputError(taken));
+
+    const response = await patch({ name: "Taken" });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toBe(taken);
   });
 
   test.each([
