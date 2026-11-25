@@ -177,17 +177,6 @@ const withInviteRole = async (
 const admitsAsBootstrapAdmin = (isFirstUser: boolean, isMultiOrgEnabled: boolean): boolean =>
   isFirstUser && !isMultiOrgEnabled;
 
-/**
- * Whether this SSO sign-up is the fresh instance's first user. ENG-7313: SSO has no form to carry the
- * setup token, so with `SETUP_TOKEN` configured the SSO route cannot be the way in on a fresh instance;
- * the administrator completes setup with the token first. A named helper, not an inline expression, so
- * `gateSsoProvisioning` stays inside its cognitive-complexity budget.
- */
-const isFirstUserOfFreshInstance = (wasFreshInstance: boolean): boolean => {
-  if (isSetupTokenConfigured()) return false;
-  return wasFreshInstance;
-};
-
 /** Only a fresh instance carries the marker flag; a non-fresh provision carries nothing. */
 const freshInstanceMarker = (wasFreshInstance: boolean): { wasFreshInstance?: true } => {
   if (!wasFreshInstance) return {};
@@ -200,7 +189,8 @@ const freshInstanceMarker = (wasFreshInstance: boolean): { wasFreshInstance?: tr
  */
 const getSsoPreflightRejection = async (
   email: string,
-  callbackUrl: string
+  callbackUrl: string,
+  wasFreshInstance: boolean
 ): Promise<TSsoProvisioningDecision | null> => {
   // Formbricks Cloud only: block SSO sign-ups from personal/free/disposable email domains, before any
   // org resolution. Placed above the multi-org / fresh-instance bypass below (Cloud is multi-org, so
@@ -216,10 +206,15 @@ const getSsoPreflightRejection = async (
   }
 
   // ENG-7313: with SETUP_TOKEN set, a fresh instance is claimed only through the setup form, which carries
-  // the token. Checked before DEFAULT_ORGANIZATION_ID, whose branch would otherwise create that
-  // organization and make any account at the IdP its owner. Same answer as SSO on a fresh instance
-  // without a default organization: there is no organization to join yet.
-  if (isSetupTokenConfigured() && (await getIsFreshInstance())) {
+  // the token; SSO has no way to present it. Checked before DEFAULT_ORGANIZATION_ID, whose branch would
+  // otherwise create that organization and make any account at the IdP its owner. The user sees the same
+  // answer as SSO on a fresh instance without a default organization (there is no organization to join
+  // yet); the log says why, for the operator.
+  if (wasFreshInstance && isSetupTokenConfigured()) {
+    logger.warn(
+      { reason: "setup_token_required" },
+      "Refused an SSO sign-up: the instance is not set up and SETUP_TOKEN is set; create the administrator through the setup form"
+    );
     return { action: "reject", reason: "no_organization_found" };
   }
 
@@ -249,12 +244,12 @@ export const gateSsoProvisioning = async ({
   email: string;
   callbackUrl: string;
 }): Promise<TSsoProvisioningDecision> => {
-  const rejection = await getSsoPreflightRejection(email, callbackUrl);
-  if (rejection) return rejection;
-
-  // ENG-7313: the first SSO user of a fresh instance writes the setup marker at creation on every
-  // provision path, not only the bootstrap-administrator one.
+  // ENG-7313: read once. It refuses a fresh instance while SETUP_TOKEN is set, and the first SSO user of a
+  // fresh instance writes the setup marker at creation on every provision path, not only the
+  // bootstrap-administrator one.
   const wasFreshInstance = await getIsFreshInstance();
+  const rejection = await getSsoPreflightRejection(email, callbackUrl, wasFreshInstance);
+  if (rejection) return rejection;
   const signupSource = callbackUrl.includes("token=") ? "invite" : "direct";
 
   // `DEFAULT_ORGANIZATION_ID` short-circuits every gate below, which is exactly what it did before v5
@@ -283,7 +278,8 @@ export const gateSsoProvisioning = async ({
   }
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const isFirstUser = isFirstUserOfFreshInstance(wasFreshInstance);
+  // Past the preflight, a fresh instance means no setup token is configured.
+  const isFirstUser = wasFreshInstance;
 
   // Fresh instance or multi-org: create the user with no org auto-assignment (handled by onboarding
   // / explicit invites elsewhere).

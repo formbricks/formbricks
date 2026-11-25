@@ -163,7 +163,9 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
   and single sign-on cannot be used to create the first administrator while it is set, so keep email sign-in on
   (`EMAIL_AUTH_DISABLED` unset) until setup is done. Leaving it unset keeps the default open setup. Once the
   first account exists, the instance never accepts a new first administrator again, even if every account is
-  later deleted.
+  later deleted. To start over on purpose, empty the database (or delete every user and organization), then
+  run `DELETE FROM "InstanceSetup";` against it; set `SETUP_TOKEN` first if the instance is reachable from
+  the internet.
 </Note>
 
 <Note>

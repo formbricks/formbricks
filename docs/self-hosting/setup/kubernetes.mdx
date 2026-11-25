@@ -291,8 +291,14 @@ deployment:
           key: setup-token
 ```
 
+Create the Secret without a trailing newline (`kubectl create secret generic formbricks-secrets
+--from-literal=setup-token="$(openssl rand -hex 16)"`): a token that starts or ends with whitespace fails
+startup, because the setup form could never send it.
+
 See the [environment variables reference](/self-hosting/configuration/environment-variables). It is optional:
-leaving it unset keeps the default open setup.
+leaving it unset keeps the default open setup. Once the first account exists, the instance never accepts a
+new first administrator again, even if every account is later deleted; to start over on purpose, delete every
+user and organization and run `DELETE FROM "InstanceSetup";` against the database.
 
 ## Verify the installation
 

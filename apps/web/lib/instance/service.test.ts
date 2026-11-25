@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
+import * as setupState from "@/lib/instance/setup-state";
 import {
   getIsEligibleFirstOrganizationOwner,
   getIsFreshInstance,
@@ -15,11 +16,11 @@ vi.mock("react", async (importOriginal) => ({
   cache: (fn: unknown) => fn,
 }));
 vi.mock("@formbricks/database", () => ({
-  prisma: {
-    instanceSetup: { upsert: vi.fn(), findUnique: vi.fn() },
-    user: { findFirst: vi.fn(), count: vi.fn() },
-    organization: { count: vi.fn() },
-  },
+  prisma: { user: { findFirst: vi.fn() } },
+}));
+vi.mock("@/lib/instance/setup-state", () => ({
+  readInstanceSetupState: vi.fn(),
+  writeInstanceSetupMarker: vi.fn(),
 }));
 
 const prismaError = () =>
@@ -27,71 +28,43 @@ const prismaError = () =>
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(prisma.instanceSetup.findUnique).mockResolvedValue(null);
-  vi.mocked(prisma.instanceSetup.upsert).mockResolvedValue({
-    id: "instance",
-    completedAt: new Date(),
-  });
-  vi.mocked(prisma.user.count).mockResolvedValue(0);
-  vi.mocked(prisma.organization.count).mockResolvedValue(0);
+  vi.mocked(setupState.readInstanceSetupState).mockResolvedValue("fresh");
+  vi.mocked(setupState.writeInstanceSetupMarker).mockResolvedValue(undefined);
   vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
 });
 
 describe("markInstanceSetupCompleted (ENG-7313)", () => {
-  test("upserts the singleton marker", async () => {
+  test("writes the singleton marker", async () => {
     await markInstanceSetupCompleted();
 
-    expect(prisma.instanceSetup.upsert).toHaveBeenCalledWith({
-      where: { id: "instance" },
-      create: { id: "instance" },
-      update: {},
-    });
+    expect(setupState.writeInstanceSetupMarker).toHaveBeenCalledTimes(1);
   });
 
   test("surfaces a Prisma failure as a DatabaseError", async () => {
-    vi.mocked(prisma.instanceSetup.upsert).mockRejectedValue(prismaError());
+    vi.mocked(setupState.writeInstanceSetupMarker).mockRejectedValue(prismaError());
 
     await expect(markInstanceSetupCompleted()).rejects.toThrow(DatabaseError);
   });
 });
 
 describe("getIsFreshInstance (ENG-7313)", () => {
-  test("a marker answers without counting users or organizations", async () => {
-    vi.mocked(prisma.instanceSetup.findUnique).mockResolvedValue({
-      id: "instance",
-      completedAt: new Date(),
-    });
+  test.each([
+    ["marked", false, 0],
+    ["fresh", true, 0],
+    // A user or an organization without the marker: written now, so deleting them later cannot re-arm.
+    ["in-use", false, 1],
+  ] as const)(
+    "answers a %s instance with %s and writes the marker %i time(s)",
+    async (state, fresh, writes) => {
+      vi.mocked(setupState.readInstanceSetupState).mockResolvedValue(state);
 
-    await expect(getIsFreshInstance()).resolves.toBe(false);
-    expect(prisma.user.count).not.toHaveBeenCalled();
-    expect(prisma.organization.count).not.toHaveBeenCalled();
-  });
-
-  test("an empty instance with no marker is fresh and stays unmarked", async () => {
-    await expect(getIsFreshInstance()).resolves.toBe(true);
-    expect(prisma.user.count).toHaveBeenCalledTimes(1);
-    expect(prisma.organization.count).toHaveBeenCalledTimes(1);
-    expect(prisma.instanceSetup.upsert).not.toHaveBeenCalled();
-  });
-
-  test("a user marks the instance set up", async () => {
-    vi.mocked(prisma.user.count).mockResolvedValue(1);
-
-    await expect(getIsFreshInstance()).resolves.toBe(false);
-    expect(prisma.instanceSetup.upsert).toHaveBeenCalledTimes(1);
-  });
-
-  // The fallback for a database built with `db:push` or restored from before the migration: an
-  // organization without users is still not a fresh instance.
-  test("an organization without users marks the instance set up", async () => {
-    vi.mocked(prisma.organization.count).mockResolvedValue(1);
-
-    await expect(getIsFreshInstance()).resolves.toBe(false);
-    expect(prisma.instanceSetup.upsert).toHaveBeenCalledTimes(1);
-  });
+      await expect(getIsFreshInstance()).resolves.toBe(fresh);
+      expect(setupState.writeInstanceSetupMarker).toHaveBeenCalledTimes(writes);
+    }
+  );
 
   test("surfaces a Prisma failure as a DatabaseError", async () => {
-    vi.mocked(prisma.instanceSetup.findUnique).mockRejectedValue(prismaError());
+    vi.mocked(setupState.readInstanceSetupState).mockRejectedValue(prismaError());
 
     await expect(getIsFreshInstance()).rejects.toThrow(DatabaseError);
   });

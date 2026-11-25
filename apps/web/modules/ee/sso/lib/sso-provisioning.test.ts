@@ -184,7 +184,7 @@ describe("gateSsoProvisioning — bypass branches", () => {
   });
 
   // ENG-7313: SSO has no form to carry the setup token, so with one configured the SSO route is not a
-  // way to claim a fresh instance. It falls through to the established-instance gates and is rejected.
+  // way to claim a fresh instance. The user sees "no organization"; the log names the real cause.
   test("a fresh instance with SETUP_TOKEN configured is not claimable through SSO", async () => {
     constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
@@ -193,6 +193,12 @@ describe("gateSsoProvisioning — bypass branches", () => {
       action: "reject",
       reason: "no_organization_found",
     });
+    expect(getIsFreshInstance).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      { reason: "setup_token_required" },
+      expect.stringContaining("SETUP_TOKEN is set")
+    );
+    expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain(constantsOverrides.SETUP_TOKEN);
   });
 });
 

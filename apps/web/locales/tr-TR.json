@@ -1011,6 +1011,7 @@
       "create_administrator": "Yönetici Oluştur",
       "setup_token": "Kurulum belirteci",
       "setup_token_invalid": "Kurulum belirteci hatalı.",
+      "setup_token_needs_email_sign_up": "Bu örnek bir kurulum jetonu gerektiriyor ve bunu yalnızca e-posta ile kayıt taşıyabiliyor, ancak e-posta ile kayıt kapalı. Yönetici oluşturulana kadar EMAIL_AUTH_DISABLED ayarını kaldır, ardından tekrar kapat.",
       "this_user_has_all_the_power": "Bu kullanıcı tüm yetkilere sahiptir."
     }
   },

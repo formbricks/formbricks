@@ -781,8 +781,9 @@ const parsedEnv = createEnv({
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z.coerce.number().int().min(5).max(120).optional().default(30),
     // Blank counts as unset, so `SETUP_TOKEN=` in an env file keeps the open setup instead of failing boot.
-    // Kept verbatim like the other secrets: it is compared as given. The bounds are shared with the
-    // sign-up request schema, so a configured token can always be presented through the setup form.
+    // Compared as given, never trimmed: leading or trailing whitespace fails boot instead, because the
+    // single-line setup field can never send it (a Secret made with `echo` carries a trailing newline).
+    // The bounds are shared with the sign-up request schema, so a configured token can always be presented.
     SETUP_TOKEN: z.preprocess(
       emptyStringToUndefined,
       z
@@ -792,6 +793,10 @@ const parsedEnv = createEnv({
         })
         .max(SETUP_TOKEN_MAX_LENGTH, {
           error: `SETUP_TOKEN must be at most ${SETUP_TOKEN_MAX_LENGTH} characters`,
+        })
+        .refine((token) => token.trim() === token, {
+          error:
+            "SETUP_TOKEN must not start or end with whitespace (a trailing newline from `echo` is a common cause)",
         })
         .optional()
     ),

@@ -1011,6 +1011,7 @@
       "create_administrator": "Create Administrator",
       "setup_token": "Setup token",
       "setup_token_invalid": "The setup token is incorrect.",
+      "setup_token_needs_email_sign_up": "This instance requires a setup token, which only email sign-up can carry, and email sign-up is turned off. Unset EMAIL_AUTH_DISABLED until the administrator exists, then turn it back off.",
       "this_user_has_all_the_power": "This user has all the power."
     }
   },

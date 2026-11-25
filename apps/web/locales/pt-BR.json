@@ -1011,6 +1011,7 @@
       "create_administrator": "Criar Administrador",
       "setup_token": "Token de configuração",
       "setup_token_invalid": "O token de configuração está incorreto.",
+      "setup_token_needs_email_sign_up": "Esta instância exige um token de configuração, que só o cadastro por e-mail consegue enviar, e o cadastro por e-mail está desativado. Remova a definição de EMAIL_AUTH_DISABLED até que o administrador seja criado e depois desative o cadastro por e-mail novamente.",
       "this_user_has_all_the_power": "Esse usuário tem todo o poder."
     }
   },

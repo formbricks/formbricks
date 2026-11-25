@@ -381,8 +381,14 @@ async function assertSignupPolicyAllows(
     throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
   }
   // ENG-7313: the instance is fresh but `SETUP_TOKEN` is configured and was not presented correctly.
-  // Reveals only what /setup/intro already shows (the instance is unclaimed).
+  // Reveals only what /setup/intro already shows (the instance is unclaimed). Logged like the closed-sign-up
+  // refusals, so an operator who set the token because the instance is exposed can see guessing; never
+  // with the token or the address.
   if (admission === "setup-token-invalid") {
+    logger.warn(
+      { layer: "sign-up-route", reason: SETUP_TOKEN_INVALID_ERROR_CODE },
+      "Rejected a fresh-instance sign-up without the correct setup token"
+    );
     throw new InvalidInputError(SETUP_TOKEN_INVALID_ERROR_CODE);
   }
 

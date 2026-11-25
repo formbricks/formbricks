@@ -3,7 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
-import { INSTANCE_SETUP_ID } from "@formbricks/types/instance";
+import { readInstanceSetupState, writeInstanceSetupMarker } from "@/lib/instance/setup-state";
 
 const rethrowAsDatabaseError = (error: unknown): never => {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -12,56 +12,32 @@ const rethrowAsDatabaseError = (error: unknown): never => {
   throw error;
 };
 
-const upsertInstanceSetupMarker = async (): Promise<void> => {
-  await prisma.instanceSetup.upsert({
-    where: { id: INSTANCE_SETUP_ID },
-    create: { id: INSTANCE_SETUP_ID },
-    update: {},
-  });
-};
-
 /**
- * Record that the instance has been set up. Idempotent; the fixed primary key keeps it a singleton, and
- * nothing in the app ever deletes the row. Called by the flows that create the first user
- * (`createSignup`, the SSO `user.create.after` hook) right after the row exists, so a first user who
- * deletes their account before any page asks {@link getIsFreshInstance} cannot re-arm the setup.
+ * Record that the instance has been set up. Idempotent and safe under concurrency; the fixed primary key
+ * keeps it a singleton, and nothing in the app ever deletes the row. Called by the flows that create the
+ * first user (`createSignup`, the SSO `user.create.after` hook) right after the row exists, so a first user
+ * who deletes their account before any page asks {@link getIsFreshInstance} cannot re-arm the setup.
  */
 export const markInstanceSetupCompleted = async (): Promise<void> => {
   try {
-    await upsertInstanceSetupMarker();
+    await writeInstanceSetupMarker();
   } catch (error) {
     rethrowAsDatabaseError(error);
   }
 };
 
 /**
- * Whether the instance has never been set up: no persisted "setup completed" marker AND no users and no
- * organizations.
+ * Whether the instance has never been set up (`readInstanceSetupState` holds the rule; ENG-7313).
  *
  * The user count alone made "fresh" re-arm whenever the last user deleted their account, which reopened
- * the unauthenticated administrator sign-up (ENG-7313). The sign-up flows write the marker when they
- * create the first user, and the migration writes it for every database that already held a user or an
- * organization. The organization count is the second half of the fallback: a database
- * built with `db:push` (or restored from before the migration) can hold an organization without the
- * marker, and it is not fresh either. The marker is read first and, once it exists, answers without
- * counting.
+ * the unauthenticated administrator sign-up. When the instance is in use without a marker, the marker is
+ * written here, so the answer stays false after the last user and organization are deleted.
  */
 export const getIsFreshInstance = reactCache(async (): Promise<boolean> => {
   try {
-    if (await prisma.instanceSetup.findUnique({ where: { id: INSTANCE_SETUP_ID }, select: { id: true } })) {
-      return false;
-    }
-
-    const [userCount, organizationCount] = await Promise.all([
-      prisma.user.count(),
-      prisma.organization.count(),
-    ]);
-    if (userCount === 0 && organizationCount === 0) return true;
-
-    // A user or an organization proves the instance has been set up even when the marker is missing.
-    // Write it now so the answer stays false after the last user and organization are deleted.
-    await upsertInstanceSetupMarker();
-    return false;
+    const state = await readInstanceSetupState();
+    if (state === "in-use") await writeInstanceSetupMarker();
+    return state === "fresh";
   } catch (error) {
     return rethrowAsDatabaseError(error);
   }

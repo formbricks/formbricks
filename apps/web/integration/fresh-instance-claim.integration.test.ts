@@ -52,7 +52,9 @@ describe("getIsFreshInstance (real Postgres)", () => {
     expect(await getIsFreshInstance()).toBe(false);
   });
 
-  test("a user created by the sign-up flow keeps the instance closed even if they leave before any page asks", async () => {
+  // `createSignup` and the SSO after-hook call `markInstanceSetupCompleted` once the first user exists;
+  // their own unit tests pin that call. This pins what the call buys.
+  test("the marker written for the first user keeps the instance closed even if they leave before any page asks", async () => {
     await createUser("admin", BootstrapAdminMarker.bootstrapAdmin);
     await markInstanceSetupCompleted();
     await prisma.user.deleteMany();
@@ -68,6 +70,22 @@ describe("getIsFreshInstance (real Postgres)", () => {
     expect(await prisma.user.count()).toBe(0);
     expect(await getIsFreshInstance()).toBe(false);
     expect(await prisma.instanceSetup.count()).toBe(1);
+  });
+
+  // The race the smoke test hit as a 500: several renders, or a sign-up and a page, writing the first
+  // marker at once. Prisma's `upsert` with an empty update is not a native upsert and raised a
+  // unique-constraint error here (hundreds of failures over these rounds before the fix).
+  test("concurrent first marker writes all succeed and leave one row", async () => {
+    for (let round = 0; round < 5; round++) {
+      await prisma.instanceSetup.deleteMany();
+
+      const results = await Promise.allSettled(
+        Array.from({ length: 50 }, () => markInstanceSetupCompleted())
+      );
+
+      expect(results.filter((result) => result.status === "rejected")).toEqual([]);
+      expect(await prisma.instanceSetup.count()).toBe(1);
+    }
   });
 
   test("the marker is a singleton", async () => {

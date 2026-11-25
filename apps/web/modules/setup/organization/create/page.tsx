@@ -2,14 +2,13 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
-import { getHasNoOrganizations, getIsEligibleFirstOrganizationOwner } from "@/lib/instance/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
 import { getSession } from "@/modules/auth/lib/session";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";
+import { resolveSetupOrganizationCreation } from "@/modules/setup/organization/lib/setup-organization-policy";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { CreateOrganization } from "./components/create-organization";
 
@@ -29,15 +28,14 @@ export const CreateOrganizationPage = async () => {
     return <ClientLogout />;
   }
 
-  const hasNoOrganizations = await getHasNoOrganizations();
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const userOrganizations = await getOrganizationsByUserId(session.user.id);
+  const [creation, userOrganizations] = await Promise.all([
+    // ENG-7313: the rule `POST /api/internal/organizations` enforces, so the form is offered exactly where
+    // the route accepts it.
+    resolveSetupOrganizationCreation(user.id),
+    getOrganizationsByUserId(session.user.id),
+  ]);
 
-  // ENG-7313: the same eligibility the action enforces, so a signed-in non-admin is not offered the form.
-  const canCreateOrganization =
-    isMultiOrgEnabled || (hasNoOrganizations && (await getIsEligibleFirstOrganizationOwner(user.id)));
-
-  if (canCreateOrganization) {
+  if (creation.allowed) {
     // The organization does not exist yet, so the floor cannot be asked of it; its creator becomes an
     // owner, whom every floor but `disabled` admits.
     return <CreateOrganization skipInviteStep={USER_MANAGEMENT_MINIMUM_ROLE === "disabled"} />;

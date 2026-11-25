@@ -687,6 +687,17 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
         expect(markInstanceSetupCompleted).not.toHaveBeenCalled();
       });
 
+      test("logs a wrong-token attempt for the operator, without the token or the address", async () => {
+        await signUp({ ...baseInput, setupToken: "not-the-token" });
+
+        expect(logger.warn).toHaveBeenCalledWith(
+          { layer: "sign-up-route", reason: SETUP_TOKEN_INVALID_ERROR_CODE },
+          "Rejected a fresh-instance sign-up without the correct setup token"
+        );
+        expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain("not-the-token");
+        expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain(baseInput.email);
+      });
+
       test("admits the right token and records the instance as set up", async () => {
         const response = await signUp({ ...baseInput, setupToken: token });
 

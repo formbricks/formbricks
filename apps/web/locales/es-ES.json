@@ -1011,6 +1011,7 @@
       "create_administrator": "Crear administrador",
       "setup_token": "Token de configuración",
       "setup_token_invalid": "El token de configuración es incorrecto.",
+      "setup_token_needs_email_sign_up": "Esta instancia requiere un token de configuración, que solo se puede enviar mediante el registro por correo electrónico, y el registro por correo electrónico está desactivado. Elimina EMAIL_AUTH_DISABLED hasta que exista el administrador y, después, vuelve a desactivarlo.",
       "this_user_has_all_the_power": "Este usuario tiene todo el poder."
     }
   },

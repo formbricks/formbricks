@@ -1011,6 +1011,7 @@
       "create_administrator": "管理者を作成",
       "setup_token": "セットアップトークン",
       "setup_token_invalid": "セットアップトークンが正しくありません。",
+      "setup_token_needs_email_sign_up": "このインスタンスにはセットアップトークンが必要ですが、セットアップトークンを扱えるのはメールでのサインアップのみで、現在メールでのサインアップはオフになっています。管理者が作成されるまでは EMAIL_AUTH_DISABLED を未設定にして、作成後に再びオフに戻してください。",
       "this_user_has_all_the_power": "このユーザーはすべての権限を持っています。"
     }
   },

@@ -203,6 +203,15 @@ describe("env", () => {
     await expect(import("./env")).rejects.toThrow("SETUP_TOKEN");
   });
 
+  // The single-line setup field can never send it, so the instance could not be set up.
+  test.each([
+    ["a trailing newline", `${"t".repeat(SETUP_TOKEN_MIN_LENGTH)}\n`],
+    ["a leading space", ` ${"t".repeat(SETUP_TOKEN_MIN_LENGTH)}`],
+  ])("refuses a SETUP_TOKEN with %s", async (_label, token) => {
+    setTestEnv({ SETUP_TOKEN: token });
+    await expect(import("./env")).rejects.toThrow("whitespace");
+  });
+
   test("uses the default invite rate limit when env var is not set", async () => {
     setTestEnv({
       INVITE_RATE_LIMIT_PER_24_HOURS: undefined,
