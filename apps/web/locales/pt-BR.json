@@ -3577,6 +3577,7 @@
         "create_directory": "Criar diretório",
         "create_directory_description": "Contatos e seus atributos, compartilhados pelos workspaces que você escolher.",
         "directory_created": "Diretório criado",
+        "directory_id": "ID do diretório",
         "directory_name": "Nome do diretório",
         "directory_updated": "Diretório atualizado",
         "empty_state": "Ainda não há diretórios de contatos.",

@@ -3577,6 +3577,7 @@
         "create_directory": "Skapa katalog",
         "create_directory_description": "Kontakter och deras attribut, delade av de arbetsytor du väljer.",
         "directory_created": "Katalogen har skapats",
+        "directory_id": "Katalog-ID",
         "directory_name": "Katalognamn",
         "directory_updated": "Katalogen har uppdaterats",
         "empty_state": "Inga kontaktkataloger än.",

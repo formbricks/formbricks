@@ -3577,6 +3577,7 @@
         "create_directory": "Contactmap aanmaken",
         "create_directory_description": "Contacten en hun kenmerken, gedeeld door de werkruimtes die je kiest.",
         "directory_created": "Contactmap aangemaakt",
+        "directory_id": "Directory-ID",
         "directory_name": "Naam van de contactmap",
         "directory_updated": "Contactmap bijgewerkt",
         "empty_state": "Nog geen contactmappen.",

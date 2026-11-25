@@ -182,6 +182,17 @@ describe("ContactDirectoryDialog", () => {
     expect(dialog().getByLabelText(`${K}.external_id`)).toBeDisabled();
   });
 
+  // As Feedback directories do: the id, with a copy button, for API and support use.
+  test("shows the directory's id when managing it, and none while creating one", () => {
+    renderDialog({ directory: BRAND });
+    expect(dialog().getByText(`${K}.directory_id`)).toBeInTheDocument();
+    expect(dialog().getByText(BRAND.id)).toBeInTheDocument();
+    cleanup();
+
+    renderDialog();
+    expect(dialog().queryByText(`${K}.directory_id`)).toBeNull();
+  });
+
   // Decision 8: a workspace can't leave the directory it uses, so its chip can't be removed.
   test("locks the directory's own workspaces and says why", async () => {
     renderDialog({ directory: BRAND });

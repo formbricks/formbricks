@@ -3577,6 +3577,7 @@
         "create_directory": "ディレクトリを作成",
         "create_directory_description": "選択したワークスペースで共有されるコンタクトとその属性です。",
         "directory_created": "ディレクトリを作成しました",
+        "directory_id": "ディレクトリID",
         "directory_name": "ディレクトリ名",
         "directory_updated": "ディレクトリを更新しました",
         "empty_state": "コンタクトディレクトリはまだありません。",

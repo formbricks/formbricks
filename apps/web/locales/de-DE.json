@@ -3577,6 +3577,7 @@
         "create_directory": "Verzeichnis erstellen",
         "create_directory_description": "Kontakte und ihre Attribute, die von den ausgewählten Workspaces gemeinsam genutzt werden.",
         "directory_created": "Verzeichnis erstellt",
+        "directory_id": "Verzeichnis-ID",
         "directory_name": "Verzeichnisname",
         "directory_updated": "Verzeichnis aktualisiert",
         "empty_state": "Noch keine Kontaktverzeichnisse vorhanden.",

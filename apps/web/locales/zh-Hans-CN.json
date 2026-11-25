@@ -3577,6 +3577,7 @@
         "create_directory": "创建目录",
         "create_directory_description": "联系人及其属性,由你选择的工作区共享。",
         "directory_created": "目录已创建",
+        "directory_id": "目录 ID",
         "directory_name": "目录名称",
         "directory_updated": "目录已更新",
         "empty_state": "暂无联系人目录。",

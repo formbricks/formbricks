@@ -3577,6 +3577,7 @@
         "create_directory": "Címtár létrehozása",
         "create_directory_description": "A kapcsolattartók és azok attribútumai, amelyeket az Ön által kiválasztott munkaterületek megosztanak.",
         "directory_created": "A címtár létrehozása megtörtént",
+        "directory_id": "Címtár azonosítója",
         "directory_name": "A címtár neve",
         "directory_updated": "A címtár frissítése megtörtént",
         "empty_state": "Még nincsenek kapcsolattartói címtárak.",

@@ -3577,6 +3577,7 @@
         "create_directory": "Dizin oluştur",
         "create_directory_description": "Seçtiğin çalışma alanlarının ortak kullandığı kişiler ve bu kişilerin öznitelikleri.",
         "directory_created": "Dizin oluşturuldu",
+        "directory_id": "Dizin Kimliği",
         "directory_name": "Dizin adı",
         "directory_updated": "Dizin güncellendi",
         "empty_state": "Henüz kişi dizini yok.",

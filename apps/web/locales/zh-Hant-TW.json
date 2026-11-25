@@ -3577,6 +3577,7 @@
         "create_directory": "建立目錄",
         "create_directory_description": "由你選擇的工作區共用的聯絡人及其屬性。",
         "directory_created": "目錄已建立",
+        "directory_id": "目錄 ID",
         "directory_name": "目錄名稱",
         "directory_updated": "目錄已更新",
         "empty_state": "尚無聯絡人目錄。",

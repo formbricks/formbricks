@@ -3577,6 +3577,7 @@
         "create_directory": "Создать справочник",
         "create_directory_description": "Контакты и их атрибуты, общие для выбранных вами рабочих пространств.",
         "directory_created": "Справочник создан",
+        "directory_id": "ID каталога",
         "directory_name": "Название справочника",
         "directory_updated": "Справочник обновлён",
         "empty_state": "Справочников контактов пока нет.",

@@ -3577,6 +3577,7 @@
         "create_directory": "Créer un répertoire",
         "create_directory_description": "Les contacts et leurs attributs, partagés par les espaces de travail que tu choisis.",
         "directory_created": "Répertoire créé",
+        "directory_id": "ID du répertoire",
         "directory_name": "Nom du répertoire",
         "directory_updated": "Répertoire mis à jour",
         "empty_state": "Aucun répertoire de contacts pour le moment.",

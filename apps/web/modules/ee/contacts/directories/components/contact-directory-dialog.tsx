@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
@@ -217,6 +218,13 @@ export const ContactDirectoryDialog = ({
                   </FormItem>
                 )}
               />
+              {directory ? (
+                <IdBadge
+                  id={directory.id}
+                  label={t("workspace.settings.contact_directories.directory_id")}
+                  variant="column"
+                />
+              ) : null}
             </DialogBody>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={onClose}>
