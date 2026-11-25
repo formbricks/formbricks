@@ -119,7 +119,9 @@ internet, with more than one tenant on the instance.
   authenticated RCE; SSRF reaching internal services or cloud metadata;
   stored XSS in another user's admin session;
   disclosure of API keys, secrets or session tokens; account takeover through
-  auth logic.
+  auth logic; a request to a public endpoint (no account needed: link
+  surveys, the client API, sign-in and other auth routes) that crashes the
+  process, exhausts its memory or blocks it for other tenants.
 - **Medium** — escalation between roles, team permissions, API-key
   permissions or MCP grant limits that stays within what the attacker
   reaches, short of owner/manager: for example a `read` team or key writing; `billing` reading
@@ -130,9 +132,12 @@ internet, with more than one tenant on the instance.
   reaches, including another organization its user belongs to. Stored XSS whose impact stays inside the attacker's own
   session/workspace; CSRF on state-changing actions;
   open redirect; rate-limit bypass enabling response or invitation spam;
-  authenticated DoS.
+  authenticated DoS, including a crash or memory exhaustion that needs an
+  account: accounts are not open to the public, so the attacker is a
+  customer or a trial user with a company email.
 - **Low** — information disclosure without sensitive data; self-XSS; missing
-  security headers; DoS from a single anonymous request with no amplification;
+  security headers; an anonymous request that only slows its own response,
+  with no crash, memory exhaustion or amplification;
   issues that only exist in dev-only packages or test fixtures.
 
 Do not inflate severity based on a hypothetical misconfiguration. State the
