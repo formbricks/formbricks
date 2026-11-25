@@ -1,49 +1,25 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
+import { readInstanceSetupState } from "@/lib/instance/setup-state";
 import { getUnauthenticatedRootRedirectPath } from "./root-redirect";
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    instanceSetup: { findUnique: vi.fn() },
-    user: { findFirst: vi.fn() },
-    organization: { findFirst: vi.fn() },
-  },
-}));
+// The freshness rule and its query strategy are `readInstanceSetupState`'s (setup-state.test.ts); this pins
+// only how `/` maps each answer.
+vi.mock("@/lib/instance/setup-state", () => ({ readInstanceSetupState: vi.fn() }));
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(prisma.instanceSetup.findUnique).mockResolvedValue(null);
-  vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-  vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
 });
 
 describe("getUnauthenticatedRootRedirectPath", () => {
   test("sends a never-set-up instance to the setup intro", async () => {
+    vi.mocked(readInstanceSetupState).mockResolvedValue("fresh");
+
     await expect(getUnauthenticatedRootRedirectPath()).resolves.toBe("/setup/intro");
   });
 
-  test("sends a set-up instance with no users left to login, not the setup intro (ENG-7313)", async () => {
-    vi.mocked(prisma.instanceSetup.findUnique).mockResolvedValue({ id: "instance" } as never);
-
-    await expect(getUnauthenticatedRootRedirectPath()).resolves.toBe("/auth/login");
-    expect(prisma.instanceSetup.findUnique).toHaveBeenCalledWith({
-      where: { id: "instance" },
-      select: { id: true },
-    });
-    // The marker answers alone: a set-up instance costs one lookup.
-    expect(prisma.user.findFirst).not.toHaveBeenCalled();
-    expect(prisma.organization.findFirst).not.toHaveBeenCalled();
-  });
-
-  test("sends an instance with a user but no marker to login", async () => {
-    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user_1" } as never);
-
-    await expect(getUnauthenticatedRootRedirectPath()).resolves.toBe("/auth/login");
-    expect(prisma.organization.findFirst).not.toHaveBeenCalled();
-  });
-
-  test("sends an instance with only an organization to login", async () => {
-    vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: "org_1" } as never);
+  // ENG-7313: a set-up instance whose users are all gone is not fresh.
+  test.each(["marked", "in-use"] as const)("sends a %s instance to login", async (state) => {
+    vi.mocked(readInstanceSetupState).mockResolvedValue(state);
 
     await expect(getUnauthenticatedRootRedirectPath()).resolves.toBe("/auth/login");
   });

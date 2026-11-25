@@ -798,6 +798,9 @@ const parsedEnv = createEnv({
           error:
             "SETUP_TOKEN must not start or end with whitespace (a trailing newline from `echo` is a common cause)",
         })
+        .refine((token) => !/[\r\n]/.test(token), {
+          error: "SETUP_TOKEN must not contain line breaks (the setup form is a single-line field)",
+        })
         .optional()
     ),
     PRIVACY_URL: z

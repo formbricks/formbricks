@@ -111,6 +111,14 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    otherwise you can use the same value or omit the encoded variable. The PostgreSQL image only applies the raw
    password when it creates a new database volume.
 
+   If the server is reachable from the internet before you finish setup, also add a setup token now, before the
+   first start. Until the first administrator exists, anyone who can reach the instance can create that account;
+   with `SETUP_TOKEN` set, the setup form asks for it. Leave it out to keep the default open setup.
+
+   ```bash
+   echo "SETUP_TOKEN=$(openssl rand -hex 16)" >> .env
+   ```
+
 1. **Validate the Docker Compose Configuration**
 
    Validate the Compose file after `.env` contains the required values:
@@ -157,10 +165,8 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    and start using Formbricks.
 
 <Note>
-  Until the first administrator exists, anyone who can reach the instance can create that account. If the
-  instance is reachable from the internet before you finish setup, set the optional `SETUP_TOKEN` environment
-  variable (at least 16 characters, for example from `openssl rand -hex 16`). The setup form then asks for it,
-  and single sign-on cannot be used to create the first administrator while it is set, so keep email sign-in on
+  If you set `SETUP_TOKEN` (see **Create the Environment File**), the setup form asks for it, and single sign-on
+  cannot be used to create the first administrator while it is set, so keep email sign-in on
   (`EMAIL_AUTH_DISABLED` unset) until setup is done. Leaving it unset keeps the default open setup. Once the
   first account exists, the instance never accepts a new first administrator again, even if every account is
   later deleted. To start over on purpose, delete every user and organization, then clear the marker with

@@ -20,6 +20,17 @@ beforeEach(() => {
 describe("readInstanceSetupState (ENG-7313)", () => {
   test("is fresh with no marker, no user and no organization", async () => {
     await expect(readInstanceSetupState()).resolves.toBe("fresh");
+    // Read again before answering "fresh".
+    expect(prisma.instanceSetup.findUnique).toHaveBeenCalledTimes(2);
+  });
+
+  // A first sign-up writes the marker after the first read, and its user is deleted before the user lookup.
+  test("is not fresh when the marker appears while the lookups run", async () => {
+    vi.mocked(prisma.instanceSetup.findUnique)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: "instance" } as never);
+
+    await expect(readInstanceSetupState()).resolves.toBe("marked");
   });
 
   test("a marker answers alone, without looking for users or organizations", async () => {

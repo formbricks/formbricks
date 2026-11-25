@@ -212,6 +212,11 @@ describe("env", () => {
     await expect(import("./env")).rejects.toThrow("whitespace");
   });
 
+  test.each(["\n", "\r"])("refuses a SETUP_TOKEN with a line break inside (%j)", async (lineBreak) => {
+    setTestEnv({ SETUP_TOKEN: `${"t".repeat(SETUP_TOKEN_MIN_LENGTH)}${lineBreak}${"t".repeat(8)}` });
+    await expect(import("./env")).rejects.toThrow("line breaks");
+  });
+
   test("uses the default invite rate limit when env var is not set", async () => {
     setTestEnv({
       INVITE_RATE_LIMIT_PER_24_HOURS: undefined,

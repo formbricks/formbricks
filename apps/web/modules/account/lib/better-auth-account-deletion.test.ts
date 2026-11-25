@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-membership";
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
+import { markInstanceSetupCompleted } from "@/lib/instance/service";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
@@ -42,6 +43,7 @@ vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
 }));
 vi.mock("@/modules/email", () => ({ sendAccountDeletedEmail: vi.fn() }));
 vi.mock("./account-deletion-audit", () => ({ queueAccountDeletionAuditEvent: vi.fn() }));
+vi.mock("@/lib/instance/service", () => ({ markInstanceSetupCompleted: vi.fn() }));
 
 const user = { id: "user-1", email: "ada@example.com", name: "Ada" } as Parameters<
   typeof accountDeletionBeforeDelete
@@ -54,6 +56,36 @@ describe("accountDeletionBeforeDelete", () => {
     vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(deleteOrganization).mockResolvedValue(true as never);
     vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockResolvedValue(undefined);
+    vi.mocked(markInstanceSetupCompleted).mockResolvedValue(undefined);
+  });
+
+  // ENG-7313: the last account's deletion must never leave the instance looking fresh, even when the marker
+  // write at sign-up failed.
+  test("records that the instance is set up before any deletion step", async () => {
+    vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([{ id: "org-1" }] as never);
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+
+    await accountDeletionBeforeDelete(user);
+
+    expect(markInstanceSetupCompleted).toHaveBeenCalledTimes(1);
+    for (const step of [
+      requestEmailAuditErasureBeforeUserDeletion,
+      deleteOrganization,
+      prisma.invite.deleteMany,
+    ]) {
+      expect(vi.mocked(markInstanceSetupCompleted).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(step).mock.invocationCallOrder[0]
+      );
+    }
+  });
+
+  test("fails the deletion when the marker cannot be written, before deleting anything", async () => {
+    vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([] as never);
+    vi.mocked(markInstanceSetupCompleted).mockRejectedValue(new Error("db down"));
+
+    await expect(accountDeletionBeforeDelete(user)).rejects.toThrow("db down");
+    expect(requestEmailAuditErasureBeforeUserDeletion).not.toHaveBeenCalled();
+    expect(prisma.invite.deleteMany).not.toHaveBeenCalled();
   });
 
   test("blocks deletion on a single-org instance when the user is a sole org owner", async () => {
