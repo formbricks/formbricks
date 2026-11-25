@@ -109,6 +109,20 @@ export class V3SurveyCreateValidationDocumentNotPreparedError extends Error {
 export function getV3SurveyCreateInputInvalidParamsForDocument(
   document: TV3CreateSurveyBody
 ): InvalidParam[] {
+  return checkV3SurveyCreateInputWithoutWriting(document, toDryRunEmbeddedFields(document.embeddedFields));
+}
+
+/**
+ * The write-schema check without the create's I/O, shared by the validate dry run and the import's
+ * final gate so the two cannot drift from each other or from the create: placeholder language rows
+ * stand in for `ensureV3WorkspaceLanguages` (which upserts the same codes), and an app survey gets its
+ * distribution scalars, as the create applies them. Each caller decides how its Embedded Data becomes
+ * `embeddedFields`, since only the dry run's document is guaranteed to be prepared.
+ */
+export function checkV3SurveyCreateInputWithoutWriting(
+  document: TV3CreateSurveyBody,
+  embeddedFields: TLinkedEmbeddedField[] | undefined
+): InvalidParam[] {
   const now = new Date();
   const languages: TSurveyLanguage[] = deriveV3SurveyLanguageRequests(document).map((request) => ({
     language: {
@@ -127,7 +141,7 @@ export function getV3SurveyCreateInputInvalidParamsForDocument(
     buildV3SurveyCreateInput(document, {
       languages,
       createdBy: null,
-      embeddedFields: toDryRunEmbeddedFields(document.embeddedFields),
+      embeddedFields,
       overrides: buildV3AppSurveyScalarFields(document),
     })
   );

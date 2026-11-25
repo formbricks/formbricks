@@ -82,6 +82,7 @@ vi.mock("@/app/api/v3/lib/audit", () => ({
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    warn: vi.fn(),
     withContext: vi.fn(() => ({
       error: vi.fn(),
       warn: vi.fn(),

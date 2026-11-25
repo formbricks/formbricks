@@ -619,8 +619,8 @@ export const ZMcpListFeedbackDatasetsInput = z
  *
  * The source of truth is the outward DTO's allowlist (`TV3FeedbackRecord` in
  * `app/api/v3/feedbackRecords/lib/serializers.ts`); the `satisfies` makes a renamed or removed field a
- * compile error here instead of a projection that silently returns nothing. `id` is absent because the
- * projection always keeps it.
+ * compile error here instead of a projection that silently returns nothing, and the check below makes a
+ * new field one. `id` is absent because the projection always keeps it.
  */
 const MCP_FEEDBACK_RECORD_PROJECTION_FIELDS = [
   "dataset_id",
@@ -650,6 +650,18 @@ const MCP_FEEDBACK_RECORD_PROJECTION_FIELDS = [
   "created_at",
   "updated_at",
 ] as const satisfies readonly (keyof TV3FeedbackRecord)[];
+
+/**
+ * And the other direction: a field added to the DTO must be added above, or it can never be projected.
+ * `never` when every outward field but `id` is listed; a missing one makes this assignment fail.
+ */
+const MCP_FEEDBACK_RECORD_FIELDS_UNLISTED: Exclude<
+  keyof TV3FeedbackRecord,
+  (typeof MCP_FEEDBACK_RECORD_PROJECTION_FIELDS)[number] | "id"
+> extends never
+  ? true
+  : false = true;
+void MCP_FEEDBACK_RECORD_FIELDS_UNLISTED;
 
 export const ZMcpListFeedbackRecordsInput = ZV3FeedbackRecordListFilters.extend({
   workspaceId: ZId.describe("Workspace ID whose feedback records should be listed."),

@@ -1,5 +1,8 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { mapJsonResponseBody } from "./json-response";
+
+vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
 
 const jsonResponse = (body: unknown, status = 200) =>
   Response.json(body, { status, headers: { "x-request-id": "req_1" } });
@@ -45,5 +48,9 @@ describe("mapJsonResponseBody", () => {
     });
     expect(response).toBe(original);
     expect(await response.json()).toEqual({ data: {} });
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 200 }),
+      "MCP response projection failed; returning the unprojected response"
+    );
   });
 });

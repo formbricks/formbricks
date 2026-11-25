@@ -1,7 +1,10 @@
 import { describe, expect, expectTypeOf, test } from "vitest";
 import type { z } from "zod";
 import type { TSurveyVisibilityBlocker } from "@/app/api/v3/surveys/visibility/blockers";
-import type { TV3SurveyVisibilityChangeResult } from "@/app/api/v3/surveys/visibility/operations";
+import type {
+  TV3SurveyVisibilityChangeResult,
+  TV3SurveyVisibilityStateResult,
+} from "@/app/api/v3/surveys/visibility/operations";
 import { ZMcpSurveyVisibilityChangeOutput, ZMcpSurveyVisibilityStateOutput } from "./survey-output-schemas";
 
 /**
@@ -111,13 +114,12 @@ describe("ZMcpSurveyVisibilityChangeOutput", () => {
 // The hand-typed schemas are also pinned to the server's own types, so a serializer change breaks the
 // typecheck rather than only the MCP call at runtime.
 describe("visibility output schemas against the server types", () => {
-  test("the change result and a blocker fit what the tools advertise", () => {
+  test("the state and change results fit what the tools advertise", () => {
+    type TStateData = NonNullable<z.input<typeof ZMcpSurveyVisibilityStateOutput>["data"]>;
     type TChangeData = NonNullable<z.input<typeof ZMcpSurveyVisibilityChangeOutput>["data"]>;
-    type TStateBlocker = NonNullable<
-      z.input<typeof ZMcpSurveyVisibilityStateOutput>["data"]
-    >["blockers"][number];
 
+    expectTypeOf<TV3SurveyVisibilityStateResult>().toExtend<TStateData>();
     expectTypeOf<TV3SurveyVisibilityChangeResult>().toExtend<TChangeData>();
-    expectTypeOf<TSurveyVisibilityBlocker>().toExtend<TStateBlocker>();
+    expectTypeOf<TSurveyVisibilityBlocker>().toExtend<TStateData["blockers"][number]>();
   });
 });

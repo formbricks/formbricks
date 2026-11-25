@@ -69,7 +69,7 @@ vi.mock("@/app/api/v3/lib/audit", () => ({
 }));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
+  logger: { warn: vi.fn(), withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
 }));
 
 const recordId = "019fa338-f494-7384-b34e-01739783d280";

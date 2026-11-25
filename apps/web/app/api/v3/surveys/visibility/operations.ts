@@ -140,6 +140,24 @@ const findRelevantBlockers = (row: TVisibilityRow): Promise<TSurveyVisibilityBlo
     ? Promise.resolve([])
     : findSurveyOutboundBlockers(row.id, row.workspaceId);
 
+const toStateResult = (
+  row: TVisibilityRow,
+  visibility: TV3SurveyResourceVisibility,
+  blockers: Awaited<ReturnType<typeof findRelevantBlockers>>,
+  impact: Awaited<ReturnType<typeof getSurveyVisibilityImpact>>
+) => ({
+  id: row.id,
+  ...serializeV3SurveyVisibilityFields(row, visibility.ownerName, visibility),
+  blockers,
+  impact,
+  pending: getPendingVisibility(row),
+  version: row.visibilityVersion,
+  allowedTargets: getAllowedVisibilityTargets(row, blockers.length),
+});
+
+/** The `GET …/visibility` result; the MCP output schema is checked against it at compile time. */
+export type TV3SurveyVisibilityStateResult = ReturnType<typeof toStateResult>;
+
 export async function getV3SurveyVisibility(params: TVisibilityOperationParams): Promise<Response> {
   const log = logger.withContext({ requestId: params.requestId, surveyId: params.surveyId });
 
@@ -153,18 +171,10 @@ export async function getV3SurveyVisibility(params: TVisibilityOperationParams):
       getSurveyVisibilityImpact(row, organizationId),
     ]);
 
-    return successResponse(
-      {
-        id: row.id,
-        ...serializeV3SurveyVisibilityFields(row, visibility.ownerName, visibility),
-        blockers,
-        impact,
-        pending: getPendingVisibility(row),
-        version: row.visibilityVersion,
-        allowedTargets: getAllowedVisibilityTargets(row, blockers.length),
-      },
-      { requestId: params.requestId, cache: "private, no-store" }
-    );
+    return successResponse(toStateResult(row, visibility, blockers, impact), {
+      requestId: params.requestId,
+      cache: "private, no-store",
+    });
   } catch (error) {
     return mapV3ThrownError(error, {
       instance: params.instance,

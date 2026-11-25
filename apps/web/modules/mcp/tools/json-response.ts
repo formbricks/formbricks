@@ -1,3 +1,5 @@
+import { logger } from "@formbricks/logger";
+
 /**
  * Rewrite a successful v3 JSON response's body for an MCP projection (concise payloads, field
  * projections), keeping its status and headers.
@@ -21,7 +23,12 @@ export async function mapJsonResponseBody<TBody>(
       return response;
     }
     return Response.json(mapped, { status: response.status, headers: response.headers });
-  } catch {
+  } catch (error) {
+    // The caller still gets its authorized answer, unprojected; the log is how a projection bug shows.
+    logger.warn(
+      { err: error, status: response.status, requestId: response.headers.get("X-Request-Id") ?? undefined },
+      "MCP response projection failed; returning the unprojected response"
+    );
     return response;
   }
 }
