@@ -4041,6 +4041,7 @@
         "csv_action": "Ação",
         "csv_attribute_updates": "{count, plural, one {# atualização de atributo} other {# atualizações de atributos}}",
         "csv_attributes_applied": "{count, plural, one {Atributos dos membros definidos para # pessoa} other {Atributos dos membros definidos para # pessoas}}",
+        "csv_attributes_not_applied": "{count, plural, one {Os atributos de membro não foram definidos para # linha: o convite não foi criado ou a linha foi recusada.} many {Os atributos de membro não foram definidos para # de linhas: os convites não foram criados ou as linhas foram recusadas.} other {Os atributos de membro não foram definidos para # linhas: os convites não foram criados ou as linhas foram recusadas.}}",
         "csv_fix_invalid_rows": "Corrige primeiro as linhas inválidas: {rows}. Cada uma precisa de um endereço de email que nenhuma outra linha utilize e de valores dentro dos limites.",
         "csv_invalid": "Inválida",
         "csv_invalid_rows": "{count, plural, one {# linha inválida} other {# linhas inválidas}}",

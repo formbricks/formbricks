@@ -290,6 +290,7 @@ export const MemberSettingsDialog = ({
                       })
                     )}
                     creatable
+                    splitOnSeparators
                     readOnly={!canEditAttributes}
                     maxSelected={MEMBER_ATTRIBUTE_MAX_VALUES_PER_KEY}
                     inputMaxLength={MEMBER_ATTRIBUTE_MAX_VALUE_LENGTH}

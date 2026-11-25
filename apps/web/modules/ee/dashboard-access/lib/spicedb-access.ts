@@ -2,8 +2,8 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { can } from "@/lib/authorization";
 import {
+  filterReadableDashboardIds,
   filterReadableDashboardPageIds,
-  lookupReadableDashboardIds,
 } from "@/lib/authorization/resource-list";
 
 /**
@@ -30,23 +30,20 @@ import {
 
 export type TDashboardAccessSubject = Readonly<{ type: "user"; id: string } | { type: "apiKey"; id: string }>;
 
-/** The dashboards of `workspaceId` that `subject` can open. */
-export const listReadableDashboardIds = async (
+/**
+ * Of `dashboardIds` (all in `workspaceId`), the ones `subject` can open: the workspace read answers for
+ * everyone but a Dashboard Viewer, who is checked in bounded bulk checks. Callers pass the candidates of
+ * one list page, so the work follows the page, not the number of dashboards in the workspace.
+ */
+export const filterReadableDashboardIdsInWorkspace = async (
   subject: TDashboardAccessSubject,
-  workspaceId: string
+  workspaceId: string,
+  dashboardIds: readonly string[]
 ): Promise<Set<string>> => {
-  const dashboards = await prisma.dashboard.findMany({
-    where: { workspaceId },
-    select: { id: true },
-    orderBy: { id: "asc" },
-  });
-  if (dashboards.length === 0) return new Set();
-
-  const ids = dashboards.map(({ id }) => id);
+  const ids = [...new Set(dashboardIds)];
+  if (ids.length === 0) return new Set();
   if (await can(subject, "workspace.read", { type: "workspace", id: workspaceId })) return new Set(ids);
-
-  const readable = new Set(await lookupReadableDashboardIds(subject));
-  return new Set(ids.filter((id) => readable.has(id)));
+  return new Set(await filterReadableDashboardIds(subject, ids));
 };
 
 /** Of `pageIds`, the dashboard pages `subject` can open, in bounded bulk checks. */

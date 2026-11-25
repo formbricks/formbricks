@@ -274,6 +274,9 @@ export const MembersTable = ({
               <Button
                 variant="secondary"
                 size="sm"
+                // Only a complete snapshot: while the values load, or when they failed, every member would
+                // export blank cells, and re-importing the file would clear their values.
+                disabled={!keysQuery.isSuccess || !valuesQuery.isSuccess}
                 onClick={() =>
                   downloadMemberList(
                     buildMemberCsvExport(

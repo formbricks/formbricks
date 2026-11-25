@@ -4041,6 +4041,7 @@
         "csv_action": "Actie",
         "csv_attribute_updates": "{count, plural, one {# attribuutwijziging} other {# attribuutwijzigingen}}",
         "csv_attributes_applied": "{count, plural, one {Ledenattributen ingesteld voor # persoon} other {Ledenattributen ingesteld voor # mensen}}",
+        "csv_attributes_not_applied": "{count, plural, one {Ledenkenmerken zijn niet ingesteld voor # rij: de uitnodiging is niet aangemaakt of de rij is geweigerd.} other {Ledenkenmerken zijn niet ingesteld voor # rijen: de uitnodigingen zijn niet aangemaakt of de rijen zijn geweigerd.}}",
         "csv_fix_invalid_rows": "Los eerst de ongeldige rijen op: {rows}. Elke rij heeft één e-mailadres nodig dat in geen enkele andere rij voorkomt, en waarden die binnen de limieten vallen.",
         "csv_invalid": "Ongeldig",
         "csv_invalid_rows": "{count, plural, one {# ongeldige rij} other {# ongeldige rijen}}",

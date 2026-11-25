@@ -2,14 +2,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { can } from "@/lib/authorization";
 import {
+  filterReadableDashboardIds,
   filterReadableDashboardPageIds,
-  lookupReadableDashboardIds,
 } from "@/lib/authorization/resource-list";
 import {
   canManageDashboardAccess,
   canReadDashboard,
+  filterReadableDashboardIdsInWorkspace,
   filterReadablePageIds,
-  listReadableDashboardIds,
 } from "./spicedb-access";
 
 vi.mock("@formbricks/database", () => ({
@@ -20,8 +20,8 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/lib/authorization/resource-list", () => ({
+  filterReadableDashboardIds: vi.fn(),
   filterReadableDashboardPageIds: vi.fn(),
-  lookupReadableDashboardIds: vi.fn(),
 }));
 
 const VIEWER = { type: "user", id: "viewer-1" } as const;
@@ -32,51 +32,42 @@ const page = (id: string, workspaceId: string) => ({ dashboard: { workspaceId },
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(can).mockResolvedValue(false);
-  vi.mocked(lookupReadableDashboardIds).mockResolvedValue([]);
+  vi.mocked(filterReadableDashboardIds).mockResolvedValue(new Set());
   vi.mocked(filterReadableDashboardPageIds).mockResolvedValue(new Set());
   vi.mocked(prisma.dashboard.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([] as never);
 });
 
-describe("listReadableDashboardIds", () => {
-  test("lists every dashboard of a workspace the subject reads, without a graph lookup", async () => {
-    vi.mocked(prisma.dashboard.findMany).mockResolvedValue([{ id: "dash-1" }, { id: "dash-2" }] as never);
+describe("filterReadableDashboardIdsInWorkspace", () => {
+  test("keeps every candidate for a subject that reads the workspace, without a bulk check", async () => {
     vi.mocked(can).mockResolvedValue(true);
 
-    await expect(listReadableDashboardIds(API_KEY, "ws-1")).resolves.toEqual(new Set(["dash-1", "dash-2"]));
-
-    expect(prisma.dashboard.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { workspaceId: "ws-1" } })
-    );
+    await expect(
+      filterReadableDashboardIdsInWorkspace(API_KEY, "ws-1", ["dash-1", "dash-2"])
+    ).resolves.toEqual(new Set(["dash-1", "dash-2"]));
     expect(can).toHaveBeenCalledWith(API_KEY, "workspace.read", { type: "workspace", id: "ws-1" });
-    expect(lookupReadableDashboardIds).not.toHaveBeenCalled();
+    expect(filterReadableDashboardIds).not.toHaveBeenCalled();
   });
 
-  // A Dashboard Viewer's team dashboard limits live in SpiceDB; PostgreSQL bounds the answer to this
-  // workspace's rows, so another workspace's dashboard, or one whose row is gone, never comes back.
-  test("intersects a Dashboard Viewer's lookup with the workspace's dashboards", async () => {
-    vi.mocked(prisma.dashboard.findMany).mockResolvedValue([{ id: "dash-1" }, { id: "dash-2" }] as never);
-    vi.mocked(lookupReadableDashboardIds).mockResolvedValue([
-      "dash-2",
-      "dash-other-workspace",
-      "dash-deleted",
-    ]);
+  test("bulk-checks only the candidates for a Dashboard Viewer", async () => {
+    vi.mocked(filterReadableDashboardIds).mockResolvedValue(new Set(["dash-2"]));
 
-    await expect(listReadableDashboardIds(VIEWER, "ws-1")).resolves.toEqual(new Set(["dash-2"]));
-    expect(lookupReadableDashboardIds).toHaveBeenCalledWith(VIEWER);
+    await expect(
+      filterReadableDashboardIdsInWorkspace(VIEWER, "ws-1", ["dash-1", "dash-2", "dash-1"])
+    ).resolves.toEqual(new Set(["dash-2"]));
+    expect(filterReadableDashboardIds).toHaveBeenCalledWith(VIEWER, ["dash-1", "dash-2"]);
   });
 
-  test("asks nothing of SpiceDB for a workspace without dashboards", async () => {
-    await expect(listReadableDashboardIds(VIEWER, "ws-1")).resolves.toEqual(new Set());
+  test("asks nothing of SpiceDB for no candidates", async () => {
+    await expect(filterReadableDashboardIdsInWorkspace(VIEWER, "ws-1", [])).resolves.toEqual(new Set());
     expect(can).not.toHaveBeenCalled();
-    expect(lookupReadableDashboardIds).not.toHaveBeenCalled();
   });
 
   test("propagates an operational failure rather than listing nothing", async () => {
-    vi.mocked(prisma.dashboard.findMany).mockResolvedValue([{ id: "dash-1" }] as never);
-    vi.mocked(lookupReadableDashboardIds).mockRejectedValue(new Error("authzed_unavailable"));
-
-    await expect(listReadableDashboardIds(VIEWER, "ws-1")).rejects.toThrow("authzed_unavailable");
+    vi.mocked(filterReadableDashboardIds).mockRejectedValue(new Error("authzed_unavailable"));
+    await expect(filterReadableDashboardIdsInWorkspace(VIEWER, "ws-1", ["dash-1"])).rejects.toThrow(
+      "authzed_unavailable"
+    );
   });
 });
 

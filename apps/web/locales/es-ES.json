@@ -4041,6 +4041,7 @@
         "csv_action": "Acción",
         "csv_attribute_updates": "{count, plural, one {# actualización de atributo} other {# actualizaciones de atributos}}",
         "csv_attributes_applied": "{count, plural, one {Atributos de miembro establecidos para # persona} other {Atributos de miembro establecidos para # personas}}",
+        "csv_attributes_not_applied": "{count, plural, one {No se establecieron los atributos de miembro para # fila: no se creó su invitación o se rechazó la fila.} many {No se establecieron los atributos de miembro para # filas: no se crearon sus invitaciones o se rechazaron las filas.} other {No se establecieron los atributos de miembro para # filas: no se crearon sus invitaciones o se rechazaron las filas.}}",
         "csv_fix_invalid_rows": "Corrige primero las filas no válidas: {rows}. Cada una necesita una dirección de correo electrónico que no use ninguna otra fila y valores dentro de los límites.",
         "csv_invalid": "No válida",
         "csv_invalid_rows": "{count, plural, one {# fila no válida} other {# filas no válidas}}",

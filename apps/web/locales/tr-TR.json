@@ -4041,6 +4041,7 @@
         "csv_action": "İşlem",
         "csv_attribute_updates": "{count, plural, one {# özellik güncellemesi} other {# özellik güncellemesi}}",
         "csv_attributes_applied": "{count, plural, one {# kişi için üye özellikleri ayarlandı} other {# kişi için üye özellikleri ayarlandı}}",
+        "csv_attributes_not_applied": "{count, plural, one {# satır için üye özellikleri ayarlanmadı: davetiyesi oluşturulmadı veya satır reddedildi.} other {# satır için üye özellikleri ayarlanmadı: davetiyeleri oluşturulmadı veya satırlar reddedildi.}}",
         "csv_fix_invalid_rows": "Önce geçersiz satırları düzelt: {rows}. Her satırda başka hiçbir satırda kullanılmayan bir e-posta adresi olmalı ve değerler sınırlar içinde kalmalı.",
         "csv_invalid": "Geçersiz",
         "csv_invalid_rows": "{count, plural, one {# geçersiz satır} other {# geçersiz satır}}",

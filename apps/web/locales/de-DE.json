@@ -4041,6 +4041,7 @@
         "csv_action": "Aktion",
         "csv_attribute_updates": "{count, plural, one {# Attributaktualisierung} other {# Attributaktualisierungen}}",
         "csv_attributes_applied": "{count, plural, one {Mitgliedsattribute für # Person festgelegt} other {Mitgliedsattribute für # Personen festgelegt}}",
+        "csv_attributes_not_applied": "{count, plural, one {Die Mitgliedsattribute wurden für # Zeile nicht festgelegt: Die Einladung wurde nicht erstellt oder die Zeile wurde abgelehnt.} other {Die Mitgliedsattribute wurden für # Zeilen nicht festgelegt: Die Einladungen wurden nicht erstellt oder die Zeilen wurden abgelehnt.}}",
         "csv_fix_invalid_rows": "Korrigiere zuerst die ungültigen Zeilen: {rows}. Jede Zeile braucht eine E-Mail-Adresse, die in keiner anderen Zeile vorkommt, und Werte innerhalb der Grenzen.",
         "csv_invalid": "Ungültig",
         "csv_invalid_rows": "{count, plural, one {# ungültige Zeile} other {# ungültige Zeilen}}",

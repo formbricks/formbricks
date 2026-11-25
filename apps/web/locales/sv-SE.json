@@ -4041,6 +4041,7 @@
         "csv_action": "Åtgärd",
         "csv_attribute_updates": "{count, plural, one {# attributuppdatering} other {# attributuppdateringar}}",
         "csv_attributes_applied": "{count, plural, one {Medlemsattribut har angetts för # person} other {Medlemsattribut har angetts för # personer}}",
+        "csv_attributes_not_applied": "{count, plural, one {Medlemsattribut ställdes inte in för # rad: inbjudan skapades inte eller så avvisades raden.} other {Medlemsattribut ställdes inte in för # rader: inbjudningarna skapades inte eller så avvisades raderna.}}",
         "csv_fix_invalid_rows": "Åtgärda de ogiltiga raderna först: {rows}. Varje rad måste ha en e-postadress som ingen annan rad använder och värden inom gränserna.",
         "csv_invalid": "Ogiltig",
         "csv_invalid_rows": "{count, plural, one {# ogiltig rad} other {# ogiltiga rader}}",

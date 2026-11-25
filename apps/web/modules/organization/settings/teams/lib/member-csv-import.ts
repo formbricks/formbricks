@@ -1,7 +1,6 @@
 import { toCsvLine } from "@/lib/utils/csv-cell";
 import { MEMBER_ATTRIBUTE_MAX_BULK_ROWS } from "@/modules/ee/member-attributes/lib/limits";
 import { prepareMemberAttributeValues } from "@/modules/ee/member-attributes/lib/values";
-import { splitChipInput } from "@/modules/ui/components/tags-combobox/lib/chips";
 
 /**
  * The members CSV import (ENG-7475): one file for new and existing members. Each column that names a
@@ -122,7 +121,7 @@ export const planMemberCsvImport = ({
 
     const attributes: Record<string, string[]> = {};
     for (const { header, key } of attributeColumns) {
-      const prepared = prepareMemberAttributeValues(splitChipInput(row[header] ?? ""));
+      const prepared = prepareMemberAttributeValues(splitAttributeCell(row[header] ?? ""));
       if (prepared.ok) {
         attributes[key.key] = prepared.values;
       } else if (prepared.problem.code === "too_many_values") {
@@ -188,6 +187,45 @@ export const buildMemberCsvTemplate = (attributeKeys: readonly TCsvAttributeKey[
     ...attributeKeys.map((key) => key.key),
   ]) + toCsvLine(["Jane Doe", "jane@example.com", "Member", "", ...attributeKeys.map(() => "")]);
 
+/**
+ * The values in one attribute cell. Commas, semicolons and line breaks separate values, as in the tags
+ * field, except inside double quotes: `"Washington, D.C."; Oslo` is two values, and `""` inside quotes is
+ * one quote. The member list download writes cells this way, so a value with a separator survives the
+ * round trip instead of splitting into two (and possibly widening what it grants).
+ */
+export const splitAttributeCell = (cell: string): string[] => {
+  const values: string[] = [];
+  let current = "";
+  let quoted = false;
+  for (let i = 0; i < cell.length; i++) {
+    const char = cell[i];
+    if (quoted) {
+      if (char === '"' && cell[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        current += char;
+      }
+    } else if (char === '"' && current.trim() === "") {
+      quoted = true;
+      current = "";
+    } else if (/[,;\n\r\t]/.test(char)) {
+      values.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  values.push(current);
+  return values.map((value) => value.trim()).filter((value) => value !== "");
+};
+
+/** `splitAttributeCell` reversed: values joined with "; ", each one with a separator or quote quoted. */
+export const joinAttributeCell = (values: readonly string[]): string =>
+  values.map((value) => (/[,;"\n\r\t]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value)).join("; ");
+
 /** "dashboard_viewer" as the import reads it back: words, not the translated label. */
 const toRoleCell = (role: string): string =>
   role
@@ -198,7 +236,7 @@ const toRoleCell = (role: string): string =>
 /**
  * The member list in the import's own format: the template's columns, one row per member and pending
  * invite, so it can be edited and uploaded again through Invite member. Several values in a cell are
- * joined with ", ", which the import splits again. Cells go through `toCsvLine` (formula defanging).
+ * written by `joinAttributeCell`, which the import's `splitAttributeCell` reverses exactly. Cells go through `toCsvLine` (formula defanging).
  */
 export const buildMemberCsvExport = (
   rows: ReadonlyArray<{
@@ -224,7 +262,7 @@ export const buildMemberCsvExport = (
         row.email,
         toRoleCell(row.role),
         row.teams.map((team) => team.name).join(", "),
-        ...attributeKeys.map((key) => (row.attributes[key.key] ?? []).join(", ")),
+        ...attributeKeys.map((key) => joinAttributeCell(row.attributes[key.key] ?? [])),
       ])
     )
     .join("");

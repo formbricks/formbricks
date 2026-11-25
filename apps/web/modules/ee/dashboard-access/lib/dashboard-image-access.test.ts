@@ -5,7 +5,9 @@ import { canReadDashboardImageFile, getDashboardImageFileDashboardId } from "./d
 import { filterReadablePageIds } from "./spicedb-access";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@formbricks/database", () => ({ prisma: { dashboard: { findFirst: vi.fn() } } }));
+vi.mock("@formbricks/database", () => ({
+  prisma: { workspace: { findUnique: vi.fn() }, dashboardWidget: { findMany: vi.fn() } },
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDashboardViewerRoleEnabled: vi.fn() }));
 vi.mock("./spicedb-access", () => ({ filterReadablePageIds: vi.fn() }));
 
@@ -16,10 +18,11 @@ describe("dashboard image downloads (ENG-7482)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getIsDashboardViewerRoleEnabled).mockResolvedValue(true);
-    vi.mocked(prisma.dashboard.findFirst).mockResolvedValue({
-      workspace: { organizationId: "org-1" },
-      widgets: [{ pageId: "page-1" }, { pageId: "page-2" }],
-    } as never);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ organizationId: "org-1" } as never);
+    vi.mocked(prisma.dashboardWidget.findMany).mockResolvedValue([
+      { pageId: "page-1" },
+      { pageId: "page-2" },
+    ] as never);
   });
 
   test("names the dashboard only for dashboards/<id>/<file>", () => {
@@ -32,12 +35,12 @@ describe("dashboard image downloads (ENG-7482)", () => {
   test("allows when an image block on a readable page shows the exact file", async () => {
     vi.mocked(filterReadablePageIds).mockResolvedValue(new Set(["page-2"]));
     await expect(canReadDashboardImageFile("user-1", "ws-1", FILE)).resolves.toBe(true);
-    expect(vi.mocked(prisma.dashboard.findFirst).mock.calls[0][0]).toMatchObject({
-      where: { id: DASHBOARD, workspaceId: "ws-1" },
-      select: {
-        widgets: {
-          where: { kind: "image", content: { path: ["fileUrl"], equals: `/storage/ws-1/private/${FILE}` } },
-        },
+    // Blocks on any dashboard of the workspace count: a duplicate shows its original's upload.
+    expect(vi.mocked(prisma.dashboardWidget.findMany).mock.calls[0][0]).toMatchObject({
+      where: {
+        kind: "image",
+        content: { path: ["fileUrl"], equals: `/storage/ws-1/private/${FILE}` },
+        dashboard: { workspaceId: "ws-1" },
       },
     });
   });
@@ -46,10 +49,7 @@ describe("dashboard image downloads (ENG-7482)", () => {
     vi.mocked(filterReadablePageIds).mockResolvedValue(new Set());
     await expect(canReadDashboardImageFile("user-1", "ws-1", FILE)).resolves.toBe(false);
 
-    vi.mocked(prisma.dashboard.findFirst).mockResolvedValueOnce({
-      workspace: { organizationId: "org-1" },
-      widgets: [],
-    } as never);
+    vi.mocked(prisma.dashboardWidget.findMany).mockResolvedValueOnce([] as never);
     await expect(canReadDashboardImageFile("user-1", "ws-1", FILE)).resolves.toBe(false);
 
     vi.mocked(filterReadablePageIds).mockResolvedValue(new Set(["page-1"]));

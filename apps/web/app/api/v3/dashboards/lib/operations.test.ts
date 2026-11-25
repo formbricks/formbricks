@@ -52,7 +52,9 @@ vi.mock("./dashboard-read-access", () => ({
   refuseUnlessDashboardOpenable: vi.fn(async () => null),
   getReadablePageIds: vi.fn(async (_access: unknown, pageIds: string[]) => new Set(pageIds)),
 }));
-vi.mock("@/modules/ee/dashboard-access/lib/spicedb-access", () => ({ listReadableDashboardIds: vi.fn() }));
+vi.mock("@/modules/ee/dashboard-access/lib/spicedb-access", () => ({
+  filterReadableDashboardIdsInWorkspace: vi.fn(),
+}));
 vi.mock("@/modules/ee/dashboard-access/lib/viewer-data-access", () => ({
   getViewerAccessSummary: vi.fn(async () => ({ status: "unrestricted", chips: [] })),
 }));
@@ -65,6 +67,7 @@ vi.mock("./service", () => ({
   getDashboardResourceRow: vi.fn(),
   getDashboardWorkspaceRow: vi.fn(),
   listDashboardRows: vi.fn(),
+  listReadableDashboardRows: vi.fn(),
   renameDashboardRow: vi.fn(),
 }));
 vi.mock("./replace-service", () => ({ replaceDashboardRow: vi.fn() }));

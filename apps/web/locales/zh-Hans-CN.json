@@ -4041,6 +4041,7 @@
         "csv_action": "操作",
         "csv_attribute_updates": "{count, plural, other {# 项属性更新}}",
         "csv_attributes_applied": "{count, plural, other {已为 # 人设置成员属性}}",
+        "csv_attributes_not_applied": "{count, plural, other {有 # 行未设置成员属性：对应的邀请未创建，或该行已被拒绝。}}",
         "csv_fix_invalid_rows": "请先修复无效行：{rows}。每行都需要一个未被其他行使用的邮箱地址，且各项值须在限制范围内。",
         "csv_invalid": "无效",
         "csv_invalid_rows": "{count, plural, other {# 个无效行}}",

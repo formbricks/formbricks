@@ -96,7 +96,7 @@ export const deleteMemberAttributeKey = async (
   );
 };
 
-/** Every member's and pending invite's values, walking the list's pages (bounded). */
+/** Every member's and pending invite's values, walking the list's pages (bounded; throws past the bound). */
 export const listAllMemberAttributeRows = async (
   organizationId: string,
   signal?: AbortSignal
@@ -117,9 +117,11 @@ export const listAllMemberAttributeRows = async (
     };
     rows.push(...body.data);
     cursor = body.meta.nextCursor;
-    if (!cursor) break;
+    if (!cursor) return rows;
   }
-  return rows;
+  // A partial list would read as members without values: the table would show them blank, the member
+  // list download would export blank cells, and re-importing it would clear their values. Fail instead.
+  throw new Error(`Member attributes list exceeds ${MAX_PAGES} pages`);
 };
 
 export const bulkSetMemberAttributes = async (

@@ -163,7 +163,8 @@ export const lookupReadableDashboardIds = (actor: TAuthorizationActor): Promise<
  */
 const filterPagesWithinMcpGrant = async (
   actor: TAuthorizationActor,
-  pageIds: ReadonlyArray<string>
+  pageIds: ReadonlyArray<string>,
+  resourceType: "dashboard" | "dashboard_page" = "dashboard_page"
 ): Promise<ReadonlySet<string> | null> => {
   const grant = getMcpGrantForActor(actor);
   if (!grant) return null;
@@ -171,7 +172,7 @@ const filterPagesWithinMcpGrant = async (
     return await getAuthzedClient().checkBulkPermissions({
       permission: MCP_REACH_PERMISSION,
       resourceIds: pageIds,
-      resourceType: "dashboard_page",
+      resourceType,
       subject: toMcpGrantSubject(grant.id),
     });
   } catch (error) {
@@ -185,19 +186,34 @@ const filterPagesWithinMcpGrant = async (
  * `dashboard_page#read` in batches of at most `AUTHZED_MAX_BULK_CHECK_ITEMS`, so a page's team limit
  * applies to a Dashboard Viewer. Unprojected pages are denied (fail closed).
  */
-export const filterReadableDashboardPageIds = async (
+export const filterReadableDashboardPageIds = (
   actor: TAuthorizationActor,
   pageIds: ReadonlyArray<string>
+): Promise<ReadonlySet<string>> => filterReadableDashboardNodeIds(actor, pageIds, "dashboardPage");
+
+/**
+ * Of `dashboardIds`, the dashboards `actor` can open: `dashboard#read` in bounded bulk checks, like the
+ * pages. For a list that walks candidates page by page instead of looking up every readable dashboard.
+ */
+export const filterReadableDashboardIds = (
+  actor: TAuthorizationActor,
+  dashboardIds: ReadonlyArray<string>
+): Promise<ReadonlySet<string>> => filterReadableDashboardNodeIds(actor, dashboardIds, "dashboard");
+
+const filterReadableDashboardNodeIds = async (
+  actor: TAuthorizationActor,
+  nodeIds: ReadonlyArray<string>,
+  kind: "dashboard" | "dashboardPage"
 ): Promise<ReadonlySet<string>> => {
-  const ids = [...new Set(pageIds)];
+  const ids = [...new Set(nodeIds)];
   if (ids.length === 0) return new Set();
 
   recordAuthorizationCheckIssued();
   const startedAt = performance.now();
   const metric = {
-    action: "dashboardPage.read",
+    action: `${kind}.read`,
     actorType: actor.type,
-    resourceType: "dashboardPage",
+    resourceType: kind,
     surface: getAuthorizationSurface(),
   } as const;
 
@@ -212,10 +228,10 @@ export const filterReadableDashboardPageIds = async (
         getAuthzedClient().checkBulkPermissions({
           permission: "read",
           resourceIds: batch,
-          resourceType: getSpicedbObjectType("dashboardPage"),
+          resourceType: getSpicedbObjectType(kind),
           subject: { objectId: actor.id, objectType: getSpicedbObjectType(actor.type) },
         }),
-        filterPagesWithinMcpGrant(actor, batch),
+        filterPagesWithinMcpGrant(actor, batch, kind === "dashboard" ? "dashboard" : "dashboard_page"),
       ]);
       for (const id of readable) {
         if (reached === null || reached.has(id)) allowed.add(id);

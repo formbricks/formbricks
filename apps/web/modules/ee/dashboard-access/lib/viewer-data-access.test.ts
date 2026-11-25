@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { getMemberAttributeValuesByKey } from "@/modules/ee/member-attributes/lib/service";
-import { getViewerAccessSummary } from "./viewer-data-access";
+import { MAX_VIEWER_ACCESS_PROBES, getViewerAccessSummary } from "./viewer-data-access";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({
@@ -54,5 +54,38 @@ describe("getViewerAccessSummary", () => {
     vi.mocked(runChartQuery).mockClear();
     expect((await getViewerAccessSummary(reader, ["ds_1"])).status).toBe("restricted");
     expect(runChartQuery).not.toHaveBeenCalled();
+  });
+
+  describe("with many restricted datasets", () => {
+    const datasets = (count: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        id: `ds_${i}`,
+        viewerAccessJoin: "all",
+        viewerAccessConditions: [
+          {
+            field: "FeedbackRecords.metadataCountry",
+            attributeKeyId: "key_1",
+            attributeKey: { label: "Country" },
+          },
+        ],
+      }));
+
+    beforeEach(() => vi.mocked(runChartQuery).mockReset());
+
+    test("probes one dataset at a time and stops at the first match", async () => {
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue(datasets(3) as never);
+      vi.mocked(runChartQuery).mockResolvedValue({ rows: [{ "FeedbackRecords.count": 1 }] } as never);
+      const ids = ["ds_0", "ds_1", "ds_2"];
+      expect((await getViewerAccessSummary(reader, ids, probe)).status).toBe("restricted");
+      expect(runChartQuery).toHaveBeenCalledTimes(1);
+    });
+
+    test("runs at most MAX_VIEWER_ACCESS_PROBES probes, and stays restricted past them", async () => {
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue(datasets(250) as never);
+      vi.mocked(runChartQuery).mockResolvedValue({ rows: [{ "FeedbackRecords.count": 0 }] } as never);
+      const ids = Array.from({ length: 250 }, (_, i) => `ds_${i}`);
+      expect((await getViewerAccessSummary(reader, ids, probe)).status).toBe("restricted");
+      expect(runChartQuery).toHaveBeenCalledTimes(MAX_VIEWER_ACCESS_PROBES);
+    });
   });
 });

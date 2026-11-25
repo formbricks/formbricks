@@ -35,7 +35,7 @@ import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
-import { listReadableDashboardIds } from "@/modules/ee/dashboard-access/lib/spicedb-access";
+import { filterReadableDashboardIdsInWorkspace } from "@/modules/ee/dashboard-access/lib/spicedb-access";
 import { getViewerAccessSummary } from "@/modules/ee/dashboard-access/lib/viewer-data-access";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
 import { getReadablePageIds, refuseUnlessDashboardOpenable } from "./dashboard-read-access";
@@ -60,12 +60,23 @@ import {
   getDashboardResourceRow,
   getDashboardWorkspaceRow,
   listDashboardRows,
+  listReadableDashboardRows,
   renameDashboardRow,
 } from "./service";
 
 type TV3DashboardWriteContext = TV3DashboardOperationContext & { auditLog?: TV3AuditLog };
 
 /** 409 for a name another dashboard in the workspace already has. */
+/**
+ * For a Dashboard Viewer, the check a list page applies to its candidates (ENG-7472); `null` when the
+ * workspace read answers for every dashboard.
+ */
+const getDashboardListFilter = (
+  subject: ReturnType<typeof getDashboardReadSubject> | null,
+  workspaceId: string
+): ((ids: readonly string[]) => Promise<ReadonlySet<string>>) | null =>
+  subject ? (ids) => filterReadableDashboardIdsInWorkspace(subject, workspaceId, ids) : null;
+
 export const dashboardNameTaken = ({ requestId, instance }: TV3DashboardOperationContext): Response =>
   problemConflict(requestId, "A dashboard with this name already exists in this workspace.", instance);
 
@@ -109,10 +120,7 @@ export async function listV3Dashboards({
     const fp = computeFilterFingerprint(filter);
     // A Dashboard Viewer lists only the dashboards their team dashboard limits leave them (ENG-7472).
     const subject = getDashboardReadSubject(authentication, access);
-    const ids =
-      access.asDashboardViewer && subject
-        ? [...(await listReadableDashboardIds(subject, access.workspaceId))]
-        : undefined;
+    const readable = getDashboardListFilter(access.asDashboardViewer ? subject : null, access.workspaceId);
 
     let cursor: { value: string; id: string } | null = null;
     if (query.cursor) {
@@ -131,7 +139,9 @@ export async function listV3Dashboards({
       }
     }
 
-    const rows = await listDashboardRows({ filter: { ...filter, ids }, cursor, limit: query.limit });
+    const rows = readable
+      ? await listReadableDashboardRows({ filter, cursor, limit: query.limit, readable })
+      : await listDashboardRows({ filter, cursor, limit: query.limit });
     const { page, nextCursor } = buildKeysetPage({
       rows,
       limit: query.limit,

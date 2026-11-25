@@ -4041,6 +4041,7 @@
         "csv_action": "Action",
         "csv_attribute_updates": "{count, plural, one {# attribute update} other {# attribute updates}}",
         "csv_attributes_applied": "{count, plural, one {Member attributes set for # person} other {Member attributes set for # people}}",
+        "csv_attributes_not_applied": "{count, plural, one {Member attributes weren't set for # row: its invite wasn't created or the row was refused.} other {Member attributes weren't set for # rows: their invites weren't created or the rows were refused.}}",
         "csv_fix_invalid_rows": "Fix the invalid rows first: {rows}. Each needs one email address that no other row uses, and values within the limits.",
         "csv_invalid": "Invalid",
         "csv_invalid_rows": "{count, plural, one {# invalid row} other {# invalid rows}}",

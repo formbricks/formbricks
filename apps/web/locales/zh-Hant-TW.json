@@ -4041,6 +4041,7 @@
         "csv_action": "動作",
         "csv_attribute_updates": "{count, plural, other {# 項屬性更新}}",
         "csv_attributes_applied": "{count, plural, other {已為 # 人設定成員屬性}}",
+        "csv_attributes_not_applied": "{count, plural, other {有 # 列未設定成員屬性：因為未建立邀請，或該列遭到拒絕。}}",
         "csv_fix_invalid_rows": "請先修正無效的列：{rows}。每一列都需要提供一個未被其他列使用的電子郵件地址，且各欄位的值必須在限制範圍內。",
         "csv_invalid": "無效",
         "csv_invalid_rows": "{count, plural, other {# 個無效列}}",

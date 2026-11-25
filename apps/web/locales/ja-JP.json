@@ -4041,6 +4041,7 @@
         "csv_action": "アクション",
         "csv_attribute_updates": "{count, plural, other {#件の属性更新}}",
         "csv_attributes_applied": "{count, plural, other {#人のメンバー属性を設定しました}}",
+        "csv_attributes_not_applied": "{count, plural, other {#行でメンバー属性を設定できませんでした。招待が作成されなかったか、行が拒否されました。}}",
         "csv_fix_invalid_rows": "まず無効な行を修正してください: {rows}。各行には、他の行と重複しないメールアドレスを1つ入力し、値は制限の範囲内にしてください。",
         "csv_invalid": "無効",
         "csv_invalid_rows": "{count, plural, other {無効な行が#件}}",

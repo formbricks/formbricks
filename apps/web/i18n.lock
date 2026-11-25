@@ -3896,6 +3896,7 @@ checksums:
     workspace/settings/members/csv_action: c92af0bdf1698b0d10cf5b28d2ad4945
     workspace/settings/members/csv_attribute_updates: b54a9d09c84c2698b20140acc149ca06
     workspace/settings/members/csv_attributes_applied: 601067e6245f9b27138833115c82f7a1
+    workspace/settings/members/csv_attributes_not_applied: df06ed571607e7382c66c9ac32e3abfa
     workspace/settings/members/csv_fix_invalid_rows: 15c6724e55fcaf4afa7b359321b1ab2c
     workspace/settings/members/csv_invalid: 465e589efaf84323b0eaa38f177ed81c
     workspace/settings/members/csv_invalid_rows: 3e7b97b8ce11e9fd576390dbf07da87a

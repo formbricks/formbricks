@@ -3,7 +3,9 @@ import { MEMBER_ATTRIBUTE_MAX_BULK_ROWS } from "@/modules/ee/member-attributes/l
 import {
   buildMemberCsvExport,
   buildMemberCsvTemplate,
+  joinAttributeCell,
   planMemberCsvImport,
+  splitAttributeCell,
   toBulkAttributeRows,
 } from "./member-csv-import";
 
@@ -144,7 +146,7 @@ describe("buildMemberCsvExport", () => {
     expect(lines[0]).toContain("country");
     expect(lines[1]).toContain("Dashboard Viewer");
     expect(lines[1]).toContain("Nordics, Support");
-    expect(lines[1]).toContain("Sweden, Norway");
+    expect(lines[1]).toContain("Sweden; Norway");
     expect(lines[2]).toContain("Member");
   });
 
@@ -154,5 +156,28 @@ describe("buildMemberCsvExport", () => {
       []
     );
     expect(csv).not.toMatch(/(^|,)=cmd/m);
+  });
+});
+
+describe("attribute cells", () => {
+  test("split on commas, semicolons and line breaks, like the tags field", () => {
+    expect(splitAttributeCell("Sweden; Norway,  Denmark\nFinland")).toEqual([
+      "Sweden",
+      "Norway",
+      "Denmark",
+      "Finland",
+    ]);
+    expect(splitAttributeCell(" ; ,")).toEqual([]);
+  });
+
+  test("keep a quoted value with a separator or a quote whole", () => {
+    expect(splitAttributeCell('"Washington, D.C."; Oslo')).toEqual(["Washington, D.C.", "Oslo"]);
+    expect(splitAttributeCell('"say ""hi""; bye"')).toEqual(['say "hi"; bye']);
+  });
+
+  test("round-trip every value through the download and the import", () => {
+    const values = ["Washington, D.C.", "Oslo", 'A "quoted"; value', "Tab\there"];
+    expect(splitAttributeCell(joinAttributeCell(values))).toEqual(values);
+    expect(joinAttributeCell(["Sweden", "Norway"])).toBe("Sweden; Norway");
   });
 });

@@ -296,11 +296,16 @@ const BulkInviteTabBody = ({
     if (!attributeContext) return true;
     try {
       const summary = await attributeContext.applyAttributes(attributeRows);
-      toast.success(
-        t("workspace.settings.members.csv_attributes_applied", {
-          count: summary.updatedMembers + summary.updatedInvites,
-        })
-      );
+      const applied = summary.updatedMembers + summary.updatedInvites;
+      if (applied > 0)
+        toast.success(t("workspace.settings.members.csv_attributes_applied", { count: applied }));
+      // An email the endpoint doesn't know (its invite failed) or a refused row is an outcome, not a
+      // thrown error: report it and keep the preview open, so nothing reads as done that isn't.
+      const notApplied = summary.unknownEmails + summary.invalid;
+      if (notApplied > 0) {
+        setError(t("workspace.settings.members.csv_attributes_not_applied", { count: notApplied }));
+        return false;
+      }
       return true;
     } catch (applyError) {
       setError(getV3ApiErrorMessage(applyError, t("common.something_went_wrong_please_try_again")));
@@ -358,12 +363,13 @@ const BulkInviteTabBody = ({
     setIsImporting(true);
     try {
       // Invites first, so the attribute rows below find the new invites by email.
+      // A failed invite request (its error is already shown) stops here: the new emails' attributes would
+      // only come back as unknown, and the preview stays open to retry.
       const invited = parsed.data.length > 0 ? await onSubmit(parsed.data) : true;
+      if (!invited) return;
       const attributeRows = plan ? toBulkAttributeRows(plan) : [];
       if (attributeRows.length > 0 && attributeContext && !(await applyAttributes(attributeRows))) return;
-      if (invited || attributeRows.length > 0) {
-        setOpen(false);
-      }
+      setOpen(false);
     } finally {
       setIsImporting(false);
     }

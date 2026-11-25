@@ -4041,6 +4041,7 @@
         "csv_action": "Művelet",
         "csv_attribute_updates": "{count, plural, one {# attribútumfrissítés} other {# attribútumfrissítés}}",
         "csv_attributes_applied": "{count, plural, one {Tagattribútumok beállítva # személyhez} other {Tagattribútumok beállítva # személyhez}}",
+        "csv_attributes_not_applied": "{count, plural, one {A tagi attribútumok nem kerültek beállításra # sor esetében: a meghívó nem jött létre, vagy a sort elutasították.} other {A tagi attribútumok nem kerültek beállításra # sor esetében: a meghívók nem jöttek létre, vagy a sorokat elutasították.}}",
         "csv_fix_invalid_rows": "Kérjük, először javítsa ki az érvénytelen sorokat: {rows}. Mindegyik sorban egy olyan e-mail-címnek kell szerepelnie, amelyet más sor nem használ, az értékeknek pedig a megengedett határokon belül kell maradniuk.",
         "csv_invalid": "Érvénytelen",
         "csv_invalid_rows": "{count, plural, one {# érvénytelen sor} other {# érvénytelen sor}}",

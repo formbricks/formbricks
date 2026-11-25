@@ -92,6 +92,9 @@ export type TViewerAccessProbeScope = { workspaceId: string; actor: TCubeQueryAc
  * Whether `reader` sees at least one record of `datasetId` under their access: one count query carrying
  * the same claim every chart read carries, so "matches nothing" means exactly what the charts would show.
  */
+/** The most restricted datasets one dashboard read probes for the "unmatched" state. */
+export const MAX_VIEWER_ACCESS_PROBES = 3;
+
 const hasMatchingRecord = async (
   reader: NonNullable<TViewerAccessReader>,
   datasetId: string,
@@ -152,8 +155,11 @@ export const getViewerAccessSummary = async (
   const restricted = [...resolved.entries()].filter(
     (entry): entry is [string, TResolvedViewerAccess] => entry[1] !== null
   );
-  const matches = await Promise.all(
-    restricted.map(([datasetId, access]) => probeMatchingRecord(reader, datasetId, access, probe))
-  );
-  return matches.some(Boolean) ? summary : { ...summary, status: "unmatched" };
+  // One count query at a time, stopping at the first match, and at most `MAX_VIEWER_ACCESS_PROBES` per
+  // read: the probe only picks a message, so past the cap the viewer counts as matched and each chart
+  // shows what its own (claim-carrying) read returns.
+  for (const [datasetId, access] of restricted.slice(0, MAX_VIEWER_ACCESS_PROBES)) {
+    if (await probeMatchingRecord(reader, datasetId, access, probe)) return summary;
+  }
+  return restricted.length > MAX_VIEWER_ACCESS_PROBES ? summary : { ...summary, status: "unmatched" };
 };

@@ -7,8 +7,17 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
 import { Badge } from "@/modules/ui/components/multi-select/badge";
+import { addChips, hasChipSeparator, splitChipInput } from "@/modules/ui/components/tags-combobox/lib/chips";
 import { NO_AUTOFILL_PROPS } from "@/modules/ui/lib/no-autofill";
 import { cn } from "@/modules/ui/lib/utils";
+
+/** The chip for typed `value`: the chosen one, else a matching option, else the text itself. */
+const toTypedOption = <T extends string>(
+  chosen: readonly TOption<T>[],
+  value: string,
+  resolve: (value: T) => TOption<T> | undefined
+): TOption<T> =>
+  chosen.find((s) => s.value === value) ?? resolve(value as T) ?? { value: value as T, label: value };
 
 interface TOption<T> {
   value: T;
@@ -41,6 +50,11 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
    * values, where `options` are only suggestions.
    */
   creatable?: boolean;
+  /**
+   * With `creatable`: a comma or semicolon typed ends a value, and pasted text with separators
+   * (`Denmark; Finland`) becomes one chip per value, as in the tags field (ENG-7248).
+   */
+  splitOnSeparators?: boolean;
   /** Caps the characters of the input, e.g. a value's maximum length. */
   inputMaxLength?: number;
   /** Stops offering options once this many are chosen. */
@@ -72,6 +86,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     containerClassName,
     focusOnMount,
     creatable = false,
+    splitOnSeparators = false,
     inputMaxLength,
     maxSelected,
     inputId,
@@ -174,6 +189,44 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     if (option.disabled) return;
     isUserInitiatedRef.current = true; // Mark as user-initiated
     setSelected((prev) => [...prev, option]);
+    setInputValue("");
+  };
+
+  // Appends typed values as chips: trimmed, without blanks or case-insensitive repeats, up to the caps.
+  const addTypedValues = (texts: readonly string[]) => {
+    if (disabled || readOnly) return;
+    isUserInitiatedRef.current = true;
+    setSelected((prev) => {
+      const values = addChips(
+        prev.map((s) => s.value as string),
+        texts,
+        { maxValues: maxSelected, maxLength: inputMaxLength }
+      );
+      if (values.length === prev.length) return prev;
+      return values.map((v) => toTypedOption(prev, v, resolveOption));
+    });
+  };
+
+  const splitsTyping = creatable && splitOnSeparators;
+
+  const handleInputChange = (next: string) => {
+    if (!splitsTyping || !hasChipSeparator(next)) {
+      setInputValue(next);
+      return;
+    }
+    // Everything before the last separator is done; what follows it is still being typed.
+    const parts = next.split(/[,;\n\r\t]/);
+    const rest = parts.pop() ?? "";
+    addTypedValues(parts);
+    setInputValue(rest.trimStart());
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (!splitsTyping) return;
+    const pasted = e.clipboardData.getData("text");
+    if (!hasChipSeparator(pasted)) return;
+    e.preventDefault();
+    addTypedValues(splitChipInput(`${inputValue}${pasted}`));
     setInputValue("");
   };
 
@@ -355,7 +408,8 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               aria-labelledby={ariaLabelledBy}
               maxLength={inputMaxLength}
               value={inputValue}
-              onValueChange={setInputValue}
+              onValueChange={handleInputChange}
+              onPaste={handlePaste}
               onBlur={() => setOpen(false)}
               onFocus={() => setOpen(true)}
               placeholder={placeholder}

@@ -7,6 +7,7 @@ import {
   getDashboardResourceRow,
   getDashboardWorkspaceRow,
   listDashboardRows,
+  listReadableDashboardRows,
   renameDashboardRow,
 } from "./service";
 
@@ -340,5 +341,53 @@ describe("duplicateDashboardRow", () => {
     expect(tx.dashboard.findMany.mock.calls[0][0].where.name).toEqual({
       startsWith: String.raw`Q3 \\ Q4 100\%\_done (copy`,
     });
+  });
+});
+
+describe("listReadableDashboardRows", () => {
+  const row = (n: number) => ({ id: `dash-${n}`, createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, 1000 - n)) });
+  const rows = (from: number, count: number) => Array.from({ length: count }, (_, i) => row(from + i));
+
+  beforeEach(() => {
+    vi.mocked(prisma.dashboard.findMany).mockReset();
+  });
+
+  test("walks candidate batches until the page plus one is full, checking only each batch", async () => {
+    vi.mocked(prisma.dashboard.findMany)
+      .mockResolvedValueOnce(rows(0, 100) as never)
+      .mockResolvedValueOnce(rows(100, 100) as never);
+    // Only every 40th dashboard is readable: the first batch keeps 3, the second fills the page.
+    const readable = vi.fn(
+      async (ids: readonly string[]) => new Set(ids.filter((id) => Number(id.slice(5)) % 40 === 0))
+    );
+
+    const result = await listReadableDashboardRows({
+      filter: { workspaceId: WORKSPACE_ID },
+      cursor: null,
+      limit: 4,
+      readable,
+    });
+
+    expect(result.map(({ id }) => id)).toEqual(["dash-0", "dash-40", "dash-80", "dash-120", "dash-160"]);
+    expect(readable).toHaveBeenCalledTimes(2);
+    expect(readable.mock.calls[0][0]).toHaveLength(100);
+    expect(vi.mocked(prisma.dashboard.findMany).mock.calls[1][0]!.where).toMatchObject({
+      OR: [{ createdAt: { lt: row(99).createdAt } }, { createdAt: row(99).createdAt, id: { lt: "dash-99" } }],
+    });
+  });
+
+  test("stops when the candidates run out", async () => {
+    vi.mocked(prisma.dashboard.findMany).mockResolvedValueOnce(rows(0, 3) as never);
+    const readable = vi.fn(async () => new Set(["dash-1"]));
+
+    const result = await listReadableDashboardRows({
+      filter: { workspaceId: WORKSPACE_ID },
+      cursor: null,
+      limit: 20,
+      readable,
+    });
+
+    expect(result.map(({ id }) => id)).toEqual(["dash-1"]);
+    expect(prisma.dashboard.findMany).toHaveBeenCalledTimes(1);
   });
 });

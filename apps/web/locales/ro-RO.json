@@ -4041,6 +4041,7 @@
         "csv_action": "Acțiune",
         "csv_attribute_updates": "{count, plural, one {# actualizare de atribut} few {# actualizări de atribute} other {# de actualizări de atribute}}",
         "csv_attributes_applied": "{count, plural, one {Atributele membrilor au fost setate pentru # persoană} few {Atributele membrilor au fost setate pentru # persoane} other {Atributele membrilor au fost setate pentru # de persoane}}",
+        "csv_attributes_not_applied": "{count, plural, one {Atributele de membru nu au fost setate pentru # rând: invitația lui nu a fost creată sau rândul a fost respins.} few {Atributele de membru nu au fost setate pentru # rânduri: invitațiile lor nu au fost create sau rândurile au fost respinse.} other {Atributele de membru nu au fost setate pentru # de rânduri: invitațiile lor nu au fost create sau rândurile au fost respinse.}}",
         "csv_fix_invalid_rows": "Remediază mai întâi rândurile nevalide: {rows}. Fiecare trebuie să aibă o adresă de e-mail pe care nu o folosește niciun alt rând, iar valorile să se încadreze în limite.",
         "csv_invalid": "Nevalid",
         "csv_invalid_rows": "{count, plural, one {# rând nevalid} few {# rânduri nevalide} other {# de rânduri nevalide}}",

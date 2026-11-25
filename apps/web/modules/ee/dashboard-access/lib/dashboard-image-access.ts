@@ -14,8 +14,8 @@ export const getDashboardImageFileDashboardId = (fileName: string): string | nul
 
 /**
  * Whether `userId` may download a dashboard image upload (ENG-7482) without reading the workspace: a
- * Dashboard Viewer may, when an image block on a page they open (`dashboardPage.read`) shows exactly
- * this file. Only GET reaches this; a viewer never deletes. A lapsed plan (Access Control or Dashboards)
+ * Dashboard Viewer may, when an image block on a page they open (`dashboardPage.read`), on any dashboard
+ * of the workspace, shows exactly this file. Only GET reaches this; a viewer never deletes. A lapsed plan (Access Control or Dashboards)
  * refuses, like every other Dashboard Viewer read.
  */
 export const canReadDashboardImageFile = async (
@@ -27,23 +27,23 @@ export const canReadDashboardImageFile = async (
   if (!dashboardId) return false;
 
   const fileUrl = `/storage/${workspaceId}/private/${fileName}`;
-  const dashboard = await prisma.dashboard.findFirst({
-    where: { id: dashboardId, workspaceId },
-    select: {
-      workspace: { select: { organizationId: true } },
-      widgets: {
-        where: { kind: "image", content: { path: ["fileUrl"], equals: fileUrl } },
-        select: { pageId: true },
-        take: 50,
-      },
-    },
-  });
-  if (!dashboard || dashboard.widgets.length === 0) return false;
-  if (!(await getIsDashboardViewerRoleEnabled(dashboard.workspace.organizationId))) return false;
+  // Any image block of this workspace showing exactly this file counts, not only blocks on the dashboard
+  // that uploaded it: a duplicated dashboard, or an API/MCP save, may show another dashboard's upload,
+  // and widget writes accept any dashboard upload of the workspace (`isDashboardImageUrl`).
+  const [workspace, widgets] = await Promise.all([
+    prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
+    prisma.dashboardWidget.findMany({
+      where: { kind: "image", content: { path: ["fileUrl"], equals: fileUrl }, dashboard: { workspaceId } },
+      select: { pageId: true },
+      take: 50,
+    }),
+  ]);
+  if (!workspace || widgets.length === 0) return false;
+  if (!(await getIsDashboardViewerRoleEnabled(workspace.organizationId))) return false;
 
   const readable = await filterReadablePageIds(
     { type: "user", id: userId },
-    dashboard.widgets.map(({ pageId }) => pageId)
+    widgets.map(({ pageId }) => pageId)
   );
   return readable.size > 0;
 };
