@@ -3,7 +3,15 @@ import { getHasNoOrganizations, getIsEligibleFirstOrganizationOwner } from "@/li
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export type TSetupOrganizationCreation =
-  | { allowed: true; isFirstOrganization: boolean }
+  | {
+      allowed: true;
+      isFirstOrganization: boolean;
+      /**
+       * The single-organization instance's only organization: the caller must create it with
+       * `createOrganizationIfNoneExists`, so a concurrent claim cannot create a second one.
+       */
+      claimsInstance: boolean;
+    }
   | { allowed: false; reason: "not_fresh" | "not_eligible" };
 
 /**
@@ -24,9 +32,11 @@ export const resolveSetupOrganizationCreation = async (
     getHasNoOrganizations(),
     getIsMultiOrgEnabled(),
   ]);
-  if (isMultiOrgEnabled) return { allowed: true, isFirstOrganization: hasNoOrganizations };
+  if (isMultiOrgEnabled) {
+    return { allowed: true, isFirstOrganization: hasNoOrganizations, claimsInstance: false };
+  }
   if (!hasNoOrganizations) return { allowed: false, reason: "not_fresh" };
   return (await getIsEligibleFirstOrganizationOwner(userId))
-    ? { allowed: true, isFirstOrganization: true }
+    ? { allowed: true, isFirstOrganization: true, claimsInstance: true }
     : { allowed: false, reason: "not_eligible" };
 };

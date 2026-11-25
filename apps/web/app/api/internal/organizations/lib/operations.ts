@@ -19,6 +19,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createMembership } from "@/lib/membership/service";
 import {
   createOrganization,
+  createOrganizationIfNoneExists,
   deleteOrganization,
   getOrganization,
   updateOrganization,
@@ -142,17 +143,19 @@ async function refuseOrganizationCreation(
   flow: NonNullable<TOrganizationCreateBody["flow"]>,
   userId: string,
   { requestId, instance }: Pick<TOrganizationRequestContext, "requestId" | "instance">
-): Promise<{ refused: Response } | { isFirstOrganization: boolean }> {
+): Promise<{ refused: Response } | { isFirstOrganization: boolean; claimsInstance: boolean }> {
   if (flow === "additional") {
     if (!(await getIsMultiOrgEnabled())) {
       return { refused: problemForbidden(requestId, MULTI_ORG_DISABLED_DETAIL, instance) };
     }
     // An additional organization is never the instance's first: the caller already belongs to one.
-    return { isFirstOrganization: false };
+    return { isFirstOrganization: false, claimsInstance: false };
   }
 
   const policy = await resolveSetupOrganizationCreation(userId);
-  if (policy.allowed) return { isFirstOrganization: policy.isFirstOrganization };
+  if (policy.allowed) {
+    return { isFirstOrganization: policy.isFirstOrganization, claimsInstance: policy.claimsInstance };
+  }
   const detail =
     policy.reason === "not_eligible"
       ? FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL
@@ -188,9 +191,14 @@ export async function createOrganizationOperation({
   const flow = body.flow ?? "setup";
   const allowed = await refuseOrganizationCreation(flow, user.id, { requestId, instance });
   if ("refused" in allowed) return allowed.refused;
-  const { isFirstOrganization } = allowed;
+  const { isFirstOrganization, claimsInstance } = allowed;
 
-  const organization = await createOrganization({ name: body.name });
+  // The single-organization instance's only organization is claimed atomically: a concurrent claim that
+  // passed the policy check too finds it taken and gets the same refusal as any later one.
+  const organization = claimsInstance
+    ? await createOrganizationIfNoneExists({ name: body.name })
+    : await createOrganization({ name: body.name });
+  if (!organization) return problemForbidden(requestId, FIRST_ORGANIZATION_ONLY_DETAIL, instance);
   await createMembership(organization.id, user.id, { role: "owner", accepted: true });
 
   // Stripe setup must run AFTER membership is created so the owner email is available.

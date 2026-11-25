@@ -1011,7 +1011,7 @@
       "create_administrator": "Beheerder aanmaken",
       "setup_token": "Installatietoken",
       "setup_token_invalid": "Het installatietoken is onjuist.",
-      "setup_token_needs_email_sign_up": "Deze instance vereist een setuptoken, dat alleen via registratie met e-mail kan worden meegegeven, en registratie met e-mail is uitgeschakeld. Verwijder EMAIL_AUTH_DISABLED totdat de beheerder bestaat en schakel het daarna weer uit.",
+      "setup_token_needs_email_sign_up": "Deze instance vereist een setuptoken, dat alleen via registratie met e-mail kan worden doorgegeven, en registratie met e-mail is uitgeschakeld. Verwijder EMAIL_AUTH_DISABLED totdat de beheerder bestaat en stel de variabele daarna opnieuw in om registratie met e-mail weer uit te schakelen.",
       "this_user_has_all_the_power": "Deze gebruiker heeft alle macht."
     }
   },

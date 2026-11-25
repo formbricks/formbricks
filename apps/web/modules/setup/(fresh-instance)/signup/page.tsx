@@ -26,18 +26,20 @@ export const SignupPage = async () => {
   const locale = await findMatchingLocale();
   const isSetupTokenRequired = isSetupTokenConfigured();
 
-  const ssoAvailability = await getSsoAvailability();
-  const samlConnectionExists = await getSamlConnectionExists(ssoAvailability);
-
   const t = await getTranslate();
+  // ENG-7313: only the email form carries the setup token and SSO is refused while one is set, so with
+  // email sign-up off nothing here could succeed. Say why instead of showing a form with no way in.
+  const isSetupBlockedByEmailAuth = isSetupTokenRequired && !EMAIL_AUTH_ENABLED;
+
+  const ssoAvailability = isSetupBlockedByEmailAuth ? null : await getSsoAvailability();
+  const samlConnectionExists = ssoAvailability ? await getSamlConnectionExists(ssoAvailability) : false;
+
   return (
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">{t("setup.signup.create_administrator")}</h2>
       <p className="text-sm text-slate-800">{t("setup.signup.this_user_has_all_the_power")}</p>
       <hr className="my-6 w-full border-slate-200" />
-      {/* ENG-7313: only the email form carries the setup token and SSO is refused while one is set, so with
-          email sign-up off nothing here could succeed. Say why instead of showing a form with no way in. */}
-      {isSetupTokenRequired && !EMAIL_AUTH_ENABLED ? (
+      {isSetupBlockedByEmailAuth || !ssoAvailability ? (
         <p className="max-w-sm text-center text-sm text-slate-800">
           {t("setup.signup.setup_token_needs_email_sign_up")}
         </p>

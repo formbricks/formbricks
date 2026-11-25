@@ -1011,7 +1011,7 @@
       "create_administrator": "Créer un administrateur",
       "setup_token": "Jeton de configuration",
       "setup_token_invalid": "Le jeton de configuration est incorrect.",
-      "setup_token_needs_email_sign_up": "Cette instance nécessite un jeton de configuration, que seule l'inscription par e-mail peut transmettre, et l'inscription par e-mail est désactivée. Supprimez la variable EMAIL_AUTH_DISABLED jusqu'à ce que l'administrateur soit créé, puis désactivez-la à nouveau.",
+      "setup_token_needs_email_sign_up": "Cette instance nécessite un jeton de configuration, que seule l'inscription par e-mail peut transmettre, et l'inscription par e-mail est désactivée. Supprime la variable EMAIL_AUTH_DISABLED jusqu'à ce que l'administrateur existe, puis redéfinis-la pour désactiver de nouveau l'inscription par e-mail.",
       "this_user_has_all_the_power": "Cet utilisateur a tout le pouvoir."
     }
   },

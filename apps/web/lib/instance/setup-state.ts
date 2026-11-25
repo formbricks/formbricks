@@ -1,6 +1,9 @@
 import { prisma } from "@formbricks/database";
 import { INSTANCE_SETUP_ID } from "@formbricks/types/instance";
 
+/** The answers of {@link readInstanceSetupState}. */
+export type TInstanceSetupState = "marked" | "in-use" | "fresh";
+
 /**
  * Whether the instance has been set up (ENG-7313), from the database alone:
  *
@@ -15,8 +18,6 @@ import { INSTANCE_SETUP_ID } from "@formbricks/types/instance";
  * The lookups short-circuit in the order a set-up instance answers soonest, so almost every call is one
  * primary-key read.
  */
-export type TInstanceSetupState = "marked" | "in-use" | "fresh";
-
 export const readInstanceSetupState = async (): Promise<TInstanceSetupState> => {
   if (await prisma.instanceSetup.findUnique({ where: { id: INSTANCE_SETUP_ID }, select: { id: true } })) {
     return "marked";

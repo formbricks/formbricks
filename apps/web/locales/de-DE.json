@@ -1011,7 +1011,7 @@
       "create_administrator": "Administrator erstellen",
       "setup_token": "Einrichtungs-Token",
       "setup_token_invalid": "Das Einrichtungs-Token ist nicht korrekt.",
-      "setup_token_needs_email_sign_up": "Diese Instanz benötigt ein Setup-Token, das nur über die Registrierung per E-Mail übermittelt werden kann – und die Registrierung per E-Mail ist deaktiviert. Entferne EMAIL_AUTH_DISABLED, bis der Administrator angelegt ist, und deaktiviere die Registrierung per E-Mail anschließend wieder.",
+      "setup_token_needs_email_sign_up": "Diese Instanz benötigt ein Setup-Token, das nur bei der Registrierung per E-Mail übermittelt werden kann – und die Registrierung per E-Mail ist deaktiviert. Entferne EMAIL_AUTH_DISABLED, bis das Administratorkonto existiert, und setze die Variable danach erneut, um die Registrierung per E-Mail wieder zu deaktivieren.",
       "this_user_has_all_the_power": "Dieser Nutzer hat alle Rechte."
     }
   },

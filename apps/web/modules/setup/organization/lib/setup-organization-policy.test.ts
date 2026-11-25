@@ -22,6 +22,7 @@ describe("resolveSetupOrganizationCreation (ENG-7313)", () => {
     await expect(resolveSetupOrganizationCreation("admin")).resolves.toEqual({
       allowed: true,
       isFirstOrganization: true,
+      claimsInstance: true,
     });
     expect(getIsEligibleFirstOrganizationOwner).toHaveBeenCalledWith("admin");
   });
@@ -58,6 +59,7 @@ describe("resolveSetupOrganizationCreation (ENG-7313)", () => {
       await expect(resolveSetupOrganizationCreation("anyone")).resolves.toEqual({
         allowed: true,
         isFirstOrganization,
+        claimsInstance: false,
       });
       expect(getIsEligibleFirstOrganizationOwner).not.toHaveBeenCalled();
     }

@@ -291,8 +291,8 @@ deployment:
           key: setup-token
 ```
 
-Create the Secret without a trailing newline (`kubectl create secret generic formbricks-secrets
---from-literal=setup-token="$(openssl rand -hex 16)"`): a token that starts or ends with whitespace fails
+Create the Secret in the release's namespace and without a trailing newline (`kubectl create secret generic
+formbricks-secrets -n <namespace> --from-literal=setup-token="$(openssl rand -hex 16)"`): a token that starts or ends with whitespace fails
 startup, because the setup form could never send it.
 
 See the [environment variables reference](/self-hosting/configuration/environment-variables). It is optional:

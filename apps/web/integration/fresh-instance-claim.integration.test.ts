@@ -7,6 +7,7 @@ import {
   getIsFreshInstance,
   markInstanceSetupCompleted,
 } from "@/lib/instance/service";
+import { createOrganizationIfNoneExists } from "@/lib/organization/service";
 
 /**
  * ENG-7313, against real Postgres.
@@ -133,5 +134,25 @@ describe("getIsEligibleFirstOrganizationOwner (real Postgres)", () => {
     await createUser("admin");
 
     expect(await getIsEligibleFirstOrganizationOwner("ghost")).toBe(false);
+  });
+});
+
+describe("createOrganizationIfNoneExists (real Postgres)", () => {
+  // Two first-organization claims that both passed "are there no organizations yet?" used to create two
+  // organizations on a single-organization instance. The check and the insert now share a lock.
+  test("concurrent claims create exactly one organization", async () => {
+    const results = await Promise.all(
+      Array.from({ length: 20 }, (_, index) => createOrganizationIfNoneExists({ name: `Claim ${index}` }))
+    );
+
+    expect(results.filter((organization) => organization !== null)).toHaveLength(1);
+    expect(await prisma.organization.count()).toBe(1);
+  });
+
+  test("creates nothing once an organization exists", async () => {
+    await prisma.organization.create({ data: { id: "org-1", name: "Acme" } });
+
+    expect(await createOrganizationIfNoneExists({ name: "Second" })).toBeNull();
+    expect(await prisma.organization.count()).toBe(1);
   });
 });
