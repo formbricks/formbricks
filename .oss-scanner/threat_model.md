@@ -34,8 +34,8 @@ actions, integrations, dashboards and stored files.
 The application is multi-tenant. **Both the organization and the workspace are
 tenant boundaries**. A principal **reaches** an organization it belongs to
 (for an API key, the organization that owns it) and, inside it, these
-workspaces: an owner or manager, all of them; any other user, those one of
-their teams is assigned; an API key, those it lists; an MCP client, those its
+workspaces: an owner or manager, all of them; any other user except `billing`,
+those one of their teams is assigned; an API key, those it lists; an MCP client, those its
 user reaches. Reaching any other organization or workspace crosses a tenant
 boundary. The
 database, Redis, S3-compatible storage and SpiceDB (AuthZed) are shared by
