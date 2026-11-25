@@ -96,6 +96,9 @@ catalogs:
     dotenv-cli:
       specifier: 11.0.0
       version: 11.0.0
+    get-nonce:
+      specifier: 1.0.1
+      version: 1.0.1
     glob:
       specifier: 13.0.6
       version: 13.0.6
@@ -714,6 +717,9 @@ importers:
       framer-motion:
         specifier: 12.35.2
         version: 12.35.2(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      get-nonce:
+        specifier: 'catalog:'
+        version: 1.0.1
       googleapis:
         specifier: 171.4.0
         version: 171.4.0
@@ -1689,6 +1695,9 @@ importers:
       '@formbricks/survey-ui':
         specifier: workspace:*
         version: link:../survey-ui
+      get-nonce:
+        specifier: 'catalog:'
+        version: 1.0.1
       i18next:
         specifier: 'catalog:'
         version: 25.8.20(typescript@5.9.3)

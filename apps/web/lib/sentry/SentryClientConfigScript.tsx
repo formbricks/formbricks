@@ -8,9 +8,10 @@ import {
  * Serialises the server-only Sentry env vars into the document so `instrumentation-client.ts` can
  * start the browser SDK with runtime values (see `client-runtime-config.ts` for why this hand-off
  * exists). Rendering nothing is the gate: without a DSN or outside production no config -- and no
- * DSN -- reaches the browser, matching the previous `SentryProvider` gating.
+ * DSN -- reaches the browser, matching the previous `SentryProvider` gating. The page's CSP runs it only
+ * with the request's nonce.
  */
-export const SentryClientConfigScript = () => {
+export const SentryClientConfigScript = ({ nonce }: { readonly nonce?: string }) => {
   if (!IS_PRODUCTION || !SENTRY_DSN) {
     return null;
   }
@@ -29,6 +30,7 @@ export const SentryClientConfigScript = () => {
   return (
     <script
       id="sentry-client-config"
+      nonce={nonce}
       dangerouslySetInnerHTML={{
         __html: `window.${SENTRY_CLIENT_RUNTIME_CONFIG_KEY}=${serializedConfig};`,
       }}
