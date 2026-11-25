@@ -78,7 +78,7 @@ describe("rateLimitConfigs", () => {
     test("should have all auth configurations", () => {
       const authConfigs = Object.keys(rateLimitConfigs.auth);
       expect(authConfigs).toEqual([
-        "login",
+        "loginFailuresPerAccount",
         "signup",
         "forgotPassword",
         "forgotPasswordPerAccount",
@@ -141,6 +141,7 @@ describe("rateLimitConfigs", () => {
         "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",
+        "internalFeedbackCsvImport",
         "internalHeicConversion",
         "client",
         "clientEnvironment",
@@ -211,7 +212,11 @@ describe("rateLimitConfigs", () => {
         "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",
+        "validateSurveyPinFailuresPerSurvey",
         "validateSurveyPin",
+        "twoFactorManage",
+        "webhookTest",
+        "webhookSecretReveal",
         "licenseRecheck",
         "unsplash",
         "inviteMember",
@@ -350,7 +355,7 @@ describe("rateLimitConfigs", () => {
     test("should work with checkRateLimit function", async () => {
       mockEval.mockResolvedValue([1, 1]);
 
-      const config = rateLimitConfigs.auth.login;
+      const config = rateLimitConfigs.auth.loginFailuresPerAccount;
       const result = await checkRateLimit(config, "test-identifier");
 
       expect(result.ok).toBe(true);
@@ -368,7 +373,7 @@ describe("rateLimitConfigs", () => {
 
     test("should enforce limits correctly for each config type", async () => {
       const testCases = [
-        { config: rateLimitConfigs.auth.login, identifier: "user-login" },
+        { config: rateLimitConfigs.auth.loginFailuresPerAccount, identifier: "user-login" },
         { config: rateLimitConfigs.auth.signup, identifier: "user-signup" },
         { config: rateLimitConfigs.api.v1, identifier: "api-v1-key" },
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },

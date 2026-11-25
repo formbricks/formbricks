@@ -40,13 +40,39 @@ export const isIntegrationRoute = (url: string): boolean => {
   return regex.test(url);
 };
 
+/**
+ * Path prefixes that need a signed-in user, as whole path segments. They mirror the authenticated route
+ * tree: everything under `app/(app)` that is not public (`/workspaces`, `/organizations`, `/account`,
+ * `/attachment-exports`; `/billing-confirmation` is the Stripe return page and stays public), the legacy
+ * `app/(redirects)/environments` links and the organization setup step. Add a prefix here when a new
+ * top-level authenticated route appears.
+ *
+ * `request.nextUrl.pathname` never carries `BASE_PATH`, so the list needs no prefix handling for
+ * subpath deployments.
+ */
+const PROTECTED_ROUTE_PREFIXES = [
+  "/workspaces",
+  "/organizations",
+  "/account",
+  "/attachment-exports",
+  "/environments",
+  "/setup/organization",
+] as const;
+
+const matchesPathPrefix = (pathname: string, prefix: string): boolean =>
+  pathname === prefix || pathname.startsWith(`${prefix}/`);
+
 export const isAuthProtectedRoute = (url: string): boolean => {
-  // List of routes that require authentication
-  const protectedRoutes = ["/environments", "/setup/organization", "/organizations"];
+  // Next matches routes case-insensitively (`caseSensitiveRoutes` is off), so `/Workspaces/x` reaches the
+  // page and must be protected too.
+  const pathname = url.toLowerCase();
 
   // ID-free marketing links (/billing, /contacts, ...) resolve the user's organization, so they need a
   // session too; matched per path segment so /billing-confirmation stays public.
-  return protectedRoutes.some((route) => url.startsWith(route)) || isMarketingLinkPath(url);
+  return (
+    PROTECTED_ROUTE_PREFIXES.some((prefix) => matchesPathPrefix(pathname, prefix)) ||
+    isMarketingLinkPath(pathname)
+  );
 };
 
 /**

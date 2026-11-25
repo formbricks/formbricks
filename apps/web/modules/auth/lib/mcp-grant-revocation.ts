@@ -3,6 +3,7 @@ import { APIError, getSessionFromCtx } from "better-auth/api";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { loggableError } from "@/lib/utils/loggable-error";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import {
   MCP_GRANT_SYSTEM_ACTOR,
@@ -121,6 +122,26 @@ export const finishRevokedMcpGrants = async (
     actorUserId ? { userId: actorUserId, userType: "user" } : MCP_GRANT_SYSTEM_ACTOR,
     records
   );
+};
+
+/**
+ * ENG-7364: a password reset is what a user does when they suspect the account was taken over, and
+ * `revokeSessionsOnPasswordReset` ends sessions only. An OAuth client someone registered and authorized
+ * while they had access would keep a 30-day refresh token and its MCP grant, so the reset ends every grant
+ * too, as SSO recovery does, audited by the system. Best-effort like the rest of `onPasswordReset`: the
+ * password is already changed, so a failure is logged and never fails the reset. API keys are left alone on
+ * purpose, since revoking them breaks the user's integrations.
+ */
+export const revokeOAuthGrantsAfterPasswordReset = async (userId: string): Promise<void> => {
+  try {
+    // Its grant rows can be held by a reconciling pass: the Revoke timeout allows for that.
+    const { grantAudits } = await prisma.$transaction((tx) => revokeAllUserOAuthGrants(tx, userId), {
+      timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
+    });
+    await finishRevokedMcpGrants(grantAudits);
+  } catch (error) {
+    logger.error({ err: loggableError(error), userId }, "Failed to revoke OAuth grants after password reset");
+  }
 };
 
 type TRevokedGrant = { consentsDeleted: number; refreshTokensRevoked: number; accessTokensRevoked: number };

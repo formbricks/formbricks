@@ -169,11 +169,20 @@ export const AUTH_URL = firstConfigured(env.BETTER_AUTH_URL, env.NEXTAUTH_URL);
  * from one `$webappUrl`, and the one-click installer seds both to the same domain — so the common case is
  * one origin listed twice.
  *
+ * `WEBAPP_URL` is trusted too: it is the instance's own public origin, and on an instance that sets only
+ * it, Better Auth would otherwise add the request's Host to the allow-list itself (ENG-7369).
+ *
  * The explicit type predicate is load-bearing — `.filter(Boolean)` does not narrow
  * `(string | undefined)[]` to the `string[]` that `trustedOrigins` requires.
  */
 export const AUTH_TRUSTED_ORIGINS = [
-  ...new Set([env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url?.trim()))),
+  ...new Set(
+    [env.BETTER_AUTH_URL, env.NEXTAUTH_URL, env.WEBAPP_URL]
+      .filter((url): url is string => Boolean(url?.trim()))
+      // Better Auth compares an http(s) entry with the request's bare origin, so a subpath or trailing
+      // slash would never match. Reduce to the origin, then de-duplicate.
+      .map((url) => new URL(url).origin)
+  ),
 ];
 
 /** `BETTER_AUTH_TRUSTED_ORIGINS`, which Better Auth adds to the origins it trusts for sign-in. */
@@ -272,6 +281,8 @@ export { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/modules/ee/license-check/
 
 export const REDIS_URL = env.REDIS_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+/** True only when an Envoy gateway in front of the app enforces the covered API rate limits. */
+export const ENVOY_RATE_LIMITING_ENABLED = env.ENVOY_RATE_LIMITING_ENABLED === "1";
 /**
  * Number of reverse proxies in front of the app whose `X-Forwarded-For` entries may be believed.
  *
@@ -376,6 +387,3 @@ export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? 
 export const AUDIT_LOG_ENABLED = env.AUDIT_LOG_ENABLED === "1";
 export const AUDIT_LOG_GET_USER_IP = env.AUDIT_LOG_GET_USER_IP === "1";
 export const SESSION_MAX_AGE = Number(env.SESSION_MAX_AGE) || 86400;
-
-// Control hash for constant-time password verification to prevent timing attacks. Used when user doesn't exist to maintain consistent verification timing
-export const CONTROL_HASH = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q"; //NOSONAR not a real password hash, used only for timing-safe comparison

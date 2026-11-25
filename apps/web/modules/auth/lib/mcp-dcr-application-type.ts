@@ -5,6 +5,7 @@ import {
   getAllowedDcrRedirectUris,
   isLoopbackRedirectUri,
 } from "./mcp-dcr-redirect-policy";
+import { findDcrSizeViolation } from "./mcp-dcr-size-limits";
 
 /**
  * Default `application_type` to `"native"` on Dynamic Client Registration when the client asked for
@@ -123,6 +124,14 @@ export const prepareDcrRequest = async (request: Request): Promise<Request | Res
   }
 
   const raw = await request.text();
+  // Before the allowlist: cheapest check first, and a registration this large is refused whatever it names.
+  const oversize = findDcrSizeViolation(raw);
+  if (oversize) {
+    return Response.json(
+      { error: "invalid_client_metadata", error_description: oversize.description },
+      { status: 400 }
+    );
+  }
   const disallowed = findDisallowedRedirectUri(raw, getAllowedDcrRedirectUris());
   if (disallowed) {
     return Response.json(
