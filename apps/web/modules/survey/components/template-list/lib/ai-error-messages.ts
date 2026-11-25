@@ -7,6 +7,11 @@ type TranslateFn = (key: string) => string;
  * A client-side code, not one the API sends: the generate endpoints answer a too-thin prompt with a
  * plain `bad_request` whose `invalid_params` name the prompt. Telling that apart from any other
  * rejected body lets the user read what to add instead of "try rephrasing it" (ENG-2187).
+ *
+ * Its copy, `workspace.surveys.ai_create.prompt_needs_more_detail`, is the translated form of the
+ * reason `getPromptInvalidParams` sends (`app/api/v3/surveys/generate/service.ts`): reword both.
+ * The schema's own prompt bounds also answer `bad_request` naming the prompt, but the dialog's
+ * minimum and `maxLength` keep those from being sent.
  */
 const AI_PROMPT_NEEDS_MORE_DETAIL = "ai_prompt_needs_more_detail";
 
