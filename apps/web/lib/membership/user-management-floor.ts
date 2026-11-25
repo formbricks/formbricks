@@ -23,3 +23,21 @@ export const canTeamAdminInvite = ({
   isAccessControlAllowed: boolean;
   isTeamAdmin: boolean;
 }): boolean => isAccessControlAllowed && isTeamAdmin && !isUserManagementDisabled();
+
+/**
+ * Whether the invite controls belong to this caller, by the two paths `POST /api/internal/invites` takes:
+ * an owner or manager invites as the organization, which the role floor decides (`canManageUsers`); anyone
+ * else only as a team admin ({@link canTeamAdminInvite}). Asked on the server; the client never recomputes it.
+ */
+export const canInviteMembers = ({
+  isOwnerOrManager,
+  canManageUsers,
+  isAccessControlAllowed,
+  isTeamAdmin,
+}: {
+  isOwnerOrManager: boolean;
+  canManageUsers: boolean;
+  isAccessControlAllowed: boolean;
+  isTeamAdmin: boolean;
+}): boolean =>
+  isOwnerOrManager ? canManageUsers : canTeamAdminInvite({ isAccessControlAllowed, isTeamAdmin });

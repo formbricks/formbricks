@@ -3,7 +3,7 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { canTeamAdminInvite } from "@/lib/membership/user-management-floor";
+import { canInviteMembers } from "@/lib/membership/user-management-floor";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import {
@@ -60,14 +60,13 @@ export const MembersView = async ({
   const userAdminTeamIds = await getTeamsWhereUserIsAdmin(currentUserId, organization.id);
   const isTeamAdminUser = userAdminTeamIds.length > 0;
 
-  // Owners and managers invite as the organization, which the role floor decides; a team admin who is
-  // neither invites into their own teams. The same two paths `POST /api/internal/invites` takes, decided
-  // here on the server so the client never recomputes them.
   const { isOwner, isManager } = getAccessFlags(membershipRole);
-  const canInvite =
-    isOwner || isManager
-      ? canManageUsers
-      : canTeamAdminInvite({ isAccessControlAllowed, isTeamAdmin: isTeamAdminUser });
+  const canInvite = canInviteMembers({
+    isOwnerOrManager: isOwner || isManager,
+    canManageUsers,
+    isAccessControlAllowed,
+    isTeamAdmin: isTeamAdminUser,
+  });
 
   let teams: TOrganizationTeam[] = [];
 
