@@ -35,6 +35,17 @@ const asOperand = (value: unknown, dataType: string): string | number | undefine
 };
 
 /**
+ * A reserved field as an operand. Most reserved fields are text (a URL, a browser, a timestamp), and
+ * nothing at save ties a reserved operand's type to the target's, so a number target reads a value that
+ * is not a number as nothing to apply: `"https://…" + 1` would be NaN, which a response cannot store, and
+ * an assign would put text into a number field. A text target takes the value as text.
+ */
+const asReservedOperand = (value: unknown, dataType: string): string | number | undefined => {
+  const operand = asOperand(value, dataType);
+  return dataType === "number" && typeof operand !== "number" ? undefined : operand;
+};
+
+/**
  * The value a one-step Set value applies (add, subtract, multiply, divide, assign, concat), shared by
  * both logic engines: the survey bundle (`packages/surveys/src/lib/logic.ts`) and the server
  * (`apps/web/lib/surveyLogic/utils.ts`), so they cannot read an operand differently.
@@ -47,7 +58,8 @@ const asOperand = (value: unknown, dataType: string): string | number | undefine
  *
  * ENG-7431: a reserved operand (`{ type: "reserved", value: <catalog name> }`) was accepted by the
  * survey schema but read by neither engine, so an API- or MCP-built Set value from metadata (pages
- * viewed, say) wrote nothing. It reads `reservedValues`, the same map the expression form reads.
+ * viewed, say) wrote nothing. It reads `reservedValues`, the same map the expression form reads, by the
+ * catalog's exact name (`visitPagesViewed`, not `visitpagesviewed`).
  */
 export const getOneStepOperand = (
   action: TOneStepOperandAction,
@@ -67,7 +79,7 @@ export const getOneStepOperand = (
     case "hiddenField":
       return typeof value === "string" ? asOperand(data[value], dataType) : undefined;
     case "reserved":
-      return typeof value === "string" ? asOperand(reservedValues?.[value], dataType) : undefined;
+      return typeof value === "string" ? asReservedOperand(reservedValues?.[value], dataType) : undefined;
     default:
       return undefined;
   }

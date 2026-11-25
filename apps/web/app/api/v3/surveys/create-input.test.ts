@@ -103,7 +103,7 @@ describe("a one-step Set value from a reserved (metadata) field", () => {
     objective: "calculate",
     variableId: "pagesseen",
     operator: "assign",
-    value: { type: "reserved", value: "visitpagesviewed" },
+    value: { type: "reserved", value: "visitPagesViewed" },
   };
   const body = {
     workspaceId: "clxx1234567890123456789012",

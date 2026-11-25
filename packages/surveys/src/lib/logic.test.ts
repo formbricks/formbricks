@@ -1,5 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import {
+  RESERVED_FIELD_CATALOG,
+  buildEmbeddedLookup,
+  projectClientReservedValues,
+} from "@formbricks/types/embedded-data-resolver";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -2181,51 +2186,66 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
         calculations: TResponseVariables,
         embeddedValues: TResponseData
       ) => performActions(survey, [action], {}, calculations, { embeddedValues }).calculations;
+      // The map the survey builds at runtime, from the catalog: a name the catalog does not use reads
+      // as unset here, as it does for a respondent.
+      const lookup = (survey: TJsWorkspaceStateSurvey, meta: Record<string, unknown>) =>
+        buildEmbeddedLookup(
+          survey,
+          projectClientReservedValues(RESERVED_FIELD_CATALOG, {
+            surveyId: "survey_1",
+            language: null,
+            data: {},
+            variables: {},
+            ttc: {},
+            meta,
+          }),
+          {}
+        );
 
       test("assign stores the pages a visit viewed", () => {
+        const survey = buildSurvey([], computedRow("number", 0));
         expect(
-          run(
-            buildSurvey([], computedRow("number", 0)),
-            fromReserved("assign", "visitpagesviewed"),
-            {},
-            {
-              visitpagesviewed: 6,
-            }
-          )
+          run(survey, fromReserved("assign", "visitPagesViewed"), {}, lookup(survey, { visitPagesViewed: 6 }))
         ).toEqual({ [STORAGE_KEY]: 6 });
       });
 
-      test("a number field reads a numeric text as a number, and add sums it", () => {
+      test("add sums a numeric reserved field into a number field", () => {
         expect(
           run(
             buildSurvey([], computedRow("number", 0)),
-            fromReserved("add", "visitpagesviewed"),
+            fromReserved("add", "visitPagesViewed"),
             { [STORAGE_KEY]: 1 },
-            {
-              visitpagesviewed: "4",
-            }
+            { visitPagesViewed: "4" }
           )
         ).toEqual({ [STORAGE_KEY]: 5 });
       });
 
       test("a text field keeps the text", () => {
+        const survey = buildSurvey([], computedRow("string", ""));
         expect(
-          run(
-            buildSurvey([], computedRow("string", "")),
-            fromReserved("assign", "pagepath"),
-            {},
-            {
-              pagepath: "/pricing",
-            }
-          )
+          run(survey, fromReserved("assign", "pagePath"), {}, lookup(survey, { pagePath: "/pricing" }))
         ).toEqual({ [STORAGE_KEY]: "/pricing" });
       });
 
-      // A server-derived name (country, …) is not in the client's map: the field keeps its value rather
-      // than gaining a manufactured 0 or "".
-      test("a field the evaluator does not have writes nothing", () => {
+      // `"https://…" + 1` would be NaN, which a response cannot store.
+      test("a number field ignores a text reserved field", () => {
+        const survey = buildSurvey([], computedRow("number", 3));
         expect(
-          run(buildSurvey([], computedRow("number", 3)), fromReserved("assign", "country"), {}, {})
+          run(
+            survey,
+            fromReserved("add", "url"),
+            { [STORAGE_KEY]: 3 },
+            lookup(survey, { url: "https://example.com" })
+          )
+        ).toEqual({ [STORAGE_KEY]: 3 });
+      });
+
+      // A server-derived name (country, …) and a name the catalog does not use (a lowercased one) are
+      // not in the map: the field keeps its value rather than gaining a manufactured 0 or "".
+      test.each(["country", "visitpagesviewed"])("%s writes nothing", (name) => {
+        const survey = buildSurvey([], computedRow("number", 3));
+        expect(
+          run(survey, fromReserved("assign", name), {}, lookup(survey, { visitPagesViewed: 6 }))
         ).toEqual({});
       });
     });

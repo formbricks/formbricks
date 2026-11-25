@@ -1,6 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
-import { type TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
+import {
+  RESERVED_FIELD_CATALOG,
+  type TEmbeddedValueResponse,
+  buildEmbeddedLookup,
+  projectClientReservedValues,
+} from "@formbricks/types/embedded-data-resolver";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -734,21 +739,21 @@ describe("surveyLogic", () => {
         objective: "calculate",
         variableId: "pages",
         operator: "assign",
-        value: { type: "reserved", value: "visitpagesviewed" },
+        value: { type: "reserved", value: "visitPagesViewed" },
       },
       {
         id: "a2",
         objective: "calculate",
         variableId: "total",
         operator: "add",
-        value: { type: "reserved", value: "visitpagesviewed" },
+        value: { type: "reserved", value: "visitPagesViewed" },
       },
       {
         id: "a3",
         objective: "calculate",
         variableId: "path",
         operator: "assign",
-        value: { type: "reserved", value: "pagepath" },
+        value: { type: "reserved", value: "pagePath" },
       },
       // Not in the map this evaluator was given: the field keeps its value, nothing is manufactured.
       {
@@ -766,7 +771,22 @@ describe("surveyLogic", () => {
         actions,
         {},
         { total: 2 },
-        { embeddedValues: { visitpagesviewed: "6", pagepath: "/pricing" } }
+        {
+          // Built as the start-screen preview builds it, from the catalog, so a name the catalog does
+          // not use would read as unset here too.
+          embeddedValues: buildEmbeddedLookup(
+            survey,
+            projectClientReservedValues(RESERVED_FIELD_CATALOG, {
+              surveyId: "survey_1",
+              language: null,
+              data: {},
+              variables: {},
+              ttc: {},
+              meta: { visitPagesViewed: 6, pagePath: "/pricing" },
+            }),
+            {}
+          ),
+        }
       ).calculations
     ).toEqual({ pages: 6, total: 8, path: "/pricing" });
   });
