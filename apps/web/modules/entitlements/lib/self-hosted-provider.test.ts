@@ -40,6 +40,7 @@ const organization: TOrganization = {
     usageCycleAnchor: null,
   },
   isAISmartToolsEnabled: false,
+  hideUnavailableFeatures: false,
 };
 
 /**

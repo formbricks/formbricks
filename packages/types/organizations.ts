@@ -110,6 +110,8 @@ export const ZOrganization = z.object({
     })
     .nullable()
     .optional(),
+  // Hides workspace navigation items the plan or licence does not include, for everyone in the organization.
+  hideUnavailableFeatures: z.boolean().prefault(false),
 });
 
 export const ZOrganizationCreateInput = z.object({
@@ -131,6 +133,7 @@ export const ZOrganizationUpdateInput = z.object({
     })
     .nullable()
     .optional(),
+  hideUnavailableFeatures: z.boolean().optional(),
 });
 
 export type TOrganizationUpdateInput = z.infer<typeof ZOrganizationUpdateInput>;

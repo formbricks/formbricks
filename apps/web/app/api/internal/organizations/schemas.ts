@@ -40,13 +40,14 @@ export type TOrganizationCreateBody = z.infer<typeof ZOrganizationCreateBody>;
 
 /**
  * The organization settings the general settings page edits. Each field has its own permission: the name is
- * the owner's, the AI and display settings are owners' and managers' (see `requiredOrganizationActions`).
+ * the owner's, the AI, display and navigation settings are owners' and managers' (see `requiredOrganizationActions`).
  */
 export const ZOrganizationPatchBody = z
   .object({
     name: ZOrganizationName,
     isAISmartToolsEnabled: z.boolean(),
     displayTimeZone: ZDisplayTimeZone,
+    hideUnavailableFeatures: z.boolean(),
   })
   .partial()
   .strict()

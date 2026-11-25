@@ -4,7 +4,7 @@ import { sendApiRequest } from "@/modules/api/lib/internal-api-client";
 
 const BASE_PATH = "/api/internal/organizations";
 
-/** Rename the organization, or change its AI or display settings. Returns its settings as stored. */
+/** Rename the organization, or change its AI, display or navigation settings. Returns them as stored. */
 export const updateOrganizationSettings = (organizationId: string, body: TOrganizationPatchBody) =>
   sendApiRequest<TOrganizationSettingsResource>(`${BASE_PATH}/${encodeURIComponent(organizationId)}`, {
     method: "PATCH",

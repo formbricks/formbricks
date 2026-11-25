@@ -193,6 +193,7 @@ describe("createV3Survey", () => {
         usageCycleAnchor: null,
       },
       isAISmartToolsEnabled: false,
+      hideUnavailableFeatures: false,
       whitelabel: undefined,
     });
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);

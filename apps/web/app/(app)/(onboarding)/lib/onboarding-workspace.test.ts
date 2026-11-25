@@ -40,6 +40,7 @@ const mockOrganization = {
     usageCycleAnchor: null,
   },
   isAISmartToolsEnabled: false,
+  hideUnavailableFeatures: false,
 };
 
 const baseWorkspace = {

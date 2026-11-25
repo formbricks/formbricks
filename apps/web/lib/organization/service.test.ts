@@ -132,6 +132,7 @@ describe("Organization Service", () => {
           usageCycleAnchor: new Date(),
         },
         isAISmartToolsEnabled: false,
+        hideUnavailableFeatures: false,
         displayTimeZone: null,
         whitelabel: false,
       };
@@ -185,6 +186,7 @@ describe("Organization Service", () => {
             usageCycleAnchor: new Date(),
           },
           isAISmartToolsEnabled: false,
+          hideUnavailableFeatures: false,
           displayTimeZone: null,
           whitelabel: false,
         },
@@ -234,6 +236,7 @@ describe("Organization Service", () => {
         updatedAt: new Date(),
         billing: expectedBilling,
         isAISmartToolsEnabled: false,
+        hideUnavailableFeatures: false,
         displayTimeZone: null,
         whitelabel: false,
       };
@@ -303,6 +306,7 @@ describe("Organization Service", () => {
           usageCycleAnchor: new Date(),
         },
         isAISmartToolsEnabled: false,
+        hideUnavailableFeatures: false,
         displayTimeZone: null,
         whitelabel: false,
         memberships: [{ userId: "user1" }, { userId: "user2" }],

@@ -257,6 +257,7 @@ describe("layout navigation gates (ENG-1737)", () => {
     isAISmartToolsEnabled: false,
     whitelabel: null,
     displayTimeZone: "Europe/Berlin",
+    hideUnavailableFeatures: true,
   };
 
   beforeEach(() => {
@@ -344,6 +345,13 @@ describe("layout navigation gates (ENG-1737)", () => {
       const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
 
       expect(data.organization.displayTimeZone).toBe("Europe/Berlin");
+    });
+
+    // Rebuilt field by field too: without it the sidebar never hides what the plan lacks.
+    test("carries the organization's hide-unavailable-features setting to the layout, where the sidebar reads it", async () => {
+      const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
+
+      expect(data.organization.hideUnavailableFeatures).toBe(true);
     });
 
     test("404s when the user may not navigate there", async () => {

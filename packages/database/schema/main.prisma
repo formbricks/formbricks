@@ -847,27 +847,29 @@ model Workspace {
 /// @property whitelabel - Whitelabel configuration for the organization
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
 /// @property displayTimeZone - Optional IANA time zone used for human-facing response timestamps (exports, integrations) and for the calendar days behind the analytics date filters (survey summary, charts, dashboards); null means UTC
+/// @property hideUnavailableFeatures - Hides workspace navigation items the organization's plan or licence does not include (Workflows, Feedback Data, Contacts), for everyone in the organization
 model Organization {
-  id                    String                 @id @default(cuid())
-  createdAt             DateTime               @default(now()) @map(name: "created_at")
-  updatedAt             DateTime               @updatedAt @map(name: "updated_at")
-  name                  String
-  memberships           Membership[]
-  workspaces            Workspace[]
-  billing               OrganizationBilling?
+  id                      String                 @id @default(cuid())
+  createdAt               DateTime               @default(now()) @map(name: "created_at")
+  updatedAt               DateTime               @updatedAt @map(name: "updated_at")
+  name                    String
+  memberships             Membership[]
+  workspaces              Workspace[]
+  billing                 OrganizationBilling?
   /// [OrganizationWhitelabel]
-  whitelabel            Json                   @default("{}")
-  invites               Invite[]
-  isAISmartToolsEnabled Boolean                @default(false)
-  displayTimeZone       String?
-  teams                 Team[]
-  apiKeys               ApiKey[]
-  feedbackDirectories   FeedbackDirectory[]
-  retentionPolicies     RetentionPolicy[]
-  retentionExemptions   RetentionExemption[]
-  retentionRuns         RetentionRun[]
-  retentionNotices      RetentionNotice[]
-  mcpGrants             McpGrantOrganization[]
+  whitelabel              Json                   @default("{}")
+  invites                 Invite[]
+  isAISmartToolsEnabled   Boolean                @default(false)
+  displayTimeZone         String?
+  hideUnavailableFeatures Boolean                @default(false)
+  teams                   Team[]
+  apiKeys                 ApiKey[]
+  feedbackDirectories     FeedbackDirectory[]
+  retentionPolicies       RetentionPolicy[]
+  retentionExemptions     RetentionExemption[]
+  retentionRuns           RetentionRun[]
+  retentionNotices        RetentionNotice[]
+  mcpGrants               McpGrantOrganization[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.

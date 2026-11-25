@@ -72,4 +72,5 @@ export const ZOrganization = z.object({
   whitelabel: ZOrganizationWhiteLabel,
   isAISmartToolsEnabled: z.boolean().default(false),
   displayTimeZone: z.string().nullable(),
+  hideUnavailableFeatures: z.boolean().default(false),
 }) satisfies z.ZodType<Organization>;

@@ -24,6 +24,7 @@ import { MainNavigationHeader } from "@/app/(app)/workspaces/[workspaceId]/compo
 import { MainNavigationNotices } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigationNotices";
 import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/NavigationLink";
 import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
+import type { THiddenNavigationItems } from "@/app/(app)/workspaces/[workspaceId]/lib/unavailable-navigation-items";
 import { useLatestStableRelease } from "@/app/(app)/workspaces/[workspaceId]/lib/use-latest-stable-release";
 import { cn } from "@/lib/cn";
 import { readLocalStorage, writeLocalStorage } from "@/lib/localStorage";
@@ -71,6 +72,9 @@ interface NavigationProps {
   // The workspace's Creatives access is `full` or `windDown` (ENG-6602). Hidden otherwise, with no
   // upgrade notice: Creatives doesn't exist for that workspace.
   isCreativesVisible: boolean;
+  // Items the organization hides because its plan or licence lacks them ("Hide unavailable features" on
+  // Organization settings › General). Computed by the server layout.
+  hiddenNavigationItems: THiddenNavigationItems;
 }
 
 /**
@@ -145,6 +149,7 @@ export const MainNavigation = ({
   isFormbricksSurveysConfigured,
   trialDaysRemaining,
   isCreativesVisible,
+  hiddenNavigationItems,
 }: Readonly<NavigationProps>) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -218,7 +223,7 @@ export const MainNavigation = ({
               pathname?.includes("/contacts") ||
               pathname?.includes("/segments") ||
               pathname?.includes("/attributes"),
-            isHidden: isDashboardViewer,
+            isHidden: hiddenNavigationItems.contacts || isDashboardViewer,
             disabled: isMembershipPending || isBilling,
           },
         ],
@@ -234,7 +239,7 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/unify/sources`,
             icon: MessageSquareTextIcon,
             isActive: pathname?.includes("/unify/"),
-            isHidden: isDashboardViewer,
+            isHidden: hiddenNavigationItems.feedbackData || isDashboardViewer,
             disabled: isMembershipPending || isBilling,
           },
           {
@@ -261,16 +266,26 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/workflows`,
             icon: WorkflowIcon,
             isActive: pathname?.startsWith(`/workspaces/${workspace.id}/workflows`),
-            isHidden: isDashboardViewer,
+            isHidden: hiddenNavigationItems.workflows || isDashboardViewer,
             disabled: isMembershipPending || isBilling,
           },
         ],
       },
     ],
-    [t, workspace.id, pathname, isMembershipPending, isBilling, isCreativesVisible, isDashboardViewer]
+    [
+      t,
+      workspace.id,
+      pathname,
+      isMembershipPending,
+      isBilling,
+      isCreativesVisible,
+      isDashboardViewer,
+      hiddenNavigationItems,
+    ]
   );
 
-  // A section whose items are all hidden (Ask and Act for a Dashboard viewer) loses its header too.
+  // A section whose items are all hidden (Ask and Act for a Dashboard viewer, or Act when the organization
+  // hides Workflows its plan lacks) loses its header too.
   const visibleNavigationSections = mainNavigationSections.filter((section) =>
     section.items.some((item) => !item.isHidden)
   );

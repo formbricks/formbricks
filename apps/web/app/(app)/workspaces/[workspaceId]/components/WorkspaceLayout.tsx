@@ -2,6 +2,7 @@ import type { cookies } from "next/headers";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { MainNavigation } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
+import { getHiddenNavigationItems } from "@/app/(app)/workspaces/[workspaceId]/lib/unavailable-navigation-items";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTrialDaysRemaining } from "@/lib/trial-countdown";
@@ -84,9 +85,10 @@ export const WorkspaceLayout = async ({ layoutData, cookieStore, children }: Wor
   // Hobby (free) plan only — excludes trial and paid (Pro/Scale) orgs.
   const isHobby = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.plan === "hobby";
 
-  const [organizationWorkspacesLimit, creativesAccess] = await Promise.all([
+  const [organizationWorkspacesLimit, creativesAccess, hiddenNavigationItems] = await Promise.all([
     getOrganizationWorkspacesLimit(organization.id),
     getCreativesAccess({ organizationId: organization.id, workspaceId: workspace.id }),
+    getHiddenNavigationItems(organization),
   ]);
   const isOwnerOrManager = isOwner || isManager;
 
@@ -164,6 +166,7 @@ export const WorkspaceLayout = async ({ layoutData, cookieStore, children }: Wor
               isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
               trialDaysRemaining={trialDaysRemaining}
               isCreativesVisible={isCreativesVisible(creativesAccess)}
+              hiddenNavigationItems={hiddenNavigationItems}
             />
             <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
               <TopControlBar

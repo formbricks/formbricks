@@ -28,6 +28,7 @@ describe("getFirstOrganization", () => {
       whitelabel: null,
       updatedAt: new Date(),
       isAISmartToolsEnabled: false,
+      hideUnavailableFeatures: false,
       displayTimeZone: null,
     };
     vi.mocked(prisma.organization.findFirst).mockResolvedValue(org);

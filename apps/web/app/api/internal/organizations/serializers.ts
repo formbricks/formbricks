@@ -6,6 +6,7 @@ export type TOrganizationSettingsResource = {
   name: string;
   isAISmartToolsEnabled: boolean;
   displayTimeZone: string | null;
+  hideUnavailableFeatures: boolean;
 };
 
 /** A newly created organization: enough to go on to its next setup step. */
@@ -31,4 +32,5 @@ export const serializeOrganizationSettings = (
   name: organization.name,
   isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
   displayTimeZone: organization.displayTimeZone ?? null,
+  hideUnavailableFeatures: organization.hideUnavailableFeatures,
 });

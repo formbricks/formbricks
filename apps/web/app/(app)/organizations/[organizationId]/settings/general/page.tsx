@@ -3,6 +3,7 @@ import { AISettingsToggle } from "@/app/(app)/workspaces/[workspaceId]/settings/
 import { CreateOrganizationCard } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/CreateOrganizationCard";
 import { DeleteOrganization } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/DeleteOrganization";
 import { EditOrganizationSettingsForm } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/EditOrganizationSettingsForm";
+import { HideUnavailableFeaturesToggle } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/HideUnavailableFeaturesToggle";
 import { SecurityListTip } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/components/SecurityListTip";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
 import {
@@ -78,6 +79,11 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
         />
+      </SettingsCard>
+      <SettingsCard
+        title={t("workspace.settings.general.navigation")}
+        description={t("workspace.settings.general.navigation_description")}>
+        <HideUnavailableFeaturesToggle organization={organization} membershipRole={currentUserRole} />
       </SettingsCard>
       <EmailCustomizationSettings
         organization={organization}

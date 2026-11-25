@@ -3728,6 +3728,8 @@ checksums:
     workspace/settings/general/email_customization_preview_email_text: fa6ae92403cc8f3c35c03e6c94cbde51
     workspace/settings/general/error_deleting_organization_please_try_again: 7f0fe257d4a0b40bff025408a7766706
     workspace/settings/general/from_your_organization: 9ebd6dcd79f7bfad3fea46ed2e3133d2
+    workspace/settings/general/hide_unavailable_features: 22129fea0aa0da10d1f589f68577a4fa
+    workspace/settings/general/hide_unavailable_features_description: d2d76a901d5750b04909777c99e23d0f
     workspace/settings/general/invitation_sent_once_more: e6e5ea066810f9dcb65788aa4f05d6e2
     workspace/settings/general/invite_deleted_successfully: 1c7dca6d0f6870d945288e38cfd2f943
     workspace/settings/general/invite_expires_on: 6fd2356ad91a5f189070c43855904bb4
@@ -3750,6 +3752,9 @@ checksums:
     workspace/settings/general/member_deleted_successfully: 41446978af02c27066852a06902843b6
     workspace/settings/general/member_invited_successfully: dc9c4838d2e8cec8f89c60aeaecafc33
     workspace/settings/general/members_invited_successfully: b09ec346350871b8a5759426c1940b53
+    workspace/settings/general/navigation: 0373afd8238db1c49f4be4fa6cdf5cd3
+    workspace/settings/general/navigation_description: 98a4267ad7c98d19b2aafe89c26bd15e
+    workspace/settings/general/navigation_settings_updated_successfully: 9b3ee451eb2a66a1d1cde3e589bf9db7
     workspace/settings/general/once_its_gone_its_gone: 6c844e583dd2c0e07337cc758df385b3
     workspace/settings/general/only_org_owner_can_perform_action: 0244ff3c6de787935e592eac4c5e4f0b
     workspace/settings/general/organization_created_successfully: 1ce874980bdd7d5de8402c276fb97a57

@@ -49,6 +49,7 @@ export const select = {
   isAISmartToolsEnabled: true,
   whitelabel: true,
   displayTimeZone: true,
+  hideUnavailableFeatures: true,
 } satisfies Prisma.OrganizationSelect;
 
 type TOrganizationWithBilling = Prisma.OrganizationGetPayload<{ select: typeof select }>;
@@ -90,6 +91,7 @@ const mapOrganization = (organization: TOrganizationWithBilling): TOrganization 
   isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
   whitelabel: organization.whitelabel as TOrganization["whitelabel"],
   displayTimeZone: organization.displayTimeZone,
+  hideUnavailableFeatures: organization.hideUnavailableFeatures,
 });
 
 export const getOrganizationsTag = (organizationId: string) => `organizations-${organizationId}`;

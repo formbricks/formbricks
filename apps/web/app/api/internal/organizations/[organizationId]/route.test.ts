@@ -54,6 +54,7 @@ const organization = (overrides: Record<string, unknown> = {}) => ({
   whitelabel: {},
   isAISmartToolsEnabled: false,
   displayTimeZone: null,
+  hideUnavailableFeatures: false,
   ...overrides,
 });
 
@@ -108,6 +109,7 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
       name: "Acme Inc.",
       isAISmartToolsEnabled: false,
       displayTimeZone: null,
+      hideUnavailableFeatures: false,
     });
     expect(checkedActions()).toEqual(["organization.write"]);
     expect(mocks.can).toHaveBeenCalledWith(actor, "organization.write", { type: "organization", id: ORG_ID });
@@ -144,6 +146,28 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.updateOrganization).toHaveBeenCalledWith(ORG_ID, { displayTimeZone: null });
+  });
+
+  test.each([true, false])(
+    "lets a manager set hiding unavailable features to %s, which only needs organization.manage",
+    async (hideUnavailableFeatures) => {
+      allow("organization.manage");
+      mocks.getOrganization.mockResolvedValue(
+        organization({ hideUnavailableFeatures: !hideUnavailableFeatures })
+      );
+      const response = await patch({ hideUnavailableFeatures });
+
+      expect(response.status).toBe(200);
+      expect((await response.json()).data.hideUnavailableFeatures).toBe(hideUnavailableFeatures);
+      expect(checkedActions()).toEqual(["organization.manage"]);
+      expect(mocks.updateOrganization).toHaveBeenCalledWith(ORG_ID, { hideUnavailableFeatures });
+    }
+  );
+
+  test("refuses a member hiding unavailable features with 403, and changes nothing", async () => {
+    allow();
+    expect((await patch({ hideUnavailableFeatures: true })).status).toBe(403);
+    expect(mocks.updateOrganization).not.toHaveBeenCalled();
   });
 
   test("refuses a manager's rename with 403, and changes nothing", async () => {
@@ -210,6 +234,7 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
     ["no field", {}],
     ["a blank name", { name: "   " }],
     ["an unknown time zone", { displayTimeZone: "Mars/Olympus_Mons" }],
+    ["hiding unavailable features set to a string", { hideUnavailableFeatures: "true" }],
     ["billing, which this route never writes", { billing: { plan: "enterprise" } }],
     ["whitelabel, which this route never writes", { whitelabel: { logoUrl: "https://evil.test/x.png" } }],
     [`a name over ${ORGANIZATION_NAME_MAX} characters`, { name: "x".repeat(ORGANIZATION_NAME_MAX + 1) }],

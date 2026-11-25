@@ -39,11 +39,18 @@ import {
   serializeOrganizationSettings,
 } from "../serializers";
 
-/** What a PATCH asks of the caller: renaming is the owner's; AI and display settings are managers' too. */
+/**
+ * What a PATCH asks of the caller: renaming is the owner's; AI, display and navigation settings are
+ * managers' too.
+ */
 export const requiredOrganizationActions = (body: TOrganizationPatchBody): TOrgAction[] => {
   const actions = new Set<TOrgAction>();
   if (body.name !== undefined) actions.add("organization.write");
-  if (body.isAISmartToolsEnabled !== undefined || body.displayTimeZone !== undefined) {
+  if (
+    body.isAISmartToolsEnabled !== undefined ||
+    body.displayTimeZone !== undefined ||
+    body.hideUnavailableFeatures !== undefined
+  ) {
     actions.add("organization.manage");
   }
   return [...actions];
@@ -70,7 +77,7 @@ async function requireOrgActions(
   return access;
 }
 
-/** `PATCH /api/internal/organizations/{organizationId}`: rename it, or change its AI or display settings. */
+/** `PATCH /api/internal/organizations/{organizationId}`: rename it, or change its other settings. */
 export async function updateOrganizationOperation({
   body,
   ...context
