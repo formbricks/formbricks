@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { StorageErrorCode } from "@formbricks/storage";
 import { DELETE, GET } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -117,6 +118,39 @@ describe("storage route", () => {
     expect(mocks.logFileDeletion).toHaveBeenCalledWith(
       expect.objectContaining({ failureReason: "file_not_found_error" })
     );
+  });
+
+  // A dashboard image block whose upload was deleted asks for an object the bucket no longer holds. That is a
+  // 404, while every other storage failure stays a 500. These run the real error mapping, not the mock.
+  describe("storage errors on GET", () => {
+    beforeEach(async () => {
+      const actual =
+        await vi.importActual<typeof import("@/modules/storage/utils")>("@/modules/storage/utils");
+      mocks.getErrorResponseFromStorageError.mockImplementation(actual.getErrorResponseFromStorageError);
+    });
+
+    test("GET answers 404 when the object is missing from the bucket", async () => {
+      mocks.getFileStreamForDownload.mockResolvedValue({
+        ok: false,
+        error: { code: StorageErrorCode.FileNotFoundError },
+      });
+
+      const response = await GET(request, params(["deleted--fid--abc.png"]));
+
+      expect(response.status).toBe(404);
+    });
+
+    test.each([
+      StorageErrorCode.Unknown,
+      StorageErrorCode.S3ClientError,
+      StorageErrorCode.S3CredentialsError,
+    ])("GET answers 500 for the storage error %s", async (code) => {
+      mocks.getFileStreamForDownload.mockResolvedValue({ ok: false, error: { code } });
+
+      const response = await GET(request, params(["photo--fid--abc.png"]));
+
+      expect(response.status).toBe(500);
+    });
   });
 
   // Regression (ENG-7108): the stored Content-Type came from the uploader, and browsers read
