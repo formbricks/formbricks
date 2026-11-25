@@ -385,6 +385,7 @@ describe("createPrismaPgAdapter", () => {
     test.each([
       ["a non-numeric value", "?connect_timeout=15&pool_timeout=soon", "soon", 15_000],
       ["a negative value", "?pool_timeout=-1", "-1", DEFAULT_POOL_ACQUIRE_TIMEOUT_MS],
+      ["a value past the timer limit", "?pool_timeout=2147484", "2147484", DEFAULT_POOL_ACQUIRE_TIMEOUT_MS],
     ])("ignores %s with a warning and falls back", async (_, query, rawValue, expected) => {
       const { pool, result } = await connectAdapter(
         `postgresql://app:secret@database:5432/formbricks${query}`

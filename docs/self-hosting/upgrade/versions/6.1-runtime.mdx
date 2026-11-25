@@ -25,6 +25,9 @@ no upgrade step of their own.
 - Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
   by default). With `connect_timeout=0`, transactions give up waiting after 6 seconds; other queries
   wait until a connection is free.
+  From 6.3, a `pool_timeout` in `DATABASE_URL` takes over this bound, and also the time a new connection
+  may take to open, instead of being ignored. Check any `pool_timeout` left over from an older Prisma setup
+  before upgrading; see [Database connection pool](/self-hosting/configuration/environment-variables#database-connection-pool).
 
 #### Idle transactions (opt-in)
 

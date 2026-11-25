@@ -20,6 +20,8 @@ export const DEFAULT_POOL_ACQUIRE_TIMEOUT_MS = 5_000;
 const IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM = "idle_in_transaction_session_timeout";
 // Postgres stores the setting as a 32-bit int of milliseconds and refuses the connection otherwise.
 const MAX_POSTGRES_TIMEOUT_MS = 2_147_483_647;
+// The longest delay Node's setTimeout honours; pg-pool arms its acquire timer with one.
+const MAX_TIMER_MS = 2_147_483_647;
 
 const PRISMA_ONLY_PARAMS = new Set([
   "connection_limit",
@@ -206,11 +208,12 @@ const resolvePoolTimeoutSeconds = (url: URL): number | undefined => {
 
   // Digits only: parseInt would read "10s" as 10 and "-1" would slip past as a negative timer.
   const seconds = /^\d+$/.test(raw) ? Number(raw) : Number.NaN;
-  if (!Number.isSafeInteger(seconds)) {
+  // Node clamps a timer above 2^31-1 ms to 1 ms, which would fail every queued request at once.
+  if (!Number.isSafeInteger(seconds) || seconds * 1000 > MAX_TIMER_MS) {
     // Only the parameter's own value is logged — never the URL, which carries credentials.
     logger.warn(
       { pool_timeout: raw },
-      "Invalid pool_timeout in DATABASE_URL (expected integer seconds, 0 to wait indefinitely); ignoring it."
+      "Invalid pool_timeout in DATABASE_URL (expected integer seconds up to 2147483, 0 to wait indefinitely); ignoring it."
     );
     return undefined;
   }
@@ -280,8 +283,7 @@ export const createPrismaPgAdapter = (databaseUrl = process.env.DATABASE_URL): T
       },
     }),
     connectionString,
-    // pg-pool arms its queue timer from `connectionTimeoutMillis` (0 disables it). ENG-3534 is about
-    // which DATABASE_URL knob should feed that value; whatever it settles on only changes this line.
+    // pg-pool arms its queue timer from `connectionTimeoutMillis` (0 disables it).
     poolAcquireTimeoutMillis: connectionTimeoutMillis,
   };
 };
