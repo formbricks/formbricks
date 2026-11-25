@@ -18,18 +18,23 @@ actions, integrations, dashboards and stored files.
   dashboards of workspaces its teams are assigned, a saved chart's data on
   them, and the filter value lists for keys some chart on the dashboard groups
   by. It never reaches the free-form chart query or field-value routes, and
-  never reads surveys, responses or contacts directly.
+  never reads surveys, responses, contacts or feedback records directly.
 - `member` and `dashboard_viewer` reach a workspace only through a **team**. A
   team holds `read`, `readWrite` or `manage` on each workspace it is assigned,
   and a user's **team role** is `admin` or `contributor`.
 - An **API key** holds `read`, `write` or `manage` on each workspace it
-  lists, and optionally organization access-control `read` or `write` (teams
-  and workspace-team assignments). An **MCP OAuth client** acts for a user,
-  limited to the organizations or workspaces its grant selects.
+  lists, and optionally organization access-control `read` or `write`
+  (organization members and their roles, invites, teams and workspace-team
+  assignments).
+- An **MCP OAuth client** acts for a user and never reaches more than that
+  user can. Its grant further limits it to the organizations or workspaces it
+  selects and to an access level per permission (an absent permission has no
+  access), and the OAuth scopes the client was consented cap the grant.
 
 The application is multi-tenant. **Both the organization and the workspace are
-tenant boundaries**: a user must not reach another organization, nor a
-workspace in their own organization that none of their teams is granted. The
+tenant boundaries**: no principal may reach another organization, nor a
+workspace in its own organization that it does not reach — for a user, none of
+their teams is assigned; for an API key, the key does not list it. The
 database, Redis, S3-compatible storage and SpiceDB (AuthZed) are shared by
 every tenant. There is no in-app instance-admin role; whoever operates the
 server is trusted.
@@ -106,17 +111,22 @@ internet, with more than one tenant on the instance.
   scope; a public survey endpoint that lets an anonymous attacker take over a
   workspace.
 - **High** — IDOR or data leak across organizations, or into a workspace of
-  the same organization that none of the attacker's teams, API key or MCP
-  grant reaches; privilege escalation to organization owner/manager;
-  authenticated RCE; SSRF reaching internal services or cloud metadata; stored XSS in another user's admin session;
+  the same organization that the attacker does not reach (a user: none of
+  their teams is assigned; an API key: not listed; an MCP client: its user
+  does not reach it); privilege escalation to organization owner/manager;
+  authenticated RCE; SSRF reaching internal services or cloud metadata;
+  stored XSS in another user's admin session;
   disclosure of API keys, secrets or session tokens; account takeover through
   auth logic.
-- **Medium** — escalation between roles, team permissions or API-key
-  permissions inside the organization, without crossing into an unreached
-  workspace: for example `read` writing, `billing` reading product data, or
-  `dashboard_viewer` reading raw responses in a workspace its team is
-  assigned; stored XSS whose impact stays
-  inside the attacker's own session/workspace; CSRF on state-changing actions;
+- **Medium** — escalation between roles, team permissions, API-key
+  permissions or MCP grant limits inside the organization, short of
+  owner/manager: for example a `read` team or key writing; `billing` reading
+  product data of any workspace in its organization (Medium although billing
+  reaches no workspace); `dashboard_viewer` reading raw responses in a
+  workspace its team is assigned; an MCP client acting outside its grant's
+  selection, access levels or consented scopes but within what its user
+  reaches. Stored XSS whose impact stays inside the attacker's own
+  session/workspace; CSRF on state-changing actions;
   open redirect; rate-limit bypass enabling response or invitation spam;
   authenticated DoS.
 - **Low** — information disclosure without sensitive data; self-XSS; missing
@@ -128,9 +138,9 @@ attacker's starting position explicitly: anonymous, an organization role
 (`owner`, `manager`, `member`, `billing`, `dashboard_viewer`), and for a
 `member` or `dashboard_viewer` the team permission on the target workspace
 (`read`, `readWrite`, `manage`); or an API key with its workspace and
-organization permissions; or an MCP client and what its grant selects. A
-finding that requires the server operator or
-database owner to be malicious is not a vulnerability.
+organization permissions; or an MCP client with its grant (selection and
+access levels) and consented scopes. A finding that requires the server
+operator or database owner to be malicious is not a vulnerability.
 
 ## Out of scope
 

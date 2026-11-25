@@ -13,7 +13,8 @@ more. Sections, in this order:
    (`owner`, `manager`, `member`, `billing`, `dashboard_viewer`) plus, for a
    `member` or `dashboard_viewer`, the team permission on the target workspace
    (`read`, `readWrite`, `manage`); or an API key with its workspace and
-   organization permissions; or an MCP client and what its grant selects.
+   organization permissions; or an MCP client with its grant (selection and
+   access levels) and consented scopes.
 5. **Reproduction** — the smallest sequence that demonstrates the issue:
    request(s), payload, test, or code excerpt. Prefer a runnable unit test.
 6. **Impact** — what the attacker gains, and which tenant or role boundary is
@@ -25,8 +26,9 @@ more. Sections, in this order:
 - Whether the bug is reachable unauthenticated.
 - The exact endpoint or UI route that reaches the faulty code.
 - Which boundary it crosses (anonymous → user, user → user, organization →
-  organization, into an ungranted workspace of the same organization, role or
-  team-permission escalation) or that it is contained in one workspace.
+  organization, into an unreached workspace of the same organization, role,
+  team-permission, API-key or MCP grant escalation) or that it is contained in
+  one workspace.
 - Any precondition: an enabled feature, a configured integration, a non-default
   environment variable.
 
