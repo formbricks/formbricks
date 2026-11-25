@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
@@ -253,6 +253,10 @@ describe("POST …/visibility against the real stack", () => {
 });
 
 describe("POST /api/v3/surveys with visibility (ENG-7508)", () => {
+  afterEach(() => {
+    vi.mocked(getAccessControlPermission).mockResolvedValue(true);
+  });
+
   test("an API-key create asking for restricted answers 422 and writes no survey", async () => {
     const body = ZV3CreateSurveyBody.parse({
       workspaceId: ids.workspace,
@@ -290,7 +294,8 @@ describe("POST /api/v3/surveys with visibility (ENG-7508)", () => {
   });
 
   test("a signed-in create asking for restricted without the feature answers 403 and writes no survey", async () => {
-    vi.mocked(getAccessControlPermission).mockResolvedValueOnce(false);
+    // Every entitlement read in this create sees the feature off, whatever order they run in.
+    vi.mocked(getAccessControlPermission).mockResolvedValue(false);
     const body = ZV3CreateSurveyBody.parse({
       workspaceId: ids.workspace,
       name: "User restricted",

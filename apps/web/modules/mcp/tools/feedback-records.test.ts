@@ -23,6 +23,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { responseToMcpToolResult } from "../errors";
 import { registerFeedbackRecordTools } from "./feedback-records";
 import { ZMcpUpdateFeedbackRecordInput } from "./schemas";
 import {
@@ -42,6 +43,12 @@ const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mc
 // vitestSetup stubs createHash, which the sealed confirmation state depends on.
 vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
 vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
+
+// Real behaviour, wrapped so one test can make building the result fail after the write committed.
+vi.mock("../errors", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../errors")>();
+  return { ...actual, responseToMcpToolResult: vi.fn(actual.responseToMcpToolResult) };
+});
 
 vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
   countV3FeedbackRecords: vi.fn(),
@@ -907,10 +914,36 @@ describe("create_feedback_records", () => {
   });
 
   /**
-   * The success events must be queued exactly once even when the response cannot be projected: the
-   * wrapper queues them on the way out, and the catch queues again on a throw, so running the projection
-   * before `queueOutcome` is what keeps a projection failure from duplicating every creation.
+   * The success events must be queued exactly once even when building the result throws: the wrapper
+   * queues them on the way out, and the catch queues again on a throw, so building the result before
+   * `queueOutcome` is what keeps that failure from duplicating every creation.
    */
+  test("does not queue a creation twice when building the result throws after the write", async () => {
+    const built: Partial<TV3AuditLog>[] = [];
+    vi.mocked(buildV3AuditLog, { partial: true }).mockImplementation(() => {
+      const auditLog = makeAuditLog();
+      built.push(auditLog);
+      return auditLog;
+    });
+    vi.mocked(createV3FeedbackRecords).mockImplementation(async ({ auditLogs }) => {
+      const [created] = auditLogs ?? [];
+      if (created) created.targetId = "rec-1";
+      return successResponse({ data: [{ id: "rec-1" }], meta: { created: 1, failed: 0, failures: [] } });
+    });
+    vi.mocked(responseToMcpToolResult).mockRejectedValueOnce(new Error("boom"));
+    const { tools } = createToolServer();
+
+    await expect(
+      tools.get("create_feedback_records")!.handler(input, { http: { authInfo } })
+    ).rejects.toThrow("boom");
+
+    // One event, once: the stamped creation, queued by the catch because the call failed after it.
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toBe(built[0]);
+    expect(built[0].status).toBe("success");
+  });
+
+  /** A body the concise projection cannot read is handed back unprojected rather than failing the call. */
   test("queues a committed creation once, as a success, when its response cannot be projected", async () => {
     const built: Partial<TV3AuditLog>[] = [];
     vi.mocked(buildV3AuditLog, { partial: true }).mockImplementation(() => {

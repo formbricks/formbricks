@@ -134,6 +134,26 @@ describe("getV3SurveyCreateInputInvalidParamsForDocument (ENG-7508)", () => {
     expect(getV3SurveyCreateInputInvalidParamsForDocument(valid())).toEqual([]);
   });
 
+  // The dry run applies the app distribution's display scalars as the create does; a valid app survey
+  // still passes with them on the write input.
+  test("is empty for an app survey with a distribution the create accepts", () => {
+    const document = ZV3CreateSurveyBody.parse({
+      workspaceId: "clxx1234567890123456789012",
+      name: "App survey",
+      type: "app",
+      blocks: [{ name: "Block", elements: [element(["A", "B"])] }],
+      distribution: {
+        displayOption: "displaySome",
+        displayLimit: 3,
+        displayPercentage: 50,
+        triggers: [{ actionClassId: "claa1234567890123456789012" }],
+      },
+    });
+
+    expect(document.type).toBe("app");
+    expect(getV3SurveyCreateInputInvalidParamsForDocument(document)).toEqual([]);
+  });
+
   // The defect (ENG-7508): the v3 request schema admits these, so the dry run stopped there and called
   // them valid; the create's write schema then answered 422.
   test("reports duplicate choice labels exactly as the create's write schema does", () => {
