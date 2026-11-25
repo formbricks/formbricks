@@ -22,6 +22,7 @@ import { registerMcpTool } from "./guard-permissions";
 import { mapJsonResponseBody } from "./json-response";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
+  type TMcpArchiveSurveyInput,
   type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
   type TMcpEditSurveyBlocksInput,
@@ -33,6 +34,7 @@ import {
   type TMcpSetSurveyVisibilityInput,
   type TMcpSurveyIdInput,
   type TMcpValidateSurveyInput,
+  ZMcpArchiveSurveyInput,
   ZMcpCreateSurveyInput,
   ZMcpDeleteSurveyInput,
   ZMcpEditSurveyBlocksInput,
@@ -52,6 +54,7 @@ import {
   ZMcpSurveyVisibilityStateOutput,
 } from "./survey-output-schemas";
 import { surveyResultForCaller } from "./survey-targeting";
+import { toolContext } from "./tool-context";
 
 export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSearchParams {
   const searchParams = new URLSearchParams();
@@ -497,6 +500,7 @@ export function registerSurveyTools(server: McpServer): void {
         "Call get_survey_visibility first and show the user the impact and blockers before restricting. A restriction is refused with a 409 while a webhook, integration, active feedback source, draft or enabled workflow, or non-archived creative uses the survey; archived creatives are unlinked by the restriction. A survey with no owner cannot be restricted (422): ask the user to duplicate it in the Formbricks app to get a restricted copy.",
         "A workspace change the graph has not acknowledged yet answers 503 projection_pending: the change is stored, retry in a few seconds; the survey stays restricted until the graph catches up. Changes are limited to 10 per minute; a 429 asks you to wait before retrying.",
         "Needs the survey visibility feature (Access Control) and the survey's owner, while they still hold read access to its workspace, or an organization owner/manager. API-key connections are refused, and a non-owner workspace writer is refused even with Surveys: Write.",
+        "Sharing with the workspace (visibility workspace) shows the survey's responses to every member and cannot be taken back once read, so the user is asked to confirm first; `confirm` counts only when the client cannot show that prompt. Restricting needs no confirmation.",
       ].join(" "),
       inputSchema: ZMcpSetSurveyVisibilityInput,
       outputSchema: ZMcpSurveyVisibilityChangeOutput,
@@ -511,20 +515,40 @@ export function registerSurveyTools(server: McpServer): void {
       },
     },
     [{ permission: "surveys", level: "write" }],
-    async (input: TMcpSetSurveyVisibilityInput, ctx) =>
-      runMcpMutation(
+    async (input: TMcpSetSurveyVisibilityInput, ctx) => {
+      const change = () =>
+        runMcpMutation(
+          ctx,
+          { action: "visibilityChanged", resource: "survey", logContext: { surveyId: input.surveyId } },
+          ({ authentication, requestId, auditLog }) =>
+            changeV3SurveyVisibility({
+              surveyId: input.surveyId,
+              body: { visibility: input.visibility },
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+            })
+        );
+
+      // Restricting narrows who can read; an API key is refused by the operation either way, so it gets
+      // that 403 now rather than a prompt it cannot answer.
+      if (input.visibility !== "workspace" || "apiKeyId" in (toolContext(ctx).authentication ?? {})) {
+        return change();
+      }
+
+      // Sharing exposes the responses to every workspace member, which a later restriction cannot take
+      // back, so text the user did not write must not be able to trigger it (finding 07).
+      return runConfirmedDelete({
+        tool: "set_survey_visibility",
+        resourceKey: `${input.surveyId}->workspace`,
+        prompt: `Share survey ${input.surveyId} and its responses with everyone in the workspace?`,
+        confirm: input.confirm,
         ctx,
-        { action: "visibilityChanged", resource: "survey", logContext: { surveyId: input.surveyId } },
-        ({ authentication, requestId, auditLog }) =>
-          changeV3SurveyVisibility({
-            surveyId: input.surveyId,
-            body: { visibility: input.visibility },
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
-      )
+        run: change,
+        wording: { action: "Sharing", unchanged: "the survey's visibility did not change" },
+      });
+    }
   );
 
   registerMcpTool(
@@ -577,8 +601,8 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Archive survey",
       description:
-        'Archive a survey: it leaves the default list, stops collecting responses (an in-progress survey is paused) and becomes read-only until restored. Ask the user before archiving a survey that is not a draft and already has responses. Formbricks permanently deletes an archived survey and its responses at least 30 days after it was archived, unless a data-retention exemption holds it longer. Find it again with list_surveys and filter.status.in: ["archived"], then use restore_survey. Works on any survey, including legacy question-based ones, and archiving an already-archived survey changes nothing. Prefer this over the deprecated delete_survey.',
-      inputSchema: ZMcpSurveyIdInput,
+        'Archive a survey: it leaves the default list, stops collecting responses (an in-progress survey is paused) and becomes read-only until restored. The user is asked to confirm first; `confirm` counts only when the client cannot show that prompt. Formbricks permanently deletes an archived survey and its responses at least 30 days after it was archived, unless a data-retention exemption holds it longer. Find it again with list_surveys and filter.status.in: ["archived"], then use restore_survey. Works on any survey, including legacy question-based ones, and archiving an already-archived survey changes nothing. Prefer this over the deprecated delete_survey.',
+      inputSchema: ZMcpArchiveSurveyInput,
       outputSchema: ZMcpSurveyLifecycleOutput,
       audit: { action: "archived", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
@@ -591,19 +615,30 @@ export function registerSurveyTools(server: McpServer): void {
       },
     },
     [{ permission: "surveys", level: "write" }],
-    async (input: TMcpSurveyIdInput, ctx) =>
-      runMcpMutation(
+    // Archiving pauses a live survey (responses that would arrive meanwhile are lost) and starts the purge
+    // clock, so it confirms first like the delete it replaces (finding 07), drafts included.
+    async (input: TMcpArchiveSurveyInput, ctx) =>
+      runConfirmedDelete({
+        tool: "archive_survey",
+        resourceKey: input.surveyId,
+        prompt: `Archive survey ${input.surveyId}? It stops collecting responses, and Formbricks permanently deletes it and its responses at least 30 days later unless it is restored.`,
+        confirm: input.confirm,
         ctx,
-        { action: "archived", resource: "survey", logContext: { surveyId: input.surveyId } },
-        ({ authentication, requestId, auditLog }) =>
-          archiveV3Survey({
-            surveyId: input.surveyId,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
-      )
+        wording: { action: "Archiving", unchanged: "nothing was archived" },
+        run: () =>
+          runMcpMutation(
+            ctx,
+            { action: "archived", resource: "survey", logContext: { surveyId: input.surveyId } },
+            ({ authentication, requestId, auditLog }) =>
+              archiveV3Survey({
+                surveyId: input.surveyId,
+                authentication,
+                requestId,
+                instance: MCP_API_ROUTE,
+                auditLog,
+              })
+          ),
+      })
   );
 
   registerMcpTool(

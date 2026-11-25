@@ -16,6 +16,15 @@ const CONFIRM_KEY = "confirm";
 
 const ZConfirmationAnswer = z.object({ confirm: z.boolean() });
 
+/**
+ * How a refusal names what did not happen. A delete is the default; a confirmed write that is not a delete
+ * (an archive, a visibility change) says what it would have done instead, so a model never reads
+ * "nothing was deleted" about a call that deletes nothing.
+ */
+export type TConfirmationWording = { action: string; unchanged: string };
+
+const DELETE_WORDING: TConfirmationWording = { action: "Deletion", unchanged: "nothing was deleted" };
+
 type TDeleteDecision = { kind: "confirmed" } | { kind: "ask" } | { kind: "refused"; reason: string };
 
 /**
@@ -51,7 +60,8 @@ export function decideDelete(
   tool: string,
   resourceKey: string,
   confirm: boolean | undefined,
-  ctx: TMcpToolContext
+  ctx: TMcpToolContext,
+  wording: TConfirmationWording = DELETE_WORDING
 ): TDeleteDecision {
   // Only where nobody can be asked: see `mayAssertConfirm`.
   if (confirm === true && mayAssertConfirm(ctx)) {
@@ -65,13 +75,13 @@ export function decideDelete(
   }
 
   if (answer.kind !== "elicit" || answer.action !== "accept") {
-    return { kind: "refused", reason: "Deletion was not confirmed, so nothing was deleted." };
+    return { kind: "refused", reason: `${wording.action} was not confirmed, so ${wording.unchanged}.` };
   }
 
   const content = acceptedContent(ctx.mcpReq?.inputResponses, CONFIRM_KEY, ZConfirmationAnswer);
 
   if (content?.confirm !== true) {
-    return { kind: "refused", reason: "Deletion was declined, so nothing was deleted." };
+    return { kind: "refused", reason: `${wording.action} was declined, so ${wording.unchanged}.` };
   }
 
   const state = ctx.mcpReq?.requestState<TMcpConfirmationState>();
@@ -79,7 +89,7 @@ export function decideDelete(
   if (!state || typeof state !== "object" || state.tool !== tool || state.resourceId !== resourceKey) {
     return {
       kind: "refused",
-      reason: "The confirmation did not match this request, so nothing was deleted.",
+      reason: `The confirmation did not match this request, so ${wording.unchanged}.`,
     };
   }
 
@@ -113,6 +123,8 @@ export async function askToConfirm(
 
 /**
  * The ask / refuse / run sequence every confirmed delete shares, so a tool states only what it deletes.
+ * Writes that are not deletes but must not happen on text the user did not write (`merge_tags`,
+ * `archive_survey`, widening `set_survey_visibility`) use it too, with their own `wording`.
  *
  * `run` is reached only when the user agreed: through the prompt, or through `confirm: true` where
  * `mayAssertConfirm` allows it.
@@ -124,9 +136,11 @@ export async function runConfirmedDelete(options: {
   confirm: boolean | undefined;
   ctx: TMcpToolContext;
   run: () => Promise<CallToolResult>;
+  /** For a confirmed write that is not a delete; see {@link TConfirmationWording}. */
+  wording?: TConfirmationWording;
 }): Promise<CallToolResult | InputRequiredResult> {
-  const { tool, resourceKey, prompt, confirm, ctx, run } = options;
-  const decision = decideDelete(tool, resourceKey, confirm, ctx);
+  const { tool, resourceKey, prompt, confirm, ctx, run, wording } = options;
+  const decision = decideDelete(tool, resourceKey, confirm, ctx, wording);
 
   if (decision.kind === "ask") {
     return await askToConfirm(tool, resourceKey, prompt, ctx);

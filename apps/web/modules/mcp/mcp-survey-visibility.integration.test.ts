@@ -194,9 +194,11 @@ describe("survey visibility through MCP", () => {
     expect(dataOf(state).allowedTargets).toContain("workspace");
     expect(dataOf(state).access).toMatchObject({ canManageVisibility: true });
 
+    // This harness client cannot show a prompt, so its `confirm` stands in for the user.
     const shared = await callMcpTool({ accessToken }, "set_survey_visibility", {
       surveyId,
       visibility: "workspace",
+      confirm: true,
     });
     expect(succeeded(shared), toolText(shared)).toBe(true);
     expect(dataOf(shared)).toMatchObject({ visibility: "workspace", pending: null });

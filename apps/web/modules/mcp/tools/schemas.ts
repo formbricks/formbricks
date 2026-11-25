@@ -576,10 +576,18 @@ export const ZMcpSurveyIdInput = z
   })
   .strict();
 
+/**
+ * Archive confirms first (it pauses a live survey and starts the purge clock), and so does sharing a survey
+ * with the whole workspace, which exposes its responses: `confirm` counts only where the client cannot show
+ * the prompt, as on the delete tools.
+ */
+export const ZMcpArchiveSurveyInput = ZMcpSurveyIdInput.extend({ confirm: confirmArgument }).strict();
+
 export const ZMcpSetSurveyVisibilityInput = ZMcpSurveyIdInput.extend({
   visibility: ZSurveyVisibility.describe(
     "`workspace` shares the survey with the whole workspace; `restricted` limits it to its owner and organization owners/managers."
   ),
+  confirm: confirmArgument,
 }).strict();
 
 /** Deprecated with `delete_survey` (ENG-6575): removed in 7.0, prefer `archive_survey`. */
@@ -774,6 +782,7 @@ export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrde
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpGenerateSurveyInput = z.infer<typeof ZMcpGenerateSurveyInput>;
 export type TMcpSurveyIdInput = z.infer<typeof ZMcpSurveyIdInput>;
+export type TMcpArchiveSurveyInput = z.infer<typeof ZMcpArchiveSurveyInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
 export type TMcpSetSurveyVisibilityInput = z.infer<typeof ZMcpSetSurveyVisibilityInput>;
 export type TMcpGetWorkspaceCustomCssInput = z.infer<typeof ZMcpGetWorkspaceCustomCssInput>;

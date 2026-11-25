@@ -952,9 +952,11 @@ describe("registerSurveyTools", () => {
     vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(archiveV3Survey).mockResolvedValue(successResponse(ack, { requestId: "req_tool" }));
 
+    // An API key cannot be asked, so its `confirm` stands in for the user (see the gate tests below).
     const result = await tools.get("archive_survey")!.handler(
       {
         surveyId: "clxx1234567890123456789012",
+        confirm: true,
       },
       { http: { authInfo } }
     );
@@ -1001,7 +1003,7 @@ describe("registerSurveyTools", () => {
     expect(ZMcpSurveyLifecycleOutput.safeParse(result.structuredContent).success).toBe(true);
   });
 
-  test("archive_survey and restore_survey take only a valid survey id", () => {
+  test("archive_survey and restore_survey validate the survey id; only archive takes confirm", () => {
     const { tools } = createToolServer();
     const surveyId = "clxx1234567890123456789012";
 
@@ -1010,10 +1012,93 @@ describe("registerSurveyTools", () => {
       expect(schema.safeParse({ surveyId }).success, name).toBe(true);
       expect(schema.safeParse({}).success, name).toBe(false);
       expect(schema.safeParse({ surveyId: "not-a-cuid" }).success, name).toBe(false);
-      // No confirmation argument: archive and restore are reversible, and an unknown key is refused.
-      expect(schema.safeParse({ surveyId, confirm: true }).success, name).toBe(false);
-      expect(String(tools.get(name)!.config.description), name).not.toMatch(/confirm/i);
     }
+    const archive = tools.get("archive_survey")!.config.inputSchema as z.ZodType;
+    const restore = tools.get("restore_survey")!.config.inputSchema as z.ZodType;
+    expect(archive.safeParse({ surveyId, confirm: true }).success).toBe(true);
+    // Restore is not destructive, so it has no confirmation, and an unknown key is refused.
+    expect(restore.safeParse({ surveyId, confirm: true }).success).toBe(false);
+  });
+
+  // Archiving pauses a live survey and starts the purge clock, so text the user did not write must not be
+  // able to trigger it: a client that can show a prompt is asked, whatever the model passes (finding 07).
+  test("archive_survey asks a client that can show a prompt, whatever the model passes", async () => {
+    const { tools } = createToolServer();
+
+    for (const input of [
+      { surveyId: "clxx1234567890123456789012" },
+      { surveyId: "clxx1234567890123456789012", confirm: true },
+    ]) {
+      const result = (await tools
+        .get("archive_survey")!
+        .handler(input, elicitingOAuthContext(authInfo))) as Record<string, unknown>;
+      expect(result.resultType).toBe("input_required");
+    }
+    expect(archiveV3Survey).not.toHaveBeenCalled();
+  });
+
+  test("an API key archiving without confirm is asked, and nothing is archived", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("archive_survey")!
+      .handler({ surveyId: "clxx1234567890123456789012" }, { http: { authInfo } });
+
+    expect(result).toMatchObject({ resultType: "input_required" });
+    expect(archiveV3Survey).not.toHaveBeenCalled();
+  });
+
+  test("a declined archive says nothing was archived, and is not reported as success", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const context = elicitingOAuthContext(authInfo);
+
+    const result = await tools.get("archive_survey")!.handler(
+      { surveyId },
+      {
+        ...context,
+        mcpReq: {
+          ...context.mcpReq,
+          inputResponses: { confirm: { action: "decline" } },
+          requestState: () => ({ tool: "archive_survey", resourceId: surveyId }),
+        },
+      }
+    );
+
+    expect(archiveV3Survey).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.structuredContent)).toContain(
+      "Archiving was not confirmed, so nothing was archived."
+    );
+  });
+
+  // Sharing exposes the responses to the whole workspace, which a later restriction cannot take back.
+  test("set_survey_visibility asks before sharing with the workspace, but not before restricting", async () => {
+    const { tools } = createToolServer();
+    // A signed-in user: an API key never reaches the prompt, since the operation refuses it anyway.
+    const userAuthInfo = { ...readOnlyOAuthAuthInfo, scopes: ["surveys:read", "surveys:write"] };
+    const surveyId = "clxx1234567890123456789012";
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+    vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+      successResponse({ id: surveyId, visibility: "restricted" }, { requestId: "req_tool" })
+    );
+
+    for (const input of [
+      { surveyId, visibility: "workspace" },
+      { surveyId, visibility: "workspace", confirm: true },
+    ]) {
+      const result = (await tools
+        .get("set_survey_visibility")!
+        .handler(input, elicitingOAuthContext(userAuthInfo))) as Record<string, unknown>;
+      expect(result.resultType).toBe("input_required");
+    }
+    expect(changeV3SurveyVisibility).not.toHaveBeenCalled();
+
+    const restricted = await tools
+      .get("set_survey_visibility")!
+      .handler({ surveyId, visibility: "restricted" }, elicitingOAuthContext(userAuthInfo));
+    expect(restricted.isError).toBeFalsy();
+    expect(changeV3SurveyVisibility).toHaveBeenCalledTimes(1);
   });
 
   test("a refused archive is audited as a failed archived event", async () => {
@@ -1076,9 +1161,11 @@ describe("registerSurveyTools", () => {
       problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
     );
 
+    // An API key cannot be asked, so its `confirm` stands in for the user (see the gate tests below).
     const result = await tools.get("archive_survey")!.handler(
       {
         surveyId: "clxx1234567890123456789012",
+        confirm: true,
       },
       { http: { authInfo } }
     );
