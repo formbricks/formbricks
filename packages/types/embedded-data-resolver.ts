@@ -122,6 +122,41 @@ export type TReservedFieldPrivacy = "keep" | "drop" | "redactQuery";
 export type TReservedFieldDisplay = "primary" | "secondary" | "none";
 
 /**
+ * What has to be true for a reserved field to carry a value on a response — the answer to "why is
+ * this column empty?".
+ *
+ * "Auto-captured" means nobody declares the field, not that every response fills it: `source` only
+ * exists when the page URL carries `?source=`, `country` only when the host sets it or a CDN reports it,
+ * `action` only on app surveys. The settings page lists this beside each field, because a link-survey
+ * team reading "auto-captured" next to `Source` and `Country` expected both to fill themselves.
+ *
+ * - `always` — nothing to set up. A browser that withholds a reading (no `Intl`, a 0px viewport) can
+ *   still leave one response without it.
+ * - `urlParam` — read from the query string of the page the survey runs on: the survey link for a link
+ *   survey, the host page for an app survey. `param` is the parameter's name.
+ * - `referrer` — the browser reported a referring page; email clients and direct visits do not.
+ * - `hostOrCdnCountry` — the host set a two-letter code (`?country=` on a link survey, `country` in
+ *   `setEmbeddedData` or `track({ hiddenFields })` on an app survey), or the request passed through
+ *   Cloudflare (`CF-IPCountry`) or AWS CloudFront (`CloudFront-Viewer-Country`). Formbricks runs no
+ *   GeoIP lookup of its own, so with neither the field stays empty.
+ * - `appSurvey` — only an app survey has a triggering action.
+ * - `ipCapture` — the survey has Capture IP address on.
+ * - `websiteVisit` — the web SDK's visit store: app surveys on websites, not link surveys or mobile.
+ * - `creative` — a creative opened the survey.
+ * - `finishedResponse` — set on finished responses only.
+ */
+export type TReservedFieldCapturedWhen =
+  | { kind: "always" }
+  | { kind: "urlParam"; param: string }
+  | { kind: "referrer" }
+  | { kind: "hostOrCdnCountry" }
+  | { kind: "appSurvey" }
+  | { kind: "ipCapture" }
+  | { kind: "websiteVisit" }
+  | { kind: "creative" }
+  | { kind: "finishedResponse" };
+
+/**
  * What every reserved field declares regardless of which side can read it.
  *
  * A reserved field is auto-captured system metadata every survey can reference without declaring
@@ -138,6 +173,8 @@ interface TReservedFieldCatalogEntryBase {
   privacy: TReservedFieldPrivacy;
   /** See {@link TReservedFieldDisplay}. Required, so a new entry cannot be added without deciding. */
   display: TReservedFieldDisplay;
+  /** See {@link TReservedFieldCapturedWhen}. Required for the same reason as `display`. */
+  capturedWhen: TReservedFieldCapturedWhen;
 }
 
 /**
@@ -209,13 +246,17 @@ export type TReservedFieldCatalogEntry = TServerReservedFieldCatalogEntry | TCli
  * unset — expected, and the reason every accessor tolerates absence.
  */
 export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
-  /** How the response was collected — `link`, `app`, … Set by the client on the response input. */
+  /**
+   * The `?source=` parameter of the page the survey ran on, as the renderer read it. Nothing fills
+   * it otherwise — a link survey opened without `?source=` has no source, not `link`.
+   */
   {
     name: "source",
     dataType: "string",
     availability: "client",
     privacy: "keep",
     display: "primary",
+    capturedWhen: { kind: "urlParam", param: "source" },
     read: (r) => r.meta.source,
   },
   /**
@@ -228,6 +269,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "redactQuery",
     display: "primary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.url,
   },
   /**
@@ -241,6 +283,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "drop",
     display: "primary",
+    capturedWhen: { kind: "hostOrCdnCountry" },
     read: (r) => r.meta.country,
   },
   /** The action that triggered an app survey. */
@@ -250,6 +293,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "primary",
+    capturedWhen: { kind: "appSurvey" },
     read: (r) => r.meta.action,
   },
   /**
@@ -265,6 +309,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "drop",
     display: "primary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.userAgent?.browser,
   },
   {
@@ -273,6 +318,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "drop",
     display: "primary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.userAgent?.os,
   },
   {
@@ -281,6 +327,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "drop",
     display: "primary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.userAgent?.device,
   },
   /** Only captured when the survey has IP capture enabled, so unset on most responses. */
@@ -290,6 +337,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "drop",
     display: "secondary",
+    capturedWhen: { kind: "ipCapture" },
     read: (r) => r.meta.ipAddress,
   },
   /**
@@ -302,6 +350,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     display: "none",
+    capturedWhen: { kind: "always" },
     read: (r) => r.finished,
   },
   /** The language the respondent is answering in; known on both sides and agreed between them. */
@@ -311,6 +360,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "both",
     privacy: "keep",
     display: "none",
+    capturedWhen: { kind: "always" },
     read: (r) => r.language,
   },
   /**
@@ -325,6 +375,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     display: "none",
+    capturedWhen: { kind: "always" },
     read: (r) => r.id,
   },
   {
@@ -333,6 +384,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     display: "none",
+    capturedWhen: { kind: "always" },
     read: (r) => r.surveyId,
   },
   /**
@@ -353,6 +405,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     display: "none",
+    capturedWhen: { kind: "finishedResponse" },
     read: (r) => {
       const totalMs = r.ttc?._total;
       return typeof totalMs === "number" ? Math.round(totalMs / 1000) : undefined;
@@ -373,6 +426,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     display: "none",
+    capturedWhen: { kind: "always" },
     read: (r) => r.createdAt,
   },
   {
@@ -381,6 +435,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     display: "none",
+    capturedWhen: { kind: "always" },
     read: (r) => r.updatedAt,
   },
   /**
@@ -409,6 +464,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.pagePath,
   },
   /**
@@ -421,6 +477,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "redactQuery",
     display: "secondary",
+    capturedWhen: { kind: "referrer" },
     read: (r) => r.meta.pageReferrer,
   },
   /**
@@ -434,6 +491,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "urlParam", param: "utm_source" },
     read: (r) => r.meta.utmSource,
   },
   {
@@ -442,6 +500,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "urlParam", param: "utm_medium" },
     read: (r) => r.meta.utmMedium,
   },
   {
@@ -450,6 +509,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "urlParam", param: "utm_campaign" },
     read: (r) => r.meta.utmCampaign,
   },
   {
@@ -458,6 +518,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "urlParam", param: "utm_term" },
     read: (r) => r.meta.utmTerm,
   },
   {
@@ -466,6 +527,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "urlParam", param: "utm_content" },
     read: (r) => r.meta.utmContent,
   },
   /**
@@ -480,6 +542,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.screenWidth,
   },
   {
@@ -488,6 +551,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.screenHeight,
   },
   {
@@ -496,6 +560,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.viewportWidth,
   },
   {
@@ -504,6 +569,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.viewportHeight,
   },
   /**
@@ -517,6 +583,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.timezone,
   },
   /**
@@ -535,6 +602,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "always" },
     read: (r) => r.meta.locale,
   },
   /**
@@ -551,6 +619,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "websiteVisit" },
     read: (r) => r.meta.visitPagesViewed,
   },
   {
@@ -559,6 +628,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "websiteVisit" },
     read: (r) => r.meta.visitUniquePagesViewed,
   },
   {
@@ -567,6 +637,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "websiteVisit" },
     read: (r) => r.meta.visitTimeOnSite,
   },
   {
@@ -575,6 +646,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "redactQuery",
     display: "secondary",
+    capturedWhen: { kind: "websiteVisit" },
     read: (r) => r.meta.visitEntryReferrer,
   },
   {
@@ -583,6 +655,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "client",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "websiteVisit" },
     read: (r) => r.meta.visitUrls,
   },
   /**
@@ -599,6 +672,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "creative" },
     read: (r) => r.meta.openedByCreativeId,
   },
   {
@@ -607,6 +681,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     availability: "server",
     privacy: "keep",
     display: "secondary",
+    capturedWhen: { kind: "creative" },
     read: (r) => r.meta.openedByCreativeName,
   },
 ];
