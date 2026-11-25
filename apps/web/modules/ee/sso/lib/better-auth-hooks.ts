@@ -4,11 +4,13 @@ import { APIError, createAuthMiddleware, getOAuthState } from "better-auth/api";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { BootstrapAdminMarker } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
 import { enforceCredentialSignupBackstop } from "@/modules/auth/lib/credential-signup-backstop";
 import { getIsSamlSsoEnabled, getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -16,6 +18,7 @@ import { LINKED_SSO_LOOKUP_SELECT } from "./account-linking";
 import { canonicalAccountIssuer } from "./constants";
 import { resolveSsoEmailVerifiedForCreate } from "./email-verification-policy";
 import { type TSsoIdentityProvider, normalizeSsoProvider } from "./provider-normalization";
+import { getSsoRecoveryFailureRedirectUrl } from "./recovery-outcomes";
 import { gateSsoProvisioning, provisionSsoUserMemberships } from "./sso-provisioning";
 import { startSsoRecovery } from "./sso-recovery";
 import {
@@ -359,25 +362,41 @@ export const ssoRecoveryAfterHandler = async (ctx: AuthHookContext): Promise<voi
   const identity = getPendingSsoIdentity();
   if (!identity) return; // identity not captured → fall through to the default error redirect
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email: identity.email },
-    select: LINKED_SSO_LOOKUP_SELECT,
-  });
-  if (!existingUser) return; // no existing account → genuine error, leave the default redirect
-
+  let recoveryPath: string;
+  let existingUserId: string | undefined;
   let callbackUrl = "";
   try {
-    callbackUrl = ((await getOAuthState()) as { callbackURL?: string } | null)?.callbackURL ?? "";
-  } catch {
-    // No OAuth state available → recovery still works with an empty callback URL.
-  }
+    const existingUser = await prisma.user.findUnique({
+      where: { email: identity.email },
+      select: LINKED_SSO_LOOKUP_SELECT,
+    });
+    if (!existingUser) return; // no existing account → genuine error, leave the default redirect
+    existingUserId = existingUser.id;
 
-  const recoveryPath = await startSsoRecovery({
-    existingUser,
-    provider,
-    account: { provider, providerAccountId: identity.providerAccountId, type: "oauth" },
-    callbackUrl,
-  });
+    try {
+      callbackUrl = ((await getOAuthState()) as { callbackURL?: string } | null)?.callbackURL ?? "";
+    } catch {
+      // No OAuth state available → recovery still works with an empty callback URL.
+    }
+
+    recoveryPath = await startSsoRecovery({
+      existingUser,
+      provider,
+      account: { provider, providerAccountId: identity.providerAccountId, type: "oauth" },
+      callbackUrl,
+    });
+  } catch (error) {
+    // ENG-2558: this runs in `hooks.after`, where anything but an APIError escapes to better-call's
+    // router and becomes a 500 with an empty body. Starting recovery fails for ordinary operational
+    // reasons (SMTP down, the per-recipient cap on the recovery email reached by a user retrying
+    // sign-in, a missing secret), so land on the recovery-failure page instead. Infrastructure errors
+    // (the user lookup) are caught too: no retry owns them here, and propagating one is that same 500.
+    logger.error(
+      { ...loggableError(error), authPath: ctx.path, provider, userId: existingUserId },
+      "SSO recovery could not start; redirecting to the recovery-failure page"
+    );
+    throw ctx.redirect(getSsoRecoveryFailureRedirectUrl(callbackUrl));
+  }
 
   // Replace the ?error=account_not_linked redirect with the verify-before-link recovery flow.
   throw ctx.redirect(new URL(recoveryPath, WEBAPP_URL).toString());
