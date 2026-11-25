@@ -2448,6 +2448,7 @@
       "delete_contact_confirmation": "Isso irá excluir todas as respostas da pesquisa e atributos de contato associados a este contato. Qualquer direcionamento e personalização baseados nos dados deste contato serão perdidos.",
       "delete_contact_confirmation_with_quotas": "{value, plural, other {Isso irá apagar todas as respostas da pesquisa e atributos de contato associados a este contato. Qualquer direcionamento e personalização baseados nos dados deste contato serão perdidos. Se este contato tiver respostas que contam para cotas da pesquisa, as contagens das cotas serão reduzidas, mas os limites das cotas permanecerão inalterados.}}",
       "delete_contact_shared_directory": "Não é possível excluir contatos em um diretório que é usado por outros espaços de trabalho.",
+      "delete_contact_shared_directory_note": "{directoryName} é compartilhado com outros workspaces, então os contatos dele não podem ser excluídos.",
       "directory_line": "Diretório {directoryName}",
       "displays": "Exibições",
       "edit_attribute": "Editar atributo",

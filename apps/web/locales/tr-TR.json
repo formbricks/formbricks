@@ -2448,6 +2448,7 @@
       "delete_contact_confirmation": "Bu işlem, bu kişiyle ilişkili tüm anket yanıtlarını ve kişi özelliklerini silecek. Bu kişinin verilerine dayalı hedefleme ve kişiselleştirmeler kaybolacak.",
       "delete_contact_confirmation_with_quotas": "{value, plural, one {Bu işlem, bu kişiyle ilişkili tüm anket yanıtlarını ve kişi özelliklerini silecek. Bu kişinin verilerine dayalı hedefleme ve kişiselleştirmeler kaybolacak. Eğer bu kişinin anket kotalarına sayılan yanıtları varsa, kota sayıları azalacak ancak kota limitleri değişmeden kalacak.} other {Bu işlem, bu kişilerle ilişkili tüm anket yanıtlarını ve kişi özelliklerini silecek. Bu kişilerin verilerine dayalı hedefleme ve kişiselleştirmeler kaybolacak. Eğer bu kişilerin anket kotalarına sayılan yanıtları varsa, kota sayıları azalacak ancak kota limitleri değişmeden kalacak.}}",
       "delete_contact_shared_directory": "Diğer çalışma alanlarının kullandığı bir dizindeki kişiler silinemez.",
+      "delete_contact_shared_directory_note": "{directoryName} diğer çalışma alanlarıyla paylaşıldığı için içindeki kişiler silinemiyor.",
       "directory_line": "{directoryName} rehberi",
       "displays": "Gösterimler",
       "edit_attribute": "Özelliği düzenle",

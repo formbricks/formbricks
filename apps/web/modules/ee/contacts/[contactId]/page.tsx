@@ -3,6 +3,7 @@ import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
+import { getSharedContactDirectoryName } from "@/modules/ee/contacts/directories/lib/directory-service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContactAuth } from "@/modules/ee/contacts/lib/contact-auth";
@@ -28,14 +29,21 @@ export const SingleContactPage = async (props: {
   // ENG-3282: a contact's responses, displays and link pickers only cover surveys the viewer may see.
   const visibleSurveyWhere = await getUserVisibleSurveyWhere(session.user.id, organization.id);
 
-  const [environmentTags, contact, publishedLinkSurveys, attributesWithKeyInfo, allAttributeKeys] =
-    await Promise.all([
-      getTagsByWorkspaceId(workspace.id),
-      getContactInWorkspace(params.contactId, workspace.id),
-      getPublishedLinkSurveys(workspace.id, visibleSurveyWhere),
-      getContactAttributesWithKeyInfo(params.contactId, workspace.id),
-      getContactAttributeKeys(workspace.id),
-    ]);
+  const [
+    environmentTags,
+    contact,
+    publishedLinkSurveys,
+    attributesWithKeyInfo,
+    allAttributeKeys,
+    sharedDirectoryName,
+  ] = await Promise.all([
+    getTagsByWorkspaceId(workspace.id),
+    getContactInWorkspace(params.contactId, workspace.id),
+    getPublishedLinkSurveys(workspace.id, visibleSurveyWhere),
+    getContactAttributesWithKeyInfo(params.contactId, workspace.id),
+    getContactAttributeKeys(workspace.id),
+    getSharedContactDirectoryName(workspace.id),
+  ]);
 
   if (!contact) {
     return notFound();
@@ -57,6 +65,7 @@ export const SingleContactPage = async (props: {
         workspaceId={workspace.id}
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
+        sharedDirectoryName={sharedDirectoryName}
         publishedLinkSurveys={publishedLinkSurveys}
         currentAttributes={attributesWithKeyInfo}
         allAttributeKeys={allAttributeKeys}

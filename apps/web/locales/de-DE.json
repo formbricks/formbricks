@@ -2448,6 +2448,7 @@
       "delete_contact_confirmation": "Dadurch werden alle Umfrageantworten und Kontaktattribute gelöscht, die mit diesem Kontakt verknüpft sind. Jegliches Targeting und jede Personalisierung auf Basis der Daten dieses Kontakts gehen verloren.",
       "delete_contact_confirmation_with_quotas": "{value, plural, one {Dadurch werden alle Umfrageantworten und Kontaktattribute gelöscht, die mit diesem Kontakt verknüpft sind. Jegliches Targeting und jede Personalisierung auf Basis der Daten dieses Kontakts gehen verloren. Falls dieser Kontakt Antworten hat, die auf Umfragequoten angerechnet werden, werden die Quotenzähler reduziert, aber die Quotengrenzen bleiben unverändert.} other {Dadurch werden alle Umfrageantworten und Kontaktattribute gelöscht, die mit diesen Kontakten verknüpft sind. Jegliches Targeting und jede Personalisierung auf Basis der Daten dieser Kontakte gehen verloren. Falls diese Kontakte Antworten haben, die auf Umfragequoten angerechnet werden, werden die Quotenzähler reduziert, aber die Quotengrenzen bleiben unverändert.}}",
       "delete_contact_shared_directory": "Kontakte in einem Verzeichnis, das von anderen Workspaces verwendet wird, können nicht gelöscht werden.",
+      "delete_contact_shared_directory_note": "{directoryName} wird mit anderen Workspaces geteilt, daher können die Kontakte nicht gelöscht werden.",
       "directory_line": "Verzeichnis {directoryName}",
       "displays": "Anzeigen",
       "edit_attribute": "Attribut bearbeiten",

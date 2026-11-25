@@ -2448,6 +2448,7 @@
       "delete_contact_confirmation": "Acest lucru va șterge toate răspunsurile la sondaj și atributele de contact asociate cu acest contact. Orice țintire și personalizare bazată pe datele acestui contact vor fi pierdute.",
       "delete_contact_confirmation_with_quotas": "{value, plural, one {Această acțiune va șterge toate răspunsurile chestionarului și atributele de contact asociate cu acest contact. Orice țintire și personalizare bazată pe datele acestui contact vor fi pierdute. Dacă acest contact are răspunsuri care contează pentru cotele chestionarului, numărul cotelor va fi redus, dar limitele cotelor vor rămâne neschimbate.} other {Aceste acțiuni vor șterge toate răspunsurile chestionarului și atributele de contact asociate cu acești contacți. Orice țintire și personalizare bazată pe datele acestor contacți vor fi pierdute. Dacă acești contacți au răspunsuri care contează pentru cotele chestionarului, numărul cotelor va fi redus, dar limitele cotelor vor rămâne neschimbate.} }",
       "delete_contact_shared_directory": "Contactele dintr-un director folosit de alte spații de lucru nu pot fi șterse.",
+      "delete_contact_shared_directory_note": "{directoryName} este partajat cu alte spații de lucru, așa că persoanele de contact din el nu pot fi șterse.",
       "directory_line": "Directorul {directoryName}",
       "displays": "Afișări",
       "edit_attribute": "Editează atributul",

@@ -24,6 +24,8 @@ interface SelectedRowSettingsProps<T> {
   readonly isQuotasAllowed: boolean;
   /** Extra actions for the bar, given the table so they can read the selection when clicked. */
   readonly renderExtraActions?: (table: Table<T>) => ReactNode;
+  /** Why the rows can't be deleted. The delete dialog shows it in place of the confirmation, with Delete disabled. */
+  readonly deleteDisabledReason?: string;
 }
 
 /** Deletions in flight at once: enough to be quick, few enough to stay inside the write budget. */
@@ -37,6 +39,7 @@ export const SelectedRowSettings = <T,>({
   downloadRowsAction,
   isQuotasAllowed,
   renderExtraActions,
+  deleteDisabledReason,
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -182,8 +185,9 @@ export const SelectedRowSettings = <T,>({
         deleteWhat={deleteWhatText}
         onDelete={handleDelete}
         isDeleting={isDeleting}
-        text={deleteDialogText}>
-        {hasQuotas && (
+        disabled={Boolean(deleteDisabledReason)}
+        text={deleteDisabledReason ?? deleteDialogText}>
+        {hasQuotas && !deleteDisabledReason && (
           <DecrementQuotasCheckbox
             title={t("workspace.surveys.responses.bulk_delete_response_quotas")}
             checked={decrementQuotas ?? hasQuotas}

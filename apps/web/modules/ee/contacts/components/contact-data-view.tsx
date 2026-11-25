@@ -61,6 +61,8 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
+  /** Set when other workspaces use this directory too: its contacts can't be deleted from here. */
+  sharedDirectoryName?: string | null;
 }
 
 /** Contacts on the shared table toolbar: filter by any attribute (ENG-3542), on the server. */
@@ -70,6 +72,7 @@ export const ContactDataView = ({
   contactAttributeKeys,
   isReadOnly,
   isQuotasAllowed,
+  sharedDirectoryName,
 }: Readonly<ContactDataViewProps>) => {
   const { t, i18n } = useTranslation();
   const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en-US") as TUserLocale;
@@ -233,6 +236,13 @@ export const ContactDataView = ({
               type="contact"
               deleteAction={deleteContact}
               isQuotasAllowed={isQuotasAllowed}
+              deleteDisabledReason={
+                sharedDirectoryName
+                  ? t("workspace.contacts.delete_contact_shared_directory_note", {
+                      directoryName: sharedDirectoryName,
+                    })
+                  : undefined
+              }
             />
           ) : undefined
         }

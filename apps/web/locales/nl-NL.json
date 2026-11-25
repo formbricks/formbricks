@@ -2448,6 +2448,7 @@
       "delete_contact_confirmation": "Hierdoor worden alle enquêtereacties en contactkenmerken verwijderd die aan dit contact zijn gekoppeld. Elke targeting en personalisatie op basis van de gegevens van dit contact gaat verloren.",
       "delete_contact_confirmation_with_quotas": "{value, plural, one {Dit verwijdert alle enquêteresultaten en contactattributen die aan dit contact zijn gekoppeld. Alle targeting en personalisatie op basis van de gegevens van dit contact gaan verloren. Als dit contact reacties heeft die meetellen voor enquêtekvota, worden de quotawaarden verlaagd maar blijven de limieten ongewijzigd.} other {Dit verwijdert alle enquêteresultaten en contactattributen die aan deze contacten zijn gekoppeld. Alle targeting en personalisatie op basis van de gegevens van deze contacten gaan verloren. Als deze contacten reacties hebben die meetellen voor enquêtekvota, worden de quotawaarden verlaagd maar blijven de limieten ongewijzigd.}}",
       "delete_contact_shared_directory": "Contacten in een map die door andere werkruimtes wordt gebruikt, kunnen niet worden verwijderd.",
+      "delete_contact_shared_directory_note": "{directoryName} wordt gedeeld met andere werkruimtes, dus de contactpersonen kunnen niet worden verwijderd.",
       "directory_line": "Map {directoryName}",
       "displays": "Weergaven",
       "edit_attribute": "Attribuut bewerken",

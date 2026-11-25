@@ -27,6 +27,8 @@ interface ContactControlBarProps {
   readonly workspaceId: string;
   readonly isReadOnly: boolean;
   readonly isQuotasAllowed: boolean;
+  /** Set when other workspaces use this directory too: the contact can't be deleted from here. */
+  readonly sharedDirectoryName?: string | null;
   readonly publishedLinkSurveys: PublishedLinkSurvey[];
   readonly allAttributeKeys: TContactAttributeKey[];
   readonly currentAttributes: TContactAttributeWithKeyInfo[];
@@ -37,6 +39,7 @@ export const ContactControlBar = ({
   workspaceId,
   isReadOnly,
   isQuotasAllowed,
+  sharedDirectoryName,
   publishedLinkSurveys,
   allAttributeKeys,
   currentAttributes,
@@ -73,6 +76,17 @@ export const ContactControlBar = ({
     }
     setIsDeletingPerson(false);
     setDeleteDialogOpen(false);
+  };
+
+  const getDeleteDialogText = () => {
+    if (sharedDirectoryName) {
+      return t("workspace.contacts.delete_contact_shared_directory_note", {
+        directoryName: sharedDirectoryName,
+      });
+    }
+    return isQuotasAllowed
+      ? t("workspace.contacts.delete_contact_confirmation_with_quotas", { value: 1 })
+      : t("workspace.contacts.delete_contact_confirmation");
   };
 
   const iconActions = [
@@ -119,13 +133,8 @@ export const ContactControlBar = ({
         deleteWhat={t("common.person")}
         onDelete={handleDeletePerson}
         isDeleting={isDeletingPerson}
-        text={
-          isQuotasAllowed
-            ? t("workspace.contacts.delete_contact_confirmation_with_quotas", {
-                value: 1,
-              })
-            : t("workspace.contacts.delete_contact_confirmation")
-        }
+        disabled={Boolean(sharedDirectoryName)}
+        text={getDeleteDialogText()}
       />
       <GeneratePersonalLinkModal
         open={isGenerateLinkModalOpen}

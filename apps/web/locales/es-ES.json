@@ -2448,6 +2448,7 @@
       "delete_contact_confirmation": "Esto eliminará todas las respuestas de encuestas y atributos de contacto asociados con este contacto. Cualquier segmentación y personalización basada en los datos de este contacto se perderá.",
       "delete_contact_confirmation_with_quotas": "{value, plural, one {Esto eliminará todas las respuestas de encuestas y atributos de contacto asociados con este contacto. Cualquier segmentación y personalización basada en los datos de este contacto se perderá. Si este contacto tiene respuestas que cuentan para las cuotas de encuesta, los recuentos de cuota se reducirán pero los límites de cuota permanecerán sin cambios.} other {Esto eliminará todas las respuestas de encuestas y atributos de contacto asociados con estos contactos. Cualquier segmentación y personalización basada en los datos de estos contactos se perderá. Si estos contactos tienen respuestas que cuentan para las cuotas de encuesta, los recuentos de cuota se reducirán pero los límites de cuota permanecerán sin cambios.}}",
       "delete_contact_shared_directory": "No se pueden eliminar los contactos de un directorio que utilizan otros espacios de trabajo.",
+      "delete_contact_shared_directory_note": "{directoryName} se comparte con otros espacios de trabajo, así que no se pueden eliminar sus contactos.",
       "directory_line": "Directorio {directoryName}",
       "displays": "Visualizaciones",
       "edit_attribute": "Editar atributo",

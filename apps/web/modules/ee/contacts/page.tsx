@@ -72,6 +72,7 @@ export const ContactsPage = async ({
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
+        sharedDirectoryName={sharedDirectoryName}
       />
     </ContactsPageLayout>
   );

@@ -2358,6 +2358,7 @@ checksums:
     workspace/contacts/delete_contact_confirmation: 2d45579e0bb4bc40fb1ee75b43c0e7a4
     workspace/contacts/delete_contact_confirmation_with_quotas: d3d17f13ae46ce04c126c82bf01299ac
     workspace/contacts/delete_contact_shared_directory: c1ca8f9213204ca6d3208bf334b63781
+    workspace/contacts/delete_contact_shared_directory_note: a03877ff7ac229f9b9d57acaa0243d5e
     workspace/contacts/directory_line: 4f097e8a0e651f7aee87cf379586468e
     workspace/contacts/displays: fcc4527002bd045021882be463b8ac72
     workspace/contacts/edit_attribute: 92a83c96a5d850e7d39002e8fd5898f4
