@@ -2230,7 +2230,7 @@
         "vertical_bars": "Vertikala staplar"
       },
       "dashboards": {
-        "add_count_charts": "Lägg till {count} diagram",
+        "add_count_charts": "{count, plural, one {Lägg till {count} diagram} other {Lägg till {count} diagram}}",
         "already_on_this_dashboard": "finns redan på den här instrumentpanelen",
         "chart_cannot_be_filtered_by": "Det här diagrammet kan inte filtreras efter {label}",
         "chart_duplicate_failed": "Misslyckades med att duplicera diagram",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "Misslyckades med att återställa diagram",
         "chart_restored": "Diagram återställt",
         "charts_add_failed": "Misslyckades med att lägga till diagram i instrumentpanelen",
-        "charts_add_partial_failure": "Misslyckades med att lägga till {count} diagram",
+        "charts_add_partial_failure": "{count, plural, one {Det gick inte att lägga till {count} diagram} other {Det gick inte att lägga till {count} diagram}}",
         "charts_added_to_dashboard": "Diagram tillagda i instrumentpanelen",
         "charts_load_failed": "Misslyckades med att ladda diagram",
         "create_dashboard": "Skapa instrumentpanel",

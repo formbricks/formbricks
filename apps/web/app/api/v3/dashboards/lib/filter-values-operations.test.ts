@@ -166,7 +166,9 @@ describe("refused before Cube", () => {
     });
 
     expect(response.status).toBe(422);
-    expect(JSON.stringify(await problemOf(response))).toContain("MAX_DASHBOARD_FILTER_PICKS_CHARS");
+    const problem = JSON.stringify(await problemOf(response));
+    expect(problem).toContain(`at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters`);
+    expect(problem).not.toContain("MAX_DASHBOARD_FILTER_PICKS_CHARS");
     expect(MAX_DASHBOARD_FILTER_PICKS_CHARS).toBe(4000);
     expect(executeTenantScopedQuery).not.toHaveBeenCalled();
   });

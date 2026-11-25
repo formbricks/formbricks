@@ -2230,7 +2230,7 @@
         "vertical_bars": "纵向条形图"
       },
       "dashboards": {
-        "add_count_charts": "添加 {count} 个图表",
+        "add_count_charts": "{count, plural, other {添加 {count} 个图表}}",
         "already_on_this_dashboard": "已在此仪表板中",
         "chart_cannot_be_filtered_by": "此图表无法按{label}进行筛选",
         "chart_duplicate_failed": "图表复制失败",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "恢复图表失败",
         "chart_restored": "图表已恢复",
         "charts_add_failed": "添加图表到仪表板失败",
-        "charts_add_partial_failure": "添加 {count} 个图表失败",
+        "charts_add_partial_failure": "{count, plural, other {{count} 个图表添加失败}}",
         "charts_added_to_dashboard": "图表已添加到仪表板",
         "charts_load_failed": "加载图表失败",
         "create_dashboard": "创建仪表板",

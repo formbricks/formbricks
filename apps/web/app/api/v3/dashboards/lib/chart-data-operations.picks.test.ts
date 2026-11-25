@@ -4,6 +4,7 @@ import {
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
+import { MAX_DASHBOARD_FILTER_PICKS_CHARS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import { encodeFilterRule } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
 import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { getDatasetFieldMatcher } from "@/modules/ee/analysis/dashboards/lib/dataset-fields";
@@ -143,7 +144,9 @@ describe("getV3DashboardChartData picks", () => {
     const response = await read({ ...RULES, [`picks[${SOURCE.id}]`]: [long, long, long, long, "x"] });
 
     expect(response.status).toBe(422);
-    expect(JSON.stringify(await response.json())).toContain("MAX_DASHBOARD_FILTER_PICKS_CHARS");
+    const problem = JSON.stringify(await response.json());
+    expect(problem).toContain(`at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters`);
+    expect(problem).not.toContain("MAX_DASHBOARD_FILTER_PICKS_CHARS");
     expect(runV3ChartQuery).not.toHaveBeenCalled();
   });
 });

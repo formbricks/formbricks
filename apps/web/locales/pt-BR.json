@@ -2230,7 +2230,7 @@
         "vertical_bars": "Barras verticais"
       },
       "dashboards": {
-        "add_count_charts": "Adicionar {count} gráfico(s)",
+        "add_count_charts": "{count, plural, one {Adicionar {count} gráfico} many {Adicionar {count} de gráficos} other {Adicionar {count} gráficos}}",
         "already_on_this_dashboard": "já está neste painel",
         "chart_cannot_be_filtered_by": "Este gráfico não pode ser filtrado por {label}",
         "chart_duplicate_failed": "Falha ao duplicar gráfico",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "Falha ao restaurar gráfico",
         "chart_restored": "Gráfico restaurado",
         "charts_add_failed": "Falha ao adicionar gráficos ao painel",
-        "charts_add_partial_failure": "Falha ao adicionar {count} gráfico(s)",
+        "charts_add_partial_failure": "{count, plural, one {Falha ao adicionar {count} gráfico} many {Falha ao adicionar {count} de gráficos} other {Falha ao adicionar {count} gráficos}}",
         "charts_added_to_dashboard": "Gráficos adicionados ao painel",
         "charts_load_failed": "Falha ao carregar gráficos",
         "create_dashboard": "Criar painel",

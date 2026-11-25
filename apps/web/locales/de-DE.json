@@ -2230,7 +2230,7 @@
         "vertical_bars": "Vertikale Balken"
       },
       "dashboards": {
-        "add_count_charts": "{count} Diagramm(e) hinzufügen",
+        "add_count_charts": "{count, plural, one {{count} Diagramm hinzufügen} other {{count} Diagramme hinzufügen}}",
         "already_on_this_dashboard": "bereits in diesem Dashboard",
         "chart_cannot_be_filtered_by": "Dieses Diagramm kann nicht nach {label} gefiltert werden",
         "chart_duplicate_failed": "Diagramm konnte nicht dupliziert werden",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "Diagramm konnte nicht wiederhergestellt werden",
         "chart_restored": "Diagramm wiederhergestellt",
         "charts_add_failed": "Diagramme konnten nicht zum Dashboard hinzugefügt werden",
-        "charts_add_partial_failure": "{count} Diagramm(e) konnten nicht hinzugefügt werden",
+        "charts_add_partial_failure": "{count, plural, one {{count} Diagramm konnte nicht hinzugefügt werden} other {{count} Diagramme konnten nicht hinzugefügt werden}}",
         "charts_added_to_dashboard": "Diagramme zum Dashboard hinzugefügt",
         "charts_load_failed": "Diagramme konnten nicht geladen werden",
         "create_dashboard": "Dashboard erstellen",

@@ -2230,7 +2230,7 @@
         "vertical_bars": "Вертикальные столбцы"
       },
       "dashboards": {
-        "add_count_charts": "Добавить {count} график(ов)",
+        "add_count_charts": "{count, plural, one {Добавить {count} диаграмму} few {Добавить {count} диаграммы} many {Добавить {count} диаграмм} other {Добавить {count} диаграммы}}",
         "already_on_this_dashboard": "уже на этой панели",
         "chart_cannot_be_filtered_by": "Этот график нельзя отфильтровать по {label}",
         "chart_duplicate_failed": "Не удалось создать копию графика",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "Не удалось восстановить диаграмму",
         "chart_restored": "Диаграмма восстановлена",
         "charts_add_failed": "Не удалось добавить графики на дашборд",
-        "charts_add_partial_failure": "Не удалось добавить {count} график(ов)",
+        "charts_add_partial_failure": "{count, plural, one {Не удалось добавить {count} диаграмму} few {Не удалось добавить {count} диаграммы} many {Не удалось добавить {count} диаграмм} other {Не удалось добавить {count} диаграммы}}",
         "charts_added_to_dashboard": "Графики добавлены на дашборд",
         "charts_load_failed": "Не удалось загрузить графики",
         "create_dashboard": "Создать дашборд",

@@ -111,7 +111,7 @@ get:
                 requestId: req_01JB7X0000000000000000000
                 invalid_params:
                   - name: picks
-                    reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                    reason: Picks may take at most 4000 characters in all, each value counted percent-encoded.
                     code: limit_exceeded
     "409":
       $ref: ../components/responses/V3ChartEmbeddedFieldsRefused.yml

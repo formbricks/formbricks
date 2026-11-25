@@ -116,7 +116,7 @@ export const findPickIssues = (
     return [
       {
         name: "picks",
-        reason: `Picks may take at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).`,
+        reason: `Picks may take at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all, each value counted percent-encoded.`,
         code: "limit_exceeded",
       },
     ];

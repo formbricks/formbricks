@@ -2230,7 +2230,7 @@
         "vertical_bars": "垂直長條"
       },
       "dashboards": {
-        "add_count_charts": "新增 {count} 個圖表",
+        "add_count_charts": "{count, plural, other {新增 {count} 個圖表}}",
         "already_on_this_dashboard": "已在此儀表板中",
         "chart_cannot_be_filtered_by": "此圖表無法依「{label}」進行篩選",
         "chart_duplicate_failed": "圖表複製失敗",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "還原圖表失敗",
         "chart_restored": "圖表已還原",
         "charts_add_failed": "無法將圖表新增至儀表板",
-        "charts_add_partial_failure": "無法新增 {count} 個圖表",
+        "charts_add_partial_failure": "{count, plural, other {有 {count} 個圖表新增失敗}}",
         "charts_added_to_dashboard": "圖表已新增至儀表板",
         "charts_load_failed": "無法載入圖表",
         "create_dashboard": "建立儀表板",

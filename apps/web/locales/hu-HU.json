@@ -2230,7 +2230,7 @@
         "vertical_bars": "Függőleges oszlopok"
       },
       "dashboards": {
-        "add_count_charts": "{count} diagram hozzáadása",
+        "add_count_charts": "{count, plural, one {{count} diagram hozzáadása} other {{count} diagram hozzáadása}}",
         "already_on_this_dashboard": "már szerepel ezen az irányítópulton",
         "chart_cannot_be_filtered_by": "Ez a diagram nem szűrhető a következő alapján: {label}",
         "chart_duplicate_failed": "Nem sikerült kettőzni a diagramot",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "Nem sikerült helyreállítani a diagramot",
         "chart_restored": "Diagram helyreállítva",
         "charts_add_failed": "Nem sikerült hozzáadni a diagramokat a vezérlőpulthoz",
-        "charts_add_partial_failure": "Nem sikerült hozzáadni {count} diagramot",
+        "charts_add_partial_failure": "{count, plural, one {{count} diagram hozzáadása sikertelen volt} other {{count} diagram hozzáadása sikertelen volt}}",
         "charts_added_to_dashboard": "A diagramok hozzáadva a vezérlőpulthoz",
         "charts_load_failed": "Nem sikerült betölteni a diagramokat",
         "create_dashboard": "Vezérlőpult létrehozása",

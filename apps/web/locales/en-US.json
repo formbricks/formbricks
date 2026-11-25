@@ -2230,7 +2230,7 @@
         "vertical_bars": "Vertical bars"
       },
       "dashboards": {
-        "add_count_charts": "Add {count} chart(s)",
+        "add_count_charts": "{count, plural, one {Add {count} chart} other {Add {count} charts}}",
         "already_on_this_dashboard": "already on this dashboard",
         "chart_cannot_be_filtered_by": "This chart can't be filtered by {label}",
         "chart_duplicate_failed": "Failed to duplicate chart",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "Failed to restore chart",
         "chart_restored": "Chart restored",
         "charts_add_failed": "Failed to add charts to dashboard",
-        "charts_add_partial_failure": "Failed to add {count} chart(s)",
+        "charts_add_partial_failure": "{count, plural, one {Failed to add {count} chart} other {Failed to add {count} charts}}",
         "charts_added_to_dashboard": "Charts added to dashboard",
         "charts_load_failed": "Failed to load charts",
         "create_dashboard": "Create dashboard",

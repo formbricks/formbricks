@@ -317,7 +317,7 @@ describe("findPickIssues", () => {
     expect(findPickIssues(typed, { [C]: ["x".repeat(MAX_DASHBOARD_FILTER_PICKS_CHARS + 1)] })).toEqual([
       {
         name: "picks",
-        reason: `Picks may take at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).`,
+        reason: `Picks may take at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters in all, each value counted percent-encoded.`,
         code: "limit_exceeded",
       },
     ]);

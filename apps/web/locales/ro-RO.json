@@ -2230,7 +2230,7 @@
         "vertical_bars": "bare verticale"
       },
       "dashboards": {
-        "add_count_charts": "Adaugă {count} grafic(e)",
+        "add_count_charts": "{count, plural, one {Adaugă {count} grafic} few {Adaugă {count} grafice} other {Adaugă {count} de grafice}}",
         "already_on_this_dashboard": "deja în acest tablou de bord",
         "chart_cannot_be_filtered_by": "Acest grafic nu poate fi filtrat după {label}",
         "chart_duplicate_failed": "Graficul nu a putut fi duplicat",
@@ -2240,7 +2240,7 @@
         "chart_restore_failed": "Restaurarea graficului a eșuat",
         "chart_restored": "Graficul a fost restaurat",
         "charts_add_failed": "Nu s-au putut adăuga graficele la panoul de control",
-        "charts_add_partial_failure": "Nu s-au putut adăuga {count} grafic(e)",
+        "charts_add_partial_failure": "{count, plural, one {Nu s-a putut adăuga {count} grafic} few {Nu s-au putut adăuga {count} grafice} other {Nu s-au putut adăuga {count} de grafice}}",
         "charts_added_to_dashboard": "Grafice adăugate la panoul de control",
         "charts_load_failed": "Nu s-au putut încărca graficele",
         "create_dashboard": "Creează panou de control",
