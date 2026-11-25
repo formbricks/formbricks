@@ -29,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   queueAuditEvent: vi.fn(),
   inviteDisabled: false,
   isFormbricksCloud: false,
+  userManagementMinimumRole: "manager",
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => ({
@@ -38,6 +39,9 @@ vi.mock("@/lib/constants", async (importOriginal) => ({
   },
   get IS_FORMBRICKS_CLOUD() {
     return mocks.isFormbricksCloud;
+  },
+  get USER_MANAGEMENT_MINIMUM_ROLE() {
+    return mocks.userManagementMinimumRole;
   },
 }));
 vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
@@ -121,6 +125,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.inviteDisabled = false;
   mocks.isFormbricksCloud = false;
+  mocks.userManagementMinimumRole = "manager";
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
   mocks.getUser.mockResolvedValue({ id: USER_ID, name: "Inviter" });
   mocks.can.mockResolvedValue(true);
@@ -281,6 +286,31 @@ describe("POST /api/internal/invites", () => {
       type: "team",
       id: TEAM_ID,
     });
+  });
+
+  test.each(["owner", "manager"])("still lets a team admin invite at the %s floor", async (floor) => {
+    mocks.userManagementMinimumRole = floor;
+    callerIs("member");
+    mocks.getTeamsWhereUserIsAdmin.mockResolvedValue([TEAM_ID]);
+    denyFloor();
+
+    expect((await invite({ teamIds: [TEAM_ID] })).status).toBe(201);
+  });
+
+  // ENG-7376: `disabled` switches user management off for everyone, team admins included.
+  test("refuses a team admin while user management is disabled, before anything is written", async () => {
+    mocks.userManagementMinimumRole = "disabled";
+    callerIs("member");
+    mocks.getTeamsWhereUserIsAdmin.mockResolvedValue([TEAM_ID]);
+
+    const response = await invite({ teamIds: [TEAM_ID] });
+
+    expect(response.status).toBe(403);
+    expect(await detail(response)).toBe("User management is not allowed for your role");
+    expect(mocks.can).not.toHaveBeenCalled();
+    expect(mocks.reserveInviteRateLimit).not.toHaveBeenCalled();
+    expect(mocks.inviteUser).not.toHaveBeenCalled();
+    expect(mocks.sendInviteMemberEmail).not.toHaveBeenCalled();
   });
 
   test.each([
