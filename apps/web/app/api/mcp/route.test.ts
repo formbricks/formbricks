@@ -96,11 +96,13 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
 }));
 
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
+  archiveV3Survey: vi.fn(),
   createV3SurveyResponseFromRawInput: vi.fn(),
   deleteV3Survey: vi.fn(),
   getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
   patchV3SurveyResponse: vi.fn(),
+  restoreV3Survey: vi.fn(),
   validateV3SurveyFromRawInput: vi.fn(),
 }));
 
@@ -556,6 +558,8 @@ describe("POST /api/mcp", () => {
       "get_survey_visibility",
       "set_survey_visibility",
       "delete_survey",
+      "archive_survey",
+      "restore_survey",
       "list_workflows",
       "get_workflow",
       "list_workflow_runs",
@@ -692,6 +696,20 @@ describe("POST /api/mcp", () => {
         readOnlyHint: false,
         destructiveHint: true,
         idempotentHint: false,
+      },
+    });
+    expect(message.result.tools.find((tool) => tool.name === "archive_survey")).toMatchObject({
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+      },
+    });
+    expect(message.result.tools.find((tool) => tool.name === "restore_survey")).toMatchObject({
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
       },
     });
   });
@@ -870,7 +888,7 @@ describe("POST /api/mcp", () => {
           id: 9,
           method: "tools/call",
           params: {
-            name: "delete_survey",
+            name: "archive_survey",
             arguments: {
               surveyId: "clsv1234567890123456789012",
             },

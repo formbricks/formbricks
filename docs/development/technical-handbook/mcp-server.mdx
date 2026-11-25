@@ -119,7 +119,7 @@ Supported scopes:
 | Scope                   | Use                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `surveys:read`          | `list_surveys`, `get_survey`, `get_survey_visibility`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`                                                                                                                                                                                                                                                                                   |
-| `surveys:write`         | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `set_survey_visibility`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`                                                                                                                                               |
+| `surveys:write`         | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `delete_survey` (deprecated), `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`                                                                                                                                               |
 | `workflows:read`        | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`                                                                                                                                                                                                                                                                                                                           |
 | `workflows:write`       | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, the enable/disable/archive/unarchive mutations, and the Webhook trigger tools `get_webhook_url`, `regenerate_webhook_url`, `set_sample_payload`, `send_test_request`, `set_expected_response`, and `run_test`                                                                                                                                                                                                                                                                                      |
 | `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`                                                                                                                                                                                                                                                        |
@@ -356,8 +356,10 @@ API key permissions are enforced through the same workspace access checks as the
 | `patch_survey`                                                                                                                                                                                              | `write` or `manage`                                                                                                                                                           |
 | `edit_survey_blocks`                                                                                                                                                                                        | `write` or `manage`                                                                                                                                                           |
 | `set_survey_block_order`                                                                                                                                                                                    | `write` or `manage`                                                                                                                                                           |
+| `archive_survey`                                                                                                                                                                                            | `write` or `manage`                                                                                                                                                           |
+| `restore_survey`                                                                                                                                                                                            | `write` or `manage`                                                                                                                                                           |
+| `delete_survey` (deprecated)                                                                                                                                                                                | `write` or `manage`                                                                                                                                                           |
 | `get_survey_visibility`, `set_survey_visibility`                                                                                                                                                            | not available: visibility needs a signed-in owner or organization owner/manager, so both tools refuse API keys                                                                |
-| `delete_survey`                                                                                                                                                                                             | `write` or `manage`                                                                                                                                                           |
 | `get_workspace_custom_css`                                                                                                                                                                                  | `read`                                                                                                                                                                        |
 | `patch_workspace_custom_css`                                                                                                                                                                                | `manage` for an API key; an organization owner or manager for an OAuth user — stricter than `surveys:write`                                                                   |
 | `list_creatives`                                                                                                                                                                                            | `read`                                                                                                                                                                        |
@@ -737,9 +739,13 @@ Errors are returned as MCP error tool results with a structured v3 problem paylo
 
 ### Declared result shapes
 
-The response tools advertise an `outputSchema`, which no other tool does yet. A client can read the
-result shape off `tools/list` rather than inferring it from an example, and the SDK checks the
-structured result against the same schema it advertised.
+Most tools advertise an `outputSchema` — responses, creatives, dashboards, tags, workspace custom CSS,
+the workflow test tools, and on the survey side `generate_survey`, `archive_survey` and `restore_survey`.
+A client can read the result shape off `tools/list` rather than inferring it from an example, and the SDK
+checks the structured result against the same schema it advertised. The remaining survey tools, the
+workflow tools other than `send_test_request`, `set_expected_response` and `run_test`, feedback records,
+Audience and `list_workspaces` do not advertise one yet: their results are list projections, redacted resources or the
+survey document, which have no single v3 resource schema to build from.
 
 One object root with every branch optional, built by `mcpToolOutput`: a tool answers either the
 success payload or the error one, which reads like a union — but a union converts to a root-level
@@ -931,7 +937,8 @@ the read scope (`audience`, ENG-7151: 20261112130000 and 20261112130001).
 
 ### list_surveys
 
-Lists surveys in one workspace. The tool is read-only and idempotent.
+Lists surveys in one workspace. The tool is read-only and idempotent. Archived surveys are left out
+unless `filter.status.in` includes `archived`, which includes them alongside the other statuses selected.
 
 Input:
 
@@ -1569,7 +1576,55 @@ Input:
 Output mirrors `POST /api/v3/surveys/{surveyId}/visibility`: `id`, `visibility`, `owner`, `access`, `version`,
 `pending`, `changedAt`, `changedBy`. Each real change is audit-logged as `visibilityChanged`.
 
-### delete_survey
+### archive_survey
+
+Archives (soft-deletes) one survey by ID: it leaves the default list, stops collecting responses (an
+in-progress survey is paused) and becomes read-only until restored. Formbricks permanently deletes an
+archived survey and its responses at least 30 days after it was archived, unless a data-retention
+exemption holds it longer. Ask the user first when the survey is not a draft and already has responses.
+Archiving is idempotent: a second call changes nothing and does not restart that clock. The tool is
+destructive because it removes the survey from default reads.
+
+To find an archived survey again, list with `filter.status.in: ["archived"]`. Agents should archive
+rather than call the deprecated `delete_survey`, so a survey and its responses keep a 30-day recovery
+window.
+
+Input:
+
+```json
+{
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+Output is the v3 lifecycle acknowledgement, not the survey resource: archive works on legacy
+question-based surveys that cannot be serialized as a v3 document.
+
+```json
+{
+  "data": {
+    "id": "clsv1234567890123456789012",
+    "status": "paused",
+    "archivedAt": "2026-11-23T10:00:00.000Z"
+  },
+  "requestId": "req_..."
+}
+```
+
+### restore_survey
+
+Restores an archived survey: it is listed and editable again, and keeps the status it had before the
+restore, so a survey archived while in progress comes back paused. If a data-retention policy archived
+it, restoring gives it a fresh retention period. Restoring a survey that is not archived changes nothing,
+so the tool is idempotent and is not destructive.
+
+Input and output match `archive_survey`; `archivedAt` is `null` in the acknowledgement.
+
+### delete_survey (deprecated)
+
+Deprecated in 6.3 and removed in 7.0: use `archive_survey`. Its description says so first, so an agent
+picks the reversible tool. Until then it keeps its 6.x behaviour, because the release policy forbids
+changing an integration's behaviour in a minor.
 
 Deletes one survey and all of its responses by ID. The tool is destructive, writes data, and is not
 idempotent. It confirms first through the delete gate, drafts included; `confirm` counts only on a
@@ -2625,6 +2680,8 @@ survey operations used by the REST routes:
 | `patch_survey`               | `PATCH /api/v3/surveys/{surveyId}`                  |
 | `edit_survey_blocks`         | `PATCH /api/v3/surveys/{surveyId}/blocks`           |
 | `set_survey_block_order`     | `PUT /api/v3/surveys/{surveyId}/blocks/order`       |
+| `archive_survey`             | `POST /api/v3/surveys/{surveyId}/archive`           |
+| `restore_survey`             | `POST /api/v3/surveys/{surveyId}/restore`           |
 | `get_survey_visibility`      | `GET /api/v3/surveys/{surveyId}/visibility`         |
 | `set_survey_visibility`      | `POST /api/v3/surveys/{surveyId}/visibility`        |
 | `delete_survey`              | `DELETE /api/v3/surveys/{surveyId}`                 |
@@ -2690,9 +2747,14 @@ query, like `create_feedback_record`.
   a query and a tenant. Those need Hub-side support first.
 - The search tools require an embedding model configured on the Hub API **and** the Hub worker; without
   one they return 503. Embedding is asynchronous and covers only records with text.
-- The survey, workflow, feedback-record and Audience tools advertise no result shape (`outputSchema`), so a
-  client has to infer theirs from an example. An output schema is built from the v3 resource schema and never
-  retyped, and none exists yet for those resources.
+- Most survey tools, the workflow tools other than `send_test_request`, `set_expected_response` and
+  `run_test`, the feedback-record and Audience tools, and `list_workspaces` advertise no result shape (`outputSchema`), so a
+  client has to infer theirs from an example. An output schema is built from the v3 resource schema and
+  never retyped, and those tools' results are list projections, redacted resources or the survey document,
+  which have no single schema to build from. The survey exceptions are `generate_survey`, and
+  `archive_survey` / `restore_survey`, whose lifecycle acknowledgement is typed by hand from the v3
+  archive/restore response, because the contract declares that response inline and generates no schema
+  for it.
 - The response tools cover the v3 operations and nothing more: there is no tool that adds or removes a
   single tag, because `PATCH` replaces the tag set wholesale and such a tool would be a read-modify-write
   wrapper with its own race rather than an operation.

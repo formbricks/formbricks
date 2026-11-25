@@ -127,9 +127,10 @@ export const ZMcpListSurveysInput = z
           .optional(),
         status: z
           .strictObject({
-            in: lengthBoundedArray(ZSurveyStatus, {
+            in: lengthBoundedArray(z.union([ZSurveyStatus, z.literal("archived")]), {
               max: MCP_MAX_FILTER_VALUES,
-              description: "Survey statuses to include, for example draft or inProgress.",
+              description:
+                "Survey statuses to include, for example draft or inProgress. Add `archived` to include archived surveys, which are otherwise left out.",
             }).optional(),
           })
           .describe("Filter by survey status.")
@@ -381,9 +382,9 @@ export const SURVEY_EMBEDDED_FIELDS_DESCRIPTION = [
 ].join(" ");
 
 /**
- * `confirm` on every tool that changes or deletes an existing survey (ENG-6930). A survey that is not a
- * draft and has responses is left untouched without it, and the call answers 428 with the editor's
- * caution text — so the agent asks the user, then retries.
+ * `confirm` on every tool that changes survey content (ENG-6930). A survey that is not a draft and has
+ * responses is left untouched without it, and the call answers 428 with the editor's caution text — so
+ * the agent asks the user, then retries.
  */
 const ZMcpSurveyWriteConfirm = z
   .boolean()
@@ -565,22 +566,23 @@ export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.e
 }).strict();
 
 /**
- * Visibility reads and writes take only the survey id; the setter adds the target value. The read tool
- * declares Surveys: Read and the setter Surveys: Write; the operation behind both is limited to whoever
- * may manage visibility, so the scope cannot widen it.
+ * The survey id alone: `restore_survey` and `get_survey_visibility`, and the base the archive, delete and
+ * visibility-change inputs extend. The visibility tools declare Surveys: Read / Write, but the operation
+ * behind both is limited to whoever may manage visibility, so the scope cannot widen it.
  */
-export const ZMcpSurveyVisibilityInput = z
+export const ZMcpSurveyIdInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID."),
   })
   .strict();
 
-export const ZMcpSetSurveyVisibilityInput = ZMcpSurveyVisibilityInput.extend({
+export const ZMcpSetSurveyVisibilityInput = ZMcpSurveyIdInput.extend({
   visibility: ZSurveyVisibility.describe(
     "`workspace` shares the survey with the whole workspace; `restricted` limits it to its owner and organization owners/managers."
   ),
 }).strict();
 
+/** Deprecated with `delete_survey` (ENG-6575): removed in 7.0, prefer `archive_survey`. */
 export const ZMcpDeleteSurveyInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID to delete."),
@@ -771,8 +773,8 @@ export type TMcpEditSurveyBlocksInput = z.infer<typeof ZMcpEditSurveyBlocksInput
 export type TMcpSetSurveyBlockOrderInput = z.infer<typeof ZMcpSetSurveyBlockOrderInput>;
 export type TMcpValidateSurveyInput = z.infer<typeof ZMcpValidateSurveyInput>;
 export type TMcpGenerateSurveyInput = z.infer<typeof ZMcpGenerateSurveyInput>;
+export type TMcpSurveyIdInput = z.infer<typeof ZMcpSurveyIdInput>;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;
-export type TMcpSurveyVisibilityInput = z.infer<typeof ZMcpSurveyVisibilityInput>;
 export type TMcpSetSurveyVisibilityInput = z.infer<typeof ZMcpSetSurveyVisibilityInput>;
 export type TMcpGetWorkspaceCustomCssInput = z.infer<typeof ZMcpGetWorkspaceCustomCssInput>;
 export type TMcpPatchWorkspaceCustomCssInput = z.infer<typeof ZMcpPatchWorkspaceCustomCssInput>;

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZSurveyVisibility } from "@formbricks/types/surveys/types";
+import { ZSurveyStatus, ZSurveyVisibility } from "@formbricks/types/surveys/types";
 import type { TV3SurveyGenerateResult } from "@/app/api/v3/surveys/generate/service";
 import { mcpToolOutput } from "./output-schemas";
 
@@ -83,5 +83,18 @@ export const ZMcpSurveyVisibilityChangeOutput = mcpToolOutput(
     pending: ZSurveyVisibility.nullable(),
     changedAt: z.iso.datetime({ offset: true }).nullable(),
     changedBy: z.object({ type: z.literal("user"), id: z.string(), name: z.string() }).nullable(),
+  })
+);
+
+/**
+ * The lifecycle acknowledgement `POST /api/v3/surveys/{surveyId}/archive` and `/restore` answer with:
+ * deliberately not the survey resource, because both work on legacy question-based surveys that cannot
+ * be serialized as a v3 document. `archivedAt` is null after a restore and a timestamp after an archive.
+ */
+export const ZMcpSurveyLifecycleOutput = mcpToolOutput(
+  z.object({
+    id: z.cuid2(),
+    status: ZSurveyStatus,
+    archivedAt: z.iso.datetime({ offset: true }).nullable(),
   })
 );
