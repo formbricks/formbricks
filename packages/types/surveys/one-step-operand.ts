@@ -1,9 +1,16 @@
 import type { TResponseData, TResponseVariables } from "../responses";
+import type { TActionCalculate as TBlockActionCalculate } from "./blocks";
+import type { TActionCalculate as TLegacyActionCalculate } from "./types";
 
-/** The parts of a one-step calculate action its operand is read from. */
-interface TOneStepOperandAction {
-  value: { type: string; value: unknown };
-}
+/**
+ * Every operand a one-step Set value can carry, from the schemas themselves (block logic and the legacy
+ * question logic), so an operand kind added there fails the exhaustive switch below at compile time
+ * instead of being ignored at run time, which is how ENG-7431 happened. Type-only: nothing is bundled.
+ */
+export type TOneStepOperandValue = Exclude<
+  (TBlockActionCalculate | TLegacyActionCalculate)["value"],
+  { type: "expression" }
+>;
 
 /** What a one-step operand reads besides the action: the run's answers, fields and metadata. */
 export interface TOneStepOperandSources {
@@ -42,7 +49,10 @@ const asOperand = (value: unknown, dataType: string): string | number | undefine
  */
 const asReservedOperand = (value: unknown, dataType: string): string | number | undefined => {
   const operand = asOperand(value, dataType);
-  return dataType === "number" && typeof operand !== "number" ? undefined : operand;
+  if (dataType === "number") return typeof operand === "number" ? operand : undefined;
+  // A number-typed reserved field (pages viewed) into a text field is stored as text, as the formula
+  // form stores it.
+  return typeof operand === "number" ? String(operand) : operand;
 };
 
 /**
@@ -62,25 +72,26 @@ const asReservedOperand = (value: unknown, dataType: string): string | number | 
  * catalog's exact name (`visitPagesViewed`, not `visitpagesviewed`).
  */
 export const getOneStepOperand = (
-  action: TOneStepOperandAction,
+  operand: TOneStepOperandValue,
   { data, variables, reservedValues, dataType }: TOneStepOperandSources
 ): string | number | undefined => {
-  const { type, value } = action.value;
-
-  switch (type) {
+  switch (operand.type) {
     case "static":
-      return typeof value === "string" || typeof value === "number" ? value : undefined;
+      return typeof operand.value === "boolean" ? undefined : operand.value;
     case "variable": {
-      if (typeof value !== "string") return undefined;
-      const variable = variables[value];
+      const variable = variables[operand.value];
       return typeof variable === "number" || typeof variable === "string" ? variable : undefined;
     }
     case "element":
     case "hiddenField":
-      return typeof value === "string" ? asOperand(data[value], dataType) : undefined;
+      return asOperand(data[operand.value], dataType);
     case "reserved":
-      return typeof value === "string" ? asReservedOperand(reservedValues?.[value], dataType) : undefined;
-    default:
+      return asReservedOperand(reservedValues?.[operand.value], dataType);
+    case "question":
       return undefined;
+    default: {
+      const unhandled: never = operand;
+      return unhandled;
+    }
   }
 };

@@ -739,7 +739,7 @@ const performCalculation = (
   }
 
   const currentValue = getOneStepCurrentValue(calculations[action.variableId], dataType);
-  const operandValue = getOneStepOperand(action, {
+  const operandValue = getOneStepOperand(action.value, {
     data,
     variables: calculations,
     reservedValues: context.embeddedValues,

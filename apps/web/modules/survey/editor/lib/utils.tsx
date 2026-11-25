@@ -1152,12 +1152,6 @@ export const getActionOperatorOptions = (
   return [];
 };
 
-/**
- * The right-hand side of a `calculate` action. Same grouping as the condition pickers (ENG-1853):
- * Questions, then one Embedded Data group. No auto-captured group — `evaluateLogic` computes these
- * assignments from `responseData` and variables alone, so a reserved value offered here would read
- * as unset every time.
- */
 /** The question types whose answer a Set value step can copy into a field of this type. */
 const getSetValueSourceTypes = (fieldType: "number" | "text" | "date"): TSurveyElementTypeEnum[] => {
   switch (fieldType) {
@@ -1183,6 +1177,12 @@ const getSetValueSourceTypes = (fieldType: "number" | "text" | "date"): TSurveyE
   }
 };
 
+/**
+ * The right-hand side of a `calculate` action. Same grouping as the condition pickers (ENG-1853):
+ * Questions, then one Embedded Data group. The picker offers no auto-captured group yet, although both
+ * logic engines read a one-step reserved operand (ENG-7431): API and MCP clients can send one, and the
+ * editor offers reserved values through the formula form.
+ */
 export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,

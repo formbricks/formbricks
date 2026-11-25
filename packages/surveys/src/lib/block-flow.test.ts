@@ -644,6 +644,23 @@ describe("startSurvey: rules before the first question (ENG-6932)", () => {
     expect(start(withStart([]), { startAtBlockId: "b2" })).toMatchObject({ firstCardId: "b2" });
   });
 
+  // ENG-7431: a one-step Set value from a reserved (metadata) field, before the first question.
+  test("a start rule's one-step Set value reads a reserved field", () => {
+    const fromPagesViewed = {
+      id: "set-pages",
+      objective: "calculate" as const,
+      variableId: "score",
+      operator: "assign" as const,
+      value: { type: "reserved" as const, value: "visitPagesViewed" },
+    };
+    const result = start(withStart([startRule("pages", "seg", "heavy", [fromPagesViewed])]), {
+      responseData: { seg: "heavy" },
+      reservedFieldValues: { visitPagesViewed: 6 },
+    });
+
+    expect(result.variables).toEqual({ score: 6 });
+  });
+
   test("falls through to the first block when no rule matches", () => {
     const result = start(withStart(screener), { responseData: { panel: "p1", seg: "light" } });
 
