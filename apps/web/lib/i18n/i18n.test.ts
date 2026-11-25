@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { createI18nString, toLegacyLanguageCodes } from "./utils";
+import {
+  createI18nString,
+  getLocalizedValue,
+  isLabelValidForAllLanguages,
+  toLegacyLanguageCodes,
+} from "./utils";
 
 describe("createI18nString", () => {
   test("should create an i18n string from a regular string", () => {
@@ -43,10 +48,44 @@ describe("toLegacyLanguageCodes", () => {
     expect(toLegacyLanguageCodes("xx-YY")).toEqual([]);
   });
 
+  // ENG-3726 sibling: the reverse index must not answer for inherited Object.prototype members.
+  test.each(["constructor", "toString", "hasOwnProperty", "__proto__"])(
+    "returns an empty array for the Object.prototype member %j",
+    (code) => {
+      expect(toLegacyLanguageCodes(code)).toEqual([]);
+    }
+  );
+
   test("returns a fresh copy so a caller can't corrupt the shared cache", () => {
     const aliases = toLegacyLanguageCodes("de-DE");
     aliases.push("MUTATED");
     // A later lookup must be unaffected by the mutation above.
     expect(toLegacyLanguageCodes("de-DE")).toEqual(["de"]);
+  });
+});
+
+// ENG-3726: the response language is caller-supplied on public routes (v2 client responses validate
+// "other" option text with the raw value), so an Object.prototype member name must read as "no
+// translation", never as an inherited function.
+describe("prototype member names as language codes", () => {
+  const label = { default: "Yes", "de-DE": "Ja" };
+
+  test.each(["constructor", "toString", "hasOwnProperty", "__proto__"])(
+    "getLocalizedValue treats %j as an untranslated language",
+    (language) => {
+      expect(getLocalizedValue(label, language)).toBe("");
+    }
+  );
+
+  test.each(["constructor", "toString", "hasOwnProperty", "__proto__"])(
+    "isLabelValidForAllLanguages reports %j as missing instead of throwing",
+    (language) => {
+      expect(isLabelValidForAllLanguages(label, ["default", language])).toBe(false);
+    }
+  );
+
+  test("still reads own translations", () => {
+    expect(getLocalizedValue(label, "de-DE")).toBe("Ja");
+    expect(isLabelValidForAllLanguages(label, ["default", "de-DE"])).toBe(true);
   });
 });
