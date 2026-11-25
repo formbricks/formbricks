@@ -1,7 +1,9 @@
 import { isLegacySayableComputedType } from "@formbricks/types/embedded-data-mapping";
+import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { type TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
 import { validateStartLogic } from "@formbricks/types/surveys/start-logic-validation";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { isInternalI18nString, isPlainObject } from "./guards";
@@ -17,18 +19,29 @@ export type TV3SurveyDocumentValidationResult =
   | { valid: true; invalidParams: [] }
   | { valid: false; invalidParams: InvalidParam[] };
 
-function getConfiguredTranslationLanguageCodes(document: TV3SurveyDocument): string[] {
+/**
+ * The configured non-default languages a translatable field must carry a key for, and those whose
+ * blank text counts as missing: the enabled ones of a survey that is not a draft. A disabled language
+ * may hold blank text (an import turns a language off for texts the source lacked), and so may a draft
+ * (the editor autosaves it leniently and checks before it goes live, and the publishing patch runs
+ * this check on the survey as it will be).
+ */
+type TTranslationLanguages = { codes: string[]; blankIsMissing: ReadonlySet<string> };
+
+function getConfiguredTranslationLanguages(document: TV3SurveyDocument): TTranslationLanguages {
   const defaultLanguage = document.defaultLanguage.toLowerCase();
-  const languageCodes = new Set<string>();
+  const codes = new Set<string>();
+  const blankIsMissing = new Set<string>();
 
   document.languages.forEach((language) => {
     const code = language.code;
     if (code.toLowerCase() !== defaultLanguage) {
-      languageCodes.add(code);
+      codes.add(code);
+      if (language.enabled && document.status !== "draft") blankIsMissing.add(code);
     }
   });
 
-  return Array.from(languageCodes.values());
+  return { codes: Array.from(codes.values()), blankIsMissing };
 }
 
 function getDeclaredLanguageCodeSet(document: TV3SurveyDocument): Set<string> {
@@ -80,19 +93,38 @@ function addUnsupportedLocaleIssues(
   );
 }
 
+// Rich text is HTML: `<p></p>` is as blank as `""`, which is how the editor and the survey service judge it.
+const isBlankText = (text: string): boolean => getTextContent(text).trim() === "";
+
+/**
+ * Whether `languageCode` has no text for this translatable field. Absent is always missing. Blank
+ * (`""`, whitespace, empty rich text) is missing too, as in the editor (`isLabelValidForAllLanguages`),
+ * when the language is in `blankIsMissing` and the default language's text (`default`) is not blank:
+ * an optional text left empty everywhere is how the editor stores "no text".
+ */
+function isMissingTranslation(
+  value: TI18nString,
+  languageCode: string,
+  languages: TTranslationLanguages
+): boolean {
+  const text = value[languageCode];
+  if (text === undefined) return true;
+  return languages.blankIsMissing.has(languageCode) && isBlankText(text) && !isBlankText(value.default);
+}
+
 function addMissingTranslationIssues(
   value: unknown,
   path: string,
-  languageCodes: string[],
+  languages: TTranslationLanguages,
   issues: InvalidParam[]
 ): void {
-  if (languageCodes.length === 0) {
+  if (languages.codes.length === 0) {
     return;
   }
 
   if (Array.isArray(value)) {
     value.forEach((entry, index) =>
-      addMissingTranslationIssues(entry, path ? `${path}.${index}` : String(index), languageCodes, issues)
+      addMissingTranslationIssues(entry, path ? `${path}.${index}` : String(index), languages, issues)
     );
     return;
   }
@@ -102,8 +134,8 @@ function addMissingTranslationIssues(
   }
 
   if (isInternalI18nString(value)) {
-    languageCodes.forEach((languageCode) => {
-      if (value[languageCode] === undefined) {
+    languages.codes.forEach((languageCode) => {
+      if (isMissingTranslation(value, languageCode, languages)) {
         issues.push({
           name: path,
           reason: `Translatable field is missing configured language '${languageCode}'`,
@@ -118,13 +150,13 @@ function addMissingTranslationIssues(
   }
 
   Object.entries(value).forEach(([key, entry]) =>
-    addMissingTranslationIssues(entry, path ? `${path}.${key}` : key, languageCodes, issues)
+    addMissingTranslationIssues(entry, path ? `${path}.${key}` : key, languages, issues)
   );
 }
 
 function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidParam[] {
   const declaredLanguageCodes = getDeclaredLanguageCodeSet(document);
-  const languageCodes = getConfiguredTranslationLanguageCodes(document);
+  const languages = getConfiguredTranslationLanguages(document);
   const issues: InvalidParam[] = [];
 
   if (isPlainObject(document.metadata)) {
@@ -138,12 +170,12 @@ function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidP
 
   if (isPlainObject(document.metadata)) {
     V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
-      addMissingTranslationIssues(document.metadata[key], `metadata.${key}`, languageCodes, issues)
+      addMissingTranslationIssues(document.metadata[key], `metadata.${key}`, languages, issues)
     );
   }
-  addMissingTranslationIssues(document.welcomeCard, "welcomeCard", languageCodes, issues);
-  addMissingTranslationIssues(document.blocks, "blocks", languageCodes, issues);
-  addMissingTranslationIssues(document.endings, "endings", languageCodes, issues);
+  addMissingTranslationIssues(document.welcomeCard, "welcomeCard", languages, issues);
+  addMissingTranslationIssues(document.blocks, "blocks", languages, issues);
+  addMissingTranslationIssues(document.endings, "endings", languages, issues);
 
   return issues;
 }
