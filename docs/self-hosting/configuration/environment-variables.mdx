@@ -183,6 +183,19 @@ with `sslaccept=accept_invalid_certs`: schema migrations still require TLS but s
 app's connections, which use `DATABASE_URL`, keep whatever verification that URL sets. This does not help when the app's connections reject the certificate
 too: the migration runner opens the same kind of connection, so fix the certificate setup first.
 
+#### Database connection pool
+
+Each app process keeps a pool of database connections. Tune it with these `DATABASE_URL` parameters:
+
+- `connection_limit`: the pool size. Defaults to twice the CPU count plus one.
+- `pool_timeout`: how many seconds a query waits for a free connection when the pool is full, before it fails
+  with `timeout exceeded when trying to connect`. `0` waits indefinitely.
+- `connect_timeout`: how many seconds a new connection may take to open. Defaults to 5.
+
+The pool has a single timer for both waits. When `pool_timeout` is set, it bounds both; otherwise
+`connect_timeout` does. So with `connect_timeout=0` and no `pool_timeout`, a query waits until a connection is
+free, however long that takes. Add `pool_timeout` to bound that wait.
+
 #### In-app surveys inside Formbricks
 
 Formbricks includes its JavaScript SDK in the authenticated app so you can show surveys to your own

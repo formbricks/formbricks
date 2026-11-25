@@ -14,7 +14,7 @@ interface TParsedPrismaPgConfig {
   poolAcquireTimeoutMillis: number;
 }
 
-/** pg-pool's acquire timeout when `DATABASE_URL` carries no `connect_timeout`. */
+/** pg-pool's acquire timeout when `DATABASE_URL` carries neither `pool_timeout` nor `connect_timeout`. */
 export const DEFAULT_POOL_ACQUIRE_TIMEOUT_MS = 5_000;
 
 const IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM = "idle_in_transaction_session_timeout";
@@ -199,6 +199,25 @@ const resolveIdleInTransactionSessionTimeout = (url: URL): number | undefined =>
   return value || undefined;
 };
 
+// `pool_timeout` in whole seconds; undefined when absent or unusable, so connect_timeout decides.
+const resolvePoolTimeoutSeconds = (url: URL): number | undefined => {
+  const raw = url.searchParams.get("pool_timeout")?.trim();
+  if (raw === undefined || raw === "") return undefined;
+
+  // Digits only: parseInt would read "10s" as 10 and "-1" would slip past as a negative timer.
+  const seconds = /^\d+$/.test(raw) ? Number(raw) : Number.NaN;
+  if (!Number.isSafeInteger(seconds)) {
+    // Only the parameter's own value is logged — never the URL, which carries credentials.
+    logger.warn(
+      { pool_timeout: raw },
+      "Invalid pool_timeout in DATABASE_URL (expected integer seconds, 0 to wait indefinitely); ignoring it."
+    );
+    return undefined;
+  }
+
+  return seconds;
+};
+
 export const createPrismaPgAdapter = (databaseUrl = process.env.DATABASE_URL): TParsedPrismaPgConfig => {
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is required to create a Prisma PostgreSQL adapter.");
@@ -218,19 +237,15 @@ export const createPrismaPgAdapter = (databaseUrl = process.env.DATABASE_URL): T
   // capacity instead of silently dropping to pg's default of 10.
   const connectionLimit =
     toPositiveInt(parsedUrl.searchParams.get("connection_limit")) ?? DEFAULT_CONNECTION_LIMIT;
-  // connect_timeout → pg's TCP-connect timeout. 0 means "wait indefinitely"
-  // (Prisma 6 semantics; pg also honors this). pool_timeout (Prisma's
-  // "max wait for a pooled connection") has no pg equivalent — warn instead
-  // of silently misapplying it to a different knob.
+  // pg-pool has one timer, connectionTimeoutMillis, and it bounds both how long a request queues for a
+  // free connection when the pool is full ("timeout exceeded when trying to connect") and how long a new
+  // connection may take to establish. pool_timeout is Prisma's "max wait for a pooled connection", the
+  // queue half, so it sets the timer when present; otherwise connect_timeout does, as it always has.
+  // For both, 0 means "wait indefinitely" (Prisma 6 semantics; pg-pool arms no timer for 0).
   const connectTimeoutSeconds = toNonNegativeInt(parsedUrl.searchParams.get("connect_timeout"));
-  const connectionTimeoutMillis = toMillis(connectTimeoutSeconds) ?? DEFAULT_POOL_ACQUIRE_TIMEOUT_MS;
-  const poolTimeoutRaw = parsedUrl.searchParams.get("pool_timeout");
-  if (poolTimeoutRaw !== null && poolTimeoutRaw.trim() !== "") {
-    logger.warn(
-      { pool_timeout: poolTimeoutRaw },
-      "pool_timeout in DATABASE_URL is a Prisma-only param with no pg equivalent; ignoring."
-    );
-  }
+  const poolTimeoutSeconds = resolvePoolTimeoutSeconds(parsedUrl);
+  const connectionTimeoutMillis =
+    toMillis(poolTimeoutSeconds ?? connectTimeoutSeconds) ?? DEFAULT_POOL_ACQUIRE_TIMEOUT_MS;
   // 0 = "never expire idle connections" (Prisma 6 semantics).
   const maxIdleConnectionLifetime = toMillis(
     toNonNegativeInt(parsedUrl.searchParams.get("max_idle_connection_lifetime"))

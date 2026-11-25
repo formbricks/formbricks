@@ -46,8 +46,8 @@ export const TRANSACTION_MAX_WAIT_HEADROOM_MS = 1_000;
 export const getAppTransactionOptions = (
   poolAcquireTimeoutMillis: number
 ): { maxWait: number; timeout: number } => ({
-  // connect_timeout=0 turns pg-pool's acquire timeout off, and Prisma rejects maxWait <= 0, so fall back
-  // to the default bound; Prisma is then the only limit on the wait, as it was before this existed.
+  // A timeout of 0 (pool_timeout=0, or connect_timeout=0 without pool_timeout) turns pg-pool's acquire
+  // timeout off, and Prisma rejects maxWait <= 0, so fall back to the default bound; Prisma is then the only limit on the wait, as it was before this existed.
   maxWait:
     (poolAcquireTimeoutMillis > 0 ? poolAcquireTimeoutMillis : DEFAULT_POOL_ACQUIRE_TIMEOUT_MS) +
     TRANSACTION_MAX_WAIT_HEADROOM_MS,
