@@ -5,6 +5,7 @@ import {
   problemAIUnavailable,
   problemBadGateway,
   problemBadRequest,
+  problemChartInUse,
   problemConflict,
   problemForbidden,
   problemInternalError,
@@ -30,6 +31,25 @@ describe("v3 problem responses", () => {
     expect(body.requestId).toBe("rid");
     expect(body.invalid_params).toEqual([{ name: "x", reason: "y", identifier: "canonical-x" }]);
     expect(body.instance).toBe("/p");
+  });
+
+  test("problemChartInUse names one dashboard in the singular and several in the plural", async () => {
+    const one = await problemChartInUse("r1", [{ id: "d1", name: "Field force" }]).json();
+    expect(one.detail).toBe(
+      "This chart is on 1 dashboard, so it was not deleted. Remove it from that dashboard first."
+    );
+    const two = await problemChartInUse("r1", [
+      { id: "d1", name: "Field force" },
+      { id: "d2", name: "Quarterly" },
+    ]).json();
+    expect(two.detail).toBe(
+      "This chart is on 2 dashboards, so it was not deleted. Remove it from them first."
+    );
+    expect(two).toMatchObject({
+      status: 409,
+      code: "chart_in_use",
+      details: { dashboards: [{ id: "d1" }, { id: "d2" }] },
+    });
   });
 
   test("problemUnauthorized default detail", async () => {

@@ -490,7 +490,7 @@ export async function listV3DashboardFilterValues({
         invalid_params: [
           {
             name: "filterId",
-            reason: `The dashboard's charts need more than ${MAX_FILTER_VALUE_QUERIES} queries (MAX_FILTER_VALUE_QUERIES) to list this filter's values. Type a value instead, or split the dashboard.`,
+            reason: `The dashboard's charts need more than ${MAX_FILTER_VALUE_QUERIES} queries to list this filter's values. Type a value instead, or split the dashboard.`,
             code: "limit_exceeded",
           },
         ],

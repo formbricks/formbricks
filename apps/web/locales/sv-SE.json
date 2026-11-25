@@ -1952,7 +1952,7 @@
         "chart_deletion_error": "Det gick inte att ta bort diagrammet",
         "chart_duplicated_successfully": "Diagrammet har duplicerats",
         "chart_duplication_error": "Det gick inte att duplicera diagrammet",
-        "chart_in_use_description": "Det finns på {count} instrumentpanel(er). Ta bort det från dem innan du raderar det:",
+        "chart_in_use_description": "{count, plural, one {Det finns på {count} dashboard. Ta bort det från den dashboarden innan du raderar det:} other {Det finns på {count} dashboards. Ta bort det från dem innan du raderar det:}}",
         "chart_in_use_title": "Det här diagrammet används fortfarande",
         "chart_name": "Diagramnamn",
         "chart_name_placeholder": "Diagramnamn",

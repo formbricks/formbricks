@@ -6,6 +6,7 @@ import {
   getPopoverValueControl,
   groupFilterProperties,
   isMenuProperty,
+  lockedFilterAsShown,
   quickFilterAsRule,
   ruleAsQuickFilter,
   searchMenuProperties,
@@ -167,6 +168,19 @@ describe("quick filters edited as rules", () => {
     expect(
       quickFilterAsRule(quickList, { property: "sentiment", operator: "preset", values: ["today"] })
     ).toBeNull();
+  });
+
+  test("a locked quick filter reads as the rule its own chip shows, with simple rules only", () => {
+    const one = { property: "sentiment", operator: "in" as const, values: ["neutral"] };
+    // Locked and own, the same filter reads "Sentiment is Neutral" (ENG-7062).
+    expect(lockedFilterAsShown(quickList, one, true)).toEqual({ ...one, operator: "equals" });
+    expect(lockedFilterAsShown(quickList, one, true)).toEqual(quickFilterAsRule(quickList, one));
+    // Without simple rules, quick filters read "Sentiment: Neutral" locked and own alike.
+    expect(lockedFilterAsShown(quickList, one, false)).toBe(one);
+    // A quick filter with no such rule, and a rule, are shown as they are.
+    expect(lockedFilterAsShown(sentiment, one, true)).toBe(one);
+    const isNot = { ...one, operator: "notEquals" as const };
+    expect(lockedFilterAsShown(quickList, isNot, true)).toBe(isNot);
   });
 
   test("a saved is goes back to ticked values; any other operator stays a rule", () => {

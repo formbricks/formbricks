@@ -108,7 +108,7 @@ describe("useChartQuery", () => {
     });
 
     expect(response).toBeNull();
-    expect(result.current.error).toBe("The chart query is not valid Not a field in the field catalog.");
+    expect(result.current.error).toBe("The chart query is not valid. Not a field in the field catalog.");
     expect(result.current.isLoading).toBe(false);
   });
 

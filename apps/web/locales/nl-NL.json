@@ -1952,7 +1952,7 @@
         "chart_deletion_error": "Verwijderen van grafiek mislukt",
         "chart_duplicated_successfully": "Grafiek succesvol gedupliceerd",
         "chart_duplication_error": "Dupliceren van grafiek mislukt",
-        "chart_in_use_description": "Hij staat op {count} dashboard(s). Haal hem daar eerst van af voordat je hem verwijdert:",
+        "chart_in_use_description": "{count, plural, one {Hij staat op {count} dashboard. Verwijder hem daar eerst vanaf voordat je hem verwijdert:} other {Hij staat op {count} dashboards. Verwijder hem daar eerst van voordat je hem verwijdert:}}",
         "chart_in_use_title": "Deze grafiek wordt nog gebruikt",
         "chart_name": "Grafieknaam",
         "chart_name_placeholder": "Grafieknaam",

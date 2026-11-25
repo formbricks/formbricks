@@ -1952,7 +1952,7 @@
         "chart_deletion_error": "Diagramm konnte nicht gelöscht werden",
         "chart_duplicated_successfully": "Diagramm erfolgreich dupliziert",
         "chart_duplication_error": "Diagramm konnte nicht dupliziert werden",
-        "chart_in_use_description": "Es wird in {count} Dashboard(s) verwendet. Entferne es dort, bevor du es löschst:",
+        "chart_in_use_description": "{count, plural, one {Es befindet sich auf {count} Dashboard. Entferne es von diesem Dashboard, bevor Du es löschst:} other {Es befindet sich auf {count} Dashboards. Entferne es von diesen, bevor Du es löschst:}}",
         "chart_in_use_title": "Dieses Diagramm wird noch verwendet",
         "chart_name": "Diagrammname",
         "chart_name_placeholder": "Diagrammname",

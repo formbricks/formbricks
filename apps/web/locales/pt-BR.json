@@ -1952,7 +1952,7 @@
         "chart_deletion_error": "Falha ao excluir gráfico",
         "chart_duplicated_successfully": "Gráfico duplicado com sucesso",
         "chart_duplication_error": "Falha ao duplicar gráfico",
-        "chart_in_use_description": "Ele está em {count} painel(éis). Remova-o de todos antes de excluí-lo:",
+        "chart_in_use_description": "{count, plural, one {Ele está em {count} painel. Remova-o desse painel antes de excluí-lo:} many {Ele está em {count} de painéis. Remova-o desses painéis antes de excluí-lo:} other {Ele está em {count} painéis. Remova-o desses painéis antes de excluí-lo:}}",
         "chart_in_use_title": "Este gráfico ainda está em uso",
         "chart_name": "Nome do gráfico",
         "chart_name_placeholder": "Nome do gráfico",

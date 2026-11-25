@@ -1952,7 +1952,7 @@
         "chart_deletion_error": "Échec de la suppression du graphique",
         "chart_duplicated_successfully": "Graphique dupliqué avec succès",
         "chart_duplication_error": "Échec de la duplication du graphique",
-        "chart_in_use_description": "Il figure sur {count} tableau(x) de bord. Retire-le de ces tableaux de bord avant de le supprimer :",
+        "chart_in_use_description": "{count, plural, one {Il figure sur {count} tableau de bord. Retire-le de ce tableau de bord avant de le supprimer :} many {Il figure sur {count} de tableaux de bord. Retire-le de ces tableaux de bord avant de le supprimer :} other {Il figure sur {count} tableaux de bord. Retire-le de ces tableaux de bord avant de le supprimer :}}",
         "chart_in_use_title": "Ce graphique est encore utilisé",
         "chart_name": "Nom du graphique",
         "chart_name_placeholder": "Nom du graphique",

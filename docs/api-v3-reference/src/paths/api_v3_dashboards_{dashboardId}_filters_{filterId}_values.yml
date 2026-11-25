@@ -117,7 +117,7 @@ get:
                 requestId: req_01JB7X0000000000000000000
                 invalid_params:
                   - name: filterId
-                    reason: The dashboard's charts need more than 40 queries (MAX_FILTER_VALUE_QUERIES) to list this filter's values. Type a value instead, or split the dashboard.
+                    reason: The dashboard's charts need more than 40 queries to list this filter's values. Type a value instead, or split the dashboard.
                     code: limit_exceeded
             typedFilter:
               summary: The filter takes a typed value, not a pick from a list

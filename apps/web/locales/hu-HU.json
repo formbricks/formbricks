@@ -1952,7 +1952,7 @@
         "chart_deletion_error": "Nem sikerült törölni a diagramot",
         "chart_duplicated_successfully": "A diagram sikeresen megkettőzve",
         "chart_duplication_error": "Nem sikerült kettőzni a diagramot",
-        "chart_in_use_description": "Jelenleg {count} irányítópulton szerepel. Kérjük, törlés előtt távolítsa el onnan az alábbi helyekről:",
+        "chart_in_use_description": "{count, plural, one {Szerepel {count} irányítópulton. Kérjük, törlés előtt szíveskedjék eltávolítani arról az irányítópultról:} other {Szerepel {count} irányítópulton. Kérjük, törlés előtt szíveskedjék eltávolítani azokról az irányítópultokról:}}",
         "chart_in_use_title": "Ez a diagram még használatban van",
         "chart_name": "Diagram neve",
         "chart_name_placeholder": "Diagram neve",

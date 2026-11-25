@@ -113,6 +113,16 @@ export const quickFilterAsRule = (property: TFilterProperty, filter: TTableFilte
     : null;
 
 /**
+ * A locked filter as its chip shows it. With simple rules, a person's own quick filter shows as the rule
+ * it means ("Sentiment is Neutral"), so the same filter locked shows that way too, not as ticked values.
+ */
+export const lockedFilterAsShown = (
+  property: TFilterProperty,
+  filter: TTableFilter,
+  simpleRules: boolean | undefined
+): TTableFilter => (simpleRules ? (quickFilterAsRule(property, filter) ?? filter) : filter);
+
+/**
  * A rule saved from a quick filter's chip, back as the quick filter when it is still "is" any of some
  * values, so the Filter menu keeps showing them ticked; any other operator stays a rule.
  */
