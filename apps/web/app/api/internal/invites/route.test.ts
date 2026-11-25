@@ -298,7 +298,7 @@ describe("POST /api/internal/invites", () => {
   });
 
   // ENG-7376: `disabled` switches user management off for everyone, team admins included.
-  test("refuses a team admin while user management is disabled, before anything is written", async () => {
+  test("refuses a non-owner/manager while user management is disabled, before any lookup or write", async () => {
     mocks.userManagementMinimumRole = "disabled";
     callerIs("member");
     mocks.getTeamsWhereUserIsAdmin.mockResolvedValue([TEAM_ID]);
@@ -307,6 +307,7 @@ describe("POST /api/internal/invites", () => {
 
     expect(response.status).toBe(403);
     expect(await detail(response)).toBe("User management is not allowed for your role");
+    expect(mocks.getTeamsWhereUserIsAdmin).not.toHaveBeenCalled();
     expect(mocks.can).not.toHaveBeenCalled();
     expect(mocks.reserveInviteRateLimit).not.toHaveBeenCalled();
     expect(mocks.inviteUser).not.toHaveBeenCalled();

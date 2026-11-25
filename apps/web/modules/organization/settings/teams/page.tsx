@@ -1,5 +1,5 @@
 import { canManageUsers } from "@/lib/membership/user-management";
-import { isUserManagementDisabled } from "@/lib/membership/user-management-floor";
+import { canTeamAdminInvite } from "@/lib/membership/user-management-floor";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
@@ -33,7 +33,7 @@ export const TeamsPage = async (props: Readonly<{ params: Promise<{ organization
   // user management is not disabled outright, ENG-7376)
   const hasUserManagementAccess =
     hasStandardUserManagementAccess ||
-    (isAccessControlAllowed && isTeamAdminUser && !isUserManagementDisabled());
+    canTeamAdminInvite({ isAccessControlAllowed, isTeamAdmin: isTeamAdminUser });
 
   return (
     <PageContentWrapper>
