@@ -1151,7 +1151,8 @@ test.describe("Publishing a survey with problems", () => {
 
     const headline = page.locator('[data-issue-field$=":headline"] .editor-input').first();
     const summary = page.getByRole("region", { name: helper.EDITOR_PROBLEMS_NAME });
-    const goToFirstProblem = summary.getByRole("button", { name: "Go to first" });
+    // With one problem the bar spells it out as a link to its field, instead of "Go to first".
+    const goToFirstProblem = summary.getByRole("button", { name: /Enter a question/ });
 
     await test.step("an emptied question headline stops the publish and is listed", async () => {
       await expect(headline).toBeVisible();
