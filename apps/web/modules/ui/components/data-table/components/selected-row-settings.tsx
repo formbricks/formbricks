@@ -6,10 +6,12 @@ import { type ReactNode, useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
+import { cn } from "@/lib/cn";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { deleteInChunks } from "../lib/delete-in-chunks";
 
 const Separator = () => <div>|</div>;
@@ -24,7 +26,10 @@ interface SelectedRowSettingsProps<T> {
   readonly isQuotasAllowed: boolean;
   /** Extra actions for the bar, given the table so they can read the selection when clicked. */
   readonly renderExtraActions?: (table: Table<T>) => ReactNode;
-  /** Why the rows can't be deleted. The delete dialog shows it in place of the confirmation, with Delete disabled. */
+  /**
+   * Why the rows can't be deleted. Delete then shows as disabled and says why on hover or focus. It is
+   * `aria-disabled`, not `disabled`: a disabled button gets no hover or focus, so the reason would never show.
+   */
   readonly deleteDisabledReason?: string;
 }
 
@@ -170,14 +175,19 @@ export const SelectedRowSettings = <T,>({
           </Button>
         )}
         {renderExtraActions?.(table)}
-        <Button
-          variant="secondary"
-          size="sm"
-          className="h-6 gap-1 px-2"
-          onClick={() => setIsDeleteDialogOpen(true)}>
-          {t("common.delete")}
-          <Trash2Icon />
-        </Button>
+        <TooltipRenderer tooltipContent={deleteDisabledReason} shouldRender={Boolean(deleteDisabledReason)}>
+          <Button
+            variant="secondary"
+            size="sm"
+            className={cn("h-6 gap-1 px-2", deleteDisabledReason && "cursor-not-allowed opacity-50")}
+            aria-disabled={deleteDisabledReason ? true : undefined}
+            onClick={() => {
+              if (!deleteDisabledReason) setIsDeleteDialogOpen(true);
+            }}>
+            {t("common.delete")}
+            <Trash2Icon />
+          </Button>
+        </TooltipRenderer>
       </div>
       <DeleteDialog
         open={isDeleteDialogOpen}
@@ -185,9 +195,8 @@ export const SelectedRowSettings = <T,>({
         deleteWhat={deleteWhatText}
         onDelete={handleDelete}
         isDeleting={isDeleting}
-        disabled={Boolean(deleteDisabledReason)}
-        text={deleteDisabledReason ?? deleteDialogText}>
-        {hasQuotas && !deleteDisabledReason && (
+        text={deleteDialogText}>
+        {hasQuotas && (
           <DecrementQuotasCheckbox
             title={t("workspace.surveys.responses.bulk_delete_response_quotas")}
             checked={decrementQuotas ?? hasQuotas}

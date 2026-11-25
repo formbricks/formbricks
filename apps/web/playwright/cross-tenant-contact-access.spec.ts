@@ -259,17 +259,23 @@ test.describe("Contact directories (ENG-7495)", () => {
     await gotoContact(page, workspaceB, contactId);
     await expect(page.getByRole("heading", { name: pii.email })).toBeVisible();
 
-    // The dialog says why up front and offers no Delete.
-    await page.getByRole("button", { name: "Delete", exact: true }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(
-      dialog.getByText(`${directoryName} is shared with other workspaces, so its contacts can't be deleted.`)
-    ).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Delete" })).toBeDisabled();
-    await dialog.getByRole("button", { name: "Cancel" }).click();
-    await expect(dialog).toBeHidden();
+    // The trash icon shows as disabled and says why; clicking it opens nothing.
+    const deleteButton = page.getByRole("button", { name: "Delete", exact: true });
+    await expect(deleteButton).toHaveAttribute("aria-disabled", "true");
+    // Hovered again until the tooltip shows: a hover before the page hydrates opens nothing.
+    const reason = page
+      .getByText(`${directoryName} is shared with other workspaces, so its contacts can't be deleted.`)
+      .first();
+    await expect(async () => {
+      await page.mouse.move(0, 0);
+      await deleteButton.hover();
+      await expect(reason).toBeVisible({ timeout: 1000 });
+    }).toPass();
+    // Playwright treats aria-disabled as disabled, so the click is forced to prove it opens nothing.
+    await deleteButton.click({ force: true });
+    await expect(page.getByRole("dialog")).toBeHidden();
 
-    // The server refuses it too, for a caller that skips the dialog.
+    // The server refuses it too, for a caller that skips the button.
     const response = await page.request.delete(
       `/api/internal/contacts/${contactId}?workspaceId=${workspaceB}`,
       { headers: { Origin: new URL(page.url()).origin } }

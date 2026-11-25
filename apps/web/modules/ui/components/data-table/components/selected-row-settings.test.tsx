@@ -24,28 +24,31 @@ const renderSettings = (deleteDisabledReason?: string) => {
       deleteDisabledReason={deleteDisabledReason}
     />
   );
-  fireEvent.click(screen.getByRole("button", { name: "common.delete" }));
-  const dialogDelete = screen.getAllByRole("button", { name: "common.delete" }).at(-1)!;
-  return { deleteAction, dialogDelete };
+  return { deleteAction, deleteButton: screen.getByRole("button", { name: "common.delete" }) };
 };
 
-describe("SelectedRowSettings delete dialog", () => {
+describe("SelectedRowSettings Delete", () => {
   afterEach(cleanup);
 
-  test("shows why the rows can't be deleted, with Delete disabled", () => {
-    const { deleteAction, dialogDelete } = renderSettings("Main is shared with other workspaces");
+  // aria-disabled, not disabled: the button keeps hover and focus, so the reason can show.
+  test("shows as disabled, opens nothing, and says why on focus", async () => {
+    const { deleteAction, deleteButton } = renderSettings("Main is shared with other workspaces");
 
-    expect(screen.getByText("Main is shared with other workspaces")).toBeTruthy();
-    expect(screen.queryByText("workspace.contacts.delete_contact_confirmation")).toBeNull();
-    expect((dialogDelete as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(dialogDelete);
+    expect(deleteButton.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(deleteButton);
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(deleteAction).not.toHaveBeenCalled();
+
+    fireEvent.focus(deleteButton);
+    expect((await screen.findAllByText("Main is shared with other workspaces")).length).toBeGreaterThan(0);
   });
 
-  test("asks for confirmation, with Delete enabled, when nothing blocks the delete", () => {
-    const { dialogDelete } = renderSettings();
+  test("opens the confirmation when nothing blocks the delete", () => {
+    const { deleteButton } = renderSettings();
 
+    expect(deleteButton.getAttribute("aria-disabled")).toBeNull();
+    fireEvent.click(deleteButton);
+    expect(screen.getByRole("dialog")).toBeTruthy();
     expect(screen.getByText("workspace.contacts.delete_contact_confirmation")).toBeTruthy();
-    expect((dialogDelete as HTMLButtonElement).disabled).toBe(false);
   });
 });

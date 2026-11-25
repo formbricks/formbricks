@@ -78,17 +78,6 @@ export const ContactControlBar = ({
     setDeleteDialogOpen(false);
   };
 
-  const getDeleteDialogText = () => {
-    if (sharedDirectoryName) {
-      return t("workspace.contacts.delete_contact_shared_directory_note", {
-        directoryName: sharedDirectoryName,
-      });
-    }
-    return isQuotasAllowed
-      ? t("workspace.contacts.delete_contact_confirmation_with_quotas", { value: 1 })
-      : t("workspace.contacts.delete_contact_confirmation");
-  };
-
   const iconActions = [
     {
       icon: RefreshCwIcon,
@@ -120,6 +109,10 @@ export const ContactControlBar = ({
       onClick: () => {
         setDeleteDialogOpen(true);
       },
+      // Contacts of a directory other workspaces use can't be deleted: said here, before any dialog opens.
+      disabledReason: sharedDirectoryName
+        ? t("workspace.contacts.delete_contact_shared_directory_note", { directoryName: sharedDirectoryName })
+        : undefined,
       isVisible: !isReadOnly,
     },
   ];
@@ -133,8 +126,13 @@ export const ContactControlBar = ({
         deleteWhat={t("common.person")}
         onDelete={handleDeletePerson}
         isDeleting={isDeletingPerson}
-        disabled={Boolean(sharedDirectoryName)}
-        text={getDeleteDialogText()}
+        text={
+          isQuotasAllowed
+            ? t("workspace.contacts.delete_contact_confirmation_with_quotas", {
+                value: 1,
+              })
+            : t("workspace.contacts.delete_contact_confirmation")
+        }
       />
       <GeneratePersonalLinkModal
         open={isGenerateLinkModalOpen}

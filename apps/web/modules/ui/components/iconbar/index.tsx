@@ -16,6 +16,11 @@ interface IconAction {
   onClick?: () => void;
   isVisible?: boolean;
   disabled?: boolean;
+  /**
+   * Why the action isn't available. The button then shows as disabled and the tooltip says why. It is
+   * `aria-disabled`, not `disabled`: a disabled button gets no hover or focus, so the reason would never show.
+   */
+  disabledReason?: string;
   isLoading?: boolean;
   iconClassName?: string;
 }
@@ -36,13 +41,18 @@ export const IconBar = ({ actions }: IconBarProps) => {
       aria-label="Action buttons">
       {visibleActions.map((action, index) => (
         <span key={`${action.tooltip}-${index}`}>
-          <TooltipRenderer tooltipContent={action.tooltip}>
+          <TooltipRenderer tooltipContent={action.disabledReason ?? action.tooltip}>
             <Button
               variant="ghost"
-              className={cn("border-none hover:bg-slate-50", action.shortcut && "w-auto gap-1.5 px-2.5")}
+              className={cn(
+                "border-none hover:bg-slate-50",
+                action.shortcut && "w-auto gap-1.5 px-2.5",
+                action.disabledReason && "cursor-not-allowed opacity-50"
+              )}
               size="icon"
-              onClick={action.onClick}
+              onClick={action.disabledReason ? undefined : action.onClick}
               disabled={action.disabled}
+              aria-disabled={action.disabledReason ? true : undefined}
               loading={action.isLoading}
               aria-keyshortcuts={action.shortcut}
               aria-label={action.tooltip}>

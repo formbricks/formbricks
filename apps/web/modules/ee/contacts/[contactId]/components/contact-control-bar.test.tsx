@@ -9,24 +9,15 @@ vi.mock("react-i18next", () => ({
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
 vi.mock("@/modules/ee/contacts/lib/api-client", () => ({ deleteContact: vi.fn() }));
-// The bar's other modals and icon tooltips are not what this file proves.
+// The bar's other modals are not what this file proves.
 vi.mock("@/modules/ee/contacts/components/edit-contact-attributes-modal", () => ({
   EditContactAttributesModal: () => null,
 }));
 vi.mock("./generate-personal-link-modal", () => ({ GeneratePersonalLinkModal: () => null }));
-vi.mock("@/modules/ui/components/iconbar", () => ({
-  IconBar: ({ actions }: Readonly<{ actions: { tooltip: string; onClick: () => void }[] }>) => (
-    <div>
-      {actions.map((action) => (
-        <button key={action.tooltip} type="button" onClick={action.onClick}>
-          {action.tooltip}
-        </button>
-      ))}
-    </div>
-  ),
-}));
 
-const openDeleteDialog = (sharedDirectoryName: string | null) => {
+const SHARED_NOTE = 'workspace.contacts.delete_contact_shared_directory_note {"directoryName":"Main"}';
+
+const renderBar = (sharedDirectoryName: string | null) => {
   render(
     <ContactControlBar
       contactId="clcontact0000000000000001"
@@ -39,28 +30,30 @@ const openDeleteDialog = (sharedDirectoryName: string | null) => {
       currentAttributes={[]}
     />
   );
-  fireEvent.click(screen.getByRole("button", { name: "common.delete" }));
-  return screen.getAllByRole("button", { name: "common.delete" }).at(-1) as HTMLButtonElement;
+  return screen.getByRole("button", { name: "common.delete" });
 };
 
-describe("ContactControlBar delete dialog", () => {
+describe("ContactControlBar Delete", () => {
   afterEach(cleanup);
 
-  // A contact in a directory other workspaces use can't be deleted: the dialog says so up front
-  // instead of failing on Delete with an error toast.
-  test("says a contact of a shared directory can't be deleted, with Delete disabled", () => {
-    const dialogDelete = openDeleteDialog("Main");
+  // A contact in a directory other workspaces use can't be deleted: the trash icon says so up front
+  // instead of opening a dialog that can only fail.
+  test("shows as disabled for a shared directory, opens nothing, and says why on focus", async () => {
+    const deleteButton = renderBar("Main");
 
-    expect(
-      screen.getByText('workspace.contacts.delete_contact_shared_directory_note {"directoryName":"Main"}')
-    ).toBeTruthy();
-    expect(dialogDelete.disabled).toBe(true);
+    expect(deleteButton.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(deleteButton);
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    fireEvent.focus(deleteButton);
+    expect((await screen.findAllByText(SHARED_NOTE)).length).toBeGreaterThan(0);
   });
 
-  test("asks for confirmation, with Delete enabled, when the directory isn't shared", () => {
-    const dialogDelete = openDeleteDialog(null);
+  test("opens the confirmation when the directory isn't shared", () => {
+    const deleteButton = renderBar(null);
 
+    expect(deleteButton.getAttribute("aria-disabled")).toBeNull();
+    fireEvent.click(deleteButton);
     expect(screen.getByText("workspace.contacts.delete_contact_confirmation")).toBeTruthy();
-    expect(dialogDelete.disabled).toBe(false);
   });
 });
