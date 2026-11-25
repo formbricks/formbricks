@@ -20,6 +20,7 @@ import {
   ZV3CreateSurveyBody,
   ZV3CreateSurveyDocument,
   ZV3CreateSurveyDocumentInput,
+  ZV3CreateSurveyImportDraftBody,
   ZV3CreateSurveyQuery,
   ZV3EditSurveyBlocksBody,
   ZV3PatchSurveyBody,
@@ -46,6 +47,26 @@ const validCreateBody = {
     },
   ],
 };
+
+describe("ZV3CreateSurveyImportDraftBody", () => {
+  test("parses a draft like the create body", () => {
+    expect(ZV3CreateSurveyImportDraftBody.parse(validCreateBody)).toEqual(
+      ZV3CreateSurveyBody.parse(validCreateBody)
+    );
+  });
+
+  // ENG-7508: the client sends the reviewed draft back, so it must not choose the survey's visibility.
+  test.each(["workspace", "restricted"])("refuses a draft naming visibility %s", (visibility) => {
+    expect(ZV3CreateSurveyBody.safeParse({ ...validCreateBody, visibility }).success).toBe(true);
+
+    const result = ZV3CreateSurveyImportDraftBody.safeParse({ ...validCreateBody, visibility });
+
+    expect(result.success).toBe(false);
+    expect(formatV3ZodInvalidParams(result.error!, "data")).toContainEqual(
+      expect.objectContaining({ name: "visibility", code: "unsupported_field" })
+    );
+  });
+});
 
 describe("ZV3CreateSurveyBody", () => {
   test("accepts a valid block-based create body and applies public defaults", () => {

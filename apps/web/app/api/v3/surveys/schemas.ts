@@ -1605,14 +1605,26 @@ export const ZV3CreateSurveyDocumentInput = z
   })
   .pipe(ZV3CreateSurveyDocument);
 
-export const ZV3CreateSurveyBody = z
-  .unknown()
-  .superRefine((value, ctx) => {
-    for (const issue of getUnsupportedV3SurveyDocumentFields(value, ROOT_KEYS)) {
-      addInvalidParamZodIssue(ctx, issue);
-    }
-  })
-  .pipe(boundedSchema(ZV3CreateSurveyBodyBase));
+const createV3SurveyBodySchema = (rootKeys: Set<string>) =>
+  z
+    .unknown()
+    .superRefine((value, ctx) => {
+      for (const issue of getUnsupportedV3SurveyDocumentFields(value, rootKeys)) {
+        addInvalidParamZodIssue(ctx, issue);
+      }
+    })
+    .pipe(boundedSchema(ZV3CreateSurveyBodyBase));
+
+export const ZV3CreateSurveyBody = createV3SurveyBodySchema(ROOT_KEYS);
+
+/**
+ * The create body for a reviewed import draft (`POST /api/internal/surveys/imports`): the client sends the
+ * draft back, so like a Formbricks file it cannot choose `visibility` (ENG-7508) — the survey gets the
+ * creator's default, and a draft naming one is refused as an `unsupported_field`.
+ */
+export const ZV3CreateSurveyImportDraftBody = createV3SurveyBodySchema(
+  new Set([...ROOT_KEYS].filter((key) => key !== "visibility"))
+);
 
 /**
  * Where a created survey came from, for the `survey_created` analytics event and, through the request

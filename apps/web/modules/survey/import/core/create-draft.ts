@@ -3,7 +3,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { createV3Survey } from "@/app/api/v3/surveys/create";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
-import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
+import { ZV3CreateSurveyImportDraftBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { SurveyImportInputError, nameFromSurvey } from "./errors";
 import { getImportedSurveyName, getImporterTranslate } from "./imported-survey-name";
 import { assertSurveyWithinDraftSize, findSurveyContentPastLimits } from "./survey-limits";
@@ -47,7 +47,7 @@ export const createSurveyFromImportDraft = async ({
   const sourceName = typeof survey.name === "string" ? survey.name : "";
   const name = await getImportedSurveyName(workspaceId, sourceName, t);
 
-  const parsed = ZV3CreateSurveyBody.safeParse({ ...survey, workspaceId, name, status: "draft" });
+  const parsed = ZV3CreateSurveyImportDraftBody.safeParse({ ...survey, workspaceId, name, status: "draft" });
   if (!parsed.success) {
     throw new SurveyImportInputError(
       nameFromSurvey(formatV3ZodInvalidParams(parsed.error, "data"), null),
