@@ -22,6 +22,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { resolveResponseCountry } from "@/lib/response/country";
 import { applyIngestContractToResponseInput } from "@/lib/response/ingest";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -164,8 +165,7 @@ const buildClientResponseMeta = async ({
   const userAgent = req.headers.get("user-agent") || undefined;
   const agent = new UAParser(userAgent);
 
-  const country =
-    requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
+  const country = resolveResponseCountry(responseInputData?.meta?.country, requestHeaders);
 
   const meta: TResponseInput["meta"] = {
     // The browser-runtime context the renderer snapshotted at display time (ENG-1841). This

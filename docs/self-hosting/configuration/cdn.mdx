@@ -52,6 +52,28 @@ scheme. As a baseline, the CDN should:
   stale client state, broken authentication flows, or outdated JavaScript bundles after an upgrade.
 </Warning>
 
+## Respondent country
+
+Formbricks runs no GeoIP lookup of its own. A response's `country` is either set by you, with `?country=DE` on a
+link survey or `country` in `setEmbeddedData` for an app survey (see
+[Reserved Fields](/surveys/embedded-data/reserved-fields)), or read from the `CF-IPCountry` (Cloudflare) or
+`CloudFront-Viewer-Country` (AWS CloudFront) request header on the public client API routes. A value you set wins.
+With neither, `country` stays empty and the **Country** column in the response table, filters and exports is blank.
+
+To fill it from your CDN:
+
+- **Cloudflare** adds `CF-IPCountry` when **IP Geolocation** is on (Network settings, on by default).
+- **CloudFront** adds `CloudFront-Viewer-Country` only when your origin request policy includes it.
+- **Any other CDN or proxy** needs to set `CF-IPCountry` itself, with a two-letter country code, on requests to
+  `/api/v1/client/*` and `/api/v2/client/*`.
+
+<Warning>
+  Formbricks trusts these headers as they arrive. If the client API routes are reachable without passing through a
+  CDN that sets the header, anyone can send their own `CF-IPCountry` and that value is stored, so strip both headers
+  at your reverse proxy unless a CDN in front sets them. Even then, a respondent can add `?country=` to a link survey's
+  URL, so treat `country` as analytics, not proof of location.
+</Warning>
+
 ## What is safe to cache
 
 In most setups, you should only cache static public assets aggressively:

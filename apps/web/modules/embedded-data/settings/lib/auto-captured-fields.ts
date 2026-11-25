@@ -16,7 +16,7 @@ import { getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display
  * When a field can be referenced in logic and recall, derived from the catalog's `availability`.
  *
  * `afterSubmit` is the honest reading of `server`: the value only exists once the request reaches
- * the API (a geo-IP country, a parsed user agent), so a running survey cannot recall it — but every
+ * the API (the resolved country, a parsed user agent), so a running survey cannot recall it — but every
  * server-side reader, from filters to exports, can.
  */
 export type TAutoCapturedAvailability = "always" | "afterSubmit";

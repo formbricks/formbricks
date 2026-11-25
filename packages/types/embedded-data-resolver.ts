@@ -231,7 +231,9 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     read: (r) => r.meta.url,
   },
   /**
-   * Geo-IP country, resolved from the request in the ingest routes — nothing client-side knows it.
+   * A two-letter code the host set (`?country=` on a link survey, `country` in `setEmbeddedData`), else
+   * the CDN request header (`CF-IPCountry` or `CloudFront-Viewer-Country`). Both are resolved in the
+   * ingest routes, so it stays `server`: a running survey has no CDN value. No GeoIP lookup.
    */
   {
     name: "country",
