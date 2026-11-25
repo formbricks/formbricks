@@ -359,5 +359,45 @@ describe("createPrismaPgAdapter", () => {
       // It is the value pg-pool actually queues against, not a parallel copy that could drift.
       expect(pool.options.connectionTimeoutMillis).toBe(expected);
     });
+
+    // pool_timeout is Prisma's "max wait for a pooled connection", which is exactly what pg-pool's
+    // connectionTimeoutMillis bounds when the pool is full (ENG-3534).
+    test.each([
+      ["follows pool_timeout, in seconds", "?pool_timeout=10", 10_000],
+      ["prefers pool_timeout over connect_timeout", "?connect_timeout=15&pool_timeout=3", 3_000],
+      [
+        "bounds the wait with pool_timeout when connect_timeout=0",
+        "?connect_timeout=0&pool_timeout=7",
+        7_000,
+      ],
+      ["is 0 when pool_timeout disables the timeout", "?connect_timeout=15&pool_timeout=0", 0],
+    ])("%s", async (_, query, expected) => {
+      const { pool, result } = await connectAdapter(
+        `postgresql://app:secret@database:5432/formbricks${query}`
+      );
+
+      expect(result.poolAcquireTimeoutMillis).toBe(expected);
+      expect(pool.options.connectionTimeoutMillis).toBe(expected);
+      expect(loggerWarnMock).not.toHaveBeenCalled();
+      expect(result.connectionString).not.toContain("pool_timeout");
+    });
+
+    test.each([
+      ["a non-numeric value", "?connect_timeout=15&pool_timeout=soon", "soon", 15_000],
+      ["a negative value", "?pool_timeout=-1", "-1", DEFAULT_POOL_ACQUIRE_TIMEOUT_MS],
+      ["a value past the timer limit", "?pool_timeout=2147484", "2147484", DEFAULT_POOL_ACQUIRE_TIMEOUT_MS],
+    ])("ignores %s with a warning and falls back", async (_, query, rawValue, expected) => {
+      const { pool, result } = await connectAdapter(
+        `postgresql://app:secret@database:5432/formbricks${query}`
+      );
+
+      expect(result.poolAcquireTimeoutMillis).toBe(expected);
+      expect(pool.options.connectionTimeoutMillis).toBe(expected);
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        { pool_timeout: rawValue },
+        expect.stringContaining("pool_timeout")
+      );
+      expect(JSON.stringify(loggerWarnMock.mock.calls)).not.toContain("secret");
+    });
   });
 });
