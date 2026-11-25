@@ -91,6 +91,38 @@ describe("AuthZed retry policy", () => {
     expect(loggerMocks.warn).toHaveBeenCalledTimes(1);
   });
 
+  test("retries an in-flight stream reset and succeeds on the next attempt", async () => {
+    const request = vi
+      .fn()
+      .mockRejectedValueOnce({
+        code: status.INTERNAL,
+        details: "Received RST_STREAM with code 0 (Call ended without gRPC status)",
+      })
+      .mockResolvedValue("success");
+    const sleep = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      executeAuthzedOperation("check_permission", request, { random: () => 0.5, sleep })
+    ).resolves.toBe("success");
+
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledTimes(1);
+    expect(loggerMocks.warn).not.toHaveBeenCalled();
+  });
+
+  test("does not retry a genuine INTERNAL status from SpiceDB", async () => {
+    const request = vi.fn().mockRejectedValue({ code: status.INTERNAL, details: "internal error" });
+    const sleep = vi.fn();
+
+    const result = await executeAuthzedOperation("check_permission", request, { sleep }).catch(
+      (error: unknown) => error
+    );
+
+    expect(result).toMatchObject({ attempts: 1, code: AUTHZED_ERROR_CODES.INTERNAL, retryable: false });
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
   test("does not retry permanent errors", async () => {
     const request = vi.fn().mockRejectedValue({ code: status.UNAUTHENTICATED });
     const sleep = vi.fn();
