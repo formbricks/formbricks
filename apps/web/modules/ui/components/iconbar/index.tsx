@@ -45,9 +45,8 @@ export const IconBar = ({ actions }: IconBarProps) => {
             <Button
               variant="ghost"
               className={cn(
-                "border-none hover:bg-slate-50",
-                action.shortcut && "w-auto gap-1.5 px-2.5",
-                action.disabledReason && "cursor-not-allowed opacity-50"
+                "border-none not-aria-disabled:hover:bg-slate-50",
+                action.shortcut && "w-auto gap-1.5 px-2.5"
               )}
               size="icon"
               onClick={action.disabledReason ? undefined : action.onClick}

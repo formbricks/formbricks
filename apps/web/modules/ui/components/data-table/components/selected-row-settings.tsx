@@ -6,7 +6,6 @@ import { type ReactNode, useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
-import { cn } from "@/lib/cn";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -183,7 +182,7 @@ export const SelectedRowSettings = <T,>({
           <Button
             variant="secondary"
             size="sm"
-            className={cn("h-6 gap-1 px-2", deleteDisabledReason && "cursor-not-allowed opacity-50")}
+            className="h-6 gap-1 px-2"
             aria-disabled={deleteDisabledReason ? true : undefined}
             onClick={() => {
               if (!deleteDisabledReason) setIsDeleteDialogOpen(true);
