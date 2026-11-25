@@ -961,6 +961,36 @@ describe("registerSurveyTools", () => {
     expect(archiveV3Survey).not.toHaveBeenCalled();
   });
 
+  test("delete_survey preserves forbidden errors without leaking resource existence", async () => {
+    const { tools } = createToolServer();
+    const auditLog = { status: "failure" as const };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
+    vi.mocked(deleteV3Survey).mockResolvedValue(
+      problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
+    );
+
+    const result = await tools.get("delete_survey")!.handler(
+      {
+        surveyId: "clxx1234567890123456789012",
+        confirm: true,
+      },
+      { http: { authInfo } }
+    );
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({
+      status: 403,
+      code: "forbidden",
+      detail: "You are not authorized to access this resource",
+      requestId: "req_forbidden",
+    });
+    expect(auditLog).toMatchObject({
+      status: "failure",
+      eventId: "req_tool",
+    });
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+  });
+
   test("archive_survey preserves forbidden errors without leaking resource existence", async () => {
     const { tools } = createToolServer();
     const auditLog = { status: "failure" as const };

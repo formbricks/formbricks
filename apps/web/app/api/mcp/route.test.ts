@@ -675,6 +675,13 @@ describe("POST /api/mcp", () => {
         idempotentHint: false,
       },
     });
+    expect(message.result.tools.find((tool) => tool.name === "delete_survey")).toMatchObject({
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+      },
+    });
     expect(message.result.tools.find((tool) => tool.name === "archive_survey")).toMatchObject({
       annotations: {
         readOnlyHint: false,

@@ -1278,11 +1278,11 @@ Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` a
 
 #### Confirmation on surveys with responses
 
-`patch_survey`, `edit_survey_blocks` and `set_survey_block_order` take an optional `confirm`
-argument. On a survey that is not a draft and already has at least one response, a call
-without `confirm: true` changes nothing: it returns an error (`status: 428`, "Confirmation required")
-whose `detail` is the caution the editor shows a person (mixed old and new responses for a change),
-followed by "Pass confirm: true after the user agrees". The agent
+`patch_survey`, `edit_survey_blocks` and `set_survey_block_order` take an optional `confirm` argument.
+On a survey that is not a draft and already has at least one response, a call without `confirm: true`
+changes nothing: it returns an error (`status: 428`, "Confirmation required") whose `detail` is the
+caution the editor shows a person (mixed old and new responses), followed by "Pass confirm: true after
+the user agrees". The agent
 shows that to the user and retries with `confirm: true` only after they agree. Drafts and surveys
 without responses need nothing. The rule is MCP-only: the v3 HTTP API is unchanged, and an operation
 enforces it only when the tool passes `writeConfirmation`. `delete_survey` confirms every delete through

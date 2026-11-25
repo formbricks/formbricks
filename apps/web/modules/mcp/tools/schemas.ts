@@ -536,10 +536,12 @@ export const ZMcpSurveyIdInput = z
   .strict();
 
 /** Deprecated with `delete_survey` (ENG-6575): removed in 7.0, prefer `archive_survey`. */
-export const ZMcpDeleteSurveyInput = ZMcpSurveyIdInput.extend({
-  surveyId: z.cuid2().describe("Survey ID to delete."),
-  confirm: confirmArgument,
-}).strict();
+export const ZMcpDeleteSurveyInput = z
+  .object({
+    surveyId: z.cuid2().describe("Survey ID to delete."),
+    confirm: confirmArgument,
+  })
+  .strict();
 
 // list_workspaces takes no arguments — it returns the workspaces the authenticated caller can access.
 //
