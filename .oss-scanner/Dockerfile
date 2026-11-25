@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates git jq make g++ gcc python3 cmake pkg-config libssl-dev openssl \
     && rm -rf /var/lib/apt/lists/*
 
+# Keep in step with `packageManager` in the root package.json.
 RUN npm install --global --ignore-scripts pnpm@11.7.0
 
 # Scanner contract: the checkout lives at /src.

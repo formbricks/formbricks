@@ -10,14 +10,16 @@
 - Do not add dependencies. Do not change database migrations unless the
   vulnerability requires it.
 - Keep the existing tenant scoping and authorization helpers
-  (`apps/web/lib/workspace/auth.ts`, `apps/web/lib/authzed`,
-  `apps/web/modules/api/lib/api-key-auth.ts`); a patch that bypasses them
+  (`apps/web/lib/authorization`, `apps/web/lib/workspace/auth.ts`,
+  `apps/web/lib/authzed`, `apps/web/modules/api/lib/api-key-auth.ts`); a
+  patch that bypasses them
   is not acceptable even if it fixes the symptom.
 
 ## Code style
 
-- TypeScript, formatted with Prettier (`pnpm format`), ESLint-clean
-  (`pnpm --filter <package> lint`).
+- TypeScript. Format only the files you change
+  (`pnpm exec prettier --write <files>`) and keep oxlint clean
+  (`pnpm turbo run lint:code -- --quiet`).
 - Comments only where the fix is not self-evident; match the surrounding style.
 - Prefer existing utilities and error types over new ones.
 

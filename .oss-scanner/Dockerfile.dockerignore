@@ -7,7 +7,6 @@
 # and code that cannot run offline or is not shipped (Playwright E2E specs, the Storybook app in apps/storybook).
 
 .git
-.gitignore
 
 # Dependencies and build output
 **/node_modules
@@ -28,6 +27,11 @@
 # Local environment and credentials
 **/.env
 **/.env.*
+!.env.example
+**/.envrc
+**/.npmrc
+**/*.key
+**/*.p12
 **/*.pem
 **/gcp*.json
 **/service-account*.json

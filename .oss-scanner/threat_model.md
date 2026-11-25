@@ -53,6 +53,11 @@ Treat all of the following as adversarial:
 - **Public REST APIs** — `/api/v1`, `/api/v2`, `/api/v3`, authenticated with
   workspace API keys. The key is a credential, but every request body, query
   parameter, header and path segment is still attacker-controlled.
+- **Session-authenticated app API** — `/api/internal/**` (what the web UI
+  calls) and the remaining server actions. The caller can hold any
+  organization role or team permission, and every body, query and path
+  segment is attacker-controlled. Most role, team-permission and
+  cross-workspace checks live here.
 - **Auth and identity surfaces** — credentials and sessions (Better Auth),
   OAuth/OIDC callbacks, SAML assertions (EE), email verification, password
   reset, invite links, 2FA (EE), and the MCP OAuth endpoints
@@ -62,8 +67,9 @@ Treat all of the following as adversarial:
   records. A stored XSS that executes in another user's or another workspace's
   browser session is in scope.
 - **Outbound requests and credentials** — webhook URLs, integration endpoints
-  (Google Sheets, Slack, etc.), S3-compatible storage configuration, AI provider
-  URLs, and any URL the server fetches on a user's behalf (SSRF).
+  (Google Sheets, Slack, etc.), and any URL the server fetches on a user's
+  behalf (SSRF). Storage and AI provider settings come from the operator's
+  environment and are trusted.
 - **Request metadata** — client IP, geo headers, `X-Forwarded-*`, `Host`;
   deployments sit behind arbitrary reverse proxies and TLS terminators.
 
@@ -108,8 +114,9 @@ translations and test fixtures.
 Assume the default self-hosted or Cloud deployment, reachable from the
 internet, with more than one tenant on the instance.
 
-- **Critical** — unauthenticated RCE; authentication bypass that yields another
-  user's session; cross-tenant access to responses/PII at scale; SQL injection
+- **Critical** — unauthenticated RCE; taking over another user's account or
+  session with no action from the victim; reading responses or PII of an
+  organization the attacker chooses and does not belong to; SQL injection
   with data exfiltration; arbitrary file read/write outside the intended upload
   scope; a public survey endpoint that lets an anonymous attacker take over a
   workspace.
@@ -117,9 +124,9 @@ internet, with more than one tenant on the instance.
   attacker does not reach (see "What the project is"); privilege escalation
   to organization owner/manager;
   authenticated RCE; SSRF reaching internal services or cloud metadata;
-  stored XSS in another user's admin session;
-  disclosure of API keys, secrets or session tokens; account takeover through
-  auth logic; a request to a public endpoint (no account needed: link
+  stored XSS that runs in any other user's session;
+  disclosure of API keys, secrets or session tokens; account takeover that
+  needs an action from the victim (a click, opening a link); a request to a public endpoint (no account needed: link
   surveys, the client API, sign-in and other auth routes) that crashes the
   process, exhausts its memory or blocks it for other tenants.
 - **Medium** — escalation between roles, team permissions, API-key
@@ -129,12 +136,13 @@ internet, with more than one tenant on the instance.
   reaches no workspace); `dashboard_viewer` reading raw responses in a
   workspace its team is assigned; an MCP client acting outside its grant's
   selection, access levels or consented scopes but within what its user
-  reaches, including another organization its user belongs to. Stored XSS whose impact stays inside the attacker's own
-  session/workspace; CSRF on state-changing actions;
+  reaches, including another organization its user belongs to. Stored XSS
+  that only runs in the attacker's own session; CSRF on state-changing actions;
   open redirect; rate-limit bypass enabling response or invitation spam;
   authenticated DoS, including a crash or memory exhaustion that needs an
-  account: accounts are not open to the public, so the attacker is a
-  customer or a trial user with a company email.
+  account. Self-hosted sign-up is closed by default, and Formbricks Cloud
+  only admits company email domains (no free or disposable mail), so the
+  attacker is a customer or a trial user on a domain they control.
 - **Low** — information disclosure without sensitive data; self-XSS; missing
   security headers; an anonymous request that only slows its own response,
   with no crash, memory exhaustion or amplification;
@@ -154,6 +162,8 @@ operator or database owner to be malicious is not a vulnerability.
 - Vulnerabilities that live only in third-party dependencies. Report them only
   when Formbricks's own code misuses the dependency in a way that creates the
   issue.
+- This scanner setup itself (`.oss-scanner/`): its environment values are
+  placeholders, not secrets.
 - Generated code (`packages/database/generated`, build outputs) and
   vendored/third-party assets. The generated API v3 Zod schemas
   (`packages/api-v3-schemas`) stay in scope: they validate request input, so
