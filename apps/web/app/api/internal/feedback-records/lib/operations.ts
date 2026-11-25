@@ -9,7 +9,6 @@ import {
   problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import { assertCan } from "@/lib/authorization";
 import {
   assertFeedbackDirectoryAssignmentAccess,
   assertRecordBelongsToWorkspace,
@@ -145,6 +144,6 @@ export async function lookupFeedbackRecordContactsOperation({
   if (session instanceof Response) return session;
   const { userId } = session;
 
-  await assertCan({ type: "user", id: userId }, "workspace.read", { type: "workspace", id: workspaceId });
+  await ensureReadAccess(userId, workspaceId);
   return successResponse(await getContactIdsByUserIds(workspaceId, userIds), { requestId });
 }

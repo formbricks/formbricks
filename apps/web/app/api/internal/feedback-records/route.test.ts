@@ -277,6 +277,14 @@ describe("POST /api/internal/feedback-records/contact-lookups", () => {
     expect(mocks.getContactIdsByUserIds).not.toHaveBeenCalled();
   });
 
+  // ENG-3683: the same gate as reading a record, which this lookup serves.
+  test("refuses an organization without the feedback directories entitlement", async () => {
+    mocks.isEnabled.mockResolvedValue(false);
+    expect((await lookupContacts(["user-a"])).status).toBe(403);
+    expect(mocks.isEnabled).toHaveBeenCalledWith(ORG_ID);
+    expect(mocks.getContactIdsByUserIds).not.toHaveBeenCalled();
+  });
+
   test("answers 400 for more than 1000 ids", async () => {
     expect((await lookupContacts(Array.from({ length: 1001 }, (_, i) => `user-${i}`))).status).toBe(400);
   });
