@@ -24,17 +24,20 @@ actions, integrations, dashboards and stored files.
   and a user's **team role** is `admin` or `contributor`.
 - An **API key** holds `read`, `write` or `manage` on each workspace it
   lists, and optionally organization access-control `read` or `write`
-  (organization members and their roles, invites, teams and workspace-team
-  assignments).
+  (organization members and their roles, teams and workspace-team
+  assignments; API keys never reach invites).
 - An **MCP OAuth client** acts for a user and never reaches more than that
   user can. Its grant further limits it to the organizations or workspaces it
   selects and to an access level per permission (an absent permission has no
   access), and the OAuth scopes the client was consented cap the grant.
 
 The application is multi-tenant. **Both the organization and the workspace are
-tenant boundaries**: no principal may reach another organization, nor a
-workspace in its own organization that it does not reach — for a user, none of
-their teams is assigned; for an API key, the key does not list it. The
+tenant boundaries**. A principal **reaches** an organization it belongs to
+(for an API key, the organization that owns it) and, inside it, these
+workspaces: an owner or manager, all of them; any other user, those one of
+their teams is assigned; an API key, those it lists; an MCP client, those its
+user reaches. Reaching any other organization or workspace crosses a tenant
+boundary. The
 database, Redis, S3-compatible storage and SpiceDB (AuthZed) are shared by
 every tenant. There is no in-app instance-admin role; whoever operates the
 server is trusted.
@@ -110,22 +113,21 @@ internet, with more than one tenant on the instance.
   with data exfiltration; arbitrary file read/write outside the intended upload
   scope; a public survey endpoint that lets an anonymous attacker take over a
   workspace.
-- **High** — IDOR or data leak across organizations, or into a workspace of
-  the same organization that the attacker does not reach (a user: none of
-  their teams is assigned; an API key: not listed; an MCP client: its user
-  does not reach it); privilege escalation to organization owner/manager;
+- **High** — IDOR or data leak into an organization or workspace the
+  attacker does not reach (see "What the project is"); privilege escalation
+  to organization owner/manager;
   authenticated RCE; SSRF reaching internal services or cloud metadata;
   stored XSS in another user's admin session;
   disclosure of API keys, secrets or session tokens; account takeover through
   auth logic.
 - **Medium** — escalation between roles, team permissions, API-key
-  permissions or MCP grant limits inside the organization, short of
-  owner/manager: for example a `read` team or key writing; `billing` reading
+  permissions or MCP grant limits that stays within what the attacker
+  reaches, short of owner/manager: for example a `read` team or key writing; `billing` reading
   product data of any workspace in its organization (Medium although billing
   reaches no workspace); `dashboard_viewer` reading raw responses in a
   workspace its team is assigned; an MCP client acting outside its grant's
   selection, access levels or consented scopes but within what its user
-  reaches. Stored XSS whose impact stays inside the attacker's own
+  reaches, including another organization its user belongs to. Stored XSS whose impact stays inside the attacker's own
   session/workspace; CSRF on state-changing actions;
   open redirect; rate-limit bypass enabling response or invitation spam;
   authenticated DoS.
