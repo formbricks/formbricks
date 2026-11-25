@@ -62,6 +62,26 @@ const getGrpcStatus = (error: unknown): number | undefined => {
   return typeof code === "number" ? code : undefined;
 };
 
+/**
+ * grpc-js reports a peer resetting an in-flight HTTP/2 stream (an LB reaping the connection, a SpiceDB
+ * pod rotating mid-call) as INTERNAL with this `details`, while the same dropped connection found before
+ * the call starts is UNAVAILABLE. A status SpiceDB sends itself arrives in the trailers and never reads
+ * like this, so a genuine server fault stays non-retryable (ENG-7041). The "triggered by internal client
+ * error" form is left out: that reset comes from our side and a retry would only repeat it.
+ */
+const GRPC_PEER_STREAM_RESET_DETAILS =
+  /^Received RST_STREAM with code \d+(?: \((?:Internal server error|Call ended without gRPC status)\))?$/;
+
+const STREAM_RESET_DESCRIPTOR = { code: AUTHZED_ERROR_CODES.UNAVAILABLE, retryable: true } as const;
+
+const isGrpcPeerStreamReset = (error: unknown, grpcStatus: number | undefined): boolean =>
+  grpcStatus === status.INTERNAL &&
+  typeof error === "object" &&
+  error !== null &&
+  "details" in error &&
+  typeof error.details === "string" &&
+  GRPC_PEER_STREAM_RESET_DETAILS.test(error.details);
+
 const getErrorDescriptor = (
   grpcStatus: number | undefined
 ): Readonly<{ code: TAuthzedErrorCode; retryable: boolean }> => {
@@ -109,7 +129,9 @@ export const mapAuthzedError = (error: unknown, operation: string, attempts: num
   }
 
   const grpcStatus = getGrpcStatus(error);
-  const descriptor = getErrorDescriptor(grpcStatus);
+  const descriptor = isGrpcPeerStreamReset(error, grpcStatus)
+    ? STREAM_RESET_DESCRIPTOR
+    : getErrorDescriptor(grpcStatus);
 
   return new AuthzedError({
     attempts,
