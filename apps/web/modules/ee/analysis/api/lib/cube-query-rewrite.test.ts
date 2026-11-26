@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { runInNewContext } from "node:vm";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const require = createRequire(import.meta.url);
@@ -951,38 +950,6 @@ describe("cube embedded-data members", () => {
       "maxCompiledMembers",
       "queryRewrite",
     ]);
-  });
-
-  test("the schema compiles each key's normalized twin as a lowercased JavaScript-style trim, with no containment prefilter", () => {
-    const schemaSource = readFileSync(cubeSchemaPath, "utf8");
-    expect(schemaSource).toContain("`LOWER(${trimLikeJavaScript(`${CUBE}.${spec.valueSql}`)})`");
-    expect(schemaSource).toContain("`BTRIM(${sql}, ${JS_TRIM_WHITESPACE_SQL})`");
-    expect(schemaSource).not.toMatch(/FILTER_PARAMS\.FeedbackRecords\[spec\.normalizedName\]/);
-  });
-
-  test("the normalized twin strips exactly the whitespace JavaScript's trim() strips from the viewer's value", () => {
-    const schemaSource = readFileSync(cubeSchemaPath, "utf8");
-    // Run the schema's own trim helper and read the characters its BTRIM receives, so the check covers the
-    // SQL the model compiles rather than how the list is written down.
-    const helperStart = schemaSource.indexOf("const JS_TRIM_WHITESPACE_CODE_POINTS");
-    const helperEnd = schemaSource.indexOf("\n", schemaSource.indexOf("const trimLikeJavaScript"));
-    expect(helperStart).toBeGreaterThanOrEqual(0);
-    const compiledTrim: unknown = runInNewContext(
-      `${schemaSource.slice(helperStart, helperEnd)}\ntrimLikeJavaScript("value");`
-    );
-    expect(typeof compiledTrim).toBe("string");
-    const stripped = new Set(
-      [...String(compiledTrim).matchAll(/chr\((\d+)\)/g)].map(([, codePoint]) => Number(codePoint))
-    );
-    const trimmedByJavaScript = new Set(
-      Array.from({ length: 0x110000 }, (_, codePoint) => codePoint).filter(
-        (codePoint) =>
-          (codePoint < 0xd800 || codePoint > 0xdfff) && String.fromCodePoint(codePoint).trim() === ""
-      )
-    );
-
-    expect(stripped.has(0x00a0)).toBe(true);
-    expect(stripped).toEqual(trimmedByJavaScript);
   });
 
   test("the schema joins exactly as many AnswerFilter aliases as the rewrite numbers", () => {

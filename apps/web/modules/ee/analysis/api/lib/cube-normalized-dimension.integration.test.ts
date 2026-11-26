@@ -1,31 +1,77 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { runInNewContext } from "node:vm";
-import { describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 
 /**
- * Runs the Cube schema's normalized embedded-data expression (the `edv_` twin a Dashboard Viewer's access
- * condition compares against) on real PostgreSQL, and checks it gives what the viewer side computes with
- * JavaScript: `value.trim().toLowerCase()` (ADR-0061). The unit suite can only read the compiled SQL.
+ * Compiles the Cube model for a dataset with one embedded-data key, takes the SQL of the hidden normalized
+ * dimension it registers (what a Dashboard Viewer's access condition compares against), and runs it on real
+ * PostgreSQL. Its output must equal what the viewer side computes in JavaScript: `value.trim().toLowerCase()`
+ * (ADR-0061).
  */
-const cubeSchemaPath = require.resolve("../../../../../../../docker/cube/schema/FeedbackRecords.js");
+const localRequire = createRequire(import.meta.url);
+const cubeConfigPath = localRequire.resolve("../../../../../../../docker/cube/cube.js");
+const cubeSchemaPath = localRequire.resolve("../../../../../../../docker/cube/schema/FeedbackRecords.js");
 
-const normalizedSql = (valueSql: string): string => {
+type TDimension = { sql: (cubeAlias: string) => string; shown?: boolean };
+type TCubeDefinition = { dimensions: Record<string, TDimension> };
+
+const EMBEDDED_KEY = "Country";
+let normalizedDimensionSql: (cubeAlias: string) => string;
+
+beforeAll(async () => {
+  process.env.CUBEJS_API_SECRET = process.env.CUBEJS_API_SECRET || "cube-secret";
+  const cubeConfig: unknown = localRequire(cubeConfigPath);
   const schemaSource = readFileSync(cubeSchemaPath, "utf8");
-  const helperStart = schemaSource.indexOf("const JS_TRIM_WHITESPACE_CODE_POINTS");
-  const helperEnd = schemaSource.indexOf("\n", schemaSource.indexOf("const trimLikeJavaScript"));
-  if (helperStart < 0 || helperEnd < 0) throw new Error("trim helper not found in the Cube schema");
-  const trimmed: unknown = runInNewContext(
-    `${schemaSource.slice(helperStart, helperEnd)}\ntrimLikeJavaScript(${JSON.stringify(valueSql)});`
-  );
-  if (typeof trimmed !== "string") throw new Error("trim helper did not return SQL");
-  return `LOWER(${trimmed})`;
-};
+  const compileContext = {
+    securityContext: { feedbackDirectoryId: "frd-1", tenantId: "frd-1", edKeys: [EMBEDDED_KEY] },
+  };
+  // Cube's compiler exposes each cube's name (CUBE, AnswerFilter1, …) as a global; stand them in as strings.
+  const cubeNameGlobals: Record<string, string> = {};
+  let cubes: Record<string, TCubeDefinition> = {};
+  for (let attempt = 0; ; attempt++) {
+    cubes = {};
+    let compile: (() => Promise<void>) | undefined;
+    try {
+      runInNewContext(schemaSource, {
+        ...cubeNameGlobals,
+        require: (path: string) => {
+          if (path !== "/cube/conf/cube.js") throw new Error(`unexpected require: ${path}`);
+          return cubeConfig;
+        },
+        asyncModule: (fn: () => Promise<void>) => {
+          compile = fn;
+        },
+        cube: (name: string, definition: TCubeDefinition) => {
+          cubes[name] = definition;
+        },
+        COMPILE_CONTEXT: compileContext,
+      });
+      if (!compile) throw new Error("the schema registered no asyncModule");
+      await compile();
+      break;
+    } catch (error) {
+      const missing = /^(\w+) is not defined$/.exec(error instanceof Error ? error.message : "");
+      if (!missing || attempt > 100) throw error;
+      cubeNameGlobals[missing[1]] = missing[1];
+    }
+  }
 
+  const { getEmbeddedDimensionSpecs } = cubeConfig as {
+    getEmbeddedDimensionSpecs: (context: unknown) => Array<{ key: string; normalizedName: string }>;
+  };
+  const [spec] = getEmbeddedDimensionSpecs(compileContext);
+  const dimension = cubes.FeedbackRecords?.dimensions[spec.normalizedName];
+  if (!dimension) throw new Error(`FeedbackRecords registered no ${spec.normalizedName} dimension`);
+  normalizedDimensionSql = dimension.sql;
+});
+
+/** The dimension's SQL over one feedback record whose embedded value for the key is `value`. */
 const normalizeInPostgres = async (value: string): Promise<string> => {
   const rows = await prisma.$queryRawUnsafe<Array<{ normalized: string }>>(
-    `SELECT ${normalizedSql("$1::text")} AS normalized`,
-    value
+    `SELECT ${normalizedDimensionSql("r")} AS normalized FROM (SELECT $1::jsonb AS metadata) AS r`,
+    JSON.stringify({ embedded_data: { [EMBEDDED_KEY]: value } })
   );
   return rows[0].normalized;
 };
@@ -49,7 +95,6 @@ describe("Cube normalized embedded-data dimension on PostgreSQL", () => {
   });
 
   test("strips every character JavaScript's trim() strips, from both ends", async () => {
-    const value = `${JS_WHITESPACE}Sweden${JS_WHITESPACE}`;
-    await expect(normalizeInPostgres(value)).resolves.toBe("sweden");
+    await expect(normalizeInPostgres(`${JS_WHITESPACE}Sweden${JS_WHITESPACE}`)).resolves.toBe("sweden");
   });
 });
