@@ -61,7 +61,7 @@ ci_stop_apt() {
 ci_use_fallback_apt_mirror() {
   local apt_dir="${1:-/etc/apt}"
   # Handle both legacy .list and deb822 .sources files. Only Ubuntu archive/security hosts
-  # change; GitHub's Ubuntu mirror+file source also becomes a direct fallback URL.
+  # change; GitHub's and Blacksmith's Ubuntu mirror+file sources also become a direct fallback URL.
   # Package signatures, suites and third-party repositories remain as configured.
   sudo python3 - "$apt_dir" <<'PY'
 from pathlib import Path
@@ -73,7 +73,7 @@ for path in [root / 'sources.list', *root.glob('sources.list.d/*.list'), *root.g
     if path.is_file():
         original = path.read_text()
         updated = re.sub(r'https?://(?:[\w.-]+\.)?archive\.ubuntu\.com/ubuntu\b|https?://security\.ubuntu\.com/ubuntu\b'
-                         r'|mirror\+file:/etc/apt/apt-mirrors\.txt(?=\s|$)',
+                         r'|mirror\+file:/etc/apt/(?:apt|blacksmith-ubuntu)-mirrors\.txt(?=\s|$)',
                          'https://azure.archive.ubuntu.com/ubuntu', original)
         if updated != original:
             path.write_text(updated)

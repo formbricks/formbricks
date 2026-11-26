@@ -201,7 +201,7 @@ esac`
   expect(commands.filter((line) => line === "run")).toHaveLength(failure === "pull" ? 0 : 1);
 });
 
-test.each(["direct", "mirror-file"])(
+test.each(["direct", "mirror-file", "blacksmith-mirror-file"])(
   "apt fallback handles %s Ubuntu sources and preserves third-party sources",
   (format) => {
     const { directory, env, command } = fixture();
@@ -209,7 +209,11 @@ test.each(["direct", "mirror-file"])(
     const apt = join(directory, "apt");
     mkdirSync(join(apt, "apt.conf.d"), { recursive: true });
     mkdirSync(join(apt, "sources.list.d"));
-    const mirrorUri = "mirror+file:/etc/apt/apt-mirrors.txt";
+    // GitHub-hosted runners list Ubuntu mirrors in apt-mirrors.txt; Blacksmith runners in their own file.
+    const mirrorUri =
+      format === "blacksmith-mirror-file"
+        ? "mirror+file:/etc/apt/blacksmith-ubuntu-mirrors.txt"
+        : "mirror+file:/etc/apt/apt-mirrors.txt";
     const legacyUri = format === "direct" ? "http://us-east-2.ec2.archive.ubuntu.com/ubuntu" : mirrorUri;
     const uris =
       format === "direct"
