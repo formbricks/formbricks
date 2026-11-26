@@ -46,9 +46,9 @@ Accessing Your Application:
    deployment.env.TRUSTED_PROXY_HOP_COUNT counts. Formbricks reads the client IP from the X-Forwarded-For entry
    at that position, which a client connecting directly writes itself: it can pick a new IP for every request,
    getting fresh rate limits (sign-in, sign-up, password reset) and a forged IP in audit logs.
-   Unless a proxy that appends X-Forwarded-For sits in front, serve traffic only through an ingress or proxy
-   that appends it (a ClusterIP Service, no hostNetwork). Setting TRUSTED_PROXY_HOP_COUNT to "0" stops the spoofing but makes every
-   client one address, so one client can use up the sign-in limits for everyone: a stopgap only.
+   Unless a proxy that appends X-Forwarded-For already sits in front, serve traffic only through one (an
+   ingress, a ClusterIP Service, no hostNetwork). Setting TRUSTED_PROXY_HOP_COUNT to "0" stops the spoofing
+   but makes every client one address, so one client can use up the sign-in limits for everyone: a stopgap.
    See https://formbricks.com/docs/self-hosting/advanced/enterprise-features/audit-logging#configure-trusted-proxy-hops
 {{- end }}
 
