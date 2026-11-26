@@ -2,7 +2,7 @@
 
 set -e
 legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
-multi_arch_valkey_image="valkey/valkey@sha256:1c2b25b09f354c66fe994733acdf12fcfd4bdf6f3bd92b88a93a70378d884056"
+multi_arch_valkey_image="valkey/valkey@sha256:169567d6288e5f08aa141847c0c3e0864a32e727682ca6f052a20567c7103ef8"
 # v3.6.15 or later: before it, the buffering middleware on the auth routers turned an empty chunked response,
 # such as the redirect every OAuth/SSO callback answers with, into a 500 (traefik#11568, ENG-3977).
 # docker/traefik-auth-smoke.sh runs this image with the installer's static config and labels.
