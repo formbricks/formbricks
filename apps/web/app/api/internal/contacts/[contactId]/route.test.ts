@@ -42,7 +42,9 @@ vi.mock("@/modules/ee/contacts/lib/contacts", async () => {
   return {
     ContactInSharedDirectoryError: class extends Refusal {
       constructor() {
-        super("This contact is in a contact directory that other workspaces use, so it can't be deleted.");
+        super(
+          "This contact is in a contact directory that other workspaces use, or has responses in another workspace, so it can't be deleted."
+        );
       }
     },
     deleteContactInWorkspace: mocks.deleteContactInWorkspace,

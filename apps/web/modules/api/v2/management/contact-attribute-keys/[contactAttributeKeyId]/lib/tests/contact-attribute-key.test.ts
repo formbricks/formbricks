@@ -39,6 +39,15 @@ const mockContactAttributeKey: ContactAttributeKey = {
   updatedAt: new Date(),
 };
 
+// What the update and delete `select` returns: no directoryId and no stored workspaceId.
+const {
+  directoryId: _directoryId,
+  workspaceId: _workspaceId,
+  ...selectedKeyFields
+} = mockContactAttributeKey;
+// The Prisma mock is typed with the full model; the production select returns only these fields.
+const asSelected = (fields: typeof selectedKeyFields) => fields as unknown as ContactAttributeKey;
+
 const mockUpdateInput: TContactAttributeKeyUpdateSchema = {
   name: "Email Address",
   description: "User's verified email address",
@@ -99,8 +108,8 @@ describe("getContactAttributeKey", () => {
 
 describe("updateContactAttributeKey", () => {
   test("returns ok on successful update", async () => {
-    const updatedKey = { ...mockContactAttributeKey, ...mockUpdateInput };
-    vi.mocked(prisma.contactAttributeKey.update).mockResolvedValueOnce(updatedKey);
+    const updatedKey = { ...selectedKeyFields, ...mockUpdateInput };
+    vi.mocked(prisma.contactAttributeKey.update).mockResolvedValueOnce(asSelected(updatedKey));
 
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
       {
@@ -130,6 +139,7 @@ describe("updateContactAttributeKey", () => {
 
     if (result.ok) {
       expect(result.data).toEqual({ ...updatedKey, workspaceId: "caller-workspace" });
+      expect(result.data).not.toHaveProperty("directoryId");
     }
   });
 
@@ -178,7 +188,7 @@ describe("updateContactAttributeKey", () => {
 
 describe("deleteContactAttributeKey", () => {
   test("returns ok on successful delete", async () => {
-    vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValueOnce(mockContactAttributeKey);
+    vi.mocked(prisma.contactAttributeKey.delete).mockResolvedValueOnce(asSelected(selectedKeyFields));
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
       {
         id: "contact1",
@@ -205,7 +215,8 @@ describe("deleteContactAttributeKey", () => {
     expect(result.ok).toBe(true);
 
     if (result.ok) {
-      expect(result.data).toEqual({ ...mockContactAttributeKey, workspaceId: "caller-workspace" });
+      expect(result.data).toEqual({ ...selectedKeyFields, workspaceId: "caller-workspace" });
+      expect(result.data).not.toHaveProperty("directoryId");
     }
   });
 

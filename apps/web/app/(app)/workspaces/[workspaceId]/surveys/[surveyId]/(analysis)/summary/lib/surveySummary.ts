@@ -1327,32 +1327,33 @@ export const getResponsesForSummary = reactCache(
         ...buildWhereClause(survey, filterCriteria),
       };
 
-      const workspaceDirectoryId = await getWorkspaceContactDirectoryId(survey.workspaceId);
-
-      const responses = await prisma.response.findMany({
-        where: whereAfterResponseCursor(whereClause, cursor),
-        select: {
-          id: true,
-          createdAt: true,
-          data: true,
-          updatedAt: true,
-          contact: { select: resultsContactSelection },
-          contactAttributes: true,
-          language: true,
-          ttc: true,
-          finished: true,
-          notShown: true,
-        },
-        orderBy: [
-          {
-            createdAt: "desc",
+      const [workspaceDirectoryId, responses] = await Promise.all([
+        getWorkspaceContactDirectoryId(survey.workspaceId),
+        prisma.response.findMany({
+          where: whereAfterResponseCursor(whereClause, cursor),
+          select: {
+            id: true,
+            createdAt: true,
+            data: true,
+            updatedAt: true,
+            contact: { select: resultsContactSelection },
+            contactAttributes: true,
+            language: true,
+            ttc: true,
+            finished: true,
+            notShown: true,
           },
-          {
-            id: "desc", // Secondary sort by ID for consistent pagination
-          },
-        ],
-        take: queryLimit,
-      });
+          orderBy: [
+            {
+              createdAt: "desc",
+            },
+            {
+              id: "desc", // Secondary sort by ID for consistent pagination
+            },
+          ],
+          take: queryLimit,
+        }),
+      ]);
 
       const transformedResponses: TSurveySummaryResponseRow[] = responses.map((responsePrisma) => ({
         id: responsePrisma.id,

@@ -148,12 +148,13 @@ const assertNoContactMerge = async (
   directoryId: string,
   directorylessWorkspaceIds: string[]
 ): Promise<void> => {
-  const found = await Promise.all(
-    directorylessWorkspaceIds.map((workspaceId) =>
-      tx.contact.findFirst({ where: { workspaceId, directoryId: null }, select: { id: true } })
-    )
-  );
-  const bringingContacts = directorylessWorkspaceIds.filter((_, index) => found[index] !== null);
+  if (directorylessWorkspaceIds.length === 0) return;
+  const found = await tx.contact.groupBy({
+    by: ["workspaceId"],
+    where: { workspaceId: { in: directorylessWorkspaceIds }, directoryId: null },
+  });
+  const withContacts = new Set(found.map(({ workspaceId }) => workspaceId));
+  const bringingContacts = directorylessWorkspaceIds.filter((id) => withContacts.has(id));
   if (bringingContacts.length === 0) return;
 
   const merges =

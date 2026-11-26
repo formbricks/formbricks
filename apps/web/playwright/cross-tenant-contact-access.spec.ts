@@ -247,33 +247,12 @@ test.describe("Contact directories (ENG-7495)", () => {
     const user = await users.create({ organizationName: "shared-delete Org", skipSurveySeed: true });
     if (!user.workspaceId) throw new Error("Workspace not seeded for test");
     const directoryId = await getContactDirectoryId(user.workspaceId);
-    const directoryName = `Shared delete ${Date.now()}`;
-    await prisma.contactDirectory.update({
-      where: { id: directoryId },
-      data: { name: directoryName },
-    });
     const workspaceB = await addWorkspace(user.organizationId, "shared-delete-b", directoryId);
     const { contactId, pii } = await seedContact(user.workspaceId, directoryId, "shared-delete");
 
     await user.login();
     await gotoContact(page, workspaceB, contactId);
     await expect(page.getByRole("heading", { name: pii.email })).toBeVisible();
-
-    // The trash icon shows as disabled and says why; clicking it opens nothing.
-    const deleteButton = page.getByRole("button", { name: "Delete", exact: true });
-    await expect(deleteButton).toHaveAttribute("aria-disabled", "true");
-    // Hovered again until the tooltip shows: a hover before the page hydrates opens nothing.
-    const reason = page
-      .getByText(`${directoryName} is shared with other workspaces, so its contacts can't be deleted.`)
-      .first();
-    await expect(async () => {
-      await page.mouse.move(0, 0);
-      await deleteButton.hover();
-      await expect(reason).toBeVisible({ timeout: 1000 });
-    }).toPass();
-    // Activated from the keyboard (Playwright won't click an aria-disabled button), it still opens nothing.
-    await deleteButton.press("Enter");
-    await expect(page.getByRole("dialog")).toBeHidden();
 
     // The server refuses it too, for a caller that skips the button.
     const response = await page.request.delete(

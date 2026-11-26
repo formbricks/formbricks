@@ -334,6 +334,30 @@ type TCsvRecordResult = {
   leftOut: TUniqueValueKey[];
 };
 
+const UNIQUE_VALUE_KEYS: readonly TUniqueValueKey[] = ["email", "userId"];
+
+/**
+ * The rows with `email` and `userId` spelled as their keys, whatever case the file used. The identity
+ * check, the duplicate check and the taken-value lookup read those columns by name, and the write matches
+ * keys case-insensitively, so all of them have to see the same column. A row with two columns for one key
+ * (`email` and `Email`) is refused: which value would be stored is not clear.
+ */
+export const canonicalizeCsvColumns = (csvData: Record<string, string>[]): Record<string, string>[] =>
+  csvData.map((row) => {
+    const canonical: Record<string, string> = {};
+    const columnsByKey = new Map<string, string>();
+    for (const [column, value] of Object.entries(row)) {
+      const lower = column.toLowerCase();
+      const earlier = columnsByKey.get(lower);
+      if (earlier !== undefined) {
+        throw new ValidationError(`The columns "${earlier}" and "${column}" set the same attribute`);
+      }
+      columnsByKey.set(lower, column);
+      canonical[UNIQUE_VALUE_KEYS.find((key) => key.toLowerCase() === lower) ?? column] = value;
+    }
+    return canonical;
+  });
+
 const missingIdentityMessage = (identityKey: string): string =>
   identityKey === "email"
     ? "Email is required for all contacts"
@@ -467,15 +491,13 @@ const handleDuplicateContact = async (
     return { ...updated, workspaceId };
   }
 
-  // duplicateContactsAction = "overwrite" here
-  await prisma.contactAttribute.deleteMany({
-    where: { contactId: existingContact.id },
-  });
-
+  // duplicateContactsAction = "overwrite" here. One update, so a failed recreate keeps the old attributes
+  // instead of leaving the contact without its email or userId.
   const overwritten = await prisma.contact.update({
     where: { id: existingContact.id },
     data: {
       attributes: {
+        deleteMany: {},
         create: createAttributeConnections(recordToProcess, attributeKeyMap, attributeTypeMap),
       },
     },
@@ -499,19 +521,20 @@ export type TCreateContactsFromCSVResult =
  * existing contacts by the directory's matching key (`email` or `userId`).
  */
 export const createContactsFromCSV = async (
-  csvData: Record<string, string>[],
+  uploadedRows: Record<string, string>[],
   workspaceId: string,
   directory: TWorkspaceContactDirectory,
   duplicateContactsAction: "skip" | "update" | "overwrite",
   attributeMap: Record<string, string>
 ): Promise<TCreateContactsFromCSVResult> => {
   validateInputs(
-    [csvData, ZContactCSVRecords],
+    [uploadedRows, ZContactCSVRecords],
     [workspaceId, ZId],
     [duplicateContactsAction, ZContactCSVDuplicateAction],
     [attributeMap, ZContactCSVAttributeMap]
   );
 
+  const csvData = canonicalizeCsvColumns(uploadedRows);
   const identityKey = directory.matchingKey;
   const identityCheck = getContactCSVUploadSchema(identityKey).safeParse(csvData);
   if (!identityCheck.success) {

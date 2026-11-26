@@ -1653,32 +1653,43 @@ const unlinkSurveySegment = async (
  * workspace with no directory (decision 3) has only its app surveys' private segments, kept in the
  * workspace until it gets a directory.
  */
+const findSegmentInWorkspaceReach = async (
+  workspaceId: string,
+  segmentId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<{ isPrivate: boolean } | null> => {
+  const [existingSegment, directoryId] = await Promise.all([
+    client.segment.findUnique({
+      where: { id: segmentId },
+      select: { directoryId: true, workspaceId: true, isPrivate: true },
+    }),
+    getWorkspaceContactDirectoryId(workspaceId),
+  ]);
+  if (!existingSegment) return null;
+
+  const inReach = directoryId
+    ? existingSegment.directoryId === directoryId
+    : existingSegment.directoryId === null && existingSegment.workspaceId === workspaceId;
+  return inReach ? { isPrivate: existingSegment.isPrivate } : null;
+};
+
 const segmentBelongsToWorkspace = async (
   workspaceId: string,
   segmentId: string,
   client: Prisma.TransactionClient = prisma
-): Promise<boolean> => {
-  const [existingSegment, directoryId] = await Promise.all([
-    client.segment.findUnique({
-      where: { id: segmentId },
-      select: { directoryId: true, workspaceId: true },
-    }),
-    getWorkspaceContactDirectoryId(workspaceId),
-  ]);
+): Promise<boolean> => (await findSegmentInWorkspaceReach(workspaceId, segmentId, client)) !== null;
 
-  return directoryId
-    ? existingSegment?.directoryId === directoryId
-    : existingSegment?.directoryId === null && existingSegment.workspaceId === workspaceId;
-};
-
-const assertSurveySegmentBelongsToWorkspace = async (
+/** The segment a new survey is created on: a shared segment of the workspace's directory. */
+const assertCreateSegmentAllowed = async (
   workspaceId: string,
   segment: { id?: string | null } | null | undefined,
   client: Prisma.TransactionClient = prisma
 ): Promise<void> => {
-  if (segment?.id && !(await segmentBelongsToWorkspace(workspaceId, segment.id, client))) {
-    throw new ResourceNotFoundError("Segment", segment.id);
-  }
+  if (!segment?.id) return;
+  const target = await findSegmentInWorkspaceReach(workspaceId, segment.id, client);
+  if (!target) throw new ResourceNotFoundError("Segment", segment.id);
+  // ENG-6957, as on update: a private segment belongs to its own survey.
+  if (target.isPrivate) throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
 };
 
 /**
@@ -1883,7 +1894,7 @@ export const createSurvey = async (
     // the languages, action classes and shared fields this survey points at in that same transaction.
     const db = transaction?.tx ?? prisma;
     await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages, db);
-    await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment, db);
+    await assertCreateSegmentAllowed(parsedWorkspaceId, segment, db);
     // Read before the survey's transaction: its private segment is created in the workspace's directory.
     const segmentDirectoryId = await getWorkspaceContactDirectoryId(parsedWorkspaceId);
     assertNoSegmentFiltersWithoutDirectory(segmentDirectoryId, privateSegmentFilters);
@@ -1930,7 +1941,8 @@ export const createSurvey = async (
         status: restSurveyBody.status ?? "draft",
       }),
       languages: buildSurveyLanguagesCreateData(languages),
-      segment: segment?.id ? { connect: { id: segment.id } } : undefined,
+      // `isPrivate` repeats the check in the write.
+      segment: segment?.id ? { connect: { id: segment.id, isPrivate: false } } : undefined,
       triggers: restSurveyBody.triggers
         ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,

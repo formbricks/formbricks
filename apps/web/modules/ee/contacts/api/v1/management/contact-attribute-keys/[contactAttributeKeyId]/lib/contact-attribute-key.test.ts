@@ -157,18 +157,22 @@ describe("updateContactAttributeKey", () => {
   // Cast to TContactAttributeKeyUpdateInput for the function call, if strict typing is needed beyond the mock.
   const typedUpdateData = updateData as TContactAttributeKeyUpdateInput;
 
+  // What the update's `select` returns: no directoryId and no stored workspaceId.
+  const { directoryId: _directoryId, workspaceId: _workspaceId, ...selectedRow } = mockContactAttributeKey;
   const updatedAttributeKey = {
-    ...mockContactAttributeKey,
+    ...selectedRow,
     description: updateData.description,
     updatedAt: new Date(), // Update timestamp
-  } as ContactAttributeKey;
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test("should update contact attribute key", async () => {
-    vi.mocked(prisma.contactAttributeKey.update).mockResolvedValue(updatedAttributeKey);
+    vi.mocked(prisma.contactAttributeKey.update).mockResolvedValue(
+      updatedAttributeKey as unknown as ContactAttributeKey
+    );
 
     const result = await updateContactAttributeKey(
       mockContactAttributeKeyId,
@@ -177,6 +181,7 @@ describe("updateContactAttributeKey", () => {
     );
 
     expect(result).toEqual({ ...updatedAttributeKey, workspaceId: "caller-workspace" });
+    expect(result).not.toHaveProperty("directoryId");
     expect(prisma.contactAttributeKey.update).toHaveBeenCalledWith({
       where: { id: mockContactAttributeKeyId },
       data: { description: updateData.description },

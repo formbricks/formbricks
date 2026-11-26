@@ -36,6 +36,7 @@ export const getSegments = reactCache(
             select: {
               id: true,
               filters: true,
+              directoryId: true,
             },
           });
 
@@ -140,6 +141,20 @@ const evaluateInMemory = (
 };
 
 /**
+ * The contact is in the workspace's directory, and so is every segment it can be in. The segment list is
+ * cached for a minute, so one read before the workspace changed directory still names the old directory's
+ * segments: those are dropped.
+ */
+const getSegmentsOfCurrentDirectory = async (workspaceId: string) => {
+  const [cachedSegments, directory] = await Promise.all([
+    getSegments(workspaceId),
+    getWorkspaceContactDirectory(workspaceId),
+  ]);
+  if (!directory || !Array.isArray(cachedSegments)) return { directory, segments: [] };
+  return { directory, segments: cachedSegments.filter((segment) => segment.directoryId === directory.id) };
+};
+
+/**
  * The ids of the workspace's segments the contact belongs to. A failed segment or membership query throws
  * (ENG-3725): an empty result would read as "this contact is in no segments" and silently stop every
  * segment-targeted survey until the SDK's next sync, while a failed request answers 500 and reaches Sentry.
@@ -155,15 +170,8 @@ export const getPersonSegmentIds = async (
   try {
     validateInputs([workspaceId, ZId], [contactId, ZId], [contactUserId, ZString]);
 
-    // The contact is in the workspace's directory, and so is every segment it can be in.
-    const [segments, directory] = await Promise.all([
-      getSegments(workspaceId),
-      getWorkspaceContactDirectory(workspaceId),
-    ]);
-
-    if (!directory || !segments || !Array.isArray(segments) || segments.length === 0) {
-      return [];
-    }
+    const { directory, segments } = await getSegmentsOfCurrentDirectory(workspaceId);
+    if (!directory || segments.length === 0) return [];
 
     const interactionData = await loadInteractionData(workspaceId, contactId, interactionRows, segments);
 

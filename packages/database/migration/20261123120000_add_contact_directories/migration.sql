@@ -56,12 +56,14 @@ EXCEPTION
 END $$;
 
 -- Fills a missing directory from the row's workspace. A workspace with no directory yet leaves it NULL,
--- and the contact backfill picks the row up.
+-- and the contact backfill picks the row up. FOR SHARE waits for a save that is linking the workspace to a
+-- directory (it holds the row FOR UPDATE) and then reads the committed directory: a plain read would get
+-- the old NULL after that save had already adopted the workspace's directoryless rows.
 CREATE OR REPLACE FUNCTION contact_directory_from_workspace() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
   IF NEW."directoryId" IS NULL AND NEW."workspaceId" IS NOT NULL THEN
-    SELECT w."contactDirectoryId" INTO NEW."directoryId" FROM "Workspace" w WHERE w."id" = NEW."workspaceId";
+    SELECT w."contactDirectoryId" INTO NEW."directoryId" FROM "Workspace" w WHERE w."id" = NEW."workspaceId" FOR SHARE;
   END IF;
   RETURN NEW;
 END;
@@ -109,9 +111,15 @@ ALTER TABLE "Workspace" DROP CONSTRAINT IF EXISTS "Workspace_contactDirectoryId_
 ALTER TABLE "Workspace" ADD CONSTRAINT "Workspace_contactDirectoryId_fkey" FOREIGN KEY ("contactDirectoryId") REFERENCES "ContactDirectory"("id") ON DELETE SET NULL ON UPDATE CASCADE NOT VALID;
 
 -- Before the row goes, so the rows are still found by "workspaceId" (SET NULL clears it afterwards).
+-- Contacts of a workspace that has a directory but are still waiting for the backfill move into that
+-- directory first, so only rows that never had a directory are deleted.
 CREATE OR REPLACE FUNCTION contact_directory_delete_workspace_rows() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
+  IF OLD."contactDirectoryId" IS NOT NULL THEN
+    UPDATE "Contact" SET "directoryId" = OLD."contactDirectoryId"
+      WHERE "workspaceId" = OLD."id" AND "directoryId" IS NULL;
+  END IF;
   DELETE FROM "Contact" WHERE "workspaceId" = OLD."id" AND "directoryId" IS NULL;
   DELETE FROM "ContactAttributeKey" WHERE "workspaceId" = OLD."id" AND "directoryId" IS NULL;
   DELETE FROM "Segment" WHERE "workspaceId" = OLD."id" AND "directoryId" IS NULL;

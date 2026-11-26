@@ -64,8 +64,8 @@ const mockDeviceType = "desktop" as const;
 const mockInteractionData: TContactInteractionData = { displays: [], responses: [] };
 
 const mockSegmentsData = [
-  { id: "segment1", filters: [{}] as TBaseFilter[] },
-  { id: "segment2", filters: [{}] as TBaseFilter[] },
+  { id: "segment1", filters: [{}] as TBaseFilter[], directoryId: mockDirectoryId },
+  { id: "segment2", filters: [{}] as TBaseFilter[], directoryId: mockDirectoryId },
 ];
 
 describe("segments lib", () => {
@@ -88,7 +88,7 @@ describe("segments lib", () => {
 
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: workspaceSegmentsWhere,
-        select: { id: true, filters: true },
+        select: { id: true, filters: true, directoryId: true },
       });
 
       expect(result).toEqual(mockSegmentsData);
@@ -149,7 +149,7 @@ describe("segments lib", () => {
       expect(validateInputs).toHaveBeenCalled();
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: workspaceSegmentsWhere,
-        select: { id: true, filters: true },
+        select: { id: true, filters: true, directoryId: true },
       });
 
       expect(segmentFilterToPrismaQuery).toHaveBeenCalledTimes(mockSegmentsData.length);
@@ -163,6 +163,23 @@ describe("segments lib", () => {
       );
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
       expect(result).toEqual(mockSegmentsData.map((s) => s.id));
+    });
+
+    test("a segment list cached before the workspace changed directory is not used for the new one", async () => {
+      // The cache still holds the previous directory's segments; the workspace now uses mockDirectoryId.
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        { id: "old-directory-segment", filters: [], directoryId: "previous-directory" },
+      ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
+
+      const result = await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        mockInteractionData
+      );
+
+      expect(result).toEqual([]);
     });
 
     test("should return empty array if no segments exist", async () => {
@@ -232,8 +249,8 @@ describe("segments lib", () => {
 
     test("should include segments with no filters as always-matching", async () => {
       const segmentsWithEmptyFilters = [
-        { id: "segment-no-filter", filters: [] },
-        { id: "segment-with-filter", filters: [{}] as TBaseFilter[] },
+        { id: "segment-no-filter", filters: [], directoryId: mockDirectoryId },
+        { id: "segment-with-filter", filters: [{}] as TBaseFilter[], directoryId: mockDirectoryId },
       ];
       vi.mocked(prisma.segment.findMany).mockResolvedValue(
         segmentsWithEmptyFilters as Prisma.Result<typeof prisma.segment, unknown, "findMany">
@@ -280,6 +297,7 @@ describe("segments lib", () => {
 
     const buildInteractionSegment = (id: string, operator: string) => ({
       id,
+      directoryId: mockDirectoryId,
       filters: [
         {
           id: `filter-${id}`,
@@ -325,7 +343,7 @@ describe("segments lib", () => {
     test("falls back to the DB path for interaction segments when the visibility lookup fails", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([
         buildInteractionSegment("interaction-segment", "haveSeen"),
-        { id: "always-segment", filters: [] },
+        { id: "always-segment", filters: [], directoryId: mockDirectoryId },
       ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
       vi.mocked(prisma.survey.findMany).mockRejectedValue(new Error("pool timeout"));
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }]);
@@ -407,7 +425,7 @@ describe("segments lib", () => {
     test("should evaluate interaction segments in memory and only query the DB for the rest", async () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([
         buildInteractionSegment("interaction-segment", "haveSeen"),
-        { id: "attribute-segment", filters: [{}] as TBaseFilter[] },
+        { id: "attribute-segment", filters: [{}] as TBaseFilter[], directoryId: mockDirectoryId },
       ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }]);
 

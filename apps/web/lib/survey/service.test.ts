@@ -2911,6 +2911,7 @@ describe("Tests for createSurvey", () => {
             segment: {
               connect: {
                 id: "clseg123456789012345678901",
+                isPrivate: false,
               },
             },
           }),

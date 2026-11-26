@@ -15,7 +15,9 @@ share one directory, and then they share their contacts.
 
 The upgrade gives a directory of its own to every existing workspace that used contacts, so these keep working
 exactly as before. A workspace used contacts if it has at least one contact, has completed its app setup (the SDK
-has connected), has a segment with at least one filter, or has a custom attribute. This isn't a breaking change.
+has connected), has a segment with at least one filter, or has a custom attribute. Nothing changes for these workspaces. One
+thing does change: automation that creates workspaces and then uses contacts needs a manual step in the app,
+described below.
 
 Any other workspace gets no directory. Its default attributes, which hold no values, and its segments without
 filters are deleted. A survey that targeted such a segment keeps showing to the same visitors: a segment without
@@ -23,7 +25,7 @@ filters matched everyone.
 
 **A workspace created after the upgrade, or one that got no directory, has no contact directory until one is set
 up** in **Organization
-settings → Contact directories**. Until then, `setUserId` in the SDK and the contact APIs answer `403` with "A
+settings → Directories**. Until then, `setUserId` in the SDK and the contact APIs answer `403` with "A
 contact directory needs to be set up for this workspace before contacts are available.", and nothing is created.
 If a script of yours creates a workspace and calls `setUserId` or the contact APIs straight away, it gets this
 error. Create or assign a directory for the new workspace in the app first. Directories have no public API, so a

@@ -118,6 +118,9 @@ export const ContactDirectoryRemovalDialog = ({
 }: Readonly<ContactDirectoryRemovalDialogProps>) => {
   const { t, i18n } = useTranslation();
   const targeted = useContactDirectoryTargetedSurveys({ directoryId: directory.id, enabled: true });
+  // A reopened dialog first shows the list cached from last time while it refetches. Only a finished fetch
+  // from this opening counts, or a survey started since then would be removed without being paused.
+  const isCurrent = targeted.isSuccess && targeted.fetchStatus === "idle";
   // Workspaces whose box was unticked; every box starts ticked.
   const [keptRunning, setKeptRunning] = useState<Set<string>>(() => new Set());
   const [archive, setArchive] = useState(false);
@@ -141,10 +144,10 @@ export const ContactDirectoryRemovalDialog = ({
   const titleValues = { workspaceNames, directoryName: directory.name };
 
   const renderSurveys = (workspace: TContactDirectoryWorkspaceRef) => {
-    if (targeted.isPending) {
+    if (targeted.isError) return null;
+    if (!isCurrent) {
       return <p className="text-sm text-slate-500">{t("common.loading")}</p>;
     }
-    if (targeted.isError) return null;
     return (
       <WorkspaceSurveys
         workspace={workspace}
@@ -219,7 +222,7 @@ export const ContactDirectoryRemovalDialog = ({
             type="button"
             variant="destructive"
             loading={isSaving}
-            disabled={!targeted.isSuccess}
+            disabled={!isCurrent}
             onClick={() =>
               onConfirm({
                 pauseSurveysInWorkspaceIds: removed

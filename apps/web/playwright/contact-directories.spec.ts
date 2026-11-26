@@ -49,6 +49,9 @@ test.describe("Contact directories settings", () => {
     await expect(optionA).toContainText(`In ${workspaceA.name}`);
     await page.getByRole("option", { name: workspaceB.name }).click();
     await page.getByRole("option", { name: workspaceC.name }).click();
+    // The open list covers the dialog's buttons; Escape closes only the list.
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("option", { name: workspaceC.name })).toBeHidden();
     await expect(dialog.getByText("Workspaces in one directory share their contacts.")).toBeVisible();
 
     await dialog.getByRole("button", { name: "Create directory" }).click();

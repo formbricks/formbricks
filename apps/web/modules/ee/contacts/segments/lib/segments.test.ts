@@ -289,7 +289,7 @@ describe("Segment Service Tests", () => {
       await getSegmentsByIds(["segment-1"], workspaceId);
 
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
-        where: { id: { in: ["segment-1"] }, workspaceId },
+        where: { id: { in: ["segment-1"] }, workspaceId, directoryId: null },
         select: { id: true, filters: true },
       });
     });
@@ -571,6 +571,7 @@ describe("Segment Service Tests", () => {
         expect.objectContaining({
           where: {
             workspaceId_title: { workspaceId, title: surveyId },
+            directoryId: null,
             isPrivate: true,
             surveys: { every: { id: surveyId } },
           },
@@ -732,6 +733,21 @@ describe("Segment Service Tests", () => {
       );
     });
 
+    test("numbers the copy after the highest exact copy, whatever order the titles come in", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        { ...mockSegmentPrisma, id: "copy-3", title: "Copy of Test Segment (3)" },
+        { ...mockSegmentPrisma, id: "copy-1", title: "Copy of Test Segment (1)" },
+        { ...mockSegmentPrisma, id: "plus", title: "Copy of Test Segment Plus" },
+      ]);
+      vi.mocked(prisma.segment.create).mockResolvedValue(clonedSegmentPrisma);
+
+      await cloneSegment(segmentId, surveyId, surveyWorkspaceId);
+
+      expect(prisma.segment.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ title: "Copy of Test Segment (4)" }) })
+      );
+    });
+
     test("escapes LIKE wildcards in the title it searches copies by", async () => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue({ ...mockSegmentPrisma, title: "50%_off" });
 
@@ -884,7 +900,7 @@ describe("Segment Service Tests", () => {
       await resetSegmentInSurvey(surveyId);
 
       expect(prisma.segment.findFirst).toHaveBeenCalledWith({
-        where: { workspaceId, title: surveyId, isPrivate: true },
+        where: { workspaceId, directoryId: null, title: surveyId, isPrivate: true },
         select: selectSegment,
       });
     });

@@ -316,19 +316,17 @@ const getNextArchived = ({
 
 /**
  * Pauses the surveys of the given workspaces that their removal cuts off (decision 2): an in-progress one
- * is paused, a scheduled one loses its publish date so it stays paused. Returns their ids for the audit log.
+ * is paused, a scheduled one loses its publish date so it stays paused. One statement, so a survey that
+ * completed meanwhile is left alone. Returns the ids it paused, for the audit log.
  */
 const pauseTargetedSurveys = async (tx: TClient, workspaceIds: string[]): Promise<string[]> => {
   if (workspaceIds.length === 0) return [];
-  const surveys = await tx.survey.findMany({
+  const paused = await tx.survey.updateManyAndReturn({
     where: getTargetedSurveysWhere(workspaceIds),
+    data: { status: "paused", publishOn: null },
     select: { id: true },
   });
-  const ids = surveys.map(({ id }) => id);
-  if (ids.length > 0) {
-    await tx.survey.updateMany({ where: { id: { in: ids } }, data: { status: "paused", publishOn: null } });
-  }
-  return ids;
+  return paused.map(({ id }) => id);
 };
 
 /**

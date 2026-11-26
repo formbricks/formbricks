@@ -108,6 +108,22 @@ describe("a userId directory", () => {
     expect(await holdersOf("email", "ann@example.com")).toEqual([ann]);
   });
 
+  test("an Email column is checked like email: another contact's address is left out", async () => {
+    const ann = await seedContact({ userId: "ann", email: "ann@example.com" });
+
+    const result = await importRows([{ userId: "bob", Email: "ann@example.com" }]);
+
+    expect(result).toMatchObject({ leftOutCounts: { email: 1, userId: 0 } });
+    expect(await holdersOf("email", "ann@example.com")).toEqual([ann]);
+  });
+
+  test("two columns for one key in a row are refused before anything is written", async () => {
+    await expect(
+      importRows([{ userId: "bob", email: "bob@example.com", Email: "other@example.com" }])
+    ).rejects.toThrow('The columns "email" and "Email" set the same attribute');
+    expect(await prisma.contact.count({ where: { directoryId: directory.id } })).toBe(0);
+  });
+
   test("two rows sharing an email are refused before anything is written", async () => {
     await expect(
       importRows([

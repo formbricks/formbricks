@@ -33,6 +33,7 @@ export const useContactDirectoryTargetedSurveys = ({
     queryFn: ({ signal }) => fetchContactDirectoryTargetedSurveys({ directoryId, signal }),
     enabled,
     staleTime: 0,
+    gcTime: 0,
     refetchOnMount: "always",
     retry: retryUnlessClientError(3),
     retryDelay: v3RetryDelay,

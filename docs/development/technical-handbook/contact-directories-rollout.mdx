@@ -29,7 +29,7 @@ The app reads contacts only by `directoryId` and has no fallback for a contact w
 **Open question for the Cloud deploy owner:** does Cloud deploy the chart through Argo CD, so the migration Job finishes before the new web pods roll?
 
 - **Yes:** nothing to build.
-- **No:** add a readiness gate. In `apps/web/app/health/ready/route.ts`, report not ready until the `DataMigration` row named `20261123120002_backfill_contact_directories` has status `applied`, and throw a named reason such as `contact_directory_backfill_pending`. The route already checks `User_isBootstrapAdmin_key` the same way; consider checking `ContactAttributeKey_directoryId_key_key` there too. Extend `app/health/ready/route.test.ts`. Old pods keep serving meanwhile.
+- **No:** add a readiness gate. In `apps/web/app/health/ready/route.ts`, report not ready until both hold: the `DataMigration` row named `20261123120002_backfill_contact_directories` has status `applied`, and the index `ContactAttributeKey_directoryId_key_key` exists and is valid (the backfill can finish before the index build). Throw a named reason for each, such as `contact_directory_backfill_pending` and `contact_directory_index_pending`. The route already checks `User_isBootstrapAdmin_key` the same way. Extend `app/health/ready/route.test.ts`. Old pods keep serving meanwhile.
 
 ## Timing Check On A Cloud-Size Clone
 

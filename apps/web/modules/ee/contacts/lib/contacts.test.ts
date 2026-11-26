@@ -380,13 +380,17 @@ describe("Contacts Lib", () => {
       const result = await deleteContactInWorkspace(mockContactId, mockWorkspaceId);
 
       expect(result).toEqual({ ...mockPrismaContact, workspaceId: mockWorkspaceId });
-      // The share check is part of the delete: a directory every workspace of which is the caller's.
+      // The share check is part of the delete: a directory every workspace of which is the caller's, and
+      // no response or display in another workspace's survey.
+      const otherWorkspace = { survey: { workspaceId: { not: mockWorkspaceId } } };
       expect(prisma.contact.deleteMany).toHaveBeenCalledWith({
         where: {
           id: mockContactId,
           directory: {
             workspaces: { some: { id: mockWorkspaceId }, every: { id: mockWorkspaceId } },
           },
+          responses: { none: otherWorkspace },
+          displays: { none: otherWorkspace },
         },
       });
     });
@@ -769,8 +773,12 @@ describe("Contacts Lib", () => {
       );
 
       expect("contacts" in result).toBe(true);
-      expect(prisma.contactAttribute.deleteMany).toHaveBeenCalled();
-      expect(prisma.contact.update).toHaveBeenCalled();
+      // The old attributes go in the same update that writes the new ones.
+      expect(prisma.contact.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { attributes: expect.objectContaining({ deleteMany: {} }) },
+        })
+      );
     });
 
     test("handles update without existing userId attribute", async () => {

@@ -176,9 +176,12 @@ export const getContactInWorkspace = reactCache(
 
 /** Shown by the APIs; the Contacts page translates {@link CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE} instead. */
 export const CONTACT_IN_SHARED_DIRECTORY_MESSAGE =
-  "This contact is in a contact directory that other workspaces use, so it can't be deleted.";
+  "This contact is in a contact directory that other workspaces use, or has responses in another workspace, so it can't be deleted.";
 
-/** Deleting the contact would also delete its responses and displays in the other workspaces. */
+/**
+ * Deleting the contact would also delete its responses and displays in the other workspaces: those of
+ * the directory's other workspaces, or of a workspace that has left the directory (decision 1).
+ */
 export class ContactInSharedDirectoryError extends OperationNotAllowedError {
   constructor() {
     super(CONTACT_IN_SHARED_DIRECTORY_MESSAGE);
@@ -187,7 +190,8 @@ export class ContactInSharedDirectoryError extends OperationNotAllowedError {
 
 /**
  * Deletes a contact of the workspace's contact directory (decision 9). Refused with
- * {@link ContactInSharedDirectoryError} when another workspace uses the directory too, and with
+ * {@link ContactInSharedDirectoryError} when another workspace uses the directory too, or when the
+ * contact has a response or display in another workspace's survey (one that left the directory), and with
  * `ResourceNotFoundError` when the contact is not in the directory. The share check is part of the
  * delete itself, so a workspace joining the directory meanwhile cannot slip past it.
  */
@@ -207,6 +211,8 @@ export const deleteContactInWorkspace = async (contactId: string, workspaceId: s
       where: {
         id: contactId,
         directory: { workspaces: { some: { id: workspaceId }, every: { id: workspaceId } } },
+        responses: { none: { survey: { workspaceId: { not: workspaceId } } } },
+        displays: { none: { survey: { workspaceId: { not: workspaceId } } } },
       },
     });
     if (count === 0) {

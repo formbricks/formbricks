@@ -72,4 +72,17 @@ describe("deleting a workspace and its contact directory", () => {
     expect(await directory(directory2)).toEqual({ isArchived: false });
     expect(await contactsOf(directory2)).toEqual([{ workspaceId: null }]);
   });
+
+  test("a contact still waiting for the backfill moves into the directory instead of being deleted", async () => {
+    // The fill trigger sets the directory on insert; clearing it is how the backfill window looks.
+    const waiting = await prisma.contact.create({ data: { workspaceId: workspaceA }, select: { id: true } });
+    await prisma.contact.update({ where: { id: waiting.id }, data: { directoryId: null } });
+
+    await deleteWorkspaceIfNotLast(workspaceA, organizationId);
+
+    expect(
+      await prisma.contact.findUnique({ where: { id: waiting.id }, select: { directoryId: true } })
+    ).toEqual({ directoryId: directory1 });
+    expect(await contactsOf(directory1)).toHaveLength(2);
+  });
 });

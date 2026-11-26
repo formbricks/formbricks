@@ -35,7 +35,7 @@ const db = vi.hoisted(() => ({
   workspace: { findMany: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
   contact: { groupBy: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn() },
   segment: { findMany: vi.fn(), updateMany: vi.fn() },
-  survey: { findMany: vi.fn(), updateMany: vi.fn() },
+  survey: { findMany: vi.fn(), updateManyAndReturn: vi.fn() },
 }));
 
 vi.mock("@formbricks/database", () => ({ prisma: db }));
@@ -156,9 +156,12 @@ const setup = ({
   db.contact.updateMany.mockResolvedValue({ count: 0 });
   db.contact.findFirst.mockResolvedValue(null);
   db.contact.groupBy.mockImplementation(async ({ where }: { where: { directoryId: unknown } }) =>
-    directories
-      .filter((d) => inIds(where.directoryId).includes(d.id) && (d.contacts ?? 0) > 0)
-      .map((d) => ({ directoryId: d.id, _count: { _all: d.contacts } }))
+    // `directoryId: null` asks for a joining workspace's directoryless contacts: none here (integration test).
+    where.directoryId === null
+      ? []
+      : directories
+          .filter((d) => inIds(where.directoryId).includes(d.id) && (d.contacts ?? 0) > 0)
+          .map((d) => ({ directoryId: d.id, _count: { _all: d.contacts } }))
   );
 
   db.workspace.findMany.mockImplementation(
@@ -193,11 +196,14 @@ const setup = ({
       .filter((s) => s.targeted && inIds(where.workspaceId).includes(s.workspaceId))
       .map(({ id, name, workspaceId, status }) => ({ id, name, workspaceId, status }))
   );
-  db.survey.updateMany.mockImplementation(
-    async ({ where, data }: { where: { id: unknown }; data: { status: string } }) => {
-      log.push(`pause ${inIds(where.id).join(",")}`);
-      for (const s of surveys) if (inIds(where.id).includes(s.id)) s.status = data.status;
-      return { count: inIds(where.id).length };
+  db.survey.updateManyAndReturn.mockImplementation(
+    async ({ where, data }: { where: { workspaceId: unknown }; data: { status: string } }) => {
+      const paused = surveys.filter(
+        (s) => s.targeted && s.status !== "completed" && inIds(where.workspaceId).includes(s.workspaceId)
+      );
+      log.push(`pause ${paused.map(({ id }) => id).join(",")}`);
+      for (const s of paused) s.status = data.status;
+      return paused.map(({ id }) => ({ id }));
     }
   );
 };
@@ -387,12 +393,11 @@ describe("createContactDirectory", () => {
 });
 
 describe("updateContactDirectory", () => {
-  test("renames the directory under its lock and returns the before and after", async () => {
+  test("renames the directory and returns the before and after", async () => {
     setup({ ws: [ws("w1", "d1")], dirs: [dir("d1")] });
 
     const result = await updateContactDirectory({ organizationId: ORG, directoryId: "d1", name: " Nw " });
 
-    expect(log).toEqual(["lock directory d1", 'update directory d1 {"name":"Nw","isArchived":false}']);
     expect(result).toEqual({
       previous: { name: "Directory d1", workspaceIds: ["w1"], isArchived: false },
       next: { name: "Nw", workspaceIds: ["w1"], isArchived: false, pausedSurveyIds: [] },
@@ -408,12 +413,11 @@ describe("updateContactDirectory", () => {
     expect(db.contactDirectory.update).not.toHaveBeenCalled();
   });
 
-  test("adds a workspace with no directory, locking the directory before the workspaces", async () => {
+  test("adds a workspace with no directory", async () => {
     setup({ ws: [ws("w1", "d1"), ws("w2", null)], dirs: [dir("d1")] });
 
     await updateContactDirectory({ organizationId: ORG, directoryId: "d1", workspaceIds: ["w1", "w2"] });
 
-    expect(log.slice(0, 3)).toEqual(["lock directory d1", "lock workspaces w2", "set w2 to d1"]);
     expect(directoryOf("w2")).toBe("d1");
   });
 
@@ -437,7 +441,7 @@ describe("updateContactDirectory", () => {
     });
 
     expect(directoryOf("w2")).toBeNull();
-    expect(db.survey.updateMany).not.toHaveBeenCalled();
+    expect(db.survey.updateManyAndReturn).not.toHaveBeenCalled();
     expect(db.segment.updateMany).not.toHaveBeenCalled();
     expect(db.contact.updateMany).not.toHaveBeenCalled();
     expect(result.next).toEqual({

@@ -146,7 +146,11 @@ export const getSegmentsByIds = async (
     const segments = await prisma.segment.findMany({
       where: {
         id: { in: segmentIds },
-        ...(directory ? whereSegmentsOfWorkspace(workspaceId, directory.id) : { workspaceId }),
+        // Without a directory, only the workspace's own directoryless segments: the rows it left in a
+        // former directory keep its id but are that directory's.
+        ...(directory
+          ? whereSegmentsOfWorkspace(workspaceId, directory.id)
+          : { workspaceId, directoryId: null }),
       },
       select: { id: true, filters: true },
     });
@@ -474,17 +478,15 @@ export const cloneSegment = async (
       select: { title: true },
     });
 
-    // Find the last "Copy of" title and extract the number from it
-    const lastCopyTitle = copyTitles.map((existingSegment) => existingSegment.title).pop();
-
-    let suffix = 1;
-    if (lastCopyTitle) {
-      const regex = /\((\d+)\)$/;
-      const match = regex.exec(lastCopyTitle);
-      if (match) {
-        suffix = parseInt(match[1], 10) + 1;
-      }
-    }
+    // The next number after the highest "Copy of <title> (n)". Other titles that only start the same
+    // ("Copy of <title> Plus") don't count.
+    const copyPrefix = `Copy of ${segment.title} (`;
+    const suffix =
+      copyTitles.reduce((highest, { title }) => {
+        if (!title.startsWith(copyPrefix) || !title.endsWith(")")) return highest;
+        const number = title.slice(copyPrefix.length, -1);
+        return /^\d+$/.test(number) ? Math.max(highest, Number.parseInt(number, 10)) : highest;
+      }, 0) + 1;
 
     // Construct the title for the cloned segment
     const clonedTitle = `Copy of ${segment.title} (${suffix})`;
@@ -569,6 +571,8 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
       const segment = await tx.segment.findFirst({
         where: {
           ...whereSegmentsOfDirectoryOrWorkspace(directoryId, survey.workspaceId),
+          // A workspace with no directory never rewrites the private row it left in a former directory.
+          ...(directoryId ? {} : { directoryId: null }),
           title: surveyId,
           isPrivate: true,
         },

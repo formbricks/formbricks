@@ -231,6 +231,25 @@ describe("contact delete (decision 9)", () => {
     expect(await prisma.contact.findUnique({ where: { id: layout.contactOfC } })).toBeNull();
   });
 
+  test("is refused when a workspace that left the directory has the contact's response", async () => {
+    // B leaves D1, so A is its only workspace; B's survey still has the contact's response.
+    const surveyOfB = (
+      await prisma.survey.create({
+        data: { name: "Survey of B", type: "link", status: "inProgress", workspaceId: layout.workspaceB },
+        select: { id: true },
+      })
+    ).id;
+    await prisma.response.create({
+      data: { surveyId: surveyOfB, contactId: layout.contactFromA, finished: true, data: {} },
+    });
+    await prisma.workspace.update({ where: { id: layout.workspaceB }, data: { contactDirectoryId: null } });
+
+    await expect(deleteContactInWorkspace(layout.contactFromA, layout.workspaceA)).rejects.toBeInstanceOf(
+      ContactInSharedDirectoryError
+    );
+    expect(await prisma.response.count({ where: { surveyId: surveyOfB } })).toBe(1);
+  });
+
   test("does not reach a contact of another directory", async () => {
     await expect(deleteContactInWorkspace(layout.contactOfC, layout.workspaceA)).rejects.toBeInstanceOf(
       ResourceNotFoundError

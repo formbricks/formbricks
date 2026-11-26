@@ -100,9 +100,8 @@ describe("the app's results mark contacts the workspace no longer reaches", () =
     const summaryRows = await getResponsesForSummary(layout.surveyId, 10);
     expect(contactsById(summaryRows)).toEqual(contactsById(responses));
 
-    await expect(getResponseWithQuotas(layout.oldResponse)).resolves.toMatchObject({
-      contact: { id: layout.oldContact, unavailable: true },
-    });
+    const oldCard = await getResponseWithQuotas(layout.oldResponse);
+    expect(oldCard?.contact).toEqual({ id: layout.oldContact, unavailable: true });
     const card = await getResponseWithQuotas(layout.reachableResponse);
     expect(card?.contact).toEqual({ id: layout.reachableContact, userId: "user-in" });
   });
