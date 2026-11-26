@@ -50,7 +50,8 @@ Accessing Your Application:
    Every request must reach Formbricks through proxies that append X-Forwarded-For: serve traffic through the
    ingress (a ClusterIP Service, no hostNetwork), or block every direct path so that only those proxies reach
    the app ({{ if and .Values.deployment.hostNetwork $exposedService }}this Service and the app's port on every node{{ else if .Values.deployment.hostNetwork }}the app's port on every node{{ else }}this Service{{ end }}). A proxy in front does not stop direct connections, and a ClusterIP Service
-   still admits other pods: restrict them with a NetworkPolicy that admits only the ingress controller.
+   still admits other pods: restrict them with a NetworkPolicy that admits only the trusted proxies,
+   including the ingress controller.
    Setting TRUSTED_PROXY_HOP_COUNT to "0" stops the spoofing but makes every client one address, so one
    client can use up the sign-in limits for everyone: a stopgap.
    See https://formbricks.com/docs/self-hosting/advanced/enterprise-features/audit-logging#configure-trusted-proxy-hops
