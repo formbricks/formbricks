@@ -58,20 +58,32 @@ export const requireWorkspaceContactDirectory = async (
  * The workspace's directory, read in `tx` with the workspace's row held `FOR SHARE` until `tx` ends.
  * Removing the workspace from a directory takes the same row `FOR UPDATE`, so it waits for `tx`, or `tx`
  * sees the workspace already gone: a write in `tx` never lands in a directory the workspace has left.
- * Only the workspace row is locked, never the directory's, so this can't deadlock with a directory save
- * (directory row first, then workspace rows).
+ *
+ * A directory save locks the directory row, then the workspace rows; a write into the directory takes a
+ * key-share lock on the directory row through its foreign key. So the directory row is locked here first,
+ * in the save's order, and the workspace row second: taking them the other way round can deadlock with a
+ * save. The directory is read once before the locks to know which row to lock, and again after: if it
+ * changed meanwhile, the workspace is read as having no directory.
  */
 export const lockWorkspaceDirectory = async (
   tx: Prisma.TransactionClient,
   workspaceId: string
 ): Promise<TWorkspaceContactDirectory | null> => {
+  const readDirectory = async () =>
+    (
+      await tx.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { contactDirectory: { select: { id: true, matchingKey: true } } },
+      })
+    )?.contactDirectory ?? null;
+
+  const before = await readDirectory();
+  if (!before) return null;
+  await tx.$executeRaw`SELECT 1 FROM "ContactDirectory" WHERE "id" = ${before.id} FOR KEY SHARE`;
   await tx.$executeRaw`SELECT 1 FROM "Workspace" WHERE "id" = ${workspaceId} FOR SHARE`;
-  // Read after the lock, so it sees the directory a removal that held the row committed.
-  const workspace = await tx.workspace.findUnique({
-    where: { id: workspaceId },
-    select: { contactDirectory: { select: { id: true, matchingKey: true } } },
-  });
-  return workspace?.contactDirectory ?? null;
+  // Read after the locks, so it sees the directory a save that held them committed.
+  const after = await readDirectory();
+  return after?.id === before.id ? after : null;
 };
 
 /**

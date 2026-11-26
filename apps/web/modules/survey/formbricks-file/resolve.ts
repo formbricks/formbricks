@@ -14,10 +14,7 @@ import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
-import {
-  whereAttributeKeysOfDirectory,
-  whereAttributeKeysOfWorkspace,
-} from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereAttributeKeysOfDirectory } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import {
   CONTACT_DIRECTORY_MISSING_MESSAGE,
   getWorkspaceContactDirectory,
@@ -305,15 +302,17 @@ const planAttributeKeys = async (
     );
   }
 
+  // The keys of the directory just read, which the plan records: not of whatever directory the workspace
+  // is in by the time these run, so the apply's directory check covers them too.
   const [existing, count] = await Promise.all([
     db.contactAttributeKey.findMany({
       where: {
-        ...whereAttributeKeysOfWorkspace(workspaceId),
+        ...whereAttributeKeysOfDirectory(directory.id),
         key: { in: wanted.map((attributeKey) => attributeKey.key) },
       },
       select: { key: true },
     }),
-    db.contactAttributeKey.count({ where: whereAttributeKeysOfWorkspace(workspaceId) }),
+    db.contactAttributeKey.count({ where: whereAttributeKeysOfDirectory(directory.id) }),
   ]);
   const existingKeys = new Set(existing.map((attributeKey) => attributeKey.key));
   // A file may name one key more than once; its first definition is the one it is created with (as an
