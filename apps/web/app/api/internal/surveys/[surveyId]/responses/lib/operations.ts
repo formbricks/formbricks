@@ -57,8 +57,9 @@ export async function querySurveyResponsesOperation({
       offset,
       filterCriteria,
       undefined,
-      // The response cards on this page mark what each respondent was not shown (ENG-6936).
-      { withNotShown: true }
+      // The response cards on this page mark what each respondent was not shown (ENG-6936), and which
+      // contacts the workspace no longer reaches.
+      { withNotShown: true, withContactAvailability: true }
     );
     return successResponse(responses.map(serializeResponseCard), { requestId, cache: READ_CACHE });
   } catch (error) {

@@ -83,6 +83,38 @@ describe("updateUser through the contact directory", () => {
     ]);
   });
 
+  test("in a shared directory the SDK gets only its own workspace's displays and responses", async () => {
+    const organizationId = await createOrganization();
+    const { workspaceId, directoryId } = await createWorkspaceWithContactDirectory(organizationId);
+    await createMigratedUserIdKey(workspaceId);
+    const secondWorkspaceId = await createWorkspaceOnContactDirectory(organizationId, directoryId);
+    const { contactId } = (await updateUser(workspaceId, USER_ID, "desktop")).state.data ?? {};
+    const createSurvey = async (surveyWorkspaceId: string) =>
+      (
+        await prisma.survey.create({
+          data: { name: "Survey", type: "app", status: "inProgress", workspaceId: surveyWorkspaceId },
+          select: { id: true },
+        })
+      ).id;
+    const ownSurveyId = await createSurvey(secondWorkspaceId);
+    const otherSurveyId = await createSurvey(workspaceId);
+    const ownDisplayAt = new Date("2026-01-01T00:00:00Z");
+    await prisma.display.create({ data: { surveyId: ownSurveyId, contactId, createdAt: ownDisplayAt } });
+    // The other workspace's display is newer, so it would win `lastDisplayAt` if it leaked.
+    await prisma.display.create({
+      data: { surveyId: otherSurveyId, contactId, createdAt: new Date("2026-02-01T00:00:00Z") },
+    });
+    for (const surveyId of [ownSurveyId, otherSurveyId]) {
+      await prisma.response.create({ data: { surveyId, contactId, finished: true, data: {} } });
+    }
+
+    const { state } = await updateUser(secondWorkspaceId, USER_ID, "desktop");
+
+    expect(state.data?.displays).toEqual([{ surveyId: ownSurveyId, createdAt: ownDisplayAt }]);
+    expect(state.data?.responses).toEqual([ownSurveyId]);
+    expect(state.data?.lastDisplayAt).toEqual(ownDisplayAt);
+  });
+
   // Decision 12: a directory made in settings has default keys with no workspace; the old
   // (key, workspaceId) connect would fail for every one of its workspaces.
   test("connects the directory's default userId key, which has no workspace", async () => {

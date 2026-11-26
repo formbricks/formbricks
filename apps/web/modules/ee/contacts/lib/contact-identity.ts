@@ -2,9 +2,9 @@ import type { ContactOrderByWithRelationInput } from "@formbricks/database/prism
 
 /**
  * How CSV upload and the v2 contact writes find an existing contact. A directory's matching key is also
- * the name of the attribute key that identifies a contact in it: `email`, or `externalId` (spec
- * decision 11). Contacts are found through their attribute rows; nothing in the database makes the value
- * unique, so one value can match several contacts (decision 5).
+ * the name of the attribute key that identifies a contact in it: `email` or `userId`. Contacts are found
+ * through their attribute rows; nothing in the database makes the value unique, so one value can match
+ * several contacts (decision 5).
  */
 
 type TContactWithAttributeValues = {
@@ -39,7 +39,7 @@ export const groupContactsByIdentity = <T extends TContactWithAttributeValues>(
 /**
  * The contact a CSV or bulk row updates when its identity value matches (spec decision 5): the one whose
  * `userId` equals the row's, otherwise the oldest. The other matches are left alone. `matches` must be
- * oldest first.
+ * oldest first. In a userId directory every match has the row's userId, so this is the oldest.
  */
 export const pickContactForRow = <T extends TContactWithAttributeValues>(
   matches: T[],

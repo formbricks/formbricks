@@ -16,8 +16,8 @@ export const GET = withV3ApiWrapper({
 });
 
 /**
- * `PATCH /api/internal/contact-directories/{directoryId}`: rename a directory or add workspaces to it.
- * The matching key never changes (spec decision 1), and no workspace may leave (decision 8).
+ * `PATCH /api/internal/contact-directories/{directoryId}`: rename a directory, add or remove workspaces,
+ * archive or unarchive it. The matching key never changes (spec decision 1).
  */
 export const PATCH = withV3ApiWrapper({
   auth: "session",

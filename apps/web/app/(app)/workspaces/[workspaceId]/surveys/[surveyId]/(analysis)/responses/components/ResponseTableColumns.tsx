@@ -21,6 +21,7 @@ import { getContactIdentifier } from "@/lib/utils/contact";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
+import { ContactNotAvailable } from "@/modules/analysis/components/contact-not-available";
 import { OutcomeBadge } from "@/modules/analysis/response-outcome/components/outcome-badge";
 import { responseStatus } from "@/modules/analysis/response-outcome/lib/outcome";
 import { displayEmbeddedFieldValue } from "@/modules/embedded-data/lib/value-display";
@@ -385,6 +386,14 @@ export const generateResponseTableColumns = (
       const personId = row.original.person
         ? getContactIdentifier(row.original.person, row.original.contactAttributes)
         : t("common.anonymous");
+      if (row.original.person?.unavailable) {
+        return (
+          <div className="flex items-center gap-x-2">
+            <p className="truncate text-slate-900">{personId}</p>
+            <ContactNotAvailable />
+          </div>
+        );
+      }
       return <p className="truncate text-slate-900">{personId}</p>;
     },
   };

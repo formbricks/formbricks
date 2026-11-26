@@ -32,6 +32,7 @@ import {
   getIsWorkflowsEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { getOtherDirectorySegmentId } from "@/modules/survey/editor/lib/segment-directory";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
@@ -99,6 +100,7 @@ export const SurveyEditorPage = async (props: {
     finishedResponseCount,
     segments,
     contactDirectoryId,
+    otherDirectorySegmentId,
   ] = await Promise.all([
     getSurvey(params.surveyId),
     getWorkspaceWithTeamIds(params.workspaceId),
@@ -111,6 +113,7 @@ export const SurveyEditorPage = async (props: {
       getSegments(workspace.id, where)
     ),
     getWorkspaceContactDirectoryId(workspace.id),
+    getOtherDirectorySegmentId(params.surveyId),
   ]);
 
   if (!workspaceWithTeamIds) {
@@ -195,6 +198,7 @@ export const SurveyEditorPage = async (props: {
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
       hasContactDirectory={contactDirectoryId !== null}
+      otherDirectorySegmentId={otherDirectorySegmentId}
       isSpamProtectionAllowed={isSpamProtectionAllowed}
       workspaceLanguages={workspaceLanguages}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}

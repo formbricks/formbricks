@@ -563,7 +563,7 @@ export const SurveyMenuBar = ({
 
         // The server deletes a private segment when a survey switches from app to link, so the
         // working copy has to take that back. Skipping it is not a cosmetic loss: the stale id
-        // goes back out on the next save, `assertSurveySegmentBelongsToWorkspace` throws
+        // goes back out on the next save, `checkAppSurveySegment` throws
         // `ResourceNotFoundError`, and the catch below swallows it — so this block never runs
         // again and the editor cannot be saved or published until the page is reloaded.
         //

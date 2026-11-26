@@ -7,7 +7,11 @@ import {
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
 import type { TWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
-import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
+import {
+  TContactCreateRequest,
+  TContactResponse,
+  getUniqueValueKey,
+} from "@/modules/ee/contacts/types/contact";
 
 /** A contact of the directory whose `key` attribute is `value`, if any. */
 const findContactWithAttribute = (directoryId: string, key: string, value: string) =>
@@ -21,7 +25,8 @@ const findContactWithAttribute = (directoryId: string, key: string, value: strin
 
 /**
  * Creates a contact in `directory`, from the request's workspace. The directory's matching key (`email`
- * or `externalId`) is required and, like `userId`, must not belong to another contact of the directory.
+ * or `userId`) is required and, like the other of the two keys when given, must not belong to another
+ * contact of the directory.
  */
 export const createContact = async (
   contactData: TContactCreateRequest,
@@ -39,9 +44,6 @@ export const createContact = async (
       });
     }
 
-    // Extract userId if present
-    const userId = attributes.userId;
-
     if (await findContactWithAttribute(directory.id, identityKey, identityValue)) {
       return err({
         type: "conflict",
@@ -49,16 +51,14 @@ export const createContact = async (
       });
     }
 
-    // Check for existing contact with same userId (if provided)
-    if (userId) {
-      const existingContactByUserId = await findContactWithAttribute(directory.id, "userId", userId);
-
-      if (existingContactByUserId) {
-        return err({
-          type: "conflict",
-          details: [{ field: "userId", issue: "contact with this userId already exists" }],
-        });
-      }
+    // userId in an email directory, email in a userId one
+    const uniqueValueKey = getUniqueValueKey(identityKey);
+    const uniqueValue = attributes[uniqueValueKey];
+    if (uniqueValue && (await findContactWithAttribute(directory.id, uniqueValueKey, uniqueValue))) {
+      return err({
+        type: "conflict",
+        details: [{ field: uniqueValueKey, issue: `contact with this ${uniqueValueKey} already exists` }],
+      });
     }
 
     // Get all attribute keys that need to exist

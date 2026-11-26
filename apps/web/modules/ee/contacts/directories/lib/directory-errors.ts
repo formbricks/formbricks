@@ -37,16 +37,37 @@ export class ContactDirectoryWorkspacesNotFoundError extends ContactDirectoryWor
   }
 }
 
+/** A workspace joins a directory only while it has none: no implicit move out of another directory. */
+export class ContactDirectoryWorkspacesInOtherDirectoryError extends ContactDirectoryWorkspacesError {
+  constructor(workspaceIds: string[]) {
+    super("Some workspaces already use another contact directory", workspaceIds);
+    this.name = "ContactDirectoryWorkspacesInOtherDirectoryError";
+  }
+}
+
+/**
+ * Directoryless workspaces that bring contacts a previous-release pod wrote, where joining would merge them
+ * with the directory's own contacts (decision 15: no merge of contacts).
+ */
 export class ContactDirectoryWorkspacesNotMovableError extends ContactDirectoryWorkspacesError {
   constructor(workspaceIds: string[]) {
-    super("Some workspaces can't move to another contact directory", workspaceIds);
+    super("Some workspaces bring contacts that can't join this contact directory", workspaceIds);
     this.name = "ContactDirectoryWorkspacesNotMovableError";
   }
 }
 
-export class ContactDirectoryWorkspacesCannotLeaveError extends ContactDirectoryWorkspacesError {
-  constructor(workspaceIds: string[]) {
-    super("A workspace can't leave its contact directory", workspaceIds);
-    this.name = "ContactDirectoryWorkspacesCannotLeaveError";
+/** An archived directory gets workspaces only by being unarchived in the same save (ADR 0062). */
+export class ContactDirectoryArchivedError extends Error {
+  constructor() {
+    super("The contact directory is archived. Unarchive it to add workspaces");
+    this.name = "ContactDirectoryArchivedError";
+  }
+}
+
+/** Only a directory with no workspaces can be archived (ADR 0062). */
+export class ContactDirectoryArchiveHasWorkspacesError extends Error {
+  constructor() {
+    super("A contact directory with workspaces can't be archived");
+    this.name = "ContactDirectoryArchiveHasWorkspacesError";
   }
 }

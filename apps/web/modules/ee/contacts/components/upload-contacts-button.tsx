@@ -100,7 +100,7 @@ export const UploadContactsCSVButton = ({
         const records = parseContactsCSV(csv);
 
         // Only the file's shape and size here. The matching column is checked on Upload, once columns are
-        // mapped: a header like "External ID" or "E-mail" maps to its key there.
+        // mapped: a header like "User ID" or "E-mail" maps to its key there.
         const parsedRecords = ZContactCSVRecords.safeParse(records);
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
@@ -349,7 +349,7 @@ export const UploadContactsCSVButton = ({
 
   // Function to download an example CSV
   const handleDownloadExampleCSV = () => {
-    const exampleData = [
+    const exampleData: Record<string, string>[] = [
       {
         email: "user1@example.com",
         user_id: "1001",
@@ -397,14 +397,8 @@ export const UploadContactsCSVButton = ({
       },
     ];
 
-    // An external-ID directory matches rows on `externalId`, so its sample leads with that column.
-    const sampleRows: Record<string, string>[] =
-      matchingKey === "externalId"
-        ? exampleData.map((row) => ({ externalId: `crm-${row.user_id}`, ...row }))
-        : exampleData;
-
-    const headers = Object.keys(sampleRows[0]);
-    const csvRows = [headers.join(","), ...sampleRows.map((row) => headers.map((h) => row[h]).join(","))];
+    const headers = Object.keys(exampleData[0]);
+    const csvRows = [headers.join(","), ...exampleData.map((row) => headers.map((h) => row[h]).join(","))];
     const csvString = csvRows.join("\n");
     const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvString);
 

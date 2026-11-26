@@ -11,7 +11,16 @@ vi.mock("@/modules/survey/editor/components/targeting-locked-card", () => ({
   TargetingLockedCard: () => <div>targeting-locked-card</div>,
 }));
 vi.mock("@/modules/survey/editor/components/targeting-no-directory-card", () => ({
-  TargetingNoDirectoryCard: () => <div>targeting-no-directory-card</div>,
+  TargetingNoDirectoryCard: ({
+    targetsOtherDirectorySegment,
+  }: Readonly<{
+    targetsOtherDirectorySegment?: boolean;
+  }>) => (
+    <div>
+      targeting-no-directory-card
+      {targetsOtherDirectorySegment && <span>targets-other-directory-segment</span>}
+    </div>
+  ),
 }));
 vi.mock("@/modules/survey/editor/components/how-to-send-card", () => ({ HowToSendCard: () => null }));
 vi.mock("@/modules/survey/editor/components/when-to-send-card", () => ({ WhenToSendCard: () => null }));
@@ -34,6 +43,8 @@ const renderView = (props: {
   type: TSurvey["type"];
   isUserTargetingAllowed: boolean;
   hasContactDirectory: boolean;
+  segment?: { id: string; filters: unknown[] } | null;
+  otherDirectorySegmentId?: string | null;
 }) =>
   render(
     <SettingsView
@@ -42,7 +53,7 @@ const renderView = (props: {
           id: "survey-1",
           workspaceId: "ws-1",
           type: props.type,
-          segment: null,
+          segment: props.segment ?? null,
         } as unknown as TSurvey,
         setLocalSurvey: vi.fn(),
         actionClasses: [],
@@ -53,6 +64,7 @@ const renderView = (props: {
         membershipRole: "owner",
         isUserTargetingAllowed: props.isUserTargetingAllowed,
         hasContactDirectory: props.hasContactDirectory,
+        otherDirectorySegmentId: props.otherDirectorySegmentId ?? null,
         isSpamProtectionAllowed: false,
         workspacePermission: null,
         isFormbricksCloud: false,
@@ -99,5 +111,30 @@ describe("SettingsView › Target audience", () => {
 
     expect(screen.queryByText("targeting-no-directory-card")).not.toBeInTheDocument();
     expect(screen.queryByText("targeting-card")).not.toBeInTheDocument();
+  });
+
+  // Decision 4: a workspace that left its directory keeps its surveys' segments, which now reach nobody.
+  test("tells the no-directory card when the survey still targets a segment with filters", () => {
+    renderView({
+      type: "app",
+      isUserTargetingAllowed: true,
+      hasContactDirectory: false,
+      segment: { id: "seg-old", filters: [{ id: "f1" }] },
+      otherDirectorySegmentId: "seg-old",
+    });
+
+    expect(screen.getByText("targets-other-directory-segment")).toBeInTheDocument();
+  });
+
+  test("does not warn for a segment without filters", () => {
+    renderView({
+      type: "app",
+      isUserTargetingAllowed: true,
+      hasContactDirectory: false,
+      segment: { id: "seg-old", filters: [] },
+      otherDirectorySegmentId: "seg-old",
+    });
+
+    expect(screen.queryByText("targets-other-directory-segment")).not.toBeInTheDocument();
   });
 });

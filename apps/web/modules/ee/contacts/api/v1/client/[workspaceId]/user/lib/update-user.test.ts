@@ -108,12 +108,18 @@ describe("updateUser", () => {
           },
         },
         responses: {
-          select: { surveyId: true, createdAt: true, finished: true },
+          select: {
+            surveyId: true,
+            createdAt: true,
+            finished: true,
+            survey: { select: { workspaceId: true } },
+          },
         },
         displays: {
           select: {
             surveyId: true,
             createdAt: true,
+            survey: { select: { workspaceId: true } },
           },
           orderBy: { createdAt: "desc" },
         },

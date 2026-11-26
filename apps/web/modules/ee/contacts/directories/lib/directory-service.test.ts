@@ -1,17 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
-import { getDefaultAttributeKeys } from "./constants";
+import { CONTACT_DIRECTORY_TARGETED_SURVEYS_LIMIT } from "./constants";
 import {
+  ContactDirectoryArchiveHasWorkspacesError,
+  ContactDirectoryArchivedError,
   ContactDirectoryNameRequiredError,
   ContactDirectoryNameTakenError,
   ContactDirectoryNotFoundError,
-  ContactDirectoryWorkspacesCannotLeaveError,
+  ContactDirectoryWorkspacesInOtherDirectoryError,
   ContactDirectoryWorkspacesNotFoundError,
-  ContactDirectoryWorkspacesNotMovableError,
 } from "./directory-errors";
 import {
   createContactDirectory,
   getContactDirectory,
+  getContactDirectoryTargetedSurveys,
   getSharedContactDirectoryName,
   listContactDirectories,
   updateContactDirectory,
@@ -22,23 +24,18 @@ vi.mock("server-only", () => ({}));
 /**
  * One fake client serves as both `prisma` and the transaction client. It holds a tiny organization in
  * memory and answers the service's queries from it, so the tests read as "given these directories, this
- * happens" instead of as a list of mocked calls. `log` records the order of locks, reads and writes,
- * which is what the move rule (decision 8) depends on.
+ * happens". `log` records the order of locks and writes. The real queries (the targeted-survey filter,
+ * the trigger) are covered by `directory-service.integration.test.ts`.
  */
 const db = vi.hoisted(() => ({
   $transaction: vi.fn(),
   $queryRaw: vi.fn(),
-  contactDirectory: {
-    findMany: vi.fn(),
-    findFirst: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    deleteMany: vi.fn(),
-  },
-  contactAttributeKey: { groupBy: vi.fn(), createMany: vi.fn(), findMany: vi.fn() },
-  workspace: { findMany: vi.fn(), findUnique: vi.fn(), groupBy: vi.fn(), updateMany: vi.fn() },
+  contactDirectory: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
+  contactAttributeKey: { createMany: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
+  workspace: { findMany: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
   contact: { groupBy: vi.fn(), findFirst: vi.fn(), updateMany: vi.fn() },
-  segment: { groupBy: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
+  segment: { findMany: vi.fn(), updateMany: vi.fn() },
+  survey: { findMany: vi.fn(), updateMany: vi.fn() },
 }));
 
 vi.mock("@formbricks/database", () => ({ prisma: db }));
@@ -51,21 +48,16 @@ type TDirectoryRow = {
   id: string;
   organizationId: string;
   name: string;
-  matchingKey: "email" | "externalId";
+  matchingKey: "email" | "userId";
+  isArchived: boolean;
   contacts?: number;
-  blockingKeys?: number;
 };
-type TSegmentRow = {
-  id: string;
-  directoryId: string | null;
-  workspaceId: string;
-  isPrivate: boolean;
-  filters: unknown;
-};
+/** `targeted`: whether the survey matches the targeted-survey filter (the real filter runs in Postgres). */
+type TSurveyRow = { id: string; name: string; workspaceId: string; targeted: boolean; status: string };
 
 let workspaces: TWorkspaceRow[];
 let directories: TDirectoryRow[];
-let segments: TSegmentRow[];
+let surveys: TSurveyRow[];
 let log: string[];
 
 const statement = (args: unknown[]) => {
@@ -74,32 +66,39 @@ const statement = (args: unknown[]) => {
   return { text: sql.sql.replace(/\s+/g, " "), values: sql.values as string[] };
 };
 
-const countBy = <T>(rows: T[], key: (row: T) => string | null, ids: string[]) =>
-  ids
-    .map((id) => ({ id, count: rows.filter((row) => key(row) === id).length }))
-    .filter(({ count }) => count > 0);
-
-const idsIn = (where: { [field: string]: unknown }, field: string): string[] =>
-  (where[field] as { in: string[] }).in;
+const inIds = (where: unknown): string[] => (where as { in: string[] }).in;
 
 const setup = ({
   ws,
   dirs,
-  segs = [],
+  srv = [],
 }: {
   ws: TWorkspaceRow[];
   dirs: TDirectoryRow[];
-  segs?: TSegmentRow[];
+  srv?: TSurveyRow[];
 }) => {
   workspaces = ws.map((w) => ({ ...w }));
   directories = dirs.map((d) => ({ ...d }));
-  segments = segs.map((seg) => ({ ...seg }));
+  surveys = srv.map((s) => ({ ...s }));
   log = [];
 
   db.$transaction.mockImplementation(((fn: (client: typeof db) => unknown) => fn(db)) as never);
 
   db.$queryRaw.mockImplementation(async (...args: unknown[]) => {
     const { text, values } = statement(args);
+    if (text.includes('FROM "Survey"')) {
+      // The confirm step's capped list: the last value is the per-workspace limit.
+      const workspaceIds = values.slice(0, -1);
+      const limit = Number(values.at(-1));
+      return workspaceIds.flatMap((workspaceId) => {
+        const ofWorkspace = surveys
+          .filter((s) => s.targeted && s.workspaceId === workspaceId)
+          .sort((x, y) => x.name.localeCompare(y.name) || x.id.localeCompare(y.id));
+        return ofWorkspace
+          .slice(0, limit)
+          .map(({ id, name, status }) => ({ id, name, workspaceId, status, totalCount: ofWorkspace.length }));
+      });
+    }
     const [organizationId, ...ids] = values;
     if (text.includes('FROM "Workspace"')) {
       log.push(`lock workspaces ${ids.join(",")}`);
@@ -108,147 +107,99 @@ const setup = ({
         .map(({ id, contactDirectoryId }) => ({ id, contactDirectoryId }));
     }
     if (text.includes('FROM "ContactDirectory"')) {
-      log.push(`lock directories ${ids.join(",")}`);
+      log.push(`lock directory ${ids.join(",")}`);
       return directories
         .filter((d) => d.organizationId === organizationId && ids.includes(d.id))
-        .map(({ id, name, matchingKey }) => ({ id, name, matchingKey }));
+        .map(({ id, name, isArchived }) => ({ id, name, isArchived }));
     }
     throw new Error(`Unexpected SQL: ${text}`);
   });
 
+  const publicDirectory = ({ id, name, matchingKey, isArchived }: TDirectoryRow) => ({
+    id,
+    name,
+    matchingKey,
+    isArchived,
+  });
   db.contactDirectory.findMany.mockImplementation(async ({ where }: { where: { organizationId: string } }) =>
-    directories
-      .filter((d) => d.organizationId === where.organizationId)
-      .map(({ id, name, matchingKey }) => ({ id, name, matchingKey }))
+    directories.filter((d) => d.organizationId === where.organizationId).map(publicDirectory)
   );
   db.contactDirectory.findFirst.mockImplementation(
-    async ({ where }: { where: { id: string; organizationId: string } }) => {
+    async ({ where }: { where: { id?: string; organizationId: string; name?: unknown } }) => {
+      // The case-insensitive name check: no clash in these tests.
+      if (where.name) return null;
       const found = directories.find((d) => d.id === where.id && d.organizationId === where.organizationId);
-      return found ? { id: found.id, name: found.name, matchingKey: found.matchingKey } : null;
+      return found ? publicDirectory(found) : null;
     }
   );
-  db.contactDirectory.create.mockImplementation(async ({ data }: { data: Omit<TDirectoryRow, "id"> }) => {
-    log.push("create directory");
-    const created = { id: "clnewdir00000000000000000", ...data };
-    directories.push(created);
-    return { id: created.id };
-  });
+  db.contactDirectory.create.mockImplementation(
+    async ({ data }: { data: Omit<TDirectoryRow, "id" | "isArchived"> }) => {
+      log.push("create directory");
+      const created = { id: "clnewdir00000000000000000", isArchived: false, ...data };
+      directories.push(created);
+      return { id: created.id };
+    }
+  );
   db.contactDirectory.update.mockImplementation(
-    async ({ where, data }: { where: { id: string }; data: { name: string } }) => {
-      log.push(`rename ${where.id}`);
-      const directory = directories.find((d) => d.id === where.id)!;
-      directory.name = data.name;
-      return { id: directory.id };
+    async ({ where, data }: { where: { id: string }; data: { name: string; isArchived: boolean } }) => {
+      log.push(`update directory ${where.id} ${JSON.stringify(data)}`);
+      Object.assign(directories.find((d) => d.id === where.id)!, data);
+      return { id: where.id };
     }
   );
-  db.contactDirectory.deleteMany.mockImplementation(
-    async ({ where }: { where: { id: { in: string[] } } }) => {
-      log.push(`delete directories ${where.id.in.join(",")}`);
-      directories = directories.filter((d) => !where.id.in.includes(d.id));
-      return { count: where.id.in.length };
-    }
+  db.contactAttributeKey.createMany.mockResolvedValue({ count: 5 });
+  // Rows a previous-release pod wrote for a workspace with no directory: none here (integration test).
+  db.contactAttributeKey.findMany.mockResolvedValue([]);
+  db.contactAttributeKey.updateMany.mockResolvedValue({ count: 0 });
+  db.segment.findMany.mockResolvedValue([]);
+  db.segment.updateMany.mockResolvedValue({ count: 0 });
+  db.contact.updateMany.mockResolvedValue({ count: 0 });
+  db.contact.findFirst.mockResolvedValue(null);
+  db.contact.groupBy.mockImplementation(async ({ where }: { where: { directoryId: unknown } }) =>
+    directories
+      .filter((d) => inIds(where.directoryId).includes(d.id) && (d.contacts ?? 0) > 0)
+      .map((d) => ({ directoryId: d.id, _count: { _all: d.contacts } }))
   );
-  db.contactAttributeKey.createMany.mockImplementation(async () => {
-    log.push("create default keys");
-    return { count: 0 };
-  });
 
   db.workspace.findMany.mockImplementation(
-    async ({
-      where,
-    }: {
-      where: { organizationId?: string; contactDirectoryId?: string | { in: string[] } };
-    }) =>
+    async ({ where }: { where: { organizationId?: string; contactDirectoryId?: string } }) =>
       workspaces
-        .filter((w) => {
-          if (where.organizationId) return w.organizationId === where.organizationId;
-          if (typeof where.contactDirectoryId === "string")
-            return w.contactDirectoryId === where.contactDirectoryId;
-          return where.contactDirectoryId?.in.includes(w.contactDirectoryId ?? "");
-        })
+        .filter((w) =>
+          where.contactDirectoryId === undefined
+            ? w.organizationId === where.organizationId
+            : w.contactDirectoryId === where.contactDirectoryId
+        )
         .map(({ id, name, contactDirectoryId }) => ({ id, name, contactDirectoryId }))
   );
   db.workspace.updateMany.mockImplementation(
-    async ({ where, data }: { where: { id: { in: string[] } }; data: { contactDirectoryId: string } }) => {
-      log.push(`move ${where.id.in.join(",")} to ${data.contactDirectoryId}`);
-      for (const w of workspaces)
-        if (where.id.in.includes(w.id)) w.contactDirectoryId = data.contactDirectoryId;
-      return { count: where.id.in.length };
-    }
-  );
-  db.workspace.groupBy.mockImplementation(async ({ where }: { where: Record<string, unknown> }) => {
-    log.push("count workspaces");
-    return countBy(workspaces, (w) => w.contactDirectoryId, idsIn(where, "contactDirectoryId")).map(
-      ({ id, count }) => ({ contactDirectoryId: id, _count: { _all: count } })
-    );
-  });
-
-  db.segment.groupBy.mockImplementation(async ({ where }: { where: Record<string, unknown> }) => {
-    log.push("count public segments");
-    expect(where.isPrivate).toBe(false);
-    return countBy(
-      segments.filter((seg) => !seg.isPrivate),
-      (seg) => seg.directoryId,
-      idsIn(where, "directoryId")
-    ).map(({ id, count }) => ({ directoryId: id, _count: { _all: count } }));
-  });
-  db.segment.findMany.mockImplementation(async ({ where }: { where: Record<string, unknown> }) => {
-    // The public segments a workspace with no directory has (none here: the integration test covers them).
-    if (where.directoryId === null) return [];
-    log.push("read private segment filters");
-    return segments
-      .filter((seg) => seg.isPrivate && idsIn(where, "directoryId").includes(seg.directoryId ?? ""))
-      .map(({ directoryId, filters }) => ({ directoryId, filters }));
-  });
-  db.segment.updateMany.mockImplementation(
-    async ({ where, data }: { where: Record<string, unknown>; data: { directoryId: string } }) => {
-      const matches = segments.filter((seg) => {
-        if (!seg.isPrivate) return false;
-        if (where.directoryId === null) {
-          return seg.directoryId === null && idsIn(where, "workspaceId").includes(seg.workspaceId);
-        }
-        return idsIn(where, "directoryId").includes(seg.directoryId ?? "");
-      });
-      log.push(`re-point private segments ${matches.map((seg) => seg.id).join(",")}`);
-      for (const seg of matches) seg.directoryId = data.directoryId;
+    async ({
+      where,
+      data,
+    }: {
+      where: { id: unknown; contactDirectoryId: string | null };
+      data: { contactDirectoryId: string | null };
+    }) => {
+      const matches = workspaces.filter(
+        (w) => inIds(where.id).includes(w.id) && w.contactDirectoryId === where.contactDirectoryId
+      );
+      log.push(`set ${matches.map((w) => w.id).join(",")} to ${data.contactDirectoryId}`);
+      for (const w of matches) w.contactDirectoryId = data.contactDirectoryId;
       return { count: matches.length };
     }
   );
 
-  const contentCount =
-    (field: "contacts" | "blockingKeys", label: string) =>
-    async ({ where }: { where: Record<string, unknown> }) => {
-      log.push(label);
-      return directories
-        .filter((d) => idsIn(where, "directoryId").includes(d.id) && (d[field] ?? 0) > 0)
-        .map((d) => ({ directoryId: d.id, _count: { _all: d[field] } }));
-    };
-  db.contact.groupBy.mockImplementation(contentCount("contacts", "count contacts"));
-  // Under the move's lock only whether a directory has a contact is read. Rows a previous-release pod
-  // wrote for a workspace with no directory: none here, the integration test covers their adoption.
-  db.contact.findFirst.mockImplementation(
-    async ({ where }: { where: { directoryId: string | null; workspaceId?: string } }) => {
-      if (where.directoryId === null) {
-        log.push(`check orphan contacts ${where.workspaceId}`);
-        return null;
-      }
-      log.push(`check contacts ${where.directoryId}`);
-      const directory = directories.find((d) => d.id === where.directoryId);
-      return (directory?.contacts ?? 0) > 0 ? { id: "contact" } : null;
+  db.survey.findMany.mockImplementation(async ({ where }: { where: { workspaceId: unknown } }) =>
+    surveys
+      .filter((s) => s.targeted && inIds(where.workspaceId).includes(s.workspaceId))
+      .map(({ id, name, workspaceId, status }) => ({ id, name, workspaceId, status }))
+  );
+  db.survey.updateMany.mockImplementation(
+    async ({ where, data }: { where: { id: unknown }; data: { status: string } }) => {
+      log.push(`pause ${inIds(where.id).join(",")}`);
+      for (const s of surveys) if (inIds(where.id).includes(s.id)) s.status = data.status;
+      return { count: inIds(where.id).length };
     }
   );
-  db.contact.updateMany.mockResolvedValue({ count: 0 });
-  // A directory's keys are its defaults; a workspace with no directory has none (see above).
-  db.contactAttributeKey.findMany.mockImplementation(
-    async ({ where }: { where: { directoryId?: string | null; key?: { in: string[] } } }) => {
-      const directory = directories.find((d) => d.id === where.directoryId);
-      if (!directory) return [];
-      return getDefaultAttributeKeys(directory.matchingKey)
-        .filter(({ key }) => where.key?.in.includes(key) ?? true)
-        .map(({ key }) => ({ id: `${directory.id}-${key}`, key }));
-    }
-  );
-  db.contactAttributeKey.groupBy.mockImplementation(contentCount("blockingKeys", "count blocking keys"));
 };
 
 const ws = (id: string, contactDirectoryId: string | null, organizationId = ORG): TWorkspaceRow => ({
@@ -263,40 +214,29 @@ const dir = (id: string, extra: Partial<TDirectoryRow> = {}): TDirectoryRow => (
   organizationId: ORG,
   name: `Directory ${id}`,
   matchingKey: "email",
+  isArchived: false,
   ...extra,
 });
 
-const seg = (
-  id: string,
-  directoryId: string | null,
-  workspaceId: string,
-  extra: Partial<TSegmentRow> = {}
-): TSegmentRow => ({ id, directoryId, workspaceId, isPrivate: true, filters: [], ...extra });
+const survey = (id: string, workspaceId: string, targeted = true): TSurveyRow => ({
+  id,
+  name: `Survey ${id}`,
+  workspaceId,
+  targeted,
+  status: "inProgress",
+});
 
-/** A stored segment filter list with one attribute filter on `key`. */
-const filterOn = (key: string) => [
-  {
-    id: "f1",
-    connector: null,
-    resource: {
-      id: "r1",
-      root: { type: "attribute", contactAttributeKey: key },
-      value: "x",
-      qualifier: { operator: "equals" },
-    },
-  },
-];
+const directoryOf = (workspaceId: string) => workspaces.find((w) => w.id === workspaceId)?.contactDirectoryId;
+
+beforeEach(() => vi.clearAllMocks());
 
 describe("listContactDirectories", () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  test("lists each directory with its workspaces and contacts, and says whether its workspace can move", async () => {
+  test("lists every directory, archived ones included, with its workspaces, contacts and status", async () => {
     setup({
-      ws: [ws("w1", "d1"), ws("w2", "d2"), ws("w3", "d2"), ws("w4", "d3"), ws("w5", null)],
+      ws: [ws("w1", "d1"), ws("w2", "d1"), ws("w3", null)],
       dirs: [
-        dir("d1"),
-        dir("d2", { name: "Northwind EU", contacts: 18402 }),
-        dir("d3", { matchingKey: "externalId", contacts: 3 }),
+        dir("d1", { name: "Northwind EU", contacts: 18402 }),
+        dir("d2", { matchingKey: "userId", isArchived: true, contacts: 3 }),
       ],
     });
 
@@ -305,73 +245,29 @@ describe("listContactDirectories", () => {
     expect(list.directories).toEqual([
       {
         id: "d1",
-        name: "Directory d1",
+        name: "Northwind EU",
         matchingKey: "email",
-        workspaces: [{ id: "w1", name: "Workspace w1" }],
-        contactCount: 0,
-        workspaceCanMove: true,
+        isArchived: false,
+        workspaces: [
+          { id: "w1", name: "Workspace w1" },
+          { id: "w2", name: "Workspace w2" },
+        ],
+        contactCount: 18402,
       },
       {
         id: "d2",
-        name: "Northwind EU",
-        matchingKey: "email",
-        workspaces: [
-          { id: "w2", name: "Workspace w2" },
-          { id: "w3", name: "Workspace w3" },
-        ],
-        contactCount: 18402,
-        workspaceCanMove: false,
-      },
-      {
-        id: "d3",
-        name: "Directory d3",
-        matchingKey: "externalId",
-        workspaces: [{ id: "w4", name: "Workspace w4" }],
+        name: "Directory d2",
+        matchingKey: "userId",
+        isArchived: true,
+        workspaces: [],
         contactCount: 3,
-        workspaceCanMove: false,
       },
     ]);
-    expect(list.workspaces).toContainEqual({ id: "w5", name: "Workspace w5", directoryId: null });
-    expect(list.workspaces).toContainEqual({ id: "w2", name: "Workspace w2", directoryId: "d2" });
-  });
-
-  test("a public segment, a key beyond the defaults or a survey filter on one keeps a lone workspace where it is", async () => {
-    setup({
-      ws: [ws("w1", "d1"), ws("w2", "d2"), ws("w3", "d3"), ws("w4", "d4")],
-      dirs: [dir("d1"), dir("d2", { blockingKeys: 1 }), dir("d3"), dir("d4")],
-      segs: [
-        seg("s1", "d1", "w1", { isPrivate: false }),
-        seg("s3", "d3", "w3", { filters: filterOn("plan") }),
-        seg("s4", "d4", "w4", { filters: filterOn("email") }),
-      ],
-    });
-
-    const { directories: listed } = await listContactDirectories(ORG);
-
-    // d4's survey filter names a default key, which the new directory has too.
-    expect(listed.map((d) => d.workspaceCanMove)).toEqual([false, false, false, true]);
-  });
-
-  test("counts only keys that block a move: custom keys, externalId in an email directory, and keys in survey filters", async () => {
-    setup({ ws: [ws("w1", "d1")], dirs: [dir("d1")] });
-
-    await listContactDirectories(ORG);
-
-    const { where } = db.contactAttributeKey.groupBy.mock.calls[0][0];
-    expect(where).toEqual({
-      directoryId: { in: ["d1"] },
-      OR: [
-        { key: { notIn: ["userId", "email", "firstName", "lastName", "language", "externalId"] } },
-        { key: "externalId", directory: { matchingKey: "email" } },
-        { attributeFilters: { some: {} } },
-      ],
-    });
+    expect(list.workspaces).toContainEqual({ id: "w3", name: "Workspace w3", directoryId: null });
   });
 });
 
 describe("getContactDirectory", () => {
-  beforeEach(() => vi.clearAllMocks());
-
   test("returns one directory of the organization, and nothing for another organization's", async () => {
     setup({
       ws: [ws("w1", "d1")],
@@ -383,131 +279,76 @@ describe("getContactDirectory", () => {
   });
 });
 
-describe("createContactDirectory", () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  test("creates the directory with its default keys and moves a workspace out of its empty directory, which is deleted", async () => {
+describe("getContactDirectoryTargetedSurveys", () => {
+  test("lists each workspace of the directory with its targeted surveys, scheduled ones named so", async () => {
     setup({
-      ws: [ws("w1", "d1"), ws("w2", null)],
-      dirs: [dir("d1")],
-      segs: [seg("s1", "d1", "w1"), seg("s2", null, "w2")],
-    });
-
-    const created = await createContactDirectory({
-      organizationId: ORG,
-      name: "  Northwind EU ",
-      matchingKey: "email",
-      workspaceIds: ["w2", "w1"],
-    });
-
-    expect(created.id).toBe("clnewdir00000000000000000");
-    expect(db.contactDirectory.create).toHaveBeenCalledWith({
-      data: { organizationId: ORG, name: "Northwind EU", matchingKey: "email" },
-      select: { id: true },
-    });
-    expect(log).toEqual([
-      "create directory",
-      "create default keys",
-      "lock workspaces w1,w2",
-      "lock directories d1",
-      "count workspaces",
-      "check contacts d1",
-      "count public segments",
-      "count blocking keys",
-      "read private segment filters",
-      "check orphan contacts w2",
-      "move w1,w2 to clnewdir00000000000000000",
-      "re-point private segments s1",
-      "re-point private segments s2",
-      "delete directories d1",
-    ]);
-    expect(workspaces.map((w) => w.contactDirectoryId)).toEqual([
-      "clnewdir00000000000000000",
-      "clnewdir00000000000000000",
-    ]);
-  });
-
-  test("keeps the surveys' private segments: they move to the new directory before the old one is deleted", async () => {
-    setup({
-      ws: [ws("w1", "d1")],
-      dirs: [dir("d1")],
-      segs: [seg("survey1", "d1", "w1"), seg("survey2", "d1", "w1", { filters: filterOn("language") })],
-    });
-
-    await createContactDirectory({
-      organizationId: ORG,
-      name: "EU",
-      matchingKey: "email",
-      workspaceIds: ["w1"],
-    });
-
-    expect(segments.map((s) => s.directoryId)).toEqual([
-      "clnewdir00000000000000000",
-      "clnewdir00000000000000000",
-    ]);
-    expect(log.indexOf("re-point private segments survey1,survey2")).toBeLessThan(
-      log.indexOf("delete directories d1")
-    );
-  });
-
-  test("refuses a workspace whose survey filters name a key beyond the defaults", async () => {
-    setup({
-      ws: [ws("w1", "d1")],
-      dirs: [dir("d1")],
-      segs: [
-        seg("survey1", "d1", "w1", { filters: [{ id: "g", connector: null, resource: filterOn("plan") }] }),
+      ws: [ws("w1", "d1"), ws("w2", "d1"), ws("w3", "d2")],
+      dirs: [dir("d1"), dir("d2")],
+      srv: [
+        survey("s1", "w1"),
+        { ...survey("s2", "w1"), status: "paused" },
+        survey("s3", "w1", false),
+        survey("s4", "w3"),
       ],
     });
 
-    await expect(
-      createContactDirectory({ organizationId: ORG, name: "EU", matchingKey: "email", workspaceIds: ["w1"] })
-    ).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotMovableError);
-    expect(db.contactDirectory.deleteMany).not.toHaveBeenCalled();
+    await expect(getContactDirectoryTargetedSurveys(ORG, "d1")).resolves.toEqual({
+      workspaces: [
+        {
+          workspaceId: "w1",
+          surveys: [
+            { id: "s1", name: "Survey s1", status: "inProgress" },
+            { id: "s2", name: "Survey s2", status: "scheduled" },
+          ],
+          totalCount: 2,
+        },
+        { workspaceId: "w2", surveys: [], totalCount: 0 },
+      ],
+    });
   });
 
-  test("gives an email directory the five default keys, with no workspace of origin", async () => {
-    setup({ ws: [ws("w1", null)], dirs: [] });
+  test("lists at most the limit per workspace and counts them all", async () => {
+    const many = Array.from({ length: CONTACT_DIRECTORY_TARGETED_SURVEYS_LIMIT + 3 }, (_, index) =>
+      survey(`s${String(index).padStart(3, "0")}`, "w1")
+    );
+    setup({ ws: [ws("w1", "d1")], dirs: [dir("d1")], srv: many });
 
-    await createContactDirectory({
-      organizationId: ORG,
-      name: "EU",
-      matchingKey: "email",
-      workspaceIds: ["w1"],
-    });
+    const targeted = await getContactDirectoryTargetedSurveys(ORG, "d1");
 
-    const { data } = db.contactAttributeKey.createMany.mock.calls[0][0];
-    expect(data.map((key: { key: string }) => key.key)).toEqual([
-      "userId",
-      "email",
-      "firstName",
-      "lastName",
-      "language",
-    ]);
-    expect(data[0]).toMatchObject({
-      directoryId: "clnewdir00000000000000000",
-      type: "default",
-      isUnique: true,
-    });
-    expect(data[0]).not.toHaveProperty("workspaceId");
+    expect(targeted?.workspaces[0].surveys).toHaveLength(CONTACT_DIRECTORY_TARGETED_SURVEYS_LIMIT);
+    expect(targeted?.workspaces[0].totalCount).toBe(CONTACT_DIRECTORY_TARGETED_SURVEYS_LIMIT + 3);
   });
 
-  test("adds externalId to the default keys of an external-ID directory", async () => {
-    setup({ ws: [ws("w1", null)], dirs: [] });
+  test("answers nothing for another organization's directory", async () => {
+    setup({ ws: [], dirs: [dir("dx", { organizationId: OTHER_ORG })] });
 
-    await createContactDirectory({
-      organizationId: ORG,
-      name: "EU",
-      matchingKey: "externalId",
-      workspaceIds: ["w1"],
-    });
-
-    const { data } = db.contactAttributeKey.createMany.mock.calls[0][0];
-    expect(data.map((key: { key: string }) => key.key)).toContain("externalId");
-    expect(data).toHaveLength(6);
+    await expect(getContactDirectoryTargetedSurveys(ORG, "dx")).resolves.toBeNull();
   });
+});
 
-  test("refuses a workspace whose directory has a contact by the time the lock is held, and moves nothing", async () => {
-    setup({ ws: [ws("w1", "d1"), ws("w2", null)], dirs: [dir("d1", { contacts: 1 })] });
+describe("createContactDirectory", () => {
+  test.each(["email", "userId"] as const)(
+    "gives a %s directory the five default keys, with no externalId",
+    async (matchingKey) => {
+      setup({ ws: [ws("w1", null)], dirs: [] });
+
+      await createContactDirectory({ organizationId: ORG, name: "EU", matchingKey, workspaceIds: ["w1"] });
+
+      const { data } = db.contactAttributeKey.createMany.mock.calls[0][0];
+      expect(data.map(({ key }: { key: string }) => key)).toEqual([
+        "userId",
+        "email",
+        "firstName",
+        "lastName",
+        "language",
+      ]);
+      expect(directoryOf("w1")).toBe("clnewdir00000000000000000");
+    }
+  );
+
+  // Decision 3: no implicit move, and so no implicit delete of the directory it would leave.
+  test("refuses a workspace that uses another directory, and leaves that directory alone", async () => {
+    setup({ ws: [ws("w1", null), ws("w2", "d1")], dirs: [dir("d1")] });
 
     const attempt = createContactDirectory({
       organizationId: ORG,
@@ -516,53 +357,26 @@ describe("createContactDirectory", () => {
       workspaceIds: ["w1", "w2"],
     });
 
-    await expect(attempt).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotMovableError);
-    await expect(attempt).rejects.toMatchObject({ workspaceIds: ["w1"] });
+    await expect(attempt).rejects.toBeInstanceOf(ContactDirectoryWorkspacesInOtherDirectoryError);
+    await expect(attempt).rejects.toMatchObject({ workspaceIds: ["w2"] });
     expect(db.workspace.updateMany).not.toHaveBeenCalled();
-    expect(db.contactDirectory.deleteMany).not.toHaveBeenCalled();
-  });
-
-  test("refuses to take a workspace out of a shared directory", async () => {
-    setup({ ws: [ws("w1", "d1"), ws("w2", "d1")], dirs: [dir("d1", { name: "Shared" })] });
-
-    await expect(
-      createContactDirectory({ organizationId: ORG, name: "EU", matchingKey: "email", workspaceIds: ["w1"] })
-    ).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotMovableError);
+    expect(directoryOf("w2")).toBe("d1");
   });
 
   test("refuses a workspace of another organization as if it did not exist", async () => {
-    setup({ ws: [ws("w1", null), ws("wx", null, OTHER_ORG)], dirs: [] });
+    setup({ ws: [ws("w1", null, OTHER_ORG)], dirs: [] });
 
-    const attempt = createContactDirectory({
-      organizationId: ORG,
-      name: "EU",
-      matchingKey: "email",
-      workspaceIds: ["w1", "wx"],
-    });
-
-    await expect(attempt).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotFoundError);
-    await expect(attempt).rejects.toMatchObject({ workspaceIds: ["wx"] });
-    expect(db.workspace.updateMany).not.toHaveBeenCalled();
+    await expect(
+      createContactDirectory({ organizationId: ORG, name: "EU", matchingKey: "email", workspaceIds: ["w1"] })
+    ).rejects.toBeInstanceOf(ContactDirectoryWorkspacesNotFoundError);
   });
-
-  test.each(["", "   "])(
-    "requires a name even for one workspace, before writing anything (%j)",
-    async (name) => {
-      setup({ ws: [ws("w1", null)], dirs: [] });
-
-      await expect(
-        createContactDirectory({ organizationId: ORG, name, matchingKey: "email", workspaceIds: ["w1"] })
-      ).rejects.toBeInstanceOf(ContactDirectoryNameRequiredError);
-      expect(db.contactDirectory.create).not.toHaveBeenCalled();
-    }
-  );
 
   test("reports a name the organization already uses", async () => {
     setup({ ws: [ws("w1", null)], dirs: [] });
     db.contactDirectory.create.mockRejectedValueOnce(
       new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
         code: "P2002",
-        clientVersion: "x",
+        clientVersion: "test",
       })
     );
 
@@ -573,25 +387,19 @@ describe("createContactDirectory", () => {
 });
 
 describe("updateContactDirectory", () => {
-  beforeEach(() => vi.clearAllMocks());
-
   test("renames the directory under its lock and returns the before and after", async () => {
     setup({ ws: [ws("w1", "d1")], dirs: [dir("d1")] });
 
-    const result = await updateContactDirectory({
-      organizationId: ORG,
-      directoryId: "d1",
-      name: " Northwind ",
-    });
+    const result = await updateContactDirectory({ organizationId: ORG, directoryId: "d1", name: " Nw " });
 
-    expect(log.slice(0, 2)).toEqual(["lock directories d1", "rename d1"]);
+    expect(log).toEqual(["lock directory d1", 'update directory d1 {"name":"Nw","isArchived":false}']);
     expect(result).toEqual({
-      previous: { name: "Directory d1", workspaceIds: ["w1"] },
-      next: { name: "Northwind", workspaceIds: ["w1"] },
+      previous: { name: "Directory d1", workspaceIds: ["w1"], isArchived: false },
+      next: { name: "Nw", workspaceIds: ["w1"], isArchived: false, pausedSurveyIds: [] },
     });
   });
 
-  test.each(["", "   "])("refuses to clear the name of a one-workspace directory (%j)", async (name) => {
+  test.each(["", "   "])("refuses a blank name (%j)", async (name) => {
     setup({ ws: [ws("w1", "d1")], dirs: [dir("d1", { name: "Old" })] });
 
     await expect(
@@ -600,31 +408,157 @@ describe("updateContactDirectory", () => {
     expect(db.contactDirectory.update).not.toHaveBeenCalled();
   });
 
-  test("adds a workspace whose own directory is empty and deletes that directory, after locking the target first", async () => {
-    setup({ ws: [ws("w1", "d1"), ws("w2", "d2")], dirs: [dir("d1", { name: "EU" }), dir("d2")] });
+  test("adds a workspace with no directory, locking the directory before the workspaces", async () => {
+    setup({ ws: [ws("w1", "d1"), ws("w2", null)], dirs: [dir("d1")] });
+
+    await updateContactDirectory({ organizationId: ORG, directoryId: "d1", workspaceIds: ["w1", "w2"] });
+
+    expect(log.slice(0, 3)).toEqual(["lock directory d1", "lock workspaces w2", "set w2 to d1"]);
+    expect(directoryOf("w2")).toBe("d1");
+  });
+
+  test("refuses to take a workspace from another directory", async () => {
+    setup({ ws: [ws("w1", "d1"), ws("w2", "d2")], dirs: [dir("d1"), dir("d2")] });
+
+    await expect(
+      updateContactDirectory({ organizationId: ORG, directoryId: "d1", workspaceIds: ["w1", "w2"] })
+    ).rejects.toBeInstanceOf(ContactDirectoryWorkspacesInOtherDirectoryError);
+    expect(directoryOf("w2")).toBe("d2");
+  });
+
+  // Decision 1: removal only unlinks the workspace; nothing else is written.
+  test("removes a workspace by clearing its directory only", async () => {
+    setup({ ws: [ws("w1", "d1"), ws("w2", "d1")], dirs: [dir("d1")], srv: [survey("s1", "w2")] });
 
     const result = await updateContactDirectory({
       organizationId: ORG,
       directoryId: "d1",
-      workspaceIds: ["w1", "w2"],
+      workspaceIds: ["w1"],
     });
 
-    expect(log[0]).toBe("lock directories d1");
-    expect(log).toContain("lock workspaces w1,w2");
-    expect(log).toContain("lock directories d2");
-    expect(log.indexOf("move w2 to d1")).toBeLessThan(log.indexOf("delete directories d2"));
-    expect(workspaces.map((w) => w.contactDirectoryId)).toEqual(["d1", "d1"]);
-    expect(directories.map((d) => d.id)).toEqual(["d1"]);
-    expect(result.next.workspaceIds).toEqual(["w1", "w2"]);
+    expect(directoryOf("w2")).toBeNull();
+    expect(db.survey.updateMany).not.toHaveBeenCalled();
+    expect(db.segment.updateMany).not.toHaveBeenCalled();
+    expect(db.contact.updateMany).not.toHaveBeenCalled();
+    expect(result.next).toEqual({
+      name: "Directory d1",
+      workspaceIds: ["w1"],
+      isArchived: false,
+      pausedSurveyIds: [],
+    });
   });
 
-  test("refuses to let a workspace leave the directory", async () => {
-    setup({ ws: [ws("w1", "d1"), ws("w2", "d1")], dirs: [dir("d1", { name: "Shared" })] });
+  test("pauses the targeted surveys only of removed workspaces it was asked to", async () => {
+    setup({
+      ws: [ws("w1", "d1"), ws("w2", "d1"), ws("w3", "d1")],
+      dirs: [dir("d1")],
+      srv: [survey("s1", "w1"), survey("s2", "w2"), survey("s3", "w3"), survey("s4", "w2", false)],
+    });
 
-    const attempt = updateContactDirectory({ organizationId: ORG, directoryId: "d1", workspaceIds: ["w1"] });
+    const result = await updateContactDirectory({
+      organizationId: ORG,
+      directoryId: "d1",
+      workspaceIds: ["w1"],
+      // w1 stays, so its survey keeps running; w3 is removed without pausing.
+      pauseSurveysInWorkspaceIds: ["w1", "w2"],
+    });
 
-    await expect(attempt).rejects.toBeInstanceOf(ContactDirectoryWorkspacesCannotLeaveError);
-    await expect(attempt).rejects.toMatchObject({ workspaceIds: ["w2"] });
+    expect(surveys.map(({ id, status }) => [id, status])).toEqual([
+      ["s1", "inProgress"],
+      ["s2", "paused"],
+      ["s3", "inProgress"],
+      ["s4", "inProgress"],
+    ]);
+    expect(result.next.pausedSurveyIds).toEqual(["s2"]);
+    expect(log.indexOf("pause s2")).toBeLessThan(log.indexOf("set w2,w3 to null"));
+  });
+
+  test("leaves the directory active with no workspaces when its last workspace is removed", async () => {
+    setup({ ws: [ws("w1", "d1")], dirs: [dir("d1")] });
+
+    const result = await updateContactDirectory({ organizationId: ORG, directoryId: "d1", workspaceIds: [] });
+
+    expect(directories[0].isArchived).toBe(false);
+    expect(directoryOf("w1")).toBeNull();
+    expect(result.next).toMatchObject({ workspaceIds: [], isArchived: false });
+  });
+
+  test("removes the last workspace and archives the directory in one save when asked", async () => {
+    setup({ ws: [ws("w1", "d1")], dirs: [dir("d1")] });
+
+    const result = await updateContactDirectory({
+      organizationId: ORG,
+      directoryId: "d1",
+      workspaceIds: [],
+      isArchived: true,
+    });
+
+    expect(directories[0].isArchived).toBe(true);
+    expect(directoryOf("w1")).toBeNull();
+    expect(result.next).toMatchObject({ workspaceIds: [], isArchived: true });
+  });
+
+  test("refuses to archive a directory that still has workspaces", async () => {
+    setup({ ws: [ws("w1", "d1")], dirs: [dir("d1")] });
+
+    await expect(
+      updateContactDirectory({ organizationId: ORG, directoryId: "d1", isArchived: true })
+    ).rejects.toBeInstanceOf(ContactDirectoryArchiveHasWorkspacesError);
+    expect(directories[0].isArchived).toBe(false);
+  });
+
+  test("archives a directory with no workspaces", async () => {
+    setup({ ws: [], dirs: [dir("d1")] });
+
+    await updateContactDirectory({ organizationId: ORG, directoryId: "d1", isArchived: true });
+
+    expect(directories[0].isArchived).toBe(true);
+  });
+
+  test("unarchives a directory without giving it a workspace", async () => {
+    setup({ ws: [], dirs: [dir("d1", { isArchived: true })] });
+
+    const result = await updateContactDirectory({
+      organizationId: ORG,
+      directoryId: "d1",
+      isArchived: false,
+    });
+
+    expect(directories[0].isArchived).toBe(false);
+    expect(result.next).toMatchObject({ workspaceIds: [], isArchived: false });
+  });
+
+  test("keeps a directory active when a save removes every workspace and asks it to stay active", async () => {
+    setup({ ws: [ws("w1", "d1")], dirs: [dir("d1")] });
+
+    await updateContactDirectory({
+      organizationId: ORG,
+      directoryId: "d1",
+      isArchived: false,
+      workspaceIds: [],
+    });
+
+    expect(directories[0].isArchived).toBe(false);
+    expect(directoryOf("w1")).toBeNull();
+  });
+
+  test("gives an archived directory workspaces only when the same save unarchives it", async () => {
+    setup({ ws: [ws("w1", null)], dirs: [dir("d1", { isArchived: true })] });
+
+    await expect(
+      updateContactDirectory({ organizationId: ORG, directoryId: "d1", workspaceIds: ["w1"] })
+    ).rejects.toBeInstanceOf(ContactDirectoryArchivedError);
+    expect(directoryOf("w1")).toBeNull();
+
+    await updateContactDirectory({
+      organizationId: ORG,
+      directoryId: "d1",
+      workspaceIds: ["w1"],
+      isArchived: false,
+    });
+
+    expect(directoryOf("w1")).toBe("d1");
+    expect(directories[0].isArchived).toBe(false);
   });
 
   test("answers not found for a directory of another organization", async () => {
@@ -637,8 +571,6 @@ describe("updateContactDirectory", () => {
 });
 
 describe("getSharedContactDirectoryName", () => {
-  beforeEach(() => vi.clearAllMocks());
-
   test("names the directory only when two or more workspaces use it", async () => {
     db.workspace.findUnique.mockResolvedValueOnce({
       contactDirectory: { name: "Northwind EU", _count: { workspaces: 2 } },

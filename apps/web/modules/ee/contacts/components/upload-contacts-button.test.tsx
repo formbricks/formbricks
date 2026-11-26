@@ -30,7 +30,7 @@ const renderButton = (matchingKey: TContactDirectoryMatchingKey) => {
     <QueryClientProvider client={queryClient}>
       <UploadContactsCSVButton
         workspaceId="workspace-1"
-        contactAttributeKeys={[attributeKey("email"), attributeKey("externalId")]}
+        contactAttributeKeys={[attributeKey("email"), attributeKey("userId")]}
         matchingKey={matchingKey}
       />
     </QueryClientProvider>
@@ -60,43 +60,43 @@ describe("UploadContactsCSVButton", () => {
     );
   };
 
-  test("an external-ID directory asks for an externalId column", async () => {
-    renderButton("externalId");
+  test("a userId directory asks for a userId column", async () => {
+    renderButton("userId");
 
     pickCsv("email\na@example.com");
     await upload();
 
-    expect(await screen.findByText("Missing externalId field for one or more records")).toBeInTheDocument();
+    expect(await screen.findByText("Missing userId field for one or more records")).toBeInTheDocument();
     expect(mocks.importContacts).not.toHaveBeenCalled();
   });
 
-  // The matching column is read through the column mapping, as userId and every other key are: a CRM's
-  // "External ID" header maps to the externalId key, and is checked there.
-  test("accepts a matching column whose header maps to the key, like External ID", async () => {
+  // The matching column is read through the column mapping, as every other key is: a "User ID" header
+  // maps to the userId key, and is checked there.
+  test("accepts a matching column whose header maps to the key, like User ID", async () => {
     mocks.importContacts.mockResolvedValue({
       contacts: [],
       multiMatchCount: 0,
       leftOutCounts: { email: 0, userId: 0 },
     });
-    renderButton("externalId");
+    renderButton("userId");
 
-    pickCsv("External ID,email\nCRM-1,a@example.com\nCRM-2,b@example.com");
+    pickCsv("User ID,email\nuser-1,a@example.com\nuser-2,b@example.com");
     await upload();
 
     await waitFor(() => expect(mocks.importContacts).toHaveBeenCalled());
     expect(mocks.importContacts.mock.calls[0][1].csvData).toEqual([
-      { externalId: "CRM-1", email: "a@example.com" },
-      { externalId: "CRM-2", email: "b@example.com" },
+      { userId: "user-1", email: "a@example.com" },
+      { userId: "user-2", email: "b@example.com" },
     ]);
   });
 
   test("refuses a repeated matching value under a mapped header, before uploading", async () => {
-    renderButton("externalId");
+    renderButton("userId");
 
-    pickCsv("external_id,email\nCRM-1,a@example.com\nCRM-1,b@example.com");
+    pickCsv("user_id,email\nuser-1,a@example.com\nuser-1,b@example.com");
     await upload();
 
-    expect(await screen.findByText("Duplicate externalIds found in the records")).toBeInTheDocument();
+    expect(await screen.findByText("Duplicate userIds found in the records")).toBeInTheDocument();
     expect(mocks.importContacts).not.toHaveBeenCalled();
   });
 
@@ -159,9 +159,9 @@ describe("UploadContactsCSVButton", () => {
       multiMatchCount: 0,
       leftOutCounts: { email: 2, userId: 1 },
     });
-    renderButton("externalId");
+    renderButton("userId");
 
-    pickCsv("externalId,email\nCRM-1,a@example.com");
+    pickCsv("userId,email\nuser-1,a@example.com");
     await upload();
 
     await waitFor(() =>

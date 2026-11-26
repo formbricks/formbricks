@@ -1,4 +1,6 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
+import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   createdResponse,
   problemConflict,
@@ -8,16 +10,19 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import {
+  ContactDirectoryArchiveHasWorkspacesError,
+  ContactDirectoryArchivedError,
   ContactDirectoryNameRequiredError,
   ContactDirectoryNameTakenError,
   ContactDirectoryNotFoundError,
-  ContactDirectoryWorkspacesCannotLeaveError,
+  ContactDirectoryWorkspacesInOtherDirectoryError,
   ContactDirectoryWorkspacesNotFoundError,
   ContactDirectoryWorkspacesNotMovableError,
 } from "@/modules/ee/contacts/directories/lib/directory-errors";
 import {
   createContactDirectory,
   getContactDirectory,
+  getContactDirectoryTargetedSurveys,
   listContactDirectories,
   updateContactDirectory,
 } from "@/modules/ee/contacts/directories/lib/directory-service";
@@ -60,11 +65,18 @@ const toProblem = (error: unknown, requestId: string, instance?: string): Respon
       details: { workspaceIds: error.workspaceIds },
     });
   }
-  if (error instanceof ContactDirectoryWorkspacesCannotLeaveError) {
-    return problemUnprocessableContent(requestId, error.message, {
-      instance,
-      code: "contact_directory_workspace_cannot_leave",
+  if (error instanceof ContactDirectoryWorkspacesInOtherDirectoryError) {
+    return problemConflict(requestId, error.message, instance, {
+      code: "contact_directory_workspace_in_other_directory",
       details: { workspaceIds: error.workspaceIds },
+    });
+  }
+  if (error instanceof ContactDirectoryArchivedError) {
+    return problemConflict(requestId, error.message, instance, { code: "contact_directory_archived" });
+  }
+  if (error instanceof ContactDirectoryArchiveHasWorkspacesError) {
+    return problemConflict(requestId, error.message, instance, {
+      code: "contact_directory_archive_has_workspaces",
     });
   }
   if (error instanceof ContactDirectoryNotFoundError) {
@@ -170,6 +182,8 @@ export async function updateContactDirectoryOperation({
       directoryId,
       name: body.name,
       workspaceIds: body.workspaceIds,
+      isArchived: body.isArchived,
+      pauseSurveysInWorkspaceIds: body.pauseSurveysInWorkspaceIds,
     });
   } catch (error) {
     return toProblem(error, context.requestId, context.instance);
@@ -178,10 +192,44 @@ export async function updateContactDirectoryOperation({
   if (auditLog) {
     auditLog.oldObject = change.previous;
     auditLog.newObject = change.next;
+    // Each paused survey also gets its own "updated" entry, by the same actor, so its history shows it.
+    const log = logger.withContext({ requestId: context.requestId, directoryId });
+    await Promise.all(
+      change.next.pausedSurveyIds.map((surveyId) =>
+        queueV3AuditLog(
+          {
+            ...auditLog,
+            eventId: undefined,
+            action: "updated",
+            targetType: "survey",
+            targetId: surveyId,
+            status: "success",
+            oldObject: undefined,
+            newObject: { status: "paused", publishOn: null },
+          },
+          context.requestId,
+          log
+        )
+      )
+    );
   }
 
   const directory = await getContactDirectory(access.organizationId, directoryId);
   if (!directory) return problemForbidden(context.requestId, undefined, context.instance);
 
   return successResponse(directory, { requestId: context.requestId });
+}
+
+/** The surveys each workspace's removal would cut off, for the Manage dialog's confirm step. */
+export async function getContactDirectoryTargetedSurveysOperation({
+  directoryId,
+  ...context
+}: TRequestContext & { directoryId: string }): Promise<Response> {
+  const access = await requireContactDirectoryAccess({ ...context, directoryId });
+  if (access instanceof Response) return access;
+
+  const targeted = await getContactDirectoryTargetedSurveys(access.organizationId, directoryId);
+  if (!targeted) return problemForbidden(context.requestId, undefined, context.instance);
+
+  return successResponse(targeted, { requestId: context.requestId });
 }

@@ -42,7 +42,7 @@ const addWorkspace = async (organizationId: string, label: string, directoryId?:
     });
     contactDirectoryId = directory.id;
     await prisma.contactAttributeKey.createMany({
-      data: getDefaultAttributeKeys("email").map((key) => ({
+      data: getDefaultAttributeKeys().map((key) => ({
         ...key,
         type: "default" as const,
         directoryId: directory.id,

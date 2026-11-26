@@ -2,7 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { retryUnlessClientError, v3RetryDelay } from "@/modules/api/lib/v3-client";
-import { createContactDirectory, fetchContactDirectories, updateContactDirectory } from "../lib/api-client";
+import {
+  createContactDirectory,
+  fetchContactDirectories,
+  fetchContactDirectoryTargetedSurveys,
+  updateContactDirectory,
+} from "../lib/api-client";
 import { contactDirectoryKeys } from "../lib/query";
 import type { TContactDirectoryCreateInput, TContactDirectoryUpdateInput } from "../types";
 
@@ -16,8 +21,26 @@ export const useContactDirectories = ({ organizationId }: Readonly<{ organizatio
   });
 
 /**
- * A save can move workspaces between directories and delete the ones they left, so the whole list is
- * refetched afterwards, failed saves included (the server state may have moved since it was read).
+ * For each workspace of the directory, the surveys its removal cuts off. Read when the Manage dialog's
+ * confirm step opens, never from an older answer: surveys may have started since.
+ */
+export const useContactDirectoryTargetedSurveys = ({
+  directoryId,
+  enabled,
+}: Readonly<{ directoryId: string; enabled: boolean }>) =>
+  useQuery({
+    queryKey: contactDirectoryKeys.targetedSurveys(directoryId),
+    queryFn: ({ signal }) => fetchContactDirectoryTargetedSurveys({ directoryId, signal }),
+    enabled,
+    staleTime: 0,
+    refetchOnMount: "always",
+    retry: retryUnlessClientError(3),
+    retryDelay: v3RetryDelay,
+  });
+
+/**
+ * A save changes which workspaces use which directory, so the whole list is refetched afterwards, failed
+ * saves included (the server state may have moved since it was read).
  */
 const useInvalidateList = (organizationId: string) => {
   const queryClient = useQueryClient();

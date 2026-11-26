@@ -1,20 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyElementSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
-import { getContactIdentifier } from "@/lib/utils/contact";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
-import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 import { ResponseSampleModal } from "./ResponseSampleModal";
+import { SummaryResponseContact } from "./SummaryResponseContact";
 
 interface OpenTextSummaryProps {
   elementSummary: TSurveyElementSummaryOpenText;
@@ -75,26 +73,12 @@ export const OpenTextSummary = ({
                     }
                   }}>
                   <TableCell className="w-1/5">
-                    {response.contact ? (
-                      <Link
-                        className="ph-no-capture group flex items-center"
-                        href={`/workspaces/${survey.workspaceId}/contacts/${response.contact.id}`}
-                        onClick={(e) => e.stopPropagation()}>
-                        <div className="hidden md:flex">
-                          <PersonAvatar personId={response.contact.id} />
-                        </div>
-                        <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                          {getContactIdentifier(response.contact, response.contactAttributes)}
-                        </p>
-                      </Link>
-                    ) : (
-                      <div className="group flex items-center">
-                        <div className="hidden md:flex">
-                          <PersonAvatar personId="anonymous" />
-                        </div>
-                        <p className="break-normal text-slate-600 md:ml-2">{t("common.anonymous")}</p>
-                      </div>
-                    )}
+                    <SummaryResponseContact
+                      contact={response.contact}
+                      contactAttributes={response.contactAttributes}
+                      workspaceId={survey.workspaceId}
+                      onLinkClick={(e) => e.stopPropagation()}
+                    />
                   </TableCell>
                   <TableCell className="w-2/5 font-medium">
                     {typeof response.value === "string"

@@ -5,8 +5,10 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
 import { getSurveyUploadElementIds, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { type TResponseCursor, whereAfterResponseCursor } from "../response/pagination";
+import { toResultsResponseContact } from "../response/results-contact";
 import { buildWhereClause, selectsLowQuality } from "../response/where-clause";
 import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
@@ -86,9 +88,11 @@ export const buildAnalysisSelect = (fields: TAnalysisResponseFields, isQuotasAll
           contact: {
             select: {
               id: true,
+              // Tells whether the workspace still reaches the contact (decision 8).
+              directoryId: true,
               attributes: {
                 where: { attributeKey: { key: "userId" } },
-                select: { value: true },
+                select: { attributeKey: { select: { key: true } }, value: true },
               },
             },
           },
@@ -114,7 +118,11 @@ type TAnalysisSelected = {
   data: unknown;
   notShown: TAnalysisResponse["notShown"];
   tags?: { tag: { name: string } }[];
-  contact?: { id: string; attributes: { value: string }[] } | null;
+  contact?: {
+    id: string;
+    directoryId: string | null;
+    attributes: { attributeKey: { key: string }; value: string }[];
+  } | null;
   contactAttributes?: Record<string, unknown> | null;
   quotaLinks?: { quota: { name: string } }[];
   variables?: Record<string, string | number | boolean>;
@@ -124,7 +132,10 @@ type TAnalysisSelected = {
   updatedAt?: Date;
 };
 
-const toAnalysisResponse = (row: TAnalysisSelected): TAnalysisResponse => ({
+const toAnalysisResponse = (
+  row: TAnalysisSelected,
+  workspaceDirectoryId: string | null
+): TAnalysisResponse => ({
   id: row.id,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
@@ -140,7 +151,8 @@ const toAnalysisResponse = (row: TAnalysisSelected): TAnalysisResponse => ({
   tags: row.tags?.map(({ tag }) => tag.name),
   quotas: row.quotaLinks?.map(({ quota }) => quota.name),
   contactAttributes: row.contactAttributes,
-  contact: row.contact ? { id: row.contact.id, userId: row.contact.attributes[0]?.value } : null,
+  // A contact the workspace no longer reaches exports without its current userId.
+  contact: row.contact ? toResultsResponseContact(row.contact, workspaceDirectoryId) : null,
 });
 
 /**
@@ -160,10 +172,11 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
     if (!survey) throw new ResourceNotFoundError("Survey", input.surveyId);
 
     const where = buildAnalysisWhere(survey, input.filter, input.includeLowQuality);
-    const [included, lowQualityLeftOut, contactAttributeKeys] = await Promise.all([
+    const [included, lowQualityLeftOut, contactAttributeKeys, workspaceDirectoryId] = await Promise.all([
       prisma.response.count({ where: where.included }),
       where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,
       fields.contactAttributes ? getContactAttributeKeys(survey.workspaceId) : [],
+      fields.contact ? getWorkspaceContactDirectoryId(survey.workspaceId) : null,
     ]);
 
     const builder = createAnalysisRowBuilder({
@@ -192,7 +205,7 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
         })) as unknown as TAnalysisSelected[];
 
         yield batch.map((row) => {
-          const response = toAnalysisResponse(row);
+          const response = toAnalysisResponse(row, workspaceDirectoryId);
           // File URLs resolve like the Standard export does, for the upload element answers only.
           for (const id of uploadElementIds) {
             if (response.data[id] !== undefined)

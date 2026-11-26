@@ -13,11 +13,11 @@
 -- The previous release keeps writing during a rolling deploy and knows nothing of directories:
 --  - `contact_directory_from_workspace` fills a missing `directoryId` from the row's workspace on every
 --    insert into Contact, ContactAttributeKey and Segment. Drop it one release later.
---  - Deleting a workspace no longer cascades to these tables. `contact_directory_delete_unused` deletes the
---    workspace's directory when no other workspace uses it, which takes its contacts, keys and segments
---    with it, as the cascade did. `contact_directory_delete_workspace_rows` deletes the workspace's rows
---    that have no directory yet (not backfilled, or a workspace made without one), which would otherwise
---    be left with neither a workspace nor a directory.
+--  - Deleting a workspace no longer cascades to these tables: a directory belongs to the organization, so
+--    its contacts, keys and segments are kept, and the directory stays active even with no workspaces left
+--    (ADR 0062). `contact_directory_delete_workspace_rows` deletes the workspace's rows that have no
+--    directory yet (not backfilled, or a workspace made without one), which would otherwise be left with
+--    neither a workspace nor a directory.
 --
 -- One transaction, so the swap of each foreign key is atomic and a failed run leaves nothing behind. The
 -- tables are taken in an order that holds the lock on "Workspace", which every request reads, shortest.
@@ -26,7 +26,7 @@ SET LOCAL lock_timeout = '5s';
 
 DO $$
 BEGIN
-  CREATE TYPE "ContactDirectoryMatchingKey" AS ENUM ('email', 'externalId');
+  CREATE TYPE "ContactDirectoryMatchingKey" AS ENUM ('email', 'userId');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS "ContactDirectory" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "matchingKey" "ContactDirectoryMatchingKey" NOT NULL,
+    "isArchived" BOOLEAN NOT NULL DEFAULT false,
     "organizationId" TEXT NOT NULL,
 
     CONSTRAINT "ContactDirectory_pkey" PRIMARY KEY ("id")
@@ -118,27 +119,8 @@ BEGIN
 END;
 $$;
 
--- After the row goes, so the check no longer sees it. The directory row is locked first: when two
--- workspaces of one directory are deleted at once, the second waits for the first to commit, then sees it
--- gone and deletes the directory, instead of each seeing the other and leaving it behind.
-CREATE OR REPLACE FUNCTION contact_directory_delete_unused() RETURNS trigger
-LANGUAGE plpgsql AS $$
-BEGIN
-  IF OLD."contactDirectoryId" IS NOT NULL THEN
-    PERFORM 1 FROM "ContactDirectory" WHERE "id" = OLD."contactDirectoryId" FOR UPDATE;
-    DELETE FROM "ContactDirectory" d
-    WHERE d."id" = OLD."contactDirectoryId"
-      AND NOT EXISTS (SELECT 1 FROM "Workspace" w WHERE w."contactDirectoryId" = d."id");
-  END IF;
-  RETURN NULL;
-END;
-$$;
-
 DROP TRIGGER IF EXISTS contact_directory_delete_workspace_rows ON "Workspace";
 CREATE TRIGGER contact_directory_delete_workspace_rows BEFORE DELETE ON "Workspace"
   FOR EACH ROW EXECUTE FUNCTION contact_directory_delete_workspace_rows();
-DROP TRIGGER IF EXISTS contact_directory_delete_unused ON "Workspace";
-CREATE TRIGGER contact_directory_delete_unused AFTER DELETE ON "Workspace"
-  FOR EACH ROW EXECUTE FUNCTION contact_directory_delete_unused();
 
 COMMIT;

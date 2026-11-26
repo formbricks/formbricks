@@ -328,15 +328,15 @@ describe("POST /api/internal/contacts/imports: the import", () => {
 });
 
 describe("POST /api/internal/contacts/imports: per-record validation", () => {
-  // The identity column is the directory's matching key (email or externalId), so the import checks it once
+  // The identity column is the directory's matching key (email or userId), so the import checks it once
   // the directory is known and refuses a bad file with 422 and its reason, before anything is written.
   test("leaves the identity column to the import, which knows the directory's matching key", async () => {
-    const csvData = [{ externalId: "crm-1" }];
+    const csvData = [{ userId: "user-1" }];
     mocks.createContactsFromCSV.mockRejectedValue(
       new ValidationError("Missing email field for one or more records")
     );
 
-    const response = await post(body({ csvData, attributeMap: { externalId: "externalId" } }));
+    const response = await post(body({ csvData, attributeMap: { userId: "userId" } }));
 
     expect(response.status).toBe(422);
     expect((await problem(response)).detail).toBe("Missing email field for one or more records");

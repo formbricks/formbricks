@@ -1,18 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyElementSummaryDate } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { timeSince } from "@/lib/time";
-import { getContactIdentifier } from "@/lib/utils/contact";
 import { formatStoredDateForDisplay } from "@/lib/utils/date-display";
-import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
+import { SummaryResponseContact } from "./SummaryResponseContact";
 
 interface DateElementSummary {
   readonly elementSummary: TSurveyElementSummaryDate;
@@ -63,25 +61,11 @@ export const DateElementSummary = ({ elementSummary, survey, locale }: DateEleme
                 key={response.id}
                 className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 last:border-transparent">
                 <div className="pl-4 md:pl-6">
-                  {response.contact ? (
-                    <Link
-                      className="ph-no-capture group flex items-center"
-                      href={`/workspaces/${workspace?.id}/contacts/${response.contact.id}`}>
-                      <div className="hidden md:flex">
-                        <PersonAvatar personId={response.contact.id} />
-                      </div>
-                      <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                        {getContactIdentifier(response.contact, response.contactAttributes)}
-                      </p>
-                    </Link>
-                  ) : (
-                    <div className="group flex items-center">
-                      <div className="hidden md:flex">
-                        <PersonAvatar personId="anonymous" />
-                      </div>
-                      <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
-                    </div>
-                  )}
+                  <SummaryResponseContact
+                    contact={response.contact}
+                    contactAttributes={response.contactAttributes}
+                    workspaceId={workspace?.id}
+                  />
                 </div>
                 <div className="ph-no-capture col-span-2 pl-6 font-semibold whitespace-pre-wrap">
                   {renderResponseValue(response.value)}

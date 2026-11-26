@@ -139,7 +139,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
             select: { id: true },
           });
           await prisma.contactAttributeKey.createMany({
-            data: getDefaultAttributeKeys("email").map((key) => ({
+            data: getDefaultAttributeKeys().map((key) => ({
               ...key,
               type: "default" as const,
               directoryId: contactDirectory.id,

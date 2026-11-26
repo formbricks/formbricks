@@ -17,7 +17,10 @@ import {
 } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  getWorkspaceContactDirectoryId,
+  whereContactsOfWorkspace,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audit-maintenance";
@@ -40,6 +43,7 @@ import { calBookingsForAnswers } from "./cal-bookings";
 import { getSurveyFilteringValues } from "./filtering-values";
 import { withoutNotShownAnswers } from "./not-shown-answers";
 import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "./pagination";
+import { toResultsResponseContact } from "./results-contact";
 import { standardColumnGroups, standardHeaders } from "./standard-columns";
 import {
   calculateTtcTotal,
@@ -258,6 +262,9 @@ export const getResponseWithQuotas = reactCache(
           ...responseSelection,
           // The response card reads it to mark what the respondent was not shown (ENG-6936).
           notShown: true,
+          // ...and whether the survey's workspace still reaches the contact.
+          contact: { select: { ...responseSelection.contact.select, directoryId: true } },
+          survey: { select: { workspaceId: true } },
           quotaLinks: {
             where: { status: "screenedIn" },
             include: { quota: { select: { id: true, name: true } } },
@@ -269,9 +276,13 @@ export const getResponseWithQuotas = reactCache(
         return null;
       }
 
-      const { quotaLinks, ...rest } = responsePrisma;
+      const { quotaLinks, survey, ...rest } = responsePrisma;
+      const workspaceDirectoryId = rest.contact
+        ? await getWorkspaceContactDirectoryId(survey.workspaceId)
+        : null;
       return {
         ...mapResponsePrismaToResponse(rest),
+        contact: toResultsResponseContact(rest.contact, workspaceDirectoryId),
         quotas: quotaLinks.map((ql) => ql.quota),
       };
     } catch (error) {
@@ -337,9 +348,10 @@ export const getResponses = reactCache(
     offset?: number,
     filterCriteria?: TResponseFilterCriteria,
     cursor?: TResponseCursor,
-    // The not-shown record (ENG-6936) is read only for the app's own results, never for the v1
-    // management API or the standard export, which also read through here.
-    options?: { withNotShown?: boolean }
+    // The not-shown record (ENG-6936) is read only for the app's own results, never for the v1 management
+    // API or the standard export, which also read through here. Whether the workspace still reaches each
+    // contact is read for the app's results and the standard export, not for the v1 management API.
+    options?: { withNotShown?: boolean; withContactAvailability?: boolean }
   ): Promise<TResponseWithQuotas[]> => {
     validateInputs(
       [surveyId, ZId],
@@ -363,6 +375,7 @@ export const getResponses = reactCache(
         select: {
           ...responseSelection,
           ...(options?.withNotShown && { notShown: true }),
+          contact: { select: { ...responseSelection.contact.select, directoryId: true } },
           quotaLinks: {
             where: {
               status: "screenedIn",
@@ -389,11 +402,19 @@ export const getResponses = reactCache(
         skip: offset,
       });
 
+      // Read only when a response has a contact: an anonymous page needs no directory.
+      const workspaceDirectoryId =
+        options?.withContactAvailability && responses.some((response) => response.contact)
+          ? await getWorkspaceContactDirectoryId(survey.workspaceId)
+          : null;
+
       const transformedResponses: TResponseWithQuotas[] = responses.map((responsePrisma) => {
         const { quotaLinks, ...response } = responsePrisma;
         return {
           ...response,
-          contact: getResponseContact(responsePrisma),
+          contact: options?.withContactAvailability
+            ? toResultsResponseContact(responsePrisma.contact, workspaceDirectoryId)
+            : getResponseContact(responsePrisma),
           tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
           quotas: quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
         };
@@ -433,7 +454,10 @@ export const getResponseDownloadFile = async (
     let hasMore = true;
 
     while (hasMore) {
-      const batch = await getResponses(surveyId, batchSize, 0, filterCriteria, cursor);
+      // A contact the workspace no longer reaches exports without its current userId (decision 8).
+      const batch = await getResponses(surveyId, batchSize, 0, filterCriteria, cursor, {
+        withContactAvailability: true,
+      });
       responses.push(...batch);
 
       const lastResponse = batch.at(-1);

@@ -48,7 +48,7 @@ vi.mock("server-only", () => ({}));
 const {
   ContactDirectoryNameRequiredError,
   ContactDirectoryNameTakenError,
-  ContactDirectoryWorkspacesNotMovableError,
+  ContactDirectoryWorkspacesInOtherDirectoryError,
 } = await import("@/modules/ee/contacts/directories/lib/directory-errors");
 
 const ORG_ID = "clorg11111111111111111111";
@@ -65,8 +65,8 @@ const DIRECTORY = {
     { id: WS_1, name: "HCP" },
     { id: WS_2, name: "Patients" },
   ],
+  isArchived: false,
   contactCount: 0,
-  workspaceCanMove: false,
 };
 
 const URL_BASE = "http://localhost/api/internal/contact-directories";
@@ -163,6 +163,7 @@ describe("POST /api/internal/contact-directories", () => {
     expect((await post({ ...body, name: null })).status).toBe(400);
     expect((await post({ ...body, workspaceIds: [] })).status).toBe(400);
     expect((await post({ ...body, matchingKey: "phone" })).status).toBe(400);
+    expect((await post({ ...body, matchingKey: "externalId" })).status).toBe(400);
     expect((await post({ ...body, archived: true })).status).toBe(400);
     expect(mocks.create).not.toHaveBeenCalled();
   });
@@ -175,17 +176,17 @@ describe("POST /api/internal/contact-directories", () => {
     expect((await blank.json()).code).toBe("contact_directory_name_required");
   });
 
-  test("answers 409 for a taken name and for a workspace that can no longer move", async () => {
+  test("answers 409 for a taken name and for a workspace in another directory", async () => {
     mocks.create.mockRejectedValueOnce(new ContactDirectoryNameTakenError());
     const taken = await post(body);
     expect(taken.status).toBe(409);
     expect((await taken.json()).code).toBe("contact_directory_name_taken");
 
-    mocks.create.mockRejectedValueOnce(new ContactDirectoryWorkspacesNotMovableError([WS_2]));
-    const notMovable = await post(body);
-    expect(notMovable.status).toBe(409);
-    expect(await notMovable.json()).toMatchObject({
-      code: "contact_directory_workspace_not_movable",
+    mocks.create.mockRejectedValueOnce(new ContactDirectoryWorkspacesInOtherDirectoryError([WS_2]));
+    const elsewhere = await post(body);
+    expect(elsewhere.status).toBe(409);
+    expect(await elsewhere.json()).toMatchObject({
+      code: "contact_directory_workspace_in_other_directory",
       details: { workspaceIds: [WS_2] },
     });
   });

@@ -8,6 +8,7 @@ import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/cont
 import {
   ZContactBulkUploadRequest,
   getContactBulkUploadRequestSchema,
+  getUniqueValueKey,
 } from "@/modules/ee/contacts/types/contact";
 import { checkContactDirectoryApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -104,8 +105,7 @@ export const PUT = async (request: Request) =>
         return responses.multiStatusResponse({
           data: {
             status: "success",
-            message:
-              "Contacts bulk upload partially successful. Some contacts were skipped due to conflicting userIds.",
+            message: `Contacts bulk upload partially successful. Some contacts were skipped due to conflicting ${getUniqueValueKey(directory.matchingKey)}s.`,
             meta: {
               skippedContacts: contactIdxWithConflictingUserIds.map((idx) => ({
                 index: idx,

@@ -526,42 +526,93 @@ describe("upsertBulkContacts", () => {
       expect(upsertedContactIds()).toEqual(["oldest"]);
     });
 
-    test("an external-ID directory matches on externalId", async () => {
+    test("a userId directory matches on userId", async () => {
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
       vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce(
-        attributeKeys(["externalId", "plan"])
+        attributeKeys(["userId", "plan"])
       );
       vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
-        existingContact("crm-contact", { externalId: "crm-1" }),
+        existingContact("user-contact", { userId: "user-1" }),
       ]);
 
       await upsertBulkContacts(
         [
           {
             attributes: [
-              { attributeKey: { key: "externalId", name: "externalId" }, value: "crm-1" },
+              { attributeKey: { key: "userId", name: "userId" }, value: "user-1" },
               { attributeKey: { key: "plan", name: "plan" }, value: "pro" },
             ],
           },
         ],
         mockWorkspaceId,
-        { id: "directory_ext", matchingKey: "externalId" }
+        { id: "directory_user", matchingKey: "userId" }
       );
 
       expect(prisma.contact.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            directoryId: "directory_ext",
+            directoryId: "directory_user",
             attributes: {
               some: {
-                attributeKey: { key: "externalId", directoryId: "directory_ext" },
-                value: { in: ["crm-1"] },
+                attributeKey: { key: "userId", directoryId: "directory_user" },
+                value: { in: ["user-1"] },
               },
             },
           },
         })
       );
-      expect(upsertedContactIds()).toEqual(["crm-contact"]);
+      expect(upsertedContactIds()).toEqual(["user-contact"]);
+    });
+
+    test("a userId directory skips a contact taking an email another contact has", async () => {
+      // "taken@example.com" belongs to a contact that is not in the request.
+      vi.mocked(prisma.contactAttribute.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        { value: "taken@example.com" },
+      ]);
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce(
+        attributeKeys(["userId", "email"])
+      );
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existingContact("user-contact", { userId: "user-1", email: "old@example.com" }),
+      ]);
+
+      const result = await upsertBulkContacts(
+        [
+          // An update to the taken email and a new contact with it: both skipped.
+          {
+            attributes: [
+              { attributeKey: { key: "userId", name: "userId" }, value: "user-1" },
+              { attributeKey: { key: "email", name: "email" }, value: "taken@example.com" },
+            ],
+          },
+          {
+            attributes: [
+              { attributeKey: { key: "userId", name: "userId" }, value: "user-2" },
+              { attributeKey: { key: "email", name: "email" }, value: "taken@example.com" },
+            ],
+          },
+          {
+            attributes: [
+              { attributeKey: { key: "userId", name: "userId" }, value: "user-3" },
+              { attributeKey: { key: "email", name: "email" }, value: "free@example.com" },
+            ],
+          },
+        ],
+        mockWorkspaceId,
+        { id: "directory_user", matchingKey: "userId" }
+      );
+
+      expect(result).toEqual({ ok: true, data: { contactIdxWithConflictingUserIds: [0, 1] } });
+      expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
+        where: {
+          attributeKey: { key: "email", directoryId: "directory_user" },
+          value: { in: ["taken@example.com", "taken@example.com", "free@example.com"] },
+        },
+        select: { value: true },
+      });
+      expect(prisma.contact.createMany).toHaveBeenCalledWith({
+        data: [{ id: "mock-id", directoryId: "directory_user", workspaceId: mockWorkspaceId }],
+      });
     });
   });
 });

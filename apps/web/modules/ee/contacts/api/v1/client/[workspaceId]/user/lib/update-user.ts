@@ -35,10 +35,10 @@ const contactStateSelect = {
     },
   },
   responses: {
-    select: { surveyId: true, createdAt: true, finished: true },
+    select: { surveyId: true, createdAt: true, finished: true, survey: { select: { workspaceId: true } } },
   },
   displays: {
-    select: { surveyId: true, createdAt: true },
+    select: { surveyId: true, createdAt: true, survey: { select: { workspaceId: true } } },
     orderBy: { createdAt: "desc" as const },
   },
 } satisfies Prisma.ContactSelect;
@@ -106,15 +106,20 @@ const buildUserStateFromContact = async (
     responses: contactData.responses,
   });
 
-  // Process data efficiently from already-fetched contact
-  const displays = contactData.displays.map((display) => ({
+  // In a shared directory the contact also has displays and responses from other workspaces' surveys.
+  // Segments above use them all (a shared segment can filter on any of them), but the SDK only gets this
+  // workspace's: they drive its recontact wait and must not reveal the other workspaces' survey ids.
+  const ownDisplays = contactData.displays.filter((display) => display.survey.workspaceId === workspaceId);
+  const displays = ownDisplays.map((display) => ({
     surveyId: display.surveyId,
     createdAt: display.createdAt,
   }));
 
-  const responses = contactData.responses.map((response) => response.surveyId);
+  const responses = contactData.responses
+    .filter((response) => response.survey.workspaceId === workspaceId)
+    .map((response) => response.surveyId);
 
-  const lastDisplayAt = contactData.displays.length > 0 ? contactData.displays[0].createdAt : null;
+  const lastDisplayAt = ownDisplays.length > 0 ? ownDisplays[0].createdAt : null;
 
   return {
     contactId: contactData.id,

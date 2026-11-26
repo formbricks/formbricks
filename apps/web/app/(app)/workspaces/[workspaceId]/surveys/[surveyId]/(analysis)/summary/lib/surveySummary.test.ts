@@ -66,6 +66,9 @@ vi.mock("@/lib/i18n/utils", () => ({
 vi.mock("@/lib/response/service", () => ({
   getResponseCountBySurveyId: vi.fn(),
 }));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  getWorkspaceContactDirectoryId: vi.fn(async () => "directory-1"),
+}));
 vi.mock("@/lib/response/where-clause", () => ({
   buildWhereClause: vi.fn(() => ({})),
 }));
@@ -1466,6 +1469,7 @@ describe("getResponsesForSummary", () => {
       updatedAt: new Date(),
       contact: {
         id: "contact-1",
+        directoryId: "directory-1",
         attributes: [
           { attributeKey: { key: "userId" }, value: "user-123" },
           { attributeKey: { key: "email" }, value: "test@example.com" },
@@ -1511,6 +1515,7 @@ describe("getResponsesForSummary", () => {
       updatedAt: new Date(),
       contact: {
         id: "contact-1",
+        directoryId: "directory-1",
         attributes: [{ attributeKey: { key: "email" }, value: "test@example.com" }],
       },
       contactAttributes: {},

@@ -4563,6 +4563,18 @@ export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
 export type TSurveyEditorTabs = "elements" | "flow" | "styling" | "language" | "settings" | "followUps";
 
+/**
+ * The respondent a summary sample links to. `unavailable`: the workspace no longer reaches the contact
+ * (another contact directory, or none), so the sample shows the identifier saved on the response, unlinked.
+ */
+const ZSurveySummaryContact = z
+  .object({
+    id: ZId,
+    userId: z.string().optional(),
+    unavailable: z.boolean().optional(),
+  })
+  .nullable();
+
 export const ZSurveyElementSummaryOpenText = z.object({
   type: z.literal(TSurveyElementTypeEnum.OpenText),
   element: ZSurveyOpenTextElement,
@@ -4572,12 +4584,7 @@ export const ZSurveyElementSummaryOpenText = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      contact: z
-        .object({
-          id: ZId,
-          userId: z.string().optional(),
-        })
-        .nullable(),
+      contact: ZSurveySummaryContact,
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
@@ -4613,12 +4620,7 @@ export const ZSurveyElementSummaryMultipleChoice = z.object({
         .array(
           z.object({
             value: z.string(),
-            contact: z
-              .object({
-                id: ZId,
-                userId: z.string().optional(),
-              })
-              .nullable(),
+            contact: ZSurveySummaryContact,
             contactAttributes: ZContactAttributes.nullable(),
           })
         )
@@ -4781,12 +4783,7 @@ export const ZSurveyElementSummaryDate = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      contact: z
-        .object({
-          id: ZId,
-          userId: z.string().optional(),
-        })
-        .nullable(),
+      contact: ZSurveySummaryContact,
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
@@ -4803,12 +4800,7 @@ export const ZSurveyElementSummaryFileUpload = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      contact: z
-        .object({
-          id: ZId,
-          userId: z.string().optional(),
-        })
-        .nullable(),
+      contact: ZSurveySummaryContact,
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
@@ -4827,12 +4819,7 @@ export const ZSurveyElementSummarySignature = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      contact: z
-        .object({
-          id: ZId,
-          userId: z.string().optional(),
-        })
-        .nullable(),
+      contact: ZSurveySummaryContact,
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
@@ -4888,12 +4875,7 @@ export const ZSurveyElementSummaryHiddenFields = z.object({
     z.object({
       updatedAt: z.date(),
       value: z.string(),
-      contact: z
-        .object({
-          id: ZId,
-          userId: z.string().optional(),
-        })
-        .nullable(),
+      contact: ZSurveySummaryContact,
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
@@ -4910,12 +4892,7 @@ export const ZSurveyElementSummaryAddress = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      contact: z
-        .object({
-          id: ZId,
-          userId: z.string().optional(),
-        })
-        .nullable(),
+      contact: ZSurveySummaryContact,
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
@@ -4932,12 +4909,7 @@ export const ZSurveyElementSummaryContactInfo = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      contact: z
-        .object({
-          id: ZId,
-          userId: z.string().optional(),
-        })
-        .nullable(),
+      contact: ZSurveySummaryContact,
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
@@ -4959,12 +4931,7 @@ export const ZSurveyElementSummaryRanking = z.object({
         .array(
           z.object({
             value: z.string(),
-            contact: z
-              .object({
-                id: ZId,
-                userId: z.string().optional(),
-              })
-              .nullable(),
+            contact: ZSurveySummaryContact,
             contactAttributes: ZContactAttributes.nullable(),
           })
         )

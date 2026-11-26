@@ -68,15 +68,15 @@ describe("PUT /management/contacts/bulk", () => {
     expect(mocks.upsertBulkContacts).not.toHaveBeenCalled();
   });
 
-  test("an external-ID directory requires externalId on every contact", async () => {
-    mocks.getWorkspaceContactDirectory.mockResolvedValue({ id: "dir-1", matchingKey: "externalId" });
+  test("a userId directory requires userId on every contact", async () => {
+    mocks.getWorkspaceContactDirectory.mockResolvedValue({ id: "dir-1", matchingKey: "userId" });
 
-    const response = await callPut([contact({ externalId: "crm-1" }), contact({ email: "b@example.com" })]);
+    const response = await callPut([contact({ userId: "user-1" }), contact({ email: "b@example.com" })]);
 
     expect(response.status).toBe(422);
     const body = await response.json();
     expect(body.error.details).toEqual([
-      { field: "contacts", issue: "externalId attribute is required for contact at index 1" },
+      { field: "contacts", issue: "userId attribute is required for contact at index 1" },
     ]);
     expect(mocks.upsertBulkContacts).not.toHaveBeenCalled();
   });
@@ -95,5 +95,25 @@ describe("PUT /management/contacts/bulk", () => {
     });
     expect(mocks.upsertBulkContacts).toHaveBeenCalledWith(contacts, workspaceId, directory);
     expect(mocks.getWorkspaceContactDirectory).toHaveBeenCalledTimes(1);
+  });
+
+  test("a userId directory reports contacts skipped for a taken email", async () => {
+    mocks.getWorkspaceContactDirectory.mockResolvedValue({ id: "dir-1", matchingKey: "userId" });
+    mocks.upsertBulkContacts.mockResolvedValue({ ok: true, data: { contactIdxWithConflictingUserIds: [1] } });
+
+    const response = await callPut([
+      contact({ userId: "user-1" }),
+      contact({ userId: "user-2", email: "taken@example.com" }),
+    ]);
+
+    expect(response.status).toBe(207);
+    expect(await response.json()).toEqual({
+      data: {
+        status: "success",
+        message:
+          "Contacts bulk upload partially successful. Some contacts were skipped due to conflicting emails.",
+        meta: { skippedContacts: [{ index: 1, userId: "user-2" }] },
+      },
+    });
   });
 });

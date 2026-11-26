@@ -1,3 +1,4 @@
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { can } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -44,7 +45,7 @@ export const ContactDirectoriesPage = async (props: {
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={pageTitle} />
-        <div className="flex items-center justify-center">
+        <SettingsCard title={pageTitle} description={t("workspace.settings.contact_directories.description")}>
           <UpgradePrompt
             title={t("workspace.contacts.unlock_contacts_title")}
             description={t("workspace.contacts.unlock_contacts_description")}
@@ -62,7 +63,7 @@ export const ContactDirectoriesPage = async (props: {
               },
             ]}
           />
-        </div>
+        </SettingsCard>
       </PageContentWrapper>
     );
   }
@@ -77,8 +78,11 @@ export const ContactDirectoriesPage = async (props: {
   }
 
   return (
-    <ContactDirectoriesQueryClientProvider>
-      <ContactDirectoriesView organizationId={organization.id} />
-    </ContactDirectoriesQueryClientProvider>
+    <PageContentWrapper>
+      <PageHeader pageTitle={pageTitle} />
+      <ContactDirectoriesQueryClientProvider>
+        <ContactDirectoriesView organizationId={organization.id} />
+      </ContactDirectoriesQueryClientProvider>
+    </PageContentWrapper>
   );
 };

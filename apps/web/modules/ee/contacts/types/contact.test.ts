@@ -191,14 +191,14 @@ describe("getContactCSVUploadSchema (email directory)", () => {
   });
 });
 
-describe("getContactCSVUploadSchema (external ID directory)", () => {
-  const schema = getContactCSVUploadSchema("externalId");
+describe("getContactCSVUploadSchema (userId directory)", () => {
+  const schema = getContactCSVUploadSchema("userId");
 
   // An email belongs to one contact of a directory, as identify keeps it, whatever the directory matches by.
   test("refuses two rows with one email", () => {
     const result = schema.safeParse([
-      { externalId: "CRM-1", email: "shared@example.com" },
-      { externalId: "CRM-2", email: "shared@example.com" },
+      { userId: "user-1", email: "shared@example.com" },
+      { userId: "user-2", email: "shared@example.com" },
     ]);
     expect(result.success).toBe(false);
     expect(result.error?.issues[0].message).toBe("Duplicate emails found in the records");
@@ -206,10 +206,10 @@ describe("getContactCSVUploadSchema (external ID directory)", () => {
 
   test("accepts distinct emails, and rows without one", () => {
     const rows = [
-      { externalId: "CRM-1", email: "a@example.com" },
-      { externalId: "CRM-2", email: "b@example.com" },
-      { externalId: "CRM-3", email: "" },
-      { externalId: "CRM-4", email: "" },
+      { userId: "user-1", email: "a@example.com" },
+      { userId: "user-2", email: "b@example.com" },
+      { userId: "user-3", email: "" },
+      { userId: "user-4", email: "" },
     ];
     expect(schema.safeParse(rows).success).toBe(true);
   });
@@ -844,34 +844,34 @@ describe("validateUniqueAttributeKeys", () => {
   });
 });
 
-describe("identity checks for an external-ID directory", () => {
+describe("identity checks for a userId directory", () => {
   const workspaceId = "cld1234567890abcdef123456";
   const bulkAttr = (key: string, value: string) => ({ attributeKey: { key, name: key }, value });
   const issueMessages = (result: { success: boolean; error?: ZodError }) =>
     result.error?.issues.map((issue) => issue.message) ?? [];
 
-  test("CSV rows need an externalId column instead of email", () => {
-    const schema = getContactCSVUploadSchema("externalId");
+  test("CSV rows need a userId column instead of email", () => {
+    const schema = getContactCSVUploadSchema("userId");
 
-    expect(schema.safeParse([{ externalId: "crm-1" }]).success).toBe(true);
+    expect(schema.safeParse([{ userId: "user-1" }]).success).toBe(true);
     expect(issueMessages(schema.safeParse([{ email: "a@example.com" }]))).toEqual([
-      "Missing externalId field for one or more records",
+      "Missing userId field for one or more records",
     ]);
-    expect(issueMessages(schema.safeParse([{ externalId: "" }]))).toEqual([
-      "externalId field is empty for one or more records",
+    expect(issueMessages(schema.safeParse([{ userId: "" }]))).toEqual([
+      "userId field is empty for one or more records",
     ]);
-    expect(issueMessages(schema.safeParse([{ externalId: "crm-1" }, { externalId: "crm-1" }]))).toEqual([
-      "Duplicate externalIds found in the records",
+    expect(issueMessages(schema.safeParse([{ userId: "user-1" }, { userId: "user-1" }]))).toEqual([
+      "Duplicate userIds found in the records",
     ]);
   });
 
-  test("bulk contacts need a unique externalId, not a valid email", () => {
-    const schema = getContactBulkUploadRequestSchema("externalId");
+  test("bulk contacts need a unique userId, not a valid email", () => {
+    const schema = getContactBulkUploadRequestSchema("userId");
 
     expect(
       schema.safeParse({
         workspaceId,
-        contacts: [{ attributes: [bulkAttr("externalId", "crm-1"), bulkAttr("email", "not-an-email")] }],
+        contacts: [{ attributes: [bulkAttr("userId", "user-1"), bulkAttr("email", "not-an-email")] }],
       }).success
     ).toBe(true);
 
@@ -879,31 +879,51 @@ describe("identity checks for an external-ID directory", () => {
       issueMessages(
         schema.safeParse({ workspaceId, contacts: [{ attributes: [bulkAttr("email", "a@example.com")] }] })
       )
-    ).toEqual(["externalId attribute is required for contact at index 0"]);
+    ).toEqual(["userId attribute is required for contact at index 0"]);
 
+    // One issue for a repeated userId, not a second one from the userId check an email directory runs.
     const duplicates = schema.safeParse({
       workspaceId,
       contacts: [
-        { attributes: [bulkAttr("externalId", "crm-1")] },
-        { attributes: [bulkAttr("externalId", "crm-1")] },
+        { attributes: [bulkAttr("userId", "user-1")] },
+        { attributes: [bulkAttr("userId", "user-1")] },
       ],
     });
     expect(duplicates.error?.issues).toEqual([
       expect.objectContaining({
-        message: "Duplicate externalIds found in the records, please ensure each externalId is unique.",
-        params: { duplicateExternalIds: ["crm-1"] },
+        message: "Duplicate userIds found in the records, please ensure each userId is unique.",
+        params: { duplicateUserIds: ["user-1"] },
       }),
     ]);
   });
 
-  test("create needs an externalId attribute and does not check email format", () => {
-    const schema = getContactCreateRequestSchema("externalId");
+  test("bulk contacts can't repeat an email, as a CSV file can't", () => {
+    const schema = getContactBulkUploadRequestSchema("userId");
 
-    expect(schema.safeParse({ workspaceId, attributes: { externalId: "crm-1", email: "x" } }).success).toBe(
+    const duplicates = schema.safeParse({
+      workspaceId,
+      contacts: [
+        { attributes: [bulkAttr("userId", "user-1"), bulkAttr("email", "a@example.com")] },
+        { attributes: [bulkAttr("userId", "user-2"), bulkAttr("email", "a@example.com")] },
+        { attributes: [bulkAttr("userId", "user-3")] },
+      ],
+    });
+    expect(duplicates.error?.issues).toEqual([
+      expect.objectContaining({
+        message: "Duplicate emails found in the records, please ensure each email is unique.",
+        params: { duplicateEmails: ["a@example.com"] },
+      }),
+    ]);
+  });
+
+  test("create needs a userId attribute and does not check email format", () => {
+    const schema = getContactCreateRequestSchema("userId");
+
+    expect(schema.safeParse({ workspaceId, attributes: { userId: "user-1", email: "x" } }).success).toBe(
       true
     );
     expect(issueMessages(schema.safeParse({ workspaceId, attributes: { email: "a@example.com" } }))).toEqual([
-      "externalId attribute is required",
+      "userId attribute is required",
     ]);
   });
 });

@@ -31,7 +31,8 @@ const SCHEMA_6_2 = `
   CREATE TABLE "Organization" ("id" text PRIMARY KEY, "name" text NOT NULL);
   CREATE TABLE "Workspace" (
     "id" text PRIMARY KEY, "name" text NOT NULL,
-    "organizationId" text NOT NULL REFERENCES "Organization"("id") ON UPDATE CASCADE ON DELETE CASCADE
+    "organizationId" text NOT NULL REFERENCES "Organization"("id") ON UPDATE CASCADE ON DELETE CASCADE,
+    "appSetupCompleted" boolean NOT NULL DEFAULT false
   );
   CREATE TABLE "User" ("id" text PRIMARY KEY, "isBootstrapAdmin" boolean);
   CREATE TABLE "Contact" (
@@ -78,7 +79,8 @@ const SCHEMA_6_2 = `
   CREATE TABLE "Response" ("id" text PRIMARY KEY, "created_at" timestamp(3), "surveyId" text, "contactId" text);
 `;
 
-// 30,000 contacts, ids interleaved across workspaces: three large workspaces hold 80%.
+// 30,000 contacts, ids interleaved across workspaces: three large workspaces hold 80%. Four workspaces
+// have no contacts: three use contacts in another way and get a directory, one never did and gets none.
 const LARGE_WORKSPACES = ["ws_big_1", "ws_big_2", "ws_big_3"];
 const SEED = `
   INSERT INTO "Organization" VALUES ('org_a', 'Acme'), ('org_b', 'Beta'), ('org_long', 'Long names');
@@ -87,10 +89,14 @@ const SEED = `
     ('ws_small_3', 'Small 3', 'org_a'), ('ws_small_4', 'Small 4', 'org_a'),
     ('ws_big_1', 'Big 1', 'org_a'), ('ws_big_2', 'Big 2', 'org_a'), ('ws_big_3', 'Big 3', 'org_a'),
     ('ws_empty', 'No contacts', 'org_a'), ('ws_beta', 'Beta', 'org_b'),
-    -- Names longer than a directory name may be: two share their first 100 characters, and a third is
-    -- exactly those 100 characters, so it keeps them although its id sorts last.
-    ('ws_long_1', repeat('L', 100) || ' one', 'org_long'), ('ws_long_2', repeat('L', 100) || ' two', 'org_long'),
-    ('ws_long_z', repeat('L', 100), 'org_long');
+    ('ws_custom', 'Custom key', 'org_a'), ('ws_filtered', 'Filtered segment', 'org_a');
+  -- Names longer than a directory name may be: two share their first 100 characters, and a third is
+  -- exactly those 100 characters, so it keeps them although its id sorts last.
+  INSERT INTO "Workspace" ("id", "name", "organizationId", "appSetupCompleted") VALUES
+    ('ws_app', 'App set up', 'org_a', true),
+    ('ws_long_1', repeat('L', 100) || ' one', 'org_long', true),
+    ('ws_long_2', repeat('L', 100) || ' two', 'org_long', true),
+    ('ws_long_z', repeat('L', 100), 'org_long', true);
   INSERT INTO "Contact" ("id", "updated_at", "workspaceId")
   SELECT 'c' || lpad(n::text, 8, '0'), now(), CASE
       WHEN n % 10 = 0 THEN 'ws_small_' || ((n / 10) % 5)::text
@@ -102,15 +108,22 @@ const SEED = `
   INSERT INTO "ContactAttributeKey" ("id", "updated_at", "type", "key", "workspaceId")
   SELECT 'key_' || w."id" || '_' || k."key", now(), k."type"::"ContactAttributeType", k."key", w."id"
   FROM "Workspace" w
-  CROSS JOIN (VALUES ('userId', 'default'), ('email', 'default'), ('plan', 'custom')) AS k("key", "type");
+  CROSS JOIN (VALUES ('userId', 'default'), ('email', 'default'), ('plan', 'custom')) AS k("key", "type")
+  -- The small workspaces have contacts and nothing else that gives them a directory.
+  WHERE k."type" = 'default' OR w."id" LIKE 'ws_big_%' OR w."id" IN ('ws_beta', 'ws_custom');
   INSERT INTO "ContactAttribute" ("id", "attributeKeyId", "contactId", "value")
   SELECT 'attr_' || c."id", 'key_' || c."workspaceId" || '_userId', c."id", 'user-' || c."id" FROM "Contact" c;
   INSERT INTO "Segment" ("id", "updated_at", "title", "isPrivate", "workspaceId") VALUES
     ('seg_public', now(), 'Power users', false, 'ws_small_0'),
     ('seg_private', now(), 'survey_1', true, 'ws_small_0'),
     ('seg_beta', now(), 'Power users', false, 'ws_beta'),
-    ('seg_empty', now(), 'Nobody yet', false, 'ws_empty');
-  INSERT INTO "Survey" ("id", "workspaceId", "segmentId") VALUES ('survey_1', 'ws_small_0', 'seg_private');
+    ('seg_empty', now(), 'Nobody yet', false, 'ws_empty'),
+    ('seg_empty_private', now(), 'survey_empty', true, 'ws_empty');
+  INSERT INTO "Segment" ("id", "updated_at", "title", "isPrivate", "filters", "workspaceId") VALUES
+    ('seg_filtered', now(), 'Admins', false, '[{"id": "f1", "connector": null}]', 'ws_filtered');
+  INSERT INTO "Survey" ("id", "workspaceId", "segmentId", "ownerId") VALUES
+    ('survey_1', 'ws_small_0', 'seg_private', 'user_1'),
+    ('survey_empty', 'ws_empty', 'seg_empty_private', 'user_1');
 `;
 
 describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", () => {
@@ -184,7 +197,7 @@ describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", ()
     ).toBeNull();
   });
 
-  test("every workspace gets its own directory named after it, with its keys and segments", async () => {
+  test("every workspace that uses contacts gets its own directory named after it, with its keys and segments", async () => {
     await runCreateDirectories();
     await runCreateDirectories();
 
@@ -192,26 +205,30 @@ describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", ()
       id: string;
       name: string;
       matchingKey: string;
+      isArchived: boolean;
       organizationId: string;
       workspaceId: string;
       workspaceName: string;
       workspaceOrganizationId: string;
     }>(
-      `SELECT d."id", d."name", d."matchingKey"::text AS "matchingKey", d."organizationId",
+      `SELECT d."id", d."name", d."matchingKey"::text AS "matchingKey", d."isArchived", d."organizationId",
               w."id" AS "workspaceId", w."name" AS "workspaceName", w."organizationId" AS "workspaceOrganizationId"
        FROM "ContactDirectory" d JOIN "Workspace" w ON w."contactDirectoryId" = d."id"`
     );
-    // Thirteen workspaces, the ones with no contacts included; a second run made none.
-    expect(await rows(`SELECT 1 FROM "ContactDirectory"`)).toHaveLength(13);
-    expect(directories).toHaveLength(13);
-    expect(new Set(directories.map((d) => d.id)).size).toBe(13);
+    // Sixteen workspaces, all but ws_empty; a second run made none.
+    expect(await rows(`SELECT 1 FROM "ContactDirectory"`)).toHaveLength(15);
+    expect(directories).toHaveLength(15);
+    expect(new Set(directories.map((d) => d.id)).size).toBe(15);
     const nameOf = Object.fromEntries(directories.map((d) => [d.workspaceId, d.name]));
     for (const directory of directories) {
       if (directory.organizationId !== "org_long") expect(directory.name).toBe(directory.workspaceName);
       expect(directory.matchingKey).toBe("email");
+      expect(directory.isArchived).toBe(false);
       expect(directory.organizationId).toBe(directory.workspaceOrganizationId);
       expect(directory.id).toMatch(/^[0-9a-z]+$/);
     }
+    // No contacts, but app setup completed, a custom key, or a segment with a filter.
+    expect(Object.keys(nameOf)).toEqual(expect.arrayContaining(["ws_app", "ws_custom", "ws_filtered"]));
     // Cut to 100 characters; the exact match keeps them, the others take a suffix in id order.
     expect(nameOf).toMatchObject({
       ws_long_z: "L".repeat(100),
@@ -222,15 +239,45 @@ describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", ()
     expect(await misplaced("ContactAttributeKey")).toEqual([]);
     expect(await misplaced("Segment")).toEqual([]);
     expect(await rows(`SELECT 1 FROM "Segment" WHERE "directoryId" IS NULL`)).toHaveLength(0);
+    // Segments without filters of a workspace with a directory are kept.
+    expect(await rows(`SELECT 1 FROM "Segment" WHERE "id" IN ('seg_public', 'seg_private')`)).toHaveLength(2);
     expect(logger.info).toHaveBeenCalledWith(
-      expect.objectContaining({ directoriesCreated: 13 }),
+      expect.objectContaining({
+        directoriesCreated: 15,
+        workspacesWithoutDirectory: 1,
+        attributeKeysDeleted: 2,
+        segmentsDeleted: 2,
+      }),
       expect.any(String)
     );
   });
 
+  test("a workspace that never used contacts gets no directory and loses its default keys and empty segments", async () => {
+    expect(await directoryOf("ws_empty")).toBeNull();
+    expect(await rows(`SELECT 1 FROM "ContactAttributeKey" WHERE "workspaceId" = 'ws_empty'`)).toHaveLength(
+      0
+    );
+    expect(await rows(`SELECT 1 FROM "Segment" WHERE "workspaceId" = 'ws_empty'`)).toHaveLength(0);
+    // Its survey loses the deleted segment and nothing else.
+    expect(await rows(`SELECT * FROM "Survey" WHERE "id" = 'survey_empty'`)).toEqual([
+      {
+        id: "survey_empty",
+        workspaceId: "ws_empty",
+        segmentId: null,
+        ownerId: "user_1",
+        visibilityPending: false,
+      },
+    ]);
+    expect(
+      (
+        await rows<{ segmentId: string | null }>(`SELECT "segmentId" FROM "Survey" WHERE "id" = 'survey_1'`)
+      )[0].segmentId
+    ).toBe("seg_private");
+  });
+
   test("the contact backfill does the small workspaces first, resumes after a stop, and is safe to rerun", async () => {
     // A contact some later code already placed in another directory is left alone.
-    const elsewhere = await directoryOf("ws_empty");
+    const elsewhere = await directoryOf("ws_app");
     await client.query(`UPDATE "Contact" SET "directoryId" = $1 WHERE "id" = 'c00000010'`, [elsewhere]);
 
     // Stop the run after its first batch.
@@ -349,21 +396,22 @@ describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", ()
     await client.query(`DELETE FROM "Contact" WHERE "id" = 'c_new_pod'`);
   });
 
-  test("deleting an unshared workspace removes its directory, contacts, keys and segments", async () => {
+  test("deleting an unshared workspace leaves its directory active and keeps its contacts and keys", async () => {
     const directory = await directoryOf("ws_small_4");
     await client.query(`DELETE FROM "Workspace" WHERE "id" = 'ws_small_4'`);
 
-    expect(await rows(`SELECT 1 FROM "ContactDirectory" WHERE "id" = $1`, [directory])).toHaveLength(0);
-    for (const table of ["Contact", "ContactAttributeKey", "Segment"]) {
-      expect(
-        await rows(`SELECT 1 FROM "${table}" WHERE "directoryId" = $1 OR "workspaceId" IS NULL`, [directory])
-      ).toHaveLength(0);
-    }
+    expect(await rows(`SELECT "isArchived" FROM "ContactDirectory" WHERE "id" = $1`, [directory])).toEqual([
+      { isArchived: false },
+    ]);
+    const kept = (table: string) =>
+      rows(`SELECT 1 FROM "${table}" WHERE "directoryId" = $1 AND "workspaceId" IS NULL`, [directory]);
+    expect(await kept("Contact")).toHaveLength(600);
+    expect(await kept("ContactAttributeKey")).toHaveLength(2);
     // Other workspaces are untouched.
     expect(await rows(`SELECT 1 FROM "Contact" WHERE "workspaceId" = 'ws_small_3'`)).toHaveLength(600);
   });
 
-  test("a shared directory outlives one of its workspaces and goes with the last", async () => {
+  test("a shared directory stays active with one of its workspaces deleted, and with the last", async () => {
     const directory = await directoryOf("ws_small_3");
     await client.query(
       `INSERT INTO "Workspace" ("id", "name", "organizationId", "contactDirectoryId") VALUES ('ws_shared', 'Shared', 'org_a', $1)`,
@@ -374,15 +422,19 @@ describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", ()
     );
 
     await client.query(`DELETE FROM "Workspace" WHERE "id" = 'ws_shared'`);
-    expect(await rows(`SELECT 1 FROM "ContactDirectory" WHERE "id" = $1`, [directory])).toHaveLength(1);
+    expect(await rows(`SELECT "isArchived" FROM "ContactDirectory" WHERE "id" = $1`, [directory])).toEqual([
+      { isArchived: false },
+    ]);
     const [shared] = await rows<{ workspaceId: string | null; directoryId: string }>(
       `SELECT "workspaceId", "directoryId" FROM "Contact" WHERE "id" = 'c_shared'`
     );
     expect(shared).toEqual({ workspaceId: null, directoryId: directory });
 
     await client.query(`DELETE FROM "Workspace" WHERE "id" = 'ws_small_3'`);
-    expect(await rows(`SELECT 1 FROM "ContactDirectory" WHERE "id" = $1`, [directory])).toHaveLength(0);
-    expect(await rows(`SELECT 1 FROM "Contact" WHERE "directoryId" = $1`, [directory])).toHaveLength(0);
+    expect(await rows(`SELECT "isArchived" FROM "ContactDirectory" WHERE "id" = $1`, [directory])).toEqual([
+      { isArchived: false },
+    ]);
+    expect(await rows(`SELECT 1 FROM "Contact" WHERE "directoryId" = $1`, [directory])).toHaveLength(601);
   });
 
   test("a workspace with no directory keeps its rows without one and removes them when deleted", async () => {
@@ -411,12 +463,12 @@ describe.runIf(databaseUrl)("contact directory migration against PostgreSQL", ()
     ).toHaveLength(0);
   });
 
-  test("deleting an organization removes its workspaces and directories", async () => {
+  test("deleting an organization removes its workspaces, directories and contacts", async () => {
+    const directory = await directoryOf("ws_beta");
     await client.query(`DELETE FROM "Organization" WHERE "id" = 'org_b'`);
     expect(await rows(`SELECT 1 FROM "ContactDirectory" WHERE "organizationId" = 'org_b'`)).toHaveLength(0);
-    expect(
-      await rows(`SELECT 1 FROM "Contact" WHERE "workspaceId" IS NULL OR "directoryId" IS NULL`)
-    ).toHaveLength(0);
+    expect(await rows(`SELECT 1 FROM "Contact" WHERE "directoryId" = $1`, [directory])).toHaveLength(0);
+    expect(await rows(`SELECT 1 FROM "Contact" WHERE "directoryId" IS NULL`)).toHaveLength(0);
     expect(await rows(`SELECT 1 FROM "Segment" WHERE "id" = 'seg_beta'`)).toHaveLength(0);
   });
 });

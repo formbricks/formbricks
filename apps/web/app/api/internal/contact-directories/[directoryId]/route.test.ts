@@ -45,8 +45,10 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("server-only", () => ({}));
 
 const {
+  ContactDirectoryArchiveHasWorkspacesError,
+  ContactDirectoryArchivedError,
   ContactDirectoryNameRequiredError,
-  ContactDirectoryWorkspacesCannotLeaveError,
+  ContactDirectoryWorkspacesInOtherDirectoryError,
   ContactDirectoryWorkspacesNotFoundError,
 } = await import("@/modules/ee/contacts/directories/lib/directory-errors");
 
@@ -59,10 +61,10 @@ const WS_2 = "clws222222222222222222222";
 const DIRECTORY = {
   id: DIRECTORY_ID,
   name: "HCP",
-  matchingKey: "externalId",
+  matchingKey: "userId",
+  isArchived: false,
   workspaces: [{ id: WS_1, name: "HCP" }],
   contactCount: 12,
-  workspaceCanMove: false,
 };
 
 const url = `http://localhost/api/internal/contact-directories/${DIRECTORY_ID}`;
@@ -122,8 +124,8 @@ describe("GET /api/internal/contact-directories/{directoryId}", () => {
 describe("PATCH /api/internal/contact-directories/{directoryId}", () => {
   test("renames and adds workspaces as an owner or manager, auditing before and after", async () => {
     mocks.update.mockResolvedValue({
-      previous: { name: "Northwind", workspaceIds: [WS_1] },
-      next: { name: "Northwind EU", workspaceIds: [WS_1, WS_2] },
+      previous: { name: "Northwind", workspaceIds: [WS_1], isArchived: false },
+      next: { name: "Northwind EU", workspaceIds: [WS_1, WS_2], isArchived: false, pausedSurveyIds: [] },
     });
 
     const response = await patch({ name: "Northwind EU", workspaceIds: [WS_1, WS_2] });
@@ -135,6 +137,8 @@ describe("PATCH /api/internal/contact-directories/{directoryId}", () => {
       directoryId: DIRECTORY_ID,
       name: "Northwind EU",
       workspaceIds: [WS_1, WS_2],
+      isArchived: undefined,
+      pauseSurveysInWorkspaceIds: undefined,
     });
     expect(lastAudit()).toMatchObject({
       action: "updated",
@@ -147,6 +151,66 @@ describe("PATCH /api/internal/contact-directories/{directoryId}", () => {
     });
   });
 
+  test("removes every workspace with the pause option, and audits the paused surveys", async () => {
+    mocks.update.mockResolvedValue({
+      previous: { name: "Northwind", workspaceIds: [WS_1], isArchived: false },
+      next: { name: "Northwind", workspaceIds: [], isArchived: true, pausedSurveyIds: ["s1"] },
+    });
+
+    const response = await patch({ workspaceIds: [], pauseSurveysInWorkspaceIds: [WS_1] });
+
+    expect(response.status).toBe(200);
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceIds: [], pauseSurveysInWorkspaceIds: [WS_1] })
+    );
+    expect(lastAudit()).toMatchObject({
+      newObject: { workspaceIds: [], isArchived: true, pausedSurveyIds: ["s1"] },
+    });
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "updated",
+        targetType: "survey",
+        targetId: "s1",
+        status: "success",
+        userId: USER_ID,
+        organizationId: ORG_ID,
+        newObject: { status: "paused", publishOn: null },
+      })
+    );
+  });
+
+  test("passes archive and unarchive on to the service", async () => {
+    mocks.update.mockResolvedValue({
+      previous: { name: "N", workspaceIds: [], isArchived: true },
+      next: { name: "N", workspaceIds: [WS_1], isArchived: false, pausedSurveyIds: [] },
+    });
+
+    expect((await patch({ isArchived: false, workspaceIds: [WS_1] })).status).toBe(200);
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({ isArchived: false, workspaceIds: [WS_1] })
+    );
+  });
+
+  test("passes an unarchive with no workspace, and a save that empties an active directory, to the service", async () => {
+    mocks.update.mockResolvedValue({
+      previous: { name: "N", workspaceIds: [], isArchived: true },
+      next: { name: "N", workspaceIds: [], isArchived: false, pausedSurveyIds: [] },
+    });
+
+    expect((await patch({ isArchived: false })).status).toBe(200);
+    expect(mocks.update).toHaveBeenLastCalledWith(expect.objectContaining({ isArchived: false }));
+
+    mocks.update.mockResolvedValue({
+      previous: { name: "N", workspaceIds: [WS_1], isArchived: false },
+      next: { name: "N", workspaceIds: [], isArchived: false, pausedSurveyIds: [] },
+    });
+
+    expect((await patch({ isArchived: false, workspaceIds: [] })).status).toBe(200);
+    expect(mocks.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ isArchived: false, workspaceIds: [] })
+    );
+  });
+
   test("refuses a member with 403 and changes nothing", async () => {
     mocks.can.mockResolvedValue(false);
 
@@ -154,15 +218,19 @@ describe("PATCH /api/internal/contact-directories/{directoryId}", () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
-  test("rejects a matching key change, an empty body, an empty workspace list and a null name", async () => {
+  test("rejects a matching key change, an empty body, a null name and a bad pause list", async () => {
     expect((await patch({ matchingKey: "email" })).status).toBe(400);
     expect((await patch({ name: null })).status).toBe(400);
     expect((await patch({})).status).toBe(400);
-    expect((await patch({ workspaceIds: [] })).status).toBe(400);
+    expect((await patch({ pauseSurveysInWorkspaceIds: [WS_1] })).status).toBe(400);
+    expect((await patch({ workspaceIds: [WS_1], pauseSurveysInWorkspaceIds: ["Not A Cuid"] })).status).toBe(
+      400
+    );
+    expect((await patch({ isArchived: "yes" })).status).toBe(400);
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
-  test("answers 422 for a blank name, a workspace leaving and a workspace not in the organization", async () => {
+  test("answers 422 for a blank name and a workspace not in the organization", async () => {
     mocks.update.mockRejectedValueOnce(new ContactDirectoryNameRequiredError());
     const nameRequired = await patch({ name: "   " });
     expect(nameRequired.status).toBe(422);
@@ -171,19 +239,31 @@ describe("PATCH /api/internal/contact-directories/{directoryId}", () => {
       invalid_params: [{ name: "name", code: "missing_required_field" }],
     });
 
-    mocks.update.mockRejectedValueOnce(new ContactDirectoryWorkspacesCannotLeaveError([WS_1]));
-    const leaving = await patch({ workspaceIds: [WS_2] });
-    expect(leaving.status).toBe(422);
-    expect(await leaving.json()).toMatchObject({
-      code: "contact_directory_workspace_cannot_leave",
-      details: { workspaceIds: [WS_1] },
-    });
-
     mocks.update.mockRejectedValueOnce(new ContactDirectoryWorkspacesNotFoundError([WS_2]));
     const unknown = await patch({ workspaceIds: [WS_1, WS_2] });
     expect(unknown.status).toBe(422);
     expect(await unknown.json()).toMatchObject({
       invalid_params: [{ name: "workspaceIds", code: "invalid_reference" }],
     });
+  });
+
+  test("answers 409 for a workspace in another directory and for an archive rule", async () => {
+    mocks.update.mockRejectedValueOnce(new ContactDirectoryWorkspacesInOtherDirectoryError([WS_2]));
+    const elsewhere = await patch({ workspaceIds: [WS_1, WS_2] });
+    expect(elsewhere.status).toBe(409);
+    expect(await elsewhere.json()).toMatchObject({
+      code: "contact_directory_workspace_in_other_directory",
+      details: { workspaceIds: [WS_2] },
+    });
+
+    mocks.update.mockRejectedValueOnce(new ContactDirectoryArchiveHasWorkspacesError());
+    const archive = await patch({ isArchived: true });
+    expect(archive.status).toBe(409);
+    expect((await archive.json()).code).toBe("contact_directory_archive_has_workspaces");
+
+    mocks.update.mockRejectedValueOnce(new ContactDirectoryArchivedError());
+    const archived = await patch({ workspaceIds: [WS_1] });
+    expect(archived.status).toBe(409);
+    expect((await archived.json()).code).toBe("contact_directory_archived");
   });
 });

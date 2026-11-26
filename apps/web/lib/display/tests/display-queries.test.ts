@@ -1,6 +1,6 @@
 import { mockDisplayId, mockSurveyId } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
@@ -17,6 +17,7 @@ import {
 const mockContactId = "clqnj99r9000008lebgf8734j";
 const mockWorkspaceId = "clqkr8dlv000308jybb08evgz";
 const mockResponseId = "clqnfg59i000208i426pb4wcv";
+const mockDirectoryId = "clqdirectory0000000000001";
 
 const mockDisplaysForContact = [
   {
@@ -38,6 +39,7 @@ const mockDisplaysWithContact = [
     surveyId: mockSurveyId,
     contact: {
       id: mockContactId,
+      directoryId: mockDirectoryId,
       attributes: [
         { attributeKey: { key: "email" }, value: "test@example.com" },
         { attributeKey: { key: "userId" }, value: "user-123" },
@@ -50,6 +52,7 @@ const mockDisplaysWithContact = [
     surveyId: "clqkr8dlv000308jybb08evgs",
     contact: {
       id: "clqnj99r9000008lebgf8734k",
+      directoryId: mockDirectoryId,
       attributes: [{ attributeKey: { key: "userId" }, value: "user-456" }],
     },
   },
@@ -220,6 +223,16 @@ describe("getDisplaysByContactId", () => {
 });
 
 describe("getDisplaysBySurveyIdWithContact", () => {
+  /** The survey's workspace, on `directoryId`. */
+  const mockWorkspaceDirectory = (directoryId: string | null) =>
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({
+      workspace: { contactDirectoryId: directoryId },
+    } as never);
+
+  beforeEach(() => {
+    mockWorkspaceDirectory(mockDirectoryId);
+  });
+
   describe("Happy Path", () => {
     test("returns displays with contact attributes transformed", async () => {
       vi.mocked(prisma.display.findMany, { partial: true, deep: true }).mockResolvedValue(
@@ -267,6 +280,7 @@ describe("getDisplaysBySurveyIdWithContact", () => {
           contact: {
             select: {
               id: true,
+              directoryId: true,
               attributes: {
                 where: {
                   attributeKey: {
@@ -315,6 +329,32 @@ describe("getDisplaysBySurveyIdWithContact", () => {
           contact: null,
         },
       ]);
+    });
+
+    // Decision 8: the contact's current email and userId belong to a directory the workspace has left.
+    test("marks a contact of another directory unavailable, without its current attributes", async () => {
+      vi.mocked(prisma.display.findMany).mockResolvedValue([
+        {
+          ...mockDisplaysWithContact[0],
+          contact: { ...mockDisplaysWithContact[0].contact, directoryId: "clqolddirectory0000000001" },
+        },
+      ] as never);
+
+      const [result] = await getDisplaysBySurveyIdWithContact(mockSurveyId);
+
+      expect(result.contact).toEqual({ id: mockContactId, attributes: {}, unavailable: true });
+    });
+
+    test("marks every contact unavailable when the workspace has no directory", async () => {
+      mockWorkspaceDirectory(null);
+      vi.mocked(prisma.display.findMany, { partial: true, deep: true }).mockResolvedValue(
+        mockDisplaysWithContact
+      );
+
+      const result = await getDisplaysBySurveyIdWithContact(mockSurveyId);
+
+      expect(result.map(({ contact }) => contact?.unavailable)).toEqual([true, true]);
+      expect(result.map(({ contact }) => contact?.attributes)).toEqual([{}, {}]);
     });
   });
 

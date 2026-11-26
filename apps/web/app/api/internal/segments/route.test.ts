@@ -449,7 +449,7 @@ describe("POST /api/internal/segments", () => {
 
     expect(response.status).toBe(409);
     expect((await response.json()).detail).toBe(
-      "A segment with this title already exists in this workspace."
+      "A segment with this title already exists in this contact directory."
     );
   });
 
@@ -664,7 +664,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
 
     expect(response.status).toBe(409);
     expect((await response.json()).detail).toBe(
-      "A segment with this title already exists in this workspace."
+      "A segment with this title already exists in this contact directory."
     );
   });
 

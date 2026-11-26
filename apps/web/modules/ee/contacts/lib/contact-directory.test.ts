@@ -75,12 +75,12 @@ describe("requireWorkspaceContactDirectory", () => {
 
   test("returns the directory when the workspace has one", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
-      contactDirectory: { id: "dir-1", matchingKey: "externalId" },
+      contactDirectory: { id: "dir-1", matchingKey: "userId" },
     } as never);
 
     await expect(requireWorkspaceContactDirectory(workspaceId)).resolves.toEqual({
       id: "dir-1",
-      matchingKey: "externalId",
+      matchingKey: "userId",
     });
   });
 

@@ -2107,7 +2107,7 @@ model FeedbackSourceFieldMapping {
 
 enum ContactDirectoryMatchingKey {
   email
-  externalId
+  userId
 }
 
 /// An organization-level home for contacts, their attribute keys and segments. Workspaces link to one
@@ -2115,15 +2115,18 @@ enum ContactDirectoryMatchingKey {
 ///
 /// @property name - Required, unique per organization. The 6.3 migration names each directory after its
 ///                  workspace.
-/// @property matchingKey - How a contact is matched: email or external ID. Chosen at creation, never changed.
-/// @property workspaces - Workspaces that use this directory. A Workspace AFTER DELETE trigger deletes the
-///                        directory when its last workspace goes.
+/// @property matchingKey - How a contact is matched: email or userId. Chosen at creation, never changed.
+/// @property isArchived - An archived directory has no workspaces and keeps its contacts out of view. Only
+///                        an explicit archive sets it; an active directory may have no workspaces (ADR 0062).
+/// @property workspaces - Workspaces that use this directory. Removing or deleting the last one leaves the
+///                        directory active.
 model ContactDirectory {
   id             String                      @id @default(cuid())
   createdAt      DateTime                    @default(now()) @map(name: "created_at")
   updatedAt      DateTime                    @updatedAt @map(name: "updated_at")
   name           String
   matchingKey    ContactDirectoryMatchingKey
+  isArchived     Boolean                     @default(false)
   organizationId String
   organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   workspaces     Workspace[]

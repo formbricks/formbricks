@@ -67,7 +67,7 @@ export const ZContactImportQuery = z.object({ workspaceId: ZId }).strict();
  * what to do with a contact whose identity value exists, and the dialog's column-to-attribute map. The record
  * and map schemas carry the import's caps (`modules/ee/contacts/lib/csv-import-limits.ts`): records, columns,
  * key and value lengths, no NUL; no attribute mapped twice. The identity column (the directory's matching
- * key: email or externalId) and repeated identity values or userIds are checked once the directory is known.
+ * key: email or userId) and repeated identity values or userIds are checked once the directory is known.
  */
 export const ZContactImportBody = z
   .object({

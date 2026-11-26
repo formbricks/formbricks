@@ -5,37 +5,31 @@ import { CONTACT_DIRECTORY_MATCHING_KEYS } from "../types";
 import { CONTACT_DIRECTORY_NAME_MAX_LENGTH } from "./constants";
 
 /**
- * The create and manage dialog's rules, the same ones the route enforces: a name (decision 2), at least one
- * workspace (decision 21), and no workspace leaving the directory it already uses (decision 8).
- * `initialWorkspaceIds` is empty when creating.
+ * What the dialog is doing: creating a directory, managing an active one, or unarchiving an archived one.
+ * Creating needs at least one workspace. Managing may take every workspace off, which leaves the directory
+ * active unless the confirm step's archive box is ticked, and unarchiving needs none (ADR 0062).
  */
-export const getContactDirectoryFormSchema = (t: TFunction, initialWorkspaceIds: string[]) =>
-  z
-    .object({
-      name: z
-        .string()
-        .trim()
-        .min(1, t("workspace.settings.contact_directories.error_name_required"))
-        .max(
-          CONTACT_DIRECTORY_NAME_MAX_LENGTH,
-          t("workspace.settings.contact_directories.error_name_too_long", {
-            max: CONTACT_DIRECTORY_NAME_MAX_LENGTH,
-          })
-        ),
-      matchingKey: z.enum(CONTACT_DIRECTORY_MATCHING_KEYS),
-      workspaceIds: z
-        .array(z.string())
-        .min(1, t("workspace.settings.contact_directories.error_workspace_required")),
-    })
-    .superRefine((data, ctx) => {
-      if (initialWorkspaceIds.some((id) => !data.workspaceIds.includes(id))) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["workspaceIds"],
-          message: t("workspace.settings.contact_directories.error_workspace_cannot_leave"),
-        });
-      }
-    });
+export type TContactDirectoryDialogMode = "create" | "manage" | "unarchive";
+
+/** The create and manage dialog's rules, the same ones the route enforces. */
+export const getContactDirectoryFormSchema = (t: TFunction, mode: TContactDirectoryDialogMode) =>
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t("workspace.settings.contact_directories.error_name_required"))
+      .max(
+        CONTACT_DIRECTORY_NAME_MAX_LENGTH,
+        t("workspace.settings.contact_directories.error_name_too_long", {
+          max: CONTACT_DIRECTORY_NAME_MAX_LENGTH,
+        })
+      ),
+    matchingKey: z.enum(CONTACT_DIRECTORY_MATCHING_KEYS),
+    workspaceIds:
+      mode === "create"
+        ? z.array(z.string()).min(1, t("workspace.settings.contact_directories.error_workspace_required"))
+        : z.array(z.string()),
+  });
 
 export type TContactDirectoryFormData = z.infer<ReturnType<typeof getContactDirectoryFormSchema>>;
 
@@ -50,10 +44,13 @@ export const getContactDirectoryErrorMessage = (error: unknown, t: TFunction): s
       return t("workspace.settings.contact_directories.error_name_required");
     case "contact_directory_name_taken":
       return t("workspace.settings.contact_directories.error_name_taken");
-    case "contact_directory_workspace_cannot_leave":
-      return t("workspace.settings.contact_directories.error_workspace_cannot_leave");
+    case "contact_directory_workspace_in_other_directory":
+      return t("workspace.settings.contact_directories.error_workspace_in_other_directory");
     case "contact_directory_workspace_not_movable":
       return t("workspace.settings.contact_directories.error_workspace_not_movable");
+    case "contact_directory_archived":
+    case "contact_directory_archive_has_workspaces":
+      return t("workspace.settings.contact_directories.error_archive_state_changed");
     default:
       return t("workspace.settings.contact_directories.save_failed");
   }

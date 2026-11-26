@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyElementSummaryMultipleChoice, TSurveyType } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getContactIdentifier } from "@/lib/utils/contact";
+import { ContactNotAvailable } from "@/modules/analysis/components/contact-not-available";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 
@@ -44,7 +45,19 @@ export const OtherValuesList = ({ others, surveyType }: Readonly<OtherValuesList
                 <span>{otherValue.value}</span>
               </div>
             )}
-            {surveyType === "app" && otherValue.contact && (
+            {surveyType === "app" && otherValue.contact?.unavailable && (
+              <div className="m-2 grid h-16 grid-cols-2 items-center rounded-lg text-sm">
+                <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
+                  <span>{otherValue.value}</span>
+                </div>
+                <div className="ph-no-capture col-span-1 flex flex-wrap items-center gap-x-4 pl-6 font-medium text-slate-900">
+                  <PersonAvatar personId={otherValue.contact.id} />
+                  <span>{getContactIdentifier(otherValue.contact, otherValue.contactAttributes)}</span>
+                  <ContactNotAvailable />
+                </div>
+              </div>
+            )}
+            {surveyType === "app" && otherValue.contact && !otherValue.contact.unavailable && (
               <Link
                 href={
                   otherValue.contact.id

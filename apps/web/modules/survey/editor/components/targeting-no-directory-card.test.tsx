@@ -37,4 +37,18 @@ describe("TargetingNoDirectoryCard", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
+
+  test("warns that a survey still on a segment with filters reaches nobody", () => {
+    render(<TargetingNoDirectoryCard membershipRole="manager" targetsOtherDirectorySegment />);
+
+    expect(screen.getByText("workspace.segments.segment_from_another_contact_directory")).toBeInTheDocument();
+  });
+
+  test("shows no warning when the survey has no such segment", () => {
+    render(<TargetingNoDirectoryCard membershipRole="manager" />);
+
+    expect(
+      screen.queryByText("workspace.segments.segment_from_another_contact_directory")
+    ).not.toBeInTheDocument();
+  });
 });

@@ -82,10 +82,10 @@ const invalidFiltersMessage = (issues: { code: string; message: string }[]) =>
   issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
 
 /** A service's refusal as its 403 or 422 (see `refusalResponse`); any other error is rethrown. */
-export const SEGMENT_TITLE_TAKEN = "A segment with this title already exists in this workspace.";
+export const SEGMENT_TITLE_TAKEN = "A segment with this title already exists in this contact directory.";
 
 /**
- * Whether a failed create or rename lost to the workspace's unique title, which the service refuses with
+ * Whether a failed create or rename lost to the directory's unique title, which the service refuses with
  * its own message. A conflict with existing state, so a 409 rather than the 422 of other invalid input.
  */
 const isSegmentTitleTaken = (error: unknown): boolean =>

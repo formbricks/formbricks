@@ -17,6 +17,11 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+  getWorkspaceContactDirectoryId,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
@@ -66,6 +71,7 @@ vi.mock("@formbricks/database", () => {
     },
     segment: {
       update: vi.fn(),
+      findUnique: vi.fn(),
     },
     // ENG-3994: the publish rule asks whether a creative opens the survey. None does unless a test says so.
     creative: {
@@ -120,6 +126,12 @@ vi.mock("./targeting", () => ({
   assertV3SurveyTargetingFilterReferences: vi.fn(),
   resolveV3ContactsEntitlement: vi.fn(),
   V3_CONTACTS_NOT_ENABLED_MESSAGE: "Contact targeting is not enabled.",
+}));
+
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  getWorkspaceContactDirectory: vi.fn(),
+  getWorkspaceContactDirectoryId: vi.fn(),
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -272,6 +284,9 @@ const readBackUpdatedSurvey = (data: TSurveyUpdateArgs["data"] | undefined) => (
 describe("patchV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // The survey's segment sits in the workspace's own directory unless a test says otherwise.
+    vi.mocked(getWorkspaceContactDirectoryId).mockResolvedValue("dir_1");
+    vi.mocked(prisma.segment.findUnique).mockResolvedValue({ directoryId: "dir_1" } as never);
     vi.mocked(prisma.language.upsert).mockImplementation(
       (args: TLanguageUpsertArgs): TLanguageUpsertReturn => {
         const workspaceIdCode = args.where.workspaceId_code;
@@ -340,6 +355,7 @@ describe("patchV3Survey", () => {
       isContactsEnabled: true,
     });
     vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(true);
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue({ id: "dir_1", matchingKey: "email" });
   });
 
   test("patches a name-only payload through v3 persistence", async () => {
@@ -1559,7 +1575,7 @@ describe("patchV3Survey", () => {
           update: vi.fn(vi.mocked(prisma.survey.update).getMockImplementation()),
           findUniqueOrThrow: vi.fn(vi.mocked(prisma.survey.findUniqueOrThrow).getMockImplementation()),
         },
-        segment: { update: vi.fn() },
+        segment: { update: vi.fn(), findUnique: vi.fn().mockResolvedValue({ directoryId: "dir_1" }) },
         // ENG-1837: the EmbeddedData reconcile is part of the same transaction, so it has to be
         // reachable on the tx client — and the assertions below prove it used that client.
         surveyEmbeddedData: {
@@ -1598,6 +1614,23 @@ describe("patchV3Survey", () => {
       expect(prisma.surveyEmbeddedData.findMany).not.toHaveBeenCalled();
     });
 
+    test("rejects a filter change on a segment from another contact directory, writing nothing", async () => {
+      // The workspace left the segment's directory; the survey keeps the segment so it reaches nobody.
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue({ directoryId: "dir_old" } as never);
+
+      await expect(
+        patchV3Survey(
+          appCurrentSurvey,
+          { targeting: { filters: attributeFilters } },
+          { requestId: "req_app_foreign_segment", organizationId: "org_1" }
+        )
+      ).rejects.toThrow(V3SurveyReferenceValidationError);
+
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
     test("rejects a targeting change when the app survey has no segment", async () => {
       // App surveys always get an auto-created segment; if one is missing, a targeting change must
       // fail loudly rather than return 200 while silently dropping the filters.
@@ -1631,6 +1664,23 @@ describe("patchV3Survey", () => {
         )
       ).rejects.toThrow(V3SurveyWritePermissionError);
 
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("rejects new targeting filters in a workspace with no contact directory, with the no-directory message", async () => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      vi.mocked(getWorkspaceContactDirectory).mockResolvedValue(null);
+
+      await expect(
+        patchV3Survey(
+          appCurrentSurvey,
+          { targeting: { filters: attributeFilters } },
+          { requestId: "req_app_no_directory", organizationId: "org_1" }
+        )
+      ).rejects.toThrow(new V3SurveyWritePermissionError(CONTACT_DIRECTORY_MISSING_MESSAGE));
+
+      expect(getWorkspaceContactDirectory).toHaveBeenCalledWith(workspaceId);
       expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });

@@ -14,7 +14,7 @@ import {
 } from "@/lib/localStorage";
 import { truncate } from "@/lib/utils/strings";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
@@ -25,12 +25,15 @@ interface DeleteWorkspaceRenderProps {
   isDeleteDisabled: boolean;
   isOwnerOrManager: boolean;
   currentWorkspace: TWorkspace;
+  /** Set when this is the last workspace of its contact directory: deleting it leaves the directory empty. */
+  emptiedContactDirectoryName?: string | null;
 }
 
 export const DeleteWorkspaceRender = ({
   isDeleteDisabled,
   isOwnerOrManager,
   currentWorkspace,
+  emptiedContactDirectoryName,
 }: Readonly<DeleteWorkspaceRenderProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -121,7 +124,16 @@ export const DeleteWorkspaceRender = ({
         })}
         isDeleting={isDeleting}
         disabled={!hasValidConfirmation}>
-        <div className="py-5">
+        <div className="space-y-4 py-5">
+          {emptiedContactDirectoryName ? (
+            <Alert variant="warning" alertRole="status">
+              <AlertTitle>
+                {t("workspace.general.delete_workspace_empties_contact_directory", {
+                  directoryName: emptiedContactDirectoryName,
+                })}
+              </AlertTitle>
+            </Alert>
+          ) : null}
           <form
             onSubmit={async (e) => {
               e.preventDefault();

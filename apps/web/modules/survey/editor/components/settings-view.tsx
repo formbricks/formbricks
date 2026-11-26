@@ -34,6 +34,11 @@ interface SettingsViewProps {
   isUserTargetingAllowed?: boolean;
   /** False when the workspace has no contact directory, so it has no contacts to target (decision 13). */
   hasContactDirectory: boolean;
+  /**
+   * The survey's segment when it is from another contact directory than the workspace's, or the workspace
+   * has none: its filters reach nobody until new targeting is chosen (decision 4).
+   */
+  otherDirectorySegmentId?: string | null;
   isSpamProtectionAllowed: boolean;
   workspacePermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
@@ -65,6 +70,7 @@ export const SettingsView = ({
   membershipRole,
   isUserTargetingAllowed = false,
   hasContactDirectory,
+  otherDirectorySegmentId = null,
   isSpamProtectionAllowed,
   isQuotasAllowed,
   workspacePermission,
@@ -93,7 +99,12 @@ export const SettingsView = ({
       {localSurvey.type === "app" ? (
         <div>
           {isUserTargetingAllowed && !hasContactDirectory && (
-            <TargetingNoDirectoryCard membershipRole={membershipRole} />
+            <TargetingNoDirectoryCard
+              membershipRole={membershipRole}
+              targetsOtherDirectorySegment={
+                localSurvey.segment?.id === otherDirectorySegmentId && localSurvey.segment.filters.length > 0
+              }
+            />
           )}
           {isUserTargetingAllowed && hasContactDirectory && (
             <div className="relative">
@@ -104,6 +115,7 @@ export const SettingsView = ({
                   setLocalSurvey={setLocalSurvey}
                   contactAttributeKeys={contactAttributeKeys}
                   segments={segments}
+                  otherDirectorySegmentId={otherDirectorySegmentId}
                   initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}
                   sharedSegmentEdit={sharedSegmentEdit}
                   setSharedSegmentEdit={setSharedSegmentEdit}

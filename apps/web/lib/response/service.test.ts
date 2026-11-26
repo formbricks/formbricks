@@ -62,6 +62,12 @@ vi.mock("./utils", async (importOriginal) => {
   };
 });
 
+// The export marks contacts the workspace no longer reaches; here the workspace is on `directory-current`.
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  getWorkspaceContactDirectoryId: vi.fn(async () => "directory-current"),
+}));
+
 vi.mock("./filtering-values", () => ({
   getSurveyFilteringValues: vi.fn(),
 }));
@@ -765,6 +771,44 @@ describe("getResponseDownloadFile", () => {
     expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
     expect(exportedIds).toHaveLength(rows.length);
     expect(new Set(exportedIds).size).toBe(rows.length);
+  });
+
+  // Decision 8: the contact's current userId belongs to the directory it sits in.
+  test("exports no current userId for a contact the workspace no longer reaches", async () => {
+    const contactIn = (id: string, directoryId: string) => ({
+      id,
+      directoryId,
+      attributes: [{ attributeKey: { key: "userId" }, value: `user-of-${id}` }],
+    });
+    vi.mocked(prisma.response.findMany, { partial: true }).mockResolvedValue([
+      {
+        id: "response-reached",
+        createdAt: new Date("2026-11-02T00:00:00Z"),
+        contact: contactIn("contact-reached", "directory-current"),
+        contactAttributes: { userId: "saved-reached" },
+        tags: [],
+        quotaLinks: [],
+      },
+      {
+        id: "response-left",
+        createdAt: new Date("2026-11-01T00:00:00Z"),
+        contact: contactIn("contact-left", "directory-old"),
+        contactAttributes: { userId: "saved-left" },
+        tags: [],
+        quotaLinks: [],
+      },
+    ] as never);
+
+    await getResponseDownloadFile("survey-123", "csv");
+
+    const exported = vi.mocked(getResponsesJson).mock.calls[0][1];
+    expect(exported.map(({ contact, contactAttributes }) => ({ contact, contactAttributes }))).toEqual([
+      {
+        contact: { id: "contact-reached", userId: "user-of-contact-reached" },
+        contactAttributes: { userId: "saved-reached" },
+      },
+      { contact: { id: "contact-left", unavailable: true }, contactAttributes: { userId: "saved-left" } },
+    ]);
   });
 });
 

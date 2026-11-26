@@ -10,6 +10,10 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
 import { addsRichTextLink } from "@/lib/survey/rich-text-links";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TV3SurveyDocument } from "./schemas";
 import {
@@ -116,6 +120,8 @@ export async function assertV3SurveyWritePermissions(
 /**
  * Contact targeting (segment filters) is an enterprise feature. Only gate when the patch actually
  * changes the stored filters, so an unentitled organization can still patch other app-survey fields.
+ * Filters also need a contact directory: without one they match nobody, so they get the same 403 the
+ * contact routes give a workspace with no directory. Clearing them is always allowed.
  */
 export async function assertV3SurveyTargetingWritePermission(
   currentSurvey: TSurvey,
@@ -143,5 +149,8 @@ export async function assertV3SurveyTargetingWritePermission(
   }
   if (!isContactsEnabled) {
     throw new V3SurveyWritePermissionError(V3_CONTACTS_NOT_ENABLED_MESSAGE);
+  }
+  if (nextFilters.length > 0 && !(await getWorkspaceContactDirectory(currentSurvey.workspaceId))) {
+    throw new V3SurveyWritePermissionError(CONTACT_DIRECTORY_MISSING_MESSAGE);
   }
 }

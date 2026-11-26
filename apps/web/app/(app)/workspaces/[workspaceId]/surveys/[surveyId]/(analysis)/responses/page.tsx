@@ -81,7 +81,10 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
   // Fetch initial responses on the server to prevent duplicate client-side fetch
   const [initialResponses, { surveyVisibilityGate, visibility, surveyAccess, ownerName }] = await Promise.all(
     [
-      getResponses(params.surveyId, RESPONSES_PER_PAGE, 0, undefined, undefined, { withNotShown: true }),
+      getResponses(params.surveyId, RESPONSES_PER_PAGE, 0, undefined, undefined, {
+        withNotShown: true,
+        withContactAvailability: true,
+      }),
       getSurveyVisibilityViewer(survey, session.user.id, organization.id),
     ]
   );

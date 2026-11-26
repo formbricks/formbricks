@@ -13,10 +13,16 @@ Contacts, their attribute keys and segments move from the workspace into a
 [contact directory](/platform/features/contact-directories) at the organization level. Several workspaces can
 share one directory, and then they share their contacts.
 
-The upgrade gives every existing workspace a directory of its own, so existing workspaces keep working exactly as
-before. This isn't a breaking change.
+The upgrade gives a directory of its own to every existing workspace that used contacts, so these keep working
+exactly as before. A workspace used contacts if it has at least one contact, has completed its app setup (the SDK
+has connected), has a segment with at least one filter, or has a custom attribute. This isn't a breaking change.
 
-**A workspace created after the upgrade has no contact directory until one is set up** in **Organization
+Any other workspace gets no directory. Its default attributes, which hold no values, and its segments without
+filters are deleted. A survey that targeted such a segment keeps showing to the same visitors: a segment without
+filters matched everyone.
+
+**A workspace created after the upgrade, or one that got no directory, has no contact directory until one is set
+up** in **Organization
 settings → Contact directories**. Until then, `setUserId` in the SDK and the contact APIs answer `403` with "A
 contact directory needs to be set up for this workspace before contacts are available.", and nothing is created.
 If a script of yours creates a workspace and calls `setUserId` or the contact APIs straight away, it gets this
@@ -38,15 +44,15 @@ Containers of the previous version keep writing contacts, attribute keys and seg
 database trigger gives each of these rows the directory of its workspace, so nothing is lost.
 
 A workspace that a container of the previous version creates during the rollout has no directory. Its contacts
-join the directory you give it in **Organization settings → Contact directories**.
+join the directory you give it in **Organization settings → Directories**.
 
 ## Check it worked
 
-- **Organization settings → Contact directories** lists a directory for each workspace. Directories made by the
-  upgrade are named after their workspace.
+- **Organization settings → Directories** lists a directory for each workspace that used contacts.
+  Directories made by the upgrade are named after their workspace.
 - The migration log has a `Contact directory backfill: report` line with `contactsWithoutDirectory: 0`. Any
-  other number means contacts of a workspace made during a rolling upgrade, which get a directory once you
-  assign one.
+  other number means contacts a container of the previous version wrote during a rolling upgrade to a workspace
+  with no directory. They join the directory once you assign one.
 - Identifying a user from your app works as before, and the Contacts page lists the same contacts.
 
 ## If something goes wrong

@@ -7,10 +7,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { OrganizationRole } from "@formbricks/database/prisma-browser";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 
 interface TargetingNoDirectoryCardProps {
   membershipRole?: OrganizationRole;
+  /** The survey still has a segment with filters, from the directory the workspace left (decision 4). */
+  targetsOtherDirectorySegment?: boolean;
 }
 
 /**
@@ -18,7 +21,10 @@ interface TargetingNoDirectoryCardProps {
  * contacts, and the workspace has none until an owner or manager assigns a directory, so the card says
  * that instead of offering filters that would match nobody.
  */
-export const TargetingNoDirectoryCard = ({ membershipRole }: Readonly<TargetingNoDirectoryCardProps>) => {
+export const TargetingNoDirectoryCard = ({
+  membershipRole,
+  targetsOtherDirectorySegment = false,
+}: Readonly<TargetingNoDirectoryCardProps>) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const [open, setOpen] = useState(false);
@@ -46,6 +52,15 @@ export const TargetingNoDirectoryCard = ({ membershipRole }: Readonly<TargetingN
           </div>
         </button>
       </Collapsible.CollapsibleTrigger>
+      {targetsOtherDirectorySegment && (
+        <div className="px-4 pb-4">
+          <Alert variant="warning" alertRole="status">
+            <AlertDescription>
+              {t("workspace.segments.segment_from_another_contact_directory")}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       <Collapsible.CollapsibleContent className="min-w-full overflow-auto">
         <hr className="text-slate-600" />
         <div className="flex flex-col items-center gap-3 px-6 py-6 text-center">

@@ -16,19 +16,19 @@ let workspaceId: string;
 let directory: TWorkspaceContactDirectory;
 let keyIds: Record<string, string>;
 
-const setUp = async (matchingKey: "email" | "externalId") => {
+const setUp = async (matchingKey: "email" | "userId") => {
   const organization = await prisma.organization.create({ data: { name: "CSV unique values Org" } });
   const created = await createWorkspaceWithContactDirectory(organization.id, "CSV");
   workspaceId = created.workspaceId;
   await prisma.contactDirectory.update({ where: { id: created.directoryId }, data: { matchingKey } });
   directory = { id: created.directoryId, matchingKey };
-  const keys = ["userId", "email", "externalId"];
+  const keys = ["userId", "email"];
   await prisma.contactAttributeKey.createMany({
     data: keys.map((key) => ({
       key,
       name: key,
       type: "default" as const,
-      isUnique: key !== "externalId",
+      isUnique: true,
       workspaceId,
       directoryId: directory.id,
     })),
@@ -70,30 +70,29 @@ beforeEach(async () => {
   await resetDb();
 });
 
-describe("an external ID directory", () => {
+describe("a userId directory", () => {
   beforeEach(async () => {
-    await setUp("externalId");
+    await setUp("userId");
   });
 
-  test("a new row keeps its externalId but not an email or userId another contact holds", async () => {
-    const ann = await seedContact({ externalId: "CRM-1", email: "ann@example.com", userId: "ann" });
+  test("a new row keeps its userId but not an email another contact holds", async () => {
+    const ann = await seedContact({ userId: "ann", email: "ann@example.com" });
 
-    const result = await importRows([{ externalId: "CRM-2", email: "ann@example.com", userId: "ann" }]);
+    const result = await importRows([{ userId: "bob", email: "ann@example.com" }]);
 
-    expect(result).toMatchObject({ leftOutCounts: { email: 1, userId: 1 } });
+    expect(result).toMatchObject({ leftOutCounts: { email: 1, userId: 0 } });
     expect(await holdersOf("email", "ann@example.com")).toEqual([ann]);
-    expect(await holdersOf("userId", "ann")).toEqual([ann]);
-    const [created] = await holdersOf("externalId", "CRM-2");
+    const [created] = await holdersOf("userId", "bob");
     expect(created).toBeDefined();
     expect(await valueOf(created, "email")).toBeUndefined();
   });
 
   test("an updated contact keeps its own email when the row names another contact's", async () => {
-    const ann = await seedContact({ externalId: "CRM-1", email: "ann@example.com" });
-    const bob = await seedContact({ externalId: "CRM-2", email: "bob@example.com" });
+    const ann = await seedContact({ userId: "ann", email: "ann@example.com" });
+    const bob = await seedContact({ userId: "bob", email: "bob@example.com" });
 
     for (const action of ["update", "overwrite"] as const) {
-      const result = await importRows([{ externalId: "CRM-2", email: "ann@example.com" }], action);
+      const result = await importRows([{ userId: "bob", email: "ann@example.com" }], action);
       expect(result).toMatchObject({ leftOutCounts: { email: 1, userId: 0 } });
       expect(await holdersOf("email", "ann@example.com")).toEqual([ann]);
       expect(await valueOf(bob, "email")).toBe("bob@example.com");
@@ -101,9 +100,9 @@ describe("an external ID directory", () => {
   });
 
   test("a row may restate its own contact's email", async () => {
-    const ann = await seedContact({ externalId: "CRM-1", email: "ann@example.com" });
+    const ann = await seedContact({ userId: "ann", email: "ann@example.com" });
 
-    const result = await importRows([{ externalId: "CRM-1", email: "ann@example.com" }]);
+    const result = await importRows([{ userId: "ann", email: "ann@example.com" }]);
 
     expect(result).toMatchObject({ leftOutCounts: { email: 0, userId: 0 } });
     expect(await holdersOf("email", "ann@example.com")).toEqual([ann]);
@@ -112,8 +111,8 @@ describe("an external ID directory", () => {
   test("two rows sharing an email are refused before anything is written", async () => {
     await expect(
       importRows([
-        { externalId: "CRM-1", email: "shared@example.com" },
-        { externalId: "CRM-2", email: "shared@example.com" },
+        { userId: "ann", email: "shared@example.com" },
+        { userId: "bob", email: "shared@example.com" },
       ])
     ).rejects.toThrow("Duplicate emails found in the records");
     expect(await prisma.contact.count({ where: { directoryId: directory.id } })).toBe(0);

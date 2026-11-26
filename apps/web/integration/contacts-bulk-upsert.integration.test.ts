@@ -21,7 +21,7 @@ const contact = (attributes: Record<string, string>): TContactBulkUploadContact 
   attributes: Object.entries(attributes).map(([key, value]) => ({ attributeKey: { key, name: key }, value })),
 });
 
-const seedWorkspace = async (name: string, matchingKey: "email" | "externalId" = "email") => {
+const seedWorkspace = async (name: string, matchingKey: "email" | "userId" = "email") => {
   const organization = await prisma.organization.create({ data: { name: `${name} Org` } });
   const { workspaceId, directoryId } = await createWorkspaceWithContactDirectory(
     organization.id,
@@ -32,7 +32,6 @@ const seedWorkspace = async (name: string, matchingKey: "email" | "externalId" =
     data: [
       { key: "email", name: "Email", workspaceId, directoryId, isUnique: true, type: "default" },
       { key: "userId", name: "User Id", workspaceId, directoryId, isUnique: true, type: "default" },
-      { key: "externalId", name: "External Id", directoryId, isUnique: true, type: "default" },
       { key: "plan", name: "Plan", workspaceId, directoryId },
     ],
   });
@@ -225,27 +224,57 @@ describe("upsertBulkContacts (real Postgres)", () => {
     expect(await prisma.contact.count({ where: { directoryId: directory.id } })).toBe(4);
   });
 
-  test("an external-ID directory matches and creates contacts by externalId", async () => {
-    const { workspaceId, directory } = await seedWorkspace("External", "externalId");
+  test("a userId directory matches and creates contacts by userId", async () => {
+    const { workspaceId, directory } = await seedWorkspace("UserId", "userId");
     const existing = await seedContact(
       directory.id,
       workspaceId,
-      { externalId: "crm-1", email: "shared@example.com" },
+      { userId: "user-1", email: "shared@example.com" },
+      new Date("2024-01-01")
+    );
+
+    const result = await upsertBulkContacts(
+      [contact({ userId: "user-1", plan: "pro" }), contact({ userId: "user-2", email: "new@example.com" })],
+      workspaceId,
+      directory
+    );
+
+    expect(result).toEqual({ ok: true, data: { contactIdxWithConflictingUserIds: [] } });
+    expect(await attributeValue(existing.id, "plan")).toBe("pro");
+    expect(await prisma.contact.count({ where: { directoryId: directory.id } })).toBe(2);
+  });
+
+  test("a userId directory skips a contact taking an email another contact holds", async () => {
+    const { workspaceId, directory } = await seedWorkspace("UserIdEmail", "userId");
+    const holder = await seedContact(
+      directory.id,
+      workspaceId,
+      { userId: "user-1", email: "shared@example.com" },
+      new Date("2024-01-01")
+    );
+    const other = await seedContact(
+      directory.id,
+      workspaceId,
+      { userId: "user-2", email: "other@example.com" },
       new Date("2024-01-01")
     );
 
     const result = await upsertBulkContacts(
       [
-        contact({ externalId: "crm-1", plan: "pro" }),
-        // Same email, other externalId: a new contact, since email does not identify one here.
-        contact({ externalId: "crm-2", email: "shared@example.com" }),
+        // A new contact and an update, each taking the holder's email.
+        contact({ userId: "user-3", email: "shared@example.com" }),
+        contact({ userId: "user-2", email: "shared@example.com", plan: "pro" }),
+        // The holder resending its own email is no conflict.
+        contact({ userId: "user-1", email: "shared@example.com", plan: "free" }),
       ],
       workspaceId,
       directory
     );
 
-    expect(result.ok).toBe(true);
-    expect(await attributeValue(existing.id, "plan")).toBe("pro");
+    expect(result).toEqual({ ok: true, data: { contactIdxWithConflictingUserIds: [0, 1] } });
     expect(await prisma.contact.count({ where: { directoryId: directory.id } })).toBe(2);
+    expect(await attributeValue(other.id, "email")).toBe("other@example.com");
+    expect(await attributeValue(other.id, "plan")).toBeUndefined();
+    expect(await attributeValue(holder.id, "plan")).toBe("free");
   });
 });

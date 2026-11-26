@@ -711,6 +711,23 @@ const assertAppTargetingFiltersAllowed = async (
   }
 };
 
+/**
+ * The targeting checks of a save, before anything is written. Only an app save acts on `segment`: its id
+ * must be a segment of the workspace's directory (ENG-1749 sibling, as on create), and its filters must be
+ * allowed (ENG-7267: the Contacts licence, no self-reference). Returns true when the survey keeps a stored
+ * segment of another directory (`checkAppSurveySegment`), which the save then leaves untouched.
+ */
+const assertAppSurveyTargeting = async (
+  currentSurvey: TTargetingSurvey,
+  type: TSurvey["type"],
+  segment: TAppTargetingSegment
+): Promise<boolean> => {
+  if (type !== "app") return false;
+  if ((await checkAppSurveySegment(currentSurvey, segment)) === "kept") return true;
+  await assertAppTargetingFiltersAllowed(currentSurvey, segment);
+  return false;
+};
+
 /** Archived surveys are read-only, and a published one keeps its locked parts (ENG-6783). */
 const assertSurveyIsEditable = (currentSurvey: TSurvey, updatedSurvey: TSurvey): void => {
   // Archived surveys are read-only. This covers every write path that flows through here
@@ -947,13 +964,17 @@ const applySurveySegmentChanges = async ({
   currentSurvey,
   skipValidation,
   options,
+  keepsStoredSegment,
 }: {
   segment: TSurvey["segment"];
   type: TSurvey["type"];
   currentSurvey: TSurvey;
   skipValidation: boolean;
   options: TUpdateSurveyOptions;
+  /** From `assertAppSurveyTargeting`: the survey keeps another directory's segment, untouched. */
+  keepsStoredSegment: boolean;
 }): Promise<void> => {
+  if (keepsStoredSegment) return;
   if (type !== "app") {
     await unlinkSurveySegment(currentSurvey);
   } else if (segment) {
@@ -1139,12 +1160,7 @@ export const updateSurveyInternal = async (
     // ENG-1749 sibling: an app save acts on segment.id. Ensure the segment belongs to this survey's
     // workspace so a caller cannot touch another tenant's segment by supplying its id. Mirrors the
     // create path guard. Any other save ignores segment.id and unlinks the stored segment (ENG-6957).
-    if (updatedSurvey.type === "app") {
-      await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
-      // ENG-7267: an app save may not add attribute filters without the contacts licence, nor a
-      // self-referencing segment.
-      await assertAppTargetingFiltersAllowed(currentSurvey, segment);
-    }
+    const keepsStoredSegment = await assertAppSurveyTargeting(currentSurvey, updatedSurvey.type, segment);
 
     // ENG-1749 sibling: the languages block below links languages by language.id. Ensure every
     // referenced language belongs to this survey's workspace so a caller cannot attach another
@@ -1203,7 +1219,14 @@ export const updateSurveyInternal = async (
       data.triggers = handleTriggerUpdates(triggers, currentSurvey.triggers, actionClasses);
     }
 
-    await applySurveySegmentChanges({ segment, type, currentSurvey, skipValidation, options });
+    await applySurveySegmentChanges({
+      segment,
+      type,
+      currentSurvey,
+      skipValidation,
+      options,
+      keepsStoredSegment,
+    });
 
     data = buildSurveyWriteData({ data, updatedSurvey, currentSurvey, customCssWrite });
 
@@ -1518,7 +1541,7 @@ const isOwnPrivateSegment = (
  *   is linked to it as stored. A private segment belongs to its own survey and is refused;
  * - anything else, its current shared segment included: nothing is written.
  * The other ids in `segment.surveys` are ignored: connecting them would re-point surveys the saver may
- * not write or see. `assertSurveySegmentBelongsToWorkspace` has already checked `segment.id`'s directory.
+ * not write or see. `checkAppSurveySegment` has already checked `segment.id`'s directory.
  */
 const saveAppSurveySegment = async (
   survey: Pick<TSurvey, "id" | "workspaceId" | "segment">,
@@ -1630,29 +1653,53 @@ const unlinkSurveySegment = async (
  * workspace with no directory (decision 3) has only its app surveys' private segments, kept in the
  * workspace until it gets a directory.
  */
-const assertSurveySegmentBelongsToWorkspace = async (
+const segmentBelongsToWorkspace = async (
   workspaceId: string,
-  segment: { id?: string | null } | null | undefined,
+  segmentId: string,
   client: Prisma.TransactionClient = prisma
-): Promise<void> => {
-  if (!segment?.id) {
-    return;
-  }
-
+): Promise<boolean> => {
   const [existingSegment, directoryId] = await Promise.all([
     client.segment.findUnique({
-      where: { id: segment.id },
+      where: { id: segmentId },
       select: { directoryId: true, workspaceId: true },
     }),
     getWorkspaceContactDirectoryId(workspaceId),
   ]);
 
-  const belongs = directoryId
+  return directoryId
     ? existingSegment?.directoryId === directoryId
     : existingSegment?.directoryId === null && existingSegment.workspaceId === workspaceId;
-  if (!belongs) {
+};
+
+const assertSurveySegmentBelongsToWorkspace = async (
+  workspaceId: string,
+  segment: { id?: string | null } | null | undefined,
+  client: Prisma.TransactionClient = prisma
+): Promise<void> => {
+  if (segment?.id && !(await segmentBelongsToWorkspace(workspaceId, segment.id, client))) {
     throw new ResourceNotFoundError("Segment", segment.id);
   }
+};
+
+/**
+ * The segment check of an app survey save. A workspace that left its directory, or joined another, keeps
+ * its surveys' segment links (decisions 1 and 4), so a survey can be stored on another directory's segment.
+ * Sending that same segment back is accepted, or the survey could no longer be paused, completed or
+ * edited, but it is "kept": the save writes nothing to it, since its filters belong to the other
+ * directory. New targeting comes from Reset or Load, or from linking a segment of the current directory.
+ * Any segment id the survey is not stored with gets the full check.
+ */
+const checkAppSurveySegment = async (
+  currentSurvey: Pick<TSurvey, "workspaceId" | "segment">,
+  segment: { id?: string | null } | null | undefined
+): Promise<"checked" | "kept"> => {
+  if (!segment?.id || (await segmentBelongsToWorkspace(currentSurvey.workspaceId, segment.id))) {
+    return "checked";
+  }
+  if (segment.id === currentSurvey.segment?.id) {
+    return "kept";
+  }
+  throw new ResourceNotFoundError("Segment", segment.id);
 };
 
 /**

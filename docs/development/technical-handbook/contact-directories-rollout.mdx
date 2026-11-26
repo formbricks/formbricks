@@ -14,8 +14,8 @@ All of it ships in one release, run in this order by the migration runner:
 
 | Step | File | What it does |
 | --- | --- | --- |
-| Schema | `packages/database/migration/20261123120000_add_contact_directories/migration.sql` | Adds `ContactDirectory`, the nullable `directoryId` columns, the rollout trigger `contact_directory_from_workspace` and the two workspace-delete triggers. One transaction, `lock_timeout` 5 s. |
-| Directories | `20261123120001_create_contact_directories/migration.ts` | One directory per workspace, in chunks of 5,000 workspaces (`CHUNK_SIZE`). Moves attribute keys and segments. Runs in the runner's transaction. |
+| Schema | `packages/database/migration/20261123120000_add_contact_directories/migration.sql` | Adds `ContactDirectory`, the nullable `directoryId` columns, the rollout trigger `contact_directory_from_workspace` and the workspace-delete trigger `contact_directory_delete_workspace_rows`. One transaction, `lock_timeout` 5 s. |
+| Directories | `20261123120001_create_contact_directories/migration.ts` | One directory per workspace that uses contacts: at least one contact, `appSetupCompleted`, a segment whose `filters` isn't `[]`, or a `custom` attribute key. In chunks of 5,000 workspaces (`CHUNK_SIZE`). Moves attribute keys and segments. Every other workspace gets no directory, and its `default` attribute keys and its segments with `filters = []` are deleted (`Survey.segmentId` is `SET NULL`). Runs in the runner's transaction. |
 | Contact backfill | `20261123120002_backfill_contact_directories/migration.ts` | Sets `Contact.directoryId` in batches of `BATCH_SIZE` contacts by id, each batch committing on its own (`transactional: false`). Two passes: every workspace except the three largest, then everything left. Ends with a counts-only report. |
 | Foreign keys | `20261123120003_validate_contact_directory_foreign_keys/migration.sql` | Validates the foreign keys added `NOT VALID`. Scans each table under a lock that lets reads and writes through. |
 | Indexes | `packages/database/src/scripts/online-indexes.ts` | Builds `Contact_directoryId_idx`, `ContactAttributeKey_directoryId_key_key`, `Segment_directoryId_title_key` and `Workspace_contactDirectoryId_idx` with `CREATE INDEX CONCURRENTLY` after every migration. |
@@ -76,6 +76,7 @@ ORDER BY started_at;
 
 -- Nothing left behind: expect 0
 SELECT count(*) FROM "Contact" WHERE "directoryId" IS NULL;
+-- Workspaces that never used contacts: expect the `workspacesWithoutDirectory` of the directories step's log line
 SELECT count(*) FROM "Workspace" WHERE "contactDirectoryId" IS NULL;
 
 -- The new indexes exist and are valid
@@ -145,7 +146,7 @@ WHERE cak.key = '<number key>' AND cak."directoryId" = :'dir' AND cak."dataType"
   AND ca."valueNumber" IS NULL AND ca.value ~ '^-?[0-9]+(\.[0-9]+)?$' AND ca.value::double precision > 10;
 ```
 
-**Contacts count on the settings page** (`getDirectoryContents` in `directory-move.ts`, one `groupBy` per page). Expect `Contact_directoryId_idx`:
+**Contacts count on the settings page** (the directory list, one `groupBy` per page). Expect `Contact_directoryId_idx`:
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
@@ -167,7 +168,9 @@ Write the measured total time into the upgrade note for the release, and the bat
 Run on a Cloud-size clone or staging, as noted.
 
 **Migration (clone)**
-- Every workspace has a directory named after it (cut to 100 characters, with a ` (2)` suffix where two cut names clash) and matching key `email`.
+- Every workspace that uses contacts has a directory named after it (cut to 100 characters, with a ` (2)` suffix where two cut names clash) and matching key `email`.
+- A workspace with no contact, no app setup, no segment with filters and no custom attribute key has no directory, no attribute keys and no segments. A survey that targeted one of its deleted segments has `segmentId` NULL.
+- The directories step's log line counts `workspacesWithoutDirectory`, `attributeKeysDeleted` and `segmentsDeleted`.
 - `SELECT count(*) FROM "Contact" WHERE "directoryId" IS NULL` returns 0, and the `report` log line matches the counts per directory.
 - The four new indexes are valid.
 
@@ -181,21 +184,27 @@ Run on a Cloud-size clone or staging, as noted.
 - A public segment made in one workspace is listed and editable in the other. A filter on the other workspace's survey shows "Survey in another workspace".
 - Deleting a contact is refused on the Contacts page and with `DELETE /api/v1/management/contacts/{id}` (`403`).
 - A contact's page shows only the current workspace's responses.
-- Deleting one of the two workspaces keeps the contacts and segments for the other.
+- Deleting one of the two workspaces keeps the contacts and segments for the other, and the directory stays active.
 
 **No directory (staging)**
 - A new workspace shows **No contact directory linked**: a button for owners and managers, the "ask an owner or manager" text for members, **Upload CSV** disabled.
 - SDK identify and the v1, v2 and v3 contact APIs answer `403` with the no-directory message and create nothing.
 - After assigning a directory, identify works right away.
 
-**Settings (staging)**
-- Create with email and with external ID. The default keys appear, plus `externalId` for external ID.
-- A name is required from two workspaces on, and must be unique.
-- A workspace with contacts is greyed out in the picker with "Uses ... A workspace uses one directory."
-- A contact that arrives while a workspace moves makes the move fail instead of losing the contact.
+**Remove, archive, delete (staging)**
+- Removing a workspace in Manage shows the confirm step with its affected surveys (app, in progress or scheduled, segment with filters). With **Pause these surveys** ticked they end up paused.
+- After removal, the directory keeps its contacts, keys and segments; the workspace's Contacts page shows no directory, `setUserId` answers `403`, and old responses show "Contact not available". Re-adding the workspace brings everything back.
+- Removing the last workspace never archives: the confirm step notes the directory stays active, and afterwards it has 0 workspaces and its **Archive** button is enabled. While workspaces are linked, **Archive** is disabled with a tooltip. Archived, it shows under **Show archived**; **Unarchive** saves with or without a workspace picked.
+- Deleting the last workspace of a directory: the delete dialog says the directory will have no workspaces left. After the delete the directory is still active and its contacts are kept.
 
-**CSV in an external ID directory (staging)**
-- An `externalId` column is required. A row matching two contacts updates the one with the same `userId`, or else the oldest, and the upload message counts it.
+**Settings (staging)**
+- Create with email and with User ID. The same five default keys appear for both: `userId`, `email`, `firstName`, `lastName`, `language`.
+- A name is required and unique in the organization, archived directories included.
+- A workspace in another directory is greyed out in the picker with "In <directory name>". Archived directories are never offered.
+
+**CSV (staging)**
+- In a User ID directory a `userId` column is required, email is optional, and the same email twice in one file is refused.
+- In an email directory, a row matching two contacts updates the one with the same `userId`, or else the oldest, and the upload message counts it.
 
 **Rolling deploy (CI)**
 - The "Check 6.2 writes get a contact directory" step in `docker-build-validation.yml` is green.
@@ -211,4 +220,4 @@ The trigger `contact_directory_from_workspace` only exists for pods of the previ
 - `docker/contact-directory-compat-smoke.sh`.
 - Its two fixtures: `docker/fixtures/contact-directory-compat.sql` and `docker/fixtures/contact-directory-compat-check.sql`.
 
-Keep `contact_directory_delete_unused` and `contact_directory_delete_workspace_rows`: they handle workspace deletes and are not part of the rollout. The old unique indexes on `(key, workspaceId)` and `(workspaceId, title)` stay until 7.0.
+Keep `contact_directory_delete_workspace_rows`: it handles workspace deletes and is not part of the rollout. The old unique indexes on `(key, workspaceId)` and `(workspaceId, title)` stay until 7.0.

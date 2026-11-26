@@ -67,7 +67,7 @@ export const createContactAttributeKey = async (
 
   if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
     throw new OperationNotAllowedError(
-      `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for workspace ${workspaceId}`
+      `Maximum number of attribute keys (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for the contact directory of workspace ${workspaceId}`
     );
   }
   try {

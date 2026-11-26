@@ -68,11 +68,12 @@ const createAttributeConnections = (
   });
 
 /**
- * Keys whose value at most one contact of a directory holds, as identify keeps them: `userId`, and `email`
- * unless it is the directory's matching key (then the email picks the contact rather than clashing with it).
+ * Keys besides the matching key whose value at most one contact of a directory holds, as identify keeps
+ * them: `userId` in an email directory, `email` in a userId directory. The matching key's value picks the
+ * contact rather than clashing with it.
  */
 export const getUniqueValueKeys = (identityKey: string): TUniqueValueKey[] =>
-  identityKey === "email" ? ["userId"] : ["userId", "email"];
+  identityKey === "email" ? ["userId"] : ["email"];
 
 type TUniqueValueKey = "userId" | "email";
 
@@ -375,7 +376,7 @@ const processCsvRecord = async (
   const existingContact = pickContactForRow(matches, mappedRecord.userId);
 
   if (!existingContact) {
-    // A new contact can't take another contact's userId (or email, outside an email directory).
+    // A new contact can't take another contact's userId (in an email directory) or email (in a userId one).
     const { record: recordToCreate, leftOut } = leaveOutValuesOfOtherContacts(
       mappedRecord,
       null,
@@ -495,7 +496,7 @@ export type TCreateContactsFromCSVResult =
 
 /**
  * Creates or updates contacts of `directory` from CSV rows, as uploaded from `workspaceId`. A row matches
- * existing contacts by the directory's matching key (`email` or `externalId`).
+ * existing contacts by the directory's matching key (`email` or `userId`).
  */
 export const createContactsFromCSV = async (
   csvData: Record<string, string>[],
@@ -540,7 +541,7 @@ export const createContactsFromCSV = async (
         },
         orderBy: CONTACTS_OLDEST_FIRST,
       }),
-      // Who already holds each userId (and email, outside an email directory) the file names.
+      // Who already holds each userId (email directory) or email (userId directory) the file names.
       prisma.contactAttribute.findMany({
         where: {
           OR: uniqueValueKeys.map((key) => ({

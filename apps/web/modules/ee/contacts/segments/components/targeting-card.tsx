@@ -48,6 +48,11 @@ interface TargetingCardProps {
   readonly segments: TSegment[];
   readonly initialSegment?: TSegment;
   /**
+   * The survey's segment when it is from another contact directory than the workspace's (decision 4). Its
+   * filters match nobody the workspace can identify, so the card asks for new targeting while it is loaded.
+   */
+  readonly otherDirectorySegmentId?: string | null;
+  /**
    * The shared-segment edit open in this card (ENG-6957). A survey save does not write a shared segment,
    * so the editor stops Save and Publish while it holds unsaved filters, until "Save changes" or Cancel.
    */
@@ -83,6 +88,7 @@ export function TargetingCard({
   contactAttributeKeys,
   segments,
   initialSegment,
+  otherDirectorySegmentId = null,
   sharedSegmentEdit,
   setSharedSegmentEdit,
 }: TargetingCardProps) {
@@ -397,6 +403,13 @@ export function TargetingCard({
         <hr className="text-slate-600" />
 
         <div className="flex flex-col gap-5 p-6">
+          {segment.id === otherDirectorySegmentId && segment.filters.length > 0 && (
+            <Alert variant="warning" alertRole="status">
+              <AlertDescription>
+                {t("workspace.segments.segment_from_another_contact_directory")}
+              </AlertDescription>
+            </Alert>
+          )}
           <TargetingIndicator segment={segment} />
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">

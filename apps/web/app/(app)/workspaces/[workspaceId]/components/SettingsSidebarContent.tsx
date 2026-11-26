@@ -401,7 +401,7 @@ export const SettingsSidebarContent = ({
     },
     {
       id: "org-enterprise",
-      label: t("common.enterprise_license"),
+      label: t("common.license"),
       href: organizationSettingsPath(organizationId, "enterprise"),
       icon: <ShieldIcon className={iconClassName} />,
       hidden: isFormbricksCloud,

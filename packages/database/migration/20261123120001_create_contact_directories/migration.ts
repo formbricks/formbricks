@@ -54,16 +54,22 @@ export const nameDirectories = (
 };
 
 /**
- * ENG-7491: every workspace gets a contact directory of its own, even one with no contacts: its SDK may
- * already be installed, and its first `setUserId` must keep working. The directory is named after the
- * workspace (`nameDirectories`) with matching key `email`, and takes over the workspace's attribute keys and
- * its segments, public and private. Contacts follow in the next migration, in batches.
+ * ENG-7491: gives a contact directory to every workspace that uses contacts: one with a contact, with its
+ * app setup completed (its SDK is installed, and its first `setUserId` must keep working), with a segment
+ * that has a filter, or with a custom attribute key. The directory is named after the workspace
+ * (`nameDirectories`) with matching key `email`, and takes over the workspace's attribute keys and its
+ * segments, public and private. Contacts follow in the next migration, in batches.
  *
- * In this order, in the runner's transaction: directories, then attribute keys, then segments. No row
- * locks: the previous release never writes `contactDirectoryId` or `directoryId`, and a row it inserts
- * meanwhile gets its directory from the schema step's trigger (or, inserted before this commits, from the
- * sweep at the end of the contact backfill). Each step only touches rows that still have no directory, so
- * a rerun converges and an empty database is a no-op.
+ * Any other workspace never used contacts and gets no directory; an owner can add it to one later. Its
+ * default attribute keys and its segments without filters are deleted: they would be left with neither a
+ * directory nor a use. A survey on such a segment keeps working, as `Survey.segmentId` is set to NULL on
+ * delete, and a survey with no segment is shown to the same visitors a segment without filters was.
+ *
+ * In this order, in the runner's transaction: directories, then attribute keys, then segments, then the
+ * clean-up. No row locks: the previous release never writes `contactDirectoryId` or `directoryId`, and a
+ * row it inserts meanwhile gets its directory from the schema step's trigger (or, inserted before this
+ * commits, from the sweep at the end of the contact backfill). Each step only touches rows that still have
+ * no directory, so a rerun converges and an empty database is a no-op.
  *
  * Directory ids are cuids made here, like the app's: the API validates ids as cuid2.
  */
@@ -74,8 +80,18 @@ export const createContactDirectories: MigrationScript = {
   run: async ({ tx }) => {
     // A workspace name has no length limit. One character past the limit is enough to tell a cut name.
     const workspaces = await tx.$queryRaw<TWorkspaceRow[]>`
-      SELECT "id", "organizationId", left("name", ${NAME_MAX_LENGTH + 1}::INT) AS "name"
-      FROM "Workspace" WHERE "contactDirectoryId" IS NULL ORDER BY "id"
+      SELECT w."id", w."organizationId", left(w."name", ${NAME_MAX_LENGTH + 1}::INT) AS "name"
+      FROM "Workspace" w
+      WHERE w."contactDirectoryId" IS NULL
+        AND (
+          w."appSetupCompleted"
+          OR EXISTS (SELECT 1 FROM "Contact" c WHERE c."workspaceId" = w."id")
+          OR EXISTS (SELECT 1 FROM "Segment" s WHERE s."workspaceId" = w."id" AND s."filters" <> '[]'::JSONB)
+          OR EXISTS (
+            SELECT 1 FROM "ContactAttributeKey" k WHERE k."workspaceId" = w."id" AND k."type" = 'custom'
+          )
+        )
+      ORDER BY w."id"
     `;
     const organizationIds = [...new Set(workspaces.map(({ organizationId }) => organizationId))];
     const existing =
@@ -128,9 +144,34 @@ export const createContactDirectories: MigrationScript = {
       WHERE w."id" = s."workspaceId" AND s."directoryId" IS NULL AND w."contactDirectoryId" IS NOT NULL
     `;
 
+    // The guard on values only matters for a contact a previous-release pod adds meanwhile.
+    const attributeKeysDeleted = await tx.$executeRaw`
+      DELETE FROM "ContactAttributeKey" k USING "Workspace" w
+      WHERE w."id" = k."workspaceId" AND w."contactDirectoryId" IS NULL
+        AND k."directoryId" IS NULL AND k."type" = 'default'
+        AND NOT EXISTS (SELECT 1 FROM "ContactAttribute" a WHERE a."attributeKeyId" = k."id")
+    `;
+
+    const segmentsDeleted = await tx.$executeRaw`
+      DELETE FROM "Segment" s USING "Workspace" w
+      WHERE w."id" = s."workspaceId" AND w."contactDirectoryId" IS NULL
+        AND s."directoryId" IS NULL AND s."filters" = '[]'::JSONB
+    `;
+
+    const [{ workspacesWithoutDirectory }] = await tx.$queryRaw<{ workspacesWithoutDirectory: number }[]>`
+      SELECT count(*)::INT AS "workspacesWithoutDirectory" FROM "Workspace" WHERE "contactDirectoryId" IS NULL
+    `;
+
     logger.info(
-      { directoriesCreated, attributeKeysMoved, segmentsMoved },
-      "Contact directories: one per workspace created"
+      {
+        directoriesCreated,
+        attributeKeysMoved,
+        segmentsMoved,
+        workspacesWithoutDirectory,
+        attributeKeysDeleted,
+        segmentsDeleted,
+      },
+      "Contact directories: created for the workspaces that use contacts"
     );
   },
 };

@@ -77,8 +77,8 @@ describe("POST /management/contacts", () => {
     expect(mocks.getWorkspaceContactDirectory).not.toHaveBeenCalled();
   });
 
-  test("an external-ID directory requires externalId", async () => {
-    mocks.getWorkspaceContactDirectory.mockResolvedValue({ id: "dir-1", matchingKey: "externalId" });
+  test("a userId directory requires userId", async () => {
+    mocks.getWorkspaceContactDirectory.mockResolvedValue({ id: "dir-1", matchingKey: "userId" });
 
     const response = await callPost({ email: "a@example.com" });
 
@@ -86,7 +86,7 @@ describe("POST /management/contacts", () => {
     expect(await response.json()).toEqual(
       expect.objectContaining({
         error: expect.objectContaining({
-          details: [{ field: "attributes", issue: "externalId attribute is required" }],
+          details: [{ field: "attributes", issue: "userId attribute is required" }],
         }),
       })
     );
@@ -103,18 +103,18 @@ describe("POST /management/contacts", () => {
   });
 
   test("creates the contact in the workspace's directory", async () => {
-    const directory = { id: "dir-1", matchingKey: "externalId" };
+    const directory = { id: "dir-1", matchingKey: "userId" };
     mocks.getWorkspaceContactDirectory.mockResolvedValue(directory);
     mocks.createContact.mockResolvedValue({
       ok: true,
-      data: { id: "c1", createdAt: new Date("2026-01-01"), workspaceId, attributes: { externalId: "crm-1" } },
+      data: { id: "c1", createdAt: new Date("2026-01-01"), workspaceId, attributes: { userId: "user-1" } },
     });
 
-    const response = await callPost({ externalId: "crm-1" });
+    const response = await callPost({ userId: "user-1" });
 
     expect(response.status).toBe(201);
     expect(mocks.createContact).toHaveBeenCalledWith(
-      { workspaceId, attributes: { externalId: "crm-1" } },
+      { workspaceId, attributes: { userId: "user-1" } },
       directory
     );
   });

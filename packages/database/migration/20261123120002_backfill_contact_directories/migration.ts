@@ -155,7 +155,8 @@ export const backfillContactDirectories: AutocommitDataMigrationScript = {
         contactsPerDirectory: Object.fromEntries(reported.map((row) => [row.directoryId, row.contacts])),
         otherDirectories: others.length,
         otherDirectoriesContacts: others.reduce((sum, row) => sum + row.contacts, 0),
-        // Left only for a workspace with no directory: one a previous-release pod created mid-rollout.
+        // Left only for a workspace with no directory: one a previous-release pod created mid-rollout, or
+        // one the previous migration gave none that such a pod added a contact to meanwhile.
         contactsWithoutDirectory: perDirectory.find((row) => row.directoryId === null)?.contacts ?? 0,
         attributeKeysSwept,
         segmentsSwept,

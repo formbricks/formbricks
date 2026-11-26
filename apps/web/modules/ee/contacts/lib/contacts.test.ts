@@ -811,7 +811,6 @@ describe("Contacts Lib", () => {
     const keys = [
       { key: "email", id: "key-email", dataType: "string" as const },
       { key: "userId", id: "key-user", dataType: "string" as const },
-      { key: "externalId", id: "key-ext", dataType: "string" as const },
     ];
     type TCreatedContact = Awaited<ReturnType<typeof prisma.contact.create>>;
     const existing = (id: string, attributes: Record<string, string>) => ({
@@ -963,20 +962,20 @@ describe("Contacts Lib", () => {
       expect(result).toEqual({ contacts: [], multiMatchCount: 0, leftOutCounts: { email: 0, userId: 0 } });
     });
 
-    test("an external-ID directory matches rows on externalId", async () => {
-      const externalIdDirectory = { id: "directory-ext", matchingKey: "externalId" as const };
+    test("a userId directory matches rows on userId and checks only email against other contacts", async () => {
+      const userIdDirectory = { id: "directory-user", matchingKey: "userId" as const };
       vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
-        existing("crm-contact", { externalId: "crm-1" }),
+        existing("user-contact", { userId: "user-1" }),
       ]);
       vi.mocked(prisma.contact.update).mockResolvedValue({
-        id: "crm-contact",
+        id: "user-contact",
         attributes: [],
       } as unknown as Awaited<ReturnType<typeof prisma.contact.update>>);
 
       await createContactsFromCSV(
-        [{ externalId: "crm-1", email: "new@example.com" }],
+        [{ userId: "user-1", email: "new@example.com" }],
         mockWorkspaceId,
-        externalIdDirectory,
+        userIdDirectory,
         "update",
         {}
       );
@@ -986,24 +985,37 @@ describe("Contacts Lib", () => {
           where: expect.objectContaining({
             attributes: {
               some: {
-                attributeKey: { key: "externalId", directoryId: "directory-ext" },
-                value: { in: ["crm-1"] },
+                attributeKey: { key: "userId", directoryId: "directory-user" },
+                value: { in: ["user-1"] },
               },
             },
           }),
         })
       );
+      // The userId picks the contact, so only the email can belong to another contact.
+      expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              {
+                attributeKey: { key: "email", directoryId: "directory-user" },
+                value: { in: ["new@example.com"] },
+              },
+            ],
+          },
+        })
+      );
       expect(prisma.contact.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: "crm-contact" } })
+        expect.objectContaining({ where: { id: "user-contact" } })
       );
     });
 
-    test("an external-ID directory refuses rows without externalId before any read or write", async () => {
-      const externalIdDirectory = { id: "directory-ext", matchingKey: "externalId" as const };
+    test("a userId directory refuses rows without userId before any read or write", async () => {
+      const userIdDirectory = { id: "directory-user", matchingKey: "userId" as const };
 
       await expect(
-        createContactsFromCSV([{ email: "a@example.com" }], mockWorkspaceId, externalIdDirectory, "skip", {})
-      ).rejects.toThrow("Missing externalId field for one or more records");
+        createContactsFromCSV([{ email: "a@example.com" }], mockWorkspaceId, userIdDirectory, "skip", {})
+      ).rejects.toThrow("Missing userId field for one or more records");
       expect(prisma.contact.findMany).not.toHaveBeenCalled();
       expect(prisma.contact.create).not.toHaveBeenCalled();
     });

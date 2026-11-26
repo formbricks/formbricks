@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   useContactDirectories,
+  useContactDirectoryTargetedSurveys,
   useCreateContactDirectory,
   useUpdateContactDirectory,
 } from "./use-contact-directories";
@@ -19,8 +20,8 @@ const DIRECTORY = {
   name: "Northwind EU",
   matchingKey: "email",
   workspaces: [{ id: "w1", name: "HCP" }],
+  isArchived: false,
   contactCount: 0,
-  workspaceCanMove: true,
 };
 const LIST = { directories: [DIRECTORY], workspaces: [{ id: "w1", name: "HCP", directoryId: "cldir1" }] };
 
@@ -74,7 +75,7 @@ describe("contact directory hooks", () => {
     await waitFor(() => expect(result.current.data).toEqual(LIST));
   });
 
-  test("creating a directory posts it and refetches the list, so the picker sees the moved workspaces", async () => {
+  test("creating a directory posts it and refetches the list, so the picker sees the new directory", async () => {
     routeFetch({
       [`GET ${LIST_URL}`]: [json({ data: LIST })],
       [`POST ${LIST_URL}`]: [json({ data: DIRECTORY }, 201)],
@@ -118,5 +119,26 @@ describe("contact directory hooks", () => {
     expect(caught).toBeInstanceOf(V3ApiError);
     expect(caught).toMatchObject({ status: 409, code: "contact_directory_name_taken" });
     expect(JSON.parse(String(requests("PATCH", patchUrl)[0][1]?.body))).toEqual({ name: "Taken" });
+  });
+
+  test("reads the targeted surveys afresh each time the confirm step opens", async () => {
+    const url = "/api/internal/contact-directories/cldir1/targeted-surveys";
+    const targeted = { workspaces: [{ workspaceId: "w1", surveys: [], totalCount: 0 }] };
+    routeFetch({ [`GET ${url}`]: [json({ data: targeted })] });
+    const wrapper = wrapperFor(newClient());
+
+    const first = renderHook(
+      () => useContactDirectoryTargetedSurveys({ directoryId: "cldir1", enabled: true }),
+      {
+        wrapper,
+      }
+    );
+    await waitFor(() => expect(first.result.current.data).toEqual(targeted));
+    first.unmount();
+
+    renderHook(() => useContactDirectoryTargetedSurveys({ directoryId: "cldir1", enabled: true }), {
+      wrapper,
+    });
+    await waitFor(() => expect(requests("GET", url)).toHaveLength(2));
   });
 });

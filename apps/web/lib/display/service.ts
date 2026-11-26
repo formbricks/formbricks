@@ -8,6 +8,7 @@ import { ZId } from "@formbricks/types/common";
 import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
+import { isContactReachable } from "../response/results-contact";
 import { validateInputs } from "../utils/validate";
 import { DISPLAY_REJECTED_MESSAGE } from "./errors";
 
@@ -117,54 +118,71 @@ export const getDisplaysBySurveyIdWithContact = reactCache(
     );
 
     try {
-      const displays = await prisma.display.findMany({
-        where: {
-          surveyId,
-          contactId: { not: null },
-        },
-        select: {
-          id: true,
-          createdAt: true,
-          surveyId: true,
-          contact: {
-            select: {
-              id: true,
-              attributes: {
-                where: {
-                  attributeKey: {
-                    key: { in: ["email", "userId"] },
+      const [displays, survey] = await Promise.all([
+        prisma.display.findMany({
+          where: {
+            surveyId,
+            contactId: { not: null },
+          },
+          select: {
+            id: true,
+            createdAt: true,
+            surveyId: true,
+            contact: {
+              select: {
+                id: true,
+                directoryId: true,
+                attributes: {
+                  where: {
+                    attributeKey: {
+                      key: { in: ["email", "userId"] },
+                    },
                   },
-                },
-                select: {
-                  attributeKey: { select: { key: true } },
-                  value: true,
+                  select: {
+                    attributeKey: { select: { key: true } },
+                    value: true,
+                  },
                 },
               },
             },
           },
-        },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        skip: offset,
-      });
+          orderBy: { createdAt: "desc" },
+          take: limit,
+          skip: offset,
+        }),
+        prisma.survey.findUnique({
+          where: { id: surveyId },
+          select: { workspace: { select: { contactDirectoryId: true } } },
+        }),
+      ]);
+      const workspaceDirectoryId = survey?.workspace.contactDirectoryId ?? null;
 
-      return displays.map((display) => ({
-        id: display.id,
-        createdAt: display.createdAt,
-        surveyId: display.surveyId,
-        contact: display.contact
-          ? {
-              id: display.contact.id,
-              attributes: display.contact.attributes.reduce(
-                (acc, attr) => {
-                  acc[attr.attributeKey.key] = attr.value;
-                  return acc;
-                },
-                {} as Record<string, string>
-              ),
-            }
-          : null,
-      }));
+      return displays.map((display) => {
+        if (!display.contact) {
+          return { id: display.id, createdAt: display.createdAt, surveyId: display.surveyId, contact: null };
+        }
+        // A contact the workspace no longer reaches (decision 8): its current email and userId belong to
+        // another directory, so only its id goes out, marked unavailable.
+        if (!isContactReachable(display.contact.directoryId, workspaceDirectoryId)) {
+          return {
+            id: display.id,
+            createdAt: display.createdAt,
+            surveyId: display.surveyId,
+            contact: { id: display.contact.id, attributes: {}, unavailable: true },
+          };
+        }
+        return {
+          id: display.id,
+          createdAt: display.createdAt,
+          surveyId: display.surveyId,
+          contact: {
+            id: display.contact.id,
+            attributes: Object.fromEntries(
+              display.contact.attributes.map((attr) => [attr.attributeKey.key, attr.value])
+            ),
+          },
+        };
+      });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

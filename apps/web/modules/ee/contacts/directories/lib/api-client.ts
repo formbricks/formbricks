@@ -3,6 +3,7 @@ import type {
   TContactDirectory,
   TContactDirectoryCreateInput,
   TContactDirectoryList,
+  TContactDirectoryTargetedSurveys,
   TContactDirectoryUpdateInput,
 } from "../types";
 
@@ -59,4 +60,20 @@ export async function updateContactDirectory({
   });
   if (!response.ok) throw await parseV3ApiError(response);
   return ((await response.json()) as { data: TContactDirectory }).data;
+}
+
+export async function fetchContactDirectoryTargetedSurveys({
+  directoryId,
+  signal,
+}: {
+  directoryId: string;
+  signal?: AbortSignal;
+}): Promise<TContactDirectoryTargetedSurveys> {
+  const response = await fetch(`${BASE_PATH}/${encodeURIComponent(directoryId)}/targeted-surveys`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+  return ((await response.json()) as { data: TContactDirectoryTargetedSurveys }).data;
 }

@@ -28,8 +28,8 @@ export type TWorkspaceContactDirectory = {
 /**
  * The contact directory a workspace uses, or null when it has none.
  *
- * Deduped per request only. Do not put it behind the shared cache: moving a workspace to another
- * directory deletes the old one, and a stale id would write contacts into a deleted directory.
+ * Deduped per request only. Do not put it behind the shared cache: a workspace can be removed from its
+ * directory at any time, and a stale id would write contacts into a directory it no longer uses.
  */
 export const getWorkspaceContactDirectory = reactCache(
   async (workspaceId: string): Promise<TWorkspaceContactDirectory | null> => {

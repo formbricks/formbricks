@@ -6,7 +6,7 @@ icon: "address-card"
 
 A **contact directory** holds the people you survey: your contacts, their attributes and the segments built on them. It belongs to the organization, and one or more workspaces use it. A workspace uses at most one directory.
 
-Most teams never have to think about directories. Every workspace that existed before the upgrade got a directory of its own, so its contacts work exactly as before. Directories matter when two workspaces should know the same people, for example a web app and a mobile app for the same product.
+Most teams never have to think about directories. Every workspace that used contacts before the upgrade got a directory of its own, so its contacts work exactly as before. Directories matter when two workspaces should know the same people, for example a web app and a mobile app for the same product.
 
 <Note>
   Contacts and contact directories are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).
@@ -14,28 +14,28 @@ Most teams never have to think about directories. Every workspace that existed b
 
 ## Manage directories
 
-Go to **Organization settings → Contact directories**. The list shows each directory with its workspaces, what it matches contacts by, and how many contacts it holds. A directory made by the upgrade to 6.3 is named after its workspace.
+Go to **Organization settings → Directories**. The list shows each directory with its workspaces, what it matches contacts by, how many contacts it holds, and whether it is active or archived. Archived directories are hidden until you turn on **Show archived**. A directory made by the upgrade is named after its workspace.
 
 Only organization **Owners** and **Managers** can create and change directories. Other members see a note saying so.
 
 - **Create a directory:** click **Create directory**, name it, choose what it matches contacts by, and pick at least one workspace.
-- **Change a directory:** click its row, or **Manage directory** in the row menu (⋮). You can rename it and add workspaces.
+- **Change a directory:** click **Manage** on its row. You can rename it, add workspaces and remove workspaces.
 
-Every directory needs a name. Names are unique within the organization.
+Every directory needs a name. Names are unique within the organization, archived directories included.
 
-A new directory starts with the default attributes `userId`, `email`, `firstName`, `lastName` and `language`, plus `externalId` if it matches by external ID.
+A new directory starts with the default attributes `userId`, `email`, `firstName`, `lastName` and `language`, whatever it matches contacts by.
 
 ## Matching key
 
-Each directory matches contacts either by **email** or by **external ID**, your own ID for the person, such as the one in your CRM. You choose when you create the directory, and you can't change it later. Directories made by the upgrade match by email.
+Each directory matches contacts either by **email** or by **User ID** (`userId`). You choose when you create the directory, and you can't change it later. Directories made by the upgrade match by email.
 
 The matching key decides which attribute identifies a contact when you add contacts in bulk:
 
-- **CSV upload** needs an `email` column in an email directory and an `externalId` column in an external ID directory. A header that maps to the attribute works too, such as `External ID` or `E-mail`. Each value can appear only once in the file, and so can each `userId` and, in an external ID directory, each `email`.
+- **CSV upload** needs an `email` column in an email directory and a `userId` column in a User ID directory. A header that maps to the attribute works too, such as `User ID` or `E-mail`. Each value can appear only once in the file, and so can each `userId` and, in a User ID directory, each `email`.
 - An email or `userId` belongs to one contact of a directory. A CSV row that names one another contact already has is imported without it, and a message after the upload says how many rows that happened to.
-- **The API**, `POST /api/v2/management/contacts` and `PUT /api/v2/management/contacts/bulk`, needs `email` or `externalId` in the same way. Only an email directory checks that the value is a valid email address.
+- **The API**, `POST /api/v2/management/contacts` and `PUT /api/v2/management/contacts/bulk`, needs `email` or `userId` in the same way. Only an email directory checks that the value is a valid email address.
 
-The SDK doesn't change: it always identifies people by `userId`, set with `setUserId`. See [User Identification](/surveys/website-app-surveys/user-identification).
+The SDK always identifies people by `userId`, set with `setUserId`. In a User ID directory, the SDK and your imports meet on the same contact. See [User Identification](/surveys/website-app-surveys/user-identification).
 
 ## Share a directory between workspaces
 
@@ -53,38 +53,56 @@ The Contacts page shows the directory's name ("Northwind directory") when the di
   You can't delete a contact in a shared directory. Deleting it would also delete its responses in the other workspaces. The Contacts page refuses, and `DELETE /api/v1/management/contacts/{id}` returns `403`.
 </Warning>
 
-## Which workspaces can join a directory
+## Add a workspace to a directory
 
-A workspace can join a directory only if the directory it uses now:
+Only a workspace with no directory can join one. The workspace picker greys out a workspace that is in another directory and names that directory. To move a workspace, remove it from its directory first; its contacts stay in the old directory. Directories are never merged, and nothing is moved or deleted when a workspace joins.
 
-- isn't used by any other workspace,
-- has no contacts and no segments,
-- has no attributes beyond the defaults, and no survey filter on such an attribute.
+## Remove a workspace from a directory
 
-In other words, a workspace that already has contacts can't join another directory, and directories are never merged. The workspace picker greys such a workspace out and names the directory it uses. A workspace can't leave a shared directory either.
+Open the directory, take the workspace off and click **Save**. Before anything changes, Formbricks shows what removing it means:
 
-When a workspace joins, its old, empty directory is deleted. Its surveys keep their targeting.
+- The workspace's **Contacts**, **Attributes** and **Segments** pages are empty.
+- `setUserId` and the contact APIs answer with the no-directory error (see below).
+- Its app surveys that target a segment with filters reach nobody, because no one can be identified. They are listed, with **Pause these surveys** ticked. Leave it ticked to pause them when you save.
+- Old responses keep the contact's saved details, but show "Contact not available" instead of a link to the contact.
+
+Removing only unlinks the workspace. The contacts, attributes and segments stay in the directory, and the workspace's surveys keep their targeting. Adding the workspace back to the same directory brings everything back.
+
+A removed workspace can join a different directory. A survey that still targets a segment from the old directory reaches nobody, and the survey editor asks you to choose new targeting.
+
+A browser that identified someone before the removal can still show them a targeted survey for up to 30 minutes.
+
+## Archive a directory
+
+A directory is only archived when you choose to. Archiving is a separate action, and only a directory with no workspaces can be archived. Remove its workspaces first, then open it and click **Archive directory**. Removing the last workspace leaves the directory active with no workspaces.
+
+An archived directory isn't offered in any workspace picker. Its contacts, attributes and segments are kept, so old responses keep their history.
+
+To use an archived directory again, click **Unarchive** on its row and save. You can pick workspaces for it in the same step.
+
+A directory can't be deleted, archived or not.
 
 ## A workspace with no directory
 
-A new workspace starts without a directory. Until it gets one:
+A workspace has no directory when it was created after the upgrade, never used contacts before it, or was removed from its directory. Until it gets one:
 
 - The Contacts page shows **No contact directory linked**. Owners and managers get a button to **Contact directories**. Other members are asked to have an owner or manager assign one. **Upload CSV** is disabled.
 - `setUserId` in the SDK and the contact APIs answer `403` with "A contact directory needs to be set up for this workspace before contacts are available." Nothing is created.
+- Responses and displays from people the workspace can't identify are saved without a contact.
 - Surveys for anonymous visitors keep working. Only identifying people and working with contacts need a directory.
 
 To fix it, create a directory for the workspace or add it to an existing one. Identifying people works right away.
 
 ## When a CSV row matches several contacts
 
-Older data can hold two contacts with the same email or external ID in one directory. When a CSV row or a bulk API row matches more than one, Formbricks updates the contact whose `userId` matches the row's `userId`. If none does, it updates the oldest one. It doesn't touch the others.
+Older data can hold two contacts with the same email in one directory. When a CSV row or a bulk API row in an email directory matches more than one, Formbricks updates the contact whose `userId` matches the row's `userId`. If none does, it updates the oldest one. It doesn't touch the others.
 
 After a CSV upload, a message tells you how many rows matched more than one contact. The bulk API doesn't report this.
 
 ## Deleting a workspace
 
-Deleting the last workspace of a directory deletes the directory, with its contacts, attributes and segments, just as deleting a workspace did before. Deleting one workspace of a shared directory keeps the contacts and segments for the others.
+Deleting a workspace never deletes contacts: they belong to the directory. If the workspace is the last one of its directory, the directory stays active with no workspaces, and the delete dialog says so. Archive it afterwards if you no longer need it.
 
 ## Upgrading
 
-Self-hosting? The upgrade gives every existing workspace its own directory and needs no action for them. Workspaces created after the upgrade start without one. See [Contact directories](/self-hosting/upgrade/versions/contact-directories) in the upgrade guides.
+Self-hosting? The upgrade gives a directory to every workspace that used contacts and needs no action for them. See [Contact directories](/self-hosting/upgrade/versions/contact-directories) in the upgrade guides for which workspaces get one.

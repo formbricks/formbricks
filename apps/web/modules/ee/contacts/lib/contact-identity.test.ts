@@ -18,14 +18,14 @@ describe("groupContactsByIdentity", () => {
     expect(groups.get("b@example.com")?.map((c) => c.id)).toEqual(["c2"]);
   });
 
-  test("matches on externalId for an external-ID directory and ignores email", () => {
-    const withExternalId = contact("c1", { externalId: "crm-1", email: "a@example.com" });
+  test("matches on userId for a userId directory and ignores email", () => {
+    const withUserId = contact("c1", { userId: "user-1", email: "a@example.com" });
     const emailOnly = contact("c2", { email: "a@example.com" });
 
-    const groups = groupContactsByIdentity([withExternalId, emailOnly], "externalId");
+    const groups = groupContactsByIdentity([withUserId, emailOnly], "userId");
 
-    expect([...groups.keys()]).toEqual(["crm-1"]);
-    expect(groups.get("crm-1")?.map((c) => c.id)).toEqual(["c1"]);
+    expect([...groups.keys()]).toEqual(["user-1"]);
+    expect(groups.get("user-1")?.map((c) => c.id)).toEqual(["c1"]);
   });
 });
 

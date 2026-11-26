@@ -8,6 +8,7 @@ import { ContactDirectoryDialog } from "./contact-directory-dialog";
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, values?: Record<string, unknown>) => (values ? `${key} ${JSON.stringify(values)}` : key),
+    i18n: { language: "en-US" },
   }),
 }));
 
@@ -19,30 +20,49 @@ const directory = (id: string, extra: Partial<TContactDirectory>): TContactDirec
   id,
   name: id,
   matchingKey: "email",
+  isArchived: false,
   workspaces: [],
   contactCount: 0,
-  workspaceCanMove: false,
   ...extra,
 });
 
 const BRAND = directory("d-brand", {
   name: "Brand",
   workspaces: [{ id: "w-brand", name: "Brand Tracking" }],
-  workspaceCanMove: true,
 });
 const US = directory("d-us", {
   name: "Northwind US",
-  matchingKey: "externalId",
-  workspaces: [{ id: "w-market", name: "Market Access" }],
+  matchingKey: "userId",
+  workspaces: [
+    { id: "w-market", name: "Market Access" },
+    { id: "w-field", name: "Field Sales" },
+  ],
   contactCount: 6120,
 });
+const OLD = directory("d-old", { name: "Old EU", isArchived: true });
 
 const LIST: TContactDirectoryList = {
-  directories: [BRAND, US],
+  directories: [BRAND, US, OLD],
   workspaces: [
     { id: "w-brand", name: "Brand Tracking", directoryId: "d-brand" },
+    { id: "w-field", name: "Field Sales", directoryId: "d-us" },
     { id: "w-hcp", name: "HCP Relationship", directoryId: null },
     { id: "w-market", name: "Market Access", directoryId: "d-us" },
+  ],
+};
+
+const TARGETED = {
+  workspaces: [
+    {
+      workspaceId: "w-market",
+      surveys: [
+        { id: "s1", name: "Onboarding NPS", status: "inProgress" },
+        { id: "s2", name: "Launch poll", status: "scheduled" },
+      ],
+      // The route lists only the first surveys of a workspace with many.
+      totalCount: 5,
+    },
+    { workspaceId: "w-field", surveys: [], totalCount: 0 },
   ],
 };
 
@@ -99,6 +119,7 @@ describe("ContactDirectoryDialog", () => {
         if (init?.method === "POST") return json({ data: BRAND }, 201);
         if (init?.method === "PATCH") return json({ data: BRAND });
         if (String(input) === LIST_URL) return json({ data: LIST });
+        if (String(input).endsWith("/targeted-surveys")) return json({ data: TARGETED });
         throw new Error(`Unexpected request ${String(input)}`);
       })
     );
@@ -110,34 +131,43 @@ describe("ContactDirectoryDialog", () => {
     vi.clearAllMocks();
   });
 
-  test("greys out a workspace that can't move, naming its directory, and won't pick it", async () => {
+  // Decision 3: joining never moves a workspace out of another directory.
+  test("greys out a workspace in another directory, naming it, and won't pick it", async () => {
     renderDialog();
 
     fireEvent.focus(dialog().getByPlaceholderText(`${K}.select_workspaces_placeholder`));
-    expect(
-      dialog().getByText(`${K}.workspace_uses_directory {"directoryName":"Northwind US"}`)
-    ).toBeInTheDocument();
-    fireEvent.click(dialog().getByText("Market Access"));
+    expect(dialog().getByText(`${K}.workspace_in_directory {"directoryName":"Brand"}`)).toBeInTheDocument();
+    fireEvent.click(dialog().getByText("Brand Tracking"));
     await settle();
 
     expect(
-      dialog().queryByRole("button", { name: 'common.remove_item {"item":"Market Access"}' })
+      dialog().queryByRole("button", { name: 'common.remove_item {"item":"Brand Tracking"}' })
     ).toBeNull();
   });
 
-  test("shows the shared-contacts line once two workspaces are picked", async () => {
+  // Review point 6: the help sits under the label.
+  test("explains the matching key under its label when creating", () => {
     renderDialog();
 
-    await pick("Brand Tracking");
-    expect(dialog().queryByText(`${K}.shared_contacts_note`)).toBeNull();
+    expect(dialog().getByText(`${K}.matching_key_help`)).toBeInTheDocument();
+  });
+
+  test("shows the shared-contacts line for the directory's matching key once two workspaces are picked", async () => {
+    renderDialog({ directory: BRAND });
+
+    expect(dialog().queryByText(`${K}.shared_contacts_note_email`)).toBeNull();
     await pick("HCP Relationship");
-    expect(dialog().getByText(`${K}.shared_contacts_note`)).toBeInTheDocument();
+    expect(dialog().getByText(`${K}.shared_contacts_note_email`)).toBeInTheDocument();
+    cleanup();
+
+    renderDialog({ directory: US });
+    expect(dialog().getByText(`${K}.shared_contacts_note_user_id`)).toBeInTheDocument();
   });
 
   test("asks for a name before creating a directory with one workspace", async () => {
     renderDialog();
 
-    await pick("Brand Tracking");
+    await pick("HCP Relationship");
     submit(`${K}.create_directory`);
 
     expect(await dialog().findByText(`${K}.error_name_required`)).toBeInTheDocument();
@@ -154,12 +184,11 @@ describe("ContactDirectoryDialog", () => {
     expect(requests("PATCH")).toHaveLength(0);
   });
 
-  test("creates an external-ID directory with the picked workspaces and closes", async () => {
+  test("creates a User ID directory with the picked workspace and closes", async () => {
     const { onClose } = renderDialog();
 
     fireEvent.change(dialog().getByLabelText("common.name"), { target: { value: " Northwind EU " } });
-    fireEvent.click(dialog().getByLabelText(`${K}.external_id`));
-    await pick("Brand Tracking");
+    fireEvent.click(dialog().getByLabelText("common.user_id"));
     await pick("HCP Relationship");
     submit(`${K}.create_directory`);
 
@@ -168,18 +197,19 @@ describe("ContactDirectoryDialog", () => {
     expect(String(url)).toBe(LIST_URL);
     expect(JSON.parse(String(init?.body))).toEqual({
       name: "Northwind EU",
-      matchingKey: "externalId",
-      workspaceIds: ["w-brand", "w-hcp"],
+      matchingKey: "userId",
+      workspaceIds: ["w-hcp"],
     });
     expect(toast.success).toHaveBeenCalledWith(`${K}.directory_created`);
   });
 
-  test("manages a directory: its name is filled in and the matching key is fixed", () => {
-    renderDialog({ directory: BRAND });
+  // Review point 7: the fixed key is text, not a disabled toggle.
+  test("manages a directory: its name is filled in and the matching key is read-only text", () => {
+    renderDialog({ directory: US });
 
-    expect(dialog().getByLabelText("common.name")).toHaveValue("Brand");
-    expect(dialog().getByLabelText("common.email")).toBeDisabled();
-    expect(dialog().getByLabelText(`${K}.external_id`)).toBeDisabled();
+    expect(dialog().getByLabelText("common.name")).toHaveValue("Northwind US");
+    expect(dialog().getByText(`${K}.matches_contacts_by_user_id`)).toBeInTheDocument();
+    expect(dialog().queryByLabelText("common.email")).toBeNull();
   });
 
   // As Feedback directories do: the id, with a copy button, for API and support use.
@@ -193,56 +223,144 @@ describe("ContactDirectoryDialog", () => {
     expect(dialog().queryByText(`${K}.directory_id`)).toBeNull();
   });
 
-  // Decision 8: a workspace can't leave the directory it uses, so its chip can't be removed.
-  test("locks the directory's own workspaces and says why", async () => {
-    renderDialog({ directory: BRAND });
+  // Decision 2: removing a workspace is confirmed on Save, with its surveys and a ticked pause box.
+  test("confirms a removal with the workspace's targeted surveys, and pauses them by default", async () => {
+    const { onClose } = renderDialog({ directory: US });
 
-    expect(dialog().getByText(`${K}.workspaces_stay_note`)).toBeInTheDocument();
+    fireEvent.click(dialog().getByRole("button", { name: 'common.remove_item {"item":"Market Access"}' }));
+    await settle();
+    submit("common.save");
+
+    const confirm = within(await screen.findByRole("dialog", { name: /remove_workspaces_title/ }));
     expect(
-      dialog().queryByRole("button", { name: 'common.remove_item {"item":"Brand Tracking"}' })
-    ).toBeNull();
+      confirm.getByText(
+        `${K}.remove_workspaces_title {"workspaceNames":"Market Access","directoryName":"Northwind US"}`
+      )
+    ).toBeInTheDocument();
+    expect(await confirm.findByText("Onboarding NPS")).toBeInTheDocument();
+    expect(confirm.getByText("Launch poll")).toBeInTheDocument();
+    expect(confirm.getByText(`${K}.targeted_surveys_more {"count":3}`)).toBeInTheDocument();
+    expect(confirm.getByRole("checkbox", { name: `${K}.pause_these_surveys` })).toBeChecked();
+    expect(requests("PATCH")).toHaveLength(0);
 
-    // A workspace added now can still be taken out before saving; Backspace skips the locked chip.
-    await pick("HCP Relationship");
-    const hcpChipRemove = { name: 'common.remove_item {"item":"HCP Relationship"}' };
-    expect(dialog().getByRole("button", hcpChipRemove)).toBeInTheDocument();
-    const input = dialog().getByPlaceholderText(`${K}.select_workspaces_placeholder`);
-    fireEvent.keyDown(input, { key: "Backspace" });
-    await settle();
-    fireEvent.keyDown(input, { key: "Backspace" });
-    await settle();
+    fireEvent.click(confirm.getByRole("button", { name: `${K}.remove_workspaces` }));
 
-    expect(dialog().queryByRole("button", hcpChipRemove)).toBeNull();
-    expect(dialog().getByText("Brand Tracking")).toBeInTheDocument();
-    expect(dialog().queryByText(`${K}.error_workspace_cannot_leave`)).toBeNull();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({
+      name: "Northwind US",
+      workspaceIds: ["w-field"],
+      pauseSurveysInWorkspaceIds: ["w-market"],
+    });
   });
 
-  // Decision 8: Brand Tracking's directory is empty, so picking it moves it here and deletes that directory.
-  test("says when picking a workspace moves it here and deletes its empty directory", async () => {
+  test("keeps the surveys running when the pause box is unticked", async () => {
     renderDialog({ directory: US });
 
-    fireEvent.focus(dialog().getByPlaceholderText(`${K}.select_workspaces_placeholder`));
-    expect(dialog().getByText(`${K}.workspace_moves_here {"directoryName":"Brand"}`)).toBeInTheDocument();
-    fireEvent.click(dialog().getByText("Brand Tracking"));
+    fireEvent.click(dialog().getByRole("button", { name: 'common.remove_item {"item":"Market Access"}' }));
     await settle();
-    await pick("HCP Relationship");
+    submit("common.save");
+    const checkbox = await screen.findByRole("checkbox", { name: `${K}.pause_these_surveys` });
+    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: `${K}.remove_workspaces` }));
 
-    expect(
-      dialog()
-        .getAllByText(/saving_moves_workspace/)
-        .map((note) => note.textContent)
-    ).toEqual([`${K}.saving_moves_workspace {"workspaceName":"Brand Tracking","directoryName":"Brand"}`]);
+    await waitFor(() => expect(requests("PATCH")).toHaveLength(1));
+    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({
+      name: "Northwind US",
+      workspaceIds: ["w-field"],
+    });
   });
 
-  test("says a workspace stays once a workspace is picked for a new directory", async () => {
-    renderDialog();
+  /** Removes Brand's only workspace, saves, and waits for the confirm step to load its surveys. */
+  const removeLastWorkspace = async () => {
+    renderDialog({ directory: BRAND });
+    fireEvent.click(dialog().getByRole("button", { name: 'common.remove_item {"item":"Brand Tracking"}' }));
+    await settle();
+    submit("common.save");
+    const confirm = within(await screen.findByRole("dialog", { name: /remove_workspaces_title/ }));
+    await confirm.findByText(`${K}.no_targeted_surveys`);
+    return confirm;
+  };
 
-    expect(dialog().queryByText(`${K}.workspaces_stay_note`)).toBeNull();
-    await pick("Brand Tracking");
-    expect(dialog().getByText(`${K}.workspaces_stay_note`)).toBeInTheDocument();
+  // ADR 0062: removing the last workspace never archives; archiving is its own action in Manage.
+  test("keeps the directory active when its last workspace is removed, and never sends isArchived", async () => {
+    const confirm = await removeLastWorkspace();
+
     expect(
-      dialog().getByRole("button", { name: 'common.remove_item {"item":"Brand Tracking"}' })
+      confirm.getByText(
+        `${K}.remove_workspaces_title {"workspaceNames":"Brand Tracking","directoryName":"Brand"}`
+      )
     ).toBeInTheDocument();
+    expect(confirm.getByText(`${K}.last_workspace_removed_note`)).toBeInTheDocument();
+    expect(confirm.queryByRole("checkbox")).toBeNull();
+    fireEvent.click(confirm.getByRole("button", { name: `${K}.remove_workspaces` }));
+
+    await waitFor(() => expect(requests("PATCH")).toHaveLength(1));
+    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({ name: "Brand", workspaceIds: [] });
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(`${K}.directory_updated`));
+  });
+
+  test("shows no last-workspace note when other workspaces stay", async () => {
+    renderDialog({ directory: US });
+
+    fireEvent.click(dialog().getByRole("button", { name: 'common.remove_item {"item":"Market Access"}' }));
+    await settle();
+    submit("common.save");
+
+    const confirm = within(await screen.findByRole("dialog", { name: /remove_workspaces_title/ }));
+    await confirm.findByText("Onboarding NPS");
+    expect(confirm.queryByText(`${K}.last_workspace_removed_note`)).toBeNull();
+  });
+
+  // ADR 0062: unarchiving needs no workspace, and can add some in the same save.
+  test("unarchives a directory without a workspace", async () => {
+    const { onClose } = renderDialog({ directory: OLD });
+
+    submit("common.unarchive");
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({
+      name: "Old EU",
+      workspaceIds: [],
+      isArchived: false,
+    });
+    expect(toast.success).toHaveBeenCalledWith(`${K}.directory_unarchived`);
+  });
+
+  test("unarchives a directory together with a picked workspace", async () => {
+    const { onClose } = renderDialog({ directory: OLD });
+
+    await pick("HCP Relationship");
+    submit("common.unarchive");
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({
+      name: "Old EU",
+      workspaceIds: ["w-hcp"],
+      isArchived: false,
+    });
+  });
+
+  test("offers Archive only for a directory with no workspaces", async () => {
+    renderDialog({ directory: BRAND });
+
+    const disabledArchive = dialog().getByRole("button", { name: `${K}.archive_directory` });
+    expect(disabledArchive).toHaveAttribute("aria-disabled", "true");
+    fireEvent.focus(disabledArchive);
+    expect((await screen.findAllByText(`${K}.archive_needs_no_workspaces`)).length).toBeGreaterThan(0);
+    fireEvent.click(disabledArchive);
+    expect(requests("PATCH")).toHaveLength(0);
+    cleanup();
+
+    // An active directory left with no workspaces can be archived.
+    const { onClose } = renderDialog({ directory: directory("d-empty", { name: "Empty" }) });
+    const archive = dialog().getByRole("button", { name: `${K}.archive_directory` });
+    expect(archive).not.toHaveAttribute("aria-disabled");
+    fireEvent.focus(archive);
+    expect(screen.queryByText(`${K}.archive_needs_no_workspaces`)).toBeNull();
+    fireEvent.click(archive);
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({ isArchived: true });
   });
 
   test("shows a taken name on the name field", async () => {

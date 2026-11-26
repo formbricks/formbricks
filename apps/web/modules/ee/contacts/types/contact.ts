@@ -105,9 +105,9 @@ const csvRecordsWithinLimits = (records: unknown, ctx: z.RefinementCtx) => {
 };
 
 /**
- * The attribute key that identifies a contact in a directory is its matching key: `email` or
- * `externalId` (spec decision 11). The request schemas below check it only once the workspace's
- * directory is known, so each comes as a base schema and a builder for one matching key.
+ * The attribute key that identifies a contact in a directory is its matching key: `email` or `userId`.
+ * The request schemas below check it only once the workspace's directory is known, so each comes as a
+ * base schema and a builder for one matching key.
  */
 const identityKeyLabel = (identityKey: TContactDirectoryMatchingKey): string =>
   identityKey === "email" ? "Email" : identityKey;
@@ -285,10 +285,14 @@ export const validateUniqueAttributeKeys = (
   }
 };
 
-// The `meta` key that lists repeated identity values; `duplicateEmails` predates directories.
+/** The key, besides the matching key, that only one contact of a directory holds. */
+export const getUniqueValueKey = (identityKey: TContactDirectoryMatchingKey): TContactDirectoryMatchingKey =>
+  identityKey === "email" ? "userId" : "email";
+
+// The `meta` key that lists a repeated email or userId; `duplicateEmails` predates directories.
 const DUPLICATE_IDENTITY_VALUES_PARAM: Record<TContactDirectoryMatchingKey, string> = {
   email: "duplicateEmails",
-  externalId: "duplicateExternalIds",
+  userId: "duplicateUserIds",
 };
 
 const buildContactBulkUploadRequestSchema = (identityKey: TContactDirectoryMatchingKey | null) =>
@@ -303,8 +307,10 @@ const buildContactBulkUploadRequestSchema = (identityKey: TContactDirectoryMatch
         // Track all data in a single pass
         const seenIdentityValues = new Set<string>();
         const duplicateIdentityValues = new Set<string>();
-        const seenUserIds = new Set<string>();
-        const duplicateUserIds = new Set<string>();
+        // Without a directory yet, userId is checked, as before directories.
+        const otherUniqueKey = getUniqueValueKey(identityKey ?? "email");
+        const seenOtherValues = new Set<string>();
+        const duplicateOtherValues = new Set<string>();
 
         // Process each contact in a single pass
         contacts.forEach((contact, idx) => {
@@ -326,13 +332,13 @@ const buildContactBulkUploadRequestSchema = (identityKey: TContactDirectoryMatch
             }
           }
 
-          // 2. Check for userId duplicates
-          const userIdAttr = contact.attributes.find((attr) => attr.attributeKey.key === "userId");
-          if (userIdAttr?.value) {
-            if (seenUserIds.has(userIdAttr.value)) {
-              duplicateUserIds.add(userIdAttr.value);
+          // 2. Check for duplicates of the other unique key
+          const otherAttr = contact.attributes.find((attr) => attr.attributeKey.key === otherUniqueKey);
+          if (otherAttr?.value) {
+            if (seenOtherValues.has(otherAttr.value)) {
+              duplicateOtherValues.add(otherAttr.value);
             } else {
-              seenUserIds.add(userIdAttr.value);
+              seenOtherValues.add(otherAttr.value);
             }
           }
 
@@ -351,12 +357,12 @@ const buildContactBulkUploadRequestSchema = (identityKey: TContactDirectoryMatch
           });
         }
 
-        if (duplicateUserIds.size > 0) {
+        if (duplicateOtherValues.size > 0) {
           ctx.addIssue({
             code: "custom",
-            message: "Duplicate userIds found in the records, please ensure each userId is unique.",
+            message: `Duplicate ${otherUniqueKey}s found in the records, please ensure each ${otherUniqueKey} is unique.`,
             params: {
-              duplicateUserIds: Array.from(duplicateUserIds),
+              [DUPLICATE_IDENTITY_VALUES_PARAM[otherUniqueKey]]: Array.from(duplicateOtherValues),
             },
           });
         }

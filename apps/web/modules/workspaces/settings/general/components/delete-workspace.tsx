@@ -4,6 +4,7 @@ import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
 import { DeleteWorkspaceRender } from "@/modules/workspaces/settings/general/components/delete-workspace-render";
+import { getContactDirectoryEmptiedOnDelete } from "@/modules/workspaces/settings/general/lib/contact-directory-emptied-on-delete";
 
 interface DeleteWorkspaceProps {
   organizationId: string;
@@ -27,12 +28,16 @@ export const DeleteWorkspace = async ({
 
   const availableWorkspacesLength = availableWorkspaces ? availableWorkspaces.length : 0;
   const isDeleteDisabled = availableWorkspacesLength <= 1 || !isOwnerOrManager;
+  const emptiedContactDirectoryName = isDeleteDisabled
+    ? null
+    : await getContactDirectoryEmptiedOnDelete(currentWorkspace.id);
 
   return (
     <DeleteWorkspaceRender
       isDeleteDisabled={isDeleteDisabled}
       isOwnerOrManager={isOwnerOrManager}
       currentWorkspace={currentWorkspace}
+      emptiedContactDirectoryName={emptiedContactDirectoryName}
     />
   );
 };
