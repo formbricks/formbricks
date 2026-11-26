@@ -5,10 +5,17 @@ import {
   recordSsoCallbackThrow,
 } from "@/modules/auth/lib/better-auth-observability";
 import { createAuthPathLabeller } from "@/modules/auth/lib/better-auth-path-label";
-import { runWithBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
+import {
+  type BetterAuthRequestContext,
+  runWithBetterAuthRequestContext,
+} from "@/modules/auth/lib/better-auth-request-context";
 import { runWithEmailVerificationRequestContext } from "@/modules/auth/lib/email-verification-request-context";
 import { mapLegacySsoCallbackRequest } from "@/modules/auth/lib/legacy-sso-callback";
 import { prepareDcrRequest } from "@/modules/auth/lib/mcp-dcr-application-type";
+import {
+  type TOAuthStateCookieDiagnosis,
+  diagnoseOAuthStateCookie,
+} from "@/modules/auth/lib/oauth-state-cookie-diagnosis";
 import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 
 // Force-no-store so Better Auth's outbound SSO fetches (token exchange, userinfo, JWKS) are never
@@ -27,6 +34,36 @@ export const fetchCache = "force-no-store";
 // better-auth-request-context.ts). The labeller ignores any non-string, so a nullish entry degrades that
 // one endpoint to `unknown` instead of breaking sign-in.
 const labelAuthPath = createAuthPathLabeller(getDeclaredAuthPaths());
+
+/** The endpoint label every OAuth callback carries, built-in social and generic OAuth/SSO alike. */
+const OAUTH_CALLBACK_LABEL = "/callback/*";
+
+/**
+ * Which state-cookie cause a `state_security_mismatch` on this callback would have (ENG-6692), for the
+ * Sentry capture in better-auth-observability.ts. Diagnosed here, before the handler, because that capture
+ * runs in Better Auth's synchronous logger and verifying the cookie's signature is asynchronous.
+ *
+ * Only on a GET callback, so no other request pays for it. A POST callback (`response_mode=form_post`) never
+ * reaches the state check: Better Auth 1.7 redirects it to the GET callback first, and that GET is diagnosed.
+ * Never a reason for a sign-in to fail either: any error
+ * here leaves the context without a diagnosis. The cookie name and secret come from Better Auth's own
+ * context, so they cannot drift from what `parseGenericState` reads.
+ */
+const diagnoseCallbackStateCookie = async (
+  request: Request,
+  path: string
+): Promise<TOAuthStateCookieDiagnosis | undefined> => {
+  if (path !== OAUTH_CALLBACK_LABEL || request.method !== "GET") return undefined;
+  try {
+    const context = await auth.$context;
+    return await diagnoseOAuthStateCookie(request, {
+      name: context.createAuthCookie("state").name,
+      secret: context.secret,
+    });
+  } catch {
+    return undefined;
+  }
+};
 
 /**
  * Better Auth HTTP handler (ENG-1054 cutover) — replaces the NextAuth `[...nextauth]` catch-all (the
@@ -76,17 +113,22 @@ const handler = async (request: Request): Promise<Response> => {
   // Redis round-trip to save one JSON parse, which is the wrong trade.
   if (preparedRequest instanceof Response) return preparedRequest;
   const mappedRequest = preparedRequest;
+  const path = labelAuthPath(mappedRequest.url);
+  const oauthStateCookie = await diagnoseCallbackStateCookie(mappedRequest, path);
+  const requestContext: BetterAuthRequestContext = {
+    path,
+    method: mappedRequest.method,
+    ...(oauthStateCookie && { oauthStateCookie }),
+  };
   try {
-    const response = await runWithBetterAuthRequestContext(
-      { path: labelAuthPath(mappedRequest.url), method: mappedRequest.method },
-      () =>
-        runWithSsoRequestContext(() =>
-          // ENG-2562: carries "this request just verified an email" from Better Auth's
-          // `afterEmailVerification` hook to the `hooks.after` chain, which is where the session can
-          // actually be minted. Innermost because it is the narrowest scope of the three — one endpoint,
-          // not the whole handler.
-          runWithEmailVerificationRequestContext(() => auth.handler(mappedRequest))
-        )
+    const response = await runWithBetterAuthRequestContext(requestContext, () =>
+      runWithSsoRequestContext(() =>
+        // ENG-2562: carries "this request just verified an email" from Better Auth's
+        // `afterEmailVerification` hook to the `hooks.after` chain, which is where the session can
+        // actually be minted. Innermost because it is the narrowest scope of the three — one endpoint,
+        // not the whole handler.
+        runWithEmailVerificationRequestContext(() => auth.handler(mappedRequest))
+      )
     );
     // ENG-2551: the one place that sees the outcome of every SSO callback, whatever went wrong and
     // whichever provider it was — a failed callback is a redirect carrying `?error=`, or a 4xx/5xx.

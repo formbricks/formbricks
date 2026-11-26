@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
 import { GET, POST } from "./route";
@@ -11,11 +12,16 @@ import { GET, POST } from "./route";
 // NOT mocked: what needs proving is that this route wires them correctly, and a mock of either would
 // assert the test's own arrangement instead. `api` mirrors the shape route.ts reads the label
 // vocabulary from — each endpoint function carries its declared path.
-const { handlerMock, runWithCtxMock } = vi.hoisted(() => ({
+const { handlerMock, runWithCtxMock, authContextMock } = vi.hoisted(() => ({
   // Parameter declared even though the body ignores it: `mock.calls` is typed from the signature, so
   // without it `calls[0]` is a zero-length tuple and every `calls[0][0]` read below is a type error.
   handlerMock: vi.fn(async (_request: Request) => new Response("ok", { status: 200 })),
   runWithCtxMock: vi.fn((fn: () => unknown) => fn()),
+  // The two things the route reads off `auth.$context` to diagnose the OAuth state cookie (ENG-6692).
+  authContextMock: vi.fn(async () => ({
+    secret: "eng-6692-route-test-secret-0123456789abcdef",
+    createAuthCookie: (name: string) => ({ name: `formbricks.${name}` }),
+  })),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => {
@@ -34,7 +40,13 @@ vi.mock("@/modules/auth/lib/auth", () => {
     nullishEndpoint: null,
   };
   return {
-    auth: { handler: handlerMock, api },
+    auth: {
+      handler: handlerMock,
+      api,
+      get $context() {
+        return authContextMock();
+      },
+    },
     // The real accessor's shape, over this registry: the route builds its label vocabulary from it.
     getDeclaredAuthPaths: () =>
       Object.values(api).map((endpoint) => (endpoint as { path?: string } | null)?.path),
@@ -139,6 +151,101 @@ describe("[...all] Better Auth route — observability context (ENG-2259)", () =
     );
 
     expect(seen).toEqual({ path: "/callback/*", method: "POST" });
+  });
+});
+
+/**
+ * ENG-6692: a `state_security_mismatch` is four causes behind one throw, and the logger that captures it is
+ * synchronous, so the route diagnoses the callback's state cookie before the handler runs and carries the
+ * label in the request context. The classification itself is covered in oauth-state-cookie-diagnosis's
+ * tests; what needs proving here is that the route reads the right cookie and secret, only on a callback,
+ * and that the diagnosis can never be what fails a sign-in.
+ */
+describe("[...all] Better Auth route — OAuth state cookie diagnosis (ENG-6692)", () => {
+  const SECRET = "eng-6692-route-test-secret-0123456789abcdef";
+  const sign = (value: string, secret: string) =>
+    encodeURIComponent(`${value}.${createHmac("sha256", secret).update(value).digest("base64")}`);
+
+  beforeEach(() => {
+    handlerMock.mockClear();
+    authContextMock.mockClear();
+  });
+
+  const contextDuringHandler = async (request: Request) => {
+    let seen: ReturnType<typeof getBetterAuthRequestContext>;
+    handlerMock.mockImplementationOnce(async () => {
+      seen = getBetterAuthRequestContext();
+      return new Response("ok", { status: 200 });
+    });
+    await GET(request);
+    return seen;
+  };
+
+  test("diagnoses the state cookie of an OAuth callback", async () => {
+    const seen = await contextDuringHandler(
+      new Request("http://localhost/api/auth/callback/google?code=abc&state=state-1", {
+        headers: { cookie: `formbricks.state=${sign("state-1", "a-different-replica-secret-0123456789")}` },
+      })
+    );
+
+    expect(seen).toEqual({ path: "/callback/*", method: "GET", oauthStateCookie: "signature_invalid" });
+  });
+
+  test("reads the cookie with the secret Better Auth signs it with", async () => {
+    const seen = await contextDuringHandler(
+      new Request("http://localhost/api/auth/callback/google?code=abc&state=state-1", {
+        headers: { cookie: `formbricks.state=${sign("state-1", SECRET)}` },
+      })
+    );
+
+    expect(seen?.oauthStateCookie).toBe("matches");
+  });
+
+  test("diagnoses the pinned SSO callback too", async () => {
+    const seen = await contextDuringHandler(
+      new Request("http://localhost/api/auth/oauth2/callback/openid?code=abc&state=state-1")
+    );
+
+    expect(seen).toEqual({ path: "/callback/*", method: "GET", oauthStateCookie: "absent" });
+  });
+
+  // A form_post callback is redirected to the GET callback before any state check, so it has nothing to
+  // diagnose; the GET it turns into is diagnosed instead.
+  test("does not diagnose a POST callback", async () => {
+    let seen: ReturnType<typeof getBetterAuthRequestContext>;
+    handlerMock.mockImplementationOnce(async () => {
+      seen = getBetterAuthRequestContext();
+      return new Response("ok", { status: 200 });
+    });
+
+    await POST(
+      new Request("http://localhost/api/auth/callback/google?code=abc&state=state-1", { method: "POST" })
+    );
+
+    expect(seen).toEqual({ path: "/callback/*", method: "POST" });
+    expect(authContextMock).not.toHaveBeenCalled();
+  });
+
+  test("leaves every other endpoint alone, even one carrying a state parameter", async () => {
+    const seen = await contextDuringHandler(
+      new Request("http://localhost/api/auth/get-session?state=state-1", {
+        headers: { cookie: `formbricks.state=${sign("state-1", SECRET)}` },
+      })
+    );
+
+    expect(seen).toEqual({ path: "/get-session", method: "GET" });
+    expect(authContextMock).not.toHaveBeenCalled();
+  });
+
+  test("still signs the user in when the diagnosis itself fails", async () => {
+    authContextMock.mockRejectedValueOnce(new Error("context unavailable"));
+
+    const seen = await contextDuringHandler(
+      new Request("http://localhost/api/auth/callback/google?code=abc&state=state-1")
+    );
+
+    expect(handlerMock).toHaveBeenCalledTimes(1);
+    expect(seen).toEqual({ path: "/callback/*", method: "GET" });
   });
 });
 
