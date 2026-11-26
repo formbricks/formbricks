@@ -220,7 +220,7 @@ describe("deleteSurvey", () => {
     await expect(deleteSurvey(surveyId)).resolves.toEqual(mockDeletedSurveyAppPrivateSegment);
     // One guarded DELETE on the transaction: kept while another segment nests it (ENG-7269).
     expect(tx.$executeRaw).toHaveBeenCalledOnce();
-    expect(tx.$executeRaw.mock.calls[0].slice(1)).toEqual(expect.arrayContaining([segmentId]));
+    expect(tx.$executeRaw.mock.calls[0].slice(1)).toEqual(expect.arrayContaining([segmentId, workspaceId]));
     expect(tx.segment.delete).not.toHaveBeenCalled();
   });
 

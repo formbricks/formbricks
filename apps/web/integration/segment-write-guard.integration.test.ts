@@ -452,4 +452,33 @@ describe("deletePrivateSegmentIfUnused (ENG-7269)", () => {
     });
     expect(left.map((segment) => segment.id).sort()).toEqual([linked, nested, ids.control].sort());
   });
+
+  test("ignores its own filters and another workspace's segments, and never deletes across workspaces", async () => {
+    const organizationId = (await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } }))
+      .organizationId;
+    const other = await prisma.workspace.create({ data: { name: "Other", organizationId } });
+    const selfNesting = await createPrivate("self-nesting");
+    await prisma.segment.update({
+      where: { id: selfNesting },
+      data: { filters: nestedSegmentFilters(selfNesting) },
+    });
+    const nestedFromElsewhere = await createPrivate("nested-from-elsewhere");
+    await prisma.segment.create({
+      data: {
+        title: "Foreign nesting",
+        isPrivate: false,
+        filters: nestedSegmentFilters(nestedFromElsewhere),
+        workspaceId: other.id,
+      },
+    });
+    const foreign = await prisma.segment.create({
+      data: { title: "foreign-private", isPrivate: true, filters: [], workspaceId: other.id },
+      select: { id: true },
+    });
+
+    expect(await deletePrivateSegmentIfUnused(selfNesting, workspaceId)).toBe(true);
+    expect(await deletePrivateSegmentIfUnused(nestedFromElsewhere, workspaceId)).toBe(true);
+    expect(await deletePrivateSegmentIfUnused(foreign.id, workspaceId)).toBe(false);
+    expect(await prisma.segment.findUnique({ where: { id: foreign.id } })).not.toBeNull();
+  });
 });
