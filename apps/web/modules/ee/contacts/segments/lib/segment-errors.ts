@@ -15,3 +15,11 @@ export class SegmentSurveysChangedError extends Error {
     this.name = "SegmentSurveysChangedError";
   }
 }
+
+/**
+ * ENG-7269: the refusal for changing a private segment's filters while another segment's filters nest it
+ * (only possible in data written before nesting a private segment was refused). Changing it would change
+ * the audience of every survey on the nesting segment, which this survey's save may not do.
+ */
+export const PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE =
+  "This survey's targeting is used inside another segment, so changing it would change other surveys' targeting. Remove it from that segment first.";

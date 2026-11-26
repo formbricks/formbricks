@@ -138,6 +138,8 @@ beforeEach(() => {
   // The own-private-segment write checks how many rows it updated (ENG-6957).
   prisma.segment.updateMany.mockResolvedValue({ count: 1 });
   prisma.survey.count.mockResolvedValue(1);
+  // ENG-7269: no other segment nests the survey's private segment.
+  prisma.$queryRaw.mockResolvedValue([]);
   // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
   // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
   // the transaction.
@@ -979,14 +981,11 @@ describe("Tests for updateSurvey", () => {
         },
         data: { segmentId: null },
       });
-      expect(prisma.segment.deleteMany).toHaveBeenCalledWith({
-        where: {
-          id: OWN_PRIVATE_SEGMENT.id,
-          workspaceId: updateSurveyInput.workspaceId,
-          isPrivate: true,
-          surveys: { none: {} },
-        },
-      });
+      // One guarded DELETE: private, no survey left, and (ENG-7269) no other segment nesting it.
+      expect(prisma.$executeRaw).toHaveBeenCalledOnce();
+      expect(vi.mocked(prisma.$executeRaw).mock.calls[0].slice(1)).toEqual(
+        expect.arrayContaining([OWN_PRIVATE_SEGMENT.id, updateSurveyInput.workspaceId])
+      );
       expect(prisma.segment.delete).not.toHaveBeenCalled();
     });
 
@@ -1169,6 +1168,15 @@ describe("Tests for updateSurvey", () => {
 
         expect(getIsContactsEnabled).toHaveBeenCalledWith(mockOrganizationOutput.id);
         expect(prisma.segment.updateMany).toHaveBeenCalled();
+      });
+
+      test("refuses changed filters while another segment nests the survey's segment (ENG-7269)", async () => {
+        prisma.$queryRaw.mockResolvedValue([{ id: "clnestingsegment000000001" }]);
+
+        await expect(save(attributeFilters)).rejects.toThrow(
+          "This survey's targeting is used inside another segment, so changing it would change other surveys' targeting. Remove it from that segment first."
+        );
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       });
 
       test("keeps saving without asking for the licence when the filters are empty", async () => {
@@ -2859,11 +2867,43 @@ describe("Tests for createSurvey", () => {
             segment: {
               connect: {
                 id: "clseg123456789012345678901",
+                isPrivate: false,
+                workspaceId: mockWorkspaceId,
               },
             },
           }),
         })
       );
+    });
+
+    test("refuses linking a new survey to another survey's private segment (ENG-7269)", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: mockWorkspaceId,
+        isPrivate: true,
+      } as never);
+
+      await expect(
+        createSurvey(
+          mockWorkspaceId,
+          {
+            ...mockCreateSurveyInput,
+            segment: {
+              id: "clseg123456789012345678901",
+              title: "clsurveyother0000000000001",
+              description: null,
+              isPrivate: true,
+              filters: [],
+              workspaceId: mockWorkspaceId,
+              surveys: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          },
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
+        )
+      ).rejects.toThrow(new InvalidInputError("A survey can only be linked to a shared segment"));
+      expect(prisma.survey.create).not.toHaveBeenCalled();
     });
 
     test("rejects an explicitly provided segment from another workspace", async () => {
@@ -3142,15 +3182,11 @@ describe("Tests for loadNewSegmentInSurvey", () => {
 
       await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
 
-      // ENG-6957: deleted only once no survey uses it any more.
-      expect(prisma.segment.deleteMany).toHaveBeenCalledWith({
-        where: {
-          id: mockCurrentSegmentId,
-          workspaceId: mockSurveyOutput.workspaceId,
-          isPrivate: true,
-          surveys: { none: {} },
-        },
-      });
+      // ENG-6957 / ENG-7269: deleted only once no survey uses it and no other segment nests it.
+      expect(prisma.$executeRaw).toHaveBeenCalledOnce();
+      expect(vi.mocked(prisma.$executeRaw).mock.calls[0].slice(1)).toEqual(
+        expect.arrayContaining([mockCurrentSegmentId, mockSurveyOutput.workspaceId])
+      );
       expect(prisma.segment.delete).not.toHaveBeenCalled();
     });
   });

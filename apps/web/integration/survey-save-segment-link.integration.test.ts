@@ -208,6 +208,16 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
       { targetingActor: member() }
     );
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.segmentW } })).filters).toHaveLength(2);
+
+    // R's segment, nested by W's: R's own save may not change it, or W's audience would change with it.
+    const r = await loadSurvey(ids.R);
+    await expect(
+      updateSurvey(
+        { ...r, segment: { ...r.segment!, filters: EMAIL_FILTER } as never },
+        { targetingActor: member() }
+      )
+    ).rejects.toThrow("This survey's targeting is used inside another segment");
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.segmentR } })).filters).toEqual([]);
   });
 
   // The write requires the stored filters to equal the ones the save read: a second edit, read back

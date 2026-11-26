@@ -9,10 +9,12 @@ import {
   PRIVATE_SEGMENT_NESTED_MESSAGE,
   getSurveyIdsReadBySegments,
 } from "@/modules/ee/contacts/segments/lib/helper";
+import { PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
   ALL_SEGMENT_SURVEY_REFS,
   getExistingWorkspaceSurveyIds,
   getSegments,
+  isNestedByAnotherSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -97,6 +99,23 @@ export const sharedSegmentTargetingError = (): V3SurveyReferenceValidationError 
         "This survey is targeted with a shared segment, which a survey update can't change. Edit the segment in the app instead.",
     },
   ]);
+
+/**
+ * ENG-7269: refuses changing the filters of a survey's own private segment while another segment nests it
+ * (data from before nesting a private segment was refused): the change would reach every survey on the
+ * nesting segment. Read through `client` so a caller's transaction sees its own writes.
+ */
+export async function assertV3OwnSegmentNotNestedElsewhere(
+  workspaceId: string,
+  segmentId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<void> {
+  if (await isNestedByAnotherSegment(workspaceId, segmentId, client)) {
+    throw new V3SurveyReferenceValidationError([
+      { name: "targeting.filters", reason: PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE },
+    ]);
+  }
+}
 
 /**
  * Persist app-survey contact targeting onto the survey's own private segment. Writes the segment row

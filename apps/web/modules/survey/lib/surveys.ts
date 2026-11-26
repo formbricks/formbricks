@@ -8,6 +8,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
+import { deletePrivateSegmentIfUnused } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   SurveyLinkedCreativesError,
   type TLinkedCreative,
@@ -123,11 +124,8 @@ export const deleteSurvey = async (
       });
 
       if (deletedSurvey.type === "app" && deletedSurvey.segment?.isPrivate) {
-        await tx.segment.delete({
-          where: {
-            id: deletedSurvey.segment.id,
-          },
-        });
+        // Kept while another segment nests it (ENG-7269), or another survey still links it.
+        await deletePrivateSegmentIfUnused(deletedSurvey.segment.id, deletedSurvey.workspaceId, tx);
       }
 
       await options?.inTransaction?.(tx);

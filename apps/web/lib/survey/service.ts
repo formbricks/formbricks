@@ -75,10 +75,12 @@ import {
 import {
   assertAddedSegmentSurveyFiltersVisible,
   assertNoAddedPrivateSegmentReferences,
+  assertPrivateSegmentNotNestedElsewhere,
   assertSegmentSurveyFiltersVisible,
   checkReferencedSegmentsForRecursion,
   getAddedSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
+import { deletePrivateSegmentIfUnused } from "@/modules/ee/contacts/segments/lib/segments";
 import {
   assertNoLinkedCreatives,
   getDestinationSettingTurnedOn,
@@ -1525,6 +1527,9 @@ const saveAppSurveySegment = async (
       actor,
       segment.id
     );
+    if (!isDeepStrictEqual(segment.filters, survey.segment.filters ?? [])) {
+      await assertPrivateSegmentNotNestedElsewhere(segment.id, survey.workspaceId);
+    }
     let written: { count: number };
     try {
       // Only the filters: the title names the survey (`connectOrCreate` finds the segment by it), and a
@@ -1598,15 +1603,9 @@ const unlinkSurveySegment = async (
     throw new SurveySegmentChangedError();
   }
   if (survey.segment.isPrivate) {
-    // `isPrivate` again: a segment made shared since the survey was read is kept.
-    await prisma.segment.deleteMany({
-      where: {
-        id: survey.segment.id,
-        workspaceId: survey.workspaceId,
-        isPrivate: true,
-        surveys: { none: {} },
-      },
-    });
+    // `isPrivate` again: a segment made shared since the survey was read is kept, and so is one another
+    // segment nests (ENG-7269).
+    await deletePrivateSegmentIfUnused(survey.segment.id, survey.workspaceId);
   }
 };
 
@@ -1626,6 +1625,30 @@ const assertSurveySegmentBelongsToWorkspace = async (
 
   if (existingSegment?.workspaceId !== workspaceId) {
     throw new ResourceNotFoundError("Segment", segment.id);
+  }
+};
+
+/**
+ * The segment a new survey links, in one read: it must be in the survey's workspace (ENG-1920), and shared
+ * (ENG-7269). A private segment is another survey's own targeting (the new survey has none yet), and a
+ * second survey on it would stop that survey's saves writing it.
+ */
+const assertCreateSegmentLinkable = async (
+  workspaceId: string,
+  segment: { id?: string | null } | null | undefined,
+  client: Prisma.TransactionClient = prisma
+): Promise<void> => {
+  if (!segment?.id) return;
+
+  const existingSegment = await client.segment.findUnique({
+    where: { id: segment.id },
+    select: { workspaceId: true, isPrivate: true },
+  });
+  if (existingSegment?.workspaceId !== workspaceId) {
+    throw new ResourceNotFoundError("Segment", segment.id);
+  }
+  if (existingSegment.isPrivate) {
+    throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
   }
 };
 
@@ -1795,7 +1818,7 @@ export const createSurvey = async (
     // the languages, action classes and shared fields this survey points at in that same transaction.
     const db = transaction?.tx ?? prisma;
     await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages, db);
-    await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment, db);
+    await assertCreateSegmentLinkable(parsedWorkspaceId, segment, db);
     await assertCreateTargetingVisible(parsedWorkspaceId, segment, privateSegmentFilters, targetingActor, db);
 
     // ENG-1839: `existing` is empty because a create authors every name fresh — there is nothing to
@@ -1839,7 +1862,10 @@ export const createSurvey = async (
         status: restSurveyBody.status ?? "draft",
       }),
       languages: buildSurveyLanguagesCreateData(languages),
-      segment: segment?.id ? { connect: { id: segment.id } } : undefined,
+      // `isPrivate` and `workspaceId` repeat the checks above in the write (ENG-7269).
+      segment: segment?.id
+        ? { connect: { id: segment.id, isPrivate: false, workspaceId: parsedWorkspaceId } }
+        : undefined,
       triggers: restSurveyBody.triggers
         ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
@@ -2017,15 +2043,8 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
     });
 
     if (currentSurveySegment?.isPrivate && currentSurveySegment.title === currentSurvey.id) {
-      // Only once no survey uses it any more (ENG-6957).
-      await prisma.segment.deleteMany({
-        where: {
-          id: currentSurveySegment.id,
-          workspaceId: currentSurvey.workspaceId,
-          isPrivate: true,
-          surveys: { none: {} },
-        },
-      });
+      // Only once no survey uses it any more (ENG-6957) and no other segment nests it (ENG-7269).
+      await deletePrivateSegmentIfUnused(currentSurveySegment.id, currentSurvey.workspaceId);
     }
 
     return transformPrismaSurvey<TSurvey>(prismaSurvey);

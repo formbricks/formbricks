@@ -50,6 +50,7 @@ import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
 import {
   areV3SurveyTargetingFiltersEqual,
+  assertV3OwnSegmentNotNestedElsewhere,
   assertV3SurveyTargetingFilterReferences,
   setV3SurveySegmentFilters,
   sharedSegmentTargetingError,
@@ -223,6 +224,8 @@ async function buildV3AppSurveyPatchWrites(params: {
   if (!isOwnPrivateSegment(currentSurvey, segmentId)) {
     throw sharedSegmentTargetingError();
   }
+  // ENG-7269: and no other segment nests it (data from before nesting a private segment was refused).
+  await assertV3OwnSegmentNotNestedElsewhere(currentSurvey.workspaceId, segmentId, transaction?.tx);
 
   // Validate attribute-key references on the changed filters before the write (mirrors trigger ids).
   await assertV3SurveyTargetingFilterReferences(

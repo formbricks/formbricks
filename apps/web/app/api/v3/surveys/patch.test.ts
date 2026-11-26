@@ -29,6 +29,7 @@ import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import {
   areV3SurveyTargetingFiltersEqual,
+  assertV3OwnSegmentNotNestedElsewhere,
   resolveV3ContactsEntitlement,
   setV3SurveySegmentFilters,
 } from "./targeting";
@@ -116,6 +117,7 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
 
 vi.mock("./targeting", async () => ({
   setV3SurveySegmentFilters: vi.fn(),
+  assertV3OwnSegmentNotNestedElsewhere: vi.fn(),
   areV3SurveyTargetingFiltersEqual: vi.fn(),
   assertV3SurveyTargetingFilterReferences: vi.fn(),
   resolveV3ContactsEntitlement: vi.fn(),
@@ -1607,6 +1609,29 @@ describe("patchV3Survey", () => {
       // The Embedded Data reconcile rides the same transaction — never the global client.
       expect(tx.surveyEmbeddedData.findMany).toHaveBeenCalled();
       expect(prisma.surveyEmbeddedData.findMany).not.toHaveBeenCalled();
+    });
+
+    test("refuses a targeting change while another segment nests the survey's own segment (ENG-7269)", async () => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      vi.mocked(assertV3OwnSegmentNotNestedElsewhere).mockRejectedValueOnce(
+        new V3SurveyReferenceValidationError([{ name: "targeting.filters", reason: "nested elsewhere" }])
+      );
+
+      await expect(
+        patchV3Survey(
+          appCurrentSurvey,
+          { targeting: { filters: attributeFilters } },
+          { requestId: "req_app_nested", organizationId: "org_1" }
+        )
+      ).rejects.toThrow(V3SurveyReferenceValidationError);
+
+      expect(assertV3OwnSegmentNotNestedElsewhere).toHaveBeenCalledWith(
+        workspaceId,
+        "clsg1234567890123456789012",
+        undefined
+      );
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
     test("rejects a targeting change when the app survey has no segment", async () => {

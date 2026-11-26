@@ -4,14 +4,17 @@ import { prisma } from "@formbricks/database";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TBaseFilters } from "@formbricks/types/segment";
 import { setV3SurveySegmentFilters } from "@/app/api/v3/surveys/targeting";
+import { assertV3OwnSegmentNotNestedElsewhere } from "@/app/api/v3/surveys/targeting";
 import { resetDb } from "@/integration/reset-db";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { assertNoAddedPrivateSegmentReferences } from "@/modules/ee/contacts/segments/lib/helper";
 import { SegmentSurveysChangedError } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
+  deletePrivateSegmentIfUnused,
   deleteSegment,
   getExistingWorkspaceSurveyIds,
   getSurveyIdsTargetedThroughNesting,
+  resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
 
@@ -371,5 +374,82 @@ describe("nesting a private segment (ENG-7269)", () => {
     await expect(
       assertNoAddedPrivateSegmentReferences(namesPrivate, namesPrivate, workspaceId)
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("a private segment nested before the rule (ENG-7269)", () => {
+  test("its own survey's v3 PATCH and reset may not change it while another segment nests it", async () => {
+    const privateSegment = await prisma.segment.create({
+      data: {
+        title: ids.restricted,
+        isPrivate: true,
+        filters: attributeFilters("own@example.com"),
+        workspaceId,
+        surveys: { connect: { id: ids.restricted } },
+      },
+      select: { id: true },
+    });
+    // Written straight to the database: no write path accepts this nesting any more.
+    await prisma.segment.update({
+      where: { id: ids.target },
+      data: { filters: nestedSegmentFilters(privateSegment.id) },
+    });
+
+    await expect(assertV3OwnSegmentNotNestedElsewhere(workspaceId, privateSegment.id)).rejects.toMatchObject({
+      invalidParams: [{ name: "targeting.filters" }],
+    });
+    await expect(resetSegmentInSurvey(ids.restricted)).rejects.toThrow(
+      "This survey's targeting is used inside another segment"
+    );
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: privateSegment.id } })).filters).toEqual(
+      attributeFilters("own@example.com").map((filter) => ({
+        ...filter,
+        id: expect.any(String),
+        resource: { ...filter.resource, id: expect.any(String) },
+      }))
+    );
+
+    // Once nothing nests it, the survey owns its targeting again.
+    await prisma.segment.update({ where: { id: ids.target }, data: { filters: [] } });
+    await expect(
+      assertV3OwnSegmentNotNestedElsewhere(workspaceId, privateSegment.id)
+    ).resolves.toBeUndefined();
+  });
+});
+
+describe("deletePrivateSegmentIfUnused (ENG-7269)", () => {
+  const createPrivate = async (title: string, surveyId?: string) =>
+    (
+      await prisma.segment.create({
+        data: {
+          title,
+          isPrivate: true,
+          filters: [],
+          workspaceId,
+          ...(surveyId && { surveys: { connect: { id: surveyId } } }),
+        },
+        select: { id: true },
+      })
+    ).id;
+
+  test("deletes an unused private segment, and keeps a linked, a nested or a shared one", async () => {
+    const unused = await createPrivate("unused-private");
+    const linked = await createPrivate(ids.memberPrivate, ids.memberPrivate);
+    const nested = await createPrivate("nested-private");
+    await prisma.segment.update({
+      where: { id: ids.target },
+      data: { filters: nestedSegmentFilters(nested) },
+    });
+
+    expect(await deletePrivateSegmentIfUnused(unused, workspaceId)).toBe(true);
+    expect(await deletePrivateSegmentIfUnused(linked, workspaceId)).toBe(false);
+    expect(await deletePrivateSegmentIfUnused(nested, workspaceId)).toBe(false);
+    expect(await deletePrivateSegmentIfUnused(ids.control, workspaceId)).toBe(false);
+
+    const left = await prisma.segment.findMany({
+      where: { id: { in: [unused, linked, nested, ids.control] } },
+      select: { id: true },
+    });
+    expect(left.map((segment) => segment.id).sort()).toEqual([linked, nested, ids.control].sort());
   });
 });

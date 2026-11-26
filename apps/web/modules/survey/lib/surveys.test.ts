@@ -136,6 +136,7 @@ describe("deleteSurvey", () => {
         delete: vi.fn().mockResolvedValue(deleted),
       },
       segment: { delete: vi.fn() },
+      $executeRaw: vi.fn().mockResolvedValue(1),
     };
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(tx as never));
     return tx;
@@ -217,7 +218,10 @@ describe("deleteSurvey", () => {
     const tx = mockTransaction({ deleted: mockDeletedSurveyAppPrivateSegment });
 
     await expect(deleteSurvey(surveyId)).resolves.toEqual(mockDeletedSurveyAppPrivateSegment);
-    expect(tx.segment.delete).toHaveBeenCalledWith({ where: { id: segmentId } });
+    // One guarded DELETE on the transaction: kept while another segment nests it (ENG-7269).
+    expect(tx.$executeRaw).toHaveBeenCalledOnce();
+    expect(tx.$executeRaw.mock.calls[0].slice(1)).toEqual(expect.arrayContaining([segmentId]));
+    expect(tx.segment.delete).not.toHaveBeenCalled();
   });
 
   test("reports the survey as deleted when the drain after commit fails", async () => {

@@ -45,7 +45,11 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
-import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE, SegmentSurveysChangedError } from "./segment-errors";
+import {
+  PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE,
+  SEGMENT_TITLE_TAKEN_ERROR_MESSAGE,
+  SegmentSurveysChangedError,
+} from "./segment-errors";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
@@ -498,8 +502,12 @@ const SEGMENT_NESTED_BY_ANOTHER_MESSAGE = "Cannot delete a segment that another 
  * ENG-7269: whether another segment of the workspace nests `segmentId` in its filters. Matched in
  * Postgres, so no filter tree is read into memory; the `workspaceId` index scopes the scan.
  */
-const isNestedByAnotherSegment = async (workspaceId: string, segmentId: string): Promise<boolean> => {
-  const rows = await prisma.$queryRaw<{ id: string }[]>`
+export const isNestedByAnotherSegment = async (
+  workspaceId: string,
+  segmentId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<boolean> => {
+  const rows = await client.$queryRaw<{ id: string }[]>`
     SELECT "id" FROM "Segment"
     WHERE "workspaceId" = ${workspaceId}
       AND "id" <> ${segmentId}
@@ -507,6 +515,33 @@ const isNestedByAnotherSegment = async (workspaceId: string, segmentId: string):
     LIMIT 1
   `;
   return rows.length > 0;
+};
+
+/**
+ * Deletes a survey's private segment once it is no longer used: no survey links it and (ENG-7269) no other
+ * segment nests it. A nested one is kept, as in `deleteSegment`: deleting it would leave the nesting
+ * segment's filter dangling, and its surveys would then reach nobody. Both conditions are in the DELETE's
+ * own `WHERE`, so a link or a nesting made meanwhile keeps the segment. Returns whether it was deleted.
+ */
+export const deletePrivateSegmentIfUnused = async (
+  segmentId: string,
+  workspaceId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<boolean> => {
+  const deleted = await client.$executeRaw`
+    DELETE FROM "Segment" AS "target"
+    WHERE "target"."id" = ${segmentId}
+      AND "target"."workspaceId" = ${workspaceId}
+      AND "target"."isPrivate" = true
+      AND NOT EXISTS (SELECT 1 FROM "Survey" WHERE "Survey"."segmentId" = "target"."id")
+      AND NOT EXISTS (
+        SELECT 1 FROM "Segment" AS "other"
+        WHERE "other"."workspaceId" = ${workspaceId}
+          AND "other"."id" <> "target"."id"
+          AND jsonb_path_exists("other"."filters", ${NESTED_SEGMENT_FILTER_PATH}::jsonpath, jsonb_build_object('id', ${segmentId}::text))
+      )
+  `;
+  return deleted > 0;
 };
 
 /**
@@ -618,6 +653,16 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
 
       // if a private segment already exists, connect it to the survey
       if (segment) {
+        // ENG-7269: emptying the filters of a private segment another segment nests would change the
+        // audience of every survey on the nesting segment.
+        if (
+          Array.isArray(segment.filters) &&
+          segment.filters.length > 0 &&
+          (await isNestedByAnotherSegment(survey.workspaceId, segment.id, tx))
+        ) {
+          throw new InvalidInputError(PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE);
+        }
+
         await tx.survey.update({
           where: { id: surveyId },
           data: { segment: { connect: { id: segment.id } } },

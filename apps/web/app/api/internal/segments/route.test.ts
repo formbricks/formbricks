@@ -563,7 +563,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     const refused = await update({ surveys: [SURVEY_ID, SURVEY_2_ID] });
 
     expect(refused.status).toBe(403);
-    expect((await refused.json()).detail).toBe("You are not authorized to access this resource");
+    expect((await refused.json()).detail).toBe("This segment targets surveys you can't edit");
     expect(mocks.getSurveyWorkspaceIdMap).toHaveBeenCalledWith([SURVEY_ID, SURVEY_2_ID]);
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledOnce();
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
@@ -583,7 +583,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     const response = await update({ title: "Renamed" });
 
     expect(response.status).toBe(403);
-    expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+    expect((await response.json()).detail).toBe("This segment targets surveys you can't edit");
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], visibleWhere);
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
@@ -604,15 +604,21 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 
-  test("guards the write on the directly connected surveys only, not the nesting ones", async () => {
+  test("skips the nesting lookup when the filters don't change (ENG-7269)", async () => {
     mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
 
     expect((await update({ title: "Renamed" })).status).toBe(200);
-    expect(mocks.updateSegment).toHaveBeenCalledWith(
-      SEGMENT_ID,
-      { title: "Renamed" },
-      { connectedSurveyIds: [SURVEY_ID] }
-    );
+    expect(mocks.getSurveyIdsTargetedThroughNesting).not.toHaveBeenCalled();
+    expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], visibleWhere);
+  });
+
+  test("guards the write on the directly connected surveys only, not the nesting ones", async () => {
+    mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
+
+    expect((await update({ filters: FILTERS })).status).toBe(200);
+    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, expect.anything(), {
+      connectedSurveyIds: [SURVEY_ID],
+    });
   });
 
   test("checks the edited tree against the stored one for added private references (ENG-7269)", async () => {

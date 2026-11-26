@@ -425,8 +425,9 @@ patch:
         entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an
         unsupported person identifier, or an unknown device value. A survey targeted with a shared segment is
         refused at `name: targeting.filters` when the patch changes its filters: a shared segment is the
-        targeting of every survey that uses it, so only the app edits it. A filter may not nest a survey's
-        own (private) targeting segment either. An app survey set to any status
+        targeting of every survey that uses it, so only the app edits it. A patch may not add a filter that
+        nests another survey's own (private) targeting segment, and a survey whose own segment another
+        segment nests can't change its filters. An app survey set to any status
         but `draft` needs a trigger of its own or a non-archived creative that opens it; with neither
         it is refused at `name: triggers`. The `invalid_params`
         array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).

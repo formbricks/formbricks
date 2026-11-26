@@ -74,6 +74,9 @@ import {
 
 const SAME_WORKSPACE_MESSAGE = "Survey and segment are not in the same workspace";
 
+/** ENG-7269: a segment edit refused for a survey it targets that the caller can't edit, which it never names. */
+const TARGETS_UNWRITABLE_SURVEYS_MESSAGE = "This segment targets surveys you can't edit";
+
 /** The message the server actions refused an invalid filter tree with: its first custom issue. */
 const invalidFiltersMessage = (issues: { code: string; message: string }[]) =>
   issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
@@ -163,9 +166,12 @@ const requireSurveyWrite = async (
 /**
  * ENG-7269: `survey.write` on every survey a segment write targets, the ones it is already connected to
  * included — its stored filters are their targeting. One batched, visibility-scoped lookup; a survey the
- * caller cannot see, one that is gone, or a legacy link to another workspace answers the uniform 403.
- * Given `workspace.write`, which the caller already passed, the visibility predicate admits no survey that
- * `survey.write` refuses (ENG-3282), so it fails closed.
+ * caller cannot see, one that is gone, or a legacy link to another workspace answers 403 with a reason that
+ * names no survey.
+ * Given `workspace.write`, which the caller already passed, the visibility predicate admits exactly the
+ * surveys `survey.write` allows (`write_v2` in `authzed/schema.zed`: workspace-visible, owned, or an admin's),
+ * and fewer while a survey's visibility is pending, so it fails closed. A new grant on `write_v2` must be
+ * mirrored in `buildVisibleSurveyWhere`, or this check would refuse it. The refusal names no survey.
  */
 const requireTargetSurveyWrite = async (
   surveyIds: ReadonlyArray<string>,
@@ -176,7 +182,9 @@ const requireTargetSurveyWrite = async (
   if (surveyIds.length === 0) return null;
 
   const writable = await getExistingWorkspaceSurveyIds(workspaceId, [...surveyIds], visibleSurveyWhere);
-  return writable.size < surveyIds.length ? problemForbidden(requestId, undefined, instance) : null;
+  return writable.size < surveyIds.length
+    ? problemForbidden(requestId, TARGETS_UNWRITABLE_SURVEYS_MESSAGE, instance)
+    : null;
 };
 
 /**
@@ -283,11 +291,12 @@ export async function updateSegmentOperation({
   let oldObject: TSegment;
   let updated: TSegment;
   try {
-    // Independent reads: who the caller may see, the segment as stored, and the segments nesting it.
+    // Independent reads: who the caller may see, the segment as stored, and (only when the filters change,
+    // the one change that reaches them) the surveys on segments nesting this one.
     const [visibleSurveyWhere, storedSegment, nestingSurveyIds] = await Promise.all([
       getUserVisibleSurveyWhere(userId, organizationId),
       getSegment(segmentId),
-      getSurveyIdsTargetedThroughNesting(workspaceId, segmentId),
+      body.filters ? getSurveyIdsTargetedThroughNesting(workspaceId, segmentId) : Promise.resolve([]),
     ]);
     oldObject = storedSegment;
 

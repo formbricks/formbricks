@@ -9,7 +9,12 @@ import {
   collectSegmentFilterSurveyIds,
   restoreHiddenSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/filter-survey-ids";
-import { getSegment, getSegmentsByIds } from "@/modules/ee/contacts/segments/lib/segments";
+import { PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
+import {
+  getSegment,
+  getSegmentsByIds,
+  isNestedByAnotherSegment,
+} from "@/modules/ee/contacts/segments/lib/segments";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
   isResourceFilter,
@@ -44,6 +49,22 @@ const collectReferencedSegmentIds = (filters: TBaseFilters, found: Set<string> =
 
 /** The refusal for a filter tree that nests a survey's private targeting segment (ENG-7269). */
 export const PRIVATE_SEGMENT_NESTED_MESSAGE = "A segment filter can't use a survey's own targeting segment";
+
+/**
+ * ENG-7269: refuses a change to a private segment's filters while another segment nests it. New nestings of
+ * a private segment are refused, but data written before that rule can hold one, and the private segment's
+ * own survey save (with `survey.write` on that survey alone) would then change the nesting surveys' audience.
+ * The nesting set can only shrink now, so a read before the write is not a race an attacker can start.
+ * @throws {InvalidInputError} When another segment of the workspace nests `segmentId`
+ */
+export const assertPrivateSegmentNotNestedElsewhere = async (
+  segmentId: string,
+  workspaceId: string
+): Promise<void> => {
+  if (await isNestedByAnotherSegment(workspaceId, segmentId)) {
+    throw new InvalidInputError(PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE);
+  }
+};
 
 /**
  * ENG-7269: refuses a write that adds a `segment` filter naming a private segment. A private segment is one

@@ -5,12 +5,17 @@ import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-k
 import { DatabaseError } from "@formbricks/types/errors";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getExistingWorkspaceSurveyIds, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  getExistingWorkspaceSurveyIds,
+  getSegments,
+  isNestedByAnotherSegment,
+} from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyTargeting } from "./schemas";
 import {
   areV3SurveyTargetingFiltersEqual,
+  assertV3OwnSegmentNotNestedElsewhere,
   assertV3SurveyTargetingFilterReferences,
   resolveV3ContactsEntitlement,
   setV3SurveySegmentFilters,
@@ -39,6 +44,7 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   ALL_SEGMENT_SURVEY_REFS: {},
   getSegments: vi.fn(),
   getExistingWorkspaceSurveyIds: vi.fn(),
+  isNestedByAnotherSegment: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -127,6 +133,24 @@ describe("areV3SurveyTargetingFiltersEqual", () => {
     expect(areV3SurveyTargetingFiltersEqual(1, 2)).toBe(false);
     expect(areV3SurveyTargetingFiltersEqual({ a: 1 }, [1])).toBe(false);
     expect(areV3SurveyTargetingFiltersEqual([1], { a: 1 })).toBe(false);
+  });
+});
+
+describe("assertV3OwnSegmentNotNestedElsewhere (ENG-7269)", () => {
+  test("refuses at targeting.filters when another segment nests the survey's segment", async () => {
+    vi.mocked(isNestedByAnotherSegment).mockResolvedValueOnce(true);
+
+    await expect(assertV3OwnSegmentNotNestedElsewhere("ws_1", "seg_1")).rejects.toMatchObject({
+      invalidParams: [
+        { name: "targeting.filters", reason: expect.stringContaining("used inside another segment") },
+      ],
+    });
+  });
+
+  test("passes when nothing nests it", async () => {
+    vi.mocked(isNestedByAnotherSegment).mockResolvedValueOnce(false);
+
+    await expect(assertV3OwnSegmentNotNestedElsewhere("ws_1", "seg_1")).resolves.toBeUndefined();
   });
 });
 

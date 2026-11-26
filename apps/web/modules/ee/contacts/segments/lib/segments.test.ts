@@ -767,6 +767,23 @@ describe("Segment Service Tests", () => {
       );
     });
 
+    test("refuses emptying a private segment another segment nests (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.findFirst).mockResolvedValue({
+        ...privateSegmentPrisma,
+        filters: [{ id: "f1" }],
+      });
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([{ id: "nesting-segment" }]);
+
+      await expect(resetSegmentInSurvey(surveyId)).rejects.toThrow(InvalidInputError);
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+    });
+
+    test("resets a nested private segment that is already empty without the nesting lookup", async () => {
+      await resetSegmentInSurvey(surveyId);
+
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+    });
+
     test("should reset filters of existing private segment", async () => {
       const result = await resetSegmentInSurvey(surveyId);
 
