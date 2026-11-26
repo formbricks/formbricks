@@ -1,5 +1,5 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import * as setupState from "@/lib/instance/setup-state";
@@ -15,9 +15,6 @@ vi.mock("react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react")>()),
   cache: (fn: unknown) => fn,
 }));
-vi.mock("@formbricks/database", () => ({
-  prisma: { user: { findFirst: vi.fn() } },
-}));
 vi.mock("@/lib/instance/setup-state", () => ({
   readInstanceSetupState: vi.fn(),
   writeInstanceSetupMarker: vi.fn(),
@@ -30,7 +27,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(setupState.readInstanceSetupState).mockResolvedValue("fresh");
   vi.mocked(setupState.writeInstanceSetupMarker).mockResolvedValue(undefined);
-  vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+  prisma.user.findFirst.mockResolvedValue(null);
 });
 
 describe("markInstanceSetupCompleted (ENG-7313)", () => {
@@ -74,7 +71,7 @@ describe("getIsEligibleFirstOrganizationOwner (ENG-7313)", () => {
   const bootstrapAdminLookup = { where: { isBootstrapAdmin: { not: null } }, select: { id: true } };
 
   test("only the bootstrap administrator qualifies while that account exists", async () => {
-    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "admin" } as never);
+    prisma.user.findFirst.mockResolvedValue({ id: "admin" } as never);
 
     expect(await getIsEligibleFirstOrganizationOwner("admin")).toBe(true);
     expect(await getIsEligibleFirstOrganizationOwner("other")).toBe(false);
@@ -83,7 +80,7 @@ describe("getIsEligibleFirstOrganizationOwner (ENG-7313)", () => {
   });
 
   test("without a bootstrap administrator, the earliest-created user qualifies and no one else", async () => {
-    vi.mocked(prisma.user.findFirst).mockImplementation((async (args: { where?: unknown }) =>
+    prisma.user.findFirst.mockImplementation((async (args: { where?: unknown }) =>
       args.where ? null : { id: "first" }) as never);
 
     expect(await getIsEligibleFirstOrganizationOwner("first")).toBe(true);
@@ -99,7 +96,7 @@ describe("getIsEligibleFirstOrganizationOwner (ENG-7313)", () => {
   });
 
   test("surfaces a Prisma failure as a DatabaseError", async () => {
-    vi.mocked(prisma.user.findFirst).mockRejectedValue(prismaError());
+    prisma.user.findFirst.mockRejectedValue(prismaError());
 
     await expect(getIsEligibleFirstOrganizationOwner("admin")).rejects.toThrow(DatabaseError);
   });

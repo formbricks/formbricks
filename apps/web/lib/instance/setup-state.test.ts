@@ -1,20 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
+import { prisma } from "@/lib/__mocks__/database";
+import { beforeEach, describe, expect, test } from "vitest";
 import { readInstanceSetupState, writeInstanceSetupMarker } from "./setup-state";
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    instanceSetup: { findUnique: vi.fn(), createMany: vi.fn() },
-    user: { findFirst: vi.fn() },
-    organization: { findFirst: vi.fn() },
-  },
-}));
-
 beforeEach(() => {
-  vi.resetAllMocks();
-  vi.mocked(prisma.instanceSetup.findUnique).mockResolvedValue(null);
-  vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-  vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
+  prisma.instanceSetup.findUnique.mockResolvedValue(null);
+  prisma.user.findFirst.mockResolvedValue(null);
+  prisma.organization.findFirst.mockResolvedValue(null);
 });
 
 describe("readInstanceSetupState (ENG-7313)", () => {
@@ -26,7 +17,7 @@ describe("readInstanceSetupState (ENG-7313)", () => {
 
   // A first sign-up writes the marker after the first read, and its user is deleted before the user lookup.
   test("is not fresh when the marker appears while the lookups run", async () => {
-    vi.mocked(prisma.instanceSetup.findUnique)
+    prisma.instanceSetup.findUnique
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: "instance" } as never);
 
@@ -34,7 +25,7 @@ describe("readInstanceSetupState (ENG-7313)", () => {
   });
 
   test("a marker answers alone, without looking for users or organizations", async () => {
-    vi.mocked(prisma.instanceSetup.findUnique).mockResolvedValue({ id: "instance" } as never);
+    prisma.instanceSetup.findUnique.mockResolvedValue({ id: "instance" } as never);
 
     await expect(readInstanceSetupState()).resolves.toBe("marked");
     expect(prisma.instanceSetup.findUnique).toHaveBeenCalledWith({
@@ -46,7 +37,7 @@ describe("readInstanceSetupState (ENG-7313)", () => {
   });
 
   test("a user without a marker is in use, before organizations are looked at", async () => {
-    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: "user_1" } as never);
+    prisma.user.findFirst.mockResolvedValue({ id: "user_1" } as never);
 
     await expect(readInstanceSetupState()).resolves.toBe("in-use");
     expect(prisma.organization.findFirst).not.toHaveBeenCalled();
@@ -55,7 +46,7 @@ describe("readInstanceSetupState (ENG-7313)", () => {
   // A database built with `db:push` or restored from before the migration: an organization without
   // users is not a fresh instance either.
   test("an organization without users or a marker is in use", async () => {
-    vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: "org_1" } as never);
+    prisma.organization.findFirst.mockResolvedValue({ id: "org_1" } as never);
 
     await expect(readInstanceSetupState()).resolves.toBe("in-use");
   });

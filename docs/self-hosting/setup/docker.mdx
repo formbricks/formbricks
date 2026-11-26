@@ -170,9 +170,11 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
   cannot be used to create the first administrator while it is set, so keep email sign-in on
   (`EMAIL_AUTH_DISABLED` unset) until setup is done. Leaving it unset keeps the default open setup. Once the
   first account exists, the instance never accepts a new first administrator again, even if every account is
-  later deleted. To start over on purpose, delete every user and organization, then clear the marker with
-  `docker compose exec postgres psql -U postgres -d formbricks -c 'DELETE FROM "InstanceSetup";'`; set
-  `SETUP_TOKEN` first if the instance is reachable from the internet.
+  later deleted. To start over on purpose, start from empty data rather than deleting rows: run
+  `docker compose down -v` (this deletes every bundled volume and all its data; empty an external SpiceDB
+  database yourself), set `SETUP_TOKEN` in `.env`
+  if the instance is reachable from the internet, then `docker compose up -d`. Deleting users in the database
+  leaves the authorization data in SpiceDB behind and does not reopen setup.
 </Note>
 
 <Note>

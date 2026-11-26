@@ -292,13 +292,15 @@ deployment:
 ```
 
 Create the Secret in the release's namespace and without a trailing newline (`kubectl create secret generic
-formbricks-secrets -n <namespace> --from-literal=setup-token="$(openssl rand -hex 16)"`): a token that starts or ends with whitespace fails
-startup, because the setup form could never send it.
+formbricks-secrets -n <namespace> --from-literal=setup-token="$(openssl rand -hex 16)"`): a token that starts or
+ends with whitespace, or contains a line break, fails startup, because the setup form could never send it.
 
 See the [environment variables reference](/self-hosting/configuration/environment-variables). It is optional:
 leaving it unset keeps the default open setup. Once the first account exists, the instance never accepts a
-new first administrator again, even if every account is later deleted; to start over on purpose, delete every
-user and organization and run `DELETE FROM "InstanceSetup";` against the database.
+new first administrator again, even if every account is later deleted. To start over on purpose, set
+`SETUP_TOKEN` first (if the instance is reachable), then redeploy against an empty Formbricks database and an
+empty SpiceDB datastore. Deleting users in the database leaves the authorization data in SpiceDB behind and
+does not reopen setup.
 
 ## Verify the installation
 
