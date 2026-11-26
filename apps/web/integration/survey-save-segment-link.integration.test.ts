@@ -168,6 +168,48 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
     expect(stored.filters).toEqual(EMAIL_FILTER);
   });
 
+  // ENG-7269: R's owner writes R's private segment; nested in W's targeting, that save would change W's.
+  test("a save that adds another survey's private segment as a nested filter is refused", async () => {
+    const w = await loadSurvey(ids.W);
+    const nestsR = [
+      {
+        id: "clfilter00000000000007269",
+        connector: null,
+        resource: {
+          id: "clresrc000000000000007269",
+          root: { type: "segment", segmentId: ids.segmentR },
+          qualifier: { operator: "userIsIn" },
+          value: ids.segmentR,
+        },
+      },
+    ];
+
+    await expect(
+      updateSurvey(
+        { ...w, segment: { ...w.segment!, filters: nestsR } as never },
+        { targetingActor: member() }
+      )
+    ).rejects.toThrow("A segment filter can't use a survey's own targeting segment");
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.segmentW } })).filters).toEqual([]);
+
+    // A tree that already holds the reference (written before the rule) keeps saving.
+    await prisma.segment.update({ where: { id: ids.segmentW }, data: { filters: nestsR } });
+    const stored = await loadSurvey(ids.W);
+    await updateSurvey(
+      {
+        ...stored,
+        segment: {
+          ...stored.segment!,
+          filters: [...nestsR, ...EMAIL_FILTER].map((filter, index) =>
+            index === 0 ? filter : { ...filter, connector: "and" }
+          ),
+        } as never,
+      },
+      { targetingActor: member() }
+    );
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.segmentW } })).filters).toHaveLength(2);
+  });
+
   // The write requires the stored filters to equal the ones the save read: a second edit, read back
   // with non-empty filters, must still land.
   test("a second edit of the survey's own private segment lands", async () => {

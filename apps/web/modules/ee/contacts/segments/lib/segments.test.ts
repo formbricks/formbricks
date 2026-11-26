@@ -206,18 +206,18 @@ describe("Segment Service Tests", () => {
     test("reads only the filters of the given ids in the workspace, in one query", async () => {
       const filters = [{ id: "filter-1" }] as unknown as TBaseFilters;
       vi.mocked(prisma.segment.findMany).mockResolvedValue([
-        { id: "segment-1", filters: [] },
-        { id: "segment-2", filters },
+        { id: "segment-1", isPrivate: true, filters: [] },
+        { id: "segment-2", isPrivate: false, filters },
       ] as unknown as Awaited<ReturnType<typeof prisma.segment.findMany>>);
 
       await expect(getSegmentsByIds(["segment-1", "segment-2"], workspaceId)).resolves.toEqual([
-        { id: "segment-1", filters: [] },
-        { id: "segment-2", filters },
+        { id: "segment-1", isPrivate: true, filters: [] },
+        { id: "segment-2", isPrivate: false, filters },
       ]);
       expect(prisma.segment.findMany).toHaveBeenCalledTimes(1);
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: { id: { in: ["segment-1", "segment-2"] }, workspaceId },
-        select: { id: true, filters: true },
+        select: { id: true, isPrivate: true, filters: true },
       });
     });
 

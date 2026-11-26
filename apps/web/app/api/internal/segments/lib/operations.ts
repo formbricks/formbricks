@@ -32,6 +32,7 @@ import {
 } from "@/modules/ee/contacts/segments/lib/access";
 import {
   assertAddedSegmentSurveyFiltersVisible,
+  assertNoAddedPrivateSegmentReferences,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   checkForRecursiveSegmentFilter,
@@ -223,6 +224,8 @@ export async function createSegmentOperation({
       await resolveSurveyActorContext({ type: "user", id: userId }, organizationId)
     );
 
+    await assertNoAddedPrivateSegmentReferences(body.filters, [], workspaceId);
+
     segment = await createSegment({ ...body, surveyId: body.surveyId ?? "" });
   } catch (error) {
     if (isSegmentTitleTaken(error)) return segmentTitleTaken(context);
@@ -280,15 +283,18 @@ export async function updateSegmentOperation({
   let oldObject: TSegment;
   let updated: TSegment;
   try {
-    const visibleSurveyWhere = await getUserVisibleSurveyWhere(userId, organizationId);
-
-    oldObject = await getSegment(segmentId);
+    // Independent reads: who the caller may see, the segment as stored, and the segments nesting it.
+    const [visibleSurveyWhere, storedSegment, nestingSurveyIds] = await Promise.all([
+      getUserVisibleSurveyWhere(userId, organizationId),
+      getSegment(segmentId),
+      getSurveyIdsTargetedThroughNesting(workspaceId, segmentId),
+    ]);
+    oldObject = storedSegment;
 
     // ENG-7269: a segment's stored filters are the targeting of every survey it is connected to, and of
     // every survey on a segment that nests it, so a write needs `survey.write` on each — the ones this body
     // connects included. The write itself is conditional on the directly connected set.
     const connectedSurveyIds = [...new Set([...oldObject.surveys, ...(body.surveys ?? [])])];
-    const nestingSurveyIds = await getSurveyIdsTargetedThroughNesting(workspaceId, segmentId);
     const refused = await requireTargetSurveyWrite(
       [...new Set([...connectedSurveyIds, ...nestingSurveyIds])],
       workspaceId,
@@ -368,6 +374,7 @@ async function prepareEditedFilters(
     throw new InvalidInputError(invalidFiltersMessage(parsedFilters.error.issues));
   }
   await checkForRecursiveSegmentFilter(parsedFilters.data, segmentId, workspaceId);
+  await assertNoAddedPrivateSegmentReferences(parsedFilters.data, oldObject.filters, workspaceId);
   return parsedFilters.data;
 }
 
@@ -427,6 +434,9 @@ export async function copySegmentOperation({
 
   let copy: TSegment;
   try {
+    // The copy writes the source's filters as a new tree, so a private segment they name is a reference it adds.
+    const source = await getSegment(segmentId);
+    await assertNoAddedPrivateSegmentReferences(source.filters, [], source.workspaceId);
     copy = await cloneSegment(segmentId, surveyId);
   } catch (error) {
     return refusalOrThrow(error, context);

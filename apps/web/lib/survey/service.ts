@@ -74,6 +74,7 @@ import {
 } from "@/modules/custom-css/lib/service";
 import {
   assertAddedSegmentSurveyFiltersVisible,
+  assertNoAddedPrivateSegmentReferences,
   assertSegmentSurveyFiltersVisible,
   checkReferencedSegmentsForRecursion,
   getAddedSegmentSurveyIds,
@@ -703,6 +704,11 @@ const assertAppTargetingFiltersAllowed = async (
     // recursion must be refused before `saveAppSurveySegment` writes the tree it takes on.
     await checkReferencedSegmentsForRecursion(referenced, segment.id, currentSurvey.workspaceId);
     if (isDeepStrictEqual(filters, currentSurvey.segment.filters ?? [])) return;
+    await assertNoAddedPrivateSegmentReferences(
+      filters,
+      currentSurvey.segment.filters ?? [],
+      currentSurvey.workspaceId
+    );
     await assertContactsLicence(currentSurvey.workspaceId);
   }
 };

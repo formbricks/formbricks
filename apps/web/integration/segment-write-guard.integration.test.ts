@@ -6,6 +6,7 @@ import type { TBaseFilters } from "@formbricks/types/segment";
 import { setV3SurveySegmentFilters } from "@/app/api/v3/surveys/targeting";
 import { resetDb } from "@/integration/reset-db";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { assertNoAddedPrivateSegmentReferences } from "@/modules/ee/contacts/segments/lib/helper";
 import { SegmentSurveysChangedError } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
   deleteSegment,
@@ -215,6 +216,22 @@ describe("deleteSegment's reference guard (ENG-7269)", () => {
     await expect(deleteSegment(ids.referenced)).rejects.toBeInstanceOf(OperationNotAllowedError);
   });
 
+  test("ignores a segment of another workspace that names it", async () => {
+    const organizationId = (await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } }))
+      .organizationId;
+    const other = await prisma.workspace.create({ data: { name: "Other", organizationId } });
+    await prisma.segment.create({
+      data: {
+        title: "Foreign reference",
+        isPrivate: false,
+        filters: nestedSegmentFilters(ids.referenced),
+        workspaceId: other.id,
+      },
+    });
+
+    await expect(deleteSegment(ids.referenced)).resolves.toMatchObject({ id: ids.referenced });
+  });
+
   test("deletes a segment no other segment reads", async () => {
     await prisma.segment.create({
       data: {
@@ -310,6 +327,16 @@ describe("setV3SurveySegmentFilters' own-private guard (ENG-7269)", () => {
     await setV3SurveySegmentFilters({ segmentId: own.id, ownerSurveyId: ids.restricted, filters: next });
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: own.id } })).filters).toEqual(next);
 
+    // A private segment another survey was connected to is no longer this survey's own.
+    await prisma.segment.update({
+      where: { id: own.id },
+      data: { surveys: { connect: { id: ids.memberPrivate } } },
+    });
+    await expect(
+      setV3SurveySegmentFilters({ segmentId: own.id, ownerSurveyId: ids.restricted, filters: [] })
+    ).rejects.toMatchObject({ invalidParams: [{ name: "targeting.filters" }] });
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: own.id } })).filters).toEqual(next);
+
     // `target` is shared and used by `visible`: a v3 PATCH of `visible` must not write it.
     const before = await prisma.segment.findUniqueOrThrow({ where: { id: ids.target } });
     await expect(
@@ -318,5 +345,31 @@ describe("setV3SurveySegmentFilters' own-private guard (ENG-7269)", () => {
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.target } })).filters).toEqual(
       before.filters
     );
+  });
+});
+
+describe("nesting a private segment (ENG-7269)", () => {
+  test("refuses an added reference to a survey's private segment, and accepts a shared or a stored one", async () => {
+    const privateSegment = await prisma.segment.create({
+      data: {
+        title: ids.restricted,
+        isPrivate: true,
+        filters: [],
+        workspaceId,
+        surveys: { connect: { id: ids.restricted } },
+      },
+      select: { id: true },
+    });
+    const namesPrivate = nestedSegmentFilters(privateSegment.id);
+
+    await expect(assertNoAddedPrivateSegmentReferences(namesPrivate, [], workspaceId)).rejects.toThrow(
+      "A segment filter can't use a survey's own targeting segment"
+    );
+    await expect(
+      assertNoAddedPrivateSegmentReferences(nestedSegmentFilters(ids.referenced), [], workspaceId)
+    ).resolves.toBeUndefined();
+    await expect(
+      assertNoAddedPrivateSegmentReferences(namesPrivate, namesPrivate, workspaceId)
+    ).resolves.toBeUndefined();
   });
 });

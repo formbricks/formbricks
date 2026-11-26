@@ -127,14 +127,18 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
 export const getSegmentsByIds = async (
   segmentIds: string[],
   workspaceId: string
-): Promise<{ id: string; filters: TBaseFilters }[]> => {
+): Promise<{ id: string; isPrivate: boolean; filters: TBaseFilters }[]> => {
   validateInputs([segmentIds, z.array(ZId)], [workspaceId, ZId]);
   try {
     const segments = await prisma.segment.findMany({
       where: { id: { in: segmentIds }, workspaceId },
-      select: { id: true, filters: true },
+      select: { id: true, isPrivate: true, filters: true },
     });
-    return segments.map((segment) => ({ id: segment.id, filters: segment.filters as TBaseFilters }));
+    return segments.map((segment) => ({
+      id: segment.id,
+      isPrivate: segment.isPrivate,
+      filters: segment.filters as TBaseFilters,
+    }));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -482,10 +486,10 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
 };
 
 /**
- * A JSON path that matches a nested `segment` filter naming one of `$ids`, at any depth of a filter tree
- * (nested groups included). `$ids` is a string or an array of strings: lax mode unwraps the array.
+ * A JSON path that matches a nested `segment` filter naming `$id`, at any depth of a filter tree (nested
+ * groups included).
  */
-const NESTED_SEGMENT_FILTER_PATH = '$.** ? (@.type == "segment" && @.segmentId == $ids)';
+const NESTED_SEGMENT_FILTER_PATH = '$.** ? (@.type == "segment" && @.segmentId == $id)';
 
 const SEGMENT_ASSOCIATED_WITH_SURVEY_MESSAGE = "Cannot delete a segment that is associated with a survey";
 const SEGMENT_NESTED_BY_ANOTHER_MESSAGE = "Cannot delete a segment that another segment's filters use";
@@ -499,7 +503,7 @@ const isNestedByAnotherSegment = async (workspaceId: string, segmentId: string):
     SELECT "id" FROM "Segment"
     WHERE "workspaceId" = ${workspaceId}
       AND "id" <> ${segmentId}
-      AND jsonb_path_exists("filters", ${NESTED_SEGMENT_FILTER_PATH}::jsonpath, jsonb_build_object('ids', ${segmentId}::text))
+      AND jsonb_path_exists("filters", ${NESTED_SEGMENT_FILTER_PATH}::jsonpath, jsonb_build_object('id', ${segmentId}::text))
     LIMIT 1
   `;
   return rows.length > 0;
@@ -526,7 +530,7 @@ export const getSurveyIdsTargetedThroughNesting = async (
         SELECT "parent"."id"
         FROM "Segment" AS "parent"
         JOIN "nesting"
-          ON jsonb_path_exists("parent"."filters", ${NESTED_SEGMENT_FILTER_PATH}::jsonpath, jsonb_build_object('ids', "nesting"."id"))
+          ON jsonb_path_exists("parent"."filters", ${NESTED_SEGMENT_FILTER_PATH}::jsonpath, jsonb_build_object('id', "nesting"."id"))
         WHERE "parent"."workspaceId" = ${workspaceId}
       )
       SELECT "Survey"."id"

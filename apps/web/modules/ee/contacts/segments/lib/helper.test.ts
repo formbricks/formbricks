@@ -8,6 +8,7 @@ import {
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import {
   SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE,
+  assertNoAddedPrivateSegmentReferences,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
@@ -77,7 +78,7 @@ describe("checkForRecursiveSegmentFilter", () => {
     const differentSegmentId = "segment-456";
 
     vi.mocked(getSegmentsByIds).mockResolvedValue([
-      { id: differentSegmentId, filters: [attributeFilter] as unknown as TBaseFilters },
+      { isPrivate: false, id: differentSegmentId, filters: [attributeFilter] as unknown as TBaseFilters },
     ]);
 
     await expect(
@@ -99,6 +100,7 @@ describe("checkForRecursiveSegmentFilter", () => {
     vi.mocked(getSegmentsByIds).mockResolvedValueOnce([
       {
         id: nestedSegmentId,
+        isPrivate: false,
         // The reference back to the original segment sits inside a group.
         filters: [
           { id: "group-1", connector: null, resource: [segmentReference(originalSegmentId)] },
@@ -128,7 +130,7 @@ describe("checkForRecursiveSegmentFilter", () => {
       [segmentIdC]: [segmentReference(segmentIdA)] as unknown as TBaseFilters,
     };
     vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
-      ids.map((id) => ({ id, filters: filtersById[id] }))
+      ids.map((id) => ({ id, isPrivate: false, filters: filtersById[id] }))
     );
 
     await expect(
@@ -150,7 +152,7 @@ describe("checkForRecursiveSegmentFilter", () => {
     const second = "segment-C";
 
     vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
-      ids.map((id) => ({ id, filters: [] as unknown as TBaseFilters }))
+      ids.map((id) => ({ id, isPrivate: false, filters: [] as unknown as TBaseFilters }))
     );
 
     await checkForRecursiveSegmentFilter(
@@ -173,7 +175,7 @@ describe("checkForRecursiveSegmentFilter", () => {
       [segmentB]: [segmentReference(segmentA)] as unknown as TBaseFilters,
     };
     vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
-      ids.map((id) => ({ id, filters: filtersById[id] }))
+      ids.map((id) => ({ id, isPrivate: false, filters: filtersById[id] }))
     );
 
     await expect(
@@ -208,7 +210,11 @@ describe("checkForRecursiveSegmentFilter", () => {
     vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
       ids
         .filter((id) => id === existing)
-        .map((id) => ({ id, filters: [segmentReference(segmentId)] as unknown as TBaseFilters }))
+        .map((id) => ({
+          id,
+          isPrivate: false,
+          filters: [segmentReference(segmentId)] as unknown as TBaseFilters,
+        }))
     );
 
     await expect(
@@ -622,5 +628,56 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     await expect(
       assertSegmentSurveyFiltersVisible(tree(interaction("specific", [restrictedId])), workspaceId, member)
     ).rejects.toThrow(new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE));
+  });
+});
+
+describe("assertNoAddedPrivateSegmentReferences (ENG-7269)", () => {
+  const WORKSPACE_ID = "workspace-1";
+  const segmentReference = (segmentId: string) => ({
+    id: `filter-${segmentId}`,
+    connector: null,
+    resource: { root: { type: "segment", segmentId } },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("refuses a reference the write adds to a private segment", async () => {
+    vi.mocked(getSegmentsByIds).mockResolvedValue([{ id: "private-segment", isPrivate: true, filters: [] }]);
+
+    await expect(
+      assertNoAddedPrivateSegmentReferences([segmentReference("private-segment")], [], WORKSPACE_ID)
+    ).rejects.toThrow(new InvalidInputError("A segment filter can't use a survey's own targeting segment"));
+    expect(getSegmentsByIds).toHaveBeenCalledWith(["private-segment"], WORKSPACE_ID);
+  });
+
+  test("accepts a reference to a shared segment", async () => {
+    vi.mocked(getSegmentsByIds).mockResolvedValue([{ id: "shared-segment", isPrivate: false, filters: [] }]);
+
+    await expect(
+      assertNoAddedPrivateSegmentReferences([segmentReference("shared-segment")], [], WORKSPACE_ID)
+    ).resolves.toBeUndefined();
+  });
+
+  test("leaves a reference the stored tree already holds, without a query", async () => {
+    const stored = [{ id: "group", connector: null, resource: [segmentReference("private-segment")] }];
+
+    await expect(
+      assertNoAddedPrivateSegmentReferences([segmentReference("private-segment")], stored, WORKSPACE_ID)
+    ).resolves.toBeUndefined();
+    expect(getSegmentsByIds).not.toHaveBeenCalled();
+  });
+
+  test("checks only the added references, in one query", async () => {
+    vi.mocked(getSegmentsByIds).mockResolvedValue([{ id: "added", isPrivate: false, filters: [] }]);
+
+    await assertNoAddedPrivateSegmentReferences(
+      [segmentReference("kept"), segmentReference("added")],
+      [segmentReference("kept")],
+      WORKSPACE_ID
+    );
+    expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
+    expect(getSegmentsByIds).toHaveBeenCalledWith(["added"], WORKSPACE_ID);
   });
 });

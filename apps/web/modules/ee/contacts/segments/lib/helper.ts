@@ -42,6 +42,34 @@ const collectReferencedSegmentIds = (filters: TBaseFilters, found: Set<string> =
   return found;
 };
 
+/** The refusal for a filter tree that nests a survey's private targeting segment (ENG-7269). */
+export const PRIVATE_SEGMENT_NESTED_MESSAGE = "A segment filter can't use a survey's own targeting segment";
+
+/**
+ * ENG-7269: refuses a write that adds a `segment` filter naming a private segment. A private segment is one
+ * survey's own targeting, written by that survey's save with `survey.write` on that survey alone; nested in
+ * another segment, that save would change the audience of every survey on the nesting segment.
+ *
+ * Only references the write adds are checked, against `storedFilters` (the tree being replaced, or none
+ * for a new one), so a tree that already holds such a reference stays saveable. Takes a raw tree: the
+ * survey draft path checks one that can fail the schema. One query for every added reference.
+ * @throws {InvalidInputError} When an added reference names a private segment
+ */
+export const assertNoAddedPrivateSegmentReferences = async (
+  filters: unknown,
+  storedFilters: unknown,
+  workspaceId: string
+): Promise<void> => {
+  const stored = collectReferencedSegmentIds(storedFilters as TBaseFilters);
+  const added = [...collectReferencedSegmentIds(filters as TBaseFilters)].filter((id) => !stored.has(id));
+  if (added.length === 0) return;
+
+  const referencedSegments = await getSegmentsByIds(added, workspaceId);
+  if (referencedSegments.some((referenced) => referenced.isPrivate)) {
+    throw new InvalidInputError(PRIVATE_SEGMENT_NESTED_MESSAGE);
+  }
+};
+
 /**
  * Checks that no segment named in `segmentIds` refers back to `segmentId`, directly or through its stored
  * filters. Each level's references are read in one query, and each segment is walked once: a chain or a

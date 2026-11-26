@@ -5,7 +5,10 @@ import { DatabaseError } from "@formbricks/types/errors";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getSurveyIdsReadBySegments } from "@/modules/ee/contacts/segments/lib/helper";
+import {
+  PRIVATE_SEGMENT_NESTED_MESSAGE,
+  getSurveyIdsReadBySegments,
+} from "@/modules/ee/contacts/segments/lib/helper";
 import {
   ALL_SEGMENT_SURVEY_REFS,
   getExistingWorkspaceSurveyIds,
@@ -137,7 +140,8 @@ export async function setV3SurveySegmentFilters(
 async function getV3SegmentReferenceIssues(
   segmentRefs: TV3TargetingFilterReference[],
   workspaceId: string,
-  visibleSurveyWhere: Prisma.SurveyWhereInput
+  visibleSurveyWhere: Prisma.SurveyWhereInput,
+  storedSegmentIds: ReadonlySet<string>
 ): Promise<InvalidParam[]> {
   const issues: InvalidParam[] = [];
   const issue = (reference: TV3TargetingFilterReference, reason: string): InvalidParam => ({
@@ -151,8 +155,15 @@ async function getV3SegmentReferenceIssues(
   // would accept (and store) a reference to another workspace's segment.
   const segments = await getSegments(workspaceId, ALL_SEGMENT_SURVEY_REFS);
   const segmentsById = new Map(segments.map((segment) => [segment.id, segment]));
-  for (const reference of segmentRefs.filter((ref) => !segmentsById.has(ref.value))) {
-    issues.push(issue(reference, `Segment '${reference.value}' was not found in this workspace`));
+  for (const reference of segmentRefs) {
+    const segment = segmentsById.get(reference.value);
+    if (!segment) {
+      issues.push(issue(reference, `Segment '${reference.value}' was not found in this workspace`));
+    } else if (segment.isPrivate && !storedSegmentIds.has(segment.id)) {
+      // ENG-7269: a private segment is one survey's own targeting; nesting it would let that survey's
+      // save change this survey's audience. A reference the stored tree already holds stays, as in the app.
+      issues.push(issue(reference, PRIVATE_SEGMENT_NESTED_MESSAGE));
+    }
   }
 
   const referencedSegments = segments.filter((candidate) =>
@@ -192,12 +203,14 @@ async function getV3SegmentReferenceIssues(
  *
  * `tx`, when the write runs inside a caller's transaction (ENG-6845), is where the attribute keys are
  * read from: an import creates the keys its targeting names in that transaction, before this check.
+ * `storedFilters` is the tree a PATCH replaces: a private segment it already names is not a new reference.
  */
 export async function assertV3SurveyTargetingFilterReferences(
   workspaceId: string,
   filters: TV3SurveyFilters,
   visibleSurveyWhere: Prisma.SurveyWhereInput,
-  tx?: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient,
+  storedFilters: unknown = []
 ): Promise<void> {
   const references = collectV3TargetingFilterReferences(filters, "targeting.filters");
 
@@ -243,7 +256,14 @@ export async function assertV3SurveyTargetingFilterReferences(
 
   const segmentRefs = references.filter((ref) => ref.kind === "segment");
   if (segmentRefs.length > 0) {
-    invalidParams.push(...(await getV3SegmentReferenceIssues(segmentRefs, workspaceId, visibleSurveyWhere)));
+    const storedSegmentIds = new Set(
+      collectV3TargetingFilterReferences(storedFilters as TV3SurveyFilters, "targeting.filters")
+        .filter((ref) => ref.kind === "segment")
+        .map((ref) => ref.value)
+    );
+    invalidParams.push(
+      ...(await getV3SegmentReferenceIssues(segmentRefs, workspaceId, visibleSurveyWhere, storedSegmentIds))
+    );
   }
 
   const surveyRefs = references.filter((ref) => ref.kind === "survey");

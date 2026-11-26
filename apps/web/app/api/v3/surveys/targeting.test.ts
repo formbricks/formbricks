@@ -436,6 +436,35 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     });
   });
 
+  test("rejects a segment filter nesting a survey's private segment (ENG-7269)", async () => {
+    vi.mocked(getSegments).mockResolvedValueOnce([
+      { id: "seg_private", isPrivate: true, filters: [] },
+    ] as unknown as Awaited<ReturnType<typeof getSegments>>);
+    const filters = [segmentFilterNode("f1", "seg_private")] as unknown as TFilterTree;
+
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
+      invalidParams: [
+        {
+          name: "targeting.filters.0.resource.root.segmentId",
+          reason: "A segment filter can't use a survey's own targeting segment",
+          code: "invalid_reference",
+          identifier: "seg_private",
+        },
+      ],
+    });
+  });
+
+  test("keeps a private segment the stored tree already names (ENG-7269)", async () => {
+    vi.mocked(getSegments).mockResolvedValueOnce([
+      { id: "seg_private", isPrivate: true, filters: [] },
+    ] as unknown as Awaited<ReturnType<typeof getSegments>>);
+    const filters = [segmentFilterNode("f1", "seg_private")] as unknown as TFilterTree;
+
+    await expect(
+      assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE, undefined, filters)
+    ).resolves.toBeUndefined();
+  });
+
   test("skips the survey lookup for an any-scope survey interaction filter", async () => {
     const filters = [surveyInteractionNode("f1", "any", [])] as unknown as TFilterTree;
 

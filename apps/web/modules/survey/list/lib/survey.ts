@@ -29,7 +29,10 @@ import { type TSurveyVisibilityFilter, buildSurveyAccessWhere } from "@/lib/surv
 import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveCopiedSurveyCustomCss } from "@/modules/custom-css/lib/service";
-import { assertSegmentSurveyFiltersVisible } from "@/modules/ee/contacts/segments/lib/helper";
+import {
+  assertNoAddedPrivateSegmentReferences,
+  assertSegmentSurveyFiltersVisible,
+} from "@/modules/ee/contacts/segments/lib/helper";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { assertCanWriteCustomHeadScripts } from "@/modules/survey/lib/custom-head-scripts-permission";
@@ -438,6 +441,8 @@ const buildCopiedSegment = async (
   targetWorkspaceId: string
 ): Promise<Prisma.SurveyCreateInput["segment"]> => {
   if (segment.isPrivate) {
+    // ENG-7269: the copy's tree is new, so a private segment it names would be a nesting it adds.
+    await assertNoAddedPrivateSegmentReferences(segment.filters, [], targetWorkspaceId);
     return {
       create: {
         title: surveyId,

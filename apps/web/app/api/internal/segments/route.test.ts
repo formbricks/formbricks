@@ -61,6 +61,7 @@ const mocks = vi.hoisted(() => ({
   assertSegmentSurveyFiltersVisible: vi.fn(),
   assertAddedSegmentSurveyFiltersVisible: vi.fn(),
   checkForRecursiveSegmentFilter: vi.fn(),
+  assertNoAddedPrivateSegmentReferences: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can, assertCan: vi.fn() }));
@@ -90,6 +91,7 @@ vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
   assertAddedSegmentSurveyFiltersVisible: mocks.assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible: mocks.assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds: mocks.assertSurveyInteractionSurveyIds,
+  assertNoAddedPrivateSegmentReferences: mocks.assertNoAddedPrivateSegmentReferences,
   checkForRecursiveSegmentFilter: mocks.checkForRecursiveSegmentFilter,
   restoreHiddenSegmentSurveyIds: mocks.restoreHiddenSegmentSurveyIds,
 }));
@@ -360,6 +362,18 @@ describe("the segment write gate, shared by every write", () => {
 });
 
 describe("POST /api/internal/segments", () => {
+  test("refuses a tree that adds a nested private segment with 422 (ENG-7269)", async () => {
+    mocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    const response = await create(createBody());
+
+    expect(response.status).toBe(422);
+    expect(mocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(FILTERS, [], WORKSPACE_ID);
+    expect(mocks.createSegment).not.toHaveBeenCalled();
+  });
+
   test("creates the segment, audits it and captures it in PostHog", async () => {
     const response = await create(createBody({ surveyId: SURVEY_ID }));
 
@@ -599,6 +613,22 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       { title: "Renamed" },
       { connectedSurveyIds: [SURVEY_ID] }
     );
+  });
+
+  test("checks the edited tree against the stored one for added private references (ENG-7269)", async () => {
+    mocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    const response = await update({ filters: FILTERS });
+
+    expect(response.status).toBe(422);
+    expect(mocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      expect.anything(),
+      storedSegment().filters,
+      WORKSPACE_ID
+    );
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 
   test("checks the target surveys before validating the filters", async () => {
@@ -891,6 +921,22 @@ describe("DELETE /api/internal/segments/{segmentId}", () => {
 });
 
 describe("POST /api/internal/segments/{segmentId}/copies", () => {
+  test("refuses copying a tree that nests a private segment with 422 (ENG-7269)", async () => {
+    mocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    const response = await copy();
+
+    expect(response.status).toBe(422);
+    expect(mocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      storedSegment().filters,
+      [],
+      WORKSPACE_ID
+    );
+    expect(mocks.cloneSegment).not.toHaveBeenCalled();
+  });
+
   test("copies the segment onto the survey, audited on the segment copied with the copy", async () => {
     const response = await copy();
 

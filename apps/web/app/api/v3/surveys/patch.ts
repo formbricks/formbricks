@@ -229,7 +229,8 @@ async function buildV3AppSurveyPatchWrites(params: {
     currentSurvey.workspaceId,
     nextFilters,
     visibleSurveyWhere,
-    transaction?.tx
+    transaction?.tx,
+    currentSurvey.segment?.filters ?? []
   );
 
   return { segmentId, filters: nextFilters };
