@@ -503,13 +503,14 @@ describe("POST /api/internal/feedback-sources/{feedbackSourceId}/imports", () =>
   });
 });
 
+const sourceWrites = [
+  ["create", () => create()],
+  ["update", () => update({ source: { name: "Renamed" } })],
+  ["delete", () => remove()],
+] as const;
+
 describe("every source route", () => {
-  const routes = [
-    ["create", () => create()],
-    ["update", () => update({ source: { name: "Renamed" } })],
-    ["delete", () => remove()],
-    ["import", () => runImport()],
-  ] as const;
+  const routes = [...sourceWrites, ["import", () => runImport()]] as const;
   const writes = [
     mocks.createFeedbackSourceWithMappings,
     mocks.updateFeedbackSourceWithMappings,
@@ -551,16 +552,15 @@ describe("every source route", () => {
 });
 
 describe("every source write", () => {
-  test.each([
-    ["create", () => create()],
-    ["update", () => update({ source: { name: "Renamed" } })],
-    ["delete", () => remove()],
-  ])("%s spends the per-user source budget and records the source and organization", async (_name, send) => {
-    expect((await send()).ok).toBe(true);
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
-      rateLimitConfigs.actions.feedbackSourceMutation,
-      USER_ID
-    );
-    expect(lastAudit()).toMatchObject({ status: "success", organizationId: ORG_ID, targetId: SOURCE_ID });
-  });
+  test.each(sourceWrites)(
+    "%s spends the per-user source budget and records the source and organization",
+    async (_name, send) => {
+      expect((await send()).ok).toBe(true);
+      expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+        rateLimitConfigs.actions.feedbackSourceMutation,
+        USER_ID
+      );
+      expect(lastAudit()).toMatchObject({ status: "success", organizationId: ORG_ID, targetId: SOURCE_ID });
+    }
+  );
 });

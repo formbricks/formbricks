@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   assertCan: vi.fn(),
   getSession: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
+  resolveWorkspace: vi.fn(),
   isEnabled: vi.fn(),
   getDatasets: vi.fn(),
   retrieveFeedbackRecord: vi.fn(),
@@ -25,6 +26,7 @@ vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan, can: vi.fn()
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: mocks.getOrganizationIdFromWorkspaceId,
 }));
+vi.mock("@/app/api/v3/lib/workspace-context", () => ({ resolveV3WorkspaceContext: mocks.resolveWorkspace }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsFeedbackDirectoriesEnabled: mocks.isEnabled }));
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoriesByWorkspaceId: mocks.getDatasets,
@@ -110,6 +112,10 @@ beforeEach(() => {
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
   mocks.assertCan.mockResolvedValue(undefined);
   mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(ORG_ID);
+  mocks.resolveWorkspace.mockImplementation(async (workspaceId: string) => ({
+    workspaceId,
+    organizationId: ORG_ID,
+  }));
   mocks.isEnabled.mockResolvedValue(true);
   mocks.getDatasets.mockResolvedValue([{ id: DATASET_ID, name: "Support" }]);
   mocks.retrieveFeedbackRecord.mockResolvedValue({ data: record(), error: null });
@@ -277,12 +283,23 @@ describe("POST /api/internal/feedback-records/contact-lookups", () => {
     expect(mocks.getContactIdsByUserIds).not.toHaveBeenCalled();
   });
 
-  // ENG-3683: the same gate as reading a record, which this lookup serves.
-  test("refuses an organization without the feedback directories entitlement", async () => {
+  // ENG-3683: the same gate and answer as the feedback-source routes this table sits beside.
+  test("refuses an organization without the feedback directories entitlement, saying so", async () => {
     mocks.isEnabled.mockResolvedValue(false);
-    expect((await lookupContacts(["user-a"])).status).toBe(403);
+
+    const response = await lookupContacts(["user-a"]);
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toMatch(/^Unify Feedback is not enabled for this organization/);
     expect(mocks.isEnabled).toHaveBeenCalledWith(ORG_ID);
     expect(mocks.getContactIdsByUserIds).not.toHaveBeenCalled();
+  });
+
+  test("checks the entitlement only after the caller may read the workspace", async () => {
+    refuse("workspace.read");
+
+    expect((await lookupContacts(["user-a"])).status).toBe(403);
+    expect(mocks.isEnabled).not.toHaveBeenCalled();
   });
 
   test("answers 400 for more than 1000 ids", async () => {

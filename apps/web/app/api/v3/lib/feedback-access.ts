@@ -11,9 +11,9 @@ import type { V3WorkspaceContext } from "./workspace-context";
  * before touching Hub data. `requireV3WorkspaceAccess` covers org owner/manager OR workspace-team
  * permission; this adds the entitlement check it deliberately does not do.
  *
- * Shared so the pair can't drift between the v3 surfaces that depend on it (taxonomy and feedback
- * records). Callers that also address a specific directory should use `requireUnifyDirectoryAccess`,
- * which layers the membership check on top.
+ * Shared so the pair can't drift between the surfaces that depend on it: the v3 taxonomy and feedback
+ * records routes, and the internal feedback-source and contact-lookup routes. Callers that also address a
+ * specific directory should use `requireUnifyDirectoryAccess`, which layers the membership check on top.
  *
  * Returns a `Response` (401/403) to short-circuit on failure, or the resolved workspace context.
  */

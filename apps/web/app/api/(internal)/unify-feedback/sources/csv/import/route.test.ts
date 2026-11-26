@@ -6,9 +6,11 @@ import { assertFeedbackSourceDirectoryAccess } from "@/lib/feedback-source/acces
 import { importCsvFile } from "@/lib/feedback-source/csv-file-import";
 import { getFeedbackSourceWithMappingsById } from "@/lib/feedback-source/service";
 import { getUser } from "@/lib/user/service";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getSession } from "@/modules/auth/lib/session";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { CSV_FILE_TOO_LARGE_ERROR_CODE } from "@/modules/ee/unify-feedback/sources/types";
 import { POST } from "./route";
 
@@ -26,6 +28,12 @@ vi.mock("@/lib/feedback-source/service", () => ({
   getFeedbackSourceWithMappingsById: vi.fn(),
 }));
 vi.mock("@/lib/user/service", () => ({ getUser: vi.fn() }));
+vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsFeedbackDirectoriesEnabled: vi.fn() }));
+vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
+  getFeedbackDirectoriesByWorkspaceId: vi.fn(),
+}));
+vi.mock("server-only", () => ({}));
 vi.mock("@/lib/authorization", () => ({ assertCan: vi.fn() }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
@@ -36,6 +44,7 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 const userId = "user_1";
+const organizationId = "organization_1";
 const workspaceId = "workspace_1";
 const feedbackSourceId = "source_1";
 const feedbackDirectoryId = "directory_1";
@@ -66,6 +75,8 @@ describe("CSV feedback source import authorization", () => {
     vi.mocked(getFeedbackSourceWithMappingsById).mockResolvedValue({ feedbackDirectoryId } as never);
     vi.mocked(assertFeedbackSourceDirectoryAccess).mockResolvedValue(undefined);
     vi.mocked(importCsvFile).mockResolvedValue({ imported: 1 } as never);
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
+    vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(true);
   });
 
   test("refuses a same-site session upload with a 403 problem before reading anything (ENG-3380)", async () => {
@@ -129,6 +140,25 @@ describe("CSV feedback source import authorization", () => {
 
     expect(response.status).toBe(403);
     expect(importCsvFile).not.toHaveBeenCalled();
+  });
+
+  // ENG-3683: a lapsed licence leaves the datasets behind, so the assignment check alone doesn't stop this.
+  test("refuses an organization without the Unify licence with a 403, and imports nothing", async () => {
+    vi.mocked(getIsFeedbackDirectoriesEnabled).mockResolvedValue(false);
+
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).error).toMatch(/^Unify Feedback is not enabled for this organization/);
+    expect(getIsFeedbackDirectoriesEnabled).toHaveBeenCalledWith(organizationId);
+    expect(importCsvFile).not.toHaveBeenCalled();
+  });
+
+  test("checks the licence only after the caller may write to the workspace", async () => {
+    vi.mocked(assertCan).mockRejectedValue(new AuthorizationError("Not authorized"));
+
+    expect((await POST(makeRequest())).status).toBe(403);
+    expect(getIsFeedbackDirectoriesEnabled).not.toHaveBeenCalled();
   });
 
   test("does not log identifiers or raw operational errors", async () => {
