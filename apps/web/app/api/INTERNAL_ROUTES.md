@@ -26,6 +26,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/dashboards/{dashboardId}/access` | GET | session | dashboard | `/api/internal` | `app/api/internal/dashboards/[dashboardId]/access/route.ts` |
 | `/api/internal/dashboards/{dashboardId}/image-uploads` | POST | session | dashboard | `/api/internal` | `app/api/internal/dashboards/[dashboardId]/image-uploads/route.ts` |
 | `/api/internal/dashboards/{dashboardId}/page-access` | GET | session | dashboard | `/api/internal` | `app/api/internal/dashboards/[dashboardId]/page-access/route.ts` |
+| `/api/internal/dashboards/{dashboardId}/viewer-access` | GET | session | dashboard | `/api/internal` | `app/api/internal/dashboards/[dashboardId]/viewer-access/route.ts` |
 | `/api/internal/email-change-verifications` | POST | none | dashboard | `/api/internal` | `app/api/internal/email-change-verifications/route.ts` |
 | `/api/internal/embedded-data` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/route.ts` |
 | `/api/internal/embedded-data/{embeddedDataId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/route.ts` |

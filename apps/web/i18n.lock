@@ -2235,6 +2235,7 @@ checksums:
     workspace/analysis/dashboards/manage_access: ff9e851d8c998ea6e1e43aa32bdea36f
     workspace/analysis/dashboards/manage_pages: 4162a09aad7e33ddbcc1f8873f9e29a3
     workspace/analysis/dashboards/manage_pages_description: 44cf5455cedcd4f11ac490e4dae38be3
+    workspace/analysis/dashboards/more_dashboards_to_check: d63e8e7e1055f78c8127dbcfc356fee0
     workspace/analysis/dashboards/move_block: 2d768c5078f1a7c55063b00b09933ae7
     workspace/analysis/dashboards/new_dashboard: 994b8a982af4c22385861d26e373a949
     workspace/analysis/dashboards/new_page_name: edb6a56c808e5551229adf799af70dfc

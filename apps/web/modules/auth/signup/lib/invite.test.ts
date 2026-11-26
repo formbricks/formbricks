@@ -1,11 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { verifyInviteToken } from "@/lib/jwt";
-import { deleteInvite, getInvite, getIsValidInviteToken, resolveInviteMatch } from "./invite";
+import { createMembership } from "@/lib/membership/service";
+import { createTeamMembership } from "@/modules/auth/signup/lib/team";
+import {
+  copyInviteAttributeValuesToMembership,
+  readInviteAttributeValues,
+} from "@/modules/ee/member-attributes/lib/service";
+import {
+  InviteNoLongerValidError,
+  acceptInviteInTransaction,
+  getInvite,
+  getIsValidInviteToken,
+  resolveInviteMatch,
+} from "./invite";
 
 // Mock data
 const mockInviteId = "test-invite-id";
@@ -32,11 +43,18 @@ const mockInvite = {
 // Mock prisma methods
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     invite: {
-      delete: vi.fn(),
       findUnique: vi.fn(),
     },
   },
+}));
+
+vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
+vi.mock("@/modules/auth/signup/lib/team", () => ({ createTeamMembership: vi.fn() }));
+vi.mock("@/modules/ee/member-attributes/lib/service", () => ({
+  copyInviteAttributeValuesToMembership: vi.fn(),
+  readInviteAttributeValues: vi.fn(),
 }));
 
 // Mock logger
@@ -54,43 +72,73 @@ describe("Invite Management", () => {
     vi.clearAllMocks();
   });
 
-  describe("deleteInvite", () => {
-    test("deletes an invite successfully and invalidates cache", async () => {
-      vi.mocked(prisma.invite.delete).mockResolvedValue(mockInvite);
+  describe("acceptInviteInTransaction", () => {
+    const VALUES = [{ attributeKeyId: "key-1", value: "Berlin", normalizedValue: "berlin" }];
+    const tx = { invite: { deleteMany: vi.fn() } };
 
-      const result = await deleteInvite(mockInviteId);
-
-      expect(result).toBe(true);
-      expect(prisma.invite.delete).toHaveBeenCalledWith({
-        where: { id: mockInviteId },
-        select: { id: true, organizationId: true },
-      });
+    beforeEach(() => {
+      vi.mocked(prisma.$transaction).mockImplementation((async (callback: (client: unknown) => unknown) =>
+        callback(tx)) as never);
+      vi.mocked(readInviteAttributeValues).mockResolvedValue(VALUES);
+      tx.invite.deleteMany.mockResolvedValue({ count: 1 });
+      vi.mocked(createTeamMembership).mockResolvedValue(["team-1"]);
     });
 
-    test("throws DatabaseError when invite doesn't exist", async () => {
-      const errToThrow = new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: PrismaErrorType.RecordNotFound,
-        clientVersion: "0.0.1",
-      });
-      vi.mocked(prisma.invite.delete).mockRejectedValue(errToThrow);
+    // ENG-7468: the lock, the read, spending the invite, the membership and the copy share one transaction,
+    // so a bulk write to the invite cannot be lost to its deletion, nor overtaken by the copy on the membership.
+    test("locks and reads the invite's values, spends it, then writes the membership and copies on the same transaction", async () => {
+      const result = await acceptInviteInTransaction(mockInvite, "user-1");
 
-      await expect(deleteInvite(mockInviteId)).rejects.toThrow(DatabaseError);
+      expect(result).toEqual({ teamIds: ["team-1"] });
+      expect(readInviteAttributeValues).toHaveBeenCalledWith(
+        { inviteId: mockInviteId, organizationId: mockOrganizationId },
+        tx
+      );
+      expect(tx.invite.deleteMany).toHaveBeenCalledWith({
+        where: { id: mockInviteId, organizationId: mockOrganizationId, expiresAt: { gt: expect.any(Date) } },
+      });
+      expect(createMembership).toHaveBeenCalledWith(
+        mockOrganizationId,
+        "user-1",
+        { accepted: true, role: "member" },
+        { projection: "deferred", transaction: tx }
+      );
+      expect(createTeamMembership).toHaveBeenCalledWith(
+        { organizationId: mockOrganizationId, role: "member", teamIds: ["team-1"] },
+        "user-1",
+        { projection: "deferred", transaction: tx }
+      );
+      expect(copyInviteAttributeValuesToMembership).toHaveBeenCalledWith({
+        inviteId: mockInviteId,
+        organizationId: mockOrganizationId,
+        userId: "user-1",
+        values: VALUES,
+        transaction: tx,
+      });
+
+      const order = (fn: { mock: { invocationCallOrder: number[] } }) => fn.mock.invocationCallOrder[0];
+      expect(order(vi.mocked(readInviteAttributeValues))).toBeLessThan(order(tx.invite.deleteMany));
+      expect(order(tx.invite.deleteMany)).toBeLessThan(order(vi.mocked(createMembership)));
+      expect(order(vi.mocked(createMembership))).toBeLessThan(
+        order(vi.mocked(copyInviteAttributeValuesToMembership))
+      );
     });
 
-    test("throws DatabaseError for other Prisma errors", async () => {
-      const errToThrow = new Prisma.PrismaClientKnownRequestError("Database error", {
-        code: "P2002",
-        clientVersion: "0.0.1",
-      });
-      vi.mocked(prisma.invite.delete).mockRejectedValue(errToThrow);
+    test("writes no team memberships for an invite without teams", async () => {
+      const result = await acceptInviteInTransaction({ ...mockInvite, teamIds: [] }, "user-1");
 
-      await expect(deleteInvite(mockInviteId)).rejects.toThrow(DatabaseError);
+      expect(result).toEqual({ teamIds: [] });
+      expect(createTeamMembership).not.toHaveBeenCalled();
     });
 
-    test("throws DatabaseError for generic errors", async () => {
-      vi.mocked(prisma.invite.delete).mockRejectedValue(new Error("Generic error"));
+    test("rolls back without granting anything when the invite was spent or expired since it was checked", async () => {
+      tx.invite.deleteMany.mockResolvedValue({ count: 0 });
 
-      await expect(deleteInvite(mockInviteId)).rejects.toThrow(DatabaseError);
+      await expect(acceptInviteInTransaction(mockInvite, "user-1")).rejects.toBeInstanceOf(
+        InviteNoLongerValidError
+      );
+      expect(createMembership).not.toHaveBeenCalled();
+      expect(copyInviteAttributeValuesToMembership).not.toHaveBeenCalled();
     });
   });
 

@@ -2320,6 +2320,7 @@
         "manage_access": "Zugriff verwalten",
         "manage_pages": "Seiten verwalten",
         "manage_pages_description": "Benenne Seiten um, ändere ihre Reihenfolge und lege fest, welche Dashboard-Betrachter welche Seite sehen.",
+        "more_dashboards_to_check": "Einige Dashboards wurden noch nicht überprüft. Lade mehr, um weiterzusuchen.",
         "move_block": "Verschieben",
         "new_dashboard": "Neues Dashboard",
         "new_page_name": "Seite {number}",

@@ -2320,6 +2320,7 @@
         "manage_access": "Hozzáférés kezelése",
         "manage_pages": "Oldalak kezelése",
         "manage_pages_description": "Nevezze át és rendezze át az oldalakat, valamint korlátozza, hogy mely Irányítópult-megtekintők melyik oldalt láthatják.",
+        "more_dashboards_to_check": "Néhány irányítópultot még nem ellenőriztek. Kérjük, töltsön be továbbiakat a keresés folytatásához.",
         "move_block": "Áthelyezés",
         "new_dashboard": "Új vezérlőpult",
         "new_page_name": "{number}. oldal",

@@ -2320,6 +2320,7 @@
         "manage_access": "Hantera åtkomst",
         "manage_pages": "Hantera sidor",
         "manage_pages_description": "Byt namn på och ändra ordning på sidor, och begränsa vilka som är Dashboard Viewers som ser varje sida.",
+        "more_dashboards_to_check": "Vissa dashboards har inte kontrollerats än. Ladda fler för att fortsätta leta.",
         "move_block": "Flytta",
         "new_dashboard": "Ny instrumentpanel",
         "new_page_name": "Sida {number}",

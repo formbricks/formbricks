@@ -2320,6 +2320,7 @@
         "manage_access": "管理访问权限",
         "manage_pages": "管理页面",
         "manage_pages_description": "重命名页面并调整顺序，还可以限制哪些仪表板查看者能看到各个页面。",
+        "more_dashboards_to_check": "还有一些仪表板尚未检查。加载更多，继续查找吧。",
         "move_block": "移动",
         "new_dashboard": "新建仪表板",
         "new_page_name": "第 {number} 页",

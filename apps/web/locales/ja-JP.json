@@ -2320,6 +2320,7 @@
         "manage_access": "アクセスを管理",
         "manage_pages": "ページを管理",
         "manage_pages_description": "ページの名前変更や並べ替えを行い、各ページを閲覧できるダッシュボード閲覧者を制限できます。",
+        "more_dashboards_to_check": "まだ確認していないダッシュボードがあります。さらに読み込んで、引き続き探しましょう。",
         "move_block": "移動",
         "new_dashboard": "新しいダッシュボード",
         "new_page_name": "ページ {number}",

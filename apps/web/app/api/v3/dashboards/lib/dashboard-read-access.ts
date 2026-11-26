@@ -117,8 +117,10 @@ type TEmbeddedChartWidget = { chart: { widgets: { dashboard: { id: string } }[] 
 
 /**
  * The widgets of a read with each embedded chart's `dashboards` cut to the ones the reader can open: a
- * chart shared with a dashboard a Dashboard Viewer's team limits deny must not name it. Every other
- * reader keeps the full list.
+ * chart shared with a dashboard a Dashboard Viewer's team limits deny, or whose pages are all limited to
+ * other teams, must not name it. "Open" is the list's test (`createViewerDashboardListScope`), so a
+ * dashboard a chart names is one the reader's list shows and a read of it answers. Every other reader
+ * keeps the full list.
  */
 export const limitEmbeddedChartDashboards = async <TWidget extends TEmbeddedChartWidget>(
   access: TDashboardsAccessContext,
@@ -132,7 +134,7 @@ export const limitEmbeddedChartDashboards = async <TWidget extends TEmbeddedChar
   ];
   const readable =
     subject && ids.length > 0
-      ? await filterReadableDashboardIdsInWorkspace(subject, access.workspaceId, ids)
+      ? await createViewerDashboardListScope(subject, access.workspaceId).readable(ids)
       : new Set<string>();
   return widgets.map((widget) =>
     widget.chart

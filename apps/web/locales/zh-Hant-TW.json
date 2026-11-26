@@ -2320,6 +2320,7 @@
         "manage_access": "管理存取權限",
         "manage_pages": "管理頁面",
         "manage_pages_description": "重新命名並調整頁面順序，也可以限制哪些儀表板檢視者能看到各個頁面。",
+        "more_dashboards_to_check": "還有一些儀表板尚未檢查，載入更多即可繼續查看。",
         "move_block": "移動",
         "new_dashboard": "新儀表板",
         "new_page_name": "頁面 {number}",

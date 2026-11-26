@@ -87,18 +87,18 @@ export const getViewerAccessClaimForDataset = async (
   return buildViewerAccessClaim(resolved.get(datasetId) ?? null);
 };
 
-/** Where a summary's record probe runs: the workspace the dashboard reads from, as the caller. */
+/** Where a record probe runs: the workspace the dashboard reads from, as the caller. */
 export type TViewerAccessProbeScope = { workspaceId: string; actor: TCubeQueryActor };
 
-/** Probes run at once for one dashboard read, and how long a probe's answer is reused. */
+/** Probes run at once for one dashboard, and how long a probe's answer is reused. */
 export const VIEWER_ACCESS_PROBE_CONCURRENCY = 4;
 const PROBE_CACHE_TTL_MS = 60_000;
 const PROBE_CACHE_MAX_ENTRIES = 10_000;
 
 /**
- * Answers of recent probes, per viewer, dataset and claim, on this server. A dashboard read with many
- * restricted datasets probes each at most once a minute for a viewer, so repeated reads (every open,
- * every refresh) don't repeat the count queries. A changed attribute or row rule changes the claim, and
+ * Answers of recent probes, per viewer, dataset and claim, on this server. A dashboard with many
+ * restricted datasets is probed at most once a minute per dataset for a viewer, so repeated opens and
+ * refreshes don't repeat the count queries. A changed attribute or row rule changes the claim, and
  * with it the key, so it is never answered from an older claim.
  */
 const probeCache = new Map<string, { matched: boolean; expiresAt: number }>();
@@ -146,7 +146,7 @@ const hasMatchingRecord = async (
 /**
  * Whether the probe finds a record, or `true` when it cannot run (Cube unreachable or refusing). The probe
  * only picks the message a viewer sees, and every chart read carries the claim itself, so a failed probe
- * leaves the dashboard readable and each chart shows its own error, instead of failing the whole read.
+ * leaves the dashboard readable and each chart shows its own error, instead of hiding every chart.
  */
 const probeMatchingRecord = async (
   reader: NonNullable<TViewerAccessReader>,
@@ -171,22 +171,37 @@ const probeMatchingRecord = async (
 };
 
 /**
- * The summary of `reader`'s access to the datasets a dashboard's visible pages read. With a probe scope,
- * a viewer whose values exist but match no record in any restricted dataset (a misspelt "Swedn") is
- * `unmatched` too, so they see "Your access hasn't been set up" rather than a page of empty charts.
+ * The summary of `reader`'s access to the datasets a dashboard's visible pages read, from their
+ * conditions and Member attribute values alone: one database read, no record query, so the dashboard
+ * read never waits on Cube. `unmatched` only when every dataset is restricted and each needs a value the
+ * viewer doesn't hold; whether their values match any record is `getViewerAccessRecordMatch`'s question.
  */
 export const getViewerAccessSummary = async (
   reader: TViewerAccessReader,
-  datasetIds: readonly string[],
-  probe?: TViewerAccessProbeScope
+  datasetIds: readonly string[]
 ): Promise<TViewerAccessSummary> => {
   if (!reader || datasetIds.length === 0) return UNRESTRICTED_VIEWER_ACCESS;
   const resolved = await resolveViewerAccessForDatasets(reader.organizationId, reader.userId, datasetIds);
-  const summary = summarizeViewerAccess([...resolved.values()]);
+  return summarizeViewerAccess([...resolved.values()]);
+};
+
+/**
+ * Whether `reader`'s values match any record of the datasets a dashboard's visible pages read: the
+ * summary's status, with `restricted` turned `unmatched` when every restricted dataset is probed and none
+ * has a matching record (a misspelt "Swedn"), so they see "Your access hasn't been set up" rather than a
+ * page of empty charts. Asked by the dashboard page after it has drawn, never by the dashboard read.
+ */
+export const getViewerAccessRecordMatch = async (
+  reader: TViewerAccessReader,
+  datasetIds: readonly string[],
+  probe: TViewerAccessProbeScope
+): Promise<TViewerAccessSummary["status"]> => {
+  if (!reader || datasetIds.length === 0) return "unrestricted";
+  const resolved = await resolveViewerAccessForDatasets(reader.organizationId, reader.userId, datasetIds);
+  const datasets = [...resolved.values()];
+  const { status } = summarizeViewerAccess(datasets);
   // A dataset without conditions keeps its charts visible, so the dashboard is never "unmatched" as a whole.
-  if (summary.status !== "restricted" || !probe || hasUnrestrictedViewerDataset([...resolved.values()])) {
-    return summary;
-  }
+  if (status !== "restricted" || hasUnrestrictedViewerDataset(datasets)) return status;
 
   // A dataset whose conditions the viewer holds no value for matches nothing: no probe needed.
   const restricted = [...resolved.entries()].filter(
@@ -195,7 +210,7 @@ export const getViewerAccessSummary = async (
   );
   // Every restricted dataset is probed until one matches, so "unmatched" is only ever said when none
   // does: a few at a time (`VIEWER_ACCESS_PROBE_CONCURRENCY`), no new probe once one matched, and each
-  // answer reused for a minute, so a dashboard with many datasets doesn't repeat them on every read.
+  // answer reused for a minute, so a dashboard with many datasets doesn't repeat them on every open.
   let matched = false;
   let next = 0;
   const worker = async () => {
@@ -207,5 +222,5 @@ export const getViewerAccessSummary = async (
   await Promise.all(
     Array.from({ length: Math.min(VIEWER_ACCESS_PROBE_CONCURRENCY, restricted.length) }, worker)
   );
-  return matched ? summary : { ...summary, status: "unmatched" };
+  return matched ? "restricted" : "unmatched";
 };

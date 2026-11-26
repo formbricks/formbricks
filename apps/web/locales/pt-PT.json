@@ -2320,6 +2320,7 @@
         "manage_access": "Gerir acesso",
         "manage_pages": "Gerir páginas",
         "manage_pages_description": "Mude o nome e a ordem das páginas e limite quais os Visualizadores do Dashboard que veem cada uma.",
+        "more_dashboards_to_check": "Ainda há painéis por verificar. Carrega mais para continuares a procurar.",
         "move_block": "Mover",
         "new_dashboard": "Novo painel",
         "new_page_name": "Página {number}",

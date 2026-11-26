@@ -2320,6 +2320,7 @@
         "manage_access": "Gestionează accesul",
         "manage_pages": "Gestionează paginile",
         "manage_pages_description": "Redenumește și reordonează paginile și stabilește ce pagini văd Vizualizatorii de dashboard.",
+        "more_dashboards_to_check": "Unele dashboarduri nu au fost verificate încă. Încarcă mai multe ca să continui căutarea.",
         "move_block": "Mută",
         "new_dashboard": "Tablou de bord nou",
         "new_page_name": "Pagina {number}",

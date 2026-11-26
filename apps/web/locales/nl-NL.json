@@ -2320,6 +2320,7 @@
         "manage_access": "Toegang beheren",
         "manage_pages": "Pagina's beheren",
         "manage_pages_description": "Hernoem pagina's en wijzig de volgorde, en bepaal welke dashboardkijkers elke pagina zien.",
+        "more_dashboards_to_check": "Sommige dashboards zijn nog niet gecontroleerd. Laad meer om verder te zoeken.",
         "move_block": "Verplaatsen",
         "new_dashboard": "Nieuw dashboard",
         "new_page_name": "Pagina {number}",

@@ -2320,6 +2320,7 @@
         "manage_access": "Manage access",
         "manage_pages": "Manage pages",
         "manage_pages_description": "Rename and reorder pages, and limit which Dashboard Viewers see each one.",
+        "more_dashboards_to_check": "Some dashboards haven't been checked yet. Load more to keep looking.",
         "move_block": "Move",
         "new_dashboard": "New dashboard",
         "new_page_name": "Page {number}",

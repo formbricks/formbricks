@@ -2320,6 +2320,7 @@
         "manage_access": "Gestionar acceso",
         "manage_pages": "Gestionar páginas",
         "manage_pages_description": "Cambia el nombre y el orden de las páginas, y limita qué Lectores del panel ven cada una.",
+        "more_dashboards_to_check": "Aún quedan paneles por revisar. Carga más para seguir buscando.",
         "move_block": "Mover",
         "new_dashboard": "Nuevo panel",
         "new_page_name": "Página {number}",

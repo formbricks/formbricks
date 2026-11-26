@@ -177,6 +177,10 @@ describe("limitEmbeddedChartDashboards", () => {
 
   test("names only the dashboards a viewer can open", async () => {
     vi.mocked(filterReadableDashboardIdsInWorkspace).mockResolvedValue(new Set(["d1"]));
+    vi.mocked(listDashboardPageScopeRows).mockResolvedValue([
+      { id: "p1", dashboardId: "d1", _count: { widgets: 1 }, widgets: [] },
+    ]);
+    vi.mocked(filterReadablePageIds).mockResolvedValue(new Set(["p1"]));
 
     expect(await limitEmbeddedChartDashboards(viewer, widgets, null)).toEqual([
       { id: "w1", chart: { widgets: [{ dashboard: { id: "d1" } }] } },
@@ -187,6 +191,27 @@ describe("limitEmbeddedChartDashboards", () => {
       "ws_1",
       ["d1", "d2"]
     );
+  });
+
+  test("does not name a readable dashboard whose pages are all limited away from the viewer", async () => {
+    // d2 passes `dashboard.read`, but its only page is limited to another team: a read of it answers 403
+    // and the list leaves it out, so a chart must not name it either.
+    vi.mocked(filterReadableDashboardIdsInWorkspace).mockResolvedValue(new Set(["d1", "d2"]));
+    vi.mocked(listDashboardPageScopeRows).mockResolvedValue([
+      { id: "p1", dashboardId: "d1", _count: { widgets: 1 }, widgets: [] },
+      { id: "p2", dashboardId: "d2", _count: { widgets: 1 }, widgets: [] },
+    ]);
+    vi.mocked(filterReadablePageIds).mockResolvedValue(new Set(["p1"]));
+
+    expect(await limitEmbeddedChartDashboards(viewer, widgets, null)).toEqual([
+      { id: "w1", chart: { widgets: [{ dashboard: { id: "d1" } }] } },
+      { id: "w2", chart: null },
+    ]);
+    // One batched page read and one batched page check for every dashboard named, never one per dashboard.
+    expect(listDashboardPageScopeRows).toHaveBeenCalledTimes(1);
+    expect(listDashboardPageScopeRows).toHaveBeenCalledWith(["d1", "d2"], undefined);
+    expect(filterReadablePageIds).toHaveBeenCalledTimes(1);
+    expect(filterReadablePageIds).toHaveBeenCalledWith({ type: "user", id: "user_1" }, ["p1", "p2"]);
   });
 
   test("names none for a viewer without a subject", async () => {

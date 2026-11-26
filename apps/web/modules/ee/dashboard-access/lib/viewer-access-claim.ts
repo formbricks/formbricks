@@ -125,7 +125,7 @@ export const hasUnrestrictedViewerDataset = (datasets: readonly (TResolvedViewer
 /**
  * What a dashboard read tells its reader about the records they see: one locked chip per condition of
  * the datasets on the pages they can open ("any" conditions as one chip, labels joined with " or "), and
- * `unmatched` when every dataset is restricted and each leaves them nothing. A restricted dataset that
+ * `unmatched` when every dataset is restricted and each needs a value they don't hold. A restricted dataset that
  * matches nothing on a dashboard with other readable data only empties its own charts.
  */
 export const summarizeViewerAccess = (
@@ -158,8 +158,9 @@ export const summarizeViewerAccess = (
   }
 
   return {
-    // Unmatched only when every dataset is restricted and leaves nothing: a dataset without conditions, or
-    // one with records to match, keeps the dashboard readable (the record probe decides the latter).
+    // Unmatched only when every dataset is restricted and each needs a value the viewer doesn't hold: a
+    // dataset without conditions, or one they hold values for, keeps the dashboard readable. Whether those
+    // values match any record is a separate, later question (`getViewerAccessRecordMatch`).
     status:
       !hasUnrestrictedViewerDataset(datasets) && restricted.every(isViewerAccessUnmatched)
         ? "unmatched"

@@ -2320,6 +2320,7 @@
         "manage_access": "Erişimi yönet",
         "manage_pages": "Sayfaları yönet",
         "manage_pages_description": "Sayfaları yeniden adlandır ve sırala, her sayfayı hangi Pano Görüntüleyicilerinin göreceğini sınırla.",
+        "more_dashboards_to_check": "Bazı panolar henüz kontrol edilmedi. Aramaya devam etmek için daha fazlasını yükle.",
         "move_block": "Taşı",
         "new_dashboard": "Yeni gösterge paneli",
         "new_page_name": "Sayfa {number}",

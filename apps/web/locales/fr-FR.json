@@ -2320,6 +2320,7 @@
         "manage_access": "Gérer l'accès",
         "manage_pages": "Gérer les pages",
         "manage_pages_description": "Renomme et réorganise les pages, et limite les Lecteurs du tableau de bord qui voient chacune d'elles.",
+        "more_dashboards_to_check": "Certains tableaux de bord n'ont pas encore été vérifiés. Charge-en davantage pour continuer à chercher.",
         "move_block": "Déplacer",
         "new_dashboard": "Nouveau tableau de bord",
         "new_page_name": "Page {number}",
