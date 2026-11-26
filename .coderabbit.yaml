@@ -93,11 +93,12 @@ reviews:
     - "!.claude/skills/**"
 
   path_instructions:
-    - path: "**/*.test.tsx"
+    - path: "**/*.{test,spec}.{tsx,jsx}"
       instructions: |
-        `formbricks/no-tsx-unit-test` (lint) already fails a new `.test.tsx`; do not repeat it. When
-        the logic under test moves into a `.ts` module, do not ask for a Playwright spec instead:
-        deleting a `.test.tsx` creates no E2E obligation, and a component is not an E2E subject.
+        `formbricks/no-tsx-unit-test` (lint) already fails a new `.test.tsx` / `.spec.tsx`; do not
+        repeat it. When the logic under test moves into a `.ts` module, do not ask for a Playwright
+        spec instead: deleting a `.test.tsx` creates no E2E obligation, and a component is not an E2E
+        subject.
 
     - path: "**/*.tsx"
       instructions: |
@@ -136,6 +137,9 @@ reviews:
           against a real database claims that (CODING_STANDARDS.md "Testing Guidelines", the
           mocked-Prisma line).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
+        - A `.test.ts` that renders a component (`createElement`, a testing-library `render`) is
+          still a component unit test, which CODING_STANDARDS.md "Testing Guidelines" forbids; lint
+          only sees the file extension. Ask for the logic to move into a `.ts` module instead.
         - Module boundaries are mocked with `vi.mock`; where a shared `__mocks__` module exists
           (e.g. `apps/web/lib/__mocks__/database.ts`) the test reuses it instead of redefining it.
           Do not ask for a shared helper that does not exist.

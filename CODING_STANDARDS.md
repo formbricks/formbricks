@@ -20,14 +20,14 @@ hardening first for literal `ubuntu-*` runner labels, including version and arch
 still judge whether requested token permissions are minimal and whether runner choices outside this
 check need hardening.
 
-`formbricks/no-tsx-unit-test` fails a `*.test.tsx` / `*.spec.tsx` file, and `formbricks/no-loose-schema`
-fails a zod schema that keeps unknown keys (`.loose()`, `.passthrough()`, `z.looseObject()`, `.catchall()`
-without `z.never()`). Each allowlist in `packages/config-oxlint/base.mjs` only shrinks. An entry in
-`LOOSE_SCHEMA_ALLOWLIST` carries the reason its schemas never reach a write's `data` as columns or
-relations; in a shared types file, the one open schema carries a disable comment with that reason
-instead. `formbricks/no-request-regexp` reports request input compiled into a regex only inside one file: a
-pattern loaded from a stored survey or filter, or one that crosses files, is still a review check under
-"Security".
+`formbricks/no-tsx-unit-test` fails a `*.test.tsx` / `*.spec.tsx` (or `.jsx`) file, and
+`formbricks/no-loose-schema` fails a zod schema that keeps unknown keys (`.loose()`, `.passthrough()`,
+`z.looseObject()`, `.catchall()` without `z.never()`). Each allowlist in `packages/config-oxlint/base.mjs`
+only shrinks. An entry in `LOOSE_SCHEMA_ALLOWLIST` carries the reason its schemas never reach a write's
+`data` as columns or relations; in a shared types file, the one open schema carries a disable comment with
+that reason instead. `formbricks/no-request-regexp` reports request input compiled into a regex only
+inside one file: a pattern loaded from a stored survey or filter, or one that crosses files, is still a
+review check under "Security".
 
 ## The Review Gate
 
@@ -179,35 +179,39 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   flow completes depends on its kind. Class: link-triggered account changes and login CSRF (ENG-3264,
   ENG-7310, ENG-7395).
   - An OAuth, OIDC or SSO callback, and any flow that links an identity or creates a session in the browser
-    that started it, binds its completion to that browser (`state`, PKCE, a cookie set at the start).
-  - An emailed link (verification, recovery, invite) is short-lived and may be opened on another device
-    than the one that asked for it. Opening it may prove the mailbox or set a proof cookie. The step that
-    changes the account (link an identity, reset a password, accept an invite, change an email) is
-    single-use and runs only through a `POST` from a confirmation page, so a scanner's `GET` changes
-    nothing. A new emailed link creates no session on `GET`. The one that does, the SSO-recovery sign-in
-    link (`apps/web/modules/ee/sso/lib/better-auth-recovery-signin.ts`), is the accepted exception: it
-    stays usable until it expires so a scanner cannot spend it, signs in only an account without both a
-    verified email and 2FA (completing recovery strips an unverified account's local factors, ENG-2557),
-    and the identity link it leads to still needs the `POST` and the proof cookie.
+    that started it, binds its completion to that browser (`state`, PKCE, a cookie set at the start). Bound
+    that way, a callback may complete on the `GET` that returns from the IdP.
+  - An emailed link (verification, recovery, invite) is short-lived and may be opened on another device than
+    the one that asked for it. Opening it may prove the mailbox or set a proof cookie. The step that changes
+    the account (link an identity, reset a password, accept an invite, change an email) is single-use and
+    runs only through a `POST` from a confirmation page, so a scanner's `GET` changes nothing. A new emailed
+    link creates no session on `GET`. The one that does, the SSO-recovery sign-in link
+    (`apps/web/modules/ee/sso/lib/better-auth-recovery-signin.ts`), is the accepted exception: it stays
+    usable until the recovery completes, is cancelled or expires, so a scanner cannot spend it; it signs in an
+    account unless the account has both a verified email and 2FA (completing recovery strips an
+    unverified account's local factors, ENG-2557); and the identity link it leads to still needs the `POST`
+    and the proof cookie.
 - **No path creates a session weaker than the account requires.** Local paths (password, magic link, account
   recovery) go through the app's 2FA check. SSO relies on the IdP's MFA; a new SSO sign-in path verifies it
-  from `acr` / `amr` where the IdP sends them (the existing providers do not check them yet). An emailed link
-  counts as one factor at most, so recovery sends an account that keeps its 2FA through the 2FA check; the
-  one exception is an unverified account: completing recovery removes its local factors (ENG-2557).
-  Class: 2FA bypass through an alternate sign-in path (ENG-7266).
+  from what the IdP asserts, where it sends it (`acr` / `amr` for OIDC, `AuthnContextClassRef` for SAML);
+  the existing providers do not check them yet. An emailed link counts as one factor at most, so recovery
+  sends an account that keeps its 2FA through the 2FA check; the one exception is an unverified account:
+  completing recovery removes its local factors (ENG-2557). Class: 2FA bypass through an alternate sign-in
+  path (ENG-7266).
 - **A user-supplied regex on a shared process runs in a linear-time engine or not at all.** On the server,
   in workers and in jobs, a pattern from a survey, a filter or any request runs in RE2 with a program-size
   cap and a per-run work budget (`apps/web/modules/api/lib/linear-pattern-matcher.ts`), or is not evaluated:
   RE2 is linear in program size times input length, not free. A length cap is not ReDoS protection: a
   20-character pattern can backtrack for minutes on a short input and block the event loop for every tenant
-  on the process. Code that runs only in the end user's own tab may use native `RegExp`, as
-  `matchPatternWithRegExp` in `packages/surveys/src/lib/validation/validators.ts` does. Class: ReDoS
-  (ENG-7109).
+  on the process. A pattern from operator config (an environment variable, a constant) is not user-supplied.
+  Code that runs only in the end user's own tab may use native `RegExp`, as `matchPatternWithRegExp` in
+  `packages/surveys/src/lib/validation/validators.ts` does. Class: ReDoS (ENG-7109).
 - **Caller data a library stores for us is bounded in our code.** OAuth state and authorization codes,
   rate-limit keys and verification records that a library writes to Redis or Postgres from request input
-  have a size, count and lifetime cap set in our code (checked before the call, or a TTL we pass and verify),
-  as for any other input under "Input Limits". A library stores what it is given. Class: storage
-  amplification from anonymous or low-privilege requests (ENG-6885, ENG-7396, ENG-7399).
+  have a size and lifetime cap set in our code (checked before the call, or a TTL we pass and verify), and a
+  count cap where the library keeps several records per caller, as for any other input under "Input Limits".
+  A library stores what it is given. Class: storage amplification from anonymous or low-privilege requests
+  (ENG-6885, ENG-7396, ENG-7399).
 - **A security setting passed to a dependency is tested against the real dependency.** For a TLS mode, a
   cookie flag, a CSP or an auth option, a regression test against the real dependency (an `integration`
   row, or an `e2e` step in `apps/web/playwright/api/auth/security.spec.ts` for response headers) asserts
@@ -364,12 +368,12 @@ concluding an area has no spec.
 The PR's Coverage table names each row's level with one of six words, and the first three are claims a
 reviewer can check: `unit (red on main)` fails against the old code, so it proves the bug existed;
 `unit (mutation)` only fails if you break the fix, because the code under test is new; `unit (guard)`
-passes either way, protecting against a future regression; `integration` (a `*.integration.test.ts` against
-a real database or dependency), `e2e` and `manual` say where the check ran. Every `unit`, `integration` and
-`e2e` row names the test or spec it rests on, in the row or in a `Rerun:` line that names
-it — a bare `pnpm test` names nothing. A `unit (red on main)` row is rerunnable from the
-`Rerun:` command, or names its own where that differs; a `unit (mutation)` row names the mutated
-`file:line` a reviewer edits to turn it red.
+passes either way, protecting against a future regression; `integration` (a `*.integration.test.ts` against a
+real database or dependency), `e2e` and `manual` say where the check ran. Every `unit`, `integration` and
+`e2e` row names the test or spec it rests on, in the row or in a `Rerun:` line that names it — a bare
+`pnpm test` names nothing. A `unit (red on main)` row is rerunnable from the `Rerun:` command, or names
+its own where that differs; a `unit (mutation)` row names the mutated `file:line` a reviewer edits to turn
+it red.
 
 This raises a floor as well as lowering a ceiling. Every feature area ships a happy-path E2E, and an area
 with none is a gap rather than a saving (Dashboards and Workflows are the current examples — ENG-2314). A
@@ -417,12 +421,12 @@ Do:
 Do not:
 
 - Do not write component or UI unit tests for `.tsx` files. Mechanically, a unit test is a `*.test.ts`:
-  `formbricks/no-tsx-unit-test` fails a `*.test.tsx` / `*.spec.tsx`, and a component test written in `.ts`
-  is still a review finding. **This is not an instruction to write an E2E
-  test instead**: the absence of a component unit test creates no coverage obligation. If a component holds
-  logic worth proving, lift that logic into a `.ts` module and unit-test it there; the rendering is
-  exercised incidentally by the feature journeys that already cross it. When the lift serves a bug fix, make
-  it a commit of its own that keeps the behaviour unchanged, and fix in the next commit: `unit (red on main)`
+  `formbricks/no-tsx-unit-test` fails a `*.test.tsx` / `*.spec.tsx` (or `.jsx`), and a component test
+  written in `.ts` is still a review finding. **This is not an instruction to write an E2E test instead**:
+  the absence of a component unit test creates no coverage obligation. If a component holds logic worth
+  proving, lift that logic into a `.ts` module and unit-test it there; the rendering is exercised
+  incidentally by the feature journeys that already cross it. When the lift serves a bug fix, make it a
+  commit of its own that keeps the behaviour unchanged, and fix in the next commit: `unit (red on main)`
   then means red on the lift commit, and the Coverage row names it.
 - Do not E2E a component. A language selector, a breadcrumb, a sidebar's link list, an ARIA attribute on
   one widget, a keystroke inside one editor, a field's validation message, a search box filtering a list —

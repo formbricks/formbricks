@@ -358,9 +358,11 @@ const preferReadOnlyProps = {
 
 /*
  * Taint tracking for `no-request-regexp` (ENG-7450). A JS plugin sees one file at a time, so a value
- * is followed only inside the file: through variables, destructuring, object spreads, closures, and
- * the parameters of a function the file declares and calls with it (`helper(tainted)`, `.action(fn)`,
- * `rows.map(check)`). A source in one file and a sink in another is not reported.
+ * is followed only inside the file: through variables, destructuring, object spreads, closures declared
+ * after the value, and the parameters of a function the file declares and calls with it
+ * (`helper(tainted)`, `.action(fn)`, `rows.map(check)`). Not followed: a source in another file, the
+ * return value of the file's own functions, `this.method(x)`, an unknown call (`decodeURIComponent(x)`
+ * clears the taint), and a same-file call chain longer than the pass cap.
  *
  * A label says what is tainted: `false` (nothing), `true` (the whole value) or an object whose keys
  * label the value's properties (`{ parsedInput: true }` for a server action's first argument).
@@ -425,6 +427,7 @@ const declarationOf = (statement) =>
  * Walks `program` and calls `policy.sink(node, labelOf)` on every call and `new` expression, once the
  * labels have settled. `policy` decides what is a source:
  * - `deep`: a property of a tainted value is tainted.
+ * - `sourceKeys`: property names whose value is a source wherever they are read (`.searchParams`).
  * - `strings`: a template, a concatenation or a string method carries the taint of its operands.
  * - `callLabel(node, labelOf)`: the label of a call's result, for sources (`req.json()`) and
  *   pass-throughs (`schema.parse(tainted)`).
@@ -472,17 +475,35 @@ function walkTaint(program, policy) {
       if (named) passTo(named, labels);
     };
 
-    const labelOf = (expression) => {
+    const memberExpressionLabel = (node) => {
+      const key = keyOf(node);
+      // A length is a number, not a pattern.
+      if (key === "length") return false;
+      if (policy.sourceKeys?.has(key)) return true;
+      return memberLabel(labelOf(node.object), key, policy.deep);
+    };
+
+    const objectLabel = (node) => {
+      let label = false;
+      for (const property of node.properties) {
+        if (property.type === "SpreadElement") {
+          label = union(label, labelOf(property.argument));
+          continue;
+        }
+        const value = labelOf(property.value);
+        const key = keyOf(property);
+        if (value && key !== undefined && label !== true) label = union(label, { [key]: value });
+      }
+      return label;
+    };
+
+    function labelOf(expression) {
       const node = unwrapExpression(expression);
       switch (node?.type) {
         case "Identifier":
           return lookup(node.name);
-        case "MemberExpression": {
-          const key = keyOf(node);
-          // A length is a number, not a pattern.
-          if (key === "length") return false;
-          return memberLabel(labelOf(node.object), key, policy.deep);
-        }
+        case "MemberExpression":
+          return memberExpressionLabel(node);
         case "AwaitExpression":
           return labelOf(node.argument);
         case "AssignmentExpression":
@@ -493,19 +514,8 @@ function walkTaint(program, policy) {
           return union(labelOf(node.consequent), labelOf(node.alternate));
         case "LogicalExpression":
           return union(labelOf(node.left), labelOf(node.right));
-        case "ObjectExpression": {
-          let label = false;
-          for (const property of node.properties) {
-            if (property.type === "SpreadElement") {
-              label = union(label, labelOf(property.argument));
-              continue;
-            }
-            const value = labelOf(property.value);
-            const key = keyOf(property);
-            if (value && key !== undefined && label !== true) label = union(label, { [key]: value });
-          }
-          return label;
-        }
+        case "ObjectExpression":
+          return objectLabel(node);
         case "TemplateLiteral":
           return policy.strings && node.expressions.some((part) => labelOf(part) === true);
         case "BinaryExpression":
@@ -524,7 +534,7 @@ function walkTaint(program, policy) {
         default:
           return false;
       }
-    };
+    }
 
     // `var` belongs to the enclosing function, `let` and `const` to the block.
     const declareIn = (kind) => {
@@ -823,12 +833,22 @@ const ELEMENT_CALLBACKS = new Set([
   "flatMap",
   "forEach",
   "map",
+  "reduce",
+  "reduceRight",
   "some",
 ]);
 const IMPLICIT_REGEXP_METHODS = new Set(["match", "matchAll", "search"]);
 const REQUEST_BODY_READERS = new Set(["formData", "json", "text"]);
 const REQUEST_NAMES = new Set(["req", "request"]);
 const REGEXP_SINK_TEXT = /RegExp|\.(?:match|matchAll|search)\s*\(/;
+
+// `RegExp` or `globalThis.RegExp`, not `something.RegExp`.
+const isGlobalReference = (callee) => {
+  const node = unwrapExpression(callee);
+  if (node?.type === "Identifier") return true;
+  const object = node?.type === "MemberExpression" ? unwrapExpression(node.object) : undefined;
+  return object?.type === "Identifier" && object.name === "globalThis";
+};
 
 const isRequestRead = (node) => {
   const object = unwrapExpression(calleeObject(node));
@@ -837,9 +857,10 @@ const isRequestRead = (node) => {
     if (object?.type === "Identifier") return REQUEST_NAMES.has(object.name);
     return object?.type === "MemberExpression" && REQUEST_NAMES.has(keyOf(object));
   }
-  if (name !== "get" && name !== "getAll") return false;
-  if (object?.type === "Identifier") return object.name === "searchParams";
-  return object?.type === "MemberExpression" && keyOf(object) === "searchParams";
+  // `x.searchParams.get()` is covered by `sourceKeys`; a bare `searchParams` (a page prop, a hook) here.
+  return (
+    (name === "get" || name === "getAll") && object?.type === "Identifier" && object.name === "searchParams"
+  );
 };
 
 // `value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")`: a global character class holding every
@@ -890,6 +911,7 @@ const noRequestRegexp = {
         walkTaint(program, {
           deep: true,
           strings: true,
+          sourceKeys: new Set(["searchParams"]),
           paramLabels: () => [{ parsedInput: true, searchParams: true }],
           callLabel(node, labelOf) {
             const name = calleeName(node);
@@ -915,13 +937,19 @@ const noRequestRegexp = {
             return STRING_METHODS.has(name) && labelOf(object) === true;
           },
           callbackLabels(node, labelOf, setParams) {
-            if (node.type !== "CallExpression" || !ELEMENT_CALLBACKS.has(calleeName(node))) return;
+            const name = calleeName(node);
+            if (node.type !== "CallExpression" || !ELEMENT_CALLBACKS.has(name)) return;
             const object = calleeObject(node);
-            if (object && labelOf(object) === true) setParams(node.arguments[0], [true]);
+            if (!object || labelOf(object) !== true) return;
+            // `reduce((accumulator, element) => …)` gets the element second.
+            setParams(
+              node.arguments[0],
+              name === "reduce" || name === "reduceRight" ? [false, true] : [true]
+            );
           },
           sink(node, labelOf) {
             const name = calleeName(node);
-            if (name === "RegExp" && unwrapExpression(node.callee).type === "Identifier") {
+            if (name === "RegExp" && isGlobalReference(node.callee)) {
               if (node.parent?.type === "ExpressionStatement") return;
             } else if (
               node.type !== "CallExpression" ||
@@ -948,7 +976,8 @@ const noRequestRegexp = {
 /*
  * `no-tsx-unit-test`: CODING_STANDARDS.md, Testing Guidelines: "Do not write component or UI unit tests
  * for `.tsx` files." Mechanically, a unit test is a `*.test.ts`: this fails a test file that needs JSX
- * (`*.test.tsx`, `*.spec.tsx`). A component test written in `.ts` is still a review finding. The `allow`
+ * (`*.test.tsx`, `*.spec.tsx`, and their `.jsx` forms). A component test written in `.ts` is still a
+ * review finding. The `allow`
  * option lists the repo-relative paths of the tests that predate the check.
  */
 const TSX_TEST = /\.(?:test|spec)\.[jt]sx$/;
@@ -966,7 +995,7 @@ const noTsxUnitTest = {
         context.report({
           node,
           message:
-            "Component and UI unit tests in `.tsx` are not written here (CODING_STANDARDS.md, Testing Guidelines). Lift the logic into a `.ts` module and test it there; the feature journeys cover the rendering.",
+            "Component and UI unit tests in `.tsx`/`.jsx` are not written here (CODING_STANDARDS.md, Testing Guidelines). Lift the logic into a `.ts` module and test it there; the feature journeys cover the rendering.",
         });
       },
     };

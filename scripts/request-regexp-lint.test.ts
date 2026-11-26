@@ -114,6 +114,53 @@ export const run = ({ parsedInput }: any) => parsedInput.patterns.map(compile);
   "escape-sticky.ts": `export const run = ({ parsedInput }: any) =>
   new RegExp(parsedInput.search.replace(/[\\\\^$.*+?()[\\]{}|]/gy, "\\\\$&")).test("x");
 `,
+  // Each escape below misses one requirement, so the metacharacters stay live: a negated class.
+  "escape-negated.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[^.*+?^\${}()|[\\]\\\\]/g, "\\\\$&")).test("x");
+`,
+  // No g flag: only the first metacharacter is escaped.
+  "escape-no-g.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[.*+?^\${}()|[\\]\\\\]/, "\\\\$&")).test("x");
+`,
+  // "$&" puts each match back without a backslash.
+  "escape-bad-replacement.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[.*+?^\${}()|[\\]\\\\]/g, "$&")).test("x");
+`,
+  // A range in the class: its members are not guessed.
+  "escape-range.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[.*+?^\${}()|[\\]\\\\a-z]/g, "\\\\$&")).test("x");
+`,
+  // An escape class in the class: \w turns letters into word-class escapes.
+  "escape-class-escape.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[.*+?^\${}()|[\\]\\\\\\w]/g, "\\\\$&")).test("x");
+`,
+  // Pass-throughs: String(), JSON.parse, Object.values and safeParse().data keep the taint.
+  "string-call.ts": `export const run = ({ parsedInput }: any) => new RegExp(String(parsedInput.pattern));
+`,
+  "json-parse.ts": `export async function POST(req: Request) {
+  const raw = await req.text();
+  return new RegExp(JSON.parse(raw).pattern).test("x");
+}
+`,
+  "object-values.ts": `export const run = ({ parsedInput }: any) => Object.values(parsedInput.patterns).map((p: any) => new RegExp(p));
+`,
+  "safe-parse-data.ts": `declare const S: { safeParse: (v: unknown) => any };
+export async function POST(req: Request) {
+  const result = S.safeParse(await req.json());
+  return result.success ? new RegExp(result.data.pattern).test("x") : false;
+}
+`,
+  // searchParams held in a variable of another name is still request input.
+  "search-params-alias.ts": `export function GET(req: { nextUrl: URL }) {
+  const sp = req.nextUrl.searchParams;
+  return new RegExp(sp.get("q") ?? "").test("x");
+}
+`,
+  "global-regexp.ts": `export const run = ({ parsedInput }: any) => new globalThis.RegExp(parsedInput.pattern).test("x");
+`,
+  "reduce-callback.ts": `export const run = ({ parsedInput }: any) =>
+  parsedInput.patterns.reduce((ok: boolean, p: string) => ok && new RegExp(p).test("x"), true);
+`,
   // Two call sites pass the value at different depths; the whole-value one still counts.
   "helper-two-call-sites.ts": `export async function POST(req: Request) {
   const body = await req.json();
