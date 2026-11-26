@@ -8,6 +8,7 @@ import {
   getDefaultFilterOperator,
   getFilterFieldOptions,
   getFilterFieldType,
+  getLegacyBooleanFilterValueOption,
   getQuestionValueOptions,
   toConditionGroup,
   toFilterRowUpdates,
@@ -102,6 +103,20 @@ describe("filter-conditions", () => {
     test("falls back to a text field for an unknown id", () => {
       expect(getFilterFieldType("FeedbackRecords.doesNotExist")).toBe("string");
       expect(getDefaultFilterOperator("FeedbackRecords.doesNotExist")).toBe("equals");
+    });
+  });
+
+  describe("boolean filter choices", () => {
+    test.each([undefined, "", "true", "false"])("adds no extra choice for %s", (value) => {
+      expect(getLegacyBooleanFilterValueOption(value)).toBeUndefined();
+    });
+
+    test("displays a saved free-text value without offering it as a choice", () => {
+      expect(getLegacyBooleanFilterValueOption("TRUE")).toEqual({
+        value: "TRUE",
+        label: "TRUE",
+        disabled: true,
+      });
     });
   });
 });

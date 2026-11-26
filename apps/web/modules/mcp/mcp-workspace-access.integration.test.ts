@@ -400,6 +400,41 @@ describe("organization & workspace access on MCP calls", () => {
     });
   });
 
+  test("archive and restore answer an out-of-grant id like a made-up one, and change nothing", async () => {
+    await setAccess(
+      setup,
+      { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+      { ...READ_ALL, surveys: "write" }
+    );
+
+    const outOfGrant = await callMcpTool({ accessToken: setup.accessToken }, "archive_survey", {
+      surveyId: setup.outside.surveyId,
+    });
+    const madeUp = await callMcpTool({ accessToken: setup.accessToken }, "archive_survey", {
+      surveyId: "z6p0x2v7q0m7r4c9k1n3b5h8",
+    });
+    expect(problemOf(outOfGrant)).toEqual({
+      ...problemOf(madeUp),
+      requestId: problemOf(outOfGrant).requestId,
+    });
+    expect(await prisma.survey.findUnique({ where: { id: setup.outside.surveyId } })).toMatchObject({
+      archivedAt: null,
+    });
+
+    await prisma.survey.update({
+      where: { id: setup.outside.surveyId },
+      data: { archivedAt: new Date() },
+    });
+    expectNotFound(
+      await callMcpTool({ accessToken: setup.accessToken }, "restore_survey", {
+        surveyId: setup.outside.surveyId,
+      })
+    );
+    expect(
+      (await prisma.survey.findUnique({ where: { id: setup.outside.surveyId } }))?.archivedAt
+    ).toBeInstanceOf(Date);
+  });
+
   test("Only selected organizations reaches every workspace in them, a later one included", async () => {
     await setAccess(setup, { access: "organizations", organizationIds: [setup.acmeId] });
     const later = await seedWorkspace(setup.acmeId, "Later", setup.userId);

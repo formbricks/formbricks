@@ -5,6 +5,10 @@ import { HUB_EMOTION_VALUES } from "@formbricks/types/feedback-source";
 import { FilterDateInput } from "@/modules/ee/analysis/charts/components/filter-date-input";
 import { FilterValueCombobox } from "@/modules/ee/analysis/charts/components/filter-value-combobox";
 import {
+  BOOLEAN_DIMENSION_VALUES,
+  getChartDimensionValueLabel,
+} from "@/modules/ee/analysis/charts/lib/dimension-value-label";
+import {
   CHART_FILTER_ROOT_ID,
   type TDatasetFilterFields,
   createDefaultFilterRow,
@@ -12,6 +16,7 @@ import {
   getFilterFieldOptions,
   getFilterFieldType,
   getFilterOperatorLabel,
+  getLegacyBooleanFilterValueOption,
   getNpsSegmentOptions,
   getQuestionValueOptions,
   toConditionGroup,
@@ -40,7 +45,6 @@ import {
   VALUE_BAND_DIMENSION_ID,
   VALUE_BAND_VALUES,
   getFilterOperatorsForType,
-  getTranslatedDimensionValueLabel,
   getTranslatedFieldLabel,
   isSelectableValueDimension,
 } from "@/modules/ee/analysis/lib/schema-definition";
@@ -51,6 +55,7 @@ import type {
   TGenericCondition,
 } from "@/modules/ui/components/conditions-editor/types";
 import { Input } from "@/modules/ui/components/input";
+import type { TComboboxGroupedOption } from "@/modules/ui/components/input-combo-box";
 
 interface FiltersPanelProps {
   filters: FilterNode[];
@@ -72,6 +77,9 @@ const isFixedValueBandCondition = (field: string, operator: string): boolean =>
   field === VALUE_BAND_DIMENSION_ID && (operator === "equals" || operator === "notEquals");
 
 const isExactMatchOperator = (operator: string): boolean => operator === "equals" || operator === "notEquals";
+
+const isBooleanPick = (field: string, operator: string): boolean =>
+  isExactMatchOperator(operator) && getFilterFieldType(field) === "boolean";
 
 /**
  * Chart filters drawn with the same `ConditionsEditor` as survey logic and quotas: connector
@@ -112,12 +120,12 @@ export function FiltersPanel({
     onFiltersChange(updateFilterRow(shownFilters, id, updates));
 
   // One option group per fixed-vocabulary dimension, labelled with the dimension's own name.
-  const fixedVocabularyGroup = (dimensionId: string, values: readonly string[]) => ({
+  const fixedVocabularyGroup = (dimensionId: string, values: readonly string[]): TComboboxGroupedOption => ({
     label: getTranslatedFieldLabel(dimensionId, t),
     value: dimensionId,
     options: values.map((value) => ({
       value,
-      label: getTranslatedDimensionValueLabel(dimensionId, value, t) ?? value,
+      label: getChartDimensionValueLabel(dimensionId, value, t) ?? value,
     })),
   });
 
@@ -139,6 +147,10 @@ export function FiltersPanel({
     // The band vocabulary is fixed and computed by Cube, so there is nothing to look up: the editor's
     // combobox offers the six tokens (a distinct-value lookup would also return the NULL band).
     if (isFixedValueBandCondition(field, operator)) {
+      return undefined;
+    }
+
+    if (isBooleanPick(field, operator)) {
       return undefined;
     }
 
@@ -215,6 +227,12 @@ export function FiltersPanel({
       }
       if (isFixedValueBandCondition(field, condition.operator)) {
         return { show: true, options: [fixedVocabularyGroup(VALUE_BAND_DIMENSION_ID, VALUE_BAND_VALUES)] };
+      }
+      if (isBooleanPick(field, condition.operator)) {
+        const group = fixedVocabularyGroup(field, BOOLEAN_DIMENSION_VALUES);
+        const savedOption = getLegacyBooleanFilterValueOption(condition.rightOperand?.value);
+        if (savedOption) group.options.push(savedOption);
+        return { show: true, options: [group] };
       }
       if (isQuestionPick(field, condition.operator)) {
         const current = condition.rightOperand?.value;

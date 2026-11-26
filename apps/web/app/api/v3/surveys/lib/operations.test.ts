@@ -2415,6 +2415,29 @@ describe("setV3SurveyBlockOrderResponse", () => {
     expect(body.invalid_params).toEqual([expect.objectContaining({ name: "blocks.0.logic.0" })]);
   });
 
+  test("numbers a block named in the reason by its stored position, like the path", async () => {
+    // ENG-7013: validation ran on [blk_b, blk_a]; blk_a at post-reorder index 1 is stored block 0.
+    vi.mocked(patchV3Survey).mockRejectedValue(
+      new V3SurveyReferenceValidationError([
+        {
+          name: "blocks.1.logic",
+          reason: "Conditional Logic: Cyclic logic detected in block 2 (A).",
+        },
+      ])
+    );
+
+    const response = await call({ order: ["blk_b", "blk_a"] });
+
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([
+      expect.objectContaining({
+        name: "blocks.0.logic",
+        reason: "Conditional Logic: Cyclic logic detected in block 1 (A).",
+      }),
+    ]);
+  });
+
   test("refuses an oversized order with one issue, before touching the survey", async () => {
     const response = await call({ order: Array.from({ length: 5000 }, () => 0) });
 

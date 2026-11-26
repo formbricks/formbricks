@@ -192,6 +192,7 @@ export const validateCardFieldsForAllLanguages = (
       input: fieldLabel,
       message,
       path,
+      params: { missingLabel: true },
     };
   }
 
@@ -209,6 +210,7 @@ export const validateCardFieldsForAllLanguages = (
         input: fieldLabel,
         message: `The ${field} in ${cardTypeLabel} is not present for the following languages: ${language.language.code}`,
         path,
+        params: { missingLabel: true, invalidLanguageCodes: [language.language.code] },
       };
     }
   }
@@ -219,7 +221,7 @@ export const validateCardFieldsForAllLanguages = (
       input: fieldLabel,
       message,
       path,
-      params: { invalidLanguageCodes },
+      params: { missingLabel: true, invalidLanguageCodes },
     };
   }
 

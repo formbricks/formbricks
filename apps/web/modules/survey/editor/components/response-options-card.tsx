@@ -57,7 +57,8 @@ export const ResponseOptionsCard = ({
   );
   const surveySchedulingTimeLabel = getSurveySchedulingTimeLabel(surveySchedulingConfig);
   const surveySchedulingTimeZoneLabel = surveySchedulingConfig.timeZone;
-  const [open, setOpen] = useState(localSurvey.type === "link");
+  // Open for every survey type, so settings like auto-advance are visible without hunting.
+  const [open, setOpen] = useState(true);
   const autoComplete = localSurvey.autoComplete !== null;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
@@ -579,11 +580,11 @@ export const ResponseOptionsCard = ({
             </>
           )}
           <AdvancedOptionToggle
-            htmlId="autoProgressRatingNps"
+            htmlId="autoAdvanceAfterOneAnswer"
             isChecked={Boolean(localSurvey.isAutoProgressingEnabled)}
             onToggle={handleAutoProgressToggle}
-            title={t("workspace.surveys.edit.auto_progress_rating_and_nps")}
-            description={t("workspace.surveys.edit.auto_progress_rating_and_nps_description")}
+            title={t("workspace.surveys.edit.auto_advance_after_one_answer")}
+            description={t("workspace.surveys.edit.auto_advance_after_one_answer_description")}
           />
           <AdvancedOptionToggle
             htmlId="hideBackButton"

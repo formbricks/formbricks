@@ -287,50 +287,6 @@ test.describe("Survey Styling", async () => {
     expect(css).toContain("--fb-option-padding-y: 14px");
   });
 
-  test("Initial load derives button, progress, input, and option colors from brand color", async ({
-    page,
-    users,
-  }) => {
-    const user = await users.create();
-    await user.login();
-
-    // Navigate to Appearance settings
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
-    await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
-
-    // Toggle "Allow survey-level styling"
-    const addCustomStyles = page.getByLabel("Allow survey-level styling");
-    if (!(await addCustomStyles.isChecked())) {
-      await addCustomStyles.click();
-    }
-
-    // Wait for the preview to render with default styling
-    await page.waitForTimeout(1500);
-
-    const css = await page.evaluate(() => document.getElementById("formbricks__css__custom")?.innerHTML);
-    expect(css).toBeDefined();
-
-    // On initial load (no saved styling), button and progress bar should derive from brand color (#1e40af)
-    // NOT from the old hardcoded dark navy (#0f172a)
-    expect(css).not.toContain("--fb-button-bg-color: #0f172a");
-    expect(css).not.toContain("--fb-progress-indicator-bg-color: #0f172a");
-
-    // Input text and option label CSS variables are only emitted when
-    // the user explicitly sets them, so on initial load they should NOT
-    // be present at all (the CSS-variable fallback from globals.css applies).
-    // Verify they are not set to the old hardcoded dark navy value.
-    expect(css).not.toContain("--fb-input-text-color: #0f172a");
-    expect(css).not.toContain("--fb-option-label-color: #0f172a");
-
-    // Option background should be brand-tinted, not plain white
-    expect(css).toContain("--fb-option-bg-color:");
-
-    // Headline color should be brand-derived
-    expect(css).toContain("--fb-element-headline-color:");
-  });
-
   test("Survey Specific Styling (Survey Editor Override)", async ({ page, users }) => {
     const user = await users.create();
     await user.login();

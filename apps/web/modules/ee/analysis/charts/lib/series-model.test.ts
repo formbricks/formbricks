@@ -110,6 +110,32 @@ describe("buildSeriesModel", () => {
     expect(model.rows.map((row) => row[SOURCE])).toEqual(["B", "A"]);
     expect(model.dataKeys).toEqual([COUNT]);
   });
+
+  test.each([false, true])(
+    "projects boolean categories into chart keys and keeps the empty group distinct (grouped: %s)",
+    (isGrouped) => {
+      const dimension = "FeedbackRecords.metadataFinished";
+      const data = [
+        { [dimension]: false, [SOURCE]: "Web", [COUNT]: 2 },
+        { [dimension]: true, [SOURCE]: "Web", [COUNT]: 3 },
+        { [dimension]: EMPTY_GROUP_VALUE, [SOURCE]: "Email", [COUNT]: 1 },
+      ];
+      const dimensions = isGrouped ? [dimension, SOURCE] : [dimension];
+      const model = buildSeriesModel({
+        data,
+        grouping: getChartGrouping({ measures: [COUNT], dimensions }),
+        xAxisKey: dimension,
+        hasCategoryAxis: true,
+        isGrouped,
+        measureKeys: [COUNT],
+        measureLabels: { [COUNT]: "Records" },
+        formatGroupValue,
+      });
+
+      expect(model.rows.map((row) => row[dimension])).toEqual(["true", "false", EMPTY_GROUP_VALUE]);
+      expect(data.map((row) => row[dimension])).toEqual([false, true, EMPTY_GROUP_VALUE]);
+    }
+  );
 });
 
 describe("getAreaFillOpacity", () => {
@@ -122,6 +148,19 @@ describe("getAreaFillOpacity", () => {
 
 describe("createGroupValueFormatter", () => {
   const t = ((key: string) => key) as unknown as Parameters<typeof createGroupValueFormatter>[0];
+
+  test.each(["FeedbackRecords.metadataFinished", "FeedbackRecords.valueBoolean"])(
+    "localizes boolean categories for %s",
+    (dimension) => {
+      const format = createGroupValueFormatter(t);
+      expect(format(dimension, true)).toBe("common.true");
+      expect(format(dimension, "true")).toBe("common.true");
+      expect(format(dimension, false)).toBe("common.false");
+      expect(format(dimension, "false")).toBe("common.false");
+      expect(format(dimension, EMPTY_GROUP_VALUE)).toBe("workspace.analysis.charts.no_value");
+      expect(format(SOURCE, "false")).toBe("false");
+    }
+  );
 
   test("names the empty group by its bucket, else (no value)", () => {
     const format = createGroupValueFormatter(t);

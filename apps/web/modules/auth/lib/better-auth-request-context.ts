@@ -1,5 +1,6 @@
 import "server-only";
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { TOAuthStateCookieDiagnosis } from "./oauth-state-cookie-diagnosis";
 
 /**
  * Request scope for Better Auth observability (ENG-2259).
@@ -24,6 +25,12 @@ export interface BetterAuthRequestContext {
   path: string;
   /** HTTP method, e.g. `POST`. */
   method: string;
+  /**
+   * On an OAuth callback only: which state-cookie cause a `state_security_mismatch` would have (ENG-6692).
+   * Diagnosed by the route before the handler runs, because the logger that captures the throw is
+   * synchronous and verifying the cookie's signature is not. A label, never the cookie or the state.
+   */
+  oauthStateCookie?: TOAuthStateCookieDiagnosis;
 }
 
 const betterAuthRequestContext = new AsyncLocalStorage<BetterAuthRequestContext>();
