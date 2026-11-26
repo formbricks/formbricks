@@ -692,7 +692,6 @@ describe("getContactsInSegment", () => {
       expect.objectContaining({
         where: expect.objectContaining({
           id: { in: ["clrestricted00000000000001"] },
-          workspaceId: mockWorkspaceId,
           AND: [expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) })],
         }),
       })

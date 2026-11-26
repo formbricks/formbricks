@@ -22,8 +22,9 @@ import {
 } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
   CONTACT_DIRECTORY_MISSING_MESSAGE,
+  ContactDirectoryMissingError,
   getReportingWorkspaceByDirectory,
-  getWorkspaceContactDirectory,
+  withWorkspaceDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 
 /**
@@ -78,36 +79,37 @@ export const createContactAttributeKey = async (
     });
   }
 
-  // Keys belong to the workspace's contact directory; with none, nothing is created.
-  const directory = await getWorkspaceContactDirectory(workspaceId);
-  if (!directory) {
-    return err({
-      type: "forbidden",
-      details: [{ field: "workspaceId", issue: CONTACT_DIRECTORY_MISSING_MESSAGE }],
-    });
-  }
+  const buildKeyCreateData = (directoryId: string): Prisma.ContactAttributeKeyCreateInput => ({
+    directory: { connect: { id: directoryId } },
+    workspace: {
+      connect: {
+        id: workspaceId,
+      },
+    },
+    name: name ?? formatSnakeCaseToTitleCase(key),
+    description,
+    key,
+    ...(dataType && { dataType }),
+  });
 
   try {
-    const prismaData: Prisma.ContactAttributeKeyCreateInput = {
-      directory: { connect: { id: directory.id } },
-      workspace: {
-        connect: {
-          id: workspaceId,
-        },
-      },
-      name: name ?? formatSnakeCaseToTitleCase(key),
-      description,
-      key,
-      ...(dataType && { dataType }),
-    };
-
-    const createdContactAttributeKey = await prisma.contactAttributeKey.create({
-      data: prismaData,
-      select: selectContactAttributeKey,
-    });
+    // Keys belong to the workspace's contact directory, read under the workspace's lock so the key can't
+    // land in a directory the workspace has just left; with none, nothing is created.
+    const createdContactAttributeKey = await withWorkspaceDirectory(workspaceId, (tx, directory) =>
+      tx.contactAttributeKey.create({
+        data: buildKeyCreateData(directory.id),
+        select: selectContactAttributeKey,
+      })
+    );
 
     return ok(withCallerWorkspace(createdContactAttributeKey, workspaceId));
   } catch (error) {
+    if (error instanceof ContactDirectoryMissingError) {
+      return err({
+        type: "forbidden",
+        details: [{ field: "workspaceId", issue: CONTACT_DIRECTORY_MISSING_MESSAGE }],
+      });
+    }
     if (
       isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
       isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)

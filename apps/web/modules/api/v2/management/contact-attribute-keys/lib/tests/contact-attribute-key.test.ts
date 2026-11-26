@@ -11,6 +11,7 @@ import { createContactAttributeKey, getContactAttributeKeys } from "../contact-a
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),
+    $executeRaw: vi.fn(),
     contactAttributeKey: {
       findMany: vi.fn(),
       count: vi.fn(),
@@ -26,6 +27,9 @@ vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // A create runs in a transaction that locks the workspace and reads its directory (`withWorkspaceDirectory`).
+  vi.mocked(prisma.$transaction).mockImplementation((async (arg: unknown) =>
+    typeof arg === "function" ? arg(prisma) : Promise.all(arg as Promise<unknown>[])) as never);
   vi.mocked(prisma.workspace.findMany).mockResolvedValue([
     { id: "ws1", contactDirectoryId: "dir-1" },
     { id: "ws2", contactDirectoryId: "dir-1" },

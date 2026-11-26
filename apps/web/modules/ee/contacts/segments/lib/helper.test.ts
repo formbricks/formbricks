@@ -514,7 +514,7 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
 
     expect(result).toBe(true);
     expect(mockSurveyFindFirst).toHaveBeenCalledWith({
-      where: { id: { in: [visibleId, restrictedId] }, workspaceId, AND: [memberHiddenWhere] },
+      where: { id: { in: [visibleId, restrictedId] }, AND: [memberHiddenWhere] },
       select: { id: true },
     });
   });

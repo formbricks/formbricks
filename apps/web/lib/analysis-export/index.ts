@@ -5,7 +5,6 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
 import { getSurveyUploadElementIds, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { type TResponseCursor, whereAfterResponseCursor } from "../response/pagination";
 import { toResultsResponseContact } from "../response/results-contact";
@@ -172,12 +171,23 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
     if (!survey) throw new ResourceNotFoundError("Survey", input.surveyId);
 
     const where = buildAnalysisWhere(survey, input.filter, input.includeLowQuality);
-    const [included, lowQualityLeftOut, contactAttributeKeys, workspaceDirectoryId] = await Promise.all([
+    const [included, lowQualityLeftOut, contactAttributeKeys] = await Promise.all([
       prisma.response.count({ where: where.included }),
       where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,
       fields.contactAttributes ? getContactAttributeKeys(survey.workspaceId) : [],
-      fields.contact ? getWorkspaceContactDirectoryId(survey.workspaceId) : null,
     ]);
+    // Read with each batch, not once: an export can run for a while, and a contact of a directory the
+    // workspace has left meanwhile must come out as unavailable from then on. Not the request-deduped
+    // `getWorkspaceContactDirectoryId`, which would keep answering with the first read.
+    const readWorkspaceDirectoryId = async (): Promise<string | null> =>
+      fields.contact
+        ? ((
+            await prisma.workspace.findUnique({
+              where: { id: survey.workspaceId },
+              select: { contactDirectoryId: true },
+            })
+          )?.contactDirectoryId ?? null)
+        : null;
 
     const builder = createAnalysisRowBuilder({
       survey,
@@ -197,12 +207,16 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
     async function* rows() {
       let cursor: TResponseCursor | undefined;
       while (true) {
-        const batch = (await prisma.response.findMany({
-          where: whereAfterResponseCursor(where.included, cursor),
-          select,
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-          take: batchSize,
-        })) as unknown as TAnalysisSelected[];
+        const [batchRows, workspaceDirectoryId] = await Promise.all([
+          prisma.response.findMany({
+            where: whereAfterResponseCursor(where.included, cursor),
+            select,
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            take: batchSize,
+          }),
+          readWorkspaceDirectoryId(),
+        ]);
+        const batch = batchRows as unknown as TAnalysisSelected[];
 
         yield batch.map((row) => {
           const response = toAnalysisResponse(row, workspaceDirectoryId);

@@ -6,7 +6,11 @@ import {
   whereDirectoryAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
-import type { TWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  ContactDirectoryMissingError,
+  type TWorkspaceContactDirectory,
+  withWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import {
   TContactCreateRequest,
   TContactResponse,
@@ -93,27 +97,34 @@ export const createContact = async (
       };
     });
 
-    const result = await prisma.contact.create({
-      data: {
-        // The directory owns the contact; the workspace records where it was created.
-        directoryId: directory.id,
-        workspaceId,
-        attributes: {
-          createMany: {
-            data: attributeData,
+    // Under the workspace's lock, and only while `directory` is still its directory: a removal that
+    // committed after the checks above refuses the insert instead of leaving the contact behind.
+    const result = await withWorkspaceDirectory(
+      workspaceId,
+      (tx) =>
+        tx.contact.create({
+          data: {
+            // The directory owns the contact; the workspace records where it was created.
+            directoryId: directory.id,
+            workspaceId,
+            attributes: {
+              createMany: {
+                data: attributeData,
+              },
+            },
           },
-        },
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        attributes: {
-          include: {
-            attributeKey: true,
+          select: {
+            id: true,
+            createdAt: true,
+            attributes: {
+              include: {
+                attributeKey: true,
+              },
+            },
           },
-        },
-      },
-    });
+        }),
+      { expectedDirectoryId: directory.id }
+    );
 
     // Format the response with flattened attributes, resolving from typed columns
     const flattenedAttributes: Record<string, string> = {};
@@ -130,6 +141,9 @@ export const createContact = async (
 
     return ok(response);
   } catch (error) {
+    if (error instanceof ContactDirectoryMissingError) {
+      return err({ type: "forbidden", details: [{ field: "workspaceId", issue: error.message }] });
+    }
     return err({
       type: "internal_server_error",
       details: [

@@ -748,4 +748,40 @@ describe("directory names", () => {
       )
     ).toEqual(["Acme", "NorthWind"]);
   });
+
+  test("a rename waits for another save of the organization's names, then sees its name", async () => {
+    const organizationId = await createOrganization();
+    const directory = await createContactDirectory({
+      organizationId,
+      name: "Acme",
+      matchingKey: "email",
+      workspaceIds: [await createWorkspaceWithoutDirectory(organizationId, "A")],
+    });
+
+    // Another save, as the service makes one: it holds the names lock and writes "NORTHWIND", but has
+    // not committed yet when the rename to "Northwind" starts.
+    let releaseOtherSave = () => {};
+    const otherSaveHolds = new Promise<void>((resolve) => {
+      releaseOtherSave = resolve;
+    });
+    let otherSaveStarted = () => {};
+    const started = new Promise<void>((resolve) => {
+      otherSaveStarted = resolve;
+    });
+    const otherSave = prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"contact-directory-name:" + organizationId}))`;
+      await tx.contactDirectory.create({ data: { organizationId, name: "NORTHWIND", matchingKey: "email" } });
+      otherSaveStarted();
+      await otherSaveHolds;
+    });
+    await started;
+
+    const rename = updateContactDirectory({ organizationId, directoryId: directory.id, name: "Northwind" });
+    // Without the lock the rename would find the name free now, before the other save commits.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    releaseOtherSave();
+    await otherSave;
+
+    await expect(rename).rejects.toBeInstanceOf(ContactDirectoryNameTakenError);
+  });
 });

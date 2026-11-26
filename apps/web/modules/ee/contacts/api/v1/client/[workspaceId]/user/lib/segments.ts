@@ -64,9 +64,10 @@ export type TContactInteractionRows = {
  * The rows the in-memory evaluator reads, each marked with whether it counts for `any` scope (ENG-6870:
  * only workspace-visible surveys do). The restricted surveys among the contact's own are looked up only
  * when `needsAnyScope`, in one query, so a workspace without `any` filters pays nothing on this hot path.
+ * In a shared directory the rows include other workspaces' surveys, so the lookup isn't limited to one
+ * workspace: a restricted survey anywhere doesn't count, as in the Prisma path.
  */
 export const buildContactInteractionData = async (
-  workspaceId: string,
   rows: TContactInteractionRows,
   needsAnyScope: boolean
 ): Promise<TContactInteractionData> => {
@@ -76,7 +77,7 @@ export const buildContactInteractionData = async (
       ? new Set(
           (
             await prisma.survey.findMany({
-              where: { workspaceId, id: { in: surveyIds }, AND: [effectivelyRestrictedWhere] },
+              where: { id: { in: surveyIds }, AND: [effectivelyRestrictedWhere] },
               select: { id: true },
             })
           ).map((survey) => survey.id)
@@ -103,7 +104,6 @@ const loadInteractionData = async (
 ): Promise<TContactInteractionData | null> => {
   try {
     return await buildContactInteractionData(
-      workspaceId,
       rows,
       segments.some((segment) => hasAnyScopeInteractionFilter((segment.filters ?? []) as TBaseFilters))
     );

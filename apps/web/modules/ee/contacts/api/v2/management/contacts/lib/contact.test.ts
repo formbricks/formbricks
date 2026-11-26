@@ -14,15 +14,26 @@ vi.mock("@formbricks/database", () => ({
     contactAttributeKey: {
       findMany: vi.fn(),
     },
+    // The insert runs in a transaction that locks the workspace and reads its directory again.
+    $transaction: vi.fn(async (run: (tx: unknown) => unknown) =>
+      run((await import("@formbricks/database")).prisma)
+    ),
+    $executeRaw: vi.fn(),
+    workspace: { findUnique: vi.fn() },
   },
 }));
 
 const emailDirectory = { id: "directory123", matchingKey: "email" as const };
 const userIdDirectory = { id: "directory-user", matchingKey: "userId" as const };
 
+/** The workspace's directory when the insert reads it under the lock. */
+const workspaceOnDirectory = (directory: { id: string; matchingKey: "email" | "userId" } | null) =>
+  vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ contactDirectory: directory } as never);
+
 describe("contact.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    workspaceOnDirectory(emailDirectory);
   });
 
   describe("createContact", () => {
@@ -120,7 +131,26 @@ describe("contact.ts", () => {
       expect(prisma.contact.create).not.toHaveBeenCalled();
     });
 
+    test("creates nothing once the workspace has left the directory the checks used", async () => {
+      // A removal committed after the duplicate checks: the workspace now has no directory.
+      workspaceOnDirectory(null);
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+        { id: "key-email", key: "email", dataType: "string" },
+      ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
+
+      const result = await createContact(
+        { workspaceId: "workspace123", attributes: { email: "john@example.com" } },
+        emailDirectory
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.type).toBe("forbidden");
+      expect(prisma.contact.create).not.toHaveBeenCalled();
+    });
+
     test("creates the contact in the directory with keys of the directory", async () => {
+      workspaceOnDirectory(userIdDirectory);
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
         { id: "key-user", key: "userId", dataType: "string" },

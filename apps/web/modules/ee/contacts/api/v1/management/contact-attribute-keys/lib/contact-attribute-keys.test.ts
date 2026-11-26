@@ -20,6 +20,11 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
     },
+    // The count and the insert run in a transaction that locks the workspace (`withWorkspaceDirectory`).
+    $transaction: vi.fn(async (run: (tx: unknown) => unknown) =>
+      run((await import("@formbricks/database")).prisma)
+    ),
+    $executeRaw: vi.fn(),
   },
 }));
 

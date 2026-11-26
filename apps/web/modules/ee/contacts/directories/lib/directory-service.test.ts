@@ -30,6 +30,7 @@ vi.mock("server-only", () => ({}));
 const db = vi.hoisted(() => ({
   $transaction: vi.fn(),
   $queryRaw: vi.fn(),
+  $executeRaw: vi.fn(),
   contactDirectory: { findMany: vi.fn(), findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   contactAttributeKey: { createMany: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
   workspace: { findMany: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },

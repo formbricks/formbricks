@@ -225,9 +225,22 @@ const runDirectoryTransaction = async <T>(operation: (tx: TClient) => Promise<T>
   }
 };
 
+const DIRECTORY_NAME_LOCK_PREFIX = "contact-directory-name:";
+
+/**
+ * Serializes the organization's directory name checks with their writes. Without it, two saves naming
+ * different directories "Northwind" and "NORTHWIND" at once would each find the name free. Taken first in
+ * the transaction, before the directory and workspace row locks, so the lock order stays the same.
+ */
+const lockDirectoryNames = async (tx: TClient, organizationId: string): Promise<void> => {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${DIRECTORY_NAME_LOCK_PREFIX + organizationId}))`;
+};
+
 /**
  * Names are unique in an organization whatever their case, so "northwind" can't sit next to "Northwind"
- * and look like the same directory. The database's unique index only catches the exact same spelling.
+ * and look like the same directory. The database's unique index only catches the exact same spelling; a
+ * case-insensitive one would fail the upgrade for workspaces named "Alpha" and "alpha". Run it under
+ * {@link lockDirectoryNames}.
  */
 const assertDirectoryNameFree = async (
   tx: TClient,
@@ -265,6 +278,7 @@ export const createContactDirectory = async ({
   const directoryName = normalizeName(name);
 
   return runDirectoryTransaction(async (tx) => {
+    await lockDirectoryNames(tx, organizationId);
     await assertDirectoryNameFree(tx, organizationId, directoryName);
     const directory = await tx.contactDirectory.create({
       data: { organizationId, name: directoryName, matchingKey },
@@ -361,6 +375,7 @@ export const updateContactDirectory = async ({
   const nameChange = name === undefined ? undefined : normalizeName(name);
 
   return runDirectoryTransaction(async (tx) => {
+    if (nameChange !== undefined) await lockDirectoryNames(tx, organizationId);
     const [directory] = await tx.$queryRaw<{ id: string; name: string; isArchived: boolean }[]>`
       SELECT "id", "name", "isArchived" FROM "ContactDirectory"
       WHERE "organizationId" = ${organizationId} AND "id" = ${directoryId}

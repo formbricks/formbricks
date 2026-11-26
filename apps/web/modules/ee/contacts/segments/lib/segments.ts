@@ -25,9 +25,11 @@ import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import {
+  ContactDirectoryMissingError,
   getWorkspaceContactDirectory,
   getWorkspaceContactDirectoryId,
   requireWorkspaceContactDirectory,
+  withWorkspaceDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
@@ -497,21 +499,34 @@ export const cloneSegment = async (
       throw new ValidationError("Invalid filters");
     }
 
-    const clonedSegment = await prisma.segment.create({
-      data: {
-        title: clonedTitle,
-        description: segment.description,
-        isPrivate: segment.isPrivate,
-        workspaceId,
-        directoryId: segment.directoryId,
-        filters: segment.filters,
-        surveys: {
-          connect: {
-            id: surveyId,
+    // Under the workspace's lock, and only while the segment's directory is still the workspace's: the
+    // caller checked that, but a removal committed since must not get a copy into the old directory.
+    const segmentDirectoryId = segment.directoryId;
+    const clonedSegment = await withWorkspaceDirectory(
+      workspaceId,
+      (tx) =>
+        tx.segment.create({
+          data: {
+            title: clonedTitle,
+            description: segment.description,
+            isPrivate: segment.isPrivate,
+            workspaceId,
+            directoryId: segmentDirectoryId,
+            filters: segment.filters,
+            surveys: {
+              connect: {
+                id: surveyId,
+              },
+            },
           },
-        },
-      },
-      select: selectSegment,
+          select: selectSegment,
+        }),
+      { expectedDirectoryId: segmentDirectoryId }
+    ).catch((error: unknown) => {
+      // The workspace no longer reaches the segment.
+      if (error instanceof ContactDirectoryMissingError)
+        throw new ResourceNotFoundError("segment", segmentId);
+      throw error;
     });
 
     return transformPrismaSegment(clonedSegment);

@@ -1,6 +1,6 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import type { ContactDirectoryMatchingKey, ContactWhereInput } from "@formbricks/database/prisma";
+import type { ContactDirectoryMatchingKey, ContactWhereInput, Prisma } from "@formbricks/database/prisma";
 
 /** The message every contact API and `setUserId` answers with when the workspace has no directory. */
 export const CONTACT_DIRECTORY_MISSING_MESSAGE =
@@ -53,6 +53,48 @@ export const requireWorkspaceContactDirectory = async (
   if (!directory) throw new ContactDirectoryMissingError();
   return directory;
 };
+
+/**
+ * The workspace's directory, read in `tx` with the workspace's row held `FOR SHARE` until `tx` ends.
+ * Removing the workspace from a directory takes the same row `FOR UPDATE`, so it waits for `tx`, or `tx`
+ * sees the workspace already gone: a write in `tx` never lands in a directory the workspace has left.
+ * Only the workspace row is locked, never the directory's, so this can't deadlock with a directory save
+ * (directory row first, then workspace rows).
+ */
+export const lockWorkspaceDirectory = async (
+  tx: Prisma.TransactionClient,
+  workspaceId: string
+): Promise<TWorkspaceContactDirectory | null> => {
+  await tx.$executeRaw`SELECT 1 FROM "Workspace" WHERE "id" = ${workspaceId} FOR SHARE`;
+  // Read after the lock, so it sees the directory a removal that held the row committed.
+  const workspace = await tx.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { contactDirectory: { select: { id: true, matchingKey: true } } },
+  });
+  return workspace?.contactDirectory ?? null;
+};
+
+/**
+ * Runs `write` in a transaction that holds the workspace's directory with {@link lockWorkspaceDirectory}.
+ * Throws {@link ContactDirectoryMissingError} when the workspace has no directory, or when
+ * `expectedDirectoryId` (one the caller read earlier) is no longer its directory. `timeout` raises the
+ * transaction's time limit for a write that does more than a few statements.
+ */
+export const withWorkspaceDirectory = async <T>(
+  workspaceId: string,
+  write: (tx: Prisma.TransactionClient, directory: TWorkspaceContactDirectory) => Promise<T>,
+  { expectedDirectoryId, timeout }: { expectedDirectoryId?: string; timeout?: number } = {}
+): Promise<T> =>
+  prisma.$transaction(
+    async (tx) => {
+      const directory = await lockWorkspaceDirectory(tx, workspaceId);
+      if (!directory || (expectedDirectoryId !== undefined && directory.id !== expectedDirectoryId)) {
+        throw new ContactDirectoryMissingError();
+      }
+      return write(tx, directory);
+    },
+    timeout === undefined ? undefined : { timeout }
+  );
 
 /**
  * The contacts a workspace sees: every contact of its directory, in the same query. A contact's own

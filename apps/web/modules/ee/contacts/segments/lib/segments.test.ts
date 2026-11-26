@@ -85,6 +85,19 @@ vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) =>
       if (!directory) throw new actual.ContactDirectoryMissingError();
       return directory;
     },
+    // A copy is inserted under the workspace's lock; here on the mocked client, with the directory
+    // `getWorkspaceContactDirectory` answers, refused like the real one when it isn't the expected one.
+    withWorkspaceDirectory: async (
+      id: string,
+      write: (tx: unknown, directory: unknown) => Promise<unknown>,
+      options?: { expectedDirectoryId?: string }
+    ) => {
+      const directory = await getWorkspaceContactDirectory(id);
+      if (!directory || (options?.expectedDirectoryId && directory.id !== options.expectedDirectoryId)) {
+        throw new actual.ContactDirectoryMissingError();
+      }
+      return write((await import("@formbricks/database")).prisma, directory);
+    },
   };
 });
 
@@ -730,6 +743,20 @@ describe("Segment Service Tests", () => {
           data: expect.objectContaining({ title: "Copy of Test Segment (2)" }),
         })
       );
+    });
+
+    test("creates no copy once the survey's workspace has left the segment's directory", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([mockSegmentPrisma]);
+      // The copy route checked the workspace's directory; a removal committed before the insert.
+      vi.mocked(getWorkspaceContactDirectory).mockResolvedValue({
+        id: "other-directory",
+        matchingKey: "email",
+      });
+
+      await expect(cloneSegment(segmentId, surveyId, surveyWorkspaceId)).rejects.toThrow(
+        ResourceNotFoundError
+      );
+      expect(prisma.segment.create).not.toHaveBeenCalled();
     });
 
     test("numbers the copy after the highest exact copy, whatever order the titles come in", async () => {

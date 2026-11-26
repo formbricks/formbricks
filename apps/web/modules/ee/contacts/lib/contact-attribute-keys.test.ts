@@ -26,10 +26,23 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
-vi.mock("./contact-directory", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./contact-directory")>()),
-  requireWorkspaceContactDirectory: vi.fn(),
-}));
+vi.mock("./contact-directory", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./contact-directory")>();
+  const requireWorkspaceContactDirectory = vi.fn();
+  return {
+    ...actual,
+    requireWorkspaceContactDirectory,
+    // The writes run under the workspace's lock in a transaction; here, on the mocked client, with the
+    // directory `requireWorkspaceContactDirectory` answers (or its error).
+    withWorkspaceDirectory: vi.fn(
+      async (workspaceId: string, write: (tx: unknown, directory: unknown) => Promise<unknown>) =>
+        write(
+          (await import("@formbricks/database")).prisma,
+          await requireWorkspaceContactDirectory(workspaceId)
+        )
+    ),
+  };
+});
 
 const workspaceId = "workspace-1";
 /** The keys a workspace sees: every key of its directory, never filtered on `key.workspaceId`. */
@@ -213,6 +226,10 @@ describe("createContactAttributeKey", () => {
 describe("updateContactAttributeKey", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(requireWorkspaceContactDirectory).mockResolvedValue({
+      id: "directory-1",
+      matchingKey: "email",
+    });
   });
 
   test("throws ResourceNotFoundError for a key outside the workspace's directory", async () => {
@@ -223,7 +240,7 @@ describe("updateContactAttributeKey", () => {
       ResourceNotFoundError
     );
     expect(prisma.contactAttributeKey.findFirst).toHaveBeenCalledWith({
-      where: { id, ...directoryScope },
+      where: { id, directoryId: "directory-1" },
       select: { type: true },
     });
     expect(prisma.contactAttributeKey.update).not.toHaveBeenCalled();
@@ -266,6 +283,10 @@ describe("updateContactAttributeKey", () => {
 describe("deleteContactAttributeKey", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(requireWorkspaceContactDirectory).mockResolvedValue({
+      id: "directory-1",
+      matchingKey: "email",
+    });
   });
 
   test("throws ResourceNotFoundError for a key outside the workspace's directory", async () => {
@@ -274,7 +295,7 @@ describe("deleteContactAttributeKey", () => {
 
     await expect(deleteContactAttributeKey(id, workspaceId)).rejects.toThrow(ResourceNotFoundError);
     expect(prisma.contactAttributeKey.findFirst).toHaveBeenCalledWith({
-      where: { id, ...directoryScope },
+      where: { id, directoryId: "directory-1" },
       select: { type: true },
     });
     expect(prisma.contactAttributeKey.delete).not.toHaveBeenCalled();

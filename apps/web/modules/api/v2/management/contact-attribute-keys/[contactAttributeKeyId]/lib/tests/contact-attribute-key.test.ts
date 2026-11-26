@@ -21,6 +21,14 @@ vi.mock("@formbricks/database", () => ({
     contactAttribute: {
       findMany: vi.fn(),
     },
+    // The writes run in a transaction that locks the caller's workspace and reads its directory.
+    $transaction: vi.fn(async (run: (tx: unknown) => unknown) =>
+      run((await import("@formbricks/database")).prisma)
+    ),
+    $executeRaw: vi.fn(),
+    workspace: {
+      findUnique: vi.fn(async () => ({ contactDirectory: { id: "directory-1", matchingKey: "email" } })),
+    },
   },
 }));
 
@@ -141,6 +149,20 @@ describe("updateContactAttributeKey", () => {
       expect(result.data).toEqual({ ...updatedKey, workspaceId: "caller-workspace" });
       expect(result.data).not.toHaveProperty("directoryId");
     }
+    // Only while the key is in the caller's workspace's directory.
+    expect(prisma.contactAttributeKey.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "cak123", directoryId: "directory-1" } })
+    );
+  });
+
+  test("returns not_found once the caller's workspace has no directory", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce({ contactDirectory: null } as never);
+
+    const result = await updateContactAttributeKey("cak123", "caller-workspace", mockUpdateInput);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.type).toBe("not_found");
+    expect(prisma.contactAttributeKey.update).not.toHaveBeenCalled();
   });
 
   test("returns not_found if record does not exist", async () => {
@@ -218,6 +240,9 @@ describe("deleteContactAttributeKey", () => {
       expect(result.data).toEqual({ ...selectedKeyFields, workspaceId: "caller-workspace" });
       expect(result.data).not.toHaveProperty("directoryId");
     }
+    expect(prisma.contactAttributeKey.delete).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "cak123", directoryId: "directory-1" } })
+    );
   });
 
   test("returns not_found if record does not exist", async () => {

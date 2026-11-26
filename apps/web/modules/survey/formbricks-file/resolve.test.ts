@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   CONTACT_DIRECTORY_MISSING_MESSAGE,
-  ContactDirectoryMissingError,
   getWorkspaceContactDirectory,
-  requireWorkspaceContactDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import type { TFormbricksFileReferences } from "./envelope";
@@ -12,7 +10,6 @@ import { applyFormbricksFileReferences, planFormbricksFileReferences } from "./r
 vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
   getWorkspaceContactDirectory: vi.fn(),
-  requireWorkspaceContactDirectory: vi.fn(async () => ({ id: "dir-1", matchingKey: "email" })),
 }));
 
 const WORKSPACE_ID = "clxx1234567890123456789012";
@@ -189,6 +186,7 @@ const plannedCodeAction = {
 const planOf = (actionClasses: Map<string, { create: typeof plannedCodeAction }>) => ({
   actionClasses,
   attributeKeysToCreate: [],
+  attributeKeyDirectoryId: null,
   languagesToCreate: [],
   issues: [],
 });
@@ -267,6 +265,7 @@ describe("applyFormbricksFileReferences", () => {
         ],
       ]),
       attributeKeysToCreate: [],
+      attributeKeyDirectoryId: null,
       languagesToCreate: [],
       issues: [],
     });
@@ -279,6 +278,9 @@ describe("applyFormbricksFileReferences", () => {
     const createManyAndReturn = vi.fn(async () => [{ key: "plan_tier" }]);
     const tx = {
       $executeRaw: vi.fn(async () => 0),
+      workspace: {
+        findUnique: vi.fn(async () => ({ contactDirectory: { id: "dir-1", matchingKey: "email" } })),
+      },
       actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
       contactAttributeKey: { count: vi.fn(async () => 0), createManyAndReturn },
       language: { createManyAndReturn: vi.fn(async () => []) },
@@ -287,6 +289,7 @@ describe("applyFormbricksFileReferences", () => {
     await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
       actionClasses: new Map(),
       attributeKeysToCreate: [{ key: "plan_tier", name: null, description: null, dataType: "string" }],
+      attributeKeyDirectoryId: "dir-1",
       languagesToCreate: [],
       issues: [],
     });
@@ -304,6 +307,9 @@ describe("applyFormbricksFileReferences", () => {
     const executeRaw = vi.fn(async () => 0);
     const tx = {
       $executeRaw: executeRaw,
+      workspace: {
+        findUnique: vi.fn(async () => ({ contactDirectory: { id: "dir-1", matchingKey: "email" } })),
+      },
       actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
       contactAttributeKey: { count, createManyAndReturn },
       language: { createManyAndReturn: vi.fn(async () => []) },
@@ -312,12 +318,14 @@ describe("applyFormbricksFileReferences", () => {
     await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
       actionClasses: new Map(),
       attributeKeysToCreate: [{ key: "plan", name: "Plan", description: null, dataType: "string" }],
+      attributeKeyDirectoryId: "dir-1",
       languagesToCreate: [],
       issues: [],
     });
 
     expect(count).toHaveBeenCalledWith({ where: { directoryId: "dir-1" } });
-    expect(executeRaw.mock.calls[0]).toContain("survey-import:attribute-keys:dir-1");
+    // After the workspace lock: the cap lock on the directory.
+    expect(executeRaw.mock.calls.flat()).toContain("survey-import:attribute-keys:dir-1");
     expect(createManyAndReturn).toHaveBeenCalledWith(
       expect.objectContaining({
         data: [expect.objectContaining({ key: "plan", directoryId: "dir-1", workspaceId: WORKSPACE_ID })],
@@ -325,11 +333,12 @@ describe("applyFormbricksFileReferences", () => {
     );
   });
 
-  test("creates no attribute key for a workspace with no directory", async () => {
-    vi.mocked(requireWorkspaceContactDirectory).mockRejectedValueOnce(new ContactDirectoryMissingError());
+  test("creates no attribute key once the workspace has no directory", async () => {
     const createManyAndReturn = vi.fn(async () => []);
     const tx = {
       $executeRaw: vi.fn(async () => 0),
+      // The workspace was removed from its directory after the plan.
+      workspace: { findUnique: vi.fn(async () => ({ contactDirectory: null })) },
       actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
       contactAttributeKey: { count: vi.fn(async () => 0), createManyAndReturn },
       language: { createManyAndReturn: vi.fn(async () => []) },
@@ -339,10 +348,36 @@ describe("applyFormbricksFileReferences", () => {
       applyFormbricksFileReferences(tx, WORKSPACE_ID, {
         actionClasses: new Map(),
         attributeKeysToCreate: [{ key: "plan", name: "Plan", description: null, dataType: "string" }],
+        attributeKeyDirectoryId: "dir-1",
         languagesToCreate: [],
         issues: [],
       })
-    ).rejects.toThrow(ContactDirectoryMissingError);
+    ).rejects.toBeInstanceOf(SurveyImportInputError);
+    expect(createManyAndReturn).not.toHaveBeenCalled();
+  });
+
+  test("refuses when the workspace moved to another directory after the plan", async () => {
+    const createManyAndReturn = vi.fn(async () => []);
+    const tx = {
+      $executeRaw: vi.fn(async () => 0),
+      workspace: {
+        findUnique: vi.fn(async () => ({ contactDirectory: { id: "dir-2", matchingKey: "email" } })),
+      },
+      actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
+      contactAttributeKey: { count: vi.fn(async () => 0), createManyAndReturn },
+      language: { createManyAndReturn: vi.fn(async () => []) },
+    } as never;
+
+    // The plan matched "plan" in dir-1 and creates nothing; the survey's filter still needs it.
+    const refusal = await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
+      actionClasses: new Map(),
+      attributeKeysToCreate: [],
+      attributeKeyDirectoryId: "dir-1",
+      languagesToCreate: [],
+      issues: [],
+    }).catch((error: unknown) => error);
+
+    expect(refusal).toBeInstanceOf(SurveyImportInputError);
     expect(createManyAndReturn).not.toHaveBeenCalled();
   });
 
@@ -351,6 +386,9 @@ describe("applyFormbricksFileReferences", () => {
     const createManyAndReturn = vi.fn(async () => []);
     const tx = {
       $executeRaw: executeRaw,
+      workspace: {
+        findUnique: vi.fn(async () => ({ contactDirectory: { id: "dir-1", matchingKey: "email" } })),
+      },
       actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
       // Another import filled the workspace between this one's plan and its write.
       contactAttributeKey: { count: vi.fn(async () => 150), createManyAndReturn },
@@ -360,6 +398,7 @@ describe("applyFormbricksFileReferences", () => {
     const refusal = await applyFormbricksFileReferences(tx, WORKSPACE_ID, {
       actionClasses: new Map(),
       attributeKeysToCreate: [{ key: "plan", name: "Plan", description: null, dataType: "string" }],
+      attributeKeyDirectoryId: "dir-1",
       languagesToCreate: [],
       issues: [],
     }).catch((error: unknown) => error);
@@ -374,6 +413,9 @@ describe("applyFormbricksFileReferences", () => {
       actionClass: { createManyAndReturn: vi.fn(async () => []), findMany: vi.fn(async () => []) },
       // One of each was skipped: another import inserted it first.
       $executeRaw: vi.fn(async () => 0),
+      workspace: {
+        findUnique: vi.fn(async () => ({ contactDirectory: { id: "dir-1", matchingKey: "email" } })),
+      },
       contactAttributeKey: {
         count: vi.fn(async () => 0),
         createManyAndReturn: vi.fn(async () => [{ key: "plan" }]),
@@ -387,6 +429,7 @@ describe("applyFormbricksFileReferences", () => {
         { key: "plan", name: "Plan", description: null, dataType: "string" },
         { key: "seat", name: "Seat", description: null, dataType: "string" },
       ],
+      attributeKeyDirectoryId: "dir-1",
       languagesToCreate: [
         { code: "de-DE", alias: "German" },
         { code: "fr-FR", alias: "French" },

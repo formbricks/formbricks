@@ -17,7 +17,10 @@ import {
   whereDirectoryAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
-import type { TWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  type TWorkspaceContactDirectory,
+  withWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import {
   CONTACTS_OLDEST_FIRST,
   groupContactsByIdentity,
@@ -280,17 +283,23 @@ const createMissingAttributeKeys = async (
     );
   }
 
-  await prisma.contactAttributeKey.createMany({
-    data: Array.from(uniqueMissingKeys.values()).map((key) => ({
-      key,
-      name: formatSnakeCaseToTitleCase(key),
-      dataType: attributeTypeMap.get(key)?.dataType ?? "string",
-      // The directory owns the key; the workspace records where it was created.
-      directoryId,
-      workspaceId,
-    })),
-    skipDuplicates: true,
-  });
+  // Under the workspace's lock, like the contact writes, and only while the directory is still its own.
+  await withWorkspaceDirectory(
+    workspaceId,
+    (tx) =>
+      tx.contactAttributeKey.createMany({
+        data: Array.from(uniqueMissingKeys.values()).map((key) => ({
+          key,
+          name: formatSnakeCaseToTitleCase(key),
+          dataType: attributeTypeMap.get(key)?.dataType ?? "string",
+          // The directory owns the key; the workspace records where it was created.
+          directoryId,
+          workspaceId,
+        })),
+        skipDuplicates: true,
+      }),
+    { expectedDirectoryId: directoryId }
+  );
 
   // Fetch and update the maps with new keys. Read by directory: a key another workspace of a shared
   // directory created at the same moment carries that workspace's id.
@@ -324,6 +333,8 @@ type TCsvProcessingContext = {
   duplicateContactsAction: "skip" | "update" | "overwrite";
   workspaceId: string;
   directoryId: string;
+  /** The chunk's transaction, which holds the workspace's lock (`withWorkspaceDirectory`). */
+  client: Prisma.TransactionClient;
 };
 
 type TCsvRecordResult = {
@@ -380,6 +391,7 @@ const processCsvRecord = async (
     duplicateContactsAction,
     workspaceId,
     directoryId,
+    client,
   } = ctx;
   // Map CSV keys to actual DB keys (case-insensitive matching)
   const mappedRecord: Record<string, string> = {};
@@ -407,7 +419,7 @@ const processCsvRecord = async (
       takenValues
     );
     // Create new contact in the directory; the workspace records where it was created.
-    const created = await prisma.contact.create({
+    const created = await client.contact.create({
       data: {
         directoryId,
         workspaceId,
@@ -436,7 +448,8 @@ const processCsvRecord = async (
     attributeKeyMap,
     attributeTypeMap,
     duplicateContactsAction,
-    workspaceId
+    workspaceId,
+    client
   );
   return { contact, updatedOneOfSeveral: matches.length > 1, leftOut };
 };
@@ -450,7 +463,8 @@ const handleDuplicateContact = async (
   attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
   duplicateContactsAction: "update" | "overwrite",
-  workspaceId: string
+  workspaceId: string,
+  client: Prisma.TransactionClient
 ): Promise<TContact> => {
   if (duplicateContactsAction === "update") {
     const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => {
@@ -478,7 +492,7 @@ const handleDuplicateContact = async (
       };
     });
 
-    const updated = await prisma.contact.update({
+    const updated = await client.contact.update({
       where: { id: existingContact.id },
       data: {
         attributes: {
@@ -493,7 +507,7 @@ const handleDuplicateContact = async (
 
   // duplicateContactsAction = "overwrite" here. One update, so a failed recreate keeps the old attributes
   // instead of leaving the contact without its email or userId.
-  const overwritten = await prisma.contact.update({
+  const overwritten = await client.contact.update({
     where: { id: existingContact.id },
     data: {
       attributes: {
@@ -621,7 +635,7 @@ export const createContactsFromCSV = async (
     );
 
     // Step 6: Process each CSV record
-    const processingContext: TCsvProcessingContext = {
+    const processingContext: Omit<TCsvProcessingContext, "client"> = {
       lowercaseToActualKeyMap,
       identityToContactsMap,
       identityKey,
@@ -634,12 +648,19 @@ export const createContactsFromCSV = async (
     };
 
     const CHUNK_SIZE = 50;
+    const CSV_CHUNK_TIMEOUT_MS = 30_000;
     const allResults: TCsvRecordResult[] = [];
 
     for (let i = 0; i < csvData.length; i += CHUNK_SIZE) {
       const chunk = csvData.slice(i, i + CHUNK_SIZE);
-      const chunkResults = await Promise.all(
-        chunk.map((record) => processCsvRecord(record, processingContext))
+      // One transaction per chunk, under the workspace's lock and only while the directory is still the
+      // workspace's: a removal during the import stops it at the next chunk, never writes into the
+      // directory the workspace has left. A chunk keeps the lock short; the whole import would not.
+      const chunkResults = await withWorkspaceDirectory(
+        workspaceId,
+        (tx) =>
+          Promise.all(chunk.map((record) => processCsvRecord(record, { ...processingContext, client: tx }))),
+        { expectedDirectoryId: directory.id, timeout: CSV_CHUNK_TIMEOUT_MS }
       );
       allResults.push(...chunkResults);
     }

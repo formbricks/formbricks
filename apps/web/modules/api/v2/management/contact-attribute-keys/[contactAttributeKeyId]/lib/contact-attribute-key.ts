@@ -11,6 +11,10 @@ import {
   selectContactAttributeKey,
   withCallerWorkspace,
 } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import {
+  ContactDirectoryMissingError,
+  withWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 
 /** The key with its directory, which decides who may reach it. */
 export const getContactAttributeKey = reactCache(async (contactAttributeKeyId: string) => {
@@ -56,13 +60,15 @@ export const updateContactAttributeKey = async (
       description: contactAttributeKeyInput.description,
     };
 
-    const updatedKey = await prisma.contactAttributeKey.update({
-      where: {
-        id: contactAttributeKeyId,
-      },
-      data: updateData,
-      select: selectContactAttributeKey,
-    });
+    // The route authorized `workspaceId` on the key's directory; under the workspace's lock, the write
+    // only matches while the key is still in the workspace's directory.
+    const updatedKey = await withWorkspaceDirectory(workspaceId, (tx, directory) =>
+      tx.contactAttributeKey.update({
+        where: { id: contactAttributeKeyId, directoryId: directory.id },
+        data: updateData,
+        select: selectContactAttributeKey,
+      })
+    );
 
     await prisma.contactAttribute.findMany({
       where: {
@@ -77,6 +83,7 @@ export const updateContactAttributeKey = async (
     return ok(withCallerWorkspace(updatedKey, workspaceId));
   } catch (error) {
     if (
+      error instanceof ContactDirectoryMissingError ||
       isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
       isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)
     ) {
@@ -114,12 +121,13 @@ export const deleteContactAttributeKey = async (
   workspaceId: string
 ): Promise<Result<TContactAttributeKey, ApiErrorResponseV2>> => {
   try {
-    const deletedKey = await prisma.contactAttributeKey.delete({
-      where: {
-        id: contactAttributeKeyId,
-      },
-      select: selectContactAttributeKey,
-    });
+    // As in update: only while the key is still in the workspace's directory, under its lock.
+    const deletedKey = await withWorkspaceDirectory(workspaceId, (tx, directory) =>
+      tx.contactAttributeKey.delete({
+        where: { id: contactAttributeKeyId, directoryId: directory.id },
+        select: selectContactAttributeKey,
+      })
+    );
 
     await prisma.contactAttribute.findMany({
       where: {
@@ -134,6 +142,7 @@ export const deleteContactAttributeKey = async (
     return ok(withCallerWorkspace(deletedKey, workspaceId));
   } catch (error) {
     if (
+      error instanceof ContactDirectoryMissingError ||
       isPrismaKnownRequestError(error, PrismaErrorType.RelatedRecordNotFound) ||
       isPrismaKnownRequestError(error, PrismaErrorType.RecordNotFound)
     ) {

@@ -136,6 +136,32 @@ describe("Analysis export", () => {
   });
 });
 
+describe("Analysis export, while the workspace leaves its directory", () => {
+  test("a batch read after the removal exports the reached contact as unavailable", async () => {
+    const { workspaceId, surveyId, reachedContact } = await seed();
+    // A third, oldest response from the same contact, so it comes again after the removal.
+    await prisma.response.create({
+      data: {
+        surveyId,
+        contactId: reachedContact,
+        createdAt: new Date("2026-10-31T00:00:00Z"),
+        finished: true,
+        data: {},
+      },
+    });
+
+    const exported = await openAnalysisExport({ surveyId, fields: { contact: true }, batchSize: 1 });
+    const userIdColumn = exported.columns.findIndex((column) => column.name === "user_id");
+    const userIds: unknown[] = [];
+    for await (const batch of exported.rows()) {
+      userIds.push(...batch.map((row) => row.codes?.[userIdColumn]));
+      if (userIds.length === 1) await removeFromDirectory(workspaceId);
+    }
+
+    expect(userIds).toEqual(["reached-current-user-id", null, null]);
+  });
+});
+
 describe("Summary Impressions", () => {
   test("marks a display's contact of another directory unavailable, without its email or userId", async () => {
     const { surveyId, reachedContact, oldContact } = await seed();

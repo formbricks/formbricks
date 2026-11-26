@@ -42,6 +42,8 @@ vi.mock("@formbricks/database", () => ({
     $transaction: vi.fn(),
     contactAttribute: { upsert: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     contactAttributeKey: { createManyAndReturn: vi.fn(), findMany: vi.fn() },
+    // The contact is in the workspace's directory unless a test says otherwise.
+    contact: { findFirst: vi.fn(async () => ({ id: "contact-1" })) },
   },
 }));
 
@@ -115,6 +117,22 @@ describe("updateAttributes", () => {
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
     vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+  });
+
+  test("writes nothing when the contact is not in the directory the keys come from", async () => {
+    // The workspace changed directory after the caller found the contact.
+    vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce(null);
+
+    await expect(updateAttributes(contactId, userId, workspaceId, { name: "Jane" })).rejects.toThrow(
+      "contact"
+    );
+    expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+      where: { id: contactId, directoryId },
+      select: { id: true },
+    });
+    expect(prisma.contactAttribute.upsert).not.toHaveBeenCalled();
+    expect(prisma.contactAttributeKey.createManyAndReturn).not.toHaveBeenCalled();
+    expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
   });
 
   test("updates existing attributes", async () => {

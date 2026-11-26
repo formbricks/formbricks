@@ -3,7 +3,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
-import { ValidationError } from "@formbricks/types/errors";
+import { ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { NULL_BYTE_REASON, hasNullByte } from "@/lib/utils/postgres-text";
@@ -491,14 +491,23 @@ export const updateAttributes = async (
   // with no directory, before anything is read or written.
   const { id: directoryId } = await requireWorkspaceContactDirectory(workspaceId);
 
-  // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
-  const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
-    await Promise.all([
-      getContactAttributes(contactId),
-      getContactAttributeKeysOfDirectory(directoryId),
-      emailValue ? hasEmailAttribute(emailValue, directoryId, contactId) : Promise.resolve(null),
-      userIdValue ? hasUserIdAttribute(userIdValue, directoryId, contactId) : Promise.resolve(null),
-    ]);
+  // Fetch current attributes, contact attribute keys, and email/userId checks in parallel. The contact
+  // must be in the same directory the keys come from: a caller checked it through the workspace, but the
+  // workspace may have changed directory since, and another directory's keys must never land on it.
+  const [
+    contactInDirectory,
+    currentAttributes,
+    contactAttributeKeys,
+    existingEmailAttribute,
+    existingUserIdAttribute,
+  ] = await Promise.all([
+    prisma.contact.findFirst({ where: { id: contactId, directoryId }, select: { id: true } }),
+    getContactAttributes(contactId),
+    getContactAttributeKeysOfDirectory(directoryId),
+    emailValue ? hasEmailAttribute(emailValue, directoryId, contactId) : Promise.resolve(null),
+    userIdValue ? hasUserIdAttribute(userIdValue, directoryId, contactId) : Promise.resolve(null),
+  ]);
+  if (!contactInDirectory) throw new ResourceNotFoundError("contact", contactId);
 
   // Process email and userId existence early
   const emailExists = !!existingEmailAttribute;

@@ -17,7 +17,7 @@ import {
 } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
   getReportingWorkspaceByDirectory,
-  requireWorkspaceContactDirectory,
+  withWorkspaceDirectory,
 } from "@/modules/ee/contacts/lib/contact-directory";
 
 /**
@@ -59,29 +59,30 @@ export const createContactAttributeKey = async (
     throw new InvalidInputError(getReservedFutureDefaultAttributeKeyIssue([data.key]));
   }
 
-  // Before the write, so a workspace with no directory creates nothing. Keys, and their cap, are per directory.
-  const directory = await requireWorkspaceContactDirectory(workspaceId);
-  const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
-    where: whereAttributeKeysOfDirectory(directory.id),
-  });
-
-  if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
-    throw new OperationNotAllowedError(
-      `Maximum number of attribute keys (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for the contact directory of workspace ${workspaceId}`
-    );
-  }
   try {
-    const contactAttributeKey = await prisma.contactAttributeKey.create({
-      data: {
-        key: data.key,
-        name: data.name ?? formatSnakeCaseToTitleCase(data.key),
-        type: data.type,
-        description: data.description ?? "",
-        ...(data.dataType && { dataType: data.dataType }),
-        directoryId: directory.id,
-        workspaceId,
-      },
-      select: selectContactAttributeKey,
+    // The count and the insert run under the workspace's lock (`withWorkspaceDirectory`), so a key can't
+    // land in a directory the workspace has just left. Keys, and their cap, are per directory.
+    const contactAttributeKey = await withWorkspaceDirectory(workspaceId, async (tx, directory) => {
+      const contactAttributeKeysCount = await tx.contactAttributeKey.count({
+        where: whereAttributeKeysOfDirectory(directory.id),
+      });
+      if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+        throw new OperationNotAllowedError(
+          `Maximum number of attribute keys (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for the contact directory of workspace ${workspaceId}`
+        );
+      }
+      return tx.contactAttributeKey.create({
+        data: {
+          key: data.key,
+          name: data.name ?? formatSnakeCaseToTitleCase(data.key),
+          type: data.type,
+          description: data.description ?? "",
+          ...(data.dataType && { dataType: data.dataType }),
+          directoryId: directory.id,
+          workspaceId,
+        },
+        select: selectContactAttributeKey,
+      });
     });
 
     return withCallerWorkspace(contactAttributeKey, workspaceId);

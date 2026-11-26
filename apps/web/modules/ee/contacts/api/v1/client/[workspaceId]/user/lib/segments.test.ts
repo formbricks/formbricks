@@ -218,25 +218,6 @@ describe("segments lib", () => {
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
-    test("should call validateInputs with correct parameters", async () => {
-      vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }, { id: mockContactId }]);
-
-      await getPersonSegmentIds(
-        mockWorkspaceId,
-        mockDirectoryId,
-        mockContactId,
-        mockContactUserId,
-        mockDeviceType,
-        mockInteractionData
-      );
-      expect(validateInputs).toHaveBeenCalledWith(
-        [mockWorkspaceId, expect.anything()],
-        [mockDirectoryId, expect.anything()],
-        [mockContactId, expect.anything()],
-        [mockContactUserId, expect.anything()]
-      );
-    });
-
     test("should return only matching segment IDs", async () => {
       vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }, null]);
 
@@ -342,7 +323,6 @@ describe("segments lib", () => {
       expect(result).toEqual([]);
       expect(prisma.survey.findMany).toHaveBeenCalledWith({
         where: {
-          workspaceId: mockWorkspaceId,
           id: { in: ["survey-restricted"] },
           AND: [expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) })],
         },

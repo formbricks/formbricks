@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TBaseFilters } from "@formbricks/types/segment";
-import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
+import {
+  createWorkspaceOnContactDirectory,
+  createWorkspaceWithContactDirectory,
+} from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { buildContactInteractionData } from "@/modules/ee/contacts/api/v1/client/[workspaceId]/user/lib/segments";
@@ -24,6 +27,7 @@ import { segmentFiltersReadHiddenSurvey } from "@/modules/ee/contacts/segments/l
 
 let workspaceId: string;
 let directoryId: string;
+let organizationId: string;
 let ownerId: string;
 let memberId: string;
 const surveys: Record<"D" | "V" | "R" | "P", string> = { D: "", V: "", R: "", P: "" };
@@ -67,6 +71,7 @@ const tree = (...filters: unknown[]) => filters as TBaseFilters;
 
 const seed = async (): Promise<void> => {
   const organization = await prisma.organization.create({ data: { name: "ENG-6870 Org" } });
+  organizationId = organization.id;
   // Contacts and segments belong to the workspace's contact directory (ENG-7496).
   ({ workspaceId, directoryId } = await createWorkspaceWithContactDirectory(
     organization.id,
@@ -131,7 +136,7 @@ const inMemoryMembers = async (filters: TBaseFilters): Promise<string[]> => {
   const now = new Date();
   const members: string[] = [];
   for (const row of rows) {
-    const data = await buildContactInteractionData(workspaceId, row, true);
+    const data = await buildContactInteractionData(row, true);
     if (tryEvaluateSurveyInteractionSegmentInMemory(filters, data, now)) members.push(row.id);
   }
   return members.sort();
@@ -156,6 +161,31 @@ describe("segment survey visibility against real Postgres (ENG-6870)", () => {
     expect(await inMemoryMembers(notSeenAny)).toEqual(quiet);
   });
 
+  test("`any` scope doesn't count a restricted survey of another workspace of the directory", async () => {
+    // In a shared directory the contact's rows include other workspaces' surveys.
+    const otherWorkspaceId = await createWorkspaceOnContactDirectory(organizationId, directoryId, "Other");
+    const restrictedElsewhere = (
+      await prisma.survey.create({
+        data: {
+          name: "R elsewhere",
+          type: "link",
+          status: "inProgress",
+          workspaceId: otherWorkspaceId,
+          visibility: "restricted",
+          ownerId,
+        },
+        select: { id: true },
+      })
+    ).id;
+    await prisma.response.create({
+      data: { surveyId: restrictedElsewhere, contactId: contacts.c3, finished: true, data: {} },
+    });
+    const completedAny = tree(interaction("haveCompleted", "any"));
+
+    expect(await segmentMembers(completedAny)).toEqual([contacts.c2]);
+    expect(await inMemoryMembers(completedAny)).toEqual([contacts.c2]);
+  });
+
   test("the member-built `any` tree from the report no longer isolates the restricted survey's respondent", async () => {
     // Completed some survey, but none of the ones the member can see. On main this returned exactly c1.
     const filters = tree(
@@ -178,6 +208,28 @@ describe("segment survey visibility against real Postgres (ENG-6870)", () => {
     expect(await segmentFiltersReadHiddenSurvey(filters, workspaceId, { ...member(), userId: ownerId })).toBe(
       false
     );
+  });
+
+  test("a hidden survey of another workspace of the directory is refused too", async () => {
+    // A shared segment can name another workspace's survey; the filter matches on its responses as well.
+    const otherWorkspaceId = await createWorkspaceOnContactDirectory(organizationId, directoryId, "Other");
+    const restrictedElsewhere = (
+      await prisma.survey.create({
+        data: {
+          name: "R elsewhere",
+          type: "link",
+          status: "inProgress",
+          workspaceId: otherWorkspaceId,
+          visibility: "restricted",
+          ownerId,
+        },
+        select: { id: true },
+      })
+    ).id;
+    const filters = tree(interaction("haveCompleted", "specific", [restrictedElsewhere]));
+
+    expect(await segmentFiltersReadHiddenSurvey(filters, workspaceId, member())).toBe(true);
+    expect(await segmentFiltersReadHiddenSurvey(filters, workspaceId, owner())).toBe(false);
   });
 
   test("a pending survey is hidden from a member, a workspace-visible one is not", async () => {

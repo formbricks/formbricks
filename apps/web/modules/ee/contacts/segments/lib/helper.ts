@@ -362,16 +362,19 @@ const getReachableSurveyIds = async (
   return reachable;
 };
 
-/** Whether any of `surveyIds` is a survey of `workspaceId` that `buildHiddenSurveyWhere` hides from `actor`. */
+/**
+ * Whether any of `surveyIds` is a survey `buildHiddenSurveyWhere` hides from `actor`, in whichever
+ * workspace it is. A shared segment can name surveys of the directory's other workspaces, and a filter
+ * that names one matches on its responses and displays all the same.
+ */
 const anySurveyHiddenFrom = async (
   surveyIds: ReadonlyArray<string>,
-  workspaceId: string,
   hiddenSurveyWhere: Prisma.SurveyWhereInput
 ): Promise<boolean> => {
   for (let i = 0; i < surveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
     const batch = surveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
     // Sequential on purpose: the first hidden survey decides, and no further query runs.
-    const batchWhere: Prisma.SurveyWhereInput = { id: { in: batch }, workspaceId, AND: [hiddenSurveyWhere] };
+    const batchWhere: Prisma.SurveyWhereInput = { id: { in: batch }, AND: [hiddenSurveyWhere] };
     if (await findHiddenSurvey(batchWhere)) return true; // NOSONAR
   }
   return false;
@@ -398,7 +401,7 @@ export const segmentFiltersReadHiddenSurvey = async (
   const hiddenSurveyWhere = buildHiddenSurveyWhere(actor);
   if (!hiddenSurveyWhere) return false;
   const reachable = await getReachableSurveyIds(filters, workspaceId, segmentId);
-  return anySurveyHiddenFrom([...reachable], workspaceId, hiddenSurveyWhere);
+  return anySurveyHiddenFrom([...reachable], hiddenSurveyWhere);
 };
 
 export const SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE =
@@ -469,7 +472,7 @@ export const assertAddedSegmentSurveyFiltersVisible = async (
   const hiddenSurveyWhere = buildHiddenSurveyWhere(actor);
   if (!hiddenSurveyWhere) return;
   const added = await getAddedSegmentSurveyIds(filters, storedFilters, workspaceId, segmentId);
-  if (await anySurveyHiddenFrom(added, workspaceId, hiddenSurveyWhere)) {
+  if (await anySurveyHiddenFrom(added, hiddenSurveyWhere)) {
     throw new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE);
   }
 };

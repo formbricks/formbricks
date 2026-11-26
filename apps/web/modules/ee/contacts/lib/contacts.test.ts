@@ -52,6 +52,23 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+// CSV writes run per chunk under the workspace's lock (`withWorkspaceDirectory`). Here they run on the
+// mocked client, in the directory the import was given; the lock itself is covered by integration tests.
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  withWorkspaceDirectory: vi.fn(
+    async (
+      _workspaceId: string,
+      write: (tx: unknown, directory: unknown) => Promise<unknown>,
+      options?: { expectedDirectoryId?: string }
+    ) =>
+      write((await import("@formbricks/database")).prisma, {
+        id: options?.expectedDirectoryId ?? "directory-123",
+        matchingKey: "email",
+      })
+  ),
+}));
+
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
@@ -1406,7 +1423,6 @@ describe("Contacts Lib", () => {
         expect(prisma.survey.findFirst).toHaveBeenCalledWith({
           where: {
             id: { in: [restrictedSurveyId] },
-            workspaceId: mockWorkspaceId,
             AND: [memberHiddenSurveyWhere],
           },
           select: { id: true },
@@ -1428,7 +1444,6 @@ describe("Contacts Lib", () => {
         expect(prisma.survey.findFirst).toHaveBeenCalledWith({
           where: {
             id: { in: [visibleSurveyId, destinationSurveyId] },
-            workspaceId: mockWorkspaceId,
             AND: [memberHiddenSurveyWhere],
           },
           select: { id: true },
