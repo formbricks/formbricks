@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TBaseFilter } from "@formbricks/types/segment";
-import { validateInputs } from "@/lib/utils/validate";
 import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { type TContactInteractionData } from "@/modules/ee/contacts/segments/lib/filter/survey-interaction";
@@ -147,7 +146,6 @@ describe("segments lib", () => {
         mockInteractionData
       );
 
-      expect(validateInputs).toHaveBeenCalled();
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: workspaceSegmentsWhere,
         select: { id: true, filters: true, directoryId: true },

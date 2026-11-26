@@ -15,7 +15,11 @@ import {
   whereDirectoryAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
-import type { TWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  ContactDirectoryMissingError,
+  type TWorkspaceContactDirectory,
+  lockWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import {
   CONTACTS_OLDEST_FIRST,
   groupContactsByIdentity,
@@ -673,6 +677,11 @@ export const upsertBulkContacts = async (
     // Execute everything in ONE transaction
     await prisma.$transaction(
       async (tx) => {
+        // The directory was read before this transaction; a removal since then must not get new rows.
+        if ((await lockWorkspaceDirectory(tx, workspaceId))?.id !== directory.id) {
+          throw new ContactDirectoryMissingError();
+        }
+
         const attributeKeyMap = existingAttributeKeys.reduce<Record<string, string>>((acc, keyObj) => {
           acc[keyObj.key] = keyObj.id;
           return acc;
@@ -739,6 +748,9 @@ export const upsertBulkContacts = async (
       contactIdxWithConflictingUserIds,
     });
   } catch (error) {
+    if (error instanceof ContactDirectoryMissingError) {
+      return err({ type: "forbidden", details: [{ field: "workspaceId", issue: error.message }] });
+    }
     logger.error({ error }, "Failed to upsert contacts");
 
     return err({

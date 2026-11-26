@@ -21,6 +21,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       createMany: vi.fn(),
     },
+    workspace: { findUnique: vi.fn() },
     $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback(prisma)),
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn(),
@@ -33,6 +34,9 @@ describe("upsertBulkContacts", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue({
+      contactDirectory: mockDirectory,
+    } as never);
   });
 
   test("should create new contacts when all provided contacts have unique user IDs and emails", async () => {
@@ -434,6 +438,9 @@ describe("upsertBulkContacts", () => {
 
     // Mock the transaction
     const mockTransaction = {
+      workspace: {
+        findUnique: vi.fn(async () => ({ contactDirectory: { id: "directory_123", matchingKey: "email" } })),
+      },
       contact: {
         createMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
@@ -466,7 +473,11 @@ describe("upsertBulkContacts", () => {
     });
 
     /** The contact ids of the attribute rows written by the raw upsert: its fourth bound array. */
-    const upsertedContactIds = (): unknown => vi.mocked(prisma.$executeRaw).mock.calls[0]?.[4];
+    // The attribute upsert's contact ids, from its statement (the lock's statements come first).
+    const upsertedContactIds = (): unknown =>
+      vi
+        .mocked(prisma.$executeRaw)
+        .mock.calls.find(([sql]) => (sql as unknown as string[]).join("").includes("ContactAttribute"))?.[4];
 
     const attributeKeys = (keys: string[]) =>
       keys.map((key) => ({ id: `key-${key}`, key, name: key, dataType: "string" as const }));
@@ -526,7 +537,14 @@ describe("upsertBulkContacts", () => {
       expect(upsertedContactIds()).toEqual(["oldest"]);
     });
 
+    /** The workspace is on the userId directory these tests upload to. */
+    const onUserIdDirectory = () =>
+      vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue({
+        contactDirectory: { id: "directory_user", matchingKey: "userId" },
+      } as never);
+
     test("a userId directory matches on userId", async () => {
+      onUserIdDirectory();
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
       vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce(
         attributeKeys(["userId", "plan"])
@@ -565,6 +583,7 @@ describe("upsertBulkContacts", () => {
     });
 
     test("a userId directory skips a contact taking an email another contact has", async () => {
+      onUserIdDirectory();
       // "taken@example.com" belongs to a contact that is not in the request.
       vi.mocked(prisma.contactAttribute.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { value: "taken@example.com" },

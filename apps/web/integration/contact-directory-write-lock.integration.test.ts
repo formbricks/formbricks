@@ -5,6 +5,7 @@ import { createWorkspaceWithContactDirectory } from "@/integration/contact-direc
 import { waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { createContactAttributeKey as createKeyV1 } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/lib/contact-attribute-keys";
+import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 import { createContact as createContactV2 } from "@/modules/ee/contacts/api/v2/management/contacts/lib/contact";
 import { updateContactAttributeKey } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { ContactDirectoryMissingError } from "@/modules/ee/contacts/lib/contact-directory";
@@ -82,13 +83,37 @@ describe("writes and a directory removal", () => {
     expect((await prisma.contactAttributeKey.findUniqueOrThrow({ where: { id: key.id } })).name).toBe("Plan");
   });
 
-  test("a CSV import read before the removal writes no contact after it", async () => {
+  test("a CSV import that reaches its contact write during the removal writes no contact", async () => {
+    // The key exists, so the import gets past key creation to its first chunk's write.
+    await prisma.contactAttributeKey.create({
+      data: { key: "email", name: "Email", type: "default", isUnique: true, directoryId },
+    });
     const directory = { id: directoryId, matchingKey: "email" as const };
-    await prisma.workspace.update({ where: { id: workspaceId }, data: { contactDirectoryId: null } });
 
-    await expect(
+    const outcome = await duringRemoval(() =>
       createContactsFromCSV([{ email: "late@example.com" }], workspaceId, directory, "update", {})
-    ).rejects.toBeInstanceOf(ContactDirectoryMissingError);
+    );
+
+    expect(outcome.status).toBe("rejected");
+    if (outcome.status === "rejected") expect(outcome.reason).toBeInstanceOf(ContactDirectoryMissingError);
+    expect(await prisma.contact.count({ where: { directoryId } })).toBe(0);
+  });
+
+  test("a bulk upsert checked against the old directory inserts nothing after the removal", async () => {
+    await prisma.contactAttributeKey.create({
+      data: { key: "email", name: "Email", type: "default", isUnique: true, directoryId },
+    });
+    const directory = { id: directoryId, matchingKey: "email" as const };
+
+    const outcome = await duringRemoval(() =>
+      upsertBulkContacts(
+        [{ attributes: [{ attributeKey: { key: "email", name: "Email" }, value: "late@example.com" }] }],
+        workspaceId,
+        directory
+      )
+    );
+
+    expect(outcome.status === "fulfilled" && !outcome.value.ok && outcome.value.error.type).toBe("forbidden");
     expect(await prisma.contact.count({ where: { directoryId } })).toBe(0);
   });
 });
