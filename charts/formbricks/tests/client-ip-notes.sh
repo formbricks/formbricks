@@ -17,10 +17,25 @@ trap 'rm -rf "${temp_dir}"' EXIT
 source "${SCRIPT_DIR}/lib/notes.sh"
 build_notes_chart "${temp_dir}"
 
+# Renders the notes for one case, failing the test when Helm fails: inside an `if`, a failed render would
+# otherwise read as "no warning".
+notes_for() {
+  local case_name="$1"
+  shift
+  local notes
+  if ! notes="$(render_notes client-ip "$@")"; then
+    printf '%s\n' "Install notes failed to render: ${case_name}." >&2
+    exit 1
+  fi
+  printf '%s\n' "${notes}"
+}
+
 expect_warning() {
   local case_name="$1"
   shift
-  if ! render_notes client-ip "$@" | grep --fixed-strings "${WARNING}" >/dev/null; then
+  local notes
+  notes="$(notes_for "${case_name}" "$@")"
+  if ! grep --fixed-strings "${WARNING}" <<<"${notes}" >/dev/null; then
     printf '%s\n' "Install notes must warn about client IP spoofing: ${case_name}." >&2
     exit 1
   fi
@@ -29,7 +44,9 @@ expect_warning() {
 expect_no_warning() {
   local case_name="$1"
   shift
-  if render_notes client-ip "$@" | grep --fixed-strings "${WARNING}" >/dev/null; then
+  local notes
+  notes="$(notes_for "${case_name}" "$@")"
+  if grep --fixed-strings "${WARNING}" <<<"${notes}" >/dev/null; then
     printf '%s\n' "Install notes must not warn about client IP spoofing: ${case_name}." >&2
     exit 1
   fi
@@ -47,6 +64,18 @@ expect_warning "LoadBalancer Service with the hop count from a secret" \
   --set service.type=LoadBalancer --set deployment.env.TRUSTED_PROXY_HOP_COUNT.valueFrom.secretKeyRef.name=hops \
   --set deployment.env.TRUSTED_PROXY_HOP_COUNT.valueFrom.secretKeyRef.key=count
 expect_warning "hostNetwork on a ClusterIP Service" --set deployment.hostNetwork=true
+# Restricting the Service does not close a hostNetwork pod's port on the node, so the advice has to differ.
+host_network_notes="$(notes_for "hostNetwork advice" --set deployment.hostNetwork=true)"
+if ! grep --fixed-strings "(the app's port on every node)" <<<"${host_network_notes}" >/dev/null; then
+  printf '%s\n' "hostNetwork install notes must point at the node port, not the Service." >&2
+  exit 1
+fi
+both_notes="$(notes_for "hostNetwork and LoadBalancer advice" --set deployment.hostNetwork=true \
+  --set service.type=LoadBalancer)"
+if ! grep --fixed-strings "(this Service and the app's port on every node)" <<<"${both_notes}" >/dev/null; then
+  printf '%s\n' "Install notes must name both direct paths when hostNetwork meets an exposed Service." >&2
+  exit 1
+fi
 expect_no_warning "LoadBalancer Service with forwarding headers disabled (string)" \
   --set service.type=LoadBalancer --set-string deployment.env.TRUSTED_PROXY_HOP_COUNT=0
 # A values file writes `TRUSTED_PROXY_HOP_COUNT: 0` as a number; the app also reads "00" as 0.
