@@ -33,7 +33,7 @@ programming or UI concepts, and no implementation details.
 
 **Element** — One input inside a block, which the editor calls a question. Its id, which the editor shows as Question ID, is the key responses are stored under, so it never changes once a survey is published.
 
-**Choice id** — The stable id of one option of a choice element. Survey logic and option show-if compare it, never the label, whose text differs per language. The editor shows it as Option ID.
+**Choice id** — The stable id of one option of a choice element. Survey logic and show-if compare it, never the label, whose text differs per language. The editor shows it as Option ID.
 
 **Default language** — A survey's fallback language, used wherever another language has no translation.
 
