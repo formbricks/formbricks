@@ -38,6 +38,11 @@ formbricks:
 
     Add any additional overrides you need for ingress, external services, secrets, or Enterprise license features.
 
+    If those overrides make the instance reachable before you finish setup (an Ingress, or a `LoadBalancer` or
+    `NodePort` Service), set `SETUP_TOKEN` in this file and create its Secret before you install: see
+    [Protect first-administrator setup](#protect-first-administrator-setup-optional). Otherwise the first
+    visitor to reach the setup form can create the administrator account.
+
   </Step>
 
   <Step title="Install Formbricks">
@@ -291,9 +296,16 @@ deployment:
           key: setup-token
 ```
 
-Create the Secret in the release's namespace and without a trailing newline (`kubectl create secret generic
-formbricks-secrets -n <namespace> --from-literal=setup-token="$(openssl rand -hex 16)"`): a token that starts or
-ends with whitespace, or contains a line break, fails startup, because the setup form could never send it.
+Create the Secret in the release's namespace before `helm install`, creating the namespace first if the install
+would otherwise create it with `--create-namespace`. `--from-literal` stores the token without a trailing
+newline; a token that starts or ends with whitespace, or contains a line break, fails startup, because the setup
+form could never send it.
+
+```sh
+kubectl create namespace formbricks
+kubectl create secret generic formbricks-secrets -n formbricks \
+  --from-literal=setup-token="$(openssl rand -hex 16)"
+```
 
 See the [environment variables reference](/self-hosting/configuration/environment-variables). It is optional:
 leaving it unset keeps the default open setup. Once the first account exists, the instance never accepts a
