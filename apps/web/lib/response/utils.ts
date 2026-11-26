@@ -13,6 +13,7 @@ import {
   projectReservedValues,
 } from "@formbricks/types/embedded-data-resolver";
 import {
+  MAX_RESPONSE_TTC,
   TResponse,
   TResponseDataValue,
   TResponseHiddenFieldsFilter,
@@ -125,6 +126,33 @@ export const getChoiceIdByValue = (
     element.choices.find((choice) => choice.label.default === value);
 
   return match?.id ?? "other";
+};
+
+/**
+ * The ttc bucket the server owns. A caller-supplied `_total` is dropped rather than trusted: it is
+ * derived, so honouring one would let a caller disagree with the sum of its own buckets, and
+ * `calculateTtcTotal` would then add it into the total a second time.
+ */
+export const TTC_TOTAL_KEY = "_total";
+
+/**
+ * Clamp each per-element time-to-complete into `[0, MAX_RESPONSE_TTC]` and drop any `_total`.
+ *
+ * Clamp rather than reject: `ttc` is client telemetry, and one absurd bucket from a laptop that slept
+ * mid-survey should not cost a caller the whole response. Non-finite numbers never reach here — the
+ * request schemas' `z.number()` rejects NaN and Infinity, and JSON cannot carry them.
+ */
+export const clampTtcBuckets = (ttc: Readonly<Record<string, number>>): TResponseTtc => {
+  // Null-prototype: the keys are element ids, which the survey author chooses, so `__proto__` is a
+  // legal one. On a plain `{}` it hits `Object.prototype`'s setter and the bucket vanishes silently.
+  const clamped = Object.create(null) as TResponseTtc;
+
+  for (const [key, value] of Object.entries(ttc)) {
+    if (key === TTC_TOTAL_KEY) continue;
+    clamped[key] = Math.min(Math.max(value, 0), MAX_RESPONSE_TTC);
+  }
+
+  return clamped;
 };
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {

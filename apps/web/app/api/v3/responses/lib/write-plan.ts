@@ -7,7 +7,7 @@ import {
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
-import { calculateTtcTotal } from "@/lib/response/utils";
+import { TTC_TOTAL_KEY, calculateTtcTotal, clampTtcBuckets } from "@/lib/response/utils";
 import { type TV3AnswerPlan, isPublishableDataKey, publishedDataValue } from "./answers";
 
 /**
@@ -17,30 +17,6 @@ import { type TV3AnswerPlan, isPublishableDataKey, publishedDataValue } from "./
  */
 const UTF8_ENCODER = new TextEncoder();
 const utf8ByteLength = (value: string): number => UTF8_ENCODER.encode(value).length;
-
-/** Milliseconds in a day: the contract's upper bound for one element's time-to-complete. */
-const TTC_MAX_MS = 86_400_000;
-
-/**
- * The bucket the server owns. A caller-supplied `_total` is dropped rather than trusted: it is
- * derived, so honouring one would let a caller disagree with the sum of its own buckets, and
- * `calculateTtcTotal` would then add it into the total a second time.
- */
-const TTC_TOTAL_KEY = "_total";
-
-const clampTtcBuckets = (ttc: Readonly<Record<string, number>>): TResponseTtc => {
-  // Null-prototype, like `ingestedBag` below: the keys are element ids, which the caller chooses at
-  // survey creation, so `__proto__` is a legal one. On a plain `{}` it hits `Object.prototype`'s
-  // setter and the bucket vanishes with no error.
-  const clamped = Object.create(null) as TResponseTtc;
-
-  for (const [key, value] of Object.entries(ttc)) {
-    if (key === TTC_TOTAL_KEY) continue;
-    clamped[key] = Math.min(Math.max(value, 0), TTC_MAX_MS);
-  }
-
-  return clamped;
-};
 
 /**
  * Clamp rather than reject, which is the contract's choice and worth restating: `ttc` is client

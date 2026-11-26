@@ -4,7 +4,7 @@ import { Prisma, Response } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { isDisplayOfSurvey } from "@/lib/display/service";
-import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
+import { calculateTtcTotal, clampTtcBuckets, normalizeResponseLanguage } from "@/lib/response/utils";
 import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/contact";
 import {
   getOrganizationBilling,
@@ -132,13 +132,12 @@ export const createResponse = async (
     }
     const contact = context.contact.data;
 
+    // Each element is clamped into [0, MAX_RESPONSE_TTC], as v1 and v3 do, so negative or absurd
+    // timings cannot skew summaries and exports; `_total` is always derived from the clamped values.
     let ttc = {};
     if (initialTtc) {
-      if (finished) {
-        ttc = calculateTtcTotal(initialTtc);
-      } else {
-        ttc = initialTtc;
-      }
+      const clamped = clampTtcBuckets(initialTtc);
+      ttc = finished ? calculateTtcTotal(clamped) : clamped;
     }
 
     const prismaData: Prisma.ResponseCreateInput = {
