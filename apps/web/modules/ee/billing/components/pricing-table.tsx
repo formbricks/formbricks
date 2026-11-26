@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
+import { type PaymentIntent, type StripeError, type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
 import type { TFunction } from "i18next";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
@@ -29,7 +29,7 @@ import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/c
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { getActionErrorMessage } from "../lib/action-error-message";
+import { getActionErrorMessage, getUpgradeConfirmationErrorMessage } from "../lib/action-error-message";
 import {
   changeBillingPlan,
   createBillingPortalSession,
@@ -416,7 +416,11 @@ export const PricingTable = ({
   // On-session 3D Secure for the upgrade invoice PaymentIntent (uses the saved default card).
   const confirmUpgradeSca = async (
     clientSecret: string
-  ): Promise<{ status: "succeeded" | "processing" | "failed"; paymentIntentId: string | null }> => {
+  ): Promise<{
+    status: "succeeded" | "processing" | "failed";
+    paymentIntentId: string | null;
+    stripeError?: StripeError | PaymentIntent.LastPaymentError | null;
+  }> => {
     if (!stripePublishableKey) {
       return { status: "failed", paymentIntentId: null };
     }
@@ -426,7 +430,7 @@ export const PricingTable = ({
     }
     const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret);
     if (error) {
-      return { status: "failed", paymentIntentId: error.payment_intent?.id ?? null };
+      return { status: "failed", paymentIntentId: error.payment_intent?.id ?? null, stripeError: error };
     }
     if (paymentIntent?.status === "succeeded") {
       return { status: "succeeded", paymentIntentId: paymentIntent.id };
@@ -434,7 +438,12 @@ export const PricingTable = ({
     if (paymentIntent?.status === "processing") {
       return { status: "processing", paymentIntentId: paymentIntent.id };
     }
-    return { status: "failed", paymentIntentId: paymentIntent?.id ?? null };
+    // Not confirmed and no error: a decline is recorded on the PaymentIntent.
+    return {
+      status: "failed",
+      paymentIntentId: paymentIntent?.id ?? null,
+      stripeError: paymentIntent?.last_payment_error,
+    };
   };
 
   // Completes any required SCA; returns whether the upgrade is applied (succeeded/processing).
@@ -463,7 +472,7 @@ export const PricingTable = ({
     }
     return {
       applied: false,
-      message: t("workspace.settings.billing.payment_authentication_failed"),
+      message: getUpgradeConfirmationErrorMessage(outcome.stripeError, t),
     };
   };
 

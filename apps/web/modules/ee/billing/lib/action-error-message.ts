@@ -1,5 +1,9 @@
+import { getCardRefusalReason } from "./card-refusal";
+
+type TTranslate = (key: string) => string;
+
 /** The billing page's message for a refusal the billing API answered with (its problem `detail`). */
-export const getActionErrorMessage = (serverError: string, t: (key: string) => string) => {
+export const getActionErrorMessage = (serverError: string, t: TTranslate) => {
   if (serverError === "mixed_interval_checkout_unsupported") {
     return t("workspace.settings.billing.yearly_checkout_unavailable");
   }
@@ -12,6 +16,19 @@ export const getActionErrorMessage = (serverError: string, t: (key: string) => s
   // needing 3DS errors out with nothing left to confirm. Say so instead of a generic failure.
   if (serverError === "card_authentication_required") {
     return t("workspace.settings.billing.payment_authentication_failed");
+  }
+
+  // The card was charged and refused: say why, so the user knows whether to change cards (ENG-2170).
+  if (serverError === "card_declined") {
+    return t("workspace.settings.billing.card_declined");
+  }
+
+  if (serverError === "card_insufficient_funds") {
+    return t("workspace.settings.billing.card_insufficient_funds");
+  }
+
+  if (serverError === "card_expired") {
+    return t("workspace.settings.billing.card_expired");
   }
 
   // Stripe refused the change because the customer still holds billing in another currency (ENG-3370).
@@ -31,4 +48,15 @@ export const getActionErrorMessage = (serverError: string, t: (key: string) => s
   }
 
   return t("common.something_went_wrong_please_try_again");
+};
+
+/**
+ * The message for an upgrade invoice the browser could not confirm: the card's refusal reason when
+ * Stripe reports one, otherwise the 3D Secure message.
+ */
+export const getUpgradeConfirmationErrorMessage = (stripeError: unknown, t: TTranslate) => {
+  const refusalReason = getCardRefusalReason(stripeError);
+  return refusalReason
+    ? getActionErrorMessage(refusalReason, t)
+    : t("workspace.settings.billing.payment_authentication_failed");
 };
