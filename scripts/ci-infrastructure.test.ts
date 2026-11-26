@@ -253,6 +253,25 @@ test.each(["direct", "mirror-file", "blacksmith-mirror-file"])(
   }
 );
 
+test("a fallback that matches no Ubuntu source says so instead of retrying silently", () => {
+  const { directory, env, command } = fixture();
+  command("sudo", 'exec "$@"');
+  const apt = join(directory, "apt");
+  mkdirSync(join(apt, "sources.list.d"), { recursive: true });
+  writeFileSync(join(apt, "sources.list.d/vendor.sources"), "URIs: mirror+file:/etc/apt/other-mirrors.txt\n");
+  const result = spawnSync(
+    "bash",
+    ["-c", 'source scripts/ci-network.sh; ci_use_fallback_apt_mirror "$1"', "test", apt],
+    {
+      cwd: repository,
+      env,
+      encoding: "utf8",
+    }
+  );
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stdout).toContain("::warning::No Ubuntu apt source matched the fallback-mirror rewrite");
+});
+
 test("a kind download failure skips cluster diagnostics without an isolated kubeconfig", () => {
   const { directory, env, command } = fixture();
   writeFileSync(join(directory, "commands"), "");

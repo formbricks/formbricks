@@ -69,13 +69,19 @@ import re
 import sys
 
 root = Path(sys.argv[1])
+rewritten = 0
 for path in [root / 'sources.list', *root.glob('sources.list.d/*.list'), *root.glob('sources.list.d/*.sources')]:
     if path.is_file():
         original = path.read_text()
-        updated = re.sub(r'https?://(?:[\w.-]+\.)?archive\.ubuntu\.com/ubuntu\b|https?://security\.ubuntu\.com/ubuntu\b'
-                         r'|mirror\+file:/etc/apt/(?:apt|blacksmith-ubuntu)-mirrors\.txt(?=\s|$)',
-                         'https://azure.archive.ubuntu.com/ubuntu', original)
+        updated, count = re.subn(r'https?://(?:[\w.-]+\.)?archive\.ubuntu\.com/ubuntu\b|https?://security\.ubuntu\.com/ubuntu\b'
+                                 r'|mirror\+file:/etc/apt/(?:apt|blacksmith-ubuntu)-mirrors\.txt(?=\s|$)',
+                                 'https://azure.archive.ubuntu.com/ubuntu', original)
+        rewritten += count
         if updated != original:
             path.write_text(updated)
+# A runner image that names its Ubuntu mirror differently would otherwise retry the same stalled mirror
+# silently; say so where the failure will show.
+if rewritten == 0:
+    print('::warning::No Ubuntu apt source matched the fallback-mirror rewrite; the retry uses the same mirrors.')
 PY
 }
