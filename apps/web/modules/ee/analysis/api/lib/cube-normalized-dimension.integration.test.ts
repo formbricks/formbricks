@@ -52,7 +52,9 @@ beforeAll(async () => {
       await compile();
       break;
     } catch (error) {
-      const missing = /^(\w+) is not defined$/.exec(error instanceof Error ? error.message : "");
+      // Errors thrown inside the VM context come from another realm, so `instanceof Error` is false there.
+      const message = (error as { message?: unknown } | null)?.message;
+      const missing = /^(\w+) is not defined$/.exec(typeof message === "string" ? message : "");
       if (!missing || attempt > 100) throw error;
       cubeNameGlobals[missing[1]] = missing[1];
     }

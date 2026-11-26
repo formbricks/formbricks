@@ -67,7 +67,9 @@ describe("replaceTeamDashboardLimits", () => {
       TemplateStringsArray,
       ...unknown[],
     ];
-    expect(strings.join("?")).toMatch(/FROM "Team" WHERE "id" = \? AND "organizationId" = \? FOR UPDATE/);
+    expect(strings.join("?").replaceAll(/\s+/g, " ")).toMatch(
+      /FROM "Team" WHERE "id" = \? AND "organizationId" = \? FOR UPDATE/
+    );
     expect(values).toEqual([TEAM, ORG]);
     expect(prisma.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
       prisma.team.findFirst.mock.invocationCallOrder[0]
