@@ -1,4 +1,5 @@
 import "server-only";
+import { BASE_ERROR_CODES } from "@better-auth/core/error";
 import { APIError, isAPIError } from "better-auth/api";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { hashString } from "@/lib/hash-string";
@@ -11,7 +12,10 @@ const SIGN_IN_PATH = "/sign-in/email";
 // The failures that spend the unit. An unverified account with the right password counts too (ENG-2099):
 // its answer is the wrong-password one, and a budget that refunded it would lock out a taken address after
 // ten tries but never a free one, telling them apart again through the 429.
-const SPENDING_CODES = new Set(["INVALID_EMAIL_OR_PASSWORD", "EMAIL_NOT_VERIFIED"]);
+const SPENDING_CODES = new Set<string>([
+  BASE_ERROR_CODES.INVALID_EMAIL_OR_PASSWORD.code,
+  BASE_ERROR_CODES.EMAIL_NOT_VERIFIED.code,
+]);
 // Where the before hook leaves its receipt for the after hook. Both run on the one request context.
 const RESERVATION_KEY = "signInBudgetReservation";
 

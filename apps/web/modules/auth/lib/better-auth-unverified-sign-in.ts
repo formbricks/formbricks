@@ -34,7 +34,10 @@ const toErrorResponse = (error: APIError): Response =>
  * Over HTTP it returns a `Response` rather than throwing the new error: when an after hook replaces an
  * error, Better Auth's dispatcher keeps the status the endpoint threw (403) and only swaps the body, but it
  * passes a `Response` through as is. A server-side `auth.api.signInEmail` call has no request and gets the
- * thrown `APIError`, whose 401 the dispatcher does keep when it rethrows.
+ * thrown `APIError`, whose 401 the dispatcher keeps when it rethrows. The hook cannot see the caller's
+ * `asResponse` flag (the dispatcher resets it before the hooks run), so a server-side call that passes
+ * `asResponse: true` without a request would still get the 403 status with this body. Only our own code
+ * calls that way, and an HTTP request always carries its request.
  *
  * Must run after `auditFailedAuthAfter` and `settleSignInBudgetAfterHandler`, which need the real code:
  * the audit records `email_not_verified` as the internal reason, and the budget spends the unit for it.

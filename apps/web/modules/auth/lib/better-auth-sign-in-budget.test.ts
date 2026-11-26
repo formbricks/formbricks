@@ -124,4 +124,33 @@ describe("sign-in failure budget (SEC-18)", () => {
       expect(settleRateLimitUsage).not.toHaveBeenCalled();
     });
   });
+
+  // ENG-2099: the 429 must arrive at the same attempt for a free address as for a taken one. Counted with a
+  // stand-in for the Redis budget that refuses once ten units are held and frees a unit when it is settled.
+  test("locks an unverified account with the right password out at the same attempt as a wrong password", async () => {
+    const lockoutAttempt = async (returned: unknown): Promise<number> => {
+      let held = 0;
+      vi.mocked(reserveRateLimitUsage).mockImplementation(async () => {
+        if (held >= budget.allowedPerInterval) throw new TooManyRequestsError("limit");
+        held += 1;
+        return reservation;
+      });
+      vi.mocked(settleRateLimitUsage).mockImplementation(async () => {
+        held -= 1;
+      });
+      for (let attempt = 1; attempt <= 2 * budget.allowedPerInterval; attempt += 1) {
+        try {
+          await signIn("a@b.co", returned);
+        } catch {
+          return attempt;
+        }
+      }
+      return Number.POSITIVE_INFINITY;
+    };
+
+    const unverified = new APIError("FORBIDDEN", { message: "x", code: "EMAIL_NOT_VERIFIED" });
+
+    expect(await lockoutAttempt(wrongPassword)).toBe(budget.allowedPerInterval + 1);
+    expect(await lockoutAttempt(unverified)).toBe(budget.allowedPerInterval + 1);
+  });
 });
