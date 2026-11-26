@@ -152,6 +152,21 @@ export const addDraftCharts = (
   return next;
 };
 
+/**
+ * An image block's uploaded file put into the draft as it is now: only `fileUrl` changes, so alt text,
+ * fit and position set while the upload ran are kept. A block removed meanwhile stays removed.
+ */
+export const setDraftImageFile = (
+  widgets: TDashboardWidget[],
+  widgetId: string,
+  fileUrl: string
+): TDashboardWidget[] =>
+  widgets.map((widget) =>
+    widget.id === widgetId && widget.kind === "image"
+      ? { ...widget, content: { ...widget.content, fileUrl } }
+      : widget
+  );
+
 /** Text blocks the save would refuse: neither a headline nor a description. */
 export const findEmptyTextBlocks = (widgets: TDashboardWidget[]): TDashboardWidget[] =>
   widgets.filter((widget) => widget.kind === "text" && isTextBlockEmpty(widget.content));

@@ -63,7 +63,8 @@ export type TMemberSettingsDialogProps = Readonly<{
   canEditRole: boolean;
   /**
    * Whether attributes can be changed here (an Owner or Manager above the floor, Member attributes on, and
-   * the values loaded: the dialog keeps the values it opened with as the baseline Save diffs against).
+   * the values loaded). The dialog takes the member's values as its baseline the first time this is true,
+   * and Save diffs against that baseline; until then the fields are read only.
    */
   canEditAttributes: boolean;
   canDelete: boolean;
@@ -97,13 +98,30 @@ export const MemberSettingsDialog = ({
   const router = useRouter();
   const fieldId = useId();
   const roleLabels = getOrganizationRoleLabels(t);
+  // The role as the dialog opened: Save writes the role only when the user changed it from this, so a
+  // refresh of the table while the dialog is open never sends a stale role back.
+  const [initialRole] = useState<TOrganizationRole>(row.role);
   const [role, setRole] = useState<TOrganizationRole>(row.role);
-  // The values the fields showed when the dialog opened: Save sends only keys changed from these, so a
-  // refetch while the dialog is open never turns an untouched key into a write.
-  const [initialAttributes] = useState<Record<string, string[]>>(() =>
-    Object.fromEntries(attributeKeys.map(({ key }) => [key, row.attributes[key] ?? []]))
+  const snapshotAttributes = () =>
+    Object.fromEntries(attributeKeys.map(({ key }) => [key, row.attributes[key] ?? []]));
+  // The values the fields showed when editing became possible: Save sends only keys changed from these, so
+  // a refetch while the dialog is open never turns an untouched key into a write. `null` until the values
+  // are loaded: a dialog opened before them stays read only, and takes them as its baseline when they come
+  // (nothing could be typed meanwhile), never an empty snapshot that Save would then write over.
+  const [initialAttributes, setInitialAttributes] = useState<Record<string, string[]> | null>(() =>
+    canEditAttributes ? snapshotAttributes() : null
   );
-  const [attributes, setAttributes] = useState<Record<string, string[]>>(initialAttributes);
+  const [attributes, setAttributes] = useState<Record<string, string[]>>(
+    () => initialAttributes ?? snapshotAttributes()
+  );
+  if (canEditAttributes && initialAttributes === null) {
+    const loaded = snapshotAttributes();
+    setInitialAttributes(loaded);
+    setAttributes(loaded);
+  }
+  const isAttributeEditable = canEditAttributes && initialAttributes !== null;
+  // Read only, the fields follow the member's current values.
+  const shownAttributes = initialAttributes === null ? snapshotAttributes() : attributes;
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -117,7 +135,7 @@ export const MemberSettingsDialog = ({
   const roleOptions = assignableRoles.includes(row.role) ? assignableRoles : [row.role, ...assignableRoles];
 
   const saveRole = async (): Promise<boolean> => {
-    if (role === row.role) return true;
+    if (role === initialRole) return true;
     try {
       if (row.kind === "member" && row.member) {
         await updateMemberRole({ userId: row.member.userId, organizationId, body: { role } });
@@ -132,8 +150,9 @@ export const MemberSettingsDialog = ({
   };
 
   const saveAttributes = async (): Promise<boolean> => {
+    if (!isAttributeEditable || initialAttributes === null) return true;
     const changed = getChangedAttributes(initialAttributes, attributes);
-    if (!canEditAttributes || Object.keys(changed).length === 0) return true;
+    if (Object.keys(changed).length === 0) return true;
     try {
       const result = await bulkMutation.mutateAsync([{ email: row.email, attributes: changed }]);
       const outcome = result.rows[0];
@@ -154,7 +173,7 @@ export const MemberSettingsDialog = ({
   const onSave = async () => {
     setIsSaving(true);
     try {
-      const roleChanged = role !== row.role;
+      const roleChanged = role !== initialRole;
       if (!(await saveRole())) return;
       // The role is saved even if the attributes fail next, so the table must show it either way.
       if (roleChanged) router.refresh();
@@ -278,7 +297,7 @@ export const MemberSettingsDialog = ({
               <div className="flex flex-col gap-y-1">
                 <Label>{t("workspace.settings.member_attributes.title")}</Label>
                 <Muted className="text-slate-500">
-                  {canEditAttributes
+                  {isAttributeEditable
                     ? t("workspace.settings.members.attributes_help")
                     : t("workspace.settings.members.attributes_read_only_help")}
                 </Muted>
@@ -291,9 +310,9 @@ export const MemberSettingsDialog = ({
                   <MultiSelect
                     inputId={`${fieldId}-${key}`}
                     ariaLabelledBy={`${fieldId}-${key}-label`}
-                    value={attributes[key] ?? []}
+                    value={shownAttributes[key] ?? []}
                     onChange={(values) => setAttributes((current) => ({ ...current, [key]: values }))}
-                    options={(canEditAttributes ? getAttributeSuggestions(allRows, key) : []).map(
+                    options={(isAttributeEditable ? getAttributeSuggestions(allRows, key) : []).map(
                       (suggestion) => ({
                         value: suggestion,
                         label: suggestion,
@@ -301,7 +320,7 @@ export const MemberSettingsDialog = ({
                     )}
                     creatable
                     splitOnSeparators
-                    readOnly={!canEditAttributes}
+                    readOnly={!isAttributeEditable}
                     maxSelected={MEMBER_ATTRIBUTE_MAX_VALUES_PER_KEY}
                     inputMaxLength={MEMBER_ATTRIBUTE_MAX_VALUE_LENGTH}
                     placeholder={t("common.tags_field.add_value_placeholder")}

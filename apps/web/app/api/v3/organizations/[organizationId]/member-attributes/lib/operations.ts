@@ -24,6 +24,7 @@ import {
   MemberAttributeKeyLimitError,
   MemberAttributeKeyNotFoundError,
   MemberAttributeKeyTakenError,
+  MemberAttributeWriteTargetGoneError,
 } from "@/modules/ee/member-attributes/lib/errors";
 import { MEMBER_ATTRIBUTE_LIST_DEFAULT_LIMIT } from "@/modules/ee/member-attributes/lib/limits";
 import {
@@ -283,7 +284,18 @@ export async function bulkSetV3MemberAttributes(
     matches,
   });
 
-  await applyMemberAttributeWrites(access.organizationId, writes);
+  try {
+    await applyMemberAttributeWrites(access.organizationId, writes);
+  } catch (error) {
+    if (error instanceof MemberAttributeWriteTargetGoneError) {
+      return problemConflict(
+        requestId,
+        "A member or invite changed while this batch was applied; nothing was saved. Retry the request.",
+        params.instance
+      );
+    }
+    throw error;
+  }
 
   const summary = {
     updatedMembers: outcomes.filter((outcome) => outcome.status === "updated_member").length,

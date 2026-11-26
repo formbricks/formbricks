@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { TeamDashboardLimitsInvalidError } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 import {
   TeamAssignmentOutsideOrganizationError,
   TeamNameTakenError,
@@ -37,6 +38,13 @@ const teamNameP2002 = () =>
       },
     },
   });
+
+const dashboardLimits = vi.hoisted(() => ({ replaceInTransaction: vi.fn() }));
+
+vi.mock("@/modules/ee/dashboard-access/lib/team-dashboard-limits", async (importActual) => ({
+  ...(await importActual<typeof import("@/modules/ee/dashboard-access/lib/team-dashboard-limits")>()),
+  replaceTeamDashboardLimitsInTransaction: dashboardLimits.replaceInTransaction,
+}));
 
 const lockedMemberships = vi.hoisted(() => ({
   rows: [] as Array<{ role: string }>,
@@ -404,6 +412,45 @@ describe("updateTeamDetails", () => {
     vi.mocked(reconcileTeamWorkspaceRelationships).mockRejectedValueOnce(new Error("private"));
 
     await expect(updateTeamDetails("t1", data)).resolves.toBe(true);
+  });
+  test("writes the dashboard limit in the team's transaction, after the grants, only when one is sent", async () => {
+    const arrange = () => {
+      vi.mocked(prisma.team.findUnique)
+        .mockResolvedValueOnce({ id: "t1", organizationId: "org1", name: "Team 1" } as never)
+        .mockResolvedValueOnce(mockTeamDetails);
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
+    };
+
+    arrange();
+    await expect(updateTeamDetails("t1", data)).resolves.toBe(true);
+    expect(dashboardLimits.replaceInTransaction).not.toHaveBeenCalled();
+
+    arrange();
+    await expect(updateTeamDetails("t1", data, ["d1"])).resolves.toBe(true);
+    expect(dashboardLimits.replaceInTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ team: prisma.team }),
+      "org1",
+      "t1",
+      ["d1"]
+    );
+    expect(vi.mocked(prisma.team.update).mock.invocationCallOrder[1]).toBeLessThan(
+      dashboardLimits.replaceInTransaction.mock.invocationCallOrder[0]
+    );
+  });
+  test("lets a refused dashboard limit fail the whole save, before the projection", async () => {
+    vi.mocked(prisma.team.findUnique)
+      .mockResolvedValueOnce({ id: "t1", organizationId: "org1", name: "Team 1" } as never)
+      .mockResolvedValueOnce(mockTeamDetails);
+    vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
+    const refused = new TeamDashboardLimitsInvalidError(["d1"]);
+    dashboardLimits.replaceInTransaction.mockRejectedValueOnce(refused);
+
+    await expect(updateTeamDetails("t1", data, ["d1"])).rejects.toBe(refused);
+    expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
   });
   test("throws ResourceNotFoundError if team not found", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);

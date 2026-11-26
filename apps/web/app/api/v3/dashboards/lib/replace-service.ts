@@ -117,7 +117,7 @@ const firstDisplayedPage = (
     if (best.pageId === undefined) return true;
     return (creationRank.get(page.pageId) ?? 0) < (creationRank.get(best.pageId) ?? 0);
   };
-  const first = pages.reduce((best, page) => (comesFirst(page, best) ? page : best));
+  const first = pages.reduce((best, page) => (comesFirst(page, best) ? page : best), pages[0]);
   return first.pageId ? { id: first.pageId } : { key: first.key as string };
 };
 

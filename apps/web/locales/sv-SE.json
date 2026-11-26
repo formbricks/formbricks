@@ -4177,7 +4177,6 @@
         "team_deletion_not_allowed": "Du har inte behörighet att ta bort detta team.",
         "team_name": "Teamnamn",
         "team_name_settings_title": "{teamName}-inställningar",
-        "team_partially_saved": "Teamet kanske bara har sparats delvis. Öppna teamets inställningar igen och kontrollera dess medlemmar, arbetsytor och åtkomst till dashboards.",
         "team_select_placeholder": "Sök teamnamn...",
         "team_settings_description": "Hantera teammedlemmar, åtkomsträttigheter och mer.",
         "team_updated_successfully": "Team uppdaterat",

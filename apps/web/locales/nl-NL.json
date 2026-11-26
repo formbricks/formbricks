@@ -4177,7 +4177,6 @@
         "team_deletion_not_allowed": "Je mag dit team niet verwijderen.",
         "team_name": "Teamnaam",
         "team_name_settings_title": "{teamName} Instellingen",
-        "team_partially_saved": "Het team is mogelijk maar gedeeltelijk opgeslagen. Open de instellingen opnieuw en controleer de leden, workspaces en dashboardtoegang.",
         "team_select_placeholder": "Zoek teamnaam...",
         "team_settings_description": "Beheer teamleden, toegangsrechten en meer.",
         "team_updated_successfully": "Team succesvol bijgewerkt",

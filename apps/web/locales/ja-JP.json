@@ -4177,7 +4177,6 @@
         "team_deletion_not_allowed": "このチームを削除する権限がありません。",
         "team_name": "チーム名",
         "team_name_settings_title": "{teamName} 設定",
-        "team_partially_saved": "チームが一部しか保存されていない可能性があります。もう一度チームの設定を開いて、メンバー、ワークスペース、ダッシュボードへのアクセス権を確認してください。",
         "team_select_placeholder": "チーム名を検索...",
         "team_settings_description": "チームメンバー、アクセス権などを管理します。",
         "team_updated_successfully": "チームを正常に更新しました",

@@ -4177,7 +4177,6 @@
         "team_deletion_not_allowed": "Du darfst dieses Team nicht löschen.",
         "team_name": "Teamname",
         "team_name_settings_title": "Einstellungen für {teamName}",
-        "team_partially_saved": "Das Team wurde möglicherweise nur teilweise gespeichert. Öffne die Team-Einstellungen erneut und prüfe die Mitglieder, Workspaces und Dashboard-Zugriffe.",
         "team_select_placeholder": "Teamnamen suchen…",
         "team_settings_description": "Verwalte Teammitglieder, Zugriffsrechte und mehr.",
         "team_updated_successfully": "Team erfolgreich aktualisiert",

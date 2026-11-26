@@ -207,6 +207,10 @@ interface ImageBlockProps {
   content: TDashboardImageContent;
   isEditing: boolean;
   onChange: (content: TDashboardImageContent) => void;
+  /** Asked as an upload starts; `false` refuses it (a save is in flight). */
+  onUploadStart: () => boolean;
+  /** The upload's file, or `null` when it failed: the dashboard puts it into its draft as it is then. */
+  onUploadEnd: (fileUrl: string | null) => void;
   onRemove: () => void;
   onMeasure?: (px: number) => void;
 }
@@ -222,27 +226,28 @@ function ImageBlock({
   content,
   isEditing,
   onChange,
+  onUploadStart,
+  onUploadEnd,
   onRemove,
   onMeasure,
 }: Readonly<ImageBlockProps>) {
   const { t } = useTranslation();
   const ref = useReportHeight(onMeasure);
   const [isUploading, setIsUploading] = useState(false);
-  // The content as it is when an upload finishes: alt text, fit or position changed meanwhile are kept.
-  const contentRef = useRef(content);
-  useEffect(() => {
-    contentRef.current = content;
-  }, [content]);
 
+  // The dashboard applies the file to its draft as it is when the upload ends, so alt text, fit or position
+  // changed meanwhile are kept, and it holds Save until every upload has ended.
   const upload = async (file: File) => {
+    if (!onUploadStart()) return;
     setIsUploading(true);
+    let fileUrl: string | null = null;
     try {
-      const fileUrl = await uploadDashboardImage(dashboardId, file);
-      onChange({ ...contentRef.current, fileUrl });
+      fileUrl = await uploadDashboardImage(dashboardId, file);
     } catch (error) {
       toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.image_upload_failed")));
     } finally {
       setIsUploading(false);
+      onUploadEnd(fileUrl);
     }
   };
 
@@ -415,6 +420,10 @@ export interface DashboardLayoutBlockProps {
   widget: Exclude<TDashboardWidget, { kind: "chart" }>;
   isEditing: boolean;
   onContentChange: (widgetId: string, content: TDashboardImageContent | TDashboardTextContent) => void;
+  /** Asked as an image upload starts; `false` refuses it. */
+  onImageUploadStart: () => boolean;
+  /** An image upload ended, with its file or `null` when it failed. */
+  onImageUploadEnd: (widgetId: string, fileUrl: string | null) => void;
   onRemove: (widgetId: string) => void;
   /** The pixels the block's content needs, for its auto-height; image and text blocks report it. */
   onMeasure?: (widgetId: string, px: number) => void;
@@ -425,6 +434,8 @@ export function DashboardLayoutBlock({
   widget,
   isEditing,
   onContentChange,
+  onImageUploadStart,
+  onImageUploadEnd,
   onRemove,
   onMeasure,
 }: Readonly<DashboardLayoutBlockProps>) {
@@ -451,6 +462,8 @@ export function DashboardLayoutBlock({
       content={widget.content}
       isEditing={isEditing}
       onChange={(content) => onContentChange(widget.id, content)}
+      onUploadStart={onImageUploadStart}
+      onUploadEnd={(fileUrl) => onImageUploadEnd(widgetId, fileUrl)}
       onRemove={remove}
       onMeasure={report}
     />

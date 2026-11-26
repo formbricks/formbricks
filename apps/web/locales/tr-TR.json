@@ -4177,7 +4177,6 @@
         "team_deletion_not_allowed": "Bu takımı silme yetkin yok.",
         "team_name": "Takım Adı",
         "team_name_settings_title": "{teamName} Ayarları",
-        "team_partially_saved": "Ekip yalnızca kısmen kaydedilmiş olabilir. Ayarlarını tekrar aç ve üyelerini, çalışma alanlarını ve gösterge paneli erişimini kontrol et.",
         "team_select_placeholder": "Takım adı ara…",
         "team_settings_description": "Takım üyelerini, erişim haklarını ve daha fazlasını yönet.",
         "team_updated_successfully": "Takım başarıyla güncellendi",

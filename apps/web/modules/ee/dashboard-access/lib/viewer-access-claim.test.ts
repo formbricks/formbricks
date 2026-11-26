@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   VIEWER_ACCESS_MAX_VALUES,
   buildViewerAccessClaim,
+  hasUnrestrictedViewerDataset,
   isViewerAccessField,
   normalizeViewerAccessValues,
   summarizeViewerAccess,
@@ -96,5 +97,18 @@ describe("viewer access claim (ADR-0061)", () => {
         { join: "any", conditions: [empty] },
       ]).status
     ).toBe("unmatched");
+  });
+
+  test("a dataset without conditions keeps the dashboard readable when a restricted one matches nothing", () => {
+    const empty = condition("FeedbackRecords.metadataCountry", []);
+    expect(summarizeViewerAccess([{ join: "all", conditions: [empty] }, null]).status).toBe("restricted");
+    expect(
+      summarizeViewerAccess([
+        { join: "all", conditions: [empty] },
+        { join: "all", conditions: [] },
+      ]).status
+    ).toBe("restricted");
+    expect(hasUnrestrictedViewerDataset([{ join: "all", conditions: [empty] }])).toBe(false);
+    expect(hasUnrestrictedViewerDataset([{ join: "all", conditions: [empty] }, null])).toBe(true);
   });
 });

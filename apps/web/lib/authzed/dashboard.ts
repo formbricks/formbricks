@@ -1,4 +1,5 @@
 import "server-only";
+import { status } from "@grpc/grpc-js";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import type {
@@ -16,8 +17,10 @@ import {
   expectedDashboardRelationships,
 } from "./dashboard-relationships";
 import { readDashboardPageProjectionRows, readDashboardProjectionRows } from "./dashboard-source";
+import { AuthzedError } from "./errors";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
+  AuthzedProjectionFencedError,
   AuthzedProjectionUnstableError,
   type TAuthzedProjectionResult,
   runBestEffortProjection,
@@ -112,11 +115,60 @@ const resourceUpdateGroup = async (
   return diffDashboardRelationships(current, expected);
 };
 
+/**
+ * Upper bound on one reconcile transaction. It only holds the locks, but spans SpiceDB round trips for a
+ * whole chunk, so Prisma's five-second default would abort a healthy but slow reconcile.
+ */
+const DASHBOARD_PROJECTION_TRANSACTION_TIMEOUT_MS = 30_000;
+const DASHBOARD_PROJECTION_TRANSACTION_MAX_WAIT_MS = 10_000;
+
+/**
+ * How long before the transaction times out a reconcile stops writing to SpiceDB, like the MCP grant
+ * projector (`mcp-grant-timeouts.ts`). A write still under way at the deadline is abandoned by SpiceDB,
+ * but one whose datastore commit was already sent can land just after, so a write that misses it keeps
+ * the locks through this margin before the pass fails.
+ */
+const DASHBOARD_PROJECTION_WRITE_MARGIN_MS = 5_000;
+const LOCK_RELEASE_SLACK_MS = 1_000;
+
+const isDeadlineExceeded = (error: unknown): boolean =>
+  error instanceof AuthzedError && error.grpcStatus === status.DEADLINE_EXCEEDED;
+
+/**
+ * Every SpiceDB write of a pass is fenced by `deadline`, the time by which its advisory locks are still
+ * certainly held: Prisma's rollback on timeout frees the locks but does not stop the callback, so an
+ * unfenced allow written after it could land behind a newer reconcile and restore a viewer's access. A
+ * write not started by the deadline is not sent; one under way carries it to SpiceDB.
+ */
+const assertBeforeDeadline = (deadline: number): void => {
+  if (Date.now() >= deadline) throw new AuthzedProjectionFencedError();
+};
+
+const writeBeforeDeadline = async (
+  client: TAuthzedClient,
+  batch: ReadonlyArray<TAuthzedRelationshipUpdate>,
+  deadline: number
+): Promise<void> => {
+  assertBeforeDeadline(deadline);
+  try {
+    await client.writeRelationships(batch, { deadline });
+  } catch (error) {
+    if (isDeadlineExceeded(error)) {
+      // Keep the locks until a second before the transaction times out, so a commit SpiceDB could no
+      // longer abandon lands, if at all, while no other reconcile of these targets can run.
+      const wait = deadline + DASHBOARD_PROJECTION_WRITE_MARGIN_MS - LOCK_RELEASE_SLACK_MS - Date.now();
+      if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+    throw error;
+  }
+};
+
 const writeSnapshot = async (
   client: TAuthzedClient,
   dashboardIds: ReadonlyArray<string>,
   pageIds: ReadonlyArray<string>,
-  snapshot: TDashboardSnapshot
+  snapshot: TDashboardSnapshot,
+  deadline: number
 ): Promise<void> => {
   const dashboardsById = new Map(snapshot.dashboards.map((row) => [row.id, row]));
   const pagesById = new Map(snapshot.pages.map((row) => [row.id, row]));
@@ -153,21 +205,16 @@ const writeSnapshot = async (
   }
 
   for (const batch of packRelationshipUpdateGroups(updateGroups.filter((group) => group.length > 0))) {
-    await client.writeRelationships(batch); // NOSONAR
+    await writeBeforeDeadline(client, batch, deadline); // NOSONAR
   }
+  // Deletes only narrow access, and only for rows already gone, but still none starts past the deadline.
+  if (deletionFilters.length > 0) assertBeforeDeadline(deadline);
   await deleteRelationshipsInBoundedBatches(client, deletionFilters);
 };
 
 /** Advisory lock key prefixes, one per resource type, hashed with the id like the survey projector's. */
 const DASHBOARD_PROJECTION_LOCK_PREFIX = "authzed-dashboard:";
 const DASHBOARD_PAGE_PROJECTION_LOCK_PREFIX = "authzed-dashboard-page:";
-
-/**
- * Upper bound on one reconcile transaction. It only holds the locks, but spans SpiceDB round trips for a
- * whole chunk, so Prisma's five-second default would abort a healthy but slow reconcile.
- */
-const DASHBOARD_PROJECTION_TRANSACTION_TIMEOUT_MS = 30_000;
-const DASHBOARD_PROJECTION_TRANSACTION_MAX_WAIT_MS = 10_000;
 
 /**
  * Every lock key of the targets, in one fixed order for every caller (dashboards, then pages, each
@@ -202,12 +249,16 @@ export const reconcileDashboardRelationships = (
     const lockKeys = dashboardProjectionLockKeys(dashboardIds, pageIds);
     return prisma.$transaction(
       async (tx) => {
+        // The locks last until the transaction ends, at its timeout at the latest, counted from now (the
+        // wait for the locks included): every write is held to a deadline short of it (`writeBeforeDeadline`).
+        const writeDeadline =
+          Date.now() + DASHBOARD_PROJECTION_TRANSACTION_TIMEOUT_MS - DASHBOARD_PROJECTION_WRITE_MARGIN_MS;
         // Held until the transaction ends. The array is scanned in order, so the locks are taken in order.
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(key)) FROM unnest(${lockKeys}::text[]) AS key`;
 
         for (let pass = 1; pass <= AUTHZED_MAX_RECONCILIATION_PASSES; pass++) {
           const sourceSnapshot = await readSnapshot(tx, dashboardIds, pageIds);
-          await writeSnapshot(client, dashboardIds, pageIds, sourceSnapshot);
+          await writeSnapshot(client, dashboardIds, pageIds, sourceSnapshot, writeDeadline);
 
           if (snapshotsMatch(sourceSnapshot, await readSnapshot(tx, dashboardIds, pageIds))) {
             return pass;

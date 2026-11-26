@@ -288,7 +288,7 @@ const EMBEDDED_EQUALS_MEMBER_PREFIX = "edc_";
  */
 const EMBEDDED_NUMBER_MEMBER_PREFIX = "edn_";
 /**
- * Normalized twin of an embedded dimension: LOWER(TRIM(value)). Only a Dashboard Viewer access condition
+ * Normalized twin of an embedded dimension: LOWER(BTRIM(value, <the characters JS trim() removes>)). Only a Dashboard Viewer access condition
  * names it (ADR-0061: matching ignores case and surrounding spaces), and it has no containment
  * prefilter, since an exact `@>` would drop records whose stored value differs in case or spacing.
  */

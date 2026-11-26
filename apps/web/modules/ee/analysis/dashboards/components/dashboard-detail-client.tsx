@@ -55,6 +55,7 @@ import {
   pagesChanged,
   renameDraftPage,
   resolveSelectedPageId,
+  setDraftImageFile,
   setDraftPageTeams,
   toSavedPages,
   widgetsChanged,
@@ -381,6 +382,10 @@ function DashboardDetailView({
   // Set as a save starts, before React re-renders: the draft is frozen while its request is in flight, so
   // nothing changed meanwhile is cleared unsaved when the save succeeds.
   const savingRef = useRef(false);
+  // Image uploads in flight. Save waits for them, and none starts while a save is in flight, so an upload
+  // ending is never dropped from the draft the save sends, nor cleared with it after.
+  const uploadsRef = useRef(0);
+  const [isUploading, setIsUploading] = useState(false);
   // The version the edit started from: what the save sends as its precondition, so a refetch while
   // editing can never make a save silently overwrite someone else's change.
   const [editBaseUpdatedAt, setEditBaseUpdatedAt] = useState<string | null>(null);
@@ -565,6 +570,24 @@ function DashboardDetailView({
     },
     [dashboard.widgets]
   );
+
+  const handleImageUploadStart = useCallback(() => {
+    if (savingRef.current) return false;
+    uploadsRef.current += 1;
+    setIsUploading(true);
+    return true;
+  }, []);
+
+  const handleImageUploadEnd = useCallback((widgetId: string, fileUrl: string | null) => {
+    uploadsRef.current = Math.max(0, uploadsRef.current - 1);
+    setIsUploading(uploadsRef.current > 0);
+    // Applied to the draft as it is now, so settings changed while the upload ran are kept.
+    if (fileUrl !== null) {
+      setDraftWidgets((current) =>
+        current === null ? current : setDraftImageFile(current, widgetId, fileUrl)
+      );
+    }
+  }, []);
 
   const enterEditMode = useCallback(async () => {
     if (isEditing) {
@@ -870,7 +893,7 @@ function DashboardDetailView({
   }, [name, selectPage, t, widgets]);
 
   const handleSave = useCallback(async () => {
-    if (!canSave()) return;
+    if (uploadsRef.current > 0 || !canSave()) return;
     await saveDashboard(
       editBaseUpdatedAt ?? dashboard.updatedAt,
       name,
@@ -891,7 +914,7 @@ function DashboardDetailView({
 
   /** Save the edit over the latest version, knowing what it removes. */
   const handleSaveAnyway = useCallback(() => {
-    if (!staleLatest) return;
+    if (!staleLatest || uploadsRef.current > 0) return;
     const keptPages = draftPagesOverLatest(staleLatest.pages, pages, editBasePages ?? []);
     // A name this editor did not touch is the latest one, so someone else's rename survives the overwrite.
     void saveDashboard(
@@ -933,7 +956,12 @@ function DashboardDetailView({
   // `E` toggles edit mode: it enters from view mode, and inside edit mode it saves when there is
   // something to save and cancels otherwise - the same button the key cap sits on in the control bar.
   useEffect(() => {
-    const action = resolveEditHotkeyAction({ isReadOnly, isEditing, hasChanges, isSaving });
+    const action = resolveEditHotkeyAction({
+      isReadOnly,
+      isEditing,
+      hasChanges,
+      isSaving: isSaving || isUploading,
+    });
     if (!action) {
       return;
     }
@@ -951,7 +979,16 @@ function DashboardDetailView({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleCancel, handleEnterEditMode, handleSave, hasChanges, isEditing, isReadOnly, isSaving]);
+  }, [
+    handleCancel,
+    handleEnterEditMode,
+    handleSave,
+    hasChanges,
+    isEditing,
+    isReadOnly,
+    isSaving,
+    isUploading,
+  ]);
 
   const applyDateFilterToUrl = useCallback(
     (filter: TDashboardDateFilter | null) => {
@@ -1074,6 +1111,8 @@ function DashboardDetailView({
           widget={widget}
           isEditing={isEditing}
           onContentChange={handleBlockContentChange}
+          onImageUploadStart={handleImageUploadStart}
+          onImageUploadEnd={handleImageUploadEnd}
           onRemove={handleRemoveWidget}
           onMeasure={isAutoHeightBlock(widget.kind) ? handleMeasure : undefined}
         />
@@ -1117,6 +1156,7 @@ function DashboardDetailView({
               dashboardId={dashboard.id}
               isEditing={isEditing}
               isSaving={isSaving}
+              isUploading={isUploading}
               hasChanges={hasChanges}
               isReadOnly={isReadOnly}
               onRefresh={() => {

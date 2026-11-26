@@ -11,6 +11,7 @@ import {
   UNRESTRICTED_VIEWER_ACCESS,
   VIEWER_ACCESS_MAX_CONDITIONS,
   buildViewerAccessClaim,
+  hasUnrestrictedViewerDataset,
   isViewerAccessUnmatched,
   summarizeViewerAccess,
 } from "./viewer-access-claim";
@@ -182,7 +183,10 @@ export const getViewerAccessSummary = async (
   if (!reader || datasetIds.length === 0) return UNRESTRICTED_VIEWER_ACCESS;
   const resolved = await resolveViewerAccessForDatasets(reader.organizationId, reader.userId, datasetIds);
   const summary = summarizeViewerAccess([...resolved.values()]);
-  if (summary.status !== "restricted" || !probe) return summary;
+  // A dataset without conditions keeps its charts visible, so the dashboard is never "unmatched" as a whole.
+  if (summary.status !== "restricted" || !probe || hasUnrestrictedViewerDataset([...resolved.values()])) {
+    return summary;
+  }
 
   // A dataset whose conditions the viewer holds no value for matches nothing: no probe needed.
   const restricted = [...resolved.entries()].filter(

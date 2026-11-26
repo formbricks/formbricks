@@ -4177,7 +4177,6 @@
         "team_deletion_not_allowed": "Nu aveți permisiunea să ștergeți această echipă.",
         "team_name": "Nume echipă",
         "team_name_settings_title": "{teamName} Setări",
-        "team_partially_saved": "Este posibil ca echipa să fi fost salvată doar parțial. Deschide din nou setările echipei și verifică membrii, spațiile de lucru și accesul la dashboard-uri.",
         "team_select_placeholder": "Caută numele echipei...",
         "team_settings_description": "Gestionați membrii echipei, drepturile de acces și altele.",
         "team_updated_successfully": "Echipă actualizată cu succes",

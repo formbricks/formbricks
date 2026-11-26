@@ -95,49 +95,61 @@ export const replaceTeamDashboardLimits = async (
   organizationId: string,
   teamId: string,
   dashboardIds: readonly string[]
+): Promise<{ before: TTeamDashboardLimits; after: TTeamDashboardLimits } | null> =>
+  prisma.$transaction((tx) =>
+    replaceTeamDashboardLimitsInTransaction(tx, organizationId, teamId, dashboardIds)
+  );
+
+/**
+ * `replaceTeamDashboardLimits` inside a caller's transaction: the team settings save writes the limit in
+ * the transaction that changes the team's workspace grants, so a new grant never commits without it.
+ */
+export const replaceTeamDashboardLimitsInTransaction = async (
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  teamId: string,
+  dashboardIds: readonly string[]
 ): Promise<{ before: TTeamDashboardLimits; after: TTeamDashboardLimits } | null> => {
   const ids = [...new Set(dashboardIds)];
-  return prisma.$transaction(async (tx) => {
-    const before = await tx.team.findFirst({
-      where: { id: teamId, organizationId },
-      select: {
-        dashboardLimited: true,
-        dashboardLimits: { select: { dashboardId: true }, orderBy: { dashboardId: "asc" } },
-      },
-    });
-    if (!before) return null;
-
-    if (ids.length > 0) {
-      const eligible = new Set(
-        (
-          await tx.dashboard.findMany({
-            where: { id: { in: ids }, workspace: { organizationId, workspaceTeams: { some: { teamId } } } },
-            select: { id: true },
-          })
-        ).map(({ id }) => id)
-      );
-      const refused = ids.filter((id) => !eligible.has(id));
-      if (refused.length > 0) throw new TeamDashboardLimitsInvalidError(refused);
-    }
-
-    const previous = before.dashboardLimits.map(({ dashboardId }) => dashboardId);
-    const removed = previous.filter((id) => !ids.includes(id));
-    const added = ids.filter((id) => !previous.includes(id));
-    if (removed.length > 0) {
-      await tx.teamDashboard.deleteMany({ where: { teamId, dashboardId: { in: removed } } });
-    }
-    if (added.length > 0) {
-      await tx.teamDashboard.createMany({ data: added.map((dashboardId) => ({ teamId, dashboardId })) });
-    }
-    const limited = ids.length > 0;
-    if (before.dashboardLimited !== limited) {
-      await tx.team.update({ where: { id: teamId }, data: { dashboardLimited: limited } });
-    }
-    return {
-      before: { teamId, limited: before.dashboardLimited, dashboardIds: previous },
-      after: { teamId, limited, dashboardIds: [...ids].sort((a, b) => a.localeCompare(b)) },
-    };
+  const before = await tx.team.findFirst({
+    where: { id: teamId, organizationId },
+    select: {
+      dashboardLimited: true,
+      dashboardLimits: { select: { dashboardId: true }, orderBy: { dashboardId: "asc" } },
+    },
   });
+  if (!before) return null;
+
+  if (ids.length > 0) {
+    const eligible = new Set(
+      (
+        await tx.dashboard.findMany({
+          where: { id: { in: ids }, workspace: { organizationId, workspaceTeams: { some: { teamId } } } },
+          select: { id: true },
+        })
+      ).map(({ id }) => id)
+    );
+    const refused = ids.filter((id) => !eligible.has(id));
+    if (refused.length > 0) throw new TeamDashboardLimitsInvalidError(refused);
+  }
+
+  const previous = before.dashboardLimits.map(({ dashboardId }) => dashboardId);
+  const removed = previous.filter((id) => !ids.includes(id));
+  const added = ids.filter((id) => !previous.includes(id));
+  if (removed.length > 0) {
+    await tx.teamDashboard.deleteMany({ where: { teamId, dashboardId: { in: removed } } });
+  }
+  if (added.length > 0) {
+    await tx.teamDashboard.createMany({ data: added.map((dashboardId) => ({ teamId, dashboardId })) });
+  }
+  const limited = ids.length > 0;
+  if (before.dashboardLimited !== limited) {
+    await tx.team.update({ where: { id: teamId }, data: { dashboardLimited: limited } });
+  }
+  return {
+    before: { teamId, limited: before.dashboardLimited, dashboardIds: previous },
+    after: { teamId, limited, dashboardIds: [...ids].sort((a, b) => a.localeCompare(b)) },
+  };
 };
 
 /**

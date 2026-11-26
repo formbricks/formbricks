@@ -8,6 +8,7 @@ import {
   MemberAttributeKeyLimitError,
   MemberAttributeKeyNotFoundError,
   MemberAttributeKeyTakenError,
+  MemberAttributeWriteTargetGoneError,
 } from "@/modules/ee/member-attributes/lib/errors";
 import {
   applyMemberAttributeWrites,
@@ -264,5 +265,21 @@ describe("bulkSetV3MemberAttributes", () => {
       [{ target: "member", userId: "user_anna", valuesByKeyId: new Map([[keyId, ["Sweden"]]]) }],
     ]);
     expect(JSON.stringify(auditLog.newObject)).not.toContain("Sweden");
+  });
+
+  test("answers 409 when a member or invite disappears while the batch is applied", async () => {
+    grant();
+    vi.mocked(listAttributeKeys).mockResolvedValue([key]);
+    vi.mocked(matchEmailsInOrganization).mockResolvedValue(
+      new Map([
+        ["anna@example.com", { target: "member" as const, userId: "user_anna", email: "anna@example.com" }],
+      ])
+    );
+    vi.mocked(applyMemberAttributeWrites).mockRejectedValueOnce(new MemberAttributeWriteTargetGoneError());
+    const response = await bulkSetV3MemberAttributes({
+      ...base,
+      body: { rows: [{ email: "anna@example.com", attributes: { country: ["Sweden"] } }] },
+    });
+    expect(response.status).toBe(409);
   });
 });

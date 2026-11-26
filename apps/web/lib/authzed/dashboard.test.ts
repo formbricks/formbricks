@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
+import { prisma } from "@/lib/__mocks__/database";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { type TAuthzedRelationship, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import {
@@ -22,16 +22,6 @@ const clientMocks = {
   writeRelationships: vi.fn(),
 };
 
-const tx = { $executeRaw: vi.fn() };
-
-vi.mock("@formbricks/database", () => ({
-  prisma: {
-    $transaction: vi.fn(),
-    dashboard: { findMany: vi.fn() },
-    dashboardPage: { findMany: vi.fn() },
-    workspaceTeam: { findMany: vi.fn() },
-  },
-}));
 vi.mock("@formbricks/logger", () => ({ logger: { debug: vi.fn(), warn: vi.fn() } }));
 vi.mock("./client", () => ({ getAuthzedClient: vi.fn() }));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
@@ -97,10 +87,11 @@ beforeEach(() => {
   vi.mocked(prisma.dashboard.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([] as never);
-  tx.$executeRaw.mockResolvedValue(1);
-  vi.mocked(prisma.$transaction).mockImplementation((async (callback: (client: typeof tx) => unknown) =>
-    // The reads run on the transaction too; the mocks are the same functions either way.
-    callback({ ...prisma, ...tx })) as never);
+  prisma.$executeRaw.mockResolvedValue(1);
+  // The transaction client is the shared mock itself, so its reads and lock calls are the same functions.
+  prisma.$transaction.mockImplementation(async (callback) =>
+    typeof callback === "function" ? callback(prisma) : []
+  );
 });
 
 describe("expected dashboard relationships (ADR-0060)", () => {
@@ -334,15 +325,15 @@ describe("reconcileDashboardRelationships", () => {
 
     await reconcileDashboardRelationships({ dashboardIds: ["dash-b", "dash-a"], pageIds: ["page-1"] });
 
-    expect(tx.$executeRaw).toHaveBeenCalledTimes(1);
-    const [sql, keys] = tx.$executeRaw.mock.calls[0] as [TemplateStringsArray, string[]];
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    const [sql, keys] = prisma.$executeRaw.mock.calls[0] as [TemplateStringsArray, string[]];
     expect(sql.join("?")).toContain("pg_advisory_xact_lock(hashtext(key))");
     expect(keys).toEqual([
       "authzed-dashboard:dash-a",
       "authzed-dashboard:dash-b",
       "authzed-dashboard-page:page-1",
     ]);
-    expect(tx.$executeRaw.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(prisma.$executeRaw.mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(prisma.dashboardPage.findMany).mock.invocationCallOrder[0]
     );
   });
@@ -382,6 +373,43 @@ describe("reconcileDashboardRelationships", () => {
       code: AUTHZED_ERROR_CODES.UNAVAILABLE,
       retryable: true,
       status: "failed",
+    });
+  });
+
+  describe("write deadline", () => {
+    const NOW = new Date("2026-11-26T12:00:00.000Z").getTime();
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(NOW);
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("carries a deadline short of the transaction timeout on every write", async () => {
+      vi.mocked(prisma.dashboard.findMany).mockResolvedValue([dashboardRow([])] as never);
+
+      await reconcileDashboardRelationships({ dashboardIds: ["dash-1"] });
+
+      expect(clientMocks.writeRelationships).toHaveBeenCalledWith(expect.any(Array), {
+        deadline: NOW + 25_000,
+      });
+    });
+
+    test("sends no write once the locks may have been released, and fails as fenced", async () => {
+      vi.mocked(prisma.dashboard.findMany).mockImplementation((async () => {
+        // A slow read: by the time the pass writes, the deadline has passed.
+        vi.setSystemTime(NOW + 26_000);
+        return [dashboardRow([])];
+      }) as never);
+
+      await expect(reconcileDashboardRelationships({ dashboardIds: ["dash-1"] })).resolves.toMatchObject({
+        code: "authzed_projection_fenced",
+        retryable: true,
+        status: "failed",
+      });
+      expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
     });
   });
 

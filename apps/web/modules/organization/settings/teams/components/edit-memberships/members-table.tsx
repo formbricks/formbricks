@@ -223,12 +223,9 @@ export const MembersTable = ({
   ];
 
   // Member settings may edit attributes only once the keys and values are loaded: the dialog diffs against
-  // the values it opened with, and blank fields would otherwise save as cleared values.
+  // the values it holds when editing starts, and blank fields would otherwise save as cleared values. It
+  // opens at once either way, read only until then, and is never remounted, so a role edit is kept.
   const hasAttributeValues = keysQuery.data !== undefined && valuesQuery.data !== undefined;
-  // The dialog reads a member's values once, when it opens. Someone who may edit them opens it only once
-  // they are loaded (or failed, which leaves them read-only), so it is never remounted mid-edit and a role
-  // change made in it is kept.
-  const attributeValuesSettled = hasAttributeValues || keysQuery.isError || valuesQuery.isError;
   const settingsRow = settingsRowId ? allRows.find((row) => row.id === settingsRowId) : undefined;
   const settingsPermissions = settingsRow ? permissionsFor(settingsRow) : null;
   // A member who may not read everyone's attributes sees only their own, read-only.
@@ -322,27 +319,25 @@ export const MembersTable = ({
           onRowClick={(row) => setSettingsRowId(row.original.id)}
         />
       </div>
-      {settingsRowWithOwnValues &&
-        settingsPermissions &&
-        (!settingsPermissions.canEditAttributes || attributeValuesSettled) && (
-          <MemberSettingsDialog
-            key={settingsRowWithOwnValues.id}
-            organizationId={organizationId}
-            row={settingsRowWithOwnValues}
-            allRows={allRows}
-            open
-            setOpen={(open) => {
-              if (!open) setSettingsRowId(null);
-            }}
-            currentUserRole={currentUserRole}
-            isFormbricksCloud={isFormbricksCloud}
-            isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
-            canEditRole={settingsPermissions.canEditRole}
-            canEditAttributes={settingsPermissions.canEditAttributes && hasAttributeValues}
-            canDelete={settingsPermissions.canDelete}
-            attributeKeys={settingsAttributeKeys}
-          />
-        )}
+      {settingsRowWithOwnValues && settingsPermissions && (
+        <MemberSettingsDialog
+          key={settingsRowWithOwnValues.id}
+          organizationId={organizationId}
+          row={settingsRowWithOwnValues}
+          allRows={allRows}
+          open
+          setOpen={(open) => {
+            if (!open) setSettingsRowId(null);
+          }}
+          currentUserRole={currentUserRole}
+          isFormbricksCloud={isFormbricksCloud}
+          isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
+          canEditRole={settingsPermissions.canEditRole}
+          canEditAttributes={settingsPermissions.canEditAttributes && hasAttributeValues}
+          canDelete={settingsPermissions.canDelete}
+          attributeKeys={settingsAttributeKeys}
+        />
+      )}
     </div>
   );
 };

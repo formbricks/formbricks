@@ -952,12 +952,27 @@ describe("cube embedded-data members", () => {
     ]);
   });
 
-  test("the schema compiles each key's normalized twin as LOWER(TRIM()), with no containment prefilter", () => {
+  test("the schema compiles each key's normalized twin as a lowercased JavaScript-style trim, with no containment prefilter", () => {
     const schemaSource = readFileSync(cubeSchemaPath, "utf8");
-    expect(schemaSource).toContain(
-      "embeddedDimensions[spec.normalizedName] = {\n      sql: (CUBE) => `LOWER(TRIM(${CUBE}.${spec.valueSql}))`,"
-    );
+    expect(schemaSource).toContain("`LOWER(${trimLikeJavaScript(`${CUBE}.${spec.valueSql}`)})`");
+    expect(schemaSource).toContain("`BTRIM(${sql}, ${JS_TRIM_WHITESPACE_SQL})`");
     expect(schemaSource).not.toMatch(/FILTER_PARAMS\.FeedbackRecords\[spec\.normalizedName\]/);
+  });
+
+  test("the normalized twin strips exactly the whitespace JavaScript's trim() strips from the viewer's value", () => {
+    const schemaSource = readFileSync(cubeSchemaPath, "utf8");
+    const listed = /const JS_TRIM_WHITESPACE_CODE_POINTS = \[([^\]]+)\]/.exec(schemaSource)?.[1] ?? "";
+    const codePoints = listed
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0)
+      .map(Number);
+    const trimmed = Array.from({ length: 0x10000 }, (_, codePoint) => codePoint).filter(
+      (codePoint) => String.fromCodePoint(codePoint).trim() === ""
+    );
+
+    expect(codePoints).toContain(0x00a0);
+    expect(codePoints).toEqual(trimmed);
   });
 
   test("the schema joins exactly as many AnswerFilter aliases as the rewrite numbers", () => {

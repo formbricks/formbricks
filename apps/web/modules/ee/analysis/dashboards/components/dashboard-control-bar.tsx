@@ -35,6 +35,8 @@ interface DashboardControlBarProps {
   dashboardId: string;
   isEditing: boolean;
   isSaving: boolean;
+  /** An image upload is in flight: Save waits for it, so the save carries its file. */
+  isUploading?: boolean;
   hasChanges: boolean;
   isReadOnly: boolean;
   onRefresh: () => void;
@@ -57,6 +59,7 @@ export const DashboardControlBar = ({
   dashboardId,
   isEditing,
   isSaving,
+  isUploading = false,
   hasChanges,
   isReadOnly,
   onRefresh,
@@ -94,16 +97,16 @@ export const DashboardControlBar = ({
     {
       icon: isSaving ? null : CheckIcon,
       tooltip: hasChanges ? t("common.save") : t("common.no_changes"),
-      shortcut: hasChanges && !isSaving ? editHotkey : undefined,
+      shortcut: hasChanges && !isSaving && !isUploading ? editHotkey : undefined,
       onClick: onSave,
       isVisible: true,
       isLoading: isSaving,
-      disabled: isSaving || !hasChanges,
+      disabled: isSaving || isUploading || !hasChanges,
     },
     {
       icon: XIcon,
       tooltip: t("common.cancel"),
-      shortcut: !hasChanges && !isSaving ? editHotkey : undefined,
+      shortcut: !hasChanges && !isSaving && !isUploading ? editHotkey : undefined,
       onClick: onCancel,
       isVisible: true,
       disabled: isSaving,

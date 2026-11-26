@@ -41,23 +41,27 @@ const EMAIL_VALUE = "__email__";
 const EMBEDDED_VALUE = "__embedded__";
 
 type TDraftCondition = { id: string; field: string; attributeKeyId: string | null };
+type TRule = { join: TViewerAccessJoin; conditions: TDraftCondition[] };
 /**
  * `basedOn` is the dataset version the edit started from, kept with the edit: a background refetch after
  * someone else's save must not move it forward, or the stale edit would pass the server's version check.
+ * `original` is the rule at that version: an edit brought back to it is no edit at all.
  */
-type TDraft = { join: TViewerAccessJoin; conditions: TDraftCondition[]; basedOn: string };
+type TDraft = TRule & { basedOn: string; original: TRule };
 
-const toDraft = (access: TDatasetViewerAccessResource): TDraft => ({
-  basedOn: access.updatedAt,
-  join: access.join,
-  conditions: access.conditions.map(({ field, attributeKeyId }, index) => ({
-    id: `${index}`,
-    field,
-    attributeKeyId,
-  })),
-});
+const toDraft = (access: TDatasetViewerAccessResource): TDraft => {
+  const rule: TRule = {
+    join: access.join,
+    conditions: access.conditions.map(({ field, attributeKeyId }, index) => ({
+      id: `${index}`,
+      field,
+      attributeKeyId,
+    })),
+  };
+  return { ...rule, basedOn: access.updatedAt, original: rule };
+};
 
-const sameDraft = (a: TDraft, b: TDraft) =>
+const sameDraft = (a: TRule, b: TRule) =>
   a.join === b.join &&
   a.conditions.length === b.conditions.length &&
   a.conditions.every(
@@ -171,7 +175,9 @@ export const DashboardViewerAccessSection = ({
 
   if (accessQuery.isError) return null;
 
-  const update = (next: TDraft) => setDraft(next);
+  // An edit undone back to the rule it started from is dropped, so a later refetch of someone else's
+  // change shows that change instead of making Save send the stale version.
+  const update = (next: TDraft) => setDraft(sameDraft(next, next.original) ? null : next);
   const updateCondition = (id: string, change: Partial<TDraftCondition>) => {
     if (!current) return;
     update({

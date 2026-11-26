@@ -86,12 +86,15 @@ describe("getReadablePageIdsCached", () => {
     );
   });
 
-  test("keeps each page's decision on its own, so a later read reuses allows and denies page by page", async () => {
-    // A cache that keeps what it was told, as the real one does for the read-decision TTL.
+  test("keeps each page's allow on its own, so a later read reuses allows and decides denied pages again", async () => {
+    // A cache that keeps allows only, as the real one does for the read-decision TTL: a denial is a
+    // Response and is never kept.
     const cache = new Map<string, unknown>();
     vi.mocked(withCachedDashboardDecision).mockImplementation(async ({ decision }, decide) => {
-      if (!cache.has(decision)) cache.set(decision, await decide());
-      return cache.get(decision) as Awaited<ReturnType<typeof decide>>;
+      if (cache.has(decision)) return cache.get(decision) as Awaited<ReturnType<typeof decide>>;
+      const decided = await decide();
+      if (!(decided instanceof Response)) cache.set(decision, decided);
+      return decided;
     });
     vi.mocked(filterReadablePageIds).mockImplementation(
       async (_subject, pageIds) => new Set(pageIds.filter((pageId) => pageId === "p1"))
@@ -101,10 +104,12 @@ describe("getReadablePageIdsCached", () => {
       new Set(["p1"])
     );
 
-    // SpiceDB now allows every page: the pages already decided keep their answers, a new one is decided.
-    vi.mocked(filterReadablePageIds).mockImplementation(async (_subject, pageIds) => new Set(pageIds));
+    // SpiceDB now allows every page except p1: p1's kept allow is reused, p2's denial is decided again.
+    vi.mocked(filterReadablePageIds).mockImplementation(
+      async (_subject, pageIds) => new Set(pageIds.filter((pageId) => pageId !== "p1"))
+    );
     expect(await getReadablePageIdsCached(viewer, dashboard, ["p1", "p2", "p3"], context)).toEqual(
-      new Set(["p1", "p3"])
+      new Set(["p1", "p2", "p3"])
     );
   });
 });

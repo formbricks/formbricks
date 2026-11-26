@@ -11,6 +11,7 @@ import {
   pagesChanged,
   renameDraftPage,
   resolveSelectedPageId,
+  setDraftImageFile,
   setDraftPageTeams,
   toSavedPages,
   toSavedWidgets,
@@ -143,6 +144,19 @@ describe("widgets in the draft", () => {
       "c1",
       "c2",
     ]);
+  });
+
+  test("puts an uploaded image file into the draft as it is now, keeping settings changed meanwhile", () => {
+    const { widgets, widgetId } = addDraftBlock([], { kind: "image", pageId: "p1", dashboardId: "d" });
+    const edited = widgets.map((widget) =>
+      widget.kind === "image"
+        ? { ...widget, content: { ...widget.content, alt: "Logo", fit: "fill" } }
+        : widget
+    ) as TDashboardWidget[];
+    const [image] = setDraftImageFile(edited, widgetId, "/storage/new.png");
+    expect(image.content).toMatchObject({ fileUrl: "/storage/new.png", alt: "Logo", fit: "fill" });
+    // A block removed while its upload ran stays removed.
+    expect(setDraftImageFile([], widgetId, "/storage/new.png")).toEqual([]);
   });
 
   test("finds text blocks with neither a headline nor a description", () => {

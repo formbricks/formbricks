@@ -33,6 +33,9 @@ const surveyMigration = readMigration("20261002120002_add_survey_projection_trig
 const mcpGrantMigration = readMigration("20261112140000_add_mcp_grant_projection_trigger");
 // ADR-0060: the seven dashboard, page and team-limit triggers, and the functions re-declared again.
 const dashboardMigration = readMigration("20261123120001_dashboard_access_control_projection");
+// P-ENG-110: the page `teamLimited` trigger, and the function re-declared once more. Replayed after the
+// dashboard migration, or the replay would roll the function back to the classifier without it.
+const pageTeamLimitedMigration = readMigration("20261126120000_add_dashboard_page_team_limited");
 
 /**
  * The durable outbox against a real PostgreSQL (ENG-2408).
@@ -82,6 +85,7 @@ describe("AuthZed projection outbox triggers", () => {
       await prisma.$executeRawUnsafe(surveyMigration);
       await prisma.$executeRawUnsafe(mcpGrantMigration);
       await prisma.$executeRawUnsafe(dashboardMigration);
+      await prisma.$executeRawUnsafe(pageTeamLimitedMigration);
     }
 
     const [catalog] = await prisma.$queryRaw<Array<{ indexes: bigint; triggers: bigint }>>`
@@ -94,7 +98,7 @@ describe("AuthZed projection outbox triggers", () => {
            AND NOT tgisinternal) AS triggers
     `;
     expect(Number(catalog?.indexes)).toBe(3);
-    expect(Number(catalog?.triggers)).toBe(24);
+    expect(Number(catalog?.triggers)).toBe(25);
   });
 
   test("does not classify an accepted invite as a revocation", async () => {

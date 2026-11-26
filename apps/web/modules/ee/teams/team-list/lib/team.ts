@@ -14,7 +14,10 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { validateInputs } from "@/lib/utils/validate";
-import { deleteTeamDashboardLimitsInWorkspaces } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
+import {
+  deleteTeamDashboardLimitsInWorkspaces,
+  replaceTeamDashboardLimitsInTransaction,
+} from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 import {
   TeamAssignmentOutsideOrganizationError,
   TeamNameTakenError,
@@ -353,7 +356,16 @@ const assertMembersAndWorkspacesInOrganization = async (
   }
 };
 
-export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormSchema): Promise<boolean> => {
+/**
+ * Renames the team and replaces its members and workspace grants. With `dashboardIds`, also replaces the
+ * team's dashboard limit (ENG-7483; empty = All dashboards) in the same transaction, after the grants, so
+ * a newly granted workspace never commits without its limit. The caller authorizes the limit write.
+ */
+export const updateTeamDetails = async (
+  teamId: string,
+  data: TTeamSettingsFormSchema,
+  dashboardIds?: readonly string[]
+): Promise<boolean> => {
   validateInputs([teamId, ZId], [data, ZTeamSettingsFormSchema]);
 
   try {
@@ -446,6 +458,9 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       });
       // A lost workspace grant takes the team's dashboard limits there with it (ENG-7483).
       await deleteTeamDashboardLimitsInWorkspaces(tx, teamId, deletedWorkspaces);
+      if (dashboardIds !== undefined) {
+        await replaceTeamDashboardLimitsInTransaction(tx, team.organizationId, teamId, dashboardIds);
+      }
     });
 
     const membershipUserIds = new Set([

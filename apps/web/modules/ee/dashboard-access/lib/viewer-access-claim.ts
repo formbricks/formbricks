@@ -116,9 +116,17 @@ export type TViewerAccessSummary = {
 export const UNRESTRICTED_VIEWER_ACCESS: TViewerAccessSummary = { status: "unrestricted", chips: [] };
 
 /**
+ * Whether any dataset has no conditions: its charts show every record, so the dashboard is never
+ * `unmatched` as a whole, whatever the restricted datasets leave.
+ */
+export const hasUnrestrictedViewerDataset = (datasets: readonly (TResolvedViewerAccess | null)[]): boolean =>
+  datasets.some((access) => access === null || access.conditions.length === 0);
+
+/**
  * What a dashboard read tells its reader about the records they see: one locked chip per condition of
  * the datasets on the pages they can open ("any" conditions as one chip, labels joined with " or "), and
- * `unmatched` when every restricted dataset leaves them nothing.
+ * `unmatched` when every dataset is restricted and each leaves them nothing. A restricted dataset that
+ * matches nothing on a dashboard with other readable data only empties its own charts.
  */
 export const summarizeViewerAccess = (
   datasets: readonly (TResolvedViewerAccess | null)[]
@@ -150,9 +158,12 @@ export const summarizeViewerAccess = (
   }
 
   return {
-    // Unmatched only when every restricted dataset leaves nothing: one with records to match keeps the
-    // dashboard readable, and the record probe decides it.
-    status: restricted.every(isViewerAccessUnmatched) ? "unmatched" : "restricted",
+    // Unmatched only when every dataset is restricted and leaves nothing: a dataset without conditions, or
+    // one with records to match, keeps the dashboard readable (the record probe decides the latter).
+    status:
+      !hasUnrestrictedViewerDataset(datasets) && restricted.every(isViewerAccessUnmatched)
+        ? "unmatched"
+        : "restricted",
     chips: [...chips.values()],
   };
 };

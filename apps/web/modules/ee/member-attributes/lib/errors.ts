@@ -45,3 +45,15 @@ export class MemberAttributeKeyInUseError extends Error {
     this.name = "MemberAttributeKeyInUseError";
   }
 }
+
+/**
+ * A member or pending invite a bulk write targets was gone when its row was locked (removed, or the invite
+ * accepted or deleted, since the emails were matched). The whole batch is rolled back, so no row is
+ * reported as updated that was not.
+ */
+export class MemberAttributeWriteTargetGoneError extends Error {
+  constructor() {
+    super("A member or invite changed while its Member attributes were being set");
+    this.name = "MemberAttributeWriteTargetGoneError";
+  }
+}

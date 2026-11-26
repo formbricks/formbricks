@@ -7,6 +7,7 @@ import {
   MemberAttributeKeyLimitError,
   MemberAttributeKeyNotFoundError,
   MemberAttributeKeyTakenError,
+  MemberAttributeWriteTargetGoneError,
 } from "./errors";
 import { MEMBER_ATTRIBUTE_LIST_MAX_LIMIT, MEMBER_ATTRIBUTE_MAX_KEYS_PER_ORGANIZATION } from "./limits";
 import {
@@ -486,6 +487,16 @@ describe("matchEmailsInOrganization", () => {
 });
 
 describe("applyMemberAttributeWrites", () => {
+  // The lock queries find every requested row unless a test says otherwise.
+  beforeEach(() => {
+    prisma.$queryRaw.mockImplementation(((strings: TemplateStringsArray, _org: string, ids: string[]) =>
+      Promise.resolve(
+        strings.join("").includes('FROM "Membership"')
+          ? ids.map((userId) => ({ userId }))
+          : ids.map((id) => ({ id }))
+      )) as never);
+  });
+
   test("does nothing when no row names a key", async () => {
     await applyMemberAttributeWrites(ORG, [{ target: "member", userId: "u1", valuesByKeyId: new Map() }]);
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -523,11 +534,18 @@ describe("applyMemberAttributeWrites", () => {
 
     const lockCalls = prisma.$queryRaw.mock.calls;
     expect(lockCalls).toHaveLength(2);
-    expect((lockCalls[0][0] as TemplateStringsArray).join("")).toContain('FROM "Membership"');
-    expect((lockCalls[0][0] as TemplateStringsArray).join("")).toContain("FOR UPDATE");
+    // The row-lock order is the query's ORDER BY, not the order of the ids passed to ANY().
+    const memberLock = (lockCalls[0][0] as TemplateStringsArray).join("");
+    expect(memberLock).toContain('FROM "Membership"');
+    expect(memberLock).toMatch(/ORDER BY "userId"\s+FOR UPDATE/);
     expect(lockCalls[0].slice(1)).toEqual([ORG, ["u1", "u2"]]);
-    expect((lockCalls[1][0] as TemplateStringsArray).join("")).toContain('FROM "Invite"');
+    const inviteLock = (lockCalls[1][0] as TemplateStringsArray).join("");
+    expect(inviteLock).toContain('FROM "Invite"');
+    expect(inviteLock).toMatch(/ORDER BY "id"\s+FOR UPDATE/);
     expect(lockCalls[1].slice(1)).toEqual([ORG, ["i1", "i2"]]);
+    expect(prisma.$queryRaw.mock.invocationCallOrder[1]).toBeLessThan(
+      prisma.memberAttributeValue.deleteMany.mock.invocationCallOrder[0]
+    );
     expect(prisma.memberAttributeValue.deleteMany).toHaveBeenCalledTimes(1);
     expect(prisma.memberAttributeValue.deleteMany).toHaveBeenCalledWith({
       where: {
@@ -539,6 +557,27 @@ describe("applyMemberAttributeWrites", () => {
       },
     });
     expect(prisma.inviteAttributeValue.deleteMany).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    ["member", { target: "member" as const, userId: "u2", valuesByKeyId: new Map([["k1", []]]) }],
+    ["invite", { target: "invite" as const, inviteId: "i2", valuesByKeyId: new Map([["k1", []]]) }],
+  ])("rolls the batch back when a %s target is gone by the time it is locked", async (_label, gone) => {
+    prisma.$queryRaw.mockImplementation(((strings: TemplateStringsArray) =>
+      Promise.resolve(
+        strings.join("").includes('FROM "Membership"') ? [{ userId: "u1" }] : [{ id: "i1" }]
+      )) as never);
+
+    await expect(
+      applyMemberAttributeWrites(ORG, [
+        { target: "member", userId: "u1", valuesByKeyId: new Map([["k1", ["Sweden"]]]) },
+        { target: "invite", inviteId: "i1", valuesByKeyId: new Map([["k1", ["Norway"]]]) },
+        gone,
+      ])
+    ).rejects.toBeInstanceOf(MemberAttributeWriteTargetGoneError);
+    expect(prisma.memberAttributeValue.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.inviteAttributeValue.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.memberAttributeValue.createMany).not.toHaveBeenCalled();
   });
 
   test("clears a key given an empty list without inserting", async () => {

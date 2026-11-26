@@ -4177,7 +4177,6 @@
         "team_deletion_not_allowed": "Não tens permissão para eliminar esta equipa.",
         "team_name": "Nome da Equipa",
         "team_name_settings_title": "Definições de {teamName}",
-        "team_partially_saved": "É possível que a equipa só tenha sido guardada parcialmente. Abre novamente as respetivas definições e verifica os membros, os espaços de trabalho e o acesso aos dashboards.",
         "team_select_placeholder": "Pesquisar nome da equipa...",
         "team_settings_description": "Gerir membros da equipa, direitos de acesso e mais.",
         "team_updated_successfully": "Equipa atualizada com sucesso",

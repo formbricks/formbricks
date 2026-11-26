@@ -8,6 +8,7 @@ import {
   MemberAttributeKeyLimitError,
   MemberAttributeKeyNotFoundError,
   MemberAttributeKeyTakenError,
+  MemberAttributeWriteTargetGoneError,
 } from "./errors";
 import {
   MEMBER_ATTRIBUTE_LIST_MAX_LIMIT,
@@ -536,6 +537,17 @@ const toValueRows = (valuesByKeyId: Map<string, string[]>) =>
     values.map((value) => ({ attributeKeyId, value, normalizedValue: normalizeMemberAttributeValue(value) }))
   );
 
+/** Byte order of the ids (ASCII cuids), the same order PostgreSQL's `ORDER BY` gives them. */
+const compareIds = (left: string, right: string): number => {
+  if (left < right) return -1;
+  return left > right ? 1 : 0;
+};
+
+const assertEveryTargetLocked = (requested: readonly string[], locked: readonly string[]): void => {
+  const lockedIds = new Set(locked);
+  if (requested.some((id) => !lockedIds.has(id))) throw new MemberAttributeWriteTargetGoneError();
+};
+
 /**
  * Replaces, for each row, the values of the keys it names (a key not named is left alone; an empty list
  * clears the key). All rows in one transaction: the whole batch applies or none of it. Every key id must
@@ -558,27 +570,38 @@ export const applyMemberAttributeWrites = async (
       const inviteWrites = named.filter(
         (write): write is Extract<TMemberAttributeWrite, { target: "invite" }> => write.target === "invite"
       );
-      const userIds = [...new Set(memberWrites.map((write) => write.userId))].sort();
-      const inviteIds = [...new Set(inviteWrites.map((write) => write.inviteId))].sort();
+      const userIds = [...new Set(memberWrites.map((write) => write.userId))].sort(compareIds);
+      const inviteIds = [...new Set(inviteWrites.map((write) => write.inviteId))].sort(compareIds);
 
-      // Lock every target's membership or invite row first, in a fixed order, so two requests replacing
-      // the same member's values run one after the other (a delete matching no rows locks nothing, and
-      // both inserts would otherwise land) and two overlapping batches cannot deadlock.
+      // Lock every target's membership or invite row first, in a fixed order (the `ORDER BY`), so two
+      // requests replacing the same member's values run one after the other (a delete matching no rows
+      // locks nothing, and both inserts would otherwise land) and two overlapping batches cannot deadlock.
+      // A target whose row is gone by now (removed, or the invite accepted or deleted, since the emails
+      // were matched) rolls the batch back, before any delete: a clear-only write to it would raise no
+      // error, and the row would be reported as updated.
       if (userIds.length > 0) {
-        await tx.$queryRaw`
+        const locked = await tx.$queryRaw<{ userId: string }[]>`
           SELECT "userId" FROM "Membership"
           WHERE "organizationId" = ${organizationId} AND "userId" = ANY(${userIds}::TEXT[])
           ORDER BY "userId"
           FOR UPDATE
         `;
+        assertEveryTargetLocked(
+          userIds,
+          locked.map((row) => row.userId)
+        );
       }
       if (inviteIds.length > 0) {
-        await tx.$queryRaw`
+        const locked = await tx.$queryRaw<{ id: string }[]>`
           SELECT "id" FROM "Invite"
           WHERE "organizationId" = ${organizationId} AND "id" = ANY(${inviteIds}::TEXT[])
           ORDER BY "id"
           FOR UPDATE
         `;
+        assertEveryTargetLocked(
+          inviteIds,
+          locked.map((row) => row.id)
+        );
       }
 
       // One delete per table for the whole batch; each row still clears only the keys it names.

@@ -4177,7 +4177,6 @@
         "team_deletion_not_allowed": "您不得刪除此團隊。",
         "team_name": "團隊名稱",
         "team_name_settings_title": "{teamName} 設定",
-        "team_partially_saved": "團隊可能只儲存了一部分。請再次開啟團隊設定，檢查成員、工作區和儀表板存取權限。",
         "team_select_placeholder": "搜尋團隊名稱...",
         "team_settings_description": "管理團隊成員、存取權限等。",
         "team_updated_successfully": "團隊已成功更新",

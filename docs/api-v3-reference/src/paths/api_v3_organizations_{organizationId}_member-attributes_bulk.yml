@@ -42,6 +42,24 @@ put:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3MemberAttributesForbidden.yml
+    "409":
+      description: >-
+        Conflict (`code: conflict`). A matched member or invite was removed while the batch was being
+        applied, so nothing was saved. Retry the request; the removed email is then reported as
+        `unknown_email`.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
     "429":
       $ref: ../components/responses/V3TooManyRequests.yml
     "500":
