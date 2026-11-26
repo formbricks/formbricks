@@ -40,11 +40,11 @@ export const delay = (ms: number): Promise<void> => {
   });
 };
 
-// Module-level locks keyed by surveyId.
-// Survive ResponseQueue instance recreation (e.g. React useMemo recomputation)
-// so that only one sync/send runs at a time per survey, even across instances.
+// Module-level locks. They survive ResponseQueue instance recreation (e.g. React useMemo recomputation),
+// so only one sync runs at a time per survey and one send at a time per display (see `requestLockKey`),
+// even across instances.
 const syncingBySurvey = new Map<string, boolean>();
-const requestInProgressBySurvey = new Map<string, boolean>();
+const requestInProgressByLockKey = new Map<string, boolean>();
 const processedDbIdsPendingRemovalBySurvey = new Map<string, Set<number>>();
 // The answers waiting to be sent, and their IndexedDB ids, are shared the same way, but per display of the
 // survey: a display that ends with an unsent answer must not hand it to the next one. The survey component
@@ -68,15 +68,15 @@ const sharedFor = <T>(registry: Map<string, T>, surveyId: string | undefined, cr
 export const _syncLocks = {
   clear: () => {
     syncingBySurvey.clear();
-    requestInProgressBySurvey.clear();
+    requestInProgressByLockKey.clear();
     processedDbIdsPendingRemovalBySurvey.clear();
     queueByDisplay.clear();
     pendingDbIdsByDisplay.clear();
   },
   set: (surveyId: string, value: boolean) => syncingBySurvey.set(surveyId, value),
   get: (surveyId: string) => syncingBySurvey.get(surveyId) ?? false,
-  setRequestInProgress: (surveyId: string, value: boolean) => requestInProgressBySurvey.set(surveyId, value),
-  getRequestInProgress: (surveyId: string) => requestInProgressBySurvey.get(surveyId) ?? false,
+  setRequestInProgress: (lockKey: string, value: boolean) => requestInProgressByLockKey.set(lockKey, value),
+  getRequestInProgress: (lockKey: string) => requestInProgressByLockKey.get(lockKey) ?? false,
 };
 
 export class ResponseQueue {
@@ -120,13 +120,27 @@ export class ResponseQueue {
     }
   }
 
+  /**
+   * The send lock is held per display, like the queue it drains: a display's sends are serialized, but one
+   * display never waits on another. If displays shared it, an answer added to a second display while the
+   * first had a request in flight would wait for a lock whose holder only drains its own queue, and it was
+   * never sent if it was that display's last. With offline persistence the lock stays per survey, because
+   * IndexedDB and `syncPersistedResponses` hold every display's answers in one per-survey list. Offline
+   * persistence is link-survey-only and `displayMultiple` app-only, so displays never overlap there.
+   */
+  private get requestLockKey(): string | undefined {
+    return this.config.persistOffline ? this.config.surveyId : this.displayRegistryKey;
+  }
+
   private get isRequestInProgress(): boolean {
-    return this.config.surveyId ? (requestInProgressBySurvey.get(this.config.surveyId) ?? false) : false;
+    const key = this.requestLockKey;
+    return key ? (requestInProgressByLockKey.get(key) ?? false) : false;
   }
 
   private set isRequestInProgress(value: boolean) {
-    if (this.config.surveyId) {
-      requestInProgressBySurvey.set(this.config.surveyId, value);
+    const key = this.requestLockKey;
+    if (key) {
+      requestInProgressByLockKey.set(key, value);
     }
   }
 

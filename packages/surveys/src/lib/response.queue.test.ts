@@ -153,6 +153,58 @@ describe("ResponseQueue across displays of one survey", () => {
     expect(rebuilt.queue).toHaveLength(1);
     expect(next.queue).toHaveLength(0);
   });
+
+  // When the send lock was shared per survey, a second display's first answer, added while the first
+  // display still had a request in flight, found the lock held and waited. The first display then drained
+  // only its own queue, so the answer was never sent if it was the second display's last one.
+  test("sends a second display's answer added while the first display is mid-request", async () => {
+    _syncLocks.clear();
+    const firstState = new SurveyState("s1");
+    firstState.updateDisplayId("display1");
+    const nextState = new SurveyState("s1");
+    nextState.updateDisplayId("display2");
+    const first = new ResponseQueue(getConfig({ surveyId: "s1", displayKey: "1" }), firstState);
+    const next = new ResponseQueue(getConfig({ surveyId: "s1", displayKey: "2" }), nextState);
+    let finishFirstCreate: () => void = () => {};
+    vi.mocked(first.api.createResponse).mockImplementation(
+      () => new Promise((resolve) => (finishFirstCreate = () => resolve(ok({ id: "r1" }) as never)))
+    );
+    vi.mocked(next.api.createResponse).mockResolvedValue(ok({ id: "r2" }) as never);
+
+    first.add({ data: { q1: "a" }, hiddenFields: {}, finished: true });
+    await flushPromises();
+    next.add({ data: { q1: "b" }, hiddenFields: {}, finished: true });
+    await flushPromises();
+    finishFirstCreate();
+    await flushPromises();
+    await flushPromises();
+
+    expect(vi.mocked(first.api.createResponse)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(next.api.createResponse)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(next.api.createResponse).mock.calls[0][0]).toMatchObject({
+      displayId: "display2",
+      data: { q1: "b" },
+    });
+    expect(first.queue).toHaveLength(0);
+    expect(next.queue).toHaveLength(0);
+    expect(next.config.onResponseSendingFinished).toHaveBeenCalledTimes(1);
+  });
+
+  // IndexedDB and syncPersistedResponses hold every display's answers in one list per survey, so with
+  // offline persistence a send in one display still keeps the others, and the sync, waiting.
+  test("with offline persistence, the send lock stays shared per survey", async () => {
+    _syncLocks.clear();
+    const next = new ResponseQueue(
+      getConfig({ surveyId: "s1", displayKey: "2", persistOffline: true }),
+      new SurveyState("s1")
+    );
+    _syncLocks.setRequestInProgress("s1", true);
+    next.queue.push({ data: { q1: "b" }, hiddenFields: {}, finished: true });
+
+    expect(await next.processQueue()).toEqual({ success: false });
+    expect(vi.mocked(next.api.createResponse)).not.toHaveBeenCalled();
+    expect(await next.syncPersistedResponses()).toEqual({ success: false, syncedCount: 0 });
+  });
 });
 
 describe("ResponseQueue", () => {
