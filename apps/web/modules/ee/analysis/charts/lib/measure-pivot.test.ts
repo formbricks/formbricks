@@ -12,8 +12,9 @@ const measureOnlyRow = { [NPS_AVERAGE]: 7.29, [CSAT_AVERAGE]: 3.93 };
 const t = ((key: string) => key) as unknown as TFunction;
 
 describe("pivotsMeasuresIntoCategories", () => {
-  test("a measure-only bar chart draws one category per measure", () => {
-    expect(pivotsMeasuresIntoCategories("bar", false)).toBe(true);
+  // As one series per measure, a line or area has a single point per series and draws blank (ENG-2618).
+  test.each(["bar", "area"] as const)("a measure-only %s chart draws one category per measure", (type) => {
+    expect(pivotsMeasuresIntoCategories(type, false)).toBe(true);
   });
 
   test.each(["bar", "area"] as const)("a grouped %s chart keeps its category axis", (type) => {

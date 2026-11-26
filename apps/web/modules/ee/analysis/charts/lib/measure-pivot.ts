@@ -18,11 +18,11 @@ import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/anal
 
 /**
  * Whether a chart draws its measures as categories. A measure-only query (no dimension or time
- * grouping) returns one row with one column per measure; a bar chart pivots it into one category per
- * measure. Pie folds measures into slices itself, and a big number shows one value.
+ * grouping) returns one row with one column per measure; bar, line and area charts pivot it into one
+ * category per measure. Pie folds measures into slices itself, and a big number shows one value.
  */
 export const pivotsMeasuresIntoCategories = (chartType: TChartType, hasCategoryAxis: boolean): boolean =>
-  !hasCategoryAxis && chartType === "bar";
+  !hasCategoryAxis && (chartType === "bar" || chartType === "area");
 
 /** Formats a value by the measure behind its data key, in the app's locale. */
 export type TValueFormatter = (dataKey: string, value: unknown) => string;
@@ -56,8 +56,9 @@ export interface PivotedMeasureChartInput {
 /**
  * Measure-only queries (no dimension or time grouping) return a single row with one column per
  * measure. Drawn as N series, that row is a single category: bars form one band centered in the plot
- * with a wide gap before the first (ENG-1796). Pivoting the measures into categories fills the axis
- * from the left, one bar per measure.
+ * with a wide gap before the first (ENG-1796), and a line or area has one point per series and nothing
+ * to join, so it draws blank (ENG-2618). Pivoting the measures into categories gives every
+ * measure-only cartesian chart one point per measure along a measure axis.
  */
 export const getPivotedMeasureChart = ({
   sortedData,

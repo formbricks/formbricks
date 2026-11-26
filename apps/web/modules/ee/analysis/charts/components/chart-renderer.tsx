@@ -291,6 +291,10 @@ function SeriesChart({
           yAxisScale={areaScale}
           isLine={areaDisplay === "line"}
           isGrouped={isGrouped}
+          pivotMeasures={pivotMeasures}
+          formatValue={formatValue}
+          measureAxisLabels={measureAxisLabelsFor(measureKeys, t)}
+          locale={locale}
         />
       );
     case "pie":
@@ -342,7 +346,7 @@ function SeriesChart({
   }
 }
 
-/** A measure-only bar chart's bar labels: the short enum label where there is one ("Joy" for the
+/** A measure-only bar, line or area chart's axis labels: the short enum label where there is one ("Joy" for the
  * joy count), without a family prefix every bar shares. */
 const measureAxisLabelsFor = (measureKeys: string[], t: TFunction): Record<string, string> => {
   const labels = stripSharedLabelPrefix(measureKeys.map((key) => getMeasureAxisLabel(key, t)));
