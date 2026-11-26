@@ -299,7 +299,8 @@ See the [environment variables reference](/self-hosting/configuration/environmen
 leaving it unset keeps the default open setup. Once the first account exists, the instance never accepts a
 new first administrator again, even if every account is later deleted. To start over on purpose, set
 `SETUP_TOKEN` first (if the instance is reachable), then redeploy against an empty Formbricks database and an
-empty SpiceDB datastore. Deleting users in the database leaves the authorization data in SpiceDB behind and
+empty SpiceDB datastore: bundled PostgreSQL keeps its data across `helm uninstall`, so also delete the release's
+PVCs (see [Uninstalling the deployment](#6-uninstalling-the-deployment)). Deleting users in the database leaves the authorization data in SpiceDB behind and
 does not reopen setup.
 
 ## Verify the installation

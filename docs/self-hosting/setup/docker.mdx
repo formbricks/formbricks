@@ -171,8 +171,9 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
   (`EMAIL_AUTH_DISABLED` unset) until setup is done. Leaving it unset keeps the default open setup. Once the
   first account exists, the instance never accepts a new first administrator again, even if every account is
   later deleted. To start over on purpose, start from empty data rather than deleting rows: run
-  `docker compose down -v` (this deletes every bundled volume and all its data; empty an external SpiceDB
-  database yourself), set `SETUP_TOKEN` in `.env`
+  `docker compose down -v` with the same `-f` files you start with (this deletes every bundled volume and all
+  its data, including the AI model cache; empty any external database, such as SpiceDB or `HUB_DATABASE_URL`,
+  and external file storage yourself), set `SETUP_TOKEN` in `.env`
   if the instance is reachable from the internet, then `docker compose up -d`. Deleting users in the database
   leaves the authorization data in SpiceDB behind and does not reopen setup.
 </Note>
