@@ -81,6 +81,98 @@ describe("delay", () => {
   });
 });
 
+describe("ResponseQueue across instances of one survey", () => {
+  // The survey component rebuilds its queue whenever a host callback changes identity, while the send
+  // lock is shared per survey. An answer added to the new instance while the old one still held the lock
+  // was never sent: the old instance finished with an empty queue and nothing woke the new one, so the
+  // ending card stayed on "Sending responses..." for good.
+  test("sends an answer added to a newer instance while an older one is mid-request", async () => {
+    _syncLocks.clear();
+    const state = new SurveyState("s1", null, null, "display1", null);
+    const first = new ResponseQueue(getConfig({ surveyId: "s1" }), state);
+    const second = new ResponseQueue(getConfig({ surveyId: "s1" }), state);
+    let finishCreate: () => void = () => {};
+    vi.mocked(first.api.createResponse).mockImplementation(
+      () => new Promise((resolve) => (finishCreate = () => resolve(ok({ id: "r1" }) as never)))
+    );
+    vi.mocked(second.api.updateResponse).mockResolvedValue(ok({}) as never);
+    vi.mocked(first.api.updateResponse).mockResolvedValue(ok({}) as never);
+
+    first.add({ data: { q1: "a" }, hiddenFields: {}, finished: false });
+    await flushPromises();
+    second.add({ data: { q2: "b" }, hiddenFields: {}, finished: true });
+    finishCreate();
+    await flushPromises();
+    await flushPromises();
+
+    const updates = [
+      ...vi.mocked(first.api.updateResponse).mock.calls,
+      ...vi.mocked(second.api.updateResponse).mock.calls,
+    ];
+    expect(updates).toHaveLength(1);
+    expect(updates[0][0]).toMatchObject({ responseId: "r1", finished: true });
+    expect(first.queue).toHaveLength(0);
+    expect(second.queue).toHaveLength(0);
+  });
+
+  // ENG-7534: a link survey rebuilds its queue on every page change. An answer stranded in a middle
+  // instance used to stay there while a later instance sent the final answer, so the response was
+  // marked finished without it.
+  test("does not finish the response while an answer added to an earlier rebuild is unsent", async () => {
+    _syncLocks.clear();
+    const state = new SurveyState("s1", null, null, "display1", null);
+    state.updateResponseId("r1");
+    const config = getConfig({ surveyId: "s1", displayKey: "1" });
+    const pageTwo = new ResponseQueue(config, state);
+    let finishPageTwo: () => void = () => {};
+    vi.mocked(pageTwo.api.updateResponse)
+      .mockResolvedValue(ok(true) as never)
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (finishPageTwo = () => resolve(ok(true) as never)))
+      );
+
+    pageTwo.add({ data: { q2: "b" }, hiddenFields: {}, finished: false });
+    await flushPromises();
+    const pageThree = new ResponseQueue(config, state);
+    vi.mocked(pageThree.api.updateResponse).mockResolvedValue(ok(true) as never);
+    pageThree.add({ data: { q3: "c" }, hiddenFields: {}, finished: false });
+    await flushPromises();
+    finishPageTwo();
+    await flushPromises();
+    await flushPromises();
+    const pageFour = new ResponseQueue(config, state);
+    vi.mocked(pageFour.api.updateResponse).mockResolvedValue(ok(true) as never);
+    pageFour.add({ data: { q4: "d" }, hiddenFields: {}, finished: true });
+    await flushPromises();
+    await flushPromises();
+
+    const sent = [pageTwo, pageThree, pageFour].flatMap((queue) =>
+      vi.mocked(queue.api.updateResponse).mock.calls.map(([update]) => update)
+    );
+    expect(sent.map((update) => Object.keys(update.data ?? {})).flat()).toEqual(["q2", "q3", "q4"]);
+    expect(sent.at(-1)).toMatchObject({ finished: true });
+    expect(pageFour.queue).toHaveLength(0);
+  });
+});
+
+describe("ResponseQueue across displays of one survey", () => {
+  // `displayMultiple` shows the same survey again on one page. An answer the first display never managed to
+  // send (a failed final submit) must not be sent first by the second, whose own answers would then hit
+  // "already finished" and be lost.
+  test("a new display starts with an empty queue, the one it was built for keeps sharing", () => {
+    _syncLocks.clear();
+    const state = new SurveyState("s1", null, null, "display1", null);
+    const first = new ResponseQueue(getConfig({ surveyId: "s1", displayKey: "1" }), state);
+    const rebuilt = new ResponseQueue(getConfig({ surveyId: "s1", displayKey: "1" }), state);
+    const next = new ResponseQueue(getConfig({ surveyId: "s1", displayKey: "2" }), state);
+
+    first.queue.push({ data: { q1: "unsent" }, hiddenFields: {}, finished: true });
+
+    expect(rebuilt.queue).toHaveLength(1);
+    expect(next.queue).toHaveLength(0);
+  });
+});
+
 describe("ResponseQueue", () => {
   let surveyState: SurveyState;
   let config: ReturnType<typeof getConfig>;
