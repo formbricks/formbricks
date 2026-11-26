@@ -214,6 +214,37 @@ describe("useTaxonomyRun", () => {
     }
   });
 
+  /**
+   * The topics page reads through the house client: a 5xx is retried three times with backoff (1 s, 2 s,
+   * 4 s) before the error lands, and the poll then keeps its interval so a Hub blip self-recovers.
+   */
+  test("retries a 5xx three times under the house query client, then keeps polling", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.mocked(global.fetch);
+      fetchMock.mockImplementation(async () => problemResponse(502));
+
+      const { result } = renderHook(
+        () => useTaxonomyRun({ workspaceId: "w", directoryId: "d", runId: "run-1" }),
+        { wrapper: createWrapper(makeQueryClient()) }
+      );
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(7500);
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(4);
+      expect(result.current.isError).toBe(true);
+
+      // One interval later the poll asks again rather than stopping.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+      expect(fetchMock.mock.calls.length).toBeGreaterThan(4);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test("stays idle (no fetch) when runId is null", () => {
     const fetchMock = vi.mocked(global.fetch);
 

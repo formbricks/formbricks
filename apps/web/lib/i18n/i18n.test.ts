@@ -88,4 +88,16 @@ describe("prototype member names as language codes", () => {
     expect(getLocalizedValue(label, "de-DE")).toBe("Ja");
     expect(isLabelValidForAllLanguages(label, ["default", "de-DE"])).toBe(true);
   });
+
+  // A stored label is JSON the type cannot vouch for; a non-string entry reads as untranslated rather than
+  // reaching a caller that calls `.trim()` on it.
+  test("treats a non-string translation as untranslated", () => {
+    const malformed = JSON.parse('{"default":"Yes","de-DE":5,"fr-FR":{"text":"Oui"}}') as Record<
+      string,
+      string
+    >;
+    expect(getLocalizedValue(malformed, "de-DE")).toBe("");
+    expect(getLocalizedValue(malformed, "fr-FR")).toBe("");
+    expect(isLabelValidForAllLanguages(malformed, ["default", "de-DE"])).toBe(false);
+  });
 });
