@@ -52,6 +52,7 @@ import {
   areV3SurveyTargetingFiltersEqual,
   assertV3SurveyTargetingFilterReferences,
   setV3SurveySegmentFilters,
+  sharedSegmentTargetingError,
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyIntroducedMediaInvalidParams } from "./validation";
@@ -220,13 +221,7 @@ async function buildV3AppSurveyPatchWrites(params: {
   // targeting of every survey on it, so it is written through the segment endpoints, which authorize each
   // of those surveys and audit the segment change — never as a side effect of a survey PATCH.
   if (!isOwnPrivateSegment(currentSurvey, segmentId)) {
-    throw new V3SurveyReferenceValidationError([
-      {
-        name: "targeting.filters",
-        reason:
-          "This survey's targeting uses a shared segment. Edit the segment from its targeting card (Save changes) or the Segments page.",
-      },
-    ]);
+    throw sharedSegmentTargetingError();
   }
 
   // Validate attribute-key references on the changed filters before the write (mirrors trigger ids).
@@ -500,7 +495,7 @@ export async function executeV3SurveyPatch(params: {
   // no longer be correct. Under a caller's transaction (ENG-6845) that transaction is this one.
   const writeSurvey = async (tx: Prisma.TransactionClient) => {
     if (segmentFilterWrite) {
-      await setV3SurveySegmentFilters(segmentFilterWrite.segmentId, segmentFilterWrite.filters, tx);
+      await setV3SurveySegmentFilters({ ...segmentFilterWrite, ownerSurveyId: currentSurvey.id }, tx);
     }
 
     await runSurveyUpdate(tx);

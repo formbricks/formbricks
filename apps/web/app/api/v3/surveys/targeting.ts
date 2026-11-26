@@ -83,25 +83,45 @@ export function areV3SurveyTargetingFiltersEqual(a: unknown, b: unknown): boolea
 }
 
 /**
- * Persist app-survey contact targeting onto the survey's (auto-created) segment. Writes the segment
- * row directly — mirroring updateSurveyInternal — so empty filters ("show to everyone") are supported,
- * which the EE updateSegment service rejects. Entitlement is gated by the caller before invoking this.
+ * ENG-7269: the refusal for `targeting.filters` on a survey targeted with a shared segment. That segment is
+ * the targeting of every survey that uses it, so a survey update never writes it.
+ */
+export const sharedSegmentTargetingError = (): V3SurveyReferenceValidationError =>
+  new V3SurveyReferenceValidationError([
+    {
+      name: "targeting.filters",
+      reason:
+        "This survey is targeted with a shared segment, which a survey update can't change. Edit the segment in the app instead.",
+    },
+  ]);
+
+/**
+ * Persist app-survey contact targeting onto the survey's own private segment. Writes the segment row
+ * directly — mirroring updateSurveyInternal — so empty filters ("show to everyone") are supported, which
+ * the EE updateSegment service rejects. Entitlement is gated by the caller before invoking this.
  *
- * Pass a transaction client (`tx`) to write atomically alongside the survey update; defaults to the
- * shared prisma client for standalone writes (e.g. on create).
+ * ENG-7269: the write's own `where` repeats that the segment is private and used by `ownerSurveyId` alone,
+ * so a segment shared after the caller read the survey refuses the write instead of retargeting the
+ * surveys that now use it.
+ *
+ * Pass a transaction client (`tx`) to write atomically alongside the survey update.
  */
 export async function setV3SurveySegmentFilters(
-  segmentId: string,
-  filters: TV3SurveyFilters,
+  {
+    segmentId,
+    ownerSurveyId,
+    filters,
+  }: { segmentId: string; ownerSurveyId: string; filters: TV3SurveyFilters },
   client: Prisma.TransactionClient = prisma
 ): Promise<void> {
   try {
     await client.segment.update({
-      where: { id: segmentId },
+      where: { id: segmentId, isPrivate: true, surveys: { every: { id: ownerSurveyId } } },
       data: { filters },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") throw sharedSegmentTargetingError();
       throw new DatabaseError(error.message);
     }
     throw error;

@@ -131,11 +131,17 @@ describe("areV3SurveyTargetingFiltersEqual", () => {
 });
 
 describe("setV3SurveySegmentFilters", () => {
-  test("updates the segment via the default prisma client", async () => {
-    await setV3SurveySegmentFilters("seg_1", EMPTY_FILTERS);
+  const ownWhere = (id: string) => ({ id, isPrivate: true, surveys: { every: { id: "survey_1" } } });
+
+  test("writes only while the segment is the survey's own private one (ENG-7269)", async () => {
+    await setV3SurveySegmentFilters({
+      segmentId: "seg_1",
+      ownerSurveyId: "survey_1",
+      filters: EMPTY_FILTERS,
+    });
 
     expect(prisma.segment.update).toHaveBeenCalledWith({
-      where: { id: "seg_1" },
+      where: ownWhere("seg_1"),
       data: { filters: EMPTY_FILTERS },
     });
   });
@@ -143,31 +149,50 @@ describe("setV3SurveySegmentFilters", () => {
   test("writes through a provided transaction client instead of the shared prisma client", async () => {
     const tx = { segment: { update: vi.fn() } };
 
-    await setV3SurveySegmentFilters("seg_2", EMPTY_FILTERS, tx as unknown as Prisma.TransactionClient);
+    await setV3SurveySegmentFilters(
+      { segmentId: "seg_2", ownerSurveyId: "survey_1", filters: EMPTY_FILTERS },
+      tx as unknown as Prisma.TransactionClient
+    );
 
     expect(tx.segment.update).toHaveBeenCalledWith({
-      where: { id: "seg_2" },
+      where: ownWhere("seg_2"),
       data: { filters: EMPTY_FILTERS },
     });
     expect(prisma.segment.update).not.toHaveBeenCalled();
   });
 
-  test("maps known Prisma errors to a DatabaseError", async () => {
+  test("refuses a segment shared since the survey was read as a shared-segment targeting change (ENG-7269)", async () => {
+    vi.mocked(prisma.segment.update).mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("No record found", { code: "P2025", clientVersion: "test" })
+    );
+
+    await expect(
+      setV3SurveySegmentFilters({ segmentId: "seg_3", ownerSurveyId: "survey_1", filters: EMPTY_FILTERS })
+    ).rejects.toMatchObject({
+      invalidParams: [{ name: "targeting.filters", reason: expect.stringContaining("shared segment") }],
+    });
+  });
+
+  test("maps other known Prisma errors to a DatabaseError", async () => {
     vi.mocked(prisma.segment.update).mockRejectedValueOnce(
       new Prisma.PrismaClientKnownRequestError("segment update failed", {
-        code: "P2025",
+        code: "P2002",
         clientVersion: "test",
       })
     );
 
-    await expect(setV3SurveySegmentFilters("seg_3", EMPTY_FILTERS)).rejects.toThrow(DatabaseError);
+    await expect(
+      setV3SurveySegmentFilters({ segmentId: "seg_3", ownerSurveyId: "survey_1", filters: EMPTY_FILTERS })
+    ).rejects.toThrow(DatabaseError);
   });
 
   test("rethrows non-Prisma errors unchanged", async () => {
     const unexpected = new Error("connection lost");
     vi.mocked(prisma.segment.update).mockRejectedValueOnce(unexpected);
 
-    await expect(setV3SurveySegmentFilters("seg_4", EMPTY_FILTERS)).rejects.toBe(unexpected);
+    await expect(
+      setV3SurveySegmentFilters({ segmentId: "seg_4", ownerSurveyId: "survey_1", filters: EMPTY_FILTERS })
+    ).rejects.toBe(unexpected);
   });
 });
 

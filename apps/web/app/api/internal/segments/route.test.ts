@@ -14,7 +14,10 @@ import { PUT as attachSurveySegment } from "@/app/api/internal/surveys/[surveyId
 import { GET as listFilterSurveys } from "@/app/api/internal/workspaces/[workspaceId]/segment-filter-surveys/route";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
+import {
+  SEGMENT_TITLE_TAKEN_ERROR_MESSAGE,
+  SegmentSurveysChangedError,
+} from "@/modules/ee/contacts/segments/lib/segment-errors";
 import { POST as copySegment } from "./[segmentId]/copies/route";
 import { DELETE, PATCH } from "./[segmentId]/route";
 import { POST } from "./route";
@@ -53,12 +56,7 @@ const mocks = vi.hoisted(() => ({
   resolveSurveyActorContext: vi.fn(),
   restoreHiddenSegmentSurveyIds: vi.fn(),
   getExistingWorkspaceSurveyIds: vi.fn(),
-  SegmentSurveysChangedError: class SegmentSurveysChangedError extends Error {
-    constructor() {
-      super("The segment's connected surveys changed while saving. Reload and try again.");
-      this.name = "SegmentSurveysChangedError";
-    }
-  },
+  getSurveyIdsTargetedThroughNesting: vi.fn(),
   assertSurveyInteractionSurveyIds: vi.fn(),
   assertSegmentSurveyFiltersVisible: vi.fn(),
   assertAddedSegmentSurveyFiltersVisible: vi.fn(),
@@ -77,12 +75,12 @@ vi.mock("@/lib/utils/helper", () => ({
 vi.mock("@/lib/organization/service", () => ({ getOrganization: mocks.getOrganization }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: mocks.getIsContactsEnabled }));
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
-  SegmentSurveysChangedError: mocks.SegmentSurveysChangedError,
   cloneSegment: mocks.cloneSegment,
   createSegment: mocks.createSegment,
   deleteSegment: mocks.deleteSegment,
   getExistingWorkspaceSurveyIds: mocks.getExistingWorkspaceSurveyIds,
   getSegment: mocks.getSegment,
+  getSurveyIdsTargetedThroughNesting: mocks.getSurveyIdsTargetedThroughNesting,
   getSurveyRefsForWorkspace: mocks.getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap: mocks.getSurveyWorkspaceIdMap,
   resetSegmentInSurvey: mocks.resetSegmentInSurvey,
@@ -246,6 +244,7 @@ beforeEach(() => {
     ])
   );
   mocks.getExistingWorkspaceSurveyIds.mockResolvedValue(new Set([SURVEY_ID, SURVEY_2_ID]));
+  mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([]);
   mocks.getUserVisibleSurveyWhere.mockResolvedValue(visibleWhere);
   mocks.resolveSurveyActorContext.mockResolvedValue(memberActor);
   mocks.restoreHiddenSegmentSurveyIds.mockImplementation(async (filters: unknown) => filters);
@@ -575,6 +574,33 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 
+  test("requires survey.write on the surveys of segments that nest this one", async () => {
+    mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
+    mocks.getExistingWorkspaceSurveyIds.mockResolvedValueOnce(new Set([SURVEY_ID]));
+
+    const response = await update({ filters: FILTERS });
+
+    expect(response.status).toBe(403);
+    expect(mocks.getSurveyIdsTargetedThroughNesting).toHaveBeenCalledWith(WORKSPACE_ID, SEGMENT_ID);
+    expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
+      WORKSPACE_ID,
+      [SURVEY_ID, SURVEY_2_ID],
+      visibleWhere
+    );
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
+  test("guards the write on the directly connected surveys only, not the nesting ones", async () => {
+    mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
+
+    expect((await update({ title: "Renamed" })).status).toBe(200);
+    expect(mocks.updateSegment).toHaveBeenCalledWith(
+      SEGMENT_ID,
+      { title: "Renamed" },
+      { connectedSurveyIds: [SURVEY_ID] }
+    );
+  });
+
   test("checks the target surveys before validating the filters", async () => {
     mocks.getExistingWorkspaceSurveyIds.mockResolvedValueOnce(new Set());
 
@@ -606,7 +632,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
   });
 
   test("answers 409 when a survey was connected after the check", async () => {
-    mocks.updateSegment.mockRejectedValue(new mocks.SegmentSurveysChangedError());
+    mocks.updateSegment.mockRejectedValue(new SegmentSurveysChangedError());
 
     const response = await update({ title: "Renamed" });
 

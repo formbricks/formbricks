@@ -114,11 +114,14 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
-vi.mock("./targeting", () => ({
+vi.mock("./targeting", async () => ({
   setV3SurveySegmentFilters: vi.fn(),
   areV3SurveyTargetingFiltersEqual: vi.fn(),
   assertV3SurveyTargetingFilterReferences: vi.fn(),
   resolveV3ContactsEntitlement: vi.fn(),
+  // The real refusal: patch maps it by class, so a stand-in would hide a wrong mapping.
+  sharedSegmentTargetingError: (await vi.importActual<typeof import("./targeting")>("./targeting"))
+    .sharedSegmentTargetingError,
   V3_CONTACTS_NOT_ENABLED_MESSAGE: "Contact targeting is not enabled.",
 }));
 
@@ -1592,8 +1595,11 @@ describe("patchV3Survey", () => {
       expect(resolveV3ContactsEntitlement).toHaveBeenCalledWith(workspaceId, "org_1");
       // Segment-filter write and survey update must use the SAME tx client (true atomic behavior).
       expect(setV3SurveySegmentFilters).toHaveBeenCalledWith(
-        "clsg1234567890123456789012",
-        attributeFilters,
+        {
+          segmentId: "clsg1234567890123456789012",
+          ownerSurveyId: appCurrentSurvey.id,
+          filters: attributeFilters,
+        },
         tx
       );
       expect(tx.survey.update).toHaveBeenCalled();

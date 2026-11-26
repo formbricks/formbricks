@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TBaseFilters } from "@formbricks/types/segment";
+import { setV3SurveySegmentFilters } from "@/app/api/v3/surveys/targeting";
 import { resetDb } from "@/integration/reset-db";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { SegmentSurveysChangedError } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
-  SegmentSurveysChangedError,
   deleteSegment,
   getExistingWorkspaceSurveyIds,
+  getSurveyIdsTargetedThroughNesting,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
 
@@ -225,5 +227,96 @@ describe("deleteSegment's reference guard (ENG-7269)", () => {
 
     await expect(deleteSegment(ids.referenced)).resolves.toMatchObject({ id: ids.referenced });
     expect(await prisma.segment.findUnique({ where: { id: ids.referenced } })).toBeNull();
+  });
+});
+
+describe("getSurveyIdsTargetedThroughNesting (ENG-7269)", () => {
+  const createSegment = async (title: string, filters: TBaseFilters, surveyId?: string) =>
+    (
+      await prisma.segment.create({
+        data: {
+          title,
+          isPrivate: false,
+          filters,
+          workspaceId,
+          ...(surveyId && { surveys: { connect: { id: surveyId } } }),
+        },
+        select: { id: true },
+      })
+    ).id;
+
+  test("finds the surveys of every segment that nests it, through a chain and a nested group", async () => {
+    // restricted ← outer ─nests (in a group)→ middle ─nests→ referenced; memberPrivate ← middle.
+    const middle = await createSegment("Middle", nestedSegmentFilters(ids.referenced), ids.memberPrivate);
+    await createSegment(
+      "Outer",
+      [{ id: createId(), connector: null, resource: nestedSegmentFilters(middle) }],
+      ids.restricted
+    );
+
+    expect((await getSurveyIdsTargetedThroughNesting(workspaceId, ids.referenced)).sort()).toEqual(
+      [ids.memberPrivate, ids.restricted].sort()
+    );
+  });
+
+  test("ends on a cycle among other segments and leaves out the segment's own surveys", async () => {
+    const first = await createSegment("First", nestedSegmentFilters(ids.target), ids.restricted);
+    await prisma.segment.update({
+      where: { id: ids.target },
+      data: { filters: nestedSegmentFilters(first) },
+    });
+
+    // target ⇄ first: only `first`'s survey targets `target` through nesting; `target`'s own is excluded.
+    expect(await getSurveyIdsTargetedThroughNesting(workspaceId, ids.target)).toEqual([ids.restricted]);
+  });
+
+  test("ignores segments of another workspace and segments that nest a different one", async () => {
+    const otherWorkspace = await prisma.workspace.create({
+      data: {
+        name: "Other",
+        organizationId: (await prisma.workspace.findUniqueOrThrow({ where: { id: workspaceId } }))
+          .organizationId,
+      },
+      select: { id: true },
+    });
+    await prisma.segment.create({
+      data: {
+        title: "Foreign",
+        isPrivate: false,
+        filters: nestedSegmentFilters(ids.referenced),
+        workspaceId: otherWorkspace.id,
+      },
+    });
+    await createSegment("Nests control", nestedSegmentFilters(ids.control), ids.restricted);
+
+    expect(await getSurveyIdsTargetedThroughNesting(workspaceId, ids.referenced)).toEqual([]);
+  });
+});
+
+describe("setV3SurveySegmentFilters' own-private guard (ENG-7269)", () => {
+  test("writes the survey's own private segment and refuses one another survey uses", async () => {
+    const own = await prisma.segment.create({
+      data: {
+        title: ids.restricted,
+        isPrivate: true,
+        filters: [],
+        workspaceId,
+        surveys: { connect: { id: ids.restricted } },
+      },
+      select: { id: true },
+    });
+    const next = attributeFilters("v3@example.com");
+
+    await setV3SurveySegmentFilters({ segmentId: own.id, ownerSurveyId: ids.restricted, filters: next });
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: own.id } })).filters).toEqual(next);
+
+    // `target` is shared and used by `visible`: a v3 PATCH of `visible` must not write it.
+    const before = await prisma.segment.findUniqueOrThrow({ where: { id: ids.target } });
+    await expect(
+      setV3SurveySegmentFilters({ segmentId: ids.target, ownerSurveyId: ids.visible, filters: next })
+    ).rejects.toMatchObject({ invalidParams: [{ name: "targeting.filters" }] });
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.target } })).filters).toEqual(
+      before.filters
+    );
   });
 });

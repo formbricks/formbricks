@@ -44,9 +44,8 @@ import {
   searchForAttributeKeyInSegment,
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
-import { segmentFiltersReferenceSegment } from "./filter-survey-ids";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
-import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "./segment-errors";
+import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE, SegmentSurveysChangedError } from "./segment-errors";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
@@ -304,6 +303,22 @@ const assertPrivateSegmentKeepsTitle = (data: TSegmentUpdateInput, current: TSeg
 };
 
 /**
+ * ENG-7269: a private segment is one survey's own targeting, which only that survey's save writes. So a
+ * shared segment is never made private (the survey save would then write a segment other surveys use),
+ * and a private one connects no further survey unless it becomes shared in the same write ("Save as
+ * shared segment").
+ */
+const assertPrivateSegmentKeepsOwnSurvey = (data: TSegmentUpdateInput, current: TSegment): void => {
+  if (!current.isPrivate && data.isPrivate === true) {
+    throw new InvalidInputError("A shared segment can't be made private");
+  }
+  const staysPrivate = current.isPrivate && data.isPrivate !== false;
+  if (staysPrivate && data.surveys?.some((surveyId) => !current.surveys.includes(surveyId))) {
+    throw new InvalidInputError("A private segment targets only its own survey");
+  }
+};
+
+/**
  * A rename, or a private segment turned shared while it keeps its survey's id as title, stores a title
  * the caller chose for a segment the survey save may later pick up by that title (ENG-6956).
  */
@@ -467,22 +482,74 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
 };
 
 /**
- * ENG-7269: a segment another segment's `segment` filter still names. Deleting it would leave that
- * reference dangling — evaluation then matches nobody on the Prisma path and throws in the in-memory
- * one — so the delete is refused while any other segment of the workspace reads it. One workspace-scoped
- * scan: deletes are rare, and a workspace's segments are already read whole elsewhere.
+ * A JSON path that matches a nested `segment` filter naming one of `$ids`, at any depth of a filter tree
+ * (nested groups included). `$ids` is a string or an array of strings: lax mode unwraps the array.
  */
-const findSegmentReferencing = async (workspaceId: string, segmentId: string) => {
-  const segments = await prisma.segment.findMany({
-    where: { workspaceId, id: { not: segmentId } },
-    select: { id: true, filters: true },
-  });
+const NESTED_SEGMENT_FILTER_PATH = '$.** ? (@.type == "segment" && @.segmentId == $ids)';
 
-  return segments.find((segment) =>
-    segmentFiltersReferenceSegment(segment.filters as TBaseFilters, segmentId)
-  );
+const SEGMENT_ASSOCIATED_WITH_SURVEY_MESSAGE = "Cannot delete a segment that is associated with a survey";
+const SEGMENT_NESTED_BY_ANOTHER_MESSAGE = "Cannot delete a segment that another segment's filters use";
+
+/**
+ * ENG-7269: whether another segment of the workspace nests `segmentId` in its filters. Matched in
+ * Postgres, so no filter tree is read into memory; the `workspaceId` index scopes the scan.
+ */
+const isNestedByAnotherSegment = async (workspaceId: string, segmentId: string): Promise<boolean> => {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT "id" FROM "Segment"
+    WHERE "workspaceId" = ${workspaceId}
+      AND "id" <> ${segmentId}
+      AND jsonb_path_exists("filters", ${NESTED_SEGMENT_FILTER_PATH}::jsonpath, jsonb_build_object('ids', ${segmentId}::text))
+    LIMIT 1
+  `;
+  return rows.length > 0;
 };
 
+/**
+ * ENG-7269: the surveys a segment targets through nesting. A `segment` filter is resolved when it is
+ * evaluated, so a segment's filters are also part of the targeting of every survey on a segment that nests
+ * it, directly or through other segments. One recursive query: `UNION` stops at a segment already reached,
+ * so a cycle among other segments ends. Surveys are not scoped to the workspace here: a legacy link to
+ * another workspace stays in the set, and the caller's workspace-scoped write check refuses it.
+ */
+export const getSurveyIdsTargetedThroughNesting = async (
+  workspaceId: string,
+  segmentId: string
+): Promise<string[]> => {
+  validateInputs([workspaceId, ZId], [segmentId, ZId]);
+
+  try {
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      WITH RECURSIVE "nesting" ("id") AS (
+        SELECT ${segmentId}::text
+        UNION
+        SELECT "parent"."id"
+        FROM "Segment" AS "parent"
+        JOIN "nesting"
+          ON jsonb_path_exists("parent"."filters", ${NESTED_SEGMENT_FILTER_PATH}::jsonpath, jsonb_build_object('ids', "nesting"."id"))
+        WHERE "parent"."workspaceId" = ${workspaceId}
+      )
+      SELECT "Survey"."id"
+      FROM "Survey"
+      JOIN "nesting" ON "Survey"."segmentId" = "nesting"."id"
+      WHERE "nesting"."id" <> ${segmentId}
+    `;
+    return rows.map((row) => row.id);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * Deletes a segment no survey uses. A segment another segment nests is refused too (ENG-7269): deleting it
+ * would leave that reference dangling, and evaluation would then match nobody on the Prisma path and throw
+ * in the in-memory one. "No survey" is repeated in the delete's own `where`, so a survey connected after
+ * the read refuses the delete instead of losing its targeting.
+ */
 export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
   validateInputs([segmentId, ZId]);
 
@@ -493,16 +560,17 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
     }
 
     if (currentSegment.surveys?.length) {
-      throw new OperationNotAllowedError("Cannot delete a segment that is associated with a survey");
+      throw new OperationNotAllowedError(SEGMENT_ASSOCIATED_WITH_SURVEY_MESSAGE);
     }
 
-    if (await findSegmentReferencing(currentSegment.workspaceId, segmentId)) {
-      throw new OperationNotAllowedError("Cannot delete a segment that another segment's filters use");
+    if (await isNestedByAnotherSegment(currentSegment.workspaceId, segmentId)) {
+      throw new OperationNotAllowedError(SEGMENT_NESTED_BY_ANOTHER_MESSAGE);
     }
 
     const segment = await prisma.segment.delete({
       where: {
         id: segmentId,
+        surveys: { none: {} },
       },
       select: selectSegment,
     });
@@ -510,6 +578,12 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
     return transformPrismaSegment(segment);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        // The guarded delete matched no row: the segment is gone, or a survey was connected since the read.
+        const existing = await prisma.segment.findUnique({ where: { id: segmentId }, select: { id: true } });
+        if (!existing) throw new ResourceNotFoundError("segment", segmentId);
+        throw new OperationNotAllowedError(SEGMENT_ASSOCIATED_WITH_SURVEY_MESSAGE);
+      }
       throw new DatabaseError(error.message);
     }
 
@@ -621,20 +695,6 @@ export const getSurveyWorkspaceIdMap = reactCache(
   }
 );
 
-/**
- * ENG-7269: a segment write whose connected surveys changed after the caller was authorized — a survey
- * connected between the check and the write. A 409: the request is fine, the segment's state moved under
- * it, so the caller re-reads and retries. Listed in the callers that map it (the internal segment route).
- */
-export class SegmentSurveysChangedError extends Error {
-  readonly statusCode = 409;
-
-  constructor() {
-    super("The segment's connected surveys changed while saving. Reload and try again.");
-    this.name = "SegmentSurveysChangedError";
-  }
-}
-
 export type TSegmentUpdateOptions = Readonly<{
   /**
    * ENG-7269: the survey ids the caller was authorized to target. The write lands only while the segment
@@ -672,6 +732,7 @@ export const updateSegment = async (
     }
 
     assertPrivateSegmentKeepsTitle(data, currentSegment);
+    assertPrivateSegmentKeepsOwnSurvey(data, currentSegment);
     if (needsSurveyIdTitleCheck(data, currentSegment)) {
       await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title ?? currentSegment.title);
     }
