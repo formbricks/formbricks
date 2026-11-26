@@ -45,9 +45,11 @@ import {
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import {
+  type TImageUploadTicket,
   addDraftBlock,
   addDraftCharts,
   addDraftPage,
+  createImageUploadTracker,
   deleteDraftPage,
   findEmptyTextBlocks,
   isDraftId,
@@ -386,6 +388,11 @@ function DashboardDetailView({
   // ending is never dropped from the draft the save sends, nor cleared with it after.
   const uploadsRef = useRef(0);
   const [isUploading, setIsUploading] = useState(false);
+  // Which upload is each image block's latest, and the edit session open now (`null` when not editing):
+  // an upload's file goes into the draft only if it is still both, however its block was remounted.
+  const [imageUploads] = useState(createImageUploadTracker);
+  const editSessionRef = useRef<number | null>(null);
+  const lastEditSessionRef = useRef(0);
   // The version the edit started from: what the save sends as its precondition, so a refetch while
   // editing can never make a save silently overwrite someone else's change.
   const [editBaseUpdatedAt, setEditBaseUpdatedAt] = useState<string | null>(null);
@@ -571,23 +578,32 @@ function DashboardDetailView({
     [dashboard.widgets]
   );
 
-  const handleImageUploadStart = useCallback(() => {
-    if (savingRef.current) return false;
-    uploadsRef.current += 1;
-    setIsUploading(true);
-    return true;
-  }, []);
+  const handleImageUploadStart = useCallback(
+    (widgetId: string): TImageUploadTicket | null => {
+      const editSession = editSessionRef.current;
+      if (savingRef.current || editSession === null) return null;
+      uploadsRef.current += 1;
+      setIsUploading(true);
+      return imageUploads.start(widgetId, editSession);
+    },
+    [imageUploads]
+  );
 
-  const handleImageUploadEnd = useCallback((widgetId: string, fileUrl: string | null) => {
-    uploadsRef.current = Math.max(0, uploadsRef.current - 1);
-    setIsUploading(uploadsRef.current > 0);
-    // Applied to the draft as it is now, so settings changed while the upload ran are kept.
-    if (fileUrl !== null) {
-      setDraftWidgets((current) =>
-        current === null ? current : setDraftImageFile(current, widgetId, fileUrl)
-      );
-    }
-  }, []);
+  const handleImageUploadEnd = useCallback(
+    (ticket: TImageUploadTicket, fileUrl: string | null) => {
+      // Always released, even for an upload whose file is dropped, so Save is never held by it.
+      uploadsRef.current = Math.max(0, uploadsRef.current - 1);
+      setIsUploading(uploadsRef.current > 0);
+      const applies = imageUploads.end(ticket, editSessionRef.current);
+      // Applied to the draft as it is now, so settings changed while the upload ran are kept.
+      if (applies && fileUrl !== null) {
+        setDraftWidgets((current) =>
+          current === null ? current : setDraftImageFile(current, ticket.widgetId, fileUrl)
+        );
+      }
+    },
+    [imageUploads]
+  );
 
   const enterEditMode = useCallback(async () => {
     if (isEditing) {
@@ -604,6 +620,8 @@ function DashboardDetailView({
     setEditBasePages(base.pages);
     setEditBaseWidgetIds(new Set(base.widgets.map((widget) => widget.id)));
     setEditBaseUpdatedAt(base.updatedAt);
+    lastEditSessionRef.current += 1;
+    editSessionRef.current = lastEditSessionRef.current;
     setIsEditing(true);
   }, [dashboard, isEditing, queryClient, waitForViewWrites]);
 
@@ -716,6 +734,7 @@ function DashboardDetailView({
   );
 
   const leaveEditMode = useCallback(() => {
+    editSessionRef.current = null;
     setDraftName(null);
     setDraftWidgets(null);
     setDraftPages(null);

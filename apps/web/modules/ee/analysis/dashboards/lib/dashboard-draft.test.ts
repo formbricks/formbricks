@@ -4,6 +4,7 @@ import {
   addDraftBlock,
   addDraftCharts,
   addDraftPage,
+  createImageUploadTracker,
   deleteDraftPage,
   findEmptyTextBlocks,
   isDraftId,
@@ -188,5 +189,56 @@ describe("widgets in the draft", () => {
       { kind: "separator", pageKey: pageId, layout: { x: 0, y: 0, w: 12, h: 2 }, order: 1 },
       { kind: "chart", chartId: "c9", pageId: "p2", layout: { x: 0, y: 0, w: 4, h: 16 }, order: 2 },
     ]);
+  });
+});
+
+describe("image uploads", () => {
+  test("applies an upload that ends in the edit session it started in", () => {
+    const uploads = createImageUploadTracker();
+    const ticket = uploads.start("image-1", 1);
+
+    expect(uploads.end(ticket, 1)).toBe(true);
+  });
+
+  test("an older upload for the same block ending last does not overwrite the newer file", () => {
+    const uploads = createImageUploadTracker();
+    const older = uploads.start("image-1", 1);
+    const newer = uploads.start("image-1", 1);
+
+    expect(uploads.end(newer, 1)).toBe(true);
+    expect(uploads.end(older, 1)).toBe(false);
+  });
+
+  test("an older upload ending first is dropped while the newer one still applies", () => {
+    const uploads = createImageUploadTracker();
+    const older = uploads.start("image-1", 1);
+    const newer = uploads.start("image-1", 1);
+
+    expect(uploads.end(older, 1)).toBe(false);
+    expect(uploads.end(newer, 1)).toBe(true);
+  });
+
+  test("uploads for different blocks do not supersede each other", () => {
+    const uploads = createImageUploadTracker();
+    const first = uploads.start("image-1", 1);
+    const second = uploads.start("image-2", 1);
+
+    expect(uploads.end(first, 1)).toBe(true);
+    expect(uploads.end(second, 1)).toBe(true);
+  });
+
+  test("an upload outliving its edit session does not write into the next one", () => {
+    const uploads = createImageUploadTracker();
+    const ticket = uploads.start("image-1", 1);
+
+    // Cancelled and editing again: a new session.
+    expect(uploads.end(ticket, 2)).toBe(false);
+  });
+
+  test("an upload ending after editing stopped is dropped", () => {
+    const uploads = createImageUploadTracker();
+    const ticket = uploads.start("image-1", 1);
+
+    expect(uploads.end(ticket, null)).toBe(false);
   });
 });

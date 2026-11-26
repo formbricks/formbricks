@@ -29,6 +29,9 @@ export type TTeamDashboardLimits = {
   dashboardIds: string[];
 };
 
+/** A team's dashboard limits before and after a replace, for the audit trail. */
+export type TTeamDashboardLimitsChange = { before: TTeamDashboardLimits; after: TTeamDashboardLimits };
+
 export class TeamDashboardLimitsInvalidError extends Error {
   constructor(readonly dashboardIds: string[]) {
     super("Some dashboards are not in a workspace the team is granted");
@@ -95,7 +98,7 @@ export const replaceTeamDashboardLimits = async (
   organizationId: string,
   teamId: string,
   dashboardIds: readonly string[]
-): Promise<{ before: TTeamDashboardLimits; after: TTeamDashboardLimits } | null> =>
+): Promise<TTeamDashboardLimitsChange | null> =>
   prisma.$transaction((tx) =>
     replaceTeamDashboardLimitsInTransaction(tx, organizationId, teamId, dashboardIds)
   );
@@ -109,7 +112,7 @@ export const replaceTeamDashboardLimitsInTransaction = async (
   organizationId: string,
   teamId: string,
   dashboardIds: readonly string[]
-): Promise<{ before: TTeamDashboardLimits; after: TTeamDashboardLimits } | null> => {
+): Promise<TTeamDashboardLimitsChange | null> => {
   const ids = [...new Set(dashboardIds)];
   const before = await tx.team.findFirst({
     where: { id: teamId, organizationId },

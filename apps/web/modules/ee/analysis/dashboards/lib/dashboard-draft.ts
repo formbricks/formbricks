@@ -167,6 +167,36 @@ export const setDraftImageFile = (
       : widget
   );
 
+/** One image upload: the block it is for, and the edit session it started in. */
+export interface TImageUploadTicket {
+  readonly id: number;
+  readonly widgetId: string;
+  readonly editSession: number;
+}
+
+/**
+ * The dashboard's image uploads, kept by the dashboard rather than the block: switching pages remounts a
+ * block, so a block cannot tell its own earlier upload is still running. `end` says whether an ended
+ * upload's file goes into the draft: only the block's latest upload, and only while the edit session it
+ * started in is still open, so an older upload finishing late, or one outliving a Cancel, changes nothing.
+ */
+export const createImageUploadTracker = () => {
+  let lastId = 0;
+  const latestByWidget = new Map<string, number>();
+  return {
+    start(widgetId: string, editSession: number): TImageUploadTicket {
+      lastId += 1;
+      latestByWidget.set(widgetId, lastId);
+      return { id: lastId, widgetId, editSession };
+    },
+    end(ticket: TImageUploadTicket, activeEditSession: number | null): boolean {
+      const isLatest = latestByWidget.get(ticket.widgetId) === ticket.id;
+      if (isLatest) latestByWidget.delete(ticket.widgetId);
+      return isLatest && activeEditSession === ticket.editSession;
+    },
+  };
+};
+
 /** Text blocks the save would refuse: neither a headline nor a description. */
 export const findEmptyTextBlocks = (widgets: TDashboardWidget[]): TDashboardWidget[] =>
   widgets.filter((widget) => widget.kind === "text" && isTextBlockEmpty(widget.content));

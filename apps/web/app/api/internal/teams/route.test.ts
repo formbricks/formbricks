@@ -22,7 +22,6 @@ const mocks = vi.hoisted(() => ({
   deleteTeam: vi.fn(),
   getTeamRoleByTeamIdUserId: vi.fn(),
   queueAuditEvent: vi.fn(),
-  getTeamDashboardLimits: vi.fn(),
   getIsDashboardViewerRoleEnabled: vi.fn(),
 }));
 
@@ -44,7 +43,6 @@ vi.mock("@/modules/ee/dashboard-access/lib/team-dashboard-limits", async () => {
   return {
     TEAM_DASHBOARD_LIMIT_MAX: 200,
     TeamDashboardLimitsInvalidError,
-    getTeamDashboardLimits: mocks.getTeamDashboardLimits,
   };
 });
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -147,11 +145,10 @@ beforeEach(() => {
   mocks.checkRoleManagementPermission.mockResolvedValue(undefined);
   mocks.createTeam.mockResolvedValue(TEAM_ID);
   mocks.getTeamDetails.mockResolvedValue(team());
-  mocks.updateTeamDetails.mockResolvedValue(true);
+  mocks.updateTeamDetails.mockResolvedValue({ dashboardLimits: null });
   mocks.deleteTeam.mockResolvedValue(true);
   mocks.getTeamRoleByTeamIdUserId.mockResolvedValue("admin");
   mocks.getIsDashboardViewerRoleEnabled.mockResolvedValue(true);
-  mocks.getTeamDashboardLimits.mockResolvedValue({ teamId: TEAM_ID, limited: false, dashboardIds: [] });
 });
 
 describe("POST /api/internal/teams", () => {
@@ -482,12 +479,13 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
     const DASHBOARD_ID = "cldash1111111111111111111";
     const workspaces = [...updateBody().workspaces, { workspaceId: OTHER_WORKSPACE_ID, permission: "read" }];
 
-    test("saves the grants and the limit in one write behind Access Control write, and audits both", async () => {
+    test("saves the grants and the limit in one write behind Access Control write, and audits both as the write saw them", async () => {
       allow("team.manage", "organization.manage", "organization.manage_access");
       const limited = { teamId: TEAM_ID, limited: true, dashboardIds: [DASHBOARD_ID] };
-      mocks.getTeamDashboardLimits
-        .mockResolvedValueOnce({ teamId: TEAM_ID, limited: false, dashboardIds: [] })
-        .mockResolvedValueOnce(limited);
+      // The audit takes the limit from the write's own transaction, not from reads around it.
+      mocks.updateTeamDetails.mockResolvedValueOnce({
+        dashboardLimits: { before: { teamId: TEAM_ID, limited: false, dashboardIds: [] }, after: limited },
+      });
       mocks.getTeamDetails.mockResolvedValueOnce(team()).mockResolvedValueOnce(team({ name: "Renamed" }));
 
       const response = await update(updateBody({ workspaces, dashboardIds: [DASHBOARD_ID] }));

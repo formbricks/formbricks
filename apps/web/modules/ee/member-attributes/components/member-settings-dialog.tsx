@@ -98,9 +98,10 @@ export const MemberSettingsDialog = ({
   const router = useRouter();
   const fieldId = useId();
   const roleLabels = getOrganizationRoleLabels(t);
-  // The role as the dialog opened: Save writes the role only when the user changed it from this, so a
-  // refresh of the table while the dialog is open never sends a stale role back.
-  const [initialRole] = useState<TOrganizationRole>(row.role);
+  // The role as the dialog opened, then as last written by it: Save writes the role only when the user
+  // changed it from this, so a refresh of the table while the dialog is open never sends a stale role back,
+  // and a role saved before the attributes failed is written again if the user reverts it and retries.
+  const [initialRole, setInitialRole] = useState<TOrganizationRole>(row.role);
   const [role, setRole] = useState<TOrganizationRole>(row.role);
   const snapshotAttributes = () =>
     Object.fromEntries(attributeKeys.map(({ key }) => [key, row.attributes[key] ?? []]));
@@ -142,6 +143,7 @@ export const MemberSettingsDialog = ({
       } else if (row.invite) {
         await updateInviteRole({ inviteId: row.invite.id, body: { role } });
       }
+      setInitialRole(role);
       return true;
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));

@@ -354,7 +354,7 @@ describe("updateTeamDetails", () => {
       dashboardLimited: false,
     });
     const result = await updateTeamDetails("t1", data);
-    expect(result).toBe(true);
+    expect(result).toEqual({ dashboardLimits: null });
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
       teamIds: ["t1"],
       teamMemberships: [
@@ -378,7 +378,9 @@ describe("updateTeamDetails", () => {
     vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
     vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
 
-    await expect(updateTeamDetails("t1", { ...data, members: [] })).resolves.toBe(true);
+    await expect(updateTeamDetails("t1", { ...data, members: [] })).resolves.toEqual({
+      dashboardLimits: null,
+    });
     expect(prisma.membership.count).not.toHaveBeenCalled();
     // The team had no grant before, so the update itself has to write it.
     expect(prisma.team.update).toHaveBeenCalledWith({
@@ -411,7 +413,7 @@ describe("updateTeamDetails", () => {
     vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
     vi.mocked(reconcileTeamWorkspaceRelationships).mockRejectedValueOnce(new Error("private"));
 
-    await expect(updateTeamDetails("t1", data)).resolves.toBe(true);
+    await expect(updateTeamDetails("t1", data)).resolves.toEqual({ dashboardLimits: null });
   });
   test("writes the dashboard limit in the team's transaction, after the grants, only when one is sent", async () => {
     const arrange = () => {
@@ -424,11 +426,17 @@ describe("updateTeamDetails", () => {
     };
 
     arrange();
-    await expect(updateTeamDetails("t1", data)).resolves.toBe(true);
+    await expect(updateTeamDetails("t1", data)).resolves.toEqual({ dashboardLimits: null });
     expect(dashboardLimits.replaceInTransaction).not.toHaveBeenCalled();
 
     arrange();
-    await expect(updateTeamDetails("t1", data, ["d1"])).resolves.toBe(true);
+    // The write's own before and after snapshots come back for the audit.
+    const change = {
+      before: { teamId: "t1", limited: false, dashboardIds: [] },
+      after: { teamId: "t1", limited: true, dashboardIds: ["d1"] },
+    };
+    dashboardLimits.replaceInTransaction.mockResolvedValueOnce(change);
+    await expect(updateTeamDetails("t1", data, ["d1"])).resolves.toEqual({ dashboardLimits: change });
     expect(dashboardLimits.replaceInTransaction).toHaveBeenCalledWith(
       expect.objectContaining({ team: prisma.team }),
       "org1",

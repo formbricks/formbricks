@@ -12,6 +12,7 @@ import {
   type TDashboardTextContent,
 } from "@formbricks/types/analysis";
 import { cn } from "@/lib/cn";
+import type { TImageUploadTicket } from "@/modules/ee/analysis/dashboards/lib/dashboard-draft";
 import { DASHBOARD_IMAGE_EXTENSIONS } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import { getChartApiErrorMessage, uploadDashboardImage } from "@/modules/ee/analysis/lib/api-client";
 import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
@@ -207,10 +208,13 @@ interface ImageBlockProps {
   content: TDashboardImageContent;
   isEditing: boolean;
   onChange: (content: TDashboardImageContent) => void;
-  /** Asked as an upload starts; `false` refuses it (a save is in flight). */
-  onUploadStart: () => boolean;
-  /** The upload's file, or `null` when it failed: the dashboard puts it into its draft as it is then. */
-  onUploadEnd: (fileUrl: string | null) => void;
+  /** Asked as an upload starts; `null` refuses it (a save is in flight, or not editing). */
+  onUploadStart: () => TImageUploadTicket | null;
+  /**
+   * The upload's file, or `null` when it failed: the dashboard puts it into its draft as it is then, if
+   * the upload is still the block's latest and its edit session is still open.
+   */
+  onUploadEnd: (ticket: TImageUploadTicket, fileUrl: string | null) => void;
   onRemove: () => void;
   onMeasure?: (px: number) => void;
 }
@@ -238,7 +242,8 @@ function ImageBlock({
   // The dashboard applies the file to its draft as it is when the upload ends, so alt text, fit or position
   // changed meanwhile are kept, and it holds Save until every upload has ended.
   const upload = async (file: File) => {
-    if (!onUploadStart()) return;
+    const ticket = onUploadStart();
+    if (!ticket) return;
     setIsUploading(true);
     let fileUrl: string | null = null;
     try {
@@ -247,7 +252,7 @@ function ImageBlock({
       toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.image_upload_failed")));
     } finally {
       setIsUploading(false);
-      onUploadEnd(fileUrl);
+      onUploadEnd(ticket, fileUrl);
     }
   };
 
@@ -420,10 +425,10 @@ export interface DashboardLayoutBlockProps {
   widget: Exclude<TDashboardWidget, { kind: "chart" }>;
   isEditing: boolean;
   onContentChange: (widgetId: string, content: TDashboardImageContent | TDashboardTextContent) => void;
-  /** Asked as an image upload starts; `false` refuses it. */
-  onImageUploadStart: () => boolean;
+  /** Asked as an image upload starts for a block; `null` refuses it. */
+  onImageUploadStart: (widgetId: string) => TImageUploadTicket | null;
   /** An image upload ended, with its file or `null` when it failed. */
-  onImageUploadEnd: (widgetId: string, fileUrl: string | null) => void;
+  onImageUploadEnd: (ticket: TImageUploadTicket, fileUrl: string | null) => void;
   onRemove: (widgetId: string) => void;
   /** The pixels the block's content needs, for its auto-height; image and text blocks report it. */
   onMeasure?: (widgetId: string, px: number) => void;
@@ -462,8 +467,8 @@ export function DashboardLayoutBlock({
       content={widget.content}
       isEditing={isEditing}
       onChange={(content) => onContentChange(widget.id, content)}
-      onUploadStart={onImageUploadStart}
-      onUploadEnd={(fileUrl) => onImageUploadEnd(widgetId, fileUrl)}
+      onUploadStart={() => onImageUploadStart(widgetId)}
+      onUploadEnd={onImageUploadEnd}
       onRemove={remove}
       onMeasure={report}
     />

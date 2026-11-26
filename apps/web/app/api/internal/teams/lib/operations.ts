@@ -16,8 +16,8 @@ import { can } from "@/lib/authorization";
 import { getTeam } from "@/lib/utils/services";
 import {
   type TTeamDashboardLimits,
+  type TTeamDashboardLimitsChange,
   TeamDashboardLimitsInvalidError,
-  getTeamDashboardLimits,
 } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
 import { requireRoleManagementEntitlement } from "@/modules/ee/role-management/lib/api-access";
@@ -144,13 +144,12 @@ export async function getTeamOperation({
 /**
  * A dashboard limit sent with a team update is checked as `PUT /api/v3/teams/{teamId}/dashboard-limits`
  * checks it: Access Control write (`organization.manage_access`), then the Access Control and Dashboards
- * plan. When allowed, the team's limit as it is now, for the audit entry.
+ * plan. The refusal, or `null` when allowed.
  */
-async function readDashboardLimitsForUpdate(
+async function authorizeDashboardLimitsUpdate(
   context: TRequestContext,
-  organizationId: string,
-  teamId: string
-): Promise<Response | { limits: TTeamDashboardLimits | null }> {
+  organizationId: string
+): Promise<Response | null> {
   const access = await requireOrgActionAccess({
     ...context,
     organizationId,
@@ -160,7 +159,7 @@ async function readDashboardLimitsForUpdate(
   if (!(await getIsDashboardViewerRoleEnabled(organizationId))) {
     return problemDashboardAccessPlanRequired(context.requestId, context.instance);
   }
-  return { limits: await getTeamDashboardLimits(organizationId, teamId) };
+  return null;
 }
 
 /** The answer to a refused team update, or `undefined` for an error that is not a refusal. */
@@ -224,14 +223,14 @@ export async function updateTeamOperation({
   }
 
   const { dashboardIds, ...teamDetails } = body;
-  const limitsBefore =
-    dashboardIds === undefined
-      ? null
-      : await readDashboardLimitsForUpdate(context, access.organizationId, teamId);
-  if (limitsBefore instanceof Response) return limitsBefore;
+  if (dashboardIds !== undefined) {
+    const refusal = await authorizeDashboardLimitsUpdate(context, access.organizationId);
+    if (refusal) return refusal;
+  }
 
+  let limits: TTeamDashboardLimitsChange | null;
   try {
-    await updateTeamDetails(teamId, teamDetails, dashboardIds);
+    ({ dashboardLimits: limits } = await updateTeamDetails(teamId, teamDetails, dashboardIds));
   } catch (error) {
     const refusal = updateRefusal(error, context);
     if (refusal) return refusal;
@@ -241,11 +240,8 @@ export async function updateTeamOperation({
   if (!after) return problemForbidden(requestId, undefined, instance);
 
   if (auditLog) {
-    // A limit saved with the team is audited beside it, as the limits route audits it.
-    const limits = limitsBefore && {
-      before: limitsBefore.limits,
-      after: await getTeamDashboardLimits(access.organizationId, teamId),
-    };
+    // A limit saved with the team is audited beside it, as the limits route audits it: as the save's
+    // transaction found and left it.
     auditLog.oldObject = withDashboardLimits(before, limits?.before);
     auditLog.newObject = withDashboardLimits(after, limits?.after);
   }
