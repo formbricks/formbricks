@@ -36,7 +36,12 @@ APT
 
 ci_apt_running() {
   # Zombies hold no locks and only wait to be reaped, so count running, sleeping and blocked processes.
-  sudo pgrep -x --runstates DRS 'apt-get|apt|dpkg' >/dev/null
+  local status=0
+  sudo pgrep -x --runstates DRS 'apt-get|apt|dpkg' >/dev/null || status=$?
+  if (( status > 1 )); then
+    echo "::warning::pgrep failed (exit ${status}); cannot tell whether apt is still running."
+  fi
+  return "$status"
 }
 
 ci_stop_apt() {
@@ -56,26 +61,34 @@ ci_stop_apt() {
     ci_apt_running || return 0
     sleep 1
   done
+  echo '::warning::apt or dpkg is still running after KILL; the retry may hit its lock.'
 }
 
 ci_use_fallback_apt_mirror() {
-  local apt_dir="${1:-/etc/apt}"
-  # Handle both legacy .list and deb822 .sources files. Only Ubuntu archive/security hosts
+  local apt_dir="${1:-/etc/apt}" architecture
+  # Handle both legacy .list and deb822 .sources files. Only Ubuntu archive, security and ports hosts
   # change; GitHub's and Blacksmith's Ubuntu mirror+file sources also become a direct fallback URL.
-  # Package signatures, suites and third-party repositories remain as configured.
-  sudo python3 - "$apt_dir" <<'PY'
+  # Package signatures, suites and third-party repositories remain as configured. Azure's archive mirror
+  # carries amd64 and i386 only, so other architectures (the arm64 release smoke jobs) use its ports mirror.
+  architecture="$(dpkg --print-architecture)"
+  sudo python3 - "$apt_dir" "$architecture" <<'PY'
 from pathlib import Path
 import re
 import sys
 
 root = Path(sys.argv[1])
+mirror_files = r'|mirror\+file:/etc/apt/(?:apt|blacksmith-ubuntu)-mirrors\.txt(?=\s|$)'
+if sys.argv[2] in ('amd64', 'i386'):
+    ubuntu = r'https?://(?:[\w.-]+\.)?archive\.ubuntu\.com/ubuntu\b|https?://security\.ubuntu\.com/ubuntu\b'
+    fallback = 'https://azure.archive.ubuntu.com/ubuntu'
+else:
+    ubuntu = r'https?://(?:[\w.-]+\.)?ports\.ubuntu\.com/ubuntu-ports\b'
+    fallback = 'https://azure.ports.ubuntu.com/ubuntu-ports'
 rewritten = 0
 for path in [root / 'sources.list', *root.glob('sources.list.d/*.list'), *root.glob('sources.list.d/*.sources')]:
     if path.is_file():
         original = path.read_text()
-        updated, count = re.subn(r'https?://(?:[\w.-]+\.)?archive\.ubuntu\.com/ubuntu\b|https?://security\.ubuntu\.com/ubuntu\b'
-                                 r'|mirror\+file:/etc/apt/(?:apt|blacksmith-ubuntu)-mirrors\.txt(?=\s|$)',
-                                 'https://azure.archive.ubuntu.com/ubuntu', original)
+        updated, count = re.subn(ubuntu + mirror_files, fallback, original)
         rewritten += count
         if updated != original:
             path.write_text(updated)

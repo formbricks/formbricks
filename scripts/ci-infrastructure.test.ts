@@ -42,6 +42,7 @@ function fixture() {
   const command = (name: string, body: string) =>
     writeFileSync(join(directory, "bin", name), `#!/usr/bin/env bash\nset -eu\n${body}\n`, { mode: 0o755 });
   command("sleep", ":");
+  command("dpkg", "echo amd64");
   command("sudo", ": # Never change the host apt configuration in a test");
   // pnpm supplies the simulated timeout status; the harness also runs on stock macOS.
   command("timeout", 'while [[ "$1" == --* ]]; do shift; done; shift; exec "$@"');
@@ -180,6 +181,19 @@ test("apt that ignores TERM is killed after a bounded wait, and the retry still 
   expect(commands.filter((line) => line.startsWith("sudo pgrep"))).toHaveLength(25);
   expect(commands.filter((line) => line === "sudo pkill -KILL -x apt-get|apt|dpkg")).toHaveLength(1);
   expect(commands.filter((line) => line.includes("install-deps"))).toHaveLength(2);
+  expect(result.stdout).toContain("::warning::apt or dpkg is still running after KILL");
+});
+
+test("a pgrep failure is reported instead of read as nothing running", () => {
+  const { env, command } = fixture();
+  command("sudo", '[[ "$1" != pgrep ]] || exit 3');
+  const result = spawnSync("bash", ["-c", "source scripts/ci-network.sh; ci_stop_apt"], {
+    cwd: repository,
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stdout).toContain("::warning::pgrep failed (exit 3)");
 });
 
 test.each(["pull", "validation"])("a permanent %s failure remains red", (failure) => {
@@ -250,8 +264,42 @@ test.each(["direct", "mirror-file", "blacksmith-mirror-file"])(
     expect(readFileSync(join(apt, "apt.conf.d/99formbricks-ci"), "utf8")).toContain(
       'APT::Update::Error-Mode "any";'
     );
+    expect(result.stdout).not.toContain("::warning::No Ubuntu apt source matched");
   }
 );
+
+// The arm64 release image smoke jobs run this too; Azure's archive mirror has no arm64 packages.
+test("apt fallback on arm64 switches ports sources to the Azure ports mirror", () => {
+  const { directory, env, command } = fixture();
+  command("sudo", 'exec "$@"');
+  command("dpkg", "echo arm64");
+  const apt = join(directory, "apt");
+  mkdirSync(join(apt, "sources.list.d"), { recursive: true });
+  writeFileSync(
+    join(apt, "sources.list"),
+    "deb mirror+file:/etc/apt/blacksmith-ubuntu-mirrors.txt noble main\n"
+  );
+  const sources = join(apt, "sources.list.d/ubuntu.sources");
+  writeFileSync(sources, "URIs: http://ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-security\n");
+  const thirdParty = join(apt, "sources.list.d/docker.list");
+  writeFileSync(thirdParty, "deb https://download.docker.com/linux/ubuntu noble stable\n");
+  const result = spawnSync(
+    "bash",
+    ["-c", 'source scripts/ci-network.sh; ci_use_fallback_apt_mirror "$1"', "test", apt],
+    { cwd: repository, env, encoding: "utf8" }
+  );
+  expect(result.status, result.stderr).toBe(0);
+  expect(readFileSync(join(apt, "sources.list"), "utf8")).toBe(
+    "deb https://azure.ports.ubuntu.com/ubuntu-ports noble main\n"
+  );
+  expect(readFileSync(sources, "utf8")).toBe(
+    "URIs: https://azure.ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-security\n"
+  );
+  expect(readFileSync(thirdParty, "utf8")).toBe(
+    "deb https://download.docker.com/linux/ubuntu noble stable\n"
+  );
+  expect(result.stdout).not.toContain("::warning::");
+});
 
 test("a fallback that matches no Ubuntu source says so instead of retrying silently", () => {
   const { directory, env, command } = fixture();
