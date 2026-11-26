@@ -28,6 +28,7 @@ export const getEmailLogoPreviewUrl = (
   fbLogoUrl: string
 ): string => {
   const { logoUrl, hideLogo } = getEmailLogo(whitelabel);
-  if (logoUrl) return logoUrl;
-  return hideLogo ? "" : fbLogoUrl;
+  // A removal wins over any stored URL, exactly as in the rendered email.
+  if (hideLogo) return "";
+  return logoUrl || fbLogoUrl;
 };

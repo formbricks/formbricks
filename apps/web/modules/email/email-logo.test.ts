@@ -58,23 +58,25 @@ describe.each(senders)("%s logo (ENG-545)", (_name, send) => {
     vi.clearAllMocks();
   });
 
+  // Logo images are the only `<img>` the email chrome renders here, so their sources are the logo.
+  const imageSources = (): string[] =>
+    [...sentHtml().matchAll(/<img\b[^>]*\bsrc="([^"]*)"/g)].map(([, src]) => src);
+
   test("renders no logo when the organization removed it", async () => {
     await send({ logoUrl: "", hideLogo: true });
 
-    expect(sentHtml()).not.toContain('data-testid="default-logo-image"');
-    expect(sentHtml()).not.toContain('data-testid="logo-image"');
+    expect(imageSources()).toEqual([]);
   });
 
   test("falls back to the Formbricks logo when none was ever set", async () => {
     await send({ logoUrl: "" });
 
-    expect(sentHtml()).toContain('data-testid="default-logo-image"');
+    expect(imageSources()).toEqual([expect.stringContaining("logo-transparent.png")]);
   });
 
   test("renders the organization's own logo", async () => {
     await send({ logoUrl: "https://cdn.example.com/logo.png" });
 
-    expect(sentHtml()).toContain('data-testid="logo-image"');
-    expect(sentHtml()).toContain("https://cdn.example.com/logo.png");
+    expect(imageSources()).toEqual(["https://cdn.example.com/logo.png"]);
   });
 });

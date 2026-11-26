@@ -29,4 +29,8 @@ describe("getEmailLogoPreviewUrl", () => {
   test("previews no logo once it was removed, so it stays gone after a reload (ENG-545)", () => {
     expect(getEmailLogoPreviewUrl({ logoUrl: null, hideLogo: true }, FB_LOGO_URL)).toBe("");
   });
+
+  test("previews no logo when removed, even with a stale logo URL, as the email renders it", () => {
+    expect(getEmailLogoPreviewUrl({ logoUrl: CUSTOM_LOGO_URL, hideLogo: true }, FB_LOGO_URL)).toBe("");
+  });
 });
