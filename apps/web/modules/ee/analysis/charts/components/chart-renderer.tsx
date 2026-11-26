@@ -346,8 +346,8 @@ function SeriesChart({
   }
 }
 
-/** A measure-only bar, line or area chart's axis labels: the short enum label where there is one ("Joy" for the
- * joy count), without a family prefix every bar shares. */
+/** A measure-only bar, line or area chart's category labels: the short enum label where there is one
+ * ("Joy" for the joy count), without a family prefix every measure shares. */
 const measureAxisLabelsFor = (measureKeys: string[], t: TFunction): Record<string, string> => {
   const labels = stripSharedLabelPrefix(measureKeys.map((key) => getMeasureAxisLabel(key, t)));
   return Object.fromEntries(measureKeys.map((key, i) => [key, labels[i]]));

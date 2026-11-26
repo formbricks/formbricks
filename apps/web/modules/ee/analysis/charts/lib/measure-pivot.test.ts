@@ -21,9 +21,12 @@ describe("pivotsMeasuresIntoCategories", () => {
     expect(pivotsMeasuresIntoCategories(type, true)).toBe(false);
   });
 
-  test.each(["pie", "big_number"] as const)("a %s chart folds its measures itself", (type) => {
-    expect(pivotsMeasuresIntoCategories(type, false)).toBe(false);
-  });
+  test.each(["pie", "big_number"] as const)(
+    "a %s chart never pivots: it draws its measures its own way",
+    (type) => {
+      expect(pivotsMeasuresIntoCategories(type, false)).toBe(false);
+    }
+  );
 });
 
 describe("getPivotedMeasureChart", () => {
