@@ -50,9 +50,13 @@ export const diagnoseOAuthStateCookie = (
   const state = new URL(request.url).searchParams.get("state");
   if (state === null) return undefined;
 
-  const cookieHeader = request.headers.get("cookie");
-  const signed = cookieHeader ? getCookieValueFromHeader(cookieHeader, cookie.name) : null;
-  if (!signed) return "absent";
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  // Presence is checked apart from the value: a cookie sent empty or not decodable was not dropped.
+  const isPresent = cookieHeader.split(";").some((pair) => pair.trim().startsWith(`${cookie.name}=`));
+  if (!isPresent) return "absent";
+
+  const signed = getCookieValueFromHeader(cookieHeader, cookie.name);
+  if (!signed) return "signature_invalid";
 
   const value = verifySignedCookieValue(signed, cookie.secret);
   if (value === null) return "signature_invalid";

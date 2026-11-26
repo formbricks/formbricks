@@ -57,6 +57,14 @@ describe("diagnoseOAuthStateCookie", () => {
     );
   });
 
+  // Present but empty, or not valid percent-encoding: the browser sent the cookie, so it was not dropped.
+  test.each([`${COOKIE_NAME}=`, `${COOKIE_NAME}=%ZZ`])(
+    "a present but empty or undecodable cookie (%s) is not taken for a missing one",
+    (cookieHeader) => {
+      expect(diagnoseOAuthStateCookie(callback("state-abc", cookieHeader), cookie)).toBe("signature_invalid");
+    }
+  );
+
   test("verifies but holds another sign-in's state: a second flow in the same browser", () => {
     const request = callback("state-abc", `${COOKIE_NAME}=${sign("state-newer-flow", SECRET)}`);
 
