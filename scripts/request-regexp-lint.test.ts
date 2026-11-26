@@ -137,6 +137,7 @@ export const run = ({ parsedInput }: any) => parsedInput.patterns.map(compile);
   // Pass-throughs: String(), JSON.parse, Object.values and safeParse().data keep the taint.
   "string-call.ts": `export const run = ({ parsedInput }: any) => new RegExp(String(parsedInput.pattern));
 `,
+  // Also tainted by the generic `.parse()` pass-through, so this pins the result, not the JSON branch.
   "json-parse.ts": `export async function POST(req: Request) {
   const raw = await req.text();
   return new RegExp(JSON.parse(raw).pattern).test("x");
@@ -155,6 +156,14 @@ export async function POST(req: Request) {
   const sp = req.nextUrl.searchParams;
   return new RegExp(sp.get("q") ?? "").test("x");
 }
+`,
+  "search-params-destructure-alias.ts": `export function GET(req: Request) {
+  const { searchParams: sp } = new URL(req.url);
+  return new RegExp(sp.get("q") ?? "").test("x");
+}
+`,
+  "reduce-no-initial.ts": `export const run = ({ parsedInput }: any) =>
+  parsedInput.patterns.reduce((first: string) => (new RegExp(first).test("x") ? first : ""));
 `,
   "global-regexp.ts": `export const run = ({ parsedInput }: any) => new globalThis.RegExp(parsedInput.pattern).test("x");
 `,

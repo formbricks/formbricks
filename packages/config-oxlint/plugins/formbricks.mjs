@@ -541,6 +541,9 @@ function walkTaint(program, policy) {
       const scope = kind === "var" ? scopes.findLast((candidate) => candidate.isFunction) : scopes.at(-1);
       return (name, label) => scope.vars.set(name, label);
     };
+    // `{ searchParams: sp } = url` binds a source key like `url.searchParams` reads it.
+    const propertyLabel = (label, key) =>
+      policy.sourceKeys?.has(key) ? true : memberLabel(label, key, policy.deep);
     const bind = (pattern, label, set) => {
       switch (pattern?.type) {
         case "Identifier":
@@ -549,7 +552,7 @@ function walkTaint(program, policy) {
         case "ObjectPattern":
           for (const property of pattern.properties) {
             if (property.type === "RestElement") bind(property.argument, label, set);
-            else bind(property.value, memberLabel(label, keyOf(property), policy.deep), set);
+            else bind(property.value, propertyLabel(label, keyOf(property)), set);
           }
           return;
         case "ArrayPattern":
@@ -794,8 +797,8 @@ const noLooseSchema = {
  * and `.match(p)`, `.matchAll(p)`, `.search(p)`, which compile a string argument. `.split(p)` and
  * `.replace(p, …)` take a string as text, not as a pattern. Sources: the `parsedInput` and
  * `searchParams` of a function's first argument (server actions, v3 handlers, Next pages),
- * `.json()`/`.formData()`/`.text()` on a `req` or `request` (also `ctx.req`), and
- * `.searchParams.get()`. Patterns loaded from storage (a survey's validation rules, the shipped
+ * `.json()`/`.formData()`/`.text()` on a `req` or `request` (also `ctx.req`), and any `.searchParams`
+ * read, destructured or not. Patterns loaded from storage (a survey's validation rules, the shipped
  * ENG-7109 case) are not sources here: they stay a review check (CODING_STANDARDS.md, Security).
  */
 const STRING_METHODS = new Set([
@@ -941,11 +944,10 @@ const noRequestRegexp = {
             if (node.type !== "CallExpression" || !ELEMENT_CALLBACKS.has(name)) return;
             const object = calleeObject(node);
             if (!object || labelOf(object) !== true) return;
-            // `reduce((accumulator, element) => …)` gets the element second.
-            setParams(
-              node.arguments[0],
-              name === "reduce" || name === "reduceRight" ? [false, true] : [true]
-            );
+            // `reduce((accumulator, element) => …)` gets the element second, and with no initial value
+            // the first element as the accumulator too.
+            const reduces = name === "reduce" || name === "reduceRight";
+            setParams(node.arguments[0], reduces ? [node.arguments.length < 2, true] : [true]);
           },
           sink(node, labelOf) {
             const name = calleeName(node);
@@ -977,8 +979,7 @@ const noRequestRegexp = {
  * `no-tsx-unit-test`: CODING_STANDARDS.md, Testing Guidelines: "Do not write component or UI unit tests
  * for `.tsx` files." Mechanically, a unit test is a `*.test.ts`: this fails a test file that needs JSX
  * (`*.test.tsx`, `*.spec.tsx`, and their `.jsx` forms). A component test written in `.ts` is still a
- * review finding. The `allow`
- * option lists the repo-relative paths of the tests that predate the check.
+ * review finding. The `allow` option lists the repo-relative paths of the tests that predate the check.
  */
 const TSX_TEST = /\.(?:test|spec)\.[jt]sx$/;
 
