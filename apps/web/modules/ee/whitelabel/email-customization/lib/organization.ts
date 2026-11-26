@@ -6,6 +6,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import { type TOrganizationEmailLogo, getEmailLogo } from "./email-logo";
 
 export const updateOrganizationEmailLogoUrl = async (
   organizationId: string,
@@ -100,13 +101,6 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
   }
 };
 
-export type TOrganizationEmailLogo = {
-  /** The organization's own logo, or null for none. */
-  logoUrl: string | null;
-  /** The organization removed its logo: emails show none, not the Formbricks fallback. */
-  hideLogo: boolean;
-};
-
 export const getOrganizationEmailLogo = reactCache(
   async (organizationId: string): Promise<TOrganizationEmailLogo> => {
     validateInputs([organizationId, ZId]);
@@ -117,10 +111,7 @@ export const getOrganizationEmailLogo = reactCache(
           whitelabel: true,
         },
       });
-      return {
-        logoUrl: organization?.whitelabel?.logoUrl ?? null,
-        hideLogo: organization?.whitelabel?.hideLogo === true,
-      };
+      return getEmailLogo(organization?.whitelabel);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

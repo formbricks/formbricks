@@ -19,6 +19,7 @@ import {
   sendOrganizationTestEmail,
   updateOrganizationEmailLogo,
 } from "@/modules/ee/whitelabel/email-customization/lib/api-client";
+import { getEmailLogoPreviewUrl } from "@/modules/ee/whitelabel/email-customization/lib/email-logo";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -56,12 +57,11 @@ export const EmailCustomizationSettings = ({
 }: EmailCustomizationSettingsProps) => {
   const { t } = useTranslation();
 
-  // An empty `logoUrl` means no logo at all. The Formbricks logo stands in only while the
-  // organization has neither its own logo nor a recorded removal (`hideLogo`).
-  const savedLogoUrl = organization.whitelabel?.logoUrl;
-  const isLogoRemoved = organization.whitelabel?.hideLogo === true;
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string>(savedLogoUrl || (isLogoRemoved ? "" : fbLogoUrl));
+  // An empty `logoUrl` means no logo at all.
+  const [logoUrl, setLogoUrl] = useState<string>(() =>
+    getEmailLogoPreviewUrl(organization.whitelabel, fbLogoUrl)
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);

@@ -198,6 +198,8 @@ describe("DELETE /api/internal/organizations/{organizationId}/email-logo", () =>
         organizationId: ORG_ID,
         targetId: ORG_ID,
         oldObject: { logoUrl: "" },
+        // Removal means no logo in emails, not the Formbricks fallback (ENG-545).
+        newObject: { logoUrl: null, hideLogo: true },
       })
     );
   });

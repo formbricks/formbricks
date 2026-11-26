@@ -15,6 +15,7 @@ import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { validateInputs } from "@/lib/utils/validate";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/email-logo";
 import { getOrganizationMemberEmails, resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -34,7 +35,7 @@ const evaluateFollowUp = async (
     const { to, replyTo } = properties;
     const toValueFromResponse = response.data[to];
     const logoUrl = organization.whitelabel?.logoUrl ?? "";
-    const hideLogo = organization.whitelabel?.hideLogo === true;
+    const { hideLogo } = getEmailLogo(organization.whitelabel);
 
     // Check if 'to' is a direct email address (team member or user email)
     const parsedEmailTo = z.email().safeParse(to);

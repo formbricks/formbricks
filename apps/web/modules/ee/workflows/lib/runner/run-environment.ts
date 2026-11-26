@@ -17,6 +17,7 @@ import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { isSurveyOutboundAllowed } from "@/lib/survey/visibility/outbound";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
+import { getEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/email-logo";
 import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
 import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { recordSurveyOutboundSkipped } from "@/modules/response-pipeline/lib/outbound-visibility-metrics";
@@ -191,7 +192,7 @@ export const loadWorkflowRunEnvironment = async ({
     surveyResponse,
     ...(trigger.type === "webhook" ? { payload: trigger.payload } : {}),
     logoUrl: organization?.whitelabel?.logoUrl ?? "",
-    hideLogo: organization?.whitelabel?.hideLogo === true,
+    hideLogo: getEmailLogo(organization?.whitelabel).hideLogo,
     allowedRecipientEmails,
     secretValues,
     rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },

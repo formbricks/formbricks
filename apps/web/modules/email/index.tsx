@@ -46,6 +46,7 @@ import {
   VERIFICATION_LINK_TTL_SECONDS,
   buildVerificationLinks,
 } from "@/modules/auth/lib/verification-links";
+import { getEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/email-logo";
 import { toEmailDisplayText } from "@/modules/email/lib/email-display-text";
 import type { TEmailRateLimitContext } from "@/modules/email/lib/email-rate-limits";
 import { sendEmail } from "@/modules/email/lib/send-email";
@@ -610,7 +611,7 @@ export const sendResponseFinishedEmail = async (
     organization,
     elements: elementsWithResolvedUrls,
     logoUrl,
-    hideLogo: organization.whitelabel?.hideLogo === true,
+    hideLogo: getEmailLogo(organization.whitelabel).hideLogo,
     t,
     ...legalProps,
   });
