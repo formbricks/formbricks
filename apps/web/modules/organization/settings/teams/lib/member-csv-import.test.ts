@@ -156,7 +156,8 @@ describe("buildMemberCsvExport", () => {
       [{ name: "=cmd()", email: "x@example.com", role: "member", teams: [], attributes: {} }],
       []
     );
-    expect(csv).not.toMatch(/(^|,)=cmd/m);
+    const nameCell = csv.trim().split(/\r?\n/)[1].split(",")[0];
+    expect(nameCell.replace(/^"|"$/g, "")).toBe("'=cmd()");
   });
 });
 

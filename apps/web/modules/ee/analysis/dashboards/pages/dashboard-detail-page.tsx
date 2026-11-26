@@ -100,7 +100,9 @@ export async function DashboardDetailPage({
   // View as (ENG-7484): an Owner or Manager sees the dashboard as a chosen member — read-only, without
   // their own remembered filters. The reads carry `viewAs` and the server decides them as that member.
   const viewAsParam = (await searchParams)?.[VIEW_AS_PARAM];
-  const viewAsUserId = typeof viewAsParam === "string" ? viewAsParam : null;
+  // A repeated `viewAs` is read as its first value, as the browser's reads (`URLSearchParams.get`) carry it:
+  // the page must never show the editor while those reads answer as someone else.
+  const viewAsUserId = (Array.isArray(viewAsParam) ? viewAsParam[0] : viewAsParam) ?? null;
   const viewAsMember =
     canManageAccess && viewAsUserId ? await getViewAsMember(organizationId, viewAsUserId) : null;
   if (viewAsMember) {

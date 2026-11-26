@@ -54,7 +54,7 @@ export type TV3DashboardListQuery = z.infer<typeof ZV3DashboardListQuery>;
 export const ZV3DashboardIdParams = z.object({ dashboardId: z.cuid2() }).strict();
 
 /** A dashboard's name: unique within its workspace, trimmed, never empty. */
-export const ZV3DashboardName = z.string().trim().min(1).max(V3_NAME_MAX_LENGTH);
+export const ZV3DashboardName = zPostgresText().trim().min(1).max(V3_NAME_MAX_LENGTH);
 
 export const ZV3DashboardCreateBody = z.object({ workspaceId: z.cuid2(), name: ZV3DashboardName }).strict();
 export type TV3DashboardCreateBody = z.infer<typeof ZV3DashboardCreateBody>;
@@ -102,7 +102,7 @@ export {
 export const MAX_PAGE_TEAMS = 100;
 
 /** A page's name: trimmed, never empty. Names may repeat within a dashboard. */
-export const ZV3DashboardPageName = z.string().trim().min(1).max(MAX_PAGE_NAME_LENGTH);
+export const ZV3DashboardPageName = zPostgresText().trim().min(1).max(MAX_PAGE_NAME_LENGTH);
 
 /** Refuses a team listed twice in a page's limit. */
 const refuseRepeatedTeams = (teamIds: readonly string[] | null | undefined, ctx: z.RefinementCtx): void => {
@@ -116,8 +116,9 @@ const refuseRepeatedTeams = (teamIds: readonly string[] | null | undefined, ctx:
 };
 
 /**
- * The teams a page is limited to. `null` or an empty list means no limit ("All teams"). Changing it needs
- * Owner or Manager and the Access Control feature (`dashboard.manage_access`).
+ * The teams a page is limited to. `null` means no limit ("All teams"); a list limits the page to those
+ * teams' Dashboard Viewers, and an empty list to none of them. Changing it needs Owner or Manager and the
+ * Access Control feature (`dashboard.manage_access`).
  */
 export const ZV3PageTeamIds = z
   .array(z.cuid2())
@@ -323,7 +324,8 @@ export const ZV3NewPageKey = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
 
 /**
  * A page in a whole-dashboard save: an existing one by `pageId`, or a new one by a `key` of the caller's
- * choosing. `teamIds` is kept as it is when omitted; a new page without it is open to all teams.
+ * choosing. `teamIds` is kept as it is when omitted, and `null` removes the limit; a new page without it, or
+ * with `null`, is open to all teams.
  */
 const ZV3ReplacePage = z
   .object({

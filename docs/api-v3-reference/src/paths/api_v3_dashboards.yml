@@ -4,6 +4,11 @@ get:
   description: |
     Lists a workspace's dashboards, newest first, page by page, each with its widget count.
     `filter[chartId][eq]` lists the dashboards that hold a chart. Needs read access to the workspace.
+
+    A Dashboard Viewer lists only the dashboards their team dashboard limits leave them and that have
+    at least one page they can open; `widgetCount` counts only the widgets on those pages, and
+    `filter[chartId][eq]` matches only a chart on such a page. A list read with `viewAs` is audited
+    once as `viewedAs` against the workspace, whatever it returns.
   tags:
     - V3 Dashboards
   parameters:

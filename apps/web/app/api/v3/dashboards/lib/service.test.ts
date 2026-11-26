@@ -7,6 +7,7 @@ import {
   duplicateDashboardRow,
   getDashboardResourceRow,
   getDashboardWorkspaceRow,
+  listDashboardPageScopeRows,
   listDashboardRows,
   listReadableDashboardRows,
   renameDashboardRow,
@@ -24,13 +25,16 @@ const { tx } = vi.hoisted(() => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-    dashboardPage: { create: vi.fn() },
+    dashboardPage: { createMany: vi.fn() },
+    dashboardPageTeam: { createMany: vi.fn() },
+    dashboardWidget: { createMany: vi.fn() },
   },
 }));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     dashboard: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    dashboardPage: { findMany: vi.fn() },
     $transaction: vi.fn(async (fn: (client: typeof tx) => unknown) => fn(tx)),
   },
 }));
@@ -209,6 +213,23 @@ describe("deleteDashboardRow", () => {
   });
 });
 
+describe("listDashboardPageScopeRows", () => {
+  test("reads the dashboards' pages with their widget counts, and only a chart filter's widgets", async () => {
+    vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([]);
+
+    await listDashboardPageScopeRows([DASHBOARD_ID], CHART_ID);
+    await listDashboardPageScopeRows([DASHBOARD_ID]);
+
+    const [[withChart], [withoutChart]] = vi.mocked(prisma.dashboardPage.findMany).mock.calls;
+    expect(withChart!.where).toEqual({ dashboardId: { in: [DASHBOARD_ID] } });
+    expect(withChart!.select).toMatchObject({
+      _count: { select: { widgets: true } },
+      widgets: { where: { chartId: CHART_ID }, take: 1 },
+    });
+    expect(withoutChart!.select).toMatchObject({ widgets: { where: { id: { in: [] } } } });
+  });
+});
+
 describe("duplicateDashboardRow", () => {
   const filters = [
     {
@@ -226,6 +247,7 @@ describe("duplicateDashboardRow", () => {
     pages: [
       {
         name: "Overview",
+        teamLimited: false,
         teamLimits: [],
         widgets: [
           { kind: "chart", chartId: CHART_ID, content: null, layout: { x: 0, y: 0, w: 6, h: 4 } },
@@ -234,6 +256,7 @@ describe("duplicateDashboardRow", () => {
       },
       {
         name: "Sales",
+        teamLimited: true,
         teamLimits: [{ teamId: "clte000000000000000000001" }],
         widgets: [
           { kind: "chart", chartId: CHART_ID, content: null, layout: { x: 0, y: 0, w: 4, h: 4 } },
@@ -255,6 +278,24 @@ describe("duplicateDashboardRow", () => {
     expect(tx.dashboard.create).not.toHaveBeenCalled();
   });
 
+  /** What the copy wrote: each page with its team limit and its widgets, joined on the minted page ids. */
+  type TWrittenPage = { id: string; dashboardId: string; name: string; order: number; teamLimited: boolean };
+  type TWrittenWidget = { pageId: string; chartId: string | null; order: number } & Record<string, unknown>;
+  const writtenPages = () => {
+    const dataOf = <T>(fn: { mock: { calls: unknown[][] } }): T[] =>
+      fn.mock.calls.flatMap(([args]) => (args as { data: T[] }).data);
+    const pages = dataOf<TWrittenPage>(tx.dashboardPage.createMany);
+    const teamLimits = dataOf<{ pageId: string; teamId: string }>(tx.dashboardPageTeam.createMany);
+    const widgets = dataOf<TWrittenWidget>(tx.dashboardWidget.createMany);
+    return pages.map(({ id, ...page }) => ({
+      ...page,
+      teamIds: teamLimits.filter((limit) => limit.pageId === id).map(({ teamId }) => teamId),
+      widgets: widgets
+        .filter((widget) => widget.pageId === id)
+        .map(({ pageId: _pageId, ...widget }) => widget),
+    }));
+  };
+
   test("copies into the source's workspace with its filters, then each page with its team limit and widgets", async () => {
     tx.dashboard.findUnique.mockResolvedValue(source);
 
@@ -268,47 +309,101 @@ describe("duplicateDashboardRow", () => {
       createdBy: "user_1",
       filters,
     });
-    expect(tx.dashboardPage.create.mock.calls.map(([args]) => args.data)).toEqual([
+    // One bulk write per table, whatever the number of pages.
+    expect(tx.dashboardPage.createMany).toHaveBeenCalledTimes(1);
+    expect(tx.dashboardPageTeam.createMany).toHaveBeenCalledTimes(1);
+    expect(tx.dashboardWidget.createMany).toHaveBeenCalledTimes(1);
+    expect(writtenPages()).toEqual([
       {
         dashboardId: COPY_ID,
         name: "Overview",
         order: 0,
-        teamLimits: { create: [] },
-        widgets: {
-          create: [
-            expect.objectContaining({ dashboardId: COPY_ID, kind: "chart", chartId: CHART_ID, order: 0 }),
-            expect.objectContaining({ chartId: "clch000000000000000000002", layout: {}, order: 1 }),
-          ],
-        },
+        teamLimited: false,
+        teamIds: [],
+        widgets: [
+          expect.objectContaining({ dashboardId: COPY_ID, kind: "chart", chartId: CHART_ID, order: 0 }),
+          expect.objectContaining({ chartId: "clch000000000000000000002", layout: {}, order: 1 }),
+        ],
       },
       {
         dashboardId: COPY_ID,
         name: "Sales",
         order: 1,
-        teamLimits: { create: [{ teamId: "clte000000000000000000001" }] },
-        widgets: {
-          create: [
-            expect.objectContaining({ kind: "chart", chartId: CHART_ID, order: 0 }),
-            expect.objectContaining({ kind: "text", chartId: null, content: textContent, order: 1 }),
-          ],
-        },
+        teamLimited: true,
+        teamIds: ["clte000000000000000000001"],
+        widgets: [
+          // A chart may sit on two pages of the source, and so of the copy.
+          expect.objectContaining({ kind: "chart", chartId: CHART_ID, order: 0 }),
+          expect.objectContaining({ kind: "text", chartId: null, content: textContent, order: 1 }),
+        ],
       },
     ]);
-    // A chart may sit on two pages of the source, and so of the copy.
     expect(tx.dashboard.findUniqueOrThrow).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: COPY_ID } })
     );
   });
 
-  test("reads the source's pages and widgets in display order", async () => {
-    tx.dashboard.findUnique.mockResolvedValue(source);
+  test("copies pages and widgets in the order the source shows them, numbering tied orders plainly", async () => {
+    type TRow = { order: number; createdAt: Date; id: string };
+    const sortRows = <T extends TRow>(rows: T[], orderBy: Record<string, "asc" | "desc">[]): T[] =>
+      [...rows].sort((a, b) => {
+        for (const key of orderBy) {
+          const [field, direction] = Object.entries(key)[0] as [keyof TRow, "asc" | "desc"];
+          const delta = a[field] < b[field] ? -1 : a[field] > b[field] ? 1 : 0;
+          if (delta !== 0) return direction === "asc" ? delta : -delta;
+        }
+        return 0;
+      });
+    const at = (day: number) => new Date(Date.UTC(2026, 0, day));
+    const widget = (chartId: string, order: number, day: number) => ({
+      id: `w-${chartId}`,
+      order,
+      createdAt: at(day),
+      kind: "chart",
+      chartId,
+      content: null,
+      layout: null,
+    });
+    // Stored out of display order, with tied orders that the creation time breaks.
+    const stored = [
+      { id: "p-b", name: "Second", order: 0, createdAt: at(2), teamLimits: [], widgets: [] },
+      {
+        id: "p-a",
+        name: "First",
+        order: 0,
+        createdAt: at(1),
+        teamLimits: [],
+        widgets: [widget("late", 3, 1), widget("tie-later", 1, 3), widget("tie-earlier", 1, 2)],
+      },
+    ];
+    tx.dashboard.findUnique.mockImplementation(async ({ select }) => ({
+      ...source,
+      pages: sortRows(stored, select.pages.orderBy).map((page) => ({
+        ...page,
+        widgets: sortRows(page.widgets, select.pages.select.widgets.orderBy),
+      })),
+    }));
 
     await duplicateDashboardRow({ sourceId: DASHBOARD_ID, createdBy: null, name: "Copy" });
 
-    const select = tx.dashboard.findUnique.mock.calls[0][0].select;
-    const readOrder = [{ order: "asc" }, { createdAt: "asc" }, { id: "asc" }];
-    expect(select.pages.orderBy).toEqual(readOrder);
-    expect(select.pages.select.widgets.orderBy).toEqual(readOrder);
+    expect(
+      writtenPages().map(({ name, order, widgets }) => ({
+        name,
+        order,
+        widgets: widgets.map(({ chartId, order }) => [chartId, order]),
+      }))
+    ).toEqual([
+      {
+        name: "First",
+        order: 0,
+        widgets: [
+          ["tie-earlier", 0],
+          ["tie-later", 1],
+          ["late", 2],
+        ],
+      },
+      { name: "Second", order: 1, widgets: [] },
+    ]);
   });
 
   test("gives a copy of a dashboard without pages the first page every dashboard has", async () => {
@@ -316,8 +411,24 @@ describe("duplicateDashboardRow", () => {
 
     await duplicateDashboardRow({ sourceId: DASHBOARD_ID, createdBy: null, name: "Copy" });
 
-    expect(tx.dashboardPage.create).toHaveBeenCalledTimes(1);
-    expect(tx.dashboardPage.create.mock.calls[0][0].data).toMatchObject({ name: "Overview", order: 0 });
+    expect(writtenPages()).toEqual([
+      { dashboardId: COPY_ID, name: "Overview", order: 0, teamLimited: false, teamIds: [], widgets: [] },
+    ]);
+    expect(tx.dashboardPageTeam.createMany).not.toHaveBeenCalled();
+    expect(tx.dashboardWidget.createMany).not.toHaveBeenCalled();
+  });
+
+  test("keeps a page limited to no team limited in the copy, not open to every team", async () => {
+    tx.dashboard.findUnique.mockResolvedValue({
+      ...source,
+      pages: [{ name: "Closed", teamLimited: true, teamLimits: [], widgets: [] }],
+    });
+
+    await duplicateDashboardRow({ sourceId: DASHBOARD_ID, createdBy: null, name: "Copy" });
+
+    expect(writtenPages()).toEqual([
+      { dashboardId: COPY_ID, name: "Closed", order: 0, teamLimited: true, teamIds: [], widgets: [] },
+    ]);
   });
 
   test("without a name, takes the first free copy name among the workspace's dashboards", async () => {

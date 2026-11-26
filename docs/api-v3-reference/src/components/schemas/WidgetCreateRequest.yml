@@ -1,7 +1,8 @@
 type: object
 description: >-
   A chart (`chartId`, with `kind` left out or `chart`) or a layout block (`kind` `image`, `text` or
-  `separator`). A text block needs `content`; an image block without `content` starts empty.
+  `separator`). A text block needs `content`; an image block without `content` starts empty. Only a
+  chart takes a `chartId`, and only an image or text block takes non-null `content`.
 properties:
   kind:
     type: string
@@ -34,4 +35,58 @@ properties:
     description: >-
       Where to put it. Without one it lands in the first open slot at its default size: a chart's by
       its type, a text block 9 columns wide, an image 3, a separator the full row.
+allOf:
+  - if:
+      properties:
+        kind:
+          const: chart
+    then:
+      required:
+        - chartId
+      properties:
+        content:
+          type: "null"
+  - if:
+      required:
+        - kind
+      properties:
+        kind:
+          const: text
+    then:
+      required:
+        - content
+      not:
+        required:
+          - chartId
+      properties:
+        content:
+          $ref: ./DashboardTextContent.yml
+  - if:
+      required:
+        - kind
+      properties:
+        kind:
+          const: image
+    then:
+      not:
+        required:
+          - chartId
+      properties:
+        content:
+          oneOf:
+            - $ref: ./DashboardImageContent.yml
+            - type: "null"
+  - if:
+      required:
+        - kind
+      properties:
+        kind:
+          const: separator
+    then:
+      not:
+        required:
+          - chartId
+      properties:
+        content:
+          type: "null"
 additionalProperties: false

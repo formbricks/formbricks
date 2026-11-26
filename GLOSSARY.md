@@ -81,7 +81,7 @@ programming or UI concepts, and no implementation details.
 
 **Dashboard** — A named grid of widgets in a workspace. Its charts can come from different Feedback Datasets.
 
-**Dashboard page** — A tab of a dashboard. Every dashboard has at least one; an upgraded dashboard opens as one page called "Overview". A page can be limited to selected teams, and then only those teams' Dashboard Viewers can open it, in the app, by link, and through the API and MCP. Owners, Managers and Members see every page. _Avoid_: tab (in code), section, sheet.
+**Dashboard page** — A tab of a dashboard. Every dashboard has at least one; an upgraded dashboard opens as one page called "Overview". A page can be limited to selected teams, and then only those teams' Dashboard Viewers can open it, in the app, by link, and through the API and MCP. A page limited to no team, or whose limited teams were all deleted, is open to no Dashboard Viewer; it never reopens to all of them on its own. Owners, Managers and Members see every page. _Avoid_: tab (in code), section, sheet.
 
 **Widget** — One block on one Dashboard page: a chart's placement, or a layout block (an image, a text block or a separator). Each has a position, size and order on the page's grid. A chart sits on a page at most once, but can sit on several pages of one dashboard; removing a widget keeps the chart. User-facing copy says "chart" or names the block. _Avoid_: placement, tile, panel.
 
@@ -91,7 +91,7 @@ programming or UI concepts, and no implementation details.
 
 **Member** — A person's membership of an organization: their role, teams and Member attributes. _Avoid_: user (the account, which can hold several memberships), contact (a survey respondent).
 
-**Member attribute** — A named value on a Member, such as Country, from an organization-wide list of keys that Owners and Managers define. A Member can hold several values for one key. The built-in Email attribute is the login email and is never stored. Set in Member settings, by CSV, or through the API; MCP only reads them. _Avoid_: user attribute, contact attribute (contacts are respondents), property.
+**Member attribute** — A named value on a Member, such as Country, from an organization-wide list of keys that Owners and Managers define. A Member can hold several values for one key. The built-in Email attribute is always the login email. Set in Member settings, by CSV, or through the API; MCP only reads them. _Avoid_: user attribute, contact attribute (contacts are respondents), property.
 
 **Dashboard Viewer access** — The conditions on a Feedback Dataset that decide which of its records a Dashboard Viewer sees: each condition says a record field equals one of the viewer's values for a Member attribute, and they combine with "all" or "any". Matching ignores case and surrounding spaces; a viewer with no value for the attribute matches nothing. A dataset without conditions shows Dashboard Viewers every record. It never binds Owners, Managers or Members. _Avoid_: row rule, row-level security, data lock (in code and copy).
 

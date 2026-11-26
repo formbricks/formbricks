@@ -46,21 +46,22 @@ interface ManagePagesDialogProps {
   onMovePage: (activeId: string, overId: string) => void;
   /** Asks to delete a page; the caller confirms first. */
   onDeletePage: (pageId: string) => void;
-  onTeamsChange: (pageId: string, teamIds: string[]) => void;
+  /** `null` for "All teams"; a list, possibly empty, limits the page to those teams. */
+  onTeamsChange: (pageId: string, teamIds: string[] | null) => void;
   /** From the server; while it loads, or for someone who may not change limits, the pickers are read-only. */
   access: TDashboardPageAccess | undefined;
 }
 
-/** Who sees a page: every team, or the ones picked. Empty `teamIds` is stored as "all teams". */
+/**
+ * Who sees a page: every team, or the ones picked. "Specific teams" with none picked is a limit too: no
+ * Dashboard Viewer sees the page (an empty selection means no access, not "All teams").
+ */
 type TPageTeamsMode = "all" | "specific";
 
 function PageRow({
   page,
   canDelete,
   access,
-  mode,
-  showPickError,
-  onModeChange,
   onRenamePage,
   onDeletePage,
   onTeamsChange,
@@ -68,10 +69,6 @@ function PageRow({
   page: TDashboardPage;
   canDelete: boolean;
   access: TDashboardPageAccess | undefined;
-  mode: TPageTeamsMode;
-  /** "Specific teams" with none picked, after trying to close the dialog. */
-  showPickError: boolean;
-  onModeChange: (pageId: string, mode: TPageTeamsMode) => void;
   onRenamePage: ManagePagesDialogProps["onRenamePage"];
   onDeletePage: ManagePagesDialogProps["onDeletePage"];
   onTeamsChange: ManagePagesDialogProps["onTeamsChange"];
@@ -84,6 +81,7 @@ function PageRow({
   const teams = access?.teams ?? [];
   const canEdit = !!access?.canManageAccess;
   const toggleId = `page-teams-${page.id}`;
+  const mode: TPageTeamsMode = page.limited ? "specific" : "all";
 
   return (
     <tr
@@ -139,9 +137,9 @@ function PageRow({
               { value: "specific", label: t("workspace.analysis.dashboards.specific_teams") },
             ]}
             onChange={(next) => {
-              onModeChange(page.id, next);
-              // "All teams" is stored as no teams; the picks are dropped with it.
-              if (next === "all" && page.teamIds.length > 0) onTeamsChange(page.id, []);
+              // "All teams" drops the picks; "Specific teams" starts from none, so nobody sees the page
+              // until a team is picked.
+              if (next !== mode) onTeamsChange(page.id, next === "all" ? null : []);
             }}
           />
           {mode === "specific" && (
@@ -164,8 +162,8 @@ function PageRow({
               }
             />
           )}
-          {showPickError && (
-            <p className="text-xs text-amber-700">{t("workspace.analysis.dashboards.page_teams_pick_one")}</p>
+          {mode === "specific" && page.teamIds.length === 0 && (
+            <p className="text-xs text-amber-700">{t("workspace.analysis.dashboards.page_teams_none")}</p>
           )}
         </div>
       </td>
@@ -203,35 +201,6 @@ export function ManagePagesDialog({
   access,
 }: Readonly<ManagePagesDialogProps>) {
   const { t } = useTranslation();
-  // "Specific teams" chosen with none picked yet: only here, since the stored limit is just the team ids.
-  const [pickingPageIds, setPickingPageIds] = useState<ReadonlySet<string>>(new Set());
-  const [triedToClose, setTriedToClose] = useState(false);
-  const modeOf = (page: TDashboardPage): TPageTeamsMode =>
-    page.teamIds.length > 0 || pickingPageIds.has(page.id) ? "specific" : "all";
-  const unpicked = pages.filter((page) => modeOf(page) === "specific" && page.teamIds.length === 0);
-
-  const handleModeChange = (pageId: string, mode: TPageTeamsMode) => {
-    setPickingPageIds((current) => {
-      const next = new Set(current);
-      if (mode === "specific") next.add(pageId);
-      else next.delete(pageId);
-      return next;
-    });
-  };
-
-  // Closing with a page on "Specific teams" and none picked would leave it open to all teams: keep the
-  // dialog open and say which page needs a team.
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen && unpicked.length > 0) {
-      setTriedToClose(true);
-      return;
-    }
-    if (!nextOpen) {
-      setPickingPageIds(new Set());
-      setTriedToClose(false);
-    }
-    onOpenChange(nextOpen);
-  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -243,7 +212,7 @@ export function ManagePagesDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent width="wide">
         <DialogHeader>
           <DialogTitle>{t("workspace.analysis.dashboards.manage_pages")}</DialogTitle>
@@ -280,9 +249,6 @@ export function ManagePagesDialog({
                       page={page}
                       canDelete={pages.length > 1}
                       access={access}
-                      mode={modeOf(page)}
-                      showPickError={triedToClose && unpicked.includes(page)}
-                      onModeChange={handleModeChange}
                       onRenamePage={onRenamePage}
                       onDeletePage={onDeletePage}
                       onTeamsChange={onTeamsChange}
@@ -298,7 +264,7 @@ export function ManagePagesDialog({
             <PlusIcon />
             {t("workspace.analysis.dashboards.add_page")}
           </Button>
-          <Button type="button" onClick={() => handleOpenChange(false)}>
+          <Button type="button" onClick={() => onOpenChange(false)}>
             {t("common.done")}
           </Button>
         </DialogFooter>

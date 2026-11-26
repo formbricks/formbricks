@@ -57,7 +57,9 @@ export function AddExistingChartsDialog({
 }: Readonly<AddExistingChartsDialogProps>) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const [selectedChartIds, setSelectedChartIds] = useState<string[]>([]);
+  // The picked charts themselves, not their ids: the list holds only the current search's results, and a
+  // chart picked under an earlier search must still be added.
+  const [selectedCharts, setSelectedCharts] = useState<TAppChart[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const nameContains = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
 
@@ -72,21 +74,21 @@ export function AddExistingChartsDialog({
   const handleOpenChange = (next: boolean) => {
     if (!next) {
       setSearch("");
-      setSelectedChartIds([]);
+      setSelectedCharts([]);
     }
     onOpenChange(next);
   };
 
-  const toggleChart = (chartId: string, checked: boolean) =>
-    setSelectedChartIds((current) =>
-      checked ? [...current, chartId] : current.filter((selected) => selected !== chartId)
-    );
+  const toggleChart = (chart: TAppChart, checked: boolean) =>
+    setSelectedCharts((current) => {
+      const others = current.filter((selected) => selected.id !== chart.id);
+      return checked ? [...others, chart] : others;
+    });
 
   // Picked charts go into the edit's draft, placed on the current page; the dashboard's save adds them.
   const handleAdd = () => {
-    const picked = selectedChartIds.flatMap((chartId) => charts.find((chart) => chart.id === chartId) ?? []);
-    if (picked.length === 0) return;
-    onPick(picked);
+    if (selectedCharts.length === 0) return;
+    onPick(selectedCharts);
     handleOpenChange(false);
   };
 
@@ -141,9 +143,9 @@ export function AddExistingChartsDialog({
             <li key={chart.id} className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-slate-50">
               <Checkbox
                 id={checkboxId}
-                checked={isOnDashboard || selectedChartIds.includes(chart.id)}
+                checked={isOnDashboard || selectedCharts.some((selected) => selected.id === chart.id)}
                 disabled={isOnDashboard || isAdding}
-                onCheckedChange={(checked) => toggleChart(chart.id, checked === true)}
+                onCheckedChange={(checked) => toggleChart(chart, checked === true)}
               />
               <label
                 htmlFor={checkboxId}
@@ -203,12 +205,9 @@ export function AddExistingChartsDialog({
             <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isAdding}>
               {t("common.cancel")}
             </Button>
-            <Button
-              onClick={handleAdd}
-              loading={isAdding}
-              disabled={selectedChartIds.length === 0 || isAdding}>
-              {selectedChartIds.length > 0
-                ? t("workspace.analysis.dashboards.add_count_charts", { count: selectedChartIds.length })
+            <Button onClick={handleAdd} loading={isAdding} disabled={selectedCharts.length === 0 || isAdding}>
+              {selectedCharts.length > 0
+                ? t("workspace.analysis.dashboards.add_count_charts", { count: selectedCharts.length })
                 : t("common.add")}
             </Button>
           </div>

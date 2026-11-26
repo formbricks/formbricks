@@ -9,7 +9,11 @@ import {
   expectedDashboardRelationships,
   reconcileDashboardRelationships,
 } from "./dashboard";
-import { teamWorkspacePairKey, toDashboardProjectionRow } from "./dashboard-relationships";
+import {
+  teamWorkspacePairKey,
+  toDashboardPageProjectionRow,
+  toDashboardProjectionRow,
+} from "./dashboard-relationships";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 
 const clientMocks = {
@@ -18,8 +22,11 @@ const clientMocks = {
   writeRelationships: vi.fn(),
 };
 
+const tx = { $executeRaw: vi.fn() };
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     dashboard: { findMany: vi.fn() },
     dashboardPage: { findMany: vi.fn() },
     workspaceTeam: { findMany: vi.fn() },
@@ -55,10 +62,11 @@ const dashboardRow = (teamIds: ReadonlyArray<string>, workspaceId = "ws-1") => (
   workspaceId,
 });
 
-const pageRow = (teamIds: ReadonlyArray<string>) => ({
+const pageRow = (teamIds: ReadonlyArray<string>, teamLimited = teamIds.length > 0) => ({
   dashboard: { workspace: { organizationId: ORGANIZATION_ID } },
   dashboardId: "dash-1",
   id: "page-1",
+  teamLimited,
   teamLimits: teamIds.map((teamId) => teamLimit(teamId)),
 });
 
@@ -89,6 +97,10 @@ beforeEach(() => {
   vi.mocked(prisma.dashboard.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([] as never);
+  tx.$executeRaw.mockResolvedValue(1);
+  vi.mocked(prisma.$transaction).mockImplementation((async (callback: (client: typeof tx) => unknown) =>
+    // The reads run on the transaction too; the mocks are the same functions either way.
+    callback({ ...prisma, ...tx })) as never);
 });
 
 describe("expected dashboard relationships (ADR-0060)", () => {
@@ -108,7 +120,12 @@ describe("expected dashboard relationships (ADR-0060)", () => {
 
   test("a page without a team limit is open on its dashboard", () => {
     expect(
-      expectedDashboardPageRelationships({ dashboardId: "dash-1", id: "page-1", limitedTeamIds: [] })
+      expectedDashboardPageRelationships({
+        dashboardId: "dash-1",
+        id: "page-1",
+        limited: false,
+        limitedTeamIds: [],
+      })
     ).toEqual([
       edge("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
       edge("dashboard_page", "page-1", "open_on", "dashboard", "dash-1"),
@@ -119,12 +136,37 @@ describe("expected dashboard relationships (ADR-0060)", () => {
     const relationships = expectedDashboardPageRelationships({
       dashboardId: "dash-1",
       id: "page-1",
+      limited: true,
       limitedTeamIds: ["t-1"],
     });
     expect(relationships).toEqual([
       edge("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
       edge("dashboard_page", "page-1", "limited_team", "team", "t-1"),
     ]);
+  });
+
+  // P-ENG-110: an empty access selector means no access. A page whose last limited team was deleted
+  // (or never had one picked) stays closed rather than reopening to every reader of its dashboard.
+  test("a limited page with no teams left is open to no one: neither `open_on` nor a team", () => {
+    expect(
+      expectedDashboardPageRelationships({
+        dashboardId: "dash-1",
+        id: "page-1",
+        limited: true,
+        limitedTeamIds: [],
+      })
+    ).toEqual([edge("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1")]);
+  });
+
+  test("a page with a limit row stays limited even when the row's team is of another organization", () => {
+    const row = toDashboardPageProjectionRow({
+      dashboardId: "dash-1",
+      id: "page-1",
+      organizationId: ORGANIZATION_ID,
+      teamLimited: false,
+      teamLimits: [teamLimit("t-foreign", "org-2")],
+    });
+    expect(row).toEqual({ dashboardId: "dash-1", id: "page-1", limited: true, limitedTeamIds: [] });
   });
 
   test("only teams of the dashboard's organization that hold its workspace select it", () => {
@@ -247,6 +289,27 @@ describe("reconcileDashboardRelationships", () => {
     });
   });
 
+  test("keeps a page whose last limited team was deleted closed: `limited_team` out, no `open_on` in", async () => {
+    vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([pageRow([], true)] as never);
+    setGraph([
+      edge("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
+      edge("dashboard_page", "page-1", "limited_team", "team", "t-1"),
+    ]);
+
+    await reconcileDashboardRelationships({ pageIds: ["page-1"] });
+
+    expect(writtenUpdates()).toEqual([
+      {
+        operation: "touch",
+        relationship: edge("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
+      },
+      {
+        operation: "delete",
+        relationship: edge("dashboard_page", "page-1", "limited_team", "team", "t-1"),
+      },
+    ]);
+  });
+
   test("removes a deleted dashboard's edges and its pages' edges onto it, and a deleted page's edges", async () => {
     await reconcileDashboardRelationships({ dashboardIds: ["dash-gone"], pageIds: ["page-gone"] });
 
@@ -264,8 +327,29 @@ describe("reconcileDashboardRelationships", () => {
     });
   });
 
+  // A reconcile that read an older row must not write after a newer one, even if it fails before its
+  // re-read: every reconcile of a resource holds that resource's lock from its first read to its last.
+  test("holds each target's lock, in one fixed order, before reading or writing anything", async () => {
+    vi.mocked(prisma.dashboardPage.findMany).mockResolvedValue([pageRow(["t-1"])] as never);
+
+    await reconcileDashboardRelationships({ dashboardIds: ["dash-b", "dash-a"], pageIds: ["page-1"] });
+
+    expect(tx.$executeRaw).toHaveBeenCalledTimes(1);
+    const [sql, keys] = tx.$executeRaw.mock.calls[0] as [TemplateStringsArray, string[]];
+    expect(sql.join("?")).toContain("pg_advisory_xact_lock(hashtext(key))");
+    expect(keys).toEqual([
+      "authzed-dashboard:dash-a",
+      "authzed-dashboard:dash-b",
+      "authzed-dashboard-page:page-1",
+    ]);
+    expect(tx.$executeRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(prisma.dashboardPage.findMany).mock.invocationCallOrder[0]
+    );
+  });
+
   test("reads nothing and writes nothing without targets", async () => {
     await expect(reconcileDashboardRelationships({})).resolves.toEqual({ passes: 0, status: "projected" });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(prisma.dashboard.findMany).not.toHaveBeenCalled();
     expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
   });

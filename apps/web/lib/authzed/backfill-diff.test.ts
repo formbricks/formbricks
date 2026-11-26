@@ -641,6 +641,35 @@ describe("dashboards, pages and team dashboard limits (ADR-0060)", () => {
     ]);
   });
 
+  // The parent check only validates edges that exist, so a lost parent must surface here.
+  test("reports a limited page that lost its dashboard edge, and a dashboard that lost its workspace", () => {
+    expect(
+      findMismatchedPermissionRelations(
+        [
+          tuple("dashboard", "dash-1", "workspace", "workspace", "ws-1"),
+          tuple("dashboard", "dash-1", "selected_by_team", "team", "team-1"),
+          tuple("dashboard_page", "page-1", "dashboard", "dashboard", "dash-1"),
+          tuple("dashboard_page", "page-1", "limited_team", "team", "team-1"),
+        ],
+        [
+          tuple("dashboard", "dash-1", "selected_by_team", "team", "team-1"),
+          tuple("dashboard_page", "page-1", "limited_team", "team", "team-1"),
+        ]
+      )
+    ).toEqual([
+      {
+        expectedRelations: ["selected_by_team", "workspace"],
+        observedRelations: ["selected_by_team"],
+        source: { dashboardId: "dash-1", kind: "dashboard" },
+      },
+      {
+        expectedRelations: ["dashboard", "limited_team"],
+        observedRelations: ["limited_team"],
+        source: { kind: "dashboardPage", pageId: "page-1" },
+      },
+    ]);
+  });
+
   test("reports a team whose dashboard limit marker is missing", () => {
     expect(
       findMismatchedPermissionRelations(

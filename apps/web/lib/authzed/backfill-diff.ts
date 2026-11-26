@@ -545,16 +545,20 @@ const isParentRelationship = ({ relation, resource }: TAuthzedRelationship): boo
 /**
  * Find source records that exist on both sides but carry a different exact permission relation set.
  *
- * Parent edges are deliberately excluded: their correctness is verified by `findMismatchedParentEdges`,
- * which can distinguish an absent row from a cross-tenant parent. Everything else is compared as a full
- * relationship tuple, so an API key with two independent organization flags and a role ladder with one
- * selected value are both handled without special cases.
+ * Parent edges are compared by relation only: which parent they point at is verified by
+ * `findMismatchedParentEdges`, which can distinguish an absent row from a cross-tenant parent, but that
+ * check only sees edges that exist. So a source that kept its other edges but lost a parent edge (a page
+ * that kept `limited_team` but lost `dashboard`) is reported here, with the missing parent relation among
+ * its expected relations. Everything else is compared as a full relationship tuple, so an API key with two
+ * independent organization flags and a role ladder with one selected value are both handled without
+ * special cases.
  */
 export const findMismatchedPermissionRelations = (
   expected: ReadonlyArray<TAuthzedRelationship>,
   observed: ReadonlyArray<TAuthzedRelationship>
 ): ReadonlyArray<TAuthzedPermissionMismatch> => {
   type TRelationshipGroup = {
+    parentRelations: Set<string>;
     permissionRelationships: TAuthzedRelationship[];
     source: TAuthzedSourceRef;
   };
@@ -571,8 +575,10 @@ export const findMismatchedPermissionRelations = (
       }
 
       const key = sourceRefKey(source);
-      const group = groups.get(key) ?? { permissionRelationships: [], source };
-      if (!isParentRelationship(relationship)) {
+      const group = groups.get(key) ?? { parentRelations: new Set(), permissionRelationships: [], source };
+      if (isParentRelationship(relationship)) {
+        group.parentRelations.add(relationship.relation);
+      } else {
         group.permissionRelationships.push(relationship);
       }
       groups.set(key, group);
@@ -594,14 +600,22 @@ export const findMismatchedPermissionRelations = (
 
     const expectedKeys = expectedGroup.permissionRelationships.map(relationshipKey).sort(byCodeUnit);
     const observedKeys = observedGroup.permissionRelationships.map(relationshipKey).sort(byCodeUnit);
-    if (JSON.stringify(expectedKeys) === JSON.stringify(observedKeys)) {
+    const missingParentRelations = [...expectedGroup.parentRelations].filter(
+      (relation) => !observedGroup.parentRelations.has(relation)
+    );
+    if (
+      JSON.stringify(expectedKeys) === JSON.stringify(observedKeys) &&
+      missingParentRelations.length === 0
+    ) {
       continue;
     }
 
     mismatches.push([
       sourceKey,
       {
-        expectedRelations: relationNames(expectedGroup.permissionRelationships),
+        expectedRelations: [
+          ...new Set([...relationNames(expectedGroup.permissionRelationships), ...missingParentRelations]),
+        ].sort(byCodeUnit),
         observedRelations: relationNames(observedGroup.permissionRelationships),
         source: expectedGroup.source,
       },

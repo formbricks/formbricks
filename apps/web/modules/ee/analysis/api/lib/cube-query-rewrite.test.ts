@@ -13,6 +13,7 @@ type TEmbeddedDimensionSpec = {
   name: string;
   equalsName: string;
   numberName: string;
+  normalizedName: string;
   valueSql: string;
   keyLiteral: string;
 };
@@ -716,6 +717,13 @@ describe("cube queryRewrite: answer filters", () => {
       },
     ],
     [
+      "an embedded normalized twin",
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "FeedbackRecords.edv_plan_64879f7d", operator: "equals", values: ["x"] }],
+      },
+    ],
+    [
       "the answer member as a dimension",
       { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.answer"] },
     ],
@@ -782,6 +790,7 @@ describe("cube embedded-data members", () => {
     const [spec] = specsFor(["区域 🎉"]);
     expect(spec.name).toMatch(/^ed_[0-9a-f]{8}$/);
     expect(spec.equalsName).toBe(spec.name.replace(/^ed_/, "edc_"));
+    expect(spec.normalizedName).toBe(spec.name.replace(/^ed_/, "edv_"));
   });
 
   test("drops blank keys, keys over 128 characters, non-strings and duplicates, and caps at 110", () => {
@@ -943,6 +952,14 @@ describe("cube embedded-data members", () => {
     ]);
   });
 
+  test("the schema compiles each key's normalized twin as LOWER(TRIM()), with no containment prefilter", () => {
+    const schemaSource = readFileSync(cubeSchemaPath, "utf8");
+    expect(schemaSource).toContain(
+      "embeddedDimensions[spec.normalizedName] = {\n      sql: (CUBE) => `LOWER(TRIM(${CUBE}.${spec.valueSql}))`,"
+    );
+    expect(schemaSource).not.toMatch(/FILTER_PARAMS\.FeedbackRecords\[spec\.normalizedName\]/);
+  });
+
   test("the schema joins exactly as many AnswerFilter aliases as the rewrite numbers", () => {
     const schemaSource = readFileSync(cubeSchemaPath, "utf8");
     const joined = [...schemaSource.matchAll(/^ {6}AnswerFilter(\d+): \{$/gm)].map(([, index]) =>
@@ -1014,14 +1031,37 @@ describe("cube queryRewrite: Dashboard Viewer access (ADR-0061)", () => {
     });
   });
 
-  test("an embedded-key condition moves to the key's equals twin", () => {
+  test("an embedded-key condition matches on the key's normalized twin, ignoring case and spaces", () => {
     const filters = rewrite({
       join: "all",
-      conditions: [{ member: "FeedbackRecords.ed_region_1a2b3c4d", values: ["EU"] }],
+      conditions: [{ member: "FeedbackRecords.ed_region_1a2b3c4d", values: [" Sweden ", "EU"] }],
     });
+    // Not the equals twin: its exact containment prefilter would drop " sweden" or "SWEDEN" records.
     expect(filters[0]).toEqual({
-      and: [{ member: "FeedbackRecords.edc_region_1a2b3c4d", operator: "equals", values: ["EU"] }],
+      and: [{ member: "FeedbackRecords.edv_region_1a2b3c4d", operator: "equals", values: ["sweden", "eu"] }],
     });
+  });
+
+  test("leaves a caller's embedded equals filter exact, beside a normalized viewer condition", () => {
+    const filters = queryRewrite(
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "FeedbackRecords.ed_region_1a2b3c4d", operator: "equals", values: ["EU"] }],
+      },
+      {
+        securityContext: {
+          ...securityContext,
+          viewerAccess: {
+            join: "all",
+            conditions: [{ member: "FeedbackRecords.ed_region_1a2b3c4d", values: ["eu"] }],
+          },
+        },
+      }
+    ).filters as Record<string, unknown>[];
+    expect(filters.slice(0, 2)).toEqual([
+      { member: "FeedbackRecords.edc_region_1a2b3c4d", operator: "equals", values: ["EU"] },
+      { and: [{ member: "FeedbackRecords.edv_region_1a2b3c4d", operator: "equals", values: ["eu"] }] },
+    ]);
   });
 
   test("refuses a claim outside its bounds or naming another member", () => {

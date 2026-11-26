@@ -51,20 +51,24 @@ const keepWorkspacesWithReadableDashboards = async <TWorkspace extends { id: str
   workspaces: TWorkspace[]
 ): Promise<TWorkspace[]> => {
   if (workspaces.length === 0) return workspaces;
-  const [readableIds, dashboards] = await Promise.all([
+  const workspaceIds = workspaces.map(({ id }) => id);
+  // Two facts per workspace, grouped in the database: does it hold any dashboard, and a readable one.
+  const workspacesWith = async (dashboardIds?: ReadonlyArray<string>): Promise<Set<string>> => {
+    const rows = await prisma.dashboard.groupBy({
+      by: ["workspaceId"],
+      where: {
+        workspaceId: { in: workspaceIds },
+        ...(dashboardIds ? { id: { in: [...dashboardIds] } } : {}),
+      },
+    });
+    return new Set(rows.map(({ workspaceId }) => workspaceId));
+  };
+  const [readableIds, withDashboards] = await Promise.all([
     lookupReadableDashboardIds({ type: "user", id: userId }),
-    prisma.dashboard.findMany({
-      where: { workspaceId: { in: workspaces.map(({ id }) => id) } },
-      select: { id: true, workspaceId: true },
-    }),
+    workspacesWith(),
   ]);
-  const readable = new Set(readableIds);
-  const withDashboards = new Set<string>();
-  const withReadable = new Set<string>();
-  for (const { id, workspaceId } of dashboards) {
-    withDashboards.add(workspaceId);
-    if (readable.has(id)) withReadable.add(workspaceId);
-  }
+  if (withDashboards.size === 0) return workspaces;
+  const withReadable = readableIds.length > 0 ? await workspacesWith(readableIds) : new Set<string>();
   return workspaces.filter(({ id }) => !withDashboards.has(id) || withReadable.has(id));
 };
 

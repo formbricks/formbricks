@@ -5,6 +5,11 @@ description: >-
   At least one of `label` and `description` is required.
 required:
   - expectedUpdatedAt
+anyOf:
+  - required:
+      - label
+  - required:
+      - description
 properties:
   label:
     type: string

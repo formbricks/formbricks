@@ -14,9 +14,44 @@ properties:
     format: cuid2
     description: A chart in the dashboard's workspace that is not already on the widget's page.
   content:
-    type: object
     description: >-
-      Fields of the block's content (`DashboardImageContent` or `DashboardTextContent`) to replace.
+      Fields of the block's content (`DashboardImageContent` or `DashboardTextContent`) to replace; the
+      fields left out keep their stored values. The merged content must be valid for the block's kind,
+      so a field of the other kind, or any unknown field, answers 422.
+    anyOf:
+      - type: object
+        title: Image content fields
+        properties:
+          fileUrl:
+            oneOf:
+              - type: string
+                maxLength: 2048
+              - type: "null"
+          fit:
+            type: string
+            enum:
+              - fit
+              - fill
+          position:
+            type: string
+            enum:
+              - left
+              - center
+              - right
+          alt:
+            type: string
+            maxLength: 300
+        additionalProperties: false
+      - type: object
+        title: Text content fields
+        properties:
+          headline:
+            type: string
+            maxLength: 200
+          description:
+            type: string
+            maxLength: 2000
+        additionalProperties: false
   pageId:
     type: string
     format: cuid2

@@ -118,8 +118,9 @@ info:
     - **Pages.** A dashboard has one or more pages (tabs), each with its own grid; every widget names
       its `pageId`. A chart appears at most once per page (**409**) but can sit on several pages of one
       dashboard. Besides charts, a page holds layout blocks: images, text blocks and separators
-      (`kind`). A page can be limited to selected teams (`teamIds`); the limit binds Dashboard Viewers
-      only, and only a signed-in Owner or Manager with Access Control may change it.
+      (`kind`). A page can be limited to selected teams (`limited`, `teamIds`), or to none; the limit
+      binds Dashboard Viewers only, and only a signed-in Owner or Manager with Access Control may change
+      it.
     - **Grid.** Widgets sit on a page's 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
       `1 ≤ h ≤ 32`, `0 ≤ y ≤ 4000`). Gaps are allowed and overlaps on a page answer **422** naming the
       widget. A widget added without a layout takes the first open slot at its default size.

@@ -38,6 +38,9 @@ properties:
     type: integer
     minimum: 0
   chart:
+    description: >-
+      The chart, as reading it returns it, except that for a Dashboard Viewer its `dashboards` lists only
+      the dashboards they can open.
     oneOf:
       - $ref: ./ChartResource.yml
       - type: "null"

@@ -14,8 +14,8 @@ import {
 
 interface StaleDashboardDialogProps {
   open: boolean;
-  /** Names of the charts the overwrite would take off the dashboard. */
-  removedChartNames: string[];
+  /** Names of the pages, charts and blocks the overwrite would take off the dashboard. */
+  removedItemNames: string[];
   isSaving: boolean;
   onReload: () => void;
   onSaveAnyway: () => void;
@@ -25,7 +25,7 @@ interface StaleDashboardDialogProps {
 /** Shown when a save was refused because someone else changed the dashboard during the edit. */
 export const StaleDashboardDialog = ({
   open,
-  removedChartNames,
+  removedItemNames,
   isSaving,
   onReload,
   onSaveAnyway,
@@ -40,12 +40,13 @@ export const StaleDashboardDialog = ({
           <DialogTitle>{t("workspace.analysis.dashboards.stale_title")}</DialogTitle>
           <DialogDescription>{t("workspace.analysis.dashboards.stale_description")}</DialogDescription>
         </DialogHeader>
-        {removedChartNames.length > 0 && (
+        {removedItemNames.length > 0 && (
           <DialogBody className="space-y-2 text-sm text-slate-700">
             <p>{t("workspace.analysis.dashboards.stale_overwrite_removes")}</p>
             <ul className="list-disc space-y-1 pl-5">
-              {removedChartNames.map((chartName) => (
-                <li key={chartName}>{chartName}</li>
+              {removedItemNames.map((itemName, index) => (
+                // Two blocks can share a label ("Text"), so the position keeps the keys apart.
+                <li key={`${index}-${itemName}`}>{itemName}</li>
               ))}
             </ul>
           </DialogBody>

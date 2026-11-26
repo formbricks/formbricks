@@ -13,7 +13,7 @@ put:
 
     Needs an Owner or Manager session above the organization's user-management floor, or an API key of
     this organization with Access Control write. Rate-limited to 20 requests a minute per caller on top of
-    the default limit. One audit event per request.
+    the default limit. One audit event per request. Takes no query parameters: any query parameter answers **400**.
   tags:
     - V3 Member Attributes
   parameters:

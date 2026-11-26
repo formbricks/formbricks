@@ -1,18 +1,27 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TDashboardsAccessContext } from "@/app/api/v3/lib/dashboards-access";
-import { canReadDashboard, filterReadablePageIds } from "@/modules/ee/dashboard-access/lib/spicedb-access";
 import {
+  canReadDashboard,
+  filterReadableDashboardIdsInWorkspace,
+  filterReadablePageIds,
+} from "@/modules/ee/dashboard-access/lib/spicedb-access";
+import {
+  createViewerDashboardListScope,
   getReadablePageIds,
   getReadablePageIdsCached,
+  limitEmbeddedChartDashboards,
   refuseUnlessDashboardOpenable,
 } from "./dashboard-read-access";
 import { withCachedDashboardDecision } from "./read-decision-cache";
+import { listDashboardPageScopeRows } from "./service";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/modules/ee/dashboard-access/lib/spicedb-access", () => ({
   canReadDashboard: vi.fn(),
+  filterReadableDashboardIdsInWorkspace: vi.fn(),
   filterReadablePageIds: vi.fn(),
 }));
+vi.mock("./service", () => ({ listDashboardPageScopeRows: vi.fn() }));
 vi.mock("./read-decision-cache", () => ({
   getDashboardReadPrincipal: vi.fn(() => "principal"),
   withCachedDashboardDecision: vi.fn(),
@@ -77,7 +86,13 @@ describe("getReadablePageIdsCached", () => {
     );
   });
 
-  test("decides each page on its own cache entry and keeps only the allowed ones", async () => {
+  test("keeps each page's decision on its own, so a later read reuses allows and denies page by page", async () => {
+    // A cache that keeps what it was told, as the real one does for the read-decision TTL.
+    const cache = new Map<string, unknown>();
+    vi.mocked(withCachedDashboardDecision).mockImplementation(async ({ decision }, decide) => {
+      if (!cache.has(decision)) cache.set(decision, await decide());
+      return cache.get(decision) as Awaited<ReturnType<typeof decide>>;
+    });
     vi.mocked(filterReadablePageIds).mockImplementation(
       async (_subject, pageIds) => new Set(pageIds.filter((pageId) => pageId === "p1"))
     );
@@ -85,9 +100,94 @@ describe("getReadablePageIdsCached", () => {
     expect(await getReadablePageIdsCached(viewer, dashboard, ["p1", "p2", "p1"], context)).toEqual(
       new Set(["p1"])
     );
-    expect(vi.mocked(withCachedDashboardDecision).mock.calls.map((call) => call[0])).toEqual([
-      { dashboard, principal: "principal", decision: "page:p1" },
-      { dashboard, principal: "principal", decision: "page:p2" },
+
+    // SpiceDB now allows every page: the pages already decided keep their answers, a new one is decided.
+    vi.mocked(filterReadablePageIds).mockImplementation(async (_subject, pageIds) => new Set(pageIds));
+    expect(await getReadablePageIdsCached(viewer, dashboard, ["p1", "p2", "p3"], context)).toEqual(
+      new Set(["p1", "p3"])
+    );
+  });
+});
+
+describe("createViewerDashboardListScope", () => {
+  const subject = { type: "user" as const, id: "user_1" };
+  const page = (id: string, dashboardId: string, widgets: number, holdsChart = false) => ({
+    id,
+    dashboardId,
+    _count: { widgets },
+    widgets: holdsChart ? [{ id: `w-${id}` }] : [],
+  });
+
+  test("keeps dashboards with an open page and counts only the open pages' widgets", async () => {
+    vi.mocked(filterReadableDashboardIdsInWorkspace).mockResolvedValue(new Set(["d1", "d2"]));
+    vi.mocked(listDashboardPageScopeRows).mockResolvedValue([
+      page("p1", "d1", 2),
+      page("p2", "d1", 5),
+      page("p3", "d2", 4),
+    ]);
+    vi.mocked(filterReadablePageIds).mockResolvedValue(new Set(["p1"]));
+    const scope = createViewerDashboardListScope(subject, "ws_1");
+
+    // d2's only page is limited to another team: like a read of it, the list leaves it out.
+    expect(await scope.readable(["d1", "d2", "d3"])).toEqual(new Set(["d1"]));
+    expect(filterReadableDashboardIdsInWorkspace).toHaveBeenCalledWith(subject, "ws_1", ["d1", "d2", "d3"]);
+    expect(listDashboardPageScopeRows).toHaveBeenCalledWith(["d1", "d2"], undefined);
+    expect(scope.widgetCount("d1")).toBe(2);
+  });
+
+  test("with a chart filter, keeps only dashboards holding the chart on a page the reader can open", async () => {
+    vi.mocked(filterReadableDashboardIdsInWorkspace).mockResolvedValue(new Set(["d1", "d2"]));
+    vi.mocked(listDashboardPageScopeRows).mockResolvedValue([
+      page("p1", "d1", 1),
+      page("p2", "d1", 1, true),
+      page("p3", "d2", 1, true),
+    ]);
+    vi.mocked(filterReadablePageIds).mockResolvedValue(new Set(["p1", "p3"]));
+    const scope = createViewerDashboardListScope(subject, "ws_1", "chart_1");
+
+    expect(await scope.readable(["d1", "d2"])).toEqual(new Set(["d2"]));
+    expect(listDashboardPageScopeRows).toHaveBeenCalledWith(["d1", "d2"], "chart_1");
+  });
+
+  test("reads no pages when no dashboard of the batch is readable", async () => {
+    vi.mocked(filterReadableDashboardIdsInWorkspace).mockResolvedValue(new Set());
+    const scope = createViewerDashboardListScope(subject, "ws_1");
+
+    expect(await scope.readable(["d1"])).toEqual(new Set());
+    expect(listDashboardPageScopeRows).not.toHaveBeenCalled();
+    expect(scope.widgetCount("d1")).toBe(0);
+  });
+});
+
+describe("limitEmbeddedChartDashboards", () => {
+  const widgets = [
+    { id: "w1", chart: { widgets: [{ dashboard: { id: "d1" } }, { dashboard: { id: "d2" } }] } },
+    { id: "w2", chart: null },
+  ];
+
+  test("leaves every dashboard for a reader who is not a Dashboard Viewer", async () => {
+    expect(await limitEmbeddedChartDashboards(member, widgets, null)).toBe(widgets);
+    expect(filterReadableDashboardIdsInWorkspace).not.toHaveBeenCalled();
+  });
+
+  test("names only the dashboards a viewer can open", async () => {
+    vi.mocked(filterReadableDashboardIdsInWorkspace).mockResolvedValue(new Set(["d1"]));
+
+    expect(await limitEmbeddedChartDashboards(viewer, widgets, null)).toEqual([
+      { id: "w1", chart: { widgets: [{ dashboard: { id: "d1" } }] } },
+      { id: "w2", chart: null },
+    ]);
+    expect(filterReadableDashboardIdsInWorkspace).toHaveBeenCalledWith(
+      { type: "user", id: "user_1" },
+      "ws_1",
+      ["d1", "d2"]
+    );
+  });
+
+  test("names none for a viewer without a subject", async () => {
+    expect(await limitEmbeddedChartDashboards(viewerWithoutSubject, widgets, null)).toEqual([
+      { id: "w1", chart: { widgets: [] } },
+      { id: "w2", chart: null },
     ]);
   });
 });

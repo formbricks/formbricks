@@ -92,24 +92,41 @@ describe("a Feedback Dataset's Dashboard Viewer access", () => {
   });
 
   test("refuses an answer field, and a Member attribute of another organization, with 422", async () => {
+    const foreignOrganizationId = (
+      await prisma.workspace.findUniqueOrThrow({
+        where: { id: fixture.foreignWorkspaceId },
+        select: { organizationId: true },
+      })
+    ).organizationId;
+    const foreignKey = (
+      await prisma.memberAttributeKey.create({
+        data: { organizationId: foreignOrganizationId, key: "region", label: "Region" },
+      })
+    ).id;
     const { updatedAt } = (
       (await (
         await getV3DatasetViewerAccess({ datasetId: fixture.datasetId, ...ctx(fixture.users.owner) })
       ).json()) as { data: { updatedAt: string } }
     ).data;
-    const refused = await replaceV3DatasetViewerAccess({
-      datasetId: fixture.datasetId,
-      body: {
-        join: "all",
-        conditions: [
-          { field: "FeedbackRecords.valueText", attributeKeyId: null },
-          { field: "FeedbackRecords.language", attributeKeyId: "clak000000000000000000009" },
-        ],
-        expectedUpdatedAt: updatedAt,
-      },
-      ...ctx(fixture.users.owner),
-    });
-    expect(refused.status).toBe(422);
+    // Each invalid input on its own, so one refusal cannot hide that the other check stopped working.
+    const replace = (condition: { field: string; attributeKeyId: string | null }) =>
+      replaceV3DatasetViewerAccess({
+        datasetId: fixture.datasetId,
+        body: { join: "all", conditions: [condition], expectedUpdatedAt: updatedAt },
+        ...ctx(fixture.users.owner),
+      });
+    const invalidParams = async (response: Response) =>
+      ((await response.json()) as { invalid_params?: { name: string }[] }).invalid_params?.map(
+        ({ name }) => name
+      );
+
+    const answerField = await replace({ field: "FeedbackRecords.valueText", attributeKeyId: null });
+    expect(answerField.status).toBe(422);
+    expect(await invalidParams(answerField)).toEqual(["conditions[0].field"]);
+
+    const foreignAttribute = await replace({ field: "FeedbackRecords.language", attributeKeyId: foreignKey });
+    expect(foreignAttribute.status).toBe(422);
+    expect(await invalidParams(foreignAttribute)).toEqual(["conditions[0].attributeKeyId"]);
   });
 
   test("a Member, and another organization's dataset, answer 403", async () => {

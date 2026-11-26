@@ -44,10 +44,11 @@ const context = {
   instance: "/api/v3/dashboards/pages",
 };
 
-const pageRow = (teamIds: string[] = []) => ({
+const pageRow = (teamIds: string[] = [], teamLimited = teamIds.length > 0) => ({
   id: PAGE_ID,
   name: "Sales",
   order: 1,
+  teamLimited,
   teamLimits: teamIds.map((teamId) => ({ teamId })),
 });
 
@@ -75,7 +76,13 @@ describe("createV3DashboardPage", () => {
 
     expect(response.status).toBe(201);
     expect(response.headers.get("Location")).toBe(`/api/v3/dashboards/${DASHBOARD_ID}/pages/${PAGE_ID}`);
-    expect((await response.json()).data).toEqual({ id: PAGE_ID, name: "Sales", order: 1, teamIds: [] });
+    expect((await response.json()).data).toEqual({
+      id: PAGE_ID,
+      name: "Sales",
+      order: 1,
+      limited: false,
+      teamIds: [],
+    });
     expect(vi.mocked(requireDashboardsAccess).mock.calls[0][2]).toBe("readWrite");
     expect(auditLog).toMatchObject({ targetId: PAGE_ID, organizationId: ORGANIZATION_ID });
   });
@@ -112,7 +119,7 @@ describe("updateV3DashboardPage", () => {
     vi.mocked(updatePageRow).mockResolvedValueOnce({
       kind: "ok",
       page: pageRow([TEAM_ID]),
-      previous: { name: "Sales", teamIds: [] },
+      previous: { name: "Sales", limited: false, teamIds: [] },
     });
     const auditLog = {} as TV3AuditLog;
 
@@ -133,8 +140,8 @@ describe("updateV3DashboardPage", () => {
       canManageAccess: true,
     });
     expect(auditLog).toMatchObject({
-      oldObject: { dashboardId: DASHBOARD_ID, id: PAGE_ID, teamIds: [] },
-      newObject: { dashboardId: DASHBOARD_ID, id: PAGE_ID, teamIds: [TEAM_ID] },
+      oldObject: { dashboardId: DASHBOARD_ID, id: PAGE_ID, limited: false, teamIds: [] },
+      newObject: { dashboardId: DASHBOARD_ID, id: PAGE_ID, limited: true, teamIds: [TEAM_ID] },
     });
   });
 
@@ -154,7 +161,7 @@ describe("deleteV3DashboardPage", () => {
   test("answers 204 and audits the page with the widgets it took", async () => {
     vi.mocked(deletePageRow).mockResolvedValueOnce({
       kind: "ok",
-      removed: { name: "Sales", teamIds: [], widgetIds: ["clwg1"] },
+      removed: { name: "Sales", limited: false, teamIds: [], widgetIds: ["clwg1"] },
     });
     const auditLog = {} as TV3AuditLog;
     const response = await deleteV3DashboardPage({

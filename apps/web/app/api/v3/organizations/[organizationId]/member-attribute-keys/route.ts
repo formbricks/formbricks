@@ -7,12 +7,13 @@
  * Control and Dashboards. See `../member-attributes/lib/operations.ts`.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
 import { createV3MemberAttributeKey, listV3MemberAttributeKeys } from "../member-attributes/lib/operations";
 import { ZV3CreateMemberAttributeKeyBody, ZV3OrganizationParams } from "../member-attributes/lib/schemas";
 
 export const GET = withV3ApiWrapper({
   auth: "both",
-  schemas: { params: ZV3OrganizationParams },
+  schemas: { params: ZV3OrganizationParams, query: ZV3EmptyQuery },
   handler: async ({ authentication, parsedInput, requestId, instance }) =>
     listV3MemberAttributeKeys({
       authentication,
@@ -26,7 +27,7 @@ export const POST = withV3ApiWrapper({
   auth: "both",
   action: "created",
   targetType: "memberAttributeKey",
-  schemas: { params: ZV3OrganizationParams, body: ZV3CreateMemberAttributeKeyBody },
+  schemas: { params: ZV3OrganizationParams, query: ZV3EmptyQuery, body: ZV3CreateMemberAttributeKeyBody },
   handler: async ({ authentication, parsedInput, auditLog, requestId, instance }) =>
     createV3MemberAttributeKey({
       authentication,

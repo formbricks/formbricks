@@ -131,6 +131,11 @@ describe("page schemas", () => {
     expect(ZV3PageUpdateBody.safeParse({}).success).toBe(false);
     expect(ZV3PageUpdateBody.safeParse({ name: "   " }).success).toBe(false);
   });
+
+  test("refuses a page or dashboard name with a NULL byte, which Postgres cannot store", () => {
+    expect(ZV3PageUpdateBody.safeParse({ name: "Over\u0000view" }).success).toBe(false);
+    expect(ZV3DashboardReplaceBody.safeParse({ ...body([]), name: "Bo\u0000ard" }).success).toBe(false);
+  });
 });
 
 describe("ZV3WidgetCreateBody", () => {

@@ -8,6 +8,7 @@
  * needs Access Control and Dashboards. Rate-limited on top of the v3 default.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { bulkSetV3MemberAttributes } from "../lib/operations";
 import { ZV3BulkMemberAttributesBody, ZV3OrganizationParams } from "../lib/schemas";
@@ -17,7 +18,7 @@ export const PUT = withV3ApiWrapper({
   action: "updated",
   targetType: "memberAttributes",
   customRateLimitConfig: rateLimitConfigs.api.v3MemberAttributesBulk,
-  schemas: { params: ZV3OrganizationParams, body: ZV3BulkMemberAttributesBody },
+  schemas: { params: ZV3OrganizationParams, query: ZV3EmptyQuery, body: ZV3BulkMemberAttributesBody },
   handler: async ({ authentication, parsedInput, auditLog, requestId, instance }) =>
     bulkSetV3MemberAttributes({
       authentication,

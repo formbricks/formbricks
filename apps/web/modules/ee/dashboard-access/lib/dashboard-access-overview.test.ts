@@ -85,6 +85,17 @@ describe("listViewAsMembers", () => {
       limit: VIEW_AS_MEMBER_LIMIT,
       roles: ["member", "dashboard_viewer"],
     });
+    // Team memberships are read only for the offered members.
+    const [query] = prisma.workspaceTeam.findMany.mock.calls[0] as unknown as [
+      { select: { team: { select: { teamUsers: { where: unknown } } } } },
+    ];
+    expect(query.select.team.select.teamUsers.where).toEqual({ userId: { in: ["anna"] } });
+  });
+
+  test("reads no team memberships when no member can be offered", async () => {
+    vi.mocked(listMembersWithAttributes).mockResolvedValue([]);
+    expect(await listViewAsMembers("org_1", "d1", "ws_1")).toEqual([]);
+    expect(prisma.workspaceTeam.findMany).not.toHaveBeenCalled();
   });
 
   test("a Member opens the dashboard through any granted team; a Dashboard Viewer only where the limit allows", async () => {

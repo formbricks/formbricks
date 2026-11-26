@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
+import { lookupAuthorizedWorkspaceIds, lookupReadableDashboardIds } from "@/lib/authorization/resource-list";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
@@ -13,7 +13,7 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: { findMany: vi.fn() },
     workspace: { findMany: vi.fn() },
-    dashboard: { findMany: vi.fn(async () => []) },
+    dashboard: { groupBy: vi.fn(async () => []) },
     membership: { findUnique: vi.fn(), findMany: vi.fn() },
   },
 }));
@@ -86,5 +86,31 @@ describe("listDashboardViewerWorkspaces", () => {
     expect(getMembershipByUserIdOrganizationId).toHaveBeenCalledWith("user-1", "org-1");
     expect(prisma.membership.findUnique).not.toHaveBeenCalled();
     expect(lookupAuthorizedWorkspaceIds).not.toHaveBeenCalled();
+  });
+
+  test("keeps empty workspaces and those with a readable dashboard, grouped in the database", async () => {
+    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "dashboard_viewer" } as never);
+    vi.mocked(getIsDashboardViewerRoleEnabled).mockResolvedValue(true);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["ws-empty", "ws-open", "ws-closed"]);
+    vi.mocked(prisma.workspace.findMany).mockResolvedValue([
+      { id: "ws-closed", name: "Closed" },
+      { id: "ws-empty", name: "Empty" },
+      { id: "ws-open", name: "Open" },
+    ] as never);
+    vi.mocked(lookupReadableDashboardIds).mockResolvedValue(["dash-open"]);
+    vi.mocked(prisma.dashboard.groupBy).mockImplementation((async ({ where }: { where: { id?: unknown } }) =>
+      where.id
+        ? [{ workspaceId: "ws-open" }]
+        : [{ workspaceId: "ws-open" }, { workspaceId: "ws-closed" }]) as never);
+
+    await expect(listDashboardViewerWorkspaces("user-1", "org-1")).resolves.toEqual([
+      { id: "ws-empty", name: "Empty" },
+      { id: "ws-open", name: "Open" },
+    ]);
+    expect(prisma.dashboard.groupBy).toHaveBeenCalledTimes(2);
+    expect(prisma.dashboard.groupBy).toHaveBeenLastCalledWith({
+      by: ["workspaceId"],
+      where: { workspaceId: { in: ["ws-closed", "ws-empty", "ws-open"] }, id: { in: ["dash-open"] } },
+    });
   });
 });

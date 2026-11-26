@@ -6,6 +6,7 @@ import { type Ref, useId, useImperativeHandle, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { getTranslatedFieldLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import {
   type TDatasetViewerAccessResource,
   dashboardAccessQueryKeys,
@@ -40,9 +41,14 @@ const EMAIL_VALUE = "__email__";
 const EMBEDDED_VALUE = "__embedded__";
 
 type TDraftCondition = { id: string; field: string; attributeKeyId: string | null };
-type TDraft = { join: TViewerAccessJoin; conditions: TDraftCondition[] };
+/**
+ * `basedOn` is the dataset version the edit started from, kept with the edit: a background refetch after
+ * someone else's save must not move it forward, or the stale edit would pass the server's version check.
+ */
+type TDraft = { join: TViewerAccessJoin; conditions: TDraftCondition[]; basedOn: string };
 
 const toDraft = (access: TDatasetViewerAccessResource): TDraft => ({
+  basedOn: access.updatedAt,
   join: access.join,
   conditions: access.conditions.map(({ field, attributeKeyId }, index) => ({
     id: `${index}`,
@@ -112,7 +118,7 @@ export const DashboardViewerAccessSection = ({
       replaceDatasetViewerAccess(datasetId, {
         join: value.join,
         conditions: value.conditions.map(({ field, attributeKeyId }) => ({ field, attributeKeyId })),
-        expectedUpdatedAt: accessQuery.data?.updatedAt ?? "",
+        expectedUpdatedAt: value.basedOn,
       }),
     // The dialog reports success for the whole save; only failures are said here.
     onSuccess: (data) => {
@@ -256,9 +262,9 @@ export const DashboardViewerAccessSection = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(VIEWER_ACCESS_RECORD_FIELDS).map(([field, label]) => (
+                  {Object.keys(VIEWER_ACCESS_RECORD_FIELDS).map((field) => (
                     <SelectItem key={field} value={field}>
-                      {label}
+                      {getTranslatedFieldLabel(field, t)}
                     </SelectItem>
                   ))}
                   <SelectItem value={EMBEDDED_VALUE}>

@@ -52,8 +52,22 @@ const stored = {
   updatedAt: LOCKED_AT,
   filters: [],
   pages: [
-    { id: PAGE_1, name: "Overview", order: 0, teamLimits: [] as { teamId: string }[] },
-    { id: PAGE_2, name: "Details", order: 1, teamLimits: [{ teamId: "clteam_a" }] },
+    {
+      id: PAGE_1,
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      name: "Overview",
+      order: 0,
+      teamLimited: false,
+      teamLimits: [] as { teamId: string }[],
+    },
+    {
+      id: PAGE_2,
+      createdAt: new Date("2026-01-02T00:00:00.000Z"),
+      name: "Details",
+      order: 1,
+      teamLimited: true,
+      teamLimits: [{ teamId: "clteam_a" }],
+    },
   ],
   widgets: [widgetA, widgetB, textOnPage2],
 };
@@ -110,18 +124,27 @@ const expectNothingWritten = (tx: TTx) => {
   expect(tx.dashboardPage.deleteMany).not.toHaveBeenCalled();
   expect(tx.dashboardWidget.deleteMany).not.toHaveBeenCalled();
   expect(tx.dashboardWidget.createMany).not.toHaveBeenCalled();
+  expect(tx.dashboardWidget.update).not.toHaveBeenCalled();
+  expect(tx.dashboardPageTeam.deleteMany).not.toHaveBeenCalled();
+  expect(tx.dashboardPageTeam.createMany).not.toHaveBeenCalled();
   expect(tx.$executeRaw).not.toHaveBeenCalled();
 };
 
-/** The widget places a save wrote in its one UPDATE: ids, pages, layouts and orders, in order. */
+/**
+ * What a save wrote in its one UPDATE of existing widgets: ids, pages, layouts, orders and contents (null
+ * where the content is kept), in order.
+ */
 const placesWritten = (tx: TTx) => {
   expect(tx.$executeRaw).toHaveBeenCalledTimes(1);
-  const [strings, ids, pageIds, layouts, orders, dashboardId] = tx.$executeRaw.mock.calls[0] as unknown as [
+  const [strings, ids, pageIds, layouts, orders, setContent, contents, dashboardId] = tx.$executeRaw.mock
+    .calls[0] as unknown as [
     TemplateStringsArray,
     string[],
     string[],
     string[],
     (number | null)[],
+    boolean[],
+    (string | null)[],
     string,
   ];
   expect(strings.join("?")).toContain('w."dashboardId" = ?');
@@ -130,6 +153,9 @@ const placesWritten = (tx: TTx) => {
     pageIds,
     layouts: layouts.map((layout) => JSON.parse(layout) as unknown),
     orders,
+    contents: contents.map((content, index) =>
+      setContent[index] ? (content === null ? null : (JSON.parse(content) as unknown)) : "kept"
+    ),
     dashboardId,
   };
 };
@@ -325,6 +351,7 @@ describe("replaceDashboardRow: the version and the widgets", () => {
       pageIds: [PAGE_1, PAGE_2],
       layouts: [moved, textOnPage2.layout],
       orders: [5, null],
+      contents: ["kept", "kept"],
       dashboardId: DASHBOARD_ID,
     });
     expect(tx.dashboard.update).toHaveBeenCalledWith(
@@ -332,7 +359,7 @@ describe("replaceDashboardRow: the version and the widgets", () => {
     );
   });
 
-  test("replaces a block's content when sent, and keeps it when not", async () => {
+  test("replaces a block's content when sent, and keeps it when not, in the one widget UPDATE", async () => {
     const tx = stub(makeTx());
     await replace({
       widgets: [
@@ -341,13 +368,8 @@ describe("replaceDashboardRow: the version and the widgets", () => {
         { ...keepAll[2], content: { headline: "Hello", description: "World" } },
       ],
     });
-    expect(tx.dashboardWidget.update).toHaveBeenCalledTimes(1);
-    expect(tx.dashboardWidget.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: textOnPage2.id },
-        data: { content: { headline: "Hello", description: "World" } },
-      })
-    );
+    expect(placesWritten(tx).contents).toEqual(["kept", "kept", { headline: "Hello", description: "World" }]);
+    expect(tx.dashboardWidget.update).not.toHaveBeenCalled();
   });
 });
 
@@ -377,7 +399,13 @@ describe("replaceDashboardRow: pages", () => {
     expect(result.kind).toBe("ok");
     expect(tx.dashboardPage.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { dashboardId: DASHBOARD_ID, name: "Notes", order: 2, teamLimits: { create: [] } },
+        data: {
+          dashboardId: DASHBOARD_ID,
+          name: "Notes",
+          order: 2,
+          teamLimited: false,
+          teamLimits: { create: [] },
+        },
       })
     );
     expect(tx.dashboardWidget.createMany).toHaveBeenCalledWith({
@@ -396,6 +424,7 @@ describe("replaceDashboardRow: pages", () => {
       ],
     });
     expect(result.kind).toBe("ok");
+    expect(tx.dashboardPage.update).toHaveBeenCalledTimes(1);
     expect(tx.dashboardPage.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: PAGE_1 }, data: { name: "Summary", order: 0 } })
     );
@@ -407,6 +436,24 @@ describe("replaceDashboardRow: pages", () => {
     expect(tx.dashboardPage.deleteMany.mock.invocationCallOrder[0]).toBeGreaterThan(
       tx.$executeRaw.mock.invocationCallOrder[0]
     );
+  });
+
+  test("writes no page whose name and order are unchanged", async () => {
+    const tx = stub(makeTx());
+    expect((await replace({ pages: pagesAsStored, widgets: keepAll })).kind).toBe("ok");
+    expect(tx.dashboardPage.update).not.toHaveBeenCalled();
+  });
+
+  test("puts a new widget without a page on the page shown first, not the one sent first", async () => {
+    const tx = stub(makeTx());
+    const result = await replace({
+      pages: [pagesAsStored[1], pagesAsStored[0]],
+      widgets: [...keepAll, { kind: "separator", layout: { x: 0, y: 8, w: 12, h: 1 } }],
+    });
+    expect(result.kind).toBe("ok");
+    expect(tx.dashboardWidget.createMany).toHaveBeenCalledWith({
+      data: [expect.objectContaining({ pageId: PAGE_1, kind: "separator" })],
+    });
   });
 
   test("refuses a widget left on a page the save removes", async () => {
@@ -465,6 +512,61 @@ describe("replaceDashboardRow: pages", () => {
       data: [{ pageId: PAGE_1, teamId: "clteam_b" }],
     });
     expect(tx.dashboardPageTeam.deleteMany).toHaveBeenCalledWith({ where: { pageId: PAGE_2 } });
+    expect(tx.dashboardPage.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: PAGE_1 }, data: { teamLimited: true } })
+    );
+    expect(tx.dashboardPage.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: PAGE_2 }, data: { teamLimited: false } })
+    );
+  });
+
+  // P-ENG-110: an empty access selector means no access, so an empty list keeps the page limited.
+  test("limits a page to no team with an empty list, keeping it limited", async () => {
+    const tx = stub(makeTx());
+    const result = await replace({
+      pages: [pagesAsStored[0], { ...pagesAsStored[1], teamIds: [] }],
+      widgets: keepAll,
+      canManageAccess: true,
+    });
+    expect(result.kind).toBe("ok");
+    expect(tx.dashboardPageTeam.deleteMany).toHaveBeenCalledWith({ where: { pageId: PAGE_2 } });
+    expect(tx.dashboardPageTeam.createMany).not.toHaveBeenCalled();
+    expect(tx.dashboardPage.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: PAGE_2 }, data: { teamLimited: true } })
+    );
+  });
+
+  test("an empty list sent for a page already limited to no team needs no permission", async () => {
+    const tx = stub(
+      makeTx({
+        found: {
+          ...stored,
+          pages: [stored.pages[0], { ...stored.pages[1], teamLimits: [] }],
+        },
+      })
+    );
+    const result = await replace({
+      pages: [pagesAsStored[0], { ...pagesAsStored[1], teamIds: [] }],
+      widgets: keepAll,
+    });
+    expect(result.kind).toBe("ok");
+    expect(tx.dashboardPageTeam.deleteMany).not.toHaveBeenCalled();
+  });
+
+  // Like PAGE_READ_ORDER: two kept pages tied on `order` are shown by when they were added, not as sent.
+  test("breaks a tie between kept pages by when they were added, for a new widget without a page", async () => {
+    const tx = stub(makeTx());
+    const result = await replace({
+      pages: [
+        { ...pagesAsStored[1], order: 0 },
+        { ...pagesAsStored[0], order: 0 },
+      ],
+      widgets: [...keepAll, { kind: "separator", layout: { x: 0, y: 8, w: 12, h: 1 } }],
+    });
+    expect(result.kind).toBe("ok");
+    expect(tx.dashboardWidget.createMany).toHaveBeenCalledWith({
+      data: [expect.objectContaining({ pageId: PAGE_1, kind: "separator" })],
+    });
   });
 });
 

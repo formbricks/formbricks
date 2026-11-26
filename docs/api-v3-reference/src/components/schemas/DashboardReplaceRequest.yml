@@ -34,7 +34,8 @@ properties:
     description: >-
       Every page, in tab order: an existing one by `pageId`, or a new one by a `key` of your choosing
       that the save's widgets use as `pageKey`. Each page appears once. `teamIds` sets which teams'
-      Dashboard Viewers see the page (empty: every team); left out, the page keeps its limit. Changing
+      Dashboard Viewers see the page: a list limits it to those teams, an empty list to no team, and
+      `null` removes the limit (every team); left out, the page keeps its limit (a new page: every team). Changing
       a limit needs an Owner or Manager signed in and the Access Control feature (403 otherwise), and
       each team must hold a grant on the dashboard's workspace without a dashboard limit leaving this
       dashboard out (422 otherwise).
@@ -74,7 +75,10 @@ properties:
       Every widget to keep or create. An existing widget by `widgetId` keeps its kind and chart (repoint
       a chart with the widget update) and its page unless `pageId` or `pageKey` moves it; a new one needs
       `kind`, `chartId` for a chart and `content` for a text block, and goes on the first page without a
-      page. On each page a chart appears at most once (409) and widgets may not overlap (422).
+      page. On each page a chart appears at most once (409) and widgets may not overlap (422). A
+      dashboard holds at most 250 widgets, counted on every page: a save that creates widgets and
+      leaves more than 250 answers 409. A save that creates none is not capped, so a dashboard already
+      above 250 can still be saved and shrunk.
     items:
       type: object
       required:

@@ -74,7 +74,32 @@ put:
     "403":
       $ref: ../components/responses/V3DashboardAccessForbidden.yml
     "409":
-      $ref: ../components/responses/V3Conflict.yml
+      description: >-
+        Conflict — the dataset changed since the `expectedUpdatedAt` sent, so nothing was written.
+        `details.currentUpdatedAt` holds the current one. Retrying with the same `expectedUpdatedAt`
+        fails again: read the access again, reconcile your changes with its conditions, and retry with
+        its `updatedAt`.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Conflict
+            status: 409
+            detail: The Feedback Dataset changed since it was read
+            code: conflict
+            requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+            details:
+              currentUpdatedAt: 2026-10-22T11:30:00.000Z
     "422":
       $ref: ../components/responses/V3UnprocessableContent.yml
     "429":

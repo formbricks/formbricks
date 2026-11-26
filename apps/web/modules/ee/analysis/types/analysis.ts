@@ -83,11 +83,15 @@ export type TDashboardWidget =
   | TDashboardTextWidget
   | TDashboardSeparatorWidget;
 
-/** A Dashboard page as the app renders it: a tab, its order, and the teams it is limited to (none = all). */
+/**
+ * A Dashboard page as the app renders it: a tab, its order, and its team limit. Not `limited`: every team
+ * sees it ("All teams"). `limited`: only the teams of `teamIds` do, and none while `teamIds` is empty.
+ */
 export type TDashboardPage = {
   id: string;
   name: string;
   order: number;
+  limited: boolean;
   teamIds: string[];
 };
 

@@ -57,6 +57,7 @@ describe("getMemberAttributeKeyProblem", () => {
     ["2nd", "invalid_format"],
     ["has-dash", "invalid_format"],
     ["email", "reserved"],
+    ["constructor", "reserved"],
     ["a".repeat(65), "too_long"],
   ])("%s → %s", (key, problem) => {
     expect(getMemberAttributeKeyProblem(key)).toBe(problem);

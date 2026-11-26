@@ -2,8 +2,14 @@ import "server-only";
 import type { TV3ChartOperationContext } from "@/app/api/v3/charts/lib/access";
 import { type TDashboardsAccessContext, getDashboardReadSubject } from "@/app/api/v3/lib/dashboards-access";
 import { problemForbidden } from "@/app/api/v3/lib/response";
-import { canReadDashboard, filterReadablePageIds } from "@/modules/ee/dashboard-access/lib/spicedb-access";
+import {
+  type TDashboardAccessSubject,
+  canReadDashboard,
+  filterReadableDashboardIdsInWorkspace,
+  filterReadablePageIds,
+} from "@/modules/ee/dashboard-access/lib/spicedb-access";
 import { getDashboardReadPrincipal, withCachedDashboardDecision } from "./read-decision-cache";
+import { listDashboardPageScopeRows } from "./service";
 
 /**
  * Which dashboards and pages a dashboard-bound read reaches (ENG-7472, ADR-0060). Owners, Managers,
@@ -71,4 +77,72 @@ export const getReadablePageIdsCached = async (
     })
   );
   return new Set(decided.filter((pageId): pageId is string => pageId !== null));
+};
+
+/**
+ * A Dashboard Viewer's list (ENG-7472): `readable` keeps, of a batch of candidate dashboards, those they can
+ * open with at least one page they can open — holding `chartId` on such a page when the list filters by a
+ * chart — and `widgetCount` then counts only the widgets on those pages. A dashboard whose pages are all
+ * limited to other teams answers 403 on read, so the list leaves it out too.
+ */
+export const createViewerDashboardListScope = (
+  subject: TDashboardAccessSubject,
+  workspaceId: string,
+  chartId?: string
+): {
+  readable: (ids: readonly string[]) => Promise<ReadonlySet<string>>;
+  widgetCount: (dashboardId: string) => number;
+} => {
+  const widgetCounts = new Map<string, number>();
+  const readable = async (ids: readonly string[]): Promise<ReadonlySet<string>> => {
+    const dashboards = await filterReadableDashboardIdsInWorkspace(subject, workspaceId, ids);
+    if (dashboards.size === 0) return new Set();
+    const pages = await listDashboardPageScopeRows([...dashboards], chartId);
+    const openPages = await filterReadablePageIds(
+      subject,
+      pages.map(({ id }) => id)
+    );
+    const allowed = new Set<string>();
+    for (const page of pages) {
+      if (!openPages.has(page.id)) continue;
+      widgetCounts.set(page.dashboardId, (widgetCounts.get(page.dashboardId) ?? 0) + page._count.widgets);
+      if (!chartId || page.widgets.length > 0) allowed.add(page.dashboardId);
+    }
+    return allowed;
+  };
+  return { readable, widgetCount: (dashboardId) => widgetCounts.get(dashboardId) ?? 0 };
+};
+
+type TEmbeddedChartWidget = { chart: { widgets: { dashboard: { id: string } }[] } | null };
+
+/**
+ * The widgets of a read with each embedded chart's `dashboards` cut to the ones the reader can open: a
+ * chart shared with a dashboard a Dashboard Viewer's team limits deny must not name it. Every other
+ * reader keeps the full list.
+ */
+export const limitEmbeddedChartDashboards = async <TWidget extends TEmbeddedChartWidget>(
+  access: TDashboardsAccessContext,
+  widgets: TWidget[],
+  authentication: TV3ChartOperationContext["authentication"]
+): Promise<TWidget[]> => {
+  if (!access.asDashboardViewer) return widgets;
+  const subject = getDashboardReadSubject(authentication, access);
+  const ids = [
+    ...new Set(widgets.flatMap(({ chart }) => chart?.widgets.map(({ dashboard }) => dashboard.id) ?? [])),
+  ];
+  const readable =
+    subject && ids.length > 0
+      ? await filterReadableDashboardIdsInWorkspace(subject, access.workspaceId, ids)
+      : new Set<string>();
+  return widgets.map((widget) =>
+    widget.chart
+      ? {
+          ...widget,
+          chart: {
+            ...widget.chart,
+            widgets: widget.chart.widgets.filter(({ dashboard }) => readable.has(dashboard.id)),
+          },
+        }
+      : widget
+  );
 };

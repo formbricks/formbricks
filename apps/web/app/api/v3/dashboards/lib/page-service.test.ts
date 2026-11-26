@@ -21,10 +21,11 @@ const WORKSPACE_ID = "clws000000000000000000001";
 const PAGE_ID = "clpg000000000000000000001";
 const LOCKED_AT = new Date("2026-06-01T12:00:00.000Z");
 
-const pageRow = (teamIds: string[] = [], name = "Page") => ({
+const pageRow = (teamIds: string[] = [], name = "Page", teamLimited = teamIds.length > 0) => ({
   id: PAGE_ID,
   name,
   order: 0,
+  teamLimited,
   teamLimits: teamIds.map((teamId) => ({ teamId })),
 });
 
@@ -96,7 +97,7 @@ describe("updatePageRow", () => {
     expect(result).toEqual({
       kind: "ok",
       page: pageRow(["team_a"], "New"),
-      previous: { name: "Old", teamIds: ["team_a"] },
+      previous: { name: "Old", limited: true, teamIds: ["team_a"] },
     });
     expect(prisma.dashboardPageTeam.deleteMany).not.toHaveBeenCalled();
     expect(prisma.dashboardPage.update.mock.calls[0][0].data).toEqual({ name: "New" });
@@ -125,7 +126,8 @@ describe("updatePageRow", () => {
     expect(prisma.dashboardPageTeam.createMany).toHaveBeenCalledWith({
       data: [{ pageId: PAGE_ID, teamId: "team_a" }],
     });
-    expect(prisma.dashboardPage.update.mock.calls[0][0].data).toHaveProperty("updatedAt");
+    expect(prisma.dashboardPage.update.mock.calls[0][0].data).toEqual({ teamLimited: true });
+    expect(prisma.dashboardPage.update.mock.calls[1][0].data).toHaveProperty("updatedAt");
   });
 
   test("removes the limit when teamIds is null", async () => {
@@ -136,7 +138,32 @@ describe("updatePageRow", () => {
 
     expect(prisma.dashboardPageTeam.deleteMany).toHaveBeenCalled();
     expect(prisma.dashboardPageTeam.createMany).not.toHaveBeenCalled();
+    expect(prisma.dashboardPage.update.mock.calls[0][0].data).toEqual({ teamLimited: false });
     expect(prisma.team.findMany).not.toHaveBeenCalled();
+  });
+
+  // P-ENG-110: an empty access selector means no access, not "All teams".
+  test("limits the page to no team when teamIds is empty, keeping it limited", async () => {
+    prisma.dashboardPage.findFirst.mockResolvedValue(pageRow(["team_a"]) as never);
+    prisma.dashboardPage.update.mockResolvedValue(pageRow([], "Page", true) as never);
+
+    const result = await updatePageRow({ ...base, teamIds: [], canManageAccess: true });
+
+    expect(result).toMatchObject({ kind: "ok", previous: { limited: true, teamIds: ["team_a"] } });
+    expect(prisma.dashboardPageTeam.deleteMany).toHaveBeenCalledWith({ where: { pageId: PAGE_ID } });
+    expect(prisma.dashboardPageTeam.createMany).not.toHaveBeenCalled();
+    expect(prisma.dashboardPage.update.mock.calls[0][0].data).toEqual({ teamLimited: true });
+  });
+
+  test("treats a page whose last limited team was deleted as limited to no team, not open", async () => {
+    prisma.dashboardPage.findFirst.mockResolvedValue(pageRow([], "Page", true) as never);
+    prisma.dashboardPage.update.mockResolvedValue(pageRow([], "Page", true) as never);
+
+    // Sent back unchanged, so no permission is needed and nothing is rewritten.
+    const result = await updatePageRow({ ...base, teamIds: [], canManageAccess: false });
+
+    expect(result).toMatchObject({ kind: "ok", previous: { limited: true, teamIds: [] } });
+    expect(prisma.dashboardPageTeam.deleteMany).not.toHaveBeenCalled();
   });
 
   test("is gone when the dashboard disappears before the touch", async () => {
@@ -163,6 +190,7 @@ describe("deletePageRow", () => {
   test("deletes the page and reports what it removed", async () => {
     prisma.dashboardPage.findFirst.mockResolvedValue({
       name: "Page",
+      teamLimited: true,
       teamLimits: [{ teamId: "team_a" }],
       widgets: [{ id: "w1" }, { id: "w2" }],
     } as never);
@@ -170,7 +198,7 @@ describe("deletePageRow", () => {
 
     expect(await deletePageRow(DASHBOARD_ID, PAGE_ID)).toEqual({
       kind: "ok",
-      removed: { name: "Page", teamIds: ["team_a"], widgetIds: ["w1", "w2"] },
+      removed: { name: "Page", limited: true, teamIds: ["team_a"], widgetIds: ["w1", "w2"] },
     });
     expect(prisma.dashboardPage.delete).toHaveBeenCalledWith({ where: { id: PAGE_ID } });
     expect(prisma.dashboard.updateMany).toHaveBeenCalled();

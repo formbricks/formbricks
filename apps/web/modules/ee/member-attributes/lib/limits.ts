@@ -29,7 +29,9 @@ export const MEMBER_ATTRIBUTE_KEY_PATTERN = /^[a-z][a-z0-9_]*$/;
 
 /**
  * Keys no organization may define: `email` is the built-in Email attribute (read from the login email,
- * never stored), and the others are the CSV import's own member columns.
+ * never stored), `constructor` is the only valid key that names an `Object.prototype` property (code that
+ * reads values as `attributes[key]` would see the inherited function), and the others are the CSV import's
+ * own member columns.
  */
 export const MEMBER_ATTRIBUTE_RESERVED_KEYS: ReadonlySet<string> = new Set([
   "email",
@@ -37,6 +39,7 @@ export const MEMBER_ATTRIBUTE_RESERVED_KEYS: ReadonlySet<string> = new Set([
   "full_name",
   "role",
   "teams",
+  "constructor",
 ]);
 
 /** Rows in one bulk values request. A 200-row CSV import is one request. */

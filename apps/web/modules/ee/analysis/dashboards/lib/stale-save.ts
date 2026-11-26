@@ -1,5 +1,5 @@
 import type { TDashboardPage, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
-import { isDraftId } from "./dashboard-draft";
+import { isDraftId, samePageLimit } from "./dashboard-draft";
 
 export { toSavedWidgets } from "./dashboard-draft";
 
@@ -21,10 +21,45 @@ export const widgetsRemovedByOverwrite = (
  * The editor's pages, as a save over the latest version can send them: a page someone else deleted
  * meanwhile is no longer there to keep, so it is dropped; pages the editor added stay.
  */
-export const draftPagesOverLatest = (latest: TDashboardPage[], draft: TDashboardPage[]): TDashboardPage[] => {
-  const present = new Set(latest.map((page) => page.id));
-  const kept = draft.filter((page) => isDraftId(page.id) || present.has(page.id));
+export const draftPagesOverLatest = (
+  latest: TDashboardPage[],
+  draft: TDashboardPage[],
+  base: TDashboardPage[] = []
+): TDashboardPage[] => {
+  const latestById = new Map(latest.map((page) => [page.id, page]));
+  const baseById = new Map(base.map((page) => [page.id, page]));
+  const kept = draft.flatMap((page) => {
+    if (isDraftId(page.id)) return [page];
+    const current = latestById.get(page.id);
+    if (!current) return [];
+    // A name or team limit the editor left as the edit found it is the latest one, so a change someone
+    // else made meanwhile survives the overwrite (as the dashboard's name does).
+    const before = baseById.get(page.id);
+    if (!before) return [page];
+    return [
+      {
+        ...page,
+        name: page.name === before.name ? current.name : page.name,
+        ...(samePageLimit(page, before)
+          ? { limited: current.limited, teamIds: current.teamIds }
+          : { limited: page.limited, teamIds: page.teamIds }),
+      },
+    ];
+  });
   return kept.length > 0 ? kept : latest;
+};
+
+/**
+ * The pages saving an edit over the latest version would remove without the editor asking: a page that
+ * appeared after the edit began and is not in the draft. A page the editor deleted is in `base`.
+ */
+export const pagesRemovedByOverwrite = (
+  latest: TDashboardPage[],
+  draft: TDashboardPage[],
+  base: ReadonlySet<string>
+): TDashboardPage[] => {
+  const kept = new Set(draft.map((page) => page.id));
+  return latest.filter((page) => !kept.has(page.id) && !base.has(page.id));
 };
 
 /**

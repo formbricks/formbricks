@@ -11,6 +11,7 @@ import {
   UNRESTRICTED_VIEWER_ACCESS,
   VIEWER_ACCESS_MAX_CONDITIONS,
   buildViewerAccessClaim,
+  isViewerAccessUnmatched,
   summarizeViewerAccess,
 } from "./viewer-access-claim";
 
@@ -183,8 +184,10 @@ export const getViewerAccessSummary = async (
   const summary = summarizeViewerAccess([...resolved.values()]);
   if (summary.status !== "restricted" || !probe) return summary;
 
+  // A dataset whose conditions the viewer holds no value for matches nothing: no probe needed.
   const restricted = [...resolved.entries()].filter(
-    (entry): entry is [string, TResolvedViewerAccess] => entry[1] !== null
+    (entry): entry is [string, TResolvedViewerAccess] =>
+      entry[1] !== null && !isViewerAccessUnmatched(entry[1])
   );
   // Every restricted dataset is probed until one matches, so "unmatched" is only ever said when none
   // does: a few at a time (`VIEWER_ACCESS_PROBE_CONCURRENCY`), no new probe once one matched, and each

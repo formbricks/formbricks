@@ -2,7 +2,8 @@ patch:
   operationId: updateDashboardPageV3
   summary: Rename a page or limit it to teams
   description: |
-    Renames a page, sets which teams' Dashboard Viewers see it (`teamIds`), or both. Changing the team
+    Renames a page, sets which teams' Dashboard Viewers see it (`teamIds`: a list of teams, an empty
+    list for no team, or `null` for every team), or both. Changing the team
     limit needs an Owner or Manager signed in and the Access Control feature — an API key gets 403 — and
     a team that holds no grant on the dashboard's workspace, or whose dashboard limit leaves this
     dashboard out, answers 422 naming it. A limit sent back unchanged needs neither. Moves the

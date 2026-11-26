@@ -9,6 +9,7 @@ const readMigration = (name: string): string =>
 
 const surveyMigration = readMigration("20261002120002_add_survey_projection_trigger");
 const dashboardMigration = readMigration("20261123120001_dashboard_access_control_projection");
+const pageTeamLimitedMigration = readMigration("20261126120000_add_dashboard_page_team_limited");
 
 /** The body of one `CREATE OR REPLACE FUNCTION` statement, up to its `LANGUAGE` clause. */
 const functionBody = (sql: string, name: string): string => {
@@ -114,6 +115,37 @@ describe("dashboard projection trigger migration (ADR-0060)", () => {
   test("ships the outbox target types its triggers write", () => {
     expect(AUTHZED_OUTBOX_TARGET_TYPES).toEqual(
       expect.arrayContaining(["dashboard", "dashboard_page", "team"])
+    );
+  });
+});
+
+describe("page team-limited migration (P-ENG-110)", () => {
+  const PAGE_LIMIT_DELETE = /WHEN TG_TABLE_NAME = 'DashboardPageTeam' THEN\n[\s\S]*?\n {6}WHEN/;
+
+  // The enqueue function is re-declared whole again; only the page-limit DELETE classification may change.
+  test("re-declares the enqueue function with only the page-limit removal changed", () => {
+    const strip = (sql: string) =>
+      withoutComments(functionBody(sql, "enqueue_authzed_projection")).replace(PAGE_LIMIT_DELETE, "<delete>");
+    expect(strip(pageTeamLimitedMigration)).toBe(strip(dashboardMigration));
+  });
+
+  // Removing the last limit of a page that stays limited takes the page from that team and gives it to
+  // nobody: a narrowing, so it must arm the freshness guard until it is projected.
+  test("classifies removing a limit from a page that stays limited as a revocation", () => {
+    expect(
+      PAGE_LIMIT_DELETE.exec(functionBody(pageTeamLimitedMigration, "enqueue_authzed_projection"))?.[0]
+    ).toContain(`OR EXISTS (SELECT 1 FROM "DashboardPage" WHERE id = source ->> 'pageId' AND "teamLimited")`);
+  });
+
+  test("backfills limited pages before it watches the flag, so the backfill queues nothing", () => {
+    const backfill = pageTeamLimitedMigration.indexOf(`SET "teamLimited" = true`);
+    const trigger = pageTeamLimitedMigration.indexOf(
+      `CREATE TRIGGER "authzed_projection_dashboard_page_team_limited"`
+    );
+    expect(backfill).toBeGreaterThan(-1);
+    expect(trigger).toBeGreaterThan(backfill);
+    expect(pageTeamLimitedMigration).toMatch(
+      /AFTER UPDATE OF "teamLimited" ON "DashboardPage"\nFOR EACH ROW WHEN \(OLD\."teamLimited" IS DISTINCT FROM NEW\."teamLimited"\)\nEXECUTE FUNCTION enqueue_authzed_projection\('dashboard_page', 'id', ''\);/
     );
   });
 });

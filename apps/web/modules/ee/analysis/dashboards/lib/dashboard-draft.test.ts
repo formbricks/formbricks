@@ -21,6 +21,7 @@ const page = (id: string, order: number, teamIds: string[] = []): TDashboardPage
   id,
   name: `Page ${id}`,
   order,
+  limited: teamIds.length > 0,
   teamIds,
 });
 
@@ -49,12 +50,20 @@ describe("pages in the draft", () => {
   test("adds a page last, open to all teams, with a draft id", () => {
     const { pages: next, pageId } = addDraftPage(pages, "Notes");
     expect(isDraftId(pageId)).toBe(true);
-    expect(next.at(-1)).toEqual({ id: pageId, name: "Notes", order: 2, teamIds: [] });
+    expect(next.at(-1)).toEqual({ id: pageId, name: "Notes", order: 2, limited: false, teamIds: [] });
   });
 
   test("renames and limits one page", () => {
     expect(renameDraftPage(pages, "p1", "Summary")[0].name).toBe("Summary");
-    expect(setDraftPageTeams(pages, "p2", [])[1].teamIds).toEqual([]);
+    expect(setDraftPageTeams(pages, "p2", ["t1"])[1]).toMatchObject({ limited: true, teamIds: ["t1"] });
+  });
+
+  // P-ENG-110: an empty access selector means no access; "All teams" is its own choice.
+  test("keeps a page limited to no team apart from a page open to all teams", () => {
+    const closed = setDraftPageTeams(pages, "p1", []);
+    expect(closed[0]).toMatchObject({ limited: true, teamIds: [] });
+    expect(pagesChanged(closed, pages)).toBe(true);
+    expect(setDraftPageTeams(closed, "p1", null)[0]).toMatchObject({ limited: false, teamIds: [] });
   });
 
   test("moves a page where another was, renumbering the order", () => {
@@ -90,6 +99,22 @@ describe("pages in the draft", () => {
       { pageId: "p2", name: "Page p2", order: 1 },
       { key: pageId, name: "Notes", order: 2 },
     ]);
+  });
+
+  test("sends a limit to no team as an empty list, and All teams as null", () => {
+    const limited = [page("p1", 0, ["t1"]), page("p2", 1)];
+    const edited = setDraftPageTeams(setDraftPageTeams(limited, "p1", null), "p2", []);
+    expect(toSavedPages(edited, limited)).toEqual([
+      { pageId: "p1", name: "Page p1", order: 0, teamIds: null },
+      { pageId: "p2", name: "Page p2", order: 1, teamIds: [] },
+    ]);
+    const { pages: withClosed, pageId } = addDraftPage(limited, "Closed");
+    expect(toSavedPages(setDraftPageTeams(withClosed, pageId, []), limited).at(-1)).toEqual({
+      key: pageId,
+      name: "Closed",
+      order: 2,
+      teamIds: [],
+    });
   });
 });
 

@@ -5,6 +5,7 @@ import { forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { TruncationTooltip } from "@/modules/ui/components/info-tooltip";
+import { getChipRemoval } from "../lib/chip-removal";
 
 type TFilterChipProps = {
   readonly label: string;
@@ -113,7 +114,12 @@ export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
   ) => {
     const { t } = useTranslation();
     const isLockedForYou = Boolean(lockedHint) && lockedFor === "you";
-    const onRemove = isLockedForYou ? undefined : onRemoveProp;
+    const removal = getChipRemoval({
+      hasRemoveHandler: Boolean(onRemoveProp),
+      isLocked: Boolean(lockedHint),
+      lockedFor,
+    });
+    const onRemove = removal === "none" ? undefined : onRemoveProp;
     const body = (
       <>
         <span className="shrink-0 whitespace-nowrap">{label}</span>
@@ -166,7 +172,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, TFilterChipProps>(
         {onRemove && (
           <ChipRemoveButton
             label={
-              lockedHint
+              removal === "unlock"
                 ? t("common.table_toolbar.unlock_filter", { filter: accessibleName })
                 : t("common.table_toolbar.remove_filter", { filter: accessibleName })
             }

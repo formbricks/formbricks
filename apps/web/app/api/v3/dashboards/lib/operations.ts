@@ -7,6 +7,7 @@ import { dashboardFull } from "@/app/api/v3/charts/lib/problems";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
 import {
+  type TDashboardsAccessContext,
   getDashboardReadSubject,
   getViewerAccessReader,
   queueViewedAsAudit,
@@ -37,10 +38,15 @@ import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
-import { filterReadableDashboardIdsInWorkspace } from "@/modules/ee/dashboard-access/lib/spicedb-access";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { getViewerAccessSummary } from "@/modules/ee/dashboard-access/lib/viewer-data-access";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
-import { getReadablePageIds, refuseUnlessDashboardOpenable } from "./dashboard-read-access";
+import {
+  createViewerDashboardListScope,
+  getReadablePageIds,
+  limitEmbeddedChartDashboards,
+  refuseUnlessDashboardOpenable,
+} from "./dashboard-read-access";
 import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 import { canManageDashboardAccess, ineligiblePageTeams, pageAccessDenied } from "./page-access";
 import { type TDashboardReplaceResult, replaceDashboardRow } from "./replace-service";
@@ -68,17 +74,25 @@ import {
 
 type TV3DashboardWriteContext = TV3DashboardOperationContext & { auditLog?: TV3AuditLog };
 
-/** 409 for a name another dashboard in the workspace already has. */
 /**
- * For a Dashboard Viewer, the check a list page applies to its candidates (ENG-7472); `null` when the
- * workspace read answers for every dashboard.
+ * A list read with View as is audited once, against the workspace, whatever it returned: the list itself
+ * names no single dashboard.
  */
-const getDashboardListFilter = (
-  subject: ReturnType<typeof getDashboardReadSubject> | null,
-  workspaceId: string
-): ((ids: readonly string[]) => Promise<ReadonlySet<string>>) | null =>
-  subject ? (ids) => filterReadableDashboardIdsInWorkspace(subject, workspaceId, ids) : null;
+const queueViewedAsListAudit = async (access: TDashboardsAccessContext): Promise<void> => {
+  if (!access.viewAs) return;
+  await queueAuditEventBackground({
+    action: "viewedAs",
+    targetType: "workspace",
+    userId: access.viewAs.actorUserId,
+    userType: "user",
+    targetId: access.workspaceId,
+    organizationId: access.organizationId,
+    status: "success",
+    newObject: { workspaceId: access.workspaceId, viewedAsUserId: access.viewAs.userId },
+  });
+};
 
+/** 409 for a name another dashboard in the workspace already has. */
 export const dashboardNameTaken = ({ requestId, instance }: TV3DashboardOperationContext): Response =>
   problemConflict(requestId, "A dashboard with this name already exists in this workspace.", instance);
 
@@ -120,9 +134,12 @@ export async function listV3Dashboards({
       chartId: query["filter[chartId][eq]"],
     };
     const fp = computeFilterFingerprint(filter);
-    // A Dashboard Viewer lists only the dashboards their team dashboard limits leave them (ENG-7472).
-    const subject = getDashboardReadSubject(authentication, access);
-    const readable = getDashboardListFilter(access.asDashboardViewer ? subject : null, access.workspaceId);
+    // A Dashboard Viewer lists only the dashboards their team dashboard limits leave them, counted and
+    // matched by the pages they can open (ENG-7472).
+    const subject = access.asDashboardViewer ? getDashboardReadSubject(authentication, access) : null;
+    const viewerScope = subject
+      ? createViewerDashboardListScope(subject, access.workspaceId, filter.chartId)
+      : null;
 
     let cursor: { value: string; id: string } | null = null;
     if (query.cursor) {
@@ -141,8 +158,13 @@ export async function listV3Dashboards({
       }
     }
 
-    const scan = readable
-      ? await listReadableDashboardRows({ filter, cursor, limit: query.limit, readable })
+    const scan = viewerScope
+      ? await listReadableDashboardRows({
+          filter,
+          cursor,
+          limit: query.limit,
+          readable: viewerScope.readable,
+        })
       : { rows: await listDashboardRows({ filter, cursor, limit: query.limit }), resumeAfter: null };
     const built = buildKeysetPage({
       rows: scan.rows,
@@ -165,8 +187,14 @@ export async function listV3Dashboards({
         })
       : built.nextCursor;
 
+    await queueViewedAsListAudit(access);
+
     return successListResponse(
-      page.map(serializeV3DashboardListItem),
+      page.map((row) =>
+        serializeV3DashboardListItem(
+          viewerScope ? { ...row, _count: { widgets: viewerScope.widgetCount(row.id) } } : row
+        )
+      ),
       { limit: query.limit, nextCursor },
       { requestId }
     );
@@ -206,10 +234,15 @@ export async function getV3Dashboard({
       context.authentication
     );
     if (readable.size === 0) return problemForbidden(context.requestId, undefined, context.instance);
+    // Each chart names only the dashboards the reader can open, too.
     const visible = {
       ...row,
       pages: row.pages.filter(({ id }) => readable.has(id)),
-      widgets: row.widgets.filter(({ pageId }) => readable.has(pageId)),
+      widgets: await limitEmbeddedChartDashboards(
+        access,
+        row.widgets.filter(({ pageId }) => readable.has(pageId)),
+        context.authentication
+      ),
     };
     const datasetIds = visible.widgets.flatMap(({ chart }) => (chart ? [chart.feedbackDirectoryId] : []));
     const actor = getV3AuthorizationActor(context.authentication);

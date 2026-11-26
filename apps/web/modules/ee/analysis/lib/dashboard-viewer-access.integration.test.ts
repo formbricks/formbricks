@@ -901,7 +901,8 @@ describe("team dashboard limits, page team limits and Dashboard Viewer access (E
         ...ctx(limited.viewer, "/api/v3/dashboards/charts/data"),
       });
     expect(await statusOf(await data(limited.openChart))).toBe(200);
-    expect(await statusOf(await data(limited.closedChart))).not.toBe(200);
+    // A chart on a page the viewer cannot open answers like a chart not on the dashboard (ENG-7472).
+    expect(await statusOf(await data(limited.closedChart))).toBe(404);
   });
 
   test("owners see every page and every record", async () => {

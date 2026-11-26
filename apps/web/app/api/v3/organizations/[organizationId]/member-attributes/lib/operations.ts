@@ -188,7 +188,7 @@ export async function updateV3MemberAttributeKey(
 }
 
 export async function deleteV3MemberAttributeKey(
-  params: TBaseParams & { keyId: string; expectedUpdatedAt?: string; auditLog?: TV3AuditLog }
+  params: TBaseParams & { keyId: string; expectedUpdatedAt: string; auditLog?: TV3AuditLog }
 ): Promise<Response> {
   const { requestId, instance, auditLog, keyId } = params;
   const access = await authorizeMemberAttributes(params, "write");
@@ -202,7 +202,7 @@ export async function deleteV3MemberAttributeKey(
     const deleted = await deleteAttributeKey(
       access.organizationId,
       keyId,
-      params.expectedUpdatedAt ? new Date(params.expectedUpdatedAt) : undefined
+      new Date(params.expectedUpdatedAt)
     );
     if (auditLog) auditLog.oldObject = deleted;
     return successResponse({ id: deleted.id }, { requestId });

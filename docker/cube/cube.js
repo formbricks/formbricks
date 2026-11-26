@@ -288,6 +288,12 @@ const EMBEDDED_EQUALS_MEMBER_PREFIX = "edc_";
  */
 const EMBEDDED_NUMBER_MEMBER_PREFIX = "edn_";
 /**
+ * Normalized twin of an embedded dimension: LOWER(TRIM(value)). Only a Dashboard Viewer access condition
+ * names it (ADR-0061: matching ignores case and surrounding spaces), and it has no containment
+ * prefilter, since an exact `@>` would drop records whose stored value differs in case or spacing.
+ */
+const EMBEDDED_NORMALIZED_MEMBER_PREFIX = "edv_";
+/**
  * The text a Postgres numeric reads: an optional sign, digits with an optional point (or a point and
  * digits), an optional exponent of at most three digits, blanks around. Written without `?`, which Cube
  * rewrites in generated SQL.
@@ -397,6 +403,7 @@ function getEmbeddedDimensionSpecs(compileContext) {
       name: `${EMBEDDED_MEMBER_PREFIX}${suffix}`,
       equalsName: `${EMBEDDED_EQUALS_MEMBER_PREFIX}${suffix}`,
       numberName: `${EMBEDDED_NUMBER_MEMBER_PREFIX}${suffix}`,
+      normalizedName: `${EMBEDDED_NORMALIZED_MEMBER_PREFIX}${suffix}`,
       valueSql,
       keyLiteral,
     });
@@ -591,14 +598,18 @@ function expandAnswerRules(filters, securityContext) {
 }
 
 /**
- * Members only the rewrite may write: the answer-filter joins, the embedded `equals` twins, and the
- * answer member anywhere but a filter (it has no column to select or sort by).
+ * Members only the rewrite may write: the answer-filter joins, the embedded `equals` and normalized
+ * twins, and the answer member anywhere but a filter (it has no column to select or sort by).
  */
 function assertNoReservedMember(query) {
   const cubeQuery = query ?? {};
   for (const member of collectQueryMembers(cubeQuery)) {
     const [cubeName, memberName = ""] = member.split(".");
-    if (ANSWER_FILTER_CUBE.test(cubeName) || memberName.startsWith(EMBEDDED_EQUALS_MEMBER_PREFIX)) {
+    if (
+      ANSWER_FILTER_CUBE.test(cubeName) ||
+      memberName.startsWith(EMBEDDED_EQUALS_MEMBER_PREFIX) ||
+      memberName.startsWith(EMBEDDED_NORMALIZED_MEMBER_PREFIX)
+    ) {
       throw new Error("Cube query rejected: reserved member");
     }
   }
@@ -694,6 +705,18 @@ function getViewerAccessFilter(securityContext) {
     const kept = values.map((value) => value.trim()).filter((value) => value.length > 0);
     if (kept.length === 0) {
       return VIEWER_ACCESS_NO_MATCH;
+    }
+    // An embedded key has no normalized companion in CASE_INSENSITIVE_EQUALS_DIMENSIONS: it matches on
+    // its LOWER(TRIM()) twin, which no containment prefilter narrows.
+    if (EMBEDDED_MEMBER_PATTERN.test(member)) {
+      return {
+        member: member.replace(
+          `FeedbackRecords.${EMBEDDED_MEMBER_PREFIX}`,
+          `FeedbackRecords.${EMBEDDED_NORMALIZED_MEMBER_PREFIX}`
+        ),
+        operator: "equals",
+        values: kept.map((value) => value.toLowerCase()),
+      };
     }
     return { member, operator: "equals", values: kept };
   });

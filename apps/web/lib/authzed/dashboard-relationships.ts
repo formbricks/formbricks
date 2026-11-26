@@ -24,12 +24,14 @@ export type TDashboardProjectionRow = Readonly<{
 }>;
 
 /**
- * A dashboard page's projected facts. `limitedTeamIds` holds the page's `DashboardPageTeam` teams of the
- * dashboard's own organization; an empty list means the page has no team limit.
+ * A dashboard page's projected facts. `limited` says whether the page has a team limit; `limitedTeamIds`
+ * holds the page's `DashboardPageTeam` teams of the dashboard's own organization. A limited page with no
+ * teams is open to no Dashboard Viewer.
  */
 export type TDashboardPageProjectionRow = Readonly<{
   dashboardId: string;
   id: string;
+  limited: boolean;
   limitedTeamIds: ReadonlyArray<string>;
 }>;
 
@@ -70,11 +72,12 @@ export const expectedDashboardRelationships = (row: TDashboardProjectionRow): TA
  * | Fact                        | Edge                                       |
  * | --------------------------- | ------------------------------------------ |
  * | always                      | `dashboard_page#dashboard@dashboard:D`     |
- * | no `DashboardPageTeam` row  | `dashboard_page#open_on@dashboard:D`       |
+ * | not limited                 | `dashboard_page#open_on@dashboard:D`       |
  * | `DashboardPageTeam(T)`      | `dashboard_page#limited_team@team:T`       |
  *
  * `open_on` and `limited_team` never coexist: a page is either open to every reader of its dashboard
- * or limited to its teams, so the projector removes one in the same write that adds the other.
+ * or limited to its teams, so the projector removes one in the same write that adds the other. A limited
+ * page whose teams are all gone keeps neither, and no Dashboard Viewer reads it.
  */
 export const expectedDashboardPageRelationships = (
   row: TDashboardPageProjectionRow
@@ -86,7 +89,7 @@ export const expectedDashboardPageRelationships = (
     { relation: DASHBOARD_PAGE_RELATIONS.dashboard, resource, subject: dashboard },
   ];
 
-  if (limitedTeamIds.length === 0) {
+  if (!row.limited) {
     relationships.push({ relation: DASHBOARD_PAGE_RELATIONS.openOn, resource, subject: dashboard });
   }
   for (const teamId of limitedTeamIds) {
@@ -134,17 +137,23 @@ export const toDashboardProjectionRow = (
   workspaceId: dashboard.workspaceId,
 });
 
-/** Narrow a page's raw `DashboardPageTeam` rows to the teams of its dashboard's organization. */
+/**
+ * Narrow a page's raw `DashboardPageTeam` rows to the teams of its dashboard's organization. The page is
+ * limited by its `teamLimited` flag, or by any limit row at all (a row the previous release wrote without
+ * the flag, or one naming another organization's team): a page never opens because a row was ignored.
+ */
 export const toDashboardPageProjectionRow = (
   page: Readonly<{
     dashboardId: string;
     id: string;
     organizationId: string;
+    teamLimited: boolean;
     teamLimits: ReadonlyArray<Readonly<{ team: Readonly<{ organizationId: string }>; teamId: string }>>;
   }>
 ): TDashboardPageProjectionRow => ({
   dashboardId: page.dashboardId,
   id: page.id,
+  limited: page.teamLimited || page.teamLimits.length > 0,
   limitedTeamIds: sortedUnique(
     page.teamLimits
       .filter(({ team }) => team.organizationId === page.organizationId)

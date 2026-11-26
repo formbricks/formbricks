@@ -13,8 +13,16 @@ export const splitTypedInput = (text: string): { commit: string[]; rest: string 
 };
 
 /**
- * Pasted text with a separator becomes values at once, together with what was typed before it; `null`
- * when the paste holds no separator and should go into the input as text.
+ * Pasted text with a separator becomes values at once, together with the typed text around it; `null`
+ * when the paste holds no separator and should go into the input as text. The paste replaces the input's
+ * selection (`selectionStart`–`selectionEnd`, the caret at the end by default), as a native paste would.
  */
-export const splitPastedInput = (typed: string, pasted: string): string[] | null =>
-  hasChipSeparator(pasted) ? splitChipInput(`${typed}${pasted}`) : null;
+export const splitPastedInput = (
+  typed: string,
+  pasted: string,
+  selectionStart: number = typed.length,
+  selectionEnd: number = selectionStart
+): string[] | null =>
+  hasChipSeparator(pasted)
+    ? splitChipInput(`${typed.slice(0, selectionStart)}${pasted}${typed.slice(selectionEnd)}`)
+    : null;

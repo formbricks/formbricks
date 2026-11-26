@@ -11,7 +11,7 @@ properties:
     pattern: "^[a-z][a-z0-9_]*$"
     description: >-
       Lowercase letters, numbers and underscores, starting with a letter. Never changes after creation.
-      `email`, `name`, `full_name`, `role` and `teams` are reserved (**400**); a key the organization
+      `email`, `name`, `full_name`, `role`, `teams` and `constructor` are reserved (**400**); a key the organization
       already has answers **409**.
   label:
     type: string

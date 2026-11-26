@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import {
   type TDashboardPageProjectionRow,
   type TDashboardProjectionRow,
@@ -22,6 +23,9 @@ type TDashboardPageWhere = NonNullable<
   NonNullable<Parameters<typeof prisma.dashboardPage.findMany>[0]>["where"]
 >;
 
+/** The global client, or a transaction's: the projector reads inside the transaction holding its locks. */
+type TDb = Prisma.TransactionClient | typeof prisma;
+
 const teamLimitSelect = {
   team: { select: { organizationId: true } },
   teamId: true,
@@ -32,9 +36,10 @@ const teamLimitSelect = {
  * their `TeamDashboard` rows, then the `WorkspaceTeam` grants those selections need to count.
  */
 export const readDashboardProjectionRows = async (
-  where: TDashboardWhere
+  where: TDashboardWhere,
+  db: TDb = prisma
 ): Promise<ReadonlyArray<TDashboardProjectionRow>> => {
-  const dashboards = await prisma.dashboard.findMany({
+  const dashboards = await db.dashboard.findMany({
     where,
     select: {
       id: true,
@@ -51,7 +56,7 @@ export const readDashboardProjectionRows = async (
   const grants =
     selections.length === 0
       ? []
-      : await prisma.workspaceTeam.findMany({
+      : await db.workspaceTeam.findMany({
           where: { OR: selections },
           select: { teamId: true, workspaceId: true },
         });
@@ -69,24 +74,27 @@ export const readDashboardProjectionRows = async (
 
 /** The dashboard pages `where` selects, as projection rows, ordered by ID. */
 export const readDashboardPageProjectionRows = async (
-  where: TDashboardPageWhere
+  where: TDashboardPageWhere,
+  db: TDb = prisma
 ): Promise<ReadonlyArray<TDashboardPageProjectionRow>> => {
-  const pages = await prisma.dashboardPage.findMany({
+  const pages = await db.dashboardPage.findMany({
     where,
     select: {
       dashboard: { select: { workspace: { select: { organizationId: true } } } },
       dashboardId: true,
       id: true,
+      teamLimited: true,
       teamLimits: { select: teamLimitSelect, orderBy: { teamId: "asc" } },
     },
     orderBy: { id: "asc" },
   });
 
-  return pages.map(({ dashboard, dashboardId, id, teamLimits }) =>
+  return pages.map(({ dashboard, dashboardId, id, teamLimited, teamLimits }) =>
     toDashboardPageProjectionRow({
       dashboardId,
       id,
       organizationId: dashboard.workspace.organizationId,
+      teamLimited,
       teamLimits,
     })
   );

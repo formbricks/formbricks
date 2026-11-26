@@ -63,14 +63,16 @@ export const ZV3DashboardWidget = z
 export type TV3DashboardWidget = z.infer<typeof ZV3DashboardWidget>;
 
 /**
- * A Dashboard page: a tab of the dashboard, in `order`. `teamIds` lists the teams whose Dashboard Viewers
- * may open it; empty means every team that can open the dashboard ("All teams").
+ * A Dashboard page: a tab of the dashboard, in `order`. While `limited` is false every team that can open
+ * the dashboard sees it ("All teams"); while it is true only the Dashboard Viewers of `teamIds` do, and none
+ * when `teamIds` is empty (a page limited to no team, or whose limited teams were all deleted).
  */
 export const ZV3DashboardPage = z
   .object({
     id: z.string(),
     name: z.string(),
     order: z.number().int(),
+    limited: z.boolean(),
     teamIds: z.array(z.string()),
   })
   .strict();

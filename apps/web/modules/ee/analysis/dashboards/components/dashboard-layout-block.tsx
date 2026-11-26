@@ -228,12 +228,17 @@ function ImageBlock({
   const { t } = useTranslation();
   const ref = useReportHeight(onMeasure);
   const [isUploading, setIsUploading] = useState(false);
+  // The content as it is when an upload finishes: alt text, fit or position changed meanwhile are kept.
+  const contentRef = useRef(content);
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
 
   const upload = async (file: File) => {
     setIsUploading(true);
     try {
       const fileUrl = await uploadDashboardImage(dashboardId, file);
-      onChange({ ...content, fileUrl });
+      onChange({ ...contentRef.current, fileUrl });
     } catch (error) {
       toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.image_upload_failed")));
     } finally {
@@ -262,11 +267,12 @@ function ImageBlock({
           <div
             className={cn("flex", IMAGE_POSITION_CLASS[content.position])}
             // Dropping a new file on an image replaces it.
+            // One replacement at a time, so an earlier upload finishing late cannot undo a later one.
             onDragOver={(event) => {
-              if (isEditing) event.preventDefault();
+              if (isEditing && !isUploading) event.preventDefault();
             }}
             onDrop={(event) => {
-              if (!isEditing) return;
+              if (!isEditing || isUploading) return;
               event.preventDefault();
               const file = event.dataTransfer.files[0];
               if (file) void upload(file);
@@ -308,11 +314,25 @@ function AutoGrowTextarea(props: Readonly<React.TextareaHTMLAttributes<HTMLTextA
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-    element.style.height = "auto";
-    // `scrollHeight` leaves out the border, which `border-box` sizing counts: without it the field is two
-    // pixels short and shows a scrollbar on a single line.
-    const border = element.offsetHeight - element.clientHeight;
-    element.style.height = `${element.scrollHeight + border}px`;
+    const fit = () => {
+      element.style.height = "auto";
+      // `scrollHeight` leaves out the border, which `border-box` sizing counts: without it the field is two
+      // pixels short and shows a scrollbar on a single line.
+      const border = element.offsetHeight - element.clientHeight;
+      element.style.height = `${element.scrollHeight + border}px`;
+    };
+    fit();
+    if (typeof ResizeObserver === "undefined") return;
+    // A narrower block wraps the text onto more lines without a new value. Only a width change refits:
+    // the refit sets the height, which must not set off another one.
+    let width = element.offsetWidth;
+    const observer = new ResizeObserver(() => {
+      if (element.offsetWidth === width) return;
+      width = element.offsetWidth;
+      fit();
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
   }, [props.value]);
   return <textarea ref={ref} rows={1} {...props} className={cn("overflow-hidden", props.className)} />;
 }

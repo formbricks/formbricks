@@ -18,7 +18,9 @@ properties:
       - unmatched
   chips:
     type: array
-    maxItems: 100
+    description: >-
+      One per distinct condition, across every dataset on the pages the reader can open: up to 10 per
+      dataset, with no overall cap.
     items:
       type: object
       required:

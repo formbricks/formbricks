@@ -192,7 +192,11 @@ describe("keys", () => {
     vi.mocked(deleteAttributeKey).mockRejectedValue(
       new MemberAttributeKeyInUseError([{ id: "clds1", name: "Support tickets" }], 1)
     );
-    const response = await deleteV3MemberAttributeKey({ ...base, keyId });
+    const response = await deleteV3MemberAttributeKey({
+      ...base,
+      keyId,
+      expectedUpdatedAt: "2026-11-01T10:00:00.000Z",
+    });
     expect(response.status).toBe(409);
     const json = await body(response);
     expect(json.code).toBe("member_attribute_key_in_use");

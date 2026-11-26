@@ -1,4 +1,5 @@
 import "server-only";
+import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
@@ -60,6 +61,7 @@ export const selectPageResource = {
   id: true,
   name: true,
   order: true,
+  teamLimited: true,
   teamLimits: { orderBy: { teamId: "asc" as const }, select: { teamId: true } },
 } satisfies Prisma.DashboardPageSelect;
 
@@ -184,6 +186,21 @@ export const listReadableDashboardRows = async ({
   return { rows, resumeAfter: null };
 };
 
+/**
+ * Each page of `dashboardIds` with its widget count and, when `chartId` is given, whether it holds that
+ * chart: what a Dashboard Viewer's list needs to count and match only the pages they can open.
+ */
+export const listDashboardPageScopeRows = (dashboardIds: readonly string[], chartId?: string) =>
+  prisma.dashboardPage.findMany({
+    where: { dashboardId: { in: [...dashboardIds] } },
+    select: {
+      id: true,
+      dashboardId: true,
+      _count: { select: { widgets: true } },
+      widgets: { where: chartId ? { chartId } : { id: { in: [] } }, select: { id: true }, take: 1 },
+    },
+  });
+
 /** A new dashboard, with its first page ("Overview"): every dashboard has at least one. */
 export const createDashboardRow = (data: {
   workspaceId: string;
@@ -240,6 +257,7 @@ export const duplicateDashboardRow = ({
           orderBy: PAGE_READ_ORDER,
           select: {
             name: true,
+            teamLimited: true,
             teamLimits: { select: { teamId: true } },
             widgets: {
               orderBy: WIDGET_READ_ORDER,
@@ -278,33 +296,40 @@ export const duplicateDashboardRow = ({
       select: { id: true },
     });
 
-    // Every page, in order and with its team limit, and each page's widgets on the copied page. A
+    // Every page, in order and with its team limit, and each page's widgets on the copied page, in one
+    // bulk write per table: the page ids are minted here so the limits and widgets can name them. A
     // dashboard always has a page; one that somehow has none still gets the first page a dashboard needs.
-    const pages =
+    const pages = (
       source.pages.length > 0
         ? source.pages
-        : [{ name: DEFAULT_DASHBOARD_PAGE_NAME, teamLimits: [], widgets: [] }];
-    for (const [pageOrder, page] of pages.entries()) {
-      await tx.dashboardPage.create({
-        data: {
-          dashboardId: copy.id,
-          name: page.name,
-          order: pageOrder,
-          teamLimits: { create: page.teamLimits.map(({ teamId }) => ({ teamId })) },
-          widgets: {
-            create: page.widgets.map((widget, order) => ({
-              dashboardId: copy.id,
-              kind: widget.kind,
-              chartId: widget.chartId,
-              content: widget.content ?? Prisma.DbNull,
-              layout: (widget.layout ?? {}) as Prisma.InputJsonValue,
-              order,
-            })),
-          },
-        },
-        select: { id: true },
-      });
-    }
+        : [{ name: DEFAULT_DASHBOARD_PAGE_NAME, teamLimited: false, teamLimits: [], widgets: [] }]
+    ).map((page) => ({ ...page, id: createId() }));
+    await tx.dashboardPage.createMany({
+      data: pages.map(({ id, name, teamLimited, teamLimits }, order) => ({
+        id,
+        dashboardId: copy.id,
+        name,
+        order,
+        // A page limited to no team stays limited in the copy.
+        teamLimited: teamLimited || teamLimits.length > 0,
+      })),
+    });
+    const teamLimits = pages.flatMap(({ id, teamLimits }) =>
+      teamLimits.map(({ teamId }) => ({ pageId: id, teamId }))
+    );
+    if (teamLimits.length > 0) await tx.dashboardPageTeam.createMany({ data: teamLimits });
+    const widgets = pages.flatMap(({ id, widgets }) =>
+      widgets.map((widget, order) => ({
+        dashboardId: copy.id,
+        pageId: id,
+        kind: widget.kind,
+        chartId: widget.chartId,
+        content: widget.content ?? Prisma.DbNull,
+        layout: (widget.layout ?? {}) as Prisma.InputJsonValue,
+        order,
+      }))
+    );
+    if (widgets.length > 0) await tx.dashboardWidget.createMany({ data: widgets });
 
     return tx.dashboard.findUniqueOrThrow({ where: { id: copy.id }, select: selectDashboardResource });
   });

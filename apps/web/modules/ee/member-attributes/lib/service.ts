@@ -185,12 +185,13 @@ const findDatasetsUsingKey = async (
 /**
  * Deletes a key and every value members and invites hold for it. Refused while Dashboard Viewer access of
  * a Feedback Dataset matches on it (the FK is `Restrict`, so a condition added during the delete is caught
- * by the database too). `expectedUpdatedAt`, when sent, is the same compare-and-set as an update.
+ * by the database too). `expectedUpdatedAt` is the same compare-and-set as an update: it is checked by the
+ * delete statement too, not only by the read before it.
  */
 export const deleteAttributeKey = async (
   organizationId: string,
   keyId: string,
-  expectedUpdatedAt?: Date
+  expectedUpdatedAt: Date
 ): Promise<TMemberAttributeKey> => {
   try {
     return await prisma.$transaction(async (tx) => {
@@ -199,14 +200,26 @@ export const deleteAttributeKey = async (
         select: KEY_SELECT,
       });
       if (!key) throw new MemberAttributeKeyNotFoundError();
-      if (expectedUpdatedAt && key.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+      if (key.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
         throw new MemberAttributeKeyConflictError(key.updatedAt);
       }
 
       const usage = await findDatasetsUsingKey(tx, organizationId, keyId);
       if (usage.datasetCount > 0) throw new MemberAttributeKeyInUseError(usage.datasets, usage.datasetCount);
 
-      await tx.memberAttributeKey.delete({ where: { id: keyId } });
+      // The version check is part of the delete itself, so an update that commits after the read above
+      // still turns this delete into a conflict instead of removing a key the caller never saw.
+      const { count } = await tx.memberAttributeKey.deleteMany({
+        where: { id: keyId, organizationId, updatedAt: expectedUpdatedAt },
+      });
+      if (count === 0) {
+        const current = await tx.memberAttributeKey.findFirst({
+          where: { id: keyId, organizationId },
+          select: { updatedAt: true },
+        });
+        if (!current) throw new MemberAttributeKeyNotFoundError();
+        throw new MemberAttributeKeyConflictError(current.updatedAt);
+      }
       return key;
     });
   } catch (error) {
@@ -352,14 +365,16 @@ const toAttributeRecord = (
   keyById: Map<string, string>,
   values: { attributeKeyId: string; value: string }[]
 ): Record<string, string[]> => {
-  const record: Record<string, string[]> = {};
+  // A Map, not an object literal: a key such as `constructor` would otherwise read the inherited property.
+  const byKey = new Map<string, string[]>();
   for (const { attributeKeyId, value } of values) {
     const key = keyById.get(attributeKeyId);
     if (!key) continue;
-    record[key] ??= [];
-    record[key].push(value);
+    const list = byKey.get(key) ?? [];
+    list.push(value);
+    byKey.set(key, list);
   }
-  return record;
+  return Object.fromEntries(byKey);
 };
 
 /**
@@ -537,31 +552,65 @@ export const applyMemberAttributeWrites = async (
 
   await prisma.$transaction(
     async (tx) => {
-      const memberRows: TMemberValueRow[] = [];
-      const inviteRows: TInviteValueRow[] = [];
+      const memberWrites = named.filter(
+        (write): write is Extract<TMemberAttributeWrite, { target: "member" }> => write.target === "member"
+      );
+      const inviteWrites = named.filter(
+        (write): write is Extract<TMemberAttributeWrite, { target: "invite" }> => write.target === "invite"
+      );
+      const userIds = [...new Set(memberWrites.map((write) => write.userId))].sort();
+      const inviteIds = [...new Set(inviteWrites.map((write) => write.inviteId))].sort();
 
-      for (const write of named) {
-        const attributeKeyId = { in: [...write.valuesByKeyId.keys()] };
-        if (write.target === "member") {
-          await tx.memberAttributeValue.deleteMany({
-            where: { organizationId, userId: write.userId, attributeKeyId },
-          });
-          memberRows.push(
-            ...toValueRows(write.valuesByKeyId).map((row) => ({
-              ...row,
-              organizationId,
-              userId: write.userId,
-            }))
-          );
-        } else {
-          await tx.inviteAttributeValue.deleteMany({
-            where: { inviteId: write.inviteId, invite: { organizationId }, attributeKeyId },
-          });
-          inviteRows.push(
-            ...toValueRows(write.valuesByKeyId).map((row) => ({ ...row, inviteId: write.inviteId }))
-          );
-        }
+      // Lock every target's membership or invite row first, in a fixed order, so two requests replacing
+      // the same member's values run one after the other (a delete matching no rows locks nothing, and
+      // both inserts would otherwise land) and two overlapping batches cannot deadlock.
+      if (userIds.length > 0) {
+        await tx.$queryRaw`
+          SELECT "userId" FROM "Membership"
+          WHERE "organizationId" = ${organizationId} AND "userId" = ANY(${userIds}::TEXT[])
+          ORDER BY "userId"
+          FOR UPDATE
+        `;
       }
+      if (inviteIds.length > 0) {
+        await tx.$queryRaw`
+          SELECT "id" FROM "Invite"
+          WHERE "organizationId" = ${organizationId} AND "id" = ANY(${inviteIds}::TEXT[])
+          ORDER BY "id"
+          FOR UPDATE
+        `;
+      }
+
+      // One delete per table for the whole batch; each row still clears only the keys it names.
+      if (memberWrites.length > 0) {
+        await tx.memberAttributeValue.deleteMany({
+          where: {
+            organizationId,
+            OR: memberWrites.map((write) => ({
+              userId: write.userId,
+              attributeKeyId: { in: [...write.valuesByKeyId.keys()] },
+            })),
+          },
+        });
+      }
+      if (inviteWrites.length > 0) {
+        await tx.inviteAttributeValue.deleteMany({
+          where: {
+            invite: { organizationId },
+            OR: inviteWrites.map((write) => ({
+              inviteId: write.inviteId,
+              attributeKeyId: { in: [...write.valuesByKeyId.keys()] },
+            })),
+          },
+        });
+      }
+
+      const memberRows: TMemberValueRow[] = memberWrites.flatMap((write) =>
+        toValueRows(write.valuesByKeyId).map((row) => ({ ...row, organizationId, userId: write.userId }))
+      );
+      const inviteRows: TInviteValueRow[] = inviteWrites.flatMap((write) =>
+        toValueRows(write.valuesByKeyId).map((row) => ({ ...row, inviteId: write.inviteId }))
+      );
 
       if (memberRows.length > 0) {
         await tx.memberAttributeValue.createMany({ data: memberRows, skipDuplicates: true });
@@ -581,15 +630,26 @@ type TInviteAttributeValueRow = { attributeKeyId: string; value: string; normali
  * are never read: only values whose key belongs to the invite's organization. A caller that spends the
  * invite before the membership exists (deleting the invite deletes its values) reads them first, in the
  * same transaction, and passes them on.
+ *
+ * The invite row is locked before the read, the same lock `applyMemberAttributeWrites` takes: a bulk write
+ * to the invite either commits before the read (so its values are copied) or waits until the invite is
+ * spent and then fails on the invite's foreign key, rolling its batch back instead of reporting values the
+ * acceptance's cascade removed.
  */
-export const readInviteAttributeValues = (
+export const readInviteAttributeValues = async (
   { inviteId, organizationId }: { inviteId: string; organizationId: string },
   client: Prisma.TransactionClient = prisma
-): Promise<TInviteAttributeValueRow[]> =>
-  client.inviteAttributeValue.findMany({
+): Promise<TInviteAttributeValueRow[]> => {
+  await client.$queryRaw`
+    SELECT "id" FROM "Invite"
+    WHERE "id" = ${inviteId} AND "organizationId" = ${organizationId}
+    FOR UPDATE
+  `;
+  return client.inviteAttributeValue.findMany({
     where: { inviteId, invite: { organizationId }, attributeKey: { organizationId } },
     select: { attributeKeyId: true, value: true, normalizedValue: true },
   });
+};
 
 /**
  * Copies an invite's values onto the membership its acceptance created (ENG-7468: "Invites carry values

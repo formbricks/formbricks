@@ -648,7 +648,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Rename dashboard page",
       description:
-        "Rename a dashboard page. Which teams see a page is set in the app by an Owner or Manager; get_dashboard reads it as teamIds.",
+        "Rename a dashboard page. Which teams see a page is set in the app by an Owner or Manager; get_dashboard reads it as limited and teamIds: every team sees a page that is not limited, and only the listed teams see a limited one (none when teamIds is empty).",
       inputSchema: ZMcpUpdateDashboardPageInput,
       outputSchema: ZMcpDashboardPageOutput,
       audit: { action: "updated", targetType: "dashboardPage", targetIdArg: "pageId" },

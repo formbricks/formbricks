@@ -210,11 +210,30 @@ describe("addV3DashboardWidget", () => {
   });
 
   test("adds a layout block at its kind's default size, on the page asked for, without a chart lookup", async () => {
-    vi.mocked(addWidgetRow).mockResolvedValueOnce(ok());
-    await addV3DashboardWidget({
+    const textLayout = { x: 0, y: 0, w: 9, h: 8 };
+    vi.mocked(addWidgetRow).mockResolvedValueOnce({
+      kind: "ok",
+      widget: {
+        ...widgetRow({ layout: textLayout }),
+        kind: "text",
+        chartId: null,
+        chart: null,
+        content: { headline: "Q3", description: "" },
+      },
+    });
+    const response = await addV3DashboardWidget({
       dashboardId: DASHBOARD_ID,
       body: { kind: "text", pageId: PAGE_ID, content: { headline: "Q3", description: "" } },
       ...context,
+    });
+    expect(response.status).toBe(201);
+    expect((await response.json()).data).toMatchObject({
+      id: WIDGET_ID,
+      pageId: PAGE_ID,
+      kind: "text",
+      chartId: null,
+      content: { headline: "Q3", description: "" },
+      layout: textLayout,
     });
     expect(getChartTypeInWorkspace).not.toHaveBeenCalled();
     expect(addWidgetRow).toHaveBeenCalledWith(

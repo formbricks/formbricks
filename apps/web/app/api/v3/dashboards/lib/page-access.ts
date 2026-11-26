@@ -95,9 +95,53 @@ export const ineligiblePageTeams = (
     ],
   });
 
-/** Whether two team limits are the same set; `null` and an empty list both mean "All teams". */
-export const sameTeamLimit = (a: readonly string[] | null, b: readonly string[] | null): boolean => {
-  const left = new Set(a ?? []);
-  const right = new Set(b ?? []);
+/**
+ * A page's team limit: `null` for none ("All teams"), or the teams it is limited to. An empty list is a
+ * limit too: no team's Dashboard Viewers see the page, as when its last limited team was deleted.
+ */
+export type TPageTeamLimit = string[] | null;
+
+/** A stored page's team limit, from `DashboardPage.teamLimited` and its `DashboardPageTeam` rows. */
+export const storedTeamLimit = (page: {
+  teamLimited: boolean;
+  teamLimits: ReadonlyArray<{ teamId: string }>;
+}): TPageTeamLimit =>
+  page.teamLimited || page.teamLimits.length > 0 ? page.teamLimits.map(({ teamId }) => teamId) : null;
+
+/** A team limit as the API reads it, and as the audit trail records it: `limited` and `teamIds`. */
+export const toLimitFields = (limit: TPageTeamLimit): { limited: boolean; teamIds: string[] } => ({
+  limited: limit !== null,
+  teamIds: limit ?? [],
+});
+
+/** Whether two team limits are the same: both none, or both the same set of teams. */
+export const sameTeamLimit = (a: TPageTeamLimit, b: TPageTeamLimit): boolean => {
+  if (a === null || b === null) return a === b;
+  const left = new Set(a);
+  const right = new Set(b);
   return left.size === right.size && [...left].every((teamId) => right.has(teamId));
+};
+
+/** The teams `next` limits a page to that `before` did not; every team when the page was unlimited. */
+export const addedLimitTeams = (before: TPageTeamLimit, next: TPageTeamLimit): string[] =>
+  (next ?? []).filter((teamId) => !(before ?? []).includes(teamId));
+
+/**
+ * Replace a page's team limit: its `DashboardPageTeam` rows and its `teamLimited` flag, which keeps a
+ * page limited to no team limited (it never reopens to every reader of its dashboard on its own).
+ */
+export const writePageTeamLimit = async (
+  tx: Prisma.TransactionClient,
+  pageId: string,
+  next: TPageTeamLimit
+): Promise<void> => {
+  await tx.dashboardPageTeam.deleteMany({ where: { pageId } });
+  if (next && next.length > 0) {
+    await tx.dashboardPageTeam.createMany({ data: next.map((teamId) => ({ pageId, teamId })) });
+  }
+  await tx.dashboardPage.update({
+    where: { id: pageId },
+    data: { teamLimited: next !== null },
+    select: { id: true },
+  });
 };

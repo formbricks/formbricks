@@ -1911,6 +1911,9 @@ model Dashboard {
 /// bind Dashboard Viewers only and are enforced in SpiceDB (ADR-0060).
 ///
 /// @property order - Sort key of the tab, ascending
+/// @property teamLimited - Whether the page is limited to its `teamLimits` teams. Stays true when the
+///                         page is limited to no team, as when its last limited team is deleted: such a
+///                         page is open to no Dashboard Viewer, never reopened to all of them.
 model DashboardPage {
   id          String              @id @default(cuid())
   createdAt   DateTime            @default(now()) @map(name: "created_at")
@@ -1919,6 +1922,7 @@ model DashboardPage {
   dashboardId String
   name        String
   order       Int                 @default(0)
+  teamLimited Boolean             @default(false)
   widgets     DashboardWidget[]
   teamLimits  DashboardPageTeam[]
 

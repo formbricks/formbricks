@@ -46,17 +46,27 @@ export const addDraftPage = (
   name: string
 ): { pages: TDashboardPage[]; pageId: string } => {
   const pageId = newDraftId();
-  return { pages: renumber([...pages, { id: pageId, name, order: pages.length, teamIds: [] }]), pageId };
+  return {
+    pages: renumber([...pages, { id: pageId, name, order: pages.length, limited: false, teamIds: [] }]),
+    pageId,
+  };
 };
 
 export const renameDraftPage = (pages: TDashboardPage[], pageId: string, name: string): TDashboardPage[] =>
   pages.map((page) => (page.id === pageId ? { ...page, name } : page));
 
+/**
+ * Sets a page's team limit: `null` for "All teams", or the teams it is limited to. An empty list is kept
+ * as a limit to no team, never read as "All teams".
+ */
 export const setDraftPageTeams = (
   pages: TDashboardPage[],
   pageId: string,
-  teamIds: string[]
-): TDashboardPage[] => pages.map((page) => (page.id === pageId ? { ...page, teamIds } : page));
+  teamIds: string[] | null
+): TDashboardPage[] =>
+  pages.map((page) =>
+    page.id === pageId ? { ...page, limited: teamIds !== null, teamIds: teamIds ?? [] } : page
+  );
 
 /** Deletes a page and its widgets; the last page is kept, as a dashboard always has one. */
 export const deleteDraftPage = (
@@ -146,8 +156,14 @@ export const addDraftCharts = (
 export const findEmptyTextBlocks = (widgets: TDashboardWidget[]): TDashboardWidget[] =>
   widgets.filter((widget) => widget.kind === "text" && isTextBlockEmpty(widget.content));
 
-const sameTeams = (a: readonly string[], b: readonly string[]) =>
+export const sameTeams = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && a.every((teamId) => b.includes(teamId));
+
+/** Whether two pages have the same team limit: both "All teams", or both limited to the same teams. */
+export const samePageLimit = (
+  a: Pick<TDashboardPage, "limited" | "teamIds">,
+  b: Pick<TDashboardPage, "limited" | "teamIds">
+): boolean => a.limited === b.limited && (!a.limited || sameTeams(a.teamIds, b.teamIds));
 
 /** Whether the draft pages differ from the saved ones: added, removed, renamed, reordered or re-limited. */
 export const pagesChanged = (draft: TDashboardPage[], saved: TDashboardPage[]): boolean =>
@@ -158,7 +174,7 @@ export const pagesChanged = (draft: TDashboardPage[], saved: TDashboardPage[]): 
       page.id !== other.id ||
       page.name !== other.name ||
       page.order !== other.order ||
-      !sameTeams(page.teamIds, other.teamIds)
+      !samePageLimit(page, other)
     );
   });
 
@@ -182,17 +198,17 @@ export const widgetsChanged = (draft: TDashboardWidget[], saved: TDashboardWidge
 /**
  * The pages as the save sends them, in tab order. A team limit is sent only where it differs from
  * `saved`, so an editor who cannot change limits never sends one, and the server is asked for the
- * permission only when a limit really changes.
+ * permission only when a limit really changes. "All teams" is sent as `null`; a limit to no team as `[]`.
  */
 export const toSavedPages = (pages: TDashboardPage[], saved: TDashboardPage[]): TSavedPage[] =>
   pages.map((page, order) => {
     const before = saved.find((other) => other.id === page.id);
-    const limitChanged = before ? !sameTeams(before.teamIds, page.teamIds) : page.teamIds.length > 0;
+    const limitChanged = before ? !samePageLimit(before, page) : page.limited;
     return {
       ...(isDraftId(page.id) ? { key: page.id } : { pageId: page.id }),
       name: page.name.trim(),
       order,
-      ...(limitChanged ? { teamIds: page.teamIds } : {}),
+      ...(limitChanged ? { teamIds: page.limited ? page.teamIds : null } : {}),
     };
   });
 

@@ -61,7 +61,10 @@ export type TMemberSettingsDialogProps = Readonly<{
   isDashboardViewerRoleEnabled: boolean;
   /** Whether the role can be changed here (`isRoleEditDisabled` false, Access Control on). */
   canEditRole: boolean;
-  /** Whether attributes can be changed here (an Owner or Manager above the floor, Member attributes on). */
+  /**
+   * Whether attributes can be changed here (an Owner or Manager above the floor, Member attributes on, and
+   * the values loaded: the dialog keeps the values it opened with as the baseline Save diffs against).
+   */
   canEditAttributes: boolean;
   canDelete: boolean;
   /** The organization's attribute keys; empty when there are none or the viewer may not read them. */
@@ -95,9 +98,12 @@ export const MemberSettingsDialog = ({
   const fieldId = useId();
   const roleLabels = getOrganizationRoleLabels(t);
   const [role, setRole] = useState<TOrganizationRole>(row.role);
-  const [attributes, setAttributes] = useState<Record<string, string[]>>(() =>
+  // The values the fields showed when the dialog opened: Save sends only keys changed from these, so a
+  // refetch while the dialog is open never turns an untouched key into a write.
+  const [initialAttributes] = useState<Record<string, string[]>>(() =>
     Object.fromEntries(attributeKeys.map(({ key }) => [key, row.attributes[key] ?? []]))
   );
+  const [attributes, setAttributes] = useState<Record<string, string[]>>(initialAttributes);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -126,16 +132,19 @@ export const MemberSettingsDialog = ({
   };
 
   const saveAttributes = async (): Promise<boolean> => {
-    const changed = getChangedAttributes(row.attributes, attributes);
+    const changed = getChangedAttributes(initialAttributes, attributes);
     if (!canEditAttributes || Object.keys(changed).length === 0) return true;
     try {
       const result = await bulkMutation.mutateAsync([{ email: row.email, attributes: changed }]);
       const outcome = result.rows[0];
+      if (outcome?.status === "updated_member" || outcome?.status === "updated_invite") return true;
       if (outcome?.status === "invalid") {
         toast.error(outcome.problems.map((problem) => problem.reason).join(", "));
-        return false;
+      } else {
+        // `unknown_email`: the member left or the invite was removed while the dialog was open.
+        toast.error(t("workspace.settings.members.member_no_longer_exists"));
       }
-      return true;
+      return false;
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       return false;
@@ -147,10 +156,11 @@ export const MemberSettingsDialog = ({
     try {
       const roleChanged = role !== row.role;
       if (!(await saveRole())) return;
+      // The role is saved even if the attributes fail next, so the table must show it either way.
+      if (roleChanged) router.refresh();
       if (!(await saveAttributes())) return;
       toast.success(t("workspace.settings.members.member_settings_saved"));
       setOpen(false);
-      if (roleChanged) router.refresh();
     } finally {
       setIsSaving(false);
     }

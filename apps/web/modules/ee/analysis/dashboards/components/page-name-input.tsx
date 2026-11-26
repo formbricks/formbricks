@@ -40,6 +40,8 @@ export function PageNameInput({ initialName, onSubmit, onCancel, className }: Re
       onChange={(event) => setName(event.target.value)}
       onBlur={submit}
       onKeyDown={(event) => {
+        // Enter that confirms an IME candidate (Japanese, Chinese, Korean input) is not a submit.
+        if (event.nativeEvent.isComposing) return;
         if (event.key === "Enter") {
           event.preventDefault();
           submit();

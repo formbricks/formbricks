@@ -115,9 +115,11 @@ import { TableToolbar } from "@/modules/ui/components/table-toolbar";
 import { useDashboard } from "../hooks/use-dashboard";
 import { useDashboardToolbarFilters } from "../hooks/use-dashboard-toolbar-filters";
 import { useLockedDashboardFilters } from "../hooks/use-locked-dashboard-filters";
+import { compactWidgetLayouts } from "../lib/saved-layout";
 import {
   draftOverLatest,
   draftPagesOverLatest,
+  pagesRemovedByOverwrite,
   toSavedWidgets,
   widgetsRemovedByOverwrite,
 } from "../lib/stale-save";
@@ -322,14 +324,16 @@ export function DashboardDetailClient(props: Readonly<DashboardDetailClientProps
 
   // A failed background refetch keeps the last dashboard (TanStack Query holds `data` on error), so the
   // full-page error is only for a dashboard that never loaded; replacing the view would drop an open edit.
-  if (!dashboard) {
+  // A 403 is the exception: access was taken away, so the copy read before must not stay on screen.
+  const isForbidden = error instanceof V3ApiError && error.status === 403;
+  if (!dashboard || isForbidden) {
     return (
       <PageContentWrapper>
         <GoBackButton url={`/workspaces/${props.workspaceId}/dashboards`} />
         {/* Viewing as someone keeps the banner and its way back, whatever the read answered. */}
         {props.viewAsMember && <ViewAsBanner member={props.viewAsMember} />}
         {/* A 403 while viewing as someone is the answer, not a failure: they cannot see this dashboard. */}
-        {props.viewAsMember && error instanceof V3ApiError && error.status === 403 ? (
+        {props.viewAsMember && isForbidden ? (
           <div className="rounded-lg border border-slate-200 bg-white p-6">
             <h2 className="text-base font-semibold text-slate-900">
               {t("workspace.analysis.dashboards.view_as_no_access_title", {
@@ -374,6 +378,9 @@ function DashboardDetailView({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  // Set as a save starts, before React re-renders: the draft is frozen while its request is in flight, so
+  // nothing changed meanwhile is cleared unsaved when the save succeeds.
+  const savingRef = useRef(false);
   // The version the edit started from: what the save sends as its precondition, so a refetch while
   // editing can never make a save silently overwrite someone else's change.
   const [editBaseUpdatedAt, setEditBaseUpdatedAt] = useState<string | null>(null);
@@ -455,9 +462,14 @@ function DashboardDetailView({
 
   const widgets = draftWidgets ?? dashboard.widgets;
   const pages = draftPages ?? dashboard.pages;
+  // From the saved widgets, not the draft: the filter fields are read from the saved dashboard, so a draft
+  // chart's dataset in the query key would cache the saved fields under a key that claims to include it.
   const datasetIds = useMemo(
-    () => widgets.flatMap((widget) => (widget.kind === "chart" ? [widget.chart.feedbackDirectoryId] : [])),
-    [widgets]
+    () =>
+      dashboard.widgets.flatMap((widget) =>
+        widget.kind === "chart" ? [widget.chart.feedbackDirectoryId] : []
+      ),
+    [dashboard.widgets]
   );
 
   // ── The selected page, kept in the URL ────────────────────────────────────────────────────────
@@ -470,6 +482,14 @@ function DashboardDetailView({
     },
     [pathname, searchParams]
   );
+
+  // The selection and pages as they are now, for work that finishes after the render that started it.
+  const selectedPageIdRef = useRef(selectedPageId);
+  const pagesRef = useRef(pages);
+  useEffect(() => {
+    selectedPageIdRef.current = selectedPageId;
+    pagesRef.current = pages;
+  }, [selectedPageId, pages]);
 
   const pageWidgets = useMemo(
     () => widgets.filter((widget) => widget.pageId === selectedPageId),
@@ -498,11 +518,12 @@ function DashboardDetailView({
       ),
     [pageWidgets, neededRows, isEditing]
   );
-  /** Every widget with the heights its blocks are drawn at, as the save sends them. */
+  /**
+   * Every widget with the heights its blocks are drawn at and the places the grid draws them in, as the
+   * save sends them: a block that grew pushes the ones below it down, as the grid's compactor does.
+   */
   const withFittedHeights = useCallback(
-    (all: TDashboardWidget[]) => {
-      return fitBlockHeights(all, neededRows);
-    },
+    (all: TDashboardWidget[]) => compactWidgetLayouts(fitBlockHeights(all, neededRows)),
     [neededRows]
   );
 
@@ -517,6 +538,7 @@ function DashboardDetailView({
 
   const handleInteractionEnd = useCallback(
     (finalLayout: Layout) => {
+      if (savingRef.current) return;
       setDraftWidgets((current) => applyLayoutToWidgets(current ?? dashboard.widgets, finalLayout));
     },
     [dashboard.widgets]
@@ -524,6 +546,7 @@ function DashboardDetailView({
 
   const handleRemoveWidget = useCallback(
     (widgetId: string) => {
+      if (savingRef.current) return;
       setDraftWidgets((current) => (current ?? dashboard.widgets).filter((w) => w.id !== widgetId));
     },
     [dashboard.widgets]
@@ -531,6 +554,7 @@ function DashboardDetailView({
 
   const handleBlockContentChange = useCallback(
     (widgetId: string, content: TDashboardImageContent | TDashboardTextContent) => {
+      if (savingRef.current) return;
       setDraftWidgets((current) =>
         (current ?? dashboard.widgets).map((widget) =>
           widget.id === widgetId && (widget.kind === "image" || widget.kind === "text")
@@ -683,6 +707,7 @@ function DashboardDetailView({
 
   // ── Pages and blocks in the draft ─────────────────────────────────────────────────────────────
   const handleAddPage = useCallback(() => {
+    if (savingRef.current) return;
     if (pages.length >= MAX_DASHBOARD_PAGES) {
       toast.error(t("workspace.analysis.dashboards.page_limit_reached", { max: MAX_DASHBOARD_PAGES }));
       return;
@@ -696,19 +721,29 @@ function DashboardDetailView({
   }, [pages, selectPage, t]);
 
   const handleRenamePage = useCallback(
-    (pageId: string, pageName: string) => setDraftPages(renameDraftPage(pages, pageId, pageName)),
+    (pageId: string, pageName: string) => {
+      if (!savingRef.current) setDraftPages(renameDraftPage(pages, pageId, pageName));
+    },
     [pages]
   );
 
   const handleMovePage = useCallback(
-    (activeId: string, overId: string) => setDraftPages(moveDraftPage(pages, activeId, overId)),
+    (activeId: string, overId: string) => {
+      if (!savingRef.current) setDraftPages(moveDraftPage(pages, activeId, overId));
+    },
     [pages]
   );
 
   const handlePageTeamsChange = useCallback(
-    (pageId: string, teamIds: string[]) => setDraftPages(setDraftPageTeams(pages, pageId, teamIds)),
+    (pageId: string, teamIds: string[] | null) => {
+      if (!savingRef.current) setDraftPages(setDraftPageTeams(pages, pageId, teamIds));
+    },
     [pages]
   );
+
+  const handleNameChange = useCallback((nextName: string) => {
+    if (!savingRef.current) setDraftName(nextName);
+  }, []);
 
   /** Delete asks first; Cancel goes back to where it was asked, the tabs or Manage pages. */
   const askDeletePage = useCallback(
@@ -720,7 +755,7 @@ function DashboardDetailView({
   );
 
   const handleConfirmDeletePage = useCallback(() => {
-    if (!pageToDelete) return;
+    if (!pageToDelete || savingRef.current) return;
     const next = deleteDraftPage(pages, widgets, pageToDelete.id);
     setDraftPages(next.pages);
     setDraftWidgets(next.widgets);
@@ -729,7 +764,7 @@ function DashboardDetailView({
 
   const handleAddBlock = useCallback(
     (kind: TLayoutBlockKind) => {
-      if (!selectedPageId) return;
+      if (!selectedPageId || savingRef.current) return;
       setDraftWidgets(
         addDraftBlock(widgets, { kind, pageId: selectedPageId, dashboardId: dashboard.id }).widgets
       );
@@ -737,12 +772,18 @@ function DashboardDetailView({
     [dashboard.id, selectedPageId, widgets]
   );
 
+  // A chart created from the picker arrives after a read, so it is added to the draft as it is then, on
+  // the page the picker was opened on, and not at all once that page or the edit is gone.
   const handlePickCharts = useCallback(
     (charts: TAppChart[]) => {
-      if (!selectedPageId) return;
-      setDraftWidgets(addDraftCharts(widgets, { charts, pageId: selectedPageId, dashboardId: dashboard.id }));
+      const pageId = selectedPageId;
+      if (!pageId || savingRef.current) return;
+      if (!pagesRef.current.some((page) => page.id === pageId)) return;
+      setDraftWidgets((current) =>
+        current === null ? current : addDraftCharts(current, { charts, pageId, dashboardId: dashboard.id })
+      );
     },
-    [dashboard.id, selectedPageId, widgets]
+    [dashboard.id, selectedPageId]
   );
 
   const placedChartIds = useMemo(
@@ -770,6 +811,7 @@ function DashboardDetailView({
       basePages: TDashboardPage[],
       savedWidgets: TDashboardWidget[]
     ) => {
+      savingRef.current = true;
       setIsSaving(true);
       try {
         const saved = await replaceDashboard(dashboard.id, {
@@ -781,10 +823,12 @@ function DashboardDetailView({
         queryClient.setQueryData(dashboardKeys.detail(dashboard.id), saved);
         void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
         void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
-        // A page created by the save had a draft id: stay on it, now under its real one.
-        if (selectedPageId && isDraftId(selectedPageId)) {
-          const index = savedPages.findIndex((page) => page.id === selectedPageId);
-          const created = saved.pages[index];
+        // A page created by the save had a draft id: stay on it, now under its real one. Read the selection
+        // as it is now, so a page picked while the save was in flight stays picked.
+        const currentPageId = selectedPageIdRef.current;
+        if (currentPageId && isDraftId(currentPageId)) {
+          const index = savedPages.findIndex((page) => page.id === currentPageId);
+          const created = index === -1 ? undefined : saved.pages[index];
           if (created) selectPage(created.id);
         }
         toast.success(t("workspace.analysis.dashboards.dashboard_saved"));
@@ -803,10 +847,11 @@ function DashboardDetailView({
         }
         toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.dashboard_save_failed")));
       } finally {
+        savingRef.current = false;
         setIsSaving(false);
       }
     },
-    [dashboard.id, leaveEditMode, queryClient, selectPage, selectedPageId, t, withFittedHeights]
+    [dashboard.id, leaveEditMode, queryClient, selectPage, t, withFittedHeights]
   );
 
   /** Whether the draft can be saved; says why not when it cannot. */
@@ -847,7 +892,7 @@ function DashboardDetailView({
   /** Save the edit over the latest version, knowing what it removes. */
   const handleSaveAnyway = useCallback(() => {
     if (!staleLatest) return;
-    const keptPages = draftPagesOverLatest(staleLatest.pages, pages);
+    const keptPages = draftPagesOverLatest(staleLatest.pages, pages, editBasePages ?? []);
     // A name this editor did not touch is the latest one, so someone else's rename survives the overwrite.
     void saveDashboard(
       staleLatest.updatedAt,
@@ -856,17 +901,34 @@ function DashboardDetailView({
       staleLatest.pages,
       draftOverLatest(staleLatest.widgets, widgets, keptPages)
     );
-  }, [staleLatest, saveDashboard, draftName, pages, widgets]);
+  }, [staleLatest, saveDashboard, draftName, pages, editBasePages, widgets]);
 
-  const removedByOverwrite = useMemo(
-    () =>
-      staleLatest
-        ? widgetsRemovedByOverwrite(staleLatest.widgets, widgets, editBaseWidgetIds ?? NO_WIDGET_IDS).flatMap(
-            (widget) => (widget.kind === "chart" ? [widget.chart.name] : [])
-          )
-        : [],
-    [staleLatest, widgets, editBaseWidgetIds]
-  );
+  // Everything Save anyway takes away that someone else added meanwhile: their pages, then their charts
+  // and blocks, each named as the editor would recognise it.
+  const removedByOverwrite = useMemo(() => {
+    if (!staleLatest) return [];
+    const basePageIds = new Set((editBasePages ?? []).map((page) => page.id));
+    const removedPages = pagesRemovedByOverwrite(staleLatest.pages, pages, basePageIds).map((page) =>
+      t("workspace.analysis.dashboards.stale_removed_page", { name: page.name })
+    );
+    const removedWidgets = widgetsRemovedByOverwrite(
+      staleLatest.widgets,
+      widgets,
+      editBaseWidgetIds ?? NO_WIDGET_IDS
+    ).map((widget) => {
+      switch (widget.kind) {
+        case "chart":
+          return widget.chart.name;
+        case "text":
+          return widget.content.headline.trim() || t("common.text");
+        case "image":
+          return widget.content.alt.trim() || t("common.image");
+        default:
+          return t("workspace.analysis.dashboards.separator");
+      }
+    });
+    return [...removedPages, ...removedWidgets];
+  }, [staleLatest, pages, widgets, editBasePages, editBaseWidgetIds, t]);
 
   // `E` toggles edit mode: it enters from view mode, and inside edit mode it saves when there is
   // something to save and cancels otherwise - the same button the key cap sits on in the control bar.
@@ -920,11 +982,12 @@ function DashboardDetailView({
     (filter: TDashboardDateFilter | null) => {
       // Persist the choice (cookie) so it survives across sessions and seeds the next visit's first
       // fetch, then reflect it in the URL so the view can be shared.
-      writeStoredDateFilter(dashboard.id, filter);
+      // Viewing as someone is a preview: its choices never replace the viewer's own remembered ones.
+      if (!viewAsMember) writeStoredDateFilter(dashboard.id, filter);
       setChosenDateFilter(filter);
       applyDateFilterToUrl(filter);
     },
-    [applyDateFilterToUrl, dashboard.id]
+    [applyDateFilterToUrl, dashboard.id, viewAsMember]
   );
 
   // Remember the filters (cookie) for the next visit, then pin them in the URL so the view can be shared.
@@ -940,13 +1003,13 @@ function DashboardDetailView({
         toast.error(t("workspace.analysis.dashboards.filter_picks_too_long"));
         return;
       }
-      writeStoredFilters(dashboard.id, kept);
+      if (!viewAsMember) writeStoredFilters(dashboard.id, kept);
       setChosenFilters(kept);
       const params = writeFiltersToUrl(new URLSearchParams(searchParams.toString()), kept);
       const queryString = params.toString();
       window.history.pushState(null, "", queryString ? `${pathname}?${queryString}` : pathname);
     },
-    [dashboard.id, pathname, searchParams, t]
+    [dashboard.id, pathname, searchParams, t, viewAsMember]
   );
 
   const toolbar = useDashboardToolbarFilters({
@@ -982,7 +1045,8 @@ function DashboardDetailView({
     if (forYou.length === 0) return lockedFilters.locked;
     return { ...(lockedFilters.locked ?? { filters: [], hint: "" }), forYou };
   }, [viewerAccess?.chips, lockedFilters.locked, t]);
-  const isPageEmpty = pageWidgets.length === 0;
+  // What is drawn decides it: outside edit mode an image block without a file is not drawn.
+  const isPageEmpty = displayedWidgets.length === 0;
 
   // The cookie is read by the server and seeds `chosenDateFilter`, so there is no client-side restore
   // effect. A pinned URL param still wins and is intentionally NOT written back to the cookie, so
@@ -1039,7 +1103,7 @@ function DashboardDetailView({
       <DashboardPageHeader
         name={name}
         isEditing={isEditing}
-        onNameChange={setDraftName}
+        onNameChange={handleNameChange}
         cta={
           <div className="flex items-center gap-2">
             {canManageAccess && !viewAsMember && !isEditing && (
@@ -1083,7 +1147,7 @@ function DashboardDetailView({
 
       <StaleDashboardDialog
         open={staleLatest !== null}
-        removedChartNames={removedByOverwrite}
+        removedItemNames={removedByOverwrite}
         isSaving={isSaving}
         onReload={handleReloadLatest}
         onSaveAnyway={handleSaveAnyway}
@@ -1155,13 +1219,13 @@ function DashboardDetailView({
                     // the date filter above instead of inset from it.
                     containerPadding={[0, 0]}
                     dragConfig={{
-                      enabled: isEditing,
+                      enabled: isEditing && !isSaving,
                       handle: ".rgl-drag-handle",
                       bounded: false,
                       threshold: 5,
                     }}
                     resizeConfig={{
-                      enabled: isEditing,
+                      enabled: isEditing && !isSaving,
                       handles: ["n", "s", "e", "w", "ne", "nw", "se", "sw"],
                     }}
                     compactor={verticalCompactor}

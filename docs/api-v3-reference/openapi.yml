@@ -46,8 +46,9 @@ info:
     - **Pages.** A dashboard has one or more pages (tabs), each with its own grid; every widget names
       its `pageId`. A chart appears at most once per page (**409**) but can sit on several pages of one
       dashboard. Besides charts, a page holds layout blocks: images, text blocks and separators
-      (`kind`). A page can be limited to selected teams (`teamIds`); the limit binds Dashboard Viewers
-      only, and only a signed-in Owner or Manager with Access Control may change it.
+      (`kind`). A page can be limited to selected teams (`limited`, `teamIds`), or to none; the limit
+      binds Dashboard Viewers only, and only a signed-in Owner or Manager with Access Control may change
+      it.
     - **Grid.** Widgets sit on a page's 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
       `1 ≤ h ≤ 32`, `0 ≤ y ≤ 4000`). Gaps are allowed and overlaps on a page answer **422** naming the
       widget. A widget added without a layout takes the first open slot at its default size.
@@ -5233,6 +5234,11 @@ paths:
       description: |
         Lists a workspace's dashboards, newest first, page by page, each with its widget count.
         `filter[chartId][eq]` lists the dashboards that hold a chart. Needs read access to the workspace.
+
+        A Dashboard Viewer lists only the dashboards their team dashboard limits leave them and that have
+        at least one page they can open; `widgetCount` counts only the widgets on those pages, and
+        `filter[chartId][eq]` matches only a chart on such a page. A list read with `viewAs` is audited
+        once as `viewedAs` against the workspace, whatever it returns.
       tags:
         - V3 Dashboards
       parameters:
@@ -5516,7 +5522,7 @@ paths:
         '403':
           $ref: '#/components/responses/V3DashboardsForbidden'
         '409':
-          description: 'Conflict — the dashboard changed since your read, or the name is already used in the workspace. Nothing was written. For a changed dashboard, `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`: read it again and retry.'
+          description: 'Conflict — the dashboard changed since your read, the name is already used in the workspace, a chart appears twice on one page, or new widgets would take the dashboard past 250 widgets. Nothing was written. For a changed dashboard, `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`: read it again and retry.'
           headers:
             X-Request-Id:
               schema:
@@ -5702,7 +5708,8 @@ paths:
       operationId: updateDashboardPageV3
       summary: Rename a page or limit it to teams
       description: |
-        Renames a page, sets which teams' Dashboard Viewers see it (`teamIds`), or both. Changing the team
+        Renames a page, sets which teams' Dashboard Viewers see it (`teamIds`: a list of teams, an empty
+        list for no team, or `null` for every team), or both. Changing the team
         limit needs an Owner or Manager signed in and the Access Control feature — an API key gets 403 — and
         a team that holds no grant on the dashboard's workspace, or whose dashboard limit leaves this
         dashboard out, answers 422 naming it. A limit sent back unchanged needs neither. Moves the
@@ -6148,8 +6155,10 @@ paths:
 
         Needs read access to the dashboard's workspace and to every Feedback Dataset its charts read.
         Every request counts against the default v3 budget, cached or not. Lists are cached
-        for 60 seconds per dashboard version, chart versions, filter, picks, date range and search,
-        shared by everyone who may read the dashboard; an uncached list also counts one unit of the
+        for 60 seconds per dashboard version, filter definitions, picks, date range and search, the
+        charts the reader's list draws on (for a Dashboard Viewer, only those on pages they can open) with
+        their versions, and each Feedback Dataset's Dashboard Viewer access claim for the reader. Readers
+        share a cached list only when all of these match; an uncached list also counts one unit of the
         chart-query budget (600 per minute, 20 at once, per user or API key) per Cube query it runs.
       tags:
         - V3 Dashboards
@@ -6273,8 +6282,8 @@ paths:
         A dashboard-bound read: it needs read access to the dashboard's workspace, which a Dashboard viewer
         has, unlike the field catalog. A Feedback Dataset the caller cannot read through the dashboard is
         left out rather than failing the list. A dashboard with no charts lists nothing. The workspace is
-        resolved from the dashboard, so the operation takes no query parameters; a dashboard the caller
-        cannot see, or that does not exist, answers 403.
+        resolved from the dashboard, so the only query parameter is `viewAs`; any other, such as
+        `workspaceId`, answers 400. A dashboard the caller cannot see, or that does not exist, answers 403.
 
         A Dashboard viewer gets only the keys some chart on the dashboard groups by: a key can hold anything,
         so a viewer filters by, and lists the values of, only what the charts already show them. Naming any
@@ -8166,7 +8175,7 @@ paths:
 
         Needs an Owner or Manager session, or an API key of this organization with Access Control read or
         write. Member attributes need Access Control and Dashboards (**403** `member_attributes_plan_required`
-        without them).
+        without them). Takes no query parameters: any query parameter answers **400**.
       tags:
         - V3 Member Attributes
       parameters:
@@ -8209,7 +8218,7 @@ paths:
         `limit_exceeded`); a `key` it already has answers **409**.
 
         Needs an Owner or Manager session above the organization's user-management floor, or an API key of
-        this organization with Access Control write. Audited.
+        this organization with Access Control write. Audited. Takes no query parameters: any query parameter answers **400**.
       tags:
         - V3 Member Attributes
       parameters:
@@ -8261,7 +8270,7 @@ paths:
       summary: Get a Member attribute key
       description: |
         Returns one key. A key that does not exist in the organization answers **403**. Same access as the
-        list.
+        list. Takes no query parameters: any query parameter answers **400**.
       tags:
         - V3 Member Attributes
       parameters:
@@ -8299,7 +8308,7 @@ paths:
       description: |
         Changes a key's label, description or both. Its `key` never changes. Send the `updatedAt` from your
         read as `expectedUpdatedAt`: if the key changed since, the request answers **409** and nothing is
-        written. Same access as create. Audited.
+        written. Same access as create. Audited. Takes no query parameters: any query parameter answers **400**.
       tags:
         - V3 Member Attributes
       parameters:
@@ -8345,8 +8354,9 @@ paths:
       description: |
         Deletes a key and every value members and pending invites hold for it. Refused with **409**
         `member_attribute_key_in_use` while Dashboard Viewer access of a Feedback Dataset matches on the key;
-        `details.datasets` names them. With `expectedUpdatedAt`, a key changed since answers **409** too.
-        Same access as create. Audited.
+        `details.datasets` names them. Send the `updatedAt` from your read as the required `expectedUpdatedAt`
+        query parameter (**400** without it): if the key changed since, the request answers **409** and nothing
+        is deleted. Same access as create. Audited.
       tags:
         - V3 Member Attributes
       parameters:
@@ -8354,10 +8364,11 @@ paths:
         - $ref: '#/components/parameters/MemberAttributeKeyIdPath'
         - in: query
           name: expectedUpdatedAt
+          required: true
           schema:
             type: string
             format: date-time
-          description: The key's `updatedAt` from your read. Optional.
+          description: 'The key''s `updatedAt` from your read. Required: deleting a key removes every value members hold for it, so the stale-write check is not optional.'
       responses:
         '200':
           description: The key was deleted
@@ -8472,7 +8483,7 @@ paths:
 
         Needs an Owner or Manager session above the organization's user-management floor, or an API key of
         this organization with Access Control write. Rate-limited to 20 requests a minute per caller on top of
-        the default limit. One audit event per request.
+        the default limit. One audit event per request. Takes no query parameters: any query parameter answers **400**.
       tags:
         - V3 Member Attributes
       parameters:
@@ -8586,7 +8597,28 @@ paths:
         '403':
           $ref: '#/components/responses/V3DashboardAccessForbidden'
         '409':
-          $ref: '#/components/responses/V3Conflict'
+          description: 'Conflict — the dataset changed since the `expectedUpdatedAt` sent, so nothing was written. `details.currentUpdatedAt` holds the current one. Retrying with the same `expectedUpdatedAt` fails again: read the access again, reconcile your changes with its conditions, and retry with its `updatedAt`.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: The Feedback Dataset changed since it was read
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  currentUpdatedAt: '2026-10-22T11:30:00.000Z'
         '422':
           $ref: '#/components/responses/V3UnprocessableContent'
         '429':
@@ -8602,10 +8634,12 @@ paths:
       operationId: getTeamDashboardLimitsV3
       summary: Get a team's dashboard limits
       description: |
-        The dashboards the team's Dashboard Viewer members open in the team's workspaces; an empty list
-        means all of them. `dashboards` lists the dashboards the limit can name: those of the workspaces the
-        team is granted. Owners and Managers, or an API key with Access Control read; needs Access Control
-        and Dashboards.
+        The dashboards the team's Dashboard Viewer members open in the team's workspaces. Read `limited`
+        to interpret an empty `dashboardIds`: with `limited: false` they open all of them; with
+        `limited: true` (every selected dashboard was deleted) they open none. `dashboards` lists every
+        dashboard of the organization (at most 1,000), to pick the limit from; a write accepts only those in
+        workspaces the team is granted. Owners and Managers, or an API key with Access Control read; needs
+        Access Control and Dashboards.
       tags:
         - V3 Dashboard Access
       parameters:
@@ -17416,11 +17450,12 @@ components:
       additionalProperties: false
     DashboardPage:
       type: object
-      description: 'A dashboard page: one tab of the dashboard. Every dashboard has at least one. `teamIds` limits which teams'' Dashboard Viewers see the page; empty means every team that can open the dashboard. The limit binds Dashboard Viewers only: Owners, Managers, Members and API keys see every page.'
+      description: 'A dashboard page: one tab of the dashboard. Every dashboard has at least one. While `limited` is false, every team that can open the dashboard sees the page. While it is true, only the Dashboard Viewers of the `teamIds` teams do, and none when `teamIds` is empty (a page limited to no team, or whose limited teams were all deleted). The limit binds Dashboard Viewers only: Owners, Managers, Members and API keys see every page.'
       required:
         - id
         - name
         - order
+        - limited
         - teamIds
       properties:
         id:
@@ -17433,6 +17468,9 @@ components:
           type: integer
           minimum: 0
           description: Sort key of the tab, ascending.
+        limited:
+          type: boolean
+          description: Whether the page is limited to `teamIds`.
         teamIds:
           type: array
           items:
@@ -17521,6 +17559,7 @@ components:
           type: integer
           minimum: 0
         chart:
+          description: The chart, as reading it returns it, except that for a Dashboard Viewer its `dashboards` lists only the dashboards they can open.
           oneOf:
             - $ref: '#/components/schemas/ChartResource'
             - type: 'null'
@@ -17545,7 +17584,7 @@ components:
             - unmatched
         chips:
           type: array
-          maxItems: 100
+          description: 'One per distinct condition, across every dataset on the pages the reader can open: up to 10 per dataset, with no overall cap.'
           items:
             type: object
             required:
@@ -17646,7 +17685,7 @@ components:
           type: array
           minItems: 1
           maxItems: 50
-          description: 'Every page, in tab order: an existing one by `pageId`, or a new one by a `key` of your choosing that the save''s widgets use as `pageKey`. Each page appears once. `teamIds` sets which teams'' Dashboard Viewers see the page (empty: every team); left out, the page keeps its limit. Changing a limit needs an Owner or Manager signed in and the Access Control feature (403 otherwise), and each team must hold a grant on the dashboard''s workspace without a dashboard limit leaving this dashboard out (422 otherwise).'
+          description: 'Every page, in tab order: an existing one by `pageId`, or a new one by a `key` of your choosing that the save''s widgets use as `pageKey`. Each page appears once. `teamIds` sets which teams'' Dashboard Viewers see the page: a list limits it to those teams, an empty list to no team, and `null` removes the limit (every team); left out, the page keeps its limit (a new page: every team). Changing a limit needs an Owner or Manager signed in and the Access Control feature (403 otherwise), and each team must hold a grant on the dashboard''s workspace without a dashboard limit leaving this dashboard out (422 otherwise).'
           items:
             type: object
             required:
@@ -17679,7 +17718,7 @@ components:
         widgets:
           type: array
           maxItems: 1000
-          description: Every widget to keep or create. An existing widget by `widgetId` keeps its kind and chart (repoint a chart with the widget update) and its page unless `pageId` or `pageKey` moves it; a new one needs `kind`, `chartId` for a chart and `content` for a text block, and goes on the first page without a page. On each page a chart appears at most once (409) and widgets may not overlap (422).
+          description: 'Every widget to keep or create. An existing widget by `widgetId` keeps its kind and chart (repoint a chart with the widget update) and its page unless `pageId` or `pageKey` moves it; a new one needs `kind`, `chartId` for a chart and `content` for a text block, and goes on the first page without a page. On each page a chart appears at most once (409) and widgets may not overlap (422). A dashboard holds at most 250 widgets, counted on every page: a save that creates widgets and leaves more than 250 answers 409. A save that creates none is not capped, so a dashboard already above 250 can still be saved and shrunk.'
           items:
             type: object
             required:
@@ -17754,7 +17793,7 @@ components:
       additionalProperties: false
     DashboardPageUpdateRequest:
       type: object
-      description: Send a `name`, `teamIds`, or both. `teamIds` limits which teams' Dashboard Viewers see the page; `null` or an empty list removes the limit (every team). Changing the limit needs an Owner or Manager signed in and the Access Control feature — an API key never may (403) — and each team must hold a grant on the dashboard's workspace without a dashboard limit leaving this dashboard out (422). A limit sent back unchanged needs neither. Limit changes are audited.
+      description: 'Send a `name`, `teamIds`, or both. `teamIds` limits which teams'' Dashboard Viewers see the page: a list limits it to those teams, an empty list to no team, and `null` removes the limit (every team). Changing the limit needs an Owner or Manager signed in and the Access Control feature — an API key never may (403) — and each team must hold a grant on the dashboard''s workspace without a dashboard limit leaving this dashboard out (422). A limit sent back unchanged needs neither. Limit changes are audited.'
       minProperties: 1
       properties:
         name:
@@ -17772,7 +17811,7 @@ components:
       additionalProperties: false
     WidgetCreateRequest:
       type: object
-      description: A chart (`chartId`, with `kind` left out or `chart`) or a layout block (`kind` `image`, `text` or `separator`). A text block needs `content`; an image block without `content` starts empty.
+      description: A chart (`chartId`, with `kind` left out or `chart`) or a layout block (`kind` `image`, `text` or `separator`). A text block needs `content`; an image block without `content` starts empty. Only a chart takes a `chartId`, and only an image or text block takes non-null `content`.
       properties:
         kind:
           type: string
@@ -17799,6 +17838,60 @@ components:
         layout:
           $ref: '#/components/schemas/WidgetLayout'
           description: 'Where to put it. Without one it lands in the first open slot at its default size: a chart''s by its type, a text block 9 columns wide, an image 3, a separator the full row.'
+      allOf:
+        - if:
+            properties:
+              kind:
+                const: chart
+          then:
+            required:
+              - chartId
+            properties:
+              content:
+                type: 'null'
+        - if:
+            required:
+              - kind
+            properties:
+              kind:
+                const: text
+          then:
+            required:
+              - content
+            not:
+              required:
+                - chartId
+            properties:
+              content:
+                $ref: '#/components/schemas/DashboardTextContent'
+        - if:
+            required:
+              - kind
+            properties:
+              kind:
+                const: image
+          then:
+            not:
+              required:
+                - chartId
+            properties:
+              content:
+                oneOf:
+                  - $ref: '#/components/schemas/DashboardImageContent'
+                  - type: 'null'
+        - if:
+            required:
+              - kind
+            properties:
+              kind:
+                const: separator
+          then:
+            not:
+              required:
+                - chartId
+            properties:
+              content:
+                type: 'null'
       additionalProperties: false
     WidgetUpdateRequest:
       type: object
@@ -17812,8 +17905,41 @@ components:
           format: cuid2
           description: A chart in the dashboard's workspace that is not already on the widget's page.
         content:
-          type: object
-          description: Fields of the block's content (`DashboardImageContent` or `DashboardTextContent`) to replace.
+          description: Fields of the block's content (`DashboardImageContent` or `DashboardTextContent`) to replace; the fields left out keep their stored values. The merged content must be valid for the block's kind, so a field of the other kind, or any unknown field, answers 422.
+          anyOf:
+            - type: object
+              title: Image content fields
+              properties:
+                fileUrl:
+                  oneOf:
+                    - type: string
+                      maxLength: 2048
+                    - type: 'null'
+                fit:
+                  type: string
+                  enum:
+                    - fit
+                    - fill
+                position:
+                  type: string
+                  enum:
+                    - left
+                    - center
+                    - right
+                alt:
+                  type: string
+                  maxLength: 300
+              additionalProperties: false
+            - type: object
+              title: Text content fields
+              properties:
+                headline:
+                  type: string
+                  maxLength: 200
+                description:
+                  type: string
+                  maxLength: 2000
+              additionalProperties: false
         pageId:
           type: string
           format: cuid2
@@ -19621,7 +19747,7 @@ components:
           minLength: 1
           maxLength: 64
           pattern: ^[a-z][a-z0-9_]*$
-          description: Lowercase letters, numbers and underscores, starting with a letter. Never changes after creation. `email`, `name`, `full_name`, `role` and `teams` are reserved (**400**); a key the organization already has answers **409**.
+          description: Lowercase letters, numbers and underscores, starting with a letter. Never changes after creation. `email`, `name`, `full_name`, `role`, `teams` and `constructor` are reserved (**400**); a key the organization already has answers **409**.
         label:
           type: string
           minLength: 1
@@ -19676,6 +19802,11 @@ components:
       description: Changes a key's label, description or both; the `key` itself never changes (sending it is a **400**). At least one of `label` and `description` is required.
       required:
         - expectedUpdatedAt
+      anyOf:
+        - required:
+            - label
+        - required:
+            - description
       properties:
         label:
           type: string
@@ -19937,7 +20068,7 @@ components:
       additionalProperties: false
     TeamDashboardLimitsResource:
       type: object
-      description: 'A team''s dashboard limits: the dashboards its members whose organization role is Dashboard Viewer open in the workspaces the team is granted. Not limited means all of them. Other members are never limited.'
+      description: 'A team''s dashboard limits: the dashboards its members whose organization role is Dashboard Viewer open in the workspaces the team is granted. Not limited means all of them; limited with an empty `dashboardIds` means none. Other members are never limited.'
       required:
         - teamId
         - limited
@@ -19957,7 +20088,7 @@ components:
             format: cuid2
         dashboards:
           type: array
-          description: 'Only on a read: the dashboards of the organization, to pick the limit from. A write still accepts only dashboards of the workspaces the team is granted.'
+          description: 'Only on a read: every dashboard of the organization (at most 1,000), in any workspace, to pick the limit from. A write accepts only dashboards of the workspaces the team is granted, so not every listed dashboard can be submitted (422 otherwise).'
           maxItems: 1000
           items:
             type: object

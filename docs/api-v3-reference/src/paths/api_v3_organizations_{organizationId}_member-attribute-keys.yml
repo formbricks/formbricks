@@ -8,7 +8,7 @@ get:
 
     Needs an Owner or Manager session, or an API key of this organization with Access Control read or
     write. Member attributes need Access Control and Dashboards (**403** `member_attributes_plan_required`
-    without them).
+    without them). Takes no query parameters: any query parameter answers **400**.
   tags:
     - V3 Member Attributes
   parameters:
@@ -51,7 +51,7 @@ post:
     `limit_exceeded`); a `key` it already has answers **409**.
 
     Needs an Owner or Manager session above the organization's user-management floor, or an API key of
-    this organization with Access Control write. Audited.
+    this organization with Access Control write. Audited. Takes no query parameters: any query parameter answers **400**.
   tags:
     - V3 Member Attributes
   parameters:

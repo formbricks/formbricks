@@ -171,12 +171,36 @@ describe("addWidgetRow", () => {
     );
   });
 
-  test("without a pageId, writes to the dashboard's first page by order", async () => {
+  test("without a pageId, writes to the dashboard's first page by order, not the first one added", async () => {
     const tx = stubTransaction(makeTx());
+    // Two pages of this dashboard, added in the opposite order from how they show, and another dashboard's.
+    const pages = [
+      { id: OTHER_PAGE_ID, dashboardId: DASHBOARD_ID, order: 1, createdAt: new Date("2026-01-01") },
+      { id: PAGE_ID, dashboardId: DASHBOARD_ID, order: 0, createdAt: new Date("2026-01-02") },
+      { id: "clpg_elsewhere", dashboardId: "cldb_other", order: -1, createdAt: new Date("2026-01-01") },
+    ];
+    tx.dashboardPage.findFirst.mockImplementation((async ({
+      where,
+      orderBy = [],
+    }: {
+      where: { dashboardId: string };
+      orderBy?: Record<string, "asc" | "desc">[];
+    }) => {
+      const [first] = pages
+        .filter((page) => page.dashboardId === where.dashboardId)
+        .sort((a, b) => {
+          for (const key of orderBy) {
+            const [field, direction] = Object.entries(key)[0] as [keyof typeof a, "asc" | "desc"];
+            const delta = a[field] < b[field] ? -1 : a[field] > b[field] ? 1 : 0;
+            if (delta !== 0) return direction === "asc" ? delta : -delta;
+          }
+          return 0;
+        });
+      return first ? { id: first.id } : null;
+    }) as never);
+
     await addChart("clch_b");
-    expect(tx.dashboardPage.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { dashboardId: DASHBOARD_ID } })
-    );
+
     expect(tx.dashboardWidget.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ pageId: PAGE_ID, kind: "chart" }) })
     );

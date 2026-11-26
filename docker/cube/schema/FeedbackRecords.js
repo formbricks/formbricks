@@ -30,6 +30,12 @@ asyncModule(async () => {
       type: `string`,
       shown: false,
     };
+    // The key's value lowercased and trimmed: what a Dashboard Viewer access condition matches on (ADR-0061).
+    embeddedDimensions[spec.normalizedName] = {
+      sql: (CUBE) => `LOWER(TRIM(${CUBE}.${spec.valueSql}))`,
+      type: `string`,
+      shown: false,
+    };
     // The key's value as a number, NULL where it is not one: what a dashboard's "> 10" on the key compares.
     embeddedDimensions[spec.numberName] = {
       sql: (CUBE) => toSafeNumericSql(`${CUBE}.${spec.valueSql}`),

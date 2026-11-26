@@ -28,6 +28,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/modules/ui/components/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { Skeleton } from "@/modules/ui/components/skeleton";
@@ -127,11 +128,21 @@ export const ViewAsButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
         <Command filter={matchesViewAsSearch}>
           <CommandInput placeholder={t("workspace.analysis.dashboards.view_as_search")} />
           <CommandList>
-            <CommandEmpty>
-              {overview.isPending
-                ? t("common.loading")
-                : t("workspace.analysis.dashboards.view_as_no_members")}
-            </CommandEmpty>
+            {/* A failed lookup says so, with a retry; "No members" is only for a lookup that found none. */}
+            {overview.isError ? (
+              <div className="py-6 text-center text-sm text-slate-500">
+                {t("common.error_loading_data")}{" "}
+                <Button variant="link" size="sm" className="h-auto p-0" onClick={() => overview.refetch()}>
+                  {t("common.retry")}
+                </Button>
+              </div>
+            ) : (
+              <CommandEmpty>
+                {overview.isPending
+                  ? t("common.loading")
+                  : t("workspace.analysis.dashboards.view_as_no_members")}
+              </CommandEmpty>
+            )}
             {groups.map(([role, members], index) => (
               <CommandGroup
                 key={role}
@@ -216,105 +227,106 @@ export const AccessButton = ({ dashboardId }: Readonly<{ dashboardId: string }>)
   const teams = overview.data?.teams ?? [];
 
   return (
-    <>
-      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-        <UsersIcon className="size-4" />
-        {t("workspace.analysis.dashboards.access")}
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("workspace.analysis.dashboards.access")}</DialogTitle>
-            <DialogDescription>{t("workspace.analysis.dashboards.access_description")}</DialogDescription>
-          </DialogHeader>
-          <DialogBody>
-            <table className="w-full text-left text-sm" aria-busy={overview.isPending}>
-              <thead className="text-xs text-slate-500">
-                <tr>
-                  <th className="py-2 font-medium">{t("common.team")}</th>
-                  <th className="py-2 font-medium">
-                    <span className="inline-flex items-center gap-1">
-                      {t("workspace.analysis.dashboards.access_workspace_permission")}
-                      <TooltipRenderer tooltipContent={t("workspace.analysis.dashboards.access_tooltip")}>
-                        <InfoIcon
-                          className="size-3.5"
-                          aria-label={t("workspace.analysis.dashboards.access_tooltip")}
-                        />
-                      </TooltipRenderer>
-                    </span>
-                  </th>
-                  <th className="py-2 font-medium">{t("workspace.analysis.dashboards.access_dashboards")}</th>
-                  <th className="py-2 font-medium">{t("common.members")}</th>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {/* The trigger, so closing the dialog returns focus to it. */}
+      <DialogTrigger asChild>
+        <Button variant="secondary" size="sm">
+          <UsersIcon className="size-4" />
+          {t("workspace.analysis.dashboards.access")}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("workspace.analysis.dashboards.access")}</DialogTitle>
+          <DialogDescription>{t("workspace.analysis.dashboards.access_description")}</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <table className="w-full text-left text-sm" aria-busy={overview.isPending}>
+            <thead className="text-xs text-slate-500">
+              <tr>
+                <th className="py-2 font-medium">{t("common.team")}</th>
+                <th className="py-2 font-medium">
+                  <span className="inline-flex items-center gap-1">
+                    {t("workspace.analysis.dashboards.access_workspace_permission")}
+                    <TooltipRenderer tooltipContent={t("workspace.analysis.dashboards.access_tooltip")}>
+                      <InfoIcon
+                        className="size-3.5"
+                        aria-label={t("workspace.analysis.dashboards.access_tooltip")}
+                      />
+                    </TooltipRenderer>
+                  </span>
+                </th>
+                <th className="py-2 font-medium">{t("workspace.analysis.dashboards.access_dashboards")}</th>
+                <th className="py-2 font-medium">{t("common.members")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teams.map((team) => (
+                <tr key={team.id} className="border-t border-slate-100">
+                  <td className="py-2 text-slate-900">{team.name}</td>
+                  <td className="py-2 text-slate-700">{permissionLabel(team.permission)}</td>
+                  <td className="py-2 text-slate-700">
+                    {team.limitedDashboardCount === null
+                      ? t("workspace.settings.teams.all_dashboards")
+                      : t("workspace.analysis.dashboards.access_selected_dashboards", {
+                          count: team.limitedDashboardCount,
+                        })}
+                  </td>
+                  <td className="py-2 text-slate-700">{team.memberCount}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {teams.map((team) => (
-                  <tr key={team.id} className="border-t border-slate-100">
-                    <td className="py-2 text-slate-900">{team.name}</td>
-                    <td className="py-2 text-slate-700">{permissionLabel(team.permission)}</td>
-                    <td className="py-2 text-slate-700">
-                      {team.limitedDashboardCount === null
-                        ? t("workspace.settings.teams.all_dashboards")
-                        : t("workspace.analysis.dashboards.access_selected_dashboards", {
-                            count: team.limitedDashboardCount,
-                          })}
-                    </td>
-                    <td className="py-2 text-slate-700">{team.memberCount}</td>
+              ))}
+              {/* Rows as tall as a team row, so the dialog does not jump when the teams arrive. They hold
+                    no text, and the table is `aria-busy` meanwhile, so nothing extra is announced. */}
+              {overview.isPending &&
+                [0, 1, 2].map((row) => (
+                  <tr key={row} className="border-t border-slate-100">
+                    {["w-24", "w-16", "w-20", "w-6"].map((width) => (
+                      <td key={width} className="py-3">
+                        <Skeleton className={cn("h-3 rounded-sm", width)} />
+                      </td>
+                    ))}
                   </tr>
                 ))}
-                {/* Rows as tall as a team row, so the dialog does not jump when the teams arrive. They hold
-                    no text, and the table is `aria-busy` meanwhile, so nothing extra is announced. */}
-                {overview.isPending &&
-                  [0, 1, 2].map((row) => (
-                    <tr key={row} className="border-t border-slate-100">
-                      {["w-24", "w-16", "w-20", "w-6"].map((width) => (
-                        <td key={width} className="py-3">
-                          <Skeleton className={cn("h-3 rounded-sm", width)} />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                {overview.isError && (
-                  <tr>
-                    <td colSpan={4} className="py-4 text-center text-slate-500">
-                      {t("common.error_loading_data")}{" "}
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="h-auto p-0"
-                        onClick={() => overview.refetch()}>
-                        {t("common.retry")}
-                      </Button>
-                    </td>
-                  </tr>
-                )}
-                {overview.isSuccess && teams.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-4 text-center text-slate-500">
-                      {t("workspace.analysis.dashboards.access_no_teams")}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </DialogBody>
-          <DialogFooter>
-            {/* Shown from the start, disabled until the organization is known, so the footer does not shift. */}
-            {overview.data ? (
-              <Button variant="secondary" asChild>
-                <Link href={`/organizations/${overview.data.organizationId}/settings/teams`}>
-                  {t("workspace.analysis.dashboards.manage_access")}
-                </Link>
-              </Button>
-            ) : (
-              <Button variant="secondary" disabled>
+              {overview.isError && (
+                <tr>
+                  <td colSpan={4} className="py-4 text-center text-slate-500">
+                    {t("common.error_loading_data")}{" "}
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0"
+                      onClick={() => overview.refetch()}>
+                      {t("common.retry")}
+                    </Button>
+                  </td>
+                </tr>
+              )}
+              {overview.isSuccess && teams.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="py-4 text-center text-slate-500">
+                    {t("workspace.analysis.dashboards.access_no_teams")}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </DialogBody>
+        <DialogFooter>
+          {/* Shown from the start, disabled until the organization is known, so the footer does not shift. */}
+          {overview.data ? (
+            <Button variant="secondary" asChild>
+              <Link href={`/organizations/${overview.data.organizationId}/settings/teams`}>
                 {t("workspace.analysis.dashboards.manage_access")}
-              </Button>
-            )}
-            <Button onClick={() => setOpen(false)}>{t("common.done")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="secondary" disabled>
+              {t("workspace.analysis.dashboards.manage_access")}
+            </Button>
+          )}
+          <Button onClick={() => setOpen(false)}>{t("common.done")}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -72,8 +72,9 @@ export const ZV3UpdateMemberAttributeKeyBody = z
     path: ["label"],
   });
 
+/** Deleting a key removes every value members hold for it, so the stale-write check is not optional. */
 export const ZV3DeleteMemberAttributeKeyQuery = z.strictObject({
-  expectedUpdatedAt: z.iso.datetime({ offset: true }).optional(),
+  expectedUpdatedAt: z.iso.datetime({ offset: true }),
 });
 
 export const ZV3MemberAttributesListQuery = z.strictObject({

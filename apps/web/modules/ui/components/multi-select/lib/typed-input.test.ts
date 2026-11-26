@@ -18,6 +18,15 @@ describe("splitPastedInput", () => {
     expect(splitPastedInput("Ice", "land; Denmark, Finland")).toEqual(["Iceland", "Denmark", "Finland"]);
   });
 
+  test("replaces the selected text instead of appending to it", () => {
+    expect(splitPastedInput("Sweden", "Denmark; Finland", 0, 6)).toEqual(["Denmark", "Finland"]);
+    expect(splitPastedInput("Ice!", "land; Norway", 3, 4)).toEqual(["Iceland", "Norway"]);
+  });
+
+  test("inserts at a caret before the end", () => {
+    expect(splitPastedInput("Swe", "Den, Fin", 0)).toEqual(["Den", "FinSwe"]);
+  });
+
   test("leaves a paste without a separator as text", () => {
     expect(splitPastedInput("", "Denmark")).toBeNull();
   });

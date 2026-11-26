@@ -169,6 +169,31 @@ export const TeamSettingsModal = ({
     }
   };
 
+  /**
+   * Restores the team as it was when the settings opened: name, members and workspace grants, then the
+   * dashboard limit, which the update dropped in any workspace whose grant it removed. When the restore
+   * fails too, says so plainly: the team may keep a new grant without its limit.
+   */
+  const restoreTeam = async () => {
+    const original = dashboardLimits.data;
+    try {
+      await updateTeam({
+        teamId: team.id,
+        body: {
+          name: team.name,
+          members: initialMembers,
+          workspaces: team.workspaces.map(({ workspaceId, permission }) => ({ workspaceId, permission })),
+        },
+      });
+      if (original?.limited && original.dashboardIds.length > 0) {
+        await replaceTeamDashboardLimits(team.id, original.dashboardIds);
+      }
+    } catch {
+      toast.error(t("workspace.settings.teams.team_partially_saved"), { duration: 10_000 });
+    }
+    router.refresh();
+  };
+
   const handleUpdateTeam: SubmitHandler<TTeamSettingsFormSchema> = async (data) => {
     const members = data.members.filter((m) => m.userId);
     const workspaces = data.workspaces.filter((p) => p.workspaceId);
@@ -183,7 +208,12 @@ export const TeamSettingsModal = ({
     try {
       await updateTeam({ teamId: team.id, body: { name: data.name, members, workspaces } });
       const limitsSaved = await saveDashboardLimits(limitDraft);
-      if (!limitsSaved) return;
+      if (!limitsSaved) {
+        // The team was saved but its dashboard limit was not: a new grant would open every dashboard of
+        // the workspace to the team's Dashboard Viewers. Put the team back as it was, so neither applies.
+        await restoreTeam();
+        return;
+      }
       toast.success(t("workspace.settings.teams.team_updated_successfully"));
       closeSettingsModal();
       router.refresh();

@@ -9,6 +9,8 @@ import {
 import { problemDashboardsPlanRequired, problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { createViewerDashboardListScope, limitEmbeddedChartDashboards } from "./dashboard-read-access";
 import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 import {
   createV3Dashboard,
@@ -53,10 +55,10 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
 vi.mock("./dashboard-read-access", () => ({
   refuseUnlessDashboardOpenable: vi.fn(async () => null),
   getReadablePageIds: vi.fn(async (_access: unknown, pageIds: string[]) => new Set(pageIds)),
+  createViewerDashboardListScope: vi.fn(),
+  limitEmbeddedChartDashboards: vi.fn(async (_access: unknown, widgets: unknown[]) => widgets),
 }));
-vi.mock("@/modules/ee/dashboard-access/lib/spicedb-access", () => ({
-  filterReadableDashboardIdsInWorkspace: vi.fn(),
-}));
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
 vi.mock("@/modules/ee/dashboard-access/lib/viewer-data-access", () => ({
   getViewerAccessSummary: vi.fn(async () => ({ status: "unrestricted", chips: [] })),
 }));
@@ -128,7 +130,7 @@ const dashboardRow = (overrides: Partial<TDashboardResourceRow> = {}): TDashboar
     createdAt: new Date("2026-02-01T00:00:00.000Z"),
     updatedAt: new Date("2026-02-02T00:00:00.000Z"),
     creator: { name: "Editor" },
-    pages: [{ id: PAGE_ID, name: "Overview", order: 0, teamLimits: [] }],
+    pages: [{ id: PAGE_ID, name: "Overview", order: 0, teamLimited: false, teamLimits: [] }],
     widgets: [
       {
         id: WIDGET_A,
@@ -189,16 +191,68 @@ describe("listV3Dashboards", () => {
   test("a Dashboard Viewer's list walks readable rows, and resumes after the scan ceiling", async () => {
     vi.mocked(requireDashboardsAccess).mockResolvedValue({ ...granted, asDashboardViewer: true } as never);
     vi.mocked(getDashboardReadSubject).mockReturnValueOnce({ type: "user", id: "viewer-1" } as never);
+    const readable = vi.fn();
+    vi.mocked(createViewerDashboardListScope).mockReturnValue({ readable, widgetCount: () => 0 });
     const last = listRow("clda000000000000000000099", "2026-02-01T00:00:00.000Z");
     vi.mocked(listReadableDashboardRows).mockResolvedValue({ rows: [], resumeAfter: last });
 
-    const response = await list();
+    const response = await list({ "filter[chartId][eq]": CHART_ID });
 
     expect(response.status).toBe(200);
     expect(listDashboardRows).not.toHaveBeenCalled();
+    expect(createViewerDashboardListScope).toHaveBeenCalledWith(
+      { type: "user", id: "viewer-1" },
+      WORKSPACE_ID,
+      CHART_ID
+    );
+    expect(vi.mocked(listReadableDashboardRows).mock.calls[0][0].readable).toBe(readable);
     const body = await response.json();
     expect(body.data).toEqual([]);
     expect(typeof body.meta.nextCursor).toBe("string");
+  });
+
+  test("a Dashboard Viewer's list counts only the widgets on pages they can open", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValue({ ...granted, asDashboardViewer: true } as never);
+    vi.mocked(getDashboardReadSubject).mockReturnValueOnce({ type: "user", id: "viewer-1" } as never);
+    vi.mocked(createViewerDashboardListScope).mockReturnValue({ readable: vi.fn(), widgetCount: () => 2 });
+    vi.mocked(listReadableDashboardRows).mockResolvedValue({
+      rows: [listRow(DASHBOARD_ID, "2026-03-01T00:00:00.000Z", 5)],
+      resumeAfter: null,
+    });
+
+    const body = await (await list()).json();
+
+    expect(body.data.map((row: { widgetCount: number }) => row.widgetCount)).toEqual([2]);
+  });
+
+  test("audits a View as list once against the workspace, even when it lists nothing", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValue({
+      ...granted,
+      viewAs: { userId: "clus000000000000000000009", actorUserId: USER_ID },
+    });
+    vi.mocked(listDashboardRows).mockResolvedValue([]);
+
+    const response = await list({ viewAs: "clus000000000000000000009" });
+
+    expect(response.status).toBe(200);
+    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "viewedAs",
+        targetType: "workspace",
+        targetId: WORKSPACE_ID,
+        userId: USER_ID,
+        organizationId: ORGANIZATION_ID,
+        newObject: { workspaceId: WORKSPACE_ID, viewedAsUserId: "clus000000000000000000009" },
+      })
+    );
+  });
+
+  test("does not audit an ordinary list read", async () => {
+    vi.mocked(listDashboardRows).mockResolvedValue([]);
+
+    expect((await list()).status).toBe(200);
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
   });
 
   test("scopes the read to the authorized workspace and serializes a widget count", async () => {
@@ -323,7 +377,7 @@ describe("getV3Dashboard", () => {
       creator: { name: "Editor" },
       createdAt: "2026-02-01T00:00:00.000Z",
     });
-    expect(data.pages).toEqual([{ id: PAGE_ID, name: "Overview", order: 0, teamIds: [] }]);
+    expect(data.pages).toEqual([{ id: PAGE_ID, name: "Overview", order: 0, limited: false, teamIds: [] }]);
     expect(data.widgets).toEqual([
       {
         id: WIDGET_A,
@@ -336,6 +390,18 @@ describe("getV3Dashboard", () => {
         content: null,
       },
     ]);
+  });
+
+  test("embeds each chart with only the dashboards the reader can open", async () => {
+    vi.mocked(getDashboardResourceRow).mockResolvedValue(dashboardRow());
+    vi.mocked(limitEmbeddedChartDashboards).mockImplementationOnce(async (_access, widgets) =>
+      widgets.map((widget) => ({ ...widget, chart: widget.chart && { ...widget.chart, widgets: [] } }))
+    );
+
+    const { data } = await (await get()).json();
+
+    expect(vi.mocked(limitEmbeddedChartDashboards).mock.calls[0][1]).toHaveLength(1);
+    expect(data.widgets[0].chart.dashboards).toEqual([]);
   });
 
   test("passes a plan refusal through", async () => {
@@ -688,7 +754,7 @@ describe("replaceV3Dashboard (PUT)", () => {
   test("writes the name and every widget against the caller's updatedAt, and audits before and after", async () => {
     const previous = {
       name: "Board",
-      pages: [{ id: PAGE_ID, name: "Overview", order: 0, teamIds: [] }],
+      pages: [{ id: PAGE_ID, name: "Overview", order: 0, limited: false, teamIds: [] }],
       widgets: [{ id: WIDGET_A, pageId: PAGE_ID, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 }],
     };
     resultIs({ kind: "ok", row: dashboardRow({ name: "Saved" }), previous });
@@ -713,7 +779,7 @@ describe("replaceV3Dashboard (PUT)", () => {
       newObject: {
         name: "Saved",
         filters: [],
-        pages: [{ id: PAGE_ID, name: "Overview", order: 0, teamIds: [] }],
+        pages: [{ id: PAGE_ID, name: "Overview", order: 0, limited: false, teamIds: [] }],
         widgets: [{ id: WIDGET_A, pageId: PAGE_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
       },
     });

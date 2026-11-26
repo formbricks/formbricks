@@ -3,11 +3,13 @@
  * PATCH  /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId} — change its label or
  *        description (`key` never changes); `expectedUpdatedAt` compare-and-set, 409 when stale.
  * DELETE /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId} — delete it and every value;
+ *        `expectedUpdatedAt` (query, required) compare-and-set, 409 when stale;
  *        409 `member_attribute_key_in_use` naming the Feedback Datasets whose Dashboard Viewer access uses it.
  *
  * A key of another organization, or none, answers 403.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
+import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
 import {
   deleteV3MemberAttributeKey,
   getV3MemberAttributeKey,
@@ -21,7 +23,7 @@ import {
 
 export const GET = withV3ApiWrapper({
   auth: "both",
-  schemas: { params: ZV3MemberAttributeKeyParams },
+  schemas: { params: ZV3MemberAttributeKeyParams, query: ZV3EmptyQuery },
   handler: async ({ authentication, parsedInput, requestId, instance }) =>
     getV3MemberAttributeKey({
       authentication,
@@ -36,7 +38,11 @@ export const PATCH = withV3ApiWrapper({
   auth: "both",
   action: "updated",
   targetType: "memberAttributeKey",
-  schemas: { params: ZV3MemberAttributeKeyParams, body: ZV3UpdateMemberAttributeKeyBody },
+  schemas: {
+    params: ZV3MemberAttributeKeyParams,
+    query: ZV3EmptyQuery,
+    body: ZV3UpdateMemberAttributeKeyBody,
+  },
   handler: async ({ authentication, parsedInput, auditLog, requestId, instance }) =>
     updateV3MemberAttributeKey({
       authentication,

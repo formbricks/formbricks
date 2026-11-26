@@ -222,7 +222,13 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     if (!splitsTyping) return;
-    const values = splitPastedInput(inputValue, e.clipboardData.getData("text"));
+    const { selectionStart, selectionEnd } = e.currentTarget;
+    const values = splitPastedInput(
+      inputValue,
+      e.clipboardData.getData("text"),
+      selectionStart ?? inputValue.length,
+      selectionEnd ?? selectionStart ?? inputValue.length
+    );
     if (!values) return;
     e.preventDefault();
     addTypedValues(values);

@@ -1812,9 +1812,10 @@ API key has never had tag access, and the tools refuse one with a `403` rather t
 
 Twenty-five tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
 operation, minus deletion: there is no tool that deletes a chart or a dashboard, so a vague prompt such as
-"clean up old charts" cannot remove anything permanently. `delete_dashboard_page` removes a page with its
-widgets, as `remove_chart_from_dashboard` removes one; the charts stay. There is no AI generation tool either — an agent
-writes the chart query itself.
+"clean up old charts" cannot remove a chart or a dashboard. Widgets are another matter:
+`delete_dashboard_page` permanently removes a page with its widgets, and `remove_chart_from_dashboard` removes
+one widget. The charts stay, but a removed text or image block's content is gone. There is no AI generation
+tool either — an agent writes the chart query itself.
 
 - **Write against the catalog.** `list_chart_fields` returns every field a chart query may use; the query
   validator refuses anything else with `invalid_params` naming each problem. `preview_chart` runs an unsaved

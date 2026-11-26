@@ -1,4 +1,6 @@
 import "server-only";
+import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import type {
   TAuthzedClient,
   TAuthzedRelationship,
@@ -42,6 +44,11 @@ export {
  * losing `open_on` and gaining its `limited_team` edges. Like the team reconciler, a pass re-reads the
  * rows after writing and repeats while they moved, so a change committed mid-pass is not lost.
  *
+ * Reconciles of one dashboard or page never overlap: each holds a per-resource advisory lock for its
+ * whole read-write-re-read, like the survey projector. So a reconcile that read an older row cannot write
+ * after a newer one, even when it then fails before its re-read: the newer one waits, then reads the row
+ * as it is now. A failed reconcile is retried as before.
+ *
  * The team self-marker (`team#dashboard_limited`) is the team reconciler's (`./team-workspace`): that
  * reconciler owns every edge on a `team` resource.
  */
@@ -77,14 +84,17 @@ export const diffDashboardRelationships = (
 const sortedUnique = (ids: ReadonlyArray<string> | undefined): ReadonlyArray<string> =>
   [...new Set(ids ?? [])].sort((left, right) => left.localeCompare(right));
 
+/** Read on the transaction holding the locks, so a reconcile needs one pooled connection, not three. */
 const readSnapshot = async (
+  tx: Prisma.TransactionClient,
   dashboardIds: ReadonlyArray<string>,
   pageIds: ReadonlyArray<string>
 ): Promise<TDashboardSnapshot> => {
-  const [dashboards, pages] = await Promise.all([
-    dashboardIds.length === 0 ? [] : readDashboardProjectionRows({ id: { in: [...dashboardIds] } }),
-    pageIds.length === 0 ? [] : readDashboardPageProjectionRows({ id: { in: [...pageIds] } }),
-  ]);
+  // Sequential: one transaction runs one query at a time.
+  const dashboards =
+    dashboardIds.length === 0 ? [] : await readDashboardProjectionRows({ id: { in: [...dashboardIds] } }, tx);
+  const pages =
+    pageIds.length === 0 ? [] : await readDashboardPageProjectionRows({ id: { in: [...pageIds] } }, tx);
   return { dashboards, pages };
 };
 
@@ -148,6 +158,29 @@ const writeSnapshot = async (
   await deleteRelationshipsInBoundedBatches(client, deletionFilters);
 };
 
+/** Advisory lock key prefixes, one per resource type, hashed with the id like the survey projector's. */
+const DASHBOARD_PROJECTION_LOCK_PREFIX = "authzed-dashboard:";
+const DASHBOARD_PAGE_PROJECTION_LOCK_PREFIX = "authzed-dashboard-page:";
+
+/**
+ * Upper bound on one reconcile transaction. It only holds the locks, but spans SpiceDB round trips for a
+ * whole chunk, so Prisma's five-second default would abort a healthy but slow reconcile.
+ */
+const DASHBOARD_PROJECTION_TRANSACTION_TIMEOUT_MS = 30_000;
+const DASHBOARD_PROJECTION_TRANSACTION_MAX_WAIT_MS = 10_000;
+
+/**
+ * Every lock key of the targets, in one fixed order for every caller (dashboards, then pages, each
+ * sorted), so concurrent reconciles of overlapping targets take their locks in one order.
+ */
+const dashboardProjectionLockKeys = (
+  dashboardIds: ReadonlyArray<string>,
+  pageIds: ReadonlyArray<string>
+): string[] => [
+  ...dashboardIds.map((id) => DASHBOARD_PROJECTION_LOCK_PREFIX + id),
+  ...pageIds.map((id) => DASHBOARD_PAGE_PROJECTION_LOCK_PREFIX + id),
+];
+
 const snapshotsMatch = (left: TDashboardSnapshot, right: TDashboardSnapshot): boolean =>
   JSON.stringify(left) === JSON.stringify(right);
 
@@ -166,16 +199,28 @@ export const reconcileDashboardRelationships = (
     }
 
     const client = getAuthzedClient();
-    for (let pass = 1; pass <= AUTHZED_MAX_RECONCILIATION_PASSES; pass++) {
-      const sourceSnapshot = await readSnapshot(dashboardIds, pageIds);
-      await writeSnapshot(client, dashboardIds, pageIds, sourceSnapshot);
+    const lockKeys = dashboardProjectionLockKeys(dashboardIds, pageIds);
+    return prisma.$transaction(
+      async (tx) => {
+        // Held until the transaction ends. The array is scanned in order, so the locks are taken in order.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(key)) FROM unnest(${lockKeys}::text[]) AS key`;
 
-      if (snapshotsMatch(sourceSnapshot, await readSnapshot(dashboardIds, pageIds))) {
-        return pass;
+        for (let pass = 1; pass <= AUTHZED_MAX_RECONCILIATION_PASSES; pass++) {
+          const sourceSnapshot = await readSnapshot(tx, dashboardIds, pageIds);
+          await writeSnapshot(client, dashboardIds, pageIds, sourceSnapshot);
+
+          if (snapshotsMatch(sourceSnapshot, await readSnapshot(tx, dashboardIds, pageIds))) {
+            return pass;
+          }
+        }
+
+        throw new AuthzedProjectionUnstableError();
+      },
+      {
+        maxWait: DASHBOARD_PROJECTION_TRANSACTION_MAX_WAIT_MS,
+        timeout: DASHBOARD_PROJECTION_TRANSACTION_TIMEOUT_MS,
       }
-    }
-
-    throw new AuthzedProjectionUnstableError();
+    );
   });
 
 /** Every page's dashboard edges onto one dashboard, by subject — for a deleted dashboard. */

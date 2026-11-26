@@ -533,10 +533,10 @@ const MemberCsvPreview = ({ plan }: Readonly<{ plan: TMemberCsvPlan }>) => {
         <table className="w-full text-left text-xs">
           <thead className="bg-slate-100 text-slate-700">
             <tr>
-              <th className="px-2 py-1.5 font-medium">Full Name</th>
-              <th className="px-2 py-1.5 font-medium">Email Address</th>
-              <th className="px-2 py-1.5 font-medium">Organization Role</th>
-              <th className="px-2 py-1.5 font-medium">Teams</th>
+              <th className="px-2 py-1.5 font-medium">{t("common.full_name")}</th>
+              <th className="px-2 py-1.5 font-medium">{t("common.email")}</th>
+              <th className="px-2 py-1.5 font-medium">{t("common.role")}</th>
+              <th className="px-2 py-1.5 font-medium">{t("common.teams")}</th>
               {plan.attributeColumns.map((column) => (
                 <th key={column.key} className="px-2 py-1.5 font-medium">
                   {column.label}

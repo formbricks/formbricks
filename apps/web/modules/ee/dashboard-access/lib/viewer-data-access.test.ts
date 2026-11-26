@@ -55,6 +55,38 @@ describe("getViewerAccessSummary", () => {
     expect((await getViewerAccessSummary(reader, ["ds_1"], probe)).status).toBe("restricted");
   });
 
+  test("probes only the dataset with values when another one has none", async () => {
+    vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue([
+      {
+        id: "ds_empty",
+        viewerAccessJoin: "all",
+        viewerAccessConditions: [
+          {
+            field: "FeedbackRecords.sourceName",
+            attributeKeyId: "key_none",
+            attributeKey: { label: "Team" },
+          },
+        ],
+      },
+      {
+        id: "ds_1",
+        viewerAccessJoin: "all",
+        viewerAccessConditions: [
+          {
+            field: "FeedbackRecords.metadataCountry",
+            attributeKeyId: "key_1",
+            attributeKey: { label: "Country" },
+          },
+        ],
+      },
+    ] as never);
+    vi.mocked(runChartQuery).mockReset();
+    vi.mocked(runChartQuery).mockResolvedValue({ rows: [{ "FeedbackRecords.count": 2 }] } as never);
+    expect((await getViewerAccessSummary(reader, ["ds_empty", "ds_1"], probe)).status).toBe("restricted");
+    expect(runChartQuery).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(runChartQuery).mock.calls[0][0].datasetId).toBe("ds_1");
+  });
+
   test("runs no probe without a probe scope", async () => {
     vi.mocked(runChartQuery).mockClear();
     expect((await getViewerAccessSummary(reader, ["ds_1"])).status).toBe("restricted");

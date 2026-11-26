@@ -161,7 +161,7 @@ describe("updateAttributeKey", () => {
 describe("deleteAttributeKey", () => {
   test("refuses a key outside the organization", async () => {
     prisma.memberAttributeKey.findFirst.mockResolvedValue(null);
-    await expect(deleteAttributeKey(ORG, "k1")).rejects.toBeInstanceOf(MemberAttributeKeyNotFoundError);
+    await expect(deleteAttributeKey(ORG, "k1", t0)).rejects.toBeInstanceOf(MemberAttributeKeyNotFoundError);
   });
 
   test("refuses a stale expectedUpdatedAt", async () => {
@@ -170,7 +170,7 @@ describe("deleteAttributeKey", () => {
       updatedAt: t1,
     } as never);
     await expect(deleteAttributeKey(ORG, "k1", t0)).rejects.toBeInstanceOf(MemberAttributeKeyConflictError);
-    expect(prisma.memberAttributeKey.delete).not.toHaveBeenCalled();
+    expect(prisma.memberAttributeKey.deleteMany).not.toHaveBeenCalled();
   });
 
   test("refuses while a Feedback Dataset's viewer access uses the key", async () => {
@@ -182,7 +182,7 @@ describe("deleteAttributeKey", () => {
     expect(error).toBeInstanceOf(MemberAttributeKeyInUseError);
     expect((error as MemberAttributeKeyInUseError).datasetCount).toBe(4);
     expect((error as MemberAttributeKeyInUseError).datasets).toEqual([{ id: "ds_1", name: "Support" }]);
-    expect(prisma.memberAttributeKey.delete).not.toHaveBeenCalled();
+    expect(prisma.memberAttributeKey.deleteMany).not.toHaveBeenCalled();
   });
 
   test("deletes an unused key and returns it", async () => {
@@ -191,8 +191,38 @@ describe("deleteAttributeKey", () => {
     prisma.feedbackDirectory.findMany.mockResolvedValue([]);
     prisma.feedbackDirectory.count.mockResolvedValue(0);
 
-    expect(await deleteAttributeKey(ORG, "k1")).toEqual(existing);
-    expect(prisma.memberAttributeKey.delete).toHaveBeenCalledWith({ where: { id: "k1" } });
+    prisma.memberAttributeKey.deleteMany.mockResolvedValue({ count: 1 });
+
+    expect(await deleteAttributeKey(ORG, "k1", t0)).toEqual(existing);
+    expect(prisma.memberAttributeKey.deleteMany).toHaveBeenCalledWith({
+      where: { id: "k1", organizationId: ORG, updatedAt: t0 },
+    });
+  });
+
+  test("checks expectedUpdatedAt in the delete and refuses a key changed after the read", async () => {
+    prisma.memberAttributeKey.findFirst
+      .mockResolvedValueOnce(key("k1", "country") as never)
+      .mockResolvedValueOnce({ updatedAt: t1 } as never);
+    prisma.feedbackDirectory.findMany.mockResolvedValue([]);
+    prisma.feedbackDirectory.count.mockResolvedValue(0);
+    prisma.memberAttributeKey.deleteMany.mockResolvedValue({ count: 0 });
+
+    const error = await deleteAttributeKey(ORG, "k1", t0).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(MemberAttributeKeyConflictError);
+    expect(prisma.memberAttributeKey.deleteMany).toHaveBeenCalledWith({
+      where: { id: "k1", organizationId: ORG, updatedAt: t0 },
+    });
+  });
+
+  test("reports a key deleted after the read as not found", async () => {
+    prisma.memberAttributeKey.findFirst
+      .mockResolvedValueOnce(key("k1", "country") as never)
+      .mockResolvedValueOnce(null);
+    prisma.feedbackDirectory.findMany.mockResolvedValue([]);
+    prisma.feedbackDirectory.count.mockResolvedValue(0);
+    prisma.memberAttributeKey.deleteMany.mockResolvedValue({ count: 0 });
+
+    await expect(deleteAttributeKey(ORG, "k1", t0)).rejects.toBeInstanceOf(MemberAttributeKeyNotFoundError);
   });
 
   test("reports the datasets when a condition added during the delete trips the foreign key", async () => {
@@ -201,16 +231,16 @@ describe("deleteAttributeKey", () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ id: "ds_2", name: "Sales" }] as never);
     prisma.feedbackDirectory.count.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
-    prisma.memberAttributeKey.delete.mockRejectedValue(knownError("P2003"));
+    prisma.memberAttributeKey.deleteMany.mockRejectedValue(knownError("P2003"));
 
-    const error = await deleteAttributeKey(ORG, "k1").catch((e: unknown) => e);
+    const error = await deleteAttributeKey(ORG, "k1", t0).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(MemberAttributeKeyInUseError);
     expect((error as MemberAttributeKeyInUseError).datasets).toEqual([{ id: "ds_2", name: "Sales" }]);
   });
 
   test("rethrows any other error", async () => {
     prisma.memberAttributeKey.findFirst.mockRejectedValue(new Error("boom"));
-    await expect(deleteAttributeKey(ORG, "k1")).rejects.toThrow("boom");
+    await expect(deleteAttributeKey(ORG, "k1", t0)).rejects.toThrow("boom");
   });
 });
 
@@ -391,6 +421,16 @@ describe("listMemberAttributeRows", () => {
     expect(prisma.invite.findMany.mock.calls[0][0]?.take).toBe(3);
   });
 
+  test("groups values of a key named like an Object.prototype property", async () => {
+    prisma.memberAttributeKey.findMany.mockResolvedValue([key("k1", "constructor")] as never);
+    prisma.membership.findMany.mockResolvedValue([member("u1")] as never);
+    prisma.invite.findMany.mockResolvedValue([]);
+
+    const { rows } = await listMemberAttributeRows(ORG, { limit: 5, cursor: null });
+
+    expect(rows[0].attributes).toEqual({ constructor: ["Sweden", "Norway"] });
+  });
+
   test("continues invites after the cursor and ends without one", async () => {
     prisma.invite.findMany.mockResolvedValue([invite("i5")] as never);
 
@@ -458,10 +498,10 @@ describe("applyMemberAttributeWrites", () => {
     ]);
 
     expect(prisma.memberAttributeValue.deleteMany).toHaveBeenCalledWith({
-      where: { organizationId: ORG, userId: "u1", attributeKeyId: { in: ["k1"] } },
+      where: { organizationId: ORG, OR: [{ userId: "u1", attributeKeyId: { in: ["k1"] } }] },
     });
     expect(prisma.inviteAttributeValue.deleteMany).toHaveBeenCalledWith({
-      where: { inviteId: "i1", invite: { organizationId: ORG }, attributeKeyId: { in: ["k1"] } },
+      where: { invite: { organizationId: ORG }, OR: [{ inviteId: "i1", attributeKeyId: { in: ["k1"] } }] },
     });
     const memberData = prisma.memberAttributeValue.createMany.mock.calls[0][0]?.data;
     expect(memberData).toEqual([
@@ -471,6 +511,34 @@ describe("applyMemberAttributeWrites", () => {
     expect(inviteData).toEqual([
       expect.objectContaining({ inviteId: "i1", attributeKeyId: "k1", value: "Norway" }),
     ]);
+  });
+
+  test("locks the targets in a fixed order and deletes once per table for the whole batch", async () => {
+    await applyMemberAttributeWrites(ORG, [
+      { target: "member", userId: "u2", valuesByKeyId: new Map([["k1", ["Sweden"]]]) },
+      { target: "member", userId: "u1", valuesByKeyId: new Map([["k2", []]]) },
+      { target: "invite", inviteId: "i2", valuesByKeyId: new Map([["k1", ["Norway"]]]) },
+      { target: "invite", inviteId: "i1", valuesByKeyId: new Map([["k1", ["Denmark"]]]) },
+    ]);
+
+    const lockCalls = prisma.$queryRaw.mock.calls;
+    expect(lockCalls).toHaveLength(2);
+    expect((lockCalls[0][0] as TemplateStringsArray).join("")).toContain('FROM "Membership"');
+    expect((lockCalls[0][0] as TemplateStringsArray).join("")).toContain("FOR UPDATE");
+    expect(lockCalls[0].slice(1)).toEqual([ORG, ["u1", "u2"]]);
+    expect((lockCalls[1][0] as TemplateStringsArray).join("")).toContain('FROM "Invite"');
+    expect(lockCalls[1].slice(1)).toEqual([ORG, ["i1", "i2"]]);
+    expect(prisma.memberAttributeValue.deleteMany).toHaveBeenCalledTimes(1);
+    expect(prisma.memberAttributeValue.deleteMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: ORG,
+        OR: [
+          { userId: "u2", attributeKeyId: { in: ["k1"] } },
+          { userId: "u1", attributeKeyId: { in: ["k2"] } },
+        ],
+      },
+    });
+    expect(prisma.inviteAttributeValue.deleteMany).toHaveBeenCalledTimes(1);
   });
 
   test("clears a key given an empty list without inserting", async () => {
@@ -487,6 +555,12 @@ describe("invite values", () => {
   test("reads only values whose key belongs to the invite's organization", async () => {
     prisma.inviteAttributeValue.findMany.mockResolvedValue([]);
     await readInviteAttributeValues({ inviteId: "i1", organizationId: ORG });
+    const lock = prisma.$queryRaw.mock.calls[0];
+    expect((lock[0] as TemplateStringsArray).join("")).toContain("FOR UPDATE");
+    expect(lock.slice(1)).toEqual(["i1", ORG]);
+    expect(prisma.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      prisma.inviteAttributeValue.findMany.mock.invocationCallOrder[0]
+    );
     expect(prisma.inviteAttributeValue.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { inviteId: "i1", invite: { organizationId: ORG }, attributeKey: { organizationId: ORG } },

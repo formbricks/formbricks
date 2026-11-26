@@ -94,6 +94,8 @@ export const serializeV3DashboardPage = (page: TPageResourceRow): TV3DashboardPa
   id: page.id,
   name: page.name,
   order: page.order,
+  // A limit row without the flag still limits: the page never opens because the flag lagged (ADR-0060).
+  limited: page.teamLimited || page.teamLimits.length > 0,
   teamIds: page.teamLimits.map(({ teamId }) => teamId),
 });
 

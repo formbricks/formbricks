@@ -3,7 +3,14 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { type TLockedDashboard, lockDashboard } from "./dashboard-lock";
-import { findIneligiblePageTeams, sameTeamLimit } from "./page-access";
+import {
+  addedLimitTeams,
+  findIneligiblePageTeams,
+  sameTeamLimit,
+  storedTeamLimit,
+  toLimitFields,
+  writePageTeamLimit,
+} from "./page-access";
 import { MAX_DASHBOARD_PAGES, MAX_WIDGET_ORDER } from "./schemas";
 import { type TPageResourceRow, selectPageResource } from "./service";
 import { touchDashboard } from "./widget-service";
@@ -15,7 +22,11 @@ import { touchDashboard } from "./widget-service";
  */
 
 export type TPageWriteResult =
-  | { kind: "ok"; page: TPageResourceRow; previous?: { name: string; teamIds: string[] } }
+  | {
+      kind: "ok";
+      page: TPageResourceRow;
+      previous?: { name: string; limited: boolean; teamIds: string[] };
+    }
   /** The dashboard already has `MAX_DASHBOARD_PAGES` pages. */
   | { kind: "full" }
   /** A team limit change by a caller who may not make one (`canManageDashboardAccess`). */
@@ -61,7 +72,8 @@ export const createPageRow = (dashboardId: string, name: string): Promise<TPageW
 /**
  * Rename a page, limit it to teams, or both. A team limit that changes needs `canManageAccess` — the
  * caller's `canManageDashboardAccess` — and every team it adds must be one of the page's options; an
- * unchanged limit sent back as it was needs neither. `teamIds` null or empty removes the limit.
+ * unchanged limit sent back as it was needs neither. `teamIds` null removes the limit; an empty list limits
+ * the page to no team.
  */
 export const updatePageRow = ({
   dashboardId,
@@ -86,36 +98,30 @@ export const updatePageRow = ({
         select: selectPageResource,
       });
       if (!current) return { kind: "gone" };
-      const currentTeamIds = current.teamLimits.map(({ teamId }) => teamId);
+      const currentLimit = storedTeamLimit(current);
 
-      const nextTeamIds = teamIds === undefined ? null : (teamIds ?? []);
-      const limitChanges = nextTeamIds !== null && !sameTeamLimit(currentTeamIds, nextTeamIds);
+      const limitChanges = teamIds !== undefined && !sameTeamLimit(currentLimit, teamIds);
       if (limitChanges) {
         if (!canManageAccess) return { kind: "accessDenied" };
-        const added = nextTeamIds.filter((teamId) => !currentTeamIds.includes(teamId));
+        const added = addedLimitTeams(currentLimit, teamIds);
         const ineligible = await findIneligiblePageTeams(tx, { dashboardId, workspaceId, teamIds: added });
         if (ineligible.length > 0) return { kind: "ineligibleTeams", teamIds: ineligible };
       }
 
       if (!(await touchDashboard(tx, dashboardId, locked))) return { kind: "gone" };
-      if (limitChanges) {
-        await tx.dashboardPageTeam.deleteMany({ where: { pageId } });
-        if (nextTeamIds.length > 0) {
-          await tx.dashboardPageTeam.createMany({ data: nextTeamIds.map((teamId) => ({ pageId, teamId })) });
-        }
-      }
+      if (limitChanges) await writePageTeamLimit(tx, pageId, teamIds);
       const page = await tx.dashboardPage.update({
         where: { id: pageId },
         data: name === undefined ? { updatedAt: new Date() } : { name },
         select: selectPageResource,
       });
-      return { kind: "ok", page, previous: { name: current.name, teamIds: currentTeamIds } };
+      return { kind: "ok", page, previous: { name: current.name, ...toLimitFields(currentLimit) } };
     },
     { kind: "gone" }
   );
 
 export type TPageDeleteResult =
-  | { kind: "ok"; removed: { name: string; teamIds: string[]; widgetIds: string[] } }
+  | { kind: "ok"; removed: { name: string; limited: boolean; teamIds: string[]; widgetIds: string[] } }
   /** The dashboard's only page: a dashboard always has one. */
   | { kind: "lastPage" }
   | { kind: "gone" };
@@ -129,6 +135,7 @@ export const deletePageRow = (dashboardId: string, pageId: string): Promise<TPag
         where: { id: pageId, dashboardId },
         select: {
           name: true,
+          teamLimited: true,
           teamLimits: { select: { teamId: true } },
           widgets: { select: { id: true } },
         },
@@ -142,7 +149,7 @@ export const deletePageRow = (dashboardId: string, pageId: string): Promise<TPag
         kind: "ok",
         removed: {
           name: page.name,
-          teamIds: page.teamLimits.map(({ teamId }) => teamId),
+          ...toLimitFields(storedTeamLimit(page)),
           widgetIds: page.widgets.map(({ id }) => id),
         },
       };

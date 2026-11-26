@@ -3,7 +3,7 @@ get:
   summary: Get a Member attribute key
   description: |
     Returns one key. A key that does not exist in the organization answers **403**. Same access as the
-    list.
+    list. Takes no query parameters: any query parameter answers **400**.
   tags:
     - V3 Member Attributes
   parameters:
@@ -41,7 +41,7 @@ patch:
   description: |
     Changes a key's label, description or both. Its `key` never changes. Send the `updatedAt` from your
     read as `expectedUpdatedAt`: if the key changed since, the request answers **409** and nothing is
-    written. Same access as create. Audited.
+    written. Same access as create. Audited. Takes no query parameters: any query parameter answers **400**.
   tags:
     - V3 Member Attributes
   parameters:
@@ -87,8 +87,9 @@ delete:
   description: |
     Deletes a key and every value members and pending invites hold for it. Refused with **409**
     `member_attribute_key_in_use` while Dashboard Viewer access of a Feedback Dataset matches on the key;
-    `details.datasets` names them. With `expectedUpdatedAt`, a key changed since answers **409** too.
-    Same access as create. Audited.
+    `details.datasets` names them. Send the `updatedAt` from your read as the required `expectedUpdatedAt`
+    query parameter (**400** without it): if the key changed since, the request answers **409** and nothing
+    is deleted. Same access as create. Audited.
   tags:
     - V3 Member Attributes
   parameters:
@@ -96,10 +97,13 @@ delete:
     - $ref: ../components/parameters/MemberAttributeKeyIdPath.yml
     - in: query
       name: expectedUpdatedAt
+      required: true
       schema:
         type: string
         format: date-time
-      description: The key's `updatedAt` from your read. Optional.
+      description: >-
+        The key's `updatedAt` from your read. Required: deleting a key removes every value members hold
+        for it, so the stale-write check is not optional.
   responses:
     "200":
       description: The key was deleted

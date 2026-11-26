@@ -7,7 +7,15 @@ import type { TDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dash
 import { parseWidgetContent } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import { findOverlappingWidget } from "@/modules/ee/analysis/dashboards/lib/widget-placement";
 import { lockDashboard, nextDashboardUpdatedAt } from "./dashboard-lock";
-import { findIneligiblePageTeams, sameTeamLimit } from "./page-access";
+import {
+  type TPageTeamLimit,
+  addedLimitTeams,
+  findIneligiblePageTeams,
+  sameTeamLimit,
+  storedTeamLimit,
+  toLimitFields,
+  writePageTeamLimit,
+} from "./page-access";
 import { MAX_DASHBOARD_WIDGETS } from "./schemas";
 import { PAGE_READ_ORDER, type TDashboardResourceRow, selectDashboardResource } from "./service";
 import { toContentInput } from "./widget-service";
@@ -37,7 +45,8 @@ export type TReplaceWidgetInput = {
   order?: number;
 };
 
-type TPreviousPage = { id: string; name: string; order: number; teamIds: string[] };
+/** A stored page as the save read it; `teamIds` is its team limit, `null` for none. */
+type TPreviousPage = { id: string; name: string; order: number; teamIds: TPageTeamLimit };
 type TPreviousWidget = { id: string; pageId: string; layout: unknown; order: number };
 
 export type TDashboardReplaceResult =
@@ -47,7 +56,7 @@ export type TDashboardReplaceResult =
       previous: {
         name: string;
         filters?: unknown;
-        pages: TPreviousPage[];
+        pages: { id: string; name: string; order: number; limited: boolean; teamIds: string[] }[];
         widgets: TPreviousWidget[];
       };
     }
@@ -81,7 +90,10 @@ type TRefusal = Exclude<TDashboardReplaceResult, { kind: "ok" | "gone" | "stale"
 const REPLACE_TRANSACTION_OPTIONS = { timeout: 15_000 };
 
 type TCurrent = {
-  pages: { id: string; teamIds: string[] }[];
+  /** In display order (`PAGE_READ_ORDER`). */
+  pages: TPreviousPage[];
+  /** Each stored page's place by when it was added (`createdAt`, then id): `PAGE_READ_ORDER`'s tie-break. */
+  creationRank: ReadonlyMap<string, number>;
   widgets: { id: string; pageId: string; kind: TDashboardWidgetKind; chartId: string | null }[];
 };
 
@@ -89,6 +101,25 @@ type TCurrent = {
 type TPageRef = { id: string } | { key: string };
 
 const pageRefKey = (ref: TPageRef): string => ("id" in ref ? `id:${ref.id}` : `key:${ref.key}`);
+
+/**
+ * The page a dashboard displays first after the save, the way `PAGE_READ_ORDER` will read it back: the
+ * lowest `order`; on a tie a kept page before a new one (it was created earlier), two kept pages by when
+ * they were added (`createdAt`, then id), and two new pages in request order. Not the order pages were sent.
+ */
+const firstDisplayedPage = (
+  pages: TReplacePageInput[],
+  creationRank: ReadonlyMap<string, number>
+): TPageRef => {
+  const comesFirst = (page: TReplacePageInput, best: TReplacePageInput): boolean => {
+    if (page.order !== best.order) return page.order < best.order;
+    if (page.pageId === undefined) return false;
+    if (best.pageId === undefined) return true;
+    return (creationRank.get(page.pageId) ?? 0) < (creationRank.get(best.pageId) ?? 0);
+  };
+  const first = pages.reduce((best, page) => (comesFirst(page, best) ? page : best));
+  return first.pageId ? { id: first.pageId } : { key: first.key as string };
+};
 
 /** The pages a save leaves: the ones it sends, or the current ones when it sends none. */
 const planPages = (
@@ -100,11 +131,16 @@ const planPages = (
   | {
       kind: "ok";
       final: TPageRef[];
+      /** Where a new widget without a page reference lands. */
+      firstPage: TPageRef;
       removed: string[];
       /** Team ids each page's limit gains, to be checked against the options. */
       added: string[];
     } => {
-  if (!pages) return { kind: "ok", final: current.pages.map(({ id }) => ({ id })), removed: [], added: [] };
+  if (!pages) {
+    const final = current.pages.map(({ id }) => ({ id }));
+    return { kind: "ok", final, firstPage: final[0], removed: [], added: [] };
+  }
 
   const currentById = new Map(current.pages.map((page) => [page.id, page]));
   const unknown = pages.flatMap((page) =>
@@ -115,16 +151,17 @@ const planPages = (
   const added: string[] = [];
   for (const page of pages) {
     if (page.teamIds === undefined) continue;
-    const before = page.pageId ? (currentById.get(page.pageId)?.teamIds ?? []) : [];
+    const before = page.pageId ? (currentById.get(page.pageId)?.teamIds ?? null) : null;
     if (sameTeamLimit(before, page.teamIds)) continue;
     if (!canManageAccess) return { kind: "accessDenied" };
-    added.push(...(page.teamIds ?? []).filter((teamId) => !before.includes(teamId)));
+    added.push(...addedLimitTeams(before, page.teamIds));
   }
 
   const kept = new Set(pages.flatMap((page) => (page.pageId ? [page.pageId] : [])));
   return {
     kind: "ok",
     final: pages.map((page) => (page.pageId ? { id: page.pageId } : { key: page.key as string })),
+    firstPage: firstDisplayedPage(pages, current.creationRank),
     removed: current.pages.filter((page) => !kept.has(page.id)).map(({ id }) => id),
     added: [...new Set(added)],
   };
@@ -214,6 +251,7 @@ const planWidgets = ({
   current,
   widgets,
   finalPages,
+  firstPage,
   removedPages,
   requireEveryWidget,
   workspaceId,
@@ -221,6 +259,7 @@ const planWidgets = ({
   current: TCurrent;
   widgets: TReplaceWidgetInput[];
   finalPages: TPageRef[];
+  firstPage: TPageRef;
   removedPages: ReadonlySet<string>;
   requireEveryWidget: boolean;
   workspaceId: string;
@@ -236,7 +275,7 @@ const planWidgets = ({
     .map(({ id }) => id);
   if (requireEveryWidget && omitted.length > 0) return { kind: "missingWidgets", widgetIds: omitted };
 
-  const context = { finalKeys: new Set(finalPages.map(pageRefKey)), firstPage: finalPages[0], workspaceId };
+  const context = { finalKeys: new Set(finalPages.map(pageRefKey)), firstPage, workspaceId };
   const planned: TPlannedWidget[] = [];
   for (const [index, widget] of widgets.entries()) {
     const existing = widget.widgetId ? currentById.get(widget.widgetId) : undefined;
@@ -277,35 +316,38 @@ const checkNewWidgets = async (
 };
 
 /**
- * Every existing widget's page, layout, and order where one is given, in one statement: a save of a large
- * dashboard is one round trip, not one per widget, while it holds the dashboard's lock. Only this
- * dashboard's widgets can match.
+ * Every existing widget's page, layout, order where one is given, and content where one is given, in one
+ * statement: a save of a large dashboard is one round trip, not one per widget, while it holds the
+ * dashboard's lock. `nextContent` undefined keeps the stored content; null clears it (SQL NULL, as
+ * `toContentInput` writes it). Only this dashboard's widgets can match.
  */
 const writeWidgetPlaces = async (
   tx: Prisma.TransactionClient,
   dashboardId: string,
-  widgets: { widgetId: string; pageId: string; layout: TWidgetLayout; order?: number }[]
+  widgets: {
+    widgetId: string;
+    pageId: string;
+    layout: TWidgetLayout;
+    order?: number;
+    nextContent?: unknown;
+  }[]
 ): Promise<void> => {
   if (widgets.length === 0) return;
   await tx.$executeRaw`
     UPDATE "DashboardWidget" AS w
-    SET "layout" = v."layout"::jsonb, "pageId" = v."pageId", "order" = COALESCE(v."order", w."order"), "updated_at" = NOW() AT TIME ZONE 'UTC'
+    SET "layout" = v."layout"::jsonb, "pageId" = v."pageId", "order" = COALESCE(v."order", w."order"),
+      "content" = CASE WHEN v."setContent" THEN v."content"::jsonb ELSE w."content" END,
+      "updated_at" = NOW() AT TIME ZONE 'UTC'
     FROM unnest(
       ${widgets.map((widget) => widget.widgetId)}::text[],
       ${widgets.map((widget) => widget.pageId)}::text[],
       ${widgets.map((widget) => JSON.stringify(widget.layout))}::text[],
-      ${widgets.map((widget) => widget.order ?? null)}::int[]
-    ) AS v("id", "pageId", "layout", "order")
+      ${widgets.map((widget) => widget.order ?? null)}::int[],
+      ${widgets.map((widget) => widget.nextContent !== undefined)}::boolean[],
+      ${widgets.map((widget) => (widget.nextContent == null ? null : JSON.stringify(widget.nextContent)))}::text[]
+    ) AS v("id", "pageId", "layout", "order", "setContent", "content")
     WHERE w."id" = v."id" AND w."dashboardId" = ${dashboardId}
   `;
-};
-
-/** Replaces a kept page's team limit with `teamIds`. */
-const writePageTeams = async (tx: Prisma.TransactionClient, pageId: string, teamIds: string[]) => {
-  await tx.dashboardPageTeam.deleteMany({ where: { pageId } });
-  if (teamIds.length > 0) {
-    await tx.dashboardPageTeam.createMany({ data: teamIds.map((teamId) => ({ pageId, teamId })) });
-  }
 };
 
 /** Writes the save's pages: new ones created, kept ones renamed and reordered, limits replaced. */
@@ -316,26 +358,30 @@ const writePages = async (
   current: TCurrent
 ): Promise<Map<string, string>> => {
   const idByKey = new Map<string, string>();
-  const currentTeams = new Map(current.pages.map((page) => [page.id, page.teamIds]));
+  const currentById = new Map(current.pages.map((page) => [page.id, page]));
   for (const page of pages) {
-    const teamIds = page.teamIds ?? [];
     if (page.pageId) {
-      await tx.dashboardPage.update({
-        where: { id: page.pageId },
-        data: { name: page.name, order: page.order },
-        select: { id: true },
-      });
-      if (page.teamIds !== undefined && !sameTeamLimit(currentTeams.get(page.pageId) ?? [], teamIds)) {
-        await writePageTeams(tx, page.pageId, teamIds);
+      const before = currentById.get(page.pageId);
+      if (before?.name !== page.name || before.order !== page.order) {
+        await tx.dashboardPage.update({
+          where: { id: page.pageId },
+          data: { name: page.name, order: page.order },
+          select: { id: true },
+        });
+      }
+      if (page.teamIds !== undefined && !sameTeamLimit(before?.teamIds ?? null, page.teamIds)) {
+        await writePageTeamLimit(tx, page.pageId, page.teamIds);
       }
       continue;
     }
+    const teamIds = page.teamIds ?? null;
     const created = await tx.dashboardPage.create({
       data: {
         dashboardId,
         name: page.name,
         order: page.order,
-        teamLimits: { create: teamIds.map((teamId) => ({ teamId })) },
+        teamLimited: teamIds !== null,
+        teamLimits: { create: (teamIds ?? []).map((teamId) => ({ teamId })) },
       },
       select: { id: true },
     });
@@ -365,16 +411,9 @@ const writeWidgets = async (
       pageId: resolvePage(widget.page),
       layout: widget.layout,
       order: widget.order,
+      nextContent: widget.nextContent,
     }))
   );
-  for (const widget of existing) {
-    if (widget.nextContent === undefined) continue;
-    await tx.dashboardWidget.update({
-      where: { id: widget.widgetId },
-      data: { content: toContentInput(widget.nextContent) },
-      select: { id: true },
-    });
-  }
   const fresh = planned.filter((widget) => !widget.widgetId);
   if (fresh.length === 0) return;
   await tx.dashboardWidget.createMany({
@@ -396,25 +435,45 @@ const selectStoredDashboard = {
   filters: true,
   pages: {
     orderBy: PAGE_READ_ORDER,
-    select: { id: true, name: true, order: true, teamLimits: { select: { teamId: true } } },
+    select: {
+      id: true,
+      createdAt: true,
+      name: true,
+      order: true,
+      teamLimited: true,
+      teamLimits: { select: { teamId: true } },
+    },
   },
   widgets: {
     select: { id: true, pageId: true, kind: true, chartId: true, layout: true, order: true },
   },
 } satisfies Prisma.DashboardSelect;
 
-/** A stored page as the save reads it, its team limit as ids. */
+/** A stored page as the save reads it, its team limit as ids (`null` for none). */
 const toPreviousPage = (page: {
   id: string;
   name: string;
   order: number;
+  teamLimited: boolean;
   teamLimits: { teamId: string }[];
 }): TPreviousPage => ({
   id: page.id,
   name: page.name,
   order: page.order,
-  teamIds: page.teamLimits.map(({ teamId }) => teamId),
+  teamIds: storedTeamLimit(page),
 });
+
+/** Each stored page's place by `createdAt`, then id: how `PAGE_READ_ORDER` breaks a tie on `order`. */
+const toCreationRank = (pages: ReadonlyArray<{ id: string; createdAt: Date }>): Map<string, number> =>
+  new Map(
+    [...pages]
+      .sort(
+        (left, right) =>
+          left.createdAt.getTime() - right.createdAt.getTime() ||
+          (left.id < right.id ? -1 : Number(left.id > right.id))
+      )
+      .map(({ id }, rank) => [id, rank])
+  );
 
 type TReplaceInput = {
   dashboardId: string;
@@ -468,6 +527,7 @@ const planReplace = async (
     current,
     widgets,
     finalPages: pagePlan.final,
+    firstPage: pagePlan.firstPage,
     removedPages: new Set(pagePlan.removed),
     requireEveryWidget,
     workspaceId,
@@ -500,7 +560,11 @@ export const replaceDashboardRow = (input: TReplaceInput): Promise<TDashboardRep
         return { kind: "stale", currentUpdatedAt: stored.updatedAt };
       }
       const previousPages = stored.pages.map(toPreviousPage);
-      const current: TCurrent = { pages: previousPages, widgets: stored.widgets };
+      const current: TCurrent = {
+        pages: previousPages,
+        creationRank: toCreationRank(stored.pages),
+        widgets: stored.widgets,
+      };
 
       const plan = await planReplace(tx, current, input);
       if (plan.kind !== "ok") return plan;
@@ -530,7 +594,8 @@ export const replaceDashboardRow = (input: TReplaceInput): Promise<TDashboardRep
         previous: {
           name: stored.name,
           filters: stored.filters,
-          pages: previousPages,
+          // As the API reads a page, so the audit's before and after compare field by field.
+          pages: previousPages.map(({ teamIds, ...page }) => ({ ...page, ...toLimitFields(teamIds) })),
           widgets: stored.widgets.map(({ id, pageId, layout, order }) => ({ id, pageId, layout, order })),
         },
       };

@@ -80,4 +80,21 @@ describe("viewer access claim (ADR-0061)", () => {
       ]).status
     ).toBe("restricted");
   });
+
+  test("one dataset without a value does not make a dashboard with a matchable dataset unmatched", () => {
+    const empty = condition("FeedbackRecords.metadataCountry", []);
+    const matchable = condition("FeedbackRecords.language", ["de"]);
+    expect(
+      summarizeViewerAccess([
+        { join: "all", conditions: [empty] },
+        { join: "all", conditions: [matchable] },
+      ]).status
+    ).toBe("restricted");
+    expect(
+      summarizeViewerAccess([
+        { join: "all", conditions: [empty] },
+        { join: "any", conditions: [empty] },
+      ]).status
+    ).toBe("unmatched");
+  });
 });

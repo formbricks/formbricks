@@ -80,28 +80,30 @@ export const VIEW_AS_ROLES = ["member", "dashboard_viewer"] as const satisfies r
 export type TViewAsCandidate = TViewAsMember & { hasAccess: boolean };
 
 /**
- * Who opens `dashboardId`, by role, from the teams with a grant on its workspace: a Member through any of
- * them (dashboard limits do not apply to Members), a Dashboard Viewer only through a team without a dashboard
- * limit or whose limit names this dashboard. The same rule the reads apply (ADR-0060).
+ * Which of `userIds` open `dashboardId`, by role, from the teams with a grant on its workspace: a Member
+ * through any of them (dashboard limits do not apply to Members), a Dashboard Viewer only through a team
+ * without a dashboard limit or whose limit names this dashboard. The same rule the reads apply (ADR-0060).
  */
 const listUsersWhoOpenDashboard = async (
   dashboardId: string,
-  workspaceId: string
+  workspaceId: string,
+  userIds: string[]
 ): Promise<{ members: Set<string>; dashboardViewers: Set<string> }> => {
+  const members = new Set<string>();
+  const dashboardViewers = new Set<string>();
+  if (userIds.length === 0) return { members, dashboardViewers };
   const grants = await prisma.workspaceTeam.findMany({
     where: { workspaceId },
     select: {
       team: {
         select: {
-          teamUsers: { select: { userId: true } },
+          teamUsers: { where: { userId: { in: userIds } }, select: { userId: true } },
           dashboardLimited: true,
           dashboardLimits: { where: { dashboardId }, select: { dashboardId: true } },
         },
       },
     },
   });
-  const members = new Set<string>();
-  const dashboardViewers = new Set<string>();
   for (const { team } of grants) {
     const opensThisDashboard = !team.dashboardLimited || team.dashboardLimits.length > 0;
     for (const { userId } of team.teamUsers) {
@@ -121,10 +123,16 @@ export const listViewAsMembers = async (
   dashboardId: string,
   workspaceId: string
 ): Promise<TViewAsCandidate[]> => {
-  const [members, openers] = await Promise.all([
-    listMembersWithAttributes(organizationId, { limit: VIEW_AS_MEMBER_LIMIT, roles: VIEW_AS_ROLES }),
-    listUsersWhoOpenDashboard(dashboardId, workspaceId),
-  ]);
+  const members = await listMembersWithAttributes(organizationId, {
+    limit: VIEW_AS_MEMBER_LIMIT,
+    roles: VIEW_AS_ROLES,
+  });
+  // Only the offered members' team memberships are read, not every membership of the workspace's teams.
+  const openers = await listUsersWhoOpenDashboard(
+    dashboardId,
+    workspaceId,
+    members.map(({ userId }) => userId)
+  );
   return members.map(({ userId, name, email, role, attributes }) => ({
     userId,
     name,

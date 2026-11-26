@@ -159,8 +159,9 @@ put:
       $ref: ../components/responses/V3DashboardsForbidden.yml
     "409":
       description: >-
-        Conflict — the dashboard changed since your read, or the name is already used in the
-        workspace. Nothing was written. For a changed dashboard, `details` carries
+        Conflict — the dashboard changed since your read, the name is already used in the
+        workspace, a chart appears twice on one page, or new widgets would take the dashboard past
+        250 widgets. Nothing was written. For a changed dashboard, `details` carries
         `expectedUpdatedAt` and the live `currentUpdatedAt`: read it again and retry.
       headers:
         X-Request-Id:
