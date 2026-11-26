@@ -411,6 +411,21 @@ describe("reconcileDashboardRelationships", () => {
       });
       expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
     });
+
+    test("starts no further delete batch once the deadline passes between batches", async () => {
+      // Six deleted dashboards: two delete filters each, so a first batch of 10 and a second of 2.
+      const dashboardIds = ["d1", "d2", "d3", "d4", "d5", "d6"];
+      clientMocks.deleteRelationships.mockImplementation(async () => {
+        vi.setSystemTime(NOW + 26_000);
+      });
+
+      await expect(reconcileDashboardRelationships({ dashboardIds })).resolves.toMatchObject({
+        code: "authzed_projection_fenced",
+        retryable: true,
+        status: "failed",
+      });
+      expect(clientMocks.deleteRelationships).toHaveBeenCalledTimes(10);
+    });
   });
 
   test("is disabled, touching nothing, while AuthZed is off", async () => {

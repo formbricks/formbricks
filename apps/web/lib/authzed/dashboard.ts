@@ -207,9 +207,8 @@ const writeSnapshot = async (
   for (const batch of packRelationshipUpdateGroups(updateGroups.filter((group) => group.length > 0))) {
     await writeBeforeDeadline(client, batch, deadline); // NOSONAR
   }
-  // Deletes only narrow access, and only for rows already gone, but still none starts past the deadline.
-  if (deletionFilters.length > 0) assertBeforeDeadline(deadline);
-  await deleteRelationshipsInBoundedBatches(client, deletionFilters);
+  // Deletes only narrow access, and only for rows already gone, but still no batch starts past the deadline.
+  await deleteRelationshipsInBoundedBatches(client, deletionFilters, () => assertBeforeDeadline(deadline));
 };
 
 /** Advisory lock key prefixes, one per resource type, hashed with the id like the survey projector's. */
