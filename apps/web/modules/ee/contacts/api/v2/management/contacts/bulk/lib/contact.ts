@@ -218,14 +218,24 @@ const findExistingContact = (
   };
 };
 
+/** The key only one contact of the directory may hold a value of, and its values other contacts hold. */
+type TUniqueValueCheck = { key: string; taken: { value: string }[] };
+
+const takesHeldValue = (
+  contactAttributes: TContactBulkUploadContact["attributes"],
+  check: TUniqueValueCheck
+) => {
+  const uniqueAttr = contactAttributes.find((attr) => attr.attributeKey.key === check.key);
+  return uniqueAttr !== undefined && check.taken.some((u) => u.value === uniqueAttr.value);
+};
+
 /**
  * Processes a contact that exists in the database to determine if it needs updating
  */
 const processExistingContact = (
   contact: TContactBulkUploadContact,
   existingContact: TExistingContact,
-  uniqueValueKey: string,
-  takenUniqueValues: { value: string }[],
+  uniqueValueCheck: TUniqueValueCheck,
   idx: number,
   contactIdxWithConflictingUserIds: number[],
   contactsToUpdate: TContactToUpdate[],
@@ -244,8 +254,7 @@ const processExistingContact = (
     return;
   }
 
-  const uniqueAttr = attributesToUpdate.find((attr) => attr.attributeKey.key === uniqueValueKey);
-  if (uniqueAttr && takenUniqueValues.some((u) => u.value === uniqueAttr.value)) {
+  if (takesHeldValue(attributesToUpdate, uniqueValueCheck)) {
     contactIdxWithConflictingUserIds.push(idx);
     return;
   }
@@ -275,16 +284,13 @@ const processExistingContact = (
  */
 const processNewContact = (
   contact: TContactBulkUploadContact,
-  uniqueValueKey: string,
-  takenUniqueValues: { value: string }[],
+  uniqueValueCheck: TUniqueValueCheck,
   idx: number,
   contactIdxWithConflictingUserIds: number[],
   contactsToCreate: TContactToCreate[],
   filteredContacts: TContactBulkUploadContact[]
 ): void => {
-  const uniqueAttr = contact.attributes.find((attr) => attr.attributeKey.key === uniqueValueKey);
-
-  if (uniqueAttr && takenUniqueValues.some((u) => u.value === uniqueAttr.value)) {
+  if (takesHeldValue(contact.attributes, uniqueValueCheck)) {
     contactIdxWithConflictingUserIds.push(idx);
     return;
   }
@@ -637,6 +643,7 @@ export const upsertBulkContacts = async (
   const contactsToCreate: TContactToCreate[] = [];
   const filteredContacts: TContactBulkUploadContact[] = [];
 
+  const uniqueValueCheck: TUniqueValueCheck = { key: uniqueValueKey, taken: takenUniqueValues };
   contacts.forEach((contact, idx) => {
     const existingContact = findExistingContact(contact, identityKey, contactsByIdentity);
 
@@ -644,8 +651,7 @@ export const upsertBulkContacts = async (
       processExistingContact(
         contact,
         existingContact,
-        uniqueValueKey,
-        takenUniqueValues,
+        uniqueValueCheck,
         idx,
         contactIdxWithConflictingUserIds,
         contactsToUpdate,
@@ -654,8 +660,7 @@ export const upsertBulkContacts = async (
     } else {
       processNewContact(
         contact,
-        uniqueValueKey,
-        takenUniqueValues,
+        uniqueValueCheck,
         idx,
         contactIdxWithConflictingUserIds,
         contactsToCreate,
