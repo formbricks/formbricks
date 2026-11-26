@@ -3580,6 +3580,7 @@
         "your_plan": "Az Ön csomagja"
       },
       "contact_directories": {
+        "also_archive_directory": "Kérjük, archiválja ezt a könyvtárat is",
         "archive_directory": "Címtár archiválása",
         "archive_needs_no_workspaces": "Kizárólag olyan címtár archiválható, amelyhez nem tartozik munkaterület. Jelen címtár archiválásához kérjük, távolítsa el a hozzá tartozó munkaterületeket, majd mentse a módosítást.",
         "create_directory": "Címtár létrehozása",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "Az Ön által kiválasztott egyik munkaterület időközben már másik kapcsolattartói címtárat használ. Kérjük, töltse újra az oldalt, majd próbálkozzon ismét.",
         "error_workspace_not_movable": "Az Ön által kiválasztott munkaterület már nem helyezhető át ebbe a címtárba. Kérjük, töltse be újra az oldalt, majd próbálja meg ismét.",
         "error_workspace_required": "Kérjük, válasszon ki legalább egy munkaterületet.",
-        "last_workspace_removed_note": "A címtár munkaterületek nélkül is aktív marad. Ezt követően a Kezelés menüpontban archiválhatja.",
         "load_failed": "A kapcsolattartói címtárak betöltése nem sikerült.",
         "manage_directory": "Címtár kezelése",
         "match_contacts_by": "A kapcsolattartók egyeztetésének alapja",

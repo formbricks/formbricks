@@ -3580,6 +3580,7 @@
         "your_plan": "Ton offre"
       },
       "contact_directories": {
+        "also_archive_directory": "Archiver aussi ce répertoire",
         "archive_directory": "Archiver le répertoire",
         "archive_needs_no_workspaces": "Seul un répertoire sans espace de travail peut être archivé. Pour archiver celui-ci, retire ses espaces de travail et enregistre.",
         "create_directory": "Créer un répertoire",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "Un espace de travail que tu as sélectionné utilise désormais un autre répertoire de contacts. Recharge la page et réessaie.",
         "error_workspace_not_movable": "Un espace de travail que tu as sélectionné ne peut plus être déplacé vers ce répertoire. Recharge la page et réessaie.",
         "error_workspace_required": "Sélectionne au moins un espace de travail.",
-        "last_workspace_removed_note": "L'annuaire reste actif sans aucun espace de travail. Tu pourras ensuite l'archiver depuis Gérer.",
         "load_failed": "Impossible de charger les répertoires de contacts.",
         "manage_directory": "Gérer le répertoire",
         "match_contacts_by": "Associer les contacts par",

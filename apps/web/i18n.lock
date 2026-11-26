@@ -3449,6 +3449,7 @@ checksums:
     workspace/settings/billing/yearly: 87f43e016c19cb25860f456549a2f431
     workspace/settings/billing/yearly_checkout_unavailable: f7b694de0e554c8583d8aaa4740e01a2
     workspace/settings/billing/your_plan: dc56f0334977d7d5d7d8f1f5801ac54b
+    workspace/settings/contact_directories/also_archive_directory: 1a95eaf206df6690a950dcb5237df89e
     workspace/settings/contact_directories/archive_directory: 51657817cdb2b14069f0cbdf4c07e202
     workspace/settings/contact_directories/archive_needs_no_workspaces: dae03636b248a813d18b2bfdc0ab0e51
     workspace/settings/contact_directories/create_directory: e62c607f0d71e0fd012f2249ac124554
@@ -3469,7 +3470,6 @@ checksums:
     workspace/settings/contact_directories/error_workspace_in_other_directory: 021c04f3190d41b2939b196a80db24d0
     workspace/settings/contact_directories/error_workspace_not_movable: d6281c526cf9b5a72a8ed0dc0e8a3542
     workspace/settings/contact_directories/error_workspace_required: 330637acea216cc57815ba3adcc8dd9e
-    workspace/settings/contact_directories/last_workspace_removed_note: 9374cbb271825df1e197dde30726aa5c
     workspace/settings/contact_directories/load_failed: d85ce58c7d30ee15a0d21abd5d0ce06c
     workspace/settings/contact_directories/manage_directory: 1274a4a5ed0cdee9033b3b7114c2e08f
     workspace/settings/contact_directories/match_contacts_by: 776e8bd7ffcdcd2124a86b596ec203b2

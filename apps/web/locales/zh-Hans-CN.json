@@ -3580,6 +3580,7 @@
         "your_plan": "你的套餐"
       },
       "contact_directories": {
+        "also_archive_directory": "同时归档此目录",
         "archive_directory": "归档目录",
         "archive_needs_no_workspaces": "只有不含任何工作区的目录才能归档。若要归档此目录，请先移除其工作区并保存。",
         "create_directory": "创建目录",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "你选择的某个工作区现在已使用另一个联系人目录。请刷新页面后重试。",
         "error_workspace_not_movable": "你所选的某个工作区已无法移至此目录。请刷新页面后重试。",
         "error_workspace_required": "请至少选择一个工作区。",
-        "last_workspace_removed_note": "该通讯录目前没有任何工作区，但仍会保持启用状态。之后你可以在“管理”中将其归档。",
         "load_failed": "无法加载联系人目录。",
         "manage_directory": "管理目录",
         "match_contacts_by": "联系人匹配方式",

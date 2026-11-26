@@ -281,8 +281,9 @@ describe("ContactDirectoryDialog", () => {
     return confirm;
   };
 
-  // ADR 0062: removing the last workspace never archives; archiving is its own action in Manage.
-  test("keeps the directory active when its last workspace is removed, and never sends isArchived", async () => {
+  // ADR 0062: removing the last workspace only detaches it; "Also archive" is an unticked shortcut that
+  // sends the Archive button's own request after the removal is saved.
+  test("keeps the directory active when its last workspace is removed and the archive box stays unticked", async () => {
     const confirm = await removeLastWorkspace();
 
     expect(
@@ -290,16 +291,27 @@ describe("ContactDirectoryDialog", () => {
         `${K}.remove_workspaces_title {"workspaceNames":"Brand Tracking","directoryName":"Brand"}`
       )
     ).toBeInTheDocument();
-    expect(confirm.getByText(`${K}.last_workspace_removed_note`)).toBeInTheDocument();
-    expect(confirm.queryByRole("checkbox")).toBeNull();
+    expect(confirm.getByRole("checkbox", { name: `${K}.also_archive_directory` })).not.toBeChecked();
     fireEvent.click(confirm.getByRole("button", { name: `${K}.remove_workspaces` }));
 
-    await waitFor(() => expect(requests("PATCH")).toHaveLength(1));
-    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({ name: "Brand", workspaceIds: [] });
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith(`${K}.directory_updated`));
+    expect(requests("PATCH")).toHaveLength(1);
+    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({ name: "Brand", workspaceIds: [] });
   });
 
-  test("shows no last-workspace note when other workspaces stay", async () => {
+  test("archives in a second request after the removal when the archive box is ticked", async () => {
+    const confirm = await removeLastWorkspace();
+
+    fireEvent.click(confirm.getByRole("checkbox", { name: `${K}.also_archive_directory` }));
+    fireEvent.click(confirm.getByRole("button", { name: `${K}.remove_workspaces` }));
+
+    await waitFor(() => expect(requests("PATCH")).toHaveLength(2));
+    expect(JSON.parse(String(requests("PATCH")[0][1]?.body))).toEqual({ name: "Brand", workspaceIds: [] });
+    expect(JSON.parse(String(requests("PATCH")[1][1]?.body))).toEqual({ isArchived: true });
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(`${K}.directory_archived`));
+  });
+
+  test("offers no archive box when other workspaces stay", async () => {
     renderDialog({ directory: US });
 
     fireEvent.click(dialog().getByRole("button", { name: 'common.remove_item {"item":"Market Access"}' }));
@@ -308,7 +320,7 @@ describe("ContactDirectoryDialog", () => {
 
     const confirm = within(await screen.findByRole("dialog", { name: /remove_workspaces_title/ }));
     await confirm.findByText("Onboarding NPS");
-    expect(confirm.queryByText(`${K}.last_workspace_removed_note`)).toBeNull();
+    expect(confirm.queryByRole("checkbox", { name: `${K}.also_archive_directory` })).toBeNull();
   });
 
   // ADR 0062: unarchiving needs no workspace, and can add some in the same save.

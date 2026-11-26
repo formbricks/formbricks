@@ -194,7 +194,7 @@ Run on a Cloud-size clone or staging, as noted.
 **Remove, archive, delete (staging)**
 - Removing a workspace in Manage shows the confirm step with its affected surveys (app, in progress or scheduled, segment with filters). With **Pause these surveys** ticked they end up paused.
 - After removal, the directory keeps its contacts, keys and segments; the workspace's Contacts page shows no directory, `setUserId` answers `403`, and old responses show "Contact not available". Re-adding the workspace brings everything back.
-- Removing the last workspace never archives: the confirm step notes the directory stays active, and afterwards it has 0 workspaces and its **Archive** button is enabled. While workspaces are linked, **Archive** is disabled with a tooltip. Archived, it shows under **Show archived**; **Unarchive** saves with or without a workspace picked.
+- Removing the last workspace never archives on its own: the confirm step's **Also archive this directory** box is unticked. Unticked, the directory stays active with 0 workspaces and its **Archive** button is enabled; ticked, it is archived right after the removal. While workspaces are linked, **Archive** is disabled with a tooltip. Archived, it shows under **Show archived**; **Unarchive** saves with or without a workspace picked.
 - Deleting the last workspace of a directory: the delete dialog says the directory will have no workspaces left. After the delete the directory is still active and its contacts are kept.
 
 **Settings (staging)**

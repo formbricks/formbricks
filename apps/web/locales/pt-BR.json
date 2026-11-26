@@ -3580,6 +3580,7 @@
         "your_plan": "Seu plano"
       },
       "contact_directories": {
+        "also_archive_directory": "Arquivar também este diretório",
         "archive_directory": "Arquivar diretório",
         "archive_needs_no_workspaces": "Só é possível arquivar um diretório sem workspaces. Para arquivar este, remova os workspaces dele e salve.",
         "create_directory": "Criar diretório",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "Um workspace que você escolheu agora usa outro diretório de contatos. Recarregue a página e tente novamente.",
         "error_workspace_not_movable": "Um workspace que você escolheu não pode mais ser movido para este diretório. Recarregue a página e tente novamente.",
         "error_workspace_required": "Escolha pelo menos um workspace.",
-        "last_workspace_removed_note": "O diretório continua ativo sem nenhum workspace. Depois, você pode arquivá-lo em Gerenciar.",
         "load_failed": "Não foi possível carregar os diretórios de contatos.",
         "manage_directory": "Gerenciar diretório",
         "match_contacts_by": "Associar contatos por",

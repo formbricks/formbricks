@@ -3580,6 +3580,7 @@
         "your_plan": "Your plan"
       },
       "contact_directories": {
+        "also_archive_directory": "Also archive this directory",
         "archive_directory": "Archive directory",
         "archive_needs_no_workspaces": "Only a directory with no workspaces can be archived. To archive this one, remove its workspaces and save.",
         "create_directory": "Create directory",
@@ -3600,7 +3601,7 @@
         "error_workspace_in_other_directory": "A workspace you picked now uses another contact directory. Reload the page and try again.",
         "error_workspace_not_movable": "A workspace you picked can no longer move to this directory. Reload the page and try again.",
         "error_workspace_required": "Pick at least one workspace.",
-        "last_workspace_removed_note": "The directory stays active with no workspaces. You can archive it from Manage afterwards.",
+
         "load_failed": "Couldn't load contact directories.",
         "manage_directory": "Manage directory",
         "match_contacts_by": "Match contacts by",

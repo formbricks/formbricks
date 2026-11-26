@@ -3580,6 +3580,7 @@
         "your_plan": "Dein Tarif"
       },
       "contact_directories": {
+        "also_archive_directory": "Dieses Verzeichnis auch archivieren",
         "archive_directory": "Verzeichnis archivieren",
         "archive_needs_no_workspaces": "Nur ein Verzeichnis ohne Workspaces kann archiviert werden. Um dieses zu archivieren, entferne seine Workspaces und speichere.",
         "create_directory": "Verzeichnis erstellen",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "Ein von Dir ausgewählter Workspace verwendet jetzt ein anderes Kontaktverzeichnis. Lade die Seite neu und versuche es erneut.",
         "error_workspace_not_movable": "Ein von dir ausgewählter Workspace kann nicht mehr in dieses Verzeichnis verschoben werden. Lade die Seite neu und versuche es erneut.",
         "error_workspace_required": "Wähle mindestens einen Workspace aus.",
-        "last_workspace_removed_note": "Das Verzeichnis bleibt auch ohne Workspaces aktiv. Du kannst es anschließend unter „Verwalten“ archivieren.",
         "load_failed": "Kontaktverzeichnisse konnten nicht geladen werden.",
         "manage_directory": "Verzeichnis verwalten",
         "match_contacts_by": "Kontakte abgleichen nach",

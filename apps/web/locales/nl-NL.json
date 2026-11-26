@@ -3580,6 +3580,7 @@
         "your_plan": "Jouw abonnement"
       },
       "contact_directories": {
+        "also_archive_directory": "Archiveer deze map ook",
         "archive_directory": "Map archiveren",
         "archive_needs_no_workspaces": "Alleen een map zonder werkruimtes kan worden gearchiveerd. Wil je deze map archiveren? Verwijder dan de werkruimtes en sla op.",
         "create_directory": "Contactmap aanmaken",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "Een werkruimte die je hebt gekozen, gebruikt nu een andere contactmap. Laad de pagina opnieuw en probeer het nog eens.",
         "error_workspace_not_movable": "Een werkruimte die je hebt gekozen kan niet meer naar deze contactmap worden verplaatst. Laad de pagina opnieuw en probeer het nog eens.",
         "error_workspace_required": "Kies minimaal één werkruimte.",
-        "last_workspace_removed_note": "De map blijft actief zonder werkruimtes. Je kunt hem daarna archiveren via Beheren.",
         "load_failed": "Kan contactmappen niet laden.",
         "manage_directory": "Contactmap beheren",
         "match_contacts_by": "Contacten koppelen op basis van",

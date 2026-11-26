@@ -3580,6 +3580,7 @@
         "your_plan": "Tu plan"
       },
       "contact_directories": {
+        "also_archive_directory": "Archivar también este directorio",
         "archive_directory": "Archivar directorio",
         "archive_needs_no_workspaces": "Solo se puede archivar un directorio que no tenga espacios de trabajo. Para archivar este, elimina sus espacios de trabajo y guarda los cambios.",
         "create_directory": "Crear directorio",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "Un espacio de trabajo que has seleccionado ahora usa otro directorio de contactos. Recarga la página e inténtalo de nuevo.",
         "error_workspace_not_movable": "Un espacio de trabajo que has elegido ya no se puede mover a este directorio. Recarga la página e inténtalo de nuevo.",
         "error_workspace_required": "Elige al menos un espacio de trabajo.",
-        "last_workspace_removed_note": "El directorio sigue activo sin espacios de trabajo. Después, puedes archivarlo desde Administrar.",
         "load_failed": "No se han podido cargar los directorios de contactos.",
         "manage_directory": "Gestionar directorio",
         "match_contacts_by": "Relacionar contactos por",

@@ -3580,6 +3580,7 @@
         "your_plan": "Planul tău"
       },
       "contact_directories": {
+        "also_archive_directory": "Arhivează și acest director",
         "archive_directory": "Arhivează directorul",
         "archive_needs_no_workspaces": "Poate fi arhivat doar un director fără spații de lucru. Pentru a-l arhiva pe acesta, elimină-i spațiile de lucru și salvează.",
         "create_directory": "Creează director",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "Un spațiu de lucru pe care l-ai ales folosește acum un alt director de contacte. Reîncarcă pagina și încearcă din nou.",
         "error_workspace_not_movable": "Un spațiu de lucru ales de tine nu mai poate fi mutat în acest director. Reîncarcă pagina și încearcă din nou.",
         "error_workspace_required": "Alege cel puțin un spațiu de lucru.",
-        "last_workspace_removed_note": "Directorul rămâne activ chiar și fără spații de lucru. Îl poți arhiva ulterior din secțiunea Gestionează.",
         "load_failed": "Directoarele de contacte nu au putut fi încărcate.",
         "manage_directory": "Gestionează directorul",
         "match_contacts_by": "Asociază contactele după",

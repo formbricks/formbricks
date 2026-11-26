@@ -3580,6 +3580,7 @@
         "your_plan": "您的方案"
       },
       "contact_directories": {
+        "also_archive_directory": "同時封存此目錄",
         "archive_directory": "封存目錄",
         "archive_needs_no_workspaces": "只有沒有任何工作區的目錄才能封存。若要封存此目錄,請先移除其工作區並儲存。",
         "create_directory": "建立目錄",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "您選擇的某個工作區現在已改用其他聯絡人目錄。請重新載入頁面後再試一次。",
         "error_workspace_not_movable": "你選擇的某個工作區已無法移至此目錄。請重新載入頁面後再試一次。",
         "error_workspace_required": "請至少選擇一個工作區。",
-        "last_workspace_removed_note": "即使沒有任何工作區，這個通訊錄仍會保持啟用。之後你可以在「管理」中將它封存。",
         "load_failed": "無法載入聯絡人目錄。",
         "manage_directory": "管理目錄",
         "match_contacts_by": "聯絡人比對依據",

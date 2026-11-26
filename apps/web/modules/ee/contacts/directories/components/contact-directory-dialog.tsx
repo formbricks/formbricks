@@ -116,10 +116,14 @@ export const ContactDirectoryDialog = ({
     toast.error(message);
   };
 
-  // A save never archives (ADR 0062): only the Archive button does, once no workspaces are left.
+  // A save never archives (ADR 0062). "Also archive" in the removal step sends the Archive button's own
+  // request once the removal is saved; if that fails, the directory just stays active with no workspaces.
   const saveChanges = (
     data: TContactDirectoryFormData,
-    { pauseSurveysInWorkspaceIds = [] }: { pauseSurveysInWorkspaceIds?: string[] } = {}
+    {
+      pauseSurveysInWorkspaceIds = [],
+      archive = false,
+    }: { pauseSurveysInWorkspaceIds?: string[]; archive?: boolean } = {}
   ) => {
     if (!directory) return;
     const input: TContactDirectoryUpdateInput = { name: data.name.trim(), workspaceIds: data.workspaceIds };
@@ -135,10 +139,30 @@ export const ContactDirectoryDialog = ({
       { directoryId: directory.id, input },
       {
         onSuccess: () => {
+          if (archive) {
+            archiveAfterRemoval(directory.id);
+            return;
+          }
           toast.success(successMessage);
           onClose();
         },
         onError: handleSaveError,
+      }
+    );
+  };
+
+  const archiveAfterRemoval = (directoryId: string) => {
+    updateDirectory.mutate(
+      { directoryId, input: { isArchived: true } },
+      {
+        onSuccess: () => {
+          toast.success(t("workspace.settings.contact_directories.directory_archived"));
+          onClose();
+        },
+        onError: (error) => {
+          toast.error(getContactDirectoryErrorMessage(error, t));
+          onClose();
+        },
       }
     );
   };

@@ -3580,6 +3580,7 @@
         "your_plan": "Planın"
       },
       "contact_directories": {
+        "also_archive_directory": "Bu rehberi de arşivle",
         "archive_directory": "Dizini arşivle",
         "archive_needs_no_workspaces": "Yalnızca hiç çalışma alanı olmayan bir dizin arşivlenebilir. Bu dizini arşivlemek için çalışma alanlarını kaldır ve kaydet.",
         "create_directory": "Dizin oluştur",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "Seçtiğin bir çalışma alanı artık başka bir kişi dizinini kullanıyor. Sayfayı yenileyip tekrar dene.",
         "error_workspace_not_movable": "Seçtiğin çalışma alanlarından biri artık bu dizine taşınamıyor. Sayfayı yeniden yükleyip tekrar dene.",
         "error_workspace_required": "En az bir çalışma alanı seç.",
-        "last_workspace_removed_note": "Dizin, çalışma alanı olmadan da etkin kalır. Sonrasında Yönet bölümünden arşivleyebilirsin.",
         "load_failed": "Kişi dizinleri yüklenemedi.",
         "manage_directory": "Dizini yönet",
         "match_contacts_by": "Kişileri şuna göre eşleştir",

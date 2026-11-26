@@ -3580,6 +3580,7 @@
         "your_plan": "Din plan"
       },
       "contact_directories": {
+        "also_archive_directory": "Arkivera även den här katalogen",
         "archive_directory": "Arkivera katalog",
         "archive_needs_no_workspaces": "Bara en katalog utan arbetsytor kan arkiveras. Om du vill arkivera den här tar du bort dess arbetsytor och sparar.",
         "create_directory": "Skapa katalog",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "En arbetsyta du valde använder nu en annan kontaktkatalog. Ladda om sidan och försök igen.",
         "error_workspace_not_movable": "En arbetsyta som du valde kan inte längre flyttas till den här katalogen. Ladda om sidan och försök igen.",
         "error_workspace_required": "Välj minst en arbetsyta.",
-        "last_workspace_removed_note": "Katalogen förblir aktiv utan några arbetsytor. Du kan arkivera den från Hantera efteråt.",
         "load_failed": "Det gick inte att läsa in kontaktkatalogerna.",
         "manage_directory": "Hantera katalog",
         "match_contacts_by": "Matcha kontakter via",

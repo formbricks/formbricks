@@ -3580,6 +3580,7 @@
         "your_plan": "ご利用プラン"
       },
       "contact_directories": {
+        "also_archive_directory": "このディレクトリもアーカイブする",
         "archive_directory": "ディレクトリをアーカイブ",
         "archive_needs_no_workspaces": "アーカイブできるのは、ワークスペースが1つもないディレクトリのみです。このディレクトリをアーカイブするには、ワークスペースを削除して保存してください。",
         "create_directory": "ディレクトリを作成",
@@ -3600,7 +3601,6 @@
         "error_workspace_in_other_directory": "選択したワークスペースが、別のコンタクトディレクトリを使用するようになりました。ページを再読み込みして、もう一度お試しください。",
         "error_workspace_not_movable": "選択したワークスペースは、このディレクトリに移動できなくなりました。ページを再読み込みして、もう一度お試しください。",
         "error_workspace_required": "ワークスペースを1つ以上選択してください。",
-        "last_workspace_removed_note": "ワークスペースがなくなっても、ディレクトリは有効なままです。あとで「管理」からアーカイブできます。",
         "load_failed": "コンタクトディレクトリを読み込めませんでした。",
         "manage_directory": "ディレクトリを管理",
         "match_contacts_by": "コンタクトの照合キー",
