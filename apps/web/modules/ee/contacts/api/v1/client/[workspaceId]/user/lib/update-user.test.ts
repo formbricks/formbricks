@@ -311,19 +311,33 @@ describe("updateUser", () => {
   test("should use device type 'phone'", async () => {
     vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     await updateUser(mockWorkspaceId, mockUserId, "phone");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "phone", {
-      displays: [],
-      responses: [],
-    });
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(
+      mockWorkspaceId,
+      mockDirectoryId,
+      mockContactId,
+      mockUserId,
+      "phone",
+      {
+        displays: [],
+        responses: [],
+      }
+    );
   });
 
   test("should use device type 'desktop'", async () => {
     vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     await updateUser(mockWorkspaceId, mockUserId, "desktop");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "desktop", {
-      displays: [],
-      responses: [],
-    });
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(
+      mockWorkspaceId,
+      mockDirectoryId,
+      mockContactId,
+      mockUserId,
+      "desktop",
+      {
+        displays: [],
+        responses: [],
+      }
+    );
   });
 
   // ENG-3725: a failed segment check must fail the request, not report "no segments".

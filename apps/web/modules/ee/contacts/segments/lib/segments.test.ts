@@ -571,7 +571,6 @@ describe("Segment Service Tests", () => {
         expect.objectContaining({
           where: {
             workspaceId_title: { workspaceId, title: surveyId },
-            directoryId: null,
             isPrivate: true,
             surveys: { every: { id: surveyId } },
           },
@@ -900,7 +899,7 @@ describe("Segment Service Tests", () => {
       await resetSegmentInSurvey(surveyId);
 
       expect(prisma.segment.findFirst).toHaveBeenCalledWith({
-        where: { workspaceId, directoryId: null, title: surveyId, isPrivate: true },
+        where: { workspaceId, title: surveyId, isPrivate: true },
         select: selectSegment,
       });
     });

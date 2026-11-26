@@ -34,8 +34,8 @@ export const whereSegmentsOfDirectoryOrWorkspace = (
 /**
  * Where a survey's private segment is found: its title, the survey's id, in the workspace's directory.
  * A workspace with no directory (decision 3) still gives its app surveys a private segment, keyed in the
- * workspace until a directory is picked for it. That key also matches the row the workspace left in a
- * former directory (it keeps the workspace's id), so `directoryId: null` keeps writes off that row.
+ * workspace until a directory is picked for it. That key also finds the survey's own private segment left
+ * in a former directory (it keeps the workspace's id): still only that survey's, so it is used as is.
  */
 export const privateSegmentKey = (
   workspaceId: string,
@@ -44,4 +44,4 @@ export const privateSegmentKey = (
 ): SegmentWhereUniqueInput =>
   directoryId
     ? { directoryId_title: { directoryId, title: surveyId } }
-    : { workspaceId_title: { workspaceId, title: surveyId }, directoryId: null };
+    : { workspaceId_title: { workspaceId, title: surveyId } };

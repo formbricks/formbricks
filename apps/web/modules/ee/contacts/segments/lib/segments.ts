@@ -571,8 +571,6 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
       const segment = await tx.segment.findFirst({
         where: {
           ...whereSegmentsOfDirectoryOrWorkspace(directoryId, survey.workspaceId),
-          // A workspace with no directory never rewrites the private row it left in a former directory.
-          ...(directoryId ? {} : { directoryId: null }),
           title: surveyId,
           isPrivate: true,
         },

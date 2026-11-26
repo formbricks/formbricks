@@ -44,6 +44,11 @@ vi.mock("@formbricks/database", () => ({
     survey: {
       findFirst: vi.fn(),
     },
+    $queryRaw: vi.fn(),
+    // The transaction runs on the same mocked client.
+    $transaction: vi.fn(async (run: (tx: unknown) => unknown) =>
+      run((await import("@formbricks/database")).prisma)
+    ),
   },
 }));
 

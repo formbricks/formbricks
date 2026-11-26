@@ -141,17 +141,15 @@ const evaluateInMemory = (
 };
 
 /**
- * The contact is in the workspace's directory, and so is every segment it can be in. The segment list is
- * cached for a minute, so one read before the workspace changed directory still names the old directory's
- * segments: those are dropped.
+ * The workspace's segments in the contact's directory, which the caller read once. The segment list is
+ * cached for a minute and the workspace may have changed directory since, so segments of any other
+ * directory are dropped: the contact can't be in them, not even in one without filters.
  */
-const getSegmentsOfCurrentDirectory = async (workspaceId: string) => {
-  const [cachedSegments, directory] = await Promise.all([
-    getSegments(workspaceId),
-    getWorkspaceContactDirectory(workspaceId),
-  ]);
-  if (!directory || !Array.isArray(cachedSegments)) return { directory, segments: [] };
-  return { directory, segments: cachedSegments.filter((segment) => segment.directoryId === directory.id) };
+const getSegmentsOfContactDirectory = async (workspaceId: string, directoryId: string) => {
+  const cachedSegments = await getSegments(workspaceId);
+  return Array.isArray(cachedSegments)
+    ? cachedSegments.filter((segment) => segment.directoryId === directoryId)
+    : [];
 };
 
 /**
@@ -162,16 +160,17 @@ const getSegmentsOfCurrentDirectory = async (workspaceId: string) => {
  */
 export const getPersonSegmentIds = async (
   workspaceId: string,
+  directoryId: string,
   contactId: string,
   contactUserId: string,
   deviceType: "phone" | "desktop",
   interactionRows: TContactInteractionRows
 ): Promise<string[]> => {
   try {
-    validateInputs([workspaceId, ZId], [contactId, ZId], [contactUserId, ZString]);
+    validateInputs([workspaceId, ZId], [directoryId, ZId], [contactId, ZId], [contactUserId, ZString]);
 
-    const { directory, segments } = await getSegmentsOfCurrentDirectory(workspaceId);
-    if (!directory || segments.length === 0) return [];
+    const segments = await getSegmentsOfContactDirectory(workspaceId, directoryId);
+    if (segments.length === 0) return [];
 
     const interactionData = await loadInteractionData(workspaceId, contactId, interactionRows, segments);
 
@@ -209,7 +208,7 @@ export const getPersonSegmentIds = async (
       const queryResult = await segmentFilterToPrismaQuery(
         segment.id,
         filters,
-        directory.id,
+        directoryId,
         workspaceId,
         deviceType
       );

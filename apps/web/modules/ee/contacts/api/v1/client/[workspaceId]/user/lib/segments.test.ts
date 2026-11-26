@@ -140,6 +140,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -165,14 +166,15 @@ describe("segments lib", () => {
       expect(result).toEqual(mockSegmentsData.map((s) => s.id));
     });
 
-    test("a segment list cached before the workspace changed directory is not used for the new one", async () => {
-      // The cache still holds the previous directory's segments; the workspace now uses mockDirectoryId.
+    test("only segments of the contact's directory count, even one cached before a directory change", async () => {
+      // The cache holds another directory's always-matching segment; the contact is in mockDirectoryId.
       vi.mocked(prisma.segment.findMany).mockResolvedValue([
         { id: "old-directory-segment", filters: [], directoryId: "previous-directory" },
       ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -187,6 +189,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -203,6 +206,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -219,6 +223,7 @@ describe("segments lib", () => {
 
       await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -226,6 +231,7 @@ describe("segments lib", () => {
       );
       expect(validateInputs).toHaveBeenCalledWith(
         [mockWorkspaceId, expect.anything()],
+        [mockDirectoryId, expect.anything()],
         [mockContactId, expect.anything()],
         [mockContactUserId, expect.anything()]
       );
@@ -236,6 +242,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -259,6 +266,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -285,6 +293,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -323,6 +332,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -350,6 +360,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -376,6 +387,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -393,6 +405,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -411,6 +424,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -431,6 +445,7 @@ describe("segments lib", () => {
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
+        mockDirectoryId,
         mockContactId,
         mockContactUserId,
         mockDeviceType,
@@ -456,6 +471,7 @@ describe("segments lib", () => {
       await expect(
         getPersonSegmentIds(
           mockWorkspaceId,
+          mockDirectoryId,
           mockContactId,
           mockContactUserId,
           mockDeviceType,
@@ -470,6 +486,7 @@ describe("segments lib", () => {
       await expect(
         getPersonSegmentIds(
           mockWorkspaceId,
+          mockDirectoryId,
           mockContactId,
           mockContactUserId,
           mockDeviceType,
@@ -484,6 +501,7 @@ describe("segments lib", () => {
       await expect(
         getPersonSegmentIds(
           mockWorkspaceId,
+          mockDirectoryId,
           mockContactId,
           mockContactUserId,
           mockDeviceType,

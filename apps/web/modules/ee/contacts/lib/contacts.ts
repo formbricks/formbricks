@@ -207,13 +207,18 @@ export const deleteContactInWorkspace = async (contactId: string, workspaceId: s
       throw new ResourceNotFoundError("contact", contactId);
     }
 
-    const { count } = await prisma.contact.deleteMany({
-      where: {
-        id: contactId,
-        directory: { workspaces: { some: { id: workspaceId }, every: { id: workspaceId } } },
-        responses: { none: { survey: { workspaceId: { not: workspaceId } } } },
-        displays: { none: { survey: { workspaceId: { not: workspaceId } } } },
-      },
+    const { count } = await prisma.$transaction(async (tx) => {
+      // A response or display being written for the contact holds a key-share lock on its row until it
+      // commits. Waiting for it here means the checks below see that row, so its cascade never deletes it.
+      await tx.$queryRaw`SELECT "id" FROM "Contact" WHERE "id" = ${contactId} FOR UPDATE`;
+      return tx.contact.deleteMany({
+        where: {
+          id: contactId,
+          directory: { workspaces: { some: { id: workspaceId }, every: { id: workspaceId } } },
+          responses: { none: { survey: { workspaceId: { not: workspaceId } } } },
+          displays: { none: { survey: { workspaceId: { not: workspaceId } } } },
+        },
+      });
     });
     if (count === 0) {
       throw new ContactInSharedDirectoryError();

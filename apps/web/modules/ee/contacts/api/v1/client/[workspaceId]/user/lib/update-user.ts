@@ -94,6 +94,7 @@ const createContact = async (directoryId: string, workspaceId: string, userId: s
 const buildUserStateFromContact = async (
   contactData: NonNullable<Awaited<ReturnType<typeof getContactWithFullData>>>,
   workspaceId: string,
+  directoryId: string,
   userId: string,
   device: "phone" | "desktop"
 ) => {
@@ -101,7 +102,7 @@ const buildUserStateFromContact = async (
   // in no segments and hide every segment-targeted survey until the next sync.
   // The contact's displays/responses are already loaded here, so interaction-only segments can be
   // evaluated in memory without any additional query (see getPersonSegmentIds).
-  const segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device, {
+  const segments = await getPersonSegmentIds(workspaceId, directoryId, contactData.id, userId, device, {
     displays: contactData.displays,
     responses: contactData.responses,
   });
@@ -296,7 +297,13 @@ export const updateUser = async (
   }
 
   // Build user state from already-fetched data (no additional query needed)
-  const userStateData = await buildUserStateFromContact(contactData, workspaceId, userId, device);
+  const userStateData = await buildUserStateFromContact(
+    contactData,
+    workspaceId,
+    directoryId,
+    userId,
+    device
+  );
 
   // Transitional SDK back-compat (ENG-1067): echo the language to the SDK in a legacy form (the first
   // known alias), matching the legacy codes the client environment serializer exposes, so SDK clients
