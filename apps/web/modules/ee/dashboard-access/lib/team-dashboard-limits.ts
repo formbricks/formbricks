@@ -114,6 +114,9 @@ export const replaceTeamDashboardLimitsInTransaction = async (
   dashboardIds: readonly string[]
 ): Promise<TTeamDashboardLimitsChange | null> => {
   const ids = [...new Set(dashboardIds)];
+  // Lock the team row first: every limit writer (team save, v3 limits route) takes it before reading the
+  // current limits, so concurrent writers run one after another and each audit snapshot is exact.
+  await tx.$queryRaw`SELECT "id" FROM "Team" WHERE "id" = ${teamId} AND "organizationId" = ${organizationId} FOR UPDATE`;
   const before = await tx.team.findFirst({
     where: { id: teamId, organizationId },
     select: {

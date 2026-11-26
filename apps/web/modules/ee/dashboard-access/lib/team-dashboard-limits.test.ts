@@ -57,6 +57,23 @@ describe("reads", () => {
 });
 
 describe("replaceTeamDashboardLimits", () => {
+  test("locks the team row before it reads the current limits", async () => {
+    prisma.team.findFirst.mockResolvedValue({ dashboardLimited: false, dashboardLimits: [] } as never);
+    prisma.dashboard.findMany.mockResolvedValue([{ id: "d1" }] as never);
+
+    await replaceTeamDashboardLimits(ORG, TEAM, ["d1"]);
+
+    const [strings, ...values] = prisma.$queryRaw.mock.calls[0] as unknown as [
+      TemplateStringsArray,
+      ...unknown[],
+    ];
+    expect(strings.join("?")).toMatch(/FROM "Team" WHERE "id" = \? AND "organizationId" = \? FOR UPDATE/);
+    expect(values).toEqual([TEAM, ORG]);
+    expect(prisma.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      prisma.team.findFirst.mock.invocationCallOrder[0]
+    );
+  });
+
   test("returns null for a team of another organization", async () => {
     prisma.team.findFirst.mockResolvedValue(null);
     expect(await replaceTeamDashboardLimits(ORG, TEAM, ["d1"])).toBeNull();
