@@ -16,7 +16,7 @@ const hook = (path: string, returned: unknown, { overHttp = true } = {}) =>
 
 describe("maskUnverifiedSignInAfterHandler (ENG-2099)", () => {
   test("answers an unverified account's sign-in over HTTP with the wrong-password response", async () => {
-    const response = await maskUnverifiedSignInAfterHandler(hook("/sign-in/email", unverified));
+    const response = maskUnverifiedSignInAfterHandler(hook("/sign-in/email", unverified));
 
     expect(response).toBeInstanceOf(Response);
     expect(response?.status).toBe(401);
@@ -29,9 +29,13 @@ describe("maskUnverifiedSignInAfterHandler (ENG-2099)", () => {
   });
 
   test("throws the wrong-password error for a server-side call, which has no request", async () => {
-    await expect(
-      maskUnverifiedSignInAfterHandler(hook("/sign-in/email", unverified, { overHttp: false }))
-    ).rejects.toMatchObject({
+    let thrown: unknown;
+    try {
+      maskUnverifiedSignInAfterHandler(hook("/sign-in/email", unverified, { overHttp: false }));
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toMatchObject({
       statusCode: 401,
       body: { message: "Invalid email or password", code: "INVALID_EMAIL_OR_PASSWORD" },
     });
@@ -42,7 +46,7 @@ describe("maskUnverifiedSignInAfterHandler (ENG-2099)", () => {
     ["a successful sign-in", "/sign-in/email", { token: "t" }],
     ["no response yet", "/sign-in/email", undefined],
     ["EMAIL_NOT_VERIFIED on another path", "/send-verification-email", unverified],
-  ])("leaves %s alone", async (_label, path, returned) => {
-    await expect(maskUnverifiedSignInAfterHandler(hook(path, returned))).resolves.toBeUndefined();
+  ])("leaves %s alone", (_label, path, returned) => {
+    expect(maskUnverifiedSignInAfterHandler(hook(path, returned))).toBeUndefined();
   });
 });

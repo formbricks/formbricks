@@ -46,5 +46,5 @@ export const runAfterAuthHooks = async (ctx: AuthHookContext): Promise<Response 
   // ENG-2099: a correct password on an unverified account answers like every other failed sign-in. Only
   // touches `/sign-in/email`, so it is path-disjoint from the SSO redirect above; last because the response
   // it returns replaces the request's.
-  return await maskUnverifiedSignInAfterHandler(ctx);
+  return maskUnverifiedSignInAfterHandler(ctx);
 };

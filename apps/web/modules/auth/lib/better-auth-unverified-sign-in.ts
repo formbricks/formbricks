@@ -43,9 +43,7 @@ const toErrorResponse = (error: APIError): Response =>
  * the audit records `email_not_verified` as the internal reason, and the budget spends the unit for it.
  * It replaces the response, so it runs last in `runAfterAuthHooks`.
  */
-export const maskUnverifiedSignInAfterHandler = async (
-  ctx: AuthHookContext
-): Promise<Response | undefined> => {
+export const maskUnverifiedSignInAfterHandler = (ctx: AuthHookContext): Response | undefined => {
   if (ctx.path !== SIGN_IN_PATH) return undefined;
 
   const returned = (ctx.context as { returned?: unknown }).returned;

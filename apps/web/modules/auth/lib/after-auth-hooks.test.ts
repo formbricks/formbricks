@@ -95,7 +95,7 @@ describe("runAfterAuthHooks", () => {
       calls.push("redirect");
     });
     const rewritten = new Response(null, { status: 401 });
-    vi.mocked(maskUnverifiedSignInAfterHandler).mockImplementation(async () => {
+    vi.mocked(maskUnverifiedSignInAfterHandler).mockImplementation(() => {
       calls.push("mask-unverified");
       return rewritten;
     });
