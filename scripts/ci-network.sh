@@ -36,12 +36,15 @@ APT
 
 ci_apt_running() {
   # Zombies hold no locks and only wait to be reaped, so count running, sleeping and blocked processes.
+  # pgrep exits 1 for "none". Any other failure means we cannot tell, so answer "running": the caller
+  # then still waits and KILLs, rather than retrying into a lock it never checked.
   local status=0
   sudo pgrep -x --runstates DRS 'apt-get|apt|dpkg' >/dev/null || status=$?
-  if (( status > 1 )); then
-    echo "::warning::pgrep failed (exit ${status}); cannot tell whether apt is still running."
+  if (( status > 1 )) && [[ -z "${CI_APT_PGREP_WARNED:-}" ]]; then
+    CI_APT_PGREP_WARNED=1
+    echo "::warning::pgrep failed (exit ${status}); treating apt as still running."
   fi
-  return "$status"
+  (( status != 1 ))
 }
 
 ci_stop_apt() {

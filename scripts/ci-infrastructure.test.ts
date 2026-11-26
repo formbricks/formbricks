@@ -184,16 +184,18 @@ test("apt that ignores TERM is killed after a bounded wait, and the retry still 
   expect(result.stdout).toContain("::warning::apt or dpkg is still running after KILL");
 });
 
-test("a pgrep failure is reported instead of read as nothing running", () => {
-  const { env, command } = fixture();
-  command("sudo", '[[ "$1" != pgrep ]] || exit 3');
+test("a pgrep failure is reported once and treated as still running, so apt is still killed", () => {
+  const { directory, env, command } = fixture();
+  command("sudo", 'echo "sudo $*" >> "$FIXTURE/commands"; [[ "$1" != pgrep ]] || exit 3');
   const result = spawnSync("bash", ["-c", "source scripts/ci-network.sh; ci_stop_apt"], {
     cwd: repository,
     env,
     encoding: "utf8",
   });
   expect(result.status, result.stderr).toBe(0);
-  expect(result.stdout).toContain("::warning::pgrep failed (exit 3)");
+  expect(result.stdout.match(/::warning::pgrep failed \(exit 3\)/g)).toHaveLength(1);
+  const commands = readFileSync(join(directory, "commands"), "utf8").trim().split("\n");
+  expect(commands).toContain("sudo pkill -KILL -x apt-get|apt|dpkg");
 });
 
 test.each(["pull", "validation"])("a permanent %s failure remains red", (failure) => {
@@ -275,9 +277,10 @@ test("apt fallback on arm64 switches ports sources to the Azure ports mirror", (
   command("dpkg", "echo arm64");
   const apt = join(directory, "apt");
   mkdirSync(join(apt, "sources.list.d"), { recursive: true });
+  // Blacksmith's and GitHub's (ubuntu-24.04-arm) runner mirror lists, as legacy .list lines.
   writeFileSync(
     join(apt, "sources.list"),
-    "deb mirror+file:/etc/apt/blacksmith-ubuntu-mirrors.txt noble main\n"
+    "deb mirror+file:/etc/apt/blacksmith-ubuntu-mirrors.txt noble main\ndeb mirror+file:/etc/apt/apt-mirrors.txt noble main\n"
   );
   const sources = join(apt, "sources.list.d/ubuntu.sources");
   writeFileSync(sources, "URIs: http://ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-security\n");
@@ -290,7 +293,7 @@ test("apt fallback on arm64 switches ports sources to the Azure ports mirror", (
   );
   expect(result.status, result.stderr).toBe(0);
   expect(readFileSync(join(apt, "sources.list"), "utf8")).toBe(
-    "deb https://azure.ports.ubuntu.com/ubuntu-ports noble main\n"
+    "deb https://azure.ports.ubuntu.com/ubuntu-ports noble main\ndeb https://azure.ports.ubuntu.com/ubuntu-ports noble main\n"
   );
   expect(readFileSync(sources, "utf8")).toBe(
     "URIs: https://azure.ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-security\n"
