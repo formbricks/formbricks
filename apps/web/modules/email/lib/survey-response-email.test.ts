@@ -4,7 +4,11 @@ import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resol
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { buildSurveyResponseEmailHtml, resolveResponseRecipient } from "./survey-response-email";
+import {
+  buildSurveyResponseEmailHtml,
+  buildWorkflowEmailHtml,
+  resolveResponseRecipient,
+} from "./survey-response-email";
 
 const {
   mockRenderFollowUpEmail,
@@ -388,5 +392,33 @@ describe("buildSurveyResponseEmailHtml", () => {
 
     expect(mockResolveStorageUrl).not.toHaveBeenCalled();
     expect(mockRenderFollowUpEmail.mock.calls[0][0].logoUrl).toBeUndefined();
+    expect(mockRenderFollowUpEmail.mock.calls[0][0].hideLogo).toBe(false);
+  });
+
+  test("renders no logo when the organization removed it (ENG-545)", async () => {
+    await buildSurveyResponseEmailHtml({
+      body: "Body",
+      survey,
+      response,
+      attachResponseData: false,
+      logoUrl: "",
+      hideLogo: true,
+    });
+
+    expect(mockRenderFollowUpEmail.mock.calls[0][0].hideLogo).toBe(true);
+  });
+});
+
+describe("buildWorkflowEmailHtml logo", () => {
+  test("renders no logo when the organization removed it (ENG-545)", async () => {
+    await buildWorkflowEmailHtml({ body: "Body", logoUrl: "", hideLogo: true });
+
+    expect(mockRenderFollowUpEmail.mock.calls.at(-1)?.[0].hideLogo).toBe(true);
+  });
+
+  test("keeps the Formbricks fallback when the logo was never removed", async () => {
+    await buildWorkflowEmailHtml({ body: "Body", logoUrl: "" });
+
+    expect(mockRenderFollowUpEmail.mock.calls.at(-1)?.[0].hideLogo).toBe(false);
   });
 });

@@ -162,6 +162,7 @@ export const buildSurveyResponseEmailHtml = async ({
   includeVariables = false,
   includeHiddenFields = false,
   logoUrl,
+  hideLogo = false,
   locale,
 }: {
   body: string;
@@ -171,6 +172,8 @@ export const buildSurveyResponseEmailHtml = async ({
   includeVariables?: boolean;
   includeHiddenFields?: boolean;
   logoUrl?: string;
+  /** The organization removed its logo: the email shows none. */
+  hideLogo?: boolean;
   locale?: TUserLocale;
 }): Promise<string> => {
   // Worker context (no request scope) — pass explicit locale to skip headers()/cookies().
@@ -186,6 +189,7 @@ export const buildSurveyResponseEmailHtml = async ({
     // resolve — it has no origin to resolve against, so the `<img>` renders broken. Resolve it to an
     // absolute URL here, exactly like every other email sender does (see `@/modules/email`).
     logoUrl: logoUrl ? resolveStorageUrl(logoUrl) : undefined,
+    hideLogo,
     t,
     privacyUrl: PRIVACY_URL || undefined,
     termsUrl: TERMS_URL || undefined,
@@ -202,10 +206,13 @@ export const buildSurveyResponseEmailHtml = async ({
 export const buildWorkflowEmailHtml = async ({
   body,
   logoUrl,
+  hideLogo = false,
   locale,
 }: {
   body: string;
   logoUrl?: string;
+  /** The organization removed its logo: the email shows none. */
+  hideLogo?: boolean;
   locale?: TUserLocale;
 }): Promise<string> => {
   const resolvedLocale = locale ?? DEFAULT_LOCALE;
@@ -220,6 +227,7 @@ export const buildWorkflowEmailHtml = async ({
     variables: [],
     hiddenFields: [],
     logoUrl: logoUrl ? resolveStorageUrl(logoUrl) : undefined,
+    hideLogo,
     t,
     privacyUrl: PRIVACY_URL || undefined,
     termsUrl: TERMS_URL || undefined,

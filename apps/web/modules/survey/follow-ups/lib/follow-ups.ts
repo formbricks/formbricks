@@ -34,6 +34,7 @@ const evaluateFollowUp = async (
     const { to, replyTo } = properties;
     const toValueFromResponse = response.data[to];
     const logoUrl = organization.whitelabel?.logoUrl ?? "";
+    const hideLogo = organization.whitelabel?.hideLogo === true;
 
     // Check if 'to' is a direct email address (team member or user email)
     const parsedEmailTo = z.email().safeParse(to);
@@ -49,6 +50,7 @@ const evaluateFollowUp = async (
         includeVariables: properties.includeVariables,
         includeHiddenFields: properties.includeHiddenFields,
         logoUrl,
+        hideLogo,
         locale,
         // The author can type any address, so only a member's counts as the organization's own mail.
         rateLimit: {
@@ -82,6 +84,7 @@ const evaluateFollowUp = async (
           to: parsedResult.data,
           replyTo,
           logoUrl,
+          hideLogo,
           survey,
           response,
           attachResponseData: properties.attachResponseData,
@@ -119,6 +122,7 @@ const evaluateFollowUp = async (
           to: parsedResult.data,
           replyTo,
           logoUrl,
+          hideLogo,
           survey,
           response,
           attachResponseData: properties.attachResponseData,

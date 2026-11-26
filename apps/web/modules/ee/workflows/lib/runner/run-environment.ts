@@ -48,6 +48,8 @@ export interface WorkflowRunEnvironment {
   /** Only for Webhook runs: the JSON object the Webhook Secret URL call delivered (ENG-7177). */
   payload?: Record<string, unknown>;
   logoUrl: string;
+  /** The organization removed its email logo: the run's emails show none. */
+  hideLogo: boolean;
   /**
    * Lowercased emails of everyone who can access this run's workspace. A literal `to` recipient must
    * be in this set (ENG-2029, ENG-2186). Loaded only when a step has a literal recipient; empty
@@ -189,6 +191,7 @@ export const loadWorkflowRunEnvironment = async ({
     surveyResponse,
     ...(trigger.type === "webhook" ? { payload: trigger.payload } : {}),
     logoUrl: organization?.whitelabel?.logoUrl ?? "",
+    hideLogo: organization?.whitelabel?.hideLogo === true,
     allowedRecipientEmails,
     secretValues,
     rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },

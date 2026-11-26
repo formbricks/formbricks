@@ -3900,7 +3900,6 @@
         "organization_name_updated_successfully": "Название организации успешно обновлено",
         "organization_settings": "Настройки организации",
         "organization_settings_description": "Управляйте названием и настройками вашей организации.",
-        "please_add_a_logo": "Пожалуйста, добавьте логотип",
         "please_check_csv_file": "Проверьте CSV-файл и убедитесь, что он соответствует нашему формату",
         "please_save_logo_before_sending_test_email": "Пожалуйста, сохраните логотип перед отправкой тестового письма.",
         "remove_logo": "Удалить логотип",

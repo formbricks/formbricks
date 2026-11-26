@@ -19,6 +19,8 @@ interface EmailTemplateProps extends TEmailTemplateLegalProps {
   readonly children: React.ReactNode;
   readonly forceLightMode?: boolean;
   readonly logoUrl?: string;
+  /** The organization removed its logo: render no logo at all, not even the Formbricks fallback. */
+  readonly hideLogo?: boolean;
   readonly t: TFunction;
 }
 
@@ -26,6 +28,7 @@ export function EmailTemplate({
   children,
   forceLightMode = false,
   logoUrl,
+  hideLogo = false,
   t,
   privacyUrl,
   imprintUrl,
@@ -61,29 +64,32 @@ export function EmailTemplate({
               there. `align="center"` is an HTML attribute Word does honor, and `Column` is the
               only react-email primitive that renders a `<td>` we can put it on (`Section` keeps
               its cell bare). `mx-auto` stays for clients that honor the image's own margins. */}
-          <Row>
-            <Column align="center" className="text-center">
-              {isDefaultLogo ? (
-                <Link href={logoLink} target="_blank">
+          {/* Without a logo the body's padding and the card's top margin keep the header spacing. */}
+          {!hideLogo && (
+            <Row>
+              <Column align="center" className="text-center">
+                {isDefaultLogo ? (
+                  <Link href={logoLink} target="_blank">
+                    <Img
+                      data-testid="default-logo-image"
+                      alt="Logo"
+                      className="mx-auto w-60"
+                      src={fbLogoUrl}
+                      width={DEFAULT_LOGO_WIDTH}
+                    />
+                  </Link>
+                ) : (
                   <Img
-                    data-testid="default-logo-image"
+                    data-testid="logo-image"
                     alt="Logo"
-                    className="mx-auto w-60"
-                    src={fbLogoUrl}
-                    width={DEFAULT_LOGO_WIDTH}
+                    className="mx-auto max-h-[100px] w-80 object-contain"
+                    src={logoUrl}
+                    width={CUSTOM_LOGO_WIDTH}
                   />
-                </Link>
-              ) : (
-                <Img
-                  data-testid="logo-image"
-                  alt="Logo"
-                  className="mx-auto max-h-[100px] w-80 object-contain"
-                  src={logoUrl}
-                  width={CUSTOM_LOGO_WIDTH}
-                />
-              )}
-            </Column>
-          </Row>
+                )}
+              </Column>
+            </Row>
+          )}
           <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-start">
             {children}
           </Container>

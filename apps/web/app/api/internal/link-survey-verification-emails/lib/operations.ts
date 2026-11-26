@@ -6,7 +6,7 @@ import { applyIPRateLimitOrRespond, rateLimitedResponse } from "@/app/api/v3/lib
 import { noContentResponse, problemNotFound, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
+import { getOrganizationEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { getSurveyOwnerId } from "@/modules/survey/link/lib/data";
@@ -51,8 +51,8 @@ export async function sendLinkSurveyVerificationEmailOperation({
   ]);
   // Independent reads on the hot path of an unauthenticated route: run them together. `ownerId` stays out
   // of the survey the page loads, which reaches the browser, so it is read here instead.
-  const [organizationLogoUrl, actorUserId] = await Promise.all([
-    getOrganizationLogoUrl(organizationId),
+  const [organizationLogo, actorUserId] = await Promise.all([
+    getOrganizationEmailLogo(organizationId),
     resolveEmailActorUserId(surveyOwnerId, organizationId),
   ]);
 
@@ -80,7 +80,8 @@ export async function sendLinkSurveyVerificationEmailOperation({
         suToken: isSingleUse ? body.suToken : undefined,
         surveyLanguageCode,
         surveyName: survey.name,
-        logoUrl: organizationLogoUrl || "",
+        logoUrl: organizationLogo.logoUrl || "",
+        hideLogo: organizationLogo.hideLogo,
       },
       // The visitor is anonymous, so the survey's organization and owner carry the limits: a fresh
       // survey or organization does not reset them.

@@ -39,7 +39,8 @@ export async function sendTestEmailOperation(context: TWhiteLabelRequestContext)
       user.locale,
       user.id,
       organization.whitelabel?.logoUrl || "",
-      organization.id
+      organization.id,
+      organization.whitelabel?.hideLogo === true
     );
   } catch (error) {
     // The sender's email budget is spent: the limiter's message, which says when to try again.

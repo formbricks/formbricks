@@ -23,6 +23,7 @@ import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
 import { Muted, P, Small } from "@/modules/ui/components/typography";
@@ -55,12 +56,16 @@ export const EmailCustomizationSettings = ({
 }: EmailCustomizationSettingsProps) => {
   const { t } = useTranslation();
 
+  // An empty `logoUrl` means no logo at all. The Formbricks logo stands in only while the
+  // organization has neither its own logo nor a recorded removal (`hideLogo`).
+  const savedLogoUrl = organization.whitelabel?.logoUrl;
+  const isLogoRemoved = organization.whitelabel?.hideLogo === true;
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || fbLogoUrl);
+  const [logoUrl, setLogoUrl] = useState<string>(savedLogoUrl || (isLogoRemoved ? "" : fbLogoUrl));
   const [isSaving, setIsSaving] = useState(false);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null) as React.RefObject<HTMLInputElement>;
-
-  const isDefaultLogo = logoUrl === fbLogoUrl;
 
   const router = useRouter();
 
@@ -74,7 +79,7 @@ export const EmailCustomizationSettings = ({
     if (!file) return;
 
     // Revoke any previous object URL so we don't leak memory
-    if (logoUrl) {
+    if (logoFile) {
       URL.revokeObjectURL(logoUrl);
     }
 
@@ -109,26 +114,30 @@ export const EmailCustomizationSettings = ({
     onFileInputChange(files);
   };
 
+  // Removing always persists, the Formbricks logo included: it records that emails carry no logo.
   const removeLogo = async () => {
-    if (logoUrl) {
+    setIsRemoving(true);
+    try {
+      await removeOrganizationEmailLogo(organization.id);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      setIsRemoving(false);
+      setIsRemoveDialogOpen(false);
+      return;
+    }
+
+    if (logoFile) {
       URL.revokeObjectURL(logoUrl);
     }
     setLogoFile(null);
     setLogoUrl("");
-
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-
-    if (isDefaultLogo || !organization.whitelabel?.logoUrl) return;
-
-    try {
-      await removeOrganizationEmailLogo(organization.id);
-      toast.success(t("workspace.settings.general.logo_removed_successfully"));
-      router.refresh();
-    } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
-    }
+    setIsRemoving(false);
+    setIsRemoveDialogOpen(false);
+    toast.success(t("workspace.settings.general.logo_removed_successfully"));
+    router.refresh();
   };
 
   const handleSave = async () => {
@@ -145,6 +154,8 @@ export const EmailCustomizationSettings = ({
     try {
       await updateOrganizationEmailLogo(organization.id, url);
       toast.success(t("workspace.settings.general.logo_saved_successfully"));
+      URL.revokeObjectURL(logoUrl);
+      setLogoFile(null);
       setLogoUrl(url);
       router.refresh();
     } catch (error) {
@@ -155,11 +166,9 @@ export const EmailCustomizationSettings = ({
   };
 
   const sendTestEmail = async () => {
-    if (!logoUrl) {
-      toast.error(t("workspace.settings.general.please_add_a_logo"));
-      return;
-    }
-    if (logoUrl !== organization.whitelabel?.logoUrl && !isDefaultLogo) {
+    // A picked logo is only a preview until it's saved; the test email uses the saved state, which
+    // may be no logo at all.
+    if (logoFile) {
       toast.error(t("workspace.settings.general.please_save_logo_before_sending_test_email"));
       return;
     }
@@ -229,7 +238,7 @@ export const EmailCustomizationSettings = ({
                       </Button>
                       <Button
                         data-testid="remove-logo-button"
-                        onClick={removeLogo}
+                        onClick={() => setIsRemoveDialogOpen(true)}
                         variant="outline"
                         disabled={isReadOnly || isSaving}>
                         <Trash2Icon className="size-4" />
@@ -270,15 +279,17 @@ export const EmailCustomizationSettings = ({
               </div>
             </div>
             <div className="min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pt-10 pb-4 shadow-card-xl">
-              <Image
-                data-testid="email-customization-preview-image"
-                src={logoUrl || fbLogoUrl}
-                alt="Logo"
-                className="mx-auto max-h-[100px] max-w-full object-contain"
-                width={192}
-                height={192}
-                unoptimized={isExternalImageSrc(logoUrl || fbLogoUrl)}
-              />
+              {logoUrl && (
+                <Image
+                  data-testid="email-customization-preview-image"
+                  src={logoUrl}
+                  alt="Logo"
+                  className="mx-auto max-h-[100px] max-w-full object-contain"
+                  width={192}
+                  height={192}
+                  unoptimized={isExternalImageSrc(logoUrl)}
+                />
+              )}
               <P className="font-bold">
                 {t("workspace.settings.general.email_customization_preview_email_heading", {
                   userName: user?.name,
@@ -297,6 +308,15 @@ export const EmailCustomizationSettings = ({
             feature="email_customization"
           />
         )}
+
+        <DeleteDialog
+          open={isRemoveDialogOpen}
+          setOpen={setIsRemoveDialogOpen}
+          deleteWhat={t("common.logo")}
+          text={t("workspace.look.remove_logo_confirmation")}
+          onDelete={removeLogo}
+          isDeleting={isRemoving}
+        />
 
         {hasWhiteLabelPermission && isReadOnly && (
           <Alert variant="warning" className="mt-4 mb-6" alertRole="status">

@@ -171,7 +171,11 @@ const renderEmailHtml = async (
   const body = surveyLinkUrl ? insertWorkflowSurveyLink(renderedBody, surveyLinkUrl) : renderedBody;
 
   if (!environment.surveyResponse) {
-    return buildWorkflowEmailHtml({ body, logoUrl: environment.logoUrl });
+    return buildWorkflowEmailHtml({
+      body,
+      logoUrl: environment.logoUrl,
+      hideLogo: environment.hideLogo,
+    });
   }
   const { survey, response } = environment.surveyResponse;
   return buildSurveyResponseEmailHtml({
@@ -182,6 +186,7 @@ const renderEmailHtml = async (
     includeVariables: getIncludeEmbeddedData(config),
     includeHiddenFields: config.includeHiddenFields,
     logoUrl: environment.logoUrl,
+    hideLogo: environment.hideLogo,
     locale: toResponseLocale(response.language),
   });
 };

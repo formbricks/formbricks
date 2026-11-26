@@ -22,11 +22,13 @@ export const updateOrganizationEmailLogoUrl = async (
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
+    // A new logo undoes an earlier removal, so `hideLogo` goes with the old value.
+    const { hideLogo: _removed, ...whitelabel } = organization.whitelabel ?? {};
     await prisma.organization.update({
       where: { id: organizationId },
       data: {
         whitelabel: {
-          ...organization.whitelabel,
+          ...whitelabel,
           logoUrl,
         },
       },
@@ -75,9 +77,12 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
     await prisma.organization.update({
       where: { id: organizationId },
       data: {
+        // `logoUrl: null` alone means "use the Formbricks logo"; `hideLogo` records that the
+        // organization wants no logo at all.
         whitelabel: {
           ...organization.whitelabel,
           logoUrl: null,
+          hideLogo: true,
         },
       },
     });
@@ -95,20 +100,32 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
   }
 };
 
-export const getOrganizationLogoUrl = reactCache(async (organizationId: string): Promise<string | null> => {
-  validateInputs([organizationId, ZId]);
-  try {
-    const organization = await prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: {
-        whitelabel: true,
-      },
-    });
-    return organization?.whitelabel?.logoUrl ?? null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+export type TOrganizationEmailLogo = {
+  /** The organization's own logo, or null for none. */
+  logoUrl: string | null;
+  /** The organization removed its logo: emails show none, not the Formbricks fallback. */
+  hideLogo: boolean;
+};
+
+export const getOrganizationEmailLogo = reactCache(
+  async (organizationId: string): Promise<TOrganizationEmailLogo> => {
+    validateInputs([organizationId, ZId]);
+    try {
+      const organization = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: {
+          whitelabel: true,
+        },
+      });
+      return {
+        logoUrl: organization?.whitelabel?.logoUrl ?? null,
+        hideLogo: organization?.whitelabel?.hideLogo === true,
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
   }
-});
+);
