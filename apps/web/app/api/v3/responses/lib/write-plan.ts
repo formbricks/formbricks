@@ -19,9 +19,7 @@ const UTF8_ENCODER = new TextEncoder();
 const utf8ByteLength = (value: string): number => UTF8_ENCODER.encode(value).length;
 
 /**
- * Clamp rather than reject, which is the contract's choice and worth restating: `ttc` is client
- * telemetry, and a single absurd bucket from a laptop that slept mid-survey should not cost a caller
- * the whole response.
+ * Clamps each bucket with `clampTtcBuckets` (clamp, not reject: see there).
  *
  * **An omitted `ttc` stores `{}`, never `{_total: 0}`.** Every other write path treats a missing map
  * as "no timing was collected" and stores an empty object; totalling an absent map instead publishes

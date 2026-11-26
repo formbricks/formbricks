@@ -139,8 +139,9 @@ export const TTC_TOTAL_KEY = "_total";
  * Clamp each per-element time-to-complete into `[0, MAX_RESPONSE_TTC]` and drop any `_total`.
  *
  * Clamp rather than reject: `ttc` is client telemetry, and one absurd bucket from a laptop that slept
- * mid-survey should not cost a caller the whole response. Non-finite numbers never reach here — the
- * request schemas' `z.number()` rejects NaN and Infinity, and JSON cannot carry them.
+ * mid-survey should not cost a caller the whole response. Callers keep non-finite numbers out: the
+ * request schemas' `z.number()` rejects NaN and Infinity, and stored-ttc callers filter with
+ * `Number.isFinite` first.
  */
 export const clampTtcBuckets = (ttc: Readonly<Record<string, number>>): TResponseTtc => {
   // Null-prototype: the keys are element ids, which the survey author chooses, so `__proto__` is a
@@ -157,7 +158,7 @@ export const clampTtcBuckets = (ttc: Readonly<Record<string, number>>): TRespons
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
   const result = { ...ttc };
-  result._total = Object.values(result).reduce((acc: number, val: number) => acc + val, 0);
+  result[TTC_TOTAL_KEY] = Object.values(result).reduce((acc: number, val: number) => acc + val, 0);
 
   return result;
 };
