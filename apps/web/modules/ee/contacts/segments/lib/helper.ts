@@ -6,7 +6,10 @@ import { TBaseFilters, TSegmentFilter, TSegmentSurveyInteractionFilter } from "@
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { andVisibleSurveys, buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
 import {
+  collectChangedFilterSurveyIds,
   collectSegmentFilterSurveyIds,
+  findBlockedHiddenFilterIds,
+  findUnchangedSurveyFilterIds,
   restoreHiddenSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/filter-survey-ids";
 import { getSegment, getSegmentsByIds } from "@/modules/ee/contacts/segments/lib/segments";
@@ -194,7 +197,13 @@ export const restoreHiddenSegmentSurveyIds = async (
     where: { AND: [{ workspaceId, id: { in: storedIds } }, visibleSurveyWhere] },
     select: { id: true },
   });
-  return restoreHiddenSurveyIds(filters, storedFilters, new Set(visible.map((survey) => survey.id)));
+  const visibleIds = new Set(visible.map((survey) => survey.id));
+  // ENG-6955: a filter that holds a hidden survey and was edited or duplicated cannot take it back.
+  const unchanged = findUnchangedSurveyFilterIds(filters, storedFilters, visibleIds);
+  if (findBlockedHiddenFilterIds(filters, storedFilters, visibleIds, unchanged).length > 0) {
+    throw new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE);
+  }
+  return restoreHiddenSurveyIds(filters, storedFilters, visibleIds, unchanged);
 };
 
 /**
@@ -234,7 +243,8 @@ const collectReachableSurveyIds = async (
   filters: TBaseFilters,
   workspaceId: string,
   surveyIds: Set<string>,
-  visitedSegmentIds: Set<string>
+  visitedSegmentIds: Set<string>,
+  includeDirect = true
 ): Promise<void> => {
   // Draft saves skip filter validation (`updateSurveyDraft`), so every node is read defensively: a
   // half-built one names no survey.
@@ -242,9 +252,9 @@ const collectReachableSurveyIds = async (
   for (const filter of filters) {
     const resource = filter?.resource;
     if (Array.isArray(resource)) {
-      await collectReachableSurveyIds(resource, workspaceId, surveyIds, visitedSegmentIds);
+      await collectReachableSurveyIds(resource, workspaceId, surveyIds, visitedSegmentIds, includeDirect);
     } else if (resource && isResourceFilter(resource)) {
-      await collectFromLeaf(resource, workspaceId, surveyIds, visitedSegmentIds);
+      await collectFromLeaf(resource, workspaceId, surveyIds, visitedSegmentIds, includeDirect);
     }
   }
 };
@@ -253,10 +263,11 @@ const collectFromLeaf = async (
   resource: TSegmentFilter,
   workspaceId: string,
   surveyIds: Set<string>,
-  visitedSegmentIds: Set<string>
+  visitedSegmentIds: Set<string>,
+  includeDirect: boolean
 ): Promise<void> => {
   if (resource.root?.type === "surveyInteraction") {
-    for (const surveyId of specificSurveyIdsOf(resource)) surveyIds.add(surveyId);
+    if (includeDirect) for (const surveyId of specificSurveyIdsOf(resource)) surveyIds.add(surveyId);
     return;
   }
   if (resource.root?.type !== "segment") return;
@@ -277,10 +288,17 @@ const findHiddenSurvey = (where: Prisma.SurveyWhereInput) =>
 const getReachableSurveyIds = async (
   filters: TBaseFilters,
   workspaceId: string,
-  segmentId?: string
+  segmentId?: string,
+  includeDirect = true
 ): Promise<Set<string>> => {
   const reachable = new Set<string>();
-  await collectReachableSurveyIds(filters, workspaceId, reachable, new Set(segmentId ? [segmentId] : []));
+  await collectReachableSurveyIds(
+    filters,
+    workspaceId,
+    reachable,
+    new Set(segmentId ? [segmentId] : []),
+    includeDirect
+  );
   return reachable;
 };
 
@@ -360,18 +378,31 @@ export const getSurveyIdsReadBySegments = async (
   return reachable;
 };
 
-/** The survey ids `filters` reads that `storedFilters` did not, nested segments followed in both. */
+/**
+ * The survey ids `filters` reads that `storedFilters` did not (ENG-6955). Judged per filter, not by a set
+ * difference: every survey a `specific` survey-interaction filter names counts as added unless that filter
+ * carries its stored ids over unchanged (`findUnchangedSurveyFilterIds`), so a survey the stored tree also
+ * reads elsewhere does not excuse an edited or duplicated filter. Only the surveys reached through nested
+ * segments keep the set difference, followed in both trees.
+ */
 export const getAddedSegmentSurveyIds = async (
   filters: TBaseFilters,
   storedFilters: TBaseFilters,
   workspaceId: string,
   segmentId?: string
 ): Promise<string[]> => {
-  const [next, stored] = await Promise.all([
-    getReachableSurveyIds(filters, workspaceId, segmentId),
-    getReachableSurveyIds(storedFilters, workspaceId, segmentId),
+  const [nextViaSegments, storedViaSegments] = await Promise.all([
+    getReachableSurveyIds(filters, workspaceId, segmentId, false),
+    getReachableSurveyIds(storedFilters, workspaceId, segmentId, false),
   ]);
-  return [...next].filter((surveyId) => !stored.has(surveyId));
+  const unchanged = findUnchangedSurveyFilterIds(filters, storedFilters);
+  // A value that is not an id can name no survey (a draft may have stored one), as in `specificSurveyIdsOf`.
+  const changedIds = collectChangedFilterSurveyIds(filters, unchanged).filter(
+    (surveyId) => ZId.safeParse(surveyId).success
+  );
+  const added = new Set(changedIds);
+  for (const surveyId of nextViaSegments) if (!storedViaSegments.has(surveyId)) added.add(surveyId);
+  return [...added];
 };
 
 /**
