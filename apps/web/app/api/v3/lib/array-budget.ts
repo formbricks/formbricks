@@ -14,6 +14,18 @@ export const V3_REQUEST_ARRAY_MAX_ITEMS = 1000;
 export const V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS = 50_000;
 
 /**
+ * The two array limits a request is held to: the longest array, and the elements of every array summed.
+ * Depth is not part of it: `V3_REQUEST_MAX_DEPTH` bounds the walk itself, so no route may lift it.
+ */
+export type TArrayBudget = { maxItems: number; maxTotalElements: number };
+
+/** The budget every v3 and internal request is held to, unless its route declares its own. */
+export const V3_REQUEST_ARRAY_BUDGET: TArrayBudget = {
+  maxItems: V3_REQUEST_ARRAY_MAX_ITEMS,
+  maxTotalElements: V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS,
+};
+
+/**
  * Deepest nesting a v3 request may carry, counted in containers from the root. The walk holds a little
  * state for every open level, so depth is what bounds it: without a cap, a 15 MB body nested one level
  * per few bytes keeps millions of levels open at once (ENG-3653). The cap sits well clear of the deepest
@@ -57,11 +69,16 @@ type TContainerFrame = {
 const isContainer = (value: unknown): value is Record<string, unknown> | unknown[] =>
   typeof value === "object" && value !== null;
 
-function checkArray(array: unknown[], path: TPathNode | null, total: number): TArrayBudgetViolation | null {
-  if (array.length > V3_REQUEST_ARRAY_MAX_ITEMS) {
+function checkArray(
+  array: unknown[],
+  path: TPathNode | null,
+  total: number,
+  budget: TArrayBudget
+): TArrayBudgetViolation | null {
+  if (array.length > budget.maxItems) {
     return { kind: "array_too_long", path: renderPath(path), length: array.length };
   }
-  if (total > V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS) {
+  if (total > budget.maxTotalElements) {
     return { kind: "too_many_elements", path: renderPath(path), total };
   }
   return null;
@@ -81,7 +98,8 @@ const childAt = (frame: TContainerFrame, index: number, segment: string): unknow
 
 /**
  * Checks a parsed JSON value against the budgets above — every array's length, the elements across all
- * arrays, and the nesting depth — before any schema sees it.
+ * arrays, and the nesting depth — before any schema sees it. `budget` replaces the two array limits for
+ * a route that declares its own (see `withV3ApiWrapper`'s `arrayBudget`); the depth cap always holds.
  *
  * Zod parses every element of an array before an array-level `.max()` runs, so an oversized array
  * costs one issue per element — ~500 MB of transient heap and a multi-megabyte 400 for a 200k-entry
@@ -99,7 +117,10 @@ const childAt = (frame: TContainerFrame, index: number, segment: string): unknow
  * Paths use the dotted form `invalid_params` already uses (`blocks.3.elements`), cut to the first
  * `MAX_REPORTED_PATH_SEGMENTS`; an empty path means the root value itself.
  */
-export function findArrayBudgetViolation(value: unknown): TArrayBudgetViolation | null {
+export function findArrayBudgetViolation(
+  value: unknown,
+  budget: TArrayBudget = V3_REQUEST_ARRAY_BUDGET
+): TArrayBudgetViolation | null {
   if (!isContainer(value)) {
     return null;
   }
@@ -126,7 +147,7 @@ export function findArrayBudgetViolation(value: unknown): TArrayBudgetViolation 
     total += container.length;
     return {
       frame: { container, keys: null, next: 0, path, depth },
-      violation: checkArray(container, path, total),
+      violation: checkArray(container, path, total, budget),
     };
   };
 
@@ -260,8 +281,11 @@ const rawPath = (text: string, frames: TRawFrame[]): string =>
  * a body breaks several limits, this names the first one reached reading left to right, which can be a
  * different one from the walk's; either is true of the body.
  */
-export function findRawArrayBudgetViolation(text: string): TArrayBudgetViolation | null {
-  const scan: TRawScan = { text, frames: [], total: 0 };
+export function findRawArrayBudgetViolation(
+  text: string,
+  budget: TArrayBudget = V3_REQUEST_ARRAY_BUDGET
+): TArrayBudgetViolation | null {
+  const scan: TRawScan = { text, frames: [], total: 0, budget };
 
   for (let index = 0; index < text.length; index += 1) {
     const code = text.charCodeAt(index);
@@ -289,7 +313,7 @@ export function findRawArrayBudgetViolation(text: string): TArrayBudgetViolation
   return null;
 }
 
-type TRawScan = { text: string; frames: TRawFrame[]; total: number };
+type TRawScan = { text: string; frames: TRawFrame[]; total: number; budget: TArrayBudget };
 
 /** Where a token ended (-1: the text broke there), or the limit it crossed. */
 type TRawStep = { end: number; violation?: TArrayBudgetViolation };
@@ -363,10 +387,10 @@ function countElement(scan: TRawScan): TArrayBudgetViolation | null {
   top.count += 1;
   top.expectingEntry = false;
   scan.total += 1;
-  if (top.count > V3_REQUEST_ARRAY_MAX_ITEMS) {
+  if (top.count > scan.budget.maxItems) {
     return { kind: "array_too_long", path: rawPath(scan.text, scan.frames.slice(0, -1)), length: top.count };
   }
-  if (scan.total > V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS) {
+  if (scan.total > scan.budget.maxTotalElements) {
     return {
       kind: "too_many_elements",
       path: rawPath(scan.text, scan.frames.slice(0, -1)),
@@ -379,16 +403,17 @@ function countElement(scan: TRawScan): TArrayBudgetViolation | null {
 /**
  * The violation as the one `invalid_params` entry a 400 carries. The per-array message is Zod's own
  * `too_big` wording, so a caller sees the same sentence whether the schema or this walk refused the
- * array.
+ * array. `budget` is the one the violation was found against, so the reason names the limit that held.
  */
 export function arrayBudgetInvalidParam(
   violation: TArrayBudgetViolation,
-  fallbackName: string
+  fallbackName: string,
+  budget: TArrayBudget = V3_REQUEST_ARRAY_BUDGET
 ): InvalidParam {
   const name = violation.path || fallbackName;
 
   if (violation.kind === "array_too_long") {
-    return { name, reason: `Too big: expected array to have <=${V3_REQUEST_ARRAY_MAX_ITEMS} items` };
+    return { name, reason: `Too big: expected array to have <=${budget.maxItems} items` };
   }
 
   if (violation.kind === "too_deep") {
@@ -397,6 +422,6 @@ export function arrayBudgetInvalidParam(
 
   return {
     name,
-    reason: `Too big: expected the request to carry <=${V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS} array elements in total`,
+    reason: `Too big: expected the request to carry <=${budget.maxTotalElements} array elements in total`,
   };
 }

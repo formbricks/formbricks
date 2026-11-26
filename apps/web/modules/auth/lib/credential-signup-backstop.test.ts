@@ -14,6 +14,8 @@ vi.mock("@/modules/auth/lib/signup-request-context", () => ({
 }));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
+const { loggerWarn } = vi.hoisted(() => ({ loggerWarn: vi.fn() }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: loggerWarn } }));
 
 const constantsOverrides = vi.hoisted(() => ({ SIGNUP_ENABLED: true }));
 vi.mock("@/lib/constants", () => ({
@@ -85,6 +87,16 @@ describe("enforceCredentialSignupBackstop", () => {
         status: "FORBIDDEN",
         body: { code: SIGNUP_DISABLED_ERROR_CODE },
       });
+    });
+
+    // ENG-2347: a refused sign-up leaves a trace, whichever layer refused it.
+    test("logs the rejection", async () => {
+      await expect(enforceCredentialSignupBackstop("intruder@example.com")).rejects.toBeDefined();
+
+      expect(loggerWarn).toHaveBeenCalledWith(
+        { layer: "better-auth-user-create-backstop" },
+        expect.stringContaining("closed-sign-up policy")
+      );
     });
 
     // ENG-2247: admitted, and marked — the marker is what stops a second concurrent sign-up from

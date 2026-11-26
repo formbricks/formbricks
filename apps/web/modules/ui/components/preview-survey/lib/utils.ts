@@ -1,6 +1,6 @@
 import { TPlacement } from "@formbricks/types/common";
 import { resolveDarkColors } from "@formbricks/types/dark-palette";
-import type { TSurveyStyling } from "@formbricks/types/surveys/types";
+import type { TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
 import type { TWorkspaceStyling } from "@formbricks/types/workspace";
 
 export type TPreviewType = "modal" | "fullwidth" | "email";
@@ -103,3 +103,18 @@ export const getSlidingAnimationClass = (previewMode: string, show: boolean): st
   }
   return "";
 };
+
+/**
+ * The language the preview renders in: the one last chosen in the preview, unless that language is
+ * no longer enabled, in which case the survey's default (`"default"`). The editor only resets the
+ * preview when the language it is EDITING stops being enabled, so a language picked with the
+ * in-survey switch would otherwise outlive being disabled.
+ */
+export const resolvePreviewLanguageCode = (
+  activeLanguageCode: string,
+  enabledLanguages: readonly Pick<TSurveyLanguage, "default" | "language">[]
+): string =>
+  activeLanguageCode === "default" ||
+  enabledLanguages.some((l) => !l.default && l.language.code === activeLanguageCode)
+    ? activeLanguageCode
+    : "default";

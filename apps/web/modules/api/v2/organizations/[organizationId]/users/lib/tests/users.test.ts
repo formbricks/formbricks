@@ -117,6 +117,18 @@ describe("Users Lib", () => {
       }
     });
 
+    test("only includes teams of the requested organization (ENG-7371)", async () => {
+      vi.mocked(prisma.$transaction).mockResolvedValueOnce([[mockUser], 1]);
+      await getUsers("org456", { limit: 10, skip: 0 } as TGetUsersFilter);
+      expect(prisma.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            teamUsers: { where: { team: { organizationId: "org456" } }, include: { team: true } },
+          }),
+        })
+      );
+    });
+
     test("returns internal_server_error if prisma fails", async () => {
       vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("Transaction error"));
       const result = await getUsers("org456", { limit: 10, skip: 0 } as TGetUsersFilter);

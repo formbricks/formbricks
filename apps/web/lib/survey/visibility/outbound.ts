@@ -21,14 +21,18 @@ export const SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE =
 /** The rows an outbound check needs: `getEffectiveVisibility(row) === "restricted"`, as SQL. */
 const notWorkspaceVisibleWhere: Prisma.SurveyWhereInput = effectivelyRestrictedWhere;
 
+/** Reads surveys: the app client, or a transaction's so a caller holding a lock needs no second connection. */
+type TSurveyReader = Pick<Prisma.TransactionClient, "survey">;
+
 /** Of `surveyIds`, the ones outbound plumbing must not serve. */
 export const findNotWorkspaceVisibleSurveyIds = async (
-  surveyIds: ReadonlyArray<string>
+  surveyIds: ReadonlyArray<string>,
+  client: TSurveyReader = prisma
 ): Promise<string[]> => {
   const unique = [...new Set(surveyIds)];
   if (unique.length === 0) return [];
 
-  const rows = await prisma.survey.findMany({
+  const rows = await client.survey.findMany({
     where: { id: { in: unique }, ...notWorkspaceVisibleWhere },
     select: { id: true },
   });
@@ -49,18 +53,23 @@ export const findEffectivelyRestrictedSurveyIds = findNotWorkspaceVisibleSurveyI
  */
 export const findNewlyAttachedNotWorkspaceVisibleSurveyIds = (
   next: ReadonlyArray<string>,
-  previous: ReadonlyArray<string>
+  previous: ReadonlyArray<string>,
+  client: TSurveyReader = prisma
 ): Promise<string[]> => {
   const existing = new Set(previous);
-  return findNotWorkspaceVisibleSurveyIds(next.filter((surveyId) => !existing.has(surveyId)));
+  return findNotWorkspaceVisibleSurveyIds(
+    next.filter((surveyId) => !existing.has(surveyId)),
+    client
+  );
 };
 
 /** Server-action form of the attach-time guard: the app's generic "not allowed" error, with our copy. */
 export const assertNewlyAttachedSurveysWorkspaceVisible = async (
   next: ReadonlyArray<string>,
-  previous: ReadonlyArray<string> = []
+  previous: ReadonlyArray<string> = [],
+  client: TSurveyReader = prisma
 ): Promise<void> => {
-  const blocked = await findNewlyAttachedNotWorkspaceVisibleSurveyIds(next, previous);
+  const blocked = await findNewlyAttachedNotWorkspaceVisibleSurveyIds(next, previous, client);
   if (blocked.length > 0) throw new OperationNotAllowedError(SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE);
 };
 

@@ -89,6 +89,7 @@ const SurveyPage = async (
   return (
     <PageContentWrapper>
       <PageHeader
+        wrapCta
         pageTitle={survey.name}
         cta={
           <SurveyAnalysisCTA

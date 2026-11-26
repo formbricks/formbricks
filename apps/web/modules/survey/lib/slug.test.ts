@@ -67,7 +67,7 @@ describe("Slug Library Tests", () => {
 
   describe("updateSurveySlug", () => {
     test("should update slug successfully", async () => {
-      const mockResult = { id: "survey_123", slug: "new-slug" };
+      const mockResult = { id: "survey_123", slug: "new-slug", updatedAt: new Date("2026-11-12T10:00:00Z") };
       vi.mocked(prisma.survey.update).mockResolvedValueOnce(mockResult as never);
 
       const result = await updateSurveySlug("survey_123", "new-slug");
@@ -75,7 +75,7 @@ describe("Slug Library Tests", () => {
       expect(prisma.survey.update).toHaveBeenCalledWith({
         where: { id: "survey_123" },
         data: { slug: "new-slug" },
-        select: { id: true, slug: true },
+        select: { id: true, slug: true, updatedAt: true },
       });
     });
 

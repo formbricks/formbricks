@@ -5,6 +5,7 @@ import {
   ssoRecoveryAfterHandler,
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { auditFailedAuthAfter } from "./better-auth-observability";
+import { settleSignInBudgetAfterHandler } from "./better-auth-sign-in-budget";
 import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
 import { verificationAutoSignInAfterHandler } from "./better-auth-verification-autosignin";
 import { revokeTokensBeyondConsentAfterHandler } from "./oauth-grant-revocation";
@@ -23,6 +24,8 @@ import { requireOAuthConsentOnRefreshAfterHandler } from "./oauth-refresh-check"
 export const runAfterAuthHooks = async (ctx: AuthHookContext): Promise<void> => {
   await ssoRecoveryAfterHandler(ctx);
   await auditFailedAuthAfter(ctx);
+  // SEC-18: give back the sign-in budget unit unless the password was wrong.
+  await settleSignInBudgetAfterHandler(ctx);
   // ENG-1824: heal legacy 2FA enrollments (no `TwoFactor` row) on successful password sign-in, before
   // the 2FA challenge. Only touches `/sign-in/email`, so it's unaffected by the SSO-only redirect below.
   await twoFactorBackfillAfterHandler(ctx);

@@ -1,9 +1,9 @@
 # Coding Standards
 
 Read at review time: the `code-review` skill's Standards pass and every reviewer apply this file to a diff.
-The design sections, "Existing Patterns" through "Input Limits", are also read when planning a change, so
-plans are built to the same calls reviews check. It holds judgement calls. What an implementer needs before
-the first line stays in `AGENTS.md`, and task process lives under `docs/agents/`. Where an ADR in
+It holds judgement calls. The design sections, "Existing Patterns" through "Input Limits", are also read
+when planning a change, so a plan meets the same judgement calls a review checks. What an implementer needs
+before the first line stays in `AGENTS.md`, and task process lives under `docs/agents/`. Where an ADR in
 `docs/adr/` decides otherwise for its area, the ADR wins.
 
 ## Tooling and Review Scope
@@ -29,6 +29,28 @@ instead. `formbricks/no-request-regexp` reports request input compiled into a re
 pattern loaded from a stored survey or filter, or one that crosses files, is still a review check under
 "Security".
 
+## The Review Gate
+
+A review is a gate, not advice. Most findings human reviewers raise on merged PRs break a rule already in
+this file, so the review blocks on them before a person looks.
+
+- A finding that cites a rule in this file is **blocking**: it names the rule's section and the hunk that
+  breaks it. The review passes only once every blocking finding is fixed. One that cannot be fixed in this
+  PR goes under Open gaps with the reason, and stays blocking until a reviewer other than the author
+  accepts it there. A smell or taste call that cites no rule is non-blocking and says so.
+- A new or changed test is checked against the **red** rule under "Testing Guidelines": the reviewer
+  reverts the line it guards (in a scratch copy when the review pushes nothing), runs it, and sees it fail.
+  A test that cannot go red is fixed or deleted; it never waits under Open gaps. A review that could not
+  run the tests says so and has not passed.
+- A finding names its class, and the fix covers the class. A re-review repeats the sibling search ("A fix
+  names its siblings") for each earlier finding instead of rechecking only the flagged line: most second
+  review rounds were a variant the first fix left open.
+- The PR description is reviewed like the code once it exists. Coverage rows, "still covered by" claims,
+  the breaking-changes box and Open gaps are claims about the diff, and a claim the code contradicts is a
+  finding.
+- The ticket does not override this file. Where a ticket asks for something a rule here forbids, quote
+  both and treat it as a blocking finding until the ticket's author decides.
+
 ## Conventions Awaiting Automated Enforcement
 
 These remain review checks until their enforcement handles the repository's existing patterns:
@@ -53,8 +75,16 @@ These remain review checks until their enforcement handles the repository's exis
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings.
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
-- A change that replaces a tool keeps every behaviour the old setup carried (script flags, inline config
-  comments, per-package overrides) or lists what it drops under Open gaps.
+- A change that replaces a mechanism (a tool, a library, a data-fetching path, a refactor) keeps every
+  behaviour the old one carried, implicit ones included, or lists what it drops under Open gaps: config
+  flags and overrides, cache revalidation and serialization, and the handling of missing or malformed
+  input.
+- One rule, one source. A rule enforced in two places (client and server validation, an allowlist copied
+  from another module) reads one shared definition, or a test keeps the copies equal. A client that
+  accepts what the server rejects is a finding.
+- Prose follows the code. Docs, code comments, OpenAPI descriptions, ADRs, `AGENTS.md` and the PR
+  description that describe behaviour the diff changes are updated in the same PR, and every path or
+  symbol they name exists.
 
 ## Existing Patterns
 
@@ -73,9 +103,9 @@ These remain review checks until their enforcement handles the repository's exis
 
 ## API Design
 
-- New endpoints start internal: `/api/internal/<resource>`, session auth, no OpenAPI entry and no stability
-  promise. Internal routes are v3 in everything but the contract, so they can change freely while the shape
-  settles.
+- New endpoints start internal ([ADR-0059](docs/adr/0059-internal-endpoints-live-outside-v3.md)):
+  `/api/internal/<resource>`, session auth, no OpenAPI entry and no stability promise. Internal routes are
+  v3 in everything but the contract, so they can change freely while the shape settles.
 - An endpoint is promoted to public `/api/v3` once an external caller (an API key, an integration, an MCP
   tool that writes) needs it: it gains its OpenAPI contract and stability promise, and the app moves to the
   public route rather than keeping an internal twin. A feature built for external callers from day one
@@ -93,11 +123,19 @@ These remain review checks until their enforcement handles the repository's exis
   endpoints mounted raw at `/api/auth/*` ([ADR-0017](docs/adr/0017-better-auth-native-endpoints-closed.md)),
   public client routes and `/storage`, MCP tools and API-key paths, and the write side of a read-gated
   module. A gate on fewer paths than reach the data is a finding, and so is a second copy of the predicate.
+- A security check validates what is actually used. Input is normalized before it is checked, and
+  content that is rendered or consumed later is checked on the output of the same transform the consumer
+  runs, not on a separate parse of the raw input. A role or privilege grant rests on verified evidence (a
+  signed token, a verified email), never on a value the caller controls. A lookup keyed by caller input
+  uses `Object.hasOwn` or a `Map`, never `in`, which also matches inherited keys such as `__proto__`.
 - Unknown query parameters and body keys are rejected with 400 at every nesting level: `.strict()` on nested
   objects too, and MCP tools register the schema, not its `.shape`. A dropped typo returns a confidently
   wrong answer.
 - A change to a shared schema, the API wrapper, or a key's scope changes every route that uses it. A new 400
-  or 422, a renamed `meta` field or a widened scope gets a breaking-change entry like any route edit.
+  or 422, a renamed `meta` field or a widened scope gets a breaking-change entry like any route edit. So
+  does removing a released route or MCP tool, changing the type of a value already stored or emitted, and
+  moving anything a caller stored (a webhook URL, a token, a config key); outside a major release the old
+  one is deprecated beside the new one, not removed.
   Shipped mobile SDKs, js-core's cached environment state and the Zapier app read `/api/v1` and the client
   API without updating, so a field there is renamed only by adding the new one beside the old.
 - Unreleased code has no compatibility obligation: released is the line, not merged. Self-hosters and Cloud
@@ -204,6 +242,13 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   at `error`.
 - A `catch` that carries on names the errors it expects. Infrastructure errors (pool exhaustion, timeouts)
   propagate to the retry that owns them.
+- Retries cover transient failures only (network errors, timeouts, 408, 429, 5xx), with backoff that
+  honours `Retry-After` when present and a bounded number of attempts; other client errors are final. A
+  timeout leaves the outcome unknown, so a retried write is idempotent, deduplicated, or first confirmed not
+  to have committed. A call that reports failure in its return value is checked like one that throws.
+- A security check fails closed: when it hits a cap, gets partial input or misses a header it relies on,
+  it denies rather than treating the gap as a pass. Abuse limits stay closed when Redis is down
+  ([ADR-0016](docs/adr/0016-abuse-limits-fail-closed.md)).
 - Log a caught error through `loggableError` (`apps/web/lib/utils/loggable-error.ts`): its name and frames,
   never its message. A message can carry prompts, file text, OAuth codes or respondent answers, so a new
   `logger.*({ error })` on a path that handles such content is a finding.
@@ -255,6 +300,13 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
   transaction as the write, either on a row read `FOR UPDATE` or as the write's own `WHERE`
   (`DELETE … WHERE "archivedAt" IS NOT NULL`). A check read before the transaction is a race. Snapshots for
   audit logs and "previous value" diffs are read under that lock too.
+- Inside an interactive transaction every query goes through `tx`; a query on the global `prisma` waits for
+  a second pool connection and can deadlock the pool. A lock that guards a count also covers rows that can
+  join the counted set while it waits.
+- State outside Postgres races the same way. A read-modify-write on Redis or a third-party API is
+  serialized across workers or replaced by one atomic write, or one conditional on the value it read (a
+  lock alone does not do this once its lease can expire); idempotency makes a retry safe but does not
+  prevent a lost update.
 - `ON DELETE CASCADE` reaches only Postgres. Deleting a survey, response, workspace, organization or account
   also deletes its storage objects (under the `workspaceId` prefix and the legacy `environmentId` one), its
   Hub records and its pending invites, and its test asserts those deletes.
@@ -357,7 +409,10 @@ Do:
   expected answer, not a new spec.
 - Run `pnpm test` before opening a PR and `pnpm test:coverage` when touching critical flows.
 - Merging, narrowing, or deleting an E2E spec is legitimate work — record it in the PR's Coverage table
-  like any other change.
+  like any other change, and name in each row the test that still covers the behaviour, or "none".
+  A test that is the only way another test can go red stays, as a `test.step` in a test that survives: the
+  positive control for an assertion helper, or the allowed half of an allowed/denied pair whose denied half
+  asserts an absence.
 
 Do not:
 

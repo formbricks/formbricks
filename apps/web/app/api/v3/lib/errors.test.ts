@@ -9,6 +9,10 @@ import {
   UniqueConstraintError,
   ValidationError,
 } from "@formbricks/types/errors";
+import {
+  EmbeddedKeysNotReadyError,
+  RareEmbeddedKeysConflictError,
+} from "@/modules/ee/analysis/lib/embedded-keys-errors";
 import { mapV3ThrownError } from "./errors";
 
 vi.mock("server-only", () => ({}));
@@ -85,6 +89,23 @@ describe("mapV3ThrownError", () => {
     expect(body.code).toBe("conflict");
     expect(JSON.stringify(body)).not.toContain("singleUseId");
   });
+
+  test.each([
+    ["rare keys of several buckets", new RareEmbeddedKeysConflictError(), "Remove one of them"],
+    ["keys the catalog has not caught up with", new EmbeddedKeysNotReadyError(), "not available yet"],
+  ])(
+    "maps a refusal of a chart's embedded-data fields (%s) to 409 with its fixed message",
+    async (_, err, detail) => {
+      const log = makeLog();
+      const response = mapV3ThrownError(err, ctx(log));
+
+      expect(response.status).toBe(409);
+      const body = await response.json();
+      expect(body.code).toBe("conflict");
+      expect(body.detail).toContain(detail);
+      expect(log.error).not.toHaveBeenCalled();
+    }
+  );
 
   /**
    * `DatabaseError` wraps the raw Prisma message by codebase convention, which carries table, column and

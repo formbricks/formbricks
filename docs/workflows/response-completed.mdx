@@ -1,0 +1,22 @@
+---
+title: "Response completed"
+description: "Start a workflow when a respondent finishes a survey in the workspace."
+icon: "circle-check"
+---
+
+The **Response completed** trigger starts a run each time a respondent finishes the survey you link to the
+workflow. Later steps can use the response's answers, hidden fields and Embedded Data as
+[Variables](/workflows/variables).
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+## Set up the trigger
+
+Select the survey whose completed responses should start the workflow. The survey must be in the same workspace
+as the workflow. Changing the linked survey clears any ending card and email recipient configuration that
+belonged to the previous survey.
+
+Under **Ending cards**, choose one of these scopes:
+
+- **All endings** runs the workflow for every completed response, including ending cards added later.
+- **Specific endings** runs it only when the respondent reaches one of the selected ending cards.

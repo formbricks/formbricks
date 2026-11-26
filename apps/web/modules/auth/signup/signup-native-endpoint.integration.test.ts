@@ -6,7 +6,7 @@ import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-conte
 import { sendVerificationLinkEmail } from "@/modules/email";
 
 /**
- * ENG-3988: there is exactly one way to create a credential account, and it is `createUserAction`.
+ * ENG-3988: there is exactly one way to create a credential account, and it is the sign-up route (`POST /api/internal/signups`).
  *
  * Better Auth's native `POST /api/auth/sign-up/email` used to be a second way in. On Cloud it skipped
  * everything the action enforces — Turnstile, `ZUserEmail`/`ZUserPassword`, the app-level IP limit, org

@@ -30,6 +30,16 @@ export function useChartQuery(
   const runSeqRef = useRef(0);
   const inFlightRef = useRef<AbortController | null>(null);
 
+  // A new data source supersedes the run in flight. That run no longer settles the loading or error
+  // state (only the latest run may), so the switch clears both here instead of leaving the preview
+  // spinning or showing the previous data source's error.
+  const [scope, setScope] = useState({ workspaceId, feedbackDirectoryId });
+  if (scope.workspaceId !== workspaceId || scope.feedbackDirectoryId !== feedbackDirectoryId) {
+    setScope({ workspaceId, feedbackDirectoryId });
+    setIsLoading(false);
+    setError(null);
+  }
+
   useEffect(() => {
     runSeqRef.current++;
     inFlightRef.current?.abort();

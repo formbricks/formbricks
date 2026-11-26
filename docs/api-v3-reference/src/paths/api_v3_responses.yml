@@ -2,7 +2,7 @@ get:
   operationId: getResponsesV3
   summary: List responses
   description: >
-    Returns responses for a workspace, newest first. Session cookie, `x-api-key`, or a Bearer token, with read access.
+    Returns responses for a workspace, newest first. `x-api-key` or a Bearer token, with read access.
 
 
     **Scoping.** `workspaceId` is required, as on every v3 collection read. Add `surveyId` to narrow

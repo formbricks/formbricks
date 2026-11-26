@@ -1,7 +1,6 @@
 import { expect } from "@playwright/test";
-import { logger } from "@formbricks/logger";
 import { test } from "../../lib/fixtures";
-import { loginAndGetApiKey } from "../../lib/utils";
+import { createUserWithApiKey } from "../../utils/api-key";
 import { SURVEYS_API_URL } from "../constants";
 
 test.describe("API Tests", () => {
@@ -9,13 +8,8 @@ test.describe("API Tests", () => {
   let workspaceId: string;
   let apiKey: string;
 
-  test("API Tests", async ({ page, users, request }) => {
-    try {
-      ({ workspaceId, apiKey } = await loginAndGetApiKey(page, users));
-    } catch (error) {
-      logger.error(error, "Error during login and getting API key");
-      throw error;
-    }
+  test("API Tests", async ({ users, request }) => {
+    ({ workspaceId, apiKey } = await createUserWithApiKey(users));
 
     await test.step("Create Survey from API", async () => {
       const response = await request.post(SURVEYS_API_URL, {

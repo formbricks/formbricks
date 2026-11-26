@@ -1088,6 +1088,19 @@ describe("processWorkflowRunJob", () => {
       expect(mockSendEmail.mock.calls[0][0].subject).toBe("Else");
     });
 
+    test.each([
+      ["contains", "Else"],
+      ["doesNotContain", "Then"],
+      ["notContains", "Then"],
+    ])("routes a missing Variable with %s to %s", async (operator, subject) => {
+      runWith(branchingDefinition({ id: "c1", left: { path: "response.nope" }, operator, right: "def" }));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe(subject);
+    });
+
     test("resumes an If/else from its log instead of deciding again", async () => {
       // The response changed since the first attempt took Else; the run must stay on Else.
       mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: 9 } });

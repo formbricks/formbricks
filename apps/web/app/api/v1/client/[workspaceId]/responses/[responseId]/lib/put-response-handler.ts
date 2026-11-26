@@ -10,7 +10,7 @@ import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-er
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { applyIngestContractToResponseData } from "@/lib/response/ingest";
+import { applyIngestContractToResponseInput } from "@/lib/response/ingest";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
@@ -131,7 +131,8 @@ const validateUpdateRequest = (
   survey: TSurvey,
   responseUpdateInput: TClientResponseUpdateInput,
   workspaceId: string,
-  notShown: TResponseNotShown | null
+  notShown: TResponseNotShown | null,
+  invalidCalElementId: string | undefined
 ): TRouteResult | undefined => {
   // Mirror the POST endpoint: a closed survey accepts no submissions, including finalizing a partial
   // response created while it was open (ENG-1654).
@@ -147,6 +148,17 @@ const validateUpdateRequest = (
   // updateResponseWithQuotaEvaluation, since the response can be finished after this read.
   if (existingResponse.finished) {
     return responseAlreadyFinished();
+  }
+
+  // After the two refusals above, so a closed survey or a finished response answers as it always did.
+  if (invalidCalElementId) {
+    return {
+      response: responses.badRequestResponse(
+        "Invalid booking details",
+        { elementId: invalidCalElementId },
+        true
+      ),
+    };
   }
 
   if (
@@ -270,10 +282,9 @@ export const putResponseHandler = async ({
   // everything else passes through — which is how a crafted PUT could write a locked key, an unknown
   // key or an oversize value straight into `response.data`, where exports read it. Ahead of
   // validation and quota evaluation so both see the values that will be stored.
-  const ingestResult = applyIngestContractToResponseData(survey, responseUpdateInput.data);
-  if (responseUpdateInput.data) {
-    responseUpdateInput.data = ingestResult.data;
-  }
+  // The same step splits a Cal element's booking record out of `data` (the stored answer stays the string
+  // "booked"); on an update the details are merged into what is stored, by Question ID.
+  const ingestResult = applyIngestContractToResponseInput(survey, responseUpdateInput);
 
   const notShownResult = await getNotShownForValidation(responseId, responseUpdateInput);
   if ("response" in notShownResult) {
@@ -285,7 +296,8 @@ export const putResponseHandler = async ({
     survey,
     responseUpdateInput,
     workspaceId,
-    notShownResult.notShown
+    notShownResult.notShown,
+    ingestResult.invalidCalElementId
   );
   if (validationResult) {
     return validationResult;

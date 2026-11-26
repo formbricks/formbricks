@@ -396,23 +396,36 @@ describe("deleteSurvey", () => {
 });
 
 describe("archiveSurvey", () => {
+  const archiveTx = (locked: { id: string; status: string; archivedAt: Date | null } | undefined) => {
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue(locked ? [locked] : []),
+      survey: { update: vi.fn() },
+    };
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(tx as never));
+    return tx;
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("should archive an inProgress survey by pausing it, preserving publishOn", async () => {
-    const findUniqueMock = vi
-      .fn()
-      .mockResolvedValue({ id: surveyId, status: "inProgress", archivedAt: null });
-    const updateMock = vi.fn().mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
+  test("should archive an inProgress survey by pausing it, preserving publishOn, with the row locked", async () => {
+    const archivedAt = new Date("2026-11-24T10:00:00.000Z");
+    const tx = archiveTx({ id: surveyId, status: "inProgress", archivedAt: null });
+    tx.survey.update.mockResolvedValue({ id: surveyId, status: "paused", archivedAt });
 
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      callback({ survey: { findUnique: findUniqueMock, update: updateMock } } as never)
-    );
+    await expect(archiveSurvey(surveyId)).resolves.toEqual({
+      id: surveyId,
+      status: "paused",
+      archivedAt,
+      changed: true,
+      previous: { id: surveyId, status: "inProgress", archivedAt: null },
+    });
 
-    await archiveSurvey(surveyId);
-
-    expect(updateMock).toHaveBeenCalledWith({
+    const statement = String(tx.$queryRaw.mock.calls[0][0].join("?"));
+    expect(statement).toContain('FROM "Survey"');
+    expect(statement).toContain("FOR UPDATE");
+    expect(tx.survey.update).toHaveBeenCalledWith({
       where: { id: surveyId },
       data: { archivedAt: expect.any(Date), status: "paused" },
       select: { id: true, status: true, archivedAt: true },
@@ -420,16 +433,19 @@ describe("archiveSurvey", () => {
   });
 
   test("should archive a paused survey without changing its status or publishOn", async () => {
-    const findUniqueMock = vi.fn().mockResolvedValue({ id: surveyId, status: "paused", archivedAt: null });
-    const updateMock = vi.fn().mockResolvedValue({ id: surveyId, status: "paused", archivedAt: new Date() });
+    const archivedAt = new Date("2026-11-24T10:00:00.000Z");
+    const tx = archiveTx({ id: surveyId, status: "paused", archivedAt: null });
+    tx.survey.update.mockResolvedValue({ id: surveyId, status: "paused", archivedAt });
 
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      callback({ survey: { findUnique: findUniqueMock, update: updateMock } } as never)
-    );
+    await expect(archiveSurvey(surveyId)).resolves.toEqual({
+      id: surveyId,
+      status: "paused",
+      archivedAt,
+      changed: true,
+      previous: { id: surveyId, status: "paused", archivedAt: null },
+    });
 
-    await archiveSurvey(surveyId);
-
-    expect(updateMock).toHaveBeenCalledWith({
+    expect(tx.survey.update).toHaveBeenCalledWith({
       where: { id: surveyId },
       data: { archivedAt: expect.any(Date) },
       select: { id: true, status: true, archivedAt: true },
@@ -438,31 +454,22 @@ describe("archiveSurvey", () => {
 
   test("should be a no-op when the survey is already archived", async () => {
     const alreadyArchived = { id: surveyId, status: "paused", archivedAt: new Date() };
-    const findUniqueMock = vi.fn().mockResolvedValue(alreadyArchived);
-    const updateMock = vi.fn();
-
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      callback({ survey: { findUnique: findUniqueMock, update: updateMock } } as never)
-    );
+    const tx = archiveTx(alreadyArchived);
 
     const result = await archiveSurvey(surveyId);
 
-    expect(updateMock).not.toHaveBeenCalled();
-    expect(result).toEqual(alreadyArchived);
+    expect(tx.survey.update).not.toHaveBeenCalled();
+    expect(result).toEqual({ ...alreadyArchived, changed: false, previous: alreadyArchived });
   });
 
   test("should throw ResourceNotFoundError when the survey does not exist", async () => {
-    const findUniqueMock = vi.fn().mockResolvedValue(null);
-
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      callback({ survey: { findUnique: findUniqueMock, update: vi.fn() } } as never)
-    );
+    archiveTx(undefined);
 
     await expect(archiveSurvey(surveyId)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("should map Prisma P2025 during archive to ResourceNotFoundError", async () => {
-    // A concurrent delete between findUnique and update raises P2025; match restoreSurvey's contract.
+    // Defensive mapping, matching restoreSurvey: the lock makes a concurrent delete unreachable here.
     const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
       code: "P2025",
       clientVersion: "4.0.0",
@@ -481,7 +488,7 @@ describe("restoreSurvey", () => {
     locked: { status?: string; archivedAt: Date | null; organizationId: string } | undefined
   ) => {
     const tx = {
-      $queryRaw: vi.fn().mockResolvedValue(locked ? [locked] : []),
+      $queryRaw: vi.fn().mockResolvedValue(locked ? [{ status: "paused", ...locked }] : []),
       survey: { update: vi.fn().mockResolvedValue(restored) },
     };
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(tx as never));
@@ -493,15 +500,20 @@ describe("restoreSurvey", () => {
   });
 
   test("clears archivedAt and restarts the survey's retention, with the survey locked", async () => {
-    const tx = restoreTx({ archivedAt: new Date("2030-01-01T00:00:00.000Z"), organizationId });
+    const archivedAt = new Date("2030-01-01T00:00:00.000Z");
+    const tx = restoreTx({ archivedAt, organizationId });
     vi.mocked(restartSurveyRetention).mockResolvedValue({ exemptionId: "clexm" });
 
     await expect(restoreSurvey(surveyId, { restoredById: "user-1" })).resolves.toEqual({
       ...restored,
       retentionExemptionId: "clexm",
+      changed: true,
+      previous: { id: surveyId, status: "paused", archivedAt },
     });
 
-    expect(String(tx.$queryRaw.mock.calls[0][0].join("?"))).toContain("FOR UPDATE");
+    const statement = String(tx.$queryRaw.mock.calls[0][0].join("?"));
+    expect(statement).toContain('FROM "Survey"');
+    expect(statement).toContain("FOR UPDATE");
     expect(tx.survey.update).toHaveBeenCalledWith({
       where: { id: surveyId },
       data: { archivedAt: null },
@@ -517,7 +529,12 @@ describe("restoreSurvey", () => {
   test("restoring a survey that isn't archived writes nothing and leaves retention alone", async () => {
     const tx = restoreTx({ status: "paused", archivedAt: null, organizationId });
 
-    await expect(restoreSurvey(surveyId)).resolves.toEqual({ ...restored, retentionExemptionId: null });
+    await expect(restoreSurvey(surveyId)).resolves.toEqual({
+      ...restored,
+      retentionExemptionId: null,
+      changed: false,
+      previous: { id: surveyId, status: "paused", archivedAt: null },
+    });
     // An update would bump updated_at, which the surveys policy's "no changes" reads.
     expect(tx.survey.update).not.toHaveBeenCalled();
     expect(restartSurveyRetention).not.toHaveBeenCalled();

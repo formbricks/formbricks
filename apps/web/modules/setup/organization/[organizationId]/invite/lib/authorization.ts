@@ -7,7 +7,7 @@ import { assertUserManagementAllowed, canManageUsers } from "@/lib/membership/us
  * Deliberately narrower than the org settings invite path, where managers may invite members: this
  * path takes no role input and `inviteUser` always persists an owner invite, so admitting a manager
  * here lets them mint an owner without an existing owner's approval. Nothing legitimate is lost —
- * the only entry to this screen is the redirect right after `createOrganizationAction`, which makes
+ * the only entry to this screen is the redirect right after `POST /api/internal/organizations`, which makes
  * the creator an owner.
  *
  * `organization.write` is the vocabulary's owner-only capability (`permission write: user = owner`

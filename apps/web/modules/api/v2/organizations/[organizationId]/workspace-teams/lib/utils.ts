@@ -4,6 +4,10 @@ import { Prisma } from "@formbricks/database/prisma";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
+import {
+  canManageOrganizationUsers,
+  getApiKeyCreatorRole,
+} from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import { TGetWorkspaceTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/types/workspace-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
@@ -97,6 +101,31 @@ export const checkAuthenticationAndAccess = async (
 
   if (!hasAccess.ok) {
     return err(hasAccess.error as ApiErrorResponseV2);
+  }
+
+  return ok(true);
+};
+
+/**
+ * Org API keys carry no role of their own, so workspace-team writes are anchored to the API key
+ * creator's current role, the same clamp the teams and users routes apply. A key whose creator was
+ * demoted, removed or never recorded (legacy keys) can no longer manage team access.
+ */
+export const checkApiKeyCreatorCanManageWorkspaceTeams = async (
+  authentication: TAuthenticationApiKey
+): Promise<Result<true, ApiErrorResponseV2>> => {
+  const assignerRole = await getApiKeyCreatorRole(authentication.apiKeyId, authentication.organizationId);
+
+  if (!canManageOrganizationUsers(assignerRole)) {
+    return err({
+      type: "forbidden",
+      details: [
+        {
+          field: "workspaceTeam",
+          issue: "You are not allowed to manage team access in this organization",
+        },
+      ],
+    });
   }
 
   return ok(true);

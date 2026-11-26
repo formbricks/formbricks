@@ -8,6 +8,7 @@ export const AI_TRANSLATION_FIELDS_PER_BATCH = 8;
 export const AI_TRANSLATION_SOURCE_CHARS_PER_BATCH = 3000;
 export const AI_TRANSLATION_MAX_FIELD_CHARS = 20_000;
 export const AI_TRANSLATION_FIELD_TOO_LONG = "ai_translation_field_exceeds_20000_characters";
+export const AI_TRANSLATION_MAX_PATH_CHARS = 512;
 export const AI_TRANSLATION_MAX_FIELDS_PER_ACTION = 256;
 export const AI_TRANSLATION_TOO_MANY_FIELDS = "ai_translation_exceeds_256_fields";
 export const AI_TRANSLATION_MODEL_BATCHES_PER_ACTION = 3;

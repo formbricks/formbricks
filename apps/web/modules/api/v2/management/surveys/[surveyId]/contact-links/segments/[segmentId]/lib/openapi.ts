@@ -9,7 +9,8 @@ import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/type
 export const getContactLinksBySegmentEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactLinksBySegment",
   summary: "Get survey links for contacts in a segment",
-  description: "Generates personalized survey links for contacts in a segment.",
+  description:
+    "Generates personalized survey links for contacts in a segment. Although this is a GET, it creates credentials: each link lets whoever holds it submit a response as that contact. The API key therefore needs read & write access to the workspace; a read-only key, or a key restricted from this survey, is rejected with 401.",
   tags: ["Management API - Surveys - Contact Links"],
   requestParams: {
     path: ZContactLinksBySegmentParams,

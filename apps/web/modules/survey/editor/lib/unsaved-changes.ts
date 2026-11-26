@@ -1,6 +1,6 @@
 import { withMatrixConditionIdsInBlocks } from "@formbricks/types/surveys/matrix-conditions";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { isDeepEqual } from "@/lib/utils/object";
+import { isDeepEqualIgnoringUndefined } from "@/lib/utils/object";
 import { toComparableStoredCustomCss } from "@/modules/custom-css/components/lib/draft";
 
 /** Stands in for `updatedAt` on both sides of a comparison, so its real value never decides one. */
@@ -64,12 +64,16 @@ const ignoringServerOwned = (survey: TSurvey): TSurvey => ({
 /**
  * Whether the editor holds changes that are not persisted.
  *
- * A save leaves behind two representations of the same stored survey: the one the server action
+ * A save leaves behind two representations of the same stored survey: the one the save route
  * returns, which `localSurvey` is set to, and the one the `router.refresh()` that follows re-reads
  * into the `survey` prop. They reach the client by different routes and do not always arrive
  * identical, so checking `localSurvey` against only one of them reports unsaved work the moment a
  * save completes. Pass every survey known to be persisted; the editor is clean when it matches any
  * of them, and the guard still fires on the first genuine edit, which matches none.
+ *
+ * A key that holds `undefined` counts as missing. The save routes answer in JSON, which drops such keys,
+ * while the page renders the survey with them (`keepEndingCardOpen`, `autoSelectLanguage`, …), so a plain
+ * deep equal would call a survey dirty the moment it was saved and the autosave would never stop.
  */
 export const hasUnsavedSurveyChanges = (
   localSurvey: TSurvey,
@@ -77,7 +81,7 @@ export const hasUnsavedSurveyChanges = (
 ): boolean => {
   const local = ignoringServerOwned(localSurvey);
   return !persistedSurveys.some(
-    (persisted) => persisted && isDeepEqual(local, ignoringServerOwned(persisted))
+    (persisted) => persisted && isDeepEqualIgnoringUndefined(local, ignoringServerOwned(persisted))
   );
 };
 

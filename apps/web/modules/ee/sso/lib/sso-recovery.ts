@@ -5,6 +5,7 @@ import type { Account } from "@formbricks/types/auth";
 import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken } from "@/lib/jwt";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
@@ -86,7 +87,7 @@ export const startSsoRecovery = async ({
   } catch (error) {
     getSsoRecoveryLogger("sso_recovery_failed").error(
       {
-        error,
+        ...loggableError(error),
         userId: existingUser.id,
         provider,
         callbackUrl: originalCallbackUrl,

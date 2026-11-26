@@ -17,6 +17,8 @@ import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
+import { BILLING_SYNC_LOCK_TTL_MS, acquireOrganizationBillingLock } from "./billing-lock";
+import { getCardRefusalReason } from "./card-refusal";
 import { buildFreeTrialEndParams, getFreeTrialEndUnix, hasFreeTrialFallback } from "./free-trial-end";
 import {
   type TStandardCloudPlan,
@@ -37,10 +39,6 @@ import {
 } from "./subscription-currency";
 
 const BILLING_SYNC_STALE_MS = 5 * 60 * 1000;
-// Single-flight lock TTL for the stale read-through Stripe sync: long enough to cover a few Stripe
-// round-trips + the write, short enough that a crashed holder can't block refreshes for long. The
-// lock is released by expiry (no explicit unlock), matching the license-fetch pattern.
-const BILLING_SYNC_LOCK_TTL_MS = 30 * 1000;
 // Hard deadline for the read-through sync, strictly below the lock TTL. This runs on a hot render
 // path, so if Stripe is slow we stop waiting and serve the cached snapshot instead of blocking the
 // request. Because the OrganizationBilling write is idempotent (Stripe is the source of truth;
@@ -56,6 +54,17 @@ const rejectAfter = (ms: number, message: string): { promise: Promise<never>; ca
   });
   return { promise, cancel: () => clearTimeout(timer) };
 };
+/**
+ * Stripe request options for one write of a caller's intent (one click on a plan, say): the intent's
+ * idempotency key with the step appended, so every write the intent makes has its own key and a retry of
+ * the same intent replays each of them instead of repeating it. No options at all without a key, so such
+ * a call stays the request it always was.
+ */
+const intentRequestOptions = (
+  idempotencyKey: string | undefined,
+  step: string
+): [Stripe.RequestOptions] | [] => (idempotencyKey ? [{ idempotencyKey: `${idempotencyKey}:${step}` }] : []);
+
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set<string>(["trialing", "active", "past_due", "unpaid", "paused"]);
 
 const ORGANIZATION_BILLING_SELECT = {
@@ -662,6 +671,8 @@ export const createPaidPlanCheckoutSession = async (input: {
   customerId: string;
   plan: Exclude<TStandardCloudPlan, "hobby">;
   interval: TCloudBillingInterval;
+  /** The caller's intent: a retry with the same key gets the same Checkout Session back. */
+  idempotencyKey?: string;
 }): Promise<string> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
@@ -682,37 +693,40 @@ export const createPaidPlanCheckoutSession = async (input: {
 
   const items = await getCatalogItemsForPlan(input.plan, input.interval);
   const session = await stripeClient.checkout.sessions
-    .create({
-      mode: "subscription",
-      customer: input.customerId,
-      line_items: items,
-      client_reference_id: input.organizationId,
-      billing_address_collection: "required",
-      // Charges VAT/sales tax from the billing address and tax ID collected below.
-      automatic_tax: { enabled: true },
-      tax_id_collection: {
-        enabled: true,
-        required: "if_supported",
-      },
-      customer_update: {
-        address: "auto",
-        name: "auto",
-      },
-      // Carries the purchased plan so the confirmation page can force a Stripe sync — the read-
-      // through sync only refreshes a >5min-stale snapshot and would otherwise serve the old plan.
-      success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1&plan=${input.plan}`,
-      cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
-      metadata: {
-        organizationId: input.organizationId,
-        targetPlan: input.plan,
-        targetInterval: input.interval,
-      },
-      subscription_data: {
+    .create(
+      {
+        mode: "subscription",
+        customer: input.customerId,
+        line_items: items,
+        client_reference_id: input.organizationId,
+        billing_address_collection: "required",
+        // Charges VAT/sales tax from the billing address and tax ID collected below.
+        automatic_tax: { enabled: true },
+        tax_id_collection: {
+          enabled: true,
+          required: "if_supported",
+        },
+        customer_update: {
+          address: "auto",
+          name: "auto",
+        },
+        // Carries the purchased plan so the confirmation page can force a Stripe sync — the read-
+        // through sync only refreshes a >5min-stale snapshot and would otherwise serve the old plan.
+        success_url: `${WEBAPP_URL}/billing-confirmation?organizationId=${input.organizationId}&checkout_success=1&plan=${input.plan}`,
+        cancel_url: `${WEBAPP_URL}/organizations/${input.organizationId}/settings/billing`,
         metadata: {
           organizationId: input.organizationId,
+          targetPlan: input.plan,
+          targetInterval: input.interval,
+        },
+        subscription_data: {
+          metadata: {
+            organizationId: input.organizationId,
+          },
         },
       },
-    })
+      ...intentRequestOptions(input.idempotencyKey, "checkout-session")
+    )
     .catch((error: unknown) => {
       throw toBillingCurrencyConflictError(error);
     });
@@ -739,25 +753,30 @@ const getRequiredActiveSubscription = async (
 
 const clearPendingPlanState = async (
   organizationId: string,
-  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  idempotencyKey?: string
 ): Promise<void> => {
   if (!stripeClient) {
     return;
   }
 
   if (subscription.cancel_at_period_end) {
-    await stripeClient.subscriptions.update(subscription.id, {
-      cancel_at_period_end: false,
-    });
+    await stripeClient.subscriptions.update(
+      subscription.id,
+      { cancel_at_period_end: false },
+      ...intentRequestOptions(idempotencyKey, "clear-cancel-at-period-end")
+    );
   }
 
   if (subscription.schedule) {
     const scheduleId =
       typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
 
-    await stripeClient.subscriptionSchedules.release(scheduleId, {
-      preserve_cancel_date: false,
-    });
+    await stripeClient.subscriptionSchedules.release(
+      scheduleId,
+      { preserve_cancel_date: false },
+      ...intentRequestOptions(idempotencyKey, "release-schedule")
+    );
   }
 
   await updatePendingPlanChangeSnapshot(organizationId, null);
@@ -812,30 +831,20 @@ const previewFullConversionChargeCents = async (
   return { amountDue: preview.amount_due, currency: preview.currency };
 };
 
-// Codes meaning the card needs cardholder authentication off-session. error_if_incomplete rolls the
-// update back (no PaymentIntent survives to confirm), so the only useful action is a distinct error.
-const CARD_AUTHENTICATION_ERROR_CODES = new Set([
-  "authentication_required",
-  "subscription_payment_intent_requires_action",
-]);
-
-const toTrialConversionError = (error: unknown): unknown => {
-  const code = (error as { code?: string } | null)?.code;
-  const declineCode = (error as { decline_code?: string } | null)?.decline_code;
-  if (
-    (code && CARD_AUTHENTICATION_ERROR_CODES.has(code)) ||
-    (declineCode && CARD_AUTHENTICATION_ERROR_CODES.has(declineCode))
-  ) {
-    return new OperationNotAllowedError("card_authentication_required");
-  }
-  return error;
+// A charge Stripe refused for a card-level reason becomes a refusal the billing page names (3D Secure,
+// declined, insufficient funds, expired) instead of a generic failure (ENG-2170). Off-session 3D Secure
+// matters most under error_if_incomplete: the update rolls back, so no PaymentIntent survives to confirm.
+const toCardRefusalError = (error: unknown): unknown => {
+  const refusalReason = getCardRefusalReason(error);
+  return refusalReason ? new OperationNotAllowedError(refusalReason) : error;
 };
 
 const updateSubscriptionItemsImmediately = async (
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
   customerId: string,
   targetPlan: TStandardCloudPlan,
-  targetInterval: TCloudBillingInterval
+  targetInterval: TCloudBillingInterval,
+  idempotencyKey?: string
 ): Promise<TUpgradePaymentConfirmation> => {
   if (!stripeClient) {
     return { clientSecret: null, requiresAction: false };
@@ -854,10 +863,14 @@ const updateSubscriptionItemsImmediately = async (
   // declined card would lose the trial's Hobby fallback (that update's cancel_at "" clears both).
   const clearCancelAtPeriodEnd = subscription.cancel_at_period_end && subscription.status !== "trialing";
   if (clearCancelAtPeriodEnd || automaticTax) {
-    await stripeClient.subscriptions.update(subscription.id, {
-      ...(clearCancelAtPeriodEnd ? { cancel_at_period_end: false } : {}),
-      ...(automaticTax ? { automatic_tax: automaticTax } : {}),
-    });
+    await stripeClient.subscriptions.update(
+      subscription.id,
+      {
+        ...(clearCancelAtPeriodEnd ? { cancel_at_period_end: false } : {}),
+        ...(automaticTax ? { automatic_tax: automaticTax } : {}),
+      },
+      ...intentRequestOptions(idempotencyKey, "prepare-subscription")
+    );
   }
 
   // Ends the trial and switches plans in a SINGLE update so the card is billed exactly once for the
@@ -867,7 +880,7 @@ const updateSubscriptionItemsImmediately = async (
   //
   // Trade-off: a card needing off-session 3DS also errors here (the update rolls back before the
   // browser can confirm, leaving no PaymentIntent) — translated into a distinct error via
-  // toTrialConversionError so the UI can ask for a non-3DS card.
+  // toCardRefusalError so the UI can ask for a non-3DS card.
   //
   // Clearing cancel_at in this same update is what makes the purchase stick: the free trial is set to
   // cancel at trial_end (buildFreeTrialEndParams), and a decline rolls the whole update back, so a failed
@@ -875,29 +888,37 @@ const updateSubscriptionItemsImmediately = async (
   // instead of billing it.
   if (subscription.status === "trialing") {
     try {
-      await stripeClient.subscriptions.update(subscription.id, {
-        items: [...existingDeletions, ...targetItems],
-        trial_end: "now",
-        cancel_at: "",
-        proration_behavior: "always_invoice",
-        payment_behavior: "error_if_incomplete",
-      });
+      await stripeClient.subscriptions.update(
+        subscription.id,
+        {
+          items: [...existingDeletions, ...targetItems],
+          trial_end: "now",
+          cancel_at: "",
+          proration_behavior: "always_invoice",
+          payment_behavior: "error_if_incomplete",
+        },
+        ...intentRequestOptions(idempotencyKey, "subscription-items")
+      );
     } catch (error) {
-      throw toBillingCurrencyConflictError(toTrialConversionError(error));
+      throw toBillingCurrencyConflictError(toCardRefusalError(error));
     }
     return { clientSecret: null, requiresAction: false };
   }
 
   const updated = await stripeClient.subscriptions
-    .update(subscription.id, {
-      items: [...existingDeletions, ...targetItems],
-      proration_behavior: "always_invoice",
-      // Records a pending_update; the plan isn't granted until the invoice is paid (SCA-safe).
-      // Only pending-update-supported attributes are allowed (no metadata/cancel_at_period_end).
-      payment_behavior: "pending_if_incomplete",
-    })
+    .update(
+      subscription.id,
+      {
+        items: [...existingDeletions, ...targetItems],
+        proration_behavior: "always_invoice",
+        // Records a pending_update; the plan isn't granted until the invoice is paid (SCA-safe).
+        // Only pending-update-supported attributes are allowed (no metadata/cancel_at_period_end).
+        payment_behavior: "pending_if_incomplete",
+      },
+      ...intentRequestOptions(idempotencyKey, "subscription-items")
+    )
     .catch((error: unknown) => {
-      throw toBillingCurrencyConflictError(error);
+      throw toBillingCurrencyConflictError(toCardRefusalError(error));
     });
 
   const invoiceId =
@@ -935,7 +956,8 @@ const getScheduleItemsForPlanChange = async (
 };
 
 const getOrCreatePlanChangeSchedule = async (
-  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  idempotencyKey?: string
 ) => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
@@ -952,10 +974,13 @@ const getOrCreatePlanChangeSchedule = async (
   }
 
   return {
-    schedule: await stripeClient.subscriptionSchedules.create({
-      // Stripe rejects metadata when cloning from an existing subscription.
-      from_subscription: subscription.id,
-    }),
+    schedule: await stripeClient.subscriptionSchedules.create(
+      {
+        // Stripe rejects metadata when cloning from an existing subscription.
+        from_subscription: subscription.id,
+      },
+      ...intentRequestOptions(idempotencyKey, "create-schedule")
+    ),
     createdSchedule: true,
   };
 };
@@ -1064,7 +1089,8 @@ const scheduleSubscriptionPlanChange = async (
   customerId: string,
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
   targetPlan: TStandardCloudPlan,
-  targetInterval: TCloudBillingInterval
+  targetInterval: TCloudBillingInterval,
+  idempotencyKey?: string
 ): Promise<TOrganizationStripePendingChange> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
@@ -1090,9 +1116,11 @@ const scheduleSubscriptionPlanChange = async (
 
   const hadCancelAtPeriodEnd = subscription.cancel_at_period_end;
   if (hadCancelAtPeriodEnd) {
-    await stripeClient.subscriptions.update(subscription.id, {
-      cancel_at_period_end: false,
-    });
+    await stripeClient.subscriptions.update(
+      subscription.id,
+      { cancel_at_period_end: false },
+      ...intentRequestOptions(idempotencyKey, "schedule-clear-cancel-at-period-end")
+    );
   }
 
   const { currentItems, targetItems } = await getScheduleItemsForPlanChange(
@@ -1100,28 +1128,32 @@ const scheduleSubscriptionPlanChange = async (
     targetPlan,
     targetInterval
   );
-  const { schedule, createdSchedule } = await getOrCreatePlanChangeSchedule(subscription);
+  const { schedule, createdSchedule } = await getOrCreatePlanChangeSchedule(subscription, idempotencyKey);
   const currentPhase = getCurrentSchedulePhase(schedule);
 
   let updatedSchedule: Stripe.SubscriptionSchedule;
 
   try {
-    updatedSchedule = await stripeClient.subscriptionSchedules.update(schedule.id, {
-      end_behavior: "release",
-      metadata: {
-        organizationId,
+    updatedSchedule = await stripeClient.subscriptionSchedules.update(
+      schedule.id,
+      {
+        end_behavior: "release",
+        metadata: {
+          organizationId,
+        },
+        proration_behavior: "none",
+        phases: buildPlanChangePhases({
+          currentPhase,
+          currentItems,
+          targetItems,
+          organizationId,
+          targetPlan,
+          targetInterval,
+          automaticTax,
+        }),
       },
-      proration_behavior: "none",
-      phases: buildPlanChangePhases({
-        currentPhase,
-        currentItems,
-        targetItems,
-        organizationId,
-        targetPlan,
-        targetInterval,
-        automaticTax,
-      }),
-    });
+      ...intentRequestOptions(idempotencyKey, "update-schedule")
+    );
   } catch (error) {
     await rollbackFailedPlanChangeScheduleUpdate({
       organizationId,
@@ -1184,7 +1216,8 @@ const hasCollectedPaymentMethod = async (
  */
 const switchTrialToHobbyImmediately = async (
   organizationId: string,
-  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>
+  subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>,
+  idempotencyKey?: string
 ): Promise<void> => {
   if (!stripeClient) {
     throw new Error("Stripe is not configured");
@@ -1193,16 +1226,20 @@ const switchTrialToHobbyImmediately = async (
   if (subscription.schedule) {
     const scheduleId =
       typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
-    await stripeClient.subscriptionSchedules.release(scheduleId, {
-      preserve_cancel_date: false,
-    });
+    await stripeClient.subscriptionSchedules.release(
+      scheduleId,
+      { preserve_cancel_date: false },
+      ...intentRequestOptions(idempotencyKey, "hobby-release-schedule")
+    );
   }
 
   // cancel_at_period_end isn't a pending-update attribute, so clear it in a separate plain update first.
   if (subscription.cancel_at_period_end) {
-    await stripeClient.subscriptions.update(subscription.id, {
-      cancel_at_period_end: false,
-    });
+    await stripeClient.subscriptions.update(
+      subscription.id,
+      { cancel_at_period_end: false },
+      ...intentRequestOptions(idempotencyKey, "hobby-clear-cancel-at-period-end")
+    );
   }
 
   const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
@@ -1220,13 +1257,17 @@ const switchTrialToHobbyImmediately = async (
   // upgrade. Hobby is free, so override to "create_invoice": the trial ends into an active $0 Hobby
   // subscription with no payment method required. cancel_at is cleared too: it was the trial's Hobby
   // fallback, and left in place it would cancel this Hobby subscription at the old trial end.
-  await stripeClient.subscriptions.update(subscription.id, {
-    items: [...existingDeletions, ...hobbyItems],
-    trial_end: "now",
-    cancel_at: "",
-    proration_behavior: "none",
-    trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
-  });
+  await stripeClient.subscriptions.update(
+    subscription.id,
+    {
+      items: [...existingDeletions, ...hobbyItems],
+      trial_end: "now",
+      cancel_at: "",
+      proration_behavior: "none",
+      trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
+    },
+    ...intentRequestOptions(idempotencyKey, "hobby-subscription-items")
+  );
 
   await updatePendingPlanChangeSnapshot(organizationId, null);
 };
@@ -1421,12 +1462,13 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
   subscription: TActiveSubscription;
   targetPlan: TStandardCloudPlan;
   targetInterval: TCloudBillingInterval;
+  idempotencyKey?: string;
 }): Promise<TUpgradePaymentConfirmation> => {
   if (!stripeClient) {
     return { clientSecret: null, requiresAction: false };
   }
 
-  const { organizationId, customerId, subscription, targetPlan, targetInterval } = input;
+  const { organizationId, customerId, subscription, targetPlan, targetInterval, idempotencyKey } = input;
   const isHobbyTarget = targetPlan === "hobby";
   const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
   const card = isHobbyTarget ? null : await resolveReplacementCard(subscription, customerId);
@@ -1438,10 +1480,18 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
   if (subscription.schedule) {
     const scheduleId =
       typeof subscription.schedule === "string" ? subscription.schedule : subscription.schedule.id;
-    await stripeClient.subscriptionSchedules.release(scheduleId, { preserve_cancel_date: false });
+    await stripeClient.subscriptionSchedules.release(
+      scheduleId,
+      { preserve_cancel_date: false },
+      ...intentRequestOptions(idempotencyKey, "replace-release-schedule")
+    );
   }
 
-  await stripeClient.subscriptions.cancel(subscription.id, { invoice_now: false, prorate: false });
+  await stripeClient.subscriptions.cancel(
+    subscription.id,
+    { invoice_now: false, prorate: false },
+    ...intentRequestOptions(idempotencyKey, "replace-cancel-subscription")
+  );
   await updatePendingPlanChangeSnapshot(organizationId, null);
 
   if (isHobbyTarget) {
@@ -1475,7 +1525,7 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
       { error, organizationId, canceledSubscriptionId: subscription.id, targetPlan },
       "Legacy subscription canceled but replacement failed"
     );
-    throw toBillingCurrencyConflictError(error);
+    throw toBillingCurrencyConflictError(toCardRefusalError(error));
   }
 
   // A paid invoice still carries a confirmation secret, so only an incomplete subscription needs action.
@@ -1495,26 +1545,28 @@ const performImmediateUpgradeOrTrialConversion = async (input: {
   subscription: NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>;
   targetPlan: TStandardCloudPlan;
   targetInterval: TCloudBillingInterval;
+  idempotencyKey?: string;
 }): Promise<{
   mode: "immediate";
   pendingChange: null;
   clientSecret: string | null;
   requiresAction: boolean;
 }> => {
-  const { organizationId, customerId, subscription, targetPlan, targetInterval } = input;
+  const { organizationId, customerId, subscription, targetPlan, targetInterval, idempotencyKey } = input;
 
   const confirmation = await updateSubscriptionItemsImmediately(
     subscription,
     customerId,
     targetPlan,
-    targetInterval
+    targetInterval,
+    idempotencyKey
   );
 
   // Supersedes any pending downgrade (e.g. a no-card-trial "Return to Hobby" via cancel_at_period_end,
   // no schedule) unconditionally: releases any schedule, undoes cancel_at_period_end, and nulls the
   // pending-change snapshot so a stale "Scheduled" badge can't survive the upgrade. Safe to repeat
   // even though updateSubscriptionItemsImmediately already cleared cancel_at_period_end for trialing.
-  await clearPendingPlanState(organizationId, subscription);
+  await clearPendingPlanState(organizationId, subscription, idempotencyKey);
 
   return {
     mode: "immediate",
@@ -1531,6 +1583,7 @@ const replaceSubscriptionForCloudPlan = async (
     customerId: string;
     targetPlan: TStandardCloudPlan;
     targetInterval: TCloudBillingInterval;
+    idempotencyKey?: string;
   },
   subscription: TActiveSubscription
 ): Promise<{
@@ -1623,6 +1676,11 @@ export const switchOrganizationToCloudPlan = async (input: {
   targetInterval: TCloudBillingInterval;
   /** The legacy subscription a setup checkout was opened to replace, when there is one. */
   replacesSubscriptionId?: string;
+  /**
+   * The caller's intent (one click on a plan): each Stripe write the change makes is sent with this key
+   * plus its step, so a retry of the same intent can't charge or schedule twice.
+   */
+  idempotencyKey?: string;
 }): Promise<{
   mode: "immediate" | "scheduled";
   pendingChange: TOrganizationStripePendingChange | null;
@@ -1665,7 +1723,7 @@ export const switchOrganizationToCloudPlan = async (input: {
   // would also be unsafe — the scheduled path lacks the trial guard, so phase 1 would become a
   // billable Pro phase (charging the trial early). Correct regardless of card on file.
   if (subscription.status === "trialing" && input.targetPlan === "hobby") {
-    await switchTrialToHobbyImmediately(input.organizationId, subscription);
+    await switchTrialToHobbyImmediately(input.organizationId, subscription, input.idempotencyKey);
     return { mode: "immediate", pendingChange: null, clientSecret: null, requiresAction: false };
   }
 
@@ -1684,6 +1742,7 @@ export const switchOrganizationToCloudPlan = async (input: {
       subscription,
       targetPlan: input.targetPlan,
       targetInterval: input.targetInterval,
+      idempotencyKey: input.idempotencyKey,
     });
   }
 
@@ -1692,7 +1751,8 @@ export const switchOrganizationToCloudPlan = async (input: {
     input.customerId,
     subscription,
     input.targetPlan,
-    input.targetInterval
+    input.targetInterval,
+    input.idempotencyKey
   );
   return { mode: "scheduled", pendingChange, clientSecret: null, requiresAction: false };
 };
@@ -2246,6 +2306,54 @@ export const syncOrganizationBillingFromStripe = async (
 };
 
 /**
+ * `syncOrganizationBillingFromStripe` holding the organization's billing lock (billing-lock.ts), so it never
+ * runs beside another sync or a plan change and writes an older Stripe snapshot after theirs. It waits up to
+ * `waitMs` for the lock (none by default). While another holder keeps it past that, `whenBusy` decides:
+ * `"readStored"` (the default, for a caller that polls) answers the stored snapshot, which that holder is
+ * about to refresh; `"syncUnlocked"` (the Stripe webhook, whose delivery must never fail or hang on the lock)
+ * syncs anyway and logs at warn that it did. Without Redis it syncs unlocked. Never call it while already
+ * holding the lock: it would find its own lock taken.
+ */
+export const syncOrganizationBillingFromStripeExclusively = async (
+  organizationId: string,
+  {
+    event,
+    waitMs = 0,
+    whenBusy = "readStored",
+  }: {
+    event?: { id: string; created: number };
+    waitMs?: number;
+    whenBusy?: "readStored" | "syncUnlocked";
+  } = {}
+): Promise<TOrganizationBilling | null> => {
+  if (!IS_FORMBRICKS_CLOUD || !stripeClient) {
+    return null;
+  }
+
+  const lock = await acquireOrganizationBillingLock(organizationId, {
+    ttlMs: BILLING_SYNC_LOCK_TTL_MS,
+    waitMs,
+  });
+  if (lock.status === "busy") {
+    if (whenBusy === "readStored") return await getOrganizationBillingFromDatabase(organizationId);
+    logger.warn(
+      { organizationId, eventId: event?.id, waitMs },
+      "Organization billing lock still busy; syncing from Stripe without it"
+    );
+    return await syncOrganizationBillingFromStripe(organizationId, event);
+  }
+  if (lock.status === "unavailable") {
+    return await syncOrganizationBillingFromStripe(organizationId, event);
+  }
+
+  try {
+    return await syncOrganizationBillingFromStripe(organizationId, event);
+  } finally {
+    await lock.release();
+  }
+};
+
+/**
  * Optimistically adds a feature lookup key to stripe.features right after a subscription change
  * (e.g. starting a trial), so the next render sees it before Stripe's entitlements API propagates.
  * Only the features array is mutated — everything else is preserved verbatim; the subsequent
@@ -2347,19 +2455,17 @@ export const getOrganizationBillingWithReadThroughSync = async (
   // the Stripe sync + OrganizationBilling write — a thundering herd and a deadlock surface (ENG-2038).
   // Only the lock winner refreshes; everyone else (incl. the Redis-unavailable case) serves the
   // already-cached snapshot, which is at most one stale cycle old — acceptable for billing display.
-  const lockResult = await cache.tryLock(
-    createCacheKey.organization.billingSyncLock(organizationId),
-    "1",
-    BILLING_SYNC_LOCK_TTL_MS
-  );
-  if (!(lockResult.ok && lockResult.data === true)) {
+  // The lock is the one explicit syncs and plan changes take too (billing-lock.ts), so a refresh never
+  // runs beside them; it is given back once the sync settles, even past the deadline below.
+  const lock = await acquireOrganizationBillingLock(organizationId, { ttlMs: BILLING_SYNC_LOCK_TTL_MS });
+  if (lock.status !== "acquired") {
     return cachedBilling;
   }
 
   try {
     const syncPromise = syncOrganizationBillingFromStripe(organizationId);
     // Guard against an unhandled rejection if the sync settles after the deadline already won the race.
-    syncPromise.catch(() => undefined);
+    syncPromise.catch(() => undefined).finally(() => void lock.release());
     const deadline = rejectAfter(BILLING_SYNC_DEADLINE_MS, "billing sync exceeded deadline");
     try {
       const syncedBilling = await Promise.race([syncPromise, deadline.promise]);

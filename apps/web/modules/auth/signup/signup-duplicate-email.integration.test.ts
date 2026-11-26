@@ -18,7 +18,7 @@ import { sendVerificationLinkEmail } from "@/modules/email";
  * Open, Cloud-shaped instance — required since ENG-2293 gated Better Auth's native `/sign-up/email` on
  * the closed-instance policy. These calls are deliberately NOT action-scoped, so on a closed instance
  * the second sign-up below would be rejected outright and the duplicate branch would never run. The
- * contract still matters exactly as asserted: `signUpUserSafely` reaches it through `createUserAction`,
+ * contract still matters exactly as asserted: `signUpUserSafely` reaches it through the sign-up route (`POST /api/internal/signups`),
  * which is exempt from that gate, on open and closed instances alike. The gate's closed-instance
  * behaviour is covered by signup-closed-instance.integration.test.ts; the HTTP route itself is closed
  * (ENG-3988, signup-native-endpoint.integration.test.ts).

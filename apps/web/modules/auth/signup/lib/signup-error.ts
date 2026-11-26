@@ -11,10 +11,14 @@ export type TSignupErrorPlacement = { field: "email" | "password"; message: stri
 /**
  * Map a failed sign-up to where the user should see it: the two field-level rejections go under the
  * input that caused them, everything else is a toast. Each stable error code exists so the server can be
- * specific without the message itself being an enumeration signal.
+ * specific without the message itself being an enumeration signal. Any other code toasts `fallbackMessage`.
  */
-export const getSignupErrorPlacement = (errorMessage: string, t: TFunction): TSignupErrorPlacement => {
-  switch (errorMessage) {
+export const getSignupErrorPlacement = (
+  errorCode: string,
+  t: TFunction,
+  fallbackMessage: string = errorCode
+): TSignupErrorPlacement => {
+  switch (errorCode) {
     case SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE:
       return { field: "email", message: t("auth.signup.company_email_required") };
     case PASSWORD_COMPROMISED_ERROR_CODE:
@@ -30,6 +34,6 @@ export const getSignupErrorPlacement = (errorMessage: string, t: TFunction): TSi
       // still admits its holder on a closed instance, so the copy points there.
       return { toast: t("auth.signup.signup_disabled") };
     default:
-      return { toast: errorMessage };
+      return { toast: fallbackMessage };
   }
 };

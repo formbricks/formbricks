@@ -15,6 +15,7 @@
 set -euo pipefail
 
 chart_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${chart_dir}/../../scripts/ci-network.sh"
 
 if ! docker info >/dev/null 2>&1; then
   printf '%s\n' "Docker unavailable — skipping the AuthZed bootstrap runtime tests."
@@ -74,6 +75,7 @@ start_postgres() {
   local version="$1"
   container="authzed-bootstrap-runtime-${version}"
   docker rm --force "${container}" >/dev/null 2>&1 || true
+  ci_pull_image "postgres:${version}-alpine"
   docker run --detach --name "${container}" \
     --env POSTGRES_PASSWORD=superuser-pw "postgres:${version}-alpine" >/dev/null
   containers+=("${container}")

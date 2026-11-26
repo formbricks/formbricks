@@ -2,7 +2,7 @@ import { type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES } from "@formbricks/types/feedback-source";
 import { test } from "./lib/fixtures";
-import { createSurveyFromScratch } from "./utils/helper";
+import { createSurveyFromScratch, isBehindUpgradePrompt, publishSurvey } from "./utils/helper";
 
 // ENG-2064. A feedback source stores one mapping row per survey question it publishes to Hub, and the
 // publish path iterates those rows rather than the survey. So when a survey is edited, any drift
@@ -196,50 +196,65 @@ test.describe("Feedback source reconciliation @slow", () => {
     // poll above proves this save already reconciled a specific-scope source.
     expect(await mappedElementIds(curatedHeldBackSourceId, surveyId)).toEqual([STALE]);
   });
+});
 
-  test("a retyped question has its hubFieldType corrected rather than left stale", async ({
-    page,
-    users,
-  }) => {
+/**
+ * The sources page itself: add a source from a suggested survey, disable it, delete it. Asserted on what
+ * the database holds, so it holds before and after the page moved from server actions onto
+ * `/api/internal/feedback-sources` (ENG-3984). The one-click add also asks the Hub to import the
+ * survey's past responses; the E2E stack runs without a Hub, so that half is not asserted here.
+ */
+test.describe("Feedback sources page", () => {
+  test("adds a source from a suggested survey, disables it and deletes it", async ({ page, users }) => {
     const user = await users.create();
+    const { organizationId, workspaceId } = user;
+    if (!organizationId || !workspaceId) throw new Error("Workspace not seeded for the test user");
+    const datasetId = await seedDirectory(organizationId, workspaceId);
+
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-
     const surveyId = await createSurveyFromScratch(page);
-    const workspaceId = (
-      await prisma.survey.findUniqueOrThrow({ where: { id: surveyId }, select: { workspaceId: true } })
-    ).workspaceId;
-    const organizationId = user.organizationId;
-    if (!organizationId) throw new Error("Organization not seeded for test");
+    // Only a survey past draft, and visible to the whole workspace, is suggested as a source.
+    await publishSurvey(page);
+    const survey = await prisma.survey.findUniqueOrThrow({ where: { id: surveyId }, select: { name: true } });
 
-    const elements = await readSurveyElements(surveyId);
-    const target = elements.find((element) => !UNMAPPABLE_ELEMENT_TYPES.has(element.type));
-    if (!target) throw new Error("Survey has no mappable element to retype against");
+    const storedSource = () =>
+      prisma.feedbackSource.findFirst({
+        where: { workspaceId, feedbackDirectoryId: datasetId },
+        select: { id: true, status: true, formbricksMappings: { select: { surveyId: true } } },
+      });
+    const sourceRow = () => page.getByRole("row").filter({ hasText: survey.name });
 
-    const feedbackDirectoryId = await seedDirectory(organizationId, workspaceId);
-    // Deliberately wrong: claims the element publishes as an NPS score. Reconciliation must correct it
-    // to whatever the element's real type maps to, and must keep the row rather than delete it.
-    const sourceId = await seedSource({
-      name: `E2E retype ${surveyId}`,
-      workspaceId,
-      feedbackDirectoryId,
-      elementScope: "specific",
-      mappings: [{ surveyId, elementId: target.id, hubFieldType: "nps" }],
+    await page.goto(`/workspaces/${workspaceId}/unify/sources`, { waitUntil: "domcontentloaded" });
+    const suggestion = page.getByTestId("feedback-source-suggestion").filter({ hasText: survey.name });
+    // Skipped, not failed, where the licence lacks the feature: the page is an upgrade prompt there.
+    test.skip(
+      await isBehindUpgradePrompt(page, suggestion),
+      "The E2E licence does not include Unify Feedback."
+    );
+
+    await test.step("add a source from the suggestion", async () => {
+      await suggestion.getByRole("button", { name: "Import responses" }).click();
+
+      await expect.poll(storedSource).toMatchObject({ status: "active", formbricksMappings: [{ surveyId }] });
+      await expect(sourceRow()).toBeVisible();
     });
 
-    await saveDraft(page);
+    await test.step("disable it", async () => {
+      await sourceRow().getByRole("button", { name: "Open options" }).click();
+      await page.getByRole("menuitem", { name: "Disable" }).click();
 
-    await expect
-      .poll(
-        async () => {
-          const row = await prisma.feedbackSourceFormbricksMapping.findFirstOrThrow({
-            where: { feedbackSourceId: sourceId, surveyId, elementId: target.id },
-            select: { hubFieldType: true },
-          });
-          return row.hubFieldType;
-        },
-        { timeout: 15000 }
-      )
-      .not.toBe("nps");
+      await expect(page.getByText("Feedback source status updated successfully")).toBeVisible();
+      await expect.poll(async () => (await storedSource())?.status).toBe("paused");
+    });
+
+    await test.step("delete it", async () => {
+      await sourceRow().getByRole("button", { name: "Open options" }).click();
+      await page.getByRole("menuitem", { name: "Delete" }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
+
+      await expect(page.getByText("Feedback source deleted successfully")).toBeVisible();
+      await expect.poll(storedSource).toBeNull();
+    });
   });
 });

@@ -30,7 +30,7 @@ export const SignupWithoutVerificationSuccessPage = async ({
 
     email = getEmailFromEmailToken(token);
   } catch (error) {
-    logger.error(error, "Invalid signup success token");
+    logger.warn({ err: error }, "Invalid signup success token");
     return (
       <FormWrapper>
         <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>

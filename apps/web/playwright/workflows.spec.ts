@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 import { hasWorkflowsLicense } from "./utils/license";
+import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 
 /**
  * The Workflows journey (ENG-7183): the one place the editor, a Test run's fake effects, the Webhook
@@ -90,6 +91,7 @@ test.describe("Workflows", () => {
 
     const workflowId = await test.step("seed a Webhook workflow through API v3", async () => {
       const response = await page.request.post("/api/v3/workflows", {
+        headers: SAME_ORIGIN_HEADERS,
         data: { workspaceId, name: WORKFLOW_NAME, definition: buildDefinition(email) },
       });
       expect(response.status(), await response.text()).toBe(201);

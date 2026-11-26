@@ -12,7 +12,7 @@ import {
   isSafeIdentifier,
   toSafeIdentifier,
 } from "@formbricks/types/safe-identifier";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
   isReservedFutureDefaultAttributeKey,
@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { createContactAttributeKeyAction } from "../actions";
+import { createAttributeKey } from "../lib/api-client";
 
 interface CreateAttributeModalProps {
   workspaceId: string;
@@ -129,7 +129,7 @@ export function CreateAttributeModal({ workspaceId }: Readonly<CreateAttributeMo
     setIsCreating(true);
 
     try {
-      const createContactAttributeKeyResponse = await createContactAttributeKeyAction({
+      await createAttributeKey({
         workspaceId,
         key: formData.key,
         name: formData.name || formatSnakeCaseToTitleCase(formData.key),
@@ -137,20 +137,13 @@ export function CreateAttributeModal({ workspaceId }: Readonly<CreateAttributeMo
         dataType: formData.dataType,
       });
 
-      if (!createContactAttributeKeyResponse?.data) {
-        const errorMessage = getFormattedErrorMessage(createContactAttributeKeyResponse);
-        toast.error(errorMessage);
-        return;
-      }
-
       toast.success(t("workspace.contacts.attribute_created_successfully"));
       handleResetState();
       router.refresh();
       // The lists read through TanStack Query, which a router refresh does not reach.
       void queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
-      toast.error(errorMessage);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
     } finally {
       setIsCreating(false);
     }

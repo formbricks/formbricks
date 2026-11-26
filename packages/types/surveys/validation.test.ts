@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
+import { ZSurveyElementId } from "./elements";
+import { ZSurveyHiddenFields, ZSurveyQuestionId, ZSurveyVariable } from "./types";
 import {
   LINK_SURVEY_SYSTEM_PARAMS,
   RESERVED_DECLARED_FIELD_NAMES,
@@ -193,5 +195,34 @@ describe("validateId", () => {
         );
       });
     }
+  });
+});
+
+// ENG-6991: answers, hidden field values and variables are keyed by these ids in plain objects.
+describe("ids named after Object.prototype members", () => {
+  const prototypeNames = Object.getOwnPropertyNames(Object.prototype);
+  const noExistingIds: [string[], string[], string[], string[]] = [[], [], [], []];
+
+  test.each(prototypeNames)("refuses %s in every id schema and in validateId", (name) => {
+    expect(ZSurveyElementId.safeParse(name).success).toBe(false);
+    expect(ZSurveyQuestionId.safeParse(name).success).toBe(false);
+    expect(ZSurveyHiddenFields.safeParse({ enabled: true, fieldIds: [name] }).success).toBe(false);
+    expect(validateId(name, ...noExistingIds)?.code).toBe(TValidateIdErrorCode.Reserved);
+    expect(validateId(name, ...noExistingIds, { requireSafeIdentifier: true })?.code).toBe(
+      TValidateIdErrorCode.Reserved
+    );
+  });
+
+  test("refuses a variable whose id is a prototype name, which z.cuid2() alone accepts", () => {
+    expect(ZSurveyVariable.safeParse({ id: "constructor", name: "score", type: "number" }).success).toBe(
+      false
+    );
+    expect(ZSurveyVariable.safeParse({ id: "brand", name: "score", type: "number" }).success).toBe(true);
+  });
+
+  test("still accepts ordinary ids and other casings, since object keys are case-sensitive", () => {
+    expect(ZSurveyElementId.safeParse("brand").success).toBe(true);
+    expect(ZSurveyElementId.safeParse("Constructor").success).toBe(true);
+    expect(validateId("Constructor", ...noExistingIds)).toBeNull();
   });
 });

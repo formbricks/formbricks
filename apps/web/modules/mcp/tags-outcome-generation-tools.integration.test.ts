@@ -129,6 +129,7 @@ describe("tag tools", () => {
     callMcpTool({ accessToken: token }, "merge_tags", {
       tagId: setup.duplicateTagId,
       newTagId: setup.churnTagId,
+      confirm: true,
     });
 
   test("a new connection's grant gives Tags at its Responses level", async () => {
@@ -193,6 +194,7 @@ describe("tag tools", () => {
     const merged = await callMcpTool({ accessToken: token }, "merge_tags", {
       tagId: setup.duplicateTagId,
       newTagId: foreignTag.id,
+      confirm: true,
     });
     expect(problemOf(merged).status).toBe(403);
     expect(await prisma.tag.findUnique({ where: { id: foreignTag.id } })).toMatchObject({ name: "theirs" });

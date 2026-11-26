@@ -9,6 +9,9 @@ import {
   enqueueWebhookDeliveryJob,
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { type TCalBookingsByQuestionId } from "@formbricks/types/cal-booking";
+import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { filterAuthorizedUserIds } from "@/lib/authorization/user-list";
 import { POSTHOG_KEY } from "@/lib/constants";
@@ -30,6 +33,7 @@ import { sendResponseFinishedEmail } from "@/modules/email";
 import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/lib/posthog";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
 import { recordSurveyOutboundSkipped } from "./outbound-visibility-metrics";
@@ -181,6 +185,28 @@ const getWebhooksForPipeline = async (
 };
 
 /**
+ * What the survey's Cal.com elements reported, for the webhook body's `calBookingsByQuestionId`. It is read
+ * from the row rather than carried on `data.response`, because the column is omitted from every read by
+ * default and the pipeline payload comes from many routes: reading it here gives every event the same
+ * answer. Skipped, with no query, for a survey without a Cal element.
+ */
+const getCalBookingsForPipeline = async (
+  responseId: string,
+  blocks: readonly TSurveyBlock[]
+): Promise<TCalBookingsByQuestionId | undefined> => {
+  const hasCalElement = getElementsFromBlocks(blocks as TSurveyBlock[]).some(
+    (element) => element.type === TSurveyElementTypeEnum.Cal
+  );
+  if (!hasCalElement) return undefined;
+
+  const row = await prisma.response.findUnique({
+    where: { id: responseId },
+    select: { calBookings: true },
+  });
+  return row?.calBookings ?? undefined;
+};
+
+/**
  * Fans the event out as one `webhook-delivery.process` job per matching webhook and returns without
  * waiting on any HTTP. Each delivery then retries on its own budget, so a dead endpoint neither delays
  * the side effects below nor causes the healthy endpoints to be re-sent.
@@ -205,6 +231,7 @@ const enqueueWebhookDeliveryJobs = async ({
   }
 
   const questionCodes = getQuestionCodes(survey.blocks);
+  const calBookings = await getCalBookingsForPipeline(data.response.id, survey.blocks);
   const enqueue = await isNewReleaseWorkEnabled();
   const deliver: (...args: Parameters<typeof enqueueWebhookDeliveryJob>) => Promise<unknown> = enqueue
     ? enqueueWebhookDeliveryJob
@@ -252,6 +279,7 @@ const enqueueWebhookDeliveryJobs = async ({
             updatedAt: survey.updatedAt,
             questionCodes,
           },
+          ...(calBookings && Object.keys(calBookings).length > 0 && { calBookings }),
         },
         { jobId: createWebhookDeliveryJobId(logContext.jobId, webhook.id) }
       )

@@ -222,3 +222,32 @@ describe("arrayBudgetInvalidParam", () => {
     });
   });
 });
+
+describe("a route's own budget", () => {
+  const budget = { maxItems: 3, maxTotalElements: 4 };
+
+  test.each([
+    ["an array at the route's cap", { a: junk(3) }, null],
+    ["an array past it", { a: junk(4) }, { kind: "array_too_long", path: "a" }],
+    ["elements at the route's total", { a: junk(2), b: junk(2) }, null],
+    ["elements past it", { a: junk(2), b: junk(3) }, { kind: "too_many_elements", path: "b" }],
+  ])("%s reads the same raw and parsed", (_label, body, expected) => {
+    const parsed = findArrayBudgetViolation(body, budget);
+    const raw = findRawArrayBudgetViolation(JSON.stringify(body), budget);
+
+    expect(parsed && { kind: parsed.kind, path: parsed.path }).toEqual(expected);
+    expect(raw && { kind: raw.kind, path: raw.path }).toEqual(expected);
+  });
+
+  test("names the route's limits, not the defaults", () => {
+    expect(arrayBudgetInvalidParam({ kind: "array_too_long", path: "a", length: 4 }, "body", budget)).toEqual(
+      {
+        name: "a",
+        reason: "Too big: expected array to have <=3 items",
+      }
+    );
+    expect(
+      arrayBudgetInvalidParam({ kind: "too_many_elements", path: "b", total: 5 }, "body", budget).reason
+    ).toBe("Too big: expected the request to carry <=4 array elements in total");
+  });
+});

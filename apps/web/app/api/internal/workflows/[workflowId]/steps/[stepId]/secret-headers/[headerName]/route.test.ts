@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { collectWorkflowSecretIds } from "@formbricks/workflows";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { symmetricEncrypt } from "@/lib/crypto";
 import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
 import { PUT } from "./route";
@@ -159,7 +160,11 @@ const put = (headerName = "authorization", body: unknown = { value: NEW_VALUE },
   PUT(
     new NextRequest(
       `http://localhost/api/internal/workflows/${WORKFLOW_ID}/steps/${stepId}/secret-headers/${headerName}`,
-      { method: "PUT", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+        headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
+      }
     ),
     { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId, headerName }) }
   );

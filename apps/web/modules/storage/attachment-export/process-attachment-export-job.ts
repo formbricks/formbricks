@@ -4,7 +4,7 @@ import { prisma } from "@formbricks/database";
 import { type JobHandler, type TAttachmentExportJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { deleteFile, uploadFileStream } from "@formbricks/storage";
-import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { ZResponseFilterCriteriaFromJson } from "@formbricks/types/responses";
 import { getSurvey } from "@/lib/survey/service";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { collectResponseAttachments } from "@/modules/storage/lib/collect-response-attachments";
@@ -172,7 +172,7 @@ const collectExportEntries = async (
   }
 
   const filter =
-    row.filterCriteria === null ? undefined : ZResponseFilterCriteria.safeParse(row.filterCriteria);
+    row.filterCriteria === null ? undefined : ZResponseFilterCriteriaFromJson.safeParse(row.filterCriteria);
   if (filter && !filter.success) {
     throw new AttachmentExportBuildError("invalid_filter", false);
   }

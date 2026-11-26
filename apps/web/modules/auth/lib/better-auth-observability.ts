@@ -4,14 +4,19 @@ import * as Sentry from "@sentry/nextjs";
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { createAuthMiddleware, isAPIError } from "better-auth/api";
 import { logger } from "@formbricks/logger";
-import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED, IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import {
+  UNKNOWN_AUDIT_REQUEST_METADATA,
+  getAuditRequestMetadata,
+} from "@/modules/ee/audit-logs/lib/request-metadata";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { getBetterAuthRequestContext } from "./better-auth-request-context";
+import type { TOAuthStateCookieDiagnosis } from "./oauth-state-cookie-diagnosis";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
-import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
+import { logAuthAttempt, logSignOut, shouldLogAuthFailure } from "./utils";
 
 /**
  * Observability parity for the Better Auth cutover (ENG-1054) — re-expresses the audit + Sentry
@@ -173,6 +178,37 @@ export const signInAuditPlugin = {
   },
 } satisfies BetterAuthPlugin;
 
+type SessionDatabaseHooks = NonNullable<NonNullable<BetterAuthOptions["databaseHooks"]>["session"]>;
+type SessionDeleteAfter = NonNullable<NonNullable<SessionDatabaseHooks["delete"]>["after"]>;
+
+/**
+ * `databaseHooks.session.delete.after`: record the `userSignedOut` audit event when a sign-out ends a
+ * session. Server-side, so the actor is the deleted session's own `userId` and the IP and user agent are
+ * the sign-out request's, never anything the client reports.
+ *
+ * Only for `/sign-out`. Better Auth deletes sessions on other paths too, none of them a sign-out: the
+ * two-factor plugin withdraws the password step's session until the second factor is verified, SSO
+ * recovery revokes sessions by token, `revokeSessionsOnPasswordReset` sweeps them on a reset, and
+ * delete-user removes them all. A sign-out without a session deletes nothing, so Better Auth calls no
+ * hook and nothing is recorded.
+ *
+ * Never throws: recording must not fail a sign-out that otherwise succeeded.
+ */
+export const auditSignOutOnSessionDelete: SessionDeleteAfter = async (session, ctx) => {
+  if (ctx?.path !== "/sign-out") return;
+  const userId = (session as { userId?: unknown }).userId;
+  if (typeof userId !== "string") return;
+
+  try {
+    const requestMetadata = AUDIT_LOG_ENABLED
+      ? await getAuditRequestMetadata(ctx.headers)
+      : UNKNOWN_AUDIT_REQUEST_METADATA;
+    await logSignOut(userId, requestMetadata);
+  } catch {
+    logger.withContext({ source: "better-auth" }).error("Failed to queue userSignedOut audit event");
+  }
+};
+
 /**
  * Better Auth embeds user email addresses in some log messages — `sign-up.mjs` logs
  * `Sign-up attempt for existing email: <address>` on every duplicate sign-up, at `info`. Today
@@ -196,7 +232,7 @@ const EMAIL_IN_MESSAGE = /[^\s@]{1,64}@([\w-]{1,63}(?:\.[\w-]{1,63}){1,8})/g;
 export const redactEmailsInLogMessage = (message: unknown): unknown =>
   typeof message === "string" ? message.replace(EMAIL_IN_MESSAGE, "[redacted]@$1") : message;
 
-const SAFE_WARNING_ERROR_NAMES = new Set([
+const SAFE_ERROR_NAMES = new Set([
   "Error",
   "TypeError",
   "PrismaClientInitializationError",
@@ -206,12 +242,12 @@ const SAFE_WARNING_ERROR_NAMES = new Set([
 const PRISMA_ERROR_CODE = /^P\d{4}$/;
 
 /**
- * Warning causes stay in application logs only as a small allowlisted summary. Passing the Error to
- * Pino's `err` serializer would also emit its message, stack, and enumerable properties, any of which
- * can contain credentials supplied by an upstream provider.
+ * Error and warning causes stay in application logs only as a small allowlisted summary. Passing the
+ * Error to Pino's `err` serializer would also emit its message, stack, and enumerable properties, any of
+ * which can contain credentials supplied by an upstream provider.
  */
-const getSafeWarningErrorContext = (cause: Error): { errorType: string; errorCode?: string } => {
-  const errorType = SAFE_WARNING_ERROR_NAMES.has(cause.name) ? cause.name : "Error";
+const getSafeErrorContext = (cause: Error): { errorType: string; errorCode?: string } => {
+  const errorType = SAFE_ERROR_NAMES.has(cause.name) ? cause.name : "Error";
   const code = (cause as Error & { code?: unknown }).code;
 
   return {
@@ -274,9 +310,12 @@ const getSafeWarningErrorContext = (cause: Error): { errorType: string; errorCod
  *   cookie cannot be verified with a different secret. That is a genuine outage and must keep paging.
  * - And it is the shape a forged or mixed-up callback takes.
  *
- * Code cannot separate those three, which is exactly why ENG-2471 defers the decision to the `auth.path`
- * tag from ENG-2259 rather than guessing. Suppressing a signal before measuring it is how ENG-2037 left
- * this shape behind in the first place.
+ * The error itself cannot separate those three, which is why ENG-2471 deferred the decision rather than
+ * guessing. The callback request can: since ENG-6692 the route diagnoses its state cookie
+ * (oauth-state-cookie-diagnosis.ts) and the capture carries it as the `auth.state_cookie` tag —
+ * `signature_invalid` for a secret split, `state_differs` for an overwritten flow, `absent` for an expired
+ * or dropped cookie. Measure with that tag before suppressing any of them: suppressing a signal before
+ * measuring it is how ENG-2037 left this shape behind in the first place.
  *
  * One security-visible consequence, stated rather than left implicit: a *replayed* callback — the same
  * `state` presented again after the legitimate flow consumed it — also lands on `state_mismatch`, so
@@ -333,28 +372,32 @@ const getStateErrorCode = (cause: Error | undefined): string | undefined => {
 const isUnactionableStateError = (code: string | undefined): boolean =>
   code !== undefined && UNACTIONABLE_STATE_ERROR_CODES.has(code);
 
+const FALLBACK_LOG_LABEL = { error: "Better Auth error", warn: "Better Auth warning" } as const;
+
 /**
- * Emit a Better Auth `warn`-level log, attaching the safe error context when the entry carried an
- * `Error`.
+ * Emit a Better Auth `error`- or `warn`-level log, attaching the safe error context when the entry
+ * carried an `Error`. Both levels carry it: self-hosters have no Sentry, so for them the application
+ * log is the only copy of an auth fault's cause (ENG-2779).
  *
  * `safeMessage` is `unknown` because Better Auth's logger signature is: the message is usually a
  * string, but a couple of call sites pass the `Error` itself. pino's two-argument form needs a string
  * in the message slot, hence the narrowing — a non-string falls back to a fixed label rather than
  * being stringified, since the `Error` is already carried by the context object.
  */
-const logWarning = (
+const logWithSafeCause = (
   contextLogger: ReturnType<typeof logger.withContext>,
+  level: "error" | "warn",
   safeMessage: unknown,
   cause: Error | undefined
 ): void => {
   if (!cause) {
-    contextLogger.warn(safeMessage);
+    contextLogger[level](safeMessage);
     return;
   }
 
-  contextLogger.warn(
-    getSafeWarningErrorContext(cause),
-    typeof safeMessage === "string" ? safeMessage : "Better Auth warning"
+  contextLogger[level](
+    getSafeErrorContext(cause),
+    typeof safeMessage === "string" ? safeMessage : FALLBACK_LOG_LABEL[level]
   );
 };
 
@@ -372,7 +415,8 @@ const logWarning = (
 const captureInternalAuthFault = (
   cause: Error | undefined,
   stateErrorCode: string | undefined,
-  request: ReturnType<typeof getBetterAuthRequestContext>
+  request: ReturnType<typeof getBetterAuthRequestContext>,
+  oauthStateCookie: TOAuthStateCookieDiagnosis | undefined
 ): void => {
   if (!SENTRY_DSN || !IS_PRODUCTION) return;
   if (!cause || isAPIError(cause) || isUnactionableStateError(stateErrorCode)) return;
@@ -385,6 +429,10 @@ const captureInternalAuthFault = (
     tags: {
       component: "better-auth",
       ...(request && { "auth.path": request.path, "http.method": request.method }),
+      // ENG-6692: `state_security_mismatch` is four causes behind one throw (oauth-state-cookie-diagnosis.ts),
+      // one of them a secret split across replicas. A tag rather than a fingerprint, so FORMBRICKS-17B
+      // stays one issue and the split shows as a facet.
+      ...(oauthStateCookie && { "auth.state_cookie": oauthStateCookie }),
     },
     // No `extra`. Forwarding `message` was considered and dropped: `redactEmailsInLogMessage` strips
     // emails and nothing else, so a plugin logging `error("… <token> …", err)` would put that token in
@@ -427,6 +475,7 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
     // BA usually passes the Error as a trailing arg, but a couple of sites pass it as `message`.
     const cause = [...args, message].find((arg): arg is Error => arg instanceof Error);
     const stateErrorCode = getStateErrorCode(cause);
+    const oauthStateCookie = stateErrorCode ? request?.oauthStateCookie : undefined;
     const contextLogger = logger.withContext({
       source: "better-auth",
       // Self-hosters have no Sentry, so the label has to reach the application log too — otherwise
@@ -435,13 +484,16 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
       // The suppressed state rejections survive only in the log, so the code has to be queryable there
       // (ENG-2471). Recorded for every state error, not only the suppressed ones.
       ...(stateErrorCode && { stateErrorCode }),
+      // Which of the causes behind a state rejection this callback hit (ENG-6692). Only on a state
+      // error: on any other fault the state cookie is beside the point.
+      ...(oauthStateCookie && { oauthStateCookie }),
     });
     const safeMessage = redactEmailsInLogMessage(message);
     if (level === "error") {
-      contextLogger.error(safeMessage);
-      captureInternalAuthFault(cause, stateErrorCode, request);
+      logWithSafeCause(contextLogger, "error", safeMessage, cause);
+      captureInternalAuthFault(cause, stateErrorCode, request, oauthStateCookie);
     } else if (level === "warn") {
-      logWarning(contextLogger, safeMessage, cause);
+      logWithSafeCause(contextLogger, "warn", safeMessage, cause);
     } else {
       contextLogger.info(safeMessage);
     }

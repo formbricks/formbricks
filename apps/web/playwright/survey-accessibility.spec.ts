@@ -24,12 +24,13 @@ import { mockStorageUploads } from "./utils/helper";
  * Accessibility gate for the rendered link survey (axe-core).
  *
  * Self-seeds + publishes a kitchen-sink survey, then walks every question card in
- * nine variants (desktop / mobile / tablet, forced-colors, reduced-motion, dark,
- * empty-submit, back-nav, and a multi-language RTL pass) and asserts zero WCAG 2.1
- * / 2.2 AA violations. A silent stall fails the test rather than passing as "clean":
+ * seven variants (desktop / mobile, forced-colors, dark, empty-submit, back-nav, and
+ * a multi-language RTL pass) and asserts zero WCAG 2.1 / 2.2 AA violations. Tablet
+ * and reduced-motion walks were dropped (ENG-7517): both scanned the same DOM as the
+ * desktop walk. A silent stall fails the test rather than passing as "clean":
  * the walker proves it advanced and reached the ending card.
  *
- * A tenth variant scans the second, "answered states" fixture (ENG-1298): the cards
+ * An eighth variant scans the second, "answered states" fixture (ENG-1298): the cards
  * whose DOM only exists after an interaction, which the walker — which scans each card
  * once, before answering it — structurally cannot reach, plus the Cal.com scheduler
  * wrapper, which cannot live in the kitchen sink at all.
@@ -88,15 +89,12 @@ const ACTION_TIMEOUT = 8_000;
 const MAX_STEPS = 25;
 
 // The file the answered-states walk attaches to the (required) file-upload card. Built in
-// memory rather than read from disk so the spec owns its own fixture, and kept to an SVG the
-// storage mock already serves for unknown names (see `mockStorageUploads`). The name is asserted
+// memory rather than read from disk so the spec owns its own fixture, and a type the storage API
+// allows: the survey refuses any other before uploading (SVG is not one). The name is asserted
 // exactly against the delete control's accessible name, which the app derives from the stored file
 // name — so it must survive the upload round-trip unchanged.
-const UPLOAD_FIXTURE_FILE_NAME = "a11y-answered-states.svg";
-const UPLOAD_FIXTURE_BODY = Buffer.from(
-  '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><rect width="32" height="32" fill="#0f172a"/></svg>',
-  "utf8"
-);
+const UPLOAD_FIXTURE_FILE_NAME = "a11y-answered-states.txt";
+const UPLOAD_FIXTURE_BODY = Buffer.from("Answered-states upload fixture", "utf8");
 
 const isAllowlisted = (ruleId: string, target: string): boolean =>
   ALLOWLIST.some(
@@ -543,7 +541,6 @@ const reportAndAssert = (variant: string, failSink: ViolationRow[]): void => {
 };
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 };
-const TABLET_VIEWPORT = { width: 820, height: 1180 };
 
 test.describe("Survey accessibility (axe-core) @slow", () => {
   // Seeded once per WORKER process and reused by every test in it: seeding writes
@@ -705,7 +702,7 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
 
       await card.locator('input[type="file"]').setInputFiles({
         name: UPLOAD_FIXTURE_FILE_NAME,
-        mimeType: "image/svg+xml",
+        mimeType: "text/plain",
         buffer: UPLOAD_FIXTURE_BODY,
       });
 
@@ -765,28 +762,12 @@ test.describe("Survey accessibility (axe-core) @slow", () => {
     reportAndAssert("mobile", violations);
   });
 
-  test("tablet: full walk has no WCAG AA violations", async ({ page }) => {
-    test.setTimeout(180_000);
-    await page.setViewportSize(TABLET_VIEWPORT);
-    const violations: ViolationRow[] = [];
-    await walkAndScan(page, "tablet", surveys().surveyUrl, violations);
-    reportAndAssert("tablet", violations);
-  });
-
   test("forced-colors (high contrast): full walk has no WCAG AA violations", async ({ page }) => {
     test.setTimeout(180_000);
     await page.emulateMedia({ forcedColors: "active" });
     const violations: ViolationRow[] = [];
     await walkAndScan(page, "forced-colors", surveys().surveyUrl, violations);
     reportAndAssert("forced-colors", violations);
-  });
-
-  test("reduced-motion: full walk has no WCAG AA violations", async ({ page }) => {
-    test.setTimeout(180_000);
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    const violations: ViolationRow[] = [];
-    await walkAndScan(page, "reduced-motion", surveys().surveyUrl, violations);
-    reportAndAssert("reduced-motion", violations);
   });
 
   test.describe("dark color scheme", () => {

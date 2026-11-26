@@ -601,3 +601,77 @@ describe("v3 and MCP audit emission", () => {
     }
   );
 });
+
+describe("apiUrl and changes in the written event (ENG-3269)", () => {
+  beforeEach(clearAllMockHandles);
+
+  const writtenEvent = async (input: Partial<OriginalHandler.TAuditEventInput>) => {
+    await OriginalHandler.queueAuditEventWithoutRequest({ ...baseEventParams, ...input });
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledTimes(1);
+    const event = serviceLogAuditEventMockHandle.mock.calls[0][0];
+    // The service validates the event before it is written; a sanitized URL must still pass.
+    expect(ZAuditLogEventSchema.safeParse(event).success).toBe(true);
+    return { event, serialized: JSON.stringify(event) };
+  };
+
+  test("drops query parameters outside the allowlist, whatever their name", async () => {
+    const { event, serialized } = await writtenEvent({
+      apiUrl:
+        "https://app.example.com/api/v1/management/responses?surveyId=s1&email=jane%40example.com&x_signature=sig-123&limit=10",
+    });
+
+    expect(event.apiUrl).toBe("https://app.example.com/api/v1/management/responses");
+    for (const leaked of ["jane", "sig-123", "surveyId", "limit"]) {
+      expect(serialized).not.toContain(leaked);
+    }
+  });
+
+  test("keeps createdFrom, the one query parameter the audit trail relies on", async () => {
+    const { event } = await writtenEvent({
+      apiUrl: "https://app.example.com/api/v3/surveys?createdFrom=template&apiKey=fbk_secret",
+    });
+
+    expect(event.apiUrl).toBe("https://app.example.com/api/v3/surveys?createdFrom=template");
+  });
+
+  test("keeps the storage route's identity but not the file name in its path", async () => {
+    const { event, serialized } = await writtenEvent({
+      apiUrl: "https://app.example.com/storage/ws1/private/folder/jane-doe-passport.pdf?token=abc",
+    });
+
+    expect(event.apiUrl).toBe("https://app.example.com/storage/ws1/private/redacted");
+    expect(serialized).not.toContain("passport");
+  });
+
+  test("leaves apiUrl out rather than writing a value that is not a URL", async () => {
+    const { event } = await writtenEvent({ apiUrl: "/api/relative?token=abc" });
+    expect(event.apiUrl).toBeUndefined();
+  });
+
+  test("redacts camelCase, snake_case, kebab-case, nested and array credential fields in changes", async () => {
+    const { serialized, event } = await writtenEvent({
+      oldObject: undefined,
+      newObject: {
+        accessToken: "at-1",
+        refresh_token: "rt-1",
+        "client-secret": "cs-1",
+        config: { webhookSecret: "ws-1", newPassword: "pw-1" },
+        integrations: [{ idToken: "it-1" }, { apiKey: "ak-1" }],
+        surveyName: "Churn survey",
+        credentialPasswordsCleared: 1,
+        allowOrganizationOnlyApiKey: true,
+      },
+    });
+
+    for (const secret of ["at-1", "rt-1", "cs-1", "ws-1", "pw-1", "it-1", "ak-1"]) {
+      expect(serialized).not.toContain(secret);
+    }
+    // Route identity and non-secret change metadata stay readable.
+    expect(event.apiUrl).toBe("http://localhost:3000/api/test");
+    expect(event.changes).toMatchObject({
+      surveyName: "Churn survey",
+      credentialPasswordsCleared: 1,
+      allowOrganizationOnlyApiKey: true,
+    });
+  });
+});

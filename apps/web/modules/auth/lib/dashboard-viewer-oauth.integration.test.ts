@@ -239,7 +239,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
   });
 
   test("a demotion to viewer racing a removal elsewhere still ends the wide grant", async () => {
-    // The member list's owner demotion (`demoteOwner` in role-management/actions.ts): the owners' lock,
+    // The member list's owner demotion (`applyRoleChange` in app/api/internal/members/[userId]/lib/operations.ts): the owners' lock,
     // then the user's row, then the role change. Without the user-row lock, the demotion's "only viewer
     // memberships left?" check can miss the removal committing at the same moment.
     const { cookie, userId } = await userWithRole("dashboard_viewer");

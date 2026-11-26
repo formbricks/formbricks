@@ -21,33 +21,11 @@ describe("getRichTextLinks", () => {
     ["a slash instead of a space", '<p><a/href="https://example.com/a">this</a></p>'],
     ["a > inside a quoted attribute", '<p><a title=">" href="https://example.com/a">this</a></p>'],
     ["an unquoted href", "<p><a href=https://example.com/a>this</a></p>"],
-    // The renderer's DOMPurify keeps SVG and MathML, where a link is not an HTML <a href>.
-    ["an SVG xlink:href", '<svg><a xlink:href="https://example.com/a"><text y="9">x</text></a></svg>'],
-    ["an SVG href", '<svg><a href="https://example.com/a"><text y="9">x</text></a></svg>'],
-    ["a MathML href on <math>", '<math href="https://example.com/a"><mi>x</mi></math>'],
-    ["a MathML href on a child", '<math><mi href="https://example.com/a">x</mi></math>'],
-    [
-      "an image-map area",
-      '<map name="m"><area href="https://example.com/a" shape="rect" coords="0,0,9,9"></map>',
-    ],
-    ["a form action", '<form action="https://example.com/a"><button>go</button></form>'],
     // The renderer strips style attributes from the raw string before it parses, which can join the
     // text around one into a link attribute.
     ["an href joined by removing a style", '<p><a hr style="x"ef="https://example.com/a">go</a></p>'],
     ["an href joined across single quotes", "<p><a hr style='x'ef='https://example.com/a'>go</a></p>"],
     ["an href joined before an unquoted value", '<p><a h style="x"ref=https://example.com/a>go</a></p>'],
-    [
-      "an SVG xlink:href joined by removing a style",
-      '<svg><a xlink:hr style="x"ef="https://example.com/a"><text y="9">x</text></a></svg>',
-    ],
-    [
-      "a MathML href joined by removing a style",
-      '<math hr style="x"ef="https://example.com/a"><mi>x</mi></math>',
-    ],
-    [
-      "a form action joined by removing a style",
-      '<form acti style="x"on="https://example.com/a"><button>go</button></form>',
-    ],
   ])("finds %s", (_case, html) => {
     expect(getRichTextLinks(withHeadline(html))).toEqual(new Set(["https://example.com/a"]));
   });
@@ -62,6 +40,35 @@ describe("getRichTextLinks", () => {
     ["split attributes the renderer leaves apart", '<p><a hr style=x ef="https://example.com/a">go</a></p>'],
     ["a formaction the renderer strips", '<button formaction="https://example.com/a">go</button>'],
     ["an SVG <use> the renderer strips", '<svg><use href="https://example.com/a.svg#x"></use></svg>'],
+    // The renderer's allow-list (ENG-7270) keeps only the editor's markup, so SVG, MathML, image maps and
+    // forms never reach a respondent, and neither do the links inside them.
+    [
+      "an SVG xlink:href the renderer strips",
+      '<svg><a xlink:href="https://example.com/a"><text y="9">x</text></a></svg>',
+    ],
+    [
+      "an SVG href the renderer strips",
+      '<svg><a href="https://example.com/a"><text y="9">x</text></a></svg>',
+    ],
+    ["a MathML href on <math> the renderer strips", '<math href="https://example.com/a"><mi>x</mi></math>'],
+    ["a MathML href on a child the renderer strips", '<math><mi href="https://example.com/a">x</mi></math>'],
+    [
+      "an image-map area the renderer strips",
+      '<map name="m"><area href="https://example.com/a" shape="rect" coords="0,0,9,9"></map>',
+    ],
+    ["a form action the renderer strips", '<form action="https://example.com/a"><button>go</button></form>'],
+    [
+      "an SVG xlink:href joined by removing a style",
+      '<svg><a xlink:hr style="x"ef="https://example.com/a"><text y="9">x</text></a></svg>',
+    ],
+    [
+      "a MathML href joined by removing a style",
+      '<math hr style="x"ef="https://example.com/a"><mi>x</mi></math>',
+    ],
+    [
+      "a form action joined by removing a style",
+      '<form acti style="x"on="https://example.com/a"><button>go</button></form>',
+    ],
   ])("finds no link in %s", (_case, html) => {
     expect(getRichTextLinks(withHeadline(html)).size).toBe(0);
   });
@@ -143,21 +150,80 @@ describe("getRichTextLinks with recall", () => {
     expect(getRichTextLinks(withVariable(html, "ref"))).toContain("https://example.com/a");
   });
 
-  test("finds a link that is a text variable's whole value", () => {
-    const html = `<p>#recall:${VARIABLE_ID}/fallback:x#</p>`;
-    expect(getRichTextLinks(withVariable(html, '<a href="https://example.com/a">y</a>'))).toContain(
-      "https://example.com/a"
-    );
+  // The renderer escapes every recalled value and never scans one for tokens again (ENG-7270), so a value
+  // adds text, never markup: a link-shaped value or fallback is shown as text and is not a link.
+  test.each([
+    [
+      "a text variable's whole value",
+      `<p>#recall:${VARIABLE_ID}/fallback:x#</p>`,
+      '<a href="https://example.com/a">y</a>',
+    ],
+    ["a token's fallback", '<p>#recall:q9/fallback:<a href="https://example.com/a">y</a>#</p>', "friend"],
+    [
+      "a variable that recalls a variable holding a link",
+      `<p>#recall:${VARIABLE_ID}/fallback:x#</p>`,
+      `#recall:${VARIABLE_ID}/fallback:x#`,
+    ],
+  ])("finds no link in %s, which the survey shows as text", (_case, html, value) => {
+    expect(getRichTextLinks(withVariable(html, value)).size).toBe(0);
   });
 
-  test("finds a link that is a token's fallback", () => {
-    const html = '<p>#recall:q9/fallback:<a href="https://example.com/a">y</a>#</p>';
-    expect(getRichTextLinks(withHeadline(html))).toContain("https://example.com/a");
+  // The renderer replaces the whole token, fallback included, before it parses, so a value such as
+  // `href=https://…` becomes an attribute whatever characters the fallback holds.
+  test.each([
+    ["a plain fallback", "<p><a #recall:q9/fallback:x#>go</a></p>"],
+    ["a fallback holding >", "<p><a #recall:q9/fallback:>#>go</a></p>"],
+    ["a fallback holding <", "<p><a #recall:q9/fallback:<#>go</a></p>"],
+    ["a fallback holding a lone quote", "<p><a #recall:q9/fallback:'#>go</a></p>"],
+    ["a token inside a quoted attribute value", '<p><a title="#recall:q9/fallback:x#">go</a></p>'],
+    ["a token that is the tag name", "<p><#recall:q9/fallback:x#>go</p>"],
+    // The style stripping removes an unquoted style value whole, while the real value may split it.
+    ["a token in an unquoted style value", "<p><a style=#recall:q9/fallback:x#>go</a></p>"],
+    [
+      "a token in a style value inside a comment",
+      "<p>hi</p><!-- <p style=#recall:q9/fallback:x#--> <a>go</a>",
+    ],
+    [
+      "a token in a style value beside a title token",
+      "<p><a title=#recall:q9/fallback:x# style=#recall:q9/fallback:y#>go</a></p>",
+    ],
+    // A value of `--` closes a comment, and a tag name ends a raw-text element, unhiding a static link.
+    [
+      "a token inside a comment",
+      '<p>hi</p><!-- a#recall:q9/fallback:x#> <a href="https://example.com/c">go</a> -->',
+    ],
+    [
+      "a token in a textarea end tag",
+      '<p>hi</p><textarea></#recall:q9/fallback:x#> <a href="https://example.com/t">go</a></textarea>',
+    ],
+    ["a token in a title element", "<p>hi</p><title>#recall:q9/fallback:x#</title>"],
+    // A literal marker-shaped text cannot make a token that sits in a tag read as plain text.
+    [
+      "a marker-shaped literal beside a token in a tag",
+      '<p>fbrecallmarker0x</p><a h#recall:q9/fallback:x#="https://example.com">go</a>',
+    ],
+  ])("counts a token inside markup, whose runtime value could make it a link: %s", (_case, html) => {
+    const links = [...getRichTextLinks(withHeadline(html))];
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) expect(link).toMatch(/^recall in a tag: #recall:q9/);
   });
 
-  test("counts a token inside an opening tag, whose runtime value could make it a link", () => {
-    const html = "<p><a #recall:q9/fallback:x#>go</a></p>";
-    expect(getRichTextLinks(withHeadline(html)).size).toBe(1);
+  // The editor's own markup: a token there is plain text and must not count as a link.
+  test.each([
+    ["a list item", "<ul><li>Hi #recall:q9/fallback:there#</li></ul>"],
+    ["bold text", "<p><strong>#recall:q9/fallback:there#</strong></p>"],
+    ["a heading", "<h2>Hello #recall:q9/fallback:there#</h2>"],
+    ["link text", '<p><a href="https://example.com/a">#recall:q9/fallback:there#</a></p>'],
+    ["two tokens side by side", "<p>#recall:q9/fallback:a##recall:q8/fallback:b#</p>"],
+    ["a token with an nbsp fallback", "<p>Hi #recall:q9/fallback:nbsp#</p>"],
+  ])("does not count a token in %s as a link of its own", (_case, html) => {
+    expect(
+      [...getRichTextLinks(withHeadline(html))].filter((link) => link.startsWith("recall in a tag"))
+    ).toEqual([]);
+  });
+
+  test("finds no link in a recall token in text without any tags", () => {
+    expect(getRichTextLinks(withVariable(`Hi #recall:${VARIABLE_ID}/fallback:x#`, "friend")).size).toBe(0);
   });
 
   test("finds no link in a plain recall token", () => {
@@ -165,74 +231,22 @@ describe("getRichTextLinks with recall", () => {
     expect(getRichTextLinks(withVariable(html, "friend")).size).toBe(0);
   });
 
-  test("resolves a token that follows more than a hundred others", () => {
-    const linkVariableId = "clvar1234567890123456789099";
-    const html = `<p>${`#recall:${VARIABLE_ID}/fallback:x# `.repeat(150)}#recall:${linkVariableId}/fallback:x#</p>`;
-    const survey: TRichTextSurveyContent = {
-      ...withHeadline(html),
-      variables: [
-        { id: VARIABLE_ID, name: "v1", type: "text", value: "friend" },
-        { id: linkVariableId, name: "v2", type: "text", value: '<a href="https://example.com/a">y</a>' },
-      ],
-    };
-    expect(getRichTextLinks(survey)).toContain("https://example.com/a");
+  test("resolves every token in one pass, however many there are", () => {
+    const html = `<p>${`#recall:${VARIABLE_ID}/fallback:x# `.repeat(5_000)}<a href="https://example.com/a">y</a></p>`;
+    expect(getRichTextLinks(withVariable(html, "friend"))).toEqual(new Set(["https://example.com/a"]));
   });
 
-  test("counts a variable that recalls itself as a link instead of passing it", () => {
-    const token = `#recall:${VARIABLE_ID}/fallback:x#`;
-    expect(getRichTextLinks(withVariable(`<p>${token}</p>`, `a ${token}`)).size).toBe(1);
-  });
-
-  test("resolves a finite chain of variables deeper than ten, to see a link another token adds", () => {
-    const chainIds = Array.from({ length: 12 }, (_, i) => `clchain${String(i).padStart(20, "0")}`);
-    const chain = chainIds.map((id, i) => ({
-      id,
-      name: `c${i}`,
-      type: "text" as const,
-      value: i < chainIds.length - 1 ? `#recall:${chainIds[i + 1]}/fallback:x#` : "end",
-    }));
-    const html = `<p>#recall:${chainIds[0]}/fallback:x# #recall:${VARIABLE_ID}/fallback:x#</p>`;
-    const withValue = (value: string): TRichTextSurveyContent => ({
-      ...withHeadline(html),
-      variables: [...chain, { id: VARIABLE_ID, name: "v1", type: "text", value }],
-    });
-
-    expect(addsRichTextLink(withValue('<a href="https://example.com/a">y</a>'), withValue("friend"))).toBe(
-      true
-    );
-  });
-
-  test("does not grandfather a self-recalling variable once another variable changes", () => {
-    const loopId = "clloop1234567890123456789012";
-    const html = `<p>#recall:${loopId}/fallback:x# #recall:${VARIABLE_ID}/fallback:x#</p>`;
-    const withValue = (value: string): TRichTextSurveyContent => ({
-      ...withHeadline(html),
-      variables: [
-        { id: loopId, name: "loop", type: "text", value: `a #recall:${loopId}/fallback:x#` },
-        { id: VARIABLE_ID, name: "v1", type: "text", value },
-      ],
-    });
-
-    expect(addsRichTextLink(withValue('<a href="https://example.com/a">y</a>'), withValue("friend"))).toBe(
-      true
-    );
-  });
-
-  // The renderer swaps a token with `String.prototype.replace` and a string, so `$'`, `` $` `` and `$&`
-  // in the value expand to the text after the token, before it, and the token itself.
-  test("finds a link a $' in a fallback builds from the text after the token", () => {
-    const html = `<p>#recall:q9/fallback:<a hr$'#ef="https://example.com/a">x</a></p>`;
-    expect(getRichTextLinks(withHeadline(html))).toContain("https://example.com/a");
-  });
-
-  test("finds a link a $` in a variable's value builds from the text before the token", () => {
-    const html = `ef="https://example.com/a">x</a> #recall:${VARIABLE_ID}/fallback:x#`;
-    expect(getRichTextLinks(withVariable(html, "<a hr$`"))).toContain("https://example.com/a");
-  });
-
-  test("counts a $& that makes the renderer resolve the same token forever as a link", () => {
-    expect(getRichTextLinks(withHeadline("<p>#recall:q9/fallback:$&#</p>")).size).toBe(1);
-    expect(getRichTextLinks(withVariable(`<p>#recall:${VARIABLE_ID}/fallback:x#</p>`, "$&")).size).toBe(1);
+  // A string replacement would expand `$'`, `` $` `` and `$&` in a value; the renderer uses a replacer.
+  test.each([
+    ["a $' in a fallback", `<p>#recall:q9/fallback:<a hr$'#ef="https://example.com/a">x</a></p>`, "friend"],
+    [
+      "a $` in a variable's value",
+      `ef="https://example.com/a">x</a> #recall:${VARIABLE_ID}/fallback:x#`,
+      "<a hr$`",
+    ],
+    ["a $& in a fallback", "<p>#recall:q9/fallback:$&#</p>", "friend"],
+  ])("finds no link that %s would build by expanding", (_case, html, value) => {
+    expect(getRichTextLinks(withVariable(html, value)).size).toBe(0);
   });
 
   test("grandfathers a token in a tag the previous version already had", () => {

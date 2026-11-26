@@ -442,6 +442,50 @@ describe("processResponsePipelineJob", () => {
     });
   });
 
+  describe("Cal.com bookings for the delivery job", () => {
+    const calSurvey = {
+      ...survey,
+      blocks: [
+        {
+          id: "b1",
+          elements: [{ id: "cal1", type: "cal", headline: { default: "Book" }, calUserName: "x" }],
+        },
+      ],
+    };
+    const booking = { status: "booked", startTime: "2026-11-05T10:00:00.000Z" };
+    const bookingsSelect = { where: { id: "response_123" }, select: { calBookings: true } };
+
+    test("reads the stored bookings of a survey with a Cal element and hands them to the delivery job", async () => {
+      mockPrismaSurveyFindUnique.mockResolvedValue(calSurvey);
+      mockPrismaResponseFindUnique.mockResolvedValue({ calBookings: { cal1: booking } });
+      mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+
+      await processResponsePipelineJob(baseData, baseContext);
+
+      expect(mockPrismaResponseFindUnique).toHaveBeenCalledWith(bookingsSelect);
+      expect(mockEnqueueWebhookDeliveryJob.mock.calls[0][0].calBookings).toEqual({ cal1: booking });
+    });
+
+    test("sends no key when the response holds no booking", async () => {
+      mockPrismaSurveyFindUnique.mockResolvedValue(calSurvey);
+      mockPrismaResponseFindUnique.mockResolvedValue({ calBookings: null });
+      mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+
+      await processResponsePipelineJob(baseData, baseContext);
+
+      expect(mockEnqueueWebhookDeliveryJob.mock.calls[0][0]).not.toHaveProperty("calBookings");
+    });
+
+    test("does not query for a survey without a Cal element", async () => {
+      mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+
+      await processResponsePipelineJob(baseData, baseContext);
+
+      expect(mockPrismaResponseFindUnique).not.toHaveBeenCalledWith(bookingsSelect);
+      expect(mockEnqueueWebhookDeliveryJob.mock.calls[0][0]).not.toHaveProperty("calBookings");
+    });
+  });
+
   test("derives a stable webhook id from the pipeline job across retry attempts", async () => {
     mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
 

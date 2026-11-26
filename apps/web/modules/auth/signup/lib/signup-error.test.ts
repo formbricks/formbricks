@@ -37,4 +37,16 @@ describe("getSignupErrorPlacement", () => {
   test("a server message without a stable code is still shown as the toast", () => {
     expect(getSignupErrorPlacement("Something went wrong", t)).toEqual({ toast: "Something went wrong" });
   });
+
+  test("an unplaced code toasts the fallback message, not the code", () => {
+    expect(getSignupErrorPlacement("user_not_found", t, "No account for that address")).toEqual({
+      toast: "No account for that address",
+    });
+  });
+
+  test("a placed code ignores the fallback message", () => {
+    expect(getSignupErrorPlacement(SIGNUP_DISABLED_ERROR_CODE, t, "raw problem detail")).toEqual({
+      toast: "t:auth.signup.signup_disabled",
+    });
+  });
 });

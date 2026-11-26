@@ -57,12 +57,8 @@ const FORMATTING_TAG = /<(?:a|b|strong|i|em|u|s|strike|del|code|mark|sub|sup|ul|
 // A complete recall token, as the survey stores it and `recallToHeadline` renders it.
 const RECALL_TOKEN = /#recall:[A-Za-z0-9_-]+\/fallback:[^#]*#/g;
 
-// A row's Question ID becomes a new question's id when the element schema takes it, and it is not a
-// name every JavaScript object carries (`__proto__`, `constructor`, …): answers are keyed by question id,
-// and the schema's charset lets those through.
-const OBJECT_PROPERTY_NAMES = new Set(Object.getOwnPropertyNames(Object.prototype));
-const isNewElementId = (id: string): boolean =>
-  ZSurveyElementId.safeParse(id).success && !OBJECT_PROPERTY_NAMES.has(id);
+// A row's Question ID becomes a new question's id when the element schema takes it.
+const isNewElementId = (id: string): boolean => ZSurveyElementId.safeParse(id).success;
 
 // Types a row cannot make: a picture selection needs images, a booking needs a Cal.com account.
 const UNADDABLE_TYPES = new Set<TSurveyElementTypeEnum>([

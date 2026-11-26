@@ -1,11 +1,16 @@
-import { oauthProvider } from "@better-auth/oauth-provider";
-import { betterAuth } from "better-auth";
-import { memoryAdapter } from "better-auth/adapters/memory";
-import { jwt } from "better-auth/plugins";
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
 import { GET as getProtectedResourceMetadata } from "@/app/.well-known/oauth-protected-resource/[[...resource]]/route";
 import { prepareDcrRequest, withInferredApplicationType } from "./mcp-dcr-application-type";
+import {
+  BASE_URL,
+  LOOPBACK_REGISTRATION,
+  REDIRECT_URI,
+  REGISTER_PATH,
+  createAuthInstance,
+  registrationRequest,
+  throughRoute,
+} from "./mcp-oauth-dcr-test-utils";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { getAuthIssuerUrl, getMcpResourceUrl, getOAuthUserInfoUrl } from "./oauth-urls";
 
@@ -24,23 +29,6 @@ vi.mock("@/lib/env", () => ({
   },
 }));
 
-const BASE_URL = "http://localhost:3000";
-const REDIRECT_URI = "http://127.0.0.1:33418/callback";
-
-/**
- * A registration exactly as an MCP client sends it: a loopback callback and no `application_type`.
- * Shared by the two suites below, which read it from opposite ends — one asks what upstream does with
- * it, the other that our own gate lets it through untouched.
- */
-const LOOPBACK_REGISTRATION = JSON.stringify({
-  client_name: "MCP DCR client that omits application_type",
-  redirect_uris: [REDIRECT_URI],
-  grant_types: ["authorization_code", "refresh_token"],
-  response_types: ["code"],
-  token_endpoint_auth_method: "none",
-  scope: "surveys:read",
-});
-
 /**
  * Regression suite for the MCP OAuth handshake as REAL clients drive it (Claude Code, MCP
  * Inspector): they read `scopes_supported` from the RFC 9728 protected-resource metadata, do
@@ -50,40 +38,6 @@ const LOOPBACK_REGISTRATION = JSON.stringify({
  * how the missing offline_access advertisement broke every MCP-client login. A pre-seeded
  * full-scope client would mask that bug, so this suite must register via DCR only.
  */
-const createAuthInstance = ({ withEmailPassword = false }: { withEmailPassword?: boolean } = {}) => {
-  // memoryAdapter needs every model it will touch declared up front — it does not create them
-  // lazily. Better Auth 1.7 added the resource tables, and without them the plugin's boot-time
-  // resource seeding logs `Model oauthResource not found in the DB` and every authorize fails.
-  const db: Record<string, unknown[]> = {
-    user: [],
-    session: [],
-    account: [],
-    verification: [],
-    jwks: [],
-    oauthClient: [],
-    oauthAccessToken: [],
-    oauthRefreshToken: [],
-    oauthConsent: [],
-    oauthResource: [],
-    oauthClientResource: [],
-    oauthClientAssertion: [],
-  };
-  return betterAuth({
-    baseURL: BASE_URL,
-    secret: "mcp-oauth-dcr-test-secret",
-    database: memoryAdapter(db),
-    // Only the end-to-end flow below needs a signed-in user; everything else stops at the login redirect.
-    ...(withEmailPassword ? { emailAndPassword: { enabled: true } } : {}),
-    // jwt is a hard dependency of oauthProvider; configured as in production auth.ts.
-    plugins: [
-      jwt({
-        disableSettingJwtHeader: true,
-        jwt: { issuer: getAuthIssuerUrl(), audience: getMcpResourceUrl() },
-      }),
-      oauthProvider(getMcpOauthProviderOptions()),
-    ],
-  });
-};
 
 const fetchAdvertisedScopes = async (): Promise<string[]> => {
   const response = await getProtectedResourceMetadata(
@@ -377,21 +331,6 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
     expect(authorize.location).toContain("error=invalid_scope");
   });
 });
-
-const REGISTER_PATH = "/api/auth/oauth2/register";
-
-const registrationRequest = (path: string, body: string, contentType = "application/json") =>
-  new Request(`${BASE_URL}${path}`, {
-    method: "POST",
-    headers: { "content-type": contentType },
-    body,
-  });
-
-/** The route's real pipeline: the gate first, then Better Auth for whatever it lets through. */
-const throughRoute = async (auth: ReturnType<typeof createAuthInstance>, request: Request) => {
-  const prepared = await prepareDcrRequest(request);
-  return prepared instanceof Response ? prepared : auth.handler(prepared);
-};
 
 /**
  * The DCR redirect-URI allowlist (ENG-3086) against the REAL plugin, which is the only place its two

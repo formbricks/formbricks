@@ -13,6 +13,7 @@ import {
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
+import { getSamlConnectionExists } from "@/modules/ee/sso/lib/saml-connection";
 import { getSsoAvailability, toSsoFormProps } from "@/modules/ee/sso/lib/sso-availability";
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export const SignupPage = async () => {
   const locale = await findMatchingLocale();
 
   const ssoAvailability = await getSsoAvailability();
+  const samlConnectionExists = await getSamlConnectionExists(ssoAvailability);
 
   const t = await getTranslate();
   return (
@@ -38,6 +40,7 @@ export const SignupPage = async () => {
         emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
         {...toSsoFormProps(ssoAvailability)}
+        samlConnectionExists={samlConnectionExists}
         oidcDisplayName={OIDC_DISPLAY_NAME}
         userLocale={locale}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}

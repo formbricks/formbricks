@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { type TResponseFilterCriteria, ZResponseFilterCriteriaFromJson } from "@formbricks/types/responses";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import {
   problemBadRequest,
@@ -68,7 +68,7 @@ const parseFilterCriteria = (
     });
   }
 
-  const validation = ZResponseFilterCriteria.safeParse(parsed);
+  const validation = ZResponseFilterCriteriaFromJson.safeParse(parsed);
   if (!validation.success) {
     return problemBadRequest(requestId, "The `filters` parameter is not a valid response filter.", {
       instance,

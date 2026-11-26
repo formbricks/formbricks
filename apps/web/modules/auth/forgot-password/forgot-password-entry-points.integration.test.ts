@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { POST as postPasswordResetRequest } from "@/app/api/internal/password-reset-requests/route";
 import { flushAfter } from "@/integration/after";
+import { postToPreLoginRoute } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { WEBAPP_URL } from "@/lib/constants";
 import { auth } from "@/modules/auth/lib/auth";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
-import { forgotPasswordAction } from "./actions";
 
 /**
  * ENG-3639: there is exactly one unauthenticated way to request a password reset, and it answers before
@@ -40,6 +41,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   return { ...actual, queueAuditEventBackground: vi.fn(async () => undefined) };
 });
 
+/** The forgot-password form's request, through the real `POST /api/internal/password-reset-requests`. */
+const forgotPassword = (body: { email: string }) =>
+  postToPreLoginRoute(postPasswordResetRequest, "/api/internal/password-reset-requests", body);
+
 const EMAIL = "alice@corporate-example.com";
 
 beforeEach(async () => {
@@ -72,10 +77,10 @@ describe("password-reset entry points (real Postgres + Better Auth)", () => {
     expect(sendPasswordResetLinkEmail).toHaveBeenCalledOnce();
   });
 
-  test("the forgot-password action sends the reset mail only after it has answered", async () => {
-    const result = await forgotPasswordAction({ email: EMAIL });
+  test("the forgot-password route sends the reset mail only after it has answered", async () => {
+    const result = await forgotPassword({ email: EMAIL });
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result.status).toBe(204);
     // Answered, and nothing sent yet: the mail is work Next runs once the response has gone.
     expect(sendPasswordResetLinkEmail).not.toHaveBeenCalled();
 

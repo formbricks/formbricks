@@ -11,8 +11,8 @@ import {
   PASSWORD_COMPROMISED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { ZUserPassword } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { resetPasswordAction } from "@/modules/auth/forgot-password/reset/actions";
+import { getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
+import { completePasswordReset } from "@/modules/auth/lib/pre-login-api-client";
 import { PasswordChecks } from "@/modules/auth/signup/components/password-checks";
 import { Button } from "@/modules/ui/components/button";
 import { FormField } from "@/modules/ui/components/form";
@@ -55,19 +55,19 @@ export const ResetPasswordForm = () => {
       toast.error(t("auth.forgot-password.reset.no_token_provided"));
       return;
     }
-    const resetPasswordResponse = await resetPasswordAction({ token, password: data.password });
-    if (resetPasswordResponse?.data) {
+    try {
+      await completePasswordReset({ token, password: data.password });
       router.push("/auth/forgot-password/reset/success");
-    } else {
-      const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
-      if (errorMessage === PASSWORD_COMPROMISED_ERROR_CODE) {
+    } catch (error) {
+      const reason = getV3ApiErrorReason(error, "");
+      if (reason === PASSWORD_COMPROMISED_ERROR_CODE) {
         toast.error(t("auth.password_compromised"));
         return;
       }
       toast.error(
-        errorMessage === INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE
+        reason === INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE
           ? t("c.link_expired_description")
-          : errorMessage
+          : getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))
       );
     }
   };

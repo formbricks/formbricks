@@ -1,3 +1,4 @@
+import { parseV1Pagination } from "@/app/api/v1/management/lib/pagination";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
@@ -18,16 +19,17 @@ import {
 } from "@/lib/survey/visibility/outbound";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: THandlerParams) => {
+  handler: async ({ req, authentication }: THandlerParams) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }
 
     try {
+      const { limit, offset } = parseV1Pagination(req.nextUrl.searchParams);
       const workspaceIds = [
         ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
-      const webhooks = await getWebhooks(workspaceIds);
+      const webhooks = await getWebhooks(workspaceIds, limit, offset);
       return {
         response: responses.successResponse(await addLegacyEnvironmentIdToList(webhooks)),
       };

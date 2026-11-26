@@ -15,6 +15,7 @@ import {
   ZV3PatchCreativeBody,
 } from "@/app/api/v3/creatives/lib/schemas";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
+import { confirmArgument } from "./confirm-argument";
 
 /**
  * Input schemas for the creative tools (ENG-4004), one file per resource like `workflow-schemas.ts`;
@@ -94,6 +95,9 @@ export const ZMcpCreativeIdInput = z.strictObject({
   creativeId: idField("Creative ID."),
 });
 export type TMcpCreativeIdInput = z.infer<typeof ZMcpCreativeIdInput>;
+
+export const ZMcpDeleteCreativeInput = ZMcpCreativeIdInput.extend({ confirm: confirmArgument });
+export type TMcpDeleteCreativeInput = z.infer<typeof ZMcpDeleteCreativeInput>;
 
 /**
  * What a client sees of `create_creative`'s input. `ZMcpCreateCreativeInput` is this, validated by the v3

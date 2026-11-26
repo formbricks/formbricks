@@ -80,12 +80,12 @@ const survey = {
 
 const options = generateElementAndFilterOptions({
   survey,
-  environmentTags: [{ id: "tag1", name: "vip" } as never],
+  environmentTags: [{ id: "tag1", name: "vip" }],
   attributes: { plan: ["Pro", "Free"] },
   reservedValues: {},
   hiddenFields: {},
   variableValues: {},
-  quotas: [{ id: "quota1", name: "Germany" } as never],
+  quotas: [{ id: "quota1", name: "Germany" }],
   t,
 });
 
@@ -472,7 +472,7 @@ describe("field icons", () => {
       reservedValues: { utmSource: ["newsletter"] },
       hiddenFields: {},
       variableValues: {},
-      quotas: [{ id: "quota1", name: "Germany" } as never],
+      quotas: [{ id: "quota1", name: "Germany" }],
       t,
     });
     const { properties } = buildResponseFilterModel({

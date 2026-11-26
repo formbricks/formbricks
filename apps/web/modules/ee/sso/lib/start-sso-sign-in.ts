@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
+import { FORMBRICKS_LOGGED_IN_WITH_LS, writeLocalStorage } from "@/lib/localStorage";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import type { TSsoIdentityProvider } from "@/modules/ee/sso/lib/provider-normalization";
 
@@ -54,12 +54,8 @@ export const startSsoSignIn = async ({
     return false;
   }
 
-  // Only a sign-in that started marks the provider as last used. A browser that denies storage throws
-  // a DOMException here, which must not turn a started redirect into an error.
-  try {
-    localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, LAST_USED_LABELS[provider]);
-  } catch (error) {
-    if (!(error instanceof DOMException)) throw error;
-  }
+  // Only a sign-in that started marks the provider as last used. A browser that denies storage
+  // skips the write, which must not turn a started redirect into an error.
+  writeLocalStorage(FORMBRICKS_LOGGED_IN_WITH_LS, LAST_USED_LABELS[provider]);
   return true;
 };

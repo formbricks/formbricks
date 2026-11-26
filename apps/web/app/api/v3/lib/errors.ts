@@ -14,6 +14,10 @@ import {
   problemInternalError,
   problemTooManyRequests,
 } from "@/app/api/v3/lib/response";
+import {
+  EmbeddedKeysNotReadyError,
+  RareEmbeddedKeysConflictError,
+} from "@/modules/ee/analysis/lib/embedded-keys-errors";
 
 /**
  * The one place that turns an unexpected throw into a v3 problem response.
@@ -128,6 +132,16 @@ export function mapV3ThrownError(err: unknown, ctx: TV3ErrorContext): Response {
   if (err instanceof UniqueConstraintError) {
     log.warn({ ...context, statusCode: 409, errorCode: err.name }, "V3 uniqueness conflict");
     return problemConflict(requestId, "The request conflicts with an existing resource.", instance);
+  }
+
+  /**
+   * A chart's embedded-data fields refused before any query ran: rare fields of several buckets, or new
+   * fields the key catalog could not catch up with. Neither is a server fault, and a 500 hid that waiting
+   * or removing a field would fix it (ENG-7230). Both messages are fixed strings that name no field.
+   */
+  if (err instanceof RareEmbeddedKeysConflictError || err instanceof EmbeddedKeysNotReadyError) {
+    log.warn({ ...context, statusCode: 409, errorCode: err.name }, "V3 embedded-data fields refused");
+    return problemConflict(requestId, err.message, instance);
   }
 
   if (err instanceof DatabaseError) {

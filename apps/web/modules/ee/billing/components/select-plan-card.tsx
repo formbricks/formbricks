@@ -12,7 +12,7 @@ import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
-import { startHobbyAction, startProTrialAction } from "@/modules/ee/billing/actions";
+import { getBillingErrorReason, startHobbyPlan, startProTrial } from "@/modules/ee/billing/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -61,18 +61,14 @@ export const SelectPlanCard = ({ nextUrl, organizationId, trialDays }: Readonly<
   const handleStartTrial = async () => {
     setIsStartingTrial(true);
     try {
-      const result = await startProTrialAction({ organizationId });
-      if (result?.data) {
-        router.push(nextUrl);
-      } else if (result?.serverError === "trial_already_used") {
-        toast.error(t("workspace.settings.billing.trial_already_used"));
-        setIsStartingTrial(false);
-      } else {
-        toast.error(t("workspace.settings.billing.failed_to_start_trial"));
-        setIsStartingTrial(false);
-      }
-    } catch {
-      toast.error(t("workspace.settings.billing.failed_to_start_trial"));
+      await startProTrial(organizationId);
+      router.push(nextUrl);
+    } catch (error) {
+      toast.error(
+        getBillingErrorReason(error) === "trial_already_used"
+          ? t("workspace.settings.billing.trial_already_used")
+          : t("workspace.settings.billing.failed_to_start_trial")
+      );
       setIsStartingTrial(false);
     }
   };
@@ -80,13 +76,8 @@ export const SelectPlanCard = ({ nextUrl, organizationId, trialDays }: Readonly<
   const handleContinueHobby = async () => {
     setIsStartingHobby(true);
     try {
-      const result = await startHobbyAction({ organizationId });
-      if (result?.data) {
-        router.push(nextUrl);
-      } else {
-        toast.error(t("common.something_went_wrong_please_try_again"));
-        setIsStartingHobby(false);
-      }
+      await startHobbyPlan(organizationId);
+      router.push(nextUrl);
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
       setIsStartingHobby(false);

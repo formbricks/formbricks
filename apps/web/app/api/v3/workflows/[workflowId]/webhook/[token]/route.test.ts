@@ -380,6 +380,15 @@ describe("archived, unknown or regenerated token", () => {
     expect(mocks.runCreate).not.toHaveBeenCalled();
   });
 
+  // The route opts out of the cross-origin check for pre-login writes: the path token is its only
+  // credential, so a browser's cross-site POST reaches the token check like a server's call does.
+  test("a cross-site browser POST reaches the token check: 404 for a wrong token, 202 for the right one", async () => {
+    const crossSite = { "sec-fetch-site": "cross-site", origin: "https://evil.example" };
+
+    expect((await call({ token: OTHER_TOKEN, headers: crossSite })).status).toBe(404);
+    expect((await call({ headers: crossSite })).status).toBe(202);
+  });
+
   test("a regenerated token stops working at once, even on a body that would otherwise fail", async () => {
     mocks.workflowFindUnique.mockResolvedValue(webhookWorkflow({ webhookTokenHash: tokenHash(OTHER_TOKEN) }));
 

@@ -14,12 +14,14 @@ import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
 import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
-import { isLinkSurveyGoneError } from "@/modules/survey/link/lib/public-access";
+import {
+  isLinkSurveyGoneApiError,
+  sendLinkSurveyVerificationEmail,
+} from "@/modules/survey/link/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -88,23 +90,18 @@ export const VerifyEmail = ({
       surveyLanguageCode: languageCode,
     };
 
-    let actionResult: Awaited<ReturnType<typeof sendLinkSurveyEmailAction>>;
     try {
-      actionResult = await sendLinkSurveyEmailAction(data);
-    } catch {
-      // A rejected call (offline, or an action id a newer deploy no longer serves) still gets feedback.
-      toast.error(t("common.something_went_wrong_please_try_again"));
-      return;
-    }
-
-    if (actionResult?.data) {
+      await sendLinkSurveyVerificationEmail(data);
       setEmailSent(true);
-    } else if (isLinkSurveyGoneError(actionResult?.serverError, localSurvey.id)) {
-      // The survey stopped taking responses (closed, archived or gone) after this page loaded (ENG-4032).
-      // Re-render the page so the server shows what a fresh load would, instead of an error toast.
-      router.refresh();
-    } else {
-      toast.error(getFormattedErrorMessage(actionResult));
+    } catch (error) {
+      if (isLinkSurveyGoneApiError(error)) {
+        // The survey stopped taking responses (closed, archived or gone) after this page loaded (ENG-4032).
+        // Re-render the page so the server shows what a fresh load would, instead of an error toast.
+        router.refresh();
+        return;
+      }
+      // A refusal shows its own message; one with nothing to say (offline, a server fault) the fallback.
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

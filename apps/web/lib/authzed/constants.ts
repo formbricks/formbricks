@@ -4,6 +4,26 @@ export const AUTHZED_REQUEST_TIMEOUT_MS = 1_000;
 export const AUTHZED_MAX_ATTEMPTS = 3;
 export const AUTHZED_RETRY_BASE_DELAYS_MS = [100, 200] as const;
 export const AUTHZED_RETRY_JITTER_RATIO = 0.2;
+
+/**
+ * grpc-js options for the SpiceDB channel (ENG-7003).
+ *
+ * Once a connection drops, grpc-js keeps the channel in TRANSIENT_FAILURE for its reconnect backoff and
+ * fails every call on it at once with UNAVAILABLE, deadline unspent. The default first backoff is 1 s,
+ * longer than the whole retry budget above (about 300 ms), so a sub-second blip failed every
+ * authorization check in the process, all three attempts included. A 50 ms first backoff is shorter
+ * than the first retry delay, so the channel is reconnecting before the second attempt and the third
+ * has margin; `channel-reconnect.test.ts` holds the two in step. A longer outage still grows the
+ * backoff (×1.6 per refused reconnect) past the budget, and that check fails closed as before.
+ *
+ * The ceiling replaces grpc-js's 120 s, which after a real outage could keep a pod failing for up to two
+ * minutes after SpiceDB was back. One reconnect attempt per second per pod is cheap for SpiceDB.
+ */
+export const AUTHZED_CHANNEL_OPTIONS = {
+  "grpc.initial_reconnect_backoff_ms": 50,
+  "grpc.max_reconnect_backoff_ms": 1_000,
+} as const;
+
 export const AUTHZED_MAX_RELATIONSHIP_UPDATES = 1_000;
 export const AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES = 10;
 

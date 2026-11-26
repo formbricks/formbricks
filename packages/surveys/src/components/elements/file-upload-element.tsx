@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 import { FileUpload, type UploadedFile } from "@formbricks/survey-ui";
 import { FILE_UPLOAD_ERROR_NAMES } from "@formbricks/types/errors";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TAllowedFileExtension } from "@formbricks/types/storage";
 import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { isFileTypeAllowed } from "@/lib/utils";
 
 interface FileUploadElementProps {
   element: TSurveyFileUploadElement;
@@ -160,18 +160,7 @@ export function FileUploadElement({
    * Validate file extension
    */
   const validateFileExtension = useCallback(
-    (file: File): boolean => {
-      if (!element.allowedFileExtensions || element.allowedFileExtensions.length === 0) {
-        return true; // No restrictions
-      }
-
-      const fileExtensionPart = file.name.split(".").pop()?.toLowerCase();
-      if (!fileExtensionPart) {
-        return false; // No extension
-      }
-
-      return element.allowedFileExtensions.includes(fileExtensionPart as TAllowedFileExtension);
-    },
+    (file: File): boolean => isFileTypeAllowed(file.name, element.allowedFileExtensions),
     [element.allowedFileExtensions]
   );
 

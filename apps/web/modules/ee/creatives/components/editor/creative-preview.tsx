@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { type TCreativeView, render } from "@formbricks/creatives";
 import { cn } from "@/lib/cn";
+import { useCspNonce } from "@/lib/csp/nonce";
 import type { TStylingAppearance } from "@/lib/styling/dark-mode";
 import {
   PreviewModeSwitches,
@@ -123,6 +124,8 @@ const CreativeMount = ({
 }>) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const handlers = useRef(actions);
+  // The banner's styles live in a <style> element, which the page's CSP applies only with its nonce.
+  const nonce = useCspNonce();
   useEffect(() => {
     handlers.current = actions;
   });
@@ -136,12 +139,13 @@ const CreativeMount = ({
       root,
       device,
       appearance,
+      nonce,
       onClick: () => handlers.current.onActivate(),
       // The banner stays: the author is still styling it.
       onDismiss: () => handlers.current.onDismiss(),
     });
     return () => host.remove();
-  }, [viewKey, device, appearance]);
+  }, [viewKey, device, appearance, nonce]);
 
   // A link in a banner's text would leave the editor; it says where it goes instead.
   useEffect(() => {

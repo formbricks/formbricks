@@ -115,6 +115,23 @@ export const getFeedbackSourcesWithMappings = reactCache(
   }
 );
 
+/**
+ * The columns a request about one source is authorized and resolved against: the workspace it lives in,
+ * its feedback directory, its type and the surveys it maps. Null for an id no source has.
+ */
+export const getFeedbackSourceScope = reactCache(async (feedbackSourceId: string) => {
+  validateInputs([feedbackSourceId, ZId]);
+  return prisma.feedbackSource.findUnique({
+    where: { id: feedbackSourceId },
+    select: {
+      workspaceId: true,
+      feedbackDirectoryId: true,
+      type: true,
+      formbricksMappings: { select: { surveyId: true } },
+    },
+  });
+});
+
 export const getFeedbackSourceWithMappingsById = reactCache(
   async (feedbackSourceId: string, workspaceId: string): Promise<TFeedbackSourceWithMappings | null> => {
     validateInputs([feedbackSourceId, ZId], [workspaceId, ZId]);

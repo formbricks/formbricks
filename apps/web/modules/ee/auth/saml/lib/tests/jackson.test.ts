@@ -78,6 +78,8 @@ describe("SAML Jackson Initialization", () => {
       },
       // An anonymous failed callback must not persist its SAMLResponse (ENG-3976).
       ssoTraces: { disable: true },
+      // Only the exact callback path may receive an authorization code (ENG-7315).
+      openid: { redirectExactMatch: true },
       logger: { info: expect.any(Function), warn: expect.any(Function), error: expect.any(Function) },
     });
 

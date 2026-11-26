@@ -11,9 +11,12 @@ helpdesk, an order shipped, a data layer or ETL tool that finds a new customer. 
 
 <Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
 
-{/* SCREENSHOT PLACEHOLDER: webhook-trigger-panel.webp. The Webhook trigger panel with the Webhook Secret
-URL (Copy and the actions menu) and the expected payload with its Variables. Save to
-/images/platform/workflows/webhook-trigger-panel.webp and replace this comment with a <Frame>. */}
+<Frame>
+  <img
+    src="/images/platform/workflows/webhook-trigger-panel.webp"
+    alt="Webhook trigger panel with the Webhook Secret URL (blurred here), Copy and the actions menu, and the expected payload's Variables"
+  />
+</Frame>
 
 ## Set up the trigger
 
@@ -30,7 +33,8 @@ URL (Copy and the actions menu) and the expected payload with its Variables. Sav
 
   <Step title="Set the expected payload">
     The **expected payload** is the JSON your system sends. Write or paste it in the trigger, or send one real call
-    while the workflow is still a draft and select **Use as expected payload**. Its fields become the Variables the
+    while the workflow is still a draft and select **Use as expected payload**, or **Edit it first** to change it
+    before you save it. Its fields become the Variables the
     `@` picker offers, and a [Test run](/workflows/test-runs) sends it. A workflow can't be enabled without one.
   </Step>
 
@@ -53,13 +57,15 @@ who has the URL can start runs, so handle it like an API key or a password.
 
 ### Regenerate the URL
 
-If the URL may have leaked, open the trigger and select **Regenerate**. The old URL stops working at once and
+If the URL may have leaked, open the trigger, open the URL's ⋮ menu and select **Regenerate URL…**, then
+**Regenerate**. The old URL stops working at once and
 answers `404`, so update every system that calls it with the new one. You can regenerate the URL of a draft,
 enabled or disabled workflow without disabling it first. Each regeneration is recorded in the audit log.
 
 ## Send a call
 
-Send a `POST` request with `Content-Type: application/json` and a JSON object as the body:
+Send a `POST` request with `Content-Type: application/json` and a JSON object as the body. Until the trigger has an
+expected payload, it shows an example request for this workflow that you can copy:
 
 ```bash
 curl -X POST "https://formbricks.example.com/api/v3/workflows/<workflowId>/webhook/<token>" \

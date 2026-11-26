@@ -332,35 +332,109 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     });
     expect(stored.map((field) => field.storageKey)).toEqual([allowedName]);
   });
+});
 
-  /**
-   * The calculated half of the same guard. `isSafeIdentifier("country")` passes — it is lowercase
-   * with no separators — so the old Variables card accepted the name and the author only found out at
-   * save time, from the server guard's untranslated message. The one card applies the same
-   * `validateId` strict gate to both sources, so the refusal is translated and immediate either way.
-   */
-  test("refuses a variable named after a reserved field", async ({ page, users }) => {
-    const allowedName = uniqueName("score");
+/**
+ * The shared Embedded Data library end to end: define fields on the settings page, link one into a
+ * survey from the editor, file a survey's own field in the library, and see the library refuse to delete
+ * a field a survey still uses. Asserted on what the pages show and what the database holds, so it holds
+ * before and after these surfaces moved from server actions onto `/api/internal/embedded-data` (ENG-3984).
+ */
+test.describe("Embedded Data library @slow", () => {
+  test.setTimeout(1000 * 60 * 3);
+
+  test("defines, links, promotes and refuses to delete a field in use", async ({ page, users }) => {
+    const linked = uniqueName("plan_tier");
+    const renamed = uniqueName("plan_name");
+    const unused = uniqueName("unused");
+    const local = uniqueName("referrer");
 
     const user = await users.create();
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    const surveyId = await createSurveyFromScratch(page);
+    const { workspaceId } = user;
+    if (!workspaceId) throw new Error("Workspace not seeded for the test user");
+    const libraryUrl = `/workspaces/${workspaceId}/settings/workspace/embedded-data`;
+    const libraryRow = (name: string) => page.getByRole("row").filter({ hasText: name });
+    const storedField = (key: string) => prisma.embeddedData.findFirst({ where: { workspaceId, key } });
 
-    await openNewFieldDialog(page, "Calculated");
-    await expectReservedNameRefused(page, "country");
-    await expectReservedNameRefused(page, "Country");
-    await addFieldFromOpenDialog(page, allowedName);
+    const createLibraryField = async (name: string) => {
+      await page.getByRole("button", { name: "New field" }).click();
+      const dialog = page.getByRole("dialog");
+      // The key writes itself from the name.
+      await dialog.getByRole("textbox", { name: "Name" }).fill(name);
+      await dialog.getByRole("button", { name: "Create field" }).click();
+      await expect(libraryRow(name)).toBeVisible();
+    };
 
-    await saveDraft(page);
-    // Asserted on the definition, not on the link's `storageKey`: a calculated field is addressed by
-    // its cuid everywhere, so the card mints that id as the storage key while the name — the only
-    // thing this gate reads — lives on the definition. A passed-in field's two happen to be equal,
-    // which is why the sibling test above can compare storage keys directly.
-    const stored = await prisma.surveyEmbeddedData.findMany({
-      where: { surveyId },
-      select: { embeddedData: { select: { name: true, source: true } } },
+    await test.step("define two library fields and rename one", async () => {
+      await page.goto(libraryUrl, { waitUntil: "domcontentloaded" });
+      await createLibraryField(linked);
+      await createLibraryField(unused);
+      expect(await storedField(linked)).toMatchObject({ name: linked, surveyId: null });
+
+      await libraryRow(linked).click();
+      const dialog = page.getByRole("dialog");
+      await dialog.getByRole("textbox", { name: "Name" }).fill(renamed);
+      await dialog.getByRole("button", { name: "Save", exact: true }).click();
+      await expect(libraryRow(renamed)).toBeVisible();
+      await expect.poll(async () => (await storedField(linked))?.name).toBe(renamed);
     });
-    expect(stored.map((link) => link.embeddedData)).toEqual([{ name: allowedName, source: "computed" }]);
+
+    let surveyId = "";
+    await test.step("link a library field into a survey, and file the survey's own field in the library", async () => {
+      await page.goto(`/workspaces/${workspaceId}/surveys`, { waitUntil: "domcontentloaded" });
+      surveyId = await createSurveyFromScratch(page);
+
+      await openEmbeddedDataCard(page);
+      await editorPanel(page).getByRole("button", { name: "Add field", exact: true }).click();
+      await page
+        .getByTestId("embedded-data-library-row")
+        .filter({ hasText: renamed })
+        .getByRole("button", { name: "Add" })
+        .click();
+      await expect(embeddedFieldRow(page, renamed)).toBeVisible();
+
+      await addEmbeddedField(page, { name: local, source: "Passed in", type: "Text" });
+      await saveDraft(page);
+
+      await embeddedFieldRow(page, local)
+        .getByRole("button", { name: /Open options/ })
+        .click();
+      await page.getByRole("menuitem", { name: "Add to library", exact: true }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Add to library" }).click();
+      await expect(page.getByText(`${local} is now a library field`)).toBeVisible();
+      await expect.poll(async () => (await storedField(local))?.surveyId).toBeNull();
+    });
+
+    await test.step("see where a field is used, and fail to delete it while it is", async () => {
+      await page.goto(libraryUrl, { waitUntil: "domcontentloaded" });
+      await libraryRow(renamed).getByText("1 survey").click();
+      const { name: surveyName } = await prisma.survey.findUniqueOrThrow({
+        where: { id: surveyId },
+        select: { name: true },
+      });
+      await expect(page.getByRole("link", { name: surveyName })).toBeVisible();
+      await page.keyboard.press("Escape");
+
+      await libraryRow(renamed)
+        .getByRole("button", { name: /Open options/ })
+        .click();
+      await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
+      await expect(page.getByText(`${renamed} is still used`)).toBeVisible();
+      expect(await storedField(linked)).not.toBeNull();
+      await page.keyboard.press("Escape");
+    });
+
+    await test.step("delete a field no survey uses", async () => {
+      await libraryRow(unused)
+        .getByRole("button", { name: /Open options/ })
+        .click();
+      await page.getByRole("menuitem", { name: "Delete", exact: true }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
+      await expect(libraryRow(unused)).toHaveCount(0);
+      await expect.poll(() => storedField(unused)).toBeNull();
+    });
   });
 });

@@ -21,7 +21,9 @@ the diff and the checks you actually ran.
 ### 1. Review before you write
 
 Run the `code-review` skill against the merge-base. Every Standards and Spec finding is fixed or listed
-under Open gaps before the body is written.
+under Open gaps before the body is written, as "The Review Gate" in `CODING_STANDARDS.md` sets out. An
+Open gaps entry that holds a blocking finding starts with `Blocking:`, so the reviewer accepts or rejects it
+by name.
 
 ### 2. Fill the template
 
@@ -113,7 +115,8 @@ checkbox under `## Breaking changes`. Until the branch carries the new workflow,
   and no template comment or placeholder is left.
 - Every behaviour the diff changes has a Coverage row or an Open gaps entry.
 - A UI change has a before/after pair whose URLs load logged out; any other change says `No UI change`.
-- The body fits the budget, and every claim matches a check you ran on the head commit.
+- The body fits the budget, and every claim matches a check you ran on the head commit. A "covered by"
+  or "none" claim names a test you opened, or a search that came back empty.
 - A PR marked ready has auto-merge enabled, or your report says why it is not.
 
 ## Guardrails

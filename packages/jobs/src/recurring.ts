@@ -123,6 +123,12 @@ export const recurringJobDescriptors = {
     name: JOB_NAMES.deletionCleanupDrain,
     scheduleId: "deletion-cleanup-drain",
   }),
+  // Deletes stale anonymous OAuth client registrations that were never consented to (ENG-7314).
+  oauthClientCleanup: defineRecurringJob({
+    label: "OAuth client cleanup",
+    name: JOB_NAMES.oauthClientCleanup,
+    scheduleId: "oauth-client-cleanup",
+  }),
   surveyArchivePurge: defineRecurringJob({
     label: "survey archive purge",
     name: JOB_NAMES.surveyArchivePurge,

@@ -1,13 +1,20 @@
 import snippet from "@calcom/embed-snippet";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import {
+  type TCalBooking,
+  type TCalBookingEventData,
+  type TCalLegacyBookingEventData,
+  buildCalBooking,
+  buildCalBookingFromLegacyEvent,
+} from "@formbricks/types/cal-booking";
 import { type TSurveyCalElement } from "@formbricks/types/surveys/elements";
 import { getResolvedAppearance, subscribeToAppearance } from "@/lib/appearance";
 import { cn } from "@/lib/utils";
 
 interface CalEmbedProps {
   element: TSurveyCalElement;
-  onSuccessfulBooking: () => void;
+  onSuccessfulBooking: (booking: TCalBooking) => void;
 }
 
 // Resolve a survey CSS custom property (e.g. `--fb-heading-color`) to a concrete
@@ -103,10 +110,20 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
     const embedContainer = document.getElementById(containerId);
     ns("ui", getCalUiConfig(embedContainer, appearance));
 
-    const handleBooking = (): void => {
-      onSuccessfulBookingRef.current();
+    // Cal emits the deprecated `bookingSuccessful` alongside `bookingSuccessfulV2`, and a host too old for
+    // V2 emits only the former. V2 carries the full booking and always wins; the legacy event is used only
+    // while no V2 has arrived, so it can never overwrite the richer value.
+    let receivedV2 = false;
+    const handleBookingV2 = (event: CustomEvent<{ data?: TCalBookingEventData }>): void => {
+      receivedV2 = true;
+      onSuccessfulBookingRef.current(buildCalBooking(event.detail?.data));
     };
-    ns("on", { action: "bookingSuccessful", callback: handleBooking });
+    const handleLegacyBooking = (event: CustomEvent<{ data?: TCalLegacyBookingEventData }>): void => {
+      if (receivedV2) return;
+      onSuccessfulBookingRef.current(buildCalBookingFromLegacyEvent(event.detail?.data));
+    };
+    ns("on", { action: "bookingSuccessfulV2", callback: handleBookingV2 });
+    ns("on", { action: "bookingSuccessful", callback: handleLegacyBooking });
 
     ns("inline", {
       elementOrSelector: `#${containerId}`,
@@ -135,7 +152,8 @@ export function CalEmbed({ element, onSuccessfulBooking }: Readonly<CalEmbedProp
     }
 
     return () => {
-      ns("off", { action: "bookingSuccessful", callback: handleBooking });
+      ns("off", { action: "bookingSuccessfulV2", callback: handleBookingV2 });
+      ns("off", { action: "bookingSuccessful", callback: handleLegacyBooking });
       observer?.disconnect();
       // Remove only this scheduler's injected embed, not every cal-inline on the page.
       embedContainer?.querySelector("cal-inline")?.remove();

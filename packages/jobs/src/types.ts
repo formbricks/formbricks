@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZCalBookingsByQuestionId } from "@formbricks/types/cal-booking";
 import { ZResponse } from "@formbricks/types/responses";
 import { ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
 import { ZTag } from "@formbricks/types/tags";
@@ -165,6 +166,11 @@ export const ZWebhookDeliveryJobData = z.object({
     // `dataByQuestionCode`. Optional so a job queued before the deploy still parses.
     questionCodes: z.record(z.string(), z.string()).optional(),
   }),
+  // `{ [Question ID]: booking }` for the body's `calBookingsByQuestionId`: what the survey's Cal.com
+  // elements reported, read from the response when the event fired. Absent when the survey has no Cal
+  // element or the response holds no booking, and for a job queued before the deploy, so such a webhook
+  // body is byte-identical to what it was.
+  calBookings: ZCalBookingsByQuestionId.optional(),
 });
 
 export type TWebhookDeliveryJobData = z.infer<typeof ZWebhookDeliveryJobData>;

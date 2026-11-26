@@ -38,7 +38,11 @@ describe("getSession — Better Auth DAL (ENG-1054)", () => {
     getSessionMock.mockReset();
     findUniqueMock.mockReset();
     warnMock.mockReset();
-    findUniqueMock.mockResolvedValue({ userId: USER.id, user: { isActive: true } });
+    findUniqueMock.mockResolvedValue({
+      userId: USER.id,
+      expires: new Date(Date.now() + 60_000),
+      user: { isActive: true },
+    });
   });
 
   test("returns null when Better Auth has no session", async () => {
@@ -62,7 +66,7 @@ describe("getSession — Better Auth DAL (ENG-1054)", () => {
     });
     expect(findUniqueMock).toHaveBeenCalledWith({
       where: { sessionToken: "session_token_1" },
-      select: { userId: true, user: { select: { isActive: true } } },
+      select: { userId: true, expires: true, user: { select: { isActive: true } } },
     });
   });
 
@@ -77,7 +81,11 @@ describe("getSession — Better Auth DAL (ENG-1054)", () => {
   // after signing in kept full access for the life of a rolling 1-day session.
   test("returns null when the user has been deactivated since signing in", async () => {
     getSessionMock.mockResolvedValue(baSession());
-    findUniqueMock.mockResolvedValue({ userId: USER.id, user: { isActive: false } });
+    findUniqueMock.mockResolvedValue({
+      userId: USER.id,
+      expires: new Date(Date.now() + 60_000),
+      user: { isActive: false },
+    });
 
     const getSession = await importGetSession();
     await expect(getSession()).resolves.toBeNull();
@@ -93,9 +101,27 @@ describe("getSession — Better Auth DAL (ENG-1054)", () => {
     await expect(getSession()).resolves.toBeNull();
   });
 
+  // Proxy signs out an expired row (`getProxySession`); a getSession that still answered with a session
+  // would bounce a visitor between `/` and the login page.
+  test("returns null when the session row has expired", async () => {
+    getSessionMock.mockResolvedValue(baSession());
+    findUniqueMock.mockResolvedValue({
+      userId: USER.id,
+      expires: new Date(Date.now() - 1000),
+      user: { isActive: true },
+    });
+
+    const getSession = await importGetSession();
+    await expect(getSession()).resolves.toBeNull();
+  });
+
   test("returns null when the session row belongs to a different user", async () => {
     getSessionMock.mockResolvedValue(baSession());
-    findUniqueMock.mockResolvedValue({ userId: "someone_else", user: { isActive: true } });
+    findUniqueMock.mockResolvedValue({
+      userId: "someone_else",
+      expires: new Date(Date.now() + 60_000),
+      user: { isActive: true },
+    });
 
     const getSession = await importGetSession();
     await expect(getSession()).resolves.toBeNull();

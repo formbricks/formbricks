@@ -1436,6 +1436,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      calBookings: null,
       notShown: null,
       outcome: null,
       isFinished: true,
@@ -1482,6 +1483,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      calBookings: null,
       notShown: null,
       outcome: null,
       isFinished: true,
@@ -1523,6 +1525,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      calBookings: null,
       notShown: null,
       outcome: null,
       isFinished: true,
@@ -1675,6 +1678,7 @@ describe("getResponsesForSummary", () => {
       personAttributes: {},
       singleUseId: null,
       ingestFlags: null,
+      calBookings: null,
       notShown: null,
       outcome: null,
       isFinished: true,
@@ -5537,4 +5541,33 @@ describe("option bases (ENG-6937)", () => {
     );
     expect(matrix.data.find((row) => row.rowLabel === "Disney+")?.totalResponsesForRow).toBe(0);
   });
+
+  // ENG-6991: an element stored with a prototype-member id, from before such ids were refused. A
+  // record without that id used to read `Object.prototype.constructor` and throw for every viewer.
+  test.each(["constructor", "toString"])(
+    "an element with id `%s` still summarises when the record does not list it",
+    async (legacyId) => {
+      const legacySurvey = {
+        ...survey,
+        blocks: survey.blocks.map((block) => ({
+          ...block,
+          elements: block.elements.map((el) => (el.id === "fav" ? { ...el, id: legacyId } : el)),
+        })),
+      };
+      const legacyElements = getElementsFromBlocks(legacySurvey.blocks);
+      const responses = [response({ [legacyId]: "Netflix" }, { options: { bundle: ["netflix_apple"] } })];
+      const dropOff = getSurveySummaryDropOff(legacySurvey, legacyElements, responses, responses.length);
+      const summary = await getElementSummary(legacySurvey, legacyElements, responses, dropOff);
+      const fav = asSummaryOf(
+        summary.find((entry) => "element" in entry && entry.element.id === legacyId),
+        TSurveyElementTypeEnum.MultipleChoiceSingle
+      );
+
+      expect(fav.choices.find((entry) => entry.value === "Netflix")).toEqual({
+        value: "Netflix",
+        count: 1,
+        percentage: 100,
+      });
+    }
+  );
 });

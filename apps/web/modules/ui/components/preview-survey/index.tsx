@@ -54,6 +54,7 @@ import {
   getModalBackground,
   getPreviewPageUrl,
   mirrorPlacementForDir,
+  resolvePreviewLanguageCode,
   resolvePreviewType,
 } from "./lib/utils";
 
@@ -225,6 +226,10 @@ export const PreviewSurvey = ({
   // Tracked in local state rather than reported up through `setLanguageCode`: that state is the
   // editor's *editing* language and also drives the question pane (`survey-editor.tsx`), so a language
   // switch inside the preview must not retarget what the author is typing into.
+  //
+  // The same state is what every previewed survey (modal and link) renders in and what the chrome's
+  // language selector marks as current, so the selector shows the language on screen, not the one
+  // being edited.
   const [activeLanguageCode, setActiveLanguageCode] = useState(languageCode);
 
   // Covers the prop changes the chrome does NOT make: the editor resets its editing language to
@@ -233,6 +238,11 @@ export const PreviewSurvey = ({
   useEffect(() => {
     setActiveLanguageCode(languageCode);
   }, [languageCode]);
+
+  // That reset only fires when the EDITING language is the one disabled, so the preview reads the
+  // active language through `resolvePreviewLanguageCode`: a language picked with the in-survey switch
+  // and disabled since falls back to "default", and a frame toggle never remounts the survey in it.
+  const previewLanguageCode = resolvePreviewLanguageCode(activeLanguageCode, enabledLanguages);
 
   // Sets BOTH, because picking the language the prop already holds is a same-value setState: React
   // bails and the effect above never re-runs. That is exactly the "put it back after an in-survey
@@ -246,17 +256,18 @@ export const PreviewSurvey = ({
     [setLanguageCode]
   );
 
-  // Both modal previews are rendered behind a `previewMode === …` gate, so switching between the phone
-  // and browser frames unmounts one and mounts the other — and a fresh RenderSurvey seeds its language
-  // from whatever `languageCode` prop it is handed. Handing it the prop would reset the survey to the
-  // editing language while `placement` still reflected the language the author had switched to, sliding
-  // an Arabic card across the viewport to the LTR corner before the remounted survey reported its own
-  // language back and moved it again. Seeding from the active language keeps content and corner in step
-  // by construction, and carries the author's in-survey choice across the frame toggle.
+  // Every preview, modal and link alike, is rendered behind a `previewMode === …` gate, so switching
+  // between the phone and browser frames unmounts one and mounts the other — and a fresh RenderSurvey
+  // seeds its language from whatever `languageCode` prop it is handed. Handing it the prop would reset
+  // the survey to the editing language, dropping the author's in-survey choice on every frame toggle.
+  // For the modal it was worse: `placement` still reflected the language the author had switched to,
+  // sliding an Arabic card across the viewport to the LTR corner before the remounted survey reported
+  // its own language back and moved it again. Seeding from the active language keeps content and
+  // corner in step by construction, and carries the in-survey choice across the frame toggle.
 
   const placement = mirrorPlacementForDir(
     surveyPlacement || workspace.placement,
-    isRTLLanguage(jsSurvey, activeLanguageCode) ? "rtl" : "ltr"
+    isRTLLanguage(jsSurvey, previewLanguageCode) ? "rtl" : "ltr"
   );
   const {
     overlay,
@@ -448,7 +459,7 @@ export const PreviewSurvey = ({
         appearance={appearance}
         isBrandingEnabled={workspace.inAppSurveyBranding}
         isRedirectDisabled={true}
-        languageCode={activeLanguageCode}
+        languageCode={previewLanguageCode}
         styling={styling}
         pageFont={pageFont}
         isCardBorderVisible={!styling.highlightBorderColor?.light}
@@ -492,7 +503,8 @@ export const PreviewSurvey = ({
             isBrandingEnabled={workspace.linkSurveyBranding}
             survey={jsLinkSurvey}
             isRedirectDisabled={true}
-            languageCode={languageCode}
+            languageCode={previewLanguageCode}
+            onLanguageChange={setActiveLanguageCode}
             responseCount={42}
             styling={styling}
             showCardlessPreviewLogoSlot={!styling.isLogoHidden}
@@ -508,7 +520,7 @@ export const PreviewSurvey = ({
     showLanguageSelector && (
       <LanguageSelector
         languages={enabledLanguages}
-        languageCode={languageCode}
+        languageCode={previewLanguageCode}
         setLanguageCode={handleChromeLanguageChange}
         locale={locale}
       />

@@ -23,7 +23,17 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { buildListCreativesSearchParams, registerCreativeTools } from "./creatives";
-import { FULL_MCP_GRANT, type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
+import {
+  FULL_MCP_GRANT,
+  type ToolCallEra,
+  callToolOverHttp,
+  elicitingOAuthContext,
+  errorText,
+} from "./test-utils";
+
+// vitestSetup stubs createHash, which the sealed confirmation state depends on.
+vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
+vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
 vi.mock("@/app/api/v3/creatives/lib/operations", () => ({
   archiveV3Creative: vi.fn(),
@@ -455,7 +465,9 @@ describe("registerCreativeTools", () => {
       vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as unknown as TV3AuditLog);
       vi.mocked(deleteV3Creative).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
 
-      const result = await tools.get("delete_creative")!.handler({ creativeId }, { http: { authInfo } });
+      const result = await tools
+        .get("delete_creative")!
+        .handler({ creativeId, confirm: true }, { http: { authInfo } });
 
       expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "creative", ABSOLUTE_MCP_AUDIT_URL);
       expect(deleteV3Creative).toHaveBeenCalledWith({ creativeId, ...callContext, auditLog });
@@ -605,5 +617,32 @@ describe("tool arguments are validated by the SDK", () => {
     expect(outcome.result?.isError).toBe(true);
     expect(errorText(outcome)).toContain("type");
     expect(patchV3Creative).not.toHaveBeenCalled();
+  });
+});
+
+describe("delete_creative confirmation", () => {
+  const input = { creativeId };
+
+  test("asks the user instead of deleting when called without confirm", async () => {
+    const { tools } = createToolServer();
+
+    const result = (await tools.get("delete_creative")!.handler(input, { http: { authInfo } })) as Record<
+      string,
+      unknown
+    >;
+
+    expect(result.resultType).toBe("input_required");
+    expect(deleteV3Creative).not.toHaveBeenCalled();
+  });
+
+  test("a model-asserted confirm does not delete when the client can ask the user", async () => {
+    const { tools } = createToolServer();
+
+    const result = (await tools
+      .get("delete_creative")!
+      .handler({ ...input, confirm: true }, elicitingOAuthContext(authInfo))) as Record<string, unknown>;
+
+    expect(result.resultType).toBe("input_required");
+    expect(deleteV3Creative).not.toHaveBeenCalled();
   });
 });

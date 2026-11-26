@@ -71,6 +71,50 @@ describe("findRecentDuplicateResponse", () => {
     expect(prisma.response.findMany).not.toHaveBeenCalled();
   });
 
+  describe("Cal booking details, which live outside `data`", () => {
+    const stored = { cal1: { status: "booked", uid: "bk_1" } } as const;
+    const other = { cal1: { status: "booked", uid: "bk_2" } } as const;
+    const submit = (calBookings?: Record<string, { status: "booked"; uid: string }>) =>
+      findRecentDuplicateResponse({
+        surveyId,
+        surveyType: "link",
+        contactId,
+        data: { cal1: "booked" },
+        finished: true,
+        calBookings,
+      });
+
+    test("folds a replay of the same booking into the response that kept it", async () => {
+      vi.mocked(prisma.response.findMany).mockResolvedValue([
+        { id: "kept", data: { cal1: "booked" }, finished: true, calBookings: stored },
+      ] as never);
+
+      await expect(submit(stored)).resolves.toEqual({ id: "kept" });
+    });
+
+    test("never folds a different booking, or a booking into a response with none", async () => {
+      vi.mocked(prisma.response.findMany).mockResolvedValue([
+        { id: "kept", data: { cal1: "booked" }, finished: true, calBookings: stored },
+      ] as never);
+      await expect(submit(other)).resolves.toBeNull();
+
+      vi.mocked(prisma.response.findMany).mockResolvedValue([
+        { id: "legacy", data: { cal1: "booked" }, finished: true, calBookings: null },
+      ] as never);
+      await expect(submit(stored)).resolves.toBeNull();
+    });
+
+    test("reads the stored bookings with the candidates", async () => {
+      vi.mocked(prisma.response.findMany).mockResolvedValue([] as never);
+
+      await submit(stored);
+
+      expect(prisma.response.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ select: expect.objectContaining({ calBookings: true }) })
+      );
+    });
+  });
+
   test("returns the matching response from the contact's recent ones", async () => {
     const now = new Date("2026-10-01T12:00:00.000Z");
     vi.mocked(prisma.response.findMany).mockResolvedValue([

@@ -156,6 +156,32 @@ describe("Better Auth password reset (real Postgres)", () => {
     });
     expect(await prisma.session.count()).toBe(1);
 
+    // an OAuth grant minted while the account was exposed (ENG-7364): the reset has to end it too
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: "reset@example.com" } });
+    const now = new Date();
+    await prisma.oauthClient.create({
+      data: { clientId: "eng7364-client", redirectUris: ["http://127.0.0.1:33418/callback"], scopes: [] },
+    });
+    await prisma.oauthConsent.create({
+      data: {
+        clientId: "eng7364-client",
+        userId: user.id,
+        scopes: ["offline_access"],
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+    await prisma.oauthRefreshToken.create({
+      data: {
+        token: "eng7364-refresh",
+        clientId: "eng7364-client",
+        userId: user.id,
+        scopes: ["offline_access"],
+        createdAt: now,
+        expiresAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+      },
+    });
+
     await auth.api.requestPasswordReset({ body: { email: "reset@example.com", redirectTo: "/" } });
     expect(sendPasswordResetLinkEmail).toHaveBeenCalledTimes(1);
     const token = tokenFromLink(vi.mocked(sendPasswordResetLinkEmail).mock.calls[0][0].verifyLink);
@@ -176,6 +202,9 @@ describe("Better Auth password reset (real Postgres)", () => {
 
     // sessions revoked on reset (revokeSessionsOnPasswordReset)
     expect(await prisma.session.count()).toBe(0);
+    // OAuth grants revoked on reset (ENG-7364)
+    expect(await prisma.oauthRefreshToken.count({ where: { userId: user.id, revoked: null } })).toBe(0);
+    expect(await prisma.oauthConsent.count({ where: { userId: user.id } })).toBe(0);
     // old password no longer works
     await expect(
       auth.api.signInEmail({ body: { email: "reset@example.com", password: "OldPassw0rd!" } })

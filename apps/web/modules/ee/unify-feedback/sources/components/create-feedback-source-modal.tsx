@@ -9,8 +9,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TFeedbackSourceImportMode, TFeedbackSourceType } from "@formbricks/types/feedback-source";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import {
+  getSurveyResponseCount,
+  importFeedbackSourceResponses,
+} from "@/modules/ee/unify-feedback/sources/api-client";
 import {
   RestrictedSurveyHint,
   RestrictedSurveysNote,
@@ -217,10 +220,8 @@ export const CreateFeedbackSourceModal = ({
     async (surveyId: string) => {
       if (responseCountBySurvey[surveyId] !== undefined) return;
       try {
-        const result = await getResponseCountAction({ surveyId, workspaceId });
-        if (result?.data !== undefined) {
-          setResponseCountBySurvey((prev) => ({ ...prev, [surveyId]: result.data ?? null }));
-        }
+        const count = await getSurveyResponseCount(workspaceId, surveyId);
+        setResponseCountBySurvey((prev) => ({ ...prev, [surveyId]: count }));
       } catch {
         setResponseCountBySurvey((prev) => ({ ...prev, [surveyId]: null }));
       }
@@ -346,32 +347,22 @@ export const CreateFeedbackSourceModal = ({
     if (responseCount <= 0) return "skipped";
     setIsImporting(true);
     try {
-      const importResult = await importHistoricalResponsesAction({
-        feedbackSourceId,
-        workspaceId,
-        surveyId,
-      });
-
-      if (importResult?.data) {
-        // Picks the toast by `failures` rather than by the action resolving. The success toast
-        // carries a link to the feedback records, so a green one on a run that wrote nothing does
-        // not just misreport — it invites the user to go and look for records that are not there.
-        const imported = notifyImportResult(
-          importResult.data,
-          t("workspace.unify.historical_import_complete", {
-            successes: importResult.data.successes,
-            failures: importResult.data.failures,
-            skipped: importResult.data.skipped,
-          }),
-          showFeedbackRecordsSuccessToast
-        );
-        return imported ? "success" : "error";
-      }
-
-      toast.error(getFormattedErrorMessage(importResult));
-      return "error";
-    } catch {
-      toast.error(t("common.something_went_wrong"));
+      const totals = await importFeedbackSourceResponses(feedbackSourceId, surveyId);
+      // Picks the toast by `failures` rather than by the request resolving. The success toast carries
+      // a link to the feedback records, so a green one on a run that wrote nothing does not just
+      // misreport — it invites the user to go and look for records that are not there.
+      const imported = notifyImportResult(
+        totals,
+        t("workspace.unify.historical_import_complete", {
+          successes: totals.successes,
+          failures: totals.failures,
+          skipped: totals.skipped,
+        }),
+        showFeedbackRecordsSuccessToast
+      );
+      return imported ? "success" : "error";
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
       return "error";
     } finally {
       setIsImporting(false);

@@ -194,8 +194,8 @@ export const FilterValuePicker = ({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        align="start"
-        className="w-(--radix-popover-trigger-width) min-w-64 overflow-hidden border-slate-200 p-0"
+        align="end"
+        className="w-[max(var(--radix-popover-trigger-width),16rem)] max-w-(--radix-popover-content-available-width) overflow-hidden border-slate-200 p-0"
         onOpenAutoFocus={(event) => {
           // Straight into the search box, so typing narrows the list at once.
           event.preventDefault();
@@ -252,7 +252,7 @@ export const FilterValuePicker = ({
                 {typedIsNew && (
                   <CommandItem value={`typed:${needle}`} onSelect={() => pick(needle)} className="gap-2">
                     <CornerDownLeftIcon className="size-3.5 shrink-0 text-slate-400" />
-                    <span className="truncate">
+                    <span className="min-w-0 wrap-anywhere">
                       {t("common.table_toolbar.use_typed_value", { value: needle })}
                     </span>
                   </CommandItem>
@@ -267,7 +267,10 @@ export const FilterValuePicker = ({
                       onSelect={() => pick(option.value, option.label)}
                       className="gap-2">
                       <span
-                        className={cn("flex-1 truncate", isSelected && "font-medium text-slate-900")}
+                        className={cn(
+                          "min-w-0 flex-1 wrap-anywhere",
+                          isSelected && "font-medium text-slate-900"
+                        )}
                         title={option.label}>
                         {option.label}
                       </span>

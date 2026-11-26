@@ -4,6 +4,7 @@ import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyEnding, TSurveyVariable, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { escapeHtml } from "@/lib/utils/escape-html";
 
 /** The parts of a survey whose texts the editor stores as rich text (HTML). */
 export type TRichTextSurveyContent = {
@@ -18,9 +19,9 @@ export type TRichTextSurveyContent = {
 const MAY_HOLD_LINK = /href|action/i;
 
 /**
- * The URL an attribute navigates to, if it is one. The renderer's DOMPurify keeps SVG and MathML, so a
- * link is any `href` in any namespace (`<a href>`, `<area href>`, SVG `xlink:href`, MathML `href` on
- * any element), plus a `<form action>`, which its submit button follows.
+ * The URL an attribute navigates to, if it is one. The renderer's allow-list (ENG-7270) keeps only the
+ * editor's markup, so today only `<a href>` survives it; any `href` in any namespace and a `<form action>`
+ * still count, so this check keeps holding if that list ever widens.
  */
 const getLinkTarget = (element: Element, attribute: Attr): string | undefined => {
   const isLink =
@@ -48,27 +49,68 @@ const collectLinksFromRendered = (html: string, links: Set<string>): void => {
 // `replaceRecallInfo` in `@formbricks/surveys` resolves these before the text is parsed: a variable's
 // value, else the respondent's answer or hidden field, else the fallback (`nbsp` read as a space).
 const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/;
-// The renderer resolves one token at a time, leftmost first, until none is left, so a value may itself
-// hold one. It swaps the token with `String.prototype.replace` and a string, so `$'`, `` $` `` and `$&`
-// in a value expand (to the text after the token, before it, and the token itself); the check does the
-// same. Text past either bound never settled for the check, so it counts as a link.
-const MAX_RECALL_PASSES = 2_000;
-const MAX_RESOLVED_LENGTH = 50_000;
-// One opening tag, a quoted value consumed whole (the pattern survey-ui strips styles with).
-const OPENING_TAG = /<[a-zA-Z](?:"[^"]*"|'[^']*'|[^<>"'])*>/g;
+const RECALL_TOKENS = new RegExp(RECALL_TOKEN.source, "g");
+// Elements whose text the parser never turns into markup and the browser does not show as survey text
+// (raw text and RCDATA). A token here is not plain text either.
+const RAW_TEXT_PARENTS: ReadonlySet<string> = new Set([
+  "iframe",
+  "noembed",
+  "noframes",
+  "noscript",
+  "plaintext",
+  "script",
+  "style",
+  "textarea",
+  "title",
+  "xmp",
+]);
 
-/** The text as the renderer resolves it, or `null` when it does not settle within the bounds. */
-const resolveRecall = (html: string, resolve: (id: string, fallback: string) => string): string | null => {
-  let text = html;
-  for (let pass = 0; pass < MAX_RECALL_PASSES; pass++) {
-    const token = RECALL_TOKEN.exec(text);
-    if (!token) return text;
-    const value = resolve(token[1], token[2].replaceAll("nbsp", " ").trim());
-    text = text.replace(token[0], value);
-    if (text.length > MAX_RESOLVED_LENGTH) return null;
+/**
+ * The tokens that do not sit in plain text. Once a respondent's answer or a hidden field fills one, it
+ * becomes part of whatever markup surrounds it: escaping keeps `<` and quotes out, but not
+ * `href=https://…` in a tag, nor a `--` that closes a comment, nor a tag name that ends a `<textarea>`.
+ * No check can see the answer in advance, so each such token counts as a link of its own.
+ *
+ * An allow-list, not a list of dangerous places: each token is swapped for a marker, the text goes
+ * through the renderer's style stripping and a parse, and a token is plain text only if its marker
+ * lands in a text node of an ordinary element. A marker in a tag, an attribute, a comment, an end tag, a
+ * raw-text element, or one the stripping removed, counts. That can only over-report.
+ */
+const getTokensOutsidePlainText = (html: string): string[] => {
+  const tokens: string[] = [];
+  // Stands in for a token while the text is parsed. Random per call: survey text could otherwise spell the
+  // marker inside a text node and make a token that sits in a tag look like plain text (the permission
+  // check would miss it). Letters and digits only, so the parser keeps it whole wherever it lands (an
+  // attribute name, an attribute value, a tag name), and lower case, as the parser lower-cases names.
+  const marker = `fbrecallmarker${crypto.randomUUID().replaceAll("-", "")}`;
+  const markers = new RegExp(String.raw`${marker}(\d+)x`, "g");
+  const marked = html.replaceAll(RECALL_TOKENS, (token) => `${marker}${tokens.push(token) - 1}x`);
+  const inPlainText = new Set<number>();
+  DOMPurify.addHook("uponSanitizeElement", (node) => {
+    const parent = node.parentNode;
+    if (node.nodeName !== "#text" || parent?.nodeType !== 1) return;
+    if (RAW_TEXT_PARENTS.has(parent.nodeName.toLowerCase())) return;
+    for (const match of (node.textContent ?? "").matchAll(markers)) inPlainText.add(Number(match[1]));
+  });
+  try {
+    // RETURN_DOM_FRAGMENT: DOMPurify returns text without `<` unparsed, and then visits nothing.
+    DOMPurify.sanitize(removeStyleAttributes(marked), { RETURN_DOM_FRAGMENT: true });
+  } finally {
+    DOMPurify.removeHook("uponSanitizeElement");
   }
-  return null;
+  return tokens.filter((_token, index) => !inPlainText.has(index));
 };
+
+/**
+ * The text as the renderer resolves it (ENG-7270): every token in one pass, with a replacer so `$&` in a
+ * value is literal, and each value HTML-escaped, so a value can add text but never markup. A value is
+ * never scanned for tokens again. (A plain-text template the renderer leaves unescaped is wrapped as
+ * escaped text once it would parse as HTML, so escaping here finds the same links.)
+ */
+const resolveRecall = (html: string, resolve: (id: string, fallback: string) => string): string =>
+  html.replaceAll(RECALL_TOKENS, (_token, id: string, fallback: string) =>
+    escapeHtml(resolve(id, fallback.replaceAll("nbsp", " ").trim()))
+  );
 
 /** Links in text that holds `#recall:` tokens, which the survey resolves before it parses. */
 const collectRecallLinks = (
@@ -76,12 +118,7 @@ const collectRecallLinks = (
   links: Set<string>,
   recallValues: ReadonlyMap<string, string>
 ): void => {
-  // A token inside a tag becomes markup once a respondent's answer or a hidden field fills it, which
-  // no check can see in advance, so it counts as a link of its own.
-  for (const tag of removeStyleAttributes(html).match(OPENING_TAG) ?? []) {
-    const token = RECALL_TOKEN.exec(tag);
-    if (token) links.add(`recall in a tag: ${token[0]}`);
-  }
+  for (const token of getTokensOutsidePlainText(html)) links.add(`recall in a tag: ${token}`);
   // What the survey shows when each token resolves to nothing, to its fallback, or to the variable's
   // value the survey defines.
   for (const resolved of new Set([
@@ -89,14 +126,7 @@ const collectRecallLinks = (
     resolveRecall(html, (_id, fallback) => fallback),
     resolveRecall(html, (id, fallback) => recallValues.get(id) || fallback),
   ])) {
-    if (resolved !== null) {
-      collectLinksFromRendered(resolved, links);
-      continue;
-    }
-    // Text that never settles cannot be checked, so it counts as a link. Keyed on the variables' values
-    // too, so changing any of them is a new link rather than a grandfathered one.
-    const values = JSON.stringify([...recallValues].sort(([a], [b]) => a.localeCompare(b)));
-    links.add(`recall that does not resolve: ${html} with ${values}`);
+    collectLinksFromRendered(resolved, links);
   }
 };
 

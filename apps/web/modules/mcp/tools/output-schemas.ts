@@ -16,6 +16,12 @@ export const ZMcpToolError = z
     detail: z.string(),
     requestId: z.string(),
     code: z.string().optional(),
+    /**
+     * The problem's structured detail object, e.g. a 409's `expectedUpdatedAt` / `currentUpdatedAt`.
+     * `responseToMcpToolResult` forwards only a plain object here, never an array, so a client typing
+     * the error off `tools/list` can read the retry data it already receives.
+     */
+    details: z.record(z.string(), z.unknown()).optional(),
     invalid_params: z
       .array(
         z

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,7 @@ import { ZOverlay } from "@formbricks/types/common";
 import { ZOverlayColor, ZOverlayOpacity } from "@formbricks/types/overlay";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/modules/ui/components/form";
@@ -21,7 +22,7 @@ import {
 } from "@/modules/ui/components/overlay-settings/lib/utils";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
+import { patchWorkspaceSettings } from "@/modules/workspaces/settings/lib/api-client";
 
 interface EditPlacementProps {
   readonly workspace: TWorkspace;
@@ -40,6 +41,7 @@ type EditPlacementFormValues = z.infer<typeof ZWorkspacePlacementInput>;
 
 export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
 
   const placements = [
     { name: t("common.bottom_right"), value: "bottomRight", disabled: false },
@@ -84,21 +86,19 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
   };
 
   const onSubmit: SubmitHandler<EditPlacementFormValues> = async (data) => {
-    const updatedWorkspaceResponse = await updateWorkspaceAction({
-      workspaceId: workspace.id,
-      data: {
+    try {
+      await patchWorkspaceSettings(workspace.id, {
         placement: data.placement,
         overlay: data.overlay,
         overlayColor: data.overlayColor,
         overlayOpacity: data.overlayOpacity,
         clickOutsideClose: data.clickOutsideClose,
-      },
-    });
-    if (updatedWorkspaceResponse?.data) {
+      });
+      // The logo form sends the workspace's updatedAt with its save; refresh it, or the next logo save is stale.
+      router.refresh();
       toast.success(t("workspace.look.placement_updated_successfully"));
-    } else {
-      const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

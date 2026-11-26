@@ -1,8 +1,10 @@
 import { logger } from "@formbricks/logger";
+import { type TWithCalBookings } from "@formbricks/types/cal-booking";
 import { type TIngestResult, applyIngestContract } from "@formbricks/types/embedded-data-ingest";
 import { getIngestedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { type TResponseData } from "@formbricks/types/responses";
 import { type TSurvey } from "@formbricks/types/surveys/types";
+import { splitCalBookingsFromInput } from "@/lib/response/cal-bookings";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 
 /**
@@ -80,4 +82,22 @@ export const applyIngestContractToResponseData = (
   }
 
   return result;
+};
+
+/**
+ * `applyIngestContractToResponseData` plus the Cal booking split, in place on a client response input: the
+ * one step the client routes (v1 and v2 POST, PUT) run, so a route cannot do the first and forget the
+ * second. Afterwards `input.data` holds what will be stored, `input.calBookings` the booking details of
+ * its Cal elements, and the result carries the ingest flags. `invalidCalElementId` is set when a booking
+ * holds a value that cannot be stored, in which case the input is left as it arrived and the route answers
+ * 400.
+ */
+export const applyIngestContractToResponseInput = (
+  survey: TIngestContractSurvey,
+  input: { data?: TResponseData } & TWithCalBookings
+): TIngestResult & { invalidCalElementId?: string } => {
+  const result = applyIngestContractToResponseData(survey, input.data);
+  if (input.data) input.data = result.data;
+  const { invalidElementId } = splitCalBookingsFromInput(survey, input);
+  return invalidElementId ? { ...result, invalidCalElementId: invalidElementId } : result;
 };

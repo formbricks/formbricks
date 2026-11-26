@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { PUT } from "./route";
 
 /**
@@ -31,7 +32,7 @@ const request = (id = WORKFLOW_ID, headers: Record<string, string> = {}) =>
   new NextRequest(`http://localhost/api/v3/workflows/${id}/sample`, {
     method: "PUT",
     body: JSON.stringify({ payload: { order: 1 } }),
-    headers: { "Content-Type": "application/json", ...headers },
+    headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", ...headers },
   });
 const props = (id = WORKFLOW_ID) => ({ params: Promise.resolve({ workflowId: id }) }) as never;
 

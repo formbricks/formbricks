@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { TCalBooking } from "@formbricks/types/cal-booking";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponseUpdateInput } from "@formbricks/types/responses";
+import { TClientResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
@@ -28,6 +29,9 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+    },
+    survey: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -110,17 +114,22 @@ const mockResponseId = "response-123";
  * `vi.mocked(prisma.response.findUnique)` types `mockResolvedValue` against the method's default
  * instantiation, so the `select` at the call site is invisible to it and it asks for the **whole**
  * `Response` model — every scalar, not just the fourteen `responseSelection` names. That is what the
- * `as any` casts here were hiding, and it is why this is spelled as the selection plus the three
- * scalars it deliberately leaves out: `contactId`, `ingestFlags`, which only `updateResponse`'s
- * pre-read selects (keeping it off every response the module returns), and `notShown` (ENG-6936),
- * read only by the app's results. Together those are all seventeen columns, and `responseSelection`
- * carries the `contact` and `tags` relations the code under test reads.
+ * `as any` casts here were hiding, and it is why this is spelled as the selection plus the four
+ * scalars it deliberately leaves out: `contactId`, `ingestFlags` and `calBookings`, which only
+ * `updateResponse`'s pre-read selects (keeping them off every response the module returns), and
+ * `notShown` (ENG-6936), read only by the app's results. Together those are all eighteen columns,
+ * and `responseSelection` carries the `contact` and `tags` relations the code under test reads.
  *
  * Worth the indirection because it makes the fixture track the schema: add a column to the model and
  * these tests stop compiling, instead of a cast quietly supplying `undefined` for it.
  */
 type MockCurrentResponse = Prisma.ResponseGetPayload<{
-  select: typeof responseSelection & { contactId: true; ingestFlags: true; notShown: true };
+  select: typeof responseSelection & {
+    contactId: true;
+    ingestFlags: true;
+    calBookings: true;
+    notShown: true;
+  };
 }>;
 
 const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {}): MockCurrentResponse => ({
@@ -143,11 +152,14 @@ const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {})
   tags: [],
   contactId: null,
   ingestFlags: null,
+  calBookings: null,
   notShown: null,
   ...overrides,
 });
 
-const createMockResponseInput = (overrides: Partial<TResponseUpdateInput> = {}): TResponseUpdateInput => ({
+const createMockResponseInput = (
+  overrides: Partial<TClientResponseUpdateInput> = {}
+): TClientResponseUpdateInput => ({
   finished: false,
   data: {},
   ...overrides,
@@ -753,6 +765,99 @@ describe("getResponseDownloadFile", () => {
     expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
     expect(exportedIds).toHaveLength(rows.length);
     expect(new Set(exportedIds).size).toBe(rows.length);
+  });
+});
+
+/**
+ * The details a Cal.com element reported live in `Response.calBookings`, by Question ID. An update merges
+ * them the way it merges `data`: a booking in the payload replaces that question's stored one, and the
+ * other questions' bookings stay.
+ */
+describe("updateResponse — Cal.com booking details", () => {
+  const first = { status: "booked", startTime: "2026-11-05T10:00:00.000Z" } as const;
+  const second = { status: "booked", startTime: "2026-11-06T09:00:00.000Z" } as const;
+  const updateArgs = () => vi.mocked(prisma.response.update).mock.calls[0][0] as { data: unknown };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  /** `stored` bookings sit beside the `booked` answers they belong to, as a real response holds them. */
+  const run = async (stored: Record<string, TCalBooking> | null, input: TClientResponseUpdateInput) => {
+    const storedData = Object.fromEntries(Object.keys(stored ?? {}).map((id) => [id, "booked"]));
+    const currentResponse = createMockCurrentResponse({ calBookings: stored, data: storedData });
+    const {
+      calBookings: _calBookings,
+      ingestFlags: _ingestFlags,
+      notShown: _notShown,
+      ...returned
+    } = currentResponse;
+    vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
+    // The update's own `select` has no `calBookings`, so that is what the database hands back.
+    vi.mocked(prisma.response.update).mockResolvedValue(returned as never);
+    return updateResponse(mockResponseId, input);
+  };
+
+  test("reads the stored column for the merge, and does not return it", async () => {
+    const result = await run(null, createMockResponseInput());
+
+    expect(vi.mocked(prisma.response.findUnique).mock.calls[0][0]).toMatchObject({
+      select: { calBookings: true },
+    });
+    expect(vi.mocked(prisma.response.update).mock.calls[0][0]).toMatchObject({
+      select: expect.not.objectContaining({ calBookings: true }),
+    });
+    expect(result).not.toHaveProperty("calBookings");
+  });
+
+  test("keeps the stored bookings of other questions and adds the new one", async () => {
+    await run(
+      { cal1: first },
+      createMockResponseInput({ data: { cal2: "booked" }, calBookings: { cal2: second } })
+    );
+
+    expect(updateArgs().data).toMatchObject({ calBookings: { cal1: first, cal2: second } });
+  });
+
+  test("a new booking for the same question replaces the stored one", async () => {
+    await run(
+      { cal1: first },
+      createMockResponseInput({ data: { cal1: "booked" }, calBookings: { cal1: second } })
+    );
+
+    expect(updateArgs().data).toMatchObject({ calBookings: { cal1: second } });
+  });
+
+  test("leaves the column untouched when the payload carries no booking", async () => {
+    await run({ cal1: first }, createMockResponseInput({ data: { q1: "answer" } }));
+
+    expect(updateArgs().data).not.toHaveProperty("calBookings");
+  });
+
+  describe("a question the not-shown record lists", () => {
+    const notShown = { elements: ["cal1"] };
+
+    beforeEach(() => {
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue({
+        blocks: [{ id: "b1", elements: [{ id: "cal1" }, { id: "cal2" }] }],
+      } as never);
+    });
+
+    test("loses its stored booking with its answer, though the payload carries no booking", async () => {
+      await run({ cal1: first, cal2: second }, createMockResponseInput({ notShown }));
+
+      expect(updateArgs().data).toMatchObject({ data: { cal2: "booked" }, calBookings: { cal2: second } });
+      expect((updateArgs().data as { calBookings: object }).calBookings).not.toHaveProperty("cal1");
+    });
+
+    test("does not store a booking the same payload carries for it", async () => {
+      await run(
+        null,
+        createMockResponseInput({ notShown, data: { cal1: "booked" }, calBookings: { cal1: first } })
+      );
+
+      expect((updateArgs().data as { calBookings: object }).calBookings).toEqual({});
+    });
   });
 });
 

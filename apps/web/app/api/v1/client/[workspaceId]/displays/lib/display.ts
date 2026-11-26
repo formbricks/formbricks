@@ -12,26 +12,8 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
   const { workspaceId, userId, surveyId, creativeId } = displayInput;
 
   try {
-    let contact: { id: string } | null = null;
-    if (userId) {
-      contact = await getContactByUserId(workspaceId, userId);
-      if (!contact) {
-        contact = await prisma.contact.create({
-          data: {
-            workspaceId,
-            attributes: {
-              create: {
-                attributeKey: {
-                  connect: { key_workspaceId: { key: "userId", workspaceId } },
-                },
-                value: userId,
-              },
-            },
-          },
-        });
-      }
-    }
-
+    // The survey is checked before anything else, because a `userId` below may create a contact: this
+    // endpoint is public, so a missing or closed survey must not let a caller add contacts.
     // Status only: this runs once per survey shown, so it never loads the survey's content or its
     // stored custom CSS. The creative lookup only runs when a creative's click opened the survey.
     const [survey, openedBy] = await Promise.all([
@@ -50,6 +32,26 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
 
     if (survey.status !== "inProgress") {
       throw new InvalidInputError("Survey is not accepting submissions");
+    }
+
+    let contact: { id: string } | null = null;
+    if (userId) {
+      contact = await getContactByUserId(workspaceId, userId);
+      if (!contact) {
+        contact = await prisma.contact.create({
+          data: {
+            workspaceId,
+            attributes: {
+              create: {
+                attributeKey: {
+                  connect: { key_workspaceId: { key: "userId", workspaceId } },
+                },
+                value: userId,
+              },
+            },
+          },
+        });
+      }
     }
 
     const display = await prisma.display.create({

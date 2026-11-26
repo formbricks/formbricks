@@ -28,6 +28,7 @@ import { FallbackInput } from "@/modules/survey/components/element-form-input/co
 import "@/modules/ui/components/editor/styles-editor-frontend.css";
 import "@/modules/ui/components/editor/styles-editor.css";
 import { exampleTheme } from "../lib/example-theme";
+import { $unwrapSingleCellTable } from "../lib/single-cell-table";
 import type { TEditorTokenChip } from "../lib/token-chips";
 import "../styles-editor-frontend.css";
 import "../styles-editor.css";
@@ -102,6 +103,8 @@ export type TextEditorProps = {
   readonly focusOnMount?: boolean;
   readonly id?: string;
   readonly isExternalUrlsAllowed?: boolean;
+  /** Unwrap a single spreadsheet cell when loading or editing survey text. */
+  readonly unwrapSingleCellTables?: boolean;
   /**
    * Hand `setText` text's `<` and `>` still escaped, for a consumer that parses the markup as HTML again;
    * by default they come decoded (see `toEditorOutputHtml`).
@@ -156,6 +159,14 @@ const SyncEditablePlugin = ({ editable }: Readonly<{ editable: boolean }>) => {
   return null;
 };
 
+const SingleCellTablePlugin = () => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => editor.registerNodeTransform(TableNode, $unwrapSingleCellTable), [editor]);
+
+  return null;
+};
+
 export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -182,6 +193,7 @@ export const Editor = (props: TextEditorProps) => {
         <TokenChipRendererContext.Provider value={props.renderTokenChip ?? null}>
           <LexicalComposer initialConfig={{ ...editorConfig, editable }}>
             <SyncEditablePlugin editable={editable} />
+            {editable && props.unwrapSingleCellTables && <SingleCellTablePlugin />}
             <div
               ref={editorContainerRef}
               className={cn(

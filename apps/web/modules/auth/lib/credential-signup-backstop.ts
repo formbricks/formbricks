@@ -1,7 +1,11 @@
 import "server-only";
 import { BootstrapAdminMarker } from "@formbricks/database/prisma";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
-import { resolveUninvitedSignupAdmission, signupDisabledError } from "@/modules/auth/lib/signup-policy";
+import {
+  logClosedSignupRejection,
+  resolveUninvitedSignupAdmission,
+  signupDisabledError,
+} from "@/modules/auth/lib/signup-policy";
 import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 
 /**
@@ -20,7 +24,7 @@ import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/li
 export const enforceCredentialSignupBackstop = async (
   email: string
 ): Promise<false | { data: { isBootstrapAdmin: BootstrapAdminMarker } } | undefined> => {
-  // createUserAction runs the full personal-email policy (Cloud gate + invite exemption) and marks the
+  // the sign-up route runs the full personal-email policy (Cloud gate + invite exemption) and marks the
   // request scope before calling signUpEmail. If that mark is absent, the sign-up did not come through
   // the action, so both re-checks below re-enforce what the action would have applied (no invite is
   // carried on that path). The raw HTTP route is closed since ENG-3988, so this covers in-process callers
@@ -48,6 +52,7 @@ export const enforceCredentialSignupBackstop = async (
   // email OTP, admin create) lands here, and on a closed instance it should not.
   const admission = await resolveUninvitedSignupAdmission();
   if (admission === "denied") {
+    logClosedSignupRejection("better-auth-user-create-backstop");
     throw signupDisabledError();
   }
 

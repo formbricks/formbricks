@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { TWithCalBookings } from "./cal-booking";
 import { ZId } from "./common";
 import { ZSurveyQuota } from "./quota";
 import { MAX_NOT_SHOWN_ID_LENGTH, ZResponseNotShown, ZResponseNotShownInput } from "./surveys/not-shown";
@@ -684,6 +685,35 @@ export type TResponseContact = z.infer<typeof ZResponseContact>;
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
 /**
+ * Turns the `createdAt` range of a filter that went through JSON back into Dates. JSON writes a Date as
+ * ISO text, and `createdAt`'s bounds are the only Dates in the filter. Each string bound goes through
+ * `new Date()`, so text it cannot read becomes an invalid Date, which the schema refuses; anything that is
+ * not a string is left for the schema to refuse.
+ */
+const reviveFilterDates = (filter: unknown): unknown => {
+  if (typeof filter !== "object" || filter === null || !("createdAt" in filter)) return filter;
+  const { createdAt } = filter;
+  // An array is an object too; rebuilding it would turn `[]` into `{}`, which the schema accepts.
+  if (typeof createdAt !== "object" || createdAt === null || Array.isArray(createdAt)) return filter;
+  const revive = (value: unknown) => (typeof value === "string" ? new Date(value) : value);
+  const { min, max } = createdAt as { min?: unknown; max?: unknown };
+  return {
+    ...filter,
+    createdAt: {
+      ...(min === undefined ? {} : { min: revive(min) }),
+      ...(max === undefined ? {} : { max: revive(max) }),
+    },
+  };
+};
+
+/**
+ * The Responses filter, read from JSON: a request body, a query parameter or a JSON column. The server
+ * actions keep Dates across the wire, but `JSON.stringify` turns the `createdAt` bounds into strings,
+ * which `ZResponseFilterCriteria` refuses. Parse any filter that crossed JSON with this one (ENG-7228).
+ */
+export const ZResponseFilterCriteriaFromJson = z.preprocess(reviveFilterDates, ZResponseFilterCriteria);
+
+/**
  * The browser-runtime context the survey renderer snapshots once, at display time, and attaches to
  * every write of the response (ENG-1841). Kept as its own schema because three shapes need exactly
  * this set of keys and must not drift: the stored `ZResponseMeta`, the ingest input
@@ -832,7 +862,9 @@ export const ZResponseInput = z.object({
   meta: ZResponseMeta.optional(),
 });
 
-export type TResponseInput = z.infer<typeof ZResponseInput>;
+// `TWithCalBookings` is not in `ZResponseInput` on purpose: the client routes derive it from the survey
+// and the incoming data, so a client-sent value is stripped by the parse and never reaches the column.
+export type TResponseInput = z.infer<typeof ZResponseInput> & TWithCalBookings;
 
 /**
  * Mark as low quality from the survey (ENG-6933, ADR 0022/0024): a rule's action asks the server to set the
@@ -855,7 +887,7 @@ export const ZClientResponseInput = ZResponseInput.extend({
   notShown: ZResponseNotShownInput.optional(),
 });
 
-export type TClientResponseInput = z.infer<typeof ZClientResponseInput>;
+export type TClientResponseInput = z.infer<typeof ZClientResponseInput> & TWithCalBookings;
 
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean().optional(),
@@ -867,7 +899,8 @@ export const ZResponseUpdateInput = z.object({
   pinAuthToken: z.string().nullish(),
 });
 
-export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput>;
+// Same as `TResponseInput`: bookings ride beside the parsed input, never inside the schema.
+export type TResponseUpdateInput = z.infer<typeof ZResponseUpdateInput> & TWithCalBookings;
 
 /**
  * The survey's update input on the public client route
@@ -881,7 +914,7 @@ export const ZClientResponseUpdateInput = ZResponseUpdateInput.extend({
   notShown: ZResponseNotShownInput.optional(),
 });
 
-export type TClientResponseUpdateInput = z.infer<typeof ZClientResponseUpdateInput>;
+export type TClientResponseUpdateInput = z.infer<typeof ZClientResponseUpdateInput> & TWithCalBookings;
 
 export const ZResponseWithSurvey = ZResponse.extend({
   survey: ZSurvey,

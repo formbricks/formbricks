@@ -9,11 +9,8 @@ import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { type TV3SurveyPrepareResult, prepareV3SurveyCreateInput } from "../prepare";
 import { DEFAULT_V3_SURVEY_LANGUAGE, type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "../schemas";
-import {
-  V3_SURVEY_GENERATE_PROMPT_DETAIL_MIN_LENGTH,
-  V3_SURVEY_GENERATE_PROMPT_DETAIL_MIN_WORDS,
-} from "./constants";
 import { buildV3SurveyGenerationPrompt, buildV3SurveyGenerationSystemPrompt } from "./prompt";
+import { isV3SurveyGeneratePromptDetailed } from "./prompt-detail";
 import {
   type TGeneratedSurveyDraft,
   type TGeneratedSurveyElement,
@@ -73,13 +70,7 @@ function text(value: string, language: string): Record<string, string> {
 }
 
 function getPromptInvalidParams(prompt: string): InvalidParam[] {
-  const normalizedPrompt = prompt.trim();
-  const wordCount = normalizedPrompt.split(/\s+/).filter(Boolean).length;
-
-  if (
-    normalizedPrompt.length >= V3_SURVEY_GENERATE_PROMPT_DETAIL_MIN_LENGTH &&
-    wordCount >= V3_SURVEY_GENERATE_PROMPT_DETAIL_MIN_WORDS
-  ) {
+  if (isV3SurveyGeneratePromptDetailed(prompt)) {
     return [];
   }
 

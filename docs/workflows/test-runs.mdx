@@ -10,11 +10,17 @@ A **Test run** runs the workflow as it is in the editor, with its **expected pay
 
 <Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
 
-{/* SCREENSHOT PLACEHOLDER: test-run-result.webp. Run detail of a Test run with the Test label, an If/else that
-took its Then branch with each condition marked matched, and a Send email step showing the address it would have
-emailed. Save to /images/platform/workflows/test-run-result.webp and replace this comment with a <Frame>. */}
+<Frame>
+  <img
+    src="/images/platform/workflows/test-run-result.webp"
+    alt="Test run detail: the HTTP request answered with its expected response body, an If/else that took Then with both conditions matched, and the address the email would go to"
+  />
+</Frame>
 
 ## Start a Test run
+
+Select **Test** in the header, on the Editor or the Runs tab. It opens the **Runs** tab with the **Test the
+draft** card at the top of the runs list. Select **Test** again to hide the card.
 
 ### Webhook trigger
 
@@ -30,10 +36,19 @@ emailed. Save to /images/platform/workflows/test-run-result.webp and replace thi
     run answers with that body.
   </Step>
 
+  <Step title="Check the test payload">
+    The card shows the **Test payload** the run sends, **From the expected payload**. You can edit it to try
+    another case, such as a missing key. Your edits are kept in this browser only (**Edited · saved in this
+    browser**) and never change the expected payload. Select **Reset** to go back to the expected payload.
+  </Step>
+
   <Step title="Run the test">
-    Select **Test run**. Formbricks runs the draft at once and saves the result as a run.
+    Select **Run test**. Formbricks runs the draft at once and saves the result as a run.
   </Step>
 </Steps>
+
+To test again with the payload of an earlier run, open that run, select its trigger step and select **Use as test
+input**.
 
 ### Response completed trigger
 
@@ -48,19 +63,19 @@ emailed. Save to /images/platform/workflows/test-run-result.webp and replace thi
   </Step>
 
   <Step title="Pick the response">
-    Select **Test run**. The drawer lists the survey's responses, newest first, with when each came in, whether it
-    is completed or partial, and its first answer. The newest completed response is selected. Pick another, or
+    The card's **Response to test with** list shows the survey's responses, newest first, with when each came in,
+    **Completed** or **Partial**, and its first answer. The newest completed response is selected. Pick another, or
     select **Load more** to see older ones.
   </Step>
 
   <Step title="Run the test">
     Select **Run test**. Formbricks runs the draft as if that response had just come in and saves the result as a
-    run. To try another response, pick it in the trigger step and select **Run again**.
+    run. To try another response, pick it in the card and select **Run test** again.
   </Step>
 </Steps>
 
 A real run only starts for a completed response, and, if the trigger is limited to certain endings, only for a
-response that reached one of them. You can still test with any other response: the drawer tells you a real run
+response that reached one of them. You can still test with any other response: the card tells you a real run
 would skip it.
 
 You don't have to save or enable the workflow first: a Test run uses the current draft. It does need to pass the
@@ -75,13 +90,15 @@ effect outside Formbricks are replaced:
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **If/else**                       | Runs for real, so you see the branch a real run would take and which conditions matched.                        |
 | **Switch**                        | Runs for real, so you see the case a real run would take, or Default.                                           |
+| **Filter**                        | Runs for real, so you see whether a real run would go on or end there.                                         |
 | **Send email**                    | Sends nothing. Run detail shows the recipient and, if there is one, the survey link the email would have used.  |
-| **HTTP request, Wait and use it** | Calls nothing. Run detail shows the request it would have sent, and later steps get the step's last test response. Without a test response, later steps get no response from it. |
+| **HTTP request, Wait and use it** | Calls nothing. Run detail shows the request it would have sent, and later steps get the step's expected response body. Without one, later steps get no response from it. |
 | **HTTP request, Don't wait**      | Calls nothing. The step ends at once with the request it would have sent.                                       |
 
 ## Find Test runs
 
-Test runs appear under **Runs** with a **Test** label, next to real runs. Use the runs filter to hide them. Test
+Test runs appear under **Runs** with a **Test** label, next to real runs. Filter the list to **All**, **Live** or
+**Test runs**. Test
 runs are never billed and don't count toward usage. They are deleted 7 days after they started (see
 [Run data retention](/workflows/manage-and-monitor#run-data-retention)).
 

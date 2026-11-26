@@ -337,6 +337,8 @@ export const v3ResponseReadSelect = {
   // ENG-6936: exposed read-only. Selected explicitly: the client omits it from every read without one.
   notShown: true,
   data: true,
+  // Omitted from every read by default (`PRISMA_GLOBAL_OMIT`); v3 is one of the two readers.
+  calBookings: true,
   variables: true,
   ttc: true,
   meta: true,

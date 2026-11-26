@@ -531,7 +531,7 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     log("error", "Failed to create user", apiError);
 
     expect(Sentry.captureException).not.toHaveBeenCalled();
-    expect(contextLoggerMock.error).toHaveBeenCalledWith("Failed to create user");
+    expect(contextLoggerMock.error).toHaveBeenCalledWith({ errorType: "Error" }, "Failed to create user");
   });
 
   test("captures a genuine internal fault passed as a trailing arg (DB/adapter error)", () => {
@@ -585,6 +585,48 @@ describe("betterAuthLogger (Sentry capture gating, ENG-2037)", () => {
     );
   });
 
+  /**
+   * ENG-2779: self-hosters have no Sentry, so the application log is their only copy of an auth fault.
+   * The error branch carries the same allowlisted summary the warn branch does, never the raw Error.
+   */
+  test("preserves only an allowlisted error-level error summary in application logs", () => {
+    const dbError = Object.assign(new Error("Connection for admin@example.com included token-secret"), {
+      code: "P1001",
+      databaseUrl: "postgres://user:password-secret@db.example.com/formbricks",
+    });
+    dbError.stack = "Error: stack-secret";
+
+    log("error", "Better auth was unable to query admin@example.com's account", dbError);
+
+    expect(contextLoggerMock.error).toHaveBeenCalledWith(
+      { errorType: "Error", errorCode: "P1001" },
+      "Better auth was unable to query [redacted]@example.com's account"
+    );
+    expect(JSON.stringify(contextLoggerMock.error.mock.calls)).not.toMatch(
+      /token-secret|password-secret|stack-secret/
+    );
+  });
+
+  test("keeps the error type of a recognised fault and reduces any other to Error", () => {
+    log("error", "TypeError", new TypeError("Cannot read properties of null (reading 'id')"));
+    log("error", "Failed to create user", new APIError("UNPROCESSABLE_ENTITY", { message: "nope" }));
+
+    expect(contextLoggerMock.error).toHaveBeenNthCalledWith(1, { errorType: "TypeError" }, "TypeError");
+    expect(contextLoggerMock.error).toHaveBeenNthCalledWith(
+      2,
+      { errorType: "Error" },
+      "Failed to create user"
+    );
+  });
+
+  test("an error passed as the message itself is logged under a fixed label, not stringified", () => {
+    const deadlock = new Error("deadlock detected for admin@example.com");
+
+    log("error", deadlock as unknown as string);
+
+    expect(contextLoggerMock.error).toHaveBeenCalledWith({ errorType: "Error" }, "Better Auth error");
+  });
+
   test("info/debug-level logs go to info and are never captured", () => {
     log("info", "some info");
 
@@ -635,7 +677,7 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
     // Still visible in the application log — suppression is Sentry-only. A burst of these is how a
     // Redis eviction would present, since verification records live in Redis only.
-    expect(contextLoggerMock.error).toHaveBeenCalledWith(message);
+    expect(contextLoggerMock.error).toHaveBeenCalledWith({ errorType: "Error" }, message);
   });
 
   /**
@@ -702,6 +744,72 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
     expect(JSON.stringify(vi.mocked(logger.withContext).mock.calls)).not.toContain(
       "super-secret-state-value"
     );
+  });
+
+  /**
+   * ENG-6692: `state_security_mismatch` ("State not persisted correctly") is four causes behind one throw,
+   * and one of them, a secret split across replicas, is a security-control failure. The route diagnoses
+   * the callback's state cookie into the request context; the capture has to carry it, or FORMBRICKS-17B
+   * stays one undivided issue. A tag, not a fingerprint, so the issue stays one issue with a facet.
+   */
+  test("tags a state_security_mismatch capture with the state cookie diagnosis", () => {
+    const stateError = new StateErrorLike(
+      "State mismatch: State not persisted correctly",
+      "state_security_mismatch"
+    );
+
+    runWithBetterAuthRequestContext(
+      { path: "/callback/*", method: "GET", oauthStateCookie: "signature_invalid" },
+      () => log("error", "Failed to parse state", stateError)
+    );
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(stateError, {
+      tags: {
+        component: "better-auth",
+        "auth.path": "/callback/*",
+        "http.method": "GET",
+        "auth.state_cookie": "signature_invalid",
+      },
+    });
+  });
+
+  // Self-hosters have no Sentry, and the suppressed `state_mismatch` survives only in the log, so the
+  // diagnosis has to reach the log context on every state error, captured or not.
+  test.each(["state_security_mismatch", "state_mismatch"])(
+    "puts the state cookie diagnosis on the log context of %s",
+    (code) => {
+      runWithBetterAuthRequestContext(
+        { path: "/callback/*", method: "GET", oauthStateCookie: "absent" },
+        () => log("error", "Failed to parse state", new StateErrorLike("State mismatch", code))
+      );
+
+      expect(logger.withContext).toHaveBeenCalledWith({
+        source: "better-auth",
+        authPath: "/callback/*",
+        httpMethod: "GET",
+        stateErrorCode: code,
+        oauthStateCookie: "absent",
+      });
+    }
+  );
+
+  // The diagnosis describes the state cookie, so it means nothing on an unrelated fault that happens to
+  // be raised during a callback (a database error while linking the account, say).
+  test("leaves the diagnosis off a fault that is not a state error", () => {
+    const fault = new TypeError("Cannot read properties of null (reading 'id')");
+
+    runWithBetterAuthRequestContext({ path: "/callback/*", method: "GET", oauthStateCookie: "matches" }, () =>
+      log("error", "TypeError", fault)
+    );
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(fault, {
+      tags: { component: "better-auth", "auth.path": "/callback/*", "http.method": "GET" },
+    });
+    expect(logger.withContext).toHaveBeenCalledWith({
+      source: "better-auth",
+      authPath: "/callback/*",
+      httpMethod: "GET",
+    });
   });
 
   // The gate fails CLOSED: anything it cannot positively identify as THE one suppressed code

@@ -433,6 +433,13 @@ export const SURVEY_IMPORT_DOCUMENT_MAX_CHUNKS = 50;
  */
 export const SURVEY_IMPORT_MAX_CREATE_BODY_BYTES = DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1024 * 1024;
 
+/**
+ * Top-level entries of the draft, and of the references, a create or Update body carries. A survey has a
+ * few dozen fields and the references a handful of kinds; counted before the record is copied, so a body
+ * of a million empty keys is refused without building it again.
+ */
+export const SURVEY_IMPORT_MAX_DOCUMENT_ENTRIES = 10_000;
+
 /** How long an `Idempotency-Key` answers repeats with the survey its request created. */
 export const SURVEY_IMPORT_IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
 

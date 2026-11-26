@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { PUT } from "./route";
 
 const { mockGetSession, mockPut } = vi.hoisted(() => ({
@@ -32,7 +33,7 @@ const put = (payload: unknown = body) =>
     new NextRequest("http://localhost/api/internal/embedded-field-labels", {
       method: "PUT",
       body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
     }),
     {}
   );

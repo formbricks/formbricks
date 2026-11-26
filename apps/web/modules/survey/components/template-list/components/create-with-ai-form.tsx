@@ -85,6 +85,7 @@ export const CreateWithAIForm = ({
     status,
     draft,
     canCreate,
+    promptNeedsMoreDetail,
     errorMessage,
     generatingMessages,
     statusIndex,
@@ -286,7 +287,14 @@ export const CreateWithAIForm = ({
               onChange={(event) => setPrompt(event.target.value)}
               onKeyDown={handlePromptKeyDown}
               aria-label={t("workspace.surveys.ai_create.prompt_label")}
+              aria-describedby={promptNeedsMoreDetail ? "ai-survey-prompt-detail-hint" : undefined}
             />
+            {/* Why Create is still disabled for a started prompt: the same rule the server applies. */}
+            {promptNeedsMoreDetail && (
+              <p id="ai-survey-prompt-detail-hint" className="text-xs text-slate-500">
+                {t("workspace.surveys.ai_create.prompt_needs_more_detail")}
+              </p>
+            )}
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
               <span>
                 {t("workspace.surveys.ai_create.characters", {

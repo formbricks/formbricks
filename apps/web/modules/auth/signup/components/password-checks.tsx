@@ -3,6 +3,7 @@
 import { CheckIcon } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { isPasswordWithinByteLimit } from "@formbricks/types/user";
 
 interface PasswordChecksProps {
   readonly password: string | null;
@@ -28,7 +29,7 @@ export const PasswordChecks = ({ password }: PasswordChecksProps) => {
   const DEFAULT_VALIDATIONS = useMemo(
     () => [
       { label: t("auth.signup.password_validation_uppercase_and_lowercase"), state: false },
-      { label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"), state: false },
+      { label: t("auth.signup.password_validation_minimum_8_characters_and_maximum_72_bytes"), state: false },
       { label: t("auth.signup.password_validation_contain_at_least_1_number"), state: false },
     ],
     [t]
@@ -43,8 +44,8 @@ export const PasswordChecks = ({ password }: PasswordChecksProps) => {
         state: PASSWORD_REGEX.UPPER_AND_LOWER.test(password),
       },
       {
-        label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"),
-        state: password.length >= 8 && password.length <= 128,
+        label: t("auth.signup.password_validation_minimum_8_characters_and_maximum_72_bytes"),
+        state: password.length >= 8 && isPasswordWithinByteLimit(password),
       },
       {
         label: t("auth.signup.password_validation_contain_at_least_1_number"),
