@@ -34,6 +34,7 @@ export const AttributesPage = async ({
       isReadOnly={isReadOnly}
       hasContactDirectory={hasContactDirectory}
       isOwnerOrManager={isOwner || isManager}
+      sharedDirectoryName={sharedDirectoryName}
       cta={hasContactDirectory ? <CreateAttributeModal workspaceId={workspace.id} /> : undefined}>
       <AttributesTable
         isReadOnly={isReadOnly}

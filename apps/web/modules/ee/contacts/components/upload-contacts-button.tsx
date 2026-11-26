@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
+import { ArrowUpFromLineIcon, BookUserIcon, FileUpIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -47,13 +47,48 @@ interface UploadContactsCSVButtonProps {
   readonly contactAttributeKeys: TContactAttributeKey[];
   /** The workspace directory's matching key: the column every row needs and contacts are matched on. */
   readonly matchingKey: TContactDirectoryMatchingKey;
+  /** The directory the upload writes to, shown at the top of the dialog. */
+  readonly destination?: { name: string; workspaceNames: string[] } | null;
   readonly disabled?: boolean;
 }
+
+/** "Upload to": the directory the rows land in, the workspaces using it and its matching key. */
+const UploadDestination = ({
+  destination,
+  matchingKey,
+}: Readonly<{
+  destination: UploadContactsCSVButtonProps["destination"];
+  matchingKey: TContactDirectoryMatchingKey;
+}>) => {
+  const { t } = useTranslation();
+  if (!destination) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-medium text-slate-900">{t("workspace.contacts.upload_to")}</p>
+      <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-white p-3">
+        <BookUserIcon className="mt-0.5 size-4 shrink-0 text-slate-500" aria-hidden="true" />
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <p className="truncate text-sm font-medium text-slate-900">{destination.name}</p>
+          <p className="text-sm text-slate-500">
+            {t("workspace.contacts.upload_to_shared_by", {
+              workspaceNames: destination.workspaceNames.join(", "),
+            })}
+            {" · "}
+            {t("workspace.contacts.upload_to_matches_by", {
+              matchingKey: matchingKey === "userId" ? t("common.user_id") : t("common.email"),
+            })}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const UploadContactsCSVButton = ({
   workspaceId,
   contactAttributeKeys,
   matchingKey,
+  destination,
   disabled = false,
 }: UploadContactsCSVButtonProps) => {
   const { t } = useTranslation();
@@ -585,6 +620,8 @@ export const UploadContactsCSVButton = ({
                   </p>
                 </div>
               </div>
+
+              <UploadDestination destination={destination} matchingKey={matchingKey} />
             </div>
           </DialogBody>
 

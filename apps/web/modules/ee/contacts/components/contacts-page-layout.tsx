@@ -5,6 +5,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { ContactDirectoryEmptyState } from "./contact-directory-empty-state";
+import { ContactDirectoryIndicator } from "./contact-directory-indicator";
 import { ContactsSecondaryNavigation } from "./contacts-secondary-navigation";
 
 interface ContactsPageLayoutProps {
@@ -18,6 +19,8 @@ interface ContactsPageLayoutProps {
   readonly hasContactDirectory: boolean;
   readonly isOwnerOrManager: boolean;
   readonly cta?: ReactNode;
+  /** The workspace's directory when other workspaces share it, shown next to the CTA, read-only users included. */
+  readonly sharedDirectoryName?: string | null;
   readonly children: ReactNode;
   readonly upgradePromptTitle?: string;
   readonly upgradePromptDescription?: string;
@@ -34,6 +37,7 @@ export const ContactsPageLayout = async ({
   hasContactDirectory,
   isOwnerOrManager,
   cta,
+  sharedDirectoryName,
   children,
   upgradePromptTitle,
   upgradePromptDescription,
@@ -41,10 +45,29 @@ export const ContactsPageLayout = async ({
 }: ContactsPageLayoutProps) => {
   const t = await getTranslate();
   const organizationBillingPath = `/organizations/${organizationId}/settings/billing`;
+  const visibleCta = isContactsEnabled && !isReadOnly ? cta : undefined;
+  const directoryIndicator =
+    isContactsEnabled && hasContactDirectory && sharedDirectoryName ? (
+      <ContactDirectoryIndicator
+        label={t("workspace.contacts.directory_line", { directoryName: sharedDirectoryName })}
+        href={isOwnerOrManager ? `/organizations/${organizationId}/settings/contact-directories` : undefined}
+      />
+    ) : null;
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={pageTitle} cta={isContactsEnabled && !isReadOnly ? cta : undefined}>
+      <PageHeader
+        pageTitle={pageTitle}
+        cta={
+          directoryIndicator ? (
+            <div className="flex items-center gap-2">
+              {directoryIndicator}
+              {visibleCta}
+            </div>
+          ) : (
+            visibleCta
+          )
+        }>
         <ContactsSecondaryNavigation activeId={activeId} workspaceId={workspaceId} />
       </PageHeader>
 

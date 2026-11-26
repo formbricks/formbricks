@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "Partnerek feltöltése",
       "upload_contacts_multi_match": "{count, plural, one {{count} sor egynél több névjegyre illeszkedett. A rendszer az azonos userId-val rendelkező névjegyet frissítette, ennek hiányában a legrégebbit.} other {{count} sor egynél több névjegyre illeszkedett. A rendszer mindegyik esetben az azonos userId-val rendelkező névjegyet frissítette, ennek hiányában a legrégebbit.}}",
       "upload_contacts_success": "A partnerek sikeresen feltöltve",
-      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} sor olyan userId-t tartalmazott, amely egy másik kapcsolattartó adatai között már szerepel ebben a címtárban. A sor importálása ezen userId nélkül történt meg.} other {{count} sor olyan userId-t tartalmazott, amely más kapcsolattartók adatai között már szerepel ebben a címtárban. A sorok importálása ezen userId-k nélkül történt meg.}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} sor olyan userId-t tartalmazott, amely egy másik kapcsolattartó adatai között már szerepel ebben a címtárban. A sor importálása ezen userId nélkül történt meg.} other {{count} sor olyan userId-t tartalmazott, amely más kapcsolattartók adatai között már szerepel ebben a címtárban. A sorok importálása ezen userId-k nélkül történt meg.}}",
+      "upload_to": "Feltöltés ide:",
+      "upload_to_matches_by": "A névjegyeket a következő alapján egyezteti: {matchingKey}",
+      "upload_to_shared_by": "Használja: {workspaceNames}"
     },
     "creatives": {
       "archive_anyway": "Archiválás mindenképpen",
@@ -3580,7 +3583,6 @@
         "your_plan": "Az Ön csomagja"
       },
       "contact_directories": {
-        "also_archive_directory": "Kérjük, archiválja ezt a könyvtárat is",
         "archive_directory": "Címtár archiválása",
         "archive_needs_no_workspaces": "Kizárólag olyan címtár archiválható, amelyhez nem tartozik munkaterület. Jelen címtár archiválásához kérjük, távolítsa el a hozzá tartozó munkaterületeket, majd mentse a módosítást.",
         "create_directory": "Címtár létrehozása",
@@ -3605,8 +3607,6 @@
         "manage_directory": "Címtár kezelése",
         "match_contacts_by": "A kapcsolattartók egyeztetésének alapja",
         "matches_by": "Az egyeztetés alapja",
-        "matches_contacts_by_email": "A kapcsolattartók egyeztetése e-mail-cím alapján történik",
-        "matches_contacts_by_user_id": "A kapcsolattartók egyeztetése felhasználóazonosító alapján történik",
         "matching_key_help": "Kérjük, válassza ki az Ön egyedi azonosítóját. Az azonosító a címtár létrehozását követően már nem módosítható.",
         "name_placeholder": "pl. Northwind EU",
         "nav_label": "Könyvtárak",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "A setUserId hívás hibával meghiúsul, mivel a munkaterülethez nem tartozik kapcsolattartói címtár.",
         "removal_effect_pages": "A munkaterület Kapcsolattartók, Attribútumok és Szegmensek oldala üres lesz.",
         "removal_effect_responses": "A munkaterület meglévő válaszainál a „Kapcsolattartó nem érhető el” felirat fog megjelenni.",
-        "removal_keeps_data": "A kapcsolattartók, attribútumok és szegmensek a(z) {directoryName} címtárban megmaradnak. A munkaterület ismételt hozzáadásával ezek visszaállíthatók.",
-        "remove_workspaces": "Munkaterületek eltávolítása",
-        "remove_workspaces_title": "Eltávolítja Ön a(z) {workspaceNames} munkaterületet a(z) {directoryName} címtárból?",
+        "removal_effects_heading": "Milyen hatással lesz ez az Ön munkaterületére",
+        "removal_effects_heading_named": "Milyen hatással lesz ez a következő munkaterületre: „{workspaceName}”",
+        "removal_keeps_data": "A kapcsolattartók, az attribútumok és a szegmensek megmaradnak a kapcsolattartói címtárban.",
+        "remove_workspaces": "Munkaterületek hozzáférésének eltávolítása a következő kapcsolattartói címtárból: „{directoryName}”",
+        "remove_workspaces_title": "Eltávolítja a(z) „{directoryName}” címtárhoz való hozzáférést {count, plural, one {a(z) „{workspaceNames}” munkaterületről} other {a következő munkaterületekről: {workspaceNames}}}?",
         "save_failed": "A címtár mentése nem sikerült. Kérjük, próbálja meg újra.",
         "select_workspaces_placeholder": "Munkaterületek kiválasztása",
         "shared_contacts_note_email": "Az egy címtárban lévő munkaterületek megosztják egymással a kapcsolataikat. A CSV-importálás és az API az e-mail-cím alapján párosítja össze a kapcsolatokat.",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "Címtár archiválásának visszavonása",
         "unarchive_directory_description": "A mentéssel a könyvtár archiválása megszűnik. Ezzel egy időben munkaterületeket is kiválaszthat, és a könyvtár névjegyei ismét megjelennek azokban.",
         "workspace_in_directory": "Ebben a címtárban: {directoryName}",
-        "workspaces_help": "Kérjük, válassza ki, mely munkaterületek használják közösen ezt a címtárat."
+        "workspaces_help": "Kérjük, válassza ki, mely munkaterületek férhetnek hozzá ehhez a címtárhoz."
       },
       "data_retention": {
         "add_exemption": "Kivétel hozzáadása",

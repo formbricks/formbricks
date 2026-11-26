@@ -66,13 +66,7 @@ export const getRemovedWorkspaces = (
 export const getDirectorySaveEffect = (
   directory: TContactDirectory | undefined,
   workspaceIds: string[]
-): { removed: TContactDirectoryWorkspaceRef[]; removesLastWorkspace: boolean; unarchives: boolean } => {
-  const removed = getRemovedWorkspaces(directory, workspaceIds);
-  return {
-    removed,
-    removesLastWorkspace: Boolean(
-      directory && !directory.isArchived && removed.length > 0 && workspaceIds.length === 0
-    ),
-    unarchives: Boolean(directory?.isArchived),
-  };
-};
+): { removed: TContactDirectoryWorkspaceRef[]; unarchives: boolean } => ({
+  removed: getRemovedWorkspaces(directory, workspaceIds),
+  unarchives: Boolean(directory?.isArchived),
+});

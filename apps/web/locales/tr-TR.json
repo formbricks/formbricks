@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "Kişileri yükle",
       "upload_contacts_multi_match": "{count, plural, one {{count} satır birden fazla kişiyle eşleşti. Aynı userId'ye sahip kişi güncellendi, yoksa en eski kişi güncellendi.} other {{count} satır birden fazla kişiyle eşleşti. Her biri için aynı userId'ye sahip kişi güncellendi, yoksa en eski kişi güncellendi.}}",
       "upload_contacts_success": "Kişiler başarıyla yüklendi",
-      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} satırdaki userId bu dizindeki başka bir kişide zaten var. Bu satır, söz konusu userId olmadan içe aktarıldı.} other {{count} satırdaki userId değerleri bu dizindeki diğer kişilerde zaten var. Bu satırlar, söz konusu userId değerleri olmadan içe aktarıldı.}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} satırdaki userId bu dizindeki başka bir kişide zaten var. Bu satır, söz konusu userId olmadan içe aktarıldı.} other {{count} satırdaki userId değerleri bu dizindeki diğer kişilerde zaten var. Bu satırlar, söz konusu userId değerleri olmadan içe aktarıldı.}}",
+      "upload_to": "Şuraya yükle",
+      "upload_to_matches_by": "Kişileri {matchingKey} alanına göre eşleştirir",
+      "upload_to_shared_by": "{workspaceNames} tarafından kullanılıyor"
     },
     "creatives": {
       "archive_anyway": "Yine de arşivle",
@@ -3580,7 +3583,6 @@
         "your_plan": "Planın"
       },
       "contact_directories": {
-        "also_archive_directory": "Bu rehberi de arşivle",
         "archive_directory": "Dizini arşivle",
         "archive_needs_no_workspaces": "Yalnızca hiç çalışma alanı olmayan bir dizin arşivlenebilir. Bu dizini arşivlemek için çalışma alanlarını kaldır ve kaydet.",
         "create_directory": "Dizin oluştur",
@@ -3605,8 +3607,6 @@
         "manage_directory": "Dizini yönet",
         "match_contacts_by": "Kişileri şuna göre eşleştir",
         "matches_by": "Eşleştirme ölçütü",
-        "matches_contacts_by_email": "Kişileri e-postaya göre eşleştirir",
-        "matches_contacts_by_user_id": "Kişileri Kullanıcı Kimliğine göre eşleştirir",
         "matching_key_help": "Benzersiz tanımlayıcını seç. Tanımlayıcı, dizin oluşturulduktan sonra değiştirilemez.",
         "name_placeholder": "ör. Northwind EU",
         "nav_label": "Dizinler",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "setUserId, çalışma alanının kişi dizini olmadığı hatasıyla başarısız olacak.",
         "removal_effect_pages": "Kişiler, Özellikler ve Segmentler sayfaları boş olacak.",
         "removal_effect_responses": "Mevcut yanıtlarında \"Kişi mevcut değil\" yazacak.",
-        "removal_keeps_data": "Kişiler, özellikler ve segmentler {directoryName} içinde kalır. Bir çalışma alanını geri eklediğinde bunlar geri gelir.",
-        "remove_workspaces": "Çalışma alanlarını kaldır",
-        "remove_workspaces_title": "{workspaceNames} çalışma alanı {directoryName} dizininden kaldırılsın mı?",
+        "removal_effects_heading": "Çalışma alanın nasıl etkilenecek?",
+        "removal_effects_heading_named": "“{workspaceName}” nasıl etkilenecek?",
+        "removal_keeps_data": "Kişiler, özellikler ve segmentler kişi dizininde kalır.",
+        "remove_workspaces": "Çalışma alanlarının “{directoryName}” kişi dizinine erişimini kaldır",
+        "remove_workspaces_title": "“{directoryName}” dizinine erişim, {count, plural, one {“{workspaceNames}” çalışma alanından} other {{workspaceNames} çalışma alanlarından}} kaldırılsın mı?",
         "save_failed": "Dizin kaydedilemedi. Lütfen tekrar dene.",
         "select_workspaces_placeholder": "Çalışma alanlarını seç",
         "shared_contacts_note_email": "Aynı dizindeki çalışma alanları kişileri paylaşır. CSV içe aktarmaları ve API, kişileri e-postaya göre eşleştirir.",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "Dizini arşivden çıkar",
         "unarchive_directory_description": "Kaydettiğinde dizin arşivden çıkarılır. Şimdi çalışma alanlarını da seçebilirsin; dizindeki kişiler bu alanlarda yeniden görünür.",
         "workspace_in_directory": "{directoryName} içinde",
-        "workspaces_help": "Bu dizini hangi çalışma alanlarının paylaşacağını seç."
+        "workspaces_help": "Bu dizine hangi çalışma alanlarının erişebileceğini seç."
       },
       "data_retention": {
         "add_exemption": "İstisna ekle",

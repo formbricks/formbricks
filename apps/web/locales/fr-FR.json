@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "Importer des contacts",
       "upload_contacts_multi_match": "{count, plural, one {{count} ligne correspond à plusieurs contacts. Elle a mis à jour le contact avec le même userId, ou à défaut le plus ancien.} many {{count} de lignes correspondent à plusieurs contacts. Chacune a mis à jour le contact avec le même userId, ou à défaut le plus ancien.} other {{count} lignes correspondent à plusieurs contacts. Chacune a mis à jour le contact avec le même userId, ou à défaut le plus ancien.}}",
       "upload_contacts_success": "Contacts téléchargés avec succès",
-      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} ligne contenait un userId déjà associé à un autre contact de ce répertoire. Elle a été importée sans ce userId.} many {{count} lignes contenaient des userId déjà associés à d'autres contacts de ce répertoire. Elles ont été importées sans ces userId.} other {{count} lignes contenaient des userId déjà associés à d'autres contacts de ce répertoire. Elles ont été importées sans ces userId.}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} ligne contenait un userId déjà associé à un autre contact de ce répertoire. Elle a été importée sans ce userId.} many {{count} lignes contenaient des userId déjà associés à d'autres contacts de ce répertoire. Elles ont été importées sans ces userId.} other {{count} lignes contenaient des userId déjà associés à d'autres contacts de ce répertoire. Elles ont été importées sans ces userId.}}",
+      "upload_to": "Importer vers",
+      "upload_to_matches_by": "Associe les contacts selon {matchingKey}",
+      "upload_to_shared_by": "Utilisé par {workspaceNames}"
     },
     "creatives": {
       "archive_anyway": "Archiver quand même",
@@ -3580,7 +3583,6 @@
         "your_plan": "Ton offre"
       },
       "contact_directories": {
-        "also_archive_directory": "Archiver aussi ce répertoire",
         "archive_directory": "Archiver le répertoire",
         "archive_needs_no_workspaces": "Seul un répertoire sans espace de travail peut être archivé. Pour archiver celui-ci, retire ses espaces de travail et enregistre.",
         "create_directory": "Créer un répertoire",
@@ -3605,8 +3607,6 @@
         "manage_directory": "Gérer le répertoire",
         "match_contacts_by": "Associer les contacts par",
         "matches_by": "Association par",
-        "matches_contacts_by_email": "Associe les contacts par e-mail",
-        "matches_contacts_by_user_id": "Associe les contacts par ID utilisateur",
         "matching_key_help": "Choisis ton identifiant unique. Il ne pourra plus être modifié une fois le répertoire créé.",
         "name_placeholder": "ex. : Northwind EU",
         "nav_label": "Répertoires",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "setUserId échouera avec l'erreur indiquant que l'espace de travail n'a pas de répertoire de contacts.",
         "removal_effect_pages": "Ses pages Contacts, Attributs et Segments seront vides.",
         "removal_effect_responses": "Ses réponses existantes afficheront « Contact non disponible ».",
-        "removal_keeps_data": "Les contacts, attributs et segments restent dans {directoryName}. En rajoutant un espace de travail, tu les retrouveras.",
-        "remove_workspaces": "Retirer les espaces de travail",
-        "remove_workspaces_title": "Retirer {workspaceNames} de {directoryName} ?",
+        "removal_effects_heading": "Comment votre espace de travail sera affecté",
+        "removal_effects_heading_named": "Comment « {workspaceName} » sera affecté",
+        "removal_keeps_data": "Les contacts, les attributs et les segments restent dans l'annuaire de contacts.",
+        "remove_workspaces": "Supprimer l'accès des espaces de travail à l'annuaire de contacts « {directoryName} »",
+        "remove_workspaces_title": "Retirer l'accès à l'annuaire « {directoryName} » {count, plural, one {pour l'espace de travail « {workspaceNames} »} many {pour {workspaceNames}} other {pour {workspaceNames}}} ?",
         "save_failed": "Impossible d'enregistrer le répertoire. Réessaie.",
         "select_workspaces_placeholder": "Sélectionner des espaces de travail",
         "shared_contacts_note_email": "Les espaces de travail d'un même répertoire partagent leurs contacts. Les imports CSV et l'API associent les contacts par e-mail.",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "Désarchiver le répertoire",
         "unarchive_directory_description": "L'enregistrement désarchive le répertoire. Tu peux aussi choisir des espaces de travail dès maintenant, et ses contacts s'y afficheront à nouveau.",
         "workspace_in_directory": "Dans {directoryName}",
-        "workspaces_help": "Choisis les espaces de travail qui partagent ce répertoire."
+        "workspaces_help": "Choisis les espaces de travail qui peuvent accéder à cet annuaire."
       },
       "data_retention": {
         "add_exemption": "Ajouter une exemption",

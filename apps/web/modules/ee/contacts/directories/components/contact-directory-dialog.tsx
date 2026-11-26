@@ -116,14 +116,10 @@ export const ContactDirectoryDialog = ({
     toast.error(message);
   };
 
-  // A save never archives (ADR 0062). "Also archive" in the removal step sends the Archive button's own
-  // request once the removal is saved; if that fails, the directory just stays active with no workspaces.
+  // A save never archives (ADR 0062): archiving is the Archive button's own action.
   const saveChanges = (
     data: TContactDirectoryFormData,
-    {
-      pauseSurveysInWorkspaceIds = [],
-      archive = false,
-    }: { pauseSurveysInWorkspaceIds?: string[]; archive?: boolean } = {}
+    { pauseSurveysInWorkspaceIds = [] }: { pauseSurveysInWorkspaceIds?: string[] } = {}
   ) => {
     if (!directory) return;
     const input: TContactDirectoryUpdateInput = { name: data.name.trim(), workspaceIds: data.workspaceIds };
@@ -139,30 +135,10 @@ export const ContactDirectoryDialog = ({
       { directoryId: directory.id, input },
       {
         onSuccess: () => {
-          if (archive) {
-            archiveAfterRemoval(directory.id);
-            return;
-          }
           toast.success(successMessage);
           onClose();
         },
         onError: handleSaveError,
-      }
-    );
-  };
-
-  const archiveAfterRemoval = (directoryId: string) => {
-    updateDirectory.mutate(
-      { directoryId, input: { isArchived: true } },
-      {
-        onSuccess: () => {
-          toast.success(t("workspace.settings.contact_directories.directory_archived"));
-          onClose();
-        },
-        onError: (error) => {
-          toast.error(getContactDirectoryErrorMessage(error, t));
-          onClose();
-        },
       }
     );
   };
@@ -253,32 +229,25 @@ export const ContactDirectoryDialog = ({
                 )}
               />
 
-              {directory ? (
-                // Review point 7: fixed once the directory exists, so shown as text, not a disabled toggle.
-                <p className="text-sm text-slate-700">
-                  {directory.matchingKey === "userId"
-                    ? t("workspace.settings.contact_directories.matches_contacts_by_user_id")
-                    : t("workspace.settings.contact_directories.matches_contacts_by_email")}
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  <Label id={`${MATCHING_KEY_TOGGLE_ID}-toggle-label`}>
-                    {t("workspace.settings.contact_directories.match_contacts_by")}
-                  </Label>
-                  <Muted className="block text-slate-500">
-                    {t("workspace.settings.contact_directories.matching_key_help")}
-                  </Muted>
-                  <TabToggle<TContactDirectoryMatchingKey>
-                    id={MATCHING_KEY_TOGGLE_ID}
-                    options={[
-                      { value: "email", label: t("common.email") },
-                      { value: "userId", label: t("common.user_id") },
-                    ]}
-                    value={matchingKey}
-                    onChange={(value) => setValue("matchingKey", value, { shouldDirty: true })}
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label id={`${MATCHING_KEY_TOGGLE_ID}-toggle-label`}>
+                  {t("workspace.settings.contact_directories.match_contacts_by")}
+                </Label>
+                <Muted className="block text-slate-500">
+                  {t("workspace.settings.contact_directories.matching_key_help")}
+                </Muted>
+                {/* Fixed once the directory exists: disabled, with the chosen key still legible. */}
+                <TabToggle<TContactDirectoryMatchingKey>
+                  id={MATCHING_KEY_TOGGLE_ID}
+                  options={[
+                    { value: "email", label: t("common.email") },
+                    { value: "userId", label: t("common.user_id") },
+                  ]}
+                  value={directory ? directory.matchingKey : matchingKey}
+                  disabled={Boolean(directory)}
+                  onChange={(value) => setValue("matchingKey", value, { shouldDirty: true })}
+                />
+              </div>
 
               <FormField
                 control={control}
@@ -347,7 +316,6 @@ export const ContactDirectoryDialog = ({
         <ContactDirectoryRemovalDialog
           directory={directory}
           removed={pendingEffect.removed}
-          removesLastWorkspace={pendingEffect.removesLastWorkspace}
           isSaving={updateDirectory.isPending}
           onBack={() => setPendingRemoval(null)}
           onConfirm={(choice) => saveChanges(pendingRemoval, choice)}

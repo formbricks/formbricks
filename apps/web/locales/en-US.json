@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "Upload contacts",
       "upload_contacts_multi_match": "{count, plural, one {{count} row matched more than one contact. It updated the contact with the same userId, or else the oldest one.} other {{count} rows matched more than one contact. Each updated the contact with the same userId, or else the oldest one.}}",
       "upload_contacts_success": "Contacts uploaded successfully",
-      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} row had a userId that another contact in this directory already has. It was imported without that userId.} other {{count} rows had userIds that other contacts in this directory already have. They were imported without those userIds.}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} row had a userId that another contact in this directory already has. It was imported without that userId.} other {{count} rows had userIds that other contacts in this directory already have. They were imported without those userIds.}}",
+      "upload_to": "Upload to",
+      "upload_to_matches_by": "Matches contacts by {matchingKey}",
+      "upload_to_shared_by": "Used by {workspaceNames}"
     },
     "creatives": {
       "archive_anyway": "Archive anyway",
@@ -3580,7 +3583,6 @@
         "your_plan": "Your plan"
       },
       "contact_directories": {
-        "also_archive_directory": "Also archive this directory",
         "archive_directory": "Archive directory",
         "archive_needs_no_workspaces": "Only a directory with no workspaces can be archived. To archive this one, remove its workspaces and save.",
         "create_directory": "Create directory",
@@ -3601,13 +3603,10 @@
         "error_workspace_in_other_directory": "A workspace you picked now uses another contact directory. Reload the page and try again.",
         "error_workspace_not_movable": "A workspace you picked can no longer move to this directory. Reload the page and try again.",
         "error_workspace_required": "Pick at least one workspace.",
-
         "load_failed": "Couldn't load contact directories.",
         "manage_directory": "Manage directory",
         "match_contacts_by": "Match contacts by",
         "matches_by": "Matches by",
-        "matches_contacts_by_email": "Matches contacts by Email",
-        "matches_contacts_by_user_id": "Matches contacts by User ID",
         "matching_key_help": "Choose your unique identifier. The identifier cannot be changed after a directory is created.",
         "name_placeholder": "e.g. Northwind EU",
         "nav_label": "Directories",
@@ -3617,9 +3616,11 @@
         "removal_effect_identify": "setUserId will fail with the error that the workspace has no contact directory.",
         "removal_effect_pages": "Its Contacts, Attributes and Segments pages will be empty.",
         "removal_effect_responses": "Its existing responses will show \"Contact not available\".",
-        "removal_keeps_data": "Contacts, attributes and segments stay in {directoryName}. Adding a workspace back restores them.",
-        "remove_workspaces": "Remove workspaces",
-        "remove_workspaces_title": "Remove {workspaceNames} from {directoryName}?",
+        "removal_effects_heading": "How your workspace will be affected",
+        "removal_effects_heading_named": "How “{workspaceName}” will be affected",
+        "removal_keeps_data": "Contacts, attributes and segments stay in the contact directory.",
+        "remove_workspaces": "Remove workspace access to “{directoryName}” contact directory",
+        "remove_workspaces_title": "Remove “{directoryName}” directory access from {count, plural, one {“{workspaceNames}” workspace} other {{workspaceNames}}}?",
         "save_failed": "Couldn't save the directory. Please try again.",
         "select_workspaces_placeholder": "Select workspaces",
         "shared_contacts_note_email": "Workspaces in one directory share their contacts. CSV imports and the API match contacts by email.",
@@ -3633,7 +3634,7 @@
         "unarchive_directory": "Unarchive directory",
         "unarchive_directory_description": "Saving unarchives the directory. You can also pick workspaces now, and its contacts show again in them.",
         "workspace_in_directory": "In {directoryName}",
-        "workspaces_help": "Choose which workspaces share this directory."
+        "workspaces_help": "Choose which workspaces can access this directory."
       },
       "data_retention": {
         "add_exemption": "Add exemption",

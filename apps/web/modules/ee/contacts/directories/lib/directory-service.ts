@@ -432,6 +432,23 @@ export const updateContactDirectory = async ({
   });
 };
 
+/** The directory a CSV upload in this workspace writes to, with the workspaces that share it, by name. */
+export const getContactDirectoryUploadDestination = async (
+  workspaceId: string
+): Promise<{ name: string; workspaceNames: string[] } | null> => {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: {
+      contactDirectory: {
+        select: { name: true, workspaces: { select: { name: true }, orderBy: { name: "asc" } } },
+      },
+    },
+  });
+  const directory = workspace?.contactDirectory;
+  if (!directory) return null;
+  return { name: directory.name, workspaceNames: directory.workspaces.map(({ name }) => name) };
+};
+
 /** The name of the workspace's directory when other workspaces share it, for the Contacts page line. */
 export const getSharedContactDirectoryName = async (workspaceId: string): Promise<string | null> => {
   const workspace = await prisma.workspace.findUnique({

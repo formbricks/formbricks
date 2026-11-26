@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "上传 联系人",
       "upload_contacts_multi_match": "{count, plural, other {有 {count} 行匹配到多个联系人。系统已更新 userId 相同的联系人;如果没有,则更新最早创建的联系人。}}",
       "upload_contacts_success": "联系人上传成功",
-      "upload_contacts_user_ids_left_out": "{count, plural, other {有 {count} 行的 userId 与此通讯录中其他联系人的 userId 重复，已在不导入该 userId 的情况下完成导入。}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, other {有 {count} 行的 userId 与此通讯录中其他联系人的 userId 重复，已在不导入该 userId 的情况下完成导入。}}",
+      "upload_to": "上传到",
+      "upload_to_matches_by": "按 {matchingKey} 匹配联系人",
+      "upload_to_shared_by": "由 {workspaceNames} 使用"
     },
     "creatives": {
       "archive_anyway": "仍然归档",
@@ -3580,7 +3583,6 @@
         "your_plan": "你的套餐"
       },
       "contact_directories": {
-        "also_archive_directory": "同时归档此目录",
         "archive_directory": "归档目录",
         "archive_needs_no_workspaces": "只有不含任何工作区的目录才能归档。若要归档此目录，请先移除其工作区并保存。",
         "create_directory": "创建目录",
@@ -3605,8 +3607,6 @@
         "manage_directory": "管理目录",
         "match_contacts_by": "联系人匹配方式",
         "matches_by": "匹配方式",
-        "matches_contacts_by_email": "按电子邮件匹配联系人",
-        "matches_contacts_by_user_id": "按用户 ID 匹配联系人",
         "matching_key_help": "请选择你的唯一标识符。目录创建后，标识符无法更改。",
         "name_placeholder": "例如:Northwind EU",
         "nav_label": "目录",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "setUserId 将失败，并提示该工作区没有联系人目录。",
         "removal_effect_pages": "其“联系人”、“属性”和“细分”页面将为空。",
         "removal_effect_responses": "其现有回复将显示“联系人不可用”。",
-        "removal_keeps_data": "联系人、属性和细分会保留在 {directoryName} 中。重新添加工作区即可恢复它们。",
-        "remove_workspaces": "移除工作区",
-        "remove_workspaces_title": "要将 {workspaceNames} 从 {directoryName} 中移除吗?",
+        "removal_effects_heading": "这会对你的工作区产生哪些影响",
+        "removal_effects_heading_named": "这会对“{workspaceName}”产生哪些影响",
+        "removal_keeps_data": "联系人、属性和细分仍会保留在联系人目录中。",
+        "remove_workspaces": "移除工作区对“{directoryName}”联系人目录的访问权限",
+        "remove_workspaces_title": "要移除{count, plural, other {{workspaceNames}}}对“{directoryName}”目录的访问权限吗?",
         "save_failed": "无法保存目录,请重试。",
         "select_workspaces_placeholder": "选择工作区",
         "shared_contacts_note_email": "同一个目录中的工作区共享联系人。CSV 导入和 API 会按电子邮件匹配联系人。",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "取消归档目录",
         "unarchive_directory_description": "保存后将取消归档该目录。你也可以现在选择工作区，该目录中的联系人将重新显示在这些工作区中。",
         "workspace_in_directory": "在 {directoryName} 中",
-        "workspaces_help": "选择哪些工作区共享此目录。"
+        "workspaces_help": "选择哪些工作区可以访问此目录。"
       },
       "data_retention": {
         "add_exemption": "添加豁免",

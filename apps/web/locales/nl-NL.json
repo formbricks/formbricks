@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "Contacten uploaden",
       "upload_contacts_multi_match": "{count, plural, one {{count} rij kwam overeen met meer dan één contact. Hierbij is het contact met dezelfde userId bijgewerkt, of anders het oudste contact.} other {{count} rijen kwamen overeen met meer dan één contact. Hierbij is telkens het contact met dezelfde userId bijgewerkt, of anders het oudste contact.}}",
       "upload_contacts_success": "Contacten succesvol geüpload",
-      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} rij had een userId dat een ander contact in deze map al heeft. Deze rij is geïmporteerd zonder dat userId.} other {{count} rijen hadden userIds die andere contacten in deze map al hebben. Deze rijen zijn geïmporteerd zonder die userIds.}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} rij had een userId dat een ander contact in deze map al heeft. Deze rij is geïmporteerd zonder dat userId.} other {{count} rijen hadden userIds die andere contacten in deze map al hebben. Deze rijen zijn geïmporteerd zonder die userIds.}}",
+      "upload_to": "Uploaden naar",
+      "upload_to_matches_by": "Koppelt contacten op basis van {matchingKey}",
+      "upload_to_shared_by": "Gebruikt door {workspaceNames}"
     },
     "creatives": {
       "archive_anyway": "Toch archiveren",
@@ -3580,7 +3583,6 @@
         "your_plan": "Jouw abonnement"
       },
       "contact_directories": {
-        "also_archive_directory": "Archiveer deze map ook",
         "archive_directory": "Map archiveren",
         "archive_needs_no_workspaces": "Alleen een map zonder werkruimtes kan worden gearchiveerd. Wil je deze map archiveren? Verwijder dan de werkruimtes en sla op.",
         "create_directory": "Contactmap aanmaken",
@@ -3605,8 +3607,6 @@
         "manage_directory": "Contactmap beheren",
         "match_contacts_by": "Contacten koppelen op basis van",
         "matches_by": "Koppelt op basis van",
-        "matches_contacts_by_email": "Koppelt contacten op basis van e-mail",
-        "matches_contacts_by_user_id": "Koppelt contacten op basis van gebruikers-ID",
         "matching_key_help": "Kies je unieke identificatie. De identificatie kan niet meer worden gewijzigd nadat een map is aangemaakt.",
         "name_placeholder": "bijv. Northwind EU",
         "nav_label": "Directory's",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "setUserId mislukt met de foutmelding dat de werkruimte geen contactmap heeft.",
         "removal_effect_pages": "De pagina's Contacten, Attributen en Segmenten zijn dan leeg.",
         "removal_effect_responses": "Bestaande reacties tonen \"Contact niet beschikbaar\".",
-        "removal_keeps_data": "Contacten, attributen en segmenten blijven in {directoryName} staan. Als je een werkruimte weer toevoegt, worden ze hersteld.",
-        "remove_workspaces": "Werkruimtes verwijderen",
-        "remove_workspaces_title": "{workspaceNames} verwijderen uit {directoryName}?",
+        "removal_effects_heading": "Wat dit betekent voor je werkruimte",
+        "removal_effects_heading_named": "Wat dit betekent voor “{workspaceName}”",
+        "removal_keeps_data": "Contacten, kenmerken en segmenten blijven behouden in de contactmap.",
+        "remove_workspaces": "Toegang van werkruimte tot contactmap “{directoryName}” verwijderen",
+        "remove_workspaces_title": "Toegang tot de map “{directoryName}” verwijderen voor {count, plural, one {werkruimte “{workspaceNames}”} other {{workspaceNames}}}?",
         "save_failed": "Kan de contactmap niet opslaan. Probeer het opnieuw.",
         "select_workspaces_placeholder": "Kies werkruimtes",
         "shared_contacts_note_email": "Workspaces in één map delen hun contacten. CSV-imports en de API koppelen contacten op basis van e-mailadres.",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "Map uit archief halen",
         "unarchive_directory_description": "Als je opslaat, wordt de map weer uit het archief gehaald. Je kunt nu ook werkruimtes kiezen, dan zijn de contacten er weer in te zien.",
         "workspace_in_directory": "In {directoryName}",
-        "workspaces_help": "Kies welke workspaces deze map delen."
+        "workspaces_help": "Kies welke werkruimtes toegang hebben tot deze map."
       },
       "data_retention": {
         "add_exemption": "Uitzondering toevoegen",

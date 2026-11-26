@@ -27,17 +27,13 @@ import type {
 interface ContactDirectoryRemovalDialogProps {
   directory: TContactDirectory;
   removed: TContactDirectoryWorkspaceRef[];
-  /** The save leaves the directory with no workspaces, so it can also be archived afterwards. */
-  removesLastWorkspace: boolean;
   isSaving: boolean;
   onBack: () => void;
-  /**
-   * Called with the removed workspaces whose targeted surveys should be paused, and whether to archive the
-   * directory once the removal is saved.
-   */
-  onConfirm: (choice: { pauseSurveysInWorkspaceIds: string[]; archive: boolean }) => void;
+  /** Called with the removed workspaces whose targeted surveys should be paused. */
+  onConfirm: (choice: { pauseSurveysInWorkspaceIds: string[] }) => void;
 }
 
+/** The running surveys that stop reaching anyone, with "Pause these surveys". Only shown when there are some. */
 const WorkspaceSurveys = ({
   workspace,
   surveys,
@@ -53,13 +49,6 @@ const WorkspaceSurveys = ({
   onPausedChange: (paused: boolean) => void;
 }>) => {
   const { t } = useTranslation();
-  if (surveys.length === 0) {
-    return (
-      <p className="text-sm text-slate-500">
-        {t("workspace.settings.contact_directories.no_targeted_surveys")}
-      </p>
-    );
-  }
   const checkboxId = `contact-directory-pause-${workspace.id}`;
   return (
     <div className="space-y-2">
@@ -103,15 +92,12 @@ const WorkspaceSurveys = ({
 /**
  * The confirm step of a Manage save that removes workspaces (decision 2): per removed workspace, what
  * changes, the running surveys that stop reaching anyone, and a "Pause these surveys" box ticked by
- * default. When no workspaces are left, an unticked "Also archive this directory" box offers to archive it
- * too. That is a shortcut for the Archive button, run as its own request after the removal is saved, so the
- * removal itself never archives (ADR 0062). Opens over the Manage dialog, as Feedback Datasets confirm a
- * workspace change.
+ * default. The removal never archives the directory; that is the Archive button's own action (ADR 0062).
+ * Opens over the Manage dialog, as Feedback Datasets confirm a workspace change.
  */
 export const ContactDirectoryRemovalDialog = ({
   directory,
   removed,
-  removesLastWorkspace,
   isSaving,
   onBack,
   onConfirm,
@@ -123,7 +109,6 @@ export const ContactDirectoryRemovalDialog = ({
   const isCurrent = targeted.isSuccess && targeted.fetchStatus === "idle";
   // Workspaces whose box was unticked; every box starts ticked.
   const [keptRunning, setKeptRunning] = useState<Set<string>>(() => new Set());
-  const [archive, setArchive] = useState(false);
 
   const entryOf = (workspaceId: string) =>
     targeted.data?.workspaces.find((entry) => entry.workspaceId === workspaceId);
@@ -141,13 +126,18 @@ export const ContactDirectoryRemovalDialog = ({
   const workspaceNames = new Intl.ListFormat(i18n.language, { type: "conjunction" }).format(
     removed.map(({ name }) => name)
   );
-  const titleValues = { workspaceNames, directoryName: directory.name };
+  const titleValues = { workspaceNames, directoryName: directory.name, count: removed.length };
+
+  /** The bullet on targeted surveys: loading, or none. Running ones get their own block below the list. */
+  const renderSurveysBullet = (workspaceId: string) => {
+    if (targeted.isError) return null;
+    if (!isCurrent) return <li className="text-slate-500">{t("common.loading")}</li>;
+    if (surveysOf(workspaceId).length > 0) return null;
+    return <li>{t("workspace.settings.contact_directories.no_targeted_surveys")}</li>;
+  };
 
   const renderSurveys = (workspace: TContactDirectoryWorkspaceRef) => {
-    if (targeted.isError) return null;
-    if (!isCurrent) {
-      return <p className="text-sm text-slate-500">{t("common.loading")}</p>;
-    }
+    if (targeted.isError || !isCurrent || surveysOf(workspace.id).length === 0) return null;
     return (
       <WorkspaceSurveys
         workspace={workspace}
@@ -168,9 +158,7 @@ export const ContactDirectoryRemovalDialog = ({
             {t("workspace.settings.contact_directories.remove_workspaces_title", titleValues)}
           </DialogTitle>
           <DialogDescription>
-            {t("workspace.settings.contact_directories.removal_keeps_data", {
-              directoryName: directory.name,
-            })}
+            {t("workspace.settings.contact_directories.removal_keeps_data")}
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="flex flex-col gap-4">
@@ -192,27 +180,23 @@ export const ContactDirectoryRemovalDialog = ({
               key={workspace.id}
               aria-label={workspace.name}
               className="space-y-3 rounded-lg border border-slate-200 p-4">
-              <h3 className="text-sm font-semibold text-slate-900">{workspace.name}</h3>
+              <h3 className="text-sm font-semibold text-slate-900">
+                {/* Several workspaces each get a box, so each names its workspace. */}
+                {removed.length === 1
+                  ? t("workspace.settings.contact_directories.removal_effects_heading")
+                  : t("workspace.settings.contact_directories.removal_effects_heading_named", {
+                      workspaceName: workspace.name,
+                    })}
+              </h3>
               <ul className="list-disc space-y-0.5 pl-5 text-sm text-slate-700">
                 <li>{t("workspace.settings.contact_directories.removal_effect_pages")}</li>
                 <li>{t("workspace.settings.contact_directories.removal_effect_identify")}</li>
                 <li>{t("workspace.settings.contact_directories.removal_effect_responses")}</li>
+                {renderSurveysBullet(workspace.id)}
               </ul>
               {renderSurveys(workspace)}
             </section>
           ))}
-          {removesLastWorkspace ? (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="contact-directory-archive-after-removal"
-                checked={archive}
-                onCheckedChange={(checked) => setArchive(checked === true)}
-              />
-              <Label htmlFor="contact-directory-archive-after-removal" className="font-normal">
-                {t("workspace.settings.contact_directories.also_archive_directory")}
-              </Label>
-            </div>
-          ) : null}
         </DialogBody>
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={onBack} disabled={isSaving}>
@@ -228,10 +212,11 @@ export const ContactDirectoryRemovalDialog = ({
                 pauseSurveysInWorkspaceIds: removed
                   .map(({ id }) => id)
                   .filter((id) => !keptRunning.has(id) && surveysOf(id).length > 0),
-                archive: removesLastWorkspace && archive,
               })
             }>
-            {t("workspace.settings.contact_directories.remove_workspaces")}
+            {t("workspace.settings.contact_directories.remove_workspaces", {
+              directoryName: directory.name,
+            })}
           </Button>
         </DialogFooter>
       </DialogContent>

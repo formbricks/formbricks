@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "連絡先をアップロード",
       "upload_contacts_multi_match": "{count, plural, other {{count}行が複数のコンタクトに一致しました。同じuserIdのコンタクトが更新され、該当するものがない場合は最も古いコンタクトが更新されました。}}",
       "upload_contacts_success": "連絡先のアップロードに成功しました",
-      "upload_contacts_user_ids_left_out": "{count, plural, other {{count}行に、このディレクトリ内の他の連絡先がすでに使用しているuserIdが含まれていました。それらのuserIdを除いてインポートされました。}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, other {{count}行に、このディレクトリ内の他の連絡先がすでに使用しているuserIdが含まれていました。それらのuserIdを除いてインポートされました。}}",
+      "upload_to": "アップロード先",
+      "upload_to_matches_by": "{matchingKey}で連絡先を照合します",
+      "upload_to_shared_by": "{workspaceNames}で使用中"
     },
     "creatives": {
       "archive_anyway": "それでもアーカイブする",
@@ -3580,7 +3583,6 @@
         "your_plan": "ご利用プラン"
       },
       "contact_directories": {
-        "also_archive_directory": "このディレクトリもアーカイブする",
         "archive_directory": "ディレクトリをアーカイブ",
         "archive_needs_no_workspaces": "アーカイブできるのは、ワークスペースが1つもないディレクトリのみです。このディレクトリをアーカイブするには、ワークスペースを削除して保存してください。",
         "create_directory": "ディレクトリを作成",
@@ -3605,8 +3607,6 @@
         "manage_directory": "ディレクトリを管理",
         "match_contacts_by": "コンタクトの照合キー",
         "matches_by": "照合キー",
-        "matches_contacts_by_email": "メールアドレスでコンタクトを照合",
-        "matches_contacts_by_user_id": "ユーザーIDでコンタクトを照合",
         "matching_key_help": "一意の識別子を選択してください。識別子は、ディレクトリの作成後に変更できません。",
         "name_placeholder": "例: Northwind EU",
         "nav_label": "ディレクトリ",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "setUserIdは、ワークスペースにコンタクトディレクトリがないというエラーで失敗します。",
         "removal_effect_pages": "「コンタクト」「属性」「セグメント」ページは空になります。",
         "removal_effect_responses": "既存の回答には「コンタクトは利用できません」と表示されます。",
-        "removal_keeps_data": "コンタクト、属性、セグメントは{directoryName}に残ります。ワークスペースを再度追加すると復元されます。",
-        "remove_workspaces": "ワークスペースを削除",
-        "remove_workspaces_title": "{directoryName}から{workspaceNames}を削除しますか?",
+        "removal_effects_heading": "ワークスペースへの影響",
+        "removal_effects_heading_named": "「{workspaceName}」への影響",
+        "removal_keeps_data": "コンタクト、属性、セグメントはコンタクトディレクトリに残ります。",
+        "remove_workspaces": "ワークスペースによる「{directoryName}」コンタクトディレクトリへのアクセスを削除",
+        "remove_workspaces_title": "{count, plural, other {{workspaceNames}}}から「{directoryName}」ディレクトリへのアクセスを削除しますか？",
         "save_failed": "ディレクトリを保存できませんでした。もう一度お試しください。",
         "select_workspaces_placeholder": "ワークスペースを選択",
         "shared_contacts_note_email": "1つのディレクトリ内のワークスペースは、連絡先を共有します。CSVインポートとAPIは、メールアドレスで連絡先を照合します。",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "ディレクトリのアーカイブを解除",
         "unarchive_directory_description": "保存するとディレクトリのアーカイブが解除されます。ワークスペースをここで選択することもでき、選択したワークスペースに連絡先が再び表示されます。",
         "workspace_in_directory": "{directoryName}内",
-        "workspaces_help": "このディレクトリを共有するワークスペースを選択してください。"
+        "workspaces_help": "このディレクトリにアクセスできるワークスペースを選択してください。"
       },
       "data_retention": {
         "add_exemption": "除外を追加",

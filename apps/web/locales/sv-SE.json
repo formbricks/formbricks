@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "Ladda upp kontakter",
       "upload_contacts_multi_match": "{count, plural, one {{count} rad matchade mer än en kontakt. Den uppdaterade kontakten med samma userId, annars den äldsta.} other {{count} rader matchade mer än en kontakt. Varje rad uppdaterade kontakten med samma userId, annars den äldsta.}}",
       "upload_contacts_success": "Kontakter uppladdade",
-      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} rad hade ett userId som en annan kontakt i den här katalogen redan har. Raden importerades utan det userId:t.} other {{count} rader hade userId som andra kontakter i den här katalogen redan har. De importerades utan dessa userId.}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} rad hade ett userId som en annan kontakt i den här katalogen redan har. Raden importerades utan det userId:t.} other {{count} rader hade userId som andra kontakter i den här katalogen redan har. De importerades utan dessa userId.}}",
+      "upload_to": "Ladda upp till",
+      "upload_to_matches_by": "Matchar kontakter via {matchingKey}",
+      "upload_to_shared_by": "Används av {workspaceNames}"
     },
     "creatives": {
       "archive_anyway": "Arkivera ändå",
@@ -3580,7 +3583,6 @@
         "your_plan": "Din plan"
       },
       "contact_directories": {
-        "also_archive_directory": "Arkivera även den här katalogen",
         "archive_directory": "Arkivera katalog",
         "archive_needs_no_workspaces": "Bara en katalog utan arbetsytor kan arkiveras. Om du vill arkivera den här tar du bort dess arbetsytor och sparar.",
         "create_directory": "Skapa katalog",
@@ -3605,8 +3607,6 @@
         "manage_directory": "Hantera katalog",
         "match_contacts_by": "Matcha kontakter via",
         "matches_by": "Matchar via",
-        "matches_contacts_by_email": "Matchar kontakter via e-post",
-        "matches_contacts_by_user_id": "Matchar kontakter via användar-ID",
         "matching_key_help": "Välj din unika identifierare. Identifieraren kan inte ändras efter att katalogen har skapats.",
         "name_placeholder": "t.ex. Northwind EU",
         "nav_label": "Kataloger",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "setUserId misslyckas med felet att arbetsytan saknar kontaktkatalog.",
         "removal_effect_pages": "Dess sidor för kontakter, attribut och segment blir tomma.",
         "removal_effect_responses": "Dess befintliga svar visar \"Kontakten är inte tillgänglig\".",
-        "removal_keeps_data": "Kontakter, attribut och segment finns kvar i {directoryName}. Om du lägger till en arbetsyta igen återställs de.",
-        "remove_workspaces": "Ta bort arbetsytor",
-        "remove_workspaces_title": "Ta bort {workspaceNames} från {directoryName}?",
+        "removal_effects_heading": "Så påverkas din arbetsyta",
+        "removal_effects_heading_named": "Så påverkas ”{workspaceName}”",
+        "removal_keeps_data": "Kontakter, attribut och segment finns kvar i kontaktkatalogen.",
+        "remove_workspaces": "Ta bort arbetsytans åtkomst till kontaktkatalogen ”{directoryName}”",
+        "remove_workspaces_title": "Ta bort åtkomsten till katalogen ”{directoryName}” för {count, plural, one {arbetsytan ”{workspaceNames}”} other {{workspaceNames}}}?",
         "save_failed": "Det gick inte att spara katalogen. Försök igen.",
         "select_workspaces_placeholder": "Välj arbetsytor",
         "shared_contacts_note_email": "Arbetsytor i samma kontaktkatalog delar sina kontakter. CSV-importer och API:et matchar kontakter via e-postadress.",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "Avarkivera katalog",
         "unarchive_directory_description": "När du sparar tas katalogen bort från arkivet. Du kan också välja arbetsytor nu, så visas katalogens kontakter i dem igen.",
         "workspace_in_directory": "I {directoryName}",
-        "workspaces_help": "Välj vilka arbetsytor som delar den här katalogen."
+        "workspaces_help": "Välj vilka arbetsytor som kan komma åt den här katalogen."
       },
       "data_retention": {
         "add_exemption": "Lägg till undantag",

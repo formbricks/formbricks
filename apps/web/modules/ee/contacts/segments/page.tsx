@@ -1,6 +1,7 @@
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
+import { getSharedContactDirectoryName } from "@/modules/ee/contacts/directories/lib/directory-service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
@@ -23,14 +24,15 @@ export const SegmentsPage = async ({
 
   const hasContactDirectory = Boolean(await getWorkspaceContactDirectory(workspace.id));
 
-  const [segments, contactAttributeKeys] = hasContactDirectory
+  const [segments, contactAttributeKeys, sharedDirectoryName] = hasContactDirectory
     ? await Promise.all([
         getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
           getSegments(workspace.id, where)
         ),
         getContactAttributeKeys(workspace.id),
+        getSharedContactDirectoryName(workspace.id),
       ])
-    : [[], []];
+    : [[], [], null];
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
 
@@ -50,6 +52,7 @@ export const SegmentsPage = async ({
       isReadOnly={isReadOnly}
       hasContactDirectory={hasContactDirectory}
       isOwnerOrManager={isOwner || isManager}
+      sharedDirectoryName={sharedDirectoryName}
       cta={
         hasContactDirectory ? (
           <CreateSegmentModal

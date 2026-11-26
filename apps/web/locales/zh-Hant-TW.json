@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "上傳聯絡人",
       "upload_contacts_multi_match": "{count, plural, other {有 {count} 列資料符合多位聯絡人。系統已更新 userId 相同的聯絡人,若沒有則更新建立時間最早的聯絡人。}}",
       "upload_contacts_success": "聯絡人已成功上傳",
-      "upload_contacts_user_ids_left_out": "{count, plural, other {有 {count} 列資料的 userId 已存在於此目錄中的其他聯絡人。這些資料已匯入，但未包含該 userId。}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, other {有 {count} 列資料的 userId 已存在於此目錄中的其他聯絡人。這些資料已匯入，但未包含該 userId。}}",
+      "upload_to": "上傳至",
+      "upload_to_matches_by": "依據 {matchingKey} 比對聯絡人",
+      "upload_to_shared_by": "{workspaceNames} 正在使用"
     },
     "creatives": {
       "archive_anyway": "仍要封存",
@@ -3580,7 +3583,6 @@
         "your_plan": "您的方案"
       },
       "contact_directories": {
-        "also_archive_directory": "同時封存此目錄",
         "archive_directory": "封存目錄",
         "archive_needs_no_workspaces": "只有沒有任何工作區的目錄才能封存。若要封存此目錄,請先移除其工作區並儲存。",
         "create_directory": "建立目錄",
@@ -3605,8 +3607,6 @@
         "manage_directory": "管理目錄",
         "match_contacts_by": "聯絡人比對依據",
         "matches_by": "比對依據",
-        "matches_contacts_by_email": "以電子郵件比對聯絡人",
-        "matches_contacts_by_user_id": "以使用者 ID 比對聯絡人",
         "matching_key_help": "請選擇您的唯一識別碼。目錄建立後,就無法再變更此識別碼。",
         "name_placeholder": "例如：Northwind EU",
         "nav_label": "目錄",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "setUserId 將會失敗,並顯示該工作區沒有聯絡人目錄的錯誤。",
         "removal_effect_pages": "其「聯絡人」、「屬性」和「區隔」頁面將會是空的。",
         "removal_effect_responses": "其現有回覆將顯示「無法取得聯絡人」。",
-        "removal_keeps_data": "聯絡人、屬性和區隔會保留在 {directoryName} 中。重新加入工作區後即可恢復。",
-        "remove_workspaces": "移除工作區",
-        "remove_workspaces_title": "要將 {workspaceNames} 從 {directoryName} 中移除嗎？",
+        "removal_effects_heading": "這會對你的工作區造成哪些影響",
+        "removal_effects_heading_named": "這會對「{workspaceName}」造成哪些影響",
+        "removal_keeps_data": "聯絡人、屬性和區隔仍會保留在聯絡人目錄中。",
+        "remove_workspaces": "移除工作區對「{directoryName}」聯絡人目錄的存取權",
+        "remove_workspaces_title": "要移除{count, plural, one {「{workspaceNames}」工作區} other {{workspaceNames}}}對「{directoryName}」目錄的存取權嗎？",
         "save_failed": "無法儲存目錄，請再試一次。",
         "select_workspaces_placeholder": "選取工作區",
         "shared_contacts_note_email": "同一個目錄中的工作區會共用聯絡人。CSV 匯入和 API 會以電子郵件來比對聯絡人。",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "取消封存目錄",
         "unarchive_directory_description": "儲存後會取消封存此目錄。你也可以現在選擇工作區，目錄中的聯絡人就會再次顯示在這些工作區中。",
         "workspace_in_directory": "位於 {directoryName}",
-        "workspaces_help": "選擇要共用此目錄的工作區。"
+        "workspaces_help": "選擇哪些工作區可以存取此目錄。"
       },
       "data_retention": {
         "add_exemption": "新增豁免",

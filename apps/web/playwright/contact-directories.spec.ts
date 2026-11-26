@@ -66,9 +66,13 @@ test.describe("Contact directories settings", () => {
     await row.getByRole("button", { name: "Manage" }).click();
     await dialog.getByRole("button", { name: `Remove ${workspaceC.name}` }).click();
     await dialog.getByRole("button", { name: "Save" }).click();
-    const confirm = page.getByRole("dialog", { name: `Remove ${workspaceC.name} from ${directoryName}?` });
+    const confirm = page.getByRole("dialog", {
+      name: `Remove “${directoryName}” directory access from “${workspaceC.name}” workspace?`,
+    });
     await expect(confirm).toBeVisible();
-    await confirm.getByRole("button", { name: "Remove workspaces" }).click();
+    await confirm
+      .getByRole("button", { name: `Remove workspace access to “${directoryName}” contact directory` })
+      .click();
     await expect(page.getByText("Directory updated")).toBeVisible();
     await expect(row.getByRole("cell").nth(1)).toHaveText("1");
 

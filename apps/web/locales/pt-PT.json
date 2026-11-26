@@ -2518,7 +2518,10 @@
       "upload_contacts_modal_upload_btn": "Carregar contactos",
       "upload_contacts_multi_match": "{count, plural, one {{count} linha correspondeu a mais do que um contacto. Atualizou o contacto com o mesmo userId ou, caso não exista, o mais antigo.} many {{count} de linhas corresponderam a mais do que um contacto. Cada uma atualizou o contacto com o mesmo userId ou, caso não exista, o mais antigo.} other {{count} linhas corresponderam a mais do que um contacto. Cada uma atualizou o contacto com o mesmo userId ou, caso não exista, o mais antigo.}}",
       "upload_contacts_success": "Contactos carregados com sucesso",
-      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} linha tinha um userId que outro contacto neste diretório já tem. Foi importada sem esse userId.} many {{count} de linhas tinham userIds que outros contactos neste diretório já têm. Foram importadas sem esses userIds.} other {{count} linhas tinham userIds que outros contactos neste diretório já têm. Foram importadas sem esses userIds.}}"
+      "upload_contacts_user_ids_left_out": "{count, plural, one {{count} linha tinha um userId que outro contacto neste diretório já tem. Foi importada sem esse userId.} many {{count} de linhas tinham userIds que outros contactos neste diretório já têm. Foram importadas sem esses userIds.} other {{count} linhas tinham userIds que outros contactos neste diretório já têm. Foram importadas sem esses userIds.}}",
+      "upload_to": "Carregar para",
+      "upload_to_matches_by": "Corresponde aos contactos por {matchingKey}",
+      "upload_to_shared_by": "Utilizado por {workspaceNames}"
     },
     "creatives": {
       "archive_anyway": "Arquivar mesmo assim",
@@ -3580,7 +3583,6 @@
         "your_plan": "O teu plano"
       },
       "contact_directories": {
-        "also_archive_directory": "Arquivar também este diretório",
         "archive_directory": "Arquivar diretório",
         "archive_needs_no_workspaces": "Só é possível arquivar um diretório sem espaços de trabalho. Para arquivar este, remove os respetivos espaços de trabalho e guarda.",
         "create_directory": "Criar diretório",
@@ -3605,8 +3607,6 @@
         "manage_directory": "Gerir diretório",
         "match_contacts_by": "Associar contactos por",
         "matches_by": "Associa por",
-        "matches_contacts_by_email": "Associa contactos por e-mail",
-        "matches_contacts_by_user_id": "Associa contactos por ID de utilizador",
         "matching_key_help": "Escolhe o teu identificador único. O identificador não pode ser alterado depois de o diretório ser criado.",
         "name_placeholder": "p. ex., Northwind EU",
         "nav_label": "Diretórios",
@@ -3616,9 +3616,11 @@
         "removal_effect_identify": "setUserId falhará com o erro de que o espaço de trabalho não tem diretório de contactos.",
         "removal_effect_pages": "As páginas Contactos, Atributos e Segmentos ficarão vazias.",
         "removal_effect_responses": "As respostas existentes mostrarão \"Contacto não disponível\".",
-        "removal_keeps_data": "Os contactos, atributos e segmentos permanecem em {directoryName}. Ao voltar a adicionar um espaço de trabalho, estes são restaurados.",
-        "remove_workspaces": "Remover espaços de trabalho",
-        "remove_workspaces_title": "Remover {workspaceNames} de {directoryName}?",
+        "removal_effects_heading": "Como o teu espaço de trabalho será afetado",
+        "removal_effects_heading_named": "Como “{workspaceName}” será afetado",
+        "removal_keeps_data": "Os contactos, atributos e segmentos permanecem no diretório de contactos.",
+        "remove_workspaces": "Remover o acesso do espaço de trabalho ao diretório de contactos “{directoryName}”",
+        "remove_workspaces_title": "Remover o acesso ao diretório “{directoryName}” {count, plural, one {do espaço de trabalho “{workspaceNames}”} other {dos espaços de trabalho {workspaceNames}}}?",
         "save_failed": "Não foi possível guardar o diretório. Tente novamente.",
         "select_workspaces_placeholder": "Selecionar espaços de trabalho",
         "shared_contacts_note_email": "Os espaços de trabalho num diretório partilham os respetivos contactos. As importações de CSV e a API associam os contactos através do email.",
@@ -3632,7 +3634,7 @@
         "unarchive_directory": "Desarquivar diretório",
         "unarchive_directory_description": "Ao guardar, o diretório deixa de estar arquivado. Também podes escolher já os espaços de trabalho, e os respetivos contactos voltam a aparecer neles.",
         "workspace_in_directory": "Em {directoryName}",
-        "workspaces_help": "Escolhe que espaços de trabalho partilham este diretório."
+        "workspaces_help": "Escolhe que espaços de trabalho podem aceder a este diretório."
       },
       "data_retention": {
         "add_exemption": "Adicionar isenção",

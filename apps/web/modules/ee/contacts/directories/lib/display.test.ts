@@ -104,25 +104,22 @@ describe("getDirectorySaveEffect", () => {
   test("removing some workspaces keeps the directory active", () => {
     expect(getDirectorySaveEffect(SHARED, ["w-b"])).toEqual({
       removed: [{ id: "w-a", name: "Market Access" }],
-      removesLastWorkspace: false,
       unarchives: false,
     });
   });
 
-  // The confirm step then notes the directory stays active; the save never archives it (ADR 0062).
-  test("flags removing the last workspace", () => {
-    expect(getDirectorySaveEffect(SOLO, [])).toMatchObject({ removesLastWorkspace: true, unarchives: false });
+  // The save never archives the directory, even with its last workspace gone (ADR 0062).
+  test("removing the last workspace leaves the directory active", () => {
+    expect(getDirectorySaveEffect(SOLO, [])).toMatchObject({ unarchives: false });
   });
 
   test("a save of an archived directory unarchives it, and a new directory does neither", () => {
     expect(getDirectorySaveEffect(ARCHIVED, ["w-e"])).toEqual({
       removed: [],
-      removesLastWorkspace: false,
       unarchives: true,
     });
     expect(getDirectorySaveEffect(undefined, ["w-e"])).toEqual({
       removed: [],
-      removesLastWorkspace: false,
       unarchives: false,
     });
   });
