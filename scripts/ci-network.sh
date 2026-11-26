@@ -34,6 +34,30 @@ APT::Update::Error-Mode "any";
 APT
 }
 
+ci_apt_running() {
+  # Zombies hold no locks and only wait to be reaped, so count running, sleeping and blocked processes.
+  sudo pgrep -x --runstates DRS 'apt-get|apt|dpkg' >/dev/null
+}
+
+ci_stop_apt() {
+  # `timeout` signals its own process group, but `sudo` runs apt-get in a new session, so a timed-out
+  # `playwright install-deps` can leave apt-get running and holding /var/lib/apt/lists/lock; the
+  # retry then fails at once with "Could not get lock" (exit 100). Stop any apt/dpkg still running,
+  # bounded so the caller's budget holds: TERM, up to 20s to exit, then KILL and up to 5s more. The
+  # kernel releases their locks when they exit. Only for disposable runners, like everything else here.
+  local second
+  sudo pkill -TERM -x 'apt-get|apt|dpkg' || true
+  for ((second = 0; second < 20; second++)); do
+    ci_apt_running || return 0
+    sleep 1
+  done
+  sudo pkill -KILL -x 'apt-get|apt|dpkg' || true
+  for ((second = 0; second < 5; second++)); do
+    ci_apt_running || return 0
+    sleep 1
+  done
+}
+
 ci_use_fallback_apt_mirror() {
   local apt_dir="${1:-/etc/apt}"
   # Handle both legacy .list and deb822 .sources files. Only Ubuntu archive/security hosts

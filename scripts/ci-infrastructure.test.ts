@@ -141,6 +141,47 @@ test("a persistent apt failure stops setup before any browser install", () => {
   ]);
 });
 
+// A timed-out install-deps leaves the apt-get that sudo started running, holding apt's lock; the
+// fallback retry then failed at once with "Could not get lock" (exit 100) until it was stopped first.
+test("apt left running by a timed-out attempt is stopped before the fallback retry", () => {
+  const { directory, env, command } = fixture();
+  command("pnpm", 'echo "pnpm $*" >> "$FIXTURE/commands"; exit 124');
+  command("sudo", 'echo "sudo $*" >> "$FIXTURE/commands"; [[ "$1" != pgrep ]]');
+  const result = spawnSync("bash", ["scripts/install-playwright-ci.sh", "chromium"], {
+    cwd: repository,
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status).toBe(124);
+  const commands = readFileSync(join(directory, "commands"), "utf8").trim().split("\n");
+  const attempts = commands.flatMap((line, index) => (line.includes("install-deps") ? [index] : []));
+  expect(attempts).toHaveLength(2);
+  const stop = commands.indexOf("sudo pkill -TERM -x apt-get|apt|dpkg");
+  const repair = commands.indexOf("sudo dpkg --configure -a");
+  expect(attempts[0]).toBeLessThan(stop);
+  expect(stop).toBeLessThan(repair);
+  expect(repair).toBeLessThan(attempts[1]);
+  // Nothing was left running, so no KILL.
+  expect(commands).not.toContain("sudo pkill -KILL -x apt-get|apt|dpkg");
+});
+
+test("apt that ignores TERM is killed after a bounded wait, and the retry still runs", () => {
+  const { directory, env, command } = fixture();
+  command("pnpm", 'echo "pnpm $*" >> "$FIXTURE/commands"; exit 124');
+  // pgrep always finds apt running: the wait must end on its own instead of spinning.
+  command("sudo", 'echo "sudo $*" >> "$FIXTURE/commands"');
+  const result = spawnSync("bash", ["scripts/install-playwright-ci.sh", "chromium"], {
+    cwd: repository,
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status).toBe(124);
+  const commands = readFileSync(join(directory, "commands"), "utf8").trim().split("\n");
+  expect(commands.filter((line) => line.startsWith("sudo pgrep"))).toHaveLength(25);
+  expect(commands.filter((line) => line === "sudo pkill -KILL -x apt-get|apt|dpkg")).toHaveLength(1);
+  expect(commands.filter((line) => line.includes("install-deps"))).toHaveLength(2);
+});
+
 test.each(["pull", "validation"])("a permanent %s failure remains red", (failure) => {
   const { directory, env, command } = fixture();
   command(
