@@ -1,5 +1,6 @@
 import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { getBetterAuthRequestContext } from "@/modules/auth/lib/better-auth-request-context";
 import { GET, POST } from "./route";
 
@@ -52,6 +53,9 @@ vi.mock("@/modules/auth/lib/auth", () => {
       Object.values(api).map((endpoint) => (endpoint as { path?: string } | null)?.path),
   };
 });
+vi.mock("@formbricks/logger", () => ({
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn(), withContext: vi.fn() },
+}));
 vi.mock("@/modules/ee/sso/lib/sso-request-context", () => ({
   runWithSsoRequestContext: runWithCtxMock,
 }));
@@ -246,6 +250,8 @@ describe("[...all] Better Auth route — OAuth state cookie diagnosis (ENG-6692)
 
     expect(handlerMock).toHaveBeenCalledTimes(1);
     expect(seen).toEqual({ path: "/callback/*", method: "GET" });
+    // Never silently: a diagnosis that breaks for good would otherwise just stop tagging events.
+    expect(logger.warn).toHaveBeenCalledWith(expect.anything(), "OAuth state cookie diagnosis failed");
   });
 });
 

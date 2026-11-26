@@ -59,7 +59,7 @@ const callbackRequest = (state: string, cookieHeader?: string): Request =>
 /** Replay a callback on `auth`; return the StateError code Better Auth threw and the diagnosis. */
 const replay = async (auth: TAuth, seen: unknown[], request: Request) => {
   const context = await auth.$context;
-  const diagnosis = await diagnoseOAuthStateCookie(request.clone(), {
+  const diagnosis = diagnoseOAuthStateCookie(request.clone(), {
     name: context.createAuthCookie("state").name,
     secret: context.secret,
   });
@@ -78,12 +78,12 @@ describe("diagnoseOAuthStateCookie against a real Better Auth callback (ENG-6692
     const { state, cookie } = await startSignIn(auth);
 
     const context = await auth.$context;
-    await expect(
+    expect(
       diagnoseOAuthStateCookie(callbackRequest(state, cookie), {
         name: context.createAuthCookie("state").name,
         secret: context.secret,
       })
-    ).resolves.toBe("matches");
+    ).toBe("matches");
   });
 
   test("no cookie: rejected as not persisted, diagnosed as absent", async () => {

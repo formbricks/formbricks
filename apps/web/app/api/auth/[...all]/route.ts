@@ -1,3 +1,5 @@
+import { logger } from "@formbricks/logger";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { auth, getDeclaredAuthPaths } from "@/modules/auth/lib/auth";
 import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import {
@@ -56,11 +58,14 @@ const diagnoseCallbackStateCookie = async (
   if (path !== OAUTH_CALLBACK_LABEL || request.method !== "GET") return undefined;
   try {
     const context = await auth.$context;
-    return await diagnoseOAuthStateCookie(request, {
+    return diagnoseOAuthStateCookie(request, {
       name: context.createAuthCookie("state").name,
       secret: context.secret,
     });
-  } catch {
+  } catch (error) {
+    // Observability only: Better Auth still runs its own state check on this request, so a failed
+    // diagnosis costs the tag, never the sign-in. Logged so a broken diagnosis does not vanish silently.
+    logger.warn({ err: loggableError(error) }, "OAuth state cookie diagnosis failed");
     return undefined;
   }
 };

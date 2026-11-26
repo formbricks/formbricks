@@ -24,57 +24,57 @@ const callback = (state: string | null, cookieHeader?: string): Request => {
 };
 
 describe("diagnoseOAuthStateCookie", () => {
-  test("the cookie verifies and carries this callback's state", async () => {
+  test("the cookie verifies and carries this callback's state", () => {
     const request = callback("state-abc", `${COOKIE_NAME}=${sign("state-abc", SECRET)}`);
 
-    await expect(diagnoseOAuthStateCookie(request, cookie)).resolves.toBe("matches");
+    expect(diagnoseOAuthStateCookie(request, cookie)).toBe("matches");
   });
 
-  test("no state cookie at all: expired, dropped or blocked by the browser", async () => {
+  test("no state cookie at all: expired, dropped or blocked by the browser", () => {
     const request = callback("state-abc", "formbricks.session_token=unrelated");
 
-    await expect(diagnoseOAuthStateCookie(request, cookie)).resolves.toBe("absent");
+    expect(diagnoseOAuthStateCookie(request, cookie)).toBe("absent");
   });
 
-  test("no cookie header at all reads as absent too", async () => {
-    await expect(diagnoseOAuthStateCookie(callback("state-abc"), cookie)).resolves.toBe("absent");
+  test("no cookie header at all reads as absent too", () => {
+    expect(diagnoseOAuthStateCookie(callback("state-abc"), cookie)).toBe("absent");
   });
 
-  test("signed with another secret: a replica whose AUTH_SECRET differs", async () => {
+  test("signed with another secret: a replica whose AUTH_SECRET differs", () => {
     const request = callback("state-abc", `${COOKIE_NAME}=${sign("state-abc", OTHER_SECRET)}`);
 
-    await expect(diagnoseOAuthStateCookie(request, cookie)).resolves.toBe("signature_invalid");
+    expect(diagnoseOAuthStateCookie(request, cookie)).toBe("signature_invalid");
   });
 
-  test("a tampered or malformed value is not taken for a missing cookie", async () => {
+  test("a tampered or malformed value is not taken for a missing cookie", () => {
     const tampered = sign("state-abc", SECRET).replace("state-abc", "state-xyz");
 
-    await expect(
-      diagnoseOAuthStateCookie(callback("state-abc", `${COOKIE_NAME}=${tampered}`), cookie)
-    ).resolves.toBe("signature_invalid");
-    await expect(
-      diagnoseOAuthStateCookie(callback("state-abc", `${COOKIE_NAME}=no-signature-here`), cookie)
-    ).resolves.toBe("signature_invalid");
+    expect(diagnoseOAuthStateCookie(callback("state-abc", `${COOKIE_NAME}=${tampered}`), cookie)).toBe(
+      "signature_invalid"
+    );
+    expect(diagnoseOAuthStateCookie(callback("state-abc", `${COOKIE_NAME}=no-signature-here`), cookie)).toBe(
+      "signature_invalid"
+    );
   });
 
-  test("verifies but holds another sign-in's state: a second flow in the same browser", async () => {
+  test("verifies but holds another sign-in's state: a second flow in the same browser", () => {
     const request = callback("state-abc", `${COOKIE_NAME}=${sign("state-newer-flow", SECRET)}`);
 
-    await expect(diagnoseOAuthStateCookie(request, cookie)).resolves.toBe("state_differs");
+    expect(diagnoseOAuthStateCookie(request, cookie)).toBe("state_differs");
   });
 
-  test("reads the configured cookie name only, not a look-alike", async () => {
+  test("reads the configured cookie name only, not a look-alike", () => {
     const request = callback("state-abc", `__Secure-${COOKIE_NAME}=${sign("state-abc", SECRET)}`);
 
-    await expect(diagnoseOAuthStateCookie(request, cookie)).resolves.toBe("absent");
-    await expect(
-      diagnoseOAuthStateCookie(request, { name: `__Secure-${COOKIE_NAME}`, secret: SECRET })
-    ).resolves.toBe("matches");
+    expect(diagnoseOAuthStateCookie(request, cookie)).toBe("absent");
+    expect(diagnoseOAuthStateCookie(request, { name: `__Secure-${COOKIE_NAME}`, secret: SECRET })).toBe(
+      "matches"
+    );
   });
 
-  test("says nothing about a request that carries no state", async () => {
+  test("says nothing about a request that carries no state", () => {
     const request = callback(null, `${COOKIE_NAME}=${sign("state-abc", SECRET)}`);
 
-    await expect(diagnoseOAuthStateCookie(request, cookie)).resolves.toBeUndefined();
+    expect(diagnoseOAuthStateCookie(request, cookie)).toBeUndefined();
   });
 });
