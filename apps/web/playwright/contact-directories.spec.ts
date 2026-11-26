@@ -3,8 +3,8 @@ import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 
 // Organization settings › Directories (ENG-7497, ADR 0061): an owner makes one directory for two workspaces
-// that have none, sees a workspace that already has one greyed out, and removes a workspace again through
-// the confirm step. Both workspaces' Contacts pages say which directory they share.
+// that have none, and removes one again through the confirm step. Which workspaces the picker greys out is
+// covered by `display.test.ts`.
 test.describe("Contact directories settings", () => {
   test("creates a directory for two workspaces, then removes one of them", async ({ page, users }) => {
     const stamp = Date.now();
@@ -43,10 +43,6 @@ test.describe("Contact directories settings", () => {
 
     await dialog.getByLabel("Name").fill(directoryName);
     await dialog.getByPlaceholder("Select workspaces").click();
-    // A workspace already in a directory can't join another one; it is greyed out with the reason.
-    const optionA = page.getByRole("option").filter({ hasText: workspaceA.name });
-    await expect(optionA).toHaveAttribute("aria-disabled", "true");
-    await expect(optionA).toContainText(`In ${workspaceA.name}`);
     await page.getByRole("option", { name: workspaceB.name }).click();
     await page.getByRole("option", { name: workspaceC.name }).click();
     // The open list covers the dialog's buttons; Escape closes only the list.
