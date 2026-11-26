@@ -99,8 +99,20 @@ describe("sign-in failure budget (SEC-18)", () => {
       expect(settleRateLimitUsage).toHaveBeenCalledWith(reservation, 0);
     });
 
-    test("gives the unit back for a rejection that is not a wrong password", async () => {
+    // ENG-2099: an unverified account with the right password answers as a wrong password, so it has to
+    // spend like one. Refunding it would let ten tries lock a taken address out but never a free one.
+    test("keeps the unit for an unverified account with the right password, like a wrong password", async () => {
       await signIn("a@b.co", new APIError("FORBIDDEN", { message: "x", code: "EMAIL_NOT_VERIFIED" }));
+
+      expect(reserveRateLimitUsage).toHaveBeenCalledTimes(1);
+      expect(settleRateLimitUsage).not.toHaveBeenCalled();
+    });
+
+    test("gives the unit back for a rejection that is not a credential failure", async () => {
+      await signIn(
+        "a@b.co",
+        new APIError("UNAUTHORIZED", { message: "x", code: "FAILED_TO_CREATE_SESSION" })
+      );
 
       expect(settleRateLimitUsage).toHaveBeenCalledWith(reservation, 0);
     });

@@ -46,3 +46,12 @@ export const runWithBetterAuthRequestContext = <T>(context: BetterAuthRequestCon
  */
 export const getBetterAuthRequestContext = (): BetterAuthRequestContext | undefined =>
   betterAuthRequestContext.getStore();
+
+/**
+ * True while the current code runs inside an HTTP `POST /api/auth/sign-in/email`. The verification-email
+ * callback reads it to send after the response instead of during it (ENG-2099): Better Auth sends there only
+ * for an unverified account whose password matched, so a send on the response path makes that answer slower
+ * than the identical wrong-password one. A server-side `auth.api.*` call opens no store, so it stays awaited.
+ */
+export const isPasswordSignInRequest = (): boolean =>
+  getBetterAuthRequestContext()?.path === "/sign-in/email";

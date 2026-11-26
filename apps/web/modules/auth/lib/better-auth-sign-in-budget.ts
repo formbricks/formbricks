@@ -8,7 +8,10 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 
 const SIGN_IN_PATH = "/sign-in/email";
-const WRONG_CREDENTIALS_CODE = "INVALID_EMAIL_OR_PASSWORD";
+// The failures that spend the unit. An unverified account with the right password counts too (ENG-2099):
+// its answer is the wrong-password one, and a budget that refunded it would lock out a taken address after
+// ten tries but never a free one, telling them apart again through the 429.
+const SPENDING_CODES = new Set(["INVALID_EMAIL_OR_PASSWORD", "EMAIL_NOT_VERIFIED"]);
 // Where the before hook leaves its receipt for the after hook. Both run on the one request context.
 const RESERVATION_KEY = "signInBudgetReservation";
 
@@ -35,16 +38,16 @@ const signInAccountIdentifier = (body: unknown): string | undefined => {
  *
  * Reserved up front, atomically, rather than read now and charged after the response: bcrypt makes the
  * check slow, and a read-then-charge budget lets every guess fired at once see an untouched counter.
- * {@link settleSignInBudgetAfterHandler} gives the unit back unless the password was wrong, so a correct
- * sign-in never spends it. Fails closed with Redis down, like every brute-force guard (ADR 0016). The
+ * {@link settleSignInBudgetAfterHandler} gives the unit back unless the sign-in failed on its credentials, so
+ * a successful sign-in never spends it. Fails closed with Redis down, like every brute-force guard (ADR 0016). The
  * refusal is a 429 whatever the password was, so a locked account does not reveal whether a guess would have
  * been right.
  *
  * Trade-off, chosen on purpose: a stranger can still spend the budget for a victim's address and lock them
- * out of password sign-in until the window passes. That is why the budget refunds everything but a wrong
- * password, is generous (10 in 15 minutes, far more than a person mistypes), and is a short window rather
- * than a permanent lock; SSO and the password reset (own limits) stay open meanwhile. There is no operator
- * unlock: the window expiring is the unlock.
+ * out of password sign-in until the window passes. That is why the budget refunds everything but a failed
+ * credential check, is generous (10 in 15 minutes, far more than a person mistypes), and is a short window
+ * rather than a permanent lock; SSO and the password reset (own limits) stay open meanwhile. There is no
+ * operator unlock: the window expiring is the unlock.
  */
 export const signInBudgetBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== SIGN_IN_PATH) return;
@@ -68,9 +71,9 @@ export const signInBudgetBeforeHandler = async (ctx: AuthHookContext): Promise<v
 };
 
 /**
- * Better Auth `after` hook: keep the unit the before hook reserved only when the password was wrong; give it
- * back for a success, an unverified email or any other outcome. A request that never reaches this hook (an
- * unexpected throw) keeps its unit, which errs on the side of the budget.
+ * Better Auth `after` hook: keep the unit the before hook reserved when the password was wrong or the account
+ * is unverified (both answer as a wrong password); give it back for a success or any other outcome. A request
+ * that never reaches this hook (an unexpected throw) keeps its unit, which errs on the side of the budget.
  */
 export const settleSignInBudgetAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== SIGN_IN_PATH) return;
@@ -79,10 +82,8 @@ export const settleSignInBudgetAfterHandler = async (ctx: AuthHookContext): Prom
   if (!reservation) return;
 
   const returned = (ctx.context as { returned?: unknown }).returned;
-  const wrongPassword =
-    isAPIError(returned) &&
-    (returned.body as { code?: unknown } | undefined)?.code === WRONG_CREDENTIALS_CODE;
-  if (wrongPassword) return;
+  const code = isAPIError(returned) ? (returned.body as { code?: unknown } | undefined)?.code : undefined;
+  if (typeof code === "string" && SPENDING_CODES.has(code)) return;
 
   await settleRateLimitUsage(reservation, 0);
 };

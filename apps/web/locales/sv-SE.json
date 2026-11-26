@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Inloggning med tvåfaktorsautentisering kan inte slutföras här",
       "oauth_signup_not_allowed_description": "Din identitetsleverantör loggade in dig, men denna Formbricks-instans är inte konfigurerad för att skapa nya konton på detta sätt. Be en administratör att bjuda in dig och försök sedan igen.",
       "oauth_signup_not_allowed_title": "Vi kunde inte skapa ditt konto",
-      "please_verify_your_email_to_continue": "Verifiera din e-postadress. Vi har skickat en verifieringslänk till dig.",
       "use_a_backup_code": "Använd en reservkod"
     },
     "oauth": {

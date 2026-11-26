@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "No se puede completar aquí el inicio de sesión en dos pasos",
       "oauth_signup_not_allowed_description": "Tu proveedor de identidad te autenticó correctamente, pero esta instancia de Formbricks no está configurada para crear nuevas cuentas de esta manera. Pide a un administrador que te invite y luego inténtalo de nuevo.",
       "oauth_signup_not_allowed_title": "No pudimos crear tu cuenta",
-      "please_verify_your_email_to_continue": "Verifica tu dirección de correo electrónico. Te hemos enviado un enlace de verificación.",
       "use_a_backup_code": "Usar un código de respaldo"
     },
     "oauth": {

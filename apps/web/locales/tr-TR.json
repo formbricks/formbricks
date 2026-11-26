@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "İki aşamalı giriş burada tamamlanamıyor",
       "oauth_signup_not_allowed_description": "Kimlik sağlayıcın seni oturum açtırdı, ancak bu Formbricks örneği bu şekilde yeni hesap oluşturacak şekilde ayarlanmamış. Bir yöneticiden seni davet etmesini iste, ardından tekrar dene.",
       "oauth_signup_not_allowed_title": "Hesabını oluşturamadık",
-      "please_verify_your_email_to_continue": "Lütfen e-posta adresinizi doğrulayın. Size bir doğrulama bağlantısı gönderdik.",
       "use_a_backup_code": "Yedek kod kullan"
     },
     "oauth": {
