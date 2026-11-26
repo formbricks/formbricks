@@ -746,6 +746,72 @@ describe("betterAuthLogger — OAuth state errors (ENG-2471)", () => {
     );
   });
 
+  /**
+   * ENG-6692: `state_security_mismatch` ("State not persisted correctly") is four causes behind one throw,
+   * and one of them, a secret split across replicas, is a security-control failure. The route diagnoses
+   * the callback's state cookie into the request context; the capture has to carry it, or FORMBRICKS-17B
+   * stays one undivided issue. A tag, not a fingerprint, so the issue stays one issue with a facet.
+   */
+  test("tags a state_security_mismatch capture with the state cookie diagnosis", () => {
+    const stateError = new StateErrorLike(
+      "State mismatch: State not persisted correctly",
+      "state_security_mismatch"
+    );
+
+    runWithBetterAuthRequestContext(
+      { path: "/callback/*", method: "GET", oauthStateCookie: "signature_invalid" },
+      () => log("error", "Failed to parse state", stateError)
+    );
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(stateError, {
+      tags: {
+        component: "better-auth",
+        "auth.path": "/callback/*",
+        "http.method": "GET",
+        "auth.state_cookie": "signature_invalid",
+      },
+    });
+  });
+
+  // Self-hosters have no Sentry, and the suppressed `state_mismatch` survives only in the log, so the
+  // diagnosis has to reach the log context on every state error, captured or not.
+  test.each(["state_security_mismatch", "state_mismatch"])(
+    "puts the state cookie diagnosis on the log context of %s",
+    (code) => {
+      runWithBetterAuthRequestContext(
+        { path: "/callback/*", method: "GET", oauthStateCookie: "absent" },
+        () => log("error", "Failed to parse state", new StateErrorLike("State mismatch", code))
+      );
+
+      expect(logger.withContext).toHaveBeenCalledWith({
+        source: "better-auth",
+        authPath: "/callback/*",
+        httpMethod: "GET",
+        stateErrorCode: code,
+        oauthStateCookie: "absent",
+      });
+    }
+  );
+
+  // The diagnosis describes the state cookie, so it means nothing on an unrelated fault that happens to
+  // be raised during a callback (a database error while linking the account, say).
+  test("leaves the diagnosis off a fault that is not a state error", () => {
+    const fault = new TypeError("Cannot read properties of null (reading 'id')");
+
+    runWithBetterAuthRequestContext({ path: "/callback/*", method: "GET", oauthStateCookie: "matches" }, () =>
+      log("error", "TypeError", fault)
+    );
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(fault, {
+      tags: { component: "better-auth", "auth.path": "/callback/*", "http.method": "GET" },
+    });
+    expect(logger.withContext).toHaveBeenCalledWith({
+      source: "better-auth",
+      authPath: "/callback/*",
+      httpMethod: "GET",
+    });
+  });
+
   // The gate fails CLOSED: anything it cannot positively identify as THE one suppressed code
   // (`state_mismatch`) is still captured. A wrong answer should add noise, never silence a fault.
   test("captures a BetterAuthError carrying no code", () => {
