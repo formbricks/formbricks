@@ -1,5 +1,7 @@
-import { isLicenseRefusalStatus } from "@/modules/ee/license-check/lib/license-status";
-import type { TLicenseRefusalStatus } from "@/modules/ee/license-check/lib/license-status";
+import {
+  type TLicenseRefusalStatus,
+  isLicenseRefusalStatus,
+} from "@/modules/ee/license-check/lib/license-status";
 import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 
 // Every status the license server does not refuse. `satisfies` makes a new one fail to compile until it

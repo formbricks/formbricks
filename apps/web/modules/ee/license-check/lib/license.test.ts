@@ -1549,6 +1549,43 @@ describe("License Core Logic", () => {
     });
   });
 
+  // ENG-7563: the one reading of a license-server rejection, shared by the regular check and the recheck.
+  describe("handleLicenseRejection", () => {
+    const activePrevious = {
+      active: true,
+      features: { removeBranding: true, workspaces: 5 },
+      lastChecked: new Date(Date.now() - 60 * 60 * 1000),
+    };
+
+    test.each([
+      [400, "invalid_license"],
+      [403, "instance_mismatch"],
+    ])("records an HTTP %i as %s on the license in grace", async (status, expected) => {
+      const { handleLicenseRejection, LicenseApiError } = await import("./license");
+      mockCache.get.mockImplementation(async (key: string) =>
+        key.includes(":previous_result") ? { ok: true, data: activePrevious } : { ok: true, data: null }
+      );
+      mockCache.set.mockResolvedValue({ ok: true });
+
+      expect(await handleLicenseRejection(new LicenseApiError("refused", status))).toBe(expected);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        expect.stringContaining(":previous_result"),
+        expect.objectContaining({ active: true, lastRefusal: expected }),
+        expect.any(Number)
+      );
+    });
+
+    test.each([
+      ["an HTTP 500", async () => new (await import("./license")).LicenseApiError("boom", 500)],
+      ["a network error", async () => new TypeError("fetch failed")],
+    ])("returns null and records nothing for %s", async (_label, makeError) => {
+      const { handleLicenseRejection } = await import("./license");
+
+      expect(await handleLicenseRejection(await makeError())).toBeNull();
+      expect(mockCache.set).not.toHaveBeenCalled();
+    });
+  });
+
   describe("fetchLicenseFresh", () => {
     test("should fetch directly from server without using cache", async () => {
       const { fetchLicenseFresh } = await import("./license");
