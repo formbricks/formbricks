@@ -16,6 +16,7 @@ import {
   decodeKeysetCursor,
 } from "@/app/api/v3/lib/keyset-cursor";
 import {
+  type InvalidParam,
   createdResponse,
   noContentResponse,
   problemBadRequest,
@@ -452,6 +453,18 @@ const runDashboardReplace = async (
   return successResponse(dashboard, { requestId: context.requestId });
 };
 
+/** The 422 every refused filters write answers, naming each problem; `null` when there is none. */
+const refuseFilterIssues = (
+  issues: InvalidParam[],
+  { requestId, instance }: Pick<TV3DashboardOperationContext, "requestId" | "instance">
+): Response | null =>
+  issues.length === 0
+    ? null
+    : problemUnprocessableContent(requestId, "The dashboard filters are not valid", {
+        instance,
+        invalid_params: issues,
+      });
+
 /**
  * A filters write that names an embedded-data key no kept widget's Feedback Dataset has, as the 422 naming
  * each; `null` when every key is one a chart reads (or was already saved).
@@ -488,35 +501,27 @@ const refuseUnknownEmbeddedFilterFields = async ({
     actor,
     canReadDataset,
   });
-  return issues.length === 0
-    ? null
-    : problemUnprocessableContent(requestId, "The dashboard filters are not valid", {
-        instance,
-        invalid_params: issues,
-      });
+  return refuseFilterIssues(issues, { requestId, instance });
 };
 
 /**
- * Filters that are well-shaped but do not fit the field catalog (a field outside it, an operator the field
- * refuses, a repeated id, values past the picks budget), as the 422 naming each at `filters.<index>.<key>`;
- * `null` when they all fit. Runs before anything is read or written (ENG-7061).
+ * Filters that are well-shaped but cannot be saved (a field outside the catalog, an operator the field
+ * refuses, a repeated id, a value the field cannot take, values past the picks budget), as the 422 naming
+ * each at `filters.<index>.<key>`; `null` when there is none. Runs before anything is read or written
+ * (ENG-7061).
  */
-const refuseFiltersOffCatalog = (
+const refuseInvalidFilters = (
   filters: readonly TLockedDashboardFilter[],
-  { requestId, instance }: TV3DashboardOperationContext
-): Response | null => {
-  const issues = findInvalidDashboardFilters(filters);
-  return issues.length === 0
-    ? null
-    : problemUnprocessableContent(requestId, "The dashboard filters are not valid", {
-        instance,
-        invalid_params: issues.map(({ path, message, code }) => ({
-          name: ["filters", ...path].join("."),
-          reason: message,
-          ...(code && { code }),
-        })),
-      });
-};
+  context: Pick<TV3DashboardOperationContext, "requestId" | "instance">
+): Response | null =>
+  refuseFilterIssues(
+    findInvalidDashboardFilters(filters).map(({ path, message, code }) => ({
+      name: ["filters", ...path].join("."),
+      reason: message,
+      ...(code && { code }),
+    })),
+    context
+  );
 
 /**
  * `PUT /api/v3/dashboards/{dashboardId}` → 200 `{ data }`: the name, every widget's place and, when sent,
@@ -532,7 +537,7 @@ export async function replaceV3Dashboard({
   const { requestId, instance } = context;
   const log = logger.withContext({ requestId, dashboardId });
 
-  const invalidFilters = body.filters ? refuseFiltersOffCatalog(body.filters, context) : null;
+  const invalidFilters = body.filters ? refuseInvalidFilters(body.filters, context) : null;
   if (invalidFilters) return invalidFilters;
 
   try {
@@ -607,7 +612,7 @@ export async function setV3DashboardFilters({
   const { requestId, instance } = context;
   const log = logger.withContext({ requestId, dashboardId });
 
-  const invalidFilters = refuseFiltersOffCatalog(body.filters, context);
+  const invalidFilters = refuseInvalidFilters(body.filters, context);
   if (invalidFilters) return invalidFilters;
 
   try {
