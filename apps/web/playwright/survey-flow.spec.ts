@@ -47,29 +47,8 @@ const toV3Document = (value: unknown): unknown => {
   return value;
 };
 
+/** ENG-7437: the fixture's "hours > 112" rule pre-selects this bundle. */
 const PRESELECTED_BUNDLE = "Netflix + Prime Video";
-
-/** The fixture's blocks, with the "hours > 112" rule also pre-selecting a bundle (ENG-7437). */
-const blocksWithPreselect = (): TSurveyBlock[] =>
-  fixture.blocks.map((surveyBlock) => ({
-    ...surveyBlock,
-    logic: surveyBlock.logic?.map((rule) =>
-      rule.id === ids.lowQuality.rule
-        ? {
-            ...rule,
-            actions: [
-              ...rule.actions,
-              {
-                id: "flowactionpreselect00001",
-                objective: "preselectAnswer" as const,
-                target: "bundle",
-                value: { type: "choices" as const, choiceIds: ["netflix_prime"] },
-              },
-            ],
-          }
-        : rule
-    ),
-  }));
 
 /** The fixture as the body of `POST /api/v3/surveys`: the survey document, live, in a new workspace. */
 const toV3CreateBody = (workspaceId: string) => ({
@@ -80,7 +59,7 @@ const toV3CreateBody = (workspaceId: string) => ({
   defaultLanguage: LANGUAGE,
   welcomeCard: toV3Document(fixture.welcomeCard),
   startLogic: fixture.startLogic,
-  blocks: toV3Document(blocksWithPreselect()),
+  blocks: toV3Document(fixture.blocks),
   endings: toV3Document(fixture.endings),
   hiddenFields: fixture.hiddenFields,
   variables: fixture.variables,
