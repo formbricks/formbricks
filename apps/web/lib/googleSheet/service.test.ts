@@ -243,6 +243,12 @@ describe("writeData", () => {
     vi.unstubAllGlobals();
   });
 
+  test("rejects legacy labels that do not line up with the labels, before touching the sheet", async () => {
+    await expect(writeData(authorizedIntegration, "sheet1", ["answer"], ["question"], [])).rejects.toThrow();
+    expect(sheetsMock.update).not.toHaveBeenCalled();
+    expect(sheetsMock.append).not.toHaveBeenCalled();
+  });
+
   test("rejects with an UnknownError when the append callback reports an error", async () => {
     sheetsMock.update.mockImplementation(respondAsync(null));
     sheetsMock.append.mockImplementation(respondAsync(new Error("The caller does not have permission")));
