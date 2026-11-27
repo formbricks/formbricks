@@ -805,11 +805,12 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     mocks.assertSegmentSurveyFiltersVisible.mockClear();
     expect((await update({ surveys: [SURVEY_ID] })).status).toBe(200);
     expect(mocks.assertSegmentSurveyFiltersVisible).not.toHaveBeenCalled();
-    // Re-connecting a stored survey adds no target, so nothing ties the write to the stored filters.
+    // Re-sending a stored survey still ties the write to the filters read: the survey may have been
+    // disconnected, and the filters changed, since.
     expect(mocks.updateSegment).toHaveBeenLastCalledWith(
       SEGMENT_ID,
       { surveys: [SURVEY_ID] },
-      { connectedSurveyIds: [SURVEY_ID] }
+      { connectedSurveyIds: [SURVEY_ID], expectedFilters: FILTERS }
     );
   });
 

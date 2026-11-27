@@ -347,11 +347,12 @@ export async function updateSegmentOperation({
       );
     }
 
-    // A filter change, or a survey connected to the stored tree, was checked against `oldObject.filters`:
-    // the write lands only while they are still stored.
+    // A filter change, or any write that (re)connects surveys, was checked against `oldObject.filters`:
+    // the write lands only while they are still stored. A survey sent again from the read can have been
+    // disconnected, and the filters changed, since; reconnecting it then would skip the visibility check.
     updated = await updateSegment(segmentId, data, {
       connectedSurveyIds,
-      ...((data.filters || connectsSurveys) && { expectedFilters: oldObject.filters }),
+      ...((data.filters || body.surveys?.length) && { expectedFilters: oldObject.filters }),
     });
   } catch (error) {
     return updateRefusalOrThrow(error, context);
