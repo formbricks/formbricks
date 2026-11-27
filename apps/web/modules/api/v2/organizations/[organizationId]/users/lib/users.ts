@@ -316,15 +316,7 @@ export const updateUser = async (
                 userId: existingUser.id,
               },
             },
-            include: {
-              team: {
-                include: {
-                  workspaceTeams: {
-                    select: { workspaceId: true },
-                  },
-                },
-              },
-            },
+            select: { teamId: true },
           })
         );
       }
@@ -345,15 +337,7 @@ export const updateUser = async (
               user: { connect: { id: existingUser.id } },
               team: { connect: { id: team.id } },
             },
-            include: {
-              team: {
-                include: {
-                  workspaceTeams: {
-                    select: { workspaceId: true },
-                  },
-                },
-              },
-            },
+            select: { teamId: true },
           })
         );
       }
@@ -484,6 +468,8 @@ const getExistingTeamsFromInput = async (userInputTeams: string[] | undefined, o
         name: { in: userInputTeams },
         organizationId,
       },
+      // The same order `teamUsersInOrganization` reads, so every endpoint reports a user's teams alike.
+      orderBy: { name: "asc" },
       select: {
         id: true,
         name: true,

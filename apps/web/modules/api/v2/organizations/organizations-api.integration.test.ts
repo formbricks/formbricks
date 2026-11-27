@@ -215,6 +215,16 @@ describe("users", () => {
     expect(updated.body.data).toMatchObject({ id: other.userId, role: "member", teams: [] });
     expect(Object.keys(updated.body.data).sort()).toEqual(Object.keys(listed.body.data[0]).sort());
 
+    const promoted = await callRoute(updateUser, {
+      method: "PATCH",
+      path: orgPath("users"),
+      params: orgParams(),
+      apiKey,
+      body: { email: other.email, role: "manager" },
+    });
+    expect(promoted.status, JSON.stringify(promoted.body)).toBe(200);
+    expect(promoted.body.data).toMatchObject({ id: other.userId, role: "manager", teams: [] });
+
     const remaining = await prisma.teamUser.findMany({
       where: { userId: other.userId },
       select: { teamId: true },
@@ -226,7 +236,7 @@ describe("users", () => {
     });
     expect(memberships).toEqual(
       expect.arrayContaining([
-        { organizationId: owner.organizationId, role: "member" },
+        { organizationId: owner.organizationId, role: "manager" },
         { organizationId: other.organizationId, role: "owner" },
       ])
     );

@@ -181,6 +181,12 @@ describe("Users Lib", () => {
       const createArgs = vi.mocked(prisma.user.create).mock.calls[0]?.[0];
       expect(createArgs).not.toHaveProperty("include");
       expect(createArgs?.select).toStrictEqual(expectedApiUserSelect("org456"));
+      expect(prisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { name: { in: ["Test Team"] }, organizationId: "org456" },
+          orderBy: { name: "asc" },
+        })
+      );
       expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
         teamMemberships: [{ teamId: "team123", userId: mockUser.id }],
@@ -322,6 +328,10 @@ describe("Users Lib", () => {
       const lookupArgs = vi.mocked(prisma.user.findFirst).mock.calls[0]?.[0];
       expect(lookupArgs).not.toHaveProperty("include");
       expect(lookupArgs?.select).toStrictEqual({ id: true, teamUsers: expectedTeamUsersSelect("org456") });
+      // This request takes the batched `$transaction` path; its write selects the same columns.
+      const updateArgs = vi.mocked(prisma.user.update).mock.calls[0]?.[0];
+      expect(updateArgs).not.toHaveProperty("include");
+      expect(updateArgs?.select).toStrictEqual(expectedApiUserSelect("org456"));
     });
 
     test("writes the user selecting only this organization's membership, and no credentials", async () => {
