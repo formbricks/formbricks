@@ -350,3 +350,88 @@ describe("createWebSurveyMetaSnapshot — the visit group", () => {
     expect(meta.visitTimeOnSite).toBe(125);
   });
 });
+
+describe("createWebSurveyMetaSnapshot — the visit's landing campaign (ENG-7430)", () => {
+  const visit = {
+    pagesViewed: 3,
+    uniquePagesViewed: 3,
+    timeOnSite: 40,
+    entryReferrer: "https://www.google.com/",
+    visitedUrls: ["/", "/plans", "/plans/compare"],
+    uniquePaths: ["/", "/plans", "/plans/compare"],
+    utm: { utmSource: "newsletter", utmCampaign: "oe2027" },
+  };
+
+  test("records the landing campaign on a later, untagged page, with the current page unchanged", () => {
+    setLocation("/plans/compare?ref=nav&source=cta");
+
+    const meta = createWebSurveyMetaSnapshot(true, visit)();
+
+    expect(meta).toMatchObject({
+      url: `${ORIGIN}/plans/compare?ref=nav&source=cta`,
+      pagePath: "/plans/compare",
+      source: "cta",
+      utmSource: "newsletter",
+      utmCampaign: "oe2027",
+    });
+    expect(meta).not.toHaveProperty("utmMedium");
+    expect(meta).not.toHaveProperty("utmTerm");
+    expect(meta).not.toHaveProperty("utmContent");
+  });
+
+  test("a page carrying its own UTMs keeps them as a whole set, never mixed with the visit's", () => {
+    setLocation("/promo?utm_campaign=winter");
+
+    const meta = createWebSurveyMetaSnapshot(true, visit)();
+
+    expect(meta.utmCampaign).toBe("winter");
+    expect(meta).not.toHaveProperty("utmSource");
+  });
+
+  test("adds no UTM field when neither the page nor the visit has a campaign", () => {
+    const { utm: _utm, ...visitWithoutCampaign } = visit;
+
+    for (const meta of [
+      createWebSurveyMetaSnapshot(true, visitWithoutCampaign)(),
+      createWebSurveyMetaSnapshot(true)(),
+    ]) {
+      for (const key of ["utmSource", "utmMedium", "utmCampaign", "utmTerm", "utmContent"]) {
+        expect(meta).not.toHaveProperty(key);
+      }
+    }
+  });
+
+  test("keeps the campaign off a runtime whose location is not a host page", () => {
+    const meta = createWebSurveyMetaSnapshot(false, visit)();
+
+    expect(meta).not.toHaveProperty("utmCampaign");
+    expect(meta).not.toHaveProperty("utmSource");
+  });
+
+  test("drops a malformed campaign instead of breaking the survey", () => {
+    // The SDK and this renderer are cached separately, so a campaign from another version must not throw.
+    for (const utm of [
+      "oe2027",
+      null,
+      { utmCampaign: 42, utmSource: "  ", utmMedium: " cpc " },
+    ] as unknown as (typeof visit)["utm"][]) {
+      const meta = createWebSurveyMetaSnapshot(true, { ...visit, utm })();
+
+      expect(meta).not.toHaveProperty("utmCampaign");
+      expect(meta).not.toHaveProperty("utmSource");
+      expect(meta.visitPagesViewed).toBe(3);
+    }
+    const meta = createWebSurveyMetaSnapshot(true, {
+      ...visit,
+      utm: { utmMedium: " cpc " },
+    })();
+    expect(meta.utmMedium).toBe("cpc");
+  });
+
+  test("freezes the campaign at display like the rest of the snapshot", () => {
+    const getMeta = createWebSurveyMetaSnapshot(true, visit);
+    setLocation("/promo?utm_campaign=winter");
+
+    expect(getMeta().utmCampaign).toBe("oe2027");
+  });
+});

@@ -21,7 +21,7 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 | `url`             | `string`  | Browser         | The page URL the survey ran on. Always read back without its query string     |
 | `pagePath`        | `string`  | Browser         | The same page without the query string, to group by page rather than by visit |
 | `pageReferrer`    | `string`  | Browser         | Where the respondent came from. Also read back without its query string       |
-| `utmSource`       | `string`  | Browser         | `utm_source` from the page's own query string                                 |
+| `utmSource`       | `string`  | Browser         | `utm_source` from the page's query string, else from the visit (see below)    |
 | `utmMedium`       | `string`  | Browser         | `utm_medium`                                                                  |
 | `utmCampaign`     | `string`  | Browser         | `utm_campaign`                                                                |
 | `utmTerm`         | `string`  | Browser         | `utm_term`                                                                    |
@@ -74,6 +74,8 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 ### What Link, Web and Mobile Each Capture
 
 Link surveys and website & app surveys render through the same component, so both capture the full browser set. What those fields *describe* differs: on a link survey `url`, `pagePath`, `pageReferrer` and `utm*` are about the Formbricks-hosted survey page and how the respondent reached it; on an app survey they are about the host page the survey was triggered on.
+
+On a website, the `utm*` fields keep the campaign the visitor arrived with. When the page the survey shows on has no UTM parameters, they hold the ones of the latest page in the same visit that had any, usually the landing page, so a survey two pages after a campaign link still records the campaign. A page with its own UTM parameters uses those, as a whole set: two campaigns are never mixed. A visit that never carried UTM parameters leaves all five unset, and a new tab starts without a campaign. `url` and `pagePath` always describe the page the survey showed on.
 
 The five `visit*` fields come from the website SDK, which counts the visit in the browser tab across page loads: a visit is one tab, and time on site leaves out time spent on other sites. Only website & app surveys on a website carry them; link surveys and mobile apps leave them unset. They are what [show conditions](/surveys/website-app-surveys/show-conditions) check, recorded as they were when the survey showed. To get `visitUrls` as a list, split it on ` · `: a browser always encodes spaces inside a path, so the separator never occurs in one.
 
