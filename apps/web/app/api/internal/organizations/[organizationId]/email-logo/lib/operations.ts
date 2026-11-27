@@ -33,8 +33,9 @@ export async function updateOrganizationEmailLogoOperation({
 }
 
 /**
- * `DELETE /api/internal/organizations/{organizationId}/email-logo`: go back to the Formbricks logo. The
- * same checks as setting one. Audited as `updated` on the organization.
+ * `DELETE /api/internal/organizations/{organizationId}/email-logo`: emails show no logo at all, not the
+ * Formbricks one (ENG-545); uploading a logo again undoes it. The same checks as setting one. Audited as
+ * `updated` on the organization.
  */
 export async function removeOrganizationEmailLogoOperation(
   context: TWhiteLabelRequestContext
@@ -44,7 +45,10 @@ export async function removeOrganizationEmailLogoOperation(
   const access = await requireWhiteLabelOrgAccess(context, { chargeStateMutation: true });
   if (access instanceof Response) return access;
 
-  if (auditLog) auditLog.oldObject = { logoUrl: "" };
+  if (auditLog) {
+    auditLog.oldObject = { logoUrl: "" };
+    auditLog.newObject = { logoUrl: null, hideLogo: true };
+  }
   await removeOrganizationEmailLogoUrl(organizationId);
 
   return noContentResponse({ requestId });

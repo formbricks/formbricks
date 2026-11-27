@@ -698,7 +698,18 @@ describe("processWorkflowRunJob", () => {
 
     await processWorkflowRunJob(data, baseContext);
 
-    expect(mockBuildHtml).toHaveBeenCalledWith(expect.objectContaining({ logoUrl: "" }));
+    expect(mockBuildHtml).toHaveBeenCalledWith(expect.objectContaining({ logoUrl: "", hideLogo: false }));
+  });
+
+  test("renders no logo when the organization removed it (ENG-545)", async () => {
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({
+      id: "org1",
+      whitelabel: { logoUrl: null, hideLogo: true },
+    });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockBuildHtml).toHaveBeenCalledWith(expect.objectContaining({ hideLogo: true }));
   });
 
   test("returns without double-processing when the queued -> running claim loses the race", async () => {

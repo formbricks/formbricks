@@ -16,6 +16,7 @@ export const sendFollowUpEmail = async ({
   includeVariables = false,
   includeHiddenFields = false,
   logoUrl,
+  hideLogo = false,
   locale,
   rateLimit,
 }: {
@@ -28,6 +29,7 @@ export const sendFollowUpEmail = async ({
   survey: TSurvey;
   response: TResponse;
   logoUrl?: string;
+  hideLogo?: boolean;
   locale?: TUserLocale;
   rateLimit: TEmailRateLimitContext;
 }): Promise<void> => {
@@ -45,6 +47,7 @@ export const sendFollowUpEmail = async ({
     includeVariables,
     includeHiddenFields,
     logoUrl,
+    hideLogo,
     locale,
   });
 

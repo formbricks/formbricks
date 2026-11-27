@@ -87,7 +87,8 @@ describe("POST /api/internal/organizations/{organizationId}/test-emails", () => 
       "de-DE",
       USER_ID,
       LOGO_URL,
-      ORG_ID
+      ORG_ID,
+      false
     );
     // No settings-write budget, as before; the email service limits the sender. Nothing is audited.
     expect(operationLimits()).toEqual([]);
@@ -103,7 +104,22 @@ describe("POST /api/internal/organizations/{organizationId}/test-emails", () => 
       "de-DE",
       USER_ID,
       "",
-      ORG_ID
+      ORG_ID,
+      false
+    );
+  });
+
+  test("sends the preview with no logo at all when the organization removed it (ENG-545)", async () => {
+    mocks.getOrganization.mockResolvedValue({ id: ORG_ID, whitelabel: { logoUrl: null, hideLogo: true } });
+    expect((await send()).status).toBe(202);
+    expect(mocks.sendEmailCustomizationPreviewEmail).toHaveBeenCalledWith(
+      "ada@example.com",
+      "Ada",
+      "de-DE",
+      USER_ID,
+      "",
+      ORG_ID,
+      true
     );
   });
 

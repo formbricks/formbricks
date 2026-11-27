@@ -13,7 +13,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
-import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
+import { getOrganizationEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 
 /**
@@ -49,7 +49,7 @@ export async function sendSurveyPreviewEmailOperation({
 
   // Throws `ResourceNotFoundError` for a survey deleted since the check: the wrapper's uniform 403.
   const organizationId = await getOrganizationIdFromSurveyId(surveyId);
-  const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
+  const organizationLogo = await getOrganizationEmailLogo(organizationId);
 
   const survey = await getSurvey(surveyId);
   if (!survey) return problemForbidden(requestId, undefined, instance);
@@ -69,7 +69,8 @@ export async function sendSurveyPreviewEmailOperation({
       workspaceId: survey.workspaceId,
       locale: user.locale,
       actorUserId: user.id,
-      logoUrl: organizationLogoUrl || "",
+      logoUrl: organizationLogo.logoUrl || "",
+      hideLogo: organizationLogo.hideLogo,
       surveyId: survey.id,
       organizationId,
     });

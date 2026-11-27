@@ -15,6 +15,7 @@ import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { validateInputs } from "@/lib/utils/validate";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/email-logo";
 import { getOrganizationMemberEmails, resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -34,6 +35,7 @@ const evaluateFollowUp = async (
     const { to, replyTo } = properties;
     const toValueFromResponse = response.data[to];
     const logoUrl = organization.whitelabel?.logoUrl ?? "";
+    const { hideLogo } = getEmailLogo(organization.whitelabel);
 
     // Check if 'to' is a direct email address (team member or user email)
     const parsedEmailTo = z.email().safeParse(to);
@@ -49,6 +51,7 @@ const evaluateFollowUp = async (
         includeVariables: properties.includeVariables,
         includeHiddenFields: properties.includeHiddenFields,
         logoUrl,
+        hideLogo,
         locale,
         // The author can type any address, so only a member's counts as the organization's own mail.
         rateLimit: {
@@ -82,6 +85,7 @@ const evaluateFollowUp = async (
           to: parsedResult.data,
           replyTo,
           logoUrl,
+          hideLogo,
           survey,
           response,
           attachResponseData: properties.attachResponseData,
@@ -119,6 +123,7 @@ const evaluateFollowUp = async (
           to: parsedResult.data,
           replyTo,
           logoUrl,
+          hideLogo,
           survey,
           response,
           attachResponseData: properties.attachResponseData,
