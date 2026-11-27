@@ -156,7 +156,8 @@ export const ALL_SEGMENT_SURVEY_REFS: Prisma.SurveyWhereInput = Object.freeze({}
  * @param visibleSurveyWhere ENG-3282: the `Survey` clause each segment's `activeSurveys` /
  *   `inactiveSurveys` are read through. Required, so no page can forget it and ship restricted survey
  *   names and ids to the browser: pass `getUserVisibleSurveyWhere(...)` for anything a viewer sees, and
- *   `ALL_SEGMENT_SURVEY_REFS` only where the result stays on the server.
+ *   `ALL_SEGMENT_SURVEY_REFS` only where the result stays on the server. ENG-7556: it also scopes the
+ *   private segments, which are their surveys' targeting: only those of a survey the viewer sees are read.
  */
 export const getSegments = reactCache(
   async (
@@ -164,15 +165,15 @@ export const getSegments = reactCache(
     visibleSurveyWhere: Prisma.SurveyWhereInput
   ): Promise<TSegmentWithSurveyRefs[]> => {
     validateInputs([workspaceId, ZId]);
+    const isScoped = Object.keys(visibleSurveyWhere).length > 0;
     try {
       const segments = await prisma.segment.findMany({
-        where: {
-          workspaceId,
-        },
-        select:
-          Object.keys(visibleSurveyWhere).length > 0
-            ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
-            : selectSegment,
+        where: isScoped
+          ? { workspaceId, OR: [{ isPrivate: false }, { surveys: { some: visibleSurveyWhere } }] }
+          : { workspaceId },
+        select: isScoped
+          ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
+          : selectSegment,
       });
 
       if (!segments) {

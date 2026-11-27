@@ -2,7 +2,12 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
-import { TBaseFilters, TSegmentFilter, TSegmentSurveyInteractionFilter } from "@formbricks/types/segment";
+import {
+  TBaseFilters,
+  TSegment,
+  TSegmentFilter,
+  TSegmentSurveyInteractionFilter,
+} from "@formbricks/types/segment";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { andVisibleSurveys, buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
 import {
@@ -321,6 +326,21 @@ export const segmentFiltersReadHiddenSurvey = async (
   if (!hiddenSurveyWhere) return false;
   const reachable = await getReachableSurveyIds(filters, workspaceId, segmentId);
   return anySurveyHiddenFrom([...reachable], workspaceId, hiddenSurveyWhere);
+};
+
+/**
+ * ENG-7556: a private segment is its survey's targeting, so its filters are that survey's to see. Whether
+ * `segment` is private to a survey `buildHiddenSurveyWhere` hides from `actor`. A shared segment, and an
+ * organization owner or manager, cost no query.
+ */
+export const isPrivateSegmentOfHiddenSurvey = async (
+  segment: Pick<TSegment, "isPrivate" | "surveys" | "workspaceId">,
+  actor: TSurveyActorContext
+): Promise<boolean> => {
+  if (!segment.isPrivate || segment.surveys.length === 0) return false;
+  const hiddenSurveyWhere = buildHiddenSurveyWhere(actor);
+  if (!hiddenSurveyWhere) return false;
+  return anySurveyHiddenFrom(segment.surveys, segment.workspaceId, hiddenSurveyWhere);
 };
 
 export const SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE =

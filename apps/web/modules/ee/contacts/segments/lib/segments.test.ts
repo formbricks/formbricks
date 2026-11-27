@@ -179,9 +179,39 @@ describe("Segment Service Tests", () => {
 
       await getSegments("workspace-id-mock", visibleSurveyWhere);
 
+      expect(prisma.segment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } },
+        })
+      );
+    });
+
+    // ENG-7556: a private segment is its survey's targeting. Shipping one to a browser whose viewer can't see
+    // that survey leaks its filters (attribute values such as emails), so the query leaves it out.
+    test("leaves out the private segments of surveys hidden from the viewer", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
+      const visibleSurveyWhere = { OR: [{ visibility: "workspace" as const }, { ownerId: "user-1" }] };
+
+      await getSegments("workspace-id-mock", visibleSurveyWhere);
+
+      expect(prisma.segment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            workspaceId: "workspace-id-mock",
+            OR: [{ isPrivate: false }, { surveys: { some: visibleSurveyWhere } }],
+          },
+        })
+      );
+    });
+
+    test("keeps every private segment for a server-side caller that reads all survey references", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([]);
+
+      await getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS);
+
       expect(prisma.segment.findMany).toHaveBeenCalledWith({
         where: { workspaceId: "workspace-id-mock" },
-        select: { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } },
+        select: selectSegment,
       });
     });
 

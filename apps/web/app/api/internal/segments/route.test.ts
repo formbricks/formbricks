@@ -56,6 +56,7 @@ const mocks = vi.hoisted(() => ({
   assertSurveyInteractionSurveyIds: vi.fn(),
   assertSegmentSurveyFiltersVisible: vi.fn(),
   assertAddedSegmentSurveyFiltersVisible: vi.fn(),
+  isPrivateSegmentOfHiddenSurvey: vi.fn(),
   checkForRecursiveSegmentFilter: vi.fn(),
 }));
 
@@ -86,6 +87,7 @@ vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
   assertSurveyInteractionSurveyIds: mocks.assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace: mocks.assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter: mocks.checkForRecursiveSegmentFilter,
+  isPrivateSegmentOfHiddenSurvey: mocks.isPrivateSegmentOfHiddenSurvey,
   restoreHiddenSegmentSurveyIds: mocks.restoreHiddenSegmentSurveyIds,
 }));
 vi.mock("@/lib/survey/service", () => ({ loadNewSegmentInSurvey: mocks.loadNewSegmentInSurvey }));
@@ -241,6 +243,7 @@ beforeEach(() => {
   mocks.getUserVisibleSurveyWhere.mockResolvedValue(visibleWhere);
   mocks.resolveSurveyActorContext.mockResolvedValue(memberActor);
   mocks.restoreHiddenSegmentSurveyIds.mockImplementation(async (filters: unknown) => filters);
+  mocks.isPrivateSegmentOfHiddenSurvey.mockResolvedValue(false);
   mocks.getSegment.mockResolvedValue(storedSegment());
   mocks.createSegment.mockResolvedValue(storedSegment());
   mocks.updateSegment.mockResolvedValue(storedSegment({ title: "Renamed" }));
@@ -890,6 +893,27 @@ describe("attaching or copying a segment onto a survey", () => {
     expect(mocks.loadNewSegmentInSurvey).not.toHaveBeenCalled();
     expect(mocks.cloneSegment).not.toHaveBeenCalled();
   });
+
+  // ENG-7556: a private segment is its survey's targeting; attaching or copying it hands its filters over.
+  test.each([
+    ["PUT /surveys/{id}/segment", () => attach()],
+    ["POST /segments/{id}/copies", () => copy()],
+  ])(
+    "%s answers another survey's private segment with the uniform 403 when that survey is hidden",
+    async (_label, call) => {
+      const privateSegment = storedSegment({ title: SURVEY_2_ID, isPrivate: true });
+      mocks.getSegment.mockResolvedValue(privateSegment);
+      mocks.isPrivateSegmentOfHiddenSurvey.mockResolvedValue(true);
+
+      const response = await call();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+      expect(mocks.isPrivateSegmentOfHiddenSurvey).toHaveBeenCalledWith(privateSegment, memberActor);
+      expect(mocks.loadNewSegmentInSurvey).not.toHaveBeenCalled();
+      expect(mocks.cloneSegment).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe("POST /api/internal/surveys/{surveyId}/segment/resets", () => {

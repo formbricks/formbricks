@@ -2,7 +2,10 @@ import "server-only";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganization } from "@/lib/organization/service";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
-import { assertSegmentSurveyFiltersVisible } from "@/modules/ee/contacts/segments/lib/helper";
+import {
+  assertSegmentSurveyFiltersVisible,
+  isPrivateSegmentOfHiddenSurvey,
+} from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -27,8 +30,10 @@ export const checkAdvancedTargetingPermission = async (organizationId: string): 
 /**
  * ENG-6870: attaching or copying a segment onto a survey targets that survey at whoever the segment's
  * survey-interaction filters match, and the survey's responses then show who they are. So the caller must
- * see every survey those filters read, as if they had written them. Throws `InvalidInputError` when a filter
- * reads one they can't see, and `ResourceNotFoundError` for a segment that is gone.
+ * see every survey those filters read, as if they had written them. ENG-7556: a private segment is its
+ * survey's targeting, so it is not found for a caller who can't see that survey. Throws `InvalidInputError`
+ * when a filter reads a survey they can't see, and `ResourceNotFoundError` for a segment that is gone or
+ * private to a hidden survey.
  */
 export const assertCanTargetWithSegment = async (
   userId: string,
@@ -36,10 +41,9 @@ export const assertCanTargetWithSegment = async (
   segmentId: string
 ): Promise<void> => {
   const segment = await getSegment(segmentId);
-  await assertSegmentSurveyFiltersVisible(
-    segment.filters,
-    segment.workspaceId,
-    await resolveSurveyActorContext({ type: "user", id: userId }, organizationId),
-    segment.id
-  );
+  const actor = await resolveSurveyActorContext({ type: "user", id: userId }, organizationId);
+  if (await isPrivateSegmentOfHiddenSurvey(segment, actor)) {
+    throw new ResourceNotFoundError("segment", segmentId);
+  }
+  await assertSegmentSurveyFiltersVisible(segment.filters, segment.workspaceId, actor, segment.id);
 };
