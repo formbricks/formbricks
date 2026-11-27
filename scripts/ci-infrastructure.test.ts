@@ -146,8 +146,11 @@ test("a persistent apt failure stops setup before any browser install", () => {
 test("the apt fallback stops a stray apt-get and waits for the dpkg locks before touching dpkg", () => {
   // Playwright's apt-get runs under sudo, outside the process group `timeout` stops (ENG-7557).
   const { directory, env, command } = fixture();
-  // One line per call, even for the multi-line Python lock helper.
-  command("sudo", 'line="sudo $*"; echo "${line//$\'\\n\'/ }" >> "$FIXTURE/commands"');
+  // Record what each sudo call does; the dpkg lock wait is recorded by its target, not its source.
+  command(
+    "sudo",
+    `if [[ "$1 $2" == "python3 -c" ]]; then echo "wait for the dpkg locks in \${!#}"; else echo "sudo $*"; fi >> "$FIXTURE/commands"`
+  );
   command(
     "pnpm",
     `
@@ -167,7 +170,7 @@ if [[ "$*" == *install-deps* && ! -e "$FIXTURE/apt-failed" ]]; then touch "$FIXT
   expect(commands).toEqual([
     "exec playwright install-deps chromium",
     "sudo pkill -TERM -f -- (^|[ /])apt-get( |$)",
-    expect.stringMatching(/^sudo python3 -c .*fcntl\.lockf.* \/var\/lib\/dpkg$/),
+    "wait for the dpkg locks in /var/lib/dpkg",
     "sudo dpkg --configure -a",
     "exec playwright install-deps chromium",
     "exec playwright install chromium",
@@ -215,21 +218,31 @@ exit "$status"`
   return { env, dpkg };
 };
 
-// Hold one lock as apt or dpkg does (fcntl), and resolve once it is held.
-const holdLock = async (path: string, seconds: number) => {
+// Hold one lock as apt or dpkg does (fcntl) for the given seconds, or until release() when none are
+// given, and resolve once it is held.
+const holdLock = async (path: string, seconds?: number) => {
   const holder = spawn(
     "python3",
     [
       "-c",
-      "import fcntl, sys, time; f = open(sys.argv[1], 'a'); fcntl.lockf(f, fcntl.LOCK_EX); print('held', flush=True); time.sleep(float(sys.argv[2]))",
+      "import fcntl, sys, time; f = open(sys.argv[1], 'a'); fcntl.lockf(f, fcntl.LOCK_EX); print('held', flush=True); time.sleep(float(sys.argv[2])) if sys.argv[2] else sys.stdin.read()",
       path,
-      String(seconds),
+      seconds === undefined ? "" : String(seconds),
     ],
-    { stdio: ["ignore", "pipe", "inherit"] }
+    { stdio: ["pipe", "pipe", "inherit"] }
   );
   holders.push(holder);
   await new Promise<void>((resolve) => holder.stdout.once("data", () => resolve()));
+  return { release: () => holder.stdin.end() };
 };
+
+// Whether another process could take this lock now, as a new apt-get would try first.
+const lockIsFree = (path: string) =>
+  spawnSync("python3", [
+    "-c",
+    "import fcntl, sys; fcntl.lockf(open(sys.argv[1], 'a'), fcntl.LOCK_EX | fcntl.LOCK_NB)",
+    path,
+  ]).status === 0;
 
 const waitForLocks = (dpkg: string) => [
   "-c",
@@ -258,22 +271,17 @@ test.each([
 
 test("ci_wait_for_dpkg_lock keeps lock-frontend while it waits for lock, so no apt-get slips in between", async () => {
   const { env, dpkg } = lockWaitFixture();
-  await holdLock(join(dpkg, "lock"), 2);
+  const lock = await holdLock(join(dpkg, "lock"));
   const waiting = spawn("bash", waitForLocks(dpkg), { cwd: repository, env, stdio: "ignore" });
   holders.push(waiting);
   const exited = new Promise<number | null>((resolve) => waiting.once("exit", resolve));
-  await new Promise((resolve) => setTimeout(resolve, 700));
-  // What a new apt-get does first: try lock-frontend. It must find it taken.
-  const probe = spawnSync(
-    "python3",
-    [
-      "-c",
-      "import fcntl, sys; fcntl.lockf(open(sys.argv[1], 'a'), fcntl.LOCK_EX | fcntl.LOCK_NB)",
-      join(dpkg, "lock-frontend"),
-    ],
-    { encoding: "utf8" }
-  );
-  expect(probe.status, probe.stderr).not.toBe(0);
+  // lock stays held until released below, so the wait is still running whenever lock-frontend is taken.
+  const deadline = Date.now() + 2_500;
+  while (lockIsFree(join(dpkg, "lock-frontend")) && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  expect(lockIsFree(join(dpkg, "lock-frontend"))).toBe(false);
+  lock.release();
   expect(await exited).toBe(0);
 }, 15_000);
 
