@@ -17,7 +17,7 @@ import {
  * settings: a personal /c/ link that ends up public must not be indexed any more than an /s/ one (ENG-7436).
  * Links are still followed. A fresh object per call, since Next receives it by reference.
  */
-const getSurveyRobotsMetadata = (): Metadata["robots"] => ({
+const getSurveyNoIndexRobots = (): Metadata["robots"] => ({
   index: false,
   follow: true,
   googleBot: {
@@ -35,7 +35,7 @@ const getSurveyRobotsMetadata = (): Metadata["robots"] => ({
 export const getGenericSurveyMetadata = (): Metadata => ({
   title: "Survey",
   description: "Please complete this survey.",
-  robots: getSurveyRobotsMetadata(),
+  robots: getSurveyNoIndexRobots(),
 });
 
 /** Title, description, social previews and favicon for a survey the link page serves. */
@@ -112,7 +112,7 @@ export const getMetadataForLinkSurvey = async ({
     alternates: {
       canonical: `/s/${surveyId}`,
     },
-    robots: getSurveyRobotsMetadata(),
+    robots: getSurveyNoIndexRobots(),
   };
 
   // Same single-use gate as the page, sharing its one resolution per request. Without a valid link the page
@@ -172,6 +172,6 @@ export const getMetadataForContactSurvey = async ({
   }
   return {
     ...(await getServableSurveyMetadata(survey, undefined, acceptedLanguages)),
-    robots: getSurveyRobotsMetadata(),
+    robots: getSurveyNoIndexRobots(),
   };
 };

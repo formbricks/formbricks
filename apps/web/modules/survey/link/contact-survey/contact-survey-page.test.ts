@@ -156,17 +156,20 @@ describe("ContactSurveyPage metadata", () => {
     vi.mocked(getAcceptedLanguages).mockResolvedValue([]);
   });
 
-  test.each([
-    ["an invalid token", { type: "bad_request", details: [{ field: "token", issue: "invalid_token" }] }],
-    ["an expired token", { type: "bad_request", details: [{ field: "token", issue: "token_expired" }] }],
-  ])("asks search engines not to index the generic page for %s", async (_label, error) => {
-    vi.mocked(verifyContactSurveyToken).mockReturnValue({ ok: false, error } as never);
+  test.each(["invalid_token", "token_expired"])(
+    "asks search engines not to index the generic page for a token rejected as %s",
+    async (issue) => {
+      vi.mocked(verifyContactSurveyToken).mockReturnValue({
+        ok: false,
+        error: { type: "bad_request", details: [{ field: "token", issue }] },
+      });
 
-    const metadata = await generateMetadata(props);
+      const metadata = await generateMetadata(props);
 
-    expect(metadata).toMatchObject({ title: "Survey", robots: noIndexRules });
-    expect(getMetadataForContactSurvey).not.toHaveBeenCalled();
-  });
+      expect(metadata).toMatchObject({ title: "Survey", robots: noIndexRules });
+      expect(getMetadataForContactSurvey).not.toHaveBeenCalled();
+    }
+  );
 
   test("asks search engines not to index the generic page when verifying the token throws", async () => {
     vi.mocked(verifyContactSurveyToken).mockImplementation(() => {

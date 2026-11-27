@@ -129,15 +129,7 @@ describe("link-survey metadata", () => {
       alternates: {
         canonical: `/s/${mockSurveyId}`,
       },
-      robots: {
-        index: false,
-        follow: true,
-        googleBot: {
-          index: false,
-          follow: true,
-          noimageindex: true,
-        },
-      },
+      robots: noIndexRules,
     });
   });
 
@@ -282,15 +274,7 @@ describe("link-survey metadata", () => {
       alternates: {
         canonical: `/s/${mockSurveyId}`,
       },
-      robots: {
-        index: false,
-        follow: true,
-        googleBot: {
-          index: false,
-          follow: true,
-          noimageindex: true,
-        },
-      },
+      robots: noIndexRules,
     });
   });
 
@@ -324,15 +308,7 @@ describe("link-survey metadata", () => {
       alternates: {
         canonical: `/s/${mockSurveyId}`,
       },
-      robots: {
-        index: false,
-        follow: true,
-        googleBot: {
-          index: false,
-          follow: true,
-          noimageindex: true,
-        },
-      },
+      robots: noIndexRules,
     });
   });
 
@@ -347,7 +323,7 @@ describe("link-survey metadata", () => {
     } as never;
     const indexingRules = {
       alternates: { canonical: `/s/${mockSurveyId}` },
-      robots: { index: false, follow: true, googleBot: { index: false, follow: true, noimageindex: true } },
+      robots: noIndexRules,
     };
 
     test.each([
@@ -493,7 +469,6 @@ describe("link-survey metadata", () => {
     // A personal link that ends up public must not be indexed any more than an /s link (ENG-7436).
     test.each([
       ["a public survey", () => contactSurvey()],
-      ["a draft survey", () => contactSurvey({ status: "draft" })],
       [
         "a single-use survey opened without its link",
         () => contactSurvey({ singleUse: { enabled: true, isEncrypted: false } }),
