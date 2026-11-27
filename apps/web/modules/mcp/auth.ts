@@ -90,7 +90,9 @@ const hasDecodableProtectedHeader = (token: string): boolean => {
  * an endpoint answering non-2xx becomes a bare `Error("Jwks failed: …")`, and an unreachable one (DNS,
  * refused connection, no hairpin to the public origin) has its `TypeError` swallowed into the same
  * `no token payload` 401 as a garbage token. `getJwks` is the library's own loader and URL-keyed cache,
- * so it surfaces the real error, and on success `verifyBearerToken` reads the set cached here instead
+ * so it surfaces an error we can classify as `jwks_fetch` (from Better Auth 1.7.16 an unreachable
+ * endpoint arrives as a bare `Error("JWKS fetch failed")`: the library logs the `TypeError` itself and
+ * drops it, so its code is not in our log context), and on success `verifyBearerToken` reads the set cached here instead
  * of fetching again. `createLocalJWKSet` rejects a 200 that is not a key set (a proxy's login page),
  * which the library would otherwise cache and trip over later as another swallowed `TypeError`.
  *

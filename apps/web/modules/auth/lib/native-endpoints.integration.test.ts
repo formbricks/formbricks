@@ -61,9 +61,9 @@ const SERVED_OVER_HTTP: Record<string, string> = {
   "/oauth2/get-client": "MCP OAuth client management",
   "/oauth2/get-clients": "MCP OAuth client management",
   // Registration is `/oauth2/register` only, behind the redirect allowlist (ENG-3086, ENG-3471).
-  // `/oauth2/create-client`, `/oauth2/update-client`, `/oauth2/delete-client` and
-  // `/oauth2/client/rotate-secret` are closed in `disabledPaths` (ENG-3253): no screen calls them and
-  // they skip that allowlist for any signed-in user.
+  // `/oauth2/create-client`, `/oauth2/update-client`, `/oauth2/delete-client`,
+  // `/oauth2/client/rotate-secret` and `/oauth2/client/rotate-keys` are closed in `disabledPaths`
+  // (ENG-3253): no screen calls them and they skip that allowlist for any signed-in user.
   "/admin/oauth2/create-client": "MCP OAuth admin",
   "/admin/oauth2/update-client": "MCP OAuth admin",
   "/admin/oauth2/resources": "MCP OAuth admin",
@@ -198,6 +198,7 @@ describe("Better Auth native endpoints", () => {
       "/oauth2/update-client",
       "/oauth2/delete-client",
       "/oauth2/client/rotate-secret",
+      "/oauth2/client/rotate-keys",
     ];
 
     // One at a time: before the fix several of these mutate the same user and race each other.
@@ -229,6 +230,7 @@ describe("Better Auth native endpoints", () => {
         "/oauth2/update-client",
         "/oauth2/delete-client",
         "/oauth2/client/rotate-secret",
+        "/oauth2/client/rotate-keys",
       ])
     );
     expect(await prisma.oauthClient.count()).toBe(0);
