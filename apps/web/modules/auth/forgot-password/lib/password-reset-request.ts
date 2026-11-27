@@ -1,9 +1,8 @@
 import "server-only";
-import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { EMAIL_AUTH_ENABLED, WEBAPP_URL } from "@/lib/constants";
-import { hasCredentialAccount } from "@/lib/user/password";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { sendSsoSignInHint } from "@/modules/auth/forgot-password/lib/sso-sign-in-hint";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
@@ -12,50 +11,53 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
+import { type TSsoLinkedUser, getOfferedSsoProviders } from "@/modules/ee/sso/lib/linked-sso-providers";
+import type { TSsoIdentityProvider } from "@/modules/ee/sso/lib/provider-normalization";
+
+type TForgotPasswordMail =
+  | { kind: "resetLink" }
+  /** The providers the mail names; empty when none of the user's is offered, which it says instead. */
+  | { kind: "ssoSignInHint"; providers: TSsoIdentityProvider[] };
 
 /**
- * Whether this user has a password to reset. Pure SSO users do not: they get a mail naming their identity
- * provider instead (ENG-3262).
+ * Which mail a forgot-password request gets: a reset link, or a hint naming the SSO providers the user
+ * signs in with (ENG-3262). It follows the sign-in rule (ENG-2590): an account linked to SSO signs in with
+ * SSO while this instance offers one of its providers, and with a password when it offers none.
  *
- * The second arm exists because SSO recovery is one-way (ENG-2557): completing it flips
- * `identityProvider` to the SSO provider and nothing ever flips it back, while the recovery also clears
- * the password it found. Gated on `identityProvider` alone, those users could never ask for a reset again
- * — locked to an IdP they might lose access to, with `auth.api.setPassword` being `serverOnly` and
- * unwired. The surviving credential `Account` row identifies them: recovery nulls the password, it does
- * not delete the row.
+ * - A password user (`identityProvider === "email"`) gets a reset link, on an SSO-only instance too
+ *   (pre-existing, left alone).
+ * - An SSO user whose provider is offered gets the hint, even with a password on the account: the
+ *   password cannot sign them in, so a reset link would only set one they cannot use.
+ * - An SSO user with no offered provider gets a reset link, including one who never had a password, so
+ *   they can set one and sign in. Better Auth's `resetPassword` creates the credential row when none
+ *   exists. On an SSO-only instance (`EMAIL_AUTH_ENABLED` off) a password could not sign them in either,
+ *   so they get the hint, which then points at their administrator.
  *
- * Kept as narrow as that problem, deliberately: gating on the credential row rather than on
- * `emailVerified` means this grants nothing to a user who has only ever signed in via SSO, and
- * `EMAIL_AUTH_ENABLED` switches the second arm off entirely on an SSO-only instance. Note that gate
- * covers only the second arm — an `identityProvider === "email"` user still receives reset mail on an
- * SSO-only instance, which is pre-existing behaviour left alone here. So the flag is about not *widening*
- * that surface, not about closing it.
- *
- * Neither is the enforcement boundary. Better Auth's `resetPassword` CREATES a credential row when none
- * exists, so whoever can request a reset can mint a password; what contains that is `/sign-in/email`,
- * which is gated on `EMAIL_AUTH_ENABLED`, so a minted password is unusable on an SSO-only instance. Since
- * ENG-3639 the native `POST /api/auth/request-password-reset` is closed (`disabledPaths` in auth.ts), so
- * this flow and the authenticated profile action are the only ways to request one.
+ * This is not the enforcement boundary; the session gate on `/sign-in/email` is. Since ENG-3639 the native
+ * `POST /api/auth/request-password-reset` is closed (`disabledPaths` in auth.ts), so this flow and the
+ * authenticated profile action (password users only) are the only ways to request a reset.
  *
  * `null` when the lookup failed: we cannot say either way, so the caller sends nothing at all.
  */
-const canResetPassword = async (user: {
-  id: string;
-  identityProvider: IdentityProvider;
-}): Promise<boolean | null> => {
+const chooseForgotPasswordMail = async (user: TSsoLinkedUser): Promise<TForgotPasswordMail | null> => {
   if (user.identityProvider === "email") {
-    return true;
-  }
-  if (!EMAIL_AUTH_ENABLED) {
-    return false;
+    return { kind: "resetLink" };
   }
 
+  let providers: TSsoIdentityProvider[];
   try {
-    return await hasCredentialAccount(user.id);
+    providers = await getOfferedSsoProviders(user);
   } catch (error) {
-    logger.error({ err: error, userId: user.id }, "Credential-account lookup failed during password reset");
+    logger.error(
+      { ...loggableError(error), userId: user.id },
+      "SSO provider lookup failed during password reset"
+    );
     return null;
   }
+
+  return providers.length > 0 || !EMAIL_AUTH_ENABLED
+    ? { kind: "ssoSignInHint", providers }
+    : { kind: "resetLink" };
 };
 
 /**
@@ -98,12 +100,13 @@ export const processPasswordResetRequest = async ({
 }): Promise<void> => {
   try {
     const user = await getUserByEmail(email);
-    if (!user) {
+    // A deactivated user cannot sign in by any route, so neither mail would lead anywhere.
+    if (!user?.isActive) {
       return;
     }
 
-    const resettable = await canResetPassword(user);
-    if (resettable === null) {
+    const mail = await chooseForgotPasswordMail(user);
+    if (mail === null) {
       return;
     }
 
@@ -112,9 +115,9 @@ export const processPasswordResetRequest = async ({
       return;
     }
 
-    if (!resettable) {
-      // No password to reset, e.g. Azure AD only: tell them how they do sign in (ENG-3262).
-      await sendSsoSignInHint(user);
+    if (mail.kind === "ssoSignInHint") {
+      // Their password cannot sign them in: tell them how they do sign in (ENG-3262, ENG-2590).
+      await sendSsoSignInHint(user, mail.providers);
       return;
     }
 

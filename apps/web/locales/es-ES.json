@@ -26,7 +26,7 @@
       "back_to_login": "Volver al inicio de sesión",
       "email-sent": {
         "heading": "Solicitud de restablecimiento de contraseña realizada correctamente",
-        "sso_hint": "¿Inicias sesión con Google, Microsoft u otro proveedor de inicio de sesión único? Entonces no hay ninguna contraseña que restablecer. Inicia sesión con ese proveedor.",
+        "sso_hint": "Si inicias sesión con Google, Microsoft u otro proveedor de inicio de sesión único, el correo que te hemos enviado te explica cómo iniciar sesión.",
         "text": "Si existe una cuenta con este correo electrónico, recibirás instrucciones para restablecer la contraseña en breve."
       },
       "reset": {
@@ -903,7 +903,7 @@
     "sso_sign_in_hint_email_heading": "Inicia sesión con el inicio de sesión único",
     "sso_sign_in_hint_email_no_access": "Si ya no puedes iniciar sesión de esta forma, ponte en contacto con tu administrador.",
     "sso_sign_in_hint_email_subject": "Cómo iniciar sesión en tu cuenta de Formbricks",
-    "sso_sign_in_hint_email_text": "Hemos recibido una solicitud para restablecer la contraseña de tu cuenta de Formbricks. Tu cuenta no utiliza contraseña, así que no hay nada que restablecer. Inicias sesión con:",
+    "sso_sign_in_hint_email_text": "Hemos recibido una solicitud para restablecer la contraseña de tu cuenta de Formbricks. Tu cuenta utiliza el inicio de sesión único en lugar de una contraseña, por lo que no hay ningún enlace de restablecimiento. Inicias sesión con:",
     "sso_sign_in_hint_email_text_unavailable": "Hemos recibido una solicitud para restablecer la contraseña de tu cuenta de Formbricks. Tu cuenta no utiliza contraseña: inicia sesión mediante inicio de sesión único (SSO), que no está disponible en esta instancia de Formbricks en este momento. Ponte en contacto con tu administrador para volver a tener acceso.",
     "survey_response_finished_email_congrats": "Enhorabuena, has recibido una nueva respuesta a tu encuesta. Alguien acaba de completar tu encuesta: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "¿No quieres recibir estas notificaciones?",

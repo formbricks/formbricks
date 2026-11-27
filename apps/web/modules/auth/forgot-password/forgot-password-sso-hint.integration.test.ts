@@ -4,7 +4,9 @@ import { POST as postPasswordResetRequest } from "@/app/api/internal/password-re
 import { flushAfter } from "@/integration/after";
 import { postToPreLoginRoute } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
+import { hashSecret } from "@/lib/crypto";
 import { auth } from "@/modules/auth/lib/auth";
+import { getIsSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendPasswordResetLinkEmail, sendSsoSignInHintEmail } from "@/modules/email";
 
 /**
@@ -88,7 +90,15 @@ const seedSsoUser = async (extraProviders: string[] = []) =>
 beforeEach(async () => {
   await resetDb();
   vi.clearAllMocks();
+  // `clearAllMocks` keeps an implementation a test set, so the licence is put back explicitly.
+  vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
 });
+
+/** The token in the reset link the one reset mail sent in this test carried. */
+const mailedResetToken = () => {
+  const link = vi.mocked(sendPasswordResetLinkEmail).mock.calls[0]?.[0].verifyLink ?? "";
+  return /\/reset-password\/([^?]+)/.exec(link)?.[1] ?? null;
+};
 
 describe("POST /api/internal/password-reset-requests for an account without a password (real Postgres + Better Auth)", () => {
   test("mails an SSO-only user which provider to sign in with, and no reset link", async () => {
@@ -132,6 +142,73 @@ describe("POST /api/internal/password-reset-requests for an account without a pa
     const result = await requestReset("nobody@corporate-example.com");
 
     expect(result.status).toBe(204);
+    expect(sendSsoSignInHintEmail).not.toHaveBeenCalled();
+    expect(sendPasswordResetLinkEmail).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/internal/password-reset-requests follows the SSO sign-in rule (ENG-2590)", () => {
+  test("case 1: an SSO user with a password gets the hint while their provider is offered", async () => {
+    // The password cannot sign them in, so a reset link would only set one they cannot use.
+    const user = await seedSsoUser();
+    await prisma.account.create({
+      data: {
+        userId: user.id,
+        type: "credential",
+        provider: "credential",
+        providerAccountId: user.id,
+        password: await hashSecret("Old-Password-1", 4),
+      },
+    });
+
+    await requestReset(SSO_EMAIL);
+
+    expect(sendSsoSignInHintEmail).toHaveBeenCalledOnce();
+    expect(sendPasswordResetLinkEmail).not.toHaveBeenCalled();
+  });
+
+  test("case 2: an SSO user who never had a password gets a working reset link while SSO is unavailable", async () => {
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(false);
+    const user = await seedSsoUser();
+
+    await requestReset(SSO_EMAIL);
+
+    expect(sendSsoSignInHintEmail).not.toHaveBeenCalled();
+    const token = mailedResetToken();
+    expect(token).toBeTruthy();
+
+    // The link sets a password where there was none: Better Auth creates the credential account.
+    await auth.api.resetPassword({ body: { token: token ?? "", newPassword: "New-Passw0rd-123!" } });
+
+    const credential = await prisma.account.findUnique({
+      where: { provider_providerAccountId: { provider: "credential", providerAccountId: user.id } },
+      select: { password: true },
+    });
+    expect(credential?.password).toBeTruthy();
+    // And the new password signs them in while SSO stays unavailable: they are not locked out.
+    const signIn = await auth.api.signInEmail({ body: { email: SSO_EMAIL, password: "New-Passw0rd-123!" } });
+    expect(signIn.user.email).toBe(SSO_EMAIL);
+  });
+
+  test("case 3: the hint comes back once SSO is available again", async () => {
+    await seedSsoUser();
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(false);
+    await requestReset(SSO_EMAIL);
+    expect(sendPasswordResetLinkEmail).toHaveBeenCalledOnce();
+
+    vi.mocked(getIsSsoEnabled).mockResolvedValue(true);
+    await requestReset(SSO_EMAIL);
+
+    expect(sendSsoSignInHintEmail).toHaveBeenCalledOnce();
+    expect(sendPasswordResetLinkEmail).toHaveBeenCalledOnce();
+  });
+
+  test("sends a deactivated user nothing", async () => {
+    const user = await seedSsoUser();
+    await prisma.user.update({ where: { id: user.id }, data: { isActive: false } });
+
+    await requestReset(SSO_EMAIL);
+
     expect(sendSsoSignInHintEmail).not.toHaveBeenCalled();
     expect(sendPasswordResetLinkEmail).not.toHaveBeenCalled();
   });

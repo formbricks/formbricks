@@ -20,8 +20,9 @@ interface SsoSignInHintEmailProps extends TEmailTemplateLegalProps {
 }
 
 /**
- * Sent instead of a reset link when someone asks to reset the password of an account that has none
- * (ENG-3262). The forgot-password page answers the same way for every address, so it cannot tell an SSO
+ * Sent instead of a reset link when someone asks to reset the password of an account that signs in with SSO
+ * (ENG-3262, ENG-2590): one with no password, or one whose password cannot sign it in while its provider is
+ * offered. The forgot-password page answers the same way for every address, so it cannot tell an SSO
  * user why no link arrives without telling an anonymous visitor which addresses are registered. The mail
  * can: it only reaches the inbox on file, the same one a reset link would go to.
  *

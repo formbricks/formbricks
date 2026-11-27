@@ -26,7 +26,7 @@
       "back_to_login": "Retour à la connexion",
       "email-sent": {
         "heading": "Demande de réinitialisation de mot de passe réussie.",
-        "sso_hint": "Tu te connectes avec Google, Microsoft ou un autre fournisseur d'authentification unique (SSO) ? Dans ce cas, il n'y a pas de mot de passe à réinitialiser. Connecte-toi plutôt avec ce fournisseur.",
+        "sso_hint": "Si tu te connectes avec Google, Microsoft ou un autre fournisseur d'authentification unique, l'e-mail que nous t'avons envoyé t'explique comment te connecter.",
         "text": "Si un compte avec cet e-mail existe, vous recevrez bientôt des instructions pour réinitialiser votre mot de passe."
       },
       "reset": {
@@ -903,7 +903,7 @@
     "sso_sign_in_hint_email_heading": "Connecte-toi avec l'authentification unique",
     "sso_sign_in_hint_email_no_access": "Si tu ne peux plus te connecter de cette manière, contacte ton administrateur.",
     "sso_sign_in_hint_email_subject": "Comment te connecter à ton compte Formbricks",
-    "sso_sign_in_hint_email_text": "Nous avons reçu une demande de réinitialisation du mot de passe de ton compte Formbricks. Ton compte n'utilise pas de mot de passe, il n'y a donc rien à réinitialiser. Tu te connectes avec :",
+    "sso_sign_in_hint_email_text": "Nous avons reçu une demande de réinitialisation du mot de passe de ton compte Formbricks. Ton compte utilise l'authentification unique (SSO) à la place d'un mot de passe, il n'y a donc pas de lien de réinitialisation. Tu te connectes avec :",
     "sso_sign_in_hint_email_text_unavailable": "Nous avons reçu une demande de réinitialisation du mot de passe de ton compte Formbricks. Ton compte n'utilise pas de mot de passe : il se connecte via l'authentification unique (SSO), qui n'est pas disponible pour le moment sur cette instance de Formbricks. Contacte ton administrateur pour retrouver l'accès.",
     "survey_response_finished_email_congrats": "Félicitations, vous avez reçu une nouvelle réponse à votre enquête ! Quelqu'un vient de compléter votre enquête : {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Vous ne voulez pas recevoir ces notifications ?",

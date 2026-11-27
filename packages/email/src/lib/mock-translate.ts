@@ -137,7 +137,7 @@ const translations: Record<TranslationKey, TranslationValue> = {
     "If you can no longer sign in this way, contact your administrator.",
   "emails.sso_sign_in_hint_email_subject": "How to sign in to your Formbricks account",
   "emails.sso_sign_in_hint_email_text":
-    "We received a request to reset the password for your Formbricks account. Your account does not use a password, so there is nothing to reset. You sign in with:",
+    "We received a request to reset the password for your Formbricks account. Your account uses single sign-on instead of a password, so there is no reset link. You sign in with:",
   "emails.sso_sign_in_hint_email_text_unavailable":
     "We received a request to reset the password for your Formbricks account. Your account does not use a password: it signs in with single sign-on, which is not available on this Formbricks instance right now. Contact your administrator to get access again.",
   "emails.response_data": "Response data",

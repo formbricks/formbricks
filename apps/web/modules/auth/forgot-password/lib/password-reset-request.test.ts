@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { hasCredentialAccount } from "@/lib/user/password";
 import { sendSsoSignInHint } from "@/modules/auth/forgot-password/lib/sso-sign-in-hint";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
+import { getOfferedSsoProviders } from "@/modules/ee/sso/lib/linked-sso-providers";
 import { processPasswordResetRequest } from "./password-reset-request";
 
 const mocks = vi.hoisted(() => ({
@@ -24,9 +24,7 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "http://localhost:3000",
 }));
 
-// Mocked at the module boundary rather than letting the real one load: `lib/user/password` pulls in
-// `lib/crypto`, which reads ENCRYPTION_KEY from the (fully replaced) constants mock at import time.
-vi.mock("@/lib/user/password", () => ({ hasCredentialAccount: vi.fn() }));
+vi.mock("@/modules/ee/sso/lib/linked-sso-providers", () => ({ getOfferedSsoProviders: vi.fn() }));
 vi.mock("@/modules/auth/lib/user", () => ({ getUserByEmail: vi.fn() }));
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: { api: { requestPasswordReset: vi.fn() } } }));
 vi.mock("@/modules/auth/forgot-password/lib/sso-sign-in-hint", () => ({ sendSsoSignInHint: vi.fn() }));
@@ -70,8 +68,8 @@ describe("processPasswordResetRequest", () => {
         headers: requestHeaders,
       });
       expect(sendSsoSignInHint).not.toHaveBeenCalled();
-      // Short-circuits on `identityProvider === "email"`, so the extra query never runs for the common case.
-      expect(hasCredentialAccount).not.toHaveBeenCalled();
+      // Short-circuits on `identityProvider === "email"`, so the extra queries never run for the common case.
+      expect(getOfferedSsoProviders).not.toHaveBeenCalled();
     });
 
     test("sends nothing for an address with no account", async () => {
@@ -85,57 +83,76 @@ describe("processPasswordResetRequest", () => {
       expect(applyRateLimit).not.toHaveBeenCalled();
     });
 
-    test("sends an SSO user with no credential account the sign-in hint, not a reset (ENG-3262)", async () => {
+    test("sends an SSO user whose provider is offered the sign-in hint naming it, not a reset", async () => {
       const ssoUser = foundUser("azuread");
       vi.mocked(getUserByEmail).mockResolvedValue(ssoUser);
-      vi.mocked(hasCredentialAccount).mockResolvedValue(false);
+      vi.mocked(getOfferedSsoProviders).mockResolvedValue(["azuread"]);
 
       await process();
 
-      expect(sendSsoSignInHint).toHaveBeenCalledExactlyOnceWith(ssoUser);
+      expect(getOfferedSsoProviders).toHaveBeenCalledWith(ssoUser);
+      expect(sendSsoSignInHint).toHaveBeenCalledExactlyOnceWith(ssoUser, ["azuread"]);
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
     });
 
     /**
-     * SSO recovery is one-way: it flips `identityProvider` to the SSO provider and nothing flips it back,
-     * while clearing the password it found. Gated on `identityProvider` alone these users could never ask
-     * for a reset again, so the surviving credential `Account` row is what lets them back in (ENG-2557).
+     * ENG-2590 case 2: while none of the user's providers is offered (lapsed licence, unconfigured
+     * provider) the password signs them in, so the reset link comes back — for a user who never had a
+     * password too: Better Auth creates the credential row on reset.
      */
-    test("requests a reset for an SSO-identity user who still has a credential account", async () => {
+    test("requests a reset for an SSO user when none of their providers is offered", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(foundUser("google"));
-      vi.mocked(hasCredentialAccount).mockResolvedValue(true);
+      vi.mocked(getOfferedSsoProviders).mockResolvedValue([]);
 
       await process();
 
-      expect(hasCredentialAccount).toHaveBeenCalledWith("user123");
       expect(auth.api.requestPasswordReset).toHaveBeenCalledOnce();
       expect(sendSsoSignInHint).not.toHaveBeenCalled();
     });
 
-    test("on an SSO-only instance, sends the hint even to a user with a credential account", async () => {
+    test("on an SSO-only instance, sends the hint rather than a reset that could not sign them in", async () => {
       // Handing a password back where the operator disabled credential auth would be the "sign in around
       // the IdP" bypass that switching it off exists to prevent.
       mocks.emailAuthEnabled.value = false;
-      vi.mocked(getUserByEmail).mockResolvedValue(foundUser("google"));
-      vi.mocked(hasCredentialAccount).mockResolvedValue(true);
+      const ssoUser = foundUser("google");
+      vi.mocked(getUserByEmail).mockResolvedValue(ssoUser);
+      vi.mocked(getOfferedSsoProviders).mockResolvedValue([]);
 
       await process();
 
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
-      expect(sendSsoSignInHint).toHaveBeenCalledOnce();
+      // Empty: the mail tells them SSO is unavailable here and to contact their administrator.
+      expect(sendSsoSignInHint).toHaveBeenCalledExactlyOnceWith(ssoUser, []);
     });
 
-    test("sends nothing when it cannot tell whether the user has a password", async () => {
+    test("sends nothing when it cannot tell whether the user's SSO is offered", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(foundUser("google"));
-      vi.mocked(hasCredentialAccount).mockRejectedValue(new Error("db down"));
+      vi.mocked(getOfferedSsoProviders).mockRejectedValue(new Error("db down"));
 
       await process();
 
-      // The hint says "your account does not use a password", which a failed lookup cannot vouch for.
       expect(sendSsoSignInHint).not.toHaveBeenCalled();
       expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
       expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "user123" }),
+        "SSO provider lookup failed during password reset"
+      );
     });
+
+    test.each(["email", "azuread"] as const)(
+      "sends a deactivated %s user nothing, since neither mail leads anywhere",
+      async (identityProvider) => {
+        vi.mocked(getUserByEmail).mockResolvedValue({ ...foundUser(identityProvider), isActive: false });
+        vi.mocked(getOfferedSsoProviders).mockResolvedValue(["azuread"]);
+
+        await process();
+
+        expect(auth.api.requestPasswordReset).not.toHaveBeenCalled();
+        expect(sendSsoSignInHint).not.toHaveBeenCalled();
+        expect(applyRateLimit).not.toHaveBeenCalled();
+      }
+    );
   });
 
   describe("per-account limit (ENG-3640)", () => {
@@ -167,7 +184,7 @@ describe("processPasswordResetRequest", () => {
 
     test("sends no hint once the account's budget is spent — one budget covers both mails", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(foundUser("azuread"));
-      vi.mocked(hasCredentialAccount).mockResolvedValue(false);
+      vi.mocked(getOfferedSsoProviders).mockResolvedValue(["azuread"]);
       vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("limit"));
 
       await process();
@@ -222,7 +239,7 @@ describe("processPasswordResetRequest", () => {
 
     test("records no password reset for the SSO hint, which is not one", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(foundUser("azuread"));
-      vi.mocked(hasCredentialAccount).mockResolvedValue(false);
+      vi.mocked(getOfferedSsoProviders).mockResolvedValue(["azuread"]);
 
       await process();
 

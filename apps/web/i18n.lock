@@ -21,7 +21,7 @@ checksums:
     auth/email-change/old_email: a0997d29018f8eca4191f04254d7f3c2
     auth/forgot-password/back_to_login: 6bcc9859839f32dc2b4295e1565919a4
     auth/forgot-password/email-sent/heading: d1f5f21900d34943ec70639431c2c04d
-    auth/forgot-password/email-sent/sso_hint: fcffbf3f7541f9bef42ed6128ca6c8b8
+    auth/forgot-password/email-sent/sso_hint: e517e82e3b4bab13982a1ef0b99c58a2
     auth/forgot-password/email-sent/text: d7068d31cf3cf4590bdecb56bbe024c8
     auth/forgot-password/reset/confirm_password: b5cdb861d8deb598b0613d48098b82b6
     auth/forgot-password/reset/new_password: c3e35b0671004c7bbd9fa9b9654744d7
@@ -856,7 +856,7 @@ checksums:
     emails/sso_sign_in_hint_email_heading: b88567d0947d3eac36f61685b309c7ef
     emails/sso_sign_in_hint_email_no_access: 8461e56a711ca3092dff6bc80b389fce
     emails/sso_sign_in_hint_email_subject: 3c2cd920e0051fb3ff276f573aef90a9
-    emails/sso_sign_in_hint_email_text: 00938ea236714676b74db761f501fc0c
+    emails/sso_sign_in_hint_email_text: 6c6f46b9f05c1a6fab5a2e5a458df1d0
     emails/sso_sign_in_hint_email_text_unavailable: 97a59e235f0b3c212fa00d3950aaa402
     emails/survey_response_finished_email_congrats: 4cc39698d6a16f68cf7d9db902c5978e
     emails/survey_response_finished_email_dont_want_notifications: 749171800180682839896dc04a53ca10

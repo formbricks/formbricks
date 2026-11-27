@@ -26,7 +26,7 @@
       "back_to_login": "Voltar para o login",
       "email-sent": {
         "heading": "Pedido de redefinição de senha feito com sucesso",
-        "sso_hint": "Você entra com Google, Microsoft ou outro provedor de login único (SSO)? Então não há senha para redefinir. Entre com esse provedor.",
+        "sso_hint": "Se você entra com o Google, a Microsoft ou outro provedor de login único, o e-mail que enviamos explica como fazer login.",
         "text": "Se existir uma conta com esse e-mail, você vai receber em breve as instruções para redefinir sua senha."
       },
       "reset": {
@@ -903,7 +903,7 @@
     "sso_sign_in_hint_email_heading": "Entre com login único",
     "sso_sign_in_hint_email_no_access": "Se você não conseguir mais entrar dessa forma, fale com o administrador.",
     "sso_sign_in_hint_email_subject": "Como entrar na sua conta do Formbricks",
-    "sso_sign_in_hint_email_text": "Recebemos uma solicitação para redefinir a senha da sua conta do Formbricks. Sua conta não usa senha, então não há nada para redefinir. Você entra com:",
+    "sso_sign_in_hint_email_text": "Recebemos uma solicitação para redefinir a senha da sua conta do Formbricks. Sua conta usa login único (SSO) em vez de senha, então não há link de redefinição. Você faz login com:",
     "sso_sign_in_hint_email_text_unavailable": "Recebemos uma solicitação para redefinir a senha da sua conta do Formbricks. Sua conta não usa senha: o login é feito por single sign-on (SSO), que não está disponível nesta instância do Formbricks no momento. Entre em contato com o administrador para voltar a ter acesso.",
     "survey_response_finished_email_congrats": "Parabéns, você recebeu uma nova resposta na sua pesquisa! Alguém acabou de completar sua pesquisa: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Não quer receber essas notificações?",

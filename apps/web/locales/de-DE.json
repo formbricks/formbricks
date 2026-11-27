@@ -26,7 +26,7 @@
       "back_to_login": "Zurück zur Anmeldung",
       "email-sent": {
         "heading": "Passwort-Zurücksetzung erfolgreich angefordert",
-        "sso_hint": "Meldest du dich mit Google, Microsoft oder einem anderen Single-Sign-on-Anbieter an? Dann gibt es kein Passwort, das du zurücksetzen könntest. Melde dich stattdessen über diesen Anbieter an.",
+        "sso_hint": "Wenn Du Dich mit Google, Microsoft oder einem anderen Single-Sign-on-Anbieter anmeldest, steht in der E-Mail, die wir Dir geschickt haben, wie Du Dich anmelden kannst.",
         "text": "Falls ein Konto mit dieser E-Mail-Adresse existiert, erhältst du in Kürze Anweisungen zum Zurücksetzen deines Passworts."
       },
       "reset": {
@@ -903,7 +903,7 @@
     "sso_sign_in_hint_email_heading": "Mit Single Sign-on anmelden",
     "sso_sign_in_hint_email_no_access": "Wenn du dich auf diesem Weg nicht mehr anmelden kannst, wende dich an deinen Administrator.",
     "sso_sign_in_hint_email_subject": "So meldest du dich bei deinem Formbricks-Konto an",
-    "sso_sign_in_hint_email_text": "Wir haben eine Anfrage erhalten, das Passwort für dein Formbricks-Konto zurückzusetzen. Dein Konto verwendet kein Passwort, daher gibt es nichts zurückzusetzen. Du meldest dich an mit:",
+    "sso_sign_in_hint_email_text": "Wir haben eine Anfrage zum Zurücksetzen des Passworts für Dein Formbricks-Konto erhalten. Dein Konto verwendet Single Sign-on statt eines Passworts, daher gibt es keinen Link zum Zurücksetzen. Du meldest Dich an mit:",
     "sso_sign_in_hint_email_text_unavailable": "Wir haben eine Anfrage zum Zurücksetzen des Passworts für dein Formbricks-Konto erhalten. Dein Konto nutzt kein Passwort, sondern wird per Single Sign-on angemeldet. Diese Anmeldemethode ist auf dieser Formbricks-Instanz derzeit nicht verfügbar. Wende dich an deinen Administrator, um wieder Zugriff zu erhalten.",
     "survey_response_finished_email_congrats": "Glückwunsch, du hast eine neue Antwort auf deine Umfrage erhalten! Jemand hat gerade deine Umfrage ausgefüllt: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Möchtest du diese Benachrichtigungen nicht mehr erhalten?",
