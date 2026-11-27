@@ -352,7 +352,7 @@ export async function updateSegmentOperation({
     // disconnected, and the filters changed, since; reconnecting it then would skip the visibility check.
     updated = await updateSegment(segmentId, data, {
       connectedSurveyIds,
-      ...((data.filters || body.surveys?.length) && { expectedFilters: oldObject.filters }),
+      ...(Boolean(data.filters || body.surveys?.length) && { expectedFilters: oldObject.filters }),
     });
   } catch (error) {
     return updateRefusalOrThrow(error, context);

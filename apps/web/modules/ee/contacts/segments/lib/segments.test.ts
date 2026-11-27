@@ -793,6 +793,14 @@ describe("Segment Service Tests", () => {
       );
     });
 
+    test("keeps a miss elsewhere in the reset a database error, not the shared-segment refusal", async () => {
+      vi.mocked(prisma.survey.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("No record found", { code: "P2025", clientVersion: "test" })
+      );
+
+      await expect(resetSegmentInSurvey(surveyId)).rejects.toThrow(DatabaseError);
+    });
+
     test("refuses emptying a private segment another segment nests (ENG-7269)", async () => {
       vi.mocked(prisma.segment.findFirst).mockResolvedValue({
         ...privateSegmentPrisma,

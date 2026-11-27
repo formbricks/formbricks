@@ -714,11 +714,19 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
         });
 
         // reset the filters, only while no other survey uses the segment (repeated in the write)
-        const updatedSegment = await tx.segment.update({
-          where: { id: segment.id, surveys: { every: { id: surveyId } } },
-          data: { filters: [] },
-          select: selectSegment,
-        });
+        const updatedSegment = await tx.segment
+          .update({
+            where: { id: segment.id, surveys: { every: { id: surveyId } } },
+            data: { filters: [] },
+            select: selectSegment,
+          })
+          .catch((error: unknown) => {
+            // This write's guard missed: another survey was linked to the segment since the read.
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+              throw new InvalidInputError(PRIVATE_SEGMENT_SHARED_WITH_OTHER_SURVEYS_MESSAGE);
+            }
+            throw error;
+          });
 
         return transformPrismaSegment(updatedSegment);
       } else {
@@ -742,9 +750,6 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // The clearing write's guard missed: another survey was linked to the segment since the read.
-      if (error.code === "P2025")
-        throw new InvalidInputError(PRIVATE_SEGMENT_SHARED_WITH_OTHER_SURVEYS_MESSAGE);
       throw new DatabaseError(error.message);
     }
 
