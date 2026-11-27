@@ -64,14 +64,15 @@ Click a rule's row to open it. The row above the editor reads the whole rule as 
 
 ## Pre-select answer
 
-A **Pre-select answer** step gives a later question a default answer: the respondent sees it already picked, or already typed in, and can change it like any answer of their own.
+A **Pre-select answer** step opens a later question with an answer already given: the respondent sees it already picked, or already typed in, and can change it like any answer of their own.
 
 * **Single select**: pick the one option it opens with. **Multi select**: pick one or more. The **Other** option can't be pre-selected, because it needs the respondent's own text.
 * **Free text**: type the answer, a number when the question takes a number.
-* **Without a condition it always runs**, so every respondent sees the default. Add a condition to give the default only to some, for example *If “plan” equals “Business” → Pre-select “Yes” in “Need an invoice?”*. It also works in the [rules before the first question](/surveys/general-features/flow-tab#rules-before-the-first-question), with a URL parameter as its condition.
+* **Without a condition it always runs**, so every respondent sees the answer pre-selected. Add a condition to pre-select it only for some, for example *If “plan” equals “Business” → Pre-select “Yes” in “Need an invoice?”*. It also works in the [rules before the first question](/surveys/general-features/flow-tab#rules-before-the-first-question), with a URL parameter as its condition.
 * **Every language**: the step names the options, not their text, so a translated survey shows them in the respondent's language.
 * **Only submitted answers count.** The response stores what the respondent submits on that page. A question on a page they never see, because a rule jumped past it or it wasn't shown, stays unanswered.
 * **The respondent's own answer wins.** A question they already answered, because they went back or a [prefill link](/surveys/link-surveys/data-prefilling) answered it, keeps that answer.
+* **Back undoes it.** If the respondent goes back and changes the answer the condition read, a pre-selection they haven't changed or submitted is taken back, and comes back only if the condition still matches.
 
 Pre-select answer fills in a question. To store a value the respondent never sees, use **Set value** on an [Embedded Data](/surveys/general-features/variables) field instead.
 

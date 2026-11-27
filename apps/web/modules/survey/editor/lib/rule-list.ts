@@ -7,6 +7,7 @@ import type {
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
+import { START_LOGIC_ACTION_OBJECTIVES } from "@formbricks/types/surveys/start-logic-validation";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   createEmptyFormulaAction,
@@ -42,7 +43,7 @@ export const duplicateRule = (rules: TSurveyBlockLogic[], ruleIdx: number): TSur
 
 /**
  * Actions that may run for everyone: setting a value, marking the response Low quality and
- * pre-selecting an answer (ENG-7437: a default answer every respondent sees).
+ * pre-selecting an answer (ENG-7437: an answer every respondent opens the question with).
  */
 const ALWAYS_RUNNABLE = new Set<TSurveyBlockLogicActionObjective>([
   "calculate",
@@ -207,7 +208,7 @@ export const setStartRules = (survey: TSurvey, rules: TSurveyBlockLogic[]): TSur
  */
 export const getAllowedActionObjectives = (scopeBlockIdx: number): TSurveyBlockLogicActionObjective[] =>
   scopeBlockIdx === START_SCOPE_BLOCK_IDX
-    ? ["calculate", "jumpToBlock", "markLowQuality", "preselectAnswer"]
+    ? [...START_LOGIC_ACTION_OBJECTIVES]
     : ["calculate", "requireAnswer", "jumpToBlock", "markLowQuality", "preselectAnswer"];
 
 /** What an action's choices depend on besides its list: whether the rule has no condition. */

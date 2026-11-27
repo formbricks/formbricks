@@ -9,7 +9,11 @@ import {
   ZConditionGroup,
   ZDynamicLogicFieldValue,
 } from "./logic";
-import { PRESELECT_ANSWER_MAX_CHOICES, PRESELECT_ANSWER_MAX_TEXT_LENGTH } from "./preselect-answer";
+import {
+  PRESELECT_ANSWER_MAX_CHOICES,
+  PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH,
+  PRESELECT_ANSWER_MAX_TEXT_LENGTH,
+} from "./preselect-answer";
 
 export const ZSurveyBlockId = ZId;
 
@@ -178,7 +182,15 @@ export const ZActionPreselectAnswer = z.object({
     z.strictObject({
       type: z.literal("choices"),
       choiceIds: z
-        .array(z.string().min(1))
+        .array(
+          z
+            .string()
+            .min(1)
+            .max(
+              PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH,
+              `Conditional Logic: An option id has at most ${String(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH)} characters`
+            )
+        )
         .min(1, "Conditional Logic: Choose at least one option to pre-select")
         .max(
           PRESELECT_ANSWER_MAX_CHOICES,
@@ -189,14 +201,14 @@ export const ZActionPreselectAnswer = z.object({
       type: z.literal("static"),
       value: z
         .string()
-        .min(1, "Conditional Logic: Enter the answer to pre-fill")
+        .min(1, "Conditional Logic: Enter the answer to pre-select")
         .max(
           PRESELECT_ANSWER_MAX_TEXT_LENGTH,
-          `Conditional Logic: A pre-filled answer has at most ${String(PRESELECT_ANSWER_MAX_TEXT_LENGTH)} characters`
+          `Conditional Logic: A pre-selected answer has at most ${String(PRESELECT_ANSWER_MAX_TEXT_LENGTH)} characters`
         )
         .refine(
           (value) => !value.includes("\u0000"),
-          "Conditional Logic: A pre-filled answer can't contain a null character"
+          "Conditional Logic: A pre-selected answer can't contain a null character"
         ),
     }),
   ]),

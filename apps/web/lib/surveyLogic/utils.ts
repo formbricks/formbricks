@@ -262,7 +262,9 @@ export const createEmptyPreselectAnswerAction = (id: string): TSurveyBlockLogicA
 
 /** The empty answer that fits a question: no options for a select, an empty value for free text. */
 export const getEmptyPreselectValue = (elementType: string | undefined): TActionPreselectAnswer["value"] =>
-  elementType === "openText" ? { type: "static", value: "" } : { type: "choices", choiceIds: [] };
+  elementType === TSurveyElementTypeEnum.OpenText
+    ? { type: "static", value: "" }
+    : { type: "choices", choiceIds: [] };
 
 export const getUpdatedActionBody = (
   action: TSurveyBlockLogicAction,

@@ -33,13 +33,12 @@ export function PreselectAnswerFields({
   onChange,
 }: PreselectAnswerFieldsProps) {
   const { t } = useTranslation();
-  const element = getElementsFromBlocks(localSurvey.blocks).find(
-    (candidate) => candidate.id === action.target
-  );
+  const elements = getElementsFromBlocks(localSurvey.blocks);
+  const element = elements.find((candidate) => candidate.id === action.target);
 
   const changeTarget = (target: string) => {
     if (target === action.target) return;
-    const type = getElementsFromBlocks(localSurvey.blocks).find((candidate) => candidate.id === target)?.type;
+    const type = elements.find((candidate) => candidate.id === target)?.type;
     onChange({ target, value: getEmptyPreselectValue(type) });
   };
 

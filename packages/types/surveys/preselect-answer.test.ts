@@ -19,6 +19,14 @@ const text: TPreselectableElement = { id: "ein", type: "openText", inputType: "t
 const number: TPreselectableElement = { id: "count", type: "openText", inputType: "number" };
 
 describe("getPreselectAnswerValueIssue", () => {
+  test('accepts "None of these" on its own', () => {
+    const withNone: TPreselectableElement = {
+      ...multi,
+      choices: [...(multi.choices ?? []), { id: "none", label: { default: "None" } }],
+    };
+    expect(getPreselectAnswerValueIssue(withNone, { type: "choices", choiceIds: ["none"] })).toBeUndefined();
+  });
+
   test("accepts one option of a single select, several of a multi select, and a free text value", () => {
     expect(getPreselectAnswerValueIssue(single, { type: "choices", choiceIds: ["open"] })).toBeUndefined();
     expect(
@@ -43,6 +51,12 @@ describe("getPreselectAnswerValueIssue", () => {
     ],
     ["the same option twice", multi, { type: "choices", choiceIds: ["open", "open"] }, "twice"],
     ["the Other option", multi, { type: "choices", choiceIds: ["other"] }, "Other"],
+    [
+      '"None of these" with another option',
+      { ...multi, choices: [...(multi.choices ?? []), { id: "none", label: { default: "None" } }] },
+      { type: "choices", choiceIds: ["none", "open"] },
+      "picked alone",
+    ],
     [
       "an option the question doesn't have",
       single,

@@ -1,6 +1,7 @@
 import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
+import { START_LOGIC_ACTION_OBJECTIVES } from "@formbricks/types/surveys/start-logic-validation";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
@@ -132,7 +133,7 @@ const EDITABLE_OPERAND_TYPES = new Set(["element", "variable", "hiddenField", "r
  * "require answer" is shown read-only, as the validator refuses it anyway.
  */
 const START_EDITABLE = {
-  objectives: new Set(["jumpToBlock", "calculate", "markLowQuality", "preselectAnswer"]),
+  objectives: new Set<string>(START_LOGIC_ACTION_OBJECTIVES),
   valueTypes: new Set(["static", "variable", "hiddenField", "reserved"]),
   operandTypes: new Set(["variable", "hiddenField", "reserved"]),
 };

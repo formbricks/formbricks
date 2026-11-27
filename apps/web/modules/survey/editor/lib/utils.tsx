@@ -13,6 +13,7 @@ import {
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { OTHER_OPTION_ID } from "@formbricks/types/surveys/codes";
 import { getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
 import {
   TSurveyElement,
@@ -32,7 +33,7 @@ import {
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
-import { OTHER_CHOICE_ID, isPreselectableElement } from "@formbricks/types/surveys/preselect-answer";
+import { isPreselectableElement } from "@formbricks/types/surveys/preselect-answer";
 import { getOptionLists } from "@formbricks/types/surveys/show-if";
 import {
   TSurvey,
@@ -999,7 +1000,7 @@ export const getPreselectTargetOptions = (
 export const getPreselectChoiceOptions = (element: TSurveyElement | undefined): TComboboxOption[] => {
   if (!element || !("choices" in element)) return [];
   return element.choices
-    .filter((choice) => choice.id !== OTHER_CHOICE_ID && "label" in choice)
+    .filter((choice) => choice.id !== OTHER_OPTION_ID && "label" in choice)
     .map((choice) => ({
       label: getTextContent(getLocalizedValue("label" in choice ? choice.label : undefined, "default")),
       value: choice.id,

@@ -1,7 +1,12 @@
 import type { z } from "zod";
 import type { TEmbeddedDataType } from "../embedded-data";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
-import type { TActionCalculate, TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
+import type {
+  TActionCalculate,
+  TSurveyBlockLogic,
+  TSurveyBlockLogicAction,
+  TSurveyBlockLogicActionObjective,
+} from "./blocks";
 import {
   BOOLEAN_ASSIGN_MESSAGE,
   BOOLEAN_VALUE_TARGET_MESSAGE,
@@ -50,8 +55,19 @@ export interface TStartLogicSurvey {
 
 type TIssue = z.core.$ZodIssue;
 
-// `markLowQuality` (ENG-6952) takes no target, so it has nothing to check.
-const ALLOWED_OBJECTIVES = new Set<string>(["jumpToBlock", "calculate", "markLowQuality", "preselectAnswer"]);
+/**
+ * What a rule before the first question may do, in the order the editor lists them. The editor reads
+ * this list too (`getAllowedActionObjectives`, the Flow outline), so it offers exactly what saves.
+ * `markLowQuality` (ENG-6952) takes no target, so it has nothing to check.
+ */
+export const START_LOGIC_ACTION_OBJECTIVES = [
+  "calculate",
+  "jumpToBlock",
+  "markLowQuality",
+  "preselectAnswer",
+] as const satisfies readonly TSurveyBlockLogicActionObjective[];
+
+const ALLOWED_OBJECTIVES = new Set<string>(START_LOGIC_ACTION_OBJECTIVES);
 
 const ruleLabel = (ruleIdx: number) => `rule ${String(ruleIdx + 1)} before the first question`;
 

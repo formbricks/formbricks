@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyBlockLogicAction } from "./blocks";
+import {
+  PRESELECT_ANSWER_MAX_CHOICES,
+  PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH,
+  PRESELECT_ANSWER_MAX_TEXT_LENGTH,
+} from "./preselect-answer";
 import { SURVEY_FLOW_FIXTURE_IDS, surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
 import { type TSurvey, ZSurvey } from "./types";
 
@@ -332,6 +337,40 @@ describe("a condition's fixed value", () => {
       );
     });
 
+    // CODING_STANDARDS "Input Limits": each cap at its boundary.
+    test("caps the options, an option id and a free text answer, and refuses a null character", () => {
+      const ok = (value: unknown, target = "email") =>
+        issuesOf(withConceptActions([preselect(target, value)])).filter(({ path }) =>
+          String(path).includes("value")
+        );
+      const atCap = "x".repeat(PRESELECT_ANSWER_MAX_TEXT_LENGTH);
+
+      expect(ok({ type: "static", value: atCap })).toEqual([]);
+      expect(ok({ type: "static", value: `${atCap}x` })[0]?.message).toContain(
+        `at most ${String(PRESELECT_ANSWER_MAX_TEXT_LENGTH)} characters`
+      );
+      expect(ok({ type: "static", value: "a\u0000b" })[0]?.message).toContain("null character");
+
+      const ids = (count: number) => Array.from({ length: count }, (_, idx) => `o${String(idx)}`);
+      const issuesFor = (choiceIds: string[]) =>
+        issuesOf(withConceptActions([preselect("fav", { type: "choices", choiceIds })]));
+      // At the cap the schema takes it, and the refinement names what is wrong with the options. One
+      // over, the action's union refuses it as a whole ("Invalid input"), at the action.
+      expect(issuesFor(ids(PRESELECT_ANSWER_MAX_CHOICES))).toContainEqual({
+        path: [...actionPath, "value"],
+        message: expect.stringContaining("exactly one option") as string,
+      });
+      expect(issuesFor(ids(PRESELECT_ANSWER_MAX_CHOICES + 1)).map(({ path }) => path)).toEqual([actionPath]);
+      const idOf = (length: number) => ["x".repeat(length)];
+      expect(issuesFor(idOf(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH)).map(({ path }) => path)).toEqual([
+        [...actionPath, "value"],
+      ]);
+      expect(issuesFor(idOf(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH + 1))).toContainEqual({
+        path: [...actionPath, "value", "choiceIds", 0],
+        message: `Conditional Logic: An option id has at most ${String(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH)} characters`,
+      });
+    });
+
     test("refuses an empty answer and keys the value has no use for", () => {
       expectIssue(
         withConceptActions([preselect("fav", { type: "choices", choiceIds: [] })]),
@@ -341,7 +380,7 @@ describe("a condition's fixed value", () => {
       expectIssue(
         withConceptActions([preselect("email", { type: "static", value: "" })]),
         [...actionPath, "value", "value"],
-        "Enter the answer to pre-fill"
+        "Enter the answer to pre-select"
       );
       expect(
         issuesOf(withConceptActions([preselect("email", { type: "static", value: "x", label: "y" })])).length

@@ -2,8 +2,9 @@ import { describe, expect, test, vi } from "vitest";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import { advanceFromBlock, startSurvey } from "./block-flow";
+import { advanceFromBlock } from "./block-flow";
 import { getBlockPreselection } from "./prefill";
+import { startSurvey } from "./start-survey";
 
 /**
  * Pre-select answer (ENG-7437): a rule's `preselectAnswer` action reaches the page its question is on,

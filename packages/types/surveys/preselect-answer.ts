@@ -1,3 +1,4 @@
+import { NONE_OPTION_ID, OTHER_OPTION_ID } from "./codes";
 import { TSurveyElementTypeEnum } from "./constants";
 import { getLabelInLanguage } from "./localized-label";
 
@@ -19,6 +20,8 @@ import { getLabelInLanguage } from "./localized-label";
 /** Generous caps (CODING_STANDARDS "Input Limits"): far above any real select, finite for every request. */
 export const PRESELECT_ANSWER_MAX_CHOICES = 200;
 export const PRESELECT_ANSWER_MAX_TEXT_LENGTH = 5000;
+/** An option id is short; this only keeps a request from sending a long one. */
+export const PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH = 200;
 
 // The question types an answer can be pre-selected in, as the plain strings `element.type` holds here.
 const SINGLE_SELECT: string = TSurveyElementTypeEnum.MultipleChoiceSingle;
@@ -31,9 +34,6 @@ export const PRESELECTABLE_ELEMENT_TYPES: ReadonlySet<string> = new Set([
   MULTI_SELECT,
   OPEN_TEXT,
 ]);
-
-/** The "Other" option needs the respondent's own text, so it cannot be pre-selected. */
-export const OTHER_CHOICE_ID = "other";
 
 export type TPreselectAnswerValue =
   | { type: "choices"; choiceIds: readonly string[] }
@@ -69,7 +69,7 @@ export const getPreselectAnswerValueIssue = (
 
   if (element.type === OPEN_TEXT) {
     if (value.type !== "static") {
-      return `Question ${element.id} is a free text question: pre-fill it with a value, not with options.`;
+      return `Question ${element.id} is a free text question: pre-select a value, not options.`;
     }
     if (element.inputType === "number" && !isNumeric(value.value)) {
       return `Question ${element.id} takes a number: "${value.value}" is not one.`;
@@ -86,8 +86,11 @@ export const getPreselectAnswerValueIssue = (
   if (new Set(value.choiceIds).size !== value.choiceIds.length) {
     return `Question ${element.id}: an option is pre-selected twice.`;
   }
-  if (value.choiceIds.includes(OTHER_CHOICE_ID)) {
+  if (value.choiceIds.includes(OTHER_OPTION_ID)) {
     return `Question ${element.id}: the "Other" option takes the respondent's own text, so it can't be pre-selected.`;
+  }
+  if (value.choiceIds.includes(NONE_OPTION_ID) && value.choiceIds.length > 1) {
+    return `Question ${element.id}: "None of these" is picked alone, so it can't be pre-selected with other options.`;
   }
   const choiceIds = new Set((element.choices ?? []).map((choice) => choice.id));
   const missing = value.choiceIds.find((choiceId) => !choiceIds.has(choiceId));
@@ -100,7 +103,7 @@ export const getPreselectAnswerValueIssue = (
 /**
  * The answer the page opens with: the options' labels in `languageId` (a single select's one label,
  * a multi select's list), or the free text value. `undefined` when nothing of it still fits the
- * question (an option deleted since, or the question's type changed), so a stale action pre-fills
+ * question (an option deleted since, or the question's type changed), so a stale action pre-selects
  * nothing rather than a wrong answer.
  */
 export const resolvePreselectedAnswer = (

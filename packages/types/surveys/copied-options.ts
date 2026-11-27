@@ -1,3 +1,4 @@
+import { NONE_OPTION_ID, OTHER_OPTION_ID } from "./codes";
 import type { TConditionGroup } from "./logic";
 import { getOptionListKeys } from "./show-if";
 
@@ -37,7 +38,7 @@ export type TCopiedOption = {
 const PICTURE_TYPE = "pictureSelection";
 
 /** The option ids that are never copied: "Other" asks for text, "None" is exclusive. */
-const RESERVED_OPTION_IDS: ReadonlySet<string> = new Set(["other", "none"]);
+const RESERVED_OPTION_IDS: ReadonlySet<string> = new Set([OTHER_OPTION_ID, NONE_OPTION_ID]);
 
 const isRecord = (value: unknown): value is TRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
