@@ -13,6 +13,7 @@ export interface FollowUpEmailProps extends TEmailTemplateLegalProps {
   readonly variables?: ProcessedVariable[]; // Already filtered variables
   readonly hiddenFields?: ProcessedHiddenField[]; // Already filtered hidden fields
   readonly logoUrl?: string;
+  readonly hideLogo?: boolean;
   readonly t?: TFunction;
 }
 
@@ -22,11 +23,12 @@ export function FollowUpEmail({
   variables = [],
   hiddenFields = [],
   logoUrl,
+  hideLogo,
   t = mockT,
   ...legalProps
 }: FollowUpEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate logoUrl={logoUrl} t={t} {...legalProps}>
+    <EmailTemplate logoUrl={logoUrl} hideLogo={hideLogo} t={t} {...legalProps}>
       <>
         <div dangerouslySetInnerHTML={{ __html: body }} dir="auto" />
 

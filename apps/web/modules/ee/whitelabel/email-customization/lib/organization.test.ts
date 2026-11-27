@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import {
-  getOrganizationLogoUrl,
+  getOrganizationEmailLogo,
   removeOrganizationEmailLogoUrl,
   updateOrganizationEmailLogoUrl,
 } from "./organization";
@@ -79,6 +79,20 @@ describe("organization", () => {
       });
     });
 
+    test("clears a removed logo when a new one is uploaded, keeping the other whitelabel settings", async () => {
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue({
+        id: "clg123456789012345678901234",
+        whitelabel: { logoUrl: null, hideLogo: true, faviconUrl: "/storage/favicon.png" },
+      });
+      vi.mocked(prisma.organization.update, { partial: true }).mockResolvedValue({});
+
+      await updateOrganizationEmailLogoUrl("clg123456789012345678901234", "new-logo.png");
+
+      expect(vi.mocked(prisma.organization.update).mock.calls[0][0].data).toEqual({
+        whitelabel: { logoUrl: "new-logo.png", faviconUrl: "/storage/favicon.png" },
+      });
+    });
+
     test("should throw ResourceNotFoundError when organization is not found", async () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
 
@@ -144,8 +158,23 @@ describe("organization", () => {
           whitelabel: {
             ...mockOrganization.whitelabel,
             logoUrl: null,
+            hideLogo: true,
           },
         },
+      });
+    });
+
+    test("records the removal even when the Formbricks logo was showing, keeping the favicon", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+        whitelabel: { logoUrl: null, faviconUrl: "/storage/favicon.png" },
+        workspaces: [],
+      } as unknown as Awaited<ReturnType<typeof prisma.organization.findUnique>>);
+      vi.mocked(prisma.organization.update, { partial: true }).mockResolvedValue({});
+
+      await removeOrganizationEmailLogoUrl("clg123456789012345678901234");
+
+      expect(vi.mocked(prisma.organization.update).mock.calls[0][0].data).toEqual({
+        whitelabel: { logoUrl: null, faviconUrl: "/storage/favicon.png", hideLogo: true },
       });
     });
 
@@ -188,7 +217,7 @@ describe("organization", () => {
     });
   });
 
-  describe("getOrganizationLogoUrl", () => {
+  describe("getOrganizationEmailLogo", () => {
     test("should return logo URL when organization exists", async () => {
       const mockOrganization = {
         whitelabel: {
@@ -198,9 +227,9 @@ describe("organization", () => {
 
       vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue(mockOrganization);
 
-      const result = await getOrganizationLogoUrl("clg123456789012345678901234");
+      const result = await getOrganizationEmailLogo("clg123456789012345678901234");
 
-      expect(result).toBe("logo.png");
+      expect(result).toEqual({ logoUrl: "logo.png", hideLogo: false });
       expect(prisma.organization.findUnique).toHaveBeenCalledWith({
         where: { id: "clg123456789012345678901234" },
         select: {
@@ -209,16 +238,26 @@ describe("organization", () => {
       });
     });
 
-    test("should return null when organization exists but has no logo URL", async () => {
+    test("reports a removed logo", async () => {
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue({
+        whitelabel: { logoUrl: null, hideLogo: true },
+      });
+
+      const result = await getOrganizationEmailLogo("clg123456789012345678901234");
+
+      expect(result).toEqual({ logoUrl: null, hideLogo: true });
+    });
+
+    test("should return no logo when organization exists but has no logo URL", async () => {
       const mockOrganization = {
         whitelabel: {},
       };
 
       vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue(mockOrganization);
 
-      const result = await getOrganizationLogoUrl("clg123456789012345678901234");
+      const result = await getOrganizationEmailLogo("clg123456789012345678901234");
 
-      expect(result).toBeNull();
+      expect(result).toEqual({ logoUrl: null, hideLogo: false });
       expect(prisma.organization.findUnique).toHaveBeenCalledWith({
         where: { id: "clg123456789012345678901234" },
         select: {
@@ -230,9 +269,9 @@ describe("organization", () => {
     test("should return null when organization does not exist", async () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
 
-      const result = await getOrganizationLogoUrl("clg123456789012345678901234");
+      const result = await getOrganizationEmailLogo("clg123456789012345678901234");
 
-      expect(result).toBeNull();
+      expect(result).toEqual({ logoUrl: null, hideLogo: false });
       expect(prisma.organization.findUnique).toHaveBeenCalledWith({
         where: { id: "clg123456789012345678901234" },
         select: {
@@ -249,7 +288,7 @@ describe("organization", () => {
 
       vi.mocked(prisma.organization.findUnique).mockRejectedValue(mockError);
 
-      await expect(getOrganizationLogoUrl("clg123456789012345678901234")).rejects.toThrow(DatabaseError);
+      await expect(getOrganizationEmailLogo("clg123456789012345678901234")).rejects.toThrow(DatabaseError);
       expect(prisma.organization.findUnique).toHaveBeenCalledWith({
         where: { id: "clg123456789012345678901234" },
         select: {

@@ -6,6 +6,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import { type TOrganizationEmailLogo, getEmailLogo } from "./email-logo";
 
 export const updateOrganizationEmailLogoUrl = async (
   organizationId: string,
@@ -22,11 +23,13 @@ export const updateOrganizationEmailLogoUrl = async (
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
+    // A new logo undoes an earlier removal, so `hideLogo` goes with the old value.
+    const { hideLogo: _removed, ...whitelabel } = organization.whitelabel ?? {};
     await prisma.organization.update({
       where: { id: organizationId },
       data: {
         whitelabel: {
-          ...organization.whitelabel,
+          ...whitelabel,
           logoUrl,
         },
       },
@@ -75,9 +78,12 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
     await prisma.organization.update({
       where: { id: organizationId },
       data: {
+        // `logoUrl: null` alone means "use the Formbricks logo"; `hideLogo` records that the
+        // organization wants no logo at all.
         whitelabel: {
           ...organization.whitelabel,
           logoUrl: null,
+          hideLogo: true,
         },
       },
     });
@@ -95,20 +101,22 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
   }
 };
 
-export const getOrganizationLogoUrl = reactCache(async (organizationId: string): Promise<string | null> => {
-  validateInputs([organizationId, ZId]);
-  try {
-    const organization = await prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: {
-        whitelabel: true,
-      },
-    });
-    return organization?.whitelabel?.logoUrl ?? null;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
+export const getOrganizationEmailLogo = reactCache(
+  async (organizationId: string): Promise<TOrganizationEmailLogo> => {
+    validateInputs([organizationId, ZId]);
+    try {
+      const organization = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: {
+          whitelabel: true,
+        },
+      });
+      return getEmailLogo(organization?.whitelabel);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
     }
-    throw error;
   }
-});
+);

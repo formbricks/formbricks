@@ -177,7 +177,9 @@ describe("refused before Cube", () => {
     });
 
     expect(response.status).toBe(422);
-    expect(JSON.stringify(await problemOf(response))).toContain("MAX_DASHBOARD_FILTER_PICKS_CHARS");
+    const problem = JSON.stringify(await problemOf(response));
+    expect(problem).toContain(`at most ${MAX_DASHBOARD_FILTER_PICKS_CHARS} characters`);
+    expect(problem).not.toContain("MAX_DASHBOARD_FILTER_PICKS_CHARS");
     expect(MAX_DASHBOARD_FILTER_PICKS_CHARS).toBe(4000);
     expect(executeTenantScopedQuery).not.toHaveBeenCalled();
   });
@@ -192,7 +194,7 @@ describe("refused before Cube", () => {
     expect(executeTenantScopedQuery).not.toHaveBeenCalled();
   });
 
-  test(`more than MAX_FILTER_VALUE_QUERIES Cube queries for one list answer 422 naming it (C8)`, async () => {
+  test(`more than MAX_FILTER_VALUE_QUERIES Cube queries for one list answer 422 naming the number (C8)`, async () => {
     const topN = (n: number) => chartOf(n, { measures: [COUNT], dimensions: [SOURCE], limit: 5 });
     // Each top-N chart takes up to two queries.
     const atCap = Array.from({ length: MAX_FILTER_VALUE_QUERIES / 2 }, (_, i) => topN(i));
@@ -203,7 +205,10 @@ describe("refused before Cube", () => {
     vi.mocked(executeTenantScopedQuery).mockClear();
     const response = await list(SOURCE_FILTER.id);
     expect(response.status).toBe(422);
-    expect(JSON.stringify(await problemOf(response))).toContain("MAX_FILTER_VALUE_QUERIES");
+    const problem = JSON.stringify(await problemOf(response));
+    expect(problem).toContain(`more than ${MAX_FILTER_VALUE_QUERIES} queries`);
+    // The reason is shown to people: it names the number, never the code constant.
+    expect(problem).not.toContain("MAX_FILTER_VALUE_QUERIES");
     expect(executeTenantScopedQuery).not.toHaveBeenCalled();
   });
 });

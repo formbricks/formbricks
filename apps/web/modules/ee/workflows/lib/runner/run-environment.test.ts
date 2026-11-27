@@ -12,6 +12,7 @@ const environment = (overrides: Partial<WorkflowRunEnvironment> = {}): WorkflowR
   workspaceId: "ws",
   surveyResponse: null,
   logoUrl: "",
+  hideLogo: false,
   allowedRecipientEmails: new Set(),
   secretValues: new Map(),
   rateLimit: { actorUserId: null },

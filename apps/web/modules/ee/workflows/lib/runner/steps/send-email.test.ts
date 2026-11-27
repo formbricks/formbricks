@@ -57,6 +57,7 @@ const environment = (overrides: Partial<WorkflowRunEnvironment> = {}): WorkflowR
   configuredByUserId: "creator-1",
   surveyResponse: null,
   logoUrl: "",
+  hideLogo: false,
   allowedRecipientEmails: new Set(["team@example.com"]),
   secretValues: new Map(),
   rateLimit: { organizationId: "org_1", actorUserId: "creator-1" },

@@ -1880,7 +1880,7 @@ checksums:
     workspace/analysis/charts/chart_deletion_error: 267eb65c168e726075d7cea678dd32e0
     workspace/analysis/charts/chart_duplicated_successfully: 755c4ce5bf533764d549a53c33e32165
     workspace/analysis/charts/chart_duplication_error: 90d7166c85188b52f821c9d9f53ff8c4
-    workspace/analysis/charts/chart_in_use_description: 1d504304cc20c4cadb525f0200d13dd9
+    workspace/analysis/charts/chart_in_use_description: d150ea71d5c2fa874509ca6a4a0aeb43
     workspace/analysis/charts/chart_in_use_title: 0d83e59494765e049bdae0d2eca41bdb
     workspace/analysis/charts/chart_name: 7370d4f88f27aea337ba1c36465c3f8b
     workspace/analysis/charts/chart_name_placeholder: 7370d4f88f27aea337ba1c36465c3f8b
@@ -2165,7 +2165,7 @@ checksums:
     workspace/analysis/dashboards/access_selected_dashboards: 794ebc0e2e413c726dad779f085847c4
     workspace/analysis/dashboards/access_tooltip: bea7103184949f173aef89ac5b3d39b3
     workspace/analysis/dashboards/access_workspace_permission: cf737c09b47e2cc33c0e9bf9c451605c
-    workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
+    workspace/analysis/dashboards/add_count_charts: 34bf83d51568dffa5c7ed7babd6bb704
     workspace/analysis/dashboards/add_page: 1e8b254707b404a4e709709fff7a8df5
     workspace/analysis/dashboards/all_teams: 29179cbc5a9c8e85a19b37aa7a6afad0
     workspace/analysis/dashboards/already_on_this_page: f9f60ec996d4e7ad788f49c047afe128
@@ -3865,7 +3865,6 @@ checksums:
     workspace/settings/general/organization_name_updated_successfully: d36ba3a4f614d30b10e696d25da22432
     workspace/settings/general/organization_settings: d31952131ad5f0ec72ad96f1ed11bef6
     workspace/settings/general/organization_settings_description: 3ccc23a2e7fd3db21c103bf3dd1a7852
-    workspace/settings/general/please_add_a_logo: 66d6f97a2e7b27efc04bd653240ee813
     workspace/settings/general/please_check_csv_file: c376d018b15cf05608abc4c59c1a9264
     workspace/settings/general/please_save_logo_before_sending_test_email: d6b06dbc00189f865fa78a9913e5cc9c
     workspace/settings/general/remove_logo: f60f1803e6fc8017b1eae7c30089107f

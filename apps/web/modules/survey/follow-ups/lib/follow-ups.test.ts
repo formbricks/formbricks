@@ -132,6 +132,7 @@ describe("Follow-ups", () => {
           response: mockResponse,
           attachResponseData: true,
           logoUrl: "https://example.com/logo.png",
+          hideLogo: false,
           // The respondent typed this address in, so it is also capped per recipient (ENG-3823).
           rateLimit: { organizationId: "org1", actorUserId: "owner-1", externalRecipient: true },
         });
@@ -257,6 +258,7 @@ describe("Follow-ups", () => {
           response: mockResponse,
           attachResponseData: true,
           logoUrl: "https://example.com/logo.png",
+          hideLogo: false,
           // A member of the organization: its own mail, not counted against the external budget.
           rateLimit: { organizationId: "org1", actorUserId: "owner-1", externalRecipient: false },
         });
@@ -358,6 +360,19 @@ describe("Follow-ups", () => {
       // One lookup for the run's literal addresses, not one per follow-up.
       expect(getOrganizationMemberEmails).toHaveBeenCalledTimes(1);
       expect(getOrganizationMemberEmails).toHaveBeenCalledWith("org1", ["stranger@example.com"]);
+    });
+
+    test("sends with no logo when the organization removed it (ENG-545)", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({
+        ...mockOrganization,
+        whitelabel: { logoUrl: null, hideLogo: true },
+      });
+
+      await sendFollowUpsForResponse("response1");
+
+      expect(sendFollowUpEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ logoUrl: "", hideLogo: true })
+      );
     });
 
     // A survey created with an API key has no owner; its organization's owner is charged instead.

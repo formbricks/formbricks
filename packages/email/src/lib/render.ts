@@ -182,6 +182,7 @@ export async function renderLinkSurveyEmail(
     surveyName: string;
     surveyLink: string;
     logoUrl: string;
+    hideLogo?: boolean;
     t: TFunction;
   } & TEmailTemplateLegalProps
 ): Promise<string> {
@@ -193,6 +194,7 @@ export async function renderEmbedSurveyPreviewEmail(
     html: string;
     workspaceId: string;
     logoUrl?: string;
+    hideLogo?: boolean;
     t: TFunction;
   } & TEmailTemplateLegalProps
 ): Promise<string> {
@@ -209,6 +211,7 @@ export async function renderEmailCustomizationPreviewEmail(
   props: {
     userName: string;
     logoUrl?: string;
+    hideLogo?: boolean;
     t: TFunction;
   } & TEmailTemplateLegalProps
 ): Promise<string> {

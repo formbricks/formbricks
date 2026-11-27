@@ -347,6 +347,74 @@ describe("custom branding", () => {
   });
 });
 
+describe("removed logo (ENG-545)", () => {
+  // Every email that carries the organization's logo. With `hideLogo` it renders no logo at all —
+  // neither the custom one nor the Formbricks fallback — and keeps the rest of the chrome.
+  const logoCarryingRenderers: [
+    string,
+    (logo: { logoUrl?: string; hideLogo?: boolean }) => Promise<string>,
+  ][] = [
+    [
+      "renderLinkSurveyEmail",
+      (logo) => renderLinkSurveyEmail({ ...exampleData.linkSurveyEmail, logoUrl: "", ...logo, ...legal, t }),
+    ],
+    [
+      "renderEmbedSurveyPreviewEmail",
+      (logo) =>
+        renderEmbedSurveyPreviewEmail({ ...exampleData.embedSurveyPreviewEmail, ...logo, ...legal, t }),
+    ],
+    [
+      "renderResponseFinishedEmail",
+      (logo) =>
+        renderResponseFinishedEmail({
+          ...exampleData.responseFinishedEmail,
+          elements: responseFinishedElements,
+          ...logo,
+          ...legal,
+          t,
+        }),
+    ],
+    [
+      "renderEmailCustomizationPreviewEmail",
+      (logo) =>
+        renderEmailCustomizationPreviewEmail({
+          ...exampleData.emailCustomizationPreviewEmail,
+          ...logo,
+          ...legal,
+          t,
+        }),
+    ],
+    [
+      "renderFollowUpEmail",
+      (logo) => renderFollowUpEmail({ ...exampleData.followUpEmail, ...logo, ...legal, t }),
+    ],
+  ];
+
+  describe.each(logoCarryingRenderers)("%s", (_name, renderEmail) => {
+    test("renders no logo when the organization removed it", async () => {
+      const html = await renderEmail({ hideLogo: true });
+
+      expect(html).not.toContain('data-testid="default-logo-image"');
+      expect(html).not.toContain('data-testid="logo-image"');
+      expect(html).not.toContain("logo-transparent.png");
+      expect(html).toContain(t("emails.email_template_text_1"));
+    });
+
+    test("ignores a stale logo URL when the logo is removed", async () => {
+      const html = await renderEmail({ hideLogo: true, logoUrl: "https://example.com/custom-logo.png" });
+
+      expect(html).not.toContain("https://example.com/custom-logo.png");
+      expect(html).not.toContain('data-testid="logo-image"');
+    });
+
+    test("still falls back to the Formbricks logo when the setting was never touched", async () => {
+      const html = await renderEmail({});
+
+      expect(html).toContain('data-testid="default-logo-image"');
+    });
+  });
+});
+
 describe("logo centering (ENG-2438)", () => {
   // Outlook's Word rendering engine implements neither `margin: auto` nor `rem` units, so the
   // logo's own `mx-auto` / `w-60` classes buy it nothing there: it lands left-aligned at its

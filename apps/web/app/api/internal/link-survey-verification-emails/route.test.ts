@@ -8,7 +8,7 @@ import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-survey
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
-import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
+import { getOrganizationEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import {
   getResponseBySingleUseId,
@@ -42,7 +42,7 @@ vi.mock("@/modules/survey/link/lib/single-use-link-metrics", async (importOrigin
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: vi.fn(), applyRateLimit: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromSurveyId: vi.fn() }));
 vi.mock("@/modules/ee/whitelabel/email-customization/lib/organization", () => ({
-  getOrganizationLogoUrl: vi.fn(),
+  getOrganizationEmailLogo: vi.fn(),
 }));
 vi.mock("@/modules/email", () => ({ sendLinkSurveyToVerifiedEmail: vi.fn() }));
 vi.mock("@/modules/survey/link/lib/data", () => ({
@@ -142,7 +142,7 @@ beforeEach(() => {
   vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   vi.mocked(getOrganizationIdFromSurveyId).mockResolvedValue("org-1");
   vi.mocked(getSurveyOwnerId).mockResolvedValue("owner-1");
-  vi.mocked(getOrganizationLogoUrl).mockResolvedValue(null);
+  vi.mocked(getOrganizationEmailLogo).mockResolvedValue({ logoUrl: null, hideLogo: false });
   vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => null);
   vi.mocked(sendLinkSurveyToVerifiedEmail).mockResolvedValue(true);
   mockSurvey();
@@ -327,12 +327,30 @@ describe("POST /api/internal/link-survey-verification-emails — what a caller c
   });
 
   test("emails the stored survey name and the organization's logo", async () => {
-    vi.mocked(getOrganizationLogoUrl).mockResolvedValueOnce("/storage/org-logo.png");
+    vi.mocked(getOrganizationEmailLogo).mockResolvedValueOnce({
+      logoUrl: "/storage/org-logo.png",
+      hideLogo: false,
+    });
 
     await sendEmail();
 
     expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ surveyName: "Stored survey name", logoUrl: "/storage/org-logo.png" }),
+      expect.objectContaining({
+        surveyName: "Stored survey name",
+        logoUrl: "/storage/org-logo.png",
+        hideLogo: false,
+      }),
+      expect.anything()
+    );
+  });
+
+  test("emails no logo when the organization removed it (ENG-545)", async () => {
+    vi.mocked(getOrganizationEmailLogo).mockResolvedValueOnce({ logoUrl: null, hideLogo: true });
+
+    await sendEmail();
+
+    expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ logoUrl: "", hideLogo: true }),
       expect.anything()
     );
   });

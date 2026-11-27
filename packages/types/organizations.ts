@@ -84,6 +84,9 @@ export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;
 export const ZOrganizationWhitelabel = z.object({
   logoUrl: ZStorageUrl.nullable(),
   faviconUrl: ZStorageUrl.nullish(),
+  // The organization removed its email logo: emails show none. Absent means the Formbricks logo
+  // stands in whenever `logoUrl` is empty.
+  hideLogo: z.boolean().nullish(),
 });
 
 export type TOrganizationWhitelabel = z.infer<typeof ZOrganizationWhitelabel>;
