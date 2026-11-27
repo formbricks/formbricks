@@ -1,6 +1,6 @@
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyElement } from "@formbricks/types/surveys/elements";
-import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
+import { formatDateWithOrdinal, parseDateString } from "@/lib/date-time";
 import { isValidHTML } from "@/lib/html-utils";
 import { getLocalizedValue } from "@/lib/i18n";
 
@@ -41,15 +41,32 @@ export type TRecallOutput = "rich" | "text";
 /** A recall token: `#recall:<id>/fallback:<text>#`. */
 const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/g;
 
+const formatRecallValue = (
+  value: TResponseData[string] | null,
+  languageCode: string,
+  dayFirstLocale: string
+): string => {
+  if (value == null) return "";
+  // Record answers keep the same display text as the original recall conversion.
+  if (typeof value === "object" && !Array.isArray(value)) return Object.prototype.toString.call(value);
+
+  const text = Array.isArray(value) ? value.join(",") : String(value);
+  const parsed = parseDateString(text);
+  if (parsed) return formatDateWithOrdinal(parsed.date, parsed.dayFirst ? dayFirstLocale : languageCode);
+
+  return Array.isArray(value) ? value.filter(Boolean).join(", ") : text;
+};
+
 const resolveRecallValue = (
   recallItemId: string,
   rawFallback: string,
   responseData: TResponseData,
   variables: TResponseVariables,
-  languageCode: string
+  languageCode: string,
+  dayFirstLocale: string
 ): { value: string; usedFallback: boolean } => {
   const fallback = rawFallback.replaceAll("nbsp", " ").trim();
-  let value: string | null = null;
+  let value: TResponseData[string] | null = null;
 
   // Fetching value from variables based on recallItemId
   if (variables[recallItemId] !== undefined) {
@@ -58,19 +75,10 @@ const resolveRecallValue = (
 
   // Fetching value from responseData or attributes based on recallItemId
   if (responseData[recallItemId] !== undefined) {
-    value = (responseData[recallItemId] as string) ?? fallback;
+    value = responseData[recallItemId] ?? fallback;
   }
 
-  // Additional value formatting if it exists
-  if (value) {
-    if (isValidDateString(value)) {
-      value = formatDateWithOrdinal(new Date(value), languageCode);
-    } else if (Array.isArray(value)) {
-      value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
-    }
-  }
-
-  const resolved = value?.toString();
+  const resolved = formatRecallValue(value, languageCode, dayFirstLocale);
   return resolved ? { value: resolved, usedFallback: false } : { value: fallback, usedFallback: true };
 };
 
@@ -88,14 +96,22 @@ export const replaceRecallInfo = (
   responseData: TResponseData,
   variables: TResponseVariables,
   languageCode: string = "en-US",
-  output: TRecallOutput = "rich"
+  output: TRecallOutput = "rich",
+  dayFirstLocale: string = languageCode
 ): string => {
   if (!text.includes("recall:")) return text;
 
   const escapeValues = output === "rich" && isValidHTML(text);
   // A replacer function: a string replacement would interpret `$&` and `$1` in the value.
   const modifiedText = text.replace(RECALL_TOKEN, (_token, id: string, rawFallback: string) => {
-    const resolved = resolveRecallValue(id, rawFallback, responseData, variables, languageCode);
+    const resolved = resolveRecallValue(
+      id,
+      rawFallback,
+      responseData,
+      variables,
+      languageCode,
+      dayFirstLocale
+    );
     if (!escapeValues) return resolved.value;
     // The fallback is authored text stored inside the template's HTML, so it arrives HTML-escaped: decode
     // it once before the one escape, or `R&D` written in the editor renders as `R&amp;D`. A recalled
@@ -114,7 +130,8 @@ export const parseRecallInformation = (
   question: TSurveyElement,
   languageCode: string,
   responseData: TResponseData,
-  variables: TResponseVariables
+  variables: TResponseVariables,
+  dayFirstLocale?: string
 ): TSurveyElement => {
   const modifiedQuestion = JSON.parse(JSON.stringify(question));
   // Use getLocalizedValue (falls back to the `default` key) instead of indexing by languageCode
@@ -124,7 +141,9 @@ export const parseRecallInformation = (
       getLocalizedValue(modifiedQuestion.headline, languageCode),
       responseData,
       variables,
-      languageCode
+      languageCode,
+      "rich",
+      dayFirstLocale
     );
   }
   if (
@@ -136,7 +155,9 @@ export const parseRecallInformation = (
       getLocalizedValue(modifiedQuestion.subheader, languageCode),
       responseData,
       variables,
-      languageCode
+      languageCode,
+      "rich",
+      dayFirstLocale
     );
   }
   return modifiedQuestion;

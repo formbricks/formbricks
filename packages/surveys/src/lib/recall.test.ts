@@ -12,21 +12,11 @@ vi.mock("./i18n", () => ({
   },
 }));
 
-// Mock date-time functions as they are used internally and we want to isolate recall logic
-vi.mock("./date-time", () => ({
-  isValidDateString: (val: string) => /^\d{4}-\d{2}-\d{2}$/.test(val) || /^\d{2}-\d{2}-\d{4}$/.test(val),
-  formatDateWithOrdinal: vi.fn(
-    (date: Date) =>
-      `${date.getUTCFullYear()}-${("0" + (date.getUTCMonth() + 1)).slice(-2)}-${("0" + date.getUTCDate()).slice(-2)}_formatted`
-  ),
-}));
-
 describe("replaceRecallInfo", () => {
   const responseData: TResponseData = {
     name: "John Doe",
     email: "john.doe@example.com",
     age: 30,
-    registrationDate: "2023-01-15",
     tags: ["beta", "user"],
     emptyArray: [],
   };
@@ -34,7 +24,6 @@ describe("replaceRecallInfo", () => {
   const variables: TResponseVariables = {
     productName: "Formbricks",
     userRole: "Admin",
-    lastLogin: "2024-03-10",
   };
 
   test("should replace recall info from responseData", () => {
@@ -61,31 +50,22 @@ describe("replaceRecallInfo", () => {
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
   });
 
-  test("should format date strings from responseData", () => {
-    const text = "Registered on: #recall:registrationDate/fallback:N/A#.";
-    const expected = "Registered on: 2023-01-15_formatted.";
-    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
-  });
-
-  test("should format date strings from variables", () => {
-    const text = "Last login: #recall:lastLogin/fallback:N/A#.";
-    const expected = "Last login: 2024-03-10_formatted.";
-    expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
-  });
-
-  test("should pass the selected survey language to date formatting", async () => {
-    const { formatDateWithOrdinal } = await import("./date-time");
-    const text = "Registered on: #recall:registrationDate/fallback:N/A#.";
-
-    replaceRecallInfo(text, responseData, variables, "fr-FR");
-
-    expect(vi.mocked(formatDateWithOrdinal)).toHaveBeenCalledWith(expect.any(Date), "fr-FR");
+  test("shows an impossible date as text and uses the fallback for a missing answer", () => {
+    const text = "First: #recall:first/fallback:N/A#. Second: #recall:second/fallback:N/A#.";
+    expect(replaceRecallInfo(text, { first: "30-02-2023" }, {})).toBe("First: 30-02-2023. Second: N/A.");
   });
 
   test("should join array values with a comma and space", () => {
     const text = "Tags: #recall:tags/fallback:none#.";
     const expected = "Tags: beta, user.";
     expect(replaceRecallInfo(text, responseData, variables)).toBe(expected);
+  });
+
+  test("preserves the display of numeric and record answers", () => {
+    const text = "Score: #recall:score/fallback:N/A#. Contact: #recall:contact/fallback:N/A#.";
+    expect(replaceRecallInfo(text, { score: 0, contact: { firstName: "Jamie" } }, {})).toBe(
+      "Score: 0. Contact: [object Object]."
+    );
   });
 
   test("should handle empty array values, replacing with fallback", () => {
@@ -173,6 +153,46 @@ describe("parseRecallInformation", () => {
     inputType: "text",
     charLimit: { enabled: false },
   };
+
+  test.each([
+    ["2023-01-15", new Date("2023-01-15")],
+    ["15-01-2023", new Date(2023, 0, 15)],
+  ])("localizes %s from an answer and a variable in the headline and subheader", (date, expectedDate) => {
+    const question: TSurveyOpenTextElement = {
+      ...baseQuestion,
+      headline: { "de-DE": "Antwort vom #recall:appointment/fallback:unbekannt#" },
+      subheader: { "de-DE": "Termin am #recall:followup/fallback:unbekannt#" },
+    };
+    const result = parseRecallInformation(question, "de-DE", { appointment: date }, { followup: date });
+    const expected = new Intl.DateTimeFormat("de-DE", { dateStyle: "full" }).format(expectedDate);
+
+    expect(result.headline["de-DE"]).toBe(`Antwort vom ${expected}`);
+    expect(result.subheader?.["de-DE"]).toBe(`Termin am ${expected}`);
+  });
+
+  test("looks up default text while localizing a day-first date with the configured language", () => {
+    const question: TSurveyOpenTextElement = {
+      ...baseQuestion,
+      headline: { default: "Termin am #recall:appointment/fallback:unbekannt#" },
+      subheader: { default: "Antwort vom #recall:appointment/fallback:unbekannt#" },
+    };
+    const result = parseRecallInformation(question, "default", { appointment: "15-01-2023" }, {}, "de-DE");
+
+    expect(result.headline.default).toBe("Termin am Sonntag, 15. Januar 2023");
+    expect(result.subheader?.default).toBe("Antwort vom Sonntag, 15. Januar 2023");
+  });
+
+  test("localizes a day-first date in a rich-text template and a plain-text label", () => {
+    const token = "#recall:appointment/fallback:unbekannt#";
+    const responseData = { appointment: "15-01-2023" };
+
+    expect(replaceRecallInfo(`<p>Termin am ${token}</p>`, responseData, {}, "default", "rich", "de-DE")).toBe(
+      "<p>Termin am Sonntag, 15. Januar 2023</p>"
+    );
+    expect(replaceRecallInfo(`Termin am ${token}`, responseData, {}, "default", "text", "de-DE")).toBe(
+      "Termin am Sonntag, 15. Januar 2023"
+    );
+  });
 
   test("should replace recall info in headline", () => {
     const question: TSurveyOpenTextElement = {
