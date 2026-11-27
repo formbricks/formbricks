@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   VISIT_STORAGE_KEY,
   getVisitSnapshot,
+  recordCampaign,
   recordNavigation,
   recordPageHide,
   recordPageLoad,
@@ -201,5 +202,125 @@ describe("visit store", () => {
     recordPageLoad("/plans", "", T0);
 
     expect(getVisitSnapshot(T0)?.pagesViewed).toBe(1);
+  });
+});
+
+describe("visit store — the campaign the visit arrived with (ENG-7430)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("sessionStorage", createStorage());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const land = (path: string, search: string, now: number) => {
+    recordPageLoad(path, "https://www.google.com/", now);
+    recordCampaign(search);
+  };
+
+  test("keeps the landing page's UTMs through later full page loads", () => {
+    land(
+      "/",
+      "?utm_source=newsletter&utm_medium=email&utm_campaign=oe2027&utm_term=plans&utm_content=hero",
+      T0
+    );
+    land("/plans", "", T0 + SECOND);
+    land("/plans/compare", "?ref=nav", T0 + 2 * SECOND);
+
+    expect(getVisitSnapshot(T0 + 2 * SECOND)?.utm).toEqual({
+      utmSource: "newsletter",
+      utmMedium: "email",
+      utmCampaign: "oe2027",
+      utmTerm: "plans",
+      utmContent: "hero",
+    });
+  });
+
+  test("keeps the landing page's UTMs through SPA navigations and a replaceState that strips them", () => {
+    land("/", "?utm_campaign=oe2027", T0);
+    recordNavigation("/plans", T0 + SECOND);
+    recordCampaign("");
+    recordPathReplace("/plans/");
+    recordCampaign("");
+
+    expect(getVisitSnapshot(T0 + SECOND)?.utm).toEqual({ utmCampaign: "oe2027" });
+  });
+
+  test("has no campaign, not an empty one, when no page carried UTMs", () => {
+    land("/", "?utm_source=&utm_campaign=%20%20&ref=ad", T0);
+    land("/plans", "", T0 + SECOND);
+
+    const snapshot = getVisitSnapshot(T0 + SECOND);
+    expect(snapshot).not.toBeNull();
+    expect(snapshot).not.toHaveProperty("utm");
+  });
+
+  test("a later campaign replaces the earlier one as a whole set, never mixed", () => {
+    land("/", "?utm_source=google&utm_campaign=oe2027", T0);
+    recordNavigation("/promo", T0 + SECOND);
+    recordCampaign("?utm_campaign=winter");
+
+    expect(getVisitSnapshot(T0 + SECOND)?.utm).toEqual({ utmCampaign: "winter" });
+  });
+
+  test("a new tab starts without another visit's campaign", () => {
+    land("/", "?utm_campaign=oe2027", T0);
+
+    // sessionStorage is per tab: a new tab starts with an empty one.
+    vi.stubGlobal("sessionStorage", createStorage());
+    land("/plans", "", T0 + MINUTE);
+
+    expect(getVisitSnapshot(T0 + MINUTE)).not.toHaveProperty("utm");
+  });
+
+  test("does nothing, and never throws, when storage is blocked", () => {
+    const throwing = () => {
+      throw new Error("SecurityError");
+    };
+    vi.stubGlobal("sessionStorage", { getItem: throwing, setItem: throwing, removeItem: throwing });
+
+    expect(() => land("/", "?utm_campaign=oe2027", T0)).not.toThrow();
+    expect(getVisitSnapshot(T0)).toBeNull();
+  });
+
+  test("keeps a visit an older SDK started, and adds the campaign to it", () => {
+    sessionStorage.setItem(
+      VISIT_STORAGE_KEY,
+      JSON.stringify({
+        startedAt: T0,
+        entryReferrer: "",
+        pageViews: 1,
+        path: ["/"],
+        uniquePaths: ["/"],
+        currentPathIsNew: true,
+        accumulatedMs: 0,
+        pageStartedAt: T0,
+      })
+    );
+    land("/plans", "?utm_medium=cpc", T0 + SECOND);
+
+    expect(getVisitSnapshot(T0 + SECOND)).toMatchObject({ pagesViewed: 2, utm: { utmMedium: "cpc" } });
+  });
+
+  test("starts over when the stored campaign is not an object", () => {
+    sessionStorage.setItem(
+      VISIT_STORAGE_KEY,
+      JSON.stringify({
+        startedAt: T0,
+        entryReferrer: "",
+        pageViews: 3,
+        path: ["/"],
+        uniquePaths: ["/"],
+        currentPathIsNew: true,
+        accumulatedMs: 0,
+        pageStartedAt: T0,
+        utm: "oe2027",
+      })
+    );
+    land("/plans", "", T0 + SECOND);
+
+    expect(getVisitSnapshot(T0 + SECOND)).toMatchObject({ pagesViewed: 1 });
+    expect(getVisitSnapshot(T0 + SECOND)).not.toHaveProperty("utm");
   });
 });

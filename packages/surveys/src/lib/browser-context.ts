@@ -1,6 +1,6 @@
 import type { TResponseUpdate } from "@formbricks/types/responses";
 import type { TVisitSnapshot } from "@formbricks/types/show-conditions";
-import { VISIT_URLS_SEPARATOR } from "@formbricks/types/visit";
+import { UTM_PARAMS, VISIT_URLS_SEPARATOR } from "@formbricks/types/visit";
 
 /**
  * The `meta` the renderer contributes to a response: the browser-runtime context it can observe,
@@ -60,14 +60,6 @@ const readCount = (read: () => number | null | undefined): number | undefined =>
 /** Drops the keys that resolved to `undefined` so they are absent from the JSON, not present-and-null. */
 const compact = (meta: Record<string, string | number | undefined>): TWebSurveyMeta =>
   Object.fromEntries(Object.entries(meta).filter(([, value]) => value !== undefined));
-
-const UTM_PARAMS = [
-  ["utm_source", "utmSource"],
-  ["utm_medium", "utmMedium"],
-  ["utm_campaign", "utmCampaign"],
-  ["utm_term", "utmTerm"],
-  ["utm_content", "utmContent"],
-] as const;
 
 /**
  * The **page** group: everything whose meaning comes from `location` describing a host page the
@@ -139,6 +131,35 @@ const readVisitContextMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta
   });
 };
 
+const hasUtm = (meta: TWebSurveyMeta): boolean => UTM_PARAMS.some(([, key]) => meta[key] !== undefined);
+
+/**
+ * The campaign the visit arrived with (ENG-7430), kept by the web SDK because the page the survey
+ * shows on is often not the one the visitor landed on. Only the five UTM keys are read, each as
+ * defensively as the rest: the SDK and this renderer are cached separately, so `visit.utm` may be
+ * missing (an older SDK) or not the shape this version expects.
+ */
+const readVisitUtmMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta => {
+  const utm: Record<string, string | undefined> = {};
+  for (const [, key] of UTM_PARAMS) {
+    utm[key] = readString(() => visit?.utm?.[key]);
+  }
+  return compact(utm);
+};
+
+/**
+ * The page group, with the visit's campaign standing in when the page itself carries none.
+ *
+ * The page's own UTM parameters win as a whole set, so a response never mixes two campaigns and a
+ * survey on a tagged page records exactly what it did before. Only a page without any falls back to
+ * the visit's, which is how a visitor who landed with `?utm_campaign=…` and answers two pages later
+ * still has the campaign on the response. `url` and `pagePath` stay the page the survey shows on.
+ */
+const readAttributedPageContextMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta => {
+  const page = readPageContextMeta();
+  return hasUtm(page) ? page : { ...page, ...readVisitUtmMeta(visit) };
+};
+
 /**
  * **Snapshot at display, then freeze.**
  *
@@ -169,7 +190,7 @@ export const createWebSurveyMetaSnapshot = (
   visit?: TVisitSnapshot
 ): (() => TWebSurveyMeta) => {
   const snapshot: TWebSurveyMeta = {
-    ...(isWebEnvironment ? readPageContextMeta() : {}),
+    ...(isWebEnvironment ? readAttributedPageContextMeta(visit) : {}),
     ...readDeviceContextMeta(),
     ...readVisitContextMeta(visit),
   };

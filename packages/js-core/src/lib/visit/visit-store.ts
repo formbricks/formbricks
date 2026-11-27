@@ -1,5 +1,6 @@
 import type { TVisitSnapshot } from "@formbricks/types/show-conditions";
 import { MAX_UNIQUE_PAGES, normalizeUrlPath } from "@formbricks/types/show-conditions-evaluate";
+import { type TVisitUtm, readUtmParams } from "@formbricks/types/visit";
 
 /**
  * The visit store: what one visitor did in this browser tab (ENG-3570, ENG-3872).
@@ -21,6 +22,10 @@ import { MAX_UNIQUE_PAGES, normalizeUrlPath } from "@formbricks/types/show-condi
  *   from it, up to `MAX_UNIQUE_PAGES`, so what fell out of the journey still counts as visited.
  * - Time on site counts time on our pages only: a page's time is banked on `pagehide`, so time spent
  *   on another site before coming back in the same tab is left out. No timer runs.
+ * - The campaign (`utm`) is the UTM set of the latest page of the visit whose URL carried any: the
+ *   landing page, unless the visitor later reached a page tagged with another campaign. It is kept
+ *   as a whole set, never merged, so two campaigns are never mixed into one attribution. A page
+ *   without UTM parameters leaves it as it was (ENG-7430).
  * - If storage is blocked, there is no visit (`null`), and visit conditions fail closed.
  */
 
@@ -39,6 +44,8 @@ interface TVisitState {
   accumulatedMs: number;
   /** When the current page started counting; `null` once its time has been banked. */
   pageStartedAt: number | null;
+  /** Absent until a page of the visit carries UTM parameters, and in visits an older SDK started. */
+  utm?: TVisitUtm;
 }
 
 const isStringList = (value: unknown): boolean =>
@@ -55,7 +62,9 @@ const isVisitState = (value: unknown): value is TVisitState => {
     isStringList(state.uniquePaths) &&
     typeof state.currentPathIsNew === "boolean" &&
     typeof state.accumulatedMs === "number" &&
-    (state.pageStartedAt === null || typeof state.pageStartedAt === "number")
+    (state.pageStartedAt === null || typeof state.pageStartedAt === "number") &&
+    // Only its shape is checked: the renderer reads each UTM key on its own and drops any non-string.
+    (state.utm === undefined || (typeof state.utm === "object" && state.utm !== null))
   );
 };
 
@@ -168,6 +177,22 @@ export const recordPathReplace = (rawPath: string): void => {
   saveState(state);
 };
 
+/**
+ * Keeps the campaign of a page whose URL carries UTM parameters, replacing the visit's earlier one.
+ * Called for every page the visit records, after it is recorded, so the visit exists. A page without
+ * UTM parameters changes nothing: the visit keeps the campaign it arrived with, which is what a
+ * survey on a later page should record.
+ */
+export const recordCampaign = (search: string): void => {
+  const utm = readUtmParams(search);
+  if (!utm) return;
+  const state = loadState();
+  if (!state) return;
+
+  state.utm = utm;
+  saveState(state);
+};
+
 /** Banks the current page's time as the visitor leaves it, so time away is not counted. */
 export const recordPageHide = (now: number = Date.now()): void => {
   const state = loadState();
@@ -189,5 +214,6 @@ export const getVisitSnapshot = (now: number = Date.now()): TVisitSnapshot | nul
     entryReferrer: state.entryReferrer,
     visitedUrls: [...state.path],
     uniquePaths: [...state.uniquePaths],
+    ...(state.utm ? { utm: { ...state.utm } } : {}),
   };
 };
