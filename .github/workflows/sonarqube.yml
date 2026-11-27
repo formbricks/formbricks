@@ -56,6 +56,25 @@ jobs:
         if: ${{ !startsWith(github.base_ref, 'release/') }}
         run: |
           pnpm test:coverage
+      - name: DIAG start memory sampler
+        run: |
+          free -m
+          swapon --show || true
+          echo "swappiness=$(cat /proc/sys/vm/swappiness)"
+          echo "systemd-oomd=$(systemctl is-active systemd-oomd || true)"
+          cat > "$RUNNER_TEMP/memsample.sh" <<'EOF'
+          #!/usr/bin/env bash
+          while true; do
+            avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
+            swapfree=$(awk '/SwapFree/ {print int($2/1024)}' /proc/meminfo)
+            rss=$(ps -eo rss,args --no-headers | awk '/server\.cjs/ {n+=$1} /java/ {j+=$1} END {printf "node=%d java=%d", n/1024, j/1024}')
+            echo "$(date +%T) avail=${avail} swapfree=${swapfree} ${rss}"
+            sleep 2
+          done
+          EOF
+          chmod +x "$RUNNER_TEMP/memsample.sh"
+          nohup "$RUNNER_TEMP/memsample.sh" > "$RUNNER_TEMP/mem.log" 2>&1 &
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
         with:
@@ -65,3 +84,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: DIAG memory report
+        if: always()
+        run: |
+          echo "samples: $(wc -l < "$RUNNER_TEMP/mem.log")"
+          awk '{split($2,a,"="); split($3,s,"="); split($4,n,"="); split($5,j,"=");
+                if (min=="" || a[2]<min) {min=a[2]; minline=$0}
+                if (n[2]>maxn) {maxn=n[2]; nline=$0}
+                if (j[2]>maxj) {maxj=j[2]; jline=$0}
+                if (n[2]+j[2]>maxs) {maxs=n[2]+j[2]; sline=$0}
+                if (smin=="" || s[2]<smin) smin=s[2]}
+               END {print "lowest available: " minline; print "peak node rss:    " nline; print "peak java rss:    " jline; print "peak node+java:   " sline; print "lowest swap free: " smin " MB"}' "$RUNNER_TEMP/mem.log"
+          echo "--- timeline while the scanner ran (every 5th sample) ---"
+          awk '{split($5,j,"="); if (j[2]>200) {c++; if (c%5==1) print}}' "$RUNNER_TEMP/mem.log"
+          echo "--- kernel oom messages ---"
+          sudo dmesg | grep -i -E 'oom|out of memory|killed process' | tail -20 || true
