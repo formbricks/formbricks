@@ -672,4 +672,60 @@ describe("alignRowToHeaders", () => {
       headersChanged: true,
     });
   });
+
+  // ENG-3682: a two-paragraph headline was labelled "First lineSecond line" before the fix and
+  // "First line Second line" after it. The sheet matches headers by name.
+  describe("with the legacy labels of a sheet written before ENG-3682", () => {
+    const label = "First line Second line";
+    const legacyLabel = "First lineSecond line";
+
+    test("keeps writing under the header the sheet already has with the legacy label", () => {
+      expect(alignRowToHeaders(["Created At", legacyLabel], [label], ["answer"], [legacyLabel])).toEqual({
+        headers: ["Created At", legacyLabel],
+        row: ["", "answer"],
+        headersChanged: false,
+      });
+    });
+
+    test("appends the new label when the sheet has neither", () => {
+      expect(alignRowToHeaders(["Created At"], [label], ["answer"], [legacyLabel])).toEqual({
+        headers: ["Created At", label],
+        row: ["", "answer"],
+        headersChanged: true,
+      });
+    });
+
+    test("writes under the new label when the sheet has it", () => {
+      expect(alignRowToHeaders([legacyLabel, label], [label], ["answer"], [legacyLabel])).toEqual({
+        headers: [legacyLabel, label],
+        row: ["", "answer"],
+        headersChanged: false,
+      });
+    });
+
+    test("matches a repeated legacy label by occurrence", () => {
+      expect(
+        alignRowToHeaders(
+          [legacyLabel, legacyLabel],
+          [label, label],
+          ["first", "second"],
+          [legacyLabel, legacyLabel]
+        )
+      ).toEqual({
+        headers: [legacyLabel, legacyLabel],
+        row: ["first", "second"],
+        headersChanged: false,
+      });
+    });
+
+    test("appends a further occurrence once the legacy columns are taken", () => {
+      expect(
+        alignRowToHeaders([legacyLabel], [label, label], ["first", "second"], [legacyLabel, legacyLabel])
+      ).toEqual({
+        headers: [legacyLabel, label],
+        row: ["first", "second"],
+        headersChanged: true,
+      });
+    });
+  });
 });

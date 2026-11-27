@@ -76,11 +76,17 @@ const readHeaderRow = (
  * is, labels it does not have yet are appended to its end, and each value is placed under its own label.
  * A label that occurs more than once (e.g. two questions with the same headline) is matched by occurrence:
  * the second "Name" in this response goes under the second "Name" column.
+ *
+ * ENG-3682: `legacyElements` holds each label as it read before block elements were separated by a
+ * space ("First lineSecond line"), in the same order as `elements`. A label with no free column of its
+ * own goes under a free column with its legacy label, so a sheet written before the fix keeps filling
+ * the same column; only when neither exists is the new label appended.
  */
 export const alignRowToHeaders = (
   existingHeaders: string[],
   elements: string[],
-  responses: string[]
+  responses: string[],
+  legacyElements: string[] = elements
 ): { headers: string[]; row: string[]; headersChanged: boolean } => {
   const headers = [...existingHeaders];
   const columnsByLabel = new Map<string, number[]>();
@@ -90,19 +96,20 @@ export const alignRowToHeaders = (
     columnsByLabel.set(label, columns);
   });
 
-  const occurrences = new Map<string, number>();
+  // A column holds one value per row; taking columns in order matches a repeated label by occurrence.
+  const takenColumns = new Set<number>();
+  const takeFreeColumn = (label: string): number | undefined =>
+    (columnsByLabel.get(label) ?? []).find((column) => !takenColumns.has(column));
+
   const placements: { column: number; value: string }[] = [];
   elements.forEach((label, index) => {
-    const occurrence = occurrences.get(label) ?? 0;
-    occurrences.set(label, occurrence + 1);
-    const columns = columnsByLabel.get(label) ?? [];
-    let column = columns[occurrence];
+    let column = takeFreeColumn(label) ?? takeFreeColumn(legacyElements[index] ?? label);
     if (column === undefined) {
       column = headers.length;
       headers.push(label);
-      columns.push(column);
-      columnsByLabel.set(label, columns);
+      columnsByLabel.set(label, [...(columnsByLabel.get(label) ?? []), column]);
     }
+    takenColumns.add(column);
     placements.push({ column, value: responses[index] ?? "" });
   });
 
@@ -252,13 +259,15 @@ export const writeData = async (
   integrationData: TIntegrationGoogleSheets,
   spreadsheetId: string,
   responses: string[],
-  elements: string[]
+  elements: string[],
+  legacyElements: string[] = elements
 ) => {
   validateInputs(
     [integrationData, ZIntegrationGoogleSheets],
     [spreadsheetId, ZString],
     [responses, z.array(ZString)],
-    [elements, z.array(ZString)]
+    [elements, z.array(ZString)],
+    [legacyElements, z.array(ZString).length(elements.length)]
   );
 
   try {
@@ -277,7 +286,8 @@ export const writeData = async (
       const { headers, row, headersChanged } = alignRowToHeaders(
         existingHeaders,
         elements,
-        truncatedResponses
+        truncatedResponses,
+        legacyElements
       );
 
       if (headersChanged) {

@@ -207,30 +207,40 @@ const getExistingFields = async (key: TIntegrationAirtableCredential, baseId: st
   return new Set(currentTable.fields.map((f) => f.name));
 };
 
+/**
+ * ENG-3682: `legacyElements` holds each label as it read before block elements were separated by a
+ * space ("First lineSecond line"), in the same order as `elements`. Airtable matches fields by name, so
+ * an answer goes to the field with its new label, else to the field a table created before the fix has
+ * under its legacy label, and only when neither exists is a field created with the new label.
+ */
 export const writeData = async (
   key: TIntegrationAirtableCredential,
   configData: TIntegrationAirtableConfigData,
   responses: string[],
-  elements: string[]
+  elements: string[],
+  legacyElements: string[] = elements
 ) => {
-  if (responses.length !== elements.length) {
+  if (responses.length !== elements.length || legacyElements.length !== elements.length) {
     throw new Error(
-      `Array length mismatch: responses (${responses.length}) and elements (${elements.length}) must be equal`
+      `Array length mismatch: responses (${responses.length}), elements (${elements.length}) and legacy elements (${legacyElements.length}) must be equal`
     );
   }
 
-  // 1) Build the record payload
+  // 1) Pick each answer's field: the new label, else an existing legacy one
+  const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
+  const fieldNames = elements.map((label, i) =>
+    !existingFields.has(label) && existingFields.has(legacyElements[i]) ? legacyElements[i] : label
+  );
+
+  // 2) Build the record payload, and figure out which fields need creating
   const data: Record<string, string> = {};
-  for (let i = 0; i < elements.length; i++) {
-    data[elements[i]] =
+  for (let i = 0; i < fieldNames.length; i++) {
+    data[fieldNames[i]] =
       responses[i].length > AIRTABLE_MESSAGE_LIMIT
         ? truncateText(responses[i], AIRTABLE_MESSAGE_LIMIT)
         : responses[i];
   }
-
-  // 2) Figure out which fields need creating
-  const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
-  const fieldsToCreate = elements.filter((q) => !existingFields.has(q));
+  const fieldsToCreate = fieldNames.filter((name) => !existingFields.has(name));
 
   // 3) Create any missing fields with throttling to respect Airtable's 5 req/sec per base limit
   if (fieldsToCreate.length > 0) {

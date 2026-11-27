@@ -6,8 +6,62 @@ import {
   LINK_SURVEY_SYSTEM_PARAMS,
   RESERVED_DECLARED_FIELD_NAMES,
   TValidateIdErrorCode,
+  getLegacyTextContent,
+  getTextContent,
   validateId,
 } from "./validation";
+
+describe("getTextContent", () => {
+  test("separates paragraphs with a single space", () => {
+    expect(getTextContent("<p>First line</p><p>Second line</p>")).toBe("First line Second line");
+  });
+
+  test("separates list items, including nested lists", () => {
+    expect(getTextContent("<ul><li>one</li><li>two</li></ul>")).toBe("one two");
+    expect(getTextContent("<ul><li>one<ul><li>one-a</li><li>one-b</li></ul></li><li>two</li></ul>")).toBe(
+      "one one-a one-b two"
+    );
+  });
+
+  test("separates headings from the body", () => {
+    expect(getTextContent("<h1>Title</h1><p>Body</p>")).toBe("Title Body");
+  });
+
+  test("turns a line break into a space", () => {
+    expect(getTextContent("<p>First line<br>Second line</p>")).toBe("First line Second line");
+    expect(getTextContent("<p>First line<br/><br/>Second line</p>")).toBe("First line Second line");
+  });
+
+  test("keeps inline elements joined to their words", () => {
+    expect(getTextContent("<p>Hello <b>wor</b>ld, <a href='#'>link</a>!</p>")).toBe("Hello world, link!");
+  });
+
+  test("decodes HTML entities", () => {
+    expect(getTextContent("<p>Fish &amp; chips</p><p>&lt;tag&gt;</p>")).toBe("Fish & chips <tag>");
+  });
+
+  test("collapses source whitespace and trims", () => {
+    expect(getTextContent("<p>\n  First\n  line  </p>\n<p>  Second</p>")).toBe("First line Second");
+  });
+
+  test("leaves plain text as it is, apart from trimming", () => {
+    expect(getTextContent("  What is your name?  ")).toBe("What is your name?");
+    expect(getTextContent("")).toBe("");
+  });
+});
+
+describe("getLegacyTextContent", () => {
+  test("still glues block elements together, as labels read before the fix", () => {
+    expect(getLegacyTextContent("<p>First line</p><p>Second line</p>")).toBe("First lineSecond line");
+    expect(getLegacyTextContent("<ul><li>one</li><li>two</li></ul>")).toBe("onetwo");
+    expect(getLegacyTextContent("<h1>Title</h1><p>Body</p>")).toBe("TitleBody");
+  });
+
+  test("matches the new label for a single paragraph", () => {
+    expect(getLegacyTextContent("<p>What is your name?</p>")).toBe("What is your name?");
+    expect(getTextContent("<p>What is your name?</p>")).toBe("What is your name?");
+  });
+});
 
 describe("validateId", () => {
   const noExistingIds: [string[], string[], string[], string[]] = [[], [], [], []];

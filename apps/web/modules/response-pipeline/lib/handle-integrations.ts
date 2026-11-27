@@ -9,7 +9,7 @@ import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { TResponse, TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLegacyTextContent, getTextContent } from "@formbricks/types/surveys/validation";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { NOTION_RICH_TEXT_LIMIT } from "@/lib/constants";
 import { writeData } from "@/lib/googleSheet/service";
@@ -103,6 +103,8 @@ const processDataForIntegration = async (
 ): Promise<{
   responses: string[];
   elements: string[];
+  /** `elements` as labelled before ENG-3682, same length and order; see `extractResponses`. */
+  legacyElements: string[];
 }> => {
   const {
     elementIds,
@@ -114,7 +116,11 @@ const processDataForIntegration = async (
   } = selection;
   const ingestedStorageKeys = getIngestedStorageKeys(survey);
   const ids = includeHiddenFields ? [...elementIds, ...ingestedStorageKeys] : elementIds;
-  const { responses, elements } = await extractResponses(integrationType, data, ids, survey);
+  const {
+    responses,
+    elements,
+    legacyElements: elementLegacyLabels,
+  } = await extractResponses(integrationType, data, ids, survey);
 
   if (includeMetadata) {
     responses.push(convertMetaObjectToString(data.response.meta));
@@ -143,9 +149,14 @@ const processDataForIntegration = async (
     });
   }
 
+  // The labels added after the elements (metadata, variables, contact attributes) are plain text, so
+  // they read the same before and after ENG-3682.
+  const legacyElements = [...elementLegacyLabels, ...elements.slice(elementLegacyLabels.length)];
+
   return {
     responses,
     elements,
+    legacyElements,
   };
 };
 
@@ -221,7 +232,13 @@ const handleAirtableIntegration = async (
             toIntegrationFieldSelection(element),
             displayTimeZone
           );
-          await airtableWriteData(integration.config.key, element, values.responses, values.elements);
+          await airtableWriteData(
+            integration.config.key,
+            element,
+            values.responses,
+            values.elements,
+            values.legacyElements
+          );
         }
       }
     }
@@ -260,7 +277,13 @@ const handleGoogleSheetsIntegration = async (
             data.createdAt = new Date(data.createdAt);
           });
 
-          await writeData(integrationData, element.spreadsheetId, values.responses, values.elements);
+          await writeData(
+            integrationData,
+            element.spreadsheetId,
+            values.responses,
+            values.elements,
+            values.legacyElements
+          );
         }
       }
     }
@@ -367,9 +390,16 @@ const extractResponses = async (
 ): Promise<{
   responses: string[];
   elements: string[];
+  /**
+   * Each label in `elements` as `getTextContent` produced it before ENG-3682 glued block elements
+   * together ("First lineSecond line"), same length and order. The Airtable and Google Sheets writers
+   * use it to keep filling a column an existing integration created under that label.
+   */
+  legacyElements: string[];
 }> => {
   const responses: string[] = [];
   const elements: string[] = [];
+  const legacyElements: string[] = [];
   const surveyElements = getElementsFromBlocks(survey.blocks);
   const emptyResponseObject = createEmptyResponseObject(pipelineData.response.data);
 
@@ -408,6 +438,7 @@ const extractResponses = async (
       // labels by name but still keys its saved mapping on `link.storageKey`, which is the
       // `element.id` `buildNotionPayloadProperties` reads each value from.
       elements.push(elementId);
+      legacyElements.push(elementId);
       continue;
     }
 
@@ -419,16 +450,14 @@ const extractResponses = async (
     const responseValue = pipelineData.response.data[elementId];
     responses.push(processElementResponse(element, responseValue));
 
-    elements.push(
-      parseRecallInfo(
-        getTextContent(getLocalizedValue(element.headline, "default")),
-        responseDataForRecall,
-        variablesForRecall
-      ) || ""
+    const headline = getLocalizedValue(element.headline, "default");
+    elements.push(parseRecallInfo(getTextContent(headline), responseDataForRecall, variablesForRecall) || "");
+    legacyElements.push(
+      parseRecallInfo(getLegacyTextContent(headline), responseDataForRecall, variablesForRecall) || ""
     );
   }
 
-  return { responses, elements };
+  return { responses, elements, legacyElements };
 };
 
 const handleNotionIntegration = async (
