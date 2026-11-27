@@ -365,22 +365,29 @@ describe("autosave", () => {
     const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
     await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
 
-    // Keystrokes spaced under the debounce window: each one must restart the timer rather than
-    // queue its own PATCH.
-    for (const name of ["N", "Na", "Nam", "Name"]) {
-      act(() => {
-        store.set(setWorkflowNameAtom, name);
-      });
-      await new Promise((resolve) => setTimeout(resolve, KEYSTROKE_GAP_MS));
-    }
-    expect(updateWorkflow).not.toHaveBeenCalled();
+    // A fake clock from here on: a runner pausing between keystrokes must not let a window elapse.
+    vi.useFakeTimers();
+    try {
+      // Keystrokes spaced under the debounce window: each one must restart the timer rather than
+      // queue its own PATCH.
+      for (const name of ["N", "Na", "Nam", "Name"]) {
+        act(() => {
+          store.set(setWorkflowNameAtom, name);
+        });
+        await act(() => vi.advanceTimersByTimeAsync(KEYSTROKE_GAP_MS));
+      }
+      expect(updateWorkflow).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
-    // The first PATCH carries "Name" either way — save() reads the store, not the timer's closure —
-    // so settle past a full debounce window: an uncancelled timer would land its own call here.
-    await new Promise((resolve) => setTimeout(resolve, SETTLE_PAST_WINDOW_MS));
-    expect(updateWorkflow).toHaveBeenCalledTimes(1);
-    expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "Name" }));
+      await act(() => vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS));
+      expect(updateWorkflow).toHaveBeenCalledTimes(1);
+      // The first PATCH carries "Name" either way — save() reads the store, not the timer's closure —
+      // so settle past a full debounce window: an uncancelled timer would land its own call here.
+      await act(() => vi.advanceTimersByTimeAsync(SETTLE_PAST_WINDOW_MS));
+      expect(updateWorkflow).toHaveBeenCalledTimes(1);
+      expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "Name" }));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("does not autosave for read-only viewers", async () => {
