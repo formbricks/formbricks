@@ -149,7 +149,7 @@ test("the apt fallback stops a stray apt-get and waits for the dpkg locks before
   // Record what each sudo call does; the dpkg lock wait is recorded by its target, not its source.
   command(
     "sudo",
-    `if [[ "$1 $2" == "python3 -c" ]]; then echo "wait for the dpkg locks in \${!#}"; else echo "sudo $*"; fi >> "$FIXTURE/commands"`
+    `if [[ "$1 ${2-}" == "python3 -c" ]]; then echo "wait for the dpkg locks in \${!#}"; else echo "sudo $*"; fi >> "$FIXTURE/commands"`
   );
   command(
     "pnpm",
