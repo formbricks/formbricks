@@ -81,10 +81,21 @@ type TEnterpriseLicenseResult = {
   status: TLicenseStatus;
 };
 
+type TLicenseRefusal = Extract<TLicenseStatus, "expired" | "invalid_license" | "instance_mismatch">;
+
+const LICENSE_REFUSALS: readonly TLicenseRefusal[] = ["expired", "invalid_license", "instance_mismatch"];
+
+const isLicenseRefusal = (value: unknown): value is TLicenseRefusal =>
+  typeof value === "string" && (LICENSE_REFUSALS as readonly string[]).includes(value);
+
 type TPreviousResult = {
   active: boolean;
   lastChecked: Date;
   features: TEnterpriseLicenseFeatures | null;
+  // The license server's last answer when it refused the license after `lastChecked` (the last active
+  // answer); cleared by the next active one. While the server is unreachable, grace reports this instead
+  // of "unreachable", so a refusal is not forgotten the moment a later check fails (ENG-7563).
+  lastRefusal?: TLicenseRefusal;
 };
 
 // Wrapper type for cached license fetch results.
@@ -231,6 +242,7 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
         return {
           ...result.data,
           lastChecked: new Date(result.data.lastChecked),
+          lastRefusal: isLicenseRefusal(result.data.lastRefusal) ? result.data.lastRefusal : undefined,
         };
       }
     } catch (error) {
@@ -268,6 +280,16 @@ const setPreviousResult = async (previousResult: TPreviousResult) => {
   } catch (error) {
     logger.error({ error }, "Failed to set previous result in cache");
   }
+};
+
+/**
+ * Remembers that the license server refused a license that is still in grace, so a later unreachable
+ * check reports the refusal rather than "unreachable". Without an active previous result there is no
+ * grace to protect, and an unchanged refusal is not rewritten.
+ */
+const recordLicenseRefusal = async (previousResult: TPreviousResult, refusal: TLicenseRefusal) => {
+  if (!previousResult.active || previousResult.lastRefusal === refusal) return;
+  await setPreviousResult({ ...previousResult, lastRefusal: refusal });
 };
 
 // Monitoring functions
@@ -582,10 +604,12 @@ const computeLicenseState = async (
       };
 
       // Only update previous result if it's actually different or if it's old (1 hour)
-      // This prevents hammering Redis on every request when the license is active
+      // This prevents hammering Redis on every request when the license is active.
+      // An active answer also clears a recorded refusal, which `currentLicenseState` omits.
       if (
         !previousResult.active ||
         previousResult.active !== currentLicenseState.active ||
+        previousResult.lastRefusal !== undefined ||
         currentTime.getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000
       ) {
         await setPreviousResult(currentLicenseState);
@@ -617,13 +641,16 @@ const computeLicenseState = async (
         },
         "License server unreachable, using grace period. Will retry in ~10 minutes."
       );
+      if (liveLicenseDetails?.status === "expired") {
+        await recordLicenseRefusal(previousResult, "expired");
+      }
       const graceResult: TEnterpriseLicenseResult = {
         active: previousResult.active,
         features: previousResult.features,
         lastChecked: previousResult.lastChecked,
         isPendingDowngrade: true,
         fallbackLevel: "grace" as const,
-        status: liveLicenseDetails?.status ?? "unreachable",
+        status: liveLicenseDetails?.status ?? previousResult.lastRefusal ?? "unreachable",
       };
       memoryCache = { data: graceResult, timestamp: Date.now() };
       return graceResult;
@@ -668,6 +695,7 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
     } catch (error) {
       if (error instanceof LicenseApiError && (error.status === 400 || error.status === 403)) {
         const status = error.status === 400 ? "invalid_license" : "instance_mismatch";
+        await recordLicenseRefusal(await getPreviousResult(), status);
         const invalidResult: TEnterpriseLicenseResult = {
           active: false,
           features: DEFAULT_FEATURES,

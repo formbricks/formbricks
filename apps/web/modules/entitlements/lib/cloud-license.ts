@@ -12,7 +12,7 @@ const CLOUD_LICENSE_STATUS_POLICY = {
 
 /**
  * Whether Cloud may honour an organization's paid entitlements and limits under the instance license.
- * Every Cloud gate that reads the license goes through this, so they cannot disagree.
+ * Every Cloud organization-entitlement and limit gate goes through this, so they cannot disagree.
  *
  * Cloud refuses what the license server refuses: an `expired`, `invalid_license` or `instance_mismatch`
  * answer, or no verified license at all, falls back to the free tier (see `CLOUD_HOBBY_WORKSPACE_LIMIT`).
@@ -20,7 +20,8 @@ const CLOUD_LICENSE_STATUS_POLICY = {
  * for minutes and shared by every pod, so reading it as a refusal took paid features away from every
  * Cloud organization for that long (ENG-7563). While the license is still in its grace period it stays
  * `licenseActive` with the features it was last verified with, so Cloud keeps using those; once grace
- * ends the license resolves inactive and the free tier applies.
+ * ends the license resolves inactive and the free tier applies. A refusal stays a refusal through a
+ * later unreachable check: license.ts reports the recorded refusal instead of "unreachable".
  */
 export const isCloudLicenseUsable = ({
   licenseActive,

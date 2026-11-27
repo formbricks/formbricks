@@ -212,7 +212,8 @@ export const COMMUNITY_WORKSPACE_LIMIT = 1;
  * Workspaces a cloud organization falls back to when the instance license is not usable: the license
  * server answered expired, invalid_license or instance_mismatch, or it has been unreachable with no
  * license verified within the grace period (`isCloudLicenseUsable`). Deliberately the Hobby (free
- * tier) allowance: an entitlement we cannot verify is treated as no entitlement. The create gate is
+ * tier) allowance: a license the server refused, or one not verified within the grace period, is
+ * treated as no entitlement. The create gate is
  * `count >= limit`, so an org already above it keeps every workspace it has and only pauses creating
  * new ones until the license resolves.
  */
