@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import { prisma } from "@formbricks/database";
 import { TApiOwner, callRoute, createOwnerApiKey, seedOwner } from "@/integration/api-routes";
 import { resetDb } from "@/integration/reset-db";
 import { GET as getMe } from "@/modules/api/v2/me/route";
@@ -158,6 +159,77 @@ describe("users", () => {
       isActive: false,
       teams: [],
     });
+  });
+
+  // ENG-6698: a user who also belongs to another organization is reported, and changed, with this
+  // organization's membership and teams only. The other organization has a team with the same name, so
+  // a lookup by name that forgot the organization would surface or touch it.
+  test("reads and writes only this organization's role and teams of a user in two organizations", async () => {
+    const other = await seedOwner("other");
+    const ours = await prisma.team.create({ data: { name: "Ours", organizationId: owner.organizationId } });
+    const theirs = await Promise.all(
+      ["Ours", "Theirs"].map((name) =>
+        prisma.team.create({ data: { name, organizationId: other.organizationId } })
+      )
+    );
+    await prisma.membership.create({
+      data: { userId: other.userId, organizationId: owner.organizationId, role: "member" },
+    });
+    await prisma.teamUser.createMany({
+      data: [ours, ...theirs].map(({ id: teamId }) => ({
+        teamId,
+        userId: other.userId,
+        role: "admin" as const,
+      })),
+    });
+
+    const listed = await callRoute(listUsers, {
+      path: orgPath("users"),
+      params: orgParams(),
+      apiKey,
+      query: { email: other.email },
+    });
+    expect(listed.status, JSON.stringify(listed.body)).toBe(200);
+    expect(listed.body.data).toEqual([
+      {
+        id: other.userId,
+        email: other.email,
+        name: "other",
+        role: "member",
+        teams: ["Ours"],
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      },
+    ]);
+
+    const updated = await callRoute(updateUser, {
+      method: "PATCH",
+      path: orgPath("users"),
+      params: orgParams(),
+      apiKey,
+      body: { email: other.email, teams: [] },
+    });
+    expect(updated.status, JSON.stringify(updated.body)).toBe(200);
+    expect(updated.body.data).toMatchObject({ id: other.userId, role: "member", teams: [] });
+    expect(Object.keys(updated.body.data).sort()).toEqual(Object.keys(listed.body.data[0]).sort());
+
+    const remaining = await prisma.teamUser.findMany({
+      where: { userId: other.userId },
+      select: { teamId: true },
+    });
+    expect(remaining.map(({ teamId }) => teamId).sort()).toEqual(theirs.map(({ id }) => id).sort());
+    const memberships = await prisma.membership.findMany({
+      where: { userId: other.userId },
+      select: { organizationId: true, role: true },
+    });
+    expect(memberships).toEqual(
+      expect.arrayContaining([
+        { organizationId: owner.organizationId, role: "member" },
+        { organizationId: other.organizationId, role: "owner" },
+      ])
+    );
   });
 });
 

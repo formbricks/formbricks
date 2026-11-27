@@ -84,6 +84,24 @@ const lockedAccount = (account: { name?: string; isActive?: boolean; otherOrgani
 const targetMembership = (role: string, isActive = true) =>
   vi.mocked(prisma.membership.findUnique).mockResolvedValueOnce({ role, user: { isActive } } as never);
 
+/** The columns every query here selects: the response's, and the membership in this organization. */
+const expectedApiUserSelect = (organizationId: string) => ({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  email: true,
+  name: true,
+  lastLoginAt: true,
+  isActive: true,
+  memberships: { where: { organizationId }, select: { role: true } },
+});
+
+const expectedTeamUsersSelect = (organizationId: string) => ({
+  where: { team: { organizationId } },
+  select: { team: { select: { id: true, name: true } } },
+  orderBy: { team: { name: "asc" } },
+});
+
 describe("Users Lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -117,16 +135,25 @@ describe("Users Lib", () => {
       }
     });
 
-    test("only includes teams of the requested organization (ENG-7371)", async () => {
+    test("selects only this organization's teams and membership, and no credentials (ENG-6698)", async () => {
       vi.mocked(prisma.$transaction).mockResolvedValueOnce([[mockUser], 1]);
       await getUsers("org456", { limit: 10, skip: 0 } as TGetUsersFilter);
-      expect(prisma.user.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          include: expect.objectContaining({
-            teamUsers: { where: { team: { organizationId: "org456" } }, include: { team: true } },
-          }),
-        })
-      );
+
+      const args = vi.mocked(prisma.user.findMany).mock.calls[0]?.[0];
+      expect(args).not.toHaveProperty("include");
+      expect(args?.select).toStrictEqual({
+        ...expectedApiUserSelect("org456"),
+        teamUsers: expectedTeamUsersSelect("org456"),
+      });
+    });
+
+    test("reports the role from the membership the query returns", async () => {
+      vi.mocked(prisma.$transaction).mockResolvedValueOnce([
+        [{ ...mockUser, memberships: [{ role: "manager" }], teamUsers: [] }],
+        1,
+      ]);
+      const result = await getUsers("org456", { limit: 10, skip: 0 } as TGetUsersFilter);
+      expect(result.ok && result.data.data[0]).toMatchObject({ role: "manager", teams: [] });
     });
 
     test("returns internal_server_error if prisma fails", async () => {
@@ -151,7 +178,9 @@ describe("Users Lib", () => {
         { name: "Test User", email: "test@example.com", role: "member", teams: ["Test Team"] },
         "org456"
       );
-      expect(prisma.user.create).toHaveBeenCalled();
+      const createArgs = vi.mocked(prisma.user.create).mock.calls[0]?.[0];
+      expect(createArgs).not.toHaveProperty("include");
+      expect(createArgs?.select).toStrictEqual(expectedApiUserSelect("org456"));
       expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org456", mockUser.id);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
         teamMemberships: [{ teamId: "team123", userId: mockUser.id }],
@@ -291,9 +320,24 @@ describe("Users Lib", () => {
       await updateUser({ email: mockUser.email, teams: [] }, "org456");
 
       const lookupArgs = vi.mocked(prisma.user.findFirst).mock.calls[0]?.[0];
-      expect(lookupArgs?.include?.teamUsers).toMatchObject({
-        where: { team: { organizationId: "org456" } },
-      });
+      expect(lookupArgs).not.toHaveProperty("include");
+      expect(lookupArgs?.select).toStrictEqual({ id: true, teamUsers: expectedTeamUsersSelect("org456") });
+    });
+
+    test("writes the user selecting only this organization's membership, and no credentials", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
+        ...mockUser,
+        teamUsers: [],
+      } as unknown as Awaited<ReturnType<typeof prisma.user.findFirst>>);
+      runInTransaction();
+      lockedAccount();
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, name: "Renamed" } as never);
+
+      await updateUser({ email: mockUser.email, name: "Renamed" }, "org456");
+
+      const updateArgs = vi.mocked(prisma.user.update).mock.calls[0]?.[0];
+      expect(updateArgs).not.toHaveProperty("include");
+      expect(updateArgs?.select).toStrictEqual(expectedApiUserSelect("org456"));
     });
 
     test("updates the user by id rather than email", async () => {

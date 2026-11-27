@@ -21,16 +21,49 @@ import {
   runOwnerGuardedTransaction,
 } from "@/modules/organization/settings/teams/lib/owner-guard";
 
-/**
- * A user's team memberships, limited to teams of this organization. A user can belong to several
- * organizations, so an unfiltered `teamUsers` also returns (and, in `updateUser`, would modify) the
- * teams of the others. Shared by every read here so no query forgets the scope.
+/*
+ * A user can belong to several organizations, and the account row carries credentials. So every user
+ * query here selects the response's columns and only this organization's relations: an unscoped
+ * relation returns the memberships and teams of the others (and, in `updateUser`, would modify those
+ * teams), and an `include` loads the password hash and 2FA secrets with the row (ENG-6698).
  */
+
+/** The user's team memberships in this organization, by team name. */
 const teamUsersInOrganization = (organizationId: string) =>
   ({
     where: { team: { organizationId } },
-    include: { team: true },
+    select: { team: { select: { id: true, name: true } } },
+    orderBy: { team: { name: "asc" } },
   }) satisfies Prisma.TeamUserFindManyArgs;
+
+/** The columns the API returns, with the user's membership in this organization (one at most). */
+const apiUserSelect = (organizationId: string) =>
+  ({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    email: true,
+    name: true,
+    lastLoginAt: true,
+    isActive: true,
+    memberships: { where: { organizationId }, select: { role: true } },
+  }) satisfies Prisma.UserSelect;
+
+type TApiUserRow = Prisma.UserGetPayload<{ select: ReturnType<typeof apiUserSelect> }>;
+
+/** Field by field, so a column added to a query never reaches the response by accident. */
+const toApiUser = (user: TApiUserRow, teams: string[]): TUser =>
+  ({
+    id: user.id,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    email: user.email,
+    name: user.name,
+    lastLoginAt: user.lastLoginAt,
+    isActive: user.isActive,
+    role: user.memberships[0]?.role,
+    teams,
+  }) as TUser;
 
 export const getUsers = async (
   organizationId: string,
@@ -42,14 +75,9 @@ export const getUsers = async (
     const [users, count] = await prisma.$transaction([
       prisma.user.findMany({
         ...query,
-        include: {
+        select: {
+          ...apiUserSelect(organizationId),
           teamUsers: teamUsersInOrganization(organizationId),
-          memberships: {
-            select: {
-              role: true,
-              organizationId: true,
-            },
-          },
         },
       }),
       prisma.user.count({
@@ -57,19 +85,11 @@ export const getUsers = async (
       }),
     ]);
 
-    const returnedUsers = users.map(
-      (user) =>
-        ({
-          id: user.id,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-          email: user.email,
-          name: user.name,
-          lastLoginAt: user.lastLoginAt,
-          isActive: user.isActive,
-          role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
-          teams: user.teamUsers.map((teamUser) => teamUser.team.name),
-        }) as TUser
+    const returnedUsers = users.map(({ teamUsers, ...user }) =>
+      toApiUser(
+        user,
+        teamUsers.map((teamUser) => teamUser.team.name)
+      )
     );
 
     return ok({
@@ -135,14 +155,7 @@ export const createUser = async (
 
     const user = await prisma.user.create({
       data: prismaData,
-      include: {
-        memberships: {
-          select: {
-            role: true,
-            organizationId: true,
-          },
-        },
-      },
+      select: apiUserSelect(organizationId),
     });
 
     await reconcileOrganizationMembership(organizationId, user.id);
@@ -152,19 +165,12 @@ export const createUser = async (
       })
     );
 
-    const returnedUser = {
-      id: user.id,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      email: user.email,
-      name: user.name,
-      lastLoginAt: user.lastLoginAt,
-      isActive: user.isActive,
-      role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
-      teams: existingTeams ? existingTeams.map((team) => team.name) : [],
-    } as TUser;
-
-    return ok(returnedUser);
+    return ok(
+      toApiUser(
+        user,
+        (existingTeams ?? []).map((team) => team.name)
+      )
+    );
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       // `email` is the only user-facing unique constraint on this create, so map any P2002 to a
@@ -259,11 +265,6 @@ const toUpdateUserError = (error: unknown, demoting: boolean): ApiErrorResponseV
   };
 };
 
-/** The user row `updateUser` writes, with the memberships it reads the role from. */
-type TUpdatedUser = Prisma.UserGetPayload<{
-  include: { memberships: { select: { role: true; organizationId: true } } };
-}>;
-
 export const updateUser = async (
   userInput: TUserInputPatch,
   organizationId: string
@@ -287,13 +288,8 @@ export const updateUser = async (
         email,
         memberships: { some: { organizationId } },
       },
-      include: {
-        memberships: {
-          select: {
-            role: true,
-            organizationId: true,
-          },
-        },
+      select: {
+        id: true,
         teamUsers: teamUsersInOrganization(organizationId),
       },
     });
@@ -380,7 +376,7 @@ export const updateUser = async (
       },
     };
 
-    let updatedUser: TUpdatedUser;
+    let updatedUser: TApiUserRow;
 
     const touchesAccountFields = name !== undefined || isActive !== undefined;
 
@@ -433,11 +429,7 @@ export const updateUser = async (
           const user = await tx.user.update({
             where: { id: existingUser.id },
             data: prismaData,
-            include: {
-              memberships: {
-                select: { role: true, organizationId: true },
-              },
-            },
+            select: apiUserSelect(organizationId),
           });
           if (reactivating) await reactivateLockedUser(tx, existingUser.id);
           return user;
@@ -452,11 +444,7 @@ export const updateUser = async (
       const updateUserOp = prisma.user.update({
         where: { id: existingUser.id },
         data: prismaData,
-        include: {
-          memberships: {
-            select: { role: true, organizationId: true },
-          },
-        },
+        select: apiUserSelect(organizationId),
       });
 
       // Combine all operations into one transaction.
@@ -467,7 +455,7 @@ export const updateUser = async (
 
       // Retrieve the updated user result. Since the update was the last operation, it is the last item.
       // The update is the last operation, so its row is the last result.
-      updatedUser = results.at(-1) as TUpdatedUser;
+      updatedUser = results.at(-1) as TApiUserRow;
     }
 
     await reconcileOrganizationMembership(organizationId, updatedUser.id);
@@ -481,19 +469,7 @@ export const updateUser = async (
       })
     );
 
-    const returnedUser = {
-      id: updatedUser.id,
-      createdAt: updatedUser.createdAt,
-      updatedAt: updatedUser.updatedAt,
-      email: updatedUser.email,
-      name: updatedUser.name,
-      lastLoginAt: updatedUser.lastLoginAt,
-      isActive: updatedUser.isActive,
-      role: updatedUser.memberships.find((m) => m.organizationId === organizationId)?.role,
-      teams: newTeams ? newTeams.map((team) => team.name) : existingTeams,
-    } as TUser;
-
-    return ok(returnedUser);
+    return ok(toApiUser(updatedUser, newTeams ? newTeams.map((team) => team.name) : existingTeams));
   } catch (error) {
     return err(toUpdateUserError(error, demoting));
   }
