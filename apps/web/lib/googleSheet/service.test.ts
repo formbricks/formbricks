@@ -718,6 +718,16 @@ describe("alignRowToHeaders", () => {
       });
     });
 
+    test("does not let the legacy fallback take the column another question owns by its own label", () => {
+      expect(
+        alignRowToHeaders([legacyLabel], [label, legacyLabel], ["a", "b"], [legacyLabel, legacyLabel])
+      ).toEqual({
+        headers: [legacyLabel, label],
+        row: ["b", "a"],
+        headersChanged: true,
+      });
+    });
+
     test("appends a further occurrence once the legacy columns are taken", () => {
       expect(
         alignRowToHeaders([legacyLabel], [label, label], ["first", "second"], [legacyLabel, legacyLabel])

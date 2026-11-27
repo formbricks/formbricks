@@ -12,6 +12,7 @@ import {
   ZIntegrationAirtableTokenSchema,
 } from "@formbricks/types/integration/airtable";
 import { AIRTABLE_CLIENT_ID, AIRTABLE_MESSAGE_LIMIT } from "../constants";
+import { matchLabelsToColumns } from "../integration/match-columns";
 import { createOrUpdateIntegration, getIntegrationByType } from "../integration/service";
 import { delay } from "../utils/promises";
 import { truncateText } from "../utils/strings";
@@ -209,9 +210,8 @@ const getExistingFields = async (key: TIntegrationAirtableCredential, baseId: st
 
 /**
  * ENG-3682: `legacyElements` holds each label as it read before block elements were separated by a
- * space ("First lineSecond line"), in the same order as `elements`. Airtable matches fields by name, so
- * an answer goes to the field with its new label, else to the field a table created before the fix has
- * under its legacy label, and only when neither exists is a field created with the new label.
+ * space, in the same order as `elements`; `matchLabelsToColumns` says how a table created before the fix
+ * keeps filling its fields. Only a label matching no field gets a new field.
  */
 export const writeData = async (
   key: TIntegrationAirtableCredential,
@@ -226,11 +226,14 @@ export const writeData = async (
     );
   }
 
-  // 1) Pick each answer's field: the new label, else an existing legacy one
+  // 1) Pick each answer's field: its own label, else a legacy one, else a new field with its label
   const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
-  const fieldNames = elements.map((label, i) =>
-    !existingFields.has(label) && existingFields.has(legacyElements[i]) ? legacyElements[i] : label
-  );
+  const existingFieldNames = [...existingFields];
+  const matchedFields = matchLabelsToColumns(existingFieldNames, elements, legacyElements);
+  const fieldNames = elements.map((label, i) => {
+    const field = matchedFields[i];
+    return field === undefined ? label : existingFieldNames[field];
+  });
 
   // 2) Build the record payload, and figure out which fields need creating
   const data: Record<string, string> = {};

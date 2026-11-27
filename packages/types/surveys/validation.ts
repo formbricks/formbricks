@@ -1,4 +1,4 @@
-import { parse } from "node-html-parser";
+import { NodeType, parse } from "node-html-parser";
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
 import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
@@ -82,8 +82,8 @@ const HTML_WHITESPACE_RUN = /[ \t\n\r\f]+/g;
 type TParsedNode = ReturnType<typeof parse>["childNodes"][number];
 
 const collectText = (node: TParsedNode): string => {
-  // nodeType 3 = TEXT_NODE; `text` is the entity-decoded text
-  if (Number(node.nodeType) === 3) return node.text;
+  // `text` is the entity-decoded text
+  if (node.nodeType === NodeType.TEXT_NODE) return node.text;
   const children = node.childNodes.map(collectText).join("");
   const tagName = "rawTagName" in node && typeof node.rawTagName === "string" ? node.rawTagName : "";
   return BLOCK_TAGS.has(tagName.toLowerCase()) ? ` ${children} ` : children;
@@ -116,9 +116,10 @@ export const getTextContent = (str: string): string =>
   extractText(str, (root) => collectText(root).replace(HTML_WHITESPACE_RUN, " "));
 
 /**
- * The label as `getTextContent` produced it before ENG-3682: block elements glued together
- * ("First lineSecond line"). Only for finding columns an integration already created under that
- * label (Airtable fields, Google Sheets headers), so existing tables keep filling the same column.
+ * The text exactly as the markup holds it, with no separator added between block elements and its
+ * whitespace kept: what `getTextContent` returned before ENG-3682 ("First lineSecond line"). For finding
+ * the columns an integration created under that label (Airtable fields, Google Sheets headers), and for a
+ * caller that puts in its own line breaks and needs them kept (the Excel export's rich text cells).
  */
 export const getLegacyTextContent = (str: string): string => extractText(str, (root) => root.textContent);
 

@@ -29,6 +29,7 @@ import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
+import { matchLabelsToColumns } from "@/lib/integration/match-columns";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { truncateText } from "../utils/strings";
@@ -78,9 +79,8 @@ const readHeaderRow = (
  * the second "Name" in this response goes under the second "Name" column.
  *
  * ENG-3682: `legacyElements` holds each label as it read before block elements were separated by a
- * space ("First lineSecond line"), in the same order as `elements`. A label with no free column of its
- * own goes under a free column with its legacy label, so a sheet written before the fix keeps filling
- * the same column; only when neither exists is the new label appended.
+ * space, in the same order as `elements`; `matchLabelsToColumns` says how a sheet written before the fix
+ * keeps filling its columns. Only a label matching no column is appended as a new header.
  */
 export const alignRowToHeaders = (
   existingHeaders: string[],
@@ -89,27 +89,15 @@ export const alignRowToHeaders = (
   legacyElements: string[] = elements
 ): { headers: string[]; row: string[]; headersChanged: boolean } => {
   const headers = [...existingHeaders];
-  const columnsByLabel = new Map<string, number[]>();
-  headers.forEach((label, index) => {
-    const columns = columnsByLabel.get(label) ?? [];
-    columns.push(index);
-    columnsByLabel.set(label, columns);
-  });
-
-  // A column holds one value per row; taking columns in order matches a repeated label by occurrence.
-  const takenColumns = new Set<number>();
-  const takeFreeColumn = (label: string): number | undefined =>
-    (columnsByLabel.get(label) ?? []).find((column) => !takenColumns.has(column));
+  const matchedColumns = matchLabelsToColumns(existingHeaders, elements, legacyElements);
 
   const placements: { column: number; value: string }[] = [];
   elements.forEach((label, index) => {
-    let column = takeFreeColumn(label) ?? takeFreeColumn(legacyElements[index] ?? label);
+    let column = matchedColumns[index];
     if (column === undefined) {
       column = headers.length;
       headers.push(label);
-      columnsByLabel.set(label, [...(columnsByLabel.get(label) ?? []), column]);
     }
-    takenColumns.add(column);
     placements.push({ column, value: responses[index] ?? "" });
   });
 

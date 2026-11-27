@@ -111,6 +111,16 @@ describe("writeData", () => {
     expect(airtable.records).toEqual([{ [label]: "answer" }]);
   });
 
+  test("does not let the legacy fallback take the field another question owns by its own label", async () => {
+    // A plain "First lineSecond line" headline owns that field; the two-paragraph one gets its own.
+    airtable.fieldNames = [legacyLabel];
+
+    await writeData(key, configData, ["a", "b"], [label, legacyLabel], [legacyLabel, legacyLabel]);
+
+    expect(airtable.createdFields).toEqual([label]);
+    expect(airtable.records).toEqual([{ [label]: "a", [legacyLabel]: "b" }]);
+  });
+
   test("uses the labels as they are when no legacy labels are passed", async () => {
     airtable.fieldNames = ["Metadata"];
 
