@@ -26,6 +26,8 @@ const TLS_PARAM_NAMES = new Set(TLS_PARAMS);
 
 // WHATWG URL parsing trims leading and trailing C0 controls and spaces and deletes tabs and newlines anywhere, so
 // "ss\tl=true" reaches pg and Prisma as ssl=true.
+// Every code point compared here is below U+0080, so a surrogate pair never matches either check.
+const codePointAt = (text: string, index: number): number => text.codePointAt(index) ?? 0;
 const isEdgeWhitespace = (code: number): boolean => code <= 0x20;
 const isControlCharacter = (code: number): boolean => code <= 0x1f || code === 0x7f;
 
@@ -33,11 +35,11 @@ const isControlCharacter = (code: number): boolean => code <= 0x1f || code === 0
 export const trimConnectionUrl = (databaseUrl: string): string => {
   let start = 0;
   let end = databaseUrl.length;
-  while (start < end && isEdgeWhitespace(databaseUrl.charCodeAt(start))) start += 1;
-  while (end > start && isEdgeWhitespace(databaseUrl.charCodeAt(end - 1))) end -= 1;
+  while (start < end && isEdgeWhitespace(codePointAt(databaseUrl, start))) start += 1;
+  while (end > start && isEdgeWhitespace(codePointAt(databaseUrl, end - 1))) end -= 1;
   const trimmed = databaseUrl.slice(start, end);
   for (let index = 0; index < trimmed.length; index += 1) {
-    if (isControlCharacter(trimmed.charCodeAt(index))) {
+    if (isControlCharacter(codePointAt(trimmed, index))) {
       throw new PrismaCliTlsConfigError(
         "The database URL holds a tab, newline or other control character; remove it."
       );
