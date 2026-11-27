@@ -19,12 +19,21 @@ const banned: Record<string, string> = {
   "passthrough.ts": `${header}export const S = z.object({ name: z.string() }).passthrough();\n`,
   "loose.ts": `${header}export const S = z.object({ name: z.string() }).loose();\n`,
   "loose-object.ts": `${header}export const S = z.looseObject({ name: z.string() });\n`,
+  "catchall-named-schema.ts": `${header}declare const ZBase: z.ZodObject<{}>;
+declare const rest: z.ZodType;
+export const S = ZBase.catchall(rest);
+`,
   "catchall.ts": `${header}export const S = z.object({ name: z.string() }).catchall(z.unknown());\n`,
 };
 
 const allowed: Record<string, string> = {
   "strict.ts": `${header}export const S = z.object({ name: z.string() }).strict();\n`,
   "plain-object.ts": `${header}export const S = z.object({ name: z.string() });\n`,
+  // Another library's catchall: not a zod chain.
+  "catchall-other-library.ts": `declare const handlers: { catchall: (fallback: unknown) => unknown };
+declare const fallback: unknown;
+export const routes = handlers.catchall(fallback);
+`,
   "catchall-never.ts": `${header}export const S = z.object({ name: z.string() }).catchall(z.never());\n`,
   // A path in the allowlist, as the fixture helper nests it under the workspace.
   "apps/web/modules/mcp/tools/output-schemas.ts": `${header}export const S = z.looseObject({});\n`,

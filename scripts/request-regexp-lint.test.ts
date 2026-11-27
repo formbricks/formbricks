@@ -165,6 +165,37 @@ export async function POST(req: Request) {
   "reduce-no-initial.ts": `export const run = ({ parsedInput }: any) =>
   parsedInput.patterns.reduce((first: string) => (new RegExp(first).test("x") ? first : ""));
 `,
+  // The only sink is a bracket call, which the text prefilter must not skip.
+  "bracket-match.ts": `export const run = ({ parsedInput }: any) => "text"["match"](parsedInput.pattern);
+`,
+  // A letter in the escape class turns "b" into a word boundary.
+  "escape-extra-letter.ts": `export const run = ({ parsedInput }: any) =>
+  new RegExp(parsedInput.search.replace(/[.*+?^\${}()|[\\]\\\\b]/g, "\\\\$&")).test("x");
+`,
+  // JavaScript reads the pattern before the flags argument reassigns it.
+  "argument-order.ts": `export const run = ({ parsedInput }: any) => {
+  let pattern = parsedInput.pattern;
+  return new RegExp(pattern, (pattern = "i")).test("x");
+};
+`,
+  // A callback that may never run cannot clear the taint.
+  "closure-reset.ts": `export const run = ({ parsedInput }: any) => {
+  let pattern = parsedInput.pattern;
+  const reset = () => {
+    pattern = "^[a-z]+$";
+  };
+  void reset;
+  return new RegExp(pattern).test("x");
+};
+`,
+  // One arm keeps the request value; the other branch does not clear it.
+  "branch-merge.ts": `export const run = ({ parsedInput }: any) => {
+  let pattern = "";
+  if (parsedInput.custom) pattern = parsedInput.pattern;
+  else pattern = "^[a-z]+$";
+  return new RegExp(pattern).test("x");
+};
+`,
   "global-regexp.ts": `export const run = ({ parsedInput }: any) => new globalThis.RegExp(parsedInput.pattern).test("x");
 `,
   "reduce-callback.ts": `export const run = ({ parsedInput }: any) =>

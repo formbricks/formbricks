@@ -362,7 +362,9 @@ const preferReadOnlyProps = {
  * after the value, and the parameters of a function the file declares and calls with it
  * (`helper(tainted)`, `.action(fn)`, `rows.map(check)`). Not followed: a source in another file, the
  * return value of the file's own functions, `this.method(x)`, an unknown call (`decodeURIComponent(x)`
- * clears the taint), and a same-file call chain longer than the pass cap.
+ * clears the taint), and a same-file call chain longer than the pass cap. A write clears a label only in
+ * straight-line code of the function that declares the name; in a branch, a loop or a closure it may not
+ * run, so it only adds to the label.
  *
  * A label says what is tainted: `false` (nothing), `true` (the whole value) or an object whose keys
  * label the value's properties (`{ parsedInput: true }` for a server action's first argument).
@@ -376,7 +378,7 @@ const EXPRESSION_WRAPPERS = new Set([
   "TSTypeAssertion",
 ]);
 const FUNCTION_TYPES = new Set(["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"]);
-const BLOCK_SCOPES = new Set(["BlockStatement", "ForStatement", "StaticBlock", "SwitchStatement"]);
+const BLOCK_SCOPES = new Set(["BlockStatement", "StaticBlock"]);
 // Type positions hold no values; skipping them keeps the walk cheap.
 const TYPE_KEYS = new Set(["parent", "returnType", "typeAnnotation", "typeArguments", "typeParameters"]);
 // A same-file call can taint a function visited earlier, so the walk repeats until the labels settle.
@@ -415,7 +417,8 @@ const unionLabels = (a = [], b = []) =>
 
 const sameLabels = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-const newScope = (isFunction) => ({ vars: new Map(), fns: new Map(), isFunction });
+// `branchDepth` counts the conditional constructs (if, loop, switch, try, `? :`, `&&`) the walk is inside.
+const newScope = (isFunction) => ({ vars: new Map(), fns: new Map(), isFunction, branchDepth: 0 });
 
 // `export function f` / `export const f = …` declare `f` like the unwrapped statement.
 const declarationOf = (statement) =>
@@ -452,7 +455,24 @@ function walkTaint(program, policy) {
       return undefined;
     };
     const lookup = (name) => scopeOf(name)?.vars.get(name) ?? false;
-    const assign = (name, label) => scopeOf(name)?.vars.set(name, label);
+    const currentFunction = () => scopes.findLast((scope) => scope.isFunction);
+    // A write replaces the label only in straight-line code of the function that declares the name. In a
+    // branch, or from a closure that may never run, it may not happen, so it only adds to the label.
+    const assign = (name, label) => {
+      const index = scopes.findLastIndex((scope) => scope.vars.has(name) || scope.fns.has(name));
+      if (index === -1) return;
+      const target = scopes[index];
+      const owner = scopes.slice(0, index + 1).findLast((scope) => scope.isFunction);
+      const current = currentFunction();
+      const replaces = owner === current && current.branchDepth === 0;
+      target.vars.set(name, replaces ? label : union(target.vars.get(name), label) || false);
+    };
+    const inBranch = (walk) => {
+      const fn = currentFunction();
+      fn.branchDepth += 1;
+      walk();
+      fn.branchDepth -= 1;
+    };
     const functionNamed = (expression) => {
       const node = unwrapExpression(expression);
       if (node?.type !== "Identifier") return undefined;
@@ -628,12 +648,14 @@ function walkTaint(program, policy) {
       const label = labelOf(node.right);
       // `for (const x of tainted)` yields its elements; `for (const k in tainted)` its keys.
       const element = label === true ? policy.deep : false;
-      if (node.left.type === "VariableDeclaration") {
-        bind(node.left.declarations[0].id, element, declareIn(node.left.kind));
-      } else if (node.left.type === "Identifier") {
-        assign(node.left.name, element);
-      }
-      visit(node.body);
+      inBranch(() => {
+        if (node.left.type === "VariableDeclaration") {
+          bind(node.left.declarations[0].id, element, declareIn(node.left.kind));
+        } else if (node.left.type === "Identifier") {
+          assign(node.left.name, element);
+        }
+        visit(node.body);
+      });
       scopes.pop();
     };
 
@@ -659,15 +681,52 @@ function walkTaint(program, policy) {
 
     const visitCall = (node) => {
       policy.callbackLabels?.(node, labelOf, setParams);
-      visitChildren(node);
+      visit(node.callee);
+      // Each argument's label as JavaScript reads it: before a later argument can reassign it.
+      const argumentLabels = node.arguments.map((argument) => {
+        visit(argument);
+        return argument.type === "SpreadElement" ? false : labelOf(argument);
+      });
       const callee = node.type === "CallExpression" ? functionNamed(node.callee) : undefined;
-      if (callee) {
-        const labels = node.arguments.map((argument) =>
-          argument.type === "SpreadElement" ? false : labelOf(argument)
-        );
-        passTo(callee, labels);
+      if (callee) passTo(callee, argumentLabels);
+      if (!reporting) return;
+      policy.sink(node, (expression) => {
+        const index = node.arguments.indexOf(expression);
+        return index === -1 ? labelOf(expression) : argumentLabels[index];
+      });
+    };
+
+    // The parts of a conditional construct that may not run, walked as a branch.
+    const visitConditional = (node) => {
+      switch (node.type) {
+        case "IfStatement":
+        case "ConditionalExpression":
+          visit(node.test);
+          inBranch(() => {
+            visit(node.consequent);
+            visit(node.alternate);
+          });
+          return;
+        case "LogicalExpression":
+          visit(node.left);
+          inBranch(() => visit(node.right));
+          return;
+        case "SwitchStatement":
+          visit(node.discriminant);
+          scopes.push(newScope(false));
+          inBranch(() => node.cases.forEach(visit));
+          scopes.pop();
+          return;
+        case "ForStatement":
+          scopes.push(newScope(false));
+          visit(node.init);
+          inBranch(() => [node.test, node.update, node.body].forEach(visit));
+          scopes.pop();
+          return;
+        default:
+          // WhileStatement, DoWhileStatement, TryStatement.
+          inBranch(() => visitChildren(node));
       }
-      if (reporting) policy.sink(node, labelOf);
     };
 
     function visit(node) {
@@ -697,6 +756,16 @@ function walkTaint(program, policy) {
         case "CallExpression":
         case "NewExpression":
           visitCall(node);
+          return;
+        case "IfStatement":
+        case "ConditionalExpression":
+        case "LogicalExpression":
+        case "SwitchStatement":
+        case "ForStatement":
+        case "WhileStatement":
+        case "DoWhileStatement":
+        case "TryStatement":
+          visitConditional(node);
           return;
         default:
       }
@@ -758,14 +827,31 @@ const ALLOW_OPTION_SCHEMA = [
  */
 const LOOSE_SCHEMA_METHODS = new Set(["loose", "passthrough"]);
 
-const isOpenSchemaCall = (node) => {
+// The identifier a call or member chain starts from: `z` in `z.object({}).catchall(…)`.
+const chainRoot = (expression) => {
+  let node = unwrapExpression(expression);
+  while (node?.type === "CallExpression" || node?.type === "MemberExpression") {
+    node = unwrapExpression(node.type === "CallExpression" ? node.callee : node.object);
+  }
+  return node?.type === "Identifier" ? node.name : undefined;
+};
+
+// `catchall` is a common method name, so it counts only on a zod chain: one that starts from a zod
+// import or a `ZName` schema, or that takes a zod schema as its argument.
+const isOpenSchemaCall = (node, zodNames) => {
   const name = calleeName(node);
   if (name === "looseObject") return true;
-  if (!calleeObject(node)) return false;
+  const receiver = calleeObject(node);
+  if (!receiver) return false;
   if (LOOSE_SCHEMA_METHODS.has(name)) return node.arguments.length === 0;
   if (name !== "catchall") return false;
   const rest = unwrapExpression(node.arguments[0]);
-  return !(rest?.type === "CallExpression" && calleeName(rest) === "never");
+  if (rest?.type === "CallExpression" && calleeName(rest) === "never") return false;
+  const isZod = (expression) => {
+    const root = chainRoot(expression);
+    return root !== undefined && (zodNames.has(root) || /^Z[A-Z]/.test(root));
+  };
+  return isZod(receiver) || isZod(rest);
 };
 
 const noLooseSchema = {
@@ -776,9 +862,15 @@ const noLooseSchema = {
   },
   create(context) {
     if (isAllowlisted(context)) return {};
+    // Local names bound by `import … from "zod"` (and its subpaths); imports come first in the walk.
+    const zodNames = new Set();
     return {
+      ImportDeclaration(node) {
+        if (!/^zod(?:\/|$)/.test(String(node.source.value))) return;
+        for (const specifier of node.specifiers) zodNames.add(specifier.local.name);
+      },
       CallExpression(node) {
-        if (!isOpenSchemaCall(node)) return;
+        if (!isOpenSchemaCall(node, zodNames)) return;
         context.report({
           node,
           message:
@@ -843,7 +935,7 @@ const ELEMENT_CALLBACKS = new Set([
 const IMPLICIT_REGEXP_METHODS = new Set(["match", "matchAll", "search"]);
 const REQUEST_BODY_READERS = new Set(["formData", "json", "text"]);
 const REQUEST_NAMES = new Set(["req", "request"]);
-const REGEXP_SINK_TEXT = /RegExp|\.(?:match|matchAll|search)\s*\(/;
+const REGEXP_SINK_TEXT = /RegExp|(?:\.\s*|\[\s*["'`])(?:match|matchAll|search)\b/;
 
 // `RegExp` or `globalThis.RegExp`, not `something.RegExp`.
 const isGlobalReference = (callee) => {
@@ -887,13 +979,18 @@ const classMembers = (body) => {
   }
   return members;
 };
+// Every metacharacter, and nothing a backslash turns into syntax (`b` would become `\b`, `1` a backreference).
+const isMetacharacterClass = (members) =>
+  members !== null &&
+  REGEXP_METACHARACTERS.every((character) => members.has(character)) &&
+  [...members].every((character) => !ESCAPE_CLASS.test(character));
 const isRegExpEscape = (node) => {
   if (calleeName(node) !== "replace" && calleeName(node) !== "replaceAll") return false;
   const [pattern, replacement] = node.arguments.map(unwrapExpression);
   const source = pattern?.type === "Literal" ? (pattern.regex?.pattern ?? "") : "";
   return (
     /^\[[^^].*\]$/.test(source) &&
-    REGEXP_METACHARACTERS.every((character) => classMembers(source.slice(1, -1))?.has(character)) &&
+    isMetacharacterClass(classMembers(source.slice(1, -1))) &&
     // `g` escapes every match; `y` stops at the first non-match; `v` reads `[`, `&&`, `--` as set syntax.
     /^[^vy]*g[^vy]*$/.test(pattern.regex.flags) &&
     replacement?.type === "Literal" &&
