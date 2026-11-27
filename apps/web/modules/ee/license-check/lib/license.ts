@@ -1,51 +1,19 @@
 import "server-only";
 import { cache as reactCache } from "react";
-import { z } from "zod";
-import { createCacheKey } from "@formbricks/cache";
-import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
-import { COMMUNITY_WORKSPACE_LIMIT, E2E_TESTING } from "@/lib/constants";
 import { env } from "@/lib/env";
-import { hashString } from "@/lib/hash-string";
-import { getInstanceId } from "@/lib/instance";
-import { type TProxiedRequestInit, proxyDispatcher } from "@/lib/proxy-dispatcher";
 import {
   TEnterpriseLicenseDetails,
   TEnterpriseLicenseFeatures,
   TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
-import { getDefaultLicenseServerUrl, resolveLicenseServerUrl } from "./license-server-url";
+import { CONFIG, DEFAULT_FEATURES, LicenseApiError, LicenseError, getCacheKeys } from "./license-config";
+import { fetchLicense } from "./license-fetch";
 import { type TLicenseRefusalStatus, isLicenseRefusalStatus } from "./license-status";
 
-const LICENSE_SERVER_URL = resolveLicenseServerUrl({
-  nodeEnv: env.NODE_ENV,
-  environment: env.ENVIRONMENT,
-  overrideUrl: env.ENTERPRISE_LICENSE_SERVER_URL,
-});
-const IS_LICENSE_SERVER_OVERRIDDEN = LICENSE_SERVER_URL !== getDefaultLicenseServerUrl(env.ENVIRONMENT);
-
-if (env.ENTERPRISE_LICENSE_SERVER_URL && !IS_LICENSE_SERVER_OVERRIDDEN) {
-  logger.warn(
-    "ENTERPRISE_LICENSE_SERVER_URL is ignored: it only applies to a development server with a loopback host"
-  );
-}
-
-// Configuration
-const CONFIG = {
-  CACHE: {
-    FETCH_LICENSE_TTL_MS: 24 * 60 * 60 * 1000, // 24 hours
-    FAILED_FETCH_TTL_MS: 10 * 60 * 1000, // 10 minutes for failed/null results
-    PREVIOUS_RESULT_TTL_MS: 4 * 24 * 60 * 60 * 1000, // 4 days
-    GRACE_PERIOD_MS: 3 * 24 * 60 * 60 * 1000, // 3 days
-    MAX_RETRIES: 3,
-    RETRY_DELAY_MS: 1000,
-  },
-  API: {
-    ENDPOINT: `${LICENSE_SERVER_URL}/api/licenses/check`,
-    TIMEOUT_MS: 5000,
-  },
-} as const;
+export { LicenseApiError, getCacheKeys } from "./license-config";
+export { fetchLicense, fetchLicenseFresh } from "./license-fetch";
 
 export const GRACE_PERIOD_MS = CONFIG.CACHE.GRACE_PERIOD_MS;
 
@@ -91,116 +59,6 @@ type TPreviousResult = {
   // of "unreachable", so a refusal is not forgotten the moment a later check fails (ENG-7563).
   lastRefusal?: TLicenseRefusalStatus;
 };
-
-// Wrapper type for cached license fetch results.
-// Storing { value: <result> } instead of <result> directly lets us distinguish
-// "key not in cache" (get returns null) from "key exists with a null value"
-// ({ value: null }) in a single cache.get call, eliminating the TOCTOU race
-// that existed between separate get + exists calls.
-type TCachedFetchResult = { value: TEnterpriseLicenseDetails | null };
-
-// Validation schemas
-const LicenseFeaturesSchema = z.object({
-  isMultiOrgEnabled: z.boolean(),
-  workspaces: z.number().nullable(),
-  twoFactorAuth: z.boolean(),
-  sso: z.boolean(),
-  whitelabel: z.boolean(),
-  removeBranding: z.boolean(),
-  contacts: z.boolean(),
-  aiSmartTools: z.boolean(),
-  saml: z.boolean(),
-  spamProtection: z.boolean(),
-  auditLogs: z.boolean(),
-  accessControl: z.boolean(),
-  quotas: z.boolean(),
-  feedbackDirectories: z.boolean().default(false),
-  dashboards: z.boolean().default(false),
-  workflows: z.boolean().default(false),
-  dataRetention: z.boolean().default(false),
-  // A licence server that predates the flag omits it, which keeps Creatives off (ENG-6602).
-  creatives: z.boolean().default(false),
-});
-
-const LicenseDetailsSchema = z.object({
-  status: z.enum(["active", "expired"]),
-  features: LicenseFeaturesSchema,
-});
-
-// Error types
-class LicenseError extends Error {
-  constructor(
-    message: string,
-    public readonly code: string
-  ) {
-    super(message);
-    this.name = "LicenseError";
-  }
-}
-
-export class LicenseApiError extends LicenseError {
-  constructor(
-    message: string,
-    public readonly status: number
-  ) {
-    super(message, "API_ERROR");
-    this.name = "LicenseApiError";
-  }
-}
-
-// Cache keys using enterprise-grade hierarchical patterns
-const getCacheIdentifier = () => {
-  if (globalThis.window !== undefined) {
-    return "browser"; // Browser environment
-  }
-  if (!env.ENTERPRISE_LICENSE_KEY) {
-    return "no-license"; // No license key provided
-  }
-  // A local licence server's answers (development only, see `resolveLicenseServerUrl`) get their own
-  // slots, so turning the override off doesn't serve them as the real server's for up to four days.
-  if (IS_LICENSE_SERVER_OVERRIDDEN) {
-    return hashString(`${env.ENTERPRISE_LICENSE_KEY}@${LICENSE_SERVER_URL}`);
-  }
-  return hashString(env.ENTERPRISE_LICENSE_KEY); // Valid license key
-};
-
-const LICENSE_FETCH_LOCK_TTL_MS = 90 * 1000; // 90s lock so only one process fetches when cache is cold
-const LICENSE_FETCH_POLL_MS = 2 * 1000; // Wait up to 2s for another process to populate cache
-const LICENSE_FETCH_POLL_INTERVAL_MS = 400;
-
-export const getCacheKeys = () => {
-  const identifier = getCacheIdentifier();
-  return {
-    FETCH_LICENSE_CACHE_KEY: createCacheKey.license.status(identifier),
-    PREVIOUS_RESULT_CACHE_KEY: createCacheKey.license.previous_result(identifier),
-    FETCH_LOCK_CACHE_KEY: createCacheKey.license.fetch_lock(identifier),
-  };
-};
-
-// Default features
-const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
-  isMultiOrgEnabled: false,
-  workspaces: COMMUNITY_WORKSPACE_LIMIT,
-  twoFactorAuth: false,
-  sso: false,
-  whitelabel: false,
-  removeBranding: false,
-  contacts: false,
-  aiSmartTools: false,
-  saml: false,
-  spamProtection: false,
-  auditLogs: false,
-  accessControl: false,
-  quotas: false,
-  feedbackDirectories: false,
-  dashboards: false,
-  workflows: false,
-  dataRetention: false,
-  creatives: false,
-};
-
-// Helper functions
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const validateConfig = () => {
   const errors: string[] = [];
@@ -316,26 +174,11 @@ const trackFallbackUsage = (level: FallbackLevel) => {
   );
 };
 
-const trackApiError = (error: LicenseApiError) => {
-  logger.error(
-    {
-      status: error.status,
-      code: error.code,
-      timestamp: new Date().toISOString(),
-    },
-    `License API error: ${error.message}`
-  );
-};
-
 // Validation functions
 const validateFallback = (previousResult: TPreviousResult): boolean => {
   if (!previousResult.features) return false;
   if (previousResult.lastChecked.getTime() === new Date(0).getTime()) return false;
   return true;
-};
-
-const validateLicenseDetails = (data: unknown): TEnterpriseLicenseDetails => {
-  return LicenseDetailsSchema.parse(data);
 };
 
 // Fallback functions
@@ -381,202 +224,6 @@ const handleInitialFailure = async (currentTime: Date): Promise<TEnterpriseLicen
     fallbackLevel: "default" as const,
     status: "unreachable" as const,
   };
-};
-
-/**
- * Try to read cached license from Redis. Returns undefined on miss or error.
- */
-const getCachedLicense = async (): Promise<TEnterpriseLicenseDetails | null | undefined> => {
-  const keys = getCacheKeys();
-  const result = await cache.get<TCachedFetchResult>(keys.FETCH_LICENSE_CACHE_KEY);
-  if (!result.ok) return undefined;
-  if (result.data !== null && result.data !== undefined && "value" in result.data) {
-    return result.data.value;
-  }
-  return undefined;
-};
-
-// API functions
-let fetchLicensePromise: Promise<TEnterpriseLicenseDetails | null> | null = null;
-
-const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpriseLicenseDetails | null> => {
-  if (!env.ENTERPRISE_LICENSE_KEY) return null;
-
-  // Skip license checks during build time
-  if (process.env.NEXT_PHASE === "phase-production-build") {
-    return null;
-  }
-
-  try {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    // first millisecond of next year => current year is fully included
-    const startOfNextYear = new Date(now.getFullYear() + 1, 0, 1);
-
-    const startTime = Date.now();
-    const [instanceId, responseCount] = await Promise.all([
-      // Skip instance ID during E2E tests to avoid license key conflicts
-      // as the instance ID changes with each test run
-      E2E_TESTING ? null : getInstanceId(),
-      prisma.response.count({
-        where: {
-          createdAt: {
-            gte: startOfYear,
-            lt: startOfNextYear,
-          },
-        },
-      }),
-    ]);
-    const duration = Date.now() - startTime;
-
-    if (duration > 1000) {
-      logger.warn({ duration, responseCount }, "Slow license check prerequisite data fetching (DB count)");
-    }
-
-    // No organization exists, cannot perform license check
-    // (skip this check during E2E tests as we intentionally use null)
-    if (!E2E_TESTING && !instanceId) return null;
-
-    const payload: Record<string, unknown> = {
-      licenseKey: env.ENTERPRISE_LICENSE_KEY,
-      usage: { responseCount },
-    };
-
-    if (instanceId) {
-      payload.instanceId = instanceId;
-    }
-
-    const res = await fetch(CONFIG.API.ENDPOINT, {
-      body: JSON.stringify(payload),
-      dispatcher: proxyDispatcher,
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-      signal: AbortSignal.timeout(CONFIG.API.TIMEOUT_MS),
-    } as TProxiedRequestInit);
-
-    if (res.ok) {
-      const responseJson = (await res.json()) as { data: unknown };
-      const licenseDetails = validateLicenseDetails(responseJson.data);
-
-      logger.debug(
-        {
-          status: licenseDetails.status,
-          instanceId: instanceId ?? "not-set",
-          responseCount,
-          timestamp: new Date().toISOString(),
-        },
-        "License check API response received"
-      );
-
-      return licenseDetails;
-    }
-
-    const error = new LicenseApiError(`License check API responded with status: ${res.status}`, res.status);
-    trackApiError(error);
-
-    // Retry on specific status codes
-    if (retryCount < CONFIG.CACHE.MAX_RETRIES && [429, 502, 503, 504].includes(res.status)) {
-      await sleep(CONFIG.CACHE.RETRY_DELAY_MS * Math.pow(2, retryCount));
-      return fetchLicenseFromServerInternal(retryCount + 1);
-    }
-
-    // 400 = invalid license key, 403 = license bound to another instance.
-    // Propagate both so callers can distinguish them from unreachable.
-    if (res.status === 400 || res.status === 403) {
-      throw error;
-    }
-
-    return null;
-  } catch (error) {
-    if (error instanceof LicenseApiError) {
-      throw error;
-    }
-    logger.error(error, "Error while fetching license from server");
-    logger.warn(
-      {
-        timestamp: new Date().toISOString(),
-      },
-      "License server fetch returned null - server may be unreachable"
-    );
-    return null;
-  }
-};
-
-export const fetchLicense = async (): Promise<TEnterpriseLicenseDetails | null> => {
-  if (!env.ENTERPRISE_LICENSE_KEY) return null;
-
-  // Skip license checks during build time - check before cache access
-  if (process.env.NEXT_PHASE === "phase-production-build") {
-    return null;
-  }
-
-  if (fetchLicensePromise) {
-    return fetchLicensePromise;
-  }
-
-  fetchLicensePromise = (async () => {
-    const keys = getCacheKeys();
-    const cached = await getCachedLicense();
-    if (cached !== undefined) return cached;
-
-    const lockResult = await cache.tryLock(keys.FETCH_LOCK_CACHE_KEY, "1", LICENSE_FETCH_LOCK_TTL_MS);
-    const acquired = lockResult.ok && lockResult.data === true;
-    const redisError = !lockResult.ok;
-
-    if (acquired) {
-      try {
-        const fresh = await fetchLicenseFromServerInternal();
-        const ttl = fresh ? CONFIG.CACHE.FETCH_LICENSE_TTL_MS : CONFIG.CACHE.FAILED_FETCH_TTL_MS;
-
-        if (!fresh) {
-          logger.warn(
-            {
-              ttlMinutes: Math.floor(ttl / 60000),
-              timestamp: new Date().toISOString(),
-            },
-            "License fetch failed, caching null result with short TTL for faster retry"
-          );
-        }
-
-        await cache.set(keys.FETCH_LICENSE_CACHE_KEY, { value: fresh }, ttl);
-        return fresh;
-      } finally {
-        // Lock expires automatically; no need to release
-      }
-    }
-
-    // If Redis itself is down, skip the polling loop (it would just fail repeatedly)
-    // and go directly to fetching from the server.
-    if (redisError) {
-      logger.warn("Redis unavailable during license fetch lock; skipping poll and fetching directly");
-      return await fetchLicenseFromServerInternal();
-    }
-
-    // Another process holds the lock — poll until the cache is populated or timeout
-    const deadline = Date.now() + LICENSE_FETCH_POLL_MS;
-    while (Date.now() < deadline) {
-      await sleep(LICENSE_FETCH_POLL_INTERVAL_MS);
-      const value = await getCachedLicense();
-      if (value !== undefined) return value;
-    }
-
-    logger.warn(
-      { pollMs: LICENSE_FETCH_POLL_MS },
-      "License cache not populated by holder within poll window; fetching in this process"
-    );
-    const fallback = await fetchLicenseFromServerInternal();
-    const fallbackTtl = fallback ? CONFIG.CACHE.FETCH_LICENSE_TTL_MS : CONFIG.CACHE.FAILED_FETCH_TTL_MS;
-    await cache.set(keys.FETCH_LICENSE_CACHE_KEY, { value: fallback }, fallbackTtl);
-    return fallback;
-  })();
-
-  fetchLicensePromise
-    .finally(() => {
-      fetchLicensePromise = null;
-    })
-    .catch(() => {});
-
-  return fetchLicensePromise;
 };
 
 /**
@@ -757,28 +404,6 @@ export const clearLicenseCache = async (): Promise<void> => {
   if (!delResult.ok) {
     logger.warn({ error: delResult.error }, "Failed to delete license cache");
   }
-};
-
-/**
- * Fetch license directly from server without using cache.
- * Used by the recheck license action for a fresh check.
- * Concurrent callers share a single in-flight request to avoid
- * hammering the license server (e.g. multiple managers rechecking).
- */
-let fetchLicenseFreshPromise: Promise<TEnterpriseLicenseDetails | null> | null = null;
-
-export const fetchLicenseFresh = async (): Promise<TEnterpriseLicenseDetails | null> => {
-  if (fetchLicenseFreshPromise) return fetchLicenseFreshPromise;
-
-  fetchLicenseFreshPromise = fetchLicenseFromServerInternal();
-
-  fetchLicenseFreshPromise
-    .finally(() => {
-      fetchLicenseFreshPromise = null;
-    })
-    .catch(() => {});
-
-  return fetchLicenseFreshPromise;
 };
 
 /**
