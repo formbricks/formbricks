@@ -146,8 +146,8 @@ export const verificationAutoSignInAfterHandler = async (ctx: AuthHookContext): 
 
     if (intent === "valid" && !(await grantSessionToSignupBrowser(ctx, verifiedUserId))) {
       // The proof was good but the mint failed — a missing user row, or a `session.create.before` hook
-      // that refused by returning nothing. (`gateSessionCreate` refuses a deactivated user by throwing,
-      // which the catch below records.) Recorded like any other withheld outcome: without this the one
+      // that refused by returning `false`. (`gateSessionCreate` refuses a deactivated user by throwing,
+      // which the catch below logs.) Recorded like any other withheld outcome: without this the one
       // path that is our own fault would be the only silent one.
       withheldReason = "grant_failed";
     }

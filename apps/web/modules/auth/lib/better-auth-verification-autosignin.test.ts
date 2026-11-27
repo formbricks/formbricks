@@ -227,7 +227,7 @@ describe("verificationAutoSignInAfterHandler", () => {
 
   test("audits the refused session when a session hook returns no session", async () => {
     // A `session.create.before` hook that refuses without throwing arrives as a falsy createSession.
-    // (`gateSessionCreate` throws for a deactivated user instead; the handler's catch records that.)
+    // (`gateSessionCreate` throws for a deactivated user instead; the handler's catch logs that.)
     const ctx = buildCtx();
     sessionOf(ctx).mockResolvedValue(null);
 
