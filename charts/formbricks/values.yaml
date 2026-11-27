@@ -1480,7 +1480,7 @@ hub:
 
     image:
       repository: "ghcr.io/huggingface/text-embeddings-inference"
-      tag: "cpu-1.9"
+      tag: "cpu-1.10"
       pullPolicy: IfNotPresent
 
     command: []
