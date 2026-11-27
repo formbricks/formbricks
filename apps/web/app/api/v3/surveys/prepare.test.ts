@@ -2441,9 +2441,9 @@ describe("Pre-select answer on the v3 survey document (ENG-7437)", () => {
   });
 
   test("refuses keys its value has no use for", () => {
-    expect(invalidNames(withAction(preselect({ type: "static", value: "x", label: "y" }, "email"), "block"))).toEqual([
-      "blocks.2.logic.1.actions.0.value.label",
-    ]);
+    expect(
+      invalidNames(withAction(preselect({ type: "static", value: "x", label: "y" }, "email"), "block"))
+    ).toEqual(["blocks.2.logic.1.actions.0.value.label"]);
   });
 
   test("refuses an answer that doesn't fit the question, naming the action's value", () => {

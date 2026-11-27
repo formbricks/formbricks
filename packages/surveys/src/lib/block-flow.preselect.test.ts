@@ -70,7 +70,12 @@ const preselectRule = (conditions: TSurveyBlockLogic["conditions"]): TSurveyBloc
   id: "rule",
   conditions,
   actions: [
-    { id: "a1", objective: "preselectAnswer", target: "status", value: { type: "choices", choiceIds: ["open"] } },
+    {
+      id: "a1",
+      objective: "preselectAnswer",
+      target: "status",
+      value: { type: "choices", choiceIds: ["open"] },
+    },
     {
       id: "a2",
       objective: "preselectAnswer",
@@ -171,7 +176,12 @@ describe("Pre-select answer", () => {
         id: "rule2",
         conditions: always,
         actions: [
-          { id: "b1", objective: "preselectAnswer", target: "status", value: { type: "choices", choiceIds: ["closed"] } },
+          {
+            id: "b1",
+            objective: "preselectAnswer",
+            target: "status",
+            value: { type: "choices", choiceIds: ["closed"] },
+          },
         ],
       },
     ]);

@@ -1431,15 +1431,15 @@ export const findElementUse = (survey: TSurvey, elementId: string): TUse | null 
     firstUse(
       firstUse(usageAt("logic", logicIndex), () => startLogicUse(survey, preselectsInStartLogic)),
       () =>
-      // ENG-6938: a question another question copies its options from. Checked before show-if: a copy
-      // writes "picked in the source" show-ifs on every option it copies, so the show-if check would
-      // otherwise always find the copy first and name it as a show-if.
-      usageAt(
-        "copiedOptions",
-        elements.findIndex(
-          (element) => element.id !== elementId && getOptionsCopiedFrom(element) === elementId
+        // ENG-6938: a question another question copies its options from. Checked before show-if: a copy
+        // writes "picked in the source" show-ifs on every option it copies, so the show-if check would
+        // otherwise always find the copy first and name it as a show-if.
+        usageAt(
+          "copiedOptions",
+          elements.findIndex(
+            (element) => element.id !== elementId && getOptionsCopiedFrom(element) === elementId
+          )
         )
-      )
     ),
     () =>
       usageAt(

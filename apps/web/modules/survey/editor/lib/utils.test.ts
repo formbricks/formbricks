@@ -843,7 +843,10 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     expect(findElementUsedInLogic(inBlock, "bundle")).toBe(flatIndexOf(inBlock, "concept"));
     expect(findOptionUsedInLogic(inBlock, "bundle", "no_bundle")).toBe(flatIndexOf(inBlock, "concept"));
     expect(findOptionUsedInLogic(inBlock, "bundle", "netflix_prime")).toBe(-1);
-    expect(findElementUse(inStart, "bundle")).toEqual({ kind: "startLogic", elementIndex: START_LOGIC_USE_INDEX });
+    expect(findElementUse(inStart, "bundle")).toEqual({
+      kind: "startLogic",
+      elementIndex: START_LOGIC_USE_INDEX,
+    });
     expect(findOptionUse(inStart, "bundle", "no_bundle")).toEqual({
       kind: "startLogic",
       elementIndex: START_LOGIC_USE_INDEX,
@@ -955,8 +958,16 @@ describe("getActionObjectiveOptions", () => {
     expect(after(5)).toEqual([]);
 
     const fav = surveyFlowFixture.blocks[4].elements[0];
-    const withOther = { ...fav, choices: [...("choices" in fav ? fav.choices : []), { id: "other", label: { default: "Other" }, code: "9" }] };
-    expect(getPreselectChoiceOptions(withOther as typeof fav).map((option) => option.value)).not.toContain("other");
+    const withOther = {
+      ...fav,
+      choices: [
+        ...("choices" in fav ? fav.choices : []),
+        { id: "other", label: { default: "Other" }, code: "9" },
+      ],
+    };
+    expect(getPreselectChoiceOptions(withOther as typeof fav).map((option) => option.value)).not.toContain(
+      "other"
+    );
     expect(getPreselectChoiceOptions(undefined)).toEqual([]);
   });
 

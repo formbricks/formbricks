@@ -62,7 +62,12 @@ const jump = (target: string, id = "blockaction0000000000001"): TSurveyBlockLogi
 });
 
 const preselect = (target: string, value: unknown): TSurveyBlockLogicAction =>
-  ({ id: "blockaction0000000000001", objective: "preselectAnswer", target, value }) as TSurveyBlockLogicAction;
+  ({
+    id: "blockaction0000000000001",
+    objective: "preselectAnswer",
+    target,
+    value,
+  }) as TSurveyBlockLogicAction;
 
 describe("block rule actions", () => {
   test("the rule used here is valid with a jump to an ending", () => {
@@ -288,9 +293,9 @@ describe("a condition's fixed value", () => {
       expect(
         issuesOf(withConceptActions([preselect("fav", { type: "choices", choiceIds: ["prime"] })]))
       ).toEqual([]);
-      expect(
-        issuesOf(withConceptActions([preselect("email", { type: "static", value: "a@b.co" })]))
-      ).toEqual([]);
+      expect(issuesOf(withConceptActions([preselect("email", { type: "static", value: "a@b.co" })]))).toEqual(
+        []
+      );
     });
 
     test("refuses a question in the rule's own block or an earlier one", () => {

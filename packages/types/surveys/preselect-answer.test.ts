@@ -29,11 +29,26 @@ describe("getPreselectAnswerValueIssue", () => {
   });
 
   test.each([
-    ["a question type it can't fill", { id: "r", type: "rating" } as TPreselectableElement, { type: "choices", choiceIds: ["x"] }, "rating"],
-    ["two options in a single select", single, { type: "choices", choiceIds: ["open", "closed"] }, "exactly one"],
+    [
+      "a question type it can't fill",
+      { id: "r", type: "rating" },
+      { type: "choices", choiceIds: ["x"] },
+      "rating",
+    ],
+    [
+      "two options in a single select",
+      single,
+      { type: "choices", choiceIds: ["open", "closed"] },
+      "exactly one",
+    ],
     ["the same option twice", multi, { type: "choices", choiceIds: ["open", "open"] }, "twice"],
     ["the Other option", multi, { type: "choices", choiceIds: ["other"] }, "Other"],
-    ["an option the question doesn't have", single, { type: "choices", choiceIds: ["gone"] }, "no option gone"],
+    [
+      "an option the question doesn't have",
+      single,
+      { type: "choices", choiceIds: ["gone"] },
+      "no option gone",
+    ],
     ["options for a free text question", text, { type: "choices", choiceIds: ["open"] }, "free text"],
     ["a value for a select question", single, { type: "static", value: "Open/Pending" }, "not a value"],
     ["text for a number question", number, { type: "static", value: "zero" }, "not one"],
@@ -48,10 +63,9 @@ describe("resolvePreselectedAnswer", () => {
       "Open/Pending"
     );
     expect(resolvePreselectedAnswer(single, { type: "choices", choiceIds: ["open"] }, "de")).toBe("Offen");
-    expect(resolvePreselectedAnswer(multi, { type: "choices", choiceIds: ["closed", "open"] }, "de")).toEqual([
-      "Geschlossen",
-      "Offen",
-    ]);
+    expect(resolvePreselectedAnswer(multi, { type: "choices", choiceIds: ["closed", "open"] }, "de")).toEqual(
+      ["Geschlossen", "Offen"]
+    );
   });
 
   test("falls back to the default label when the language has none", () => {
@@ -68,6 +82,8 @@ describe("resolvePreselectedAnswer", () => {
     expect(resolvePreselectedAnswer(single, { type: "choices", choiceIds: ["deleted"] }, "default")).toBe(
       undefined
     );
-    expect(resolvePreselectedAnswer(text, { type: "choices", choiceIds: ["open"] }, "default")).toBe(undefined);
+    expect(resolvePreselectedAnswer(text, { type: "choices", choiceIds: ["open"] }, "default")).toBe(
+      undefined
+    );
   });
 });

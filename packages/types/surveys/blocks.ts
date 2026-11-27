@@ -194,7 +194,10 @@ export const ZActionPreselectAnswer = z.object({
           PRESELECT_ANSWER_MAX_TEXT_LENGTH,
           `Conditional Logic: A pre-filled answer has at most ${String(PRESELECT_ANSWER_MAX_TEXT_LENGTH)} characters`
         )
-        .refine((value) => !value.includes("\u0000"), "Conditional Logic: A pre-filled answer can't contain a null character"),
+        .refine(
+          (value) => !value.includes("\u0000"),
+          "Conditional Logic: A pre-filled answer can't contain a null character"
+        ),
     }),
   ]),
 });

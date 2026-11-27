@@ -16,8 +16,8 @@ import {
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
-  type TActionCalculate as TBlockActionCalculate,
   type TActionPreselectAnswer,
+  type TActionCalculate as TBlockActionCalculate,
   TSurveyBlockLogic,
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,

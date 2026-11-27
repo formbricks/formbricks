@@ -959,6 +959,17 @@ function validateExpressionNode(
   validateLogicOperand(value, path, issues);
 }
 
+function validatePreselectAnswerAction(
+  value: Record<string, unknown>,
+  path: string,
+  issues: SurveyDocumentProblems
+): void {
+  addUnknownKeyIssues(value, PRESELECT_ANSWER_ACTION_KEYS, path, issues);
+  if (!isPlainObject(value.value)) return;
+  const keys = value.value.type === "choices" ? PRESELECT_CHOICES_VALUE_KEYS : PRESELECT_STATIC_VALUE_KEYS;
+  addUnknownKeyIssues(value.value, keys, `${path}.value`, issues);
+}
+
 function validateAction(value: unknown, path: string, issues: SurveyDocumentProblems): void {
   if (!isPlainObject(value)) {
     return;
@@ -1001,11 +1012,7 @@ function validateAction(value: unknown, path: string, issues: SurveyDocumentProb
 
   // ENG-7437: the answer is options by id or a free text value, each a closed object.
   if (value.objective === "preselectAnswer") {
-    addUnknownKeyIssues(value, PRESELECT_ANSWER_ACTION_KEYS, path, issues);
-    if (isPlainObject(value.value)) {
-      const keys = value.value.type === "choices" ? PRESELECT_CHOICES_VALUE_KEYS : PRESELECT_STATIC_VALUE_KEYS;
-      addUnknownKeyIssues(value.value, keys, `${path}.value`, issues);
-    }
+    validatePreselectAnswerAction(value, path, issues);
   }
 }
 
