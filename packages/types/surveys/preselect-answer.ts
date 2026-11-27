@@ -20,11 +20,16 @@ import { getLabelInLanguage } from "./localized-label";
 export const PRESELECT_ANSWER_MAX_CHOICES = 200;
 export const PRESELECT_ANSWER_MAX_TEXT_LENGTH = 5000;
 
+// The question types an answer can be pre-selected in, as the plain strings `element.type` holds here.
+const SINGLE_SELECT: string = TSurveyElementTypeEnum.MultipleChoiceSingle;
+const MULTI_SELECT: string = TSurveyElementTypeEnum.MultipleChoiceMulti;
+const OPEN_TEXT: string = TSurveyElementTypeEnum.OpenText;
+
 /** The question types an answer can be pre-selected in. */
 export const PRESELECTABLE_ELEMENT_TYPES: ReadonlySet<string> = new Set([
-  TSurveyElementTypeEnum.MultipleChoiceSingle,
-  TSurveyElementTypeEnum.MultipleChoiceMulti,
-  TSurveyElementTypeEnum.OpenText,
+  SINGLE_SELECT,
+  MULTI_SELECT,
+  OPEN_TEXT,
 ]);
 
 /** The "Other" option needs the respondent's own text, so it cannot be pre-selected. */
@@ -62,7 +67,7 @@ export const getPreselectAnswerValueIssue = (
     return `An answer can only be pre-selected in a single select, multi select or free text question; question ${element.id} is a ${element.type} question.`;
   }
 
-  if (element.type === TSurveyElementTypeEnum.OpenText) {
+  if (element.type === OPEN_TEXT) {
     if (value.type !== "static") {
       return `Question ${element.id} is a free text question: pre-fill it with a value, not with options.`;
     }
@@ -75,7 +80,7 @@ export const getPreselectAnswerValueIssue = (
   if (value.type !== "choices") {
     return `Question ${element.id} is a select question: pre-select one of its options, not a value.`;
   }
-  if (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle && value.choiceIds.length > 1) {
+  if (element.type === SINGLE_SELECT && value.choiceIds.length > 1) {
     return `Question ${element.id} is a single select question: pre-select exactly one option.`;
   }
   if (new Set(value.choiceIds).size !== value.choiceIds.length) {
@@ -110,5 +115,5 @@ export const resolvePreselectedAnswer = (
     getLabelInLanguage(element.choices?.find((choice) => choice.id === choiceId)?.label, languageId)
   );
   if (labels.some((label) => label === "")) return undefined;
-  return element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ? labels[0] : labels;
+  return element.type === SINGLE_SELECT ? labels[0] : labels;
 };
