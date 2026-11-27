@@ -508,6 +508,20 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     );
   });
 
+  // ENG-7556: a private segment is its survey's targeting; the answer to an edit carries its filters.
+  test("answers another survey's private segment with the uniform 403 when that survey is hidden", async () => {
+    const privateSegment = storedSegment({ title: SURVEY_2_ID, isPrivate: true });
+    mocks.getSegment.mockResolvedValue(privateSegment);
+    mocks.isPrivateSegmentOfHiddenSurvey.mockResolvedValue(true);
+
+    const response = await update({ filters: FILTERS });
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+    expect(mocks.isPrivateSegmentOfHiddenSurvey).toHaveBeenCalledWith(privateSegment, memberActor);
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
   test("leaves isPrivate as stored when the body omits it, so saving a shared segment's filters keeps it shared", async () => {
     await update({ filters: FILTERS });
     expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, { filters: FILTERS });
