@@ -46,9 +46,9 @@ interface OrganizationActionsProps {
   readonly isDashboardViewerRoleEnabled: boolean;
   readonly isMultiOrgEnabled: boolean;
   readonly isUserManagementDisabledFromUi: boolean;
-  /** `organization.manage_access`: owners and managers above the user-management floor (ENG-6812). */
-  readonly canManageUsers: boolean;
   readonly isTeamAdmin: boolean;
+  /** Decided on the server, the same way `POST /api/internal/invites` decides it (ENG-7376). */
+  readonly canInvite: boolean;
   readonly userAdminTeamIds?: string[];
   readonly enterpriseLicenseRequestFormUrl: string;
   readonly isBulkInviteAllowed: boolean;
@@ -70,8 +70,8 @@ export const OrganizationActions = ({
   isDashboardViewerRoleEnabled,
   isMultiOrgEnabled,
   isUserManagementDisabledFromUi,
-  canManageUsers,
   isTeamAdmin,
+  canInvite,
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
   isBulkInviteAllowed,
@@ -86,10 +86,6 @@ export const OrganizationActions = ({
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
-
-  // Owners and managers invite as the organization, which the role floor decides; a team admin who is
-  // neither invites into their own teams, which it doesn't (the server takes the same two paths).
-  const canInvite = isOwnerOrManager ? canManageUsers : isAccessControlAllowed && isTeamAdmin;
 
   const handleLeaveOrganization = async () => {
     setLoading(true);

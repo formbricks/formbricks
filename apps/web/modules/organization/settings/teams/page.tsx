@@ -1,4 +1,5 @@
 import { canManageUsers } from "@/lib/membership/user-management";
+import { canTeamAdminInvite } from "@/lib/membership/user-management-floor";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import {
@@ -41,9 +42,11 @@ export const TeamsPage = async (props: Readonly<{ params: Promise<{ organization
   ]);
   const isTeamAdminUser = userAdminTeamIds.length > 0;
 
-  // Allow user management UI if they're owner/manager OR team admin (when access control is enabled)
+  // Allow user management UI if they're owner/manager OR team admin (when access control is enabled and
+  // user management is not disabled outright, ENG-7376)
   const hasUserManagementAccess =
-    hasStandardUserManagementAccess || (isAccessControlAllowed && isTeamAdminUser);
+    hasStandardUserManagementAccess ||
+    canTeamAdminInvite({ isAccessControlAllowed, isTeamAdmin: isTeamAdminUser });
 
   // The key list is administration data: Owners and Managers only, as the v3 key routes decide.
   const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
