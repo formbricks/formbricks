@@ -1328,7 +1328,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
         '409':
-          description: Conflict — a round-tripped `updatedAt` did not match the stored survey, so it changed since your read. Nothing was written. `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`, so a client can re-read and retry without guessing.
+          description: Conflict — a round-tripped `updatedAt` did not match the stored survey, so it changed since your read. Nothing was written. `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`, so a client can re-read and retry without guessing. Also returned, without `details`, when the patch changes `targeting.filters` and the survey's targeting changed since this request read it; re-read and retry.
           content:
             application/problem+json:
               schema:
