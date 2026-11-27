@@ -105,6 +105,14 @@ describe("renderSurvey custom CSS", () => {
     expect(setStyleNonce).toHaveBeenCalledWith("late-nonce");
     expect(syncCustomCssNonce).toHaveBeenCalled();
   });
+
+  test("the host's CSP nonce reaches the scroll lock survey-ui's menus inject", async () => {
+    const { getNonce } = await import("get-nonce");
+
+    setNonce("menu-nonce");
+
+    expect(getNonce()).toBe("menu-nonce");
+  });
 });
 
 describe("renderSurvey custom CSS teardown", () => {

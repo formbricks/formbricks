@@ -14,10 +14,10 @@ import { ZHubEmotion, ZHubFieldType, ZHubSentiment } from "@formbricks/types/fee
  * as taking "the same query parameters as the list endpoint", minus pagination, so both are described once
  * here and mapped to Hub params by one function in `operations.ts`.
  *
- * Field semantics follow the Hub's own `GET /v1/feedback-records` parameter documentation (hub 0.8.1
- * `openapi.yaml`). Every filter is a plain equality match, combined with AND, and always scoped to the
- * resolved dataset. Length caps mirror the Hub's (1–255); it additionally rejects NULL bytes and relays
- * that as a 400 we pass through.
+ * Field semantics follow the Hub's own `GET /v1/feedback-records` parameter documentation (`openapi.yaml`
+ * of the Hub release `charts/formbricks/values.yaml` pins). A filter given several values matches any of
+ * them; different filters combine with AND, always scoped to the resolved dataset. Length caps mirror the
+ * Hub's (1–255); it additionally rejects NULL bytes and relays that as a 400 we pass through.
  *
  * Each filter is named after the field it filters, so it matches the snake_case a caller reads back in a
  * record and sends in a create body: filtering by the `user_id` you just saw in a response is spelled the
@@ -457,7 +457,7 @@ export type TV3FeedbackRecordCreateBody = z.infer<typeof ZV3FeedbackRecordCreate
  * Update body — the **mutable subset** of the create fields, picked from them rather than redeclared so the
  * two can never drift on a bound or a description.
  *
- * The subset is the Hub's (`UpdateFeedbackRecordInputBody` in hub 0.8.1): a record's provenance is
+ * The subset is the Hub's (its `UpdateFeedbackRecordInputBody`): a record's provenance is
  * immutable, so `source_*`, `field_*`, `submission_id` and `collected_at` cannot be changed — correcting
  * those means deleting and recreating. The Hub also refuses to accept the derived enrichment fields
  * (`sentiment`, `emotions`, translations) from a caller, so there is nothing to exclude there.

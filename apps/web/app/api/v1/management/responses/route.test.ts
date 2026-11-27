@@ -61,8 +61,8 @@ const post = () =>
     authentication: apiKey,
   });
 
-const get = () => {
-  const url = `http://localhost/api/v1/management/responses?surveyId=${surveyId}`;
+const get = (query = "") => {
+  const url = `http://localhost/api/v1/management/responses?surveyId=${surveyId}${query}`;
   return (GET as unknown as THandler)({
     req: Object.assign(new Request(url), { nextUrl: new URL(url) }),
     authentication: apiKey,
@@ -153,5 +153,27 @@ describe("GET /api/v1/management/responses question codes", () => {
     expect(body.data[0].data).toEqual({ el1: "Yes" });
     expect(body.data[0].dataByQuestionCode).toEqual({ nps: "Yes", why: null });
     expect(body.data[1].dataByQuestionCode).toEqual({ nps: null, why: null });
+  });
+});
+
+describe("GET /api/v1/management/responses limit", () => {
+  test("answers 400 for a limit above the ceiling instead of clamping it, before any lookup", async () => {
+    actAsKey(true);
+
+    const { response } = await get("&limit=1000");
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual(expect.objectContaining({ message: "limit must not exceed 250" }));
+    expect(getSurvey).not.toHaveBeenCalled();
+    expect(getResponses).not.toHaveBeenCalled();
+  });
+
+  test("passes an in-range limit and skip to the loader", async () => {
+    actAsKey(true);
+
+    const { response } = await get("&limit=250&skip=10");
+
+    expect(response.status).toBe(200);
+    expect(getResponses).toHaveBeenCalledWith(surveyId, 250, 10);
   });
 });

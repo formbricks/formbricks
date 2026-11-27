@@ -7,6 +7,7 @@ import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   noContentResponse,
   problemForbidden,
+  problemInternalError,
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -219,25 +220,52 @@ export async function deleteWebhookOperation({
 }
 
 /**
- * `POST /api/internal/webhooks/test-deliveries?workspaceId=`: POST a signed test payload to `url` and
- * report whether the endpoint accepted it. The server makes an outbound request to a URL the caller names,
- * so it goes through `testEndpoint`, the transport real deliveries use: SSRF validation of the URL and of
- * every address it resolves to, the connection pinned to the validated address, no redirects followed and
- * the delivery timeout. An endpoint that refuses, redirects or answers an error status is a 422 with the
- * reason the form shows.
- *
- * With `webhookId`, the caller must be able to write to that webhook's own workspace and its stored secret
- * signs the payload; without it, the caller must be able to write to `workspaceId`, where the webhook is
- * about to be created, and the payload is signed with `secret` or a newly generated one. Not audited, as
- * the action it replaces was not: nothing is stored.
+ * `GET /api/internal/webhooks/{webhookId}/secret`: the signing secret, for a writer who asks to reveal or
+ * copy it. The route carries the per-user reveal budget. A missing webhook or secret gets the same 403 as a
+ * webhook in a workspace the caller can't write to.
  */
-export async function testWebhookDeliveryOperation({
-  workspaceId,
-  body,
+export async function getWebhookSecretOperation({
+  webhookId,
   ...context
-}: TRequestContext & { workspaceId: string; body: TWebhookTestDeliveryBody }): Promise<Response> {
+}: TRequestContext & { webhookId: string }): Promise<Response> {
   const { requestId, instance } = context;
-  let secret: string | undefined;
+  const webhook = await resolveWebhook(webhookId);
+  if (!webhook) return problemForbidden(requestId, undefined, instance);
+
+  const access = await requireWorkspaceActionAccess({
+    ...context,
+    workspaceId: webhook.workspaceId,
+    action: "workspace.write",
+  });
+  if (access instanceof Response) return access;
+
+  const secret = await getWebhookWithSecret(webhookId);
+  if (!secret.ok) {
+    // A database fault is ours, not an authorization refusal; report it as such so it reaches the
+    // infrastructure-error path. A missing webhook (or a key without a secret) stays the uniform 403.
+    if (secret.error.type === "internal_server_error") {
+      return problemInternalError(requestId, "The webhook secret could not be read.", instance);
+    }
+    return problemForbidden(requestId, undefined, instance);
+  }
+  if (secret.data.secret === null) return problemForbidden(requestId, undefined, instance);
+
+  return successResponse({ secret: secret.data.secret }, { requestId });
+}
+
+/**
+ * Who may test `body.url`, and which secret signs it. With `webhookId` the caller must write to that
+ * webhook's workspace, and the stored secret signs the payload whatever the URL: the endpoint verifies the
+ * secret real deliveries will carry, and a writer can reveal that secret anyway. Without one, the caller
+ * must write to the workspace the webhook is about to be created in, and the payload is signed with
+ * `secret` or a new one.
+ */
+async function resolveTestDeliverySecret(
+  context: TRequestContext,
+  body: TWebhookTestDeliveryBody,
+  workspaceId: string
+): Promise<Response | { userId: string; secret: string | undefined }> {
+  const { requestId, instance } = context;
 
   if (body.webhookId) {
     let webhookWorkspaceId: string;
@@ -256,18 +284,46 @@ export async function testWebhookDeliveryOperation({
 
     const webhook = await getWebhookWithSecret(body.webhookId);
     if (!webhook.ok) return problemForbidden(requestId, undefined, instance);
-    secret = webhook.data.secret ?? undefined;
-  } else {
-    const access = await requireWorkspaceActionAccess({ ...context, workspaceId, action: "workspace.write" });
-    if (access instanceof Response) return access;
-    secret = body.secret ?? generateWebhookSecret();
+    // A changed URL used to get a throwaway secret, so an endpoint that verifies the stored one rejected
+    // its own test and the form refused to save. Sign with the stored secret, as deliveries do.
+    return { userId: access.userId, secret: webhook.data.secret ?? undefined };
   }
+
+  const access = await requireWorkspaceActionAccess({ ...context, workspaceId, action: "workspace.write" });
+  if (access instanceof Response) return access;
+  return { userId: access.userId, secret: body.secret ?? generateWebhookSecret() };
+}
+
+/**
+ * `POST /api/internal/webhooks/test-deliveries?workspaceId=`: POST a signed test payload to `url` and
+ * report whether the endpoint accepted it. The server makes an outbound request to a URL the caller names,
+ * so it goes through `testEndpoint`, the transport real deliveries use: SSRF validation of the URL and of
+ * every address it resolves to, the connection pinned to the validated address, no redirects followed and
+ * the delivery timeout. An endpoint that refuses, redirects or answers an error status is a 422 with the
+ * reason the form shows. Not audited, as the action it replaces was not: nothing is stored.
+ */
+export async function testWebhookDeliveryOperation({
+  workspaceId,
+  body,
+  ...context
+}: TRequestContext & { workspaceId: string; body: TWebhookTestDeliveryBody }): Promise<Response> {
+  const { requestId } = context;
+  const resolved = await resolveTestDeliverySecret(context, body, workspaceId);
+  if (resolved instanceof Response) return resolved;
+
+  // Per user, not per workspace: each call makes the server send a signed request to an external URL.
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.webhookTest,
+    resolved.userId,
+    context
+  );
+  if (limited) return limited;
 
   const discord = refuseDiscordUrl(body.url, context);
   if (discord) return discord;
 
-  const tested = await runRefusable(context, () => testEndpoint(body.url, secret));
+  const tested = await runRefusable(context, () => testEndpoint(body.url, resolved.secret));
   if (tested instanceof Response) return tested;
 
-  return successResponse<TWebhookTestDeliveryResource>({ secret: secret ?? null }, { requestId });
+  return successResponse<TWebhookTestDeliveryResource>({ secret: resolved.secret ?? null }, { requestId });
 }

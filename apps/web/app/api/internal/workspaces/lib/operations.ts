@@ -165,9 +165,12 @@ export async function updateWorkspaceOperation({
   try {
     updated = await updateWorkspace(workspaceId, data);
   } catch (error) {
-    // The service's one refusal here: a logo save whose `expectedUpdatedAt` is stale. Its message tells
-    // the user to reload, which is what the logo form shows.
-    if (error instanceof OperationNotAllowedError) return problemConflict(requestId, error.message, instance);
+    // The service's two refusals here: a logo save whose `expectedUpdatedAt` is stale, whose message tells
+    // the user to reload, and a rename to a name the organization already uses (ENG-7509). Both messages
+    // are fixed strings the settings forms show as they are.
+    if (error instanceof OperationNotAllowedError || error instanceof InvalidInputError) {
+      return problemConflict(requestId, error.message, instance);
+    }
     throw error;
   }
 

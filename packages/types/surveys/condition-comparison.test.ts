@@ -42,12 +42,27 @@ describe("compareConditionValues", () => {
     expect(compareConditionValues("doesNotEqual", ["a", "b"], "c", context)).toBe(true);
   });
 
-  test("text operators read both sides as text", () => {
-    expect(compareConditionValues("contains", "hello world", "lo w")).toBe(true);
-    expect(compareConditionValues("doesNotContain", 12345, 34)).toBe(false);
-    expect(compareConditionValues("startsWith", "hello", "he")).toBe(true);
-    expect(compareConditionValues("doesNotEndWith", "hello", "lo")).toBe(false);
-  });
+  test.each([
+    ["contains", "def", "ul", 23, true],
+    ["doesNotContain", "def", "ul", 23, false],
+    ["startsWith", "un", "nu", 12, true],
+    ["doesNotStartWith", "un", "nu", 12, false],
+    ["endsWith", "ed", "ll", 45, true],
+    ["doesNotEndWith", "ed", "ll", 45, false],
+  ] as const)(
+    "%s distinguishes missing values from present text and numbers",
+    (operator, undefinedFragment, nullFragment, matchingNumber, matches) => {
+      expect(compareConditionValues(operator, undefined, undefinedFragment)).toBe(!matches);
+      expect(compareConditionValues(operator, null, nullFragment)).toBe(!matches);
+      expect(compareConditionValues(operator, undefined, "")).toBe(!matches);
+      expect(compareConditionValues(operator, "12345", String(matchingNumber))).toBe(matches);
+      expect(compareConditionValues(operator, 12345, matchingNumber)).toBe(matches);
+      expect(compareConditionValues(operator, 0, "0")).toBe(matches);
+      expect(compareConditionValues(operator, "12345", "x")).toBe(!matches);
+      expect(compareConditionValues(operator, "", "")).toBe(matches);
+      expect(compareConditionValues(operator, "", "x")).toBe(!matches);
+    }
+  );
 
   test("list operators need lists on both sides", () => {
     expect(compareConditionValues("includesOneOf", ["a", "b"], ["b", "c"])).toBe(true);

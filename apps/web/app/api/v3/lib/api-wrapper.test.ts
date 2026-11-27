@@ -6,6 +6,7 @@ import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { formatZodIssues, getDefaultRateLimitConfig, withV3ApiWrapper } from "./api-wrapper";
 import { V3_REQUEST_ARRAY_MAX_ITEMS, V3_REQUEST_MAX_DEPTH } from "./array-budget";
 import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
@@ -2016,5 +2017,88 @@ describe("multipart form bodies (schemas.formData)", () => {
         handler: async () => new Response(null),
       })
     ).toThrow(/either a body or a formData schema/);
+  });
+});
+
+describe("cross-origin session writes (ENG-3380)", () => {
+  const session = { user: { id: "user_1", name: "T", email: "t@example.com" }, expires: "2099-01-01" };
+  const body = z.object({ a: z.string() });
+
+  const call = (headers: Record<string, string>, method = "POST", rawBody: string | null = '{"a":"b"}') => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "both", schemas: { body }, handler });
+    const req = new NextRequest("http://localhost/api/v3/things", {
+      method,
+      headers,
+      ...(rawBody === null ? {} : { body: rawBody }),
+    });
+    return { handler, response: wrapped(req, {}) };
+  };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockGetSession.mockResolvedValue(session);
+    mockAuthenticateRequest.mockResolvedValue(null);
+  });
+
+  test("a session POST from a sibling site is refused with a 403 problem before the rate limit and handler", async () => {
+    const { handler, response } = call({ "sec-fetch-site": "same-site", "content-type": "application/json" });
+    const res = await response;
+
+    expect(res.status).toBe(403);
+    expect(res.headers.get("content-type")).toContain("application/problem+json");
+    expect(await res.json()).toMatchObject({ status: 403, code: "forbidden" });
+    expect(handler).not.toHaveBeenCalled();
+    expect(vi.mocked(applyRateLimit)).not.toHaveBeenCalled();
+  });
+
+  test("a session POST with a foreign Origin and no Sec-Fetch-Site is refused", async () => {
+    const { handler, response } = call({
+      origin: "https://evil.example",
+      "content-type": "application/json",
+    });
+    expect((await response).status).toBe(403);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("a same-origin session POST reaches the handler, with a charset on the content type", async () => {
+    const { handler, response } = call({
+      "sec-fetch-site": "same-origin",
+      "content-type": "application/json; charset=utf-8",
+    });
+    expect((await response).status).toBe(200);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("a session POST declaring a JSON body as text/plain is refused with 415", async () => {
+    const { handler, response } = call({ "sec-fetch-site": "same-origin", "content-type": "text/plain" });
+    const res = await response;
+    expect(res.status).toBe(415);
+    expect(res.headers.get("accept-post")).toBe("application/json");
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("a session GET is never checked", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({ auth: "both", handler });
+    const res = await wrapped(
+      new NextRequest("http://localhost/api/v3/things", { headers: { "sec-fetch-site": "cross-site" } }),
+      {}
+    );
+    expect(res.status).toBe(200);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test("an API-key request carries no cookie and is not checked", async () => {
+    mockGetSession.mockResolvedValue(null);
+    mockAuthenticateRequest.mockResolvedValue({ type: "apiKey", apiKeyId: "key_1" });
+    const { handler, response } = call({
+      "x-api-key": "k",
+      "sec-fetch-site": "cross-site",
+      origin: "https://evil.example",
+      "content-type": "text/plain",
+    });
+    expect((await response).status).toBe(200);
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 });

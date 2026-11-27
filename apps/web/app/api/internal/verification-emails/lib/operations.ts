@@ -1,18 +1,14 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
+import { after } from "next/server";
 import { logger } from "@formbricks/logger";
-import {
-  ResourceNotFoundError,
-  SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE,
-  TooManyRequestsError,
-} from "@formbricks/types/errors";
+import { SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE } from "@formbricks/types/errors";
 import type { TPreLoginRequestContext } from "@/app/api/internal/lib/types";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { noContentResponse, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
-import { auth } from "@/modules/auth/lib/auth";
 import {
   SIGNUP_INTENT_COOKIE_NAME,
   SIGNUP_INTENT_COOKIE_OPTIONS,
@@ -22,15 +18,9 @@ import {
 } from "@/modules/auth/lib/signup-intent";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { SSO_RECOVERY_COMPLETION_PATH, normalizeRoutePathname } from "@/modules/auth/lib/verification-links";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { deliverVerificationEmail } from "@/modules/auth/verification-requested/lib/deliver-verification-email";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import {
-  type TSsoRecoveryIntent,
-  getSsoRecoveryPairedTtlSeconds,
-  readSsoRecoveryIntent,
-  refreshSsoRecoveryIntent,
-} from "@/modules/ee/sso/lib/recovery-intent";
-import { sendVerificationEmail } from "@/modules/email";
+import { type TSsoRecoveryIntent, readSsoRecoveryIntent } from "@/modules/ee/sso/lib/recovery-intent";
 import type { TVerificationEmailBody } from "../schemas";
 
 /**
@@ -99,42 +89,6 @@ const resolveSsoRecoveryResend = async ({
   return { kind: "recovery", stateId, intent };
 };
 
-type TResendUser = NonNullable<Awaited<ReturnType<typeof getUserByEmail>>>;
-
-/** The SSO recovery branch: the recovery link again, paired with the stored intent. */
-const resendSsoRecoveryEmail = async (
-  user: TResendUser,
-  recovery: Extract<TSsoRecoveryResendResolution, { kind: "recovery" }>,
-  validatedCallbackUrl: string | undefined
-): Promise<void> => {
-  // ENG-2783: the resent link and the refreshed intent get ONE lifetime, computed once here.
-  //
-  // Both halves are needed to finish recovery, so whichever expires first ends the flow — and if
-  // the link is the survivor the user is signed in and then told recovery failed. A resend is
-  // where they can come apart: the intent's refresh is capped against its original `createdAt`
-  // (the caller is unauthenticated, so the window must not slide forever), while a freshly minted
-  // link would otherwise take the full TTL no matter how close that ceiling is. Deriving the
-  // number twice would also let a clock tick between the two, so it is derived once and passed to
-  // both.
-  const pairedTtlSeconds = getSsoRecoveryPairedTtlSeconds(recovery.intent);
-
-  // SSO recovery keeps the app-minted JWT and the recovery magic link (now routed to Better Auth's
-  // /sso-recovery/sign-in endpoint via buildVerificationLinks).
-  await sendVerificationEmail({
-    id: user.id,
-    email: user.email,
-    locale: user.locale,
-    callbackUrl: validatedCallbackUrl,
-    purpose: "sso_recovery",
-    linkTtlSeconds: pairedTtlSeconds,
-    // The same recovery the first link was bound to (ENG-7310).
-    ssoRecoveryStateId: recovery.stateId,
-  });
-
-  // Best-effort: the mail has gone out, so a failure here costs the pairing, not the resend.
-  await refreshSsoRecoveryIntent(recovery.stateId, pairedTtlSeconds);
-};
-
 /**
  * Shape the sign-up intent cookie on EVERY answer that can be a resend (ENG-2562, ENG-7094).
  *
@@ -153,13 +107,13 @@ const resendSsoRecoveryEmail = async (
  * Non-fatal, like the sign-up issuance: a failure here costs exactly the auto-sign-in UX, never the
  * resend itself.
  */
-const pairSignupIntentCookie = async (userId: string): Promise<void> => {
+const pairSignupIntentCookie = async (userId?: string): Promise<void> => {
   try {
     const cookieStore = await cookies();
     const held = cookieStore.get(SIGNUP_INTENT_COOKIE_NAME)?.value;
     cookieStore.set(
       SIGNUP_INTENT_COOKIE_NAME,
-      classifySignupIntent(held, userId) === "valid"
+      userId && classifySignupIntent(held, userId) === "valid"
         ? createSignupIntentToken(userId)
         : createDecoySignupIntentToken(),
       SIGNUP_INTENT_COOKIE_OPTIONS
@@ -169,35 +123,21 @@ const pairSignupIntentCookie = async (userId: string): Promise<void> => {
   }
 };
 
-/** The ordinary branch: Better Auth's verification email to an unverified account. */
-const resendEmailVerification = async (
-  user: TResendUser,
-  validatedCallbackUrl: string | undefined
-): Promise<void> => {
-  // Email verification is Better Auth-native (ENG-1054 decommission): BA mints its own verification
-  // token and sends the verify link through the emailVerification.sendVerificationEmail callback in
-  // auth.ts. The user is unverified here (the guard above returned for verified users), so BA takes
-  // its no-session, enumeration-safe path.
-  await auth.api.sendVerificationEmail({
-    body: { email: user.email, callbackURL: validatedCallbackUrl },
-    headers: await headers(),
-  });
-};
-
 /** A refusal the page explains: `details.reason` (and `detail`) is the stable code it translates. */
 const refused = ({ requestId, instance }: TPreLoginRequestContext, reason: string) =>
   problemUnprocessableContent(requestId, reason, { instance, details: { reason } });
 
 /**
  * `POST /api/internal/verification-emails`: send a new verification email, or an SSO recovery one when the
- * callback is a live recovery for this address (pre-login). Charged to the client's IP, and per account
- * when an email is actually sent. Answers 204 when there is nothing more to say.
+ * callback is a live recovery for this address (pre-login). Charged to the client's IP; the per-account
+ * budget and the send run after the answer (ENG-7092), so an unknown address, a verified account, a spent
+ * budget and a sent mail all answer 204 at the same speed.
  */
 export async function resendVerificationEmailOperation({
   body,
   ...context
 }: TPreLoginRequestContext & { body: TVerificationEmailBody }): Promise<Response> {
-  const { requestId, instance, auditLog } = context;
+  const { requestId, auditLog } = context;
   const limited = await applyIPRateLimitOrRespond(rateLimitConfigs.auth.verifyEmail, context);
   if (limited) {
     // Not audited, unlike the action: the IP budget is what bounds this pre-login route's audit rows, and
@@ -206,18 +146,12 @@ export async function resendVerificationEmailOperation({
     return limited;
   }
 
-  const user = await getUserByEmail(body.email);
-  if (!user) {
-    // Kept as the server action answered it, message included (ENG-7092 tracks the enumeration it allows).
-    return problemUnprocessableContent(requestId, new ResourceNotFoundError("user", body.email).message, {
-      instance,
-      details: { reason: "user_not_found" },
-    });
-  }
   const validatedCallbackUrl = getValidatedCallbackUrl(body.callbackUrl, WEBAPP_URL) ?? undefined;
+  // Derived from the callback's state id alone, before any account lookup, so the answer cannot depend on
+  // whether the address is registered.
   const resolution = await resolveSsoRecoveryResend({
     callbackUrl: validatedCallbackUrl,
-    userEmail: user.email,
+    userEmail: body.email,
   });
 
   // Said out loud rather than folded into the success below. The intent's ceiling is ~15 minutes, so
@@ -228,33 +162,37 @@ export async function resendVerificationEmailOperation({
     return refused(context, SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE);
   }
 
+  const user = await getUserByEmail(body.email);
+  if (!user) {
+    // ENG-7092: no "user not found" answer, or the page is a lookup. A decoy cookie keeps the response
+    // shaped like every other resend (ENG-7094), and no event is recorded for an account that isn't there.
+    await pairSignupIntentCookie();
+    skipV3AuditLog(auditLog);
+    return noContentResponse({ requestId });
+  }
+
   // Every answer from here on can be a resend, so shape the intent cookie before the paths diverge:
   // a 204 must never differ by whether the address had an account (ENG-7094).
   await pairSignupIntentCookie(user.id);
 
   const ssoRecoveryResend = resolution.kind === "recovery" ? resolution : null;
   if (user.emailVerified && !ssoRecoveryResend) {
+    // No mail goes out, so nothing is recorded against the account either.
+    skipV3AuditLog(auditLog);
     return noContentResponse({ requestId });
   }
-  // Anyone can ask for this account's email from here. Counted per account, only when an email is sent,
-  // and below the recipient cap, so strangers rotating IPs cannot spend the whole cap and leave the
-  // user's own sign-in with none.
-  try {
-    await applyRateLimit(rateLimitConfigs.auth.verifyEmailPerAccount, user.id);
-  } catch (error) {
-    // Answer quietly, exactly as a sent email does. Only unverified accounts reach this line, so an error
-    // here would tell anyone which addresses have one — the same reasoning that makes the callback in
-    // auth.ts swallow the same refusal.
-    if (error instanceof TooManyRequestsError) {
-      return noContentResponse({ requestId });
-    }
-    throw error;
-  }
+
   if (auditLog) auditLog.targetId = user.id;
-  if (ssoRecoveryResend) {
-    await resendSsoRecoveryEmail(user, ssoRecoveryResend, validatedCallbackUrl);
-  } else {
-    await resendEmailVerification(user, validatedCallbackUrl);
-  }
+  // Copied while the request is live: Better Auth reads the headers after the response has gone. The
+  // per-account budget and the SMTP round trip then run in `after()`, so neither changes the answer.
+  const requestHeaders = new Headers(await headers());
+  after(() =>
+    deliverVerificationEmail({
+      user,
+      callbackUrl: validatedCallbackUrl,
+      ssoRecoveryResend,
+      requestHeaders,
+    })
+  );
   return noContentResponse({ requestId });
 }

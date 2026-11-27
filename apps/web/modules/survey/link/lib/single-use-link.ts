@@ -54,9 +54,8 @@ export const singleSearchParamValue = (value?: TSingleUseSearchParam): string | 
  * into the same value.
  *
  * Never logs the raw `suToken`, the raw `suId`, the decrypted id, or the request URL — and there is
- * no safety net if that slips: `redactPII` matches its `SENSITIVE_KEYS` by exact lowercase key
- * equality, so a field named `suToken` would not be redacted, and the logger does not apply it by
- * default.
+ * no safety net if that slips: the logger does not apply `redactPII` by default, and `redactPII` itself
+ * would mask `suToken` (a credential-named key) but not `suId` or the decrypted id.
  *
  * @returns the canonical single-use id to record against a response, or `null` when the link is not
  *   valid for this survey.

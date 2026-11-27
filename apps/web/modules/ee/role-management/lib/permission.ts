@@ -9,6 +9,9 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { canAssignOrganizationRole } from "./assignable-roles";
 
+/** The reason given when anyone but an owner changes an owner's role. */
+export const OWNER_ROLE_CHANGE_DETAIL = "Only owners can change the role of an owner";
+
 export const checkRoleManagementPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
   if (!organization) {
@@ -50,7 +53,7 @@ export const assertCanAssignRole = async ({
 }): Promise<void> => {
   const requested = [...new Set(roles)];
   if (targetCurrentRole === "owner" && assignerRole !== "owner") {
-    throw new OperationNotAllowedError("Only owners can change the role of an owner");
+    throw new OperationNotAllowedError(OWNER_ROLE_CHANGE_DETAIL);
   }
   if (!IS_FORMBRICKS_CLOUD && requested.includes("billing")) {
     throw new ValidationError("Billing role is not allowed");

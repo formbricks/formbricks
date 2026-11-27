@@ -9,6 +9,7 @@ import {
   type TReleaseSlot,
   releaseWhenBodySettles,
 } from "@/app/lib/api/concurrency-limiter";
+import { isJsonContentType, isSafeMethod } from "@/app/lib/api/origin-check";
 import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
@@ -673,6 +674,26 @@ function refuseCrossOriginOrContinue(params: {
   return problemForbidden(requestId, "Cross-origin requests are not allowed.", instance);
 }
 
+/**
+ * A session-authenticated route that declares a JSON body must receive JSON (ENG-3380): a cross-site form
+ * can post `text/plain` without a preflight, and the body parser would read that text as JSON anyway.
+ * API-key callers are exempt, as they are from the origin check.
+ */
+function refuseNonJsonSessionBody(
+  req: NextRequest,
+  authentication: TV3Authentication,
+  schemas: TV3Schemas | undefined,
+  { requestId, instance }: { requestId: string; instance?: string }
+): Response | null {
+  if (!authentication || !("user" in authentication)) return null;
+  if (isSafeMethod(req.method) || !schemas?.body || isJsonContentType(req.headers.get("content-type"))) {
+    return null;
+  }
+
+  const detail = "The request body must be application/json";
+  return problemUnsupportedMediaType(requestId, detail, { instance, acceptPost: "application/json" });
+}
+
 async function authenticateV3RequestOrRespond(
   req: NextRequest,
   authMode: TV3AuthMode,
@@ -951,6 +972,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
               instance,
               log,
             })) ??
+        refuseNonJsonSessionBody(req, authResult.authentication, schemas, { requestId, instance }) ??
         (await applyV3RateLimitOrRespond({
           authentication: authResult.authentication,
           enabled: rateLimit,

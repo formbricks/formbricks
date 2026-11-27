@@ -14,6 +14,8 @@ export type TSignupRequest = {
   password: string;
   userLocale?: TUserLocale;
   inviteToken?: string;
+  /** The optional `SETUP_TOKEN` (ENG-7313); only sent when the setup page asks for it. */
+  setupToken?: string;
   turnstileToken?: string;
   subscribeToSecurityUpdates?: boolean;
   subscribeToProductUpdates?: boolean;

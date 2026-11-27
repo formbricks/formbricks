@@ -20,6 +20,10 @@ import {
 } from "@/lib/authzed/scheduled-reconciliation";
 import { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } from "@/lib/telemetry/constants";
 import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetry-job";
+import {
+  OAUTH_CLIENT_CLEANUP_INTERVAL_MS,
+  processOauthClientCleanupJob,
+} from "@/modules/auth/lib/oauth-client-cleanup";
 import { DELETION_CLEANUP_DRAIN_INTERVAL_MS } from "@/modules/deletion-cleanup/lib/constants";
 import { processDeletionCleanupDrainJob } from "@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job";
 import {
@@ -157,6 +161,17 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     job: recurringJobs.deletionCleanupDrain,
     schedule: {
       everyMs: DELETION_CLEANUP_DRAIN_INTERVAL_MS,
+      kind: "every",
+    },
+  },
+  // ENG-7314: new in this release, so scheduled only once the release is activated (older replicas have no
+  // handler for it, and it deletes rows). Idempotent, so an overlapping or retried run is harmless.
+  oauthClientCleanup: {
+    requiresReleaseActivation: true,
+    handler: processOauthClientCleanupJob,
+    job: recurringJobs.oauthClientCleanup,
+    schedule: {
+      everyMs: OAUTH_CLIENT_CLEANUP_INTERVAL_MS,
       kind: "every",
     },
   },

@@ -43,6 +43,10 @@ describe("SSO provisioning (real Postgres)", () => {
       // ENG-2247: freshness is read from the real empty database here, not a mock, so this also pins
       // that the single-use bootstrap marker is what the SSO gate hands to the insert.
       isBootstrapAdmin: true,
+      // ENG-7313: the same real-database freshness is what makes the after-hook record the setup
+      // marker at creation, closing the window where the first SSO user deletes their account before
+      // any page asks and the instance would look fresh again.
+      wasFreshInstance: true,
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource: "direct",

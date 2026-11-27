@@ -527,6 +527,19 @@ describe("chart-utils", () => {
       expect(pivotMeasuresToCategories(data, ["F.promoterCount"], label)[0]).not.toHaveProperty("F.npsCount");
     });
 
+    test("leaves the response base off the base measure's own row, so its tooltip does not print the count twice", () => {
+      const data = [{ "F.npsAverage": 7.3, "F.npsCount": 48 }];
+      const [average, count] = pivotMeasuresToCategories(
+        data,
+        ["F.npsAverage", "F.npsCount"],
+        label,
+        "F.npsCount"
+      );
+      expect(average["F.npsCount"]).toBe(48);
+      expect(count).not.toHaveProperty("F.npsCount");
+      expect(count[PIVOTED_VALUE_KEY]).toBe(48);
+    });
+
     test("keeps the given measure order so bars fill the axis from the left", () => {
       const data = [{ b: 2, a: 1 }];
       const result = pivotMeasuresToCategories(data, ["a", "b"], label);

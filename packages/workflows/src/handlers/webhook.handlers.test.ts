@@ -223,45 +223,48 @@ describe("getWebhook", () => {
     expect(res.status).toBe(403);
   });
 
-  test("returns the Secret URL, the last call and the expected payload with their Variables", async () => {
-    const res = await handlers.getWebhook({ ctx: makeCtx(), params: { workflowId } });
+  test.each(["https://app.example.com", "https://surveys.example.com"])(
+    "returns the Secret URL on %s, the last call and the expected payload with their Variables",
+    async (webhookBaseUrl) => {
+      const res = await handlers.getWebhook({ ctx: makeCtx({ webhookBaseUrl }), params: { workflowId } });
 
-    expect(res.status).toBe(200);
-    const body = await readJson<{ data: Record<string, unknown> }>(res);
-    expect(body.data).toEqual({
-      workflowId,
-      url: `https://app.example.com/api/v3/workflows/${workflowId}/webhook/${token}`,
-      lastCalledAt: "2026-11-03T10:00:00.000Z",
-      lastCallerIp: "203.0.113.9",
-      lastCall: {
-        payload: { order: { id: 8 } },
-        variables: {
-          variables: [
-            { path: "payload.order", valueType: "object" },
-            { path: "payload.order.id", valueType: "number" },
-          ],
-          notSupported: [],
-          truncated: false,
-        },
-        receivedAt: "2026-11-03T10:00:00.000Z",
-        callerIp: "203.0.113.9",
-      },
-      sample: {
+      expect(res.status).toBe(200);
+      const body = await readJson<{ data: Record<string, unknown> }>(res);
+      expect(body.data).toEqual({
         workflowId,
-        source: "trigger",
-        payload: { order: { id: 7, items: [] } },
-        variables: {
-          variables: [
-            { path: "payload.order", valueType: "object" },
-            { path: "payload.order.id", valueType: "number" },
-          ],
-          notSupported: [{ path: "payload.order.items", reason: "list" }],
-          truncated: false,
+        url: `${webhookBaseUrl}/api/v3/workflows/${workflowId}/webhook/${token}`,
+        lastCalledAt: "2026-11-03T10:00:00.000Z",
+        lastCallerIp: "203.0.113.9",
+        lastCall: {
+          payload: { order: { id: 8 } },
+          variables: {
+            variables: [
+              { path: "payload.order", valueType: "object" },
+              { path: "payload.order.id", valueType: "number" },
+            ],
+            notSupported: [],
+            truncated: false,
+          },
+          receivedAt: "2026-11-03T10:00:00.000Z",
+          callerIp: "203.0.113.9",
         },
-        updatedAt: "2026-11-03T10:00:00.000Z",
-      },
-    });
-  });
+        sample: {
+          workflowId,
+          source: "trigger",
+          payload: { order: { id: 7, items: [] } },
+          variables: {
+            variables: [
+              { path: "payload.order", valueType: "object" },
+              { path: "payload.order.id", valueType: "number" },
+            ],
+            notSupported: [{ path: "payload.order.items", reason: "list" }],
+            truncated: false,
+          },
+          updatedAt: "2026-11-03T10:00:00.000Z",
+        },
+      });
+    }
+  );
 
   test("returns no last call and no expected payload before any call or paste", async () => {
     service.getTriggerSample.mockResolvedValue(null);
@@ -288,18 +291,24 @@ describe("getWebhook", () => {
 });
 
 describe("regenerateWebhook", () => {
-  test("issues a new token and returns the new Secret URL", async () => {
-    service.regenerateWebhookToken.mockResolvedValue(makeRow({ webhookTokenEncrypted: "new-encrypted" }));
-    service.revealWebhookToken.mockReturnValue("n3wT0ken");
+  test.each(["https://app.example.com", "https://surveys.example.com"])(
+    "issues a new token and returns the new Secret URL on %s",
+    async (webhookBaseUrl) => {
+      service.regenerateWebhookToken.mockResolvedValue(makeRow({ webhookTokenEncrypted: "new-encrypted" }));
+      service.revealWebhookToken.mockReturnValue("n3wT0ken");
 
-    const res = await handlers.regenerateWebhook({ ctx: makeCtx(), params: { workflowId } });
+      const res = await handlers.regenerateWebhook({
+        ctx: makeCtx({ webhookBaseUrl }),
+        params: { workflowId },
+      });
 
-    expect(res.status).toBe(200);
-    expect(service.regenerateWebhookToken).toHaveBeenCalledWith({ workflowId, workspaceId });
-    expect((await readJson<{ data: { url: string } }>(res)).data.url).toBe(
-      `https://app.example.com/api/v3/workflows/${workflowId}/webhook/n3wT0ken`
-    );
-  });
+      expect(res.status).toBe(200);
+      expect(service.regenerateWebhookToken).toHaveBeenCalledWith({ workflowId, workspaceId });
+      expect((await readJson<{ data: { url: string } }>(res)).data.url).toBe(
+        `${webhookBaseUrl}/api/v3/workflows/${workflowId}/webhook/n3wT0ken`
+      );
+    }
+  );
 
   test("is audited against the workflow without any token material", async () => {
     service.regenerateWebhookToken.mockResolvedValue(makeRow({ webhookTokenHash: "new-hash" }));

@@ -1,6 +1,7 @@
 import "server-only";
+import type { Prisma } from "@formbricks/database/prisma";
 import { ValidationError } from "@formbricks/types/errors";
-import type { TMembership } from "@formbricks/types/memberships";
+import type { TMembership, TOrganizationRole } from "@formbricks/types/memberships";
 import {
   requireOrgActionAccess,
   requireUserManagementAccess,
@@ -30,6 +31,7 @@ import {
   updateMembership,
   updateMembershipInTransaction,
 } from "@/modules/ee/role-management/lib/membership";
+import { OWNER_ROLE_CHANGE_DETAIL } from "@/modules/ee/role-management/lib/permission";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
 import {
   LastActiveOwnerError,
@@ -39,6 +41,27 @@ import type { TMemberUpdateBody } from "../schemas";
 import { serializeMemberRole } from "../serializers";
 
 export const LAST_OWNER_DETAIL = "You cannot demote the last owner of the organization";
+export const OWN_ROLE_DETAIL = "You cannot change your own role";
+
+/** Thrown inside the role change's transaction to roll it back: a non-owner is changing an owner's role. */
+class OwnerRoleChangeRefusedError extends Error {}
+
+/**
+ * The member's role as it is now, with their membership row locked until `tx` ends: a promotion that
+ * commits first is seen, and one that comes after waits for this change.
+ */
+const lockMembershipRole = async (
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  userId: string
+): Promise<TOrganizationRole | undefined> => {
+  const [row] = await tx.$queryRaw<{ role: TOrganizationRole }[]>`
+    SELECT "role" FROM "Membership"
+    WHERE "organizationId" = ${organizationId} AND "userId" = ${userId}
+    FOR UPDATE
+  `;
+  return row?.role;
+};
 
 /**
  * Change the role, demoting an owner only while another active owner remains, as the member list's server
@@ -48,18 +71,22 @@ export const LAST_OWNER_DETAIL = "You cannot demote the last owner of the organi
  * Dashboard viewer decides whether only viewer memberships remain (and revokes the wider OAuth grants), and
  * must see a removal from another organization that commits at the same moment.
  *
- * Whether this is an owner's demotion is decided from the lookup before the lock, as the action did;
- * deciding it under the lock instead is ENG-2177. `actorUserId` is the user making the change: the actor of
- * the audit entries of any MCP grant it ends (a demotion to Dashboard viewer ends them), which are finished
- * once the transaction commits. Each attempt returns its own records, so a retried attempt's are dropped.
+ * Whether the change takes an owner out is decided under that lock, from the role read there, not from the
+ * lookup the caller made before it (ENG-2177): a member that lookup saw may have been made an owner since,
+ * and every other owner taken out, so only a change to `owner` can skip the guard. For the same reason the
+ * rule that only an owner changes an owner's role is checked again on the locked row when `assignerRole`
+ * isn't an owner (a manager never gives `owner`, so their changes always come here). `actorUserId` is the
+ * user making the change: the actor of the audit entries of any MCP grant it ends (a demotion to Dashboard
+ * viewer ends them), which are finished once the transaction commits. Each attempt returns its own records,
+ * so a retried attempt's are dropped.
  */
 const applyRoleChange = async (
   target: TMembership,
   body: TMemberUpdateBody,
-  actorUserId: string
-): Promise<TMembership | LastActiveOwnerError> => {
+  { actorUserId, assignerRole }: { actorUserId: string; assignerRole: TOrganizationRole }
+): Promise<TMembership | LastActiveOwnerError | OwnerRoleChangeRefusedError> => {
   const { userId, organizationId } = target;
-  if (target.role !== "owner" || body.role === "owner") {
+  if (body.role === "owner") {
     return updateMembership(userId, organizationId, body, actorUserId);
   }
 
@@ -68,7 +95,10 @@ const applyRoleChange = async (
       organizationId,
       userId,
       async (tx) => {
-        // After the owners' lock, before the user's MCP grant and consent rows.
+        // After the owners' lock, before the user's row and their MCP grant and consent rows.
+        if (assignerRole !== "owner" && (await lockMembershipRole(tx, organizationId, userId)) === "owner") {
+          throw new OwnerRoleChangeRefusedError();
+        }
         await lockUserActiveState(tx, userId);
         return updateMembershipInTransaction(tx, userId, organizationId, body);
       },
@@ -82,7 +112,7 @@ const applyRoleChange = async (
     await finishRevokedMcpGrants(grantAudits, { actorUserId });
     return membership;
   } catch (error) {
-    if (error instanceof LastActiveOwnerError) return error;
+    if (error instanceof LastActiveOwnerError || error instanceof OwnerRoleChangeRefusedError) return error;
     throw error;
   }
 };
@@ -93,9 +123,9 @@ const applyRoleChange = async (
  * The caller must be a member with `organization.manage_access` (user management, per
  * `USER_MANAGEMENT_MINIMUM_ROLE`) and `organization.manage`. The role rules are `assertCanAssignRole`'s
  * (managers give only the roles they may and may not touch an owner; billing is Cloud-only; the Dashboard
- * viewer role needs its plan); the last active owner can't be demoted; and the role management licence
- * applies. A missing member gets the same 403 as one in an
- * organization the caller can't see.
+ * viewer role needs its plan); nobody changes their own role, as the members page never offers it
+ * (ENG-2177); the last active owner can't be demoted; and the role management licence applies. A missing
+ * member gets the same 403 as one in an organization the caller can't see.
  */
 export async function updateMemberRoleOperation({
   authentication,
@@ -150,6 +180,10 @@ export async function updateMemberRoleOperation({
   });
   if (limited) return limited;
 
+  // A sole owner demoting themselves would leave an organization no one in it can repair: managers can't
+  // make an owner, and only an owner may change an owner's role.
+  if (userId === actor.id) return problemForbidden(requestId, OWN_ROLE_DETAIL, instance);
+
   const target = await getMembershipByUserIdOrganizationId(userId, organizationId);
   const refused = await refuseRoleAssignment({
     organizationId,
@@ -167,9 +201,15 @@ export async function updateMemberRoleOperation({
   if (!target) return problemForbidden(requestId, undefined, instance);
   if (auditLog) auditLog.oldObject = target;
 
-  const result = await applyRoleChange(target, body, actor.id);
+  const result = await applyRoleChange(target, body, {
+    actorUserId: actor.id,
+    assignerRole: callerMembership.role,
+  });
   if (result instanceof LastActiveOwnerError) {
     return problemConflict(requestId, LAST_OWNER_DETAIL, instance);
+  }
+  if (result instanceof OwnerRoleChangeRefusedError) {
+    return problemForbidden(requestId, OWNER_ROLE_CHANGE_DETAIL, instance);
   }
 
   if (auditLog) auditLog.newObject = result;

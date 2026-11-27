@@ -54,8 +54,7 @@ const assertWebhookTrigger = (row: WorkflowRow): void => {
 };
 
 /**
- * The Webhook Secret URL. Built on `ctx.webhookBaseUrl` (the app's own origin, where `/api/v3` is
- * served); a missing base or token is a server fault, never something the caller can fix.
+ * The Webhook Secret URL. Built on `ctx.webhookBaseUrl`, the base URL serving the receiver; a missing base or token is a server fault, never something the caller can fix.
  */
 const buildWebhookUrl = (ctx: WorkflowApiContext, workflowId: string, token: string | null): string => {
   if (!ctx.webhookBaseUrl || !token) {

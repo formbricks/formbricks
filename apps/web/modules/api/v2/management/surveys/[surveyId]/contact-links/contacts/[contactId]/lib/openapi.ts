@@ -9,7 +9,8 @@ import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 export const getPersonalizedSurveyLink: ZodOpenApiOperationObject = {
   operationId: "getPersonalizedSurveyLink",
   summary: "Get personalized survey link for a contact",
-  description: "Retrieves a personalized link for a specific survey.",
+  description:
+    "Retrieves a personalized link for a specific survey. Although this is a GET, it creates a credential: the link lets whoever holds it submit a response as the contact. The API key therefore needs read & write access to the workspace; a read-only key, or a key restricted from this survey, is rejected with 401.",
   requestParams: {
     path: ZContactLinkParams,
     query: ZContactLinkQuery,

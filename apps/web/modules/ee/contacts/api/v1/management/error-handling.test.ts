@@ -59,10 +59,16 @@ interface HandlerResult {
   error?: unknown;
 }
 
-type RouteHandler = (params: { authentication: TAuthenticationApiKey }) => Promise<HandlerResult>;
+type RouteHandler = (params: {
+  authentication: TAuthenticationApiKey;
+  req: { nextUrl: URL };
+}) => Promise<HandlerResult>;
 
 const invokeRoute = (route: unknown): Promise<HandlerResult> => {
-  return (route as RouteHandler)({ authentication });
+  return (route as RouteHandler)({
+    authentication,
+    req: { nextUrl: new URL("http://localhost/api/v1/management/contacts") },
+  });
 };
 
 const invokePost = (route: unknown, body: unknown): Promise<HandlerResult> => {

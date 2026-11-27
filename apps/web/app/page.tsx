@@ -3,7 +3,7 @@ import type { Session } from "@formbricks/types/auth";
 import { getOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
 import { getOnboardingRedirectPath } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import ClientWorkspaceRedirect from "@/app/ClientWorkspaceRedirect";
-import { getIsFreshInstance } from "@/lib/instance/service";
+import { getUnauthenticatedRootRedirectPath } from "@/app/middleware/root-redirect";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
@@ -36,10 +36,10 @@ const collectWorkspaceIds = async (
 
 const Page = async () => {
   const session: Session | null = await getSession();
-  const isFreshInstance = await getIsFreshInstance();
 
+  // Proxy redirects a visitor without a session before this renders; this is the fallback.
   if (!session) {
-    return redirect(isFreshInstance ? "/setup/intro" : "/auth/login");
+    return redirect(await getUnauthenticatedRootRedirectPath());
   }
 
   const user = await getUser(session.user.id);

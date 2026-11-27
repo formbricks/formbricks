@@ -1,79 +1,110 @@
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyElement } from "@formbricks/types/surveys/elements";
 import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
+import { isValidHTML } from "@/lib/html-utils";
 import { getLocalizedValue } from "@/lib/i18n";
 
-// Extracts the ID of recall question from a string containing the "recall" pattern.
-const extractId = (text: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9_-]+)/;
-  const match = text.match(pattern);
-  return match?.[1] ?? null;
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
 };
 
-// Extracts the fallback value from a string containing the "fallback" pattern.
-// An index scan, not `/fallback:([^#]*)#/`: that pattern is O(N^2) on a long run of `fallback:`
-// with no `#` after it, because the engine rescans to the end from every occurrence. Identical
-// result — `[^#]*` cannot cross a `#`, so the regex ends at the first `#` after the FIRST
-// `fallback:`, and if none follows that one none follows a later one either.
-const FALLBACK_MARKER = "fallback:";
+const escapeHtml = (value: string): string => value.replaceAll(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 
-const extractFallbackValue = (text: string): string => {
-  const markerStart = text.indexOf(FALLBACK_MARKER);
-  if (markerStart === -1) return "";
+/**
+ * The entities an author's fallback picks up when the editor serializes the rich-text template to HTML
+ * (`R&D` is stored as `R&amp;D`). Named entities beyond these, and numeric ones, are decoded too; anything
+ * unrecognised is left as typed.
+ */
+const NAMED_ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 
-  const valueStart = markerStart + FALLBACK_MARKER.length;
-  const valueEnd = text.indexOf("#", valueStart);
-  return valueEnd === -1 ? "" : text.slice(valueStart, valueEnd);
+const decodeStoredEntities = (value: string): string =>
+  value.replaceAll(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (entity, body: string) => {
+    if (body.startsWith("#")) {
+      const hex = body[1] === "x" || body[1] === "X";
+      const code = Number.parseInt(body.slice(hex ? 2 : 1), hex ? 16 : 10);
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+    }
+    return NAMED_ENTITIES[body.toLowerCase()] ?? entity;
+  });
+
+/**
+ * `"rich"` (default): the result is rendered as a headline or subheader, which treats it as HTML when it
+ * parses as HTML. `"text"`: the result is used as plain text or a URL (redirect link, button label) and
+ * values are substituted as they are; HTML-escaping there would show entities literally.
+ */
+export type TRecallOutput = "rich" | "text";
+
+/** A recall token: `#recall:<id>/fallback:<text>#`. */
+const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/g;
+
+const resolveRecallValue = (
+  recallItemId: string,
+  rawFallback: string,
+  responseData: TResponseData,
+  variables: TResponseVariables,
+  languageCode: string
+): { value: string; usedFallback: boolean } => {
+  const fallback = rawFallback.replaceAll("nbsp", " ").trim();
+  let value: string | null = null;
+
+  // Fetching value from variables based on recallItemId
+  if (variables[recallItemId] !== undefined) {
+    value = String(variables[recallItemId]);
+  }
+
+  // Fetching value from responseData or attributes based on recallItemId
+  if (responseData[recallItemId] !== undefined) {
+    value = (responseData[recallItemId] as string) ?? fallback;
+  }
+
+  // Additional value formatting if it exists
+  if (value) {
+    if (isValidDateString(value)) {
+      value = formatDateWithOrdinal(new Date(value), languageCode);
+    } else if (Array.isArray(value)) {
+      value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
+    }
+  }
+
+  const resolved = value?.toString();
+  return resolved ? { value: resolved, usedFallback: false } : { value: fallback, usedFallback: true };
 };
 
-// Extracts the complete recall information (ID and fallback) from a headline string.
-const extractRecallInfo = (headline: string, id?: string): string | null => {
-  const idPattern = id ?? "[A-Za-z0-9_-]+";
-  const pattern = new RegExp(String.raw`#recall:(${idPattern})\/fallback:([^#]*)#`);
-  const match = headline.match(pattern);
-  return match ? match[0] : null;
-};
-
+/**
+ * Recalled values come from respondents and from the URL (hidden fields), so they must never become
+ * markup. In a rich-text template, which is decided on the template BEFORE substitution, values are
+ * HTML-escaped. A plain-text template stays plain so entities are not shown literally; if a value would
+ * nevertheless make the result parse as HTML, the escaped result is wrapped in a paragraph so it
+ * renders as the text that was typed, through the sanitiser, instead of as attacker markup.
+ * One pass over the template: a substituted value is never scanned for recall tokens again, so a value
+ * that spells a token can neither loop forever nor pull in another field.
+ */
 export const replaceRecallInfo = (
   text: string,
   responseData: TResponseData,
   variables: TResponseVariables,
-  languageCode: string = "en-US"
+  languageCode: string = "en-US",
+  output: TRecallOutput = "rich"
 ): string => {
-  let modifiedText = text;
+  if (!text.includes("recall:")) return text;
 
-  while (modifiedText.includes("recall:")) {
-    const recallInfo = extractRecallInfo(modifiedText);
-    if (!recallInfo) break; // Exit the loop if no recall info is found
+  const escapeValues = output === "rich" && isValidHTML(text);
+  // A replacer function: a string replacement would interpret `$&` and `$1` in the value.
+  const modifiedText = text.replace(RECALL_TOKEN, (_token, id: string, rawFallback: string) => {
+    const resolved = resolveRecallValue(id, rawFallback, responseData, variables, languageCode);
+    if (!escapeValues) return resolved.value;
+    // The fallback is authored text stored inside the template's HTML, so it arrives HTML-escaped: decode
+    // it once before the one escape, or `R&D` written in the editor renders as `R&amp;D`. A recalled
+    // value was never escaped, so it keeps its single escape.
+    return escapeHtml(resolved.usedFallback ? decodeStoredEntities(resolved.value) : resolved.value);
+  });
 
-    const recallItemId = extractId(recallInfo);
-    if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
-
-    const fallback = extractFallbackValue(recallInfo).replace(/nbsp/g, " ").trim();
-    let value: string | null = null;
-
-    // Fetching value from variables based on recallItemId
-    if (variables[recallItemId] !== undefined) {
-      value = String(variables[recallItemId]);
-    }
-
-    // Fetching value from responseData or attributes based on recallItemId
-    if (responseData[recallItemId] !== undefined) {
-      value = (responseData[recallItemId] as string) ?? fallback;
-    }
-
-    // Additional value formatting if it exists
-    if (value) {
-      if (isValidDateString(value)) {
-        value = formatDateWithOrdinal(new Date(value), languageCode);
-      } else if (Array.isArray(value)) {
-        value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
-      }
-    }
-
-    // Replace the recallInfo in the text with the obtained or fallback value
-    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value shows the fallback too
-    modifiedText = modifiedText.replace(recallInfo, value?.toString() || fallback);
+  if (output === "rich" && !escapeValues && modifiedText !== text && isValidHTML(modifiedText)) {
+    return `<p>${escapeHtml(modifiedText)}</p>`;
   }
 
   return modifiedText;

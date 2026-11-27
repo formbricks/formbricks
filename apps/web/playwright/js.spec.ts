@@ -279,8 +279,8 @@ test.describe("JS Package Test", async () => {
     await expect(page.getByText("Much higher response rates!").first()).toBeVisible();
     await expect(page.getByText("Make this end to end test").first()).toBeVisible();
 
-    // Our own CSP (next.config.mjs) in the browser: next-config-csp.test.ts checks the header text, but
-    // only a browser shows what it blocks — like Sentry Replay's blob: worker (ENG-3194), or Zod's eval
+    // Our own CSP (built per request in proxy.ts) in the browser: lib/csp tests check the header text,
+    // but only a browser shows what it blocks — like Sentry Replay's blob: worker (ENG-3194), or Zod's eval
     // probe on every app page (ENG-3969).
     await test.step("an app page and a link survey raise no violation under our own CSP", async () => {
       await expectNoCspViolations(page, cspConsoleMessages);

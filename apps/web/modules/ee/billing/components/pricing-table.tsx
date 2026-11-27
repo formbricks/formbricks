@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
+import { type PaymentIntent, type StripeError, type Stripe as StripeJs, loadStripe } from "@stripe/stripe-js";
 import type { TFunction } from "i18next";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
@@ -29,6 +29,7 @@ import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/c
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { getActionErrorMessage, getUpgradeConfirmationErrorMessage } from "../lib/action-error-message";
 import {
   changeBillingPlan,
   createBillingPortalSession,
@@ -187,40 +188,6 @@ const getPlanChangeSuccessMessage = (
   }
 
   return t("workspace.settings.billing.plan_change_applied");
-};
-
-const getActionErrorMessage = (serverError: string, t: (key: string) => string) => {
-  if (serverError === "mixed_interval_checkout_unsupported") {
-    return t("workspace.settings.billing.yearly_checkout_unavailable");
-  }
-
-  if (serverError === "payment_method_required") {
-    return t("workspace.settings.billing.payment_method_required");
-  }
-
-  // Trial conversion charges synchronously (payment_behavior: "error_if_incomplete"), so a card
-  // needing 3DS errors out with nothing left to confirm. Say so instead of a generic failure.
-  if (serverError === "card_authentication_required") {
-    return t("workspace.settings.billing.payment_authentication_failed");
-  }
-
-  // Stripe refused the change because the customer still holds billing in another currency (ENG-3370).
-  if (serverError === "billing_currency_conflict") {
-    return t("workspace.settings.billing.billing_currency_conflict");
-  }
-
-  // Replacing a legacy plan charges the new subscription to a card; other saved methods can't pay it.
-  if (serverError === "card_payment_method_required") {
-    return t("workspace.settings.billing.card_payment_method_required");
-  }
-
-  // Stripe can't place the customer for VAT, so a paid change is refused until the billing address
-  // is fixed (ENG-4033).
-  if (serverError === "tax_location_required") {
-    return t("workspace.settings.billing.tax_location_required");
-  }
-
-  return t("common.something_went_wrong_please_try_again");
 };
 
 const isCurrentPlanSelection = (
@@ -449,7 +416,11 @@ export const PricingTable = ({
   // On-session 3D Secure for the upgrade invoice PaymentIntent (uses the saved default card).
   const confirmUpgradeSca = async (
     clientSecret: string
-  ): Promise<{ status: "succeeded" | "processing" | "failed"; paymentIntentId: string | null }> => {
+  ): Promise<{
+    status: "succeeded" | "processing" | "failed";
+    paymentIntentId: string | null;
+    stripeError?: StripeError | PaymentIntent.LastPaymentError | null;
+  }> => {
     if (!stripePublishableKey) {
       return { status: "failed", paymentIntentId: null };
     }
@@ -459,7 +430,7 @@ export const PricingTable = ({
     }
     const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret);
     if (error) {
-      return { status: "failed", paymentIntentId: error.payment_intent?.id ?? null };
+      return { status: "failed", paymentIntentId: error.payment_intent?.id ?? null, stripeError: error };
     }
     if (paymentIntent?.status === "succeeded") {
       return { status: "succeeded", paymentIntentId: paymentIntent.id };
@@ -467,7 +438,12 @@ export const PricingTable = ({
     if (paymentIntent?.status === "processing") {
       return { status: "processing", paymentIntentId: paymentIntent.id };
     }
-    return { status: "failed", paymentIntentId: paymentIntent?.id ?? null };
+    // Not confirmed and no error: a decline is recorded on the PaymentIntent.
+    return {
+      status: "failed",
+      paymentIntentId: paymentIntent?.id ?? null,
+      stripeError: paymentIntent?.last_payment_error,
+    };
   };
 
   // Completes any required SCA; returns whether the upgrade is applied (succeeded/processing).
@@ -496,7 +472,7 @@ export const PricingTable = ({
     }
     return {
       applied: false,
-      message: t("workspace.settings.billing.payment_authentication_failed"),
+      message: getUpgradeConfirmationErrorMessage(outcome.stripeError, t),
     };
   };
 

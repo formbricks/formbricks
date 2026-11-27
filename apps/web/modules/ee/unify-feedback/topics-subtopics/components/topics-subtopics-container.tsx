@@ -321,9 +321,10 @@ export const TopicsSubtopicsContainer = ({
           </Alert>
         )}
 
-        {/* A run is in progress but its status poll is failing. Polling self-recovers (see
-         * useTaxonomyRun), so surface a soft warning + manual retry rather than a hard error. A *gone* run
-         * clears `isRunning` above, so this does not offer a retry that can only 404 again. */}
+        {/* A run is in progress but its status poll is failing. Polling self-recovers from a 5xx or a
+         * network failure, and stops on a 401/403 until a refocus or this Retry (see useTaxonomyRun), so
+         * surface a soft warning + manual retry rather than a hard error. A *gone* run clears `isRunning`
+         * above, so this does not offer a retry that can only 404 again. */}
         {isRunning && runQuery.isError && (
           <Alert variant="warning" size="small">
             <AlertTitle>{t("common.something_went_wrong_please_try_again")}</AlertTitle>

@@ -5,7 +5,7 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { ZUserPassword } from "@formbricks/types/user";
+import { ZUserCurrentPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { setupTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -14,7 +14,7 @@ import { PasswordInput } from "@/modules/ui/components/password-input";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
 const ZConfirmPasswordFormState = z.object({
-  password: ZUserPassword,
+  password: ZUserCurrentPassword,
 });
 type TConfirmPasswordFormState = z.infer<typeof ZConfirmPasswordFormState>;
 

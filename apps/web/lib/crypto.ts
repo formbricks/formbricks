@@ -40,7 +40,28 @@ export const symmetricEncrypt = (text: string, key: string) => {
  * @param key Key used to decrypt value must be 32 bytes for AES256 encryption algorithm
  */
 
+let legacyCbcWarned = false;
+
+/**
+ * LEGACY, decrypt-only. AES-256-CBC carries no authentication tag, so a tampered ciphertext can decrypt
+ * to garbage (or leak through padding errors) instead of being refused.
+ *
+ * Nothing writes this format any more: `symmetricEncrypt` has produced AES-256-GCM since #5485. What can
+ * still hold it is data written before that change and never rewritten (two-factor secrets and backup
+ * codes, the Notion access token, cutover re-encoding). Every call site decrypts a value read from the
+ * database or taken from a claim of an already-verified JWT / HMAC-checked link, never a raw
+ * request value, which is what keeps the oracle out of an attacker's reach today.
+ *
+ * Migration plan: the first use per process logs a warning, so a deployment's logs show whether any
+ * CBC payload is still being read. Once a release has gone by with no such line, re-encrypt the stored
+ * values to GCM in a migration and delete this function and the two-part branch in `symmetricDecrypt`.
+ */
 const symmetricDecryptV1 = (text: string, key: string): string => {
+  if (!legacyCbcWarned) {
+    legacyCbcWarned = true;
+    logger.warn("Decrypting a legacy unauthenticated AES-256-CBC payload; re-encrypt it to AES-256-GCM");
+  }
+
   const _key = Buffer.from(key, BUFFER_ENCODING);
 
   const components = text.split(":");
@@ -75,8 +96,8 @@ const symmetricDecryptV2 = (text: string, key: string): string => {
  *
  * If the payload contains exactly one “:”, it is treated as a legacy V1 format
  * and `symmetricDecryptV1` is invoked. Otherwise, it attempts a V2 GCM decryption
- * via `symmetricDecryptV2`, falling back to V1 on failure (e.g., authentication
- * errors or bad formats).
+ * via `symmetricDecryptV2`. A GCM failure is rethrown: it never falls back to the
+ * unauthenticated CBC path.
  *
  * @param payload - The encrypted string to decrypt.
  * @param key - The secret key used for decryption.
@@ -148,6 +169,13 @@ export const constantTimeEqual = (a: string, b: string, encoding: BufferEncoding
 
   return aBytes.length === bBytes.length && timingSafeEqual(aBytes, bBytes);
 };
+
+/**
+ * Constant-time check that a stored API-key lookup hash (hex SHA-256) equals the one computed from the
+ * presented secret. A missing stored hash (legacy keys) never matches.
+ */
+export const isApiKeyLookupHashMatch = (stored: string | null | undefined, computed: string): boolean =>
+  !!stored && constantTimeEqual(stored, computed, "hex");
 
 /**
  * Parse a v2 API key format: fbk_{secret}

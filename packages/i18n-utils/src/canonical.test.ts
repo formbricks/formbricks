@@ -62,6 +62,22 @@ describe("normalizeLanguageCode", () => {
     expect(normalizeLanguageCode(undefined)).toBeNull();
     expect(normalizeLanguageCode("not a language")).toBeNull();
   });
+
+  // The static map is an object literal, so an inherited member name must not count as a match
+  // (ENG-3726): "constructor" used to return Object, and callers then called `.toLowerCase()` on it.
+  test.each(["constructor", "toString", "__proto__", "hasOwnProperty", "valueOf", "isPrototypeOf"])(
+    "does not resolve the Object.prototype member %j",
+    (input) => {
+      expect(normalizeLanguageCode(input)).toBeNull();
+    }
+  );
+
+  test("never returns a non-string for any Object.prototype member name", () => {
+    for (const name of Object.getOwnPropertyNames(Object.prototype)) {
+      const result = normalizeLanguageCode(name);
+      expect(result === null || typeof result === "string", name).toBe(true);
+    }
+  });
 });
 
 describe("LANGUAGE_CANONICAL_MAP / CANONICAL_LANGUAGE_CODES", () => {

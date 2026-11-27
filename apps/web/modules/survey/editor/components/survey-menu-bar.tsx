@@ -36,6 +36,7 @@ import {
 import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
 import { getInvalidSurveyTargets, isFlowTabIssue } from "@/modules/survey/editor/lib/invalid-survey-targets";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
+import { describeMissingLabelIssue } from "@/modules/survey/editor/lib/missing-label-message";
 import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
@@ -454,6 +455,15 @@ export const SurveyMenuBar = ({
       return;
     }
 
+    // A label missing in the default language or a translation: the schema's message is English for
+    // API callers, so word it in the editor's language instead (ENG-2621).
+    const missingLabel = describeMissingLabelIssue(firstError, t, locale);
+    if (missingLabel) {
+      toast.error(missingLabel.message, { className: "w-fit max-w-md!" });
+      if (missingLabel.hasLanguageList) setActiveId("language");
+      return;
+    }
+
     if (firstError.code === "custom") {
       reportCustomIssue(firstError);
       return;
@@ -712,7 +722,6 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      // A copy without draft flags or legacy questions; the editor's survey is not mutated.
       const surveyToSave = buildSurveySavePayload(localSurvey);
 
       await waitOutAutoSave();
@@ -924,8 +933,8 @@ export const SurveyMenuBar = ({
   };
 
   return (
-    <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
-      <div className="flex h-full items-center gap-x-2 whitespace-nowrap">
+    <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-3">
+      <div className="flex h-full min-w-0 flex-wrap items-center gap-2 whitespace-nowrap">
         {!isCxMode && (
           <Button
             size="sm"
@@ -962,7 +971,7 @@ export const SurveyMenuBar = ({
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
+      <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2 sm:ms-auto sm:mt-0">
         <AutoSaveIndicator
           isDraft={localSurvey.status === "draft"}
           // Scheduled drafts are not auto-saved (the interval is torn down), so the badge says paused.

@@ -72,8 +72,7 @@ export const normalizeRoutePathname = (url: string): string | null => {
  * Scope is narrower than the name: `sendVerificationEmail` is the only consumer, and its only callers
  * are `startSsoRecovery` and the SSO-recovery branch of `POST /api/internal/verification-emails`. Sign-up
  * verification is Better Auth's own flow on `EMAIL_VERIFICATION_TTL_SECONDS` (1 hour) and is untouched.
- * No email copy quotes a duration, so shortening this needs no rewording — the template already offers
- * the resend link for an expired one.
+ * The shared verification email directs recipients to request another link if theirs expires.
  */
 export const VERIFICATION_LINK_TTL_SECONDS = 60 * 15;
 export const VERIFICATION_REQUEST_PURPOSES = ["email_verification", "sso_recovery"] as const;

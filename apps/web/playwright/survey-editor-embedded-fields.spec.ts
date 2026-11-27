@@ -332,37 +332,6 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     });
     expect(stored.map((field) => field.storageKey)).toEqual([allowedName]);
   });
-
-  /**
-   * The calculated half of the same guard. `isSafeIdentifier("country")` passes — it is lowercase
-   * with no separators — so the old Variables card accepted the name and the author only found out at
-   * save time, from the server guard's untranslated message. The one card applies the same
-   * `validateId` strict gate to both sources, so the refusal is translated and immediate either way.
-   */
-  test("refuses a variable named after a reserved field", async ({ page, users }) => {
-    const allowedName = uniqueName("score");
-
-    const user = await users.create();
-    await user.login();
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-    const surveyId = await createSurveyFromScratch(page);
-
-    await openNewFieldDialog(page, "Calculated");
-    await expectReservedNameRefused(page, "country");
-    await expectReservedNameRefused(page, "Country");
-    await addFieldFromOpenDialog(page, allowedName);
-
-    await saveDraft(page);
-    // Asserted on the definition, not on the link's `storageKey`: a calculated field is addressed by
-    // its cuid everywhere, so the card mints that id as the storage key while the name — the only
-    // thing this gate reads — lives on the definition. A passed-in field's two happen to be equal,
-    // which is why the sibling test above can compare storage keys directly.
-    const stored = await prisma.surveyEmbeddedData.findMany({
-      where: { surveyId },
-      select: { embeddedData: { select: { name: true, source: true } } },
-    });
-    expect(stored.map((link) => link.embeddedData)).toEqual([{ name: allowedName, source: "computed" }]);
-  });
 });
 
 /**

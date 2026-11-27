@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
 import { AI_MAX_TIMEOUT_MULTIPLIER } from "@formbricks/types/ai-timeout";
 import { isValidIanaTimeZone } from "@formbricks/types/common";
+import { SETUP_TOKEN_MAX_LENGTH, SETUP_TOKEN_MIN_LENGTH } from "@formbricks/types/instance";
 import { throwEnvValidationError } from "./env-validation-error";
 
 const ZActiveAIProvider = z.enum(AI_PROVIDERS);
@@ -603,6 +604,11 @@ const parsedEnv = createEnv({
     AI_PROVIDER: ZActiveAIProvider.optional(),
     AI_MODEL: z.string().optional(),
     AIRTABLE_CLIENT_ID: z.string().optional(),
+    // Build-time asset host (next.config.mjs `assetPrefix`, inlined through its `env`); the page CSP allows it.
+    ASSET_PREFIX_URL: z.string().optional(),
+    // The AWS SDK's own region variable, which the storage client falls back to without S3_REGION. Read
+    // only so the page CSP allows the bucket the browser uploads to.
+    AWS_REGION: z.string().optional(),
     AZUREAD_CLIENT_ID: z.string().optional(),
     AZUREAD_CLIENT_SECRET: z.string().optional(),
     AZUREAD_TENANT_ID: z.string().optional(),
@@ -774,11 +780,38 @@ const parsedEnv = createEnv({
     PASSWORD_HIBP_CHECK_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z.coerce.number().int().min(5).max(120).optional().default(30),
+    // Blank counts as unset, so `SETUP_TOKEN=` in an env file keeps the open setup instead of failing boot.
+    // Compared as given, never trimmed: leading or trailing whitespace fails boot instead, because the
+    // single-line setup field can never send it (a Secret made with `echo` carries a trailing newline).
+    // The bounds are shared with the sign-up request schema, so a configured token can always be presented.
+    SETUP_TOKEN: z.preprocess(
+      emptyStringToUndefined,
+      z
+        .string()
+        .min(SETUP_TOKEN_MIN_LENGTH, {
+          error: `SETUP_TOKEN must be at least ${SETUP_TOKEN_MIN_LENGTH} characters (generate one with \`openssl rand -hex 16\`)`,
+        })
+        .max(SETUP_TOKEN_MAX_LENGTH, {
+          error: `SETUP_TOKEN must be at most ${SETUP_TOKEN_MAX_LENGTH} characters`,
+        })
+        .refine((token) => token.trim() === token, {
+          error:
+            "SETUP_TOKEN must not start or end with whitespace (a trailing newline from `echo` is a common cause)",
+        })
+        .refine((token) => !/[\r\n]/.test(token), {
+          error: "SETUP_TOKEN must not contain line breaks (the setup form is a single-line field)",
+        })
+        .optional()
+    ),
     PRIVACY_URL: z
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
     RATE_LIMITING_DISABLED: z.enum(["1", "0"]).optional(),
+    // Set to 1 only when an Envoy Gateway (or equivalent edge limiter) enforces the policies mirrored in
+    // modules/core/rate-limit/envoy-rate-limit-coverage.ts: the Helm chart sets it only when the
+    // management, webhooks, client, v2 client and storage route families all have a route and a policy.
+    ENVOY_RATE_LIMITING_ENABLED: z.enum(["1", "0"]).optional(),
     // Number of reverse proxies in front of the app whose X-Forwarded-For entries can be believed.
     // Unset falls back to 1 (see TRUSTED_PROXY_HOP_COUNT in lib/constants.ts); an explicit 0 trusts no
     // forwarding header at all. See resolveClientIp in lib/utils/client-ip.ts.
@@ -881,6 +914,8 @@ const parsedEnv = createEnv({
     AI_PROVIDER: process.env.AI_PROVIDER,
     AI_MODEL: process.env.AI_MODEL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
+    ASSET_PREFIX_URL: process.env.ASSET_PREFIX_URL,
+    AWS_REGION: process.env.AWS_REGION,
     AZUREAD_CLIENT_ID: process.env.AZUREAD_CLIENT_ID,
     AZUREAD_CLIENT_SECRET: process.env.AZUREAD_CLIENT_SECRET,
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
@@ -1004,8 +1039,10 @@ const parsedEnv = createEnv({
     PASSWORD_HIBP_CHECK_DISABLED: process.env.PASSWORD_HIBP_CHECK_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: process.env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
+    SETUP_TOKEN: process.env.SETUP_TOKEN,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
+    ENVOY_RATE_LIMITING_ENABLED: process.env.ENVOY_RATE_LIMITING_ENABLED,
     TRUSTED_PROXY_HOP_COUNT: process.env.TRUSTED_PROXY_HOP_COUNT,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     S3_ACCESS_KEY: process.env.S3_ACCESS_KEY,

@@ -11,33 +11,9 @@ const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 jiti("./lib/env");
 
-const LOOPBACK_WILDCARD_ORIGINS = LOOPBACK_HOSTS.map((host) => `http://${host}:*`);
-
-const getLoopbackOriginVariants = (value) => {
-  if (!value) {
-    return [];
-  }
-
-  try {
-    const url = new URL(value);
-
-    if (!["http:", "https:"].includes(url.protocol) || !LOOPBACK_HOSTS.includes(url.hostname)) {
-      return [];
-    }
-
-    const portSuffix = url.port ? `:${url.port}` : "";
-    const alternateHost = url.hostname === "localhost" ? "127.0.0.1" : "localhost";
-
-    return [
-      `${url.protocol}//${url.hostname}${portSuffix}`,
-      `${url.protocol}//${alternateHost}${portSuffix}`,
-    ];
-  } catch {
-    return [];
-  }
-};
-
-const getUniqueValues = (values) => [...new Set(values.filter(Boolean))];
+// The policy of the paths proxy.ts does not run on (see the first `headers()` rules).
+const ASSET_PATH_CSP =
+  "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'";
 
 // Shared by every cacheable `/js/*` rule below (the bundles, the locale JSON, the signature font), so a
 // change to how they are cached or shared cross-origin lands on all of them at once.
@@ -211,20 +187,6 @@ const nextConfig = {
     ];
   },
   async headers() {
-    const isProduction = process.env.NODE_ENV === "production";
-    const scriptSrcUnsafeEval = isProduction ? "" : " 'unsafe-eval'";
-    const allowLoopbackSources = !isProduction || process.env.E2E_TESTING === "1";
-    const devLoopbackSources = allowLoopbackSources
-      ? getUniqueValues([
-          ...LOOPBACK_WILDCARD_ORIGINS,
-          ...getLoopbackOriginVariants(process.env.WEBAPP_URL),
-          ...getLoopbackOriginVariants(process.env.BETTER_AUTH_URL),
-          ...getLoopbackOriginVariants(process.env.NEXTAUTH_URL),
-          ...getLoopbackOriginVariants(process.env.S3_ENDPOINT_URL),
-        ])
-      : [];
-    const devLoopbackSourceList = devLoopbackSources.length > 0 ? ` ${devLoopbackSources.join(" ")}` : "";
-
     // Upload extensions whose browser viewer needs `sandbox` off (see the `/storage` rules below). The
     // media list must match the audio/video types in `mimeTypes` (packages/types/storage.ts), which
     // lib/next-config-csp.test.ts checks. Header matching ignores case unless
@@ -236,49 +198,45 @@ const nextConfig = {
     const UPLOADED_PDF_EXTENSION = anyCase("pdf");
     const UPLOADED_FILE_UNSANDBOXED_EXTENSIONS = `${UPLOADED_PDF_EXTENSION}|${UPLOADED_MEDIA_EXTENSIONS}`;
 
-    // `worker-src` must stay explicit: without it browsers fall back to `script-src`, which has no
-    // `blob:`, and blocks the `blob:` worker Sentry Session Replay compresses recordings in (ENG-3194).
-    const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data:${devLoopbackSourceList} https:; font-src 'self' data: https:; connect-src 'self'${devLoopbackSourceList} https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
-
     return [
+      // Pages get their Content-Security-Policy from proxy.ts, built per request around a nonce
+      // (lib/csp/content-security-policy.ts), including `frame-ancestors`. X-Frame-Options mirrors it for
+      // browsers without CSP framing support.
       {
-        // Apply X-Frame-Options and restricted frame-ancestors to all routes except those starting with /s/ or /c/
+        // The paths proxy.ts's matcher skips (static assets) get no nonce policy, yet a missing one still
+        // renders the app's 404 page. This policy runs none of its inline code (the page stays readable,
+        // unhydrated) and loads only from this origin. Asset responses (scripts, styles, fonts, images)
+        // ignore a CSP. Mirrors the matcher, so no path gets two policies.
+        source: "/:prefix(js|css|images|fonts|icons|public|animated-bgs)/:path*",
+        headers: [{ key: "Content-Security-Policy", value: ASSET_PATH_CSP }],
+      },
+      {
+        source: "/_next/:kind(static|image)/:path*",
+        headers: [{ key: "Content-Security-Policy", value: ASSET_PATH_CSP }],
+      },
+      {
+        source: String.raw`/:file(favicon\.ico|sitemap\.xml|robots\.txt)`,
+        headers: [{ key: "Content-Security-Policy", value: ASSET_PATH_CSP }],
+      },
+      {
+        // Surveys (/s/*) and contact survey links (/c/*) are embedded in iframes on any domain.
         source: "/((?!s/|c/).*)",
         headers: [
           {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
           },
-          {
-            key: "Content-Security-Policy",
-            value: `${cspBase}; frame-ancestors 'self'`,
-          },
-        ],
-      },
-      {
-        // Allow surveys (/s/*) and contact survey links (/c/*) to be embedded in iframes on any domain
-        // Note: These routes need frame-ancestors * to support embedding surveys in customer websites
-        source: "/(s|c)/:path*",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value: `${cspBase}; frame-ancestors *`,
-          },
         ],
       },
       {
         // The SSO recovery confirmation (ENG-7395) is a one-click account change, so it may not be framed
         // at all, same origin included: a page on this origin that framed it could steer the click.
-        // After the catch-all above, so these values replace its SAMEORIGIN and `frame-ancestors 'self'`.
+        // After the catch-all above, so this value replaces its SAMEORIGIN.
         source: "/sso-recovery/:path*",
         headers: [
           {
             key: "X-Frame-Options",
             value: "DENY",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: `${cspBase}; frame-ancestors 'none'`,
           },
         ],
       },
@@ -401,17 +359,15 @@ const nextConfig = {
           },
         ],
       },
-      // Favicon files - long cache since they rarely change
+      // Favicon files - long cache since they rarely change. No CORS header: browsers load icons
+      // through <link rel="icon"> and <img>, which never need one, and a wildcard origin is flagged
+      // by scanners as a cross-domain misconfiguration (OWASP ZAP 10098).
       {
         source: "/favicon/(.*)",
         headers: [
           {
             key: "Cache-Control",
             value: "public, max-age=2592000, s-maxage=31536000, immutable",
-          },
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*",
           },
         ],
       },
@@ -423,15 +379,12 @@ const nextConfig = {
             key: "Cache-Control",
             value: "public, max-age=2592000, s-maxage=31536000, immutable",
           },
-          {
-            key: "Access-Control-Allow-Origin",
-            value: "*",
-          },
         ],
       },
-      // SVG files (icons, logos) - long cache since they're usually static
+      // SVG files (icons, logos) - long cache since they're usually static. Skips /favicon/, whose
+      // rule above deliberately sends no CORS header; this later rule would otherwise add it back.
       {
-        source: String.raw`/(.*)\.svg`,
+        source: String.raw`/((?!favicon/).*)\.svg`,
         headers: [
           {
             key: "Cache-Control",
@@ -572,6 +525,9 @@ const nextConfig = {
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
+    // `assetPrefix` above is fixed at build time, so the page CSP (lib/csp) reads the same build value
+    // rather than whatever the runtime environment holds.
+    ASSET_PREFIX_URL: process.env.ASSET_PREFIX_URL,
   },
 };
 

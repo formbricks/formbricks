@@ -5,7 +5,9 @@ import {
   ssoRecoveryAfterHandler,
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { auditFailedAuthAfter } from "./better-auth-observability";
+import { settleSignInBudgetAfterHandler } from "./better-auth-sign-in-budget";
 import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
+import { maskUnverifiedSignInAfterHandler } from "./better-auth-unverified-sign-in";
 import { verificationAutoSignInAfterHandler } from "./better-auth-verification-autosignin";
 import { revokeTokensBeyondConsentAfterHandler } from "./oauth-grant-revocation";
 import { requireOAuthConsentOnRefreshAfterHandler } from "./oauth-refresh-check";
@@ -18,11 +20,15 @@ import { requireOAuthConsentOnRefreshAfterHandler } from "./oauth-refresh-check"
  * it regardless of order — keeping it first is deliberate future-proofing: if the failed-auth audit is
  * ever extended to SSO callback paths, it must still fire before the redirect throws.
  * `ssoRecoveryAfterHandler` runs first (its account-not-linked redirect also throws, and is mutually
- * exclusive with the personal-email one). Extracted from auth.ts so the order is unit-testable.
+ * exclusive with the personal-email one). `maskUnverifiedSignInAfterHandler` comes last: it replaces the
+ * response, and the audit and the sign-in budget before it must see the real
+ * `EMAIL_NOT_VERIFIED` code (ENG-2099). Extracted from auth.ts so the order is unit-testable.
  */
-export const runAfterAuthHooks = async (ctx: AuthHookContext): Promise<void> => {
+export const runAfterAuthHooks = async (ctx: AuthHookContext): Promise<Response | undefined> => {
   await ssoRecoveryAfterHandler(ctx);
   await auditFailedAuthAfter(ctx);
+  // SEC-18: give back the sign-in budget unit unless the credentials failed (ENG-2099: unverified counts).
+  await settleSignInBudgetAfterHandler(ctx);
   // ENG-1824: heal legacy 2FA enrollments (no `TwoFactor` row) on successful password sign-in, before
   // the 2FA challenge. Only touches `/sign-in/email`, so it's unaffected by the SSO-only redirect below.
   await twoFactorBackfillAfterHandler(ctx);
@@ -37,4 +43,8 @@ export const runAfterAuthHooks = async (ctx: AuthHookContext): Promise<void> => 
   await requireOAuthConsentOnRefreshAfterHandler(ctx);
   await revokeTokensBeyondConsentAfterHandler(ctx);
   await blockedSignupDomainRedirectAfterHandler(ctx);
+  // ENG-2099: a correct password on an unverified account answers like every other failed sign-in. Only
+  // touches `/sign-in/email`, so it is path-disjoint from the SSO redirect above; last because the response
+  // it returns replaces the request's.
+  return maskUnverifiedSignInAfterHandler(ctx);
 };

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { isSecureCredentialUrl } from "@formbricks/ai";
+import { SETUP_TOKEN_MAX_LENGTH, SETUP_TOKEN_MIN_LENGTH } from "@formbricks/types/instance";
 
 const ORIGINAL_ENV = process.env;
 
@@ -175,6 +176,45 @@ describe("env", () => {
     const { env } = await import("./env");
 
     expect(env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES).toBe(45);
+  });
+
+  test("treats a blank SETUP_TOKEN as unset", async () => {
+    setTestEnv({ SETUP_TOKEN: "" });
+    const { env } = await import("./env");
+    expect(env.SETUP_TOKEN).toBeUndefined();
+  });
+
+  test("accepts a SETUP_TOKEN at both bounds", async () => {
+    for (const token of ["t".repeat(SETUP_TOKEN_MIN_LENGTH), "t".repeat(SETUP_TOKEN_MAX_LENGTH)]) {
+      vi.resetModules();
+      setTestEnv({ SETUP_TOKEN: token });
+      const { env } = await import("./env");
+      expect(env.SETUP_TOKEN).toBe(token);
+    }
+  });
+
+  test("refuses a SETUP_TOKEN shorter than the minimum", async () => {
+    setTestEnv({ SETUP_TOKEN: "t".repeat(SETUP_TOKEN_MIN_LENGTH - 1) });
+    await expect(import("./env")).rejects.toThrow("SETUP_TOKEN");
+  });
+
+  test("refuses a SETUP_TOKEN longer than the maximum", async () => {
+    setTestEnv({ SETUP_TOKEN: "t".repeat(SETUP_TOKEN_MAX_LENGTH + 1) });
+    await expect(import("./env")).rejects.toThrow("SETUP_TOKEN");
+  });
+
+  // The single-line setup field can never send it, so the instance could not be set up.
+  test.each([
+    ["a trailing newline", `${"t".repeat(SETUP_TOKEN_MIN_LENGTH)}\n`],
+    ["a leading space", ` ${"t".repeat(SETUP_TOKEN_MIN_LENGTH)}`],
+  ])("refuses a SETUP_TOKEN with %s", async (_label, token) => {
+    setTestEnv({ SETUP_TOKEN: token });
+    await expect(import("./env")).rejects.toThrow("whitespace");
+  });
+
+  test.each(["\n", "\r"])("refuses a SETUP_TOKEN with a line break inside (%j)", async (lineBreak) => {
+    setTestEnv({ SETUP_TOKEN: `${"t".repeat(SETUP_TOKEN_MIN_LENGTH)}${lineBreak}${"t".repeat(8)}` });
+    await expect(import("./env")).rejects.toThrow("line breaks");
   });
 
   test("uses the default invite rate limit when env var is not set", async () => {

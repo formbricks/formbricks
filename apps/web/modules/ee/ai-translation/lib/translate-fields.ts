@@ -11,13 +11,14 @@ import {
   AI_TRANSLATION_FIELD_TOO_LONG,
   AI_TRANSLATION_MAX_FIELDS_PER_ACTION,
   AI_TRANSLATION_MAX_FIELD_CHARS,
+  AI_TRANSLATION_MAX_PATH_CHARS,
   AI_TRANSLATION_MODEL_BATCHES_PER_ACTION,
   AI_TRANSLATION_TOO_MANY_FIELDS,
   createTranslationBatches,
 } from "./translation-batches";
 
 export const ZAITranslationField = z.object({
-  path: z.string(),
+  path: z.string().max(AI_TRANSLATION_MAX_PATH_CHARS),
   defaultText: z.string(),
   isRichText: z.boolean(),
 });

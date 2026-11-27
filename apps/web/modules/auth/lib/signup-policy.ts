@@ -1,8 +1,10 @@
 import "server-only";
 import { APIError } from "better-auth/api";
+import { logger } from "@formbricks/logger";
 import { SIGNUP_DISABLED_ERROR_CODE } from "@formbricks/types/errors";
 import { SIGNUP_ENABLED } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
+import { isSetupTokenSatisfied } from "@/lib/instance/setup-token";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
@@ -24,7 +26,8 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
  *
  * Two legitimate ways to be allowed: public sign-up is genuinely open (Cloud / dev / E2E *and* the
  * license permits multiple organizations), or the instance is still fresh, which is the initial
- * administrator completing setup with no invite to show.
+ * administrator completing setup with no invite to show. With `SETUP_TOKEN` configured (ENG-7313) the
+ * second way additionally requires the token the setup form carries.
  *
  * Query cost is deliberate. `SIGNUP_ENABLED` is a derived constant
  * (`IS_FORMBRICKS_CLOUD || IS_DEVELOPMENT || E2E_TESTING`), so testing it is free — do that first and
@@ -33,20 +36,29 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
  * it skips the license lookup and spends exactly one `count`. Evaluating freshness first — as the
  * original fix did — instead made every unauthenticated raw sign-up attempt run `count(*)` on `User`.
  */
-export type TUninvitedSignupAdmission = "open" | "fresh-instance" | "denied";
+export type TUninvitedSignupAdmission = "open" | "fresh-instance" | "setup-token-invalid" | "denied";
 
 /**
  * WHY a reason and not a boolean (ENG-2247): the fresh-instance branch is the one the bootstrap marker
  * gates, and "allowed" alone cannot tell it apart from open sign-up. Marking on plain "allowed" would
  * write the marker for every Cloud sign-up and collide on the second account ever created.
  */
-export const resolveUninvitedSignupAdmission = async (): Promise<TUninvitedSignupAdmission> => {
+export const resolveUninvitedSignupAdmission = async (
+  setupToken?: string
+): Promise<TUninvitedSignupAdmission> => {
   if (SIGNUP_ENABLED && (await getIsMultiOrgEnabled())) return "open";
-  return (await getIsFreshInstance()) ? "fresh-instance" : "denied";
+  if (!(await getIsFreshInstance())) return "denied";
+  // ENG-7313: with `SETUP_TOKEN` configured the initial administrator must present it. Only the setup
+  // form carries one; every other caller (the Better Auth hooks) passes none and is refused.
+  return isSetupTokenSatisfied(setupToken) ? "fresh-instance" : "setup-token-invalid";
 };
 
+/** Whether the admission lets the sign-up proceed. The refusal reasons are all "no" to a bare caller. */
+export const isAdmitted = (admission: TUninvitedSignupAdmission): boolean =>
+  admission === "open" || admission === "fresh-instance";
+
 export const isUninvitedSignupAllowed = async (): Promise<boolean> =>
-  (await resolveUninvitedSignupAdmission()) !== "denied";
+  isAdmitted(await resolveUninvitedSignupAdmission());
 
 /**
  * Better Auth's native credential sign-up endpoint. Closed over HTTP since ENG-3988 (`disabledPaths`),
@@ -65,6 +77,23 @@ export const signupDisabledError = (): APIError =>
     message: "Signup is disabled on this instance.",
     code: SIGNUP_DISABLED_ERROR_CODE,
   });
+
+/** Where a closed-sign-up rejection was decided: one value per layer that enforces the policy. */
+export type TClosedSignupRejectionLayer =
+  | "sign-up-route"
+  | "better-auth-sign-up-hook"
+  | "better-auth-user-create-backstop";
+
+/**
+ * Leave a trace of a sign-up the closed-sign-up policy refused (ENG-2347). A log line, not an alert:
+ * the client-facing errors are kept out of Sentry on purpose (ENG-2037), so without this an operator of
+ * a closed instance had no sign that anyone was trying to create accounts on it. Every layer that
+ * enforces the policy calls it, so the line reads the same whichever one refused. The address is left
+ * out: it is unauthenticated input, and the layer is what an operator acts on.
+ */
+export const logClosedSignupRejection = (layer: TClosedSignupRejectionLayer): void => {
+  logger.warn({ layer }, "Rejected a sign-up under the closed-sign-up policy");
+};
 
 /**
  * Better Auth `before` hook: enforce the closed-sign-up policy on Better Auth's `/sign-up/email` endpoint
@@ -99,6 +128,7 @@ export const signupPolicyBeforeHandler = async (ctx: AuthHookContext): Promise<v
   if (isSignupDomainAllowed()) return;
 
   if (!(await isUninvitedSignupAllowed())) {
+    logClosedSignupRejection("better-auth-sign-up-hook");
     throw signupDisabledError();
   }
 };

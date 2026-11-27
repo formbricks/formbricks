@@ -43,10 +43,13 @@ describe("getContacts", () => {
   test("should return contacts for given workspaceIds", async () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
 
-    const result = await getContacts(mockWorkspaceIds);
+    const result = await getContacts(mockWorkspaceIds, 25, 50);
 
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: { workspaceId: { in: mockWorkspaceIds } },
+      orderBy: { id: "asc" },
+      take: 25,
+      skip: 50,
     });
     expect(result).toEqual(mockContacts);
   });
@@ -58,9 +61,12 @@ describe("getContacts", () => {
     });
     vi.mocked(prisma.contact.findMany).mockRejectedValue(prismaError);
 
-    await expect(getContacts(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
+    await expect(getContacts(mockWorkspaceIds, 25, 50)).rejects.toThrow(DatabaseError);
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: { workspaceId: { in: mockWorkspaceIds } },
+      orderBy: { id: "asc" },
+      take: 25,
+      skip: 50,
     });
   });
 
@@ -68,9 +74,12 @@ describe("getContacts", () => {
     const genericError = new Error("Test Generic Error");
     vi.mocked(prisma.contact.findMany).mockRejectedValue(genericError);
 
-    await expect(getContacts(mockWorkspaceIds)).rejects.toThrow(genericError);
+    await expect(getContacts(mockWorkspaceIds, 25, 50)).rejects.toThrow(genericError);
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: { workspaceId: { in: mockWorkspaceIds } },
+      orderBy: { id: "asc" },
+      take: 25,
+      skip: 50,
     });
   });
 });

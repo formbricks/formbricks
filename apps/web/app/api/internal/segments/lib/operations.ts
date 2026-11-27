@@ -321,7 +321,7 @@ async function prepareEditedFilters(
   if (!parsedFilters.success) {
     throw new InvalidInputError(invalidFiltersMessage(parsedFilters.error.issues));
   }
-  await checkForRecursiveSegmentFilter(parsedFilters.data, segmentId);
+  await checkForRecursiveSegmentFilter(parsedFilters.data, segmentId, workspaceId);
   return parsedFilters.data;
 }
 

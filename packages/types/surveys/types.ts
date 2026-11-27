@@ -19,7 +19,7 @@ import { linkedToDesiredEmbeddedFields, toLegacyEmbeddedFields } from "../embedd
 import { RESERVED_FIELD_CATALOG } from "../embedded-data-resolver";
 import { type TI18nString, ZI18nString } from "../i18n";
 import { ZOverlayColor, ZOverlayOpacity } from "../overlay";
-import { isLegacyIdCharset, isLegacyVariableName } from "../safe-identifier";
+import { isLegacyIdCharset, isLegacyVariableName, isObjectPrototypeName } from "../safe-identifier";
 import { ZSegment } from "../segment";
 import { ZShowConditions } from "../show-conditions";
 import { ZAllowedFileExtension } from "../storage";
@@ -157,7 +157,7 @@ export enum TSurveyQuestionTypeEnum {
  * @deprecated Use ZSurveyElementId / TSurveyElementId instead. Kept for v1 API backward compatibility only.
  */
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
-  if (FORBIDDEN_IDS.includes(id)) {
+  if (FORBIDDEN_IDS.includes(id) || isObjectPrototypeName(id)) {
     ctx.addIssue({
       code: "custom",
       message: `Question id is not allowed`,
@@ -206,7 +206,7 @@ export const ZSurveyHiddenFields = z.object({
   fieldIds: z.optional(
     z.array(
       z.string().superRefine((field, ctx) => {
-        if (FORBIDDEN_IDS.includes(field)) {
+        if (FORBIDDEN_IDS.includes(field) || isObjectPrototypeName(field)) {
           ctx.addIssue({
             code: "custom",
             message: `Hidden field id is not allowed`,
@@ -253,6 +253,11 @@ export const ZSurveyVariable = z
     }),
   ])
   .superRefine((data, ctx) => {
+    // A variable's value is stored under its id, and `z.cuid2()` alone accepts `constructor`.
+    if (isObjectPrototypeName(data.id)) {
+      ctx.addIssue({ code: "custom", message: "Variable id is not allowed", path: ["id"] });
+    }
+
     // Lenient on purpose: this schema also parses surveys loaded from the database, which still
     // hold variable names created before `isSafeIdentifier` (e.g. `_legacy`). New names are gated
     // strictly by the variable editor.

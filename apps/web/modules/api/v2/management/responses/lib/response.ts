@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma, Response } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { isDisplayOfSurvey } from "@/lib/display/service";
 import { calculateTtcTotal, normalizeResponseLanguage } from "@/lib/response/utils";
 import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/contact";
 import {
@@ -115,26 +116,15 @@ export const createResponse = async (
   } = responseInput;
 
   try {
-    // `displayId` is caller-supplied and was connected without any ownership check. Display↔Response is
-    // one-to-one, so naming another workspace's display either failed outright or moved that display
-    // onto this response, corrupting the other tenant's display and completion counts. A display always
-    // belongs to one survey, so matching it against this survey is the tightest check available.
-    if (displayId) {
-      const display = await (tx ?? prisma).display.findUnique({
-        where: { id: displayId },
-        select: { surveyId: true },
+    // `displayId` is caller-supplied, so it must belong to this survey before it is connected (see
+    // `isDisplayOfSurvey`). Uniform not-found for "does not exist" and "exists but belongs elsewhere": the
+    // two must stay indistinguishable or this endpoint becomes a cross-tenant existence oracle for display
+    // ids — the same reason the historical-response import raises not-found rather than forbidden (#8679).
+    if (displayId && !(await isDisplayOfSurvey(displayId, surveyId, tx))) {
+      return err({
+        type: "not_found",
+        details: [{ field: "display", issue: "not found" }],
       });
-
-      // Uniform not-found for "does not exist" and "exists but belongs elsewhere". Distinguishing the
-      // two would confirm that a display id is real, making this endpoint a cross-tenant existence
-      // oracle — the same reason the historical-response import raises not-found rather than forbidden
-      // (#8679). Matches the shape the sibling handlers already return for a foreign display.
-      if (display?.surveyId !== surveyId) {
-        return err({
-          type: "not_found",
-          details: [{ field: "display", issue: "not found" }],
-        });
-      }
     }
 
     if (!context.contact.ok) {

@@ -3,6 +3,7 @@ import {
   V3ApiError,
   getV3ApiErrorMessage,
   getV3ApiErrorReason,
+  isAuthFailure,
   parseV3ApiError,
   retryUnlessClientError,
   v3RetryDelay,
@@ -150,6 +151,20 @@ describe("retryUnlessClientError", () => {
     expect(retry(0, problem(502))).toBe(true);
     expect(retry(1, new TypeError("Failed to fetch"))).toBe(true);
     expect(retry(2, problem(502))).toBe(false);
+  });
+});
+
+describe("isAuthFailure", () => {
+  test.each([
+    { label: "a 401", error: new V3ApiError({ status: 401, detail: "x" }), expected: true },
+    { label: "a 403", error: new V3ApiError({ status: 403, detail: "x" }), expected: true },
+    { label: "a 404", error: new V3ApiError({ status: 404, detail: "x" }), expected: false },
+    { label: "a 429", error: new V3ApiError({ status: 429, detail: "x" }), expected: false },
+    { label: "a 502", error: new V3ApiError({ status: 502, detail: "x" }), expected: false },
+    { label: "a network failure", error: new TypeError("Failed to fetch"), expected: false },
+    { label: "no error", error: null, expected: false },
+  ])("$label -> $expected", ({ error, expected }) => {
+    expect(isAuthFailure(error)).toBe(expected);
   });
 });
 

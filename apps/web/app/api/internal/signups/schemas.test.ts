@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SETUP_TOKEN_MAX_LENGTH } from "@formbricks/types/instance";
 import { SIGNUP_NAME_MAX, TURNSTILE_TOKEN_MAX, ZSignupBody } from "./schemas";
 
 const constants = vi.hoisted(() => ({ IS_TURNSTILE_CONFIGURED: true }));
@@ -51,6 +52,7 @@ describe("ZSignupBody — input limits", () => {
   test.each([
     ["a name", { name: "a".repeat(SIGNUP_NAME_MAX + 1) }],
     ["an invite token", { inviteToken: "t".repeat(4097) }],
+    ["a setup token", { setupToken: "t".repeat(SETUP_TOKEN_MAX_LENGTH + 1) }],
     ["a Turnstile token", { turnstileToken: "t".repeat(TURNSTILE_TOKEN_MAX + 1) }],
   ])("refuses %s over its cap", (_label, overrides) => {
     expect(ZSignupBody.safeParse({ ...input, ...overrides }).success).toBe(false);
@@ -62,6 +64,7 @@ describe("ZSignupBody — input limits", () => {
         ...input,
         name: "a".repeat(SIGNUP_NAME_MAX),
         inviteToken: "t".repeat(4096),
+        setupToken: "t".repeat(SETUP_TOKEN_MAX_LENGTH),
         turnstileToken: "t".repeat(TURNSTILE_TOKEN_MAX),
       }).success
     ).toBe(true);

@@ -103,6 +103,7 @@ vi.mock("@formbricks/logger", () => ({
     error: vi.fn(),
     warn: vi.fn(),
     info: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
@@ -329,6 +330,57 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
   });
 
+  describe("token purposes (ENG-2124)", () => {
+    test("invite tokens now carry the invite purpose", () => {
+      const decoded = jwt.decode(createInviteToken("invite-id", mockUser.email)) as { purpose?: string };
+      expect(decoded.purpose).toBe("invite");
+    });
+
+    test("an invite token no longer resolves as an email-display token", () => {
+      expect(() => getEmailFromEmailToken(createInviteToken("invite-id", mockUser.email))).toThrow(
+        "Invalid token"
+      );
+    });
+
+    test("an invite token issued before the purpose claim (inviteId, no purpose) is refused as a display token", () => {
+      const legacyInvite = jwt.sign(
+        { inviteId: "encrypted_invite-id", email: `encrypted_${mockUser.email}` },
+        TEST_AUTH_SECRET
+      );
+      expect(() => getEmailFromEmailToken(legacyInvite)).toThrow("Invalid token");
+    });
+
+    test("an invite token issued before the purpose claim still verifies as an invite", () => {
+      const legacyInvite = jwt.sign(
+        { inviteId: "encrypted_invite-id", email: `encrypted_${mockUser.email}` },
+        TEST_AUTH_SECRET,
+        { expiresIn: "7d" }
+      );
+      expect(verifyInviteToken(legacyInvite)).toEqual({ inviteId: "invite-id", email: mockUser.email });
+    });
+
+    test("a token minted for another flow is refused as an invite", () => {
+      const other = jwt.sign(
+        { inviteId: "encrypted_invite-id", email: `encrypted_${mockUser.email}`, purpose: "email_display" },
+        TEST_AUTH_SECRET
+      );
+      expect(() => verifyInviteToken(other)).toThrow("Invalid or expired invite token");
+    });
+
+    test("an email-change token is refused as a verification token", async () => {
+      const token = await createEmailChangeToken(mockUser.id, mockUser.email);
+      await expect(verifyToken(token)).rejects.toThrow("Invalid token");
+    });
+
+    test("a verification token with no purpose still verifies (issued before the claim)", async () => {
+      const token = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_AUTH_SECRET);
+      await expect(verifyToken(token)).resolves.toMatchObject({
+        id: mockUser.id,
+        purpose: "email_verification",
+      });
+    });
+  });
+
   describe("verifyTokenForLinkSurvey", () => {
     test("should verify valid survey link token", () => {
       const surveyId = "test-survey-id";
@@ -461,9 +513,13 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       const result = verifyTokenForLinkSurvey(invalidToken, surveyId);
       expect(result).toBeNull();
 
-      // Verify error logging
+      // Public-route junk is a warning, never an error (keeps Sentry clean)
       const { logger } = await import("@formbricks/logger");
-      expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "Survey link token verification failed");
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ err: expect.any(Error) }),
+        "Survey link token verification failed"
+      );
+      expect(logger.error).not.toHaveBeenCalled();
     });
 
     test("should reject legacy survey tokens for wrong survey", () => {
@@ -594,14 +650,15 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
       // Verify both methods were attempted
       const { logger } = await import("@formbricks/logger");
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.any(Error),
+      expect(logger.debug).toHaveBeenCalledWith(
+        expect.objectContaining({ err: expect.any(Error) }),
         "Token verification failed with new method"
       );
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.any(Error),
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ err: expect.any(Error) }),
         "Token verification failed with legacy method"
       );
+      expect(logger.error).not.toHaveBeenCalled();
     });
   });
 

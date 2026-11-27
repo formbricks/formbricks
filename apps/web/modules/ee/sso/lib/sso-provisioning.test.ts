@@ -56,6 +56,7 @@ const constantsOverrides = vi.hoisted(() => ({
   DEFAULT_ORGANIZATION_ID: undefined as string | undefined,
   IS_FORMBRICKS_CLOUD: false as boolean,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false as boolean,
+  SETUP_TOKEN: undefined as string | undefined,
 }));
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
@@ -75,6 +76,9 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     },
     get SIGNUP_DOMAIN_CHECK_ON_INVITES() {
       return constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES;
+    },
+    get SETUP_TOKEN() {
+      return constantsOverrides.SETUP_TOKEN;
     },
   };
 });
@@ -96,6 +100,7 @@ beforeEach(() => {
   constantsOverrides.DEFAULT_ORGANIZATION_ID = undefined;
   constantsOverrides.IS_FORMBRICKS_CLOUD = false;
   constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
+  constantsOverrides.SETUP_TOKEN = undefined;
   // Defaults: established single-org instance, access allowed, orgs resolvable.
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
@@ -119,6 +124,23 @@ describe("gateSsoProvisioning — bypass branches", () => {
     expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" })).toEqual({
       action: "provision",
       isBootstrapAdmin: true,
+      wasFreshInstance: true,
+      organizationId: null,
+      assignToDefaultTeam: false,
+      signupSource: "direct",
+    });
+  });
+
+  // ENG-7313: a fresh instance under a multi-org licence is still fresh, so the first SSO user must
+  // record setup even though `admitsAsBootstrapAdmin` is false there.
+  test("a fresh multi-org instance carries wasFreshInstance without the bootstrap marker", async () => {
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" })).toEqual({
+      action: "provision",
+      isBootstrapAdmin: false,
+      wasFreshInstance: true,
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource: "direct",
@@ -136,6 +158,47 @@ describe("gateSsoProvisioning — bypass branches", () => {
       assignToDefaultTeam: false,
       signupSource: "direct",
     });
+  });
+
+  // ENG-7313: the DEFAULT_ORGANIZATION_ID route would create that organization with the first IdP account
+  // as owner, so on a fresh instance with SETUP_TOKEN set it is refused like every other SSO claim.
+  test("SETUP_TOKEN also blocks the DEFAULT_ORGANIZATION_ID route on a fresh instance", async () => {
+    constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "org-default";
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" })).toEqual({
+      action: "reject",
+      reason: "no_organization_found",
+    });
+  });
+
+  test("DEFAULT_ORGANIZATION_ID still provisions once the instance is set up, with SETUP_TOKEN set", async () => {
+    constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "org-default";
+
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" })).toMatchObject({
+      action: "provision",
+      organizationId: "org-default",
+    });
+  });
+
+  // ENG-7313: SSO has no form to carry the setup token, so with one configured the SSO route is not a
+  // way to claim a fresh instance. The user sees "no organization"; the log names the real cause.
+  test("a fresh instance with SETUP_TOKEN configured is not claimable through SSO", async () => {
+    constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+
+    expect(await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" })).toEqual({
+      action: "reject",
+      reason: "no_organization_found",
+    });
+    expect(getIsFreshInstance).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      { reason: "setup_token_required" },
+      expect.stringContaining("SETUP_TOKEN is set")
+    );
+    expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain(constantsOverrides.SETUP_TOKEN);
   });
 });
 
@@ -167,7 +230,11 @@ describe("gateSsoProvisioning — DEFAULT_ORGANIZATION_ID (ENG-2089)", () => {
     constantsOverrides.DEFAULT_ORGANIZATION_ID = "default-org";
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
-    expect(decision).toMatchObject({ action: "provision", organizationId: "default-org" });
+    expect(decision).toMatchObject({
+      action: "provision",
+      organizationId: "default-org",
+      wasFreshInstance: true,
+    });
   });
 
   test("does not also join DEFAULT_TEAM_ID's team, which may belong to another org", async () => {
@@ -460,6 +527,7 @@ describe("gateSsoProvisioning — personal email domain block (Cloud)", () => {
     expect(await gateSsoProvisioning({ email: blockedEmail, callbackUrl: "" })).toEqual({
       action: "provision",
       isBootstrapAdmin: true,
+      wasFreshInstance: true,
       organizationId: null,
       assignToDefaultTeam: false,
       signupSource: "direct",

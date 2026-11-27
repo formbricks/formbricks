@@ -63,7 +63,11 @@ export const ZUserEmail = z
 
 export type TUserEmail = z.infer<typeof ZUserEmail>;
 
-export const ZUserPassword = z
+/**
+ * A password the user already has, checked only to be verified (re-authentication prompts). It must
+ * keep accepting every password that was valid when it was set, so it carries no byte limit.
+ */
+export const ZUserCurrentPassword = z
   .string()
   .min(8, {
     error: "Password must be at least 8 characters long",
@@ -72,6 +76,22 @@ export const ZUserPassword = z
     error: "Password must be 128 characters or less",
   })
   .regex(/^(?=.*[A-Z])(?=.*\d).*$/);
+
+/** bcrypt only hashes the first 72 bytes of its input; anything after that is silently ignored. */
+export const PASSWORD_MAX_BYTES = 72;
+
+export const isPasswordWithinByteLimit = (password: string): boolean =>
+  new TextEncoder().encode(password).length <= PASSWORD_MAX_BYTES;
+
+/**
+ * A password being set (sign-up, reset, change). Adds the bcrypt byte limit on top of
+ * {@link ZUserCurrentPassword}. Measured in UTF-8 bytes, not characters, because a multi-byte character
+ * reaches the limit sooner. Never use this to verify an existing password: hashes created before the
+ * limit may be longer.
+ */
+export const ZUserPassword = ZUserCurrentPassword.refine(isPasswordWithinByteLimit, {
+  error: `Password must be ${PASSWORD_MAX_BYTES} bytes or less`,
+});
 
 export type TUserPassword = z.infer<typeof ZUserPassword>;
 
@@ -126,7 +146,9 @@ export const ZUserPersonalInfoUpdateInput = ZUserUpdateInput.pick({
   email: true,
   locale: true,
 }).extend({
-  password: ZUserPassword.optional(),
+  // Verification only (re-authentication for an email change), never a password being set: it must accept
+  // every password that was valid when it was set, including ones above the bcrypt limit.
+  password: ZUserCurrentPassword.optional(),
 });
 
 export type TUserPersonalInfoUpdateInput = z.infer<typeof ZUserPersonalInfoUpdateInput>;

@@ -2,6 +2,8 @@ import "server-only";
 import type { TRequestMeta } from "@/app/api/internal/lib/types";
 import { applyIPRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import { problemNotFound, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
+import { constantTimeEqual } from "@/lib/crypto";
+import { reserveRateLimitUsage, settleRateLimitUsage } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getLinkSurveyOpenForResponses } from "@/modules/survey/link/lib/open-for-responses";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
@@ -38,11 +40,21 @@ export async function verifyLinkSurveyPinOperation({
   if (!survey) return problemNotFound(requestId, "Survey", body.surveyId, instance);
 
   const originalPin = survey.pin?.toString();
-  if (originalPin && originalPin !== body.pin) {
-    return problemUnprocessableContent(requestId, INVALID_PIN, {
-      instance,
-      details: { reason: INVALID_PIN },
-    });
+  if (originalPin) {
+    // Per-survey budget of wrong guesses, on top of the per-IP limit (ENG-7095). Reserved before the
+    // compare so concurrent guesses cannot all slip past a counter that is only read; a right PIN gives its
+    // unit back, a wrong one keeps it.
+    const attempt = await reserveRateLimitUsage(
+      rateLimitConfigs.actions.validateSurveyPinFailuresPerSurvey,
+      survey.id
+    );
+    if (!constantTimeEqual(originalPin, body.pin)) {
+      return problemUnprocessableContent(requestId, INVALID_PIN, {
+        instance,
+        details: { reason: INVALID_PIN },
+      });
+    }
+    await settleRateLimitUsage(attempt, 0);
   }
 
   // The survey goes to the respondent's browser: without its stored custom CSS (editable source),

@@ -5,6 +5,7 @@ import { Locator, Page } from "playwright";
 import { logger } from "@formbricks/logger";
 import { clickUntil, clickUntilVisible } from "@/playwright/utils/click-until";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
+import { SAME_ORIGIN_HEADERS } from "@/playwright/utils/same-origin";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
 const SURVEY_CREATE_API_PATHS = new Set(["/api/v3/surveys", "/api/v3/surveys/templates"]);
@@ -361,6 +362,8 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
 
 export const isWorkspaceStorageConfigured = async (page: Page, workspaceId: string): Promise<boolean> => {
   const response = await page.context().request.post("/api/v1/management/storage", {
+    // Playwright's request context sends no browser headers; the v1 wrapper refuses the session write.
+    headers: SAME_ORIGIN_HEADERS,
     data: {
       fileName: "e2e-storage-check.png",
       fileType: "image/png",

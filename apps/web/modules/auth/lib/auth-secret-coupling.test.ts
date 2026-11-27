@@ -45,14 +45,14 @@ describe("auth secret coupling", () => {
     // Anchored on the option names so replacing any of them with a literal, or reverting one to a raw
     // env read, fails here rather than in production.
     expect(source).toMatch(/^\s*secret: AUTH_SECRET,$/m);
-    expect(source).toMatch(/^\s*baseURL: AUTH_URL,$/m);
+    expect(source).toMatch(/^\s*baseURL: getAuthBaseUrl\(\),$/m);
     expect(source).toMatch(/^\s*trustedOrigins: AUTH_TRUSTED_ORIGINS,$/m);
   });
 
-  test("the URL consumers keep their own WEBAPP_URL tail rather than folding it into AUTH_URL", () => {
-    // AUTH_URL is deliberately the two-element resolution. These two append WEBAPP_URL themselves
-    // because that tail is their own precedence — auth.ts must NOT get it, or a misconfigured instance
-    // silently signs cookies for the wrong origin instead of failing.
+  test("the URL consumers fall back to WEBAPP_URL rather than to the request Host", () => {
+    // AUTH_URL is deliberately the two-element resolution; each consumer appends the WEBAPP_URL tail
+    // itself. auth.ts gets it through `getAuthBaseUrl` (oauth-urls.ts), so Better Auth never derives its
+    // base URL from the Host header (ENG-7369).
     for (const relativePath of ["./oauth-urls.ts", "./auth-cookies.ts"]) {
       expect(read(relativePath)).toMatch(/AUTH_URL \?\? env\.WEBAPP_URL/);
     }

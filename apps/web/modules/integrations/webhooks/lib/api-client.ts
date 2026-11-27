@@ -7,7 +7,7 @@ import type {
   TCreatedWebhookResource,
   TWebhookTestDeliveryResource,
 } from "@/app/api/internal/webhooks/serializers";
-import { buildApiUrl, sendApiRequest } from "@/modules/api/lib/internal-api-client";
+import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
 
 /**
  * The Webhooks page's writes to `/api/internal/webhooks`. Each throws a `V3ApiError` on a refusal, with the
@@ -27,6 +27,10 @@ export const updateWebhook = ({ webhookId, body }: { webhookId: string; body: TW
 
 export const deleteWebhook = (webhookId: string) =>
   sendApiRequest<void>(webhookPath(webhookId), { method: "DELETE" });
+
+/** The signing secret, on demand: the list only carries `hasSecret`. */
+export const getWebhookSecret = (webhookId: string) =>
+  getApiData<{ secret: string }>(`${webhookPath(webhookId)}/secret`);
 
 /**
  * Send a signed test payload to an endpoint. No client timeout: the server gives the endpoint the delivery

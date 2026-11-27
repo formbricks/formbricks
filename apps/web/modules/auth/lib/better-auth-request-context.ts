@@ -1,5 +1,6 @@
 import "server-only";
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { TOAuthStateCookieDiagnosis } from "./oauth-state-cookie-diagnosis";
 
 /**
  * Request scope for Better Auth observability (ENG-2259).
@@ -24,6 +25,12 @@ export interface BetterAuthRequestContext {
   path: string;
   /** HTTP method, e.g. `POST`. */
   method: string;
+  /**
+   * On an OAuth callback only: which state-cookie cause a `state_security_mismatch` would have (ENG-6692).
+   * Diagnosed by the route before the handler runs, because the logger that captures the throw is
+   * synchronous and verifying the cookie's signature is not. A label, never the cookie or the state.
+   */
+  oauthStateCookie?: TOAuthStateCookieDiagnosis;
 }
 
 const betterAuthRequestContext = new AsyncLocalStorage<BetterAuthRequestContext>();
@@ -39,3 +46,12 @@ export const runWithBetterAuthRequestContext = <T>(context: BetterAuthRequestCon
  */
 export const getBetterAuthRequestContext = (): BetterAuthRequestContext | undefined =>
   betterAuthRequestContext.getStore();
+
+/**
+ * True while the current code runs inside an HTTP `POST /api/auth/sign-in/email`. The verification-email
+ * callback reads it to send after the response instead of during it (ENG-2099): Better Auth sends there only
+ * for an unverified account whose password matched, so a send on the response path makes that answer slower
+ * than the identical wrong-password one. A server-side `auth.api.*` call opens no store, so it stays awaited.
+ */
+export const isPasswordSignInRequest = (): boolean =>
+  getBetterAuthRequestContext()?.path === "/sign-in/email";

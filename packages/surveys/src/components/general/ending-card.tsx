@@ -96,7 +96,7 @@ export function EndingCard({
   const processAndRedirect = useCallback(
     (urlString: string) => {
       try {
-        const url = replaceRecallInfo(urlString, responseData, variablesData, languageCode);
+        const url = replaceRecallInfo(urlString, responseData, variablesData, languageCode, "text");
         // The scheme has to be constrained, not just parseable: `new URL()` accepts `javascript:`, which
         // executes on the survey's own origin once it reaches `location.replace()`. Recall values are
         // substituted into the URL first, so the check has to run on the final string. Draft surveys are
@@ -194,7 +194,8 @@ export function EndingCard({
                           getLocalizedValue(endingCard.buttonLabel, languageCode),
                           responseData,
                           variablesData,
-                          languageCode
+                          languageCode,
+                          "text"
                         )}
                         isLastQuestion={false}
                         focus={isCurrent ? autoFocusEnabled : false}

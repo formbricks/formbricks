@@ -1884,6 +1884,35 @@ describe("organization-billing", () => {
     expect(fallbackClears).toHaveLength(0);
   });
 
+  // The page can only name what the refusal carries (ENG-2170): a raw Stripe error reaches it as a
+  // generic failure, so the card-level reason has to become the refusal's code.
+  test.each([
+    [{ code: "card_declined", decline_code: "generic_decline" }, "card_declined"],
+    [{ code: "card_declined", decline_code: "insufficient_funds" }, "card_insufficient_funds"],
+    [{ code: "expired_card" }, "card_expired"],
+    [{ code: "card_declined", decline_code: "authentication_required" }, "card_authentication_required"],
+  ])("a conversion charge Stripe refuses with %o is refused as %s", async (stripeFields, reason) => {
+    setupCardBackedProTrial(14);
+    mocks.subscriptionsUpdate.mockImplementation(async (_id: string, args: Record<string, unknown>) => {
+      if (args.trial_end === "now") {
+        throw Object.assign(new Error("Your card was declined."), {
+          type: "StripeCardError",
+          ...stripeFields,
+        });
+      }
+      return {};
+    });
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+      })
+    ).rejects.toMatchObject({ name: "OperationNotAllowedError", message: reason });
+  });
+
   test("previewImmediateUpgradeCharge quotes Stripe's full invoice total for a trial conversion", async () => {
     setupCardBackedProTrial(14);
     // Stripe's preview is authoritative: full plan price + tax ($89 + $16.91 VAT), exactly what the
@@ -1981,7 +2010,8 @@ describe("organization-billing", () => {
     expect(previewArgs.subscription_details).toMatchObject({ trial_end: "now", cancel_at: "" });
   });
 
-  test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {
+  // Shared fixture: an active, paid Pro subscription with a card on file.
+  const setupActiveProSubscription = () => {
     mocks.subscriptionsList.mockResolvedValue({
       data: [
         {
@@ -2042,6 +2072,10 @@ describe("organization-billing", () => {
         hasPaymentMethod: true,
       },
     });
+  };
+
+  test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {
+    setupActiveProSubscription();
 
     await switchOrganizationToCloudPlan({
       organizationId: "org_1",
@@ -2057,6 +2091,22 @@ describe("organization-billing", () => {
         proration_behavior: "always_invoice",
       })
     );
+  });
+
+  test("an immediate upgrade Stripe refuses with a card error is refused with the card's reason", async () => {
+    setupActiveProSubscription();
+    mocks.subscriptionsUpdate.mockRejectedValue(
+      Object.assign(new Error("Your card has expired."), { type: "StripeCardError", code: "expired_card" })
+    );
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "scale",
+        targetInterval: "monthly",
+      })
+    ).rejects.toMatchObject({ name: "OperationNotAllowedError", message: "card_expired" });
   });
 
   test("switchOrganizationToCloudPlan updates an existing schedule in place", async () => {
@@ -4425,6 +4475,21 @@ describe("organization-billing", () => {
         },
         "Legacy subscription canceled but replacement failed"
       );
+    });
+
+    test("a replacement Stripe refuses with a card error is refused with the card's reason", async () => {
+      mocks.subscriptionsCreate.mockRejectedValue(
+        Object.assign(new Error("Your card was declined."), {
+          type: "StripeCardError",
+          code: "card_declined",
+          decline_code: "generic_decline",
+        })
+      );
+
+      await expect(switchTo("pro")).rejects.toMatchObject({
+        name: "OperationNotAllowedError",
+        message: "card_declined",
+      });
     });
 
     test("a Stripe currency clash on the new subscription becomes an expected error", async () => {

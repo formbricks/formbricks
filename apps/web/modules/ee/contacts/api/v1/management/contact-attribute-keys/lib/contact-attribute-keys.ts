@@ -12,10 +12,13 @@ import {
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
 
 export const getContactAttributeKeys = reactCache(
-  async (workspaceIds: string[]): Promise<TContactAttributeKey[]> => {
+  async (workspaceIds: string[], limit: number, offset: number): Promise<TContactAttributeKey[]> => {
     try {
       const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
         where: { workspaceId: { in: workspaceIds } },
+        orderBy: { id: "asc" },
+        take: limit,
+        skip: offset,
       });
 
       return contactAttributeKeys;

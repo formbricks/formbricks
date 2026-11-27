@@ -51,7 +51,31 @@ class StuckConnectionClient extends EventEmitter {
   }
 }
 
+class FastClient extends EventEmitter {
+  static instances: FastClient[] = [];
+
+  connection = undefined;
+
+  constructor() {
+    super();
+    FastClient.instances.push(this);
+  }
+
+  connect(callback: (error?: Error) => void): void {
+    setTimeout(callback, 0);
+  }
+
+  end(callback?: () => void): void {
+    setTimeout(() => callback?.(), 0);
+  }
+
+  isConnected(): boolean {
+    return true;
+  }
+}
+
 afterEach(() => {
+  FastClient.instances = [];
   DelayedClient.instances = [];
   StuckConnectionClient.instances = [];
   vi.useRealTimers();
@@ -164,6 +188,35 @@ describe("pg-pool connection timeout patch", () => {
     const shutdown = pool.end();
     await vi.advanceTimersByTimeAsync(50);
     await shutdown;
+  });
+
+  // The same timer bounds queueing for a free connection when the pool is full, which is why
+  // `pool_timeout` in DATABASE_URL sets it (ENG-3534).
+  test("bounds the wait for a free connection when the pool is full", async () => {
+    vi.useFakeTimers();
+    const pool = new Pool({
+      Client: FastClient as unknown as NonNullable<PoolConfig["Client"]>,
+      connectionTimeoutMillis: 100,
+      max: 1,
+    });
+
+    const holding = pool.connect();
+    await vi.advanceTimersByTimeAsync(0);
+    const held = await holding;
+    const queued = pool.connect();
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
+    const rejection = expect(queued).rejects.toThrow("timeout exceeded when trying to connect");
+
+    await vi.advanceTimersByTimeAsync(99);
+    expect(pool.waitingCount).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await rejection;
+
+    expect(pool.waitingCount).toBe(0);
+    expect(FastClient.instances).toHaveLength(1);
+    held.release();
+    await pool.end();
   });
 
   test("force closes a timed-out socket when graceful termination stalls", async () => {

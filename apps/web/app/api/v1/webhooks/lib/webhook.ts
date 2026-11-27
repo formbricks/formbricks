@@ -1,9 +1,8 @@
 import { prisma } from "@formbricks/database";
 import { Prisma, Webhook } from "@formbricks/database/prisma";
-import { ZId, ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TWebhookInput, ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
-import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
@@ -45,9 +44,10 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
 
 export const getWebhooks = async (
   workspaceIds: string[],
-  page?: number
+  limit: number,
+  offset: number
 ): Promise<Omit<Webhook, "secret">[]> => {
-  validateInputs([workspaceIds, ZId.array()], [page, ZOptionalNumber]);
+  validateInputs([workspaceIds, ZId.array()]);
 
   try {
     const webhooks = await prisma.webhook.findMany({
@@ -57,8 +57,9 @@ export const getWebhooks = async (
       omit: {
         secret: true,
       },
-      take: page ? ITEMS_PER_PAGE : undefined,
-      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+      orderBy: { id: "asc" },
+      take: limit,
+      skip: offset,
     });
     return webhooks;
   } catch (error) {

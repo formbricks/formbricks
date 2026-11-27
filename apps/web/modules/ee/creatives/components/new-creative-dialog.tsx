@@ -2,7 +2,7 @@
 
 import { ArrowRightIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -33,28 +33,26 @@ const TypeCard = ({
   title,
   description,
   isSelected,
+  groupName,
   onSelect,
 }: Readonly<{
   type: TCreativeResourceType;
   title: string;
   description: string;
   isSelected: boolean;
+  groupName: string;
   onSelect: () => void;
 }>) => {
   const Icon = TYPE_ICONS[type];
   return (
-    <button
-      type="button"
-      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a button styled as an option in a radiogroup; it has no native radio input to label
-      role="radio"
-      aria-checked={isSelected}
-      onClick={onSelect}
+    <label
       className={cn(
-        "relative flex flex-col items-start gap-3 rounded-xl border bg-white p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden",
+        "relative flex cursor-pointer flex-col items-start gap-3 rounded-xl border bg-white p-4 text-left transition-colors has-focus-visible:ring-2 has-focus-visible:ring-slate-400",
         isSelected
           ? "border-slate-900 shadow-[0_0_0_1px_var(--color-slate-900)]"
           : "border-slate-200 hover:border-slate-300"
       )}>
+      <input type="radio" className="sr-only" name={groupName} checked={isSelected} onChange={onSelect} />
       <span
         className={cn(
           "flex size-10 items-center justify-center rounded-lg",
@@ -66,7 +64,7 @@ const TypeCard = ({
         <span className="block text-sm font-semibold text-slate-900">{title}</span>
         <span className="block text-xs leading-relaxed text-slate-500">{description}</span>
       </span>
-    </button>
+    </label>
   );
 };
 
@@ -77,6 +75,7 @@ export const NewCreativeDialog = ({
 }: Readonly<{ workspaceId: string; defaultLanguage: string }>) => {
   const { t } = useTranslation();
   const router = useRouter();
+  const typeGroupName = useId();
   const [type, setType] = useState<TCreativeResourceType>("feedbackButton");
   const createCreative = useCreateCreative();
 
@@ -120,6 +119,7 @@ export const NewCreativeDialog = ({
               title={t("workspace.creatives.type_feedback_button")}
               description={t("workspace.creatives.type_feedback_button_description")}
               isSelected={type === "feedbackButton"}
+              groupName={typeGroupName}
               onSelect={() => setType("feedbackButton")}
             />
             <TypeCard
@@ -127,6 +127,7 @@ export const NewCreativeDialog = ({
               title={t("workspace.creatives.type_banner")}
               description={t("workspace.creatives.type_banner_description")}
               isSelected={type === "banner"}
+              groupName={typeGroupName}
               onSelect={() => setType("banner")}
             />
           </div>

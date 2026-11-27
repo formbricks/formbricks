@@ -25,14 +25,34 @@ const decode = (value: string): string | null => {
 };
 
 /**
- * Verify Better Auth's signed cookie value and return the unsigned session token (the value stored
- * in `Session.sessionToken`), or `null` if absent or tampered with.
+ * The unsigned value of a better-call signed cookie when its signature verifies with `secret`, else `null`.
  *
- * Better Auth signs the cookie via better-call's `serializeSignedCookie`: the value is
- * `` `${token}.${signature}` `` where `signature = base64(HMAC-SHA256(token, BETTER_AUTH_SECRET))`
- * (standard base64; see better-call `crypto.mjs` `makeSignature`). We recompute that HMAC with the
- * same secret and constant-time-compare — so a raw `prisma.session.findUnique` can look the token up.
- * Fails closed: a missing secret or an invalid signature returns `null`.
+ * Better Auth signs cookies via better-call's `serializeSignedCookie`: the value is
+ * `` `${value}.${signature}` `` where `signature = base64(HMAC-SHA256(value, secret))` (standard base64;
+ * see better-call `crypto.mjs` `makeSignature`). We recompute that HMAC and constant-time-compare. Shared
+ * by the session cookie below and the OAuth state cookie diagnosis (oauth-state-cookie-diagnosis.ts), so
+ * the format lives in one place.
+ */
+export const verifySignedCookieValue = (signedValue: string, secret: string): string | null => {
+  // Neither a cuid2 token, a state nor standard base64 contains ".", so the last "." cleanly separates
+  // value from signature.
+  const lastDot = signedValue.lastIndexOf(".");
+  if (lastDot <= 0 || lastDot === signedValue.length - 1) {
+    return null;
+  }
+
+  const value = signedValue.slice(0, lastDot);
+  const signature = signedValue.slice(lastDot + 1);
+  const expected = createHmac("sha256", secret).update(value).digest("base64");
+
+  return constantTimeEqual(expected, signature) ? value : null;
+};
+
+/**
+ * Verify Better Auth's signed session cookie value and return the unsigned session token (the value
+ * stored in `Session.sessionToken`), or `null` if absent or tampered with — so a raw
+ * `prisma.session.findUnique` can look the token up. Fails closed: a missing secret or an invalid
+ * signature returns `null`.
  */
 const verifyAndExtractSessionToken = (signedValue: string | null): string | null => {
   // The same resolved secret auth.ts hands Better Auth, so this verifies the cookies BA actually
@@ -43,22 +63,7 @@ const verifyAndExtractSessionToken = (signedValue: string | null): string | null
     return null;
   }
 
-  // The token is a cuid2 (no "."), the signature is standard base64 (no "."), so the single "."
-  // cleanly separates them.
-  const lastDot = signedValue.lastIndexOf(".");
-  if (lastDot <= 0 || lastDot === signedValue.length - 1) {
-    return null;
-  }
-
-  const token = signedValue.slice(0, lastDot);
-  const signature = signedValue.slice(lastDot + 1);
-  const expected = createHmac("sha256", secret).update(token).digest("base64");
-
-  if (!constantTimeEqual(expected, signature)) {
-    return null;
-  }
-
-  return token;
+  return verifySignedCookieValue(signedValue, secret);
 };
 
 /** One cookie's decoded value from a raw `Cookie` header, or null when it is absent or empty. */

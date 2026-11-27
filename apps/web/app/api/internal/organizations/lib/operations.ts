@@ -16,10 +16,10 @@ import {
 } from "@/app/api/v3/lib/response";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getHasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import {
   createOrganization,
+  createOrganizationIfNoneExists,
   deleteOrganization,
   getOrganization,
   updateOrganization,
@@ -31,6 +31,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { listDashboardViewerOrganizations } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { resolveSetupOrganizationCreation } from "@/modules/setup/organization/lib/setup-organization-policy";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import type { TOrganizationCreateBody, TOrganizationPatchBody } from "../schemas";
 import {
@@ -127,33 +128,39 @@ export async function deleteOrganizationOperation(context: TOrganizationRequestC
 export const MULTI_ORG_DISABLED_DETAIL =
   "Creating Multiple organization is restricted on your instance of Formbricks";
 
+/** The first organization belongs to the instance's bootstrap admin or its earliest user (ENG-7313). */
+export const FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL =
+  "Only the instance's first user can create its first organization.";
+
+const FIRST_ORGANIZATION_ONLY_DETAIL = "This action can only be performed on a fresh instance.";
+
 /**
- * Whether this caller may create an organization, by the flow's own rule: `setup` on a fresh instance or
- * under a multi-organization licence, `additional` only under that licence. Answers the 403 with the reason
- * each flow's screen showed, or whether the instance had no organization yet.
+ * Whether this caller may create an organization, by the flow's own rule: `setup` by the setup-flow policy
+ * (`resolveSetupOrganizationCreation`), `additional` only under the multi-organization licence. Answers the
+ * 403 with the reason each flow's screen showed, or whether this is the instance's first organization.
  */
 async function refuseOrganizationCreation(
   flow: NonNullable<TOrganizationCreateBody["flow"]>,
+  userId: string,
   { requestId, instance }: Pick<TOrganizationRequestContext, "requestId" | "instance">
-): Promise<{ refused: Response } | { hasNoOrganizations: boolean }> {
+): Promise<{ refused: Response } | { isFirstOrganization: boolean; claimsInstance: boolean }> {
   if (flow === "additional") {
     if (!(await getIsMultiOrgEnabled())) {
       return { refused: problemForbidden(requestId, MULTI_ORG_DISABLED_DETAIL, instance) };
     }
-    return { hasNoOrganizations: false };
+    // An additional organization is never the instance's first: the caller already belongs to one.
+    return { isFirstOrganization: false, claimsInstance: false };
   }
 
-  const hasNoOrganizations = await getHasNoOrganizations();
-  if (!hasNoOrganizations && !(await getIsMultiOrgEnabled())) {
-    return {
-      refused: problemForbidden(
-        requestId,
-        "This action can only be performed on a fresh instance.",
-        instance
-      ),
-    };
+  const policy = await resolveSetupOrganizationCreation(userId);
+  if (policy.allowed) {
+    return { isFirstOrganization: policy.isFirstOrganization, claimsInstance: policy.claimsInstance };
   }
-  return { hasNoOrganizations };
+  const detail =
+    policy.reason === "not_eligible"
+      ? FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL
+      : FIRST_ORGANIZATION_ONLY_DETAIL;
+  return { refused: problemForbidden(requestId, detail, instance) };
 }
 
 /**
@@ -182,12 +189,16 @@ export async function createOrganizationOperation({
   if (limited) return limited;
 
   const flow = body.flow ?? "setup";
-  const allowed = await refuseOrganizationCreation(flow, { requestId, instance });
+  const allowed = await refuseOrganizationCreation(flow, user.id, { requestId, instance });
   if ("refused" in allowed) return allowed.refused;
-  // An additional organization is never the instance's first: the caller already belongs to one.
-  const isFirstOrganization = flow === "setup" && allowed.hasNoOrganizations;
+  const { isFirstOrganization, claimsInstance } = allowed;
 
-  const organization = await createOrganization({ name: body.name });
+  // The single-organization instance's only organization is claimed atomically: a concurrent claim that
+  // passed the policy check too finds it taken and gets the same refusal as any later one.
+  const organization = claimsInstance
+    ? await createOrganizationIfNoneExists({ name: body.name })
+    : await createOrganization({ name: body.name });
+  if (!organization) return problemForbidden(requestId, FIRST_ORGANIZATION_ONLY_DETAIL, instance);
   await createMembership(organization.id, user.id, { role: "owner", accepted: true });
 
   // Stripe setup must run AFTER membership is created so the owner email is available.

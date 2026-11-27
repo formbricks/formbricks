@@ -206,4 +206,52 @@ describe("prepareDcrRequest", () => {
     expect(prepared).toBe(request);
     expect(request.bodyUsed).toBe(false);
   });
+
+  // ENG-7314: a registration is about 1 KB; the 256 KiB auth-wide body limit let one IP store ~1.8 GB/day.
+  describe("size limits (ENG-7314)", () => {
+    const register = (body: unknown) =>
+      prepareDcrRequest(
+        new Request(REGISTER, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        })
+      );
+    const loopback = ["http://127.0.0.1:33418/callback"];
+
+    test("refuses a body over 8 KiB", async () => {
+      const prepared = await register({ redirect_uris: loopback, contacts: Array(1500).fill("a@b.co") });
+
+      expect(prepared).toBeInstanceOf(Response);
+      expect((prepared as Response).status).toBe(400);
+      await expect((prepared as Response).json()).resolves.toMatchObject({
+        error: "invalid_client_metadata",
+      });
+    });
+
+    test("refuses a value over 512 characters, at any depth", async () => {
+      for (const body of [
+        { redirect_uris: loopback, client_name: "x".repeat(513) },
+        { redirect_uris: loopback, contacts: ["y".repeat(513)] },
+        { redirect_uris: loopback, metadata: { nested: { deep: "z".repeat(513) } } },
+      ]) {
+        const prepared = await register(body);
+        expect(prepared).toBeInstanceOf(Response);
+        expect((prepared as Response).status).toBe(400);
+      }
+    });
+
+    test("still accepts an ordinary MCP client registration", async () => {
+      const prepared = await register({
+        client_name: "Claude Code",
+        redirect_uris: loopback,
+        grant_types: ["authorization_code", "refresh_token"],
+        response_types: ["code"],
+        token_endpoint_auth_method: "none",
+        scope: "openid profile email offline_access surveys:read surveys:write",
+      });
+
+      expect(prepared).toBeInstanceOf(Request);
+    });
+  });
 });

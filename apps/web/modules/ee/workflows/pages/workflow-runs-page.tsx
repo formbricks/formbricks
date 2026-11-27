@@ -1,14 +1,14 @@
 "use client";
 
 import { useAtom, useSetAtom, useStore } from "jotai";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type TWorkflowDefinition, isResponseCompletedTrigger } from "@formbricks/workflows";
 import { RunsStepPanel, RunsStepPill } from "@/modules/ee/workflows/components/runs/runs-step-panel";
 import { RunsListPill, RunsTestPanel } from "@/modules/ee/workflows/components/runs/runs-test-panel";
 import { WorkflowRunCanvas } from "@/modules/ee/workflows/components/runs/workflow-run-canvas";
+import { useRunsViewSelection } from "@/modules/ee/workflows/hooks/use-runs-view-selection";
 import { useStoredTestPayload } from "@/modules/ee/workflows/hooks/use-stored-test-payload";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { useWorkflowRun } from "@/modules/ee/workflows/hooks/use-workflow-run";
@@ -52,11 +52,7 @@ export const WorkflowRunsPage = ({
   useTrackWorkflowSurface("workflow_runs", { workflowId });
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const urlRunId = searchParams.get("run");
-  const selectedStepId = searchParams.get("step");
+  const { urlRunId, selectedStepId, showRun, selectStep } = useRunsViewSelection();
 
   // The draft: what a Test run runs, and which test input the trigger takes. The editor store keeps it
   // across the Editor and Runs tabs, so it is only fetched when Runs is opened first: hydrating again
@@ -80,21 +76,6 @@ export const WorkflowRunsPage = ({
   const shownRunId = resolveShownRunId(urlRunId, runsQuery.runs);
   const runQuery = useWorkflowRun({ runId: shownRunId });
   const runGraphQuery = useWorkflowRunDefinition({ workflowId, runId: shownRunId });
-
-  const setUrl = useCallback(
-    (next: { run?: string | null; step?: string | null }) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(next)) {
-        if (value) params.set(key, value);
-        else params.delete(key);
-      }
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
-  const showRun = useCallback((runId: string) => setUrl({ run: runId }), [setUrl]);
-  const selectStep = useCallback((stepId: string | null) => setUrl({ step: stepId }), [setUrl]);
 
   // A Test run that just came back from "Run test" is the one to look at.
   const lastTestRunIdRef = useRef(testRun.runId);
