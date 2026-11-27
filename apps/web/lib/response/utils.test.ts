@@ -7,12 +7,18 @@ import {
   type TLinkedEmbeddedField,
 } from "@formbricks/types/embedded-data-resolver";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponse, TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
+import {
+  MAX_RESPONSE_TTC,
+  TResponse,
+  TResponseFilterCriteria,
+  ZResponseFilterCriteria,
+} from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { convertToCsv, convertToXlsxBuffer } from "@/lib/utils/file-conversion";
 import {
   calculateTtcTotal,
+  clampTtcBuckets,
   extractChoiceIdsFromResponse,
   extractSurveyDetails,
   getChoiceIdByValue,
@@ -60,6 +66,26 @@ describe("Response Utils", () => {
       const ttc = {};
       const result = calculateTtcTotal(ttc);
       expect(result._total).toBe(0);
+    });
+  });
+
+  describe("clampTtcBuckets", () => {
+    test("clamps each element into [0, MAX_RESPONSE_TTC]", () => {
+      expect({ ...clampTtcBuckets({ q1: -5, q2: 10 ** 12, q3: 1500 }) }).toEqual({
+        q1: 0,
+        q2: MAX_RESPONSE_TTC,
+        q3: 1500,
+      });
+    });
+
+    test("drops a caller-supplied _total, which is derived", () => {
+      expect({ ...clampTtcBuckets({ q1: 10, _total: 99 }) }).toEqual({ q1: 10 });
+    });
+
+    // Element ids are chosen by survey authors, so `__proto__` is a legal key and must survive.
+    test("keeps a __proto__ element instead of losing it to the prototype setter", () => {
+      const ttc = JSON.parse('{"__proto__": 10}') as Record<string, number>;
+      expect(Object.keys(clampTtcBuckets(ttc))).toEqual(["__proto__"]);
     });
   });
 
