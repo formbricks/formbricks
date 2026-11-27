@@ -141,8 +141,9 @@ export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
  * Resolve here, never at the call site. The secret signs Better Auth's session cookies (auth.ts), the
  * forward-auth proxy's verification of them (session-cookie.ts), and every app JWT — invites, email
  * verification, email change, survey PIN tokens, gateway service tokens (lib/jwt.ts). A divergence
- * between any two of those is an outage, and it surfaces only as an opaque `state_security_mismatch`
- * (better-auth-observability.ts).
+ * between any two of those is an outage. On an SSO callback it surfaces as a `state_security_mismatch`
+ * whose Sentry capture is tagged `auth.state_cookie: signature_invalid` (oauth-state-cookie-diagnosis.ts,
+ * ENG-6692); elsewhere it is no more specific than a failed verification.
  *
  * `firstConfigured` treats a blank value as unset, which `??` does not: `"" ?? env.NEXTAUTH_SECRET` is
  * `""`, which is falsy and would fail every guard below while shadowing a perfectly good legacy secret.

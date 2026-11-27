@@ -42,6 +42,38 @@ describe("failures raised by the API wrapper rather than by generation", () => {
 
     expect(getAiErrorMessage(getAiErrorCode(error), t)).toBe("workspace.surveys.ai_create.request_rejected");
   });
+
+  test("a prompt the API finds too thin tells the user what to add (ENG-2187)", () => {
+    // What /api/internal/surveys/generate/stream answers for "superhuman PMF": a plain bad_request
+    // whose invalid_params name the prompt. "Try rephrasing it" does not help; adding detail does.
+    const error = new V3ApiError({
+      status: 400,
+      detail: "Prompt needs more detail",
+      code: "bad_request",
+      invalid_params: [
+        {
+          name: "prompt",
+          reason:
+            "Describe the survey goal, audience, or topic in a sentence so the AI can create a useful draft.",
+        },
+      ],
+    });
+
+    expect(getAiErrorMessage(getAiErrorCode(error), t)).toBe(
+      "workspace.surveys.ai_create.prompt_needs_more_detail"
+    );
+  });
+
+  test("a rejected request that names another field keeps the generic rejection", () => {
+    const error = new V3ApiError({
+      status: 400,
+      detail: "Invalid body",
+      code: "bad_request",
+      invalid_params: [{ name: "surveyLanguage", reason: "Unsupported language" }],
+    });
+
+    expect(getAiErrorMessage(getAiErrorCode(error), t)).toBe("workspace.surveys.ai_create.request_rejected");
+  });
 });
 
 describe("getAiErrorCode", () => {

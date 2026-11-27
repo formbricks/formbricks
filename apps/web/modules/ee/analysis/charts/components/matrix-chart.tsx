@@ -12,6 +12,7 @@ import {
   prepareGroupedRows,
 } from "@/modules/ee/analysis/charts/lib/chart-series";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { getChartDimensionValueLabel } from "@/modules/ee/analysis/charts/lib/dimension-value-label";
 import {
   MATRIX_COLUMN_DIMENSION_ID,
   MATRIX_MAX_COLUMNS,
@@ -28,11 +29,7 @@ import {
   toMatrixGrid,
 } from "@/modules/ee/analysis/charts/lib/matrix-pivot";
 import { formatMeasureValue } from "@/modules/ee/analysis/charts/lib/measure-format";
-import {
-  formatCubeColumnHeader,
-  getTranslatedDimensionValueLabel,
-  getTranslatedFieldLabel,
-} from "@/modules/ee/analysis/lib/schema-definition";
+import { formatCubeColumnHeader, getTranslatedFieldLabel } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartLabelMaps } from "@/modules/ee/analysis/types/analysis";
 
 /** Shown instead of a number when a row has no answers at all (an en dash, not a zero). */
@@ -132,13 +129,9 @@ export function MatrixChart({
     const labels = labelMapFor(dimension);
     return (value: string): string => {
       if (value === EMPTY_GROUP_VALUE) {
-        return (
-          getTranslatedDimensionValueLabel(dimension, null, t) ?? t("workspace.analysis.charts.no_value")
-        );
+        return getChartDimensionValueLabel(dimension, null, t) ?? t("workspace.analysis.charts.no_value");
       }
-      return (
-        labels?.[value] ?? getTranslatedDimensionValueLabel(dimension, value, t) ?? formatCellValue(value)
-      );
+      return labels?.[value] ?? getChartDimensionValueLabel(dimension, value, t) ?? formatCellValue(value);
     };
   };
   const rowLabels = labelMapFor(rowKey);

@@ -8,6 +8,7 @@ import {
   orderGroupCombos,
   sortCategoryRows,
   sumSeries,
+  toGroupKey,
 } from "@/modules/ee/analysis/charts/lib/chart-series";
 import {
   CHART_MEASURE_COLORS,
@@ -15,12 +16,9 @@ import {
   getSemanticDimensionColor,
   getSemanticMeasureColor,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { getChartDimensionValueLabel } from "@/modules/ee/analysis/charts/lib/dimension-value-label";
 import { type YAxisScale, computeYAxis } from "@/modules/ee/analysis/charts/lib/y-axis-scale";
-import {
-  FEEDBACK_MEASURE_IDS,
-  VALUE_ID_DIMENSION_ID,
-  getTranslatedDimensionValueLabel,
-} from "@/modules/ee/analysis/lib/schema-definition";
+import { FEEDBACK_MEASURE_IDS, VALUE_ID_DIMENSION_ID } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 
 /** Synthetic column holding a category's total across its series (ordering and stacked axes). */
@@ -72,8 +70,20 @@ interface TBuildSeriesModelInput {
  * meaning where it has one (sentiment, NPS band, emotion). Ungrouped, each measure is a series and
  * takes its own semantic color. The palette goes only to series without a meaning.
  */
-export const buildSeriesModel = (input: TBuildSeriesModelInput): TSeriesModel =>
-  input.isGrouped ? buildGroupedModel(input) : buildMeasureModel(input);
+export const buildSeriesModel = (input: TBuildSeriesModelInput): TSeriesModel => {
+  const model = input.isGrouped ? buildGroupedModel(input) : buildMeasureModel(input);
+  if (!input.hasCategoryAxis || input.grouping.isTimeCategory) return model;
+
+  // Recharts excludes raw booleans from its category domain in both grouped and ungrouped charts.
+  const { xAxisKey } = input;
+  return {
+    ...model,
+    rows: model.rows.map((row) => {
+      const category = row[xAxisKey];
+      return typeof category === "boolean" ? { ...row, [xAxisKey]: toGroupKey(category) } : row;
+    }),
+  };
+};
 
 const buildMeasureModel = ({
   data,
@@ -179,14 +189,12 @@ export const createGroupValueFormatter =
   (t: TFunction, optionLabels?: Record<string, string>) =>
   (dimensionId: string, value: unknown): string => {
     if (value === EMPTY_GROUP_VALUE) {
-      return (
-        getTranslatedDimensionValueLabel(dimensionId, null, t) ?? t("workspace.analysis.charts.no_value")
-      );
+      return getChartDimensionValueLabel(dimensionId, null, t) ?? t("workspace.analysis.charts.no_value");
     }
     if (dimensionId === VALUE_ID_DIMENSION_ID && optionLabels && typeof value === "string") {
       return optionLabels[value] ?? value;
     }
-    return getTranslatedDimensionValueLabel(dimensionId, value, t) ?? formatXAxisTick(value);
+    return getChartDimensionValueLabel(dimensionId, value, t) ?? formatXAxisTick(value);
   };
 
 /**

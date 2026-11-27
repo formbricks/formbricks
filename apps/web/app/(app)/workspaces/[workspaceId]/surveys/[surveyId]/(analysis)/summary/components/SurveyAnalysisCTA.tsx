@@ -281,7 +281,7 @@ export const SurveyAnalysisCTA = ({
   ];
 
   return (
-    <div className="hidden justify-end gap-x-1.5 sm:flex">
+    <div className="ms-auto hidden max-w-full flex-wrap items-center justify-end gap-1.5 sm:flex">
       {!isReadOnly && (appSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown />
       )}

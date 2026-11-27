@@ -69,6 +69,7 @@ export function LocalizedEditor({
         isInvalid={isInvalid}
         ariaDescribedBy={isInvalid ? errorId : undefined}
         disableLists
+        unwrapSingleCellTables
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
         focusOnMount={focusOnMount}

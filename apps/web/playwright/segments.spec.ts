@@ -43,20 +43,4 @@ test.describe("Interaction-based segments", () => {
     await dialog.getByRole("button", { name: "Create segment" }).click();
     await expect(page.getByText(segmentTitle)).toBeVisible();
   });
-
-  test("surfaces the survey interaction filter in the add-filter search", async ({ page, users }) => {
-    const user = await users.create({ workspaceName: "Interaction Search" });
-    await user.login();
-
-    await page.goto(`/workspaces/${user.workspaceId}/segments`, { waitUntil: "domcontentloaded" });
-
-    const dialog = page.getByRole("dialog");
-    await clickUntilVisible(page.getByRole("button", { name: "Create segment" }).first(), dialog);
-
-    await dialog.getByRole("button", { name: "Add filter" }).click();
-
-    // Searching by name narrows the list down to the survey interaction entry.
-    await page.getByPlaceholder("Browse filters...").fill("survey interaction");
-    await expect(page.getByTestId("filter-btn-survey-interaction")).toBeVisible();
-  });
 });

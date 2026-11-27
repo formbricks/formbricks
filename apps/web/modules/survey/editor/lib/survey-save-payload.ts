@@ -20,12 +20,12 @@ export const parseSurveyEndings = (endings: TSurvey["endings"]): TSurvey["ending
   );
 
 /**
- * The survey as the save action sends it: no draft flags, no legacy questions (blocks replace them),
- * endings parsed. A copy, so the editor's own survey keeps its draft flags if the save fails.
+ * The editor's save payload strips block draft flags and parses endings.
+ * Surveys without blocks still store their content in legacy questions.
  */
 export const buildSurveySavePayload = (survey: TSurvey): TSurvey => ({
   ...survey,
   blocks: survey.blocks ? removeDraftFlagsFromBlocks(survey.blocks) : survey.blocks,
-  questions: [],
+  questions: survey.blocks?.length ? [] : survey.questions,
   endings: parseSurveyEndings(survey.endings),
 });

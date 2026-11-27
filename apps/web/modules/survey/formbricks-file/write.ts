@@ -23,7 +23,8 @@ type TV3SurveyResource = ReturnType<typeof serializeV3SurveyResource>;
 
 /**
  * What the v3 GET resource has and a file leaves out: what a create body refuses (ids, timestamps and
- * the caller's view of it), and `metadata`, the link survey's share settings, which are not content.
+ * the caller's view of it), `metadata`, the link survey's share settings, and `customCss`, the
+ * styling. Neither is content, and the import drops `customCss` anyway (`fitFormbricksFileSurvey`).
  */
 type TServerOwnedSurveyField =
   | "id"
@@ -34,7 +35,8 @@ type TServerOwnedSurveyField =
   | "visibility"
   | "owner"
   | "access"
-  | "metadata";
+  | "metadata"
+  | "customCss";
 
 /** The survey as a Formbricks file carries it: the v3 create body without `workspaceId`. */
 export type TFormbricksFileSurvey = Omit<TV3SurveyResource, TServerOwnedSurveyField | "languages"> & {
@@ -72,6 +74,7 @@ const toFileSurvey = (resource: TV3SurveyResource): TFormbricksFileSurvey => {
     owner: _owner,
     access: _access,
     metadata: _metadata,
+    customCss: _customCss,
     languages,
     ...document
   } = resource;

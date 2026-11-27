@@ -113,6 +113,16 @@ const compareDoesNotEqual = (
   return leftValue !== rightValue;
 };
 
+const matchesText = (
+  leftValue: unknown,
+  rightValue: unknown,
+  method: "includes" | "startsWith" | "endsWith"
+): boolean => {
+  if (leftValue === undefined || leftValue === null) return false;
+  // oxlint-disable-next-line typescript/no-base-to-string -- preserve the existing coercion for present operands
+  return String(leftValue)[method](String(rightValue));
+};
+
 const compareLists = (
   leftValue: unknown,
   rightValue: unknown,
@@ -142,17 +152,17 @@ const compare = (
     case "doesNotEqual":
       return compareDoesNotEqual(leftValue, rightValue, context);
     case "contains":
-      return String(leftValue).includes(String(rightValue));
+      return matchesText(leftValue, rightValue, "includes");
     case "doesNotContain":
-      return !String(leftValue).includes(String(rightValue));
+      return !matchesText(leftValue, rightValue, "includes");
     case "startsWith":
-      return String(leftValue).startsWith(String(rightValue));
+      return matchesText(leftValue, rightValue, "startsWith");
     case "doesNotStartWith":
-      return !String(leftValue).startsWith(String(rightValue));
+      return !matchesText(leftValue, rightValue, "startsWith");
     case "endsWith":
-      return String(leftValue).endsWith(String(rightValue));
+      return matchesText(leftValue, rightValue, "endsWith");
     case "doesNotEndWith":
-      return !String(leftValue).endsWith(String(rightValue));
+      return !matchesText(leftValue, rightValue, "endsWith");
     case "isSubmitted":
       return isSubmittedValue(leftValue, context);
     case "isSkipped":
