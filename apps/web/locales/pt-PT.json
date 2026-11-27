@@ -1009,6 +1009,9 @@
     },
     "signup": {
       "create_administrator": "Criar Administrador",
+      "setup_token": "Token de configuração",
+      "setup_token_invalid": "O token de configuração está incorreto.",
+      "setup_token_needs_email_sign_up": "Esta instância requer um token de configuração, que só o registo por email consegue transmitir, e o registo por email está desativado. Remova a definição de EMAIL_AUTH_DISABLED até o administrador existir e, depois, defina-a novamente para voltar a desativar o registo por email.",
       "this_user_has_all_the_power": "Este utilizador tem todo o poder."
     }
   },

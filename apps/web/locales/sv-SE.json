@@ -1009,6 +1009,9 @@
     },
     "signup": {
       "create_administrator": "Skapa administratör",
+      "setup_token": "Installationstoken",
+      "setup_token_invalid": "Installationstoken är felaktig.",
+      "setup_token_needs_email_sign_up": "Den här instansen kräver en installationstoken, som bara kan skickas med vid registrering via e-post, och e-postregistreringen är avstängd. Ta bort inställningen EMAIL_AUTH_DISABLED tills administratören har skapats och ställ sedan in den igen för att stänga av e-postregistreringen på nytt.",
       "this_user_has_all_the_power": "Denna användare har all makt."
     }
   },

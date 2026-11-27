@@ -1009,6 +1009,9 @@
     },
     "signup": {
       "create_administrator": "Adminisztrátor létrehozása",
+      "setup_token": "Beállítási token",
+      "setup_token_invalid": "A beállítási token helytelen.",
+      "setup_token_needs_email_sign_up": "Ez a példány telepítési tokent igényel, amelyet kizárólag az e-mail-címmel történő regisztráció képes továbbítani, az e-mail-címmel történő regisztráció azonban ki van kapcsolva. Kérjük, távolítsa el az EMAIL_AUTH_DISABLED beállítást mindaddig, amíg a rendszergazda létre nem jön, majd állítsa be újra, hogy az e-mail-címmel történő regisztráció ismét ki legyen kapcsolva.",
       "this_user_has_all_the_power": "Ez a felhasználó rendelkezik az összes jogosultsággal."
     }
   },

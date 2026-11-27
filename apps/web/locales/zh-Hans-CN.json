@@ -1009,6 +1009,9 @@
     },
     "signup": {
       "create_administrator": "创建 管理员",
+      "setup_token": "设置令牌",
+      "setup_token_invalid": "设置令牌不正确。",
+      "setup_token_needs_email_sign_up": "此实例需要设置令牌，而只有邮箱注册才能携带该令牌，但目前邮箱注册已被关闭。请先取消设置 EMAIL_AUTH_DISABLED，等管理员创建完成后，再重新设置它，即可再次关闭邮箱注册。",
       "this_user_has_all_the_power": "此 用户 拥有 所有 权力。"
     }
   },

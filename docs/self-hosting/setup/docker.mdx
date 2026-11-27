@@ -111,6 +111,15 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    otherwise you can use the same value or omit the encoded variable. The PostgreSQL image only applies the raw
    password when it creates a new database volume.
 
+   If the server is reachable from the internet before you finish setup, also add a setup token now, before the
+   first start. Until the first administrator exists, anyone who can reach the instance can create that account;
+   with `SETUP_TOKEN` set (at least 16 characters), the setup form asks for it. Leave it out to keep the default
+   open setup.
+
+   ```bash
+   echo "SETUP_TOKEN=$(openssl rand -hex 16)" >> .env
+   ```
+
 1. **Validate the Docker Compose Configuration**
 
    Validate the Compose file after `.env` contains the required values:
@@ -155,6 +164,19 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
    Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access
    Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user
    and start using Formbricks.
+
+<Note>
+  If you set `SETUP_TOKEN` (see **Create the Environment File**), the setup form asks for it, and single sign-on
+  cannot be used to create the first administrator while it is set, so keep email sign-in on
+  (`EMAIL_AUTH_DISABLED` unset) until setup is done. Leaving it unset keeps the default open setup. Once the
+  first account exists, the instance never accepts a new first administrator again, even if every account is
+  later deleted. To start over on purpose, start from empty data rather than deleting rows: run
+  `docker compose down -v` with the same `-f` files you start with (this deletes every bundled volume and all
+  its data, including the AI model cache; empty any external database, such as SpiceDB or `HUB_DATABASE_URL`,
+  and external file storage yourself), set `SETUP_TOKEN` in `.env`
+  if the instance is reachable from the internet, then `docker compose up -d`. Deleting users in the database
+  leaves the authorization data in SpiceDB behind and does not reopen setup.
+</Note>
 
 <Note>
   The bundled Docker stack keeps Formbricks Hub and Cube internal to the compose network. The app reaches them

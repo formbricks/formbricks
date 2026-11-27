@@ -38,6 +38,11 @@ formbricks:
 
     Add any additional overrides you need for ingress, external services, secrets, or Enterprise license features.
 
+    If those overrides make the instance reachable before you finish setup (an Ingress, or a `LoadBalancer` or
+    `NodePort` Service), set `SETUP_TOKEN` in this file and create its Secret before you install: see
+    [Protect first-administrator setup](#protect-first-administrator-setup-optional). Otherwise the first
+    visitor to reach the setup form can create the administrator account.
+
   </Step>
 
   <Step title="Install Formbricks">
@@ -272,6 +277,43 @@ Since 4.0, each release publishes a chart with the same version number as the ap
 
 For the complete values surface, refer to the chart README in the repository:
 [charts/formbricks/README.md](https://github.com/formbricks/formbricks/tree/main/charts/formbricks).
+
+## Protect first-administrator setup (optional)
+
+Until the first administrator exists, anyone who can reach the instance can create that account. If the
+instance is reachable from the internet before you finish setup, set `SETUP_TOKEN` (at least 16 characters)
+through `deployment.env`. The setup form then asks for it, and single sign-on cannot create the first
+administrator while it is set, so keep email sign-in on until setup is done. Render it from a Secret rather
+than a plain value:
+
+```yaml
+deployment:
+  env:
+    SETUP_TOKEN:
+      valueFrom:
+        secretKeyRef:
+          name: formbricks-secrets
+          key: setup-token
+```
+
+Create the Secret in the release's namespace before `helm install`, creating the namespace first if the install
+would otherwise create it with `--create-namespace`. `--from-literal` stores the token without a trailing
+newline; a token that starts or ends with whitespace, or contains a line break, fails startup, because the setup
+form could never send it.
+
+```sh
+kubectl create namespace formbricks
+kubectl create secret generic formbricks-secrets -n formbricks \
+  --from-literal=setup-token="$(openssl rand -hex 16)"
+```
+
+See the [environment variables reference](/self-hosting/configuration/environment-variables). It is optional:
+leaving it unset keeps the default open setup. Once the first account exists, the instance never accepts a
+new first administrator again, even if every account is later deleted. To start over on purpose, set
+`SETUP_TOKEN` first (if the instance is reachable), then redeploy against an empty Formbricks database and an
+empty SpiceDB datastore: bundled PostgreSQL keeps its data across `helm uninstall`, so also delete the release's
+PVCs (see [Uninstalling the deployment](#6-uninstalling-the-deployment)). Deleting users in the database leaves the authorization data in SpiceDB behind and
+does not reopen setup.
 
 ## Verify the installation
 

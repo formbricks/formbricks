@@ -42,6 +42,9 @@ export const WEBHOOK_DELIVERY_TIMEOUT_MS = env.WEBHOOK_DELIVERY_TIMEOUT_MS ?? 5_
 export const DEBUG_SHOW_RESET_LINK = !IS_PRODUCTION && env.DEBUG_SHOW_RESET_LINK === "1";
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const PASSWORD_RESET_TOKEN_LIFETIME_MINUTES = env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES;
+
+// Optional secret the first administrator must present on a fresh instance (ENG-7313). Unset by default.
+export const SETUP_TOKEN = env.SETUP_TOKEN;
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
 export const GOOGLE_OAUTH_ENABLED = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);

@@ -1009,6 +1009,9 @@
     },
     "signup": {
       "create_administrator": "建立管理員",
+      "setup_token": "設定權杖",
+      "setup_token_invalid": "設定權杖不正確。",
+      "setup_token_needs_email_sign_up": "此執行個體需要設定權杖，而只有透過電子郵件註冊才能提供該權杖，但目前電子郵件註冊已關閉。請先取消設定 EMAIL_AUTH_DISABLED，待管理員帳號建立後，再重新設定該變數，即可再次關閉電子郵件註冊。",
       "this_user_has_all_the_power": "此使用者擁有所有權限。"
     }
   },

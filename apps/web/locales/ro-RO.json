@@ -1009,6 +1009,9 @@
     },
     "signup": {
       "create_administrator": "Creare Administrator",
+      "setup_token": "Token de configurare",
+      "setup_token_invalid": "Tokenul de configurare este incorect.",
+      "setup_token_needs_email_sign_up": "Această instanță necesită un token de configurare, pe care îl poate transmite doar înregistrarea prin e-mail, iar înregistrarea prin e-mail este dezactivată. Elimină setarea EMAIL_AUTH_DISABLED până când există administratorul, apoi setează-o din nou pentru a dezactiva la loc înregistrarea prin e-mail.",
       "this_user_has_all_the_power": "Acest utilizator are toată puterea."
     }
   },
