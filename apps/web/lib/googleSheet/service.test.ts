@@ -718,12 +718,14 @@ describe("alignRowToHeaders", () => {
       });
     });
 
-    test("does not let the legacy fallback take the column another question owns by its own label", () => {
+    test("keeps two headlines that read alike before the fix in their pre-fix order", () => {
+      // The two-paragraph headline and a plain "First lineSecond line" one shared the legacy label: the
+      // first took the existing column before the fix, and still does.
       expect(
         alignRowToHeaders([legacyLabel], [label, legacyLabel], ["a", "b"], [legacyLabel, legacyLabel])
       ).toEqual({
-        headers: [legacyLabel, label],
-        row: ["b", "a"],
+        headers: [legacyLabel, legacyLabel],
+        row: ["a", "b"],
         headersChanged: true,
       });
     });

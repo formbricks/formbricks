@@ -92,9 +92,28 @@ describe("matchLabelsToColumns", () => {
     });
   });
 
-  test("never lets a legacy fallback take the column another question owns by its own label", () => {
-    // q1 is `<p>A</p><p>B</p>` (legacy "AB"); q2 is a plain "AB" headline that owns the "AB" column.
-    expect(matchLabelsToColumns(["AB"], ["A B", "AB"], ["AB", "AB"])).toEqual([create("A B"), existing(0)]);
+  describe("when a changed label's new name is another changed label's legacy name", () => {
+    // q1 read "A BCD" before the fix and "A BC D" now; q2 reads "A BCD" now and read "ABCD" before.
+    const labels = ["A BC D", "A BCD"];
+    const legacyLabels = ["A BCD", "ABCD"];
+
+    test("gives the name to the question it was the legacy label of", () => {
+      expect(matchLabelsToColumns(["A BCD"], labels, legacyLabels)).toEqual([existing(0), create("ABCD")]);
+    });
+
+    test("keeps each question in its column across writes, in either order", () => {
+      const first = write(["A BCD"], labels, legacyLabels);
+      expect(write(first.columns, labels, legacyLabels)).toEqual(first);
+
+      const reversed = write([], [...labels].reverse(), [...legacyLabels].reverse());
+      expect(write(reversed.columns, [...labels].reverse(), [...legacyLabels].reverse())).toEqual(reversed);
+    });
+  });
+
+  test("keeps the pre-fix order when two headlines read alike before the fix", () => {
+    // q1 is `<p>A</p><p>B</p>` (legacy "AB"); q2 is a plain "AB" headline. Both wrote to "AB" columns
+    // before the fix, the first occurrence to the first column.
+    expect(matchLabelsToColumns(["AB"], ["A B", "AB"], ["AB", "AB"])).toEqual([existing(0), create("AB")]);
   });
 
   test("keeps a repeated changed label's occurrences in their columns across writes", () => {
@@ -102,5 +121,72 @@ describe("matchLabelsToColumns", () => {
     const first = write(["AB"], ["A B", "A B"], ["AB", "AB"]);
     expect(first).toEqual({ columns: ["AB", "A B"], placed: [0, 1] });
     expect(write(first.columns, ["A B", "A B"], ["AB", "AB"])).toEqual(first);
+  });
+});
+
+/**
+ * Properties over random surveys: headlines built from blocks, the legacy label gluing the blocks and the
+ * new one spacing them. A block may hold a space itself (`<p>A B</p>`), so one headline's legacy label
+ * can read like another's new label. Seeded, so a failure reproduces.
+ */
+describe("matchLabelsToColumns properties", () => {
+  const blocks = ["A", "B", "C", "AB", "BC", "A B", "B C"];
+
+  const randomSurveys = (count: number) => {
+    let seed = 7;
+    const random = (n: number) => {
+      seed = Math.trunc(seed + 0x6d2b79f5);
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) % n;
+    };
+    return Array.from({ length: count }, () => {
+      const headlines = Array.from({ length: 1 + random(4) }, () =>
+        Array.from({ length: 1 + random(3) }, () => blocks[random(blocks.length)])
+      );
+      return {
+        labels: headlines.map((parts) => parts.join(" ")),
+        legacyLabels: headlines.map((parts) => parts.join("")),
+        before: random(headlines.length + 1),
+      };
+    });
+  };
+  const surveys = randomSurveys(3000);
+
+  test("Google Sheets: every question gets its own column and keeps it on the next write", () => {
+    for (const { labels, legacyLabels } of surveys) {
+      for (const start of [[], legacyLabels]) {
+        const first = write(start, labels, legacyLabels);
+        expect(new Set(first.placed).size).toBe(labels.length);
+        expect(write(first.columns, labels, legacyLabels)).toEqual(first);
+      }
+    }
+  });
+
+  test("Google Sheets: a sheet from before the fix keeps every question in its column", () => {
+    for (const { labels, legacyLabels, before } of surveys) {
+      // The first `before` questions existed before the fix, which wrote one column per legacy label.
+      const { placed } = write(legacyLabels.slice(0, before), labels, legacyLabels);
+      expect(placed.slice(0, before)).toEqual(labels.slice(0, before).map((_, index) => index));
+    }
+  });
+
+  test("Airtable: only questions that shared a field before the fix share one, and names are stable", () => {
+    const fieldNames = (fields: string[], labels: string[], legacyLabels: string[]) =>
+      matchLabelsToColumns(fields, labels, legacyLabels).map((choice) =>
+        "existing" in choice ? fields[choice.existing] : choice.create
+      );
+    for (const { labels, legacyLabels } of surveys) {
+      for (const start of [[], [...new Set(legacyLabels)]]) {
+        const names = fieldNames(start, labels, legacyLabels);
+        names.forEach((name, i) =>
+          names.forEach((other, j) => {
+            if (name === other) expect(legacyLabels[i]).toBe(legacyLabels[j]);
+          })
+        );
+        const fields = [...new Set([...start, ...names])];
+        expect(fieldNames(fields, labels, legacyLabels)).toEqual(names);
+      }
+    }
   });
 });

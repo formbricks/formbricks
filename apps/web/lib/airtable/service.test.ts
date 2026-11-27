@@ -111,14 +111,15 @@ describe("writeData", () => {
     expect(airtable.records).toEqual([{ [label]: "answer" }]);
   });
 
-  test("does not let the legacy fallback take the field another question owns by its own label", async () => {
-    // A plain "First lineSecond line" headline owns that field; the two-paragraph one gets its own.
+  test("keeps two headlines that read alike before the fix on the field they shared", async () => {
+    // The two-paragraph headline and a plain "First lineSecond line" one wrote to one field before the
+    // fix; they still do, rather than moving either to a new field.
     airtable.fieldNames = [legacyLabel];
 
     await writeData(key, configData, ["a", "b"], [label, legacyLabel], [legacyLabel, legacyLabel]);
 
-    expect(airtable.createdFields).toEqual([label]);
-    expect(airtable.records).toEqual([{ [label]: "a", [legacyLabel]: "b" }]);
+    expect(airtable.createdFields).toEqual([]);
+    expect(airtable.records).toEqual([{ [legacyLabel]: "b" }]);
   });
 
   test("keeps both answers when a changed label now equals another question's label", async () => {
