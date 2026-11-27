@@ -342,15 +342,6 @@ describe("getSurveyExemptionEnd", () => {
     ).toBeNull();
   });
 
-  test("ends at the revocation when it is scheduled before the end date", () => {
-    expect(
-      getSurveyExemptionEnd(
-        [exemption("2031-03-31T00:00:00.000Z", { revokedAt: "2030-09-01T00:00:00.000Z" })],
-        now
-      )
-    ).toBe("2030-09-01T00:00:00.000Z");
-  });
-
   test("is the latest end when several are active", () => {
     expect(
       getSurveyExemptionEnd(

@@ -146,25 +146,17 @@ const getHoldingExemption = (
     >((longest, exemption) => (!longest || exemption.until > longest.until ? exemption : longest), undefined);
 
 /**
- * When the exemptions holding a survey from the archive purge end: the latest `LEAST(until, revokedAt)`
- * still after `now`, whatever the policy, as `getSurveyPurgeEligibleWhere` reads them (ENG-3991). Null
- * when none holds it, so the archive purge deletes it 30 days after archiving.
+ * When the exemptions holding a survey from the archive purge end (ENG-3991): the latest `until` among
+ * those still active at `now`, whatever the policy. Revocation stamps `revokedAt` with the current time,
+ * so an exemption is active exactly when it is unrevoked and `until` is after `now`, the same rule
+ * `listActiveSurveyRetentionExemptions` applies. Null when none holds the survey, so the archive purge
+ * deletes it 30 days after archiving.
  */
-export const getSurveyExemptionEnd = (
-  exemptions: readonly TRetentionExemption[],
-  now: Date
-): string | null => {
-  let latest: { iso: string; time: number } | null = null;
-  for (const exemption of exemptions) {
-    const iso =
-      exemption.revokedAt && Date.parse(exemption.revokedAt) < Date.parse(exemption.until)
-        ? exemption.revokedAt
-        : exemption.until;
-    const time = Date.parse(iso);
-    if (time > now.getTime() && (!latest || time > latest.time)) latest = { iso, time };
-  }
-  return latest?.iso ?? null;
-};
+export const getSurveyExemptionEnd = (exemptions: readonly TRetentionExemption[], now: Date): string | null =>
+  getHoldingExemption(
+    exemptions.filter((exemption) => !exemption.revokedAt && Date.parse(exemption.until) > now.getTime()),
+    "surveys"
+  )?.until ?? null;
 
 /** One policy's line for a survey: what it does next and when, or that the survey is exempt. */
 const describeSurveyRetentionPlan = (
