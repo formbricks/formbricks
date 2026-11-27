@@ -9,6 +9,7 @@ import {
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
 import { hasOrganizationEntitlementWithLicenseGuard } from "@/modules/entitlements/lib/checks";
+import { isCloudLicenseUsable } from "@/modules/entitlements/lib/cloud-license";
 import { getOrganizationEntitlementsContext } from "@/modules/entitlements/lib/provider";
 import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 
@@ -109,10 +110,7 @@ export const getBiggerUploadFileSizePermission = async (organizationId: string):
   const hasPaidCloudCapacity =
     entitlementsContext.limits.workspaces === null ||
     (typeof entitlementsContext.limits.workspaces === "number" && entitlementsContext.limits.workspaces > 1);
-  const licenseAllowsUsage =
-    entitlementsContext.licenseStatus === "active" || entitlementsContext.licenseStatus === "no-license";
-
-  return hasPaidCloudCapacity && licenseAllowsUsage;
+  return hasPaidCloudCapacity && isCloudLicenseUsable(entitlementsContext);
 };
 
 export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
@@ -271,9 +269,7 @@ export const getOrganizationWorkspacesLimit = async (organizationId: string): Pr
   const entitlementsContext = await getOrganizationEntitlementsContext(organizationId);
 
   if (IS_FORMBRICKS_CLOUD) {
-    const cloudLicenseAllowsLimits =
-      entitlementsContext.licenseStatus === "active" || entitlementsContext.licenseStatus === "no-license";
-    if (!cloudLicenseAllowsLimits) return CLOUD_HOBBY_WORKSPACE_LIMIT;
+    if (!isCloudLicenseUsable(entitlementsContext)) return CLOUD_HOBBY_WORKSPACE_LIMIT;
     return entitlementsContext.limits.workspaces ?? Infinity;
   }
 

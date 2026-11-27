@@ -108,6 +108,60 @@ describe("hasOrganizationEntitlementWithLicenseGuard", () => {
     expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "rbac")).toBe(false);
   });
 
+  // ENG-7563: a failed refresh leaves the license in grace (`licenseActive` with its last verified
+  // features, status "unreachable"). Cloud keeps honouring paid entitlements through it, but still
+  // refuses what the license server actually refused and a license nobody could ever verify.
+  test.each([
+    {
+      case: "unreachable in grace",
+      licenseActive: true,
+      licenseStatus: "unreachable" as const,
+      allowed: true,
+    },
+    {
+      case: "unreachable past grace",
+      licenseActive: false,
+      licenseStatus: "unreachable" as const,
+      allowed: false,
+    },
+    {
+      case: "answered expired in grace",
+      licenseActive: true,
+      licenseStatus: "expired" as const,
+      allowed: false,
+    },
+    {
+      case: "invalid license",
+      licenseActive: false,
+      licenseStatus: "invalid_license" as const,
+      allowed: false,
+    },
+    {
+      case: "instance mismatch",
+      licenseActive: false,
+      licenseStatus: "instance_mismatch" as const,
+      allowed: false,
+    },
+  ])("cloud license $case → $allowed", async ({ licenseActive, licenseStatus, allowed }) => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      licenseActive,
+      licenseStatus,
+      licenseFeatures: { accessControl: true } as TOrganizationEntitlementsContext["licenseFeatures"],
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "rbac")).toBe(allowed);
+  });
+
+  test("still applies the last verified license features while the license server is unreachable", async () => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      licenseActive: true,
+      licenseStatus: "unreachable",
+      licenseFeatures: { accessControl: false } as TOrganizationEntitlementsContext["licenseFeatures"],
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "rbac")).toBe(false);
+  });
+
   test("returns true when license active and mapped feature enabled", async () => {
     mockGetContext.mockResolvedValue({
       ...baseContext,

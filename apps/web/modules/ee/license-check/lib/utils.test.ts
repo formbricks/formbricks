@@ -523,6 +523,25 @@ describe("License Utils", () => {
       expect(result).toBe(false);
     });
 
+    // ENG-7563: a failed license refresh must not shrink paid uploads while the license is in grace.
+    test.each([
+      { licenseActive: true, expected: true },
+      { licenseActive: false, expected: false },
+    ])(
+      "on cloud with the license server unreachable and licenseActive $licenseActive returns $expected",
+      async ({ licenseActive, expected }) => {
+        vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+        vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
+          ...defaultEntitlementsContext,
+          licenseActive,
+          licenseStatus: "unreachable",
+          limits: { ...defaultEntitlementsContext.limits, workspaces: 10 },
+        });
+
+        expect(await getBiggerUploadFileSizePermission("org_1")).toBe(expected);
+      }
+    );
+
     test("returns false on cloud when license status is not usable", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
@@ -725,6 +744,26 @@ describe("License Utils", () => {
       // treated as no entitlement, so the free-tier allowance applies until the license resolves.
       expect(result).toBe(1);
     });
+
+    // ENG-7563: a failed license refresh keeps the org's paid allowance while the license is in grace,
+    // and falls back to Hobby once grace has ended.
+    test.each([
+      { licenseActive: true, expected: 10 },
+      { licenseActive: false, expected: 1 },
+    ])(
+      "on cloud with the license server unreachable and licenseActive $licenseActive returns $expected",
+      async ({ licenseActive, expected }) => {
+        vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+        vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
+          ...defaultEntitlementsContext,
+          licenseActive,
+          licenseStatus: "unreachable",
+          limits: { ...defaultEntitlementsContext.limits, workspaces: 10 },
+        });
+
+        expect(await getOrganizationWorkspacesLimit("org_1")).toBe(expected);
+      }
+    );
 
     test("returns Infinity for self-hosted when an active license grants unlimited workspaces", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
