@@ -96,9 +96,10 @@ reviews:
     - path: "**/*.{test,spec}.{tsx,jsx}"
       instructions: |
         `formbricks/no-tsx-unit-test` (lint) already fails a new `.test.tsx` / `.spec.tsx`; do not
-        repeat it. When the logic under test moves into a `.ts` module, do not ask for a Playwright
-        spec instead: deleting a `.test.tsx` creates no E2E obligation, and a component is not an E2E
-        subject.
+        repeat it. The files in `TSX_UNIT_TEST_ALLOWLIST` (packages/config-oxlint/base.mjs) predate
+        the ban; do not raise it on edits to them. When the logic under test moves into a `.ts`
+        module, do not ask for a Playwright spec instead: deleting a `.test.tsx` creates no E2E
+        obligation, and a component is not an E2E subject.
 
     - path: "**/*.tsx"
       instructions: |
@@ -133,13 +134,14 @@ reviews:
           snapshots, and tests that cannot fail (no meaningful assertion, everything mocked, a mocked
           return value that already is the asserted output).
         - A test over mocked Prisma proves the decision: that the code rejects or resolves, and which
-          write it sends. Do not ask it to prove that the write persists: a `*.integration.test.ts`
-          against a real database claims that (CODING_STANDARDS.md "Testing Guidelines", the
-          mocked-Prisma line).
+          write it sends. Do not ask it to prove that the write persists: an integration test
+          (`*.integration.test.ts`, `*-integration.test.ts`) against a real database claims that
+          (CODING_STANDARDS.md "Testing Guidelines", the mocked-Prisma line).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
-        - A `.test.ts` that renders a component (`createElement`, a testing-library `render`) is
-          still a component unit test, which CODING_STANDARDS.md "Testing Guidelines" forbids; lint
-          only sees the file extension. Ask for the logic to move into a `.ts` module instead.
+        - A newly added `.test.ts` whose subject is a component's markup or behaviour is still a
+          component unit test, which CODING_STANDARDS.md "Testing Guidelines" forbids; lint only sees
+          the file extension. Ask for the logic to move into a `.ts` module instead. A provider
+          wrapper for `renderHook`, or rendering an email template to HTML, is not a component test.
         - Module boundaries are mocked with `vi.mock`; where a shared `__mocks__` module exists
           (e.g. `apps/web/lib/__mocks__/database.ts`) the test reuses it instead of redefining it.
           Do not ask for a shared helper that does not exist.

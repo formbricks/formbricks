@@ -20,14 +20,18 @@ hardening first for literal `ubuntu-*` runner labels, including version and arch
 still judge whether requested token permissions are minimal and whether runner choices outside this
 check need hardening.
 
-`formbricks/no-tsx-unit-test` fails a `*.test.tsx` / `*.spec.tsx` (or `.jsx`) file, and
-`formbricks/no-loose-schema` fails a zod schema that keeps unknown keys (`.loose()`, `.passthrough()`,
-`z.looseObject()`, `.catchall()` without `z.never()`). Each allowlist in `packages/config-oxlint/base.mjs`
-only shrinks. An entry in `LOOSE_SCHEMA_ALLOWLIST` carries the reason its schemas never reach a write's
-`data` as columns or relations; in a shared types file, the one open schema carries a disable comment with
-that reason instead. `formbricks/no-request-regexp` reports request input compiled into a regex only
-inside one file: a pattern loaded from a stored survey or filter, or one that crosses files, is still a
-review check under "Security".
+`formbricks/no-tsx-unit-test` fails a `*.test.tsx` / `*.spec.tsx` (or `.jsx`) file.
+`formbricks/no-loose-schema` fails a zod object schema that keeps unknown keys: `.loose()`,
+`.passthrough()`, `z.looseObject()`, and `.catchall()` without `z.never()` on a zod chain (one starting
+from a zod import or a `ZName` schema, or taking a zod schema). `z.record()`, `z.any()`, `z.unknown()` and
+`z.json()` also accept any key and are not flagged: one that reaches a write's `data` is a review check.
+Each allowlist in `packages/config-oxlint/base.mjs` only shrinks. An entry in `LOOSE_SCHEMA_ALLOWLIST`
+carries the reason its schemas never reach a write's `data` as columns or relations; in a shared types
+file, the one open schema carries a disable comment with that reason instead.
+`formbricks/no-request-regexp` reports request input compiled into a regex only inside one file, and not
+through a function's return value, `this.method(x)`, a call it does not know (`decodeURIComponent(x)`), a
+request argument not named `req` or `request`, or a route's `params`. Those, a pattern loaded from a
+stored survey or filter, and a flow across files are review checks under "Security".
 
 ## The Review Gate
 
@@ -200,12 +204,14 @@ are under "API Design", caps on what a caller sends under "Input Limits", and te
   path (ENG-7266).
 - **A user-supplied regex on a shared process runs in a linear-time engine or not at all.** On the server,
   in workers and in jobs, a pattern from a survey, a filter or any request runs in RE2 with a program-size
-  cap and a per-run work budget (`apps/web/modules/api/lib/linear-pattern-matcher.ts`), or is not evaluated:
-  RE2 is linear in program size times input length, not free. A length cap is not ReDoS protection: a
-  20-character pattern can backtrack for minutes on a short input and block the event loop for every tenant
-  on the process. A pattern from operator config (an environment variable, a constant) is not user-supplied.
-  Code that runs only in the end user's own tab may use native `RegExp`, as `matchPatternWithRegExp` in
-  `packages/surveys/src/lib/validation/validators.ts` does. Class: ReDoS (ENG-7109).
+  cap and a per-run work budget (`apps/web/modules/api/lib/linear-pattern-matcher.ts`), or is not
+  evaluated: RE2 is linear in program size times input length, not free. A length cap is not ReDoS
+  protection: a 20-character pattern can backtrack for minutes on a short input and block the event loop
+  for every tenant on the process. A pattern from operator config (an environment variable, a constant) is
+  not user-supplied, and input escaped to a literal (every metacharacter prefixed with `\`, as
+  `escapeRegExp` does) is text, not a pattern. Code that runs only in the end user's own tab may use
+  native `RegExp`, as `matchPatternWithRegExp` in `packages/surveys/src/lib/validation/validators.ts`
+  does. Class: ReDoS (ENG-7109).
 - **Caller data a library stores for us is bounded in our code.** OAuth state and authorization codes,
   rate-limit keys and verification records that a library writes to Redis or Postgres from request input
   have a size and lifetime cap set in our code (checked before the call, or a TTL we pass and verify), and a
@@ -296,8 +302,9 @@ raises them too — but that is a second pair of eyes, and its silence is not a 
   for: `where: { id, workspaceId }`, `connect: { id_workspaceId }`. Authorizing the parent is not enough:
   most cross-tenant fixes shipped this year authorized the URL's workspace and then loaded a nested id
   alone. Columns the server owns (`archivedAt`, `organizationId`, `createdBy`) are omitted from create and
-  update input, and a write's `data` never takes the output of a zod schema that keeps unknown keys: those
-  keys become relation writes and foreign keys (mass assignment, ENG-7127). `formbricks/no-loose-schema`
+  update input, and a write's `data` never takes, as its columns or relations, the output of a zod schema
+  that keeps unknown keys: those keys become relation writes and foreign keys (mass assignment, ENG-7127).
+  Extra keys kept inside one JSON column's value are not mass assignment. `formbricks/no-loose-schema`
   flags such a schema where it is declared. For a write body with several references, the model is the
   reference manifest in `apps/web/app/api/v3/responses/lib/reference-manifest.ts` (ENG-2861).
 - A check that guards a write (a limit, a status, ownership, `finished`, "first user") runs in the same
@@ -367,13 +374,13 @@ concluding an area has no spec.
 
 The PR's Coverage table names each row's level with one of six words, and the first three are claims a
 reviewer can check: `unit (red on main)` fails against the old code, so it proves the bug existed;
-`unit (mutation)` only fails if you break the fix, because the code under test is new; `unit (guard)`
-passes either way, protecting against a future regression; `integration` (a `*.integration.test.ts` against a
-real database or dependency), `e2e` and `manual` say where the check ran. Every `unit`, `integration` and
-`e2e` row names the test or spec it rests on, in the row or in a `Rerun:` line that names it — a bare
-`pnpm test` names nothing. A `unit (red on main)` row is rerunnable from the `Rerun:` command, or names
-its own where that differs; a `unit (mutation)` row names the mutated `file:line` a reviewer edits to turn
-it red.
+`unit (mutation)` only fails if you break the fix, because the code under test is new; `unit (guard)` passes
+either way, protecting against a future regression; `integration` (an `*.integration.test.ts` or
+`*-integration.test.ts` against a real database or dependency), `e2e` and `manual` say where the check
+ran. Every `unit`, `integration` and `e2e` row names the test or spec it rests on, in the row or in a
+`Rerun:` line that names it — a bare `pnpm test` names nothing. A `unit (red on main)` row is rerunnable
+from the `Rerun:` command, or names its own where that differs; a `unit (mutation)` row names the mutated
+`file:line` a reviewer edits to turn it red.
 
 This raises a floor as well as lowering a ceiling. Every feature area ships a happy-path E2E, and an area
 with none is a gap rather than a saving (Dashboards and Workflows are the current examples — ENG-2314). A

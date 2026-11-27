@@ -23,6 +23,10 @@ const banned: Record<string, string> = {
 declare const rest: z.ZodType;
 export const S = ZBase.catchall(rest);
 `,
+  "catchall-local-schema.ts": `${header}const base = z.object({ a: z.string() });
+const rest = z.unknown();
+export const S = base.catchall(rest);
+`,
   "catchall.ts": `${header}export const S = z.object({ name: z.string() }).catchall(z.unknown());\n`,
 };
 

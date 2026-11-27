@@ -364,7 +364,8 @@ const preferReadOnlyProps = {
  * return value of the file's own functions, `this.method(x)`, an unknown call (`decodeURIComponent(x)`
  * clears the taint), and a same-file call chain longer than the pass cap. A write clears a label only in
  * straight-line code of the function that declares the name; in a branch, a loop or a closure it may not
- * run, so it only adds to the label.
+ * run, so it only adds to the label. A loop body is walked once, so taint a later iteration carries back
+ * to an earlier line is missed. A one-argument `.search(q)` on a search client reads as a sink.
  *
  * A label says what is tainted: `false` (nothing), `true` (the whole value) or an object whose keys
  * label the value's properties (`{ parsedInput: true }` for a server action's first argument).
@@ -393,6 +394,7 @@ const unwrapExpression = (node) => {
 const keyOf = (node) => {
   if (!node.computed) return node.key?.name ?? node.property?.name ?? node.key?.value;
   const key = node.key ?? node.property;
+  if (key?.type === "TemplateLiteral" && key.expressions.length === 0) return key.quasis[0].value.cooked;
   return key?.type === "Literal" ? key.value : undefined;
 };
 
@@ -417,8 +419,15 @@ const unionLabels = (a = [], b = []) =>
 
 const sameLabels = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-// `branchDepth` counts the conditional constructs (if, loop, switch, try, `? :`, `&&`) the walk is inside.
-const newScope = (isFunction) => ({ vars: new Map(), fns: new Map(), isFunction, branchDepth: 0 });
+// A function scope's `branchDepth` counts the conditional constructs (if, loop, switch, try, `? :`, `&&`)
+// the walk is inside; a scope's `depth` is that count where the scope opened.
+const newScope = (isFunction, depth = 0) => ({
+  vars: new Map(),
+  fns: new Map(),
+  isFunction,
+  depth,
+  branchDepth: 0,
+});
 
 // `export function f` / `export const f = …` declare `f` like the unwrapped statement.
 const declarationOf = (statement) =>
@@ -456,15 +465,17 @@ function walkTaint(program, policy) {
     };
     const lookup = (name) => scopeOf(name)?.vars.get(name) ?? false;
     const currentFunction = () => scopes.findLast((scope) => scope.isFunction);
-    // A write replaces the label only in straight-line code of the function that declares the name. In a
-    // branch, or from a closure that may never run, it may not happen, so it only adds to the label.
+    const blockScope = () => newScope(false, currentFunction().branchDepth);
+    // A write replaces the label only in straight-line code of the scope that declares the name. In a
+    // branch that scope does not own, or from a closure that may never run, it may not happen, so it
+    // only adds to the label.
     const assign = (name, label) => {
       const index = scopes.findLastIndex((scope) => scope.vars.has(name) || scope.fns.has(name));
       if (index === -1) return;
       const target = scopes[index];
       const owner = scopes.slice(0, index + 1).findLast((scope) => scope.isFunction);
       const current = currentFunction();
-      const replaces = owner === current && current.branchDepth === 0;
+      const replaces = owner === current && current.branchDepth === target.depth;
       target.vars.set(name, replaces ? label : union(target.vars.get(name), label) || false);
     };
     const inBranch = (walk) => {
@@ -644,7 +655,7 @@ function walkTaint(program, policy) {
 
     const visitLoop = (node) => {
       visit(node.right);
-      scopes.push(newScope(false));
+      scopes.push(blockScope());
       const label = labelOf(node.right);
       // `for (const x of tainted)` yields its elements; `for (const k in tainted)` its keys.
       const element = label === true ? policy.deep : false;
@@ -668,7 +679,9 @@ function walkTaint(program, policy) {
     };
 
     const visitAssignment = (node) => {
-      visit(node.right);
+      // `a ??= b`, `a ||= b`, `a &&= b` may not evaluate `b`.
+      if (["??=", "||=", "&&="].includes(node.operator)) inBranch(() => visit(node.right));
+      else visit(node.right);
       if (node.left.type === "Identifier") {
         const right = labelOf(node.right);
         assign(node.left.name, node.operator === "=" ? right : union(lookup(node.left.name), right));
@@ -713,12 +726,14 @@ function walkTaint(program, policy) {
           return;
         case "SwitchStatement":
           visit(node.discriminant);
-          scopes.push(newScope(false));
-          inBranch(() => node.cases.forEach(visit));
-          scopes.pop();
+          inBranch(() => {
+            scopes.push(blockScope());
+            node.cases.forEach(visit);
+            scopes.pop();
+          });
           return;
         case "ForStatement":
-          scopes.push(newScope(false));
+          scopes.push(blockScope());
           visit(node.init);
           inBranch(() => [node.test, node.update, node.body].forEach(visit));
           scopes.pop();
@@ -744,7 +759,7 @@ function walkTaint(program, policy) {
           visitAssignment(node);
           return;
         case "CatchClause":
-          scopes.push(newScope(false));
+          scopes.push(blockScope());
           bind(node.param, false, declareIn("let"));
           visit(node.body);
           scopes.pop();
@@ -771,7 +786,7 @@ function walkTaint(program, policy) {
       }
       const scoped = BLOCK_SCOPES.has(node.type);
       if (scoped) {
-        scopes.push(newScope(false));
+        scopes.push(blockScope());
         if (node.type === "BlockStatement") hoist(node.body);
       }
       visitChildren(node);
@@ -868,6 +883,13 @@ const noLooseSchema = {
       ImportDeclaration(node) {
         if (!/^zod(?:\/|$)/.test(String(node.source.value))) return;
         for (const specifier of node.specifiers) zodNames.add(specifier.local.name);
+      },
+      // A name bound to a zod chain (`const base = z.object({})`) starts a zod chain too.
+      VariableDeclarator(node) {
+        const root = chainRoot(node.init);
+        if (node.id.type === "Identifier" && root !== undefined && zodNames.has(root)) {
+          zodNames.add(node.id.name);
+        }
       },
       CallExpression(node) {
         if (!isOpenSchemaCall(node, zodNames)) return;

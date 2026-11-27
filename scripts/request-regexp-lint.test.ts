@@ -196,6 +196,16 @@ export async function POST(req: Request) {
   return new RegExp(pattern).test("x");
 };
 `,
+  "template-key-match.ts": `export const run = ({ parsedInput }: any) => "text"[\`match\`](parsedInput.pattern);
+`,
+  // The right side of ??= may not run, so it cannot clear the taint.
+  "logical-assignment-reset.ts": `export const run = ({ parsedInput }: any) => {
+  let pattern = parsedInput.pattern;
+  let seen: string | undefined;
+  seen ??= pattern = "^[a-z]+$";
+  return new RegExp(pattern).test(seen);
+};
+`,
   "global-regexp.ts": `export const run = ({ parsedInput }: any) => new globalThis.RegExp(parsedInput.pattern).test("x");
 `,
   "reduce-callback.ts": `export const run = ({ parsedInput }: any) =>
@@ -288,6 +298,30 @@ export const inherited = (o: object) => new RegExp(S.parse(o.constructor).patter
   }
   return new RegExp(body.pattern).test("x");
 }
+`,
+  // Escaped in place inside the block that declares it, as a try-wrapped route handler does.
+  "escaped-in-try.ts": `export async function GET(req: Request) {
+  try {
+    let q = new URL(req.url).searchParams.get("q") ?? "";
+    q = q.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&");
+    return new RegExp(q).test("x");
+  } catch {
+    return false;
+  }
+}
+`,
+  "escaped-in-switch-case.ts": `declare const escapeRegExp: (value: string) => string;
+export const run = ({ parsedInput }: any) => {
+  switch (parsedInput.mode) {
+    case "text": {
+      let q = parsedInput.q;
+      q = escapeRegExp(q);
+      return new RegExp(q).test("x");
+    }
+    default:
+      return false;
+  }
+};
 `,
   "disable-comment.ts": `export const run = ({ parsedInput }: any) =>
   // oxlint-disable-next-line formbricks/no-request-regexp -- fixture: a disable comment with its reason

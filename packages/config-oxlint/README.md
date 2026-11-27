@@ -51,12 +51,13 @@ Notes:
   eslint-plugin-react's rule without its autofix, which wrote `readonly` members instead of the
   `Readonly<Props>` wrapper.
   Three more run in every tier (ENG-7450). `formbricks/no-loose-schema` (ENG-7127) fails a zod schema
-  that keeps unknown keys where it is declared, outside the files in `LOOSE_SCHEMA_ALLOWLIST`
-  (`base.mjs`), each listed with the reason its schemas never reach a Prisma write's `data` as columns
-  or relations (a shared types file disables it on the one schema instead, with the reason).
-  `formbricks/no-request-regexp` (ENG-7109) follows request input inside one file, through variables,
-  closures and into the parameters of the file's own functions, to `new RegExp`, `.match`, `.matchAll`
-  or `.search`; a pattern loaded from storage is not a source. A safe line disables it with its reason.
+  that keeps unknown keys where it is declared (`.catchall()` only on a zod chain), outside the files in
+  `LOOSE_SCHEMA_ALLOWLIST` (`base.mjs`), each listed with the reason its schemas never reach a Prisma
+  write's `data` as columns or relations (a shared types file disables it on the one schema instead,
+  with the reason). `formbricks/no-request-regexp` (ENG-7109) follows request input inside one file,
+  through variables, closures and into the parameters of the file's own functions, to `new RegExp`,
+  `RegExp()`, `globalThis.RegExp`, or a one-argument `.match`, `.matchAll` or `.search`; a pattern
+  loaded from storage is not a source. A safe line disables it with its reason.
   `formbricks/no-tsx-unit-test` fails a `*.test.tsx`/`*.spec.tsx` (or `.jsx`) file (CODING_STANDARDS.md,
   Testing Guidelines), except those in `TSX_UNIT_TEST_ALLOWLIST` (`base.mjs`). Both allowlists only
   shrink.
