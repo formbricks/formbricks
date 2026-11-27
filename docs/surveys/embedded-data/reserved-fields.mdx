@@ -39,7 +39,7 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 | `visitEntryReferrer`     | `string`  | Browser (website) | Where the visit started. Read back without its query string |
 | `visitUrls`              | `string`  | Browser (website) | The paths taken in this visit, in order, joined by ` · ` (the first page and the last 49 steps). Lowercase, without a trailing slash |
 | `language`        | `string`  | Browser, Server | The language the respondent is **answering in**                               |
-| `country`         | `string`  | Browser, Server | Two-letter code you set, else the CDN request header. No GeoIP lookup         |
+| `country`         | `string`  | Server          | Two-letter code you set, else the CDN request header. No GeoIP lookup         |
 | `browser`         | `string`  | Server          | Parsed from the `user-agent` request header                                   |
 | `os`              | `string`  | Server          | Parsed from the `user-agent` request header                                   |
 | `deviceType`      | `string`  | Server          | Parsed from the `user-agent` request header                                   |

@@ -29,7 +29,7 @@ icon: "user"
 
 - **Device**: The device used by the user to fill the survey.
 
-- **Country**: The respondent's country as a two-letter code. Formbricks runs no GeoIP lookup: you can set it yourself with `?country=DE` on a link survey or `country` in `setEmbeddedData` for an app survey, and otherwise it comes from the `CF-IPCountry` (Cloudflare) or `CloudFront-Viewer-Country` (AWS CloudFront) request header. With neither, it stays empty. See [Reserved Fields](/surveys/embedded-data/reserved-fields).
+- **Country**: The respondent's country as a two-letter code. Formbricks runs no GeoIP lookup: you can set it yourself with `?country=DE` on a link survey or `country` in `setEmbeddedData` for an app survey, and otherwise it comes from the `CF-IPCountry` (Cloudflare) or `CloudFront-Viewer-Country` (AWS CloudFront) request header. With neither, it stays empty. A survey with its own field or question named `country` [keeps the name](/surveys/embedded-data/reserved-fields#name-collisions): a value you pass fills that one, and the respondent's country comes from the request header alone. See [Reserved Fields](/surveys/embedded-data/reserved-fields).
 
 - **Action**: The action that triggered the survey. This is only available for App surveys.
 
