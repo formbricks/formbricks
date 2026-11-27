@@ -586,11 +586,9 @@ export const ZMcpArchiveSurveyInput = ZMcpSurveyIdInput.extend({
 
 export const ZMcpSetSurveyVisibilityInput = ZMcpSurveyIdInput.extend({
   visibility: ZSurveyVisibility.describe(
-    "`workspace` shares the survey with the whole workspace; `restricted` limits it to its owner and organization owners/managers."
+    "`workspace` shares the survey with the whole workspace and is confirmed first; `restricted` limits it to its owner and organization owners/managers and is not."
   ),
-  confirm: confirmArgumentFor(
-    "sharing this survey with the whole workspace (only a change to `workspace` asks; restricting does not)"
-  ),
+  confirm: confirmArgumentFor("sharing this survey with the whole workspace"),
 }).strict();
 
 /** Deprecated with `delete_survey` (ENG-6575): removed in 7.0, prefer `archive_survey`. */
