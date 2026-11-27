@@ -366,7 +366,8 @@ describe("handleIntegrations", () => {
           "Variable Value",
           "2024-01-01 12:00",
         ], // responses + hidden + meta + var + created
-        ["Question 1 {{recall:q2}}", "Question 2", hiddenFieldId, "Metadata", "Variable 1", "Created At"] // elements (raw headline for Airtable) + hidden + meta + var + created
+        ["Question 1 {{recall:q2}}", "Question 2", hiddenFieldId, "Metadata", "Variable 1", "Created At"], // elements (raw headline for Airtable) + hidden + meta + var + created
+        ["Question 1 {{recall:q2}}", "Question 2", hiddenFieldId, "Metadata", "Variable 1", "Created At"] // legacy labels: plain-text headlines read the same
       );
     });
 
@@ -404,6 +405,27 @@ describe("handleIntegrations", () => {
     });
   });
 
+  describe("Airtable Integration labels", () => {
+    // ENG-3682: see the Google Sheets case below; Airtable gets the same pair of labels.
+    test("passes the spaced label and the legacy glued label for a multi-paragraph headline", async () => {
+      vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+      const survey = structuredClone(mockSurvey);
+      survey.blocks[0].elements[0].headline = { default: "<ul><li>one</li><li>two</li></ul>" };
+      const integration = structuredClone(mockAirtableIntegration);
+      integration.config.data[0].elementIds = ["q1"];
+      integration.config.data[0].includeMetadata = false;
+      integration.config.data[0].includeVariables = false;
+      integration.config.data[0].includeHiddenFields = false;
+      integration.config.data[0].includeCreatedAt = false;
+
+      await handleIntegrations([integration], mockPipelineInput, survey);
+
+      const [, , , elements, legacyElements] = vi.mocked(airtableWriteData).mock.calls[0];
+      expect(elements).toEqual(["one two"]);
+      expect(legacyElements).toEqual(["onetwo"]);
+    });
+  });
+
   describe("Google Sheets Integration", () => {
     test("should call googleSheetWriteData with correct parameters", async () => {
       vi.mocked(googleSheetWriteData).mockResolvedValue(undefined);
@@ -419,8 +441,25 @@ describe("handleIntegrations", () => {
         expectedIntegrationData,
         mockGoogleSheetsIntegration.config.data[0].spreadsheetId,
         ["Answer 1"], // responses
-        ["Question 1 {{recall:q2}}"] // elements (raw headline for Google Sheets)
+        ["Question 1 {{recall:q2}}"], // elements (raw headline for Google Sheets)
+        ["Question 1 {{recall:q2}}"] // legacy labels: a plain-text headline reads the same
       );
+    });
+
+    // ENG-3682: a multi-paragraph headline is labelled with a space between the paragraphs, and its
+    // pre-fix glued label rides along so the writer can keep filling an existing column.
+    test("passes the spaced label and the legacy glued label for a multi-paragraph headline", async () => {
+      vi.mocked(googleSheetWriteData).mockResolvedValue(undefined);
+      const survey = structuredClone(mockSurvey);
+      survey.blocks[0].elements[0].headline = { default: "<p>First line</p><p>Second line</p>" };
+      const integration = structuredClone(mockGoogleSheetsIntegration);
+      integration.config.data[0].includeMetadata = true;
+
+      await handleIntegrations([integration], mockPipelineInput, survey);
+
+      const [, , , elements, legacyElements] = vi.mocked(googleSheetWriteData).mock.calls[0];
+      expect(elements).toEqual(["First line Second line", "Metadata"]);
+      expect(legacyElements).toEqual(["First lineSecond line", "Metadata"]);
     });
 
     test("writes a Signature answer as one absolute URL", async () => {

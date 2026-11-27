@@ -29,6 +29,7 @@ import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
+import { matchLabelsToColumns } from "@/lib/integration/match-columns";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { truncateText } from "../utils/strings";
@@ -76,34 +77,29 @@ const readHeaderRow = (
  * is, labels it does not have yet are appended to its end, and each value is placed under its own label.
  * A label that occurs more than once (e.g. two questions with the same headline) is matched by occurrence:
  * the second "Name" in this response goes under the second "Name" column.
+ *
+ * ENG-3682: `legacyElements` holds each label as it read before block elements were separated by a
+ * space, in the same order as `elements`; `matchLabelsToColumns` says how a sheet written before the fix
+ * keeps filling its columns. A label matching no column is appended as a new header.
  */
 export const alignRowToHeaders = (
   existingHeaders: string[],
   elements: string[],
-  responses: string[]
+  responses: string[],
+  legacyElements: string[] = elements
 ): { headers: string[]; row: string[]; headersChanged: boolean } => {
   const headers = [...existingHeaders];
-  const columnsByLabel = new Map<string, number[]>();
-  headers.forEach((label, index) => {
-    const columns = columnsByLabel.get(label) ?? [];
-    columns.push(index);
-    columnsByLabel.set(label, columns);
-  });
+  const choices = matchLabelsToColumns(existingHeaders, elements, legacyElements);
 
-  const occurrences = new Map<string, number>();
-  const placements: { column: number; value: string }[] = [];
-  elements.forEach((label, index) => {
-    const occurrence = occurrences.get(label) ?? 0;
-    occurrences.set(label, occurrence + 1);
-    const columns = columnsByLabel.get(label) ?? [];
-    let column = columns[occurrence];
-    if (column === undefined) {
+  const placements: { column: number; value: string }[] = choices.map((choice, index) => {
+    let column: number;
+    if ("existing" in choice) {
+      column = choice.existing;
+    } else {
       column = headers.length;
-      headers.push(label);
-      columns.push(column);
-      columnsByLabel.set(label, columns);
+      headers.push(choice.create);
     }
-    placements.push({ column, value: responses[index] ?? "" });
+    return { column, value: responses[index] ?? "" };
   });
 
   const row: string[] = new Array(headers.length).fill("");
@@ -252,13 +248,15 @@ export const writeData = async (
   integrationData: TIntegrationGoogleSheets,
   spreadsheetId: string,
   responses: string[],
-  elements: string[]
+  elements: string[],
+  legacyElements: string[] = elements
 ) => {
   validateInputs(
     [integrationData, ZIntegrationGoogleSheets],
     [spreadsheetId, ZString],
     [responses, z.array(ZString)],
-    [elements, z.array(ZString)]
+    [elements, z.array(ZString)],
+    [legacyElements, z.array(ZString).length(elements.length)]
   );
 
   try {
@@ -277,7 +275,8 @@ export const writeData = async (
       const { headers, row, headersChanged } = alignRowToHeaders(
         existingHeaders,
         elements,
-        truncatedResponses
+        truncatedResponses,
+        legacyElements
       );
 
       if (headersChanged) {

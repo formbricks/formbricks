@@ -12,6 +12,7 @@ import {
   ZIntegrationAirtableTokenSchema,
 } from "@formbricks/types/integration/airtable";
 import { AIRTABLE_CLIENT_ID, AIRTABLE_MESSAGE_LIMIT } from "../constants";
+import { matchLabelsToColumns } from "../integration/match-columns";
 import { createOrUpdateIntegration, getIntegrationByType } from "../integration/service";
 import { delay } from "../utils/promises";
 import { truncateText } from "../utils/strings";
@@ -207,30 +208,43 @@ const getExistingFields = async (key: TIntegrationAirtableCredential, baseId: st
   return new Set(currentTable.fields.map((f) => f.name));
 };
 
+/**
+ * ENG-3682: `legacyElements` holds each label as it read before block elements were separated by a
+ * space, in the same order as `elements`; `matchLabelsToColumns` says how a table created before the fix
+ * keeps filling its fields, and which new fields to create.
+ */
 export const writeData = async (
   key: TIntegrationAirtableCredential,
   configData: TIntegrationAirtableConfigData,
   responses: string[],
-  elements: string[]
+  elements: string[],
+  legacyElements: string[] = elements
 ) => {
-  if (responses.length !== elements.length) {
+  if (responses.length !== elements.length || legacyElements.length !== elements.length) {
     throw new Error(
-      `Array length mismatch: responses (${responses.length}) and elements (${elements.length}) must be equal`
+      `Array length mismatch: responses (${responses.length}), elements (${elements.length}) and legacy elements (${legacyElements.length}) must be equal`
     );
   }
 
-  // 1) Build the record payload
+  // 1) Pick each answer's field: an existing one, or a new one to create
+  const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
+  const existingFieldNames = [...existingFields];
+  const choices = matchLabelsToColumns(existingFieldNames, elements, legacyElements);
+  const fieldNames = choices.map((choice) =>
+    "existing" in choice ? existingFieldNames[choice.existing] : choice.create
+  );
+
+  // 2) Build the record payload, and figure out which fields need creating
   const data: Record<string, string> = {};
-  for (let i = 0; i < elements.length; i++) {
-    data[elements[i]] =
+  for (let i = 0; i < fieldNames.length; i++) {
+    data[fieldNames[i]] =
       responses[i].length > AIRTABLE_MESSAGE_LIMIT
         ? truncateText(responses[i], AIRTABLE_MESSAGE_LIMIT)
         : responses[i];
   }
-
-  // 2) Figure out which fields need creating
-  const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
-  const fieldsToCreate = elements.filter((q) => !existingFields.has(q));
+  const fieldsToCreate = [
+    ...new Set(choices.flatMap((choice) => ("create" in choice ? [choice.create] : []))),
+  ].filter((name) => !existingFields.has(name));
 
   // 3) Create any missing fields with throttling to respect Airtable's 5 req/sec per base limit
   if (fieldsToCreate.length > 0) {

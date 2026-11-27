@@ -1,4 +1,4 @@
-import { parse } from "node-html-parser";
+import { NodeType, parse } from "node-html-parser";
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
 import { RESERVED_FIELD_NAMES } from "../reserved-field-names";
@@ -32,19 +32,69 @@ export const isValidHTML = (str: string): boolean => {
 };
 
 /**
- * Extracts text content from an HTML string
- * Works in both browser and Node.js using node-html-parser
- * @param str - The input string (can be HTML or plain text)
- * @returns The extracted text content without HTML tags
+ * Elements that start a new line when rendered. Their text is separated from the text around them, so
+ * `<p>First</p><p>Second</p>` reads "First Second" rather than "FirstSecond" (ENG-3682). `br` is
+ * handled the same way.
  */
-export const getTextContent = (str: string): string => {
+const BLOCK_TAGS = new Set([
+  "address",
+  "article",
+  "aside",
+  "blockquote",
+  "br",
+  "dd",
+  "details",
+  "div",
+  "dl",
+  "dt",
+  "figcaption",
+  "figure",
+  "footer",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "hr",
+  "li",
+  "main",
+  "nav",
+  "ol",
+  "p",
+  "pre",
+  "section",
+  "summary",
+  "table",
+  "tbody",
+  "td",
+  "tfoot",
+  "th",
+  "thead",
+  "tr",
+  "ul",
+]);
+
+/** HTML's own whitespace, which a browser collapses. `&nbsp;` is not in it, so it survives. */
+const HTML_WHITESPACE_RUN = /[ \t\n\r\f]+/g;
+
+type TParsedNode = ReturnType<typeof parse>["childNodes"][number];
+
+const collectText = (node: TParsedNode): string => {
+  // `text` is the entity-decoded text
+  if (node.nodeType === NodeType.TEXT_NODE) return node.text;
+  const children = node.childNodes.map(collectText).join("");
+  const tagName = "rawTagName" in node && typeof node.rawTagName === "string" ? node.rawTagName : "";
+  return BLOCK_TAGS.has(tagName.toLowerCase()) ? ` ${children} ` : children;
+};
+
+const extractText = (str: string, toText: (root: ReturnType<typeof parse>) => string): string => {
   if (!str || str.trim() === "") return "";
 
   if (isValidHTML(str)) {
     try {
-      const root = parse(str);
-      const textContent = root.textContent;
-      return textContent.trim();
+      return toText(parse(str)).trim();
     } catch {
       // If parsing fails, treat as plain text
       return str.trim();
@@ -53,6 +103,25 @@ export const getTextContent = (str: string): string => {
 
   return str.trim();
 };
+
+/**
+ * Extracts text content from an HTML string
+ * Works in both browser and Node.js using node-html-parser
+ * Block elements and line breaks become a single space and runs of whitespace collapse, so the label
+ * reads the way the rendered HTML does on one line.
+ * @param str - The input string (can be HTML or plain text)
+ * @returns The extracted text content without HTML tags
+ */
+export const getTextContent = (str: string): string =>
+  extractText(str, (root) => collectText(root).replace(HTML_WHITESPACE_RUN, " "));
+
+/**
+ * The text exactly as the markup holds it, with no separator added between block elements and its
+ * whitespace kept: what `getTextContent` returned before ENG-3682 ("First lineSecond line"). For finding
+ * the columns an integration created under that label (Airtable fields, Google Sheets headers), and for a
+ * caller that puts in its own line breaks and needs them kept (the Excel export's rich text cells).
+ */
+export const getLegacyTextContent = (str: string): string => extractText(str, (root) => root.textContent);
 
 // Defined in `link-survey-params` so the link page can read them without this module's HTML parser.
 export {

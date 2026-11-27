@@ -243,6 +243,12 @@ describe("writeData", () => {
     vi.unstubAllGlobals();
   });
 
+  test("rejects legacy labels that do not line up with the labels, before touching the sheet", async () => {
+    await expect(writeData(authorizedIntegration, "sheet1", ["answer"], ["question"], [])).rejects.toThrow();
+    expect(sheetsMock.update).not.toHaveBeenCalled();
+    expect(sheetsMock.append).not.toHaveBeenCalled();
+  });
+
   test("rejects with an UnknownError when the append callback reports an error", async () => {
     sheetsMock.update.mockImplementation(respondAsync(null));
     sheetsMock.append.mockImplementation(respondAsync(new Error("The caller does not have permission")));
@@ -670,6 +676,74 @@ describe("alignRowToHeaders", () => {
       headers: ["Q1", "Q2"],
       row: ["a", "b"],
       headersChanged: true,
+    });
+  });
+
+  // ENG-3682: a two-paragraph headline was labelled "First lineSecond line" before the fix and
+  // "First line Second line" after it. The sheet matches headers by name.
+  describe("with the legacy labels of a sheet written before ENG-3682", () => {
+    const label = "First line Second line";
+    const legacyLabel = "First lineSecond line";
+
+    test("keeps writing under the header the sheet already has with the legacy label", () => {
+      expect(alignRowToHeaders(["Created At", legacyLabel], [label], ["answer"], [legacyLabel])).toEqual({
+        headers: ["Created At", legacyLabel],
+        row: ["", "answer"],
+        headersChanged: false,
+      });
+    });
+
+    test("appends the new label when the sheet has neither", () => {
+      expect(alignRowToHeaders(["Created At"], [label], ["answer"], [legacyLabel])).toEqual({
+        headers: ["Created At", label],
+        row: ["", "answer"],
+        headersChanged: true,
+      });
+    });
+
+    test("writes under the new label when the sheet has it", () => {
+      expect(alignRowToHeaders([legacyLabel, label], [label], ["answer"], [legacyLabel])).toEqual({
+        headers: [legacyLabel, label],
+        row: ["", "answer"],
+        headersChanged: false,
+      });
+    });
+
+    test("matches a repeated legacy label by occurrence", () => {
+      expect(
+        alignRowToHeaders(
+          [legacyLabel, legacyLabel],
+          [label, label],
+          ["first", "second"],
+          [legacyLabel, legacyLabel]
+        )
+      ).toEqual({
+        headers: [legacyLabel, legacyLabel],
+        row: ["first", "second"],
+        headersChanged: false,
+      });
+    });
+
+    test("keeps two headlines that read alike before the fix in their pre-fix order", () => {
+      // The two-paragraph headline and a plain "First lineSecond line" one shared the legacy label: the
+      // first took the existing column before the fix, and still does.
+      expect(
+        alignRowToHeaders([legacyLabel], [label, legacyLabel], ["a", "b"], [legacyLabel, legacyLabel])
+      ).toEqual({
+        headers: [legacyLabel, legacyLabel],
+        row: ["a", "b"],
+        headersChanged: true,
+      });
+    });
+
+    test("appends a further occurrence once the legacy columns are taken", () => {
+      expect(
+        alignRowToHeaders([legacyLabel], [label, label], ["first", "second"], [legacyLabel, legacyLabel])
+      ).toEqual({
+        headers: [legacyLabel, label],
+        row: ["first", "second"],
+        headersChanged: true,
+      });
     });
   });
 });

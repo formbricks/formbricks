@@ -1,5 +1,5 @@
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLegacyTextContent } from "@formbricks/types/surveys/validation";
 import { cutText } from "@/lib/utils/cut-text";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { EXCEL_EXPORT_MAX_CELL_CHARS } from "./limits";
@@ -14,9 +14,13 @@ const EXTRA_BLANK_LINES = /\n{3,}/g;
 // ones as `&#x1;`, which makes Excel refuse to open the file as corrupt.
 const XML_INVALID = /[^\P{Cc}\t\n\r]|[\uFFFE\uFFFF]|\p{Cs}/gu;
 
-/** Rich text as the respondent reads it: the words only, one line per paragraph. */
+/**
+ * Rich text as the respondent reads it: the words only, one line per paragraph. The line breaks are the
+ * ones `BLOCK_BREAK` adds, so the text is extracted as-is: `getTextContent` would collapse them into
+ * single-line spaces (ENG-3682).
+ */
 const flattenRichText = (html: string): string =>
-  getTextContent(html.replaceAll(BLOCK_BREAK, "$&\n"))
+  getLegacyTextContent(html.replaceAll(BLOCK_BREAK, "$&\n"))
     // Split rather than a `[ \t]+\n` pattern, which backtracks quadratically on a long run of spaces.
     .split("\n")
     .map((line) => line.trimEnd())

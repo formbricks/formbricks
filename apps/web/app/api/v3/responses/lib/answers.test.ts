@@ -717,6 +717,18 @@ describe("labels resolve in the response's language", () => {
     expect(answers[0].elementLabel).toBe("Wie zufrieden?");
   });
 
+  /** ENG-3682: paragraphs and list items used to glue together ("First lineSecond line"). */
+  test("the element label separates the paragraphs and list items of an HTML headline", () => {
+    const el = element({
+      id: "q1",
+      type: "openText",
+      headline: i18n("<p>First line</p><ul><li>one</li><li>two</li></ul>"),
+    });
+    const { answers } = serializeAnswers(planFor([el]), { q1: "x" }, undefined);
+
+    expect(answers[0].elementLabel).toBe("First line one two");
+  });
+
   /** The ENG-2001 fallback: a blank translation must not blank the label. */
   test("an untranslated headline falls back to the default rather than going empty", () => {
     const el = element({ id: "q1", type: "openText", headline: i18n("How satisfied?", { de: "" }) });
