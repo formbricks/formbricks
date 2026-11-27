@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TBaseFilters } from "@formbricks/types/segment";
-import { setV3SurveySegmentFilters } from "@/app/api/v3/surveys/targeting";
+import { V3SurveyTargetingChangedError, setV3SurveySegmentFilters } from "@/app/api/v3/surveys/targeting";
 import { assertV3OwnSegmentNotNestedElsewhere } from "@/app/api/v3/surveys/targeting";
 import { resetDb } from "@/integration/reset-db";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
@@ -170,6 +170,28 @@ describe("updateSegment's connected-survey guard (ENG-7269)", () => {
     ).toEqual(before);
   });
 
+  test("a filter change lands only while the filters it was checked against are stored (ENG-7269)", async () => {
+    const stored = (await prisma.segment.findUniqueOrThrow({ where: { id: ids.target } })).filters;
+
+    await expect(
+      updateSegment(
+        ids.target,
+        { filters: attributeFilters("next@example.com") },
+        { connectedSurveyIds: [ids.visible], expectedFilters: attributeFilters("stale@example.com") }
+      )
+    ).rejects.toBeInstanceOf(SegmentSurveysChangedError);
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.target } })).filters).toEqual(stored);
+
+    const next = attributeFilters("next@example.com");
+    await expect(
+      updateSegment(
+        ids.target,
+        { filters: next },
+        { connectedSurveyIds: [ids.visible], expectedFilters: stored as TBaseFilters }
+      )
+    ).resolves.toMatchObject({ filters: next });
+  });
+
   test("an empty authorized set only writes while the segment has no surveys", async () => {
     await expect(
       updateSegment(ids.target, { description: "blocked" }, { connectedSurveyIds: [] })
@@ -332,7 +354,20 @@ describe("setV3SurveySegmentFilters' own-private guard (ENG-7269)", () => {
     });
     const next = attributeFilters("v3@example.com");
 
-    await setV3SurveySegmentFilters({ segmentId: own.id, ownerSurveyId: ids.restricted, filters: next });
+    const v3Write = (
+      segmentId: string,
+      ownerSurveyId: string,
+      filters: TBaseFilters,
+      storedFilters: unknown
+    ) => setV3SurveySegmentFilters({ segmentId, ownerSurveyId, workspaceId, filters, storedFilters });
+
+    // A write checked against filters that are no longer stored is a conflict, and writes nothing.
+    await expect(
+      v3Write(own.id, ids.restricted, next, attributeFilters("stale@example.com"))
+    ).rejects.toBeInstanceOf(V3SurveyTargetingChangedError);
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: own.id } })).filters).toEqual([]);
+
+    await v3Write(own.id, ids.restricted, next, []);
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: own.id } })).filters).toEqual(next);
 
     // A private segment another survey was connected to is no longer this survey's own.
@@ -340,16 +375,16 @@ describe("setV3SurveySegmentFilters' own-private guard (ENG-7269)", () => {
       where: { id: own.id },
       data: { surveys: { connect: { id: ids.memberPrivate } } },
     });
-    await expect(
-      setV3SurveySegmentFilters({ segmentId: own.id, ownerSurveyId: ids.restricted, filters: [] })
-    ).rejects.toMatchObject({ invalidParams: [{ name: "targeting.filters" }] });
+    await expect(v3Write(own.id, ids.restricted, [], next)).rejects.toMatchObject({
+      invalidParams: [{ name: "targeting.filters" }],
+    });
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: own.id } })).filters).toEqual(next);
 
     // `target` is shared and used by `visible`: a v3 PATCH of `visible` must not write it.
     const before = await prisma.segment.findUniqueOrThrow({ where: { id: ids.target } });
-    await expect(
-      setV3SurveySegmentFilters({ segmentId: ids.target, ownerSurveyId: ids.visible, filters: next })
-    ).rejects.toMatchObject({ invalidParams: [{ name: "targeting.filters" }] });
+    await expect(v3Write(ids.target, ids.visible, next, before.filters)).rejects.toMatchObject({
+      invalidParams: [{ name: "targeting.filters" }],
+    });
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.target } })).filters).toEqual(
       before.filters
     );
@@ -517,6 +552,28 @@ describe("what nests a segment: code and database agree (ENG-7269)", () => {
     // The nesting-survey lookup's own path agrees too.
     expect(await getSurveyIdsTargetedThroughNesting(workspaceId, target)).toEqual(
       nests ? [ids.restricted] : []
+    );
+  });
+});
+
+describe("reset of a private segment other surveys also use (ENG-7269)", () => {
+  test("is refused, and leaves its filters", async () => {
+    const shared = await prisma.segment.create({
+      data: {
+        title: ids.memberPrivate,
+        isPrivate: true,
+        filters: attributeFilters("kept@example.com"),
+        workspaceId,
+        surveys: { connect: [{ id: ids.memberPrivate }, { id: ids.restricted }] },
+      },
+      select: { id: true, filters: true },
+    });
+
+    await expect(resetSegmentInSurvey(ids.memberPrivate)).rejects.toThrow(
+      "This survey's targeting segment is also used by other surveys"
+    );
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: shared.id } })).filters).toEqual(
+      shared.filters
     );
   });
 });

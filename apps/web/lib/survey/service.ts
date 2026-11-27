@@ -1805,6 +1805,8 @@ export const createSurvey = async (
     await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages, db);
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment, db, { sharedOnly: true });
     await assertCreateTargetingVisible(parsedWorkspaceId, segment, privateSegmentFilters, targetingActor, db);
+    // ENG-7269: the new survey's own targeting may not nest another survey's private segment.
+    await assertNoAddedPrivateSegmentReferences(privateSegmentFilters, [], parsedWorkspaceId, db);
 
     // ENG-1839: `existing` is empty because a create authors every name fresh — there is nothing to
     // grandfather yet. Covers templates, `POST /api/v1/management/surveys` and the v3 create route.

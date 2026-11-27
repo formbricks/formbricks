@@ -1600,7 +1600,9 @@ describe("patchV3Survey", () => {
         {
           segmentId: "clsg1234567890123456789012",
           ownerSurveyId: appCurrentSurvey.id,
+          workspaceId,
           filters: attributeFilters,
+          storedFilters: appCurrentSurvey.segment?.filters ?? [],
         },
         tx
       );

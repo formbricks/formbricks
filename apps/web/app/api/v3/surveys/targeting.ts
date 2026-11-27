@@ -128,22 +128,56 @@ export async function assertV3OwnSegmentNotNestedElsewhere(
  *
  * Pass a transaction client (`tx`) to write atomically alongside the survey update.
  */
+/**
+ * ENG-7269: the survey's targeting changed between this request's read and its write (another save of the
+ * same survey). The request was fine, so the v3 layer answers 409 and the caller re-reads and retries.
+ */
+export class V3SurveyTargetingChangedError extends Error {
+  constructor() {
+    super("The survey's targeting changed since it was read. Re-read the survey and retry.");
+    this.name = "V3SurveyTargetingChangedError";
+  }
+}
+
 export async function setV3SurveySegmentFilters(
   {
     segmentId,
     ownerSurveyId,
+    workspaceId,
     filters,
-  }: { segmentId: string; ownerSurveyId: string; filters: TV3SurveyFilters },
+    storedFilters,
+  }: {
+    segmentId: string;
+    ownerSurveyId: string;
+    workspaceId: string;
+    filters: TV3SurveyFilters;
+    /** The filters the request read and checked against; the write lands only while they are stored. */
+    storedFilters: unknown;
+  },
   client: Prisma.TransactionClient = prisma
 ): Promise<void> {
   try {
     await client.segment.update({
-      where: { id: segmentId, isPrivate: true, surveys: { every: { id: ownerSurveyId } } },
+      where: {
+        id: segmentId,
+        workspaceId,
+        isPrivate: true,
+        surveys: { every: { id: ownerSurveyId } },
+        filters: { equals: storedFilters ?? [] },
+      },
       data: { filters },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") throw sharedSegmentTargetingError();
+      if (error.code === "P2025") {
+        // Still the survey's own private segment: only its filters moved under the request (409).
+        // Otherwise it was shared, or isn't this workspace's, since the read (422, as the pre-check says).
+        const stillOwn = await client.segment.findFirst({
+          where: { id: segmentId, workspaceId, isPrivate: true, surveys: { every: { id: ownerSurveyId } } },
+          select: { id: true },
+        });
+        throw stillOwn ? new V3SurveyTargetingChangedError() : sharedSegmentTargetingError();
+      }
       throw new DatabaseError(error.message);
     }
     throw error;

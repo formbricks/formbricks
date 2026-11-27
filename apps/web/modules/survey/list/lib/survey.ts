@@ -455,6 +455,9 @@ const buildCopiedSegment = async (
   if (isSameWorkspace) {
     return { connect: { id: segment.id } };
   }
+  // ENG-7269: the copy is a new tree in the target workspace, where an id its filters name can be a private
+  // segment the source workspace never had.
+  await assertNoAddedPrivateSegmentReferences(segment.filters, [], targetWorkspaceId);
   const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
     where: {
       title: segment.title,

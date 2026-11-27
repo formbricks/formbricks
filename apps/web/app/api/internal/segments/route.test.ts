@@ -538,9 +538,8 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).toHaveBeenCalledWith(
       SEGMENT_ID,
       { filters: EDITED_FILTERS },
-      {
-        connectedSurveyIds: [SURVEY_ID],
-      }
+      // ENG-7269: a filter change lands only while the filters it was checked against are still stored.
+      { connectedSurveyIds: [SURVEY_ID], expectedFilters: FILTERS }
     );
   });
 
@@ -637,6 +636,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect((await update({ filters: FILTERS })).status).toBe(200);
     expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, expect.anything(), {
       connectedSurveyIds: [SURVEY_ID],
+      expectedFilters: [],
     });
   });
 
@@ -693,9 +693,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     const response = await update({ title: "Renamed" });
 
     expect(response.status).toBe(409);
-    expect((await response.json()).detail).toBe(
-      "The segment's connected surveys changed while saving. Reload and try again."
-    );
+    expect((await response.json()).detail).toBe("The segment changed while saving. Reload and try again.");
   });
 
   test("checks the ids the caller sent and keeps the stored ones they can't see", async () => {
@@ -716,9 +714,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).toHaveBeenCalledWith(
       SEGMENT_ID,
       { filters: stored },
-      {
-        connectedSurveyIds: [SURVEY_ID],
-      }
+      { connectedSurveyIds: [SURVEY_ID], expectedFilters: stored }
     );
   });
 

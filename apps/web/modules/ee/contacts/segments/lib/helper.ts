@@ -102,7 +102,8 @@ export const assertPrivateSegmentNotNestedElsewhere = async (
 export const assertNoAddedPrivateSegmentReferences = async (
   filters: unknown,
   storedFilters: unknown,
-  workspaceId: string
+  workspaceId: string,
+  client?: Prisma.TransactionClient
 ): Promise<void> => {
   const stored = collectNestedSegmentIds(storedFilters);
   // An id that can't be a segment's names no stored row, so it nests nothing.
@@ -111,7 +112,7 @@ export const assertNoAddedPrivateSegmentReferences = async (
   );
   if (added.length === 0) return;
 
-  const referencedSegments = await getSegmentsByIds(added, workspaceId);
+  const referencedSegments = await getSegmentsByIds(added, workspaceId, client);
   if (referencedSegments.some((referenced) => referenced.isPrivate)) {
     throw new InvalidInputError(PRIVATE_SEGMENT_NESTED_MESSAGE);
   }

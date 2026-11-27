@@ -652,7 +652,7 @@ describe("assertNoAddedPrivateSegmentReferences (ENG-7269)", () => {
     await expect(
       assertNoAddedPrivateSegmentReferences([segmentReference(PRIVATE)], [], WORKSPACE_ID)
     ).rejects.toThrow(new InvalidInputError("A segment filter can't use a survey's own targeting segment"));
-    expect(getSegmentsByIds).toHaveBeenCalledWith([PRIVATE], WORKSPACE_ID);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([PRIVATE], WORKSPACE_ID, undefined);
   });
 
   test("counts a malformed node the database would count as a nesting", async () => {
@@ -689,7 +689,7 @@ describe("assertNoAddedPrivateSegmentReferences (ENG-7269)", () => {
       WORKSPACE_ID
     );
     expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
-    expect(getSegmentsByIds).toHaveBeenCalledWith([SHARED], WORKSPACE_ID);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([SHARED], WORKSPACE_ID, undefined);
   });
 });
 

@@ -111,6 +111,7 @@ import {
   serializeV3SurveyResource,
   serializeV3SurveyVisibilityFields,
 } from "../serializers";
+import { V3SurveyTargetingChangedError } from "../targeting";
 import { resolveV3SurveyResourceVisibility, resolveV3SurveyVisibilityContext } from "../visibility-context";
 import { type TV3SurveyWriteConfirmation, getV3SurveyWriteConfirmationRefusal } from "../write-confirmation";
 import { V3SurveyWritePermissionError } from "../write-permissions";
@@ -1039,6 +1040,11 @@ export function mapV3SurveyPatchError(
   if (err instanceof V3SurveyArchivedError) {
     log.warn({ statusCode: 422, workspaceId }, "Survey was archived while the request was in flight");
     return problemSurveyArchived(requestId, instance);
+  }
+
+  if (err instanceof V3SurveyTargetingChangedError) {
+    log.warn({ statusCode: 409, workspaceId }, "Survey targeting changed while the request was in flight");
+    return problemConflict(requestId, err.message, instance);
   }
 
   if (err instanceof V3SurveyStaleError) {

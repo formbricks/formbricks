@@ -992,6 +992,12 @@ describe("copySurveyToOtherWorkspace", () => {
 
     // Case 2: Different workspace, segment with same title does not exist in target
     await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+    // ENG-7269: the copied tree is new in the target workspace, so its references are checked there.
+    expect(targetingMocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      surveyWithPublicSegment.segment.filters,
+      [],
+      targetWorkspaceId
+    );
     expect(prisma.survey.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

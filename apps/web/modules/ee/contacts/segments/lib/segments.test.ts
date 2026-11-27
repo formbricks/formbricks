@@ -765,6 +765,22 @@ describe("Segment Service Tests", () => {
       );
     });
 
+    test("refuses resetting a private segment other surveys also use, without writing (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.findFirst).mockResolvedValue({
+        ...privateSegmentPrisma,
+        surveys: [
+          ...privateSegmentPrisma.surveys,
+          { id: "other-survey", name: "Other", status: "inProgress" },
+        ],
+      } as never);
+
+      await expect(resetSegmentInSurvey(surveyId)).rejects.toThrow(
+        "This survey's targeting segment is also used by other surveys, so it can't be reset here."
+      );
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+    });
+
     test("refuses emptying a private segment another segment nests (ENG-7269)", async () => {
       vi.mocked(prisma.segment.findFirst).mockResolvedValue({
         ...privateSegmentPrisma,
@@ -797,7 +813,7 @@ describe("Segment Service Tests", () => {
         data: { segment: { connect: { id: privateSegmentId } } },
       });
       expect(prisma.segment.update).toHaveBeenCalledWith({
-        where: { id: privateSegmentId },
+        where: { id: privateSegmentId, surveys: { every: { id: surveyId } } },
         data: { filters: [] },
         select: selectSegment,
       });
@@ -883,6 +899,23 @@ describe("Segment Service Tests", () => {
         data: { ...updateData, surveys: undefined },
         select: selectSegment,
       });
+    });
+
+    test("guards a filter change on the filters it was checked against (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
+      const expectedFilters = [{ id: "stored" }] as unknown as TBaseFilters;
+
+      await updateSegment(segmentId, updateData, { connectedSurveyIds: [surveyId], expectedFilters });
+
+      expect(prisma.segment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: segmentId,
+            filters: { equals: expectedFilters },
+            surveys: { every: { id: { in: [surveyId] } } },
+          },
+        })
+      );
     });
 
     test("answers a changed connected set with SegmentSurveysChangedError (ENG-7269)", async () => {

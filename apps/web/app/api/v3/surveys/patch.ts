@@ -499,7 +499,15 @@ export async function executeV3SurveyPatch(params: {
   // no longer be correct. Under a caller's transaction (ENG-6845) that transaction is this one.
   const writeSurvey = async (tx: Prisma.TransactionClient) => {
     if (segmentFilterWrite) {
-      await setV3SurveySegmentFilters({ ...segmentFilterWrite, ownerSurveyId: currentSurvey.id }, tx);
+      await setV3SurveySegmentFilters(
+        {
+          ...segmentFilterWrite,
+          ownerSurveyId: currentSurvey.id,
+          workspaceId: currentSurvey.workspaceId,
+          storedFilters: currentSurvey.segment?.filters ?? [],
+        },
+        tx
+      );
     }
 
     await runSurveyUpdate(tx);

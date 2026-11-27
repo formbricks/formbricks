@@ -2888,6 +2888,34 @@ describe("Tests for createSurvey", () => {
       );
     });
 
+    test("refuses a new survey's own targeting that nests another survey's private segment (ENG-7269)", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      const privateSegmentId = "clprivatesegment000000001";
+      prisma.segment.findMany.mockResolvedValue([
+        { id: privateSegmentId, isPrivate: true, filters: [] },
+      ] as never);
+
+      await expect(
+        createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
+          creationFacts: WORKSPACE_CREATION_FACTS,
+          targetingActor: OWNER_TARGETING_ACTOR,
+          privateSegmentFilters: [
+            {
+              id: "clfilter00000000000000001",
+              connector: null,
+              resource: {
+                id: "clresource000000000000001",
+                root: { type: "segment", segmentId: privateSegmentId },
+                qualifier: { operator: "userIsIn" },
+                value: privateSegmentId,
+              },
+            },
+          ] as never,
+        })
+      ).rejects.toThrow("A segment filter can't use a survey's own targeting segment");
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
     test("refuses linking a new survey to another survey's private segment (ENG-7269)", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.segment.findUnique.mockResolvedValueOnce({

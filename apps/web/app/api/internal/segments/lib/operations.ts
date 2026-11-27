@@ -346,7 +346,10 @@ export async function updateSegmentOperation({
       );
     }
 
-    updated = await updateSegment(segmentId, data, { connectedSurveyIds });
+    updated = await updateSegment(segmentId, data, {
+      connectedSurveyIds,
+      ...(data.filters && { expectedFilters: oldObject.filters }),
+    });
   } catch (error) {
     return updateRefusalOrThrow(error, context);
   }

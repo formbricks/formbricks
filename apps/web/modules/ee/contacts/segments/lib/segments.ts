@@ -2,7 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type SegmentWhereUniqueInput } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
@@ -48,6 +48,7 @@ import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
 import {
   PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE,
+  PRIVATE_SEGMENT_SHARED_WITH_OTHER_SURVEYS_MESSAGE,
   SEGMENT_TITLE_TAKEN_ERROR_MESSAGE,
   SegmentSurveysChangedError,
 } from "./segment-errors";
@@ -131,11 +132,12 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
  */
 export const getSegmentsByIds = async (
   segmentIds: string[],
-  workspaceId: string
+  workspaceId: string,
+  client: Prisma.TransactionClient = prisma
 ): Promise<{ id: string; isPrivate: boolean; filters: TBaseFilters }[]> => {
   validateInputs([segmentIds, z.array(ZId)], [workspaceId, ZId]);
   try {
-    const segments = await prisma.segment.findMany({
+    const segments = await client.segment.findMany({
       where: { id: { in: segmentIds }, workspaceId },
       select: { id: true, isPrivate: true, filters: true },
     });
@@ -691,6 +693,11 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
 
       // if a private segment already exists, connect it to the survey
       if (segment) {
+        // ENG-7269: a private segment other surveys also use (older bugs, ENG-6957) is their targeting too;
+        // the caller authorized this survey only.
+        if (segment.surveys.some((linked) => linked.id !== surveyId)) {
+          throw new InvalidInputError(PRIVATE_SEGMENT_SHARED_WITH_OTHER_SURVEYS_MESSAGE);
+        }
         // ENG-7269: emptying the filters of a private segment another segment nests would change the
         // audience of every survey on the nesting segment.
         if (
@@ -706,9 +713,9 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
           data: { segment: { connect: { id: segment.id } } },
         });
 
-        // reset the filters
+        // reset the filters, only while no other survey uses the segment (repeated in the write)
         const updatedSegment = await tx.segment.update({
-          where: { id: segment.id },
+          where: { id: segment.id, surveys: { every: { id: surveyId } } },
           data: { filters: [] },
           select: selectSegment,
         });
@@ -789,12 +796,39 @@ export type TSegmentUpdateOptions = Readonly<{
    * the write instead of being retargeted unawares.
    */
   connectedSurveyIds?: ReadonlyArray<string>;
+  /**
+   * ENG-7269: the stored filters a filter change was checked against. The write lands only while they are
+   * still stored, so an edit made since the check (a reference removed, say) isn't silently overwritten.
+   */
+  expectedFilters?: TBaseFilters;
 }>;
+
+/**
+ * ENG-7269: the guarded update's `where`. Each guard the caller passes is repeated in the write, so a
+ * survey connected, or a filter change made, since the caller's checks makes the write match no row.
+ */
+const guardedSegmentWhere = (
+  segmentId: string,
+  { connectedSurveyIds, expectedFilters }: TSegmentUpdateOptions
+): SegmentWhereUniqueInput => ({
+  id: segmentId,
+  ...(expectedFilters && { filters: { equals: expectedFilters as unknown as Prisma.InputJsonValue } }),
+  ...(connectedSurveyIds && {
+    surveys: { every: { id: { in: [...new Set(connectedSurveyIds)] } } },
+  }),
+});
+
+/** A guarded update that matched no row: the segment is gone (404), or it changed under the caller (409). */
+const throwGuardedUpdateMiss = async (segmentId: string): Promise<never> => {
+  const existing = await prisma.segment.findUnique({ where: { id: segmentId }, select: { id: true } });
+  if (!existing) throw new ResourceNotFoundError("segment", segmentId);
+  throw new SegmentSurveysChangedError();
+};
 
 export const updateSegment = async (
   segmentId: string,
   data: TSegmentUpdateInput,
-  { connectedSurveyIds }: TSegmentUpdateOptions = {}
+  guards: TSegmentUpdateOptions = {}
 ): Promise<TSegment> => {
   validateInputs([segmentId, ZId], [data, ZSegmentUpdateInput]);
 
@@ -825,12 +859,7 @@ export const updateSegment = async (
     }
 
     const segment = await prisma.segment.update({
-      where: {
-        id: segmentId,
-        ...(connectedSurveyIds && {
-          surveys: { every: { id: { in: [...new Set(connectedSurveyIds)] } } },
-        }),
-      },
+      where: guardedSegmentWhere(segmentId, guards),
       data: updatedInput,
       select: selectSegment,
     });
@@ -839,12 +868,8 @@ export const updateSegment = async (
   } catch (error) {
     throwSegmentTitleTaken(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // The guarded update matched no row: the segment moved under the caller, or a survey outside the
-      // authorized set was connected to it since the check. Tell the two apart for the answer.
-      if (error.code === "P2025" && connectedSurveyIds) {
-        const existing = await prisma.segment.findUnique({ where: { id: segmentId }, select: { id: true } });
-        if (!existing) throw new ResourceNotFoundError("segment", segmentId);
-        throw new SegmentSurveysChangedError();
+      if (error.code === "P2025" && (guards.connectedSurveyIds || guards.expectedFilters)) {
+        await throwGuardedUpdateMiss(segmentId);
       }
       throw new DatabaseError(error.message);
     }
