@@ -11,7 +11,9 @@ import {
   resetSurveyVisibilityReadinessMemo,
   setProjectionScopeReady,
 } from "@/lib/authzed/scope-readiness";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
+import { getExistingWorkspaceSurveyIds } from "@/modules/ee/contacts/segments/lib/segments";
 
 /**
  * ENG-3282: survey and response decisions against a real PostgreSQL and SpiceDB, for the contract's
@@ -255,6 +257,39 @@ describe("marker on: the contract's permission matrix", () => {
       }
     }
   );
+
+  // ENG-7269: the segment routes answer `survey.write` for a caller who already holds workspace write with
+  // the visibility predicate, in one query for every survey a segment targets. It must never admit a survey
+  // `survey.write` refuses; it may refuse one while its visibility change is pending (fails closed).
+  test.each([
+    ["readWrite survey owner", () => ids.owner],
+    ["team-level manager", () => ids.teamManager],
+    ["organization manager", () => ids.manager],
+    ["organization owner", () => ids.orgOwner],
+  ] as const)("the visibility predicate admits only surveys the %s can write", async (_label, actorId) => {
+    const surveyIds = [
+      ids.visibleSurvey,
+      ids.privateSurvey,
+      ids.ownedPrivateSurvey,
+      ids.pendingSurvey,
+      ids.pendingRestrictionSurvey,
+    ];
+    const admitted = await getExistingWorkspaceSurveyIds(
+      ids.workspace,
+      surveyIds,
+      await getUserVisibleSurveyWhere(actorId(), ids.organization)
+    );
+    const writable = new Set<string>();
+    for (const surveyId of surveyIds) {
+      if (await can(user(actorId()), "survey.write", { id: surveyId, type: "survey" }))
+        writable.add(surveyId);
+    }
+
+    for (const surveyId of admitted) expect(writable).toContain(surveyId);
+    for (const surveyId of [ids.visibleSurvey, ids.privateSurvey, ids.ownedPrivateSurvey]) {
+      expect(admitted.has(surveyId)).toBe(writable.has(surveyId));
+    }
+  });
 
   test("an owner with workspace manage retains survey manage while restricted or pending", async () => {
     await expect(

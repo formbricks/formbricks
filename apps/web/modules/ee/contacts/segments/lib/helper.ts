@@ -9,7 +9,12 @@ import {
   collectSegmentFilterSurveyIds,
   restoreHiddenSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/filter-survey-ids";
-import { getSegment, getSegmentsByIds } from "@/modules/ee/contacts/segments/lib/segments";
+import { PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
+import {
+  getSegment,
+  getSegmentsByIds,
+  isNestedByAnotherSegment,
+} from "@/modules/ee/contacts/segments/lib/segments";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
   isResourceFilter,
@@ -40,6 +45,77 @@ const collectReferencedSegmentIds = (filters: TBaseFilters, found: Set<string> =
     }
   }
   return found;
+};
+
+/**
+ * ENG-7269: the segment ids a raw filter tree nests, by the same definition the database uses to find a
+ * segment's nesters (`NESTS_SEGMENT_PATH` in segments.ts): any object, at any depth, with
+ * `type: "segment"` and a string `segmentId`. A draft save stores its tree unchecked, so a malformed node
+ * still counts; checking writes by any narrower rule would let one through that the database then treats
+ * as a nesting. Iterative; callers bound the tree first (`getSegmentFilterTreeBoundsViolation`).
+ */
+export const collectNestedSegmentIds = (tree: unknown): Set<string> => {
+  const found = new Set<string>();
+  const pending: unknown[] = [tree];
+  for (const current of pending) {
+    if (Array.isArray(current)) {
+      for (const item of current) pending.push(item);
+      continue;
+    }
+    if (!current || typeof current !== "object") continue;
+    const node = current as Record<string, unknown>;
+    if (node.type === "segment" && typeof node.segmentId === "string") found.add(node.segmentId);
+    for (const value of Object.values(node)) pending.push(value);
+  }
+  return found;
+};
+
+/** The refusal for a filter tree that nests a survey's private targeting segment (ENG-7269). */
+export const PRIVATE_SEGMENT_NESTED_MESSAGE = "A segment filter can't use a survey's own targeting segment";
+
+/**
+ * ENG-7269: refuses a change to a private segment's filters while another segment nests it. New nestings of
+ * a private segment are refused, but data written before that rule can hold one, and the private segment's
+ * own survey save (with `survey.write` on that survey alone) would then change the nesting surveys' audience.
+ * The nesting set can only shrink now, so a read before the write is not a race an attacker can start.
+ * @throws {InvalidInputError} When another segment of the workspace nests `segmentId`
+ */
+export const assertPrivateSegmentNotNestedElsewhere = async (
+  segmentId: string,
+  workspaceId: string
+): Promise<void> => {
+  if (await isNestedByAnotherSegment(workspaceId, segmentId)) {
+    throw new InvalidInputError(PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE);
+  }
+};
+
+/**
+ * ENG-7269: refuses a write that adds a `segment` filter naming a private segment. A private segment is one
+ * survey's own targeting, written by that survey's save with `survey.write` on that survey alone; nested in
+ * another segment, that save would change the audience of every survey on the nesting segment.
+ *
+ * Only references the write adds are checked, against `storedFilters` (the tree being replaced, or none
+ * for a new one), so a tree that already holds such a reference stays saveable. Takes a raw tree: the
+ * survey draft path checks one that can fail the schema. One query for every added reference.
+ * @throws {InvalidInputError} When an added reference names a private segment
+ */
+export const assertNoAddedPrivateSegmentReferences = async (
+  filters: unknown,
+  storedFilters: unknown,
+  workspaceId: string,
+  client?: Prisma.TransactionClient
+): Promise<void> => {
+  const stored = collectNestedSegmentIds(storedFilters);
+  // An id that can't be a segment's names no stored row, so it nests nothing.
+  const added = [...collectNestedSegmentIds(filters)].filter(
+    (id) => !stored.has(id) && ZId.safeParse(id).success
+  );
+  if (added.length === 0) return;
+
+  const referencedSegments = await getSegmentsByIds(added, workspaceId, client);
+  if (referencedSegments.some((referenced) => referenced.isPrivate)) {
+    throw new InvalidInputError(PRIVATE_SEGMENT_NESTED_MESSAGE);
+  }
 };
 
 /**

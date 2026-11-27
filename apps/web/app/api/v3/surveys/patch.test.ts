@@ -28,7 +28,9 @@ import { V3SurveyArchivedError, V3SurveyStaleError, executeV3SurveyPatch, patchV
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import {
+  V3SurveyTargetingChangedError,
   areV3SurveyTargetingFiltersEqual,
+  assertV3OwnSegmentNotNestedElsewhere,
   resolveV3ContactsEntitlement,
   setV3SurveySegmentFilters,
 } from "./targeting";
@@ -114,11 +116,17 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
-vi.mock("./targeting", () => ({
+vi.mock("./targeting", async () => ({
   setV3SurveySegmentFilters: vi.fn(),
+  assertV3OwnSegmentNotNestedElsewhere: vi.fn(),
   areV3SurveyTargetingFiltersEqual: vi.fn(),
   assertV3SurveyTargetingFilterReferences: vi.fn(),
   resolveV3ContactsEntitlement: vi.fn(),
+  // The real refusal: patch maps it by class, so a stand-in would hide a wrong mapping.
+  sharedSegmentTargetingError: (await vi.importActual<typeof import("./targeting")>("./targeting"))
+    .sharedSegmentTargetingError,
+  V3SurveyTargetingChangedError: (await vi.importActual<typeof import("./targeting")>("./targeting"))
+    .V3SurveyTargetingChangedError,
   V3_CONTACTS_NOT_ENABLED_MESSAGE: "Contact targeting is not enabled.",
 }));
 
@@ -1356,7 +1364,12 @@ describe("patchV3Survey", () => {
       type: "app",
       recontactDays: 7,
       triggers: [],
-      segment: { id: "clsg1234567890123456789012", filters: [] },
+      segment: {
+        id: "clsg1234567890123456789012",
+        isPrivate: true,
+        surveys: ["clsv1234567890123456789012"],
+        filters: [],
+      },
     } as unknown as TSurvey;
 
     const attributeFilters = [
@@ -1587,15 +1600,69 @@ describe("patchV3Survey", () => {
       expect(resolveV3ContactsEntitlement).toHaveBeenCalledWith(workspaceId, "org_1");
       // Segment-filter write and survey update must use the SAME tx client (true atomic behavior).
       expect(setV3SurveySegmentFilters).toHaveBeenCalledWith(
-        "clsg1234567890123456789012",
-        attributeFilters,
+        {
+          segmentId: "clsg1234567890123456789012",
+          ownerSurveyId: appCurrentSurvey.id,
+          workspaceId,
+          filters: attributeFilters,
+          storedFilters: appCurrentSurvey.segment?.filters ?? [],
+        },
         tx
       );
-      expect(tx.survey.update).toHaveBeenCalled();
+      // ENG-7269: the survey must still be on the segment the targeting was written to.
+      expect(tx.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ segmentId: "clsg1234567890123456789012" }),
+        })
+      );
       expect(prisma.survey.update).not.toHaveBeenCalled();
       // The Embedded Data reconcile rides the same transaction — never the global client.
       expect(tx.surveyEmbeddedData.findMany).toHaveBeenCalled();
       expect(prisma.surveyEmbeddedData.findMany).not.toHaveBeenCalled();
+    });
+
+    test("answers a survey moved to another segment after the targeting write with 409 (ENG-7269)", async () => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      // The survey UPDATE misses its `segmentId` guard: another save moved the survey meanwhile.
+      vi.mocked(prisma.survey.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("no rows", { code: "P2025", clientVersion: "7" })
+      );
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue({
+        updatedAt: appCurrentSurvey.updatedAt,
+        archivedAt: null,
+        segmentId: "clsgshared0000000000000001",
+      } as never);
+
+      await expect(
+        patchV3Survey(
+          appCurrentSurvey,
+          { targeting: { filters: attributeFilters } },
+          { requestId: "req_app_moved", organizationId: "org_1" }
+        )
+      ).rejects.toBeInstanceOf(V3SurveyTargetingChangedError);
+    });
+
+    test("refuses a targeting change while another segment nests the survey's own segment (ENG-7269)", async () => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      vi.mocked(assertV3OwnSegmentNotNestedElsewhere).mockRejectedValueOnce(
+        new V3SurveyReferenceValidationError([{ name: "targeting.filters", reason: "nested elsewhere" }])
+      );
+
+      await expect(
+        patchV3Survey(
+          appCurrentSurvey,
+          { targeting: { filters: attributeFilters } },
+          { requestId: "req_app_nested", organizationId: "org_1" }
+        )
+      ).rejects.toThrow(V3SurveyReferenceValidationError);
+
+      expect(assertV3OwnSegmentNotNestedElsewhere).toHaveBeenCalledWith(
+        workspaceId,
+        "clsg1234567890123456789012",
+        undefined
+      );
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
     test("rejects a targeting change when the app survey has no segment", async () => {
@@ -1611,6 +1678,33 @@ describe("patchV3Survey", () => {
           { requestId: "req_app_no_segment", organizationId: "org_1" }
         )
       ).rejects.toThrow(V3SurveyReferenceValidationError);
+
+      expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["shared", { isPrivate: false, surveys: ["clsv1234567890123456789012"] }],
+      [
+        "used by another survey",
+        { isPrivate: true, surveys: ["clsv1234567890123456789012", "clsvother000000000000000"] },
+      ],
+    ])("refuses a targeting change when the segment is %s (ENG-7269)", async (_label, segment) => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      const survey = {
+        ...appCurrentSurvey,
+        segment: { ...(appCurrentSurvey.segment ?? {}), ...segment },
+      } as unknown as TSurvey;
+
+      await expect(
+        patchV3Survey(
+          survey,
+          { targeting: { filters: attributeFilters } },
+          { requestId: "req_app_patch_shared", organizationId: "org_1" }
+        )
+      ).rejects.toMatchObject({
+        invalidParams: [{ name: "targeting.filters", reason: expect.stringContaining("shared segment") }],
+      });
 
       expect(setV3SurveySegmentFilters).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();

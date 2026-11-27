@@ -1,7 +1,8 @@
+import { isDeepStrictEqual } from "node:util";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type SegmentWhereUniqueInput } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
@@ -45,7 +46,12 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
-import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "./segment-errors";
+import {
+  PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE,
+  PRIVATE_SEGMENT_SHARED_WITH_OTHER_SURVEYS_MESSAGE,
+  SEGMENT_TITLE_TAKEN_ERROR_MESSAGE,
+  SegmentSurveysChangedError,
+} from "./segment-errors";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
@@ -126,15 +132,20 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
  */
 export const getSegmentsByIds = async (
   segmentIds: string[],
-  workspaceId: string
-): Promise<{ id: string; filters: TBaseFilters }[]> => {
+  workspaceId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<{ id: string; isPrivate: boolean; filters: TBaseFilters }[]> => {
   validateInputs([segmentIds, z.array(ZId)], [workspaceId, ZId]);
   try {
-    const segments = await prisma.segment.findMany({
+    const segments = await client.segment.findMany({
       where: { id: { in: segmentIds }, workspaceId },
-      select: { id: true, filters: true },
+      select: { id: true, isPrivate: true, filters: true },
     });
-    return segments.map((segment) => ({ id: segment.id, filters: segment.filters as TBaseFilters }));
+    return segments.map((segment) => ({
+      id: segment.id,
+      isPrivate: segment.isPrivate,
+      filters: segment.filters as TBaseFilters,
+    }));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -303,6 +314,22 @@ const assertPrivateSegmentKeepsTitle = (data: TSegmentUpdateInput, current: TSeg
 };
 
 /**
+ * ENG-7269: a private segment is one survey's own targeting, which only that survey's save writes. So a
+ * shared segment is never made private (the survey save would then write a segment other surveys use),
+ * and a private one connects no further survey unless it becomes shared in the same write ("Save as
+ * shared segment").
+ */
+const assertPrivateSegmentKeepsOwnSurvey = (data: TSegmentUpdateInput, current: TSegment): void => {
+  if (!current.isPrivate && data.isPrivate === true) {
+    throw new InvalidInputError("A shared segment can't be made private");
+  }
+  const staysPrivate = current.isPrivate && data.isPrivate !== false;
+  if (staysPrivate && data.surveys?.some((surveyId) => !current.surveys.includes(surveyId))) {
+    throw new InvalidInputError("A private segment targets only its own survey");
+  }
+};
+
+/**
  * A rename, or a private segment turned shared while it keeps its survey's id as title, stores a title
  * the caller chose for a segment the survey save may later pick up by that title (ENG-6956).
  */
@@ -334,6 +361,20 @@ const upsertPrivateSegment = async ({
   description,
   filters,
 }: Pick<TSegmentCreateInput, "workspaceId" | "surveyId" | "description" | "filters">) => {
+  // ENG-7269: a private segment another segment already nests (data from before that was refused) keeps
+  // its filters: changing them would change the audience of every survey on the nesting segment.
+  const existing = await prisma.segment.findUnique({
+    where: { workspaceId_title: { workspaceId, title: surveyId } },
+    select: { id: true, isPrivate: true, filters: true },
+  });
+  if (
+    existing?.isPrivate &&
+    !isDeepStrictEqual(existing.filters, filters) &&
+    (await isNestedByAnotherSegment(workspaceId, existing.id))
+  ) {
+    throw new InvalidInputError(PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE);
+  }
+
   const upsert = () =>
     prisma.segment.upsert({
       // A shared segment holding the title, or a private one other surveys also use (only possible
@@ -465,6 +506,140 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
   }
 };
 
+/**
+ * ENG-7269: what nests a segment, in one definition shared with `collectNestedSegmentIds` (helper.ts): any
+ * object of a filter tree with `type: "segment"` and a string `segmentId`, at any depth. A well-formed
+ * `segment` filter's `root` is such an object; matching malformed ones too (a draft save stores its tree
+ * unchecked) fails closed, and the write paths refuse adding one that names a private segment.
+ */
+// `strict`: lax mode would unwrap arrays in the comparisons and count `segmentId: ["…"]` as nesting, which
+// the code's rule (and evaluation) does not.
+const NESTS_SEGMENT_PATH = 'strict $.** ? (@.type == "segment" && @.segmentId == $id)';
+const NESTED_SEGMENT_IDS_PATH =
+  'strict $.** ? (@.type == "segment" && @.segmentId.type() == "string").segmentId';
+
+/** Whether another segment of the workspace nests `segmentId`, as an SQL condition. */
+const nestedByAnotherSegmentSql = (workspaceId: string, segmentId: string): Prisma.Sql => Prisma.sql`
+  EXISTS (
+    SELECT 1 FROM "Segment" AS "other"
+    WHERE "other"."workspaceId" = ${workspaceId}
+      AND "other"."id" <> ${segmentId}
+      AND jsonb_path_exists("other"."filters", ${NESTS_SEGMENT_PATH}::jsonpath, jsonb_build_object('id', ${segmentId}::text))
+  )`;
+
+const rethrowAsDatabaseError = (error: unknown): never => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    throw new DatabaseError(error.message);
+  }
+  throw error;
+};
+
+const SEGMENT_ASSOCIATED_WITH_SURVEY_MESSAGE = "Cannot delete a segment that is associated with a survey";
+const SEGMENT_NESTED_BY_ANOTHER_MESSAGE = "Cannot delete a segment that another segment's filters use";
+
+/**
+ * ENG-7269: whether another segment of the workspace nests `segmentId` in its filters. Matched in
+ * Postgres, so no filter tree is read into memory; the `workspaceId` index scopes the scan.
+ */
+export const isNestedByAnotherSegment = async (
+  workspaceId: string,
+  segmentId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<boolean> => {
+  // Called with stored ids only (a segment row's, or a survey's own segment), so not re-validated here.
+  try {
+    const [row] = await client.$queryRaw<{ nested: boolean }[]>`
+      SELECT ${nestedByAnotherSegmentSql(workspaceId, segmentId)} AS "nested"
+    `;
+    return row?.nested === true;
+  } catch (error) {
+    return rethrowAsDatabaseError(error);
+  }
+};
+
+/**
+ * Deletes a segment only while it is unused: no survey links it and (ENG-7269) no other segment nests it,
+ * since deleting a nested one would leave that filter dangling and its surveys would reach nobody. Both
+ * conditions are in the DELETE's own `WHERE`, so a link or a nesting made meanwhile keeps the segment.
+ * `privateOnly` also requires the segment to be private. Returns whether a row was deleted.
+ */
+const deleteSegmentIfUnused = async (
+  segmentId: string,
+  workspaceId: string,
+  { privateOnly }: { privateOnly: boolean },
+  client: Prisma.TransactionClient = prisma
+): Promise<boolean> => {
+  const deleted = await client.$executeRaw`
+    DELETE FROM "Segment" AS "target"
+    WHERE "target"."id" = ${segmentId}
+      AND "target"."workspaceId" = ${workspaceId}
+      ${privateOnly ? Prisma.sql`AND "target"."isPrivate" = true` : Prisma.empty}
+      AND NOT EXISTS (SELECT 1 FROM "Survey" WHERE "Survey"."segmentId" = "target"."id")
+      AND NOT ${nestedByAnotherSegmentSql(workspaceId, segmentId)}
+  `;
+  return deleted > 0;
+};
+
+/**
+ * Deletes a survey's private segment once it is unused (see `deleteSegmentIfUnused`): survey delete,
+ * leaving app targeting, and loading another segment. A nested one is kept (legacy data: nesting a private
+ * segment is refused now). Returns whether it was deleted.
+ */
+export const deletePrivateSegmentIfUnused = async (
+  segmentId: string,
+  workspaceId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<boolean> => {
+  // Called with a stored survey's segment and workspace ids only, so not re-validated here.
+  try {
+    return await deleteSegmentIfUnused(segmentId, workspaceId, { privateOnly: true }, client);
+  } catch (error) {
+    return rethrowAsDatabaseError(error);
+  }
+};
+
+/**
+ * ENG-7269: the surveys a segment targets through nesting. A `segment` filter is resolved when it is
+ * evaluated, so a segment's filters are also part of the targeting of every survey on a segment that nests
+ * it, directly or through other segments. The workspace's nesting edges are read once (one JSON-path pass
+ * per segment), then walked with an equality join (O(depth × edges)); `UNION` stops at a segment already
+ * reached, so a cycle ends. Surveys are not scoped to the workspace here: a legacy link to another
+ * workspace stays in the set, and the caller's workspace-scoped write check refuses it.
+ */
+export const getSurveyIdsTargetedThroughNesting = async (
+  workspaceId: string,
+  segmentId: string
+): Promise<string[]> => {
+  validateInputs([workspaceId, ZId], [segmentId, ZId]);
+
+  try {
+    const rows = await prisma.$queryRaw<{ id: string }[]>`
+      WITH RECURSIVE "edges" AS MATERIALIZED (
+        SELECT DISTINCT "parent"."id" AS "parentId", "child" #>> '{}' AS "childId"
+        FROM "Segment" AS "parent",
+          jsonb_path_query("parent"."filters", ${NESTED_SEGMENT_IDS_PATH}::jsonpath) AS "child"
+        WHERE "parent"."workspaceId" = ${workspaceId}
+      ),
+      "nesting" ("id") AS (
+        SELECT ${segmentId}::text
+        UNION
+        SELECT "edges"."parentId" FROM "edges" JOIN "nesting" ON "edges"."childId" = "nesting"."id"
+      )
+      SELECT "Survey"."id"
+      FROM "Survey"
+      JOIN "nesting" ON "Survey"."segmentId" = "nesting"."id"
+      WHERE "nesting"."id" <> ${segmentId}
+    `;
+    return rows.map((row) => row.id);
+  } catch (error) {
+    return rethrowAsDatabaseError(error);
+  }
+};
+
+/**
+ * Deletes a segment no survey uses and no other segment nests (ENG-7269), with both conditions in the
+ * DELETE's own `WHERE` (`deleteSegmentIfUnused`). A refusal names the condition that held.
+ */
 export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
   validateInputs([segmentId, ZId]);
 
@@ -473,25 +648,25 @@ export const deleteSegment = async (segmentId: string): Promise<TSegment> => {
     if (!currentSegment) {
       throw new ResourceNotFoundError("segment", segmentId);
     }
-
     if (currentSegment.surveys?.length) {
-      throw new OperationNotAllowedError("Cannot delete a segment that is associated with a survey");
+      throw new OperationNotAllowedError(SEGMENT_ASSOCIATED_WITH_SURVEY_MESSAGE);
     }
 
-    const segment = await prisma.segment.delete({
-      where: {
-        id: segmentId,
-      },
-      select: selectSegment,
+    if (await deleteSegmentIfUnused(segmentId, currentSegment.workspaceId, { privateOnly: false })) {
+      return currentSegment;
+    }
+
+    // Nothing deleted: say why, as of now.
+    const now = await prisma.segment.findUnique({
+      where: { id: segmentId },
+      select: { _count: { select: { surveys: true } } },
     });
-
-    return transformPrismaSegment(segment);
+    if (!now) throw new ResourceNotFoundError("segment", segmentId);
+    throw new OperationNotAllowedError(
+      now._count.surveys > 0 ? SEGMENT_ASSOCIATED_WITH_SURVEY_MESSAGE : SEGMENT_NESTED_BY_ANOTHER_MESSAGE
+    );
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
+    return rethrowAsDatabaseError(error);
   }
 };
 
@@ -518,17 +693,40 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
 
       // if a private segment already exists, connect it to the survey
       if (segment) {
+        // ENG-7269: a private segment other surveys also use (older bugs, ENG-6957) is their targeting too;
+        // the caller authorized this survey only.
+        if (segment.surveys.some((linked) => linked.id !== surveyId)) {
+          throw new InvalidInputError(PRIVATE_SEGMENT_SHARED_WITH_OTHER_SURVEYS_MESSAGE);
+        }
+        // ENG-7269: emptying the filters of a private segment another segment nests would change the
+        // audience of every survey on the nesting segment.
+        if (
+          Array.isArray(segment.filters) &&
+          segment.filters.length > 0 &&
+          (await isNestedByAnotherSegment(survey.workspaceId, segment.id, tx))
+        ) {
+          throw new InvalidInputError(PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE);
+        }
+
         await tx.survey.update({
           where: { id: surveyId },
           data: { segment: { connect: { id: segment.id } } },
         });
 
-        // reset the filters
-        const updatedSegment = await tx.segment.update({
-          where: { id: segment.id },
-          data: { filters: [] },
-          select: selectSegment,
-        });
+        // reset the filters, only while no other survey uses the segment (repeated in the write)
+        const updatedSegment = await tx.segment
+          .update({
+            where: { id: segment.id, surveys: { every: { id: surveyId } } },
+            data: { filters: [] },
+            select: selectSegment,
+          })
+          .catch((error: unknown) => {
+            // This write's guard missed: another survey was linked to the segment since the read.
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+              throw new InvalidInputError(PRIVATE_SEGMENT_SHARED_WITH_OTHER_SURVEYS_MESSAGE);
+            }
+            throw error;
+          });
 
         return transformPrismaSegment(updatedSegment);
       } else {
@@ -599,7 +797,47 @@ export const getSurveyWorkspaceIdMap = reactCache(
   }
 );
 
-export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput): Promise<TSegment> => {
+export type TSegmentUpdateOptions = Readonly<{
+  /**
+   * ENG-7269: the survey ids the caller was authorized to target. The write lands only while the segment
+   * is connected to no survey outside this set, so a survey connected after the caller's check refuses
+   * the write instead of being retargeted unawares.
+   */
+  connectedSurveyIds?: ReadonlyArray<string>;
+  /**
+   * ENG-7269: the stored filters a filter change was checked against. The write lands only while they are
+   * still stored, so an edit made since the check (a reference removed, say) isn't silently overwritten.
+   */
+  expectedFilters?: TBaseFilters;
+}>;
+
+/**
+ * ENG-7269: the guarded update's `where`. Each guard the caller passes is repeated in the write, so a
+ * survey connected, or a filter change made, since the caller's checks makes the write match no row.
+ */
+const guardedSegmentWhere = (
+  segmentId: string,
+  { connectedSurveyIds, expectedFilters }: TSegmentUpdateOptions
+): SegmentWhereUniqueInput => ({
+  id: segmentId,
+  ...(expectedFilters && { filters: { equals: expectedFilters as unknown as Prisma.InputJsonValue } }),
+  ...(connectedSurveyIds && {
+    surveys: { every: { id: { in: [...new Set(connectedSurveyIds)] } } },
+  }),
+});
+
+/** A guarded update that matched no row: the segment is gone (404), or it changed under the caller (409). */
+const throwGuardedUpdateMiss = async (segmentId: string): Promise<never> => {
+  const existing = await prisma.segment.findUnique({ where: { id: segmentId }, select: { id: true } });
+  if (!existing) throw new ResourceNotFoundError("segment", segmentId);
+  throw new SegmentSurveysChangedError();
+};
+
+export const updateSegment = async (
+  segmentId: string,
+  data: TSegmentUpdateInput,
+  guards: TSegmentUpdateOptions = {}
+): Promise<TSegment> => {
   validateInputs([segmentId, ZId], [data, ZSegmentUpdateInput]);
 
   try {
@@ -623,14 +861,13 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
     }
 
     assertPrivateSegmentKeepsTitle(data, currentSegment);
+    assertPrivateSegmentKeepsOwnSurvey(data, currentSegment);
     if (needsSurveyIdTitleCheck(data, currentSegment)) {
       await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title ?? currentSegment.title);
     }
 
     const segment = await prisma.segment.update({
-      where: {
-        id: segmentId,
-      },
+      where: guardedSegmentWhere(segmentId, guards),
       data: updatedInput,
       select: selectSegment,
     });
@@ -639,6 +876,9 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
   } catch (error) {
     throwSegmentTitleTaken(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025" && (guards.connectedSurveyIds || guards.expectedFilters)) {
+        await throwGuardedUpdateMiss(segmentId);
+      }
       throw new DatabaseError(error.message);
     }
 

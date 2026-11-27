@@ -5,11 +5,16 @@ import { DatabaseError } from "@formbricks/types/errors";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getSurveyIdsReadBySegments } from "@/modules/ee/contacts/segments/lib/helper";
+import {
+  PRIVATE_SEGMENT_NESTED_MESSAGE,
+  getSurveyIdsReadBySegments,
+} from "@/modules/ee/contacts/segments/lib/helper";
+import { PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
   ALL_SEGMENT_SURVEY_REFS,
   getExistingWorkspaceSurveyIds,
   getSegments,
+  isNestedByAnotherSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -83,25 +88,98 @@ export function areV3SurveyTargetingFiltersEqual(a: unknown, b: unknown): boolea
 }
 
 /**
- * Persist app-survey contact targeting onto the survey's (auto-created) segment. Writes the segment
- * row directly — mirroring updateSurveyInternal — so empty filters ("show to everyone") are supported,
- * which the EE updateSegment service rejects. Entitlement is gated by the caller before invoking this.
+ * ENG-7269: the refusal for `targeting.filters` on a survey targeted with a shared segment. That segment is
+ * the targeting of every survey that uses it, so a survey update never writes it.
+ */
+export const sharedSegmentTargetingError = (): V3SurveyReferenceValidationError =>
+  new V3SurveyReferenceValidationError([
+    {
+      name: "targeting.filters",
+      reason:
+        "This survey is targeted with a shared segment, which a survey update can't change. Edit the segment in the app instead.",
+    },
+  ]);
+
+/**
+ * ENG-7269: refuses changing the filters of a survey's own private segment while another segment nests it
+ * (data from before nesting a private segment was refused): the change would reach every survey on the
+ * nesting segment. Read through `client` so a caller's transaction sees its own writes.
+ */
+export async function assertV3OwnSegmentNotNestedElsewhere(
+  workspaceId: string,
+  segmentId: string,
+  client: Prisma.TransactionClient = prisma
+): Promise<void> {
+  if (await isNestedByAnotherSegment(workspaceId, segmentId, client)) {
+    throw new V3SurveyReferenceValidationError([
+      { name: "targeting.filters", reason: PRIVATE_SEGMENT_NESTED_ELSEWHERE_MESSAGE },
+    ]);
+  }
+}
+
+/**
+ * ENG-7269: the survey's targeting changed between this request's read and its write (another save of the
+ * same survey). The request was fine, so the v3 layer answers 409 and the caller re-reads and retries.
+ */
+export class V3SurveyTargetingChangedError extends Error {
+  constructor() {
+    super("The survey's targeting changed since it was read. Re-read the survey and retry.");
+    this.name = "V3SurveyTargetingChangedError";
+  }
+}
+
+/**
+ * Persist app-survey contact targeting onto the survey's own private segment. Writes the segment row
+ * directly — mirroring updateSurveyInternal — so empty filters ("show to everyone") are supported, which
+ * the EE updateSegment service rejects. Entitlement is gated by the caller before invoking this.
  *
- * Pass a transaction client (`tx`) to write atomically alongside the survey update; defaults to the
- * shared prisma client for standalone writes (e.g. on create).
+ * ENG-7269: the write's own `where` repeats that the segment is private and used by `ownerSurveyId` alone,
+ * so a segment shared after the caller read the survey refuses the write instead of retargeting the
+ * surveys that now use it.
+ *
+ * Pass a transaction client (`tx`) to write atomically alongside the survey update.
  */
 export async function setV3SurveySegmentFilters(
-  segmentId: string,
-  filters: TV3SurveyFilters,
+  {
+    segmentId,
+    ownerSurveyId,
+    workspaceId,
+    filters,
+    storedFilters,
+  }: {
+    segmentId: string;
+    ownerSurveyId: string;
+    workspaceId: string;
+    filters: TV3SurveyFilters;
+    /** The filters the request read and checked against; the write lands only while they are stored. */
+    storedFilters: unknown;
+  },
   client: Prisma.TransactionClient = prisma
 ): Promise<void> {
   try {
     await client.segment.update({
-      where: { id: segmentId },
+      where: {
+        id: segmentId,
+        workspaceId,
+        isPrivate: true,
+        // Still linked to the survey, and to no other: a survey moved to another segment since the read
+        // doesn't write the one it left.
+        surveys: { some: { id: ownerSurveyId }, every: { id: ownerSurveyId } },
+        filters: { equals: storedFilters ?? [] },
+      },
       data: { filters },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        // Private and used by no other survey: its filters changed, or the survey moved to another segment,
+        // since the read (409). Otherwise it was shared, or isn't this workspace's (422, as the pre-check says).
+        const stillOwn = await client.segment.findFirst({
+          where: { id: segmentId, workspaceId, isPrivate: true, surveys: { every: { id: ownerSurveyId } } },
+          select: { id: true },
+        });
+        throw stillOwn ? new V3SurveyTargetingChangedError() : sharedSegmentTargetingError();
+      }
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -117,7 +195,8 @@ export async function setV3SurveySegmentFilters(
 async function getV3SegmentReferenceIssues(
   segmentRefs: TV3TargetingFilterReference[],
   workspaceId: string,
-  visibleSurveyWhere: Prisma.SurveyWhereInput
+  visibleSurveyWhere: Prisma.SurveyWhereInput,
+  storedSegmentIds: ReadonlySet<string>
 ): Promise<InvalidParam[]> {
   const issues: InvalidParam[] = [];
   const issue = (reference: TV3TargetingFilterReference, reason: string): InvalidParam => ({
@@ -131,8 +210,15 @@ async function getV3SegmentReferenceIssues(
   // would accept (and store) a reference to another workspace's segment.
   const segments = await getSegments(workspaceId, ALL_SEGMENT_SURVEY_REFS);
   const segmentsById = new Map(segments.map((segment) => [segment.id, segment]));
-  for (const reference of segmentRefs.filter((ref) => !segmentsById.has(ref.value))) {
-    issues.push(issue(reference, `Segment '${reference.value}' was not found in this workspace`));
+  for (const reference of segmentRefs) {
+    const segment = segmentsById.get(reference.value);
+    if (!segment) {
+      issues.push(issue(reference, `Segment '${reference.value}' was not found in this workspace`));
+    } else if (segment.isPrivate && !storedSegmentIds.has(segment.id)) {
+      // ENG-7269: a private segment is one survey's own targeting; nesting it would let that survey's
+      // save change this survey's audience. A reference the stored tree already holds stays, as in the app.
+      issues.push(issue(reference, PRIVATE_SEGMENT_NESTED_MESSAGE));
+    }
   }
 
   const referencedSegments = segments.filter((candidate) =>
@@ -172,12 +258,14 @@ async function getV3SegmentReferenceIssues(
  *
  * `tx`, when the write runs inside a caller's transaction (ENG-6845), is where the attribute keys are
  * read from: an import creates the keys its targeting names in that transaction, before this check.
+ * `storedFilters` is the tree a PATCH replaces: a private segment it already names is not a new reference.
  */
 export async function assertV3SurveyTargetingFilterReferences(
   workspaceId: string,
   filters: TV3SurveyFilters,
   visibleSurveyWhere: Prisma.SurveyWhereInput,
-  tx?: Prisma.TransactionClient
+  tx?: Prisma.TransactionClient,
+  storedFilters: unknown = []
 ): Promise<void> {
   const references = collectV3TargetingFilterReferences(filters, "targeting.filters");
 
@@ -223,7 +311,14 @@ export async function assertV3SurveyTargetingFilterReferences(
 
   const segmentRefs = references.filter((ref) => ref.kind === "segment");
   if (segmentRefs.length > 0) {
-    invalidParams.push(...(await getV3SegmentReferenceIssues(segmentRefs, workspaceId, visibleSurveyWhere)));
+    const storedSegmentIds = new Set(
+      collectV3TargetingFilterReferences(storedFilters as TV3SurveyFilters, "targeting.filters")
+        .filter((ref) => ref.kind === "segment")
+        .map((ref) => ref.value)
+    );
+    invalidParams.push(
+      ...(await getV3SegmentReferenceIssues(segmentRefs, workspaceId, visibleSurveyWhere, storedSegmentIds))
+    );
   }
 
   const surveyRefs = references.filter((ref) => ref.kind === "survey");

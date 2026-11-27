@@ -8,10 +8,12 @@ import {
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import {
   SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE,
+  assertNoAddedPrivateSegmentReferences,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
+  collectNestedSegmentIds,
   collectSurveyIdsFromSegmentFilters,
   getSurveyIdsReadBySegments,
   segmentFiltersReadHiddenSurvey,
@@ -77,7 +79,7 @@ describe("checkForRecursiveSegmentFilter", () => {
     const differentSegmentId = "segment-456";
 
     vi.mocked(getSegmentsByIds).mockResolvedValue([
-      { id: differentSegmentId, filters: [attributeFilter] as unknown as TBaseFilters },
+      { isPrivate: false, id: differentSegmentId, filters: [attributeFilter] as unknown as TBaseFilters },
     ]);
 
     await expect(
@@ -99,6 +101,7 @@ describe("checkForRecursiveSegmentFilter", () => {
     vi.mocked(getSegmentsByIds).mockResolvedValueOnce([
       {
         id: nestedSegmentId,
+        isPrivate: false,
         // The reference back to the original segment sits inside a group.
         filters: [
           { id: "group-1", connector: null, resource: [segmentReference(originalSegmentId)] },
@@ -128,7 +131,7 @@ describe("checkForRecursiveSegmentFilter", () => {
       [segmentIdC]: [segmentReference(segmentIdA)] as unknown as TBaseFilters,
     };
     vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
-      ids.map((id) => ({ id, filters: filtersById[id] }))
+      ids.map((id) => ({ id, isPrivate: false, filters: filtersById[id] }))
     );
 
     await expect(
@@ -150,7 +153,7 @@ describe("checkForRecursiveSegmentFilter", () => {
     const second = "segment-C";
 
     vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
-      ids.map((id) => ({ id, filters: [] as unknown as TBaseFilters }))
+      ids.map((id) => ({ id, isPrivate: false, filters: [] as unknown as TBaseFilters }))
     );
 
     await checkForRecursiveSegmentFilter(
@@ -173,7 +176,7 @@ describe("checkForRecursiveSegmentFilter", () => {
       [segmentB]: [segmentReference(segmentA)] as unknown as TBaseFilters,
     };
     vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
-      ids.map((id) => ({ id, filters: filtersById[id] }))
+      ids.map((id) => ({ id, isPrivate: false, filters: filtersById[id] }))
     );
 
     await expect(
@@ -208,7 +211,11 @@ describe("checkForRecursiveSegmentFilter", () => {
     vi.mocked(getSegmentsByIds).mockImplementation(async (ids) =>
       ids
         .filter((id) => id === existing)
-        .map((id) => ({ id, filters: [segmentReference(segmentId)] as unknown as TBaseFilters }))
+        .map((id) => ({
+          id,
+          isPrivate: false,
+          filters: [segmentReference(segmentId)] as unknown as TBaseFilters,
+        }))
     );
 
     await expect(
@@ -622,5 +629,81 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     await expect(
       assertSegmentSurveyFiltersVisible(tree(interaction("specific", [restrictedId])), workspaceId, member)
     ).rejects.toThrow(new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE));
+  });
+});
+
+describe("assertNoAddedPrivateSegmentReferences (ENG-7269)", () => {
+  const WORKSPACE_ID = "clworkspace00000000000001";
+  const PRIVATE = "clprivatesegment000000001";
+  const SHARED = "clsharedsegment0000000001";
+  const segmentReference = (segmentId: string) => ({
+    id: `filter-${segmentId}`,
+    connector: null,
+    resource: { root: { type: "segment", segmentId } },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("refuses a reference the write adds to a private segment", async () => {
+    vi.mocked(getSegmentsByIds).mockResolvedValue([{ id: PRIVATE, isPrivate: true, filters: [] }]);
+
+    await expect(
+      assertNoAddedPrivateSegmentReferences([segmentReference(PRIVATE)], [], WORKSPACE_ID)
+    ).rejects.toThrow(new InvalidInputError("A segment filter can't use a survey's own targeting segment"));
+    expect(getSegmentsByIds).toHaveBeenCalledWith([PRIVATE], WORKSPACE_ID, undefined);
+  });
+
+  test("counts a malformed node the database would count as a nesting", async () => {
+    vi.mocked(getSegmentsByIds).mockResolvedValue([{ id: PRIVATE, isPrivate: true, filters: [] }]);
+
+    await expect(
+      assertNoAddedPrivateSegmentReferences([{ type: "segment", segmentId: PRIVATE }], [], WORKSPACE_ID)
+    ).rejects.toThrow(InvalidInputError);
+  });
+
+  test("accepts a reference to a shared segment", async () => {
+    vi.mocked(getSegmentsByIds).mockResolvedValue([{ id: SHARED, isPrivate: false, filters: [] }]);
+
+    await expect(
+      assertNoAddedPrivateSegmentReferences([segmentReference(SHARED)], [], WORKSPACE_ID)
+    ).resolves.toBeUndefined();
+  });
+
+  test("leaves a reference the stored tree already holds, without a query", async () => {
+    const stored = [{ id: "group", connector: null, resource: [segmentReference(PRIVATE)] }];
+
+    await expect(
+      assertNoAddedPrivateSegmentReferences([segmentReference(PRIVATE)], stored, WORKSPACE_ID)
+    ).resolves.toBeUndefined();
+    expect(getSegmentsByIds).not.toHaveBeenCalled();
+  });
+
+  test("checks only the added references that can be segment ids, in one query", async () => {
+    vi.mocked(getSegmentsByIds).mockResolvedValue([{ id: SHARED, isPrivate: false, filters: [] }]);
+
+    await assertNoAddedPrivateSegmentReferences(
+      [segmentReference(PRIVATE), segmentReference(SHARED), segmentReference("not an id")],
+      [segmentReference(PRIVATE)],
+      WORKSPACE_ID
+    );
+    expect(getSegmentsByIds).toHaveBeenCalledTimes(1);
+    expect(getSegmentsByIds).toHaveBeenCalledWith([SHARED], WORKSPACE_ID, undefined);
+  });
+});
+
+describe("collectNestedSegmentIds (ENG-7269)", () => {
+  test("finds a segment id at any depth, in groups, values and malformed nodes, by the database's rule", () => {
+    const tree = [
+      { resource: { root: { type: "segment", segmentId: "a" } } },
+      { resource: [{ resource: { root: { type: "segment", segmentId: "b" } } }] },
+      { resource: { root: { type: "attribute" }, value: { nested: { type: "segment", segmentId: "c" } } } },
+      { type: "segment", segmentId: "d" },
+      { resource: { root: { type: "segment", segmentId: 5 } } },
+    ];
+
+    expect([...collectNestedSegmentIds(tree)].sort()).toEqual(["a", "b", "c", "d"]);
+    expect(collectNestedSegmentIds(null).size).toBe(0);
   });
 });

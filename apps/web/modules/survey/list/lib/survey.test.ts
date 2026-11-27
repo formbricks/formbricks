@@ -7,6 +7,7 @@ import { logger } from "@formbricks/logger";
 import { TActionClassType } from "@formbricks/types/action-classes";
 import {
   DatabaseError,
+  InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
   TooManyRequestsError,
@@ -36,10 +37,12 @@ const UNENFORCED_CONTEXT = {
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("server-only", () => ({}));
 const targetingMocks = vi.hoisted(() => ({
+  assertNoAddedPrivateSegmentReferences: vi.fn(),
   assertSegmentSurveyFiltersVisible: vi.fn(),
   resolveSurveyActorContext: vi.fn(),
 }));
 vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
+  assertNoAddedPrivateSegmentReferences: targetingMocks.assertNoAddedPrivateSegmentReferences,
   assertSegmentSurveyFiltersVisible: targetingMocks.assertSegmentSurveyFiltersVisible,
 }));
 vi.mock("@/lib/survey/visibility/actor-context", () => ({
@@ -926,6 +929,54 @@ describe("copySurveyToOtherWorkspace", () => {
     );
   });
 
+  test("refuses a copy whose private segment would nest another survey's private segment (ENG-7269)", async () => {
+    const surveyWithPrivateSegment = {
+      ...mockExistingSurveyDetails,
+      segment: { id: "seg_private", isPrivate: true, filters: [{ type: "user", value: "test" }] },
+    };
+    vi.mocked(prisma.survey.findUnique, { partial: true, deep: true }).mockResolvedValue(
+      surveyWithPrivateSegment
+    );
+    targetingMocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    await expect(
+      copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId)
+    ).rejects.toThrow(InvalidInputError);
+    expect(targetingMocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      surveyWithPrivateSegment.segment.filters,
+      [],
+      targetWorkspaceId
+    );
+    expect(prisma.survey.create).not.toHaveBeenCalled();
+  });
+
+  test("refuses a cross-workspace copy whose shared segment nests a private segment there (ENG-7269)", async () => {
+    const surveyWithPublicSegment = {
+      ...mockExistingSurveyDetails,
+      segment: { id: "seg_public", title: "Public Segment", isPrivate: false, filters: [{ id: "nests" }] },
+    };
+    vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue(surveyWithPublicSegment);
+    vi.mocked(doesWorkspaceExist).mockResolvedValue(sourceWorkspaceId);
+    vi.mocked(getWorkspaceWithLanguages)
+      .mockResolvedValueOnce(mockSourceWorkspace)
+      .mockResolvedValueOnce(mockTargetWorkspace);
+    targetingMocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    await expect(
+      copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId)
+    ).rejects.toThrow(InvalidInputError);
+    expect(targetingMocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      surveyWithPublicSegment.segment.filters,
+      [],
+      targetWorkspaceId
+    );
+    expect(prisma.survey.create).not.toHaveBeenCalled();
+  });
+
   test("should handle public segment: connect if same workspace, create new if different workspace (no existing in target)", async () => {
     const surveyWithPublicSegment = {
       ...mockExistingSurveyDetails,
@@ -966,6 +1017,12 @@ describe("copySurveyToOtherWorkspace", () => {
 
     // Case 2: Different workspace, segment with same title does not exist in target
     await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+    // ENG-7269: the copied tree is new in the target workspace, so its references are checked there.
+    expect(targetingMocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      surveyWithPublicSegment.segment.filters,
+      [],
+      targetWorkspaceId
+    );
     expect(prisma.survey.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

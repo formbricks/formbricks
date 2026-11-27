@@ -14,7 +14,10 @@ import { PUT as attachSurveySegment } from "@/app/api/internal/surveys/[surveyId
 import { GET as listFilterSurveys } from "@/app/api/internal/workspaces/[workspaceId]/segment-filter-surveys/route";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
+import {
+  SEGMENT_TITLE_TAKEN_ERROR_MESSAGE,
+  SegmentSurveysChangedError,
+} from "@/modules/ee/contacts/segments/lib/segment-errors";
 import { POST as copySegment } from "./[segmentId]/copies/route";
 import { DELETE, PATCH } from "./[segmentId]/route";
 import { POST } from "./route";
@@ -52,11 +55,13 @@ const mocks = vi.hoisted(() => ({
   getUserVisibleSurveyWhere: vi.fn(),
   resolveSurveyActorContext: vi.fn(),
   restoreHiddenSegmentSurveyIds: vi.fn(),
-  assertSurveysInWorkspace: vi.fn(),
+  getExistingWorkspaceSurveyIds: vi.fn(),
+  getSurveyIdsTargetedThroughNesting: vi.fn(),
   assertSurveyInteractionSurveyIds: vi.fn(),
   assertSegmentSurveyFiltersVisible: vi.fn(),
   assertAddedSegmentSurveyFiltersVisible: vi.fn(),
   checkForRecursiveSegmentFilter: vi.fn(),
+  assertNoAddedPrivateSegmentReferences: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can, assertCan: vi.fn() }));
@@ -74,7 +79,9 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   cloneSegment: mocks.cloneSegment,
   createSegment: mocks.createSegment,
   deleteSegment: mocks.deleteSegment,
+  getExistingWorkspaceSurveyIds: mocks.getExistingWorkspaceSurveyIds,
   getSegment: mocks.getSegment,
+  getSurveyIdsTargetedThroughNesting: mocks.getSurveyIdsTargetedThroughNesting,
   getSurveyRefsForWorkspace: mocks.getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap: mocks.getSurveyWorkspaceIdMap,
   resetSegmentInSurvey: mocks.resetSegmentInSurvey,
@@ -84,7 +91,7 @@ vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
   assertAddedSegmentSurveyFiltersVisible: mocks.assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible: mocks.assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds: mocks.assertSurveyInteractionSurveyIds,
-  assertSurveysInWorkspace: mocks.assertSurveysInWorkspace,
+  assertNoAddedPrivateSegmentReferences: mocks.assertNoAddedPrivateSegmentReferences,
   checkForRecursiveSegmentFilter: mocks.checkForRecursiveSegmentFilter,
   restoreHiddenSegmentSurveyIds: mocks.restoreHiddenSegmentSurveyIds,
 }));
@@ -142,6 +149,9 @@ const FILTERS = [
     },
   },
 ];
+
+/** A filter change against the stored `FILTERS` (an edit that sends them back unchanged writes no filters). */
+const EDITED_FILTERS = [{ ...FILTERS[0], resource: { ...FILTERS[0].resource, value: "enterprise" } }];
 
 const storedSegment = (overrides: Record<string, unknown> = {}) => ({
   id: SEGMENT_ID,
@@ -238,6 +248,8 @@ beforeEach(() => {
       [SURVEY_2_ID, WORKSPACE_ID],
     ])
   );
+  mocks.getExistingWorkspaceSurveyIds.mockResolvedValue(new Set([SURVEY_ID, SURVEY_2_ID]));
+  mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([]);
   mocks.getUserVisibleSurveyWhere.mockResolvedValue(visibleWhere);
   mocks.resolveSurveyActorContext.mockResolvedValue(memberActor);
   mocks.restoreHiddenSegmentSurveyIds.mockImplementation(async (filters: unknown) => filters);
@@ -353,6 +365,18 @@ describe("the segment write gate, shared by every write", () => {
 });
 
 describe("POST /api/internal/segments", () => {
+  test("refuses a tree that adds a nested private segment with 422 (ENG-7269)", async () => {
+    mocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    const response = await create(createBody());
+
+    expect(response.status).toBe(422);
+    expect(mocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(FILTERS, [], WORKSPACE_ID);
+    expect(mocks.createSegment).not.toHaveBeenCalled();
+  });
+
   test("creates the segment, audits it and captures it in PostHog", async () => {
     const response = await create(createBody({ surveyId: SURVEY_ID }));
 
@@ -487,11 +511,15 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
 
     expect(response.status).toBe(200);
     expect((await response.json()).data).toEqual(serialized({ title: "Renamed" }));
-    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, {
-      title: "Renamed",
-      description: null,
-      isPrivate: false,
-    });
+    expect(mocks.updateSegment).toHaveBeenCalledWith(
+      SEGMENT_ID,
+      {
+        title: "Renamed",
+        description: null,
+        isPrivate: false,
+      },
+      { connectedSurveyIds: [SURVEY_ID] }
+    );
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "updated",
@@ -506,8 +534,13 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
   });
 
   test("leaves isPrivate as stored when the body omits it, so saving a shared segment's filters keeps it shared", async () => {
-    await update({ filters: FILTERS });
-    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, { filters: FILTERS });
+    await update({ filters: EDITED_FILTERS });
+    expect(mocks.updateSegment).toHaveBeenCalledWith(
+      SEGMENT_ID,
+      { filters: EDITED_FILTERS },
+      // ENG-7269: a filter change lands only while the filters it was checked against are still stored.
+      { connectedSurveyIds: [SURVEY_ID], expectedFilters: FILTERS }
+    );
   });
 
   // ENG-1920: surveys are connected by id alone.
@@ -524,17 +557,22 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 
-  test("checks every connected survey in one batched, visibility-scoped lookup", async () => {
-    mocks.assertSurveysInWorkspace.mockRejectedValueOnce(
-      new InvalidInputError(`Survey not found in workspace: ${SURVEY_2_ID}`)
-    );
+  // ENG-7269: a segment's stored filters are the targeting of every survey it is connected to, so the
+  // write needs `survey.write` on the stored ones as well as the ones the body connects.
+  test("requires survey.write on the stored and newly connected surveys in one batched lookup", async () => {
+    mocks.getExistingWorkspaceSurveyIds.mockResolvedValueOnce(new Set([SURVEY_ID]));
 
-    expect((await update({ surveys: [SURVEY_ID, SURVEY_2_ID] })).status).toBe(422);
+    const refused = await update({ surveys: [SURVEY_ID, SURVEY_2_ID] });
+
+    expect(refused.status).toBe(403);
+    expect((await refused.json()).detail).toBe(
+      "This segment targets surveys you can't edit, so you can't change it. Copy it to change your own survey's targeting."
+    );
     expect(mocks.getSurveyWorkspaceIdMap).toHaveBeenCalledWith([SURVEY_ID, SURVEY_2_ID]);
-    expect(mocks.assertSurveysInWorkspace).toHaveBeenCalledOnce();
-    expect(mocks.assertSurveysInWorkspace).toHaveBeenCalledWith(
-      [SURVEY_ID, SURVEY_2_ID],
+    expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledOnce();
+    expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
       WORKSPACE_ID,
+      [SURVEY_ID, SURVEY_2_ID],
       visibleWhere
     );
     expect(mocks.updateSegment).not.toHaveBeenCalled();
@@ -543,13 +581,119 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).toHaveBeenCalledOnce();
   });
 
-  test("skips the visibility lookup where the caller sees every survey", async () => {
+  test("refuses a change when the caller cannot write a stored connected survey", async () => {
+    mocks.getExistingWorkspaceSurveyIds.mockResolvedValueOnce(new Set());
+
+    const response = await update({ title: "Renamed" });
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe(
+      "This segment targets surveys you can't edit, so you can't change it. Copy it to change your own survey's targeting."
+    );
+    expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], visibleWhere);
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
+  test("requires survey.write on the surveys of segments that nest this one", async () => {
+    mocks.getSegment.mockResolvedValue(storedSegment({ filters: [] }));
+    mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
+    mocks.getExistingWorkspaceSurveyIds.mockResolvedValueOnce(new Set([SURVEY_ID]));
+
+    const response = await update({ filters: FILTERS });
+
+    expect(response.status).toBe(403);
+    expect(mocks.getSurveyIdsTargetedThroughNesting).toHaveBeenCalledWith(WORKSPACE_ID, SEGMENT_ID);
+    expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
+      WORKSPACE_ID,
+      [SURVEY_ID, SURVEY_2_ID],
+      visibleWhere
+    );
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["no filters", { title: "Renamed" }],
+    // The editor sends the stored filters back with a rename.
+    ["the stored filters", { title: "Renamed", filters: FILTERS }],
+  ])("skips the nesting lookup for a body with %s (ENG-7269)", async (_label, body) => {
+    mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
+
+    expect((await update(body)).status).toBe(200);
+    expect(mocks.getSurveyIdsTargetedThroughNesting).not.toHaveBeenCalled();
+    expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], visibleWhere);
+    // Unchanged filters are not written back, so a concurrent filter change isn't undone by a rename.
+    expect(mocks.updateSegment).toHaveBeenCalledWith(
+      SEGMENT_ID,
+      { title: "Renamed" },
+      { connectedSurveyIds: [SURVEY_ID] }
+    );
+  });
+
+  test("guards the write on the directly connected surveys only, not the nesting ones", async () => {
+    mocks.getSegment.mockResolvedValue(storedSegment({ filters: [] }));
+    mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
+
+    expect((await update({ filters: FILTERS })).status).toBe(200);
+    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, expect.anything(), {
+      connectedSurveyIds: [SURVEY_ID],
+      expectedFilters: [],
+    });
+  });
+
+  test("checks the edited tree against the stored one for added private references (ENG-7269)", async () => {
+    mocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    const response = await update({ filters: EDITED_FILTERS });
+
+    expect(response.status).toBe(422);
+    expect(mocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      expect.anything(),
+      storedSegment().filters,
+      WORKSPACE_ID
+    );
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
+  test("checks the target surveys before validating the filters", async () => {
+    mocks.getExistingWorkspaceSurveyIds.mockResolvedValueOnce(new Set());
+
+    expect((await update({ filters: EDITED_FILTERS })).status).toBe(403);
+    expect(mocks.assertSurveyInteractionSurveyIds).not.toHaveBeenCalled();
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
+  test("scopes the connected-survey lookup to the workspace where the caller sees every survey", async () => {
     mocks.getUserVisibleSurveyWhere.mockResolvedValue({});
 
-    await update({ surveys: [SURVEY_ID], filters: FILTERS });
+    await update({ surveys: [SURVEY_ID], filters: EDITED_FILTERS });
 
-    expect(mocks.assertSurveysInWorkspace).not.toHaveBeenCalled();
+    expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], {});
+    expect(mocks.assertSurveyInteractionSurveyIds).toHaveBeenCalled();
     expect(mocks.restoreHiddenSegmentSurveyIds).not.toHaveBeenCalled();
+  });
+
+  test("does not look up surveys when the segment has none and the body connects none", async () => {
+    mocks.getSegment.mockResolvedValue(storedSegment({ surveys: [] }));
+
+    expect((await update({ title: "Renamed" })).status).toBe(200);
+
+    expect(mocks.getExistingWorkspaceSurveyIds).not.toHaveBeenCalled();
+    expect(mocks.updateSegment).toHaveBeenCalledWith(
+      SEGMENT_ID,
+      { title: "Renamed" },
+      { connectedSurveyIds: [] }
+    );
+  });
+
+  test("answers 409 when a survey was connected after the check", async () => {
+    mocks.updateSegment.mockRejectedValue(new SegmentSurveysChangedError());
+
+    const response = await update({ title: "Renamed" });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toBe("The segment changed while saving. Reload and try again.");
   });
 
   test("checks the ids the caller sent and keeps the stored ones they can't see", async () => {
@@ -567,7 +711,11 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       visibleWhere
     );
     expect(mocks.checkForRecursiveSegmentFilter).toHaveBeenCalledWith(stored, SEGMENT_ID, WORKSPACE_ID);
-    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, { filters: stored });
+    expect(mocks.updateSegment).toHaveBeenCalledWith(
+      SEGMENT_ID,
+      { filters: stored },
+      { connectedSurveyIds: [SURVEY_ID], expectedFilters: stored }
+    );
   });
 
   test("holds the merged tree to the bounds, so restored ids can't push a filter past them", async () => {
@@ -585,7 +733,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       },
     ]);
 
-    const response = await update({ filters: FILTERS });
+    const response = await update({ filters: EDITED_FILTERS });
 
     expect(response.status).toBe(422);
     expect(mocks.updateSegment).not.toHaveBeenCalled();
@@ -613,7 +761,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       new InvalidInputError("Recursive segment filter is not allowed")
     );
 
-    const response = await update({ filters: FILTERS });
+    const response = await update({ filters: EDITED_FILTERS });
 
     expect(response.status).toBe(422);
     expect((await response.json()).detail).toBe("Recursive segment filter is not allowed");
@@ -625,12 +773,12 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       new InvalidInputError(HIDDEN_FILTERS_MESSAGE)
     );
 
-    const response = await update({ filters: FILTERS });
+    const response = await update({ filters: EDITED_FILTERS });
 
     expect(response.status).toBe(422);
     expect((await response.json()).detail).toBe(HIDDEN_FILTERS_MESSAGE);
     expect(mocks.assertAddedSegmentSurveyFiltersVisible).toHaveBeenCalledWith(
-      FILTERS,
+      EDITED_FILTERS,
       FILTERS,
       WORKSPACE_ID,
       memberActor,
@@ -657,6 +805,22 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     mocks.assertSegmentSurveyFiltersVisible.mockClear();
     expect((await update({ surveys: [SURVEY_ID] })).status).toBe(200);
     expect(mocks.assertSegmentSurveyFiltersVisible).not.toHaveBeenCalled();
+    // Re-sending a stored survey still ties the write to the filters read: the survey may have been
+    // disconnected, and the filters changed, since.
+    expect(mocks.updateSegment).toHaveBeenLastCalledWith(
+      SEGMENT_ID,
+      { surveys: [SURVEY_ID] },
+      { connectedSurveyIds: [SURVEY_ID], expectedFilters: FILTERS }
+    );
+  });
+
+  test("ties a write that connects a survey to the stored filters it checked (ENG-7269)", async () => {
+    expect((await update({ surveys: [SURVEY_ID, SURVEY_2_ID] })).status).toBe(200);
+    expect(mocks.updateSegment).toHaveBeenCalledWith(
+      SEGMENT_ID,
+      { surveys: [SURVEY_ID, SURVEY_2_ID] },
+      { connectedSurveyIds: [SURVEY_ID, SURVEY_2_ID], expectedFilters: FILTERS }
+    );
   });
 
   test.each([
@@ -795,6 +959,22 @@ describe("DELETE /api/internal/segments/{segmentId}", () => {
 });
 
 describe("POST /api/internal/segments/{segmentId}/copies", () => {
+  test("refuses copying a tree that nests a private segment with 422 (ENG-7269)", async () => {
+    mocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    const response = await copy();
+
+    expect(response.status).toBe(422);
+    expect(mocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      storedSegment().filters,
+      [],
+      WORKSPACE_ID
+    );
+    expect(mocks.cloneSegment).not.toHaveBeenCalled();
+  });
+
   test("copies the segment onto the survey, audited on the segment copied with the copy", async () => {
     const response = await copy();
 

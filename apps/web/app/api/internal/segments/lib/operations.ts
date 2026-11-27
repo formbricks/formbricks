@@ -1,4 +1,5 @@
 import "server-only";
+import { isDeepStrictEqual } from "node:util";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { type TSegment, type TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { forbidOnRefusal, refusalResponse } from "@/app/api/internal/lib/refusal";
@@ -32,18 +33,23 @@ import {
 } from "@/modules/ee/contacts/segments/lib/access";
 import {
   assertAddedSegmentSurveyFiltersVisible,
+  assertNoAddedPrivateSegmentReferences,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
-  assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   restoreHiddenSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
-import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
+import {
+  SEGMENT_TITLE_TAKEN_ERROR_MESSAGE,
+  SegmentSurveysChangedError,
+} from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
   cloneSegment,
   createSegment,
   deleteSegment,
+  getExistingWorkspaceSurveyIds,
   getSegment,
+  getSurveyIdsTargetedThroughNesting,
   getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap,
   resetSegmentInSurvey,
@@ -60,13 +66,18 @@ import {
  * Segments, for the segments page and the survey editor's targeting card, with the checks of the server
  * actions they replace, in their order: write (or read) access to the workspace, the workspace's
  * state-mutation budget for a write, then the advanced-targeting licence (403 with its reason). A survey a
- * write targets also needs `survey.write` (ENG-3282), and every survey the segment's filters read must be
- * visible to the caller (ENG-6870). The services' refusals answer 422 with their reason (filters that read a
+ * write targets — every survey a stored segment is connected to, or reaches through a segment that nests
+ * it, included (ENG-7269) — also needs `survey.write` (ENG-3282), and every survey the segment's filters
+ * read must be visible to the caller (ENG-6870). The services' refusals answer 422 with their reason (filters that read a
  * survey the caller can't see, a survey from another workspace, a recursive filter), and a segment or
  * survey that is gone the uniform 403.
  */
 
 const SAME_WORKSPACE_MESSAGE = "Survey and segment are not in the same workspace";
+
+/** ENG-7269: a segment edit refused for a survey it targets that the caller can't edit, which it never names. */
+const TARGETS_UNWRITABLE_SURVEYS_MESSAGE =
+  "This segment targets surveys you can't edit, so you can't change it. Copy it to change your own survey's targeting.";
 
 /** The message the server actions refused an invalid filter tree with: its first custom issue. */
 const invalidFiltersMessage = (issues: { code: string; message: string }[]) =>
@@ -89,6 +100,18 @@ const refusalOrThrow = (error: unknown, { requestId, instance }: TRequestContext
   const refused = refusalResponse(error, requestId, instance);
   if (refused) return refused;
   throw error;
+};
+
+/**
+ * An update's refusal: a title another segment holds, or connected surveys that changed since the caller was
+ * authorized (ENG-7269), are conflicts (409); any other refusal is the service's 403 or 422.
+ */
+const updateRefusalOrThrow = (error: unknown, context: TRequestContext): Response => {
+  if (isSegmentTitleTaken(error)) return segmentTitleTaken(context);
+  if (error instanceof SegmentSurveysChangedError) {
+    return problemConflict(context.requestId, error.message, context.instance);
+  }
+  return refusalOrThrow(error, context);
 };
 
 /**
@@ -143,6 +166,30 @@ const requireSurveyWrite = async (
     : problemForbidden(requestId, undefined, instance);
 
 /**
+ * ENG-7269: `survey.write` on every survey a segment write targets, the ones it is already connected to
+ * included — its stored filters are their targeting. One batched, visibility-scoped lookup; a survey the
+ * caller cannot see, one that is gone, or a legacy link to another workspace answers 403 with a reason that
+ * names no survey.
+ * Given `workspace.write`, which the caller already passed, the visibility predicate admits exactly the
+ * surveys `survey.write` allows (`write_v2` in `authzed/schema.zed`: workspace-visible, owned, or an admin's),
+ * and fewer while a survey's visibility is pending, so it fails closed. A new grant on `write_v2` must be
+ * mirrored in `buildVisibleSurveyWhere`, or this check would refuse it. The refusal names no survey.
+ */
+const requireTargetSurveyWrite = async (
+  surveyIds: ReadonlyArray<string>,
+  workspaceId: string,
+  visibleSurveyWhere: Awaited<ReturnType<typeof getUserVisibleSurveyWhere>>,
+  { requestId, instance }: TRequestContext
+): Promise<Response | null> => {
+  if (surveyIds.length === 0) return null;
+
+  const writable = await getExistingWorkspaceSurveyIds(workspaceId, [...surveyIds], visibleSurveyWhere);
+  return writable.size < surveyIds.length
+    ? problemForbidden(requestId, TARGETS_UNWRITABLE_SURVEYS_MESSAGE, instance)
+    : null;
+};
+
+/**
  * `POST /api/internal/segments`: create a segment, optionally for one survey (the survey editor's private
  * segment, or "save as new segment"). Audited as `created`, captured in PostHog as `segment_created`.
  */
@@ -187,6 +234,8 @@ export async function createSegmentOperation({
       await resolveSurveyActorContext({ type: "user", id: userId }, organizationId)
     );
 
+    await assertNoAddedPrivateSegmentReferences(body.filters, [], workspaceId);
+
     segment = await createSegment({ ...body, surveyId: body.surveyId ?? "" });
   } catch (error) {
     if (isSegmentTitleTaken(error)) return segmentTitleTaken(context);
@@ -209,8 +258,9 @@ export async function createSegmentOperation({
 }
 
 /**
- * `PATCH /api/internal/segments/{segmentId}`: change a segment, or connect surveys to it. Every connected
- * survey must be in the segment's workspace (ENG-1920) and visible to the caller; the stored survey ids
+ * `PATCH /api/internal/segments/{segmentId}`: change a segment, or connect surveys to it. Every survey the
+ * segment is, or becomes, connected to needs `survey.write` (ENG-7269) — a segment's stored filters are
+ * the targeting of all of them — and must be in the segment's workspace (ENG-1920); the stored survey ids
  * the caller can't see are kept in its filters; the saved tree is held to the filter bounds and may not
  * refer to the segment itself. Audited as `updated`, from the segment as it was to the segment as saved.
  */
@@ -243,29 +293,52 @@ export async function updateSegmentOperation({
   let oldObject: TSegment;
   let updated: TSegment;
   try {
-    const visibleSurveyWhere = await getUserVisibleSurveyWhere(userId, organizationId);
-    const isVisibilityScoped = Object.keys(visibleSurveyWhere).length > 0;
-    if (body.surveys?.length && isVisibilityScoped) {
-      await assertSurveysInWorkspace(body.surveys, workspaceId, visibleSurveyWhere);
-    }
+    const [visibleSurveyWhere, storedSegment] = await Promise.all([
+      getUserVisibleSurveyWhere(userId, organizationId),
+      getSegment(segmentId),
+    ]);
+    oldObject = storedSegment;
+    // Only a filter change reaches the surveys on segments nesting this one; the editor sends the filters
+    // with every save, so compare. The sent tree lacks the ids the caller can't see, so a viewer missing
+    // some always looks up the nesting surveys (fails closed).
+    const changesFilters = body.filters !== undefined && !isDeepStrictEqual(body.filters, oldObject.filters);
+    const nestingSurveyIds = changesFilters
+      ? await getSurveyIdsTargetedThroughNesting(workspaceId, segmentId)
+      : [];
 
-    oldObject = await getSegment(segmentId);
+    // ENG-7269: a segment's stored filters are the targeting of every survey it is connected to, and of
+    // every survey on a segment that nests it, so a write needs `survey.write` on each — the ones this body
+    // connects included. The write itself is conditional on the directly connected set.
+    const connectedSurveyIds = [...new Set([...oldObject.surveys, ...(body.surveys ?? [])])];
+    const refused = await requireTargetSurveyWrite(
+      [...new Set([...connectedSurveyIds, ...nestingSurveyIds])],
+      workspaceId,
+      visibleSurveyWhere,
+      context
+    );
+    if (refused) return refused;
+
     const actor = await resolveSurveyActorContext({ type: "user", id: userId }, organizationId);
-    const data: TSegmentUpdateInput = body.filters
-      ? {
-          ...body,
-          filters: await prepareEditedFilters(body.filters, oldObject, {
-            segmentId,
-            workspaceId,
-            actor,
-            visibleSurveyWhere,
-          }),
-        }
-      : body;
+    // Filters sent back unchanged are not written: a rename must not put back filters someone else changed
+    // since this request read them, without the nesting check a filter change gets.
+    const { filters: sentFilters, ...rest } = body;
+    const data: TSegmentUpdateInput =
+      changesFilters && sentFilters
+        ? {
+            ...rest,
+            filters: await prepareEditedFilters(sentFilters, oldObject, {
+              segmentId,
+              workspaceId,
+              actor,
+              visibleSurveyWhere,
+            }),
+          }
+        : rest;
 
     // ENG-6870: connecting a survey targets it with the whole stored tree, as attaching one does.
-    const connectedSurveyIds = new Set(oldObject.surveys);
-    if (body.surveys?.some((surveyId) => !connectedSurveyIds.has(surveyId))) {
+    const storedSurveyIds = new Set(oldObject.surveys);
+    const connectsSurveys = body.surveys?.some((surveyId) => !storedSurveyIds.has(surveyId)) ?? false;
+    if (connectsSurveys) {
       await assertSegmentSurveyFiltersVisible(
         data.filters ?? oldObject.filters,
         workspaceId,
@@ -274,10 +347,15 @@ export async function updateSegmentOperation({
       );
     }
 
-    updated = await updateSegment(segmentId, data);
+    // A filter change, or any write that (re)connects surveys, was checked against `oldObject.filters`:
+    // the write lands only while they are still stored. A survey sent again from the read can have been
+    // disconnected, and the filters changed, since; reconnecting it then would skip the visibility check.
+    updated = await updateSegment(segmentId, data, {
+      connectedSurveyIds,
+      ...(Boolean(data.filters || body.surveys?.length) && { expectedFilters: oldObject.filters }),
+    });
   } catch (error) {
-    if (isSegmentTitleTaken(error)) return segmentTitleTaken(context);
-    return refusalOrThrow(error, context);
+    return updateRefusalOrThrow(error, context);
   }
 
   if (auditLog) {
@@ -322,6 +400,7 @@ async function prepareEditedFilters(
     throw new InvalidInputError(invalidFiltersMessage(parsedFilters.error.issues));
   }
   await checkForRecursiveSegmentFilter(parsedFilters.data, segmentId, workspaceId);
+  await assertNoAddedPrivateSegmentReferences(parsedFilters.data, oldObject.filters, workspaceId);
   return parsedFilters.data;
 }
 
@@ -381,6 +460,9 @@ export async function copySegmentOperation({
 
   let copy: TSegment;
   try {
+    // The copy writes the source's filters as a new tree, so a private segment they name is a reference it adds.
+    const source = await getSegment(segmentId);
+    await assertNoAddedPrivateSegmentReferences(source.filters, [], source.workspaceId);
     copy = await cloneSegment(segmentId, surveyId);
   } catch (error) {
     return refusalOrThrow(error, context);
@@ -391,8 +473,9 @@ export async function copySegmentOperation({
 }
 
 /**
- * `DELETE /api/internal/segments/{segmentId}`: delete a segment. One still connected to a survey is a 409
- * with the service's reason. Audited as `deleted`, with the segment as it was.
+ * `DELETE /api/internal/segments/{segmentId}`: delete a segment. One still connected to a survey, or nested
+ * in another segment's filters, is a 409 with the service's reason. Audited as `deleted`, with the segment
+ * as it was.
  */
 export async function deleteSegmentOperation({
   segmentId,
@@ -418,7 +501,7 @@ export async function deleteSegmentOperation({
     }
     await deleteSegment(segmentId);
   } catch (error) {
-    // "Cannot delete a segment that is associated with a survey".
+    // A survey still uses the segment, or another segment's filters nest it.
     if (error instanceof OperationNotAllowedError) return problemConflict(requestId, error.message, instance);
     return refusalOrThrow(error, context);
   }

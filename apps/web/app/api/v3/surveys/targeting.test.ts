@@ -5,12 +5,18 @@ import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-k
 import { DatabaseError } from "@formbricks/types/errors";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getExistingWorkspaceSurveyIds, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  getExistingWorkspaceSurveyIds,
+  getSegments,
+  isNestedByAnotherSegment,
+} from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyTargeting } from "./schemas";
 import {
+  V3SurveyTargetingChangedError,
   areV3SurveyTargetingFiltersEqual,
+  assertV3OwnSegmentNotNestedElsewhere,
   assertV3SurveyTargetingFilterReferences,
   resolveV3ContactsEntitlement,
   setV3SurveySegmentFilters,
@@ -23,6 +29,7 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     segment: {
       update: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -39,6 +46,7 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   ALL_SEGMENT_SURVEY_REFS: {},
   getSegments: vi.fn(),
   getExistingWorkspaceSurveyIds: vi.fn(),
+  isNestedByAnotherSegment: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -130,44 +138,98 @@ describe("areV3SurveyTargetingFiltersEqual", () => {
   });
 });
 
+describe("assertV3OwnSegmentNotNestedElsewhere (ENG-7269)", () => {
+  test("refuses at targeting.filters when another segment nests the survey's segment", async () => {
+    vi.mocked(isNestedByAnotherSegment).mockResolvedValueOnce(true);
+
+    await expect(assertV3OwnSegmentNotNestedElsewhere("ws_1", "seg_1")).rejects.toMatchObject({
+      invalidParams: [
+        { name: "targeting.filters", reason: expect.stringContaining("used inside another segment") },
+      ],
+    });
+  });
+
+  test("passes when nothing nests it", async () => {
+    vi.mocked(isNestedByAnotherSegment).mockResolvedValueOnce(false);
+
+    await expect(assertV3OwnSegmentNotNestedElsewhere("ws_1", "seg_1")).resolves.toBeUndefined();
+  });
+});
+
 describe("setV3SurveySegmentFilters", () => {
-  test("updates the segment via the default prisma client", async () => {
-    await setV3SurveySegmentFilters("seg_1", EMPTY_FILTERS);
+  const STORED = [{ id: "stored" }] as unknown as TV3SurveyTargeting["filters"];
+  const write = (segmentId: string) => ({
+    segmentId,
+    ownerSurveyId: "survey_1",
+    workspaceId: "ws_1",
+    filters: EMPTY_FILTERS,
+    storedFilters: STORED,
+  });
+  const guardedWhere = (id: string) => ({
+    id,
+    workspaceId: "ws_1",
+    isPrivate: true,
+    surveys: { some: { id: "survey_1" }, every: { id: "survey_1" } },
+    filters: { equals: STORED },
+  });
+  const notFound = () =>
+    new Prisma.PrismaClientKnownRequestError("No record found", { code: "P2025", clientVersion: "test" });
+
+  test("writes only the survey's own private segment of its workspace, while its stored filters hold (ENG-7269)", async () => {
+    await setV3SurveySegmentFilters(write("seg_1"));
 
     expect(prisma.segment.update).toHaveBeenCalledWith({
-      where: { id: "seg_1" },
+      where: guardedWhere("seg_1"),
       data: { filters: EMPTY_FILTERS },
     });
   });
 
   test("writes through a provided transaction client instead of the shared prisma client", async () => {
-    const tx = { segment: { update: vi.fn() } };
+    const tx = { segment: { update: vi.fn(), findFirst: vi.fn() } };
 
-    await setV3SurveySegmentFilters("seg_2", EMPTY_FILTERS, tx as unknown as Prisma.TransactionClient);
+    await setV3SurveySegmentFilters(write("seg_2"), tx as unknown as Prisma.TransactionClient);
 
     expect(tx.segment.update).toHaveBeenCalledWith({
-      where: { id: "seg_2" },
+      where: guardedWhere("seg_2"),
       data: { filters: EMPTY_FILTERS },
     });
     expect(prisma.segment.update).not.toHaveBeenCalled();
   });
 
-  test("maps known Prisma errors to a DatabaseError", async () => {
+  test("refuses a segment shared since the survey was read as a shared-segment targeting change (ENG-7269)", async () => {
+    vi.mocked(prisma.segment.update).mockRejectedValueOnce(notFound());
+    vi.mocked(prisma.segment.findFirst).mockResolvedValueOnce(null);
+
+    await expect(setV3SurveySegmentFilters(write("seg_3"))).rejects.toMatchObject({
+      invalidParams: [{ name: "targeting.filters", reason: expect.stringContaining("shared segment") }],
+    });
+  });
+
+  test("answers a filter change made since the read with V3SurveyTargetingChangedError (ENG-7269)", async () => {
+    vi.mocked(prisma.segment.update).mockRejectedValueOnce(notFound());
+    vi.mocked(prisma.segment.findFirst).mockResolvedValueOnce({ id: "seg_3" } as never);
+
+    await expect(setV3SurveySegmentFilters(write("seg_3"))).rejects.toBeInstanceOf(
+      V3SurveyTargetingChangedError
+    );
+  });
+
+  test("maps other known Prisma errors to a DatabaseError", async () => {
     vi.mocked(prisma.segment.update).mockRejectedValueOnce(
       new Prisma.PrismaClientKnownRequestError("segment update failed", {
-        code: "P2025",
+        code: "P2002",
         clientVersion: "test",
       })
     );
 
-    await expect(setV3SurveySegmentFilters("seg_3", EMPTY_FILTERS)).rejects.toThrow(DatabaseError);
+    await expect(setV3SurveySegmentFilters(write("seg_3"))).rejects.toThrow(DatabaseError);
   });
 
   test("rethrows non-Prisma errors unchanged", async () => {
     const unexpected = new Error("connection lost");
     vi.mocked(prisma.segment.update).mockRejectedValueOnce(unexpected);
 
-    await expect(setV3SurveySegmentFilters("seg_4", EMPTY_FILTERS)).rejects.toBe(unexpected);
+    await expect(setV3SurveySegmentFilters(write("seg_4"))).rejects.toBe(unexpected);
   });
 });
 
@@ -409,6 +471,35 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
         },
       ],
     });
+  });
+
+  test("rejects a segment filter nesting a survey's private segment (ENG-7269)", async () => {
+    vi.mocked(getSegments).mockResolvedValueOnce([
+      { id: "seg_private", isPrivate: true, filters: [] },
+    ] as unknown as Awaited<ReturnType<typeof getSegments>>);
+    const filters = [segmentFilterNode("f1", "seg_private")] as unknown as TFilterTree;
+
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
+      invalidParams: [
+        {
+          name: "targeting.filters.0.resource.root.segmentId",
+          reason: "A segment filter can't use a survey's own targeting segment",
+          code: "invalid_reference",
+          identifier: "seg_private",
+        },
+      ],
+    });
+  });
+
+  test("keeps a private segment the stored tree already names (ENG-7269)", async () => {
+    vi.mocked(getSegments).mockResolvedValueOnce([
+      { id: "seg_private", isPrivate: true, filters: [] },
+    ] as unknown as Awaited<ReturnType<typeof getSegments>>);
+    const filters = [segmentFilterNode("f1", "seg_private")] as unknown as TFilterTree;
+
+    await expect(
+      assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE, undefined, filters)
+    ).resolves.toBeUndefined();
   });
 
   test("skips the survey lookup for an any-scope survey interaction filter", async () => {

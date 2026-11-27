@@ -20,6 +20,7 @@ import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapp
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE } from "@/lib/survey/publish-rule";
+import { isOwnPrivateSegment } from "@/lib/survey/segment-ownership";
 import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
 import {
@@ -48,9 +49,12 @@ import { type TV3SurveyReportedVisibility, prepareV3SurveyPatchInput } from "./p
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
 import {
+  V3SurveyTargetingChangedError,
   areV3SurveyTargetingFiltersEqual,
+  assertV3OwnSegmentNotNestedElsewhere,
   assertV3SurveyTargetingFilterReferences,
   setV3SurveySegmentFilters,
+  sharedSegmentTargetingError,
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyIntroducedMediaInvalidParams } from "./validation";
@@ -215,12 +219,22 @@ async function buildV3AppSurveyPatchWrites(params: {
     ]);
   }
 
+  // ENG-7269: only the survey's own private segment carries its targeting. A shared segment is the
+  // targeting of every survey on it, so it is written through the segment endpoints, which authorize each
+  // of those surveys and audit the segment change — never as a side effect of a survey PATCH.
+  if (!isOwnPrivateSegment(currentSurvey, segmentId)) {
+    throw sharedSegmentTargetingError();
+  }
+  // ENG-7269: and no other segment nests it (data from before nesting a private segment was refused).
+  await assertV3OwnSegmentNotNestedElsewhere(currentSurvey.workspaceId, segmentId, transaction?.tx);
+
   // Validate attribute-key references on the changed filters before the write (mirrors trigger ids).
   await assertV3SurveyTargetingFilterReferences(
     currentSurvey.workspaceId,
     nextFilters,
     visibleSurveyWhere,
-    transaction?.tx
+    transaction?.tx,
+    currentSurvey.segment?.filters ?? []
   );
 
   return { segmentId, filters: nextFilters };
@@ -290,11 +304,12 @@ export function assertV3SurveyPrecondition(
 async function resolveUpdateMiss(
   currentSurvey: TSurvey,
   precondition: TV3SurveyWritePrecondition | undefined,
-  cause: Error
+  cause: Error,
+  expectedSegmentId?: string
 ): Promise<Error> {
   const row = await prisma.survey.findFirst({
     where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
-    select: { updatedAt: true, archivedAt: true },
+    select: { updatedAt: true, archivedAt: true, segmentId: true },
   });
 
   if (!row) {
@@ -305,6 +320,9 @@ async function resolveUpdateMiss(
   }
   if (precondition) {
     return new V3SurveyStaleError(precondition.expectedUpdatedAt, row.updatedAt, "write");
+  }
+  if (expectedSegmentId && row.segmentId !== expectedSegmentId) {
+    return new V3SurveyTargetingChangedError();
   }
 
   // Live, unarchived, unconditional — and the UPDATE still missed it. Not a state this code can explain.
@@ -467,6 +485,10 @@ export async function executeV3SurveyPatch(params: {
         id: currentSurvey.id,
         archivedAt: null,
         ...(precondition ? { updatedAt: precondition.expectedUpdatedAt } : {}),
+        // ENG-7269: a targeting write goes to the segment the survey had at the read. The survey must
+        // still be on it, or another save moved it after that write and the PATCH would report targeting
+        // it no longer has; the miss rolls the segment write back.
+        ...(segmentFilterWrite ? { segmentId: segmentFilterWrite.segmentId } : {}),
       },
       data,
       // Narrow: the survey this returns would describe the Embedded Data rows before the reconcile
@@ -486,7 +508,15 @@ export async function executeV3SurveyPatch(params: {
   // no longer be correct. Under a caller's transaction (ENG-6845) that transaction is this one.
   const writeSurvey = async (tx: Prisma.TransactionClient) => {
     if (segmentFilterWrite) {
-      await setV3SurveySegmentFilters(segmentFilterWrite.segmentId, segmentFilterWrite.filters, tx);
+      await setV3SurveySegmentFilters(
+        {
+          ...segmentFilterWrite,
+          ownerSurveyId: currentSurvey.id,
+          workspaceId: currentSurvey.workspaceId,
+          storedFilters: currentSurvey.segment?.filters ?? [],
+        },
+        tx
+      );
     }
 
     await runSurveyUpdate(tx);
@@ -579,7 +609,7 @@ export async function executeV3SurveyPatch(params: {
       // reconcile and trigger writes are `*Many`/`create`, and the re-read runs inside the
       // transaction that just updated the row, so it cannot miss.
       if (error.code === "P2025") {
-        throw await resolveUpdateMiss(currentSurvey, precondition, error);
+        throw await resolveUpdateMiss(currentSurvey, precondition, error, segmentFilterWrite?.segmentId);
       }
       throw new DatabaseError(error.message);
     }

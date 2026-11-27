@@ -42,6 +42,7 @@ import {
   serializeV3SurveyListItem,
   serializeV3SurveyResource,
 } from "../serializers";
+import { V3SurveyTargetingChangedError } from "../targeting";
 import { V3SurveyWritePermissionError } from "../write-permissions";
 import {
   archiveV3Survey,
@@ -2340,6 +2341,17 @@ describe("editV3SurveyBlocksResponse", () => {
       expectedUpdatedAt: "2026-01-01T00:00:00.000Z",
       currentUpdatedAt: "2026-04-21T11:30:00.000Z",
     });
+  });
+
+  test("maps a targeting change made since the read to 409 (ENG-7269)", async () => {
+    vi.mocked(patchV3Survey).mockRejectedValue(new V3SurveyTargetingChangedError());
+
+    const response = await call({ ops: [{ op: "remove", id: "blk_b" }] });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toBe(
+      "The survey's targeting changed since it was read. Re-read the survey and retry."
+    );
   });
 });
 
