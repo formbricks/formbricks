@@ -87,6 +87,7 @@
       "oauth_second_factor_unavailable_title": "无法在此完成双重验证登录",
       "oauth_signup_not_allowed_description": "你的身份提供商已为你登录,但此 Formbricks 实例未设置为通过此方式创建新账户。请让管理员邀请你,然后重试。",
       "oauth_signup_not_allowed_title": "我们无法创建你的账户",
+      "sso_sign_in_required": "你的账号使用单点登录，请通过 {providers} 登录。",
       "use_a_backup_code": "使用 备用代码"
     },
     "oauth": {

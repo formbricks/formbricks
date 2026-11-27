@@ -87,6 +87,7 @@
       "oauth_second_factor_unavailable_title": "Autentificarea în doi pași nu poate fi finalizată aici",
       "oauth_signup_not_allowed_description": "Furnizorul tău de identitate te-a autentificat, dar această instanță Formbricks nu este configurată să creeze conturi noi în acest mod. Roagă un administrator să te invite, apoi încearcă din nou.",
       "oauth_signup_not_allowed_title": "Nu am putut crea contul tău",
+      "sso_sign_in_required": "Contul tău folosește autentificarea unică (SSO). Conectează-te cu {providers}.",
       "use_a_backup_code": "Folosiți un cod de rezervă"
     },
     "oauth": {

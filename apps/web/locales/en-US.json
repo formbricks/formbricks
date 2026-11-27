@@ -87,6 +87,7 @@
       "oauth_second_factor_unavailable_title": "Two-factor sign-in cannot be completed here",
       "oauth_signup_not_allowed_description": "Your identity provider signed you in, but this Formbricks instance is not set up to create new accounts this way. Ask an administrator to invite you, then try again.",
       "oauth_signup_not_allowed_title": "We could not create your account",
+      "sso_sign_in_required": "Your account uses single sign-on. Sign in with {providers}.",
       "use_a_backup_code": "Use a backup code"
     },
     "oauth": {

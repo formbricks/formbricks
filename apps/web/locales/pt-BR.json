@@ -87,6 +87,7 @@
       "oauth_second_factor_unavailable_title": "Não é possível concluir o login de dois fatores aqui",
       "oauth_signup_not_allowed_description": "Seu provedor de identidade fez seu login, mas esta instância do Formbricks não está configurada para criar novas contas dessa forma. Peça a um administrador para convidar você e então tente novamente.",
       "oauth_signup_not_allowed_title": "Não conseguimos criar sua conta",
+      "sso_sign_in_required": "Sua conta usa login único (SSO). Entre com {providers}.",
       "use_a_backup_code": "Usar um código de backup"
     },
     "oauth": {

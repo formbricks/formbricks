@@ -76,7 +76,7 @@ describe("getSession — Better Auth DAL (ENG-1054)", () => {
     await expect(getSession()).resolves.toMatchObject({ expires: "2026-07-01T00:00:00.000Z" });
   });
 
-  // Regression: `rejectInactiveUserOnSessionCreate` only gates session creation, and Better Auth
+  // Regression: `gateSessionCreate` only gates session creation, and Better Auth
   // serves the user from Redis + a 5-minute cookie cache — so without a live read a user deactivated
   // after signing in kept full access for the life of a rolling 1-day session.
   test("returns null when the user has been deactivated since signing in", async () => {

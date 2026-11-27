@@ -18,3 +18,11 @@ const SSO_PROVIDER_DISPLAY_NAMES = {
 export const getSsoProviderDisplayName = (provider: TSsoIdentityProvider): string =>
   // An operator-named OIDC provider is shown under that name on the login button, so it must be here too.
   provider === "openid" && OIDC_DISPLAY_NAME ? OIDC_DISPLAY_NAME : SSO_PROVIDER_DISPLAY_NAMES[provider];
+
+/**
+ * The display names of several providers, in their order and de-duplicated by name: an operator can call
+ * their OIDC provider "Microsoft" alongside Azure AD, and naming it twice would read as a mistake.
+ */
+export const getSsoProviderDisplayNames = (providers: readonly TSsoIdentityProvider[]): string[] => [
+  ...new Set(providers.map(getSsoProviderDisplayName)),
+];

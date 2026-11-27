@@ -87,6 +87,7 @@
       "oauth_second_factor_unavailable_title": "Die Zwei-Faktor-Anmeldung kann hier nicht abgeschlossen werden",
       "oauth_signup_not_allowed_description": "Dein Identity Provider hat dich angemeldet, aber diese Formbricks-Instanz ist nicht so eingerichtet, dass neue Konten auf diesem Weg erstellt werden können. Bitte einen Administrator, dich einzuladen, und versuche es dann erneut.",
       "oauth_signup_not_allowed_title": "Wir konnten dein Konto nicht erstellen",
+      "sso_sign_in_required": "Dein Konto verwendet Single Sign-on. Melde dich mit {providers} an.",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
     "oauth": {

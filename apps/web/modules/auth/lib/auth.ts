@@ -32,7 +32,6 @@ import { ssoGenericOAuthConfig, ssoSocialProviders } from "@/modules/ee/sso/lib/
 import { ssoRecoverySignInPlugin } from "@/modules/ee/sso/lib/better-auth-recovery-signin";
 import { runAfterAuthHooks } from "./after-auth-hooks";
 import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cookies";
-import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
@@ -45,6 +44,7 @@ import {
 import { passwordByteLimitBeforeHandler } from "./better-auth-password-bytes";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { isPasswordSignInRequest } from "./better-auth-request-context";
+import { gateSessionCreate } from "./better-auth-session-create-gate";
 import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
 import { trustDeviceBeforeHandler } from "./better-auth-trust-device-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
@@ -450,12 +450,13 @@ export const auth = betterAuth({
   // path), and records every session renewal as the user's last activity (`User.lastActiveAt`, the data
   // retention members clock). A completed sign-in is recorded by plugins below, not here: a session
   // created here may still be withdrawn by the two-factor plugin (ENG-3271) — the `signedIn` audit by
-  // `signInAuditPlugin`, the activity by `lastActivePlugin`.
+  // `signInAuditPlugin`, the activity by `lastActivePlugin`. The same create gate refuses a password
+  // sign-in for an account that must use SSO (ENG-2590).
   databaseHooks: {
     ...ssoDatabaseHooks,
     session: {
       create: {
-        before: rejectInactiveUserOnSessionCreate,
+        before: gateSessionCreate,
       },
       update: {
         after: recordActivityOnSessionUpdate,

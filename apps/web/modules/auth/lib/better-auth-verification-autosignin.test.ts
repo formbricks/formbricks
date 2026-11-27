@@ -226,7 +226,7 @@ describe("verificationAutoSignInAfterHandler", () => {
   });
 
   test("audits the refused session when the inactive-user gate blocks the mint", async () => {
-    // `session.create.before` (rejectInactiveUserOnSessionCreate) returns no session for a deactivated
+    // `session.create.before` (gateSessionCreate) returns no session for a deactivated
     // user rather than throwing, so this arrives as a falsy createSession, not an exception.
     const ctx = buildCtx();
     sessionOf(ctx).mockResolvedValue(null);
