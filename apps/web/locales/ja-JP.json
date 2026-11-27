@@ -1954,7 +1954,7 @@
         "chart_deletion_error": "チャートの削除に失敗しました",
         "chart_duplicated_successfully": "チャートを複製しました",
         "chart_duplication_error": "チャートの複製に失敗しました",
-        "chart_in_use_description": "このチャートは{count}個のダッシュボードで使用されています。削除する前に、それらのダッシュボードから外してください:",
+        "chart_in_use_description": "{count, plural, other {{count}件のダッシュボードで使用されています。削除する前に、ダッシュボードから取り除いてください:}}",
         "chart_in_use_title": "このチャートはまだ使用中です",
         "chart_name": "チャート名",
         "chart_name_placeholder": "チャート名",
@@ -2232,7 +2232,7 @@
         "vertical_bars": "縦棒"
       },
       "dashboards": {
-        "add_count_charts": "{count}個のグラフを追加",
+        "add_count_charts": "{count, plural, other {{count}件のグラフを追加}}",
         "already_on_this_dashboard": "このダッシュボードに追加済み",
         "chart_cannot_be_filtered_by": "このチャートは{label}ではフィルターできません",
         "chart_duplicate_failed": "グラフの複製に失敗しました",
@@ -2242,7 +2242,7 @@
         "chart_restore_failed": "チャートの復元に失敗しました",
         "chart_restored": "チャートを復元しました",
         "charts_add_failed": "ダッシュボードへのグラフの追加に失敗しました",
-        "charts_add_partial_failure": "{count}個のグラフの追加に失敗しました",
+        "charts_add_partial_failure": "{count, plural, other {{count}件のグラフを追加できませんでした}}",
         "charts_added_to_dashboard": "グラフをダッシュボードに追加しました",
         "charts_load_failed": "グラフの読み込みに失敗しました",
         "create_dashboard": "ダッシュボードを作成",

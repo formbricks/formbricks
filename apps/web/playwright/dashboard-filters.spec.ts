@@ -84,7 +84,7 @@ test.describe("Dashboard filters", () => {
     await expect(page.getByText("Filters locked for everyone who opens this dashboard")).toBeVisible();
 
     // Locking moves the filter off the editor's own: one locked chip, and the URL pins nothing.
-    await expect(lockedChip(page, /Sentiment: Negative, locked/)).toBeVisible();
+    await expect(lockedChip(page, /Sentiment is Negative, locked/)).toBeVisible();
     await expect(page.getByRole("button", { name: "Lock for everyone" })).toHaveCount(0);
     await expect.poll(() => urlFilters(page).rule).toBeNull();
     const stored = await prisma.dashboard.findUniqueOrThrow({ where: { id: setup.dashboardId } });
@@ -104,7 +104,7 @@ test.describe("Dashboard filters", () => {
       await loginOn(viewerPage, viewer.id);
       await viewerPage.goto(url);
       await expect(viewerPage.getByText(setup.chartName)).toBeVisible();
-      await expect(lockedChip(viewerPage, /Sentiment: Negative, locked/)).toBeVisible();
+      await expect(lockedChip(viewerPage, /Sentiment is Negative, locked/)).toBeVisible();
       await expect(filterChips(viewerPage).getByRole("button", { name: /^(Unlock|Remove) / })).toHaveCount(0);
     } finally {
       await viewerContext.close();

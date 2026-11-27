@@ -148,7 +148,7 @@ delete:
           example:
             title: Conflict
             status: 409
-            detail: This chart is on 1 dashboard(s), so it was not deleted. Remove it from them first.
+            detail: This chart is on 1 dashboard, so it was not deleted. Remove it from that dashboard first.
             code: chart_in_use
             requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
             details:

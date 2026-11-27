@@ -551,7 +551,9 @@ export function problemChartInUse(
   return problemResponse(
     409,
     "Conflict",
-    `This chart is on ${dashboards.length} dashboard(s), so it was not deleted. Remove it from them first.`,
+    dashboards.length === 1
+      ? "This chart is on 1 dashboard, so it was not deleted. Remove it from that dashboard first."
+      : `This chart is on ${dashboards.length} dashboards, so it was not deleted. Remove it from them first.`,
     requestId,
     { code: "chart_in_use", instance, details: { dashboards } }
   );

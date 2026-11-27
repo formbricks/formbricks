@@ -1954,7 +1954,7 @@
         "chart_deletion_error": "Grafik silinemedi",
         "chart_duplicated_successfully": "Grafik başarıyla çoğaltıldı",
         "chart_duplication_error": "Grafik çoğaltılamadı",
-        "chart_in_use_description": "Bu grafik {count} panoda yer alıyor. Silmeden önce grafiği bu panolardan kaldır:",
+        "chart_in_use_description": "{count, plural, one {Bu grafik {count} panoda yer alıyor. Silmeden önce o panodan kaldır:} other {Bu grafik {count} panoda yer alıyor. Silmeden önce bu panolardan kaldır:}}",
         "chart_in_use_title": "Bu grafik hâlâ kullanımda",
         "chart_name": "Grafik adı",
         "chart_name_placeholder": "Grafik adı",
@@ -2232,7 +2232,7 @@
         "vertical_bars": "Dikey çubuklar"
       },
       "dashboards": {
-        "add_count_charts": "{count} grafik ekle",
+        "add_count_charts": "{count, plural, one {{count} grafik ekle} other {{count} grafik ekle}}",
         "already_on_this_dashboard": "zaten bu panoda",
         "chart_cannot_be_filtered_by": "Bu grafik {label} ile filtrelenemez",
         "chart_duplicate_failed": "Grafik kopyalanamadı",
@@ -2242,7 +2242,7 @@
         "chart_restore_failed": "Grafik geri yüklenemedi",
         "chart_restored": "Grafik geri yüklendi",
         "charts_add_failed": "Grafikler panoya eklenemedi",
-        "charts_add_partial_failure": "{count} grafik eklenemedi",
+        "charts_add_partial_failure": "{count, plural, one {{count} grafik eklenemedi} other {{count} grafik eklenemedi}}",
         "charts_added_to_dashboard": "Grafikler panoya eklendi",
         "charts_load_failed": "Grafikler yüklenemedi",
         "create_dashboard": "Pano oluştur",

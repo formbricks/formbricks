@@ -637,7 +637,7 @@ const checkFilters = (value: unknown, path: string, issues: IssueCollector): TCu
   if (budget.answerRules > MAX_ANSWER_RULES) {
     issues.add(
       path,
-      `At most ${MAX_ANSWER_RULES} answer filters are allowed in one query (MAX_ANSWER_RULES), nested ones included.`,
+      `At most ${MAX_ANSWER_RULES} answer filters are allowed in one query, nested ones included.`,
       "limit_exceeded"
     );
   }

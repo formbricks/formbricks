@@ -1954,7 +1954,7 @@
         "chart_deletion_error": "Verwijderen van grafiek mislukt",
         "chart_duplicated_successfully": "Grafiek succesvol gedupliceerd",
         "chart_duplication_error": "Dupliceren van grafiek mislukt",
-        "chart_in_use_description": "Hij staat op {count} dashboard(s). Haal hem daar eerst van af voordat je hem verwijdert:",
+        "chart_in_use_description": "{count, plural, one {Hij staat op {count} dashboard. Verwijder hem daar eerst vanaf voordat je hem verwijdert:} other {Hij staat op {count} dashboards. Verwijder hem daar eerst van voordat je hem verwijdert:}}",
         "chart_in_use_title": "Deze grafiek wordt nog gebruikt",
         "chart_name": "Grafieknaam",
         "chart_name_placeholder": "Grafieknaam",
@@ -2232,7 +2232,7 @@
         "vertical_bars": "Verticale staven"
       },
       "dashboards": {
-        "add_count_charts": "{count} grafiek(en) toevoegen",
+        "add_count_charts": "{count, plural, one {{count} grafiek toevoegen} other {{count} grafieken toevoegen}}",
         "already_on_this_dashboard": "staat al op dit dashboard",
         "chart_cannot_be_filtered_by": "Deze grafiek kan niet worden gefilterd op {label}",
         "chart_duplicate_failed": "Dupliceren van grafiek mislukt",
@@ -2242,7 +2242,7 @@
         "chart_restore_failed": "Grafiek herstellen mislukt",
         "chart_restored": "Grafiek hersteld",
         "charts_add_failed": "Grafieken toevoegen aan dashboard mislukt",
-        "charts_add_partial_failure": "{count} grafiek(en) toevoegen mislukt",
+        "charts_add_partial_failure": "{count, plural, one {Kan {count} grafiek niet toevoegen} other {Kan {count} grafieken niet toevoegen}}",
         "charts_added_to_dashboard": "Grafieken toegevoegd aan dashboard",
         "charts_load_failed": "Grafieken laden mislukt",
         "create_dashboard": "Dashboard maken",
