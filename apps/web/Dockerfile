@@ -9,7 +9,7 @@
 # releases (a new .nvmrc version), not as OS package upgrades. Node trusts its bundled list, not the OS
 # store; that list also blocks the compromised eMudhra intermediates (ENG-4065), and NODE_EXTRA_CA_CERTS
 # adds private CAs on top.
-FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS base
+FROM node:26.13.1-trixie-slim@sha256:abe7e5a82b61a8ef67b315b85497c9e65173387ccf2f4a029248184b8e020be5 AS base
 
 # The runtime gets only the node binary: no npm, npx, corepack or yarn. libatomic1 is the one library the
 # binary links that Debian's slim image lacks. Prisma's schema engine, which runs the migrations, is a
