@@ -40,6 +40,24 @@ describe("resolvePrismaCliTls: URL forms node-postgres reads as TLS (ENG-7464)",
     });
   });
 
+  test("keeps ssl=0 plaintext next to sslaccept, as pg lets the URL's ssl=0 win", () => {
+    expect(pgParse(`${base}?ssl=0&sslaccept=strict`).ssl).toBe(false);
+    expect(resolve(`${base}?ssl=0&sslaccept=strict`)).toEqual({
+      databaseUrl: `${base}?ssl=0&sslaccept=strict&sslmode=disable`,
+      verifiesServerCertificate: false,
+    });
+    // ssl=no-verify asks for TLS, which sslaccept=strict then checks.
+    expect(resolve(`${base}?ssl=no-verify&sslaccept=strict`)).toEqual({
+      databaseUrl: `${base}?ssl=no-verify&sslaccept=strict&sslmode=require`,
+      verifiesServerCertificate: true,
+    });
+    // PGSSLMODE=disable, which pg ignores once the URL sets sslaccept, is still overridden.
+    expect(resolve(`${base}?sslaccept=strict`, { PGSSLMODE: "disable" })).toEqual({
+      databaseUrl: `${base}?sslaccept=strict&sslmode=require`,
+      verifiesServerCertificate: true,
+    });
+  });
+
   test.each(["false", "yes", "TRUE", "require"])(
     "rejects ssl=%s, which pg reads as verified TLS, without echoing the value",
     (value) => {

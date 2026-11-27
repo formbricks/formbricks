@@ -104,6 +104,8 @@ interface TTlsRequest {
   sslRootCert?: string;
   /** Whether sslrootcert came from the URL, which the app's pg reads, rather than PGSSLROOTCERT, which it does not. */
   rootCertInUrl: boolean;
+  /** Whether sslMode came from the URL (sslmode, or what its other TLS settings imply) rather than PGSSLMODE. */
+  sslModeFromUrl: boolean;
 }
 
 const assertKnownSslMode = (sslMode: string | undefined, source: string): void => {
@@ -175,10 +177,13 @@ const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRe
     sslAccept: lastParam(params, "sslaccept"),
     sslRootCert,
     rootCertInUrl: urlRootCert !== undefined,
+    sslModeFromUrl: false,
   };
-  if (urlMode !== undefined) return { ...request, sslMode: urlMode };
+  if (urlMode !== undefined) return { ...request, sslMode: urlMode, sslModeFromUrl: true };
 
-  const merged = { ...request, sslMode: mergeEnvMode(request, impliedSslMode(params), envMode) };
+  const urlImplied = impliedSslMode(params);
+  const sslMode = mergeEnvMode(request, urlImplied, envMode);
+  const merged = { ...request, sslMode, sslModeFromUrl: sslMode !== undefined && sslMode === urlImplied };
   // Direct negotiation starts with a TLS handshake. Prisma cannot negotiate that way, so the handshake it does
   // make must at least be verified. Whether pg reads sslnegotiation depends on its version, so this only ever
   // raises the floor and never rejects the environment's mode.
@@ -257,10 +262,12 @@ const resolveRootCertFile = (
 const resolveUnverified = (
   databaseUrl: string,
   parts: TConnectionUrlParts,
-  { sslAccept, sslMode }: TTlsRequest
+  { sslAccept, sslMode, sslModeFromUrl }: TTlsRequest
 ): TPrismaCliTls => {
   const urlMode = lastParam(parts.params, "sslmode");
-  const wantedMode = urlMode ?? (sslAccept === null ? sslMode : REQUIRE);
+  // sslaccept turns an sslmode from PGSSLMODE into require, but not one from the URL: there pg lets the URL's
+  // own setting (sslmode, or ssl=0) win over sslaccept too.
+  const wantedMode = sslModeFromUrl || sslAccept === null ? sslMode : REQUIRE;
   // With an sslkey, sslcert is a libpq client certificate, which Prisma would add as a trusted root.
   const dropsClientCert = parts.params.has("sslcert") && parts.params.has("sslkey");
   if (dropsClientCert) parts.params.delete("sslcert");
