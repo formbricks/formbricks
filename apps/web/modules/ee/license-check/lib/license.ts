@@ -16,6 +16,7 @@ import {
   TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
 import { getDefaultLicenseServerUrl, resolveLicenseServerUrl } from "./license-server-url";
+import { type TLicenseRefusalStatus, isLicenseRefusalStatus } from "./license-status";
 
 const LICENSE_SERVER_URL = resolveLicenseServerUrl({
   nodeEnv: env.NODE_ENV,
@@ -81,13 +82,6 @@ type TEnterpriseLicenseResult = {
   status: TLicenseStatus;
 };
 
-type TLicenseRefusal = Extract<TLicenseStatus, "expired" | "invalid_license" | "instance_mismatch">;
-
-const LICENSE_REFUSALS: readonly TLicenseRefusal[] = ["expired", "invalid_license", "instance_mismatch"];
-
-const isLicenseRefusal = (value: unknown): value is TLicenseRefusal =>
-  typeof value === "string" && (LICENSE_REFUSALS as readonly string[]).includes(value);
-
 type TPreviousResult = {
   active: boolean;
   lastChecked: Date;
@@ -95,7 +89,7 @@ type TPreviousResult = {
   // The license server's last answer when it refused the license after `lastChecked` (the last active
   // answer); cleared by the next active one. While the server is unreachable, grace reports this instead
   // of "unreachable", so a refusal is not forgotten the moment a later check fails (ENG-7563).
-  lastRefusal?: TLicenseRefusal;
+  lastRefusal?: TLicenseRefusalStatus;
 };
 
 // Wrapper type for cached license fetch results.
@@ -242,7 +236,7 @@ const getPreviousResult = async (): Promise<TPreviousResult> => {
         return {
           ...result.data,
           lastChecked: new Date(result.data.lastChecked),
-          lastRefusal: isLicenseRefusal(result.data.lastRefusal) ? result.data.lastRefusal : undefined,
+          lastRefusal: isLicenseRefusalStatus(result.data.lastRefusal) ? result.data.lastRefusal : undefined,
         };
       }
     } catch (error) {
@@ -286,10 +280,29 @@ const setPreviousResult = async (previousResult: TPreviousResult) => {
  * Remembers that the license server refused a license that is still in grace, so a later unreachable
  * check reports the refusal rather than "unreachable". Without an active previous result there is no
  * grace to protect, and an unchanged refusal is not rewritten.
+ *
+ * Not serialized with other writers: a pod that read the previous result just before another pod stored
+ * a newer active answer can write the refusal over it. That fails closed (Cloud refuses), and the next live
+ * evaluation rewrites the previous result because `lastRefusal` is set, so it lasts at most one memory-cache
+ * cycle. The license server would have to answer refused and active within that window.
  */
-const recordLicenseRefusal = async (previousResult: TPreviousResult, refusal: TLicenseRefusal) => {
+const recordLicenseRefusal = async (previousResult: TPreviousResult, refusal: TLicenseRefusalStatus) => {
   if (!previousResult.active || previousResult.lastRefusal === refusal) return;
   await setPreviousResult({ ...previousResult, lastRefusal: refusal });
+};
+
+/**
+ * The refusal an HTTP 400 (`invalid_license`) or 403 (`instance_mismatch`) from the license server stands
+ * for, recorded so a later unreachable check keeps it; `null` for any other error. Shared by the regular
+ * check and the manual recheck so both read a rejection the same way.
+ */
+export const handleLicenseRejection = async (
+  error: unknown
+): Promise<Extract<TLicenseRefusalStatus, "invalid_license" | "instance_mismatch"> | null> => {
+  if (!(error instanceof LicenseApiError) || (error.status !== 400 && error.status !== 403)) return null;
+  const status = error.status === 400 ? "invalid_license" : "instance_mismatch";
+  await recordLicenseRefusal(await getPreviousResult(), status);
+  return status;
 };
 
 // Monitoring functions
@@ -693,9 +706,8 @@ export const getEnterpriseLicense = reactCache(async (): Promise<TEnterpriseLice
     try {
       liveLicenseDetails = await fetchLicense();
     } catch (error) {
-      if (error instanceof LicenseApiError && (error.status === 400 || error.status === 403)) {
-        const status = error.status === 400 ? "invalid_license" : "instance_mismatch";
-        await recordLicenseRefusal(await getPreviousResult(), status);
+      const status = await handleLicenseRejection(error);
+      if (status) {
         const invalidResult: TEnterpriseLicenseResult = {
           active: false,
           features: DEFAULT_FEATURES,

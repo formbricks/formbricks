@@ -110,7 +110,8 @@ describe("hasOrganizationEntitlementWithLicenseGuard", () => {
 
   // ENG-7563: a failed refresh leaves the license in grace (`licenseActive` with its last verified
   // features, status "unreachable"). Cloud keeps honouring paid entitlements through it, but still
-  // refuses what the license server actually refused and a license nobody could ever verify.
+  // refuses what the license server actually refused and a license nobody could ever verify. The full
+  // status table is in cloud-license.test.ts; these prove the guard applies it.
   test.each([
     {
       case: "unreachable in grace",
@@ -128,18 +129,6 @@ describe("hasOrganizationEntitlementWithLicenseGuard", () => {
       case: "answered expired in grace",
       licenseActive: true,
       licenseStatus: "expired" as const,
-      allowed: false,
-    },
-    {
-      case: "invalid license",
-      licenseActive: false,
-      licenseStatus: "invalid_license" as const,
-      allowed: false,
-    },
-    {
-      case: "instance mismatch",
-      licenseActive: false,
-      licenseStatus: "instance_mismatch" as const,
       allowed: false,
     },
   ])("cloud license $case → $allowed", async ({ licenseActive, licenseStatus, allowed }) => {

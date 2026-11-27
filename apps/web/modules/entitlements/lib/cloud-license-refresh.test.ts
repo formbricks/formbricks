@@ -121,20 +121,24 @@ describe("Cloud entitlements across a failed license refresh", () => {
     expect(await contactsEnabled()).toBe(false);
   });
 
-  test("keeps refusing after the license server rejects the key, even when a later check fails", async () => {
-    at(0);
-    fetchMock.mockResolvedValueOnce(licenseServerAnswers("active"));
-    expect(await contactsEnabled()).toBe(true);
+  // 400: the key is unknown (invalid_license); 403: it is bound to another instance (instance_mismatch).
+  test.each([400, 403])(
+    "keeps refusing after an HTTP %i rejection, even when a later check fails",
+    async (status) => {
+      at(0);
+      fetchMock.mockResolvedValueOnce(licenseServerAnswers("active"));
+      expect(await contactsEnabled()).toBe(true);
 
-    at(DAY + 1000);
-    fetchMock.mockResolvedValueOnce(new Response(null, { status: 400 }));
-    expect(await contactsEnabled()).toBe(false);
+      at(DAY + 1000);
+      fetchMock.mockResolvedValueOnce(new Response(null, { status }));
+      expect(await contactsEnabled()).toBe(false);
 
-    // A rejection is not cached, so the next request checks again; past the 90 s fetch lock it fails.
-    at(DAY + 2 * 60 * 1000);
-    fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
-    expect(await contactsEnabled()).toBe(false);
-  });
+      // A rejection is not cached, so the next request checks again; past the 90 s fetch lock it fails.
+      at(DAY + 2 * 60 * 1000);
+      fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
+      expect(await contactsEnabled()).toBe(false);
+    }
+  );
 
   test("a later active answer clears the refusal, so the next failed check keeps the entitlement", async () => {
     at(0);

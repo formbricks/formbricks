@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   clearLicenseCache: vi.fn(),
   fetchLicenseFresh: vi.fn(),
   computeFreshLicenseState: vi.fn(),
+  handleLicenseRejection: vi.fn(),
   cacheSet: vi.fn(),
 }));
 
@@ -45,6 +46,7 @@ vi.mock("@/modules/ee/license-check/lib/license", async () => {
     computeFreshLicenseState: mocks.computeFreshLicenseState,
     fetchLicenseFresh: mocks.fetchLicenseFresh,
     getCacheKeys: () => ({ FETCH_LICENSE_CACHE_KEY: "license-key" }),
+    handleLicenseRejection: mocks.handleLicenseRejection,
   };
 });
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
@@ -109,11 +111,22 @@ describe("POST /api/internal/license-checks", () => {
     [400, "invalid_license"],
     [403, "instance_mismatch"],
   ])("answers a license server %i as status %s, not as a failure", async (status, expected) => {
-    mocks.fetchLicenseFresh.mockRejectedValue(new LicenseApiError("refused", status));
+    const rejection = new LicenseApiError("refused", status);
+    mocks.fetchLicenseFresh.mockRejectedValue(rejection);
+    mocks.handleLicenseRejection.mockResolvedValue(expected);
     const response = await recheck();
 
     expect(response.status).toBe(200);
     expect((await response.json()).data).toEqual({ active: false, status: expected });
+    // ENG-7563: the recheck reads (and records) a rejection through the same handler as the regular check.
+    expect(mocks.handleLicenseRejection).toHaveBeenCalledWith(rejection);
+  });
+
+  test("fails on an error that is not a license rejection", async () => {
+    mocks.fetchLicenseFresh.mockRejectedValue(new Error("socket hang up"));
+    mocks.handleLicenseRejection.mockResolvedValue(null);
+
+    expect((await recheck()).status).toBe(500);
   });
 
   test.each([

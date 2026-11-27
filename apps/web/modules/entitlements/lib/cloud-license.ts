@@ -1,18 +1,18 @@
+import { isLicenseRefusalStatus } from "@/modules/ee/license-check/lib/license-status";
+import type { TLicenseRefusalStatus } from "@/modules/ee/license-check/lib/license-status";
 import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 
-// `satisfies` makes a new license status fail to compile until it is classified here.
-const CLOUD_LICENSE_STATUS_POLICY = {
+// Every status the license server does not refuse. `satisfies` makes a new one fail to compile until it
+// is classified here; the refusals come from `LICENSE_REFUSAL_STATUSES` alone.
+const CLOUD_LICENSE_POLICY = {
   active: "usable",
   "no-license": "usable",
   unreachable: "usable-in-grace",
-  expired: "refused",
-  invalid_license: "refused",
-  instance_mismatch: "refused",
-} as const satisfies Record<TLicenseStatus, "usable" | "usable-in-grace" | "refused">;
+} as const satisfies Record<Exclude<TLicenseStatus, TLicenseRefusalStatus>, "usable" | "usable-in-grace">;
 
 /**
- * Whether Cloud may honour an organization's paid entitlements and limits under the instance license.
- * Every Cloud organization-entitlement and limit gate goes through this, so they cannot disagree.
+ * Whether Cloud may honour an organization's license-guarded entitlements and limits under the instance
+ * license. Every Cloud gate that consults the license for them goes through this, so they cannot disagree.
  *
  * Cloud refuses what the license server refuses: an `expired`, `invalid_license` or `instance_mismatch`
  * answer, or no verified license at all, falls back to the free tier (see `CLOUD_HOBBY_WORKSPACE_LIMIT`).
@@ -30,9 +30,10 @@ export const isCloudLicenseUsable = ({
   licenseActive: boolean;
   licenseStatus: TLicenseStatus;
 }): boolean => {
-  const policy = CLOUD_LICENSE_STATUS_POLICY[licenseStatus];
+  if (isLicenseRefusalStatus(licenseStatus)) return false;
+  // Widened so a status this table does not know reads as undefined and fails closed.
+  const policy: string | undefined = CLOUD_LICENSE_POLICY[licenseStatus];
   if (policy === "usable") return true;
   if (policy === "usable-in-grace") return licenseActive;
-  // "refused", and any status this table does not know, which fails closed.
   return false;
 };

@@ -12,11 +12,11 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import {
   FAILED_FETCH_TTL_MS,
   FETCH_LICENSE_TTL_MS,
-  LicenseApiError,
   clearLicenseCache,
   computeFreshLicenseState,
   fetchLicenseFresh,
   getCacheKeys,
+  handleLicenseRejection,
 } from "@/modules/ee/license-check/lib/license";
 import { assertCanRecheckLicense } from "@/modules/ee/license-check/lib/recheck-authorization";
 import type { TLicenseCheckResource } from "../schemas";
@@ -68,12 +68,11 @@ export async function recheckLicenseOperation({
   try {
     freshLicense = await fetchLicenseFresh();
   } catch (error) {
-    // 400 = invalid license key, 403 = license bound to another instance: answers, not failures.
-    if (error instanceof LicenseApiError && (error.status === 400 || error.status === 403)) {
-      return successResponse<TLicenseCheckResource>(
-        { active: false, status: error.status === 400 ? "invalid_license" : "instance_mismatch" },
-        { requestId }
-      );
+    // 400 = invalid license key, 403 = license bound to another instance: answers, not failures. Recorded
+    // like the regular check's, so a later unreachable check still reports the refusal.
+    const refusal = await handleLicenseRejection(error);
+    if (refusal) {
+      return successResponse<TLicenseCheckResource>({ active: false, status: refusal }, { requestId });
     }
     throw error;
   }
