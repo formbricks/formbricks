@@ -42,9 +42,10 @@ CI_APT_PROCESS_PATTERN='(^|[ /])apt-get( |$)'
 ci_stop_stray_apt() {
   # sudo runs Playwright's apt chain in a session of its own and passes the caller's `timeout` signal on
   # only to the shell, so apt-get outlives Playwright and keeps the dpkg lock (ENG-7557). Stop the shell
-  # too, in case it is caught between `apt-get update` and `apt-get install` and would start the
-  # install. On these disposable runners nothing else runs apt-get beside this setup. A dpkg that
-  # apt-get had started may still be running; ci_wait_for_dpkg_lock waits for it.
+  # too: if `timeout --kill-after` kills sudo before it relays, the shell lives on and would start
+  # `apt-get install` once `apt-get update` ends. On these disposable runners nothing else runs apt-get
+  # beside this setup. A dpkg that apt-get had started may still be running; ci_wait_for_dpkg_lock
+  # waits for it.
   sudo pkill -TERM -f -- "$CI_APT_PROCESS_PATTERN" || true
 }
 

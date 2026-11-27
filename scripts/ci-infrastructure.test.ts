@@ -192,6 +192,52 @@ test.each([
   expect(result.status).toBe(matches ? 0 : 1);
 });
 
+// A fixture for ci_wait_for_dpkg_lock: sudo runs the command as the test user, against lock files in a
+// temporary dpkg directory.
+const lockWaitFixture = () => {
+  const { directory, env, command } = fixture();
+  command("sudo", 'exec "$@"');
+  // A bounded run like GNU timeout's, for runners (and macOS) without one. The watchdog takes its
+  // sleep down with it, so nothing outlives the test.
+  command(
+    "timeout",
+    `while [[ "$1" == --* ]]; do shift; done; limit="\${1%s}"; shift
+"$@" & pid=$!
+( trap 'kill "$nap" 2>/dev/null; exit 0' TERM; /bin/sleep "$limit" & nap=$!; wait "$nap"; kill "$pid" 2>/dev/null ) &
+watchdog=$!
+status=0; wait "$pid" || status=$?
+kill "$watchdog" 2>/dev/null || true
+exit "$status"`
+  );
+  const dpkg = join(directory, "dpkg");
+  mkdirSync(dpkg);
+  for (const name of ["lock-frontend", "lock"]) writeFileSync(join(dpkg, name), "");
+  return { env, dpkg };
+};
+
+// Hold one lock as apt or dpkg does (fcntl), and resolve once it is held.
+const holdLock = async (path: string, seconds: number) => {
+  const holder = spawn(
+    "python3",
+    [
+      "-c",
+      "import fcntl, sys, time; f = open(sys.argv[1], 'a'); fcntl.lockf(f, fcntl.LOCK_EX); print('held', flush=True); time.sleep(float(sys.argv[2]))",
+      path,
+      String(seconds),
+    ],
+    { stdio: ["ignore", "pipe", "inherit"] }
+  );
+  holders.push(holder);
+  await new Promise<void>((resolve) => holder.stdout.once("data", () => resolve()));
+};
+
+const waitForLocks = (dpkg: string) => [
+  "-c",
+  'source scripts/ci-network.sh; ci_wait_for_dpkg_lock 3 "$1"',
+  "test",
+  dpkg,
+];
+
 test.each([
   ["waits for apt's lock-frontend to be released", "lock-frontend", 1, 0],
   ["waits for the lock a dpkg left running by a stopped apt-get still holds", "lock", 1, 0],
@@ -199,48 +245,37 @@ test.each([
 ])(
   "ci_wait_for_dpkg_lock %s",
   async (_name, lockName, holdSeconds, expectedStatus) => {
-    const { directory, env, command } = fixture();
-    command("sudo", 'exec "$@"');
-    // A bounded run like GNU timeout's, for runners (and macOS) without one. The watchdog takes its
-    // sleep down with it, so nothing outlives the test.
-    command(
-      "timeout",
-      `while [[ "$1" == --* ]]; do shift; done; limit="\${1%s}"; shift
-"$@" & pid=$!
-( trap 'kill "$nap" 2>/dev/null; exit 0' TERM; /bin/sleep "$limit" & nap=$!; wait "$nap"; kill "$pid" 2>/dev/null ) &
-watchdog=$!
-status=0; wait "$pid" || status=$?
-kill "$watchdog" 2>/dev/null || true
-exit "$status"`
-    );
-    const dpkg = join(directory, "dpkg");
-    mkdirSync(dpkg);
-    for (const name of ["lock-frontend", "lock"]) writeFileSync(join(dpkg, name), "");
-    // Hold one lock as apt or dpkg does (fcntl), and report it is held before the helper starts waiting.
-    const holder = spawn(
-      "python3",
-      [
-        "-c",
-        "import fcntl, sys, time; f = open(sys.argv[1], 'a'); fcntl.lockf(f, fcntl.LOCK_EX); print('held', flush=True); time.sleep(float(sys.argv[2]))",
-        join(dpkg, lockName),
-        String(holdSeconds),
-      ],
-      { stdio: ["ignore", "pipe", "inherit"] }
-    );
-    holders.push(holder);
-    await new Promise<void>((resolve) => holder.stdout.once("data", () => resolve()));
+    const { env, dpkg } = lockWaitFixture();
+    await holdLock(join(dpkg, lockName), holdSeconds);
     const started = Date.now();
-    const result = spawnSync(
-      "bash",
-      ["-c", 'source scripts/ci-network.sh; ci_wait_for_dpkg_lock 3 "$1"', "test", dpkg],
-      { cwd: repository, env, encoding: "utf8" }
-    );
+    const result = spawnSync("bash", waitForLocks(dpkg), { cwd: repository, env, encoding: "utf8" });
     expect(result.status, result.stderr).toBe(expectedStatus);
     if (expectedStatus === 0) expect(Date.now() - started).toBeGreaterThanOrEqual(500);
     else expect(result.stderr).toContain("were still held after 3s");
   },
   15_000
 );
+
+test("ci_wait_for_dpkg_lock keeps lock-frontend while it waits for lock, so no apt-get slips in between", async () => {
+  const { env, dpkg } = lockWaitFixture();
+  await holdLock(join(dpkg, "lock"), 2);
+  const waiting = spawn("bash", waitForLocks(dpkg), { cwd: repository, env, stdio: "ignore" });
+  holders.push(waiting);
+  const exited = new Promise<number | null>((resolve) => waiting.once("exit", resolve));
+  await new Promise((resolve) => setTimeout(resolve, 700));
+  // What a new apt-get does first: try lock-frontend. It must find it taken.
+  const probe = spawnSync(
+    "python3",
+    [
+      "-c",
+      "import fcntl, sys; fcntl.lockf(open(sys.argv[1], 'a'), fcntl.LOCK_EX | fcntl.LOCK_NB)",
+      join(dpkg, "lock-frontend"),
+    ],
+    { encoding: "utf8" }
+  );
+  expect(probe.status, probe.stderr).not.toBe(0);
+  expect(await exited).toBe(0);
+}, 15_000);
 
 test.each(["pull", "validation"])("a permanent %s failure remains red", (failure) => {
   const { directory, env, command } = fixture();
