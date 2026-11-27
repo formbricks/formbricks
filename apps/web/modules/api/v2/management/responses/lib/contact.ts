@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
 
 export const getContactByUserId = async (
   workspaceId: string,
@@ -21,10 +22,7 @@ export const getContactByUserId = async (
       where: {
         attributes: {
           some: {
-            attributeKey: {
-              key: "userId",
-              workspaceId,
-            },
+            attributeKey: whereAttributeKey(workspaceId, "userId"),
             value: userId,
           },
         },

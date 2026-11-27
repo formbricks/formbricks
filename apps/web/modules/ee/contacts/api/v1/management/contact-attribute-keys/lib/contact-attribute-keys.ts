@@ -10,18 +10,38 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { whereAttributeKeysOfDirectory } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import {
+  selectContactAttributeKey,
+  withCallerWorkspace,
+} from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import {
+  getReportingWorkspaceByDirectory,
+  withWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 
+/**
+ * Every key of the contact directories the given workspaces use. Two of those workspaces on one
+ * directory see the same keys, so each key is listed once, under one of them.
+ */
 export const getContactAttributeKeys = reactCache(
   async (workspaceIds: string[], limit: number, offset: number): Promise<TContactAttributeKey[]> => {
     try {
+      const workspaceByDirectory = await getReportingWorkspaceByDirectory(workspaceIds);
+      if (workspaceByDirectory.size === 0) return [];
+
       const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-        where: { workspaceId: { in: workspaceIds } },
+        where: { directoryId: { in: [...workspaceByDirectory.keys()] } },
+        select: { ...selectContactAttributeKey, directoryId: true },
         orderBy: { id: "asc" },
         take: limit,
         skip: offset,
       });
 
-      return contactAttributeKeys;
+      return contactAttributeKeys.flatMap(({ directoryId, ...key }) => {
+        const workspaceId = directoryId ? workspaceByDirectory.get(directoryId) : undefined;
+        return workspaceId ? [withCallerWorkspace(key, workspaceId)] : [];
+      });
     } catch (error) {
       if (isPrismaKnownRequestError(error)) {
         throw new DatabaseError(error.message);
@@ -39,30 +59,33 @@ export const createContactAttributeKey = async (
     throw new InvalidInputError(getReservedFutureDefaultAttributeKeyIssue([data.key]));
   }
 
-  const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
-    where: {
-      workspaceId,
-    },
-  });
-
-  if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
-    throw new OperationNotAllowedError(
-      `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for workspace ${workspaceId}`
-    );
-  }
   try {
-    const contactAttributeKey = await prisma.contactAttributeKey.create({
-      data: {
-        key: data.key,
-        name: data.name ?? formatSnakeCaseToTitleCase(data.key),
-        type: data.type,
-        description: data.description ?? "",
-        ...(data.dataType && { dataType: data.dataType }),
-        workspaceId,
-      },
+    // The count and the insert run under the workspace's lock (`withWorkspaceDirectory`), so a key can't
+    // land in a directory the workspace has just left. Keys, and their cap, are per directory.
+    const contactAttributeKey = await withWorkspaceDirectory(workspaceId, async (tx, directory) => {
+      const contactAttributeKeysCount = await tx.contactAttributeKey.count({
+        where: whereAttributeKeysOfDirectory(directory.id),
+      });
+      if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+        throw new OperationNotAllowedError(
+          `Maximum number of attribute keys (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for the contact directory of workspace ${workspaceId}`
+        );
+      }
+      return tx.contactAttributeKey.create({
+        data: {
+          key: data.key,
+          name: data.name ?? formatSnakeCaseToTitleCase(data.key),
+          type: data.type,
+          description: data.description ?? "",
+          ...(data.dataType && { dataType: data.dataType }),
+          directoryId: directory.id,
+          workspaceId,
+        },
+        select: selectContactAttributeKey,
+      });
     });
 
-    return contactAttributeKey;
+    return withCallerWorkspace(contactAttributeKey, workspaceId);
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       // A caller mistake, not a server fault: the route shows this message at 400.

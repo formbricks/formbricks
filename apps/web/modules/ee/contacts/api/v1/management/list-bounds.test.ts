@@ -25,6 +25,11 @@ vi.mock("./contact-attributes/lib/contact-attributes", () => ({
   getContactAttributes: mocks.getContactAttributes,
 }));
 vi.mock("./contacts/lib/contacts", () => ({ getContacts: mocks.getContacts }));
+// A key of one workspace is first checked for a contact directory (decision 13); this one has one.
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  requireWorkspaceContactDirectory: vi.fn(async () => ({ id: "directory-1", matchingKey: "email" })),
+}));
 
 const authentication = {
   apiKeyId: "api-key-1",

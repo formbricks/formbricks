@@ -54,6 +54,8 @@ export const ZDisplayWithContact = z.object({
     .object({
       id: z.string(),
       attributes: z.record(z.string(), z.string()),
+      /** The workspace no longer reaches this contact (another contact directory, or none): no attributes. */
+      unavailable: z.boolean().optional(),
     })
     .nullable(),
 });

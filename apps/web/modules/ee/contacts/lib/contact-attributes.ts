@@ -6,6 +6,8 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { validateInputs } from "@/lib/utils/validate";
+import { whereDirectoryAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 import { readAttributeValue } from "./attribute-storage";
 
 const selectContactAttribute = {
@@ -49,7 +51,7 @@ export const getContactAttributes = reactCache(async (contactId: string) => {
 /**
  * Scoped by workspace on purpose: this feeds the contact detail page, which is reached through a
  * workspace id in the URL. `ContactAttribute` has no workspace column of its own, so the tenant
- * check goes through the contact it hangs off.
+ * check goes through the contact it hangs off, which must be in the workspace's contact directory.
  */
 export const getContactAttributesWithKeyInfo = reactCache(async (contactId: string, workspaceId: string) => {
   validateInputs([contactId, ZId], [workspaceId, ZId]);
@@ -58,7 +60,7 @@ export const getContactAttributesWithKeyInfo = reactCache(async (contactId: stri
     const prismaAttributes = await prisma.contactAttribute.findMany({
       where: {
         contactId,
-        contact: { workspaceId },
+        contact: whereContactsOfWorkspace(workspaceId),
       },
       select: selectContactAttribute,
     });
@@ -80,17 +82,14 @@ export const getContactAttributesWithKeyInfo = reactCache(async (contactId: stri
 });
 
 export const hasEmailAttribute = reactCache(
-  async (email: string, workspaceId: string, contactId: string): Promise<boolean> => {
-    validateInputs([email, ZUserEmail], [workspaceId, ZId], [contactId, ZId]);
+  async (email: string, directoryId: string, contactId: string): Promise<boolean> => {
+    validateInputs([email, ZUserEmail], [directoryId, ZId], [contactId, ZId]);
 
     const contactAttribute = await prisma.contactAttribute.findFirst({
       where: {
         AND: [
           {
-            attributeKey: {
-              key: "email",
-              workspaceId,
-            },
+            attributeKey: whereDirectoryAttributeKey(directoryId, "email"),
             value: email,
           },
           {
@@ -108,17 +107,14 @@ export const hasEmailAttribute = reactCache(
 );
 
 export const hasUserIdAttribute = reactCache(
-  async (userId: string, workspaceId: string, contactId: string): Promise<boolean> => {
-    validateInputs([userId, ZString], [workspaceId, ZId], [contactId, ZId]);
+  async (userId: string, directoryId: string, contactId: string): Promise<boolean> => {
+    validateInputs([userId, ZString], [directoryId, ZId], [contactId, ZId]);
 
     const contactAttribute = await prisma.contactAttribute.findFirst({
       where: {
         AND: [
           {
-            attributeKey: {
-              key: "userId",
-              workspaceId,
-            },
+            attributeKey: whereDirectoryAttributeKey(directoryId, "userId"),
             value: userId,
           },
           {
@@ -135,14 +131,16 @@ export const hasUserIdAttribute = reactCache(
   }
 );
 
+/** The values contacts hold for a key of `directoryId`; none for a key of another directory. */
 export const getDistinctAttributeValues = reactCache(
-  async (attributeKeyId: string, limit: number = 50): Promise<string[]> => {
-    validateInputs([attributeKeyId, ZId]);
+  async (attributeKeyId: string, directoryId: string, limit: number = 50): Promise<string[]> => {
+    validateInputs([attributeKeyId, ZId], [directoryId, ZId]);
 
     try {
       const results = await prisma.contactAttribute.findMany({
         where: {
           attributeKeyId,
+          attributeKey: { directoryId },
           value: { not: "" },
         },
         select: {

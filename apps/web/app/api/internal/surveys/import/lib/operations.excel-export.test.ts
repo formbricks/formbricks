@@ -146,7 +146,13 @@ beforeEach(() => {
     references: { actionClasses: [], attributeKeys: [], embeddedFields: [], languages: [] },
     issues: [],
     source: null,
-    plan: { actionClasses: new Map(), attributeKeysToCreate: [], languagesToCreate: [], issues: [] },
+    plan: {
+      actionClasses: new Map(),
+      attributeKeysToCreate: [],
+      attributeKeyDirectoryId: null,
+      languagesToCreate: [],
+      issues: [],
+    },
   });
   mocks.buildFormbricksFileMatch.mockResolvedValue(MATCH);
 });

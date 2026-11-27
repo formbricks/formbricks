@@ -41,6 +41,8 @@ export const ZAuditTarget = z.enum([
   "retentionRun",
   // A user's grant to an MCP client (ENG-7149): created on Allow, deleted on Revoke.
   "mcpGrant",
+  // An organization's contact directory (ENG-7497): created and updated in organization settings.
+  "contactDirectory",
 ]);
 export const ZAuditAction = z.enum([
   "created",

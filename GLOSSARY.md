@@ -5,7 +5,9 @@ programming or UI concepts, and no implementation details.
 
 ## Tenancy
 
-**Workspace** — The tenant unit inside an organization: surveys, contacts, API key permissions and stored files belong to exactly one. It replaced the older project and its environments. _Avoid_: environment, project.
+**Workspace** — The tenant unit inside an organization: surveys, API key permissions and stored files belong to exactly one. Its contacts belong to its contact directory, which other workspaces can share. It replaced the older project and its environments. _Avoid_: environment, project.
+
+**Contact directory** — The organization-level set of contacts, their attribute keys and public segments that its workspaces share. An archived directory has no workspaces and keeps its contacts out of view; an active one may have none. A workspace uses at most one; a contact is matched by email or by userId, fixed when the directory is made, and one userId is one contact across all its workspaces. _Avoid_: contact list, audience, directory alone (it clashes with the Feedback Dataset's internal name).
 
 ## MCP access
 

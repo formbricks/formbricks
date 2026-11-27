@@ -4,6 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSurveyIdsReadBySegments } from "@/modules/ee/contacts/segments/lib/helper";
 import {
@@ -127,8 +128,8 @@ async function getV3SegmentReferenceIssues(
     identifier: reference.value,
   });
 
-  // Scope to the workspace's own segments — `getSegment(id)` is global, so a bare existence check
-  // would accept (and store) a reference to another workspace's segment.
+  // Scope to the segments the workspace reaches, its directory's (decision 24) — `getSegment(id)` is
+  // global, so a bare existence check would accept (and store) a reference to another directory's segment.
   const segments = await getSegments(workspaceId, ALL_SEGMENT_SURVEY_REFS);
   const segmentsById = new Map(segments.map((segment) => [segment.id, segment]));
   for (const reference of segmentRefs.filter((ref) => !segmentsById.has(ref.value))) {
@@ -208,7 +209,10 @@ export async function assertV3SurveyTargetingFilterReferences(
   const attributeKeyRefs = references.filter((ref) => ref.kind === "attributeKey");
   if (attributeKeyRefs.length > 0) {
     const attributeKeys = tx
-      ? await tx.contactAttributeKey.findMany({ where: { workspaceId }, select: { key: true } })
+      ? await tx.contactAttributeKey.findMany({
+          where: whereAttributeKeysOfWorkspace(workspaceId),
+          select: { key: true },
+        })
       : await getContactAttributeKeys(workspaceId);
     const knownKeys = new Set(attributeKeys.map((attributeKey) => attributeKey.key));
     for (const reference of attributeKeyRefs.filter((ref) => !knownKeys.has(ref.value))) {

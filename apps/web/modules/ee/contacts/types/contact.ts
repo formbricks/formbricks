@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TContactAttributeKey, ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
+import type { TContactDirectoryMatchingKey } from "@/modules/ee/contacts/directories/types";
 import {
   CSV_IMPORT_MAX_COLUMNS,
   CSV_IMPORT_MAX_KEY_LENGTH,
@@ -103,57 +104,81 @@ const csvRecordsWithinLimits = (records: unknown, ctx: z.RefinementCtx) => {
   }
 };
 
-export const ZContactCSVUploadResponse = z
+/**
+ * The attribute key that identifies a contact in a directory is its matching key: `email` or `userId`.
+ * The request schemas below check it only once the workspace's directory is known, so each comes as a
+ * base schema and a builder for one matching key.
+ */
+const identityKeyLabel = (identityKey: TContactDirectoryMatchingKey): string =>
+  identityKey === "email" ? "Email" : identityKey;
+
+/**
+ * CSV rows as the import route accepts them, held to the import's caps; the identity column is checked once
+ * the workspace's directory is known (`getContactCSVUploadSchema`).
+ */
+export const ZContactCSVRecords = z
   .unknown()
   .superRefine(csvRecordsWithinLimits)
-  .pipe(
-    z.array(z.record(z.string(), z.string())).superRefine((data, ctx) => {
-      for (const record of data) {
-        if (!Object.keys(record).includes("email")) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Missing email field for one or more records",
-          });
-          return;
-        }
+  .pipe(z.array(z.record(z.string(), z.string())));
 
-        if (!record.email) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Email field is empty for one or more records",
-          });
-          return;
-        }
-      }
+export type TContactCSVRecords = z.infer<typeof ZContactCSVRecords>;
 
-      // check for duplicate emails
-      const emails = data.map((record) => record.email);
-      const emailSet = new Set(emails);
-
-      if (emails.length !== emailSet.size) {
+/** CSV rows for a directory: each row has the identity column, filled and unique, and userIds are unique. */
+export const getContactCSVUploadSchema = (identityKey: TContactDirectoryMatchingKey) =>
+  ZContactCSVRecords.superRefine((data, ctx) => {
+    for (const record of data) {
+      if (!Object.keys(record).includes(identityKey)) {
         ctx.addIssue({
           code: "custom",
-          message: "Duplicate emails found in the records",
+          message: `Missing ${identityKey} field for one or more records`,
         });
         return;
       }
 
-      // check for duplicate userIds if present
-      const userIds = data.map((record) => record.userId).filter(Boolean);
-      if (userIds?.length > 0) {
-        const userIdSet = new Set(userIds);
-        if (userIds.length !== userIdSet.size) {
-          ctx.addIssue({
-            code: "custom",
-            message: "Duplicate userIds found in the records",
-          });
-          return;
-        }
+      if (!record[identityKey]) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${identityKeyLabel(identityKey)} field is empty for one or more records`,
+        });
+        return;
       }
-    })
-  );
+    }
 
-export type TContactCSVUploadResponse = z.infer<typeof ZContactCSVUploadResponse>;
+    const identityValues = data.map((record) => record[identityKey]);
+
+    if (identityValues.length !== new Set(identityValues).size) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Duplicate ${identityKey}s found in the records`,
+      });
+      return;
+    }
+
+    // check for duplicate userIds if present
+    const userIds = data.map((record) => record.userId).filter(Boolean);
+    if (userIds?.length > 0) {
+      const userIdSet = new Set(userIds);
+      if (userIds.length !== userIdSet.size) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Duplicate userIds found in the records",
+        });
+        return;
+      }
+    }
+
+    // An email belongs to one contact of a directory, as identify keeps it. When the directory matches by
+    // email the identity check above already covered it; otherwise two rows can't share one either.
+    if (identityKey !== "email") {
+      const emails = data.map((record) => record.email).filter(Boolean);
+      if (emails.length !== new Set(emails).size) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Duplicate emails found in the records",
+        });
+      }
+    }
+  });
 
 /** The column-to-attribute map's caps, checked before the typed schema as for the records. */
 const csvAttributeMapWithinLimits = (attributeMap: unknown, ctx: z.RefinementCtx) => {
@@ -200,33 +225,32 @@ export const ZContactBulkUploadContact = z.object({
 export type TContactBulkUploadContact = z.infer<typeof ZContactBulkUploadContact>;
 
 // Helper functions for common validation logic
-export const validateEmailAttribute = (
+export const validateIdentityAttribute = (
   attributes: z.infer<typeof ZContactBulkUploadAttribute>[],
   ctx: z.RefinementCtx,
+  identityKey: TContactDirectoryMatchingKey,
   contactIndex?: number
-): { emailAttr?: z.infer<typeof ZContactBulkUploadAttribute>; isValid: boolean } => {
-  const emailAttr = attributes.find((attr) => attr.attributeKey.key === "email");
+): { identityAttr?: z.infer<typeof ZContactBulkUploadAttribute>; isValid: boolean } => {
+  const identityAttr = attributes.find((attr) => attr.attributeKey.key === identityKey);
   const indexSuffix = contactIndex !== undefined ? ` for contact at index ${contactIndex}` : "";
 
-  if (!emailAttr?.value) {
+  if (!identityAttr?.value) {
     ctx.addIssue({
       code: "custom",
-      message: `Email attribute is required${indexSuffix}`,
+      message: `${identityKeyLabel(identityKey)} attribute is required${indexSuffix}`,
     });
     return { isValid: false };
   }
 
-  // Check email format
-  const parsedEmail = z.email().safeParse(emailAttr.value);
-  if (!parsedEmail.success) {
+  if (identityKey === "email" && !z.email().safeParse(identityAttr.value).success) {
     ctx.addIssue({
       code: "custom",
       message: `Invalid email format${indexSuffix}`,
     });
-    return { emailAttr, isValid: false };
+    return { identityAttr, isValid: false };
   }
 
-  return { emailAttr, isValid: true };
+  return { identityAttr, isValid: true };
 };
 
 export const validateUniqueAttributeKeys = (
@@ -261,70 +285,96 @@ export const validateUniqueAttributeKeys = (
   }
 };
 
-export const ZContactBulkUploadRequest = z.object({
-  workspaceId: z.cuid2(),
-  contacts: z
-    .array(ZContactBulkUploadContact)
-    .max(250, {
-      error: "Maximum 250 contacts allowed at a time.",
-    })
-    .superRefine((contacts, ctx) => {
-      // Track all data in a single pass
-      const seenEmails = new Set<string>();
-      const duplicateEmails = new Set<string>();
-      const seenUserIds = new Set<string>();
-      const duplicateUserIds = new Set<string>();
+/** The key, besides the matching key, that only one contact of a directory holds. */
+export const getUniqueValueKey = (identityKey: TContactDirectoryMatchingKey): TContactDirectoryMatchingKey =>
+  identityKey === "email" ? "userId" : "email";
 
-      // Process each contact in a single pass
-      contacts.forEach((contact, idx) => {
-        // 1. Check email existence and validity using helper function
-        const { emailAttr, isValid } = validateEmailAttribute(contact.attributes, ctx, idx);
+// The `meta` key that lists a repeated email or userId; `duplicateEmails` predates directories.
+const DUPLICATE_IDENTITY_VALUES_PARAM: Record<TContactDirectoryMatchingKey, string> = {
+  email: "duplicateEmails",
+  userId: "duplicateUserIds",
+};
 
-        if (isValid && emailAttr) {
-          // Check for duplicate emails across contacts
-          if (seenEmails.has(emailAttr.value)) {
-            duplicateEmails.add(emailAttr.value);
-          } else {
-            seenEmails.add(emailAttr.value);
+const buildContactBulkUploadRequestSchema = (identityKey: TContactDirectoryMatchingKey | null) =>
+  z.object({
+    workspaceId: z.cuid2(),
+    contacts: z
+      .array(ZContactBulkUploadContact)
+      .max(250, {
+        error: "Maximum 250 contacts allowed at a time.",
+      })
+      .superRefine((contacts, ctx) => {
+        // Track all data in a single pass
+        const seenIdentityValues = new Set<string>();
+        const duplicateIdentityValues = new Set<string>();
+        // Without a directory yet, userId is checked, as before directories.
+        const otherUniqueKey = getUniqueValueKey(identityKey ?? "email");
+        const seenOtherValues = new Set<string>();
+        const duplicateOtherValues = new Set<string>();
+
+        // Process each contact in a single pass
+        contacts.forEach((contact, idx) => {
+          // 1. Check the identity attribute's existence and validity
+          if (identityKey) {
+            const { identityAttr, isValid } = validateIdentityAttribute(
+              contact.attributes,
+              ctx,
+              identityKey,
+              idx
+            );
+
+            if (isValid && identityAttr) {
+              if (seenIdentityValues.has(identityAttr.value)) {
+                duplicateIdentityValues.add(identityAttr.value);
+              } else {
+                seenIdentityValues.add(identityAttr.value);
+              }
+            }
           }
+
+          // 2. Check for duplicates of the other unique key
+          const otherAttr = contact.attributes.find((attr) => attr.attributeKey.key === otherUniqueKey);
+          if (otherAttr?.value) {
+            if (seenOtherValues.has(otherAttr.value)) {
+              duplicateOtherValues.add(otherAttr.value);
+            } else {
+              seenOtherValues.add(otherAttr.value);
+            }
+          }
+
+          // 3. Check for duplicate attribute keys within the same contact using helper function
+          validateUniqueAttributeKeys(contact.attributes, ctx, idx);
+        });
+
+        // Report all validation issues after the single pass
+        if (identityKey && duplicateIdentityValues.size > 0) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Duplicate ${identityKey}s found in the records, please ensure each ${identityKey} is unique.`,
+            params: {
+              [DUPLICATE_IDENTITY_VALUES_PARAM[identityKey]]: Array.from(duplicateIdentityValues),
+            },
+          });
         }
 
-        // 2. Check for userId duplicates
-        const userIdAttr = contact.attributes.find((attr) => attr.attributeKey.key === "userId");
-        if (userIdAttr?.value) {
-          if (seenUserIds.has(userIdAttr.value)) {
-            duplicateUserIds.add(userIdAttr.value);
-          } else {
-            seenUserIds.add(userIdAttr.value);
-          }
+        if (duplicateOtherValues.size > 0) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Duplicate ${otherUniqueKey}s found in the records, please ensure each ${otherUniqueKey} is unique.`,
+            params: {
+              [DUPLICATE_IDENTITY_VALUES_PARAM[otherUniqueKey]]: Array.from(duplicateOtherValues),
+            },
+          });
         }
+      }),
+  });
 
-        // 3. Check for duplicate attribute keys within the same contact using helper function
-        validateUniqueAttributeKeys(contact.attributes, ctx, idx);
-      });
+/** The bulk route's body. The identity attribute is checked once the workspace's directory is known. */
+export const ZContactBulkUploadRequest = buildContactBulkUploadRequestSchema(null);
 
-      // Report all validation issues after the single pass
-      if (duplicateEmails.size > 0) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Duplicate emails found in the records, please ensure each email is unique.",
-          params: {
-            duplicateEmails: Array.from(duplicateEmails),
-          },
-        });
-      }
-
-      if (duplicateUserIds.size > 0) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Duplicate userIds found in the records, please ensure each userId is unique.",
-          params: {
-            duplicateUserIds: Array.from(duplicateUserIds),
-          },
-        });
-      }
-    }),
-});
+/** A bulk request for a directory: each contact has its identity attribute, valid and unique. */
+export const getContactBulkUploadRequestSchema = (identityKey: TContactDirectoryMatchingKey) =>
+  buildContactBulkUploadRequestSchema(identityKey);
 
 export type TContactBulkUploadRequest = z.infer<typeof ZContactBulkUploadRequest>;
 
@@ -345,28 +395,32 @@ export type TContactBulkUploadResponseSuccess = TContactBulkUploadResponseBase &
 };
 
 // Schema for single contact creation - simplified with flat attributes
+const ZContactCreateAttributes = z.record(z.string(), z.string());
+
+/** The create route's body. The identity attribute is checked once the workspace's directory is known. */
 export const ZContactCreateRequest = z.object({
   workspaceId: z.cuid2(),
-  attributes: z.record(z.string(), z.string()).superRefine((attributes, ctx) => {
-    // Check if email attribute exists and is valid
-    const email = attributes.email;
-    if (!email) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Email attribute is required",
-      });
-    } else {
-      // Check email format
-      const parsedEmail = z.email().safeParse(email);
-      if (!parsedEmail.success) {
+  attributes: ZContactCreateAttributes,
+});
+
+/** A create request for a directory: the identity attribute is present, and a valid email for an email directory. */
+export const getContactCreateRequestSchema = (identityKey: TContactDirectoryMatchingKey) =>
+  ZContactCreateRequest.extend({
+    attributes: ZContactCreateAttributes.superRefine((attributes, ctx) => {
+      const identityValue = attributes[identityKey];
+      if (!identityValue) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${identityKeyLabel(identityKey)} attribute is required`,
+        });
+      } else if (identityKey === "email" && !z.email().safeParse(identityValue).success) {
         ctx.addIssue({
           code: "custom",
           message: "Invalid email format",
         });
       }
-    }
-  }),
-});
+    }),
+  });
 
 export type TContactCreateRequest = z.infer<typeof ZContactCreateRequest>;
 

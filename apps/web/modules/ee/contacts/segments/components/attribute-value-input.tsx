@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { useContactAttributeKeyValues } from "../hooks/use-segment-editor-options";
@@ -22,7 +23,9 @@ export const AttributeValueInput = ({
   className,
   valueError,
 }: AttributeValueInputProps) => {
-  const { data: values, isLoading: loading } = useContactAttributeKeyValues(attributeKeyId);
+  // Keys belong to the contact directory, so values are read through the workspace the editor is open in.
+  const { workspace } = useWorkspace();
+  const { data: values, isLoading: loading } = useContactAttributeKeyValues(attributeKeyId, workspace?.id);
   const options: TComboboxOption[] = useMemo(
     () => (values ?? []).map((val) => ({ label: val, value: val })),
     [values]

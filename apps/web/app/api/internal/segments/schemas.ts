@@ -5,6 +5,7 @@ import {
   type TSegmentFilter,
   type TSegmentFilterValue,
   ZSegmentCreateInput,
+  ZSegmentSurveyIds,
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import { ATTRIBUTE_KEY_MAX_LENGTH } from "@/app/api/internal/contact-attribute-keys/schemas";
@@ -154,6 +155,13 @@ export type TSegmentUpdateBody = z.infer<typeof ZSegmentUpdateBody>;
 
 export const ZSegmentParams = z.object({ segmentId: ZId }).strict();
 
+/**
+ * The workspace a segment edit or delete acts from: the page's, authorized. A segment belongs to its contact
+ * directory and every workspace on it may use it (decision 24); its own `workspaceId` is only where it was
+ * made.
+ */
+export const ZSegmentWorkspaceQuery = z.object({ workspaceId: ZId }).strict();
+
 /** `POST /api/internal/segments/{segmentId}/copies` body: the survey the copy is attached to. */
 export const ZSegmentCopyBody = z.object({ surveyId: ZId }).strict();
 
@@ -164,4 +172,25 @@ export const ZSurveySegmentBody = z.object({ segmentId: ZId }).strict();
 
 export const ZContactAttributeKeyValuesParams = z.object({ contactAttributeKeyId: ZId }).strict();
 
+/** The workspace whose contact directory the values are read from: the editor's, authorized. */
+export const ZContactAttributeKeyValuesQuery = z.object({ workspaceId: ZId }).strict();
+
 export const ZWorkspaceSegmentFilterSurveysParams = z.object({ workspaceId: ZId }).strict();
+
+/** Longest `surveyIds` query: a filter's survey ids, comma-separated, with room for their separators. */
+const SEGMENT_FILTER_SURVEY_IDS_MAX_LENGTH = 4096;
+
+/**
+ * `GET /api/internal/workspaces/{workspaceId}/segment-filter-surveys` query: the survey ids a filter already
+ * names, comma-separated, as many as one filter may hold.
+ */
+export const ZWorkspaceSegmentFilterSurveysQuery = z
+  .object({
+    surveyIds: z
+      .string()
+      .max(SEGMENT_FILTER_SURVEY_IDS_MAX_LENGTH)
+      .optional()
+      .transform((value) => (value ? value.split(",") : []))
+      .pipe(ZSegmentSurveyIds),
+  })
+  .strict();

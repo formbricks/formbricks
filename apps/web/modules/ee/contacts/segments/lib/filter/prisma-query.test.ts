@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
-import { TAttributeOperator, TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
+import { TAttributeOperator, TBaseFilters } from "@formbricks/types/segment";
 import { effectivelyWorkspaceVisibleWhere } from "@/lib/survey/visibility/predicate";
-import { getSegment } from "../segments";
+import { type TSegmentWithDirectory, getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
 
 /**
@@ -36,6 +36,7 @@ vi.mock("react", () => ({
 
 describe("segmentFilterToPrismaQuery", () => {
   const mockSegmentId = "segment-123";
+  const mockDirectoryId = "directory-456";
   const mockWorkspaceId = "workspace-456";
 
   beforeEach(() => {
@@ -53,12 +54,12 @@ describe("segmentFilterToPrismaQuery", () => {
   test("generate a basic where clause for an empty filter", async () => {
     const filters: TBaseFilters = [];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     expect(result).toEqual({
       data: {
         whereClause: {
-          AND: [{ workspaceId: mockWorkspaceId }, {}],
+          AND: [{ directoryId: mockDirectoryId }, {}],
         },
       },
       ok: true,
@@ -129,7 +130,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -228,7 +229,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     if (result.ok) {
       const whereClause = asClauseTree(result.data.whereClause);
@@ -278,10 +279,11 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the getSegment function to return a segment with filters
-    const mockSegment: TSegmentWithSurveyRefs = {
+    const mockSegment: TSegmentWithDirectory = {
       id: nestedSegmentId,
       filters: nestedFilters,
-      workspaceId: mockWorkspaceId,
+      workspaceId: "workspace-456",
+      directoryId: mockDirectoryId,
       title: "Test Segment",
       description: null,
       isPrivate: true,
@@ -344,9 +346,9 @@ describe("segmentFilterToPrismaQuery", () => {
 
     // Mock getSegment to return null for the non-existent segment
     vi.mocked(getSegment).mockResolvedValueOnce(mockSegment);
-    vi.mocked(getSegment).mockResolvedValueOnce(null as unknown as TSegmentWithSurveyRefs);
+    vi.mocked(getSegment).mockResolvedValueOnce(null as unknown as TSegmentWithDirectory);
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     if (result.ok) {
       expect(result.data.whereClause.AND?.[1]).toEqual({
@@ -404,7 +406,7 @@ describe("segmentFilterToPrismaQuery", () => {
     // Mock getSegment to throw an error
     vi.mocked(getSegment).mockRejectedValueOnce(error);
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -436,10 +438,11 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the getSegment function to return a segment with filters
-    const mockSegment: TSegmentWithSurveyRefs = {
+    const mockSegment: TSegmentWithDirectory = {
       id: nestedSegmentId,
       filters: nestedFilters,
-      workspaceId: mockWorkspaceId,
+      workspaceId: "workspace-456",
+      directoryId: mockDirectoryId,
       title: "Test Segment",
       description: null,
       isPrivate: true,
@@ -470,7 +473,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     if (result.ok) {
       // The result should include the nested segment's filters
@@ -500,7 +503,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
   test("handle circular references in segment filters", async () => {
     // Mock getSegment to simulate a circular reference
-    const circularSegment: TSegmentWithSurveyRefs = {
+    const circularSegment: TSegmentWithDirectory = {
       id: mockSegmentId, // Same ID creates the circular reference
       filters: [
         {
@@ -519,7 +522,8 @@ describe("segmentFilterToPrismaQuery", () => {
           },
         },
       ],
-      workspaceId: mockWorkspaceId,
+      workspaceId: "workspace-456",
+      directoryId: mockDirectoryId,
       title: "Circular Segment",
       description: null,
       isPrivate: true,
@@ -550,7 +554,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     if (result.ok) {
       expect(result.data.whereClause.AND?.[1]).toEqual({});
@@ -560,7 +564,7 @@ describe("segmentFilterToPrismaQuery", () => {
   test("handle missing segments in segment filters", async () => {
     const nestedSegmentId = "segment-missing-123";
 
-    vi.mocked(getSegment).mockResolvedValue(null as unknown as TSegmentWithSurveyRefs);
+    vi.mocked(getSegment).mockResolvedValue(null as unknown as TSegmentWithDirectory);
 
     const filters: TBaseFilters = [
       {
@@ -580,7 +584,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     if (result.ok) {
       expect(result.data.whereClause.AND?.[1]).toEqual({});
@@ -609,10 +613,11 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Mock the nested segment
-    const mockNestedSegment: TSegmentWithSurveyRefs = {
+    const mockNestedSegment: TSegmentWithDirectory = {
       id: nestedSegmentId,
       filters: nestedFilters,
-      workspaceId: mockWorkspaceId,
+      workspaceId: "workspace-456",
+      directoryId: mockDirectoryId,
       title: "Role Segment",
       description: null,
       isPrivate: true,
@@ -753,7 +758,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -899,10 +904,11 @@ describe("segmentFilterToPrismaQuery", () => {
     ];
 
     // Set up the mocks
-    const mockCircularSegment: TSegmentWithSurveyRefs = {
+    const mockCircularSegment: TSegmentWithDirectory = {
       id: circularSegmentId,
       filters: circularFilters,
-      workspaceId: mockWorkspaceId,
+      workspaceId: "workspace-456",
+      directoryId: mockDirectoryId,
       title: "Circular Segment",
       description: null,
       isPrivate: true,
@@ -913,10 +919,11 @@ describe("segmentFilterToPrismaQuery", () => {
       inactiveSurveys: [],
     };
 
-    const mockSecondSegment: TSegmentWithSurveyRefs = {
+    const mockSecondSegment: TSegmentWithDirectory = {
       id: secondSegmentId,
       filters: secondFilters,
-      workspaceId: mockWorkspaceId,
+      workspaceId: "workspace-456",
+      directoryId: mockDirectoryId,
       title: "Second Segment",
       description: null,
       isPrivate: true,
@@ -931,7 +938,7 @@ describe("segmentFilterToPrismaQuery", () => {
     vi.mocked(getSegment)
       .mockResolvedValueOnce(mockCircularSegment) // First call for circularSegmentId
       .mockResolvedValueOnce(mockSecondSegment) // Third call for secondSegmentId
-      .mockResolvedValueOnce(null as unknown as TSegmentWithSurveyRefs); // Fourth call for non-existent-segment
+      .mockResolvedValueOnce(null as unknown as TSegmentWithDirectory); // Fourth call for non-existent-segment
 
     // Complex filters with mixed error conditions
     const filters: TBaseFilters = [
@@ -982,7 +989,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -1155,7 +1162,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -1265,7 +1272,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -1289,7 +1296,7 @@ describe("segmentFilterToPrismaQuery", () => {
       where: {
         attributeKey: {
           key: "age",
-          workspaceId: mockWorkspaceId,
+          directoryId: mockDirectoryId,
           dataType: "number",
         },
         valueNumber: null,
@@ -1299,8 +1306,8 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(mockQueryRawUnsafe).toHaveBeenCalled();
     const sqlCall = mockQueryRawUnsafe.mock.calls[0];
-    expect(sqlCall[0]).toContain('cak."workspaceId" = $4');
-    expect(sqlCall[4]).toBe(mockWorkspaceId);
+    expect(sqlCall[0]).toContain('cak."directoryId" = $4');
+    expect(sqlCall[4]).toBe(mockDirectoryId);
   });
 
   test("number filter uses clean Prisma query when backfill is complete", async () => {
@@ -1322,7 +1329,7 @@ describe("segmentFilterToPrismaQuery", () => {
       },
     ];
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -1366,7 +1373,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1410,7 +1422,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1455,7 +1472,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1505,7 +1527,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1554,7 +1581,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1596,7 +1628,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1637,7 +1674,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1696,7 +1738,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1768,7 +1815,12 @@ describe("segmentFilterToPrismaQuery", () => {
         },
       ];
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        filters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -1802,6 +1854,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
 describe("survey interaction filters", () => {
   const mockSegmentId = "segment-si";
+  const mockDirectoryId = "directory-si";
   const mockWorkspaceId = "workspace-si";
   // Fixed clock so the window cutoff is deterministic.
   const now = new Date("2026-07-20T00:00:00.000Z");
@@ -1843,7 +1896,7 @@ describe("survey interaction filters", () => {
       within: { amount: 1, unit: "months" },
     });
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
     const clause = extractClause(result);
 
     expect(clause.displays.some.createdAt.gte).toEqual(new Date("2026-06-20T00:00:00.000Z"));
@@ -1862,7 +1915,7 @@ describe("survey interaction filters", () => {
       within: { amount: 7, unit: "days" },
     });
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
     const clause = extractClause(result);
 
     expect(clause.NOT.responses.some.survey).toBe(effectivelyWorkspaceVisibleWhere);
@@ -1875,7 +1928,7 @@ describe("survey interaction filters", () => {
       within: { amount: 2, unit: "weeks" },
     });
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
     const clause = extractClause(result);
 
     expect(clause.displays.some.surveyId).toEqual({ in: ["survey_a", "survey_b"] });
@@ -1891,7 +1944,7 @@ describe("survey interaction filters", () => {
       within: { amount: 1, unit: "days" },
     });
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
     const clause = extractClause(result);
 
     expect(clause.NOT.displays.some.createdAt.gte).toEqual(new Date("2026-07-19T00:00:00.000Z"));
@@ -1904,7 +1957,7 @@ describe("survey interaction filters", () => {
       within: { amount: 1, unit: "months" },
     });
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
     const clause = extractClause(result);
 
     expect(clause.responses.some.finished).toBeUndefined();
@@ -1918,7 +1971,7 @@ describe("survey interaction filters", () => {
       within: { amount: 1, unit: "months" },
     });
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
     const clause = extractClause(result);
 
     expect(clause.responses.some.finished).toBe(true);
@@ -1932,15 +1985,17 @@ describe("survey interaction filters", () => {
       within: { amount: 1, unit: "months" },
     });
 
-    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
+    const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockDirectoryId, mockWorkspaceId);
     const clause = extractClause(result);
 
     expect(clause.NOT.responses.some.finished).toBe(true);
   });
-  describe("cross-workspace nested segments", () => {
+  describe("nested segments of another directory", () => {
     // Regression: getSegment looks up by id alone and segmentId comes from a caller-authored filter
-    // tree, so another workspace's segment could be nested and its filters evaluated against contacts
+    // tree, so another directory's segment could be nested and its filters evaluated against contacts
     // the caller controls — probing seeded values against membership reveals the other team's rules.
+    // Decision 24: segments belong to the directory, so a segment of another workspace on the same
+    // directory is the caller's own.
     const nestedFilters: TBaseFilters = [
       {
         id: "nested_filter_1",
@@ -1954,13 +2009,17 @@ describe("survey interaction filters", () => {
       },
     ];
 
-    const buildForeignSegment = (workspaceId: string): TSegmentWithSurveyRefs => ({
-      id: "foreign-segment-id",
+    const buildNestedSegment = (
+      directoryId: string | null,
+      workspaceId: string | null
+    ): TSegmentWithDirectory => ({
+      id: "nested-segment-id",
       filters: nestedFilters,
       workspaceId,
+      directoryId,
       title: "Another team's segment",
       description: null,
-      isPrivate: true,
+      isPrivate: false,
       createdAt: new Date(),
       updatedAt: new Date(),
       surveys: [],
@@ -1974,29 +2033,98 @@ describe("survey interaction filters", () => {
         connector: null,
         resource: {
           id: "segment_1",
-          root: { type: "segment" as const, segmentId: "foreign-segment-id" },
+          root: { type: "segment" as const, segmentId: "nested-segment-id" },
           value: "",
           qualifier: { operator: "userIsIn" },
         },
       },
     ];
 
-    test("does not apply the filters of a segment from another workspace", async () => {
-      vi.mocked(getSegment).mockResolvedValue(buildForeignSegment("someone-elses-workspace"));
+    test("does not apply the filters of a segment from another directory", async () => {
+      vi.mocked(getSegment).mockResolvedValue(buildNestedSegment("someone-elses-directory", "workspace-456"));
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, nestingFilters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        nestingFilters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
       // The foreign segment resolves to {}, so nothing from its filter tree leaks into the query.
       expect(JSON.stringify(result)).not.toContain("enterprise");
     });
 
-    test("still applies the filters of a segment in the same workspace", async () => {
-      vi.mocked(getSegment).mockResolvedValue(buildForeignSegment(mockWorkspaceId));
+    test("does not apply the filters of a segment with no directory", async () => {
+      vi.mocked(getSegment).mockResolvedValue(buildNestedSegment(null, "workspace-456"));
 
-      const result = await segmentFilterToPrismaQuery(mockSegmentId, nestingFilters, mockWorkspaceId);
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        nestingFilters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
+
+      expect(JSON.stringify(result)).not.toContain("enterprise");
+    });
+
+    test("applies the filters of a segment another workspace of the directory made", async () => {
+      vi.mocked(getSegment).mockResolvedValue(buildNestedSegment(mockDirectoryId, "another-workspace"));
+
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        nestingFilters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
 
       expect(result.ok).toBe(true);
+      expect(JSON.stringify(result)).toContain("enterprise");
+    });
+
+    test("does not apply the filters of another workspace's private segment on the directory", async () => {
+      vi.mocked(getSegment).mockResolvedValue({
+        ...buildNestedSegment(mockDirectoryId, "another-workspace"),
+        isPrivate: true,
+      });
+
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        nestingFilters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
+
+      expect(result.ok).toBe(true);
+      expect(JSON.stringify(result)).not.toContain("enterprise");
+    });
+
+    test("applies the filters of the workspace's own private segment", async () => {
+      vi.mocked(getSegment).mockResolvedValue({
+        ...buildNestedSegment(mockDirectoryId, mockWorkspaceId),
+        isPrivate: true,
+      });
+
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        nestingFilters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
+
+      expect(JSON.stringify(result)).toContain("enterprise");
+    });
+
+    test("applies the filters of a segment whose origin workspace was deleted", async () => {
+      vi.mocked(getSegment).mockResolvedValue(buildNestedSegment(mockDirectoryId, null));
+
+      const result = await segmentFilterToPrismaQuery(
+        mockSegmentId,
+        nestingFilters,
+        mockDirectoryId,
+        mockWorkspaceId
+      );
+
       expect(JSON.stringify(result)).toContain("enterprise");
     });
   });

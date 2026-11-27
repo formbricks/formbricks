@@ -39,7 +39,7 @@ describe("doesContactExistInWorkspace", () => {
 
     expect(result).toBe(true);
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-      where: { id: contactId, workspaceId },
+      where: { id: contactId, directory: { workspaces: { some: { id: workspaceId } } } },
       select: { id: true },
     });
   });
@@ -51,7 +51,7 @@ describe("doesContactExistInWorkspace", () => {
 
     expect(result).toBe(false);
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-      where: { id: contactId, workspaceId },
+      where: { id: contactId, directory: { workspaces: { some: { id: workspaceId } } } },
       select: { id: true },
     });
   });

@@ -10,11 +10,28 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import {
+  whereAttributeKeysOfDirectory,
+  whereDirectoryAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
+import {
+  ContactDirectoryMissingError,
+  type TWorkspaceContactDirectory,
+  lockWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  CONTACTS_OLDEST_FIRST,
+  groupContactsByIdentity,
+  pickContactForRow,
+} from "@/modules/ee/contacts/lib/contact-identity";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
-import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
+import { TContactBulkUploadContact, getUniqueValueKey } from "@/modules/ee/contacts/types/contact";
 
-const EMAIL_ATTRIBUTE_KEY = "email";
+type TExistingContactRow = {
+  id: string;
+  attributes: { id: string; attributeKey: { key: string }; createdAt: Date; value: string }[];
+};
 
 type TExistingContact = {
   contactId: string;
@@ -39,22 +56,23 @@ type TContactToCreate = {
 };
 
 /**
- * Extracts user IDs and unique attribute keys from contacts
+ * Extracts the values of `uniqueValueKey` and the unique attribute keys from contacts
  */
 const extractContactMetadata = (
-  contacts: TContactBulkUploadContact[]
+  contacts: TContactBulkUploadContact[],
+  uniqueValueKey: string
 ): {
-  userIdsInContacts: string[];
+  uniqueValuesInContacts: string[];
   attributeKeys: string[];
 } => {
-  const userIdsInContacts: string[] = [];
+  const uniqueValuesInContacts: string[] = [];
   const attributeKeysSet = new Set<string>();
   const attributeKeys: string[] = [];
 
   for (const contact of contacts) {
     for (const attr of contact.attributes) {
-      if (attr.attributeKey.key === "userId") {
-        userIdsInContacts.push(attr.value);
+      if (attr.attributeKey.key === uniqueValueKey) {
+        uniqueValuesInContacts.push(attr.value);
       }
 
       if (!attributeKeysSet.has(attr.attributeKey.key)) {
@@ -64,7 +82,7 @@ const extractContactMetadata = (
     }
   }
 
-  return { userIdsInContacts, attributeKeys };
+  return { uniqueValuesInContacts, attributeKeys };
 };
 
 /**
@@ -178,33 +196,41 @@ const validateAndAdjustAttributeTypes = (
 };
 
 /**
- * Builds a map from email to contact data for existing contacts
+ * The existing contact a request contact updates: of the contacts with its identity value (oldest
+ * first), the one with its userId, otherwise the oldest (spec decision 5). Other matches are left alone.
  */
-const buildExistingContactMap = (
-  existingContactsByEmail: {
-    id: string;
-    attributes: { id: string; attributeKey: { key: string }; createdAt: Date; value: string }[];
-  }[]
-): Map<string, TExistingContact> => {
-  const contactMap = new Map<string, TExistingContact>();
+const findExistingContact = (
+  contact: TContactBulkUploadContact,
+  identityKey: string,
+  contactsByIdentity: Map<string, TExistingContactRow[]>
+): TExistingContact | undefined => {
+  const findValue = (key: string) => contact.attributes.find((attr) => attr.attributeKey.key === key)?.value;
+  const identityValue = findValue(identityKey);
+  if (!identityValue) return undefined;
 
-  for (const contact of existingContactsByEmail) {
-    const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === EMAIL_ATTRIBUTE_KEY);
+  const match = pickContactForRow(contactsByIdentity.get(identityValue) ?? [], findValue("userId"));
+  if (!match) return undefined;
 
-    if (emailAttr) {
-      contactMap.set(emailAttr.value, {
-        contactId: contact.id,
-        attributes: contact.attributes.map((attr) => ({
-          id: attr.id,
-          attributeKey: { key: attr.attributeKey.key },
-          createdAt: attr.createdAt,
-          value: attr.value,
-        })),
-      });
-    }
-  }
+  return {
+    contactId: match.id,
+    attributes: match.attributes.map((attr) => ({
+      id: attr.id,
+      attributeKey: { key: attr.attributeKey.key },
+      createdAt: attr.createdAt,
+      value: attr.value,
+    })),
+  };
+};
 
-  return contactMap;
+/** The key only one contact of the directory may hold a value of, and its values other contacts hold. */
+type TUniqueValueCheck = { key: string; taken: { value: string }[] };
+
+const takesHeldValue = (
+  contactAttributes: TContactBulkUploadContact["attributes"],
+  check: TUniqueValueCheck
+) => {
+  const uniqueAttr = contactAttributes.find((attr) => attr.attributeKey.key === check.key);
+  return uniqueAttr !== undefined && check.taken.some((u) => u.value === uniqueAttr.value);
 };
 
 /**
@@ -213,7 +239,7 @@ const buildExistingContactMap = (
 const processExistingContact = (
   contact: TContactBulkUploadContact,
   existingContact: TExistingContact,
-  existingUserIds: { value: string }[],
+  uniqueValueCheck: TUniqueValueCheck,
   idx: number,
   contactIdxWithConflictingUserIds: number[],
   contactsToUpdate: TContactToUpdate[],
@@ -232,8 +258,7 @@ const processExistingContact = (
     return;
   }
 
-  const userIdAttr = attributesToUpdate.find((attr) => attr.attributeKey.key === "userId");
-  if (userIdAttr && existingUserIds.some((u) => u.value === userIdAttr.value)) {
+  if (takesHeldValue(attributesToUpdate, uniqueValueCheck)) {
     contactIdxWithConflictingUserIds.push(idx);
     return;
   }
@@ -263,15 +288,13 @@ const processExistingContact = (
  */
 const processNewContact = (
   contact: TContactBulkUploadContact,
-  existingUserIds: { value: string }[],
+  uniqueValueCheck: TUniqueValueCheck,
   idx: number,
   contactIdxWithConflictingUserIds: number[],
   contactsToCreate: TContactToCreate[],
   filteredContacts: TContactBulkUploadContact[]
 ): void => {
-  const userIdAttr = contact.attributes.find((attr) => attr.attributeKey.key === "userId");
-
-  if (userIdAttr && existingUserIds.some((u) => u.value === userIdAttr.value)) {
+  if (takesHeldValue(contact.attributes, uniqueValueCheck)) {
     contactIdxWithConflictingUserIds.push(idx);
     return;
   }
@@ -404,12 +427,22 @@ const prepareAttributesForExistingContacts = (
 const BATCH_SIZE = 10000;
 
 /**
- * Upserts attribute keys in batches using raw SQL
+ * Upserts attribute keys of the directory in batches using raw SQL. A new key records `workspaceId` as
+ * the workspace it was created from.
+ *
+ * The conflict target is the `(directoryId, key)` unique index, which the migration runner builds
+ * concurrently after the migrations (`ONLINE_INDEXES`). Postgres needs that exact index to exist and be
+ * valid, or the insert fails with "no unique or exclusion constraint matching the ON CONFLICT
+ * specification". The old `(key, workspaceId)` unique stays until 7.0: a row that hit only that one
+ * would raise instead of upserting, but that needs the same workspace to own the key in another
+ * directory. Joining a directory clears the workspace id from the keys it left in another one
+ * (`releaseOtherDirectoryRows` in the directories module), so that can't happen.
  */
 const upsertAttributeKeysInBatches = async (
   tx: Prisma.TransactionClient,
   keysToUpsert: Map<string, { key: string; name: string; dataType: TContactAttributeDataType }>,
   workspaceId: string,
+  directoryId: string,
   attributeKeyMap: Record<string, string>
 ): Promise<void> => {
   const keysArray = Array.from(keysToUpsert.values());
@@ -425,16 +458,17 @@ const upsertAttributeKeysInBatches = async (
     const dataTypes = batch.map((k) => k.dataType);
 
     const upsertedKeys = await tx.$queryRaw<{ id: string; key: string }[]>`
-      INSERT INTO "ContactAttributeKey" ("id", "key", "name", "workspaceId", "dataType", "created_at", "updated_at")
+      INSERT INTO "ContactAttributeKey" ("id", "key", "name", "workspaceId", "directoryId", "dataType", "created_at", "updated_at")
       SELECT
         unnest(${ids}::text[]),
         unnest(${keys}::text[]),
         unnest(${names}::text[]),
         ${workspaceId},
+        ${directoryId},
         unnest(${dataTypes}::text[]::"ContactAttributeDataType"[]),
         NOW(),
         NOW()
-      ON CONFLICT ("key", "workspaceId")
+      ON CONFLICT ("directoryId", "key")
       DO UPDATE SET
         "name" = EXCLUDED."name",
         "updated_at" = NOW()
@@ -488,10 +522,18 @@ const upsertAttributesInBatches = async (
   }
 };
 
+/**
+ * Creates or updates contacts of `directory`, as sent from `workspaceId`. A contact matches existing ones
+ * by the directory's matching key (`email` or `userId`), which the route has checked is present.
+ *
+ * The other key (`userId` in an email directory, `email` in a userId one) belongs to one contact too: a
+ * contact that would take one another contact holds is skipped, and its index returned in
+ * `contactIdxWithConflictingUserIds` (named before userId directories).
+ */
 export const upsertBulkContacts = async (
   contacts: TContactBulkUploadContact[],
   workspaceId: string,
-  parsedEmails: string[]
+  directory: TWorkspaceContactDirectory
 ): Promise<
   Result<
     {
@@ -501,24 +543,29 @@ export const upsertBulkContacts = async (
   >
 > => {
   const contactIdxWithConflictingUserIds: number[] = [];
-  const { userIdsInContacts, attributeKeys } = extractContactMetadata(contacts);
+  const identityKey = directory.matchingKey;
+  const uniqueValueKey = getUniqueValueKey(identityKey);
+  const { uniqueValuesInContacts, attributeKeys } = extractContactMetadata(contacts, uniqueValueKey);
+  const identityValues = contacts.flatMap((contact) =>
+    contact.attributes.filter((attr) => attr.attributeKey.key === identityKey).map((attr) => attr.value)
+  );
 
-  const [existingUserIds, existingContactsByEmail, existingAttributeKeys] = await Promise.all([
+  const [takenUniqueValues, existingContactsByIdentity, existingAttributeKeys] = await Promise.all([
     prisma.contactAttribute.findMany({
       where: {
-        attributeKey: { workspaceId, key: "userId" },
-        value: { in: userIdsInContacts },
+        attributeKey: whereDirectoryAttributeKey(directory.id, uniqueValueKey),
+        value: { in: uniqueValuesInContacts },
       },
       select: { value: true },
     }),
 
     prisma.contact.findMany({
       where: {
-        workspaceId,
+        directoryId: directory.id,
         attributes: {
           some: {
-            attributeKey: { key: EMAIL_ATTRIBUTE_KEY },
-            value: { in: parsedEmails },
+            attributeKey: whereDirectoryAttributeKey(directory.id, identityKey),
+            value: { in: identityValues },
           },
         },
       },
@@ -533,10 +580,11 @@ export const upsertBulkContacts = async (
         },
         id: true,
       },
+      orderBy: CONTACTS_OLDEST_FIRST,
     }),
 
     prisma.contactAttributeKey.findMany({
-      where: { key: { in: attributeKeys }, workspaceId },
+      where: { ...whereAttributeKeysOfDirectory(directory.id), key: { in: attributeKeys } },
     }),
   ]);
 
@@ -592,22 +640,22 @@ export const upsertBulkContacts = async (
   }
 
   // Build contact lookup map
-  const contactMap = buildExistingContactMap(existingContactsByEmail);
+  const contactsByIdentity = groupContactsByIdentity(existingContactsByIdentity, identityKey);
 
   // Split contacts into ones to update and ones to create
   const contactsToUpdate: TContactToUpdate[] = [];
   const contactsToCreate: TContactToCreate[] = [];
   const filteredContacts: TContactBulkUploadContact[] = [];
 
+  const uniqueValueCheck: TUniqueValueCheck = { key: uniqueValueKey, taken: takenUniqueValues };
   contacts.forEach((contact, idx) => {
-    const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === EMAIL_ATTRIBUTE_KEY);
-    const existingContact = emailAttr ? contactMap.get(emailAttr.value) : undefined;
+    const existingContact = findExistingContact(contact, identityKey, contactsByIdentity);
 
     if (existingContact) {
       processExistingContact(
         contact,
         existingContact,
-        existingUserIds,
+        uniqueValueCheck,
         idx,
         contactIdxWithConflictingUserIds,
         contactsToUpdate,
@@ -616,7 +664,7 @@ export const upsertBulkContacts = async (
     } else {
       processNewContact(
         contact,
-        existingUserIds,
+        uniqueValueCheck,
         idx,
         contactIdxWithConflictingUserIds,
         contactsToCreate,
@@ -629,6 +677,11 @@ export const upsertBulkContacts = async (
     // Execute everything in ONE transaction
     await prisma.$transaction(
       async (tx) => {
+        // The directory was read before this transaction; a removal since then must not get new rows.
+        if ((await lockWorkspaceDirectory(tx, workspaceId))?.id !== directory.id) {
+          throw new ContactDirectoryMissingError();
+        }
+
         const attributeKeyMap = existingAttributeKeys.reduce<Record<string, string>>((acc, keyObj) => {
           acc[keyObj.key] = keyObj.id;
           return acc;
@@ -651,11 +704,15 @@ export const upsertBulkContacts = async (
 
         // Upsert attribute keys in batches
         if (keysToUpsert.size > 0) {
-          await upsertAttributeKeysInBatches(tx, keysToUpsert, workspaceId, attributeKeyMap);
+          await upsertAttributeKeysInBatches(tx, keysToUpsert, workspaceId, directory.id, attributeKeyMap);
         }
 
-        // Create new contacts
-        const newContacts = contactsToCreate.map(() => ({ id: createId(), workspaceId }));
+        // Create new contacts in the directory; the workspace records where each was created.
+        const newContacts = contactsToCreate.map(() => ({
+          id: createId(),
+          directoryId: directory.id,
+          workspaceId,
+        }));
 
         if (newContacts.length > 0) {
           await tx.contact.createMany({ data: newContacts });
@@ -691,6 +748,9 @@ export const upsertBulkContacts = async (
       contactIdxWithConflictingUserIds,
     });
   } catch (error) {
+    if (error instanceof ContactDirectoryMissingError) {
+      return err({ type: "forbidden", details: [{ field: "workspaceId", issue: error.message }] });
+    }
     logger.error({ error }, "Failed to upsert contacts");
 
     return err({

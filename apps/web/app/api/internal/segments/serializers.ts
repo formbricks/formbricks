@@ -13,7 +13,9 @@ export type TSegmentResource = {
   description: string | null;
   isPrivate: boolean;
   filters: TBaseFilters;
-  workspaceId: string;
+  /** The workspace the segment was made in; null once that workspace is gone. Never a scope. */
+  workspaceId: string | null;
+  /** The surveys it targets in the caller's workspace (a shared segment may target other workspaces' too). */
   surveys: string[];
 };
 
@@ -40,4 +42,13 @@ export type TSegmentFilterSurveyResource = {
   id: string;
   name: string;
   status: string;
+};
+
+/**
+ * The segment editor's survey picker: the workspace's surveys, and which of the ids a filter names are
+ * surveys of another workspace on the contact directory (ids only: the caller may not see those surveys).
+ */
+export type TSegmentFilterSurveysResource = {
+  surveys: TSegmentFilterSurveyResource[];
+  otherWorkspaceSurveyIds: string[];
 };

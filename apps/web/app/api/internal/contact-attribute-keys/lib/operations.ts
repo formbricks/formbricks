@@ -19,15 +19,20 @@ import {
   getContactAttributeKeyById,
   updateContactAttributeKey,
 } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { ContactDirectoryMissingError } from "@/modules/ee/contacts/lib/contact-directory";
 import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import type { TCreateContactAttributeKeyBody, TUpdateContactAttributeKeyBody } from "../schemas";
 import { serializeContactAttributeKey } from "../serializers";
 
 /**
- * Contact attribute keys, for the attributes page. Every write needs write access to the key's workspace
- * (`workspace.write`), is charged to the workspace's state-mutation budget, and then needs the Contacts
- * licence (`ensureContactsEnabled`, the gate every contacts write shares), in the server actions' order.
- * Audited on the key, as the actions were.
+ * Contact attribute keys, for the attributes page. Every write needs write access to the workspace the page
+ * acts from (`workspace.write`), is charged to the workspace's state-mutation budget, and then needs the
+ * Contacts licence (`ensureContactsEnabled`, the gate every contacts write shares), in the server actions'
+ * order. Audited on the key, as the actions were.
+ *
+ * A key belongs to the workspace's contact directory, which other workspaces may share; its own
+ * `workspaceId` only records where it was created (and is null for a directory's default keys). So the
+ * workspace always comes from the request and the key must be in that workspace's directory.
  */
 
 /**
@@ -102,6 +107,10 @@ export async function createContactAttributeKeyOperation({
       dataType: body.dataType,
     });
   } catch (error) {
+    // A workspace with no contact directory has nowhere to keep the key: 403 with the reason.
+    if (error instanceof ContactDirectoryMissingError) {
+      return problemForbidden(requestId, error.message, instance);
+    }
     if (error instanceof InvalidInputError) {
       return problemUnprocessableContent(requestId, error.message, {
         instance,
@@ -124,20 +133,22 @@ export async function createContactAttributeKeyOperation({
 }
 
 /**
- * Find the key, then authorize the write in its own workspace (never one the caller names), with its
- * licence. A key that doesn't exist answers the uniform 403. The key goes into the audit entry as its old
- * object before the write, as the server actions recorded it.
+ * Authorize the write in the workspace the caller names, with its licence, then find the key in that
+ * workspace's contact directory. A key that doesn't exist, or is in another directory, answers the uniform
+ * 403. The key goes into the audit entry as its old object before the write, as the server actions
+ * recorded it.
  */
 async function requireExistingKeyWrite(
   context: TRequestContext,
-  contactAttributeKeyId: string
+  contactAttributeKeyId: string,
+  workspaceId: string
 ): Promise<Response | TExistingKey> {
   const { requestId, instance, auditLog } = context;
-  const existing = await getContactAttributeKeyById(contactAttributeKeyId);
-  if (!existing) return problemForbidden(requestId, undefined, instance);
-
-  const access = await requireContactsWrite(context, existing.workspaceId);
+  const access = await requireContactsWrite(context, workspaceId);
   if (access instanceof Response) return access;
+
+  const existing = await getContactAttributeKeyById(contactAttributeKeyId, workspaceId);
+  if (!existing) return problemForbidden(requestId, undefined, instance);
 
   if (auditLog) auditLog.oldObject = existing;
   return existing;
@@ -149,19 +160,21 @@ async function requireExistingKeyWrite(
  */
 export async function updateContactAttributeKeyOperation({
   contactAttributeKeyId,
+  workspaceId,
   body,
   ...context
 }: TRequestContext & {
   contactAttributeKeyId: string;
+  workspaceId: string;
   body: TUpdateContactAttributeKeyBody;
 }): Promise<Response> {
   const { requestId, auditLog } = context;
-  const existing = await requireExistingKeyWrite(context, contactAttributeKeyId);
+  const existing = await requireExistingKeyWrite(context, contactAttributeKeyId, workspaceId);
   if (existing instanceof Response) return existing;
 
   let updated: TContactAttributeKey;
   try {
-    updated = await updateContactAttributeKey(contactAttributeKeyId, {
+    updated = await updateContactAttributeKey(contactAttributeKeyId, workspaceId, {
       name: body.name,
       description: body.description,
     });
@@ -179,13 +192,14 @@ export async function updateContactAttributeKeyOperation({
  */
 export async function deleteContactAttributeKeyOperation({
   contactAttributeKeyId,
+  workspaceId,
   ...context
-}: TRequestContext & { contactAttributeKeyId: string }): Promise<Response> {
-  const existing = await requireExistingKeyWrite(context, contactAttributeKeyId);
+}: TRequestContext & { contactAttributeKeyId: string; workspaceId: string }): Promise<Response> {
+  const existing = await requireExistingKeyWrite(context, contactAttributeKeyId, workspaceId);
   if (existing instanceof Response) return existing;
 
   try {
-    await deleteContactAttributeKey(contactAttributeKeyId);
+    await deleteContactAttributeKey(contactAttributeKeyId, workspaceId);
   } catch (error) {
     return mapKeyWriteError(error, context);
   }

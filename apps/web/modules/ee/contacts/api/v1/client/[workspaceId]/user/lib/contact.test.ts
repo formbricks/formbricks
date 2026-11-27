@@ -29,8 +29,13 @@ describe("getContactByUserIdWithAttributes", () => {
 
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
       where: {
-        workspaceId,
-        attributes: { some: { attributeKey: { key: "userId", workspaceId }, value: userId } },
+        directory: { workspaces: { some: { id: workspaceId } } },
+        attributes: {
+          some: {
+            attributeKey: { key: "userId", directory: { workspaces: { some: { id: workspaceId } } } },
+            value: userId,
+          },
+        },
       },
       select: {
         id: true,
@@ -62,8 +67,13 @@ describe("getContactByUserIdWithAttributes", () => {
 
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
       where: {
-        workspaceId,
-        attributes: { some: { attributeKey: { key: "userId", workspaceId }, value: userId } },
+        directory: { workspaces: { some: { id: workspaceId } } },
+        attributes: {
+          some: {
+            attributeKey: { key: "userId", directory: { workspaces: { some: { id: workspaceId } } } },
+            value: userId,
+          },
+        },
       },
       select: {
         id: true,

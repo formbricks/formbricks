@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 
@@ -70,9 +71,8 @@ const seedContactWithAttributes = async (
   keys: string[]
 ): Promise<{ workspaceId: string; contactId: string; attributeKeyIdsSorted: string[] }> => {
   const organization = await prisma.organization.create({ data: { name: "ENG-2252 org" } });
-  const workspace = await prisma.workspace.create({
-    data: { name: "ENG-2252 workspace", organizationId: organization.id },
-  });
+  const { workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "ENG-2252 workspace");
+  const workspace = { id: workspaceId };
   const contact = await prisma.contact.create({ data: { workspaceId: workspace.id } });
 
   await prisma.contactAttributeKey.createMany({
@@ -105,9 +105,8 @@ const seedContactWithAttributes = async (
 describe("updateAttributes under concurrent identify calls (ENG-2252)", () => {
   test("concurrent updates of one contact with differently-ordered payloads all succeed", async () => {
     const organization = await prisma.organization.create({ data: { name: "ENG-2252 org" } });
-    const workspace = await prisma.workspace.create({
-      data: { name: "ENG-2252 workspace", organizationId: organization.id },
-    });
+    const { workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "ENG-2252 workspace");
+    const workspace = { id: workspaceId };
     const contact = await prisma.contact.create({ data: { workspaceId: workspace.id } });
 
     // "userId" plus 20 custom keys. Zero-padded so ascending name order is unambiguous.

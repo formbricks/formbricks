@@ -1,13 +1,20 @@
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { toV1Contact } from "@/modules/ee/contacts/api/v1/management/contacts/lib/contacts";
+import { findApiKeyWorkspaceOnDirectory } from "@/modules/ee/contacts/lib/api-key-directory-access";
+import { deleteContactInWorkspace } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { deleteContact, getContact } from "./lib/contact";
+import { getContact } from "./lib/contact";
 
 // Please use the methods provided by the client API to update a person
 
+/**
+ * The contact, when the key may act on a workspace that uses the contact's directory. `workspaceId` is
+ * that workspace: deletes are scoped to it, and the response reports it when the contact's own origin
+ * workspace is gone.
+ */
 const fetchAndAuthorizeContact = async (
   contactId: string,
   authentication: NonNullable<TApiKeyAuthentication>,
@@ -19,17 +26,17 @@ const fetchAndAuthorizeContact = async (
     return { error: responses.notFoundResponse("Contact", contactId) };
   }
 
-  if (
-    !(await can(
-      { type: "apiKey", id: authentication.apiKeyId },
-      getWorkspaceAuthorizationActionForMethod(requiredPermission),
-      { type: "workspace", id: contact.workspaceId }
-    ))
-  ) {
+  const workspaceId = await findApiKeyWorkspaceOnDirectory(
+    authentication.apiKeyId,
+    getWorkspaceAuthorizationActionForMethod(requiredPermission),
+    contact.directoryId,
+    authentication.workspacePermissions.map((permission) => permission.workspaceId)
+  );
+  if (!workspaceId) {
     return { error: responses.unauthorizedResponse() };
   }
 
-  return { contact };
+  return { contact: toV1Contact(contact, workspaceId), workspaceId };
 };
 
 export const GET = withV1ApiWrapper({
@@ -101,7 +108,7 @@ export const DELETE = withV1ApiWrapper({
         auditLog.oldObject = result.contact;
       }
 
-      await deleteContact(params.contactId);
+      await deleteContactInWorkspace(params.contactId, result.workspaceId);
       return {
         response: responses.successResponse({ success: "Contact deleted successfully" }),
       };

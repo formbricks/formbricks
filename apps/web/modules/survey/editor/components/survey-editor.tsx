@@ -91,6 +91,9 @@ interface SurveyEditorProps {
   membershipRole?: OrganizationRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
+  hasContactDirectory: boolean;
+  /** The survey's segment when it is from another contact directory than the workspace's (decision 4). */
+  otherDirectorySegmentId?: string | null;
   isSpamProtectionAllowed?: boolean;
   isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
@@ -134,6 +137,8 @@ export const SurveyEditor = ({
   membershipRole,
   colors,
   isUserTargetingAllowed = false,
+  hasContactDirectory,
+  otherDirectorySegmentId = null,
   isSpamProtectionAllowed = false,
   isFormbricksCloud,
   isUnsplashConfigured,
@@ -498,6 +503,8 @@ export const SurveyEditor = ({
               finishedResponseCount={finishedResponseCount}
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
+              hasContactDirectory={hasContactDirectory}
+              otherDirectorySegmentId={otherDirectorySegmentId}
               isSpamProtectionAllowed={isSpamProtectionAllowed}
               workspacePermission={workspacePermission}
               isFormbricksCloud={isFormbricksCloud}

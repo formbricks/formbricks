@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import {
+  createSurvey,
   loadNewSegmentInSurvey,
   selectSurvey,
   updateSurvey,
@@ -76,9 +78,8 @@ const member = (): TSurveyActorContext => ({
 
 const seed = async (): Promise<void> => {
   const organization = await prisma.organization.create({ data: { name: "ENG-6957 Org" } });
-  workspaceId = (
-    await prisma.workspace.create({ data: { name: "ENG-6957 Workspace", organizationId: organization.id } })
-  ).id;
+  // Segments belong to the workspace's contact directory (ENG-7496).
+  ({ workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "ENG-6957 Workspace"));
   ownerId = (await prisma.user.create({ data: { name: "Owner", email: "owner@eng6957.test" } })).id;
   memberId = (await prisma.user.create({ data: { name: "Member", email: "member@eng6957.test" } })).id;
 
@@ -376,5 +377,40 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
 
     expect(await segmentIdOf(ids.W)).toBe(ids.segmentW);
     expect(await prisma.segment.findUnique({ where: { id: ids.segmentW } })).not.toBeNull();
+  });
+
+  test("a new survey can't be created on another survey's private segment", async () => {
+    const create = async (segmentId: string) => {
+      const stored = await prisma.segment.findUniqueOrThrow({
+        where: { id: segmentId },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          isPrivate: true,
+          filters: true,
+          workspaceId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      return createSurvey(
+        workspaceId,
+        {
+          name: "New link survey",
+          type: "link",
+          blocks: BLOCKS as never,
+          segment: { ...stored, surveys: [] } as never,
+        },
+        { creationFacts: { ownerId: null, visibility: "workspace" }, targetingActor: member() }
+      );
+    };
+
+    await expect(create(ids.segmentR)).rejects.toMatchObject({ name: "InvalidInputError" });
+    expect(await prisma.survey.count({ where: { name: "New link survey" } })).toBe(0);
+
+    // A shared segment of the directory is still allowed.
+    const created = await create(ids.shared);
+    expect(await segmentIdOf(created.id)).toBe(ids.shared);
   });
 });

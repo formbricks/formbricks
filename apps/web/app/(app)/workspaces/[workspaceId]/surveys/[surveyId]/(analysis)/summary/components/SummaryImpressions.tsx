@@ -7,6 +7,7 @@ import { TDisplayWithContact } from "@formbricks/types/displays";
 import { TUserLocale } from "@formbricks/types/user";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { timeSince } from "@/lib/time";
+import { ContactNotAvailable } from "@/modules/analysis/components/contact-not-available";
 import { Button } from "@/modules/ui/components/button";
 
 interface SummaryImpressionsProps {
@@ -35,6 +36,29 @@ export const SummaryImpressions = ({
 }: SummaryImpressionsProps) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
+
+  // A contact the workspace no longer reaches (another contact directory, or none) shows no link and none
+  // of its current attributes, like an anonymous display, with the "Contact not available" marker.
+  const renderContact = (display: TDisplayWithContact) => {
+    if (!display.contact) {
+      return <span className="break-all text-slate-600">{t("common.anonymous")}</span>;
+    }
+    if (display.contact.unavailable) {
+      return (
+        <div className="flex flex-wrap items-center gap-x-2">
+          <span className="break-all text-slate-600">{t("common.anonymous")}</span>
+          <ContactNotAvailable />
+        </div>
+      );
+    }
+    return (
+      <Link
+        className="ph-no-capture break-all text-slate-600 hover:underline"
+        href={`/workspaces/${workspace?.id}/contacts/${display.contact.id}`}>
+        {getDisplayContactIdentifier(display)}
+      </Link>
+    );
+  };
 
   const renderContent = () => {
     if (displaysError) {
@@ -74,17 +98,7 @@ export const SummaryImpressions = ({
             <div
               key={display.id}
               className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-xs text-slate-800 last:border-transparent md:text-sm">
-              <div className="col-span-2 pl-4 md:pl-6">
-                {display.contact ? (
-                  <Link
-                    className="ph-no-capture break-all text-slate-600 hover:underline"
-                    href={`/workspaces/${workspace?.id}/contacts/${display.contact.id}`}>
-                    {getDisplayContactIdentifier(display)}
-                  </Link>
-                ) : (
-                  <span className="break-all text-slate-600">{t("common.anonymous")}</span>
-                )}
-              </div>
+              <div className="col-span-2 pl-4 md:pl-6">{renderContact(display)}</div>
               <div className="col-span-2 px-4 text-slate-500 md:px-6">
                 {timeSince(display.createdAt.toString(), locale)}
               </div>

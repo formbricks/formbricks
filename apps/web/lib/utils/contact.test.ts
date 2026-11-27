@@ -61,4 +61,10 @@ describe("getContactIdentifier", () => {
     const result = getContactIdentifier(null, contactAttributes);
     expect(result).toBe("test@example.com");
   });
+
+  test("falls back to the userId saved on the response for a contact the workspace no longer reaches", () => {
+    const contact: TResponseContact = { id: "contact5", unavailable: true };
+
+    expect(getContactIdentifier(contact, { userId: "saved-user" })).toBe("saved-user");
+  });
 });

@@ -2,7 +2,12 @@ import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
+import {
+  getContactDirectoryUploadDestination,
+  getSharedContactDirectoryName,
+} from "@/modules/ee/contacts/directories/lib/directory-service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ContactDataView } from "./components/contact-data-view";
@@ -14,7 +19,9 @@ export const ContactsPage = async ({
 }) => {
   const params = await paramsProps;
 
-  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, isOwner, isManager, organization, workspace } = await getWorkspaceAuth(
+    params.workspaceId
+  );
 
   const t = await getTranslate();
 
@@ -22,10 +29,27 @@ export const ContactsPage = async ({
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const contactAttributeKeys = isContactsEnabled ? await getContactAttributeKeys(workspace.id) : [];
+  const contactDirectory = await getWorkspaceContactDirectory(workspace.id);
+  const hasContactDirectory = Boolean(contactDirectory);
 
+  const [contactAttributeKeys, sharedDirectoryName, uploadDestination] =
+    isContactsEnabled && hasContactDirectory
+      ? await Promise.all([
+          getContactAttributeKeys(workspace.id),
+          getSharedContactDirectoryName(workspace.id),
+          getContactDirectoryUploadDestination(workspace.id),
+        ])
+      : [[], null, null];
+
+  // Spec decision 13: Upload CSV stays in the header, disabled, until the workspace has a directory.
   const AddContactsButton = (
-    <UploadContactsCSVButton workspaceId={workspace.id} contactAttributeKeys={contactAttributeKeys} />
+    <UploadContactsCSVButton
+      workspaceId={workspace.id}
+      contactAttributeKeys={contactAttributeKeys}
+      matchingKey={contactDirectory?.matchingKey ?? "email"}
+      destination={uploadDestination}
+      disabled={!hasContactDirectory}
+    />
   );
 
   return (
@@ -36,6 +60,9 @@ export const ContactsPage = async ({
       organizationId={organization.id}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
+      hasContactDirectory={hasContactDirectory}
+      isOwnerOrManager={isOwner || isManager}
+      sharedDirectoryName={sharedDirectoryName}
       cta={AddContactsButton}>
       <ContactDataView
         workspaceId={workspace.id}
@@ -43,6 +70,7 @@ export const ContactsPage = async ({
         contactAttributeKeys={contactAttributeKeys}
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
+        sharedDirectoryName={sharedDirectoryName}
       />
     </ContactsPageLayout>
   );

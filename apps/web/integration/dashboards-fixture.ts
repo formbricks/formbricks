@@ -1,6 +1,7 @@
 import { prisma } from "@formbricks/database";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 
 /**
@@ -53,18 +54,20 @@ export const seedDashboardsFixture = async (): Promise<TDashboardsFixture> => {
 
   const organization = await prisma.organization.create({ data: { name: "Dashboards Org" } });
   const foreignOrganization = await prisma.organization.create({ data: { name: "Foreign Org" } });
-  const [workspace, otherWorkspace, foreignWorkspace] = await Promise.all([
-    prisma.workspace.create({ data: { name: "Dashboards", organizationId: organization.id } }),
-    prisma.workspace.create({ data: { name: "Other", organizationId: organization.id } }),
-    prisma.workspace.create({ data: { name: "Foreign", organizationId: foreignOrganization.id } }),
-  ]);
+  // Each on a contact directory of its own, as the migration leaves every existing workspace.
+  const [{ workspaceId }, { workspaceId: otherWorkspaceId }, { workspaceId: foreignWorkspaceId }] =
+    await Promise.all([
+      createWorkspaceWithContactDirectory(organization.id, "Dashboards"),
+      createWorkspaceWithContactDirectory(organization.id, "Other"),
+      createWorkspaceWithContactDirectory(foreignOrganization.id, "Foreign"),
+    ]);
 
   const [dataset, unassignedDataset, foreignDataset] = await Promise.all([
     prisma.feedbackDirectory.create({
       data: {
         name: "Main dataset",
         organizationId: organization.id,
-        workspaces: { create: { workspaceId: workspace.id } },
+        workspaces: { create: { workspaceId } },
       },
     }),
     prisma.feedbackDirectory.create({ data: { name: "Unassigned", organizationId: organization.id } }),
@@ -72,7 +75,7 @@ export const seedDashboardsFixture = async (): Promise<TDashboardsFixture> => {
       data: {
         name: "Foreign dataset",
         organizationId: foreignOrganization.id,
-        workspaces: { create: { workspaceId: foreignWorkspace.id } },
+        workspaces: { create: { workspaceId: foreignWorkspaceId } },
       },
     }),
   ]);
@@ -85,7 +88,7 @@ export const seedDashboardsFixture = async (): Promise<TDashboardsFixture> => {
     if (permission) {
       const team = await prisma.team.create({ data: { name: label, organizationId: organization.id } });
       await prisma.teamUser.create({ data: { role: "contributor", teamId: team.id, userId: user.id } });
-      await prisma.workspaceTeam.create({ data: { permission, teamId: team.id, workspaceId: workspace.id } });
+      await prisma.workspaceTeam.create({ data: { permission, teamId: team.id, workspaceId } });
     }
     return user.id;
   };
@@ -102,7 +105,7 @@ export const seedDashboardsFixture = async (): Promise<TDashboardsFixture> => {
       data: { hashedKey: `${label}-hash`, label, organizationId: organization.id },
     });
     await prisma.apiKeyWorkspace.create({
-      data: { apiKeyId: apiKey.id, permission, workspaceId: workspace.id },
+      data: { apiKeyId: apiKey.id, permission, workspaceId },
     });
     return apiKey.id;
   };
@@ -117,9 +120,9 @@ export const seedDashboardsFixture = async (): Promise<TDashboardsFixture> => {
 
   return {
     organizationId: organization.id,
-    workspaceId: workspace.id,
-    otherWorkspaceId: otherWorkspace.id,
-    foreignWorkspaceId: foreignWorkspace.id,
+    workspaceId,
+    otherWorkspaceId,
+    foreignWorkspaceId,
     datasetId: dataset.id,
     unassignedDatasetId: unassignedDataset.id,
     foreignDatasetId: foreignDataset.id,

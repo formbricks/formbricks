@@ -8,6 +8,7 @@ import {
 import type { TV3ContactAttributeFilter } from "./parse-v3-contacts-list-query";
 
 const workspaceId = "clws0000000000000000000001";
+const directoryScope = { directory: { workspaces: { some: { id: workspaceId } } } };
 const attributeKeyId = "clak0000000000000000000001";
 
 const str = (operator: string, values: string[] = ["Pro"]) =>
@@ -99,8 +100,10 @@ describe("buildAttributeFilterCondition — date", () => {
 });
 
 describe("buildV3ContactsWhere", () => {
-  test("is the workspace scope alone without filters", () => {
-    expect(buildV3ContactsWhere({ workspaceId, filters: [] })).toEqual({ workspaceId });
+  // A contact is the workspace's when it is in the workspace's contact directory, whichever workspace
+  // created it; the contact's own `workspaceId` is never the filter.
+  test("is the workspace's directory scope alone without filters", () => {
+    expect(buildV3ContactsWhere({ workspaceId, filters: [] })).toEqual(directoryScope);
   });
 
   test("keeps today's search semantics and ANDs every filter under the workspace scope", () => {
@@ -113,7 +116,7 @@ describe("buildV3ContactsWhere", () => {
     });
 
     expect(where).toEqual({
-      workspaceId,
+      ...directoryScope,
       OR: [
         { attributes: { some: { value: { contains: "ada", mode: "insensitive" } } } },
         { id: { contains: "ada", mode: "insensitive" } },

@@ -31,7 +31,7 @@ describe("getContactAttributeKeys", () => {
     const result = await getContactAttributeKeys(mockWorkspaceId);
 
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { workspaceId: mockWorkspaceId },
+      where: { directory: { workspaces: { some: { id: mockWorkspaceId } } } },
       select: { key: true },
     });
 

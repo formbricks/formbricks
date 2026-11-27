@@ -10,7 +10,7 @@ import { getContactAuth } from "./contact-auth";
 vi.mock("@formbricks/database", () => ({
   prisma: {
     contact: {
-      findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -53,46 +53,49 @@ describe("getContactAuth", () => {
     vi.clearAllMocks();
   });
 
-  test("returns the workspace authorization when the contact belongs to the workspace", async () => {
+  test("returns the workspace authorization when the contact is in the workspace's directory", async () => {
     mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(VICTIM_WORKSPACE_ID));
-    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as Awaited<
-      ReturnType<typeof mockPrismaContact.findUnique>
+    mockPrismaContact.findFirst.mockResolvedValueOnce({ id: CONTACT_ID } as Awaited<
+      ReturnType<typeof mockPrismaContact.findFirst>
     >);
 
     const auth = await getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID);
 
     expect(auth.workspace.id).toBe(VICTIM_WORKSPACE_ID);
     expect(notFound).not.toHaveBeenCalled();
-    // The contact lookup stays narrow — it exists to place the contact in a workspace, nothing else.
-    expect(mockPrismaContact.findUnique).toHaveBeenCalledWith({
-      where: { id: CONTACT_ID },
-      select: { workspaceId: true },
+    // The tenant check is the contact's directory, never its own (origin) `workspaceId`.
+    expect(mockPrismaContact.findFirst).toHaveBeenCalledWith({
+      where: { id: CONTACT_ID, directory: { workspaces: { some: { id: VICTIM_WORKSPACE_ID } } } },
+      select: { id: true },
     });
   });
 
-  test("404s when the caller pairs their own workspace with a foreign contact", async () => {
+  test("404s when the caller pairs their own workspace with a contact of another directory", async () => {
     // The cross-tenant read: authorization for the attacker's own workspace succeeds, but the
-    // contact in the URL belongs to someone else.
+    // contact in the URL is not in that workspace's directory, so the scoped lookup finds nothing.
     mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(ATTACKER_WORKSPACE_ID));
-    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as Awaited<
-      ReturnType<typeof mockPrismaContact.findUnique>
-    >);
+    mockPrismaContact.findFirst.mockResolvedValueOnce(null);
 
     await expect(getContactAuth(ATTACKER_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow("NEXT_NOT_FOUND");
     expect(notFound).toHaveBeenCalled();
+    expect(mockPrismaContact.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: CONTACT_ID, directory: { workspaces: { some: { id: ATTACKER_WORKSPACE_ID } } } },
+      })
+    );
   });
 
   test("404s when the contact does not exist, so a foreign id is indistinguishable", async () => {
     mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(ATTACKER_WORKSPACE_ID));
-    mockPrismaContact.findUnique.mockResolvedValueOnce(null);
+    mockPrismaContact.findFirst.mockResolvedValueOnce(null);
 
     await expect(getContactAuth(ATTACKER_WORKSPACE_ID, "contact_missing")).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
   test("propagates the workspace authorization failure instead of masking it as a 404", async () => {
     mockGetWorkspaceAuth.mockRejectedValueOnce(new Error("not authorized"));
-    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as Awaited<
-      ReturnType<typeof mockPrismaContact.findUnique>
+    mockPrismaContact.findFirst.mockResolvedValueOnce({ id: CONTACT_ID } as Awaited<
+      ReturnType<typeof mockPrismaContact.findFirst>
     >);
 
     await expect(getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow("not authorized");
@@ -104,7 +107,7 @@ describe("getContactAuth", () => {
       clientVersion: "5.0.0",
     });
     mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(VICTIM_WORKSPACE_ID));
-    mockPrismaContact.findUnique.mockRejectedValueOnce(prismaError);
+    mockPrismaContact.findFirst.mockRejectedValueOnce(prismaError);
 
     await expect(getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow(DatabaseError);
   });
@@ -112,7 +115,7 @@ describe("getContactAuth", () => {
   test("re-throws a non-Prisma failure of the contact lookup unchanged", async () => {
     const error = new Error("Unknown error");
     mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(VICTIM_WORKSPACE_ID));
-    mockPrismaContact.findUnique.mockRejectedValueOnce(error);
+    mockPrismaContact.findFirst.mockRejectedValueOnce(error);
 
     await expect(getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow(error);
   });

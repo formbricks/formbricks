@@ -6,8 +6,13 @@ import { TContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TJsPersonState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
+import {
+  uniqueAttributeKey,
+  whereDirectoryAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { formatAttributeMessage } from "@/modules/ee/contacts/lib/attribute-messages";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import { requireWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getPersonSegmentIds } from "./segments";
 
 /** Message codes whose presence alone reveals whether an identifier is already a contact here. */
@@ -30,25 +35,25 @@ const contactStateSelect = {
     },
   },
   responses: {
-    select: { surveyId: true, createdAt: true, finished: true },
+    select: { surveyId: true, createdAt: true, finished: true, survey: { select: { workspaceId: true } } },
   },
   displays: {
-    select: { surveyId: true, createdAt: true },
+    select: { surveyId: true, createdAt: true, survey: { select: { workspaceId: true } } },
     orderBy: { createdAt: "desc" as const },
   },
 } satisfies Prisma.ContactSelect;
 
 /**
- * Comprehensive contact data fetcher - gets everything needed in one query
- * Eliminates redundant queries by fetching contact + user state data together
+ * The contact with this userId in the directory, with everything the user state needs, in one query.
+ * By directory only: in a shared directory the contact may have been created from another workspace.
  */
-const getContactWithFullData = async (workspaceId: string, userId: string) => {
+const getContactWithFullData = async (directoryId: string, userId: string) => {
   return prisma.contact.findFirst({
     where: {
-      workspaceId,
+      directoryId,
       attributes: {
         some: {
-          attributeKey: { key: "userId", workspaceId },
+          attributeKey: whereDirectoryAttributeKey(directoryId, "userId"),
           value: userId,
         },
       },
@@ -57,12 +62,13 @@ const getContactWithFullData = async (workspaceId: string, userId: string) => {
   });
 };
 
-/**
- * Creates contact with comprehensive data structure
- */
-const createContact = async (workspaceId: string, userId: string) => {
+/** Creates the contact in the directory, recording the workspace it was created from. */
+const createContact = async (directoryId: string, workspaceId: string, userId: string) => {
   return prisma.contact.create({
     data: {
+      directory: {
+        connect: { id: directoryId },
+      },
       workspace: {
         connect: { id: workspaceId },
       },
@@ -70,7 +76,7 @@ const createContact = async (workspaceId: string, userId: string) => {
         create: [
           {
             attributeKey: {
-              connect: { key_workspaceId: { key: "userId", workspaceId } },
+              connect: uniqueAttributeKey(directoryId, "userId"),
             },
             value: userId,
           },
@@ -88,6 +94,7 @@ const createContact = async (workspaceId: string, userId: string) => {
 const buildUserStateFromContact = async (
   contactData: NonNullable<Awaited<ReturnType<typeof getContactWithFullData>>>,
   workspaceId: string,
+  directoryId: string,
   userId: string,
   device: "phone" | "desktop"
 ) => {
@@ -95,20 +102,25 @@ const buildUserStateFromContact = async (
   // in no segments and hide every segment-targeted survey until the next sync.
   // The contact's displays/responses are already loaded here, so interaction-only segments can be
   // evaluated in memory without any additional query (see getPersonSegmentIds).
-  const segments = await getPersonSegmentIds(workspaceId, contactData.id, userId, device, {
+  const segments = await getPersonSegmentIds(workspaceId, directoryId, contactData.id, userId, device, {
     displays: contactData.displays,
     responses: contactData.responses,
   });
 
-  // Process data efficiently from already-fetched contact
-  const displays = contactData.displays.map((display) => ({
+  // In a shared directory the contact also has displays and responses from other workspaces' surveys.
+  // Segments above use them all (a shared segment can filter on any of them), but the SDK only gets this
+  // workspace's: they drive its recontact wait and must not reveal the other workspaces' survey ids.
+  const ownDisplays = contactData.displays.filter((display) => display.survey.workspaceId === workspaceId);
+  const displays = ownDisplays.map((display) => ({
     surveyId: display.surveyId,
     createdAt: display.createdAt,
   }));
 
-  const responses = contactData.responses.map((response) => response.surveyId);
+  const responses = contactData.responses
+    .filter((response) => response.survey.workspaceId === workspaceId)
+    .map((response) => response.surveyId);
 
-  const lastDisplayAt = contactData.displays.length > 0 ? contactData.displays[0].createdAt : null;
+  const lastDisplayAt = ownDisplays.length > 0 ? ownDisplays[0].createdAt : null;
 
   return {
     contactId: contactData.id,
@@ -208,12 +220,15 @@ export const updateUser = async (
   device: "phone" | "desktop",
   attributes?: TContactAttributesInput
 ): Promise<{ state: TJsPersonState; messages?: string[]; errors?: string[] }> => {
+  // Throws for a workspace with no directory, before anything is read or written.
+  const { id: directoryId } = await requireWorkspaceContactDirectory(workspaceId);
+
   // Single comprehensive query - gets contact + user state data
-  let contactData = await getContactWithFullData(workspaceId, userId);
+  let contactData = await getContactWithFullData(directoryId, userId);
 
   // Create contact if doesn't exist
   if (!contactData) {
-    contactData = await createContact(workspaceId, userId);
+    contactData = await createContact(directoryId, workspaceId, userId);
   }
 
   // Process contact attributes efficiently (single pass)
@@ -282,7 +297,13 @@ export const updateUser = async (
   }
 
   // Build user state from already-fetched data (no additional query needed)
-  const userStateData = await buildUserStateFromContact(contactData, workspaceId, userId, device);
+  const userStateData = await buildUserStateFromContact(
+    contactData,
+    workspaceId,
+    directoryId,
+    userId,
+    device
+  );
 
   // Transitional SDK back-compat (ENG-1067): echo the language to the SDK in a legacy form (the first
   // known alias), matching the legacy codes the client environment serializer exposes, so SDK clients

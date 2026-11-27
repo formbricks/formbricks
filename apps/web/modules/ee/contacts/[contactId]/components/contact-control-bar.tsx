@@ -6,10 +6,10 @@ import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditContactAttributesModal } from "@/modules/ee/contacts/components/edit-contact-attributes-modal";
 import { deleteContact } from "@/modules/ee/contacts/lib/api-client";
+import { getTranslatedContactDeleteError } from "@/modules/ee/contacts/lib/contact-delete-errors";
 import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
@@ -24,8 +24,11 @@ interface TContactAttributeWithKeyInfo {
 
 interface ContactControlBarProps {
   readonly contactId: string;
+  readonly workspaceId: string;
   readonly isReadOnly: boolean;
   readonly isQuotasAllowed: boolean;
+  /** Set when other workspaces use this directory too: the contact can't be deleted from here. */
+  readonly sharedDirectoryName?: string | null;
   readonly publishedLinkSurveys: PublishedLinkSurvey[];
   readonly allAttributeKeys: TContactAttributeKey[];
   readonly currentAttributes: TContactAttributeWithKeyInfo[];
@@ -33,15 +36,16 @@ interface ContactControlBarProps {
 
 export const ContactControlBar = ({
   contactId,
+  workspaceId,
   isReadOnly,
   isQuotasAllowed,
+  sharedDirectoryName,
   publishedLinkSurveys,
   allAttributeKeys,
   currentAttributes,
 }: ContactControlBarProps) => {
   const router = useRouter();
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+  const workspaceBasePath = `/workspaces/${workspaceId}`;
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
@@ -58,12 +62,17 @@ export const ContactControlBar = ({
   const handleDeletePerson = async () => {
     setIsDeletingPerson(true);
     try {
-      await deleteContact(contactId);
+      await deleteContact(contactId, workspaceId);
       router.refresh();
       router.push(`${workspaceBasePath}/contacts`);
       toast.success(t("workspace.contacts.contact_deleted_successfully"));
     } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      toast.error(
+        getTranslatedContactDeleteError(
+          getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
     }
     setIsDeletingPerson(false);
     setDeleteDialogOpen(false);
@@ -100,6 +109,10 @@ export const ContactControlBar = ({
       onClick: () => {
         setDeleteDialogOpen(true);
       },
+      // Contacts of a directory other workspaces use can't be deleted: said here, before any dialog opens.
+      disabledReason: sharedDirectoryName
+        ? t("workspace.contacts.delete_contact_shared_directory_note", { directoryName: sharedDirectoryName })
+        : undefined,
       isVisible: !isReadOnly,
     },
   ];
@@ -131,6 +144,7 @@ export const ContactControlBar = ({
         open={isEditAttributesModalOpen}
         setOpen={setIsEditAttributesModalOpen}
         contactId={contactId}
+        workspaceId={workspaceId}
         currentAttributes={currentAttributes}
         attributeKeys={allAttributeKeys}
       />

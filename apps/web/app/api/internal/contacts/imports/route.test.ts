@@ -24,21 +24,27 @@ const mocks = vi.hoisted(() => ({
   getOrganizationIdFromWorkspaceId: vi.fn(),
   createContactsFromCSV: vi.fn(),
   contactCount: vi.fn(),
+  requireWorkspaceContactDirectory: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({ prisma: { contact: { count: mocks.contactCount } } }));
 vi.mock("@/lib/authorization", () => ({ can: mocks.can, assertCan: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: mocks.getOrganizationIdFromWorkspaceId,
-  getOrganizationIdFromContactId: vi.fn(),
-  getWorkspaceIdFromContactId: vi.fn(),
   getWorkspaceIdFromSurveyId: vi.fn(),
 }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: mocks.getIsContactsEnabled }));
 vi.mock("@/modules/ee/contacts/lib/contacts", () => ({
+  ContactInSharedDirectoryError: class extends Error {},
+  deleteContactInWorkspace: vi.fn(),
+  getContactInWorkspace: vi.fn(),
+}));
+vi.mock("@/modules/ee/contacts/lib/contacts-csv-upload", () => ({
   createContactsFromCSV: mocks.createContactsFromCSV,
-  deleteContact: vi.fn(),
-  getContact: vi.fn(),
+}));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  requireWorkspaceContactDirectory: mocks.requireWorkspaceContactDirectory,
 }));
 vi.mock("@/modules/ee/contacts/lib/update-contact-attributes", () => ({ updateContactAttributes: vi.fn() }));
 vi.mock("@/modules/ee/contacts/lib/contact-survey-link", () => ({ getContactSurveyLink: vi.fn() }));
@@ -65,6 +71,7 @@ const USER_ID = "cluser1111111111111111111";
 const ORG_ID = "clorg11111111111111111111";
 const WORKSPACE_ID = "clwork1111111111111111111";
 const URL = `http://localhost/api/internal/contacts/imports?workspaceId=${WORKSPACE_ID}`;
+const DIRECTORY = { id: "cldirectory11111111111111", matchingKey: "email" as const };
 
 type TBody = {
   csvData: Record<string, string>[];
@@ -119,7 +126,12 @@ beforeEach(() => {
   mocks.getIsContactsEnabled.mockResolvedValue(true);
   mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(ORG_ID);
   mocks.contactCount.mockResolvedValue(40);
-  mocks.createContactsFromCSV.mockResolvedValue({ contacts: importedContacts });
+  mocks.createContactsFromCSV.mockResolvedValue({
+    contacts: importedContacts,
+    multiMatchCount: 0,
+    leftOutCounts: { email: 0, userId: 0 },
+  });
+  mocks.requireWorkspaceContactDirectory.mockResolvedValue(DIRECTORY);
 });
 
 describe("POST /api/internal/contacts/imports: authorization, in the action's order", () => {
@@ -219,15 +231,20 @@ describe("POST /api/internal/contacts/imports: the import", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      data: { contacts: importedContacts.map(({ id }) => ({ id })) },
+      data: {
+        contacts: importedContacts.map(({ id }) => ({ id })),
+        multiMatchCount: 0,
+        leftOutCounts: { email: 0, userId: 0 },
+      },
     });
     expect(mocks.createContactsFromCSV).toHaveBeenCalledWith(
       sent.csvData,
       WORKSPACE_ID,
+      DIRECTORY,
       "update",
       sent.attributeMap
     );
-    expect(mocks.contactCount).toHaveBeenCalledWith({ where: { workspaceId: WORKSPACE_ID } });
+    expect(mocks.contactCount).toHaveBeenCalledWith({ where: { directoryId: DIRECTORY.id } });
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "createdFromCSV",
@@ -252,6 +269,28 @@ describe("POST /api/internal/contacts/imports: the import", () => {
     );
   });
 
+  test("answers how many records matched several contacts of the directory", async () => {
+    mocks.createContactsFromCSV.mockResolvedValue({
+      contacts: importedContacts,
+      multiMatchCount: 3,
+      leftOutCounts: { email: 0, userId: 0 },
+    });
+
+    expect((await (await post(body())).json()).data.multiMatchCount).toBe(3);
+  });
+
+  test("refuses a workspace with no contact directory with the reason, before any write", async () => {
+    const { ContactDirectoryMissingError, CONTACT_DIRECTORY_MISSING_MESSAGE } =
+      await import("@/modules/ee/contacts/lib/contact-directory");
+    mocks.requireWorkspaceContactDirectory.mockRejectedValue(new ContactDirectoryMissingError());
+
+    const response = await post(body());
+
+    expect(response.status).toBe(403);
+    expect((await problem(response)).detail).toBe(CONTACT_DIRECTORY_MISSING_MESSAGE);
+    expect(mocks.createContactsFromCSV).not.toHaveBeenCalled();
+  });
+
   test("answers values that don't fit their attribute's type as validationErrors, with no event", async () => {
     const validationErrors = [{ key: "age", dataType: "number", invalidValues: ["old"] }];
     mocks.createContactsFromCSV.mockResolvedValue({ validationErrors });
@@ -267,7 +306,8 @@ describe("POST /api/internal/contacts/imports: the import", () => {
   });
 
   test("answers the import's own refusal (the attribute key cap) as a 422 with its message", async () => {
-    const message = "Importing these contacts adds 6 attribute keys, past the 150 a workspace can have";
+    const message =
+      "Importing these contacts adds 6 attribute keys, past the 150 a contact directory can have";
     mocks.createContactsFromCSV.mockRejectedValue(new ValidationError(message));
 
     const response = await post(body());
@@ -288,30 +328,19 @@ describe("POST /api/internal/contacts/imports: the import", () => {
 });
 
 describe("POST /api/internal/contacts/imports: per-record validation", () => {
-  test.each([
-    ["a record without an email", [{ plan: "pro" }], "Missing email field for one or more records"],
-    ["an empty email", [{ email: "" }], "Email field is empty for one or more records"],
-    [
-      "a repeated email",
-      [{ email: "ada@example.com" }, { email: "ada@example.com" }],
-      "Duplicate emails found in the records",
-    ],
-    [
-      "a repeated userId",
-      [
-        { email: "ada@example.com", userId: "u1" },
-        { email: "bob@example.com", userId: "u1" },
-      ],
-      "Duplicate userIds found in the records",
-    ],
-  ])("refuses %s with 400", async (_label, csvData, reason) => {
-    const response = await post(body({ csvData }));
+  // The identity column is the directory's matching key (email or userId), so the import checks it once
+  // the directory is known and refuses a bad file with 422 and its reason, before anything is written.
+  test("leaves the identity column to the import, which knows the directory's matching key", async () => {
+    const csvData = [{ userId: "user-1" }];
+    mocks.createContactsFromCSV.mockRejectedValue(
+      new ValidationError("Missing email field for one or more records")
+    );
 
-    expect(response.status).toBe(400);
-    expect((await problem(response)).invalid_params).toEqual([
-      expect.objectContaining({ name: "csvData", reason }),
-    ]);
-    expect(mocks.createContactsFromCSV).not.toHaveBeenCalled();
+    const response = await post(body({ csvData, attributeMap: { userId: "userId" } }));
+
+    expect(response.status).toBe(422);
+    expect((await problem(response)).detail).toBe("Missing email field for one or more records");
+    expect(mocks.createContactsFromCSV.mock.calls[0][0]).toEqual(csvData);
   });
 
   test("refuses an attribute mapped twice", async () => {

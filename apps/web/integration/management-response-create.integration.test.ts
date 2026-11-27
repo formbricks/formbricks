@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { createResponseWithQuotaEvaluation as createV1ManagementResponse } from "@/app/api/v1/management/responses/lib/response";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import { createResponseWithQuotaEvaluation as createV2ManagementResponse } from "@/modules/api/v2/management/responses/lib/response";
 import { ZResponseInput as ZV2ManagementResponseInput } from "@/modules/api/v2/management/responses/types/responses";
@@ -46,9 +47,8 @@ const seed = async () => {
       billing: { create: { limits: { projects: null, monthly: { responses: null, miu: null } } } },
     },
   });
-  const workspace = await prisma.workspace.create({
-    data: { name: "ENG-3722 workspace", organizationId: organization.id },
-  });
+  const { workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "ENG-3722 workspace");
+  const workspace = { id: workspaceId };
   const survey = await prisma.survey.create({
     data: { name: "ENG-3722 survey", workspaceId: workspace.id, status: "inProgress" },
   });

@@ -124,7 +124,13 @@ export const getSectionDestination = (
 // unknown slug (a typo, a renamed page) opens organization General instead of a 404, and no URL segment
 // is ever echoed into the path. "general" and "teams" exist in the workspace area too; /settings is
 // organization settings first, so the organization pages win.
-const ORGANIZATION_SETTINGS_SLUGS = new Set(["general", "teams", "api-keys", "feedback-directories"]);
+const ORGANIZATION_SETTINGS_SLUGS = new Set([
+  "general",
+  "teams",
+  "api-keys",
+  "feedback-directories",
+  "contact-directories",
+]);
 // Organization pages that 404 on Cloud; there they open General instead.
 const SELF_HOSTED_ORGANIZATION_SETTINGS_SLUGS = new Set(["usage", "domain"]);
 const ACCOUNT_SETTINGS_SLUGS = new Set(["profile", "notifications", "authorized-apps"]);

@@ -39,7 +39,7 @@ describe("getContactIdsByUserIds", () => {
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledTimes(1);
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: {
-        attributeKey: { key: "userId", workspaceId },
+        attributeKey: { key: "userId", directory: { workspaces: { some: { id: workspaceId } } } },
         value: { in: ["u1", "u2"] },
       },
       select: { value: true, contactId: true },

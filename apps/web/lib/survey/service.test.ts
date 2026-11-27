@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { createId } from "@paralleldrive/cuid2";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ActionClass, Prisma, Survey } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -30,6 +30,10 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectoryId,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import { testInputValidation } from "@/vitestSetup";
@@ -88,6 +92,15 @@ vi.mock("@/lib/membership/service", () => ({
 }));
 
 // Mock actionClass service
+// Every workspace here is on one contact directory, which its segments belong to (decision 24).
+const mockDirectoryId = "cldirectory0000000000001";
+vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  CONTACT_DIRECTORY_MISSING_MESSAGE: "A contact directory needs to be set up for this workspace.",
+  getWorkspaceContactDirectoryId: vi.fn(async () => mockDirectoryId),
+  // Read by the recursion check's batched segment lookup (`getSegmentsByIds`).
+  getWorkspaceContactDirectory: vi.fn(async () => ({ id: mockDirectoryId, matchingKey: "email" })),
+}));
+
 vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
 }));
@@ -665,6 +678,7 @@ describe("Tests for updateSurvey", () => {
         isPrivate: true,
         filters: [],
         workspaceId: "clotherworkspace1234567890",
+        directoryId: "clotherdirectory12345678",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -766,8 +780,8 @@ describe("Tests for updateSurvey", () => {
       // ENG-1939/ENG-2115 guard restricts to draft-to-draft writes.
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
       prisma.segment.findUnique.mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
-      } as never); // segment.id belongs to the survey's workspace (passes the segment guard)
+        directoryId: mockDirectoryId,
+      } as never); // segment.id belongs to the survey workspace's directory (passes the segment guard)
       prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
 
       await updateSurveyInternal(
@@ -811,7 +825,7 @@ describe("Tests for updateSurvey", () => {
     ])("does not write %s", async (_case, overrides) => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment(overrides));
       prisma.segment.findUnique.mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       } as never);
       prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
 
@@ -826,7 +840,7 @@ describe("Tests for updateSurvey", () => {
     test("does not write a segment the survey is not on, nor link it unless segment.surveys names it", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
       prisma.segment.findUnique.mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       } as never);
       prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
 
@@ -867,7 +881,7 @@ describe("Tests for updateSurvey", () => {
     test("refuses the save when the own segment changed since it was read", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
       prisma.segment.findUnique.mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       } as never);
       prisma.segment.updateMany.mockResolvedValueOnce({ count: 0 });
 
@@ -883,7 +897,7 @@ describe("Tests for updateSurvey", () => {
     test("links the survey to a shared segment that segment.surveys names it on", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
       prisma.segment.findUnique.mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       } as never);
       prisma.segment.findFirst.mockResolvedValueOnce({ isPrivate: false, filters: [] } as never);
       prisma.survey.update.mockResolvedValue({ ...mockSurveyOutput, status: "draft" } as never);
@@ -910,15 +924,15 @@ describe("Tests for updateSurvey", () => {
             connect: {
               id: "clsharedsegment000000001",
               isPrivate: false,
-              workspaceId: updateSurveyInput.workspaceId,
+              directoryId: mockDirectoryId,
             },
           },
         },
         select: { id: true },
       });
-      // The target is looked up inside the survey's workspace.
+      // The target is looked up inside the survey workspace's directory (decision 24).
       expect(prisma.segment.findFirst).toHaveBeenCalledWith({
-        where: { id: "clsharedsegment000000001", workspaceId: updateSurveyInput.workspaceId },
+        where: { id: "clsharedsegment000000001", directoryId: mockDirectoryId },
         select: { isPrivate: true, filters: true },
       });
       expect(prisma.segment.updateMany).not.toHaveBeenCalled();
@@ -927,7 +941,7 @@ describe("Tests for updateSurvey", () => {
     test("refuses to link the survey to another survey's private segment", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
       prisma.segment.findUnique.mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       } as never);
       prisma.segment.findFirst.mockResolvedValueOnce({ isPrivate: true, filters: [] } as never);
 
@@ -1011,7 +1025,7 @@ describe("Tests for updateSurvey", () => {
     test("rejects an over-bounds segment filter tree even when validation is skipped (draft save)", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
       vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       }); // segment belongs to the survey's workspace (passes the segment guard)
 
       // One node over the tree-wide cap. Junk-shaped on purpose: the bounds walk counts raw nodes
@@ -1053,7 +1067,7 @@ describe("Tests for updateSurvey", () => {
     test("still saves a draft whose segment filters are within bounds but semantically invalid", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
       vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       });
       vi.mocked(prisma.survey.update, { partial: true }).mockResolvedValueOnce({
         ...mockSurveyOutput,
@@ -1150,6 +1164,7 @@ describe("Tests for updateSurvey", () => {
           segment: ownSegment([]),
         } as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
         prisma.segment.findUnique.mockResolvedValueOnce({
+          directoryId: mockDirectoryId,
           workspaceId: updateSurveyInput.workspaceId,
         } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
         prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
@@ -1203,6 +1218,7 @@ describe("Tests for updateSurvey", () => {
           segment: ownSegment([]),
         } as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
         prisma.segment.findUnique.mockResolvedValueOnce({
+          directoryId: mockDirectoryId,
           workspaceId: updateSurveyInput.workspaceId,
         } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
         const malformed = [
@@ -1352,7 +1368,7 @@ describe("Tests for updateSurvey", () => {
     test("rejects an over-cap segment.surveys list on the draft path without any survey lookup", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
       vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       });
 
       // Every id is a valid cuid2 — only the cap can reject this list.
@@ -1389,7 +1405,7 @@ describe("Tests for updateSurvey", () => {
     test("rejects a non-id junk string in segment.surveys on the draft path without any survey lookup", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
       vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
+        directoryId: mockDirectoryId,
       });
 
       await expect(
@@ -2632,6 +2648,41 @@ describe("Tests for createSurvey", () => {
     });
 
     // ENG-6870: a new app survey's targeting may only read surveys its creator can see.
+    // Decision 3: filters target contacts, and a workspace with no contact directory has none.
+    test("refuses seeded targeting in a workspace with no contact directory", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getWorkspaceContactDirectoryId).mockResolvedValue(null);
+      const filters = [
+        {
+          id: "clf01234567890123456789012",
+          connector: null,
+          resource: {
+            id: "clf11234567890123456789012",
+            root: { type: "attribute", contactAttributeKey: "plan" },
+            qualifier: { operator: "equals" },
+            value: "pro",
+          },
+        },
+      ] as unknown as TBaseFilters;
+
+      try {
+        await expect(
+          createSurvey(
+            mockWorkspaceId,
+            { ...mockCreateSurveyInput, type: "app" },
+            {
+              creationFacts: WORKSPACE_CREATION_FACTS,
+              targetingActor: OWNER_TARGETING_ACTOR,
+              privateSegmentFilters: filters,
+            }
+          )
+        ).rejects.toThrow(new InvalidInputError(CONTACT_DIRECTORY_MISSING_MESSAGE));
+        expect(prisma.survey.create).not.toHaveBeenCalled();
+      } finally {
+        vi.mocked(getWorkspaceContactDirectoryId).mockImplementation(async () => mockDirectoryId);
+      }
+    });
+
     test("refuses seeded targeting that names a survey hidden from the creator", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({
@@ -2827,6 +2878,7 @@ describe("Tests for createSurvey", () => {
         isPrivate: false,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: mockDirectoryId,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -2859,6 +2911,7 @@ describe("Tests for createSurvey", () => {
             segment: {
               connect: {
                 id: "clseg123456789012345678901",
+                isPrivate: false,
               },
             },
           }),
@@ -2874,6 +2927,7 @@ describe("Tests for createSurvey", () => {
         isPrivate: false,
         filters: [],
         workspaceId: "clotherworkspace1234567890",
+        directoryId: "clotherdirectory12345678",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -3076,7 +3130,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       });
       const result = await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
       expect(prisma.segment.findFirst).toHaveBeenCalledWith({
-        where: { id: mockNewSegmentId, workspaceId: mockSurveyOutput.workspaceId },
+        where: { id: mockNewSegmentId, directoryId: mockDirectoryId },
         select: { isPrivate: true },
       });
       expect(prisma.survey.update).toHaveBeenCalledWith({
@@ -3086,7 +3140,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
             connect: {
               id: mockNewSegmentId,
               isPrivate: false,
-              workspaceId: mockSurveyOutput.workspaceId,
+              directoryId: mockDirectoryId,
             },
           },
         },
@@ -3581,7 +3635,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
           }
         : null,
     } as never);
-    prisma.segment.findUnique.mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as never);
+    prisma.segment.findUnique.mockResolvedValueOnce({ directoryId: mockDirectoryId } as never);
     if (!ownSegment) {
       prisma.segment.findFirst.mockResolvedValueOnce({ isPrivate: false, filters: storedFilters } as never);
     }
@@ -3661,5 +3715,196 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     await save(interaction([restrictedId]), {});
 
     expect(prisma.segment.updateMany).toHaveBeenCalled();
+  });
+});
+
+// Decision 3: a new workspace has no contact directory until an owner or manager assigns one. Its app
+// surveys still get a private segment, kept in the workspace, and it takes no filters.
+describe("app survey targeting in a workspace with no contact directory", () => {
+  const PLAN_FILTER = [
+    {
+      id: "clf01234567890123456789012",
+      connector: null,
+      resource: {
+        id: "clf11234567890123456789012",
+        root: { type: "attribute", contactAttributeKey: "plan" },
+        qualifier: { operator: "equals" },
+        value: "pro",
+      },
+    },
+  ] as unknown as TBaseFilters;
+
+  beforeEach(() => {
+    vi.mocked(getWorkspaceContactDirectoryId).mockResolvedValue(null);
+    vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+  });
+
+  afterEach(() => {
+    vi.mocked(getWorkspaceContactDirectoryId).mockImplementation(async () => mockDirectoryId);
+  });
+
+  const saveDraft = (filters: TBaseFilters) =>
+    updateSurveyInternal(
+      {
+        ...updateSurveyInput,
+        status: "draft",
+        type: "app",
+        segment: { ...OWN_PRIVATE_SEGMENT, filters },
+      } as never,
+      true
+    );
+
+  test("saves the survey's own private segment again", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: null,
+      workspaceId: updateSurveyInput.workspaceId,
+    } as never);
+    prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
+
+    await saveDraft([]);
+
+    expect(prisma.segment.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  test("refuses filters, which could match no contact", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: null,
+      workspaceId: updateSurveyInput.workspaceId,
+    } as never);
+
+    await expect(saveDraft(PLAN_FILTER)).rejects.toThrow(
+      new InvalidInputError(CONTACT_DIRECTORY_MISSING_MESSAGE)
+    );
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("still refuses another workspace's segment", async () => {
+    // Stored with no segment, so the one sent is not the survey's own (that one is kept, see below).
+    prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: null,
+      workspaceId: "clotherworkspace1234567890",
+    } as never);
+
+    await expect(saveDraft([])).rejects.toThrow(ResourceNotFoundError);
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("an app survey stored on another contact directory's segment (decisions 1 and 4)", () => {
+  const OLD_DIRECTORY_FILTER = [
+    {
+      id: "clf01234567890123456789012",
+      connector: null,
+      resource: {
+        id: "clf11234567890123456789012",
+        root: { type: "attribute", contactAttributeKey: "plan" },
+        qualifier: { operator: "equals" },
+        value: "pro",
+      },
+    },
+  ] as unknown as TBaseFilters;
+
+  /** The live survey as stored: on its own private segment, which sits in the directory it left. */
+  const storedSurvey = () =>
+    ({
+      ...mockSurveyOutput,
+      status: "inProgress",
+      type: "app",
+      segment: {
+        ...OWN_PRIVATE_SEGMENT,
+        filters: OLD_DIRECTORY_FILTER,
+        surveys: [{ id: updateSurveyInput.id }],
+      },
+    }) as never;
+
+  const pause = (filters: TBaseFilters = OLD_DIRECTORY_FILTER, segmentId = OWN_PRIVATE_SEGMENT.id) =>
+    updateSurvey({
+      ...updateSurveyInput,
+      name: "Renamed",
+      status: "paused",
+      type: "app",
+      segment: { ...OWN_PRIVATE_SEGMENT, id: segmentId, filters },
+    });
+
+  const expectNoSegmentWrite = () => {
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+    expect(prisma.segment.update).not.toHaveBeenCalled();
+    expect(prisma.segment.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.survey.updateMany).not.toHaveBeenCalled();
+    // The one survey write is the save itself, which carries no segment.
+    expect(prisma.survey.update).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(prisma.survey.update).mock.calls[0][0].data).not.toHaveProperty("segment");
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+  });
+
+  afterEach(() => {
+    vi.mocked(getWorkspaceContactDirectoryId).mockImplementation(async () => mockDirectoryId);
+  });
+
+  test("saves a status change and an edit after the workspace joined another directory", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(storedSurvey());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: "cloldirectory00000000001",
+      workspaceId: updateSurveyInput.workspaceId,
+    } as never);
+    prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+    await pause();
+
+    expect(vi.mocked(prisma.survey.update).mock.calls[0][0].data).toMatchObject({
+      name: "Renamed",
+      status: "paused",
+    });
+    expectNoSegmentWrite();
+  });
+
+  test("saves when the workspace has no directory, filters and all", async () => {
+    vi.mocked(getWorkspaceContactDirectoryId).mockResolvedValue(null);
+    prisma.survey.findUnique.mockResolvedValueOnce(storedSurvey());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: "cloldirectory00000000001",
+      workspaceId: updateSurveyInput.workspaceId,
+    } as never);
+    prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+    await pause();
+
+    expectNoSegmentWrite();
+  });
+
+  test("writes no filter edit to that segment", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(storedSurvey());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: "cloldirectory00000000001",
+      workspaceId: updateSurveyInput.workspaceId,
+    } as never);
+    prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+    await pause([]);
+
+    expectNoSegmentWrite();
+  });
+
+  test("still refuses another directory's segment the survey is not stored with", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(storedSurvey());
+    prisma.segment.findUnique.mockResolvedValueOnce({
+      directoryId: "cloldirectory00000000001",
+      workspaceId: updateSurveyInput.workspaceId,
+    } as never);
+
+    await expect(pause(OLD_DIRECTORY_FILTER, "clforeignsegment00000001")).rejects.toThrow(
+      ResourceNotFoundError
+    );
+    expect(prisma.survey.update).not.toHaveBeenCalled();
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
   });
 });

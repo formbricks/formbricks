@@ -6,7 +6,7 @@ import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
 import {
   ZContactCSVAttributeMap,
   ZContactCSVDuplicateAction,
-  ZContactCSVUploadResponse,
+  ZContactCSVRecords,
 } from "@/modules/ee/contacts/types/contact";
 
 /**
@@ -17,6 +17,13 @@ import {
 export const CONTACT_ATTRIBUTE_VALUE_MAX_LENGTH = 65_536;
 
 export const ZContactParams = z.object({ contactId: ZId }).strict();
+
+/**
+ * The workspace a contact write acts from: the page's, authorized. A contact belongs to a contact directory
+ * several workspaces may share, and its own `workspaceId` only records where it was created, so the caller
+ * names the workspace and the contact must be in that workspace's directory.
+ */
+export const ZContactWorkspaceQuery = z.object({ workspaceId: ZId }).strict();
 
 /**
  * `PUT /api/internal/contacts/{contactId}/attributes` body: every attribute the contact keeps, by key (the
@@ -57,13 +64,14 @@ export const ZContactImportQuery = z.object({ workspaceId: ZId }).strict();
 
 /**
  * `POST /api/internal/contacts/imports` body: the CSV's records with their columns renamed to attribute keys,
- * what to do with a contact whose email exists, and the dialog's column-to-attribute map. The record and map
- * schemas carry the import's caps (`modules/ee/contacts/lib/csv-import-limits.ts`): records, columns, key and
- * value lengths, no NUL; an email in every record and no repeated email or userId; no attribute mapped twice.
+ * what to do with a contact whose identity value exists, and the dialog's column-to-attribute map. The record
+ * and map schemas carry the import's caps (`modules/ee/contacts/lib/csv-import-limits.ts`): records, columns,
+ * key and value lengths, no NUL; no attribute mapped twice. The identity column (the directory's matching
+ * key: email or userId) and repeated identity values or userIds are checked once the directory is known.
  */
 export const ZContactImportBody = z
   .object({
-    csvData: ZContactCSVUploadResponse,
+    csvData: ZContactCSVRecords,
     duplicateContactsAction: ZContactCSVDuplicateAction,
     attributeMap: ZContactCSVAttributeMap,
   })

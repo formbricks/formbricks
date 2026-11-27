@@ -2,11 +2,12 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
+import { assertV3ContactDirectory, assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
 import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { V3_CONTACT_SELECT, serializeV3Contact } from "../serializers";
 import { buildV3ContactsCursorWhere, buildV3ContactsOrderBy, buildV3ContactsWhere } from "./contacts-where";
 import {
@@ -61,6 +62,8 @@ export async function listV3Contacts({
 
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
+    const directory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (directory instanceof Response) return directory;
 
     const { workspaceId } = authResult;
 
@@ -70,7 +73,7 @@ export async function listV3Contacts({
     const attributeKeys =
       requestedKeys.length > 0
         ? await prisma.contactAttributeKey.findMany({
-            where: { workspaceId, key: { in: requestedKeys } },
+            where: { ...whereAttributeKeysOfWorkspace(workspaceId), key: { in: requestedKeys } },
             select: { id: true, key: true, dataType: true },
           })
         : [];

@@ -29,6 +29,10 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { verifyResponseRecaptcha } from "@/modules/api/lib/verify-response-recaptcha";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getOpenedByCreativeMeta } from "@/modules/ee/creatives/lib/attribution";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
@@ -107,10 +111,32 @@ const parseClientResponseBody = async (
   }
 };
 
-/** User identification is an enterprise feature (contacts). */
-const isUserIdentificationAllowed = async (workspaceId: string): Promise<boolean> => {
+/**
+ * Why a submission's userId is refused, or null. User identification is an enterprise feature
+ * (contacts), and a userId names a contact of the workspace's directory, so a workspace with no
+ * directory has none (decision 13).
+ */
+const getUserIdentificationRefusal = async (
+  workspaceId: string,
+  userId: string | null | undefined
+): Promise<{ response: Response } | null> => {
+  if (!userId) return null;
+
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-  return getIsContactsEnabled(organizationId);
+  if (!(await getIsContactsEnabled(organizationId))) {
+    return {
+      response: responses.forbiddenResponse(
+        "User identification is only available for enterprise users.",
+        true
+      ),
+    };
+  }
+
+  if (!(await getWorkspaceContactDirectory(workspaceId))) {
+    return { response: responses.forbiddenResponse(CONTACT_DIRECTORY_MISSING_MESSAGE, true) };
+  }
+
+  return null;
 };
 
 /** Why the survey does not take this submission (another workspace, not running, PIN), or null. */
@@ -302,14 +328,8 @@ export const POST = withV1ApiWrapper({
 
     const responseInputData: TClientResponseInput = responseInputValidation.data;
 
-    if (responseInputData.userId && !(await isUserIdentificationAllowed(workspaceId))) {
-      return {
-        response: responses.forbiddenResponse(
-          "User identification is only available for enterprise users.",
-          true
-        ),
-      };
-    }
+    const identificationRefusal = await getUserIdentificationRefusal(workspaceId, responseInputData.userId);
+    if (identificationRefusal) return identificationRefusal;
 
     // get and check survey
     const survey = await getSurvey(responseInputData.surveyId);

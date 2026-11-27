@@ -1,0 +1,684 @@
+import "server-only";
+import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
+import { ZId } from "@formbricks/types/common";
+import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
+import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
+import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { validateInputs } from "@/lib/utils/validate";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  getReservedFutureDefaultAttributeKeys,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
+import {
+  whereAttributeKeysOfDirectory,
+  whereDirectoryAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
+import {
+  type TWorkspaceContactDirectory,
+  withWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  CONTACTS_OLDEST_FIRST,
+  groupContactsByIdentity,
+  pickContactForRow,
+} from "@/modules/ee/contacts/lib/contact-identity";
+import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
+import {
+  TContact,
+  ZContactCSVAttributeMap,
+  ZContactCSVDuplicateAction,
+  ZContactCSVRecords,
+  getContactCSVUploadSchema,
+} from "../types/contact";
+
+// Shared include clause for contact queries
+const contactAttributesInclude = {
+  attributes: {
+    select: {
+      attributeKey: { select: { key: true } },
+      value: true,
+    },
+  },
+} satisfies Prisma.ContactInclude;
+
+// Helper to create attribute objects for Prisma create operations with typed columns. Keys are
+// connected by the ids the upload already read, as the update path does.
+const createAttributeConnections = (
+  record: Record<string, string>,
+  attributeKeyMap: Map<string, string>,
+  attributeTypeMap: Map<string, TAttributeTypeInfo>
+) =>
+  Object.entries(record).map(([key, value]) => {
+    const dataType = attributeTypeMap.get(key)?.dataType ?? "string";
+    const columns = prepareAttributeColumnsForStorage(value, dataType);
+    const attributeKeyId = attributeKeyMap.get(key);
+    if (!attributeKeyId) {
+      throw new ValidationError(`Attribute key "${key}" not found in attribute key map`);
+    }
+
+    return {
+      attributeKey: {
+        connect: { id: attributeKeyId },
+      },
+      value: columns.value,
+      valueNumber: columns.valueNumber,
+      valueDate: columns.valueDate,
+    };
+  });
+
+/**
+ * Keys besides the matching key whose value at most one contact of a directory holds, as identify keeps
+ * them: `userId` in an email directory, `email` in a userId directory. The matching key's value picks the
+ * contact rather than clashing with it.
+ */
+export const getUniqueValueKeys = (identityKey: string): TUniqueValueKey[] =>
+  identityKey === "email" ? ["userId"] : ["email"];
+
+type TUniqueValueKey = "userId" | "email";
+
+/** For each unique key, the contacts already holding each value the upload names. */
+type TTakenValues = Map<TUniqueValueKey, Map<string, Set<string>>>;
+
+/**
+ * The row without the unique values another contact already holds, and the keys it left out. A row for an
+ * existing contact keeps that contact's own value in their place, so an overwrite doesn't clear it. The
+ * rest of the row is still imported, as identify does when an email or userId is taken.
+ */
+const leaveOutValuesOfOtherContacts = (
+  record: Record<string, string>,
+  existingContact: TExistingContactFromCsv | null,
+  takenValues: TTakenValues
+): { record: Record<string, string>; leftOut: TUniqueValueKey[] } => {
+  const result = { ...record };
+  const leftOut: TUniqueValueKey[] = [];
+
+  for (const [key, holdersByValue] of takenValues) {
+    const value = result[key];
+    const holders = value ? holdersByValue.get(value) : undefined;
+    if (!holders || holders.size === 0 || (existingContact && holders.has(existingContact.id))) continue;
+
+    delete result[key];
+    leftOut.push(key);
+    const ownValue = existingContact?.attributes.find((attr) => attr.attributeKey.key === key)?.value;
+    if (ownValue) result[key] = ownValue;
+  }
+
+  return { record: result, leftOut };
+};
+
+/**
+ * Extracts unique identity values, userIds, and attribute keys from CSV data
+ */
+const extractCsvMetadata = (
+  csvData: Record<string, string>[],
+  identityKey: string
+): {
+  csvIdentityValues: string[];
+  csvKeys: Set<string>;
+  attributeValuesByKey: Map<string, string[]>;
+} => {
+  const csvIdentityValues = Array.from(new Set(csvData.map((r) => r[identityKey]).filter(Boolean)));
+  const csvKeys = new Set<string>();
+  const attributeValuesByKey = new Map<string, string[]>();
+
+  for (const record of csvData) {
+    for (const [key, value] of Object.entries(record)) {
+      csvKeys.add(key);
+
+      const existingValues = attributeValuesByKey.get(key) ?? [];
+      if (value && value.trim() !== "") {
+        existingValues.push(value);
+      }
+      attributeValuesByKey.set(key, existingValues);
+    }
+  }
+
+  return { csvIdentityValues, csvKeys, attributeValuesByKey };
+};
+
+/**
+ * Builds a map of attribute keys to their detected/existing data types
+ */
+type TAttributeTypeInfo = {
+  dataType: TContactAttributeDataType;
+  isExisting: boolean; // true = from DB, false = newly detected
+};
+
+const buildAttributeTypeMap = (
+  attributeValuesByKey: Map<string, string[]>,
+  existingAttributeKeys: { key: string; dataType: TContactAttributeDataType }[],
+  lowercaseToActualKeyMap: Map<string, string>
+): Map<string, TAttributeTypeInfo> => {
+  const attributeTypeMap = new Map<string, TAttributeTypeInfo>();
+
+  for (const [key, values] of attributeValuesByKey) {
+    const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
+    const existingKey = actualKey ? existingAttributeKeys.find((ak) => ak.key === actualKey) : null;
+
+    if (existingKey) {
+      attributeTypeMap.set(key, { dataType: existingKey.dataType, isExisting: true });
+    } else {
+      const firstValue = values.find((v) => v !== "");
+      const detectedType = firstValue ? detectAttributeDataType(firstValue) : "string";
+      attributeTypeMap.set(key, { dataType: detectedType, isExisting: false });
+    }
+  }
+
+  return attributeTypeMap;
+};
+
+/**
+ * Finds invalid values for a given attribute type
+ */
+const findInvalidValuesForType = (values: string[], dataType: TContactAttributeDataType): string[] => {
+  const invalidValues: string[] = [];
+
+  for (const value of values) {
+    const columns = prepareAttributeColumnsForStorage(value, dataType);
+    const parseFailed =
+      (dataType === "number" && columns.valueNumber === null) ||
+      (dataType === "date" && columns.valueDate === null);
+
+    if (parseFailed) {
+      invalidValues.push(value);
+    }
+  }
+
+  return invalidValues;
+};
+
+interface TCsvAttributeValidationError {
+  key: string;
+  dataType: TContactAttributeDataType;
+  invalidValues: string[];
+}
+
+/**
+ * Validates attribute values against their types.
+ * - For EXISTING typed attributes: returns validation errors
+ * - For NEW attributes: downgrades to string if values are inconsistent
+ */
+const validateAndAdjustCsvAttributeTypes = (
+  attributeTypeMap: Map<string, TAttributeTypeInfo>,
+  attributeValuesByKey: Map<string, string[]>
+): TCsvAttributeValidationError[] => {
+  const typeValidationWarnings: string[] = [];
+  const validationErrors: TCsvAttributeValidationError[] = [];
+
+  for (const [key, typeInfo] of attributeTypeMap) {
+    if (typeInfo.dataType === "string") continue;
+
+    const values = attributeValuesByKey.get(key) || [];
+    const invalidValues = findInvalidValuesForType(values, typeInfo.dataType);
+
+    if (invalidValues.length === 0) continue;
+
+    if (typeInfo.isExisting) {
+      // EXISTING typed attribute: collect error
+      validationErrors.push({ key, dataType: typeInfo.dataType, invalidValues });
+      continue;
+    }
+
+    // NEW attribute: downgrade to string
+    attributeTypeMap.set(key, { dataType: "string", isExisting: false });
+    typeValidationWarnings.push(
+      `Attribute "${key}" has mixed or invalid values for type "${typeInfo.dataType}", treating as string type`
+    );
+  }
+
+  if (typeValidationWarnings.length > 0) {
+    logger.warn({ warnings: typeValidationWarnings }, "Type validation warnings during CSV upload");
+  }
+
+  return validationErrors;
+};
+
+/**
+ * Creates missing attribute keys in the database, refusing (`ValidationError`, before anything is written)
+ * keys that aren't safe identifiers, reserved keys, and an import that would take the contact directory past
+ * `MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT` keys, the cap every other path that creates keys holds.
+ */
+const createMissingAttributeKeys = async (
+  csvKeys: Set<string>,
+  lowercaseToActualKeyMap: Map<string, string>,
+  attributeKeyMap: Map<string, string>,
+  attributeTypeMap: Map<string, TAttributeTypeInfo>,
+  workspaceId: string,
+  directoryId: string
+): Promise<void> => {
+  const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
+
+  if (missingKeys.length === 0) return;
+
+  // Validate that all missing keys are safe identifiers
+  const invalidKeys = missingKeys.filter((key) => !isSafeIdentifier(key));
+  if (invalidKeys.length > 0) {
+    throw new ValidationError(
+      `Invalid attribute key(s): ${invalidKeys.join(", ")}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.`
+    );
+  }
+
+  const reservedKeys = getReservedFutureDefaultAttributeKeys(missingKeys);
+  if (reservedKeys.length > 0) {
+    throw new ValidationError(getReservedFutureDefaultAttributeKeyIssue(reservedKeys));
+  }
+
+  // Deduplicate by lowercase to avoid creating duplicates like "firstName" and "firstname"
+  const uniqueMissingKeys = new Map<string, string>();
+  for (const key of missingKeys) {
+    const lowerKey = key.toLowerCase();
+    if (!uniqueMissingKeys.has(lowerKey)) {
+      uniqueMissingKeys.set(lowerKey, key);
+    }
+  }
+
+  // `attributeKeyMap` holds every key the directory has, read with the import's other lookups.
+  if (attributeKeyMap.size + uniqueMissingKeys.size > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+    throw new ValidationError(
+      `Importing these contacts adds ${uniqueMissingKeys.size} attribute keys, past the ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} a contact directory can have`
+    );
+  }
+
+  // Under the workspace's lock, like the contact writes, and only while the directory is still its own.
+  await withWorkspaceDirectory(
+    workspaceId,
+    (tx) =>
+      tx.contactAttributeKey.createMany({
+        data: Array.from(uniqueMissingKeys.values()).map((key) => ({
+          key,
+          name: formatSnakeCaseToTitleCase(key),
+          dataType: attributeTypeMap.get(key)?.dataType ?? "string",
+          // The directory owns the key; the workspace records where it was created.
+          directoryId,
+          workspaceId,
+        })),
+        skipDuplicates: true,
+      }),
+    { expectedDirectoryId: directoryId }
+  );
+
+  // Fetch and update the maps with new keys. Read by directory: a key another workspace of a shared
+  // directory created at the same moment carries that workspace's id.
+  const newAttributeKeys = await prisma.contactAttributeKey.findMany({
+    where: {
+      ...whereAttributeKeysOfDirectory(directoryId),
+      key: { in: Array.from(uniqueMissingKeys.values()) },
+    },
+    select: { key: true, id: true, dataType: true },
+  });
+
+  for (const attrKey of newAttributeKeys) {
+    attributeKeyMap.set(attrKey.key, attrKey.id);
+    lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
+  }
+};
+
+type TExistingContactFromCsv = {
+  id: string;
+  attributes: { attributeKey: { key: string; id: string }; value: string }[];
+};
+
+type TCsvProcessingContext = {
+  lowercaseToActualKeyMap: Map<string, string>;
+  /** Existing contacts by identity value, oldest first. One value can match several contacts. */
+  identityToContactsMap: Map<string, TExistingContactFromCsv[]>;
+  identityKey: string;
+  takenValues: TTakenValues;
+  attributeKeyMap: Map<string, string>;
+  attributeTypeMap: Map<string, TAttributeTypeInfo>;
+  duplicateContactsAction: "skip" | "update" | "overwrite";
+  workspaceId: string;
+  directoryId: string;
+  /** The chunk's transaction, which holds the workspace's lock (`withWorkspaceDirectory`). */
+  client: Prisma.TransactionClient;
+};
+
+type TCsvRecordResult = {
+  contact: TContact | null;
+  /** The row matched several contacts and updated one of them (spec decision 5). */
+  updatedOneOfSeveral: boolean;
+  /** Unique values the row named that another contact already holds, so they weren't written. */
+  leftOut: TUniqueValueKey[];
+};
+
+const UNIQUE_VALUE_KEYS: readonly TUniqueValueKey[] = ["email", "userId"];
+
+/**
+ * The rows with `email` and `userId` spelled as their keys, whatever case the file used. The identity
+ * check, the duplicate check and the taken-value lookup read those columns by name, and the write matches
+ * keys case-insensitively, so all of them have to see the same column. A row with two columns for one key
+ * (`email` and `Email`) is refused: which value would be stored is not clear.
+ */
+export const canonicalizeCsvColumns = (csvData: Record<string, string>[]): Record<string, string>[] =>
+  csvData.map((row) => {
+    const canonical: Record<string, string> = {};
+    const columnsByKey = new Map<string, string>();
+    for (const [column, value] of Object.entries(row)) {
+      const lower = column.toLowerCase();
+      const earlier = columnsByKey.get(lower);
+      if (earlier !== undefined) {
+        throw new ValidationError(`The columns "${earlier}" and "${column}" set the same attribute`);
+      }
+      columnsByKey.set(lower, column);
+      canonical[UNIQUE_VALUE_KEYS.find((key) => key.toLowerCase() === lower) ?? column] = value;
+    }
+    return canonical;
+  });
+
+const missingIdentityMessage = (identityKey: string): string =>
+  identityKey === "email"
+    ? "Email is required for all contacts"
+    : `${identityKey} is required for all contacts`;
+
+/**
+ * Processes a single CSV record to create or update a contact
+ */
+const processCsvRecord = async (
+  record: Record<string, string>,
+  ctx: TCsvProcessingContext
+): Promise<TCsvRecordResult> => {
+  const {
+    lowercaseToActualKeyMap,
+    identityToContactsMap,
+    identityKey,
+    takenValues,
+    attributeKeyMap,
+    attributeTypeMap,
+    duplicateContactsAction,
+    workspaceId,
+    directoryId,
+    client,
+  } = ctx;
+  // Map CSV keys to actual DB keys (case-insensitive matching)
+  const mappedRecord: Record<string, string> = {};
+  for (const [key, value] of Object.entries(record)) {
+    const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
+    if (!actualKey) {
+      throw new ValidationError(`Attribute key "${key}" not found in attribute key map`);
+    }
+    mappedRecord[actualKey] = value;
+  }
+
+  const identityValue = mappedRecord[identityKey];
+  if (!identityValue) {
+    throw new ValidationError(missingIdentityMessage(identityKey));
+  }
+
+  const matches = identityToContactsMap.get(identityValue) ?? [];
+  const existingContact = pickContactForRow(matches, mappedRecord.userId);
+
+  if (!existingContact) {
+    // A new contact can't take another contact's userId (in an email directory) or email (in a userId one).
+    const { record: recordToCreate, leftOut } = leaveOutValuesOfOtherContacts(
+      mappedRecord,
+      null,
+      takenValues
+    );
+    // Create new contact in the directory; the workspace records where it was created.
+    const created = await client.contact.create({
+      data: {
+        directoryId,
+        workspaceId,
+        attributes: {
+          create: createAttributeConnections(recordToCreate, attributeKeyMap, attributeTypeMap),
+        },
+      },
+      include: contactAttributesInclude,
+    });
+    // Written for this workspace, so `workspaceId` is set.
+    return { contact: { ...created, workspaceId }, updatedOneOfSeveral: false, leftOut };
+  }
+
+  if (duplicateContactsAction === "skip") {
+    return { contact: null, updatedOneOfSeveral: false, leftOut: [] };
+  }
+
+  const { record: recordToProcess, leftOut } = leaveOutValuesOfOtherContacts(
+    mappedRecord,
+    existingContact,
+    takenValues
+  );
+  const contact = await handleDuplicateContact(
+    recordToProcess,
+    existingContact,
+    attributeKeyMap,
+    attributeTypeMap,
+    duplicateContactsAction,
+    workspaceId,
+    client
+  );
+  return { contact, updatedOneOfSeveral: matches.length > 1, leftOut };
+};
+
+/**
+ * Updates or overwrites the matched contact with the row, already cleared of values other contacts hold.
+ */
+const handleDuplicateContact = async (
+  recordToProcess: Record<string, string>,
+  existingContact: TExistingContactFromCsv,
+  attributeKeyMap: Map<string, string>,
+  attributeTypeMap: Map<string, TAttributeTypeInfo>,
+  duplicateContactsAction: "update" | "overwrite",
+  workspaceId: string,
+  client: Prisma.TransactionClient
+): Promise<TContact> => {
+  if (duplicateContactsAction === "update") {
+    const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => {
+      const dataType = attributeTypeMap.get(key)?.dataType ?? "string";
+      const columns = prepareAttributeColumnsForStorage(value, dataType);
+
+      return {
+        where: {
+          contactId_attributeKeyId: {
+            contactId: existingContact.id,
+            attributeKeyId: attributeKeyMap.get(key),
+          },
+        },
+        update: {
+          value: columns.value,
+          valueNumber: columns.valueNumber,
+          valueDate: columns.valueDate,
+        },
+        create: {
+          attributeKeyId: attributeKeyMap.get(key),
+          value: columns.value,
+          valueNumber: columns.valueNumber,
+          valueDate: columns.valueDate,
+        },
+      };
+    });
+
+    const updated = await client.contact.update({
+      where: { id: existingContact.id },
+      data: {
+        attributes: {
+          // @ts-expect-error - Prisma types don't fully support upsert array
+          upsert: attributesToUpsert,
+        },
+      },
+      include: contactAttributesInclude,
+    });
+    return { ...updated, workspaceId };
+  }
+
+  // duplicateContactsAction = "overwrite" here. One update, so a failed recreate keeps the old attributes
+  // instead of leaving the contact without its email or userId.
+  const overwritten = await client.contact.update({
+    where: { id: existingContact.id },
+    data: {
+      attributes: {
+        deleteMany: {},
+        create: createAttributeConnections(recordToProcess, attributeKeyMap, attributeTypeMap),
+      },
+    },
+    include: contactAttributesInclude,
+  });
+  return { ...overwritten, workspaceId };
+};
+
+export type TCreateContactsFromCSVResult =
+  | {
+      contacts: TContact[];
+      /** Rows that matched several contacts and updated one of them (spec decision 5). */
+      multiMatchCount: number;
+      /** Rows imported without their email or userId, because another contact already holds it. */
+      leftOutCounts: Record<TUniqueValueKey, number>;
+    }
+  | { validationErrors: TCsvAttributeValidationError[] };
+
+/**
+ * Creates or updates contacts of `directory` from CSV rows, as uploaded from `workspaceId`. A row matches
+ * existing contacts by the directory's matching key (`email` or `userId`).
+ */
+export const createContactsFromCSV = async (
+  uploadedRows: Record<string, string>[],
+  workspaceId: string,
+  directory: TWorkspaceContactDirectory,
+  duplicateContactsAction: "skip" | "update" | "overwrite",
+  attributeMap: Record<string, string>
+): Promise<TCreateContactsFromCSVResult> => {
+  validateInputs(
+    [uploadedRows, ZContactCSVRecords],
+    [workspaceId, ZId],
+    [duplicateContactsAction, ZContactCSVDuplicateAction],
+    [attributeMap, ZContactCSVAttributeMap]
+  );
+
+  const csvData = canonicalizeCsvColumns(uploadedRows);
+  const identityKey = directory.matchingKey;
+  const identityCheck = getContactCSVUploadSchema(identityKey).safeParse(csvData);
+  if (!identityCheck.success) {
+    throw new ValidationError(identityCheck.error.issues[0].message);
+  }
+
+  try {
+    // Step 2: Extract metadata from CSV data
+    const { csvIdentityValues, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData, identityKey);
+    const uniqueValueKeys = getUniqueValueKeys(identityKey);
+
+    // Step 3: Fetch existing data from database
+    const [existingContactsByIdentity, existingUniqueValues, existingAttributeKeys] = await Promise.all([
+      prisma.contact.findMany({
+        where: {
+          directoryId: directory.id,
+          attributes: {
+            some: {
+              attributeKey: whereDirectoryAttributeKey(directory.id, identityKey),
+              value: { in: csvIdentityValues },
+            },
+          },
+        },
+        select: {
+          id: true,
+          attributes: { select: { attributeKey: { select: { key: true, id: true } }, value: true } },
+        },
+        orderBy: CONTACTS_OLDEST_FIRST,
+      }),
+      // Who already holds each userId (email directory) or email (userId directory) the file names.
+      prisma.contactAttribute.findMany({
+        where: {
+          OR: uniqueValueKeys.map((key) => ({
+            attributeKey: whereDirectoryAttributeKey(directory.id, key),
+            value: { in: Array.from(new Set(csvData.map((row) => row[key]).filter(Boolean))) },
+          })),
+        },
+        select: { value: true, contactId: true, attributeKey: { select: { key: true } } },
+      }),
+      prisma.contactAttributeKey.findMany({
+        where: whereAttributeKeysOfDirectory(directory.id),
+        select: { key: true, id: true, dataType: true },
+      }),
+    ]);
+
+    // Step 3: Build lookup maps
+    const identityToContactsMap = groupContactsByIdentity(existingContactsByIdentity, identityKey);
+
+    const takenValues: TTakenValues = new Map(uniqueValueKeys.map((key) => [key, new Map()]));
+    for (const { value, contactId, attributeKey } of existingUniqueValues) {
+      const holdersByValue = takenValues.get(attributeKey.key as TUniqueValueKey);
+      if (!holdersByValue) continue;
+      const holders = holdersByValue.get(value) ?? new Set<string>();
+      holders.add(contactId);
+      holdersByValue.set(value, holders);
+    }
+
+    const attributeKeyMap = new Map<string, string>();
+    const lowercaseToActualKeyMap = new Map<string, string>();
+    for (const attrKey of existingAttributeKeys) {
+      attributeKeyMap.set(attrKey.key, attrKey.id);
+      lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
+    }
+
+    // Step 4: Detect and validate attribute types
+    const attributeTypeMap = buildAttributeTypeMap(
+      attributeValuesByKey,
+      existingAttributeKeys,
+      lowercaseToActualKeyMap
+    );
+    const validationErrors = validateAndAdjustCsvAttributeTypes(attributeTypeMap, attributeValuesByKey);
+    if (validationErrors.length > 0) {
+      return { validationErrors };
+    }
+
+    // Step 5: Create missing attribute keys
+    await createMissingAttributeKeys(
+      csvKeys,
+      lowercaseToActualKeyMap,
+      attributeKeyMap,
+      attributeTypeMap,
+      workspaceId,
+      directory.id
+    );
+
+    // Step 6: Process each CSV record
+    const processingContext: Omit<TCsvProcessingContext, "client"> = {
+      lowercaseToActualKeyMap,
+      identityToContactsMap,
+      identityKey,
+      takenValues,
+      attributeKeyMap,
+      attributeTypeMap,
+      duplicateContactsAction,
+      workspaceId,
+      directoryId: directory.id,
+    };
+
+    const CHUNK_SIZE = 50;
+    const CSV_CHUNK_TIMEOUT_MS = 30_000;
+    const allResults: TCsvRecordResult[] = [];
+
+    for (let i = 0; i < csvData.length; i += CHUNK_SIZE) {
+      const chunk = csvData.slice(i, i + CHUNK_SIZE);
+      // One transaction per chunk, under the workspace's lock and only while the directory is still the
+      // workspace's: a removal during the import stops it at the next chunk, never writes into the
+      // directory the workspace has left. A chunk keeps the lock short; the whole import would not.
+      const chunkResults = await withWorkspaceDirectory(
+        workspaceId,
+        (tx) =>
+          Promise.all(chunk.map((record) => processCsvRecord(record, { ...processingContext, client: tx }))),
+        { expectedDirectoryId: directory.id, timeout: CSV_CHUNK_TIMEOUT_MS }
+      );
+      allResults.push(...chunkResults);
+    }
+
+    return {
+      contacts: allResults
+        .map(({ contact }) => contact)
+        .filter((contact): contact is TContact => contact !== null),
+      multiMatchCount: allResults.filter(({ updatedOneOfSeveral }) => updatedOneOfSeveral).length,
+      leftOutCounts: {
+        userId: allResults.filter(({ leftOut }) => leftOut.includes("userId")).length,
+        email: allResults.filter(({ leftOut }) => leftOut.includes("email")).length,
+      },
+    };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};

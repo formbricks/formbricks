@@ -59,7 +59,8 @@ Order matters: call `setUserId` before `setEmail`. Attributes are only stored fo
 ```
 
 <Note>
-  **Note**: an email address can belong to only one contact per workspace. If another contact already
+  **Note**: an email address can belong to only one contact per
+  [contact directory](/platform/features/contact-directories). If another contact already
   has the address you pass, Formbricks keeps that contact's email and silently skips the update. The SDK
   reports this only in [debug mode](/surveys/website-app-surveys/framework-guides#activate-debug-mode),
   as _"The email already exists for this environment and was not updated."_ The value must be a valid

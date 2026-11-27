@@ -9,19 +9,29 @@ import { buildApiUrl, sendApiRequest } from "@/modules/api/lib/internal-api-clie
 
 const contactPath = (contactId: string) => `/api/internal/contacts/${encodeURIComponent(contactId)}`;
 
-/** Delete a contact. */
-export const deleteContact = (contactId: string) =>
-  sendApiRequest<void>(contactPath(contactId), { method: "DELETE" });
+/**
+ * Delete a contact of the workspace's contact directory. The workspace is the page's: a contact's own
+ * `workspaceId` only records where it was created.
+ */
+export const deleteContact = (contactId: string, workspaceId: string) =>
+  sendApiRequest<void>(buildApiUrl(contactPath(contactId), { workspaceId }), { method: "DELETE" });
 
 /**
  * Replace a contact's attributes with the ones sent; one left out is removed. Answers what the save could
  * not take as sent, as codes to translate.
  */
-export const updateContactAttributes = (contactId: string, attributes: TContactAttributesInput) =>
-  sendApiRequest<TContactAttributesResource>(`${contactPath(contactId)}/attributes`, {
-    method: "PUT",
-    body: { attributes },
-  });
+export const updateContactAttributes = (
+  contactId: string,
+  workspaceId: string,
+  attributes: TContactAttributesInput
+) =>
+  sendApiRequest<TContactAttributesResource>(
+    buildApiUrl(`${contactPath(contactId)}/attributes`, { workspaceId }),
+    {
+      method: "PUT",
+      body: { attributes },
+    }
+  );
 
 /** A personal link to a survey for the contact. */
 export const createContactPersonalLink = (contactId: string, surveyId: string) =>

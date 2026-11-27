@@ -36,7 +36,7 @@ describe("getContact", () => {
     const result = await getContact(contactId, workspaceId);
 
     expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-      where: { id: contactId, workspaceId },
+      where: { id: contactId, directory: { workspaces: { some: { id: workspaceId } } } },
       select: {
         id: true,
         attributes: {
@@ -59,7 +59,7 @@ describe("getContact", () => {
     const result = await getContact(contactId, workspaceId);
 
     expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-      where: { id: contactId, workspaceId },
+      where: { id: contactId, directory: { workspaces: { some: { id: workspaceId } } } },
       select: {
         id: true,
         attributes: {

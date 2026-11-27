@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
+import { ArrowUpFromLineIcon, BookUserIcon, FileUpIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { isStringMatch } from "@/lib/utils/strings";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
+import type { TContactDirectoryMatchingKey } from "@/modules/ee/contacts/directories/types";
 import { importContacts } from "@/modules/ee/contacts/lib/api-client";
 import { RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
@@ -22,9 +23,10 @@ import {
 import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
 import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
 import {
-  TContactCSVUploadResponse,
+  TContactCSVRecords,
   ZContactCSVAttributeMap,
-  ZContactCSVUploadResponse,
+  ZContactCSVRecords,
+  getContactCSVUploadSchema,
 } from "@/modules/ee/contacts/types/contact";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -43,11 +45,51 @@ import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 interface UploadContactsCSVButtonProps {
   readonly workspaceId: string;
   readonly contactAttributeKeys: TContactAttributeKey[];
+  /** The workspace directory's matching key: the column every row needs and contacts are matched on. */
+  readonly matchingKey: TContactDirectoryMatchingKey;
+  /** The directory the upload writes to, shown at the top of the dialog. */
+  readonly destination?: { name: string; workspaceNames: string[] } | null;
+  readonly disabled?: boolean;
 }
+
+/** "Upload to": the directory the rows land in, the workspaces using it and its matching key. */
+const UploadDestination = ({
+  destination,
+  matchingKey,
+}: Readonly<{
+  destination: UploadContactsCSVButtonProps["destination"];
+  matchingKey: TContactDirectoryMatchingKey;
+}>) => {
+  const { t } = useTranslation();
+  if (!destination) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-medium text-slate-900">{t("workspace.contacts.upload_to")}</p>
+      <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-white p-3">
+        <BookUserIcon className="mt-0.5 size-4 shrink-0 text-slate-500" aria-hidden="true" />
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <p className="truncate text-sm font-medium text-slate-900">{destination.name}</p>
+          <p className="text-sm text-slate-500">
+            {t("workspace.contacts.upload_to_shared_by", {
+              workspaceNames: destination.workspaceNames.join(", "),
+            })}
+            {" · "}
+            {t("workspace.contacts.upload_to_matches_by", {
+              matchingKey: matchingKey === "userId" ? t("common.user_id") : t("common.email"),
+            })}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const UploadContactsCSVButton = ({
   workspaceId,
   contactAttributeKeys,
+  matchingKey,
+  destination,
+  disabled = false,
 }: UploadContactsCSVButtonProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -58,7 +100,7 @@ export const UploadContactsCSVButton = ({
   const [duplicateContactsAction, setDuplicateContactsAction] = useState<"skip" | "update" | "overwrite">(
     "skip"
   );
-  const [csvResponse, setCSVResponse] = useState<TContactCSVUploadResponse>([]);
+  const [csvResponse, setCSVResponse] = useState<TContactCSVRecords>([]);
   const [attributeMap, setAttributeMap] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -92,7 +134,9 @@ export const UploadContactsCSVButton = ({
       try {
         const records = parseContactsCSV(csv);
 
-        const parsedRecords = ZContactCSVUploadResponse.safeParse(records);
+        // Only the file's shape and size here. The matching column is checked on Upload, once columns are
+        // mapped: a header like "User ID" or "E-mail" maps to its key there.
+        const parsedRecords = ZContactCSVRecords.safeParse(records);
         if (!parsedRecords.success) {
           console.error("Error parsing CSV:", parsedRecords.error);
           setError(parsedRecords.error.issues[0].message);
@@ -218,6 +262,16 @@ export const UploadContactsCSVButton = ({
       return newRecord;
     });
 
+    // The directory's matching column (and userId) present, filled in and unique, read through the mapping:
+    // the same check the import route runs on these rows.
+    const identityCheck = getContactCSVUploadSchema(matchingKey).safeParse(transformedCsvData);
+    if (!identityCheck.success) {
+      setError(identityCheck.error.issues[0].message);
+      errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setLoading(false);
+      return;
+    }
+
     let result: Awaited<ReturnType<typeof importContacts>>;
     try {
       result = await importContacts(workspaceId, {
@@ -251,6 +305,17 @@ export const UploadContactsCSVButton = ({
 
     setError("");
     toast.success(t("workspace.contacts.upload_contacts_success"));
+    if (result.multiMatchCount > 0) {
+      toast(t("workspace.contacts.upload_contacts_multi_match", { count: result.multiMatchCount }));
+    }
+    if (result.leftOutCounts.email > 0) {
+      toast(t("workspace.contacts.upload_contacts_emails_left_out", { count: result.leftOutCounts.email }));
+    }
+    if (result.leftOutCounts.userId > 0) {
+      toast(
+        t("workspace.contacts.upload_contacts_user_ids_left_out", { count: result.leftOutCounts.userId })
+      );
+    }
     resetState(true);
 
     router.refresh();
@@ -319,7 +384,7 @@ export const UploadContactsCSVButton = ({
 
   // Function to download an example CSV
   const handleDownloadExampleCSV = () => {
-    const exampleData = [
+    const exampleData: Record<string, string>[] = [
       {
         email: "user1@example.com",
         user_id: "1001",
@@ -368,10 +433,7 @@ export const UploadContactsCSVButton = ({
     ];
 
     const headers = Object.keys(exampleData[0]);
-    const csvRows = [
-      headers.join(","),
-      ...exampleData.map((row) => headers.map((h) => (row as Record<string, string>)[h]).join(",")),
-    ];
+    const csvRows = [headers.join(","), ...exampleData.map((row) => headers.map((h) => row[h]).join(","))];
     const csvString = csvRows.join("\n");
     const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvString);
 
@@ -408,7 +470,7 @@ export const UploadContactsCSVButton = ({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button size="sm" onClick={() => setOpen(true)} disabled={disabled}>
         {t("common.upload")} CSV
         <PlusIcon />
       </Button>
@@ -558,6 +620,8 @@ export const UploadContactsCSVButton = ({
                   </p>
                 </div>
               </div>
+
+              <UploadDestination destination={destination} matchingKey={matchingKey} />
             </div>
           </DialogBody>
 

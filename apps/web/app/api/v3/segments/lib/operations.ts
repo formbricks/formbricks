@@ -3,13 +3,16 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
+import { assertV3ContactDirectory, assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
 import { type TSortCursor, buildSortCursorPage } from "@/app/api/v3/lib/sort-cursor";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { resolveV3VisibleSurveyWhere } from "@/app/api/v3/surveys/visibility-context";
-import { selectSegment, transformPrismaSegment } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  selectSegmentForWorkspace,
+  transformPrismaSegment,
+} from "@/modules/ee/contacts/segments/lib/segments";
 import { collectSegmentFilterSurveyIds, serializeV3Segment } from "../serializers";
 import { SEGMENTS_CURSOR_KIND, parseV3SegmentsListQuery } from "./parse-v3-segments-list-query";
 import {
@@ -20,18 +23,29 @@ import {
 } from "./segments-where";
 
 /**
- * Which of the surveys the page's survey-interaction filters name the caller may see — one query for
- * the whole page, bounded by the filter tree's survey-id cap times the page size.
+ * Which of the survey ids the page's survey-interaction filters name stay in the response — one query for
+ * the whole page, bounded by the filter tree's survey-id cap times the page size. Two kinds stay:
+ * - the caller's own workspace's surveys they may see (ENG-3282);
+ * - any survey of another workspace on the same directory. A shared segment can name those (decision 24);
+ *   the editor shows each as "Survey in another workspace" by id only, and a save keeps what it does not
+ *   remove (`restoreHiddenSegmentSurveyIds`). Taking them out here made the editor drop them on save.
  */
 const resolveVisibleFilterSurveyIds = async (
   surveyIds: readonly string[],
   workspaceId: string,
+  directoryId: string,
   visibleSurveyWhere: Prisma.SurveyWhereInput
 ): Promise<Set<string>> => {
   const ids = [...new Set(surveyIds)];
   if (ids.length === 0) return new Set();
   const surveys = await prisma.survey.findMany({
-    where: { AND: [{ workspaceId, id: { in: ids } }, visibleSurveyWhere] },
+    where: {
+      id: { in: ids },
+      OR: [
+        { AND: [{ workspaceId }, visibleSurveyWhere] },
+        { workspaceId: { not: workspaceId }, workspace: { contactDirectoryId: directoryId } },
+      ],
+    },
     select: { id: true },
   });
   return new Set(surveys.map((survey) => survey.id));
@@ -46,15 +60,15 @@ type TListV3SegmentsParams = {
 
 /**
  * The cursor's position. A title too long to carry in the token is re-read from the segment it names,
- * scoped to the workspace; `null` when that segment is gone, which the list answers with a 400 cursor.
+ * scoped to the directory; `null` when that segment is gone, which the list answers with a 400 cursor.
  */
 const resolveSegmentsCursor = async (
   cursor: TSortCursor,
-  workspaceId: string
+  directoryId: string
 ): Promise<{ value: string; id: string } | null> => {
   if (cursor.value !== null) return { value: cursor.value, id: cursor.id };
   const anchor = await prisma.segment.findFirst({
-    where: { id: cursor.id, workspaceId },
+    where: { id: cursor.id, directoryId },
     select: { title: true },
   });
   return anchor ? { value: anchor.title, id: cursor.id } : null;
@@ -89,16 +103,17 @@ export async function listV3Segments({
 
     const denied = await assertV3ContactsEnabled(authResult.organizationId, requestId, instance);
     if (denied) return denied;
+    // Segments belong to the workspace's contact directory (decision 24).
+    const directory = await assertV3ContactDirectory(authResult.workspaceId, requestId, instance);
+    if (directory instanceof Response) return directory;
 
     // ENG-3282: a segment's survey references are read through the caller's survey-visibility clause,
     // exactly as `getSegments` does for the page — otherwise the list would ship restricted survey
     // names and ids. Fails closed (no survey visible) when the caller cannot be resolved.
     const visibleSurveyWhere = await resolveV3VisibleSurveyWhere(authentication, authResult.organizationId);
 
-    const where = buildV3SegmentsWhere(authResult.workspaceId, query.search);
-    const cursor = query.cursor
-      ? await resolveSegmentsCursor(query.cursor, authResult.workspaceId)
-      : undefined;
+    const where = buildV3SegmentsWhere(directory.id, query.search);
+    const cursor = query.cursor ? await resolveSegmentsCursor(query.cursor, directory.id) : undefined;
     if (cursor === null) {
       return problemBadRequest(requestId, "Invalid query parameters", {
         invalid_params: [{ name: "cursor", reason: "The cursor is invalid." }],
@@ -112,7 +127,7 @@ export async function listV3Segments({
         where: pageWhere,
         orderBy: buildV3SegmentsOrderBy(query.sortBy),
         take: query.limit + 1,
-        select: { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } },
+        select: selectSegmentForWorkspace(authResult.workspaceId, visibleSurveyWhere),
       }),
       query.includeTotalCount ? prisma.segment.count({ where }) : Promise.resolve(null),
     ]);
@@ -130,11 +145,12 @@ export async function listV3Segments({
     const visibleSurveyIds = await resolveVisibleFilterSurveyIds(
       segments.flatMap((segment) => collectSegmentFilterSurveyIds(segment.filters)),
       authResult.workspaceId,
+      directory.id,
       visibleSurveyWhere
     );
 
     return successListResponse(
-      segments.map((segment) => serializeV3Segment(segment, visibleSurveyIds)),
+      segments.map((segment) => serializeV3Segment(segment, authResult.workspaceId, visibleSurveyIds)),
       { limit: query.limit, nextCursor, totalCount },
       { requestId, cache: "private, no-store" }
     );

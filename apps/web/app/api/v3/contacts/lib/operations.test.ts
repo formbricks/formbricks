@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listV3Contacts } from "./operations";
 
@@ -15,6 +19,10 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  getWorkspaceContactDirectory: vi.fn(),
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: vi.fn() }));
 
 const workspaceId = "clws0000000000000000000001";
@@ -55,6 +63,10 @@ describe("listV3Contacts", () => {
     vi.resetAllMocks();
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(accessGranted);
     vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue({
+      id: "cldir0000000000000000001",
+      matchingKey: "email",
+    });
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
       { id: "clak0000000000000000000001", key: "seats", dataType: "number" },
     ] as never);
@@ -97,12 +109,12 @@ describe("listV3Contacts", () => {
     expect(findManyArgs?.orderBy).toEqual([{ createdAt: "desc" }, { id: "desc" }]);
     // The attribute keys are looked up inside the authorized workspace only.
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: { workspaceId, key: { in: ["seats"] } },
+      where: { directory: { workspaces: { some: { id: workspaceId } } }, key: { in: ["seats"] } },
       select: { id: true, key: true, dataType: true },
     });
     const countWhere = vi.mocked(prisma.contact.count).mock.calls[0][0]?.where;
     expect(countWhere).toEqual({
-      workspaceId,
+      directory: { workspaces: { some: { id: workspaceId } } },
       AND: [
         { attributes: { some: { attributeKeyId: "clak0000000000000000000001", valueNumber: { gt: 10 } } } },
       ],
@@ -129,7 +141,7 @@ describe("listV3Contacts", () => {
     const at = new Date("2026-03-01T00:00:00.000Z");
     expect(where).toEqual({
       AND: [
-        { workspaceId },
+        { directory: { workspaces: { some: { id: workspaceId } } } },
         { OR: [{ createdAt: { lt: at } }, { createdAt: at, id: { lt: "clct0000000000000000000003" } }] },
       ],
     });
@@ -185,6 +197,15 @@ describe("listV3Contacts", () => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(denied);
 
     expect(await call()).toBe(denied);
+    expect(prisma.contact.findMany).not.toHaveBeenCalled();
+  });
+
+  test("403 with the no-directory message when the workspace has no contact directory", async () => {
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue(null);
+
+    const response = await call();
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe(CONTACT_DIRECTORY_MISSING_MESSAGE);
     expect(prisma.contact.findMany).not.toHaveBeenCalled();
   });
 

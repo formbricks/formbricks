@@ -67,9 +67,11 @@ const unauthorizedResponse = ({
 const forbiddenResponse = ({
   cors = false,
   cache = "private, no-store",
+  message = "Forbidden",
 }: {
   cors?: boolean;
   cache?: string;
+  message?: string;
 } = {}) => {
   const headers = {
     ...(cors && corsHeaders),
@@ -80,7 +82,7 @@ const forbiddenResponse = ({
     {
       error: {
         code: 403,
-        message: "Forbidden",
+        message,
       },
     },
     {

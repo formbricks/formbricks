@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { getSurvey } from "@/lib/survey/service";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
@@ -13,14 +13,14 @@ import {
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import {
+  ContactInSharedDirectoryError,
   buildContactWhereClause,
-  createContactsFromCSV,
-  deleteContact,
+  deleteContactInWorkspace,
   generatePersonalLinks,
-  getContact,
   getContactInWorkspace,
   getContactsInSegment,
 } from "./contacts";
+import { createContactsFromCSV } from "./contacts-csv-upload";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -29,6 +29,7 @@ vi.mock("@formbricks/database", () => ({
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
@@ -43,7 +44,29 @@ vi.mock("@formbricks/database", () => ({
     survey: {
       findFirst: vi.fn(),
     },
+    $queryRaw: vi.fn(),
+    // The transaction runs on the same mocked client.
+    $transaction: vi.fn(async (run: (tx: unknown) => unknown) =>
+      run((await import("@formbricks/database")).prisma)
+    ),
   },
+}));
+
+// CSV writes run per chunk under the workspace's lock (`withWorkspaceDirectory`). Here they run on the
+// mocked client, in the directory the import was given; the lock itself is covered by integration tests.
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  withWorkspaceDirectory: vi.fn(
+    async (
+      _workspaceId: string,
+      write: (tx: unknown, directory: unknown) => Promise<unknown>,
+      options?: { expectedDirectoryId?: string }
+    ) =>
+      write((await import("@formbricks/database")).prisma, {
+        id: options?.expectedDirectoryId ?? "directory-123",
+        matchingKey: "email",
+      })
+  ),
 }));
 
 vi.mock("@/lib/utils/validate", () => ({
@@ -54,9 +77,24 @@ vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
 }));
 
-vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
-  getSegment: vi.fn(),
-}));
+// A workspace's contact directory here is `dir-<workspaceId>`; a segment belongs to its directory.
+vi.mock("@/modules/ee/contacts/segments/lib/segments", async () => {
+  const { ResourceNotFoundError } = await import("@formbricks/types/errors");
+  const getSegment = vi.fn();
+  const isSegmentOfWorkspace = async (segment: { directoryId: string | null }, workspaceId: string) =>
+    segment.directoryId === `dir-${workspaceId}`;
+  return {
+    getSegment,
+    isSegmentOfWorkspace,
+    getSegmentInWorkspace: async (segmentId: string, workspaceId: string) => {
+      const segment = await getSegment(segmentId);
+      if (!(await isSegmentOfWorkspace(segment, workspaceId))) {
+        throw new ResourceNotFoundError("segment", segmentId);
+      }
+      return segment;
+    },
+  };
+});
 
 vi.mock("@/modules/ee/contacts/segments/lib/filter/prisma-query", () => ({
   segmentFilterToPrismaQuery: vi.fn(),
@@ -75,6 +113,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 const mockWorkspaceId = "workspace-123";
+const mockDirectory = { id: "directory-123", matchingKey: "email" as const };
 const mockContactId = "contact-123";
 const mockSegmentId = "segment-123";
 const mockSurveyId = "survey-123";
@@ -92,6 +131,8 @@ const adminActor: TSurveyActorContext = {
   kind: "user",
   userId: "owner-user-1",
 };
+/** The contacts a workspace sees: every contact of its directory, never `contact.workspaceId`. */
+const directoryScope = { directory: { workspaces: { some: { id: mockWorkspaceId } } } };
 const mockPrismaContact = {
   id: mockContactId,
   createdAt: new Date("2024-01-01"),
@@ -114,9 +155,9 @@ describe("Contacts Lib", () => {
   });
 
   describe("buildContactWhereClause", () => {
-    test("returns where clause with only workspaceId when no search provided", () => {
+    test("scopes to the workspace's contact directory when no search is provided", () => {
       const result = buildContactWhereClause(mockWorkspaceId);
-      expect(result).toEqual({ workspaceId: mockWorkspaceId });
+      expect(result).toEqual(directoryScope);
     });
 
     test("returns where clause with search filters when search is provided", () => {
@@ -124,7 +165,7 @@ describe("Contacts Lib", () => {
       const result = buildContactWhereClause(mockWorkspaceId, searchTerm);
 
       expect(result).toEqual({
-        workspaceId: mockWorkspaceId,
+        ...directoryScope,
         OR: [
           {
             attributes: {
@@ -148,7 +189,7 @@ describe("Contacts Lib", () => {
 
     test("handles empty search string same as no search", () => {
       const result = buildContactWhereClause(mockWorkspaceId, "");
-      expect(result).toEqual({ workspaceId: mockWorkspaceId });
+      expect(result).toEqual(directoryScope);
     });
   });
 
@@ -158,6 +199,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       const mockContactsInSegment = [
@@ -181,7 +223,7 @@ describe("Contacts Lib", () => {
         mockContactsInSegment
       );
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toEqual([
         {
@@ -196,7 +238,7 @@ describe("Contacts Lib", () => {
     test("returns null when segment is not found", async () => {
       vi.mocked(getSegment).mockResolvedValue(null as unknown as Awaited<ReturnType<typeof getSegment>>);
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toBeNull();
     });
@@ -206,6 +248,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -214,7 +257,7 @@ describe("Contacts Lib", () => {
         error: "Filter error",
       });
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toBeNull();
     });
@@ -224,6 +267,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -233,7 +277,7 @@ describe("Contacts Lib", () => {
       } as unknown as Awaited<ReturnType<typeof segmentFilterToPrismaQuery>>);
       vi.mocked(prisma.contact.findMany).mockRejectedValue(new Error("DB Error"));
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toBeNull();
     });
@@ -243,6 +287,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       const mockContactsInSegment = [
@@ -266,7 +311,7 @@ describe("Contacts Lib", () => {
         mockContactsInSegment
       );
 
-      const result = await getContactsInSegment(mockSegmentId);
+      const result = await getContactsInSegment(mockSegmentId, mockWorkspaceId);
 
       expect(result).toEqual([
         {
@@ -282,64 +327,37 @@ describe("Contacts Lib", () => {
     });
   });
 
-  describe("getContact", () => {
-    test("returns a single contact by ID", async () => {
-      vi.mocked(prisma.contact.findUnique, { partial: true, deep: true }).mockResolvedValue(
-        mockPrismaContact
-      );
-
-      const result = await getContact(mockContactId);
-
-      expect(result).toEqual(mockPrismaContact);
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-        where: { id: mockContactId },
-        select: expect.any(Object),
-      });
-    });
-
-    test("returns null when contact not found", async () => {
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue(null);
-
-      const result = await getContact(mockContactId);
-
-      expect(result).toBeNull();
-    });
-
-    test("throws DatabaseError on Prisma error", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("DB Error", {
-        code: "P2002",
-        clientVersion: "5.0.0",
-      });
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(prismaError);
-
-      await expect(getContact(mockContactId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("re-throws non-Prisma errors", async () => {
-      const error = new Error("Unknown error");
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(error);
-
-      await expect(getContact(mockContactId)).rejects.toThrow(error);
-    });
-  });
-
   // ENG-2290: the contact detail page authorizes the workspace in the URL and must not be able to
-  // load a contact from another workspace with it. `getContact` stays unscoped on purpose — it is
-  // what derives a contact's workspace elsewhere — so page reads go through this scoped sibling.
+  // load a contact of another directory with it.
   describe("getContactInWorkspace", () => {
-    test("returns the contact when it belongs to the workspace", async () => {
-      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockPrismaContact);
+    test("returns the contact when it is in the workspace's directory", async () => {
+      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue({
+        ...mockPrismaContact,
+        workspaceId: "workspace-origin",
+      });
 
       const result = await getContactInWorkspace(mockContactId, mockWorkspaceId);
 
-      expect(result).toEqual(mockPrismaContact);
+      // The origin workspace is reported as it is.
+      expect(result).toEqual({ ...mockPrismaContact, workspaceId: "workspace-origin" });
       expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-        where: { id: mockContactId, workspaceId: mockWorkspaceId },
+        where: { id: mockContactId, ...directoryScope },
         select: expect.any(Object),
       });
     });
 
-    test("returns null for a contact in another workspace", async () => {
+    test("reports the caller's workspace when the contact's origin workspace is gone", async () => {
+      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue({
+        ...mockPrismaContact,
+        workspaceId: null,
+      });
+
+      const result = await getContactInWorkspace(mockContactId, mockWorkspaceId);
+
+      expect(result?.workspaceId).toBe(mockWorkspaceId);
+    });
+
+    test("returns null for a contact of another directory", async () => {
       // The scoped where clause is what makes this null: Prisma finds no row for the pair.
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
@@ -347,10 +365,9 @@ describe("Contacts Lib", () => {
 
       expect(result).toBeNull();
       expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-        where: { id: mockContactId, workspaceId: "workspace-attacker" },
+        where: { id: mockContactId, directory: { workspaces: { some: { id: "workspace-attacker" } } } },
         select: expect.any(Object),
       });
-      // The unscoped lookup must not be used as a fallback.
       expect(prisma.contact.findUnique).not.toHaveBeenCalled();
     });
 
@@ -372,17 +389,57 @@ describe("Contacts Lib", () => {
     });
   });
 
-  describe("deleteContact", () => {
-    test("deletes a contact and returns it", async () => {
-      vi.mocked(prisma.contact.delete, { partial: true, deep: true }).mockResolvedValue(mockPrismaContact);
+  // Decision 9: deleting a contact also deletes its responses and displays, so it is refused while
+  // another workspace uses the contact's directory.
+  describe("deleteContactInWorkspace", () => {
+    test("deletes a contact of an unshared directory and returns it", async () => {
+      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue({
+        ...mockPrismaContact,
+        workspaceId: mockWorkspaceId,
+      });
+      vi.mocked(prisma.contact.deleteMany).mockResolvedValue({ count: 1 });
 
-      const result = await deleteContact(mockContactId);
+      const result = await deleteContactInWorkspace(mockContactId, mockWorkspaceId);
 
-      expect(result).toEqual(mockPrismaContact);
-      expect(prisma.contact.delete).toHaveBeenCalledWith({
-        where: { id: mockContactId },
+      expect(result).toEqual({ ...mockPrismaContact, workspaceId: mockWorkspaceId });
+      // The share check is part of the delete: a directory every workspace of which is the caller's, and
+      // no response or display in another workspace's survey.
+      const otherWorkspace = { survey: { workspaceId: { not: mockWorkspaceId } } };
+      expect(prisma.contact.deleteMany).toHaveBeenCalledWith({
+        where: {
+          id: mockContactId,
+          directory: {
+            workspaces: { some: { id: mockWorkspaceId }, every: { id: mockWorkspaceId } },
+          },
+          responses: { none: otherWorkspace },
+          displays: { none: otherWorkspace },
+        },
+      });
+    });
+
+    test("refuses a contact of a shared directory", async () => {
+      vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue({
+        ...mockPrismaContact,
+        workspaceId: mockWorkspaceId,
+      });
+      vi.mocked(prisma.contact.deleteMany).mockResolvedValue({ count: 0 });
+
+      await expect(deleteContactInWorkspace(mockContactId, mockWorkspaceId)).rejects.toThrow(
+        ContactInSharedDirectoryError
+      );
+    });
+
+    test("does not delete a contact of another directory", async () => {
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
+
+      await expect(deleteContactInWorkspace(mockContactId, "workspace-attacker")).rejects.toThrow(
+        ResourceNotFoundError
+      );
+      expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+        where: { id: mockContactId, directory: { workspaces: { some: { id: "workspace-attacker" } } } },
         select: expect.any(Object),
       });
+      expect(prisma.contact.deleteMany).not.toHaveBeenCalled();
     });
 
     test("throws DatabaseError on Prisma error", async () => {
@@ -390,16 +447,9 @@ describe("Contacts Lib", () => {
         code: "P2002",
         clientVersion: "5.0.0",
       });
-      vi.mocked(prisma.contact.delete).mockRejectedValue(prismaError);
+      vi.mocked(prisma.contact.findFirst).mockRejectedValue(prismaError);
 
-      await expect(deleteContact(mockContactId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("re-throws non-Prisma errors", async () => {
-      const error = new Error("Unknown error");
-      vi.mocked(prisma.contact.delete).mockRejectedValue(error);
-
-      await expect(deleteContact(mockContactId)).rejects.toThrow(error);
+      await expect(deleteContactInWorkspace(mockContactId, mockWorkspaceId)).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -430,7 +480,13 @@ describe("Contacts Lib", () => {
       };
       vi.mocked(prisma.contact.create, { partial: true, deep: true }).mockResolvedValue(mockCreatedContact);
 
-      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "skip", attributeMap);
+      const result = await createContactsFromCSV(
+        csvData,
+        mockWorkspaceId,
+        mockDirectory,
+        "skip",
+        attributeMap
+      );
 
       expect(result).toBeDefined();
       expect("contacts" in result).toBe(true);
@@ -456,7 +512,13 @@ describe("Contacts Lib", () => {
         .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }]);
       vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
 
-      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "skip", attributeMap);
+      const result = await createContactsFromCSV(
+        csvData,
+        mockWorkspaceId,
+        mockDirectory,
+        "skip",
+        attributeMap
+      );
 
       expect("contacts" in result).toBe(true);
     });
@@ -484,7 +546,13 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
 
-      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "update", attributeMap);
+      const result = await createContactsFromCSV(
+        csvData,
+        mockWorkspaceId,
+        mockDirectory,
+        "update",
+        attributeMap
+      );
 
       expect("contacts" in result).toBe(true);
     });
@@ -513,7 +581,13 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 2 });
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
 
-      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "overwrite", attributeMap);
+      const result = await createContactsFromCSV(
+        csvData,
+        mockWorkspaceId,
+        mockDirectory,
+        "overwrite",
+        attributeMap
+      );
 
       expect("contacts" in result).toBe(true);
     });
@@ -531,6 +605,7 @@ describe("Contacts Lib", () => {
         createContactsFromCSV(
           invalidCsvData as Parameters<typeof createContactsFromCSV>[0],
           mockWorkspaceId,
+          mockDirectory,
           "skip",
           attributeMap
         )
@@ -551,6 +626,7 @@ describe("Contacts Lib", () => {
         createContactsFromCSV(
           reservedCsvData as Parameters<typeof createContactsFromCSV>[0],
           mockWorkspaceId,
+          mockDirectory,
           "skip",
           attributeMap
         )
@@ -567,9 +643,9 @@ describe("Contacts Lib", () => {
 
       vi.mocked(prisma.contact.findMany).mockRejectedValue(prismaError);
 
-      await expect(createContactsFromCSV(csvData, mockWorkspaceId, "skip", attributeMap)).rejects.toThrow(
-        DatabaseError
-      );
+      await expect(
+        createContactsFromCSV(csvData, mockWorkspaceId, mockDirectory, "skip", attributeMap)
+      ).rejects.toThrow(DatabaseError);
     });
 
     test("creates missing attribute keys", async () => {
@@ -590,14 +666,20 @@ describe("Contacts Lib", () => {
         attributes: [],
       } as unknown as Awaited<ReturnType<typeof prisma.contact.create>>);
 
-      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "skip", attributeMap);
+      const result = await createContactsFromCSV(
+        csvData,
+        mockWorkspaceId,
+        mockDirectory,
+        "skip",
+        attributeMap
+      );
 
       expect(prisma.contactAttributeKey.createMany).toHaveBeenCalled();
       expect("contacts" in result).toBe(true);
     });
 
     test("handles case-insensitive attribute keys", async () => {
-      const csvDataWithMixedCase = [{ Email: "john@example.com", UserId: "user-1" }];
+      const csvDataWithMixedCase = [{ email: "john@example.com", UserId: "user-1" }];
       const attributeMap = { email: "email", userid: "userId" };
 
       vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
@@ -614,7 +696,13 @@ describe("Contacts Lib", () => {
         attributes: [],
       } as unknown as Awaited<ReturnType<typeof prisma.contact.create>>);
 
-      const result = await createContactsFromCSV(csvDataWithMixedCase, mockWorkspaceId, "skip", attributeMap);
+      const result = await createContactsFromCSV(
+        csvDataWithMixedCase,
+        mockWorkspaceId,
+        mockDirectory,
+        "skip",
+        attributeMap
+      );
 
       expect("contacts" in result).toBe(true);
     });
@@ -634,14 +722,15 @@ describe("Contacts Lib", () => {
       const conflictingUserId = {
         value: "user-1",
         contactId: "other-contact-id",
+        attributeKey: { key: "userId" },
       };
 
       vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         existingContact,
       ]);
-      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([conflictingUserId] as Awaited<
-        ReturnType<typeof prisma.contactAttribute.findMany>
-      >);
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
+        conflictingUserId,
+      ] as unknown as Awaited<ReturnType<typeof prisma.contactAttribute.findMany>>);
       vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
@@ -651,7 +740,13 @@ describe("Contacts Lib", () => {
 
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
 
-      const result = await createContactsFromCSV(csvDataWithUserId, mockWorkspaceId, "update", attributeMap);
+      const result = await createContactsFromCSV(
+        csvDataWithUserId,
+        mockWorkspaceId,
+        mockDirectory,
+        "update",
+        attributeMap
+      );
 
       expect("contacts" in result).toBe(true);
       expect(prisma.contact.update).toHaveBeenCalled();
@@ -672,14 +767,15 @@ describe("Contacts Lib", () => {
       const conflictingUserId = {
         value: "user-1",
         contactId: "other-contact-id",
+        attributeKey: { key: "userId" },
       };
 
       vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         existingContact,
       ]);
-      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([conflictingUserId] as Awaited<
-        ReturnType<typeof prisma.contactAttribute.findMany>
-      >);
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([
+        conflictingUserId,
+      ] as unknown as Awaited<ReturnType<typeof prisma.contactAttribute.findMany>>);
       vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
@@ -693,13 +789,18 @@ describe("Contacts Lib", () => {
       const result = await createContactsFromCSV(
         csvDataWithUserId,
         mockWorkspaceId,
+        mockDirectory,
         "overwrite",
         attributeMap
       );
 
       expect("contacts" in result).toBe(true);
-      expect(prisma.contactAttribute.deleteMany).toHaveBeenCalled();
-      expect(prisma.contact.update).toHaveBeenCalled();
+      // The old attributes go in the same update that writes the new ones.
+      expect(prisma.contact.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { attributes: expect.objectContaining({ deleteMany: {} }) },
+        })
+      );
     });
 
     test("handles update without existing userId attribute", async () => {
@@ -724,14 +825,234 @@ describe("Contacts Lib", () => {
 
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
 
-      const result = await createContactsFromCSV(csvDataWithUserId, mockWorkspaceId, "update", attributeMap);
+      const result = await createContactsFromCSV(
+        csvDataWithUserId,
+        mockWorkspaceId,
+        mockDirectory,
+        "update",
+        attributeMap
+      );
 
       expect("contacts" in result).toBe(true);
     });
   });
 
-  describe("createContactsFromCSV: the workspace's attribute key cap", () => {
-    // The workspace already holds `existing` keys, email first; the CSV adds `adding` new ones.
+  describe("createContactsFromCSV in a contact directory", () => {
+    const keys = [
+      { key: "email", id: "key-email", dataType: "string" as const },
+      { key: "userId", id: "key-user", dataType: "string" as const },
+    ];
+    type TCreatedContact = Awaited<ReturnType<typeof prisma.contact.create>>;
+    const existing = (id: string, attributes: Record<string, string>) => ({
+      id,
+      attributes: Object.entries(attributes).map(([key, value]) => ({
+        attributeKey: { key, id: `key-${key}` },
+        value,
+      })),
+    });
+
+    beforeEach(() => {
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValue(keys);
+    });
+
+    test("reads contacts, userIds and keys of the directory, oldest contact first", async () => {
+      vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.contact.create).mockResolvedValue({
+        id: "new-1",
+        attributes: [],
+      } as unknown as TCreatedContact);
+
+      await createContactsFromCSV([{ email: "a@example.com" }], mockWorkspaceId, mockDirectory, "skip", {});
+
+      expect(prisma.contact.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            directoryId: "directory-123",
+            attributes: {
+              some: {
+                attributeKey: { key: "email", directoryId: "directory-123" },
+                value: { in: ["a@example.com"] },
+              },
+            },
+          },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        })
+      );
+      expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { directoryId: "directory-123" } })
+      );
+      expect(prisma.contact.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ directoryId: "directory-123", workspaceId: mockWorkspaceId }),
+        })
+      );
+    });
+
+    test("creates new keys in the directory, with the workspace as their origin", async () => {
+      vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
+        .mockResolvedValueOnce(keys)
+        .mockResolvedValueOnce([{ key: "plan", id: "key-plan", dataType: "string" as const }]);
+      vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
+      vi.mocked(prisma.contact.create).mockResolvedValue({
+        id: "new-1",
+        attributes: [],
+      } as unknown as TCreatedContact);
+
+      await createContactsFromCSV(
+        [{ email: "a@example.com", plan: "pro" }],
+        mockWorkspaceId,
+        mockDirectory,
+        "skip",
+        {}
+      );
+
+      expect(prisma.contactAttributeKey.createMany).toHaveBeenCalledWith({
+        data: [
+          expect.objectContaining({
+            key: "plan",
+            directoryId: "directory-123",
+            workspaceId: mockWorkspaceId,
+          }),
+        ],
+        skipDuplicates: true,
+      });
+      expect(prisma.contactAttributeKey.findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({ where: { directoryId: "directory-123", key: { in: ["plan"] } } })
+      );
+    });
+
+    test("a row matching several contacts updates the one with the row's userId and counts it", async () => {
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existing("oldest", { email: "a@example.com", userId: "u-old" }),
+        existing("same-user", { email: "a@example.com", userId: "u-1" }),
+      ]);
+      vi.mocked(prisma.contact.update).mockResolvedValue({
+        id: "same-user",
+        attributes: [],
+      } as unknown as Awaited<ReturnType<typeof prisma.contact.update>>);
+
+      const result = await createContactsFromCSV(
+        [{ email: "a@example.com", userId: "u-1" }],
+        mockWorkspaceId,
+        mockDirectory,
+        "update",
+        {}
+      );
+
+      expect(prisma.contact.update).toHaveBeenCalledTimes(1);
+      expect(prisma.contact.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: "same-user" } })
+      );
+      expect(result).toEqual(expect.objectContaining({ multiMatchCount: 1 }));
+    });
+
+    test("a row matching several contacts with no userId match updates the oldest", async () => {
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existing("oldest", { email: "a@example.com" }),
+        existing("newer", { email: "a@example.com" }),
+        existing("single", { email: "b@example.com" }),
+      ]);
+      vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 1 });
+      vi.mocked(prisma.contact.update).mockResolvedValue({
+        id: "oldest",
+        attributes: [],
+      } as unknown as Awaited<ReturnType<typeof prisma.contact.update>>);
+
+      const result = await createContactsFromCSV(
+        [{ email: "a@example.com" }, { email: "b@example.com" }],
+        mockWorkspaceId,
+        mockDirectory,
+        "overwrite",
+        {}
+      );
+
+      const updatedIds = vi.mocked(prisma.contact.update).mock.calls.map(([args]) => args.where.id);
+      expect(updatedIds.sort((a, b) => (a ?? "").localeCompare(b ?? ""))).toEqual(["oldest", "single"]);
+      expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalledWith({ where: { contactId: "newer" } });
+      expect(result).toEqual(expect.objectContaining({ multiMatchCount: 1 }));
+    });
+
+    test("skipped rows are not counted as multi-matches", async () => {
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existing("oldest", { email: "a@example.com" }),
+        existing("newer", { email: "a@example.com" }),
+      ]);
+
+      const result = await createContactsFromCSV(
+        [{ email: "a@example.com" }],
+        mockWorkspaceId,
+        mockDirectory,
+        "skip",
+        {}
+      );
+
+      expect(prisma.contact.update).not.toHaveBeenCalled();
+      expect(result).toEqual({ contacts: [], multiMatchCount: 0, leftOutCounts: { email: 0, userId: 0 } });
+    });
+
+    test("a userId directory matches rows on userId and checks only email against other contacts", async () => {
+      const userIdDirectory = { id: "directory-user", matchingKey: "userId" as const };
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existing("user-contact", { userId: "user-1" }),
+      ]);
+      vi.mocked(prisma.contact.update).mockResolvedValue({
+        id: "user-contact",
+        attributes: [],
+      } as unknown as Awaited<ReturnType<typeof prisma.contact.update>>);
+
+      await createContactsFromCSV(
+        [{ userId: "user-1", email: "new@example.com" }],
+        mockWorkspaceId,
+        userIdDirectory,
+        "update",
+        {}
+      );
+
+      expect(prisma.contact.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            attributes: {
+              some: {
+                attributeKey: { key: "userId", directoryId: "directory-user" },
+                value: { in: ["user-1"] },
+              },
+            },
+          }),
+        })
+      );
+      // The userId picks the contact, so only the email can belong to another contact.
+      expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            OR: [
+              {
+                attributeKey: { key: "email", directoryId: "directory-user" },
+                value: { in: ["new@example.com"] },
+              },
+            ],
+          },
+        })
+      );
+      expect(prisma.contact.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: "user-contact" } })
+      );
+    });
+
+    test("a userId directory refuses rows without userId before any read or write", async () => {
+      const userIdDirectory = { id: "directory-user", matchingKey: "userId" as const };
+
+      await expect(
+        createContactsFromCSV([{ email: "a@example.com" }], mockWorkspaceId, userIdDirectory, "skip", {})
+      ).rejects.toThrow("Missing userId field for one or more records");
+      expect(prisma.contact.findMany).not.toHaveBeenCalled();
+      expect(prisma.contact.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("createContactsFromCSV: the directory's attribute key cap", () => {
+    // The directory already holds `existing` keys, email first; the CSV adds `adding` new ones.
     const setup = (existing: number, adding: number) => {
       const existingKeys = [
         { key: "email", id: "key-email", dataType: "string" },
@@ -752,10 +1073,10 @@ describe("Contacts Lib", () => {
       return [{ email: "ada@example.com", ...newColumns }];
     };
 
-    test(`creates keys up to ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} in the workspace`, async () => {
+    test(`creates keys up to ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} in the directory`, async () => {
       const csvData = setup(MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT - 5, 5);
 
-      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "skip", {});
+      const result = await createContactsFromCSV(csvData, mockWorkspaceId, mockDirectory, "skip", {});
 
       expect("contacts" in result).toBe(true);
       expect(prisma.contactAttributeKey.createMany).toHaveBeenCalledTimes(1);
@@ -764,9 +1085,11 @@ describe("Contacts Lib", () => {
     test("refuses an import that would pass the cap before creating any key, naming the cap", async () => {
       const csvData = setup(MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT - 5, 6);
 
-      await expect(createContactsFromCSV(csvData, mockWorkspaceId, "skip", {})).rejects.toThrow(
+      await expect(
+        createContactsFromCSV(csvData, mockWorkspaceId, mockDirectory, "skip", {})
+      ).rejects.toThrow(
         new ValidationError(
-          `Importing these contacts adds 6 attribute keys, past the ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} a workspace can have`
+          `Importing these contacts adds 6 attribute keys, past the ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} a contact directory can have`
         )
       );
       expect(prisma.contactAttributeKey.createMany).not.toHaveBeenCalled();
@@ -776,7 +1099,7 @@ describe("Contacts Lib", () => {
     test("counts nothing against the cap for columns that are existing keys", async () => {
       const csvData = setup(MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT, 0);
 
-      const result = await createContactsFromCSV(csvData, mockWorkspaceId, "skip", {});
+      const result = await createContactsFromCSV(csvData, mockWorkspaceId, mockDirectory, "skip", {});
 
       expect("contacts" in result).toBe(true);
       expect(prisma.contactAttributeKey.createMany).not.toHaveBeenCalled();
@@ -814,6 +1137,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -848,6 +1172,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -887,6 +1212,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -923,6 +1249,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -949,6 +1276,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: mockWorkspaceId,
+        directoryId: `dir-${mockWorkspaceId}`,
       };
 
       vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue(mockSegmentData);
@@ -969,6 +1297,30 @@ describe("Contacts Lib", () => {
       expect(result).toHaveLength(0);
     });
 
+    // Decision 24: a shared segment made in another workspace of the survey's directory is the survey's
+    // to use, even once that workspace is deleted; its contacts are read in the directory.
+    test("generates links for a shared segment another workspace of the directory made", async () => {
+      vi.mocked(getSegment, { partial: true, deep: true }).mockResolvedValue({
+        id: mockSegmentId,
+        filters: [],
+        workspaceId: null,
+        directoryId: `dir-${mockWorkspaceId}`,
+      });
+      vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
+        ok: true,
+        data: { whereClause: {} },
+      } as unknown as Awaited<ReturnType<typeof segmentFilterToPrismaQuery>>);
+      vi.mocked(prisma.contact.findMany, { partial: true }).mockResolvedValue([]);
+
+      await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).resolves.toEqual([]);
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledWith(
+        mockSegmentId,
+        [],
+        `dir-${mockWorkspaceId}`,
+        mockWorkspaceId
+      );
+    });
+
     test("throws when the segment belongs to a different workspace than the survey (cross-tenant guard)", async () => {
       // Survey is in workspace A, segment is in workspace B. The caller was only
       // authorized against the survey's workspace, so reading the segment's
@@ -981,6 +1333,7 @@ describe("Contacts Lib", () => {
         id: mockSegmentId,
         filters: [],
         workspaceId: "workspace-B",
+        directoryId: "dir-workspace-B",
       });
 
       await expect(generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor)).rejects.toThrow(
@@ -1026,7 +1379,9 @@ describe("Contacts Lib", () => {
       ];
 
       const segmentWith = (filters: unknown, id = mockSegmentId) =>
-        ({ id, filters, workspaceId: mockWorkspaceId }) as Awaited<ReturnType<typeof getSegment>>;
+        ({ id, filters, workspaceId: mockWorkspaceId, directoryId: `dir-${mockWorkspaceId}` }) as Awaited<
+          ReturnType<typeof getSegment>
+        >;
 
       /** Whatever reached the contact query would end up in the CSV. */
       const mockSegmentContacts = () => {
@@ -1068,7 +1423,6 @@ describe("Contacts Lib", () => {
         expect(prisma.survey.findFirst).toHaveBeenCalledWith({
           where: {
             id: { in: [restrictedSurveyId] },
-            workspaceId: mockWorkspaceId,
             AND: [memberHiddenSurveyWhere],
           },
           select: { id: true },
@@ -1090,7 +1444,6 @@ describe("Contacts Lib", () => {
         expect(prisma.survey.findFirst).toHaveBeenCalledWith({
           where: {
             id: { in: [visibleSurveyId, destinationSurveyId] },
-            workspaceId: mockWorkspaceId,
             AND: [memberHiddenSurveyWhere],
           },
           select: { id: true },

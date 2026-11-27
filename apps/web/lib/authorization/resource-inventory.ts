@@ -32,6 +32,9 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Contact: "workspace_inherited_resource",
   ContactAttribute: "parent_derived_or_data_integrity",
   ContactAttributeKey: "workspace_inherited_resource",
+  // Organisation configuration with no SpiceDB definition of its own (ENG-7491): managed through its
+  // organisation, and its contacts, keys and segments are read through the workspaces that use it.
+  ContactDirectory: "parent_derived_or_data_integrity",
   // Creatives are authorized at the workspace level with no SpiceDB definition of their own
   // (`modules/ee/creatives/lib/authorization.ts`); their triggers, languages and counts follow the creative.
   Creative: "workspace_inherited_resource",
@@ -123,6 +126,8 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   chart: "workspace_inherited_resource",
   contact: "workspace_inherited_resource",
   contactAttributeKey: "workspace_inherited_resource",
+  // Created and updated by organization owners and managers (ENG-7497), like its Prisma model above.
+  contactDirectory: "parent_derived_or_data_integrity",
   creative: "workspace_inherited_resource",
   cubeQuery: "parent_derived_or_data_integrity",
   dashboard: "direct_authorization_resource",

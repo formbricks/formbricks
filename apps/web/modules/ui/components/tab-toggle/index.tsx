@@ -42,6 +42,7 @@ export const TabToggle = <T extends string | number>({
       <div className="mt-1 flex overflow-hidden rounded-md bg-slate-100 p-1">
         {options.map((option) => {
           const isDisabled = disabled || option.disabled;
+          const isSelected = selectedOption === option.value;
           return (
             <label
               key={option.value}
@@ -54,9 +55,13 @@ export const TabToggle = <T extends string | number>({
               // panel's empty space when scrolled to its end).
               className={cn(
                 "relative flex-1 cursor-pointer rounded-md py-2 text-center text-sm text-slate-800",
-                selectedOption === option.value && "bg-white",
+                isSelected && "bg-white",
                 "focus:ring-2 focus:ring-brand-dark/50 focus:outline-hidden",
-                isDisabled && "cursor-not-allowed opacity-50"
+                // Disabled, the selected option stays fully legible so the toggle still shows the choice
+                // that was made; only the options that can't be picked fade.
+                isDisabled && "cursor-not-allowed",
+                isDisabled && isSelected && "shadow-sm",
+                isDisabled && !isSelected && "text-slate-400"
               )}>
               <input
                 type="radio"

@@ -26,6 +26,7 @@ interface TSegmentSettingsTabProps {
   readonly segments: TSegment[];
   readonly contactAttributeKeys: TContactAttributeKey[];
   readonly isReadOnly: boolean;
+  readonly workspaceId: string;
 }
 
 export function SegmentSettings({
@@ -35,6 +36,7 @@ export function SegmentSettings({
   contactAttributeKeys,
   segments,
   isReadOnly,
+  workspaceId,
 }: TSegmentSettingsTabProps) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -75,7 +77,7 @@ export function SegmentSettings({
 
     try {
       setIsUpdatingSegment(true);
-      await updateSegment(segment.id, {
+      await updateSegment(segment.id, workspaceId, {
         title: segment.title,
         description: segment.description ?? "",
         isPrivate: segment.isPrivate,
@@ -98,7 +100,7 @@ export function SegmentSettings({
   const handleDeleteSegment = async () => {
     try {
       setIsDeletingSegment(true);
-      await deleteSegment(segment.id);
+      await deleteSegment(segment.id, workspaceId);
 
       setIsDeletingSegment(false);
       toast.success(t("workspace.segments.segment_deleted_successfully"));

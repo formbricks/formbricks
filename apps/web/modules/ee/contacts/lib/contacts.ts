@@ -4,46 +4,43 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
-import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@formbricks/types/safe-identifier";
-import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import {
+  DatabaseError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { getSurvey } from "@/lib/survey/service";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { validateInputs } from "@/lib/utils/validate";
 import {
-  getReservedFutureDefaultAttributeKeyIssue,
-  getReservedFutureDefaultAttributeKeys,
-} from "@/modules/ee/contacts/lib/attribute-key-policy";
-import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
+  whereContactsOfWorkspace,
+  withCreatingOrCallerWorkspace,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
 import {
   SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE,
   SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE,
 } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { segmentFiltersReadHiddenSurvey } from "@/modules/ee/contacts/segments/lib/helper";
-import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
-import {
-  TContact,
-  ZContactCSVAttributeMap,
-  ZContactCSVDuplicateAction,
-  ZContactCSVUploadResponse,
-} from "../types/contact";
+import { getSegment, isSegmentOfWorkspace } from "@/modules/ee/contacts/segments/lib/segments";
+import { TContact } from "../types/contact";
 
-export const getContactsInSegment = reactCache(async (segmentId: string) => {
+export const getContactsInSegment = reactCache(async (segmentId: string, workspaceId: string) => {
   try {
     const segment = await getSegment(segmentId);
 
-    if (!segment) {
+    // A segment is evaluated against the contacts of its own directory (decision 24).
+    if (!segment?.directoryId) {
       return null;
     }
 
     const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
       segment.id,
       segment.filters,
-      segment.workspaceId
+      segment.directoryId,
+      workspaceId
     );
 
     if (!segmentFilterToPrismaQueryResult.ok) {
@@ -124,7 +121,7 @@ const selectContact = {
 } satisfies Prisma.ContactSelect;
 
 export const buildContactWhereClause = (workspaceId: string, search?: string): Prisma.ContactWhereInput => {
-  const whereClause: Prisma.ContactWhereInput = { workspaceId };
+  const whereClause: Prisma.ContactWhereInput = { ...whereContactsOfWorkspace(workspaceId) };
 
   if (search) {
     whereClause.OR = [
@@ -150,41 +147,23 @@ export const buildContactWhereClause = (workspaceId: string, search?: string): P
   return whereClause;
 };
 
-export const getContact = reactCache(async (contactId: string): Promise<TContact | null> => {
-  validateInputs([contactId, ZId]);
-
-  try {
-    return await prisma.contact.findUnique({
-      where: {
-        id: contactId,
-      },
-      select: selectContact,
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-});
-
 /**
- * Workspace-scoped variant of {@link getContact}: returns null when the contact exists but lives in
- * another workspace, so a caller holding an authorized workspace id cannot read a foreign contact.
+ * The contact, when it is in the workspace's contact directory; null otherwise, so a caller holding an
+ * authorized workspace id cannot read a contact of another directory.
  */
 export const getContactInWorkspace = reactCache(
   async (contactId: string, workspaceId: string): Promise<TContact | null> => {
     validateInputs([contactId, ZId], [workspaceId, ZId]);
 
     try {
-      return await prisma.contact.findFirst({
+      const contact = await prisma.contact.findFirst({
         where: {
           id: contactId,
-          workspaceId,
+          ...whereContactsOfWorkspace(workspaceId),
         },
         select: selectContact,
       });
+      return contact ? withCreatingOrCallerWorkspace(contact, workspaceId) : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -195,532 +174,62 @@ export const getContactInWorkspace = reactCache(
   }
 );
 
-export const deleteContact = async (contactId: string): Promise<TContact | null> => {
-  validateInputs([contactId, ZId]);
-
-  try {
-    const contact = await prisma.contact.delete({
-      where: {
-        id: contactId,
-      },
-      select: selectContact,
-    });
-
-    return contact;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-// Shared include clause for contact queries
-const contactAttributesInclude = {
-  attributes: {
-    select: {
-      attributeKey: { select: { key: true } },
-      value: true,
-    },
-  },
-} satisfies Prisma.ContactInclude;
-
-// Helper to create attribute objects for Prisma create operations with typed columns
-const createAttributeConnections = (
-  record: Record<string, string>,
-  workspaceId: string,
-  attributeTypeMap: Map<string, TAttributeTypeInfo>
-) =>
-  Object.entries(record).map(([key, value]) => {
-    const dataType = attributeTypeMap.get(key)?.dataType ?? "string";
-    const columns = prepareAttributeColumnsForStorage(value, dataType);
-
-    return {
-      attributeKey: {
-        connect: { key_workspaceId: { key, workspaceId } },
-      },
-      value: columns.value,
-      valueNumber: columns.valueNumber,
-      valueDate: columns.valueDate,
-    };
-  });
-
-// Helper to handle userId conflicts when updating/overwriting contacts
-const resolveUserIdConflict = (
-  mappedRecord: Record<string, string>,
-  existingContact: { id: string; attributes: { attributeKey: { key: string }; value: string }[] },
-  existingUserIds: { value: string; contactId: string }[]
-): Record<string, string> => {
-  const existingUserId = existingUserIds.find(
-    (attr) => attr.value === mappedRecord.userId && attr.contactId !== existingContact.id
-  );
-
-  if (!existingUserId) {
-    return { ...mappedRecord };
-  }
-
-  const { userId: _userId, ...rest } = mappedRecord;
-  const existingContactUserId = existingContact.attributes.find(
-    (attr) => attr.attributeKey.key === "userId"
-  )?.value;
-
-  return {
-    ...rest,
-    ...(existingContactUserId && { userId: existingContactUserId }),
-  };
-};
+/** Shown by the APIs; the Contacts page translates {@link CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE} instead. */
+export const CONTACT_IN_SHARED_DIRECTORY_MESSAGE =
+  "This contact is in a contact directory that other workspaces use, or has responses in another workspace, so it can't be deleted.";
 
 /**
- * Extracts unique emails, userIds, and attribute keys from CSV data
+ * Deleting the contact would also delete its responses and displays in the other workspaces: those of
+ * the directory's other workspaces, or of a workspace that has left the directory (decision 1).
  */
-const extractCsvMetadata = (
-  csvData: Record<string, string>[]
-): {
-  csvEmails: string[];
-  csvUserIds: string[];
-  csvKeys: Set<string>;
-  attributeValuesByKey: Map<string, string[]>;
-} => {
-  const csvEmails = Array.from(new Set(csvData.map((r) => r.email).filter(Boolean)));
-  const csvUserIds = Array.from(new Set(csvData.map((r) => r.userId).filter(Boolean)));
-  const csvKeys = new Set<string>();
-  const attributeValuesByKey = new Map<string, string[]>();
-
-  for (const record of csvData) {
-    for (const [key, value] of Object.entries(record)) {
-      csvKeys.add(key);
-
-      const existingValues = attributeValuesByKey.get(key) ?? [];
-      if (value && value.trim() !== "") {
-        existingValues.push(value);
-      }
-      attributeValuesByKey.set(key, existingValues);
-    }
+export class ContactInSharedDirectoryError extends OperationNotAllowedError {
+  constructor() {
+    super(CONTACT_IN_SHARED_DIRECTORY_MESSAGE);
   }
-
-  return { csvEmails, csvUserIds, csvKeys, attributeValuesByKey };
-};
-
-/**
- * Builds a map of attribute keys to their detected/existing data types
- */
-type TAttributeTypeInfo = {
-  dataType: TContactAttributeDataType;
-  isExisting: boolean; // true = from DB, false = newly detected
-};
-
-const buildAttributeTypeMap = (
-  attributeValuesByKey: Map<string, string[]>,
-  existingAttributeKeys: { key: string; dataType: TContactAttributeDataType }[],
-  lowercaseToActualKeyMap: Map<string, string>
-): Map<string, TAttributeTypeInfo> => {
-  const attributeTypeMap = new Map<string, TAttributeTypeInfo>();
-
-  for (const [key, values] of attributeValuesByKey) {
-    const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
-    const existingKey = actualKey ? existingAttributeKeys.find((ak) => ak.key === actualKey) : null;
-
-    if (existingKey) {
-      attributeTypeMap.set(key, { dataType: existingKey.dataType, isExisting: true });
-    } else {
-      const firstValue = values.find((v) => v !== "");
-      const detectedType = firstValue ? detectAttributeDataType(firstValue) : "string";
-      attributeTypeMap.set(key, { dataType: detectedType, isExisting: false });
-    }
-  }
-
-  return attributeTypeMap;
-};
-
-/**
- * Finds invalid values for a given attribute type
- */
-const findInvalidValuesForType = (values: string[], dataType: TContactAttributeDataType): string[] => {
-  const invalidValues: string[] = [];
-
-  for (const value of values) {
-    const columns = prepareAttributeColumnsForStorage(value, dataType);
-    const parseFailed =
-      (dataType === "number" && columns.valueNumber === null) ||
-      (dataType === "date" && columns.valueDate === null);
-
-    if (parseFailed) {
-      invalidValues.push(value);
-    }
-  }
-
-  return invalidValues;
-};
-
-interface TCsvAttributeValidationError {
-  key: string;
-  dataType: TContactAttributeDataType;
-  invalidValues: string[];
 }
 
 /**
- * Validates attribute values against their types.
- * - For EXISTING typed attributes: returns validation errors
- * - For NEW attributes: downgrades to string if values are inconsistent
+ * Deletes a contact of the workspace's contact directory (decision 9). Refused with
+ * {@link ContactInSharedDirectoryError} when another workspace uses the directory too, or when the
+ * contact has a response or display in another workspace's survey (one that left the directory), and with
+ * `ResourceNotFoundError` when the contact is not in the directory. The share check is part of the
+ * delete itself, so a workspace joining the directory meanwhile cannot slip past it.
  */
-const validateAndAdjustCsvAttributeTypes = (
-  attributeTypeMap: Map<string, TAttributeTypeInfo>,
-  attributeValuesByKey: Map<string, string[]>
-): TCsvAttributeValidationError[] => {
-  const typeValidationWarnings: string[] = [];
-  const validationErrors: TCsvAttributeValidationError[] = [];
-
-  for (const [key, typeInfo] of attributeTypeMap) {
-    if (typeInfo.dataType === "string") continue;
-
-    const values = attributeValuesByKey.get(key) || [];
-    const invalidValues = findInvalidValuesForType(values, typeInfo.dataType);
-
-    if (invalidValues.length === 0) continue;
-
-    if (typeInfo.isExisting) {
-      // EXISTING typed attribute: collect error
-      validationErrors.push({ key, dataType: typeInfo.dataType, invalidValues });
-      continue;
-    }
-
-    // NEW attribute: downgrade to string
-    attributeTypeMap.set(key, { dataType: "string", isExisting: false });
-    typeValidationWarnings.push(
-      `Attribute "${key}" has mixed or invalid values for type "${typeInfo.dataType}", treating as string type`
-    );
-  }
-
-  if (typeValidationWarnings.length > 0) {
-    logger.warn({ warnings: typeValidationWarnings }, "Type validation warnings during CSV upload");
-  }
-
-  return validationErrors;
-};
-
-/**
- * Creates missing attribute keys in the database, refusing (`ValidationError`, before anything is written)
- * keys that aren't safe identifiers, reserved keys, and an import that would take the workspace past
- * `MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT` keys, the cap every other path that creates keys holds.
- */
-const createMissingAttributeKeys = async (
-  csvKeys: Set<string>,
-  lowercaseToActualKeyMap: Map<string, string>,
-  attributeKeyMap: Map<string, string>,
-  attributeTypeMap: Map<string, TAttributeTypeInfo>,
-  workspaceId: string
-): Promise<void> => {
-  const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
-
-  if (missingKeys.length === 0) return;
-
-  // Validate that all missing keys are safe identifiers
-  const invalidKeys = missingKeys.filter((key) => !isSafeIdentifier(key));
-  if (invalidKeys.length > 0) {
-    throw new ValidationError(
-      `Invalid attribute key(s): ${invalidKeys.join(", ")}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.`
-    );
-  }
-
-  const reservedKeys = getReservedFutureDefaultAttributeKeys(missingKeys);
-  if (reservedKeys.length > 0) {
-    throw new ValidationError(getReservedFutureDefaultAttributeKeyIssue(reservedKeys));
-  }
-
-  // Deduplicate by lowercase to avoid creating duplicates like "firstName" and "firstname"
-  const uniqueMissingKeys = new Map<string, string>();
-  for (const key of missingKeys) {
-    const lowerKey = key.toLowerCase();
-    if (!uniqueMissingKeys.has(lowerKey)) {
-      uniqueMissingKeys.set(lowerKey, key);
-    }
-  }
-
-  // `attributeKeyMap` holds every key the workspace has, read with the import's other lookups.
-  if (attributeKeyMap.size + uniqueMissingKeys.size > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
-    throw new ValidationError(
-      `Importing these contacts adds ${uniqueMissingKeys.size} attribute keys, past the ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} a workspace can have`
-    );
-  }
-
-  await prisma.contactAttributeKey.createMany({
-    data: Array.from(uniqueMissingKeys.values()).map((key) => ({
-      key,
-      name: formatSnakeCaseToTitleCase(key),
-      dataType: attributeTypeMap.get(key)?.dataType ?? "string",
-      workspaceId,
-    })),
-    skipDuplicates: true,
-  });
-
-  // Fetch and update the maps with new keys
-  const newAttributeKeys = await prisma.contactAttributeKey.findMany({
-    where: {
-      key: { in: Array.from(uniqueMissingKeys.values()) },
-      workspaceId,
-    },
-    select: { key: true, id: true, dataType: true },
-  });
-
-  for (const attrKey of newAttributeKeys) {
-    attributeKeyMap.set(attrKey.key, attrKey.id);
-    lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
-  }
-};
-
-type TExistingContactFromCsv = {
-  id: string;
-  attributes: { attributeKey: { key: string; id: string }; value: string }[];
-};
-
-type TExistingUserId = { value: string; contactId: string };
-
-type TCsvProcessingContext = {
-  lowercaseToActualKeyMap: Map<string, string>;
-  emailToContactMap: Map<string, TExistingContactFromCsv>;
-  existingUserIds: TExistingUserId[];
-  attributeKeyMap: Map<string, string>;
-  attributeTypeMap: Map<string, TAttributeTypeInfo>;
-  duplicateContactsAction: "skip" | "update" | "overwrite";
-  workspaceId: string;
-};
-
-/**
- * Processes a single CSV record to create or update a contact
- */
-const processCsvRecord = async (
-  record: Record<string, string>,
-  ctx: TCsvProcessingContext
-): Promise<TContact | null> => {
-  const {
-    lowercaseToActualKeyMap,
-    emailToContactMap,
-    existingUserIds,
-    attributeKeyMap,
-    attributeTypeMap,
-    duplicateContactsAction,
-    workspaceId,
-  } = ctx;
-  // Map CSV keys to actual DB keys (case-insensitive matching)
-  const mappedRecord: Record<string, string> = {};
-  for (const [key, value] of Object.entries(record)) {
-    const actualKey = lowercaseToActualKeyMap.get(key.toLowerCase());
-    if (!actualKey) {
-      throw new ValidationError(`Attribute key "${key}" not found in attribute key map`);
-    }
-    mappedRecord[actualKey] = value;
-  }
-
-  if (!mappedRecord.email) {
-    throw new ValidationError("Email is required for all contacts");
-  }
-
-  const existingContact = emailToContactMap.get(mappedRecord.email);
-
-  if (!existingContact) {
-    // Create new contact
-    return prisma.contact.create({
-      data: {
-        workspaceId,
-        attributes: {
-          create: createAttributeConnections(mappedRecord, workspaceId, attributeTypeMap),
-        },
-      },
-      include: contactAttributesInclude,
-    });
-  }
-
-  // Handle duplicate based on action
-  return handleDuplicateContact(
-    mappedRecord,
-    existingContact,
-    existingUserIds,
-    attributeKeyMap,
-    attributeTypeMap,
-    duplicateContactsAction,
-    workspaceId
-  );
-};
-
-/**
- * Handles duplicate contact based on the specified action
- */
-const handleDuplicateContact = async (
-  mappedRecord: Record<string, string>,
-  existingContact: TExistingContactFromCsv,
-  existingUserIds: TExistingUserId[],
-  attributeKeyMap: Map<string, string>,
-  attributeTypeMap: Map<string, TAttributeTypeInfo>,
-  duplicateContactsAction: "skip" | "update" | "overwrite",
-  workspaceId: string
-): Promise<TContact | null> => {
-  if (duplicateContactsAction === "skip") {
-    return null;
-  }
-
-  const recordToProcess = resolveUserIdConflict(mappedRecord, existingContact, existingUserIds);
-
-  if (duplicateContactsAction === "update") {
-    const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => {
-      const dataType = attributeTypeMap.get(key)?.dataType ?? "string";
-      const columns = prepareAttributeColumnsForStorage(value, dataType);
-
-      return {
-        where: {
-          contactId_attributeKeyId: {
-            contactId: existingContact.id,
-            attributeKeyId: attributeKeyMap.get(key),
-          },
-        },
-        update: {
-          value: columns.value,
-          valueNumber: columns.valueNumber,
-          valueDate: columns.valueDate,
-        },
-        create: {
-          attributeKeyId: attributeKeyMap.get(key),
-          value: columns.value,
-          valueNumber: columns.valueNumber,
-          valueDate: columns.valueDate,
-        },
-      };
-    });
-
-    return prisma.contact.update({
-      where: { id: existingContact.id },
-      data: {
-        attributes: {
-          // @ts-expect-error - Prisma types don't fully support upsert array
-          upsert: attributesToUpsert,
-        },
-      },
-      include: contactAttributesInclude,
-    });
-  }
-
-  // duplicateContactsAction = "overwrite" here
-  await prisma.contactAttribute.deleteMany({
-    where: { contactId: existingContact.id },
-  });
-
-  return prisma.contact.update({
-    where: { id: existingContact.id },
-    data: {
-      attributes: {
-        create: createAttributeConnections(recordToProcess, workspaceId, attributeTypeMap),
-      },
-    },
-    include: contactAttributesInclude,
-  });
-};
-
-export type TCreateContactsFromCSVResult =
-  | { contacts: TContact[] }
-  | { validationErrors: TCsvAttributeValidationError[] };
-
-export const createContactsFromCSV = async (
-  csvData: Record<string, string>[],
-  workspaceId: string,
-  duplicateContactsAction: "skip" | "update" | "overwrite",
-  attributeMap: Record<string, string>
-): Promise<TCreateContactsFromCSVResult> => {
-  validateInputs(
-    [csvData, ZContactCSVUploadResponse],
-    [workspaceId, ZId],
-    [duplicateContactsAction, ZContactCSVDuplicateAction],
-    [attributeMap, ZContactCSVAttributeMap]
-  );
+export const deleteContactInWorkspace = async (contactId: string, workspaceId: string): Promise<TContact> => {
+  validateInputs([contactId, ZId], [workspaceId, ZId]);
 
   try {
-    // Step 2: Extract metadata from CSV data
-    const { csvEmails, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData);
+    const contact = await prisma.contact.findFirst({
+      where: { id: contactId, ...whereContactsOfWorkspace(workspaceId) },
+      select: selectContact,
+    });
+    if (!contact) {
+      throw new ResourceNotFoundError("contact", contactId);
+    }
 
-    // Step 3: Fetch existing data from database
-    const [existingContactsByEmail, existingUserIds, existingAttributeKeys] = await Promise.all([
-      prisma.contact.findMany({
+    const { count } = await prisma.$transaction(async (tx) => {
+      // A response or display being written for the contact holds a key-share lock on its row until it
+      // commits. Waiting for it here means the checks below see that row, so its cascade never deletes it.
+      await tx.$queryRaw`SELECT "id" FROM "Contact" WHERE "id" = ${contactId} FOR UPDATE`;
+      return tx.contact.deleteMany({
         where: {
-          workspaceId,
-          attributes: { some: { attributeKey: { key: "email" }, value: { in: csvEmails } } },
+          id: contactId,
+          directory: { workspaces: { some: { id: workspaceId }, every: { id: workspaceId } } },
+          responses: { none: { survey: { workspaceId: { not: workspaceId } } } },
+          displays: { none: { survey: { workspaceId: { not: workspaceId } } } },
         },
-        select: {
-          id: true,
-          attributes: { select: { attributeKey: { select: { key: true, id: true } }, value: true } },
-        },
-      }),
-      prisma.contactAttribute.findMany({
-        where: { attributeKey: { key: "userId", workspaceId }, value: { in: csvUserIds } },
-        select: { value: true, contactId: true },
-      }),
-      prisma.contactAttributeKey.findMany({
-        where: { workspaceId },
-        select: { key: true, id: true, dataType: true },
-      }),
-    ]);
-
-    // Step 3: Build lookup maps
-    const emailToContactMap = new Map<string, TExistingContactFromCsv>();
-    for (const contact of existingContactsByEmail) {
-      const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === "email");
-      if (emailAttr) {
-        emailToContactMap.set(emailAttr.value, contact);
-      }
+      });
+    });
+    if (count === 0) {
+      throw new ContactInSharedDirectoryError();
     }
 
-    const attributeKeyMap = new Map<string, string>();
-    const lowercaseToActualKeyMap = new Map<string, string>();
-    for (const attrKey of existingAttributeKeys) {
-      attributeKeyMap.set(attrKey.key, attrKey.id);
-      lowercaseToActualKeyMap.set(attrKey.key.toLowerCase(), attrKey.key);
-    }
-
-    // Step 4: Detect and validate attribute types
-    const attributeTypeMap = buildAttributeTypeMap(
-      attributeValuesByKey,
-      existingAttributeKeys,
-      lowercaseToActualKeyMap
-    );
-    const validationErrors = validateAndAdjustCsvAttributeTypes(attributeTypeMap, attributeValuesByKey);
-    if (validationErrors.length > 0) {
-      return { validationErrors };
-    }
-
-    // Step 5: Create missing attribute keys
-    await createMissingAttributeKeys(
-      csvKeys,
-      lowercaseToActualKeyMap,
-      attributeKeyMap,
-      attributeTypeMap,
-      workspaceId
-    );
-
-    // Step 6: Process each CSV record
-    const processingContext: TCsvProcessingContext = {
-      lowercaseToActualKeyMap,
-      emailToContactMap,
-      existingUserIds,
-      attributeKeyMap,
-      attributeTypeMap,
-      duplicateContactsAction,
-      workspaceId,
-    };
-
-    const CHUNK_SIZE = 50;
-    const allResults: (TContact | null)[] = [];
-
-    for (let i = 0; i < csvData.length; i += CHUNK_SIZE) {
-      const chunk = csvData.slice(i, i + CHUNK_SIZE);
-      const chunkResults = await Promise.all(
-        chunk.map((record) => processCsvRecord(record, processingContext))
-      );
-      allResults.push(...chunkResults);
-    }
-
-    return { contacts: allResults.filter((contact): contact is TContact => contact !== null) };
+    return withCreatingOrCallerWorkspace(contact, workspaceId);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
+
     throw error;
   }
 };
@@ -741,29 +250,30 @@ export const generatePersonalLinks = async (
     return null;
   }
 
+  // Cross-tenant guard: the segment must belong to the directory of the workspace
+  // of the survey the caller is authorized against (decision 24: every workspace
+  // on a directory shares its segments). Without this, a caller with access to
+  // `surveyId`'s workspace could pass a `segmentId` from another directory and
+  // exfiltrate its contact PII. Mirrors the v2 management API
+  // (contact-links/segments) which rejects the same mismatch. The message is a
+  // stable error code the client maps to a localized string.
   const segment = await getSegment(segmentId);
 
   if (!segment) {
     return null;
   }
 
-  // Cross-tenant guard: the segment must belong to the same workspace as the
-  // survey the caller is authorized against. Without this, a caller with access
-  // to `surveyId`'s workspace could pass a `segmentId` from another workspace and
-  // exfiltrate that workspace's contact PII. Mirrors the v2 management API
-  // (contact-links/segments) which rejects the same mismatch. The message is a
-  // stable error code the client maps to a localized string.
-  if (survey.workspaceId !== segment.workspaceId) {
+  if (!(await isSegmentOfWorkspace(segment, survey.workspaceId))) {
     throw new ValidationError(SEGMENT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE);
   }
 
   // Survey-visibility guard (ENG-6870): the contacts a survey-interaction filter matches are the people
   // who saw, started or completed the surveys it reads, so the caller must see every one of them.
-  if (await segmentFiltersReadHiddenSurvey(segment.filters, segment.workspaceId, actor, segment.id)) {
+  if (await segmentFiltersReadHiddenSurvey(segment.filters, survey.workspaceId, actor, segment.id)) {
     throw new ValidationError(SEGMENT_SURVEY_FILTERS_NOT_VISIBLE_ERROR_CODE);
   }
 
-  const contactsResult = await getContactsInSegment(segmentId);
+  const contactsResult = await getContactsInSegment(segmentId, survey.workspaceId);
 
   if (!contactsResult) {
     return null;

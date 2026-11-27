@@ -24,6 +24,7 @@ vi.mock("../segments", () => ({ getSegment: vi.fn() }));
 vi.mock("react", () => ({ cache: (fn: (...args: unknown[]) => unknown) => fn }));
 
 const WORKSPACE_ID = "workspace-parity";
+const DIRECTORY_ID = "directory-parity";
 const SEGMENT_ID = "segment-parity";
 // Anchor to the real clock: the Prisma builder computes its window from `new Date()` internally, so the
 // in-memory `now` must be the same instant (within ms) for the two paths to agree. Fixtures sit days
@@ -85,7 +86,7 @@ const evalPrismaClause = (contact: FixtureContact, clause: TInteractionClause): 
 };
 
 const prismaMembership = async (contact: FixtureContact, filters: TBaseFilters): Promise<boolean> => {
-  const result = await segmentFilterToPrismaQuery(SEGMENT_ID, filters, WORKSPACE_ID);
+  const result = await segmentFilterToPrismaQuery(SEGMENT_ID, filters, DIRECTORY_ID, WORKSPACE_ID);
   if (!result.ok) throw new Error("segmentFilterToPrismaQuery failed");
   // The outer clause is { AND: [{ workspaceId }, filtersClause] }; fixtures are in-workspace, so we
   // evaluate only the filters clause.

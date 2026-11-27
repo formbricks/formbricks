@@ -1,7 +1,8 @@
 type: object
 description: >
   App-survey contact targeting. Only valid for `type: app`. `filters: []` targets everyone. Setting or
-  changing non-empty filters requires the Contacts entitlement; otherwise create/patch returns 403.
+  changing non-empty filters requires the Contacts entitlement; otherwise create/patch returns 403. A patch
+  that sets non-empty filters in a workspace with no contact directory also returns 403.
 
 
   `attribute` filters reference workspace contact-attribute keys (discover them via

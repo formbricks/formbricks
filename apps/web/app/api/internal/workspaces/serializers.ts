@@ -86,4 +86,5 @@ export const serializeEditorWorkspace = (workspace: TEditorWorkspace): TEditorWo
   logo: workspace.logo,
   appSetupCompleted: workspace.appSetupCompleted,
   customHeadScripts: workspace.customHeadScripts,
+  contactDirectoryId: workspace.contactDirectoryId,
 });

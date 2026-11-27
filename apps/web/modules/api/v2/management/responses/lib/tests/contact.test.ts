@@ -19,6 +19,7 @@ const contactId = "test-contact-id";
 const mockContactDbData = {
   id: contactId,
   workspaceId,
+  directoryId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   attributes: [
@@ -46,7 +47,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              workspaceId,
+              directory: { workspaces: { some: { id: workspaceId } } },
             },
             value: userId,
           },
@@ -83,7 +84,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              workspaceId,
+              directory: { workspaces: { some: { id: workspaceId } } },
             },
             value: userId,
           },
@@ -125,6 +126,7 @@ describe("getContactByUserId", () => {
     const mockContactWithManyAttributes = {
       id: contactId,
       workspaceId,
+      directoryId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       attributes: [
@@ -156,6 +158,7 @@ describe("getContactByUserId", () => {
     const mockContactWithNoAttributes = {
       id: contactId,
       workspaceId,
+      directoryId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       attributes: [],

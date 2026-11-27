@@ -441,7 +441,13 @@ describe("streamSurveyImport", () => {
         workspaceId: body.workspaceId,
         updatedAt: "2026-10-29T09:00:00.000Z",
       };
-      const plan = { actionClasses: new Map(), attributeKeysToCreate: [], languagesToCreate: [], issues: [] };
+      const plan = {
+        actionClasses: new Map(),
+        attributeKeysToCreate: [],
+        attributeKeyDirectoryId: null,
+        languagesToCreate: [],
+        issues: [],
+      };
       mocks.previewFormbricksFileImport.mockResolvedValue({
         draft,
         references,
@@ -770,7 +776,13 @@ describe("streamSurveyImport", () => {
           references: { actionClasses: [], attributeKeys: [], embeddedFields: [] },
           issues: [],
           source: null,
-          plan: { actionClasses: new Map(), attributeKeysToCreate: [], languagesToCreate: [], issues: [] },
+          plan: {
+            actionClasses: new Map(),
+            attributeKeysToCreate: [],
+            attributeKeyDirectoryId: null,
+            languagesToCreate: [],
+            issues: [],
+          },
         });
         mocks.findFormbricksFileMatch.mockResolvedValue(null);
       };

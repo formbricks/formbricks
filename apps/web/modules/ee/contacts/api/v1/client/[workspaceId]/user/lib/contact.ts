@@ -1,11 +1,13 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { whereAttributeKey } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 
 export const getContactByUserIdWithAttributes = reactCache(async (workspaceId: string, userId: string) => {
   const contact = await prisma.contact.findFirst({
     where: {
-      workspaceId,
-      attributes: { some: { attributeKey: { key: "userId", workspaceId }, value: userId } },
+      ...whereContactsOfWorkspace(workspaceId),
+      attributes: { some: { attributeKey: whereAttributeKey(workspaceId, "userId"), value: userId } },
     },
     select: {
       id: true,

@@ -81,6 +81,15 @@ describe("utils", () => {
       expect(body.error.message).toBe("Forbidden");
     });
 
+    test("a forbidden error with a message answers with that message", async () => {
+      const response = handleApiError(mockRequest, {
+        type: "forbidden",
+        message: "Set up a directory first.",
+      });
+      expect(response.status).toBe(403);
+      expect((await response.json()).error).toEqual({ code: 403, message: "Set up a directory first." });
+    });
+
     test('return not found response for "not_found" error', async () => {
       const details = [{ field: "resource", issue: "not found" }];
       const error: ApiErrorResponseV2 = { type: "not_found", details };

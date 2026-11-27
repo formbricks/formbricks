@@ -1,5 +1,10 @@
 import "server-only";
-import { problemContactsNotEntitled } from "@/app/api/v3/lib/response";
+import { problemContactsNotEntitled, problemForbidden } from "@/app/api/v3/lib/response";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  type TWorkspaceContactDirectory,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 /**
@@ -18,4 +23,21 @@ export async function assertV3ContactsEnabled(
   }
 
   return problemContactsNotEntitled(requestId, instance);
+}
+
+/**
+ * The no-directory gate of the same reads (spec decision 13): a workspace with no contact directory has no
+ * contacts, keys or segments to read. Returns a 403 problem carrying the decision 13 message, or the
+ * workspace's directory. Like the entitlement, run it after the workspace check: a caller without access
+ * must not learn whether the workspace has a directory.
+ */
+export async function assertV3ContactDirectory(
+  workspaceId: string,
+  requestId: string,
+  instance: string
+): Promise<Response | TWorkspaceContactDirectory> {
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (directory) return directory;
+
+  return problemForbidden(requestId, CONTACT_DIRECTORY_MISSING_MESSAGE, instance);
 }

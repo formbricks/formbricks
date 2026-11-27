@@ -1,6 +1,8 @@
 import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
+import { getSharedContactDirectoryName } from "@/modules/ee/contacts/directories/lib/directory-service";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { AttributesTable } from "./components/attributes-table";
@@ -14,9 +16,13 @@ export const AttributesPage = async ({
   const params = await paramsProps;
   const locale = await getLocale();
   const t = await getTranslate();
-  const { isReadOnly, organization, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, isOwner, isManager, organization, workspace } = await getWorkspaceAuth(
+    params.workspaceId
+  );
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
+  const hasContactDirectory = Boolean(await getWorkspaceContactDirectory(workspace.id));
+  const sharedDirectoryName = hasContactDirectory ? await getSharedContactDirectoryName(workspace.id) : null;
 
   return (
     <ContactsPageLayout
@@ -26,8 +32,16 @@ export const AttributesPage = async ({
       organizationId={organization.id}
       isContactsEnabled={isContactsEnabled}
       isReadOnly={isReadOnly}
-      cta={<CreateAttributeModal workspaceId={workspace.id} />}>
-      <AttributesTable isReadOnly={isReadOnly} workspaceId={params.workspaceId} locale={locale} />
+      hasContactDirectory={hasContactDirectory}
+      isOwnerOrManager={isOwner || isManager}
+      sharedDirectoryName={sharedDirectoryName}
+      cta={hasContactDirectory ? <CreateAttributeModal workspaceId={workspace.id} /> : undefined}>
+      <AttributesTable
+        isReadOnly={isReadOnly}
+        workspaceId={params.workspaceId}
+        locale={locale}
+        sharedDirectoryName={sharedDirectoryName}
+      />
     </ContactsPageLayout>
   );
 };

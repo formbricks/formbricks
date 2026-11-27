@@ -6,6 +6,7 @@ import { executeV3SurveyCreate } from "@/app/api/v3/surveys/create";
 import { executeV3SurveyPatch } from "@/app/api/v3/surveys/patch";
 import { prepareV3SurveyCreate, prepareV3SurveyPatchInput } from "@/app/api/v3/surveys/prepare";
 import { ZV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import { createSurvey, selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
@@ -49,9 +50,8 @@ const VARIABLE_ID = "clvar123456789012345678999";
 
 const seedWorkspace = async () => {
   const organization = await prisma.organization.create({ data: { name: "Outer Tx Org" } });
-  const workspace = await prisma.workspace.create({
-    data: { name: "Outer Tx Workspace", organizationId: organization.id },
-  });
+  const { workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "Outer Tx Workspace");
+  const workspace = { id: workspaceId };
   const user = await prisma.user.create({
     data: { email: `creator-${workspace.id}@example.com`, name: "Creator", emailVerified: true },
   });

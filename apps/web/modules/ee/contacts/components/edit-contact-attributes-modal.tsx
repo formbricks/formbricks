@@ -35,6 +35,7 @@ interface EditContactAttributesModalProps {
   readonly open: boolean;
   readonly setOpen: (open: boolean) => void;
   readonly contactId: string;
+  readonly workspaceId: string;
   readonly currentAttributes: TContactAttributeWithKeyInfo[];
   readonly attributeKeys: TContactAttributeKey[];
 }
@@ -43,6 +44,7 @@ export const EditContactAttributesModal = ({
   open,
   setOpen,
   contactId,
+  workspaceId,
   currentAttributes,
   attributeKeys,
 }: EditContactAttributesModalProps) => {
@@ -171,7 +173,7 @@ export const EditContactAttributesModal = ({
 
       let result: Awaited<ReturnType<typeof updateContactAttributes>>;
       try {
-        result = await updateContactAttributes(contactId, attributes);
+        result = await updateContactAttributes(contactId, workspaceId, attributes);
       } catch (error) {
         toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
         return;

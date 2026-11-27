@@ -7,6 +7,7 @@ import { TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/ty
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getSurveyUploadElementIds, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { type TResponseCursor, whereAfterResponseCursor } from "../response/pagination";
+import { toResultsResponseContact } from "../response/results-contact";
 import { buildWhereClause, selectsLowQuality } from "../response/where-clause";
 import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
@@ -86,9 +87,11 @@ export const buildAnalysisSelect = (fields: TAnalysisResponseFields, isQuotasAll
           contact: {
             select: {
               id: true,
+              // Tells whether the workspace still reaches the contact (decision 8).
+              directoryId: true,
               attributes: {
                 where: { attributeKey: { key: "userId" } },
-                select: { value: true },
+                select: { attributeKey: { select: { key: true } }, value: true },
               },
             },
           },
@@ -114,7 +117,11 @@ type TAnalysisSelected = {
   data: unknown;
   notShown: TAnalysisResponse["notShown"];
   tags?: { tag: { name: string } }[];
-  contact?: { id: string; attributes: { value: string }[] } | null;
+  contact?: {
+    id: string;
+    directoryId: string | null;
+    attributes: { attributeKey: { key: string }; value: string }[];
+  } | null;
   contactAttributes?: Record<string, unknown> | null;
   quotaLinks?: { quota: { name: string } }[];
   variables?: Record<string, string | number | boolean>;
@@ -124,7 +131,10 @@ type TAnalysisSelected = {
   updatedAt?: Date;
 };
 
-const toAnalysisResponse = (row: TAnalysisSelected): TAnalysisResponse => ({
+const toAnalysisResponse = (
+  row: TAnalysisSelected,
+  workspaceDirectoryId: string | null
+): TAnalysisResponse => ({
   id: row.id,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
@@ -140,7 +150,8 @@ const toAnalysisResponse = (row: TAnalysisSelected): TAnalysisResponse => ({
   tags: row.tags?.map(({ tag }) => tag.name),
   quotas: row.quotaLinks?.map(({ quota }) => quota.name),
   contactAttributes: row.contactAttributes,
-  contact: row.contact ? { id: row.contact.id, userId: row.contact.attributes[0]?.value } : null,
+  // A contact the workspace no longer reaches exports without its current userId.
+  contact: row.contact ? toResultsResponseContact(row.contact, workspaceDirectoryId) : null,
 });
 
 /**
@@ -165,6 +176,18 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
       where.lowQualityLeftOut ? prisma.response.count({ where: where.lowQualityLeftOut }) : 0,
       fields.contactAttributes ? getContactAttributeKeys(survey.workspaceId) : [],
     ]);
+    // Read with each batch, not once: an export can run for a while, and a contact of a directory the
+    // workspace has left meanwhile must come out as unavailable from then on. Not the request-deduped
+    // `getWorkspaceContactDirectoryId`, which would keep answering with the first read.
+    const readWorkspaceDirectoryId = async (): Promise<string | null> =>
+      fields.contact
+        ? ((
+            await prisma.workspace.findUnique({
+              where: { id: survey.workspaceId },
+              select: { contactDirectoryId: true },
+            })
+          )?.contactDirectoryId ?? null)
+        : null;
 
     const builder = createAnalysisRowBuilder({
       survey,
@@ -184,15 +207,19 @@ export const openAnalysisExport = async (input: TAnalysisExportInput): Promise<T
     async function* rows() {
       let cursor: TResponseCursor | undefined;
       while (true) {
-        const batch = (await prisma.response.findMany({
-          where: whereAfterResponseCursor(where.included, cursor),
-          select,
-          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-          take: batchSize,
-        })) as unknown as TAnalysisSelected[];
+        const [batchRows, workspaceDirectoryId] = await Promise.all([
+          prisma.response.findMany({
+            where: whereAfterResponseCursor(where.included, cursor),
+            select,
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            take: batchSize,
+          }),
+          readWorkspaceDirectoryId(),
+        ]);
+        const batch = batchRows as unknown as TAnalysisSelected[];
 
         yield batch.map((row) => {
-          const response = toAnalysisResponse(row);
+          const response = toAnalysisResponse(row, workspaceDirectoryId);
           // File URLs resolve like the Standard export does, for the upload element answers only.
           for (const id of uploadElementIds) {
             if (response.data[id] !== undefined)

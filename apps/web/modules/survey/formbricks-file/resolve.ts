@@ -14,6 +14,12 @@ import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { whereAttributeKeysOfDirectory } from "@/modules/ee/contacts/lib/attribute-key-scope";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+  lockWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import {
   type TTranslate,
@@ -64,6 +70,11 @@ export interface TFormbricksFileReferencePlan {
   /** Each action class a trigger uses, by its id in the file: the target's id, or what to create. */
   actionClasses: Map<string, { id: string } | { create: TActionClassCreate }>;
   attributeKeysToCreate: TFormbricksFileAttributeKey[];
+  /**
+   * The contact directory the plan matched the survey's attribute keys in, when it uses any. The apply
+   * refuses if the workspace's directory is another one by then: the keys it found may not exist there.
+   */
+  attributeKeyDirectoryId: string | null;
   languagesToCreate: TFormbricksFileLanguage[];
   /** One note per action class and attribute key the import creates. */
   issues: TSurveyImportPipelineIssue[];
@@ -276,16 +287,32 @@ const planAttributeKeys = async (
   workspaceId: string,
   { fileKeys, usedKeys }: { fileKeys: TFormbricksFileAttributeKey[]; usedKeys: ReadonlySet<string> },
   fieldPrefix: string | null
-): Promise<Pick<TFormbricksFileReferencePlan, "attributeKeysToCreate" | "issues">> => {
+): Promise<
+  Pick<TFormbricksFileReferencePlan, "attributeKeysToCreate" | "attributeKeyDirectoryId" | "issues">
+> => {
   const wanted = fileKeys.filter((attributeKey) => usedKeys.has(attributeKey.key));
-  if (wanted.length === 0) return { attributeKeysToCreate: [], issues: [] };
+  if (wanted.length === 0) return { attributeKeysToCreate: [], attributeKeyDirectoryId: null, issues: [] };
 
+  // Attribute keys live in the workspace's contact directory; without one there is nowhere to put them.
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (!directory) {
+    throw new SurveyImportInputError(
+      [{ name: at(fieldPrefix, "references.attributeKeys"), reason: CONTACT_DIRECTORY_MISSING_MESSAGE }],
+      CONTACT_DIRECTORY_MISSING_MESSAGE
+    );
+  }
+
+  // The keys of the directory just read, which the plan records: not of whatever directory the workspace
+  // is in by the time these run, so the apply's directory check covers them too.
   const [existing, count] = await Promise.all([
     db.contactAttributeKey.findMany({
-      where: { workspaceId, key: { in: wanted.map((attributeKey) => attributeKey.key) } },
+      where: {
+        ...whereAttributeKeysOfDirectory(directory.id),
+        key: { in: wanted.map((attributeKey) => attributeKey.key) },
+      },
       select: { key: true },
     }),
-    db.contactAttributeKey.count({ where: { workspaceId } }),
+    db.contactAttributeKey.count({ where: whereAttributeKeysOfDirectory(directory.id) }),
   ]);
   const existingKeys = new Set(existing.map((attributeKey) => attributeKey.key));
   // A file may name one key more than once; its first definition is the one it is created with (as an
@@ -318,6 +345,7 @@ const planAttributeKeys = async (
 
   return {
     attributeKeysToCreate,
+    attributeKeyDirectoryId: directory.id,
     issues: attributeKeysToCreate.map(({ key }) => ({
       code: "attribute_key_created",
       severity: "info",
@@ -395,6 +423,7 @@ export const planFormbricksFileReferences = async (
   return {
     actionClasses: actions.actionClasses,
     attributeKeysToCreate: attributeKeys.attributeKeysToCreate,
+    attributeKeyDirectoryId: attributeKeys.attributeKeyDirectoryId,
     languagesToCreate,
     issues: [...actions.issues, ...attributeKeys.issues],
   };
@@ -423,6 +452,18 @@ const workspaceChangedError = (name: string) =>
       {
         name: "references.actionClasses",
         reason: `Another import created the action class "${name}" while this one ran; import the file again`,
+      },
+    ],
+    "The workspace changed while the file was being imported.",
+    "formbricks_file_invalid"
+  );
+
+const contactDirectoryChangedError = () =>
+  new SurveyImportInputError(
+    [
+      {
+        name: "references.attributeKeys",
+        reason: "The workspace's contact directory changed while this import ran; import the file again",
       },
     ],
     "The workspace changed while the file was being imported.",
@@ -459,23 +500,26 @@ const recoverSkippedActionClasses = async (
 };
 
 /**
- * Create the plan's attribute keys, the cap held again under a lock: the plan counted before this
- * transaction, and another import may have added keys since. A key without a name is named after itself,
- * as the other create paths name it.
+ * Create the plan's attribute keys in the workspace's contact directory (keys and their cap are per
+ * directory), the cap held again under a lock on the directory: the plan counted before this
+ * transaction, and another import, from any workspace on the directory, may have added keys since. A
+ * key without a name is named after itself, as the other create paths name it.
  */
 const createAttributeKeys = async (
   tx: Prisma.TransactionClient,
   workspaceId: string,
+  directoryId: string,
   attributeKeys: TFormbricksFileAttributeKey[]
 ) => {
-  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${ATTRIBUTE_KEY_CAP_LOCK_PREFIX + workspaceId}))`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${ATTRIBUTE_KEY_CAP_LOCK_PREFIX + directoryId}))`;
   assertAttributeKeyCap(
-    await tx.contactAttributeKey.count({ where: { workspaceId } }),
+    await tx.contactAttributeKey.count({ where: whereAttributeKeysOfDirectory(directoryId) }),
     attributeKeys.length,
     null
   );
   return tx.contactAttributeKey.createManyAndReturn({
     data: inUniqueKeyOrder(attributeKeys, ({ key }) => key).map((attributeKey) => ({
+      directoryId,
       workspaceId,
       ...attributeKey,
       name: attributeKey.name ?? formatSnakeCaseToTitleCase(attributeKey.key),
@@ -508,8 +552,8 @@ const createMissingReferences = async (
           skipDuplicates: true,
         })
       : Promise.resolve([]),
-    plan.attributeKeysToCreate.length > 0
-      ? createAttributeKeys(tx, workspaceId, plan.attributeKeysToCreate)
+    plan.attributeKeysToCreate.length > 0 && plan.attributeKeyDirectoryId
+      ? createAttributeKeys(tx, workspaceId, plan.attributeKeyDirectoryId, plan.attributeKeysToCreate)
       : Promise.resolve([]),
     plan.languagesToCreate.length > 0
       ? tx.language.createManyAndReturn({
@@ -544,6 +588,13 @@ export const applyFormbricksFileReferences = async (
     } else {
       toCreate.set(target.create, [...(toCreate.get(target.create) ?? []), sourceId]);
     }
+  }
+
+  // The survey's targeting names keys the plan found or will create in this directory; under the
+  // workspace's lock, refuse if the workspace has moved to another directory since.
+  if (plan.attributeKeyDirectoryId) {
+    const directory = await lockWorkspaceDirectory(tx, workspaceId);
+    if (directory?.id !== plan.attributeKeyDirectoryId) throw contactDirectoryChangedError();
   }
 
   const creates = [...toCreate.keys()];

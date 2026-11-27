@@ -1,5 +1,8 @@
 import { listSegmentFilterSurveysOperation } from "@/app/api/internal/segments/lib/operations";
-import { ZWorkspaceSegmentFilterSurveysParams } from "@/app/api/internal/segments/schemas";
+import {
+  ZWorkspaceSegmentFilterSurveysParams,
+  ZWorkspaceSegmentFilterSurveysQuery,
+} from "@/app/api/internal/segments/schemas";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 
 /**
@@ -8,11 +11,12 @@ import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
  */
 export const GET = withV3ApiWrapper({
   auth: "session",
-  schemas: { params: ZWorkspaceSegmentFilterSurveysParams },
+  schemas: { params: ZWorkspaceSegmentFilterSurveysParams, query: ZWorkspaceSegmentFilterSurveysQuery },
   handler: async ({ authentication, parsedInput, requestId, instance }) =>
     listSegmentFilterSurveysOperation({
       authentication,
       workspaceId: parsedInput.params.workspaceId,
+      surveyIds: parsedInput.query.surveyIds,
       requestId,
       instance,
     }),

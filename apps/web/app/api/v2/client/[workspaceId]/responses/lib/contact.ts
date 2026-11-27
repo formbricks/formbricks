@@ -1,6 +1,7 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { whereContactsOfWorkspace } from "@/modules/ee/contacts/lib/contact-directory";
 
 type TContactAttributeResult = {
   attributeKey: {
@@ -9,9 +10,10 @@ type TContactAttributeResult = {
   value: string;
 };
 
+/** The contact, when it belongs to the workspace's directory (whichever of its workspaces created it). */
 export const getContact = reactCache(async (contactId: string, workspaceId: string) => {
   const contact = await prisma.contact.findUnique({
-    where: { id: contactId, workspaceId },
+    where: { id: contactId, ...whereContactsOfWorkspace(workspaceId) },
     select: {
       id: true,
       attributes: {

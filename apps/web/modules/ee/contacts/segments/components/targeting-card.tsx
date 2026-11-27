@@ -48,6 +48,11 @@ interface TargetingCardProps {
   readonly segments: TSegment[];
   readonly initialSegment?: TSegment;
   /**
+   * The survey's segment when it is from another contact directory than the workspace's (decision 4). Its
+   * filters match nobody the workspace can identify, so the card asks for new targeting while it is loaded.
+   */
+  readonly otherDirectorySegmentId?: string | null;
+  /**
    * The shared-segment edit open in this card (ENG-6957). A survey save does not write a shared segment,
    * so the editor stops Save and Publish while it holds unsaved filters, until "Save changes" or Cancel.
    */
@@ -83,6 +88,7 @@ export function TargetingCard({
   contactAttributeKeys,
   segments,
   initialSegment,
+  otherDirectorySegmentId = null,
   sharedSegmentEdit,
   setSharedSegmentEdit,
 }: TargetingCardProps) {
@@ -169,7 +175,7 @@ export function TargetingCard({
     }));
 
   const handleSaveAsNewSegmentUpdate = (segmentId: string, data: TSegmentUpdateInput) =>
-    withReadableMessage(() => updateSegment(segmentId, data));
+    withReadableMessage(() => updateSegment(segmentId, localSurvey.workspaceId, data));
 
   const handleSaveAsNewSegmentCreate = (data: TSegmentCreateInput) =>
     withReadableMessage(() => createSegment(data));
@@ -177,7 +183,7 @@ export function TargetingCard({
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error(t("workspace.segments.invalid_segment"));
-      await updateSegment(segment.id, data);
+      await updateSegment(segment.id, localSurvey.workspaceId, data);
       toast.success(t("workspace.segments.segment_saved_successfully"));
       // Cancel restores the segment from `segments`, which the server render owns: refresh it.
       router.refresh();
@@ -397,6 +403,13 @@ export function TargetingCard({
         <hr className="text-slate-600" />
 
         <div className="flex flex-col gap-5 p-6">
+          {segment.id === otherDirectorySegmentId && segment.filters.length > 0 && (
+            <Alert variant="warning" alertRole="status">
+              <AlertDescription>
+                {t("workspace.segments.segment_from_another_contact_directory")}
+              </AlertDescription>
+            </Alert>
+          )}
           <TargetingIndicator segment={segment} />
 
           <div className="filter-scrollbar flex flex-col gap-4 overflow-auto rounded-lg border border-slate-300 bg-slate-50 p-4">

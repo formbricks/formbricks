@@ -77,10 +77,12 @@ describe("segments API client", () => {
     expect(sentBody()).toMatchObject({ surveyId: SURVEY_ID });
   });
 
-  test("PATCHes only the fields a segment update takes, even from a whole segment", async () => {
-    routeFetch({ [`PATCH /api/internal/segments/${SEGMENT_ID}`]: [json({ data: resource })] });
+  test("PATCHes only the fields a segment update takes, even from a whole segment, naming the workspace", async () => {
+    routeFetch({
+      [`PATCH /api/internal/segments/${SEGMENT_ID}?workspaceId=${WORKSPACE_ID}`]: [json({ data: resource })],
+    });
 
-    expect(await updateSegment(SEGMENT_ID, { ...segment, title: "Renamed" })).toEqual(segment);
+    expect(await updateSegment(SEGMENT_ID, WORKSPACE_ID, { ...segment, title: "Renamed" })).toEqual(segment);
     expect(sentBody()).toEqual({
       title: "Renamed",
       description: null,
@@ -90,9 +92,13 @@ describe("segments API client", () => {
     });
   });
 
-  test("DELETEs a segment", async () => {
-    routeFetch({ [`DELETE /api/internal/segments/${SEGMENT_ID}`]: [new Response(null, { status: 204 })] });
-    await expect(deleteSegment(SEGMENT_ID)).resolves.toBeUndefined();
+  test("DELETEs a segment, naming the workspace", async () => {
+    routeFetch({
+      [`DELETE /api/internal/segments/${SEGMENT_ID}?workspaceId=${WORKSPACE_ID}`]: [
+        new Response(null, { status: 204 }),
+      ],
+    });
+    await expect(deleteSegment(SEGMENT_ID, WORKSPACE_ID)).resolves.toBeUndefined();
   });
 
   test("POSTs a copy onto a survey", async () => {
@@ -124,24 +130,31 @@ describe("segments API client", () => {
   });
 
   test("reads an attribute's values and the surveys a filter can name", async () => {
+    const surveys = {
+      surveys: [{ id: SURVEY_ID, name: "Onboarding", status: "inProgress" }],
+      otherWorkspaceSurveyIds: [],
+    };
     routeFetch({
-      [`GET /api/internal/contact-attribute-keys/${KEY_ID}/values`]: [json({ data: ["free", "pro"] })],
-      [`GET /api/internal/workspaces/${WORKSPACE_ID}/segment-filter-surveys`]: [
-        json({ data: [{ id: SURVEY_ID, name: "Onboarding", status: "inProgress" }] }),
+      [`GET /api/internal/contact-attribute-keys/${KEY_ID}/values?workspaceId=${WORKSPACE_ID}`]: [
+        json({ data: ["free", "pro"] }),
       ],
+      [`GET /api/internal/workspaces/${WORKSPACE_ID}/segment-filter-surveys`]: [json({ data: surveys })],
     });
 
-    expect(await getContactAttributeKeyValues(KEY_ID)).toEqual(["free", "pro"]);
-    expect(await listSegmentFilterSurveys(WORKSPACE_ID)).toEqual([
-      { id: SURVEY_ID, name: "Onboarding", status: "inProgress" },
-    ]);
+    expect(await getContactAttributeKeyValues(KEY_ID, WORKSPACE_ID)).toEqual(["free", "pro"]);
+    // No named ids: no query string.
+    expect(await listSegmentFilterSurveys(WORKSPACE_ID, [])).toEqual(surveys);
   });
 
   test("surfaces a segment still in use as the server's message", async () => {
     const detail = "Cannot delete a segment that is associated with a survey";
-    routeFetch({ [`DELETE /api/internal/segments/${SEGMENT_ID}`]: [json({ status: 409, detail }, 409)] });
+    routeFetch({
+      [`DELETE /api/internal/segments/${SEGMENT_ID}?workspaceId=${WORKSPACE_ID}`]: [
+        json({ status: 409, detail }, 409),
+      ],
+    });
 
-    const error = await deleteSegment(SEGMENT_ID).catch((caught: unknown) => caught);
+    const error = await deleteSegment(SEGMENT_ID, WORKSPACE_ID).catch((caught: unknown) => caught);
     expect(error).toBeInstanceOf(V3ApiError);
     expect((error as V3ApiError).message).toBe(detail);
   });

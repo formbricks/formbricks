@@ -10,14 +10,14 @@ export type ApiErrorDetails = {
 
 export type ApiErrorResponseV2 =
   | {
-      type:
-        | "unauthorized"
-        | "forbidden"
-        | "conflict"
-        | "payload_too_large"
-        | "too_many_requests"
-        | "internal_server_error";
+      type: "unauthorized" | "conflict" | "payload_too_large" | "too_many_requests" | "internal_server_error";
       details?: ApiErrorDetails;
+    }
+  | {
+      type: "forbidden";
+      details?: ApiErrorDetails;
+      /** Replaces the generic "Forbidden" in the response, for a refusal the caller can act on. */
+      message?: string;
     }
   | {
       type: "bad_request" | "not_found" | "unprocessable_entity";

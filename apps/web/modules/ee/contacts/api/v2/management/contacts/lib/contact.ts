@@ -1,75 +1,77 @@
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import {
+  whereAttributeKeysOfDirectory,
+  whereDirectoryAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
 import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
-import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
+import {
+  ContactDirectoryMissingError,
+  type TWorkspaceContactDirectory,
+  withWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
+import {
+  TContactCreateRequest,
+  TContactResponse,
+  getUniqueValueKey,
+} from "@/modules/ee/contacts/types/contact";
 
+/** A contact of the directory whose `key` attribute is `value`, if any. */
+const findContactWithAttribute = (directoryId: string, key: string, value: string) =>
+  prisma.contact.findFirst({
+    where: {
+      directoryId,
+      attributes: { some: { attributeKey: whereDirectoryAttributeKey(directoryId, key), value } },
+    },
+    select: { id: true },
+  });
+
+/**
+ * Creates a contact in `directory`, from the request's workspace. The directory's matching key (`email`
+ * or `userId`) is required and, like the other of the two keys when given, must not belong to another
+ * contact of the directory.
+ */
 export const createContact = async (
-  contactData: TContactCreateRequest
+  contactData: TContactCreateRequest,
+  directory: TWorkspaceContactDirectory
 ): Promise<Result<TContactResponse, ApiErrorResponseV2>> => {
   const { workspaceId, attributes } = contactData;
+  const identityKey = directory.matchingKey;
 
   try {
-    const emailValue = attributes.email;
-    if (!emailValue) {
+    const identityValue = attributes[identityKey];
+    if (!identityValue) {
       return err({
         type: "bad_request",
-        details: [{ field: "attributes", issue: "email attribute is required" }],
+        details: [{ field: "attributes", issue: `${identityKey} attribute is required` }],
       });
     }
 
-    // Extract userId if present
-    const userId = attributes.userId;
-
-    // Check for existing contact with same email
-    const existingContactByEmail = await prisma.contact.findFirst({
-      where: {
-        workspaceId,
-        attributes: {
-          some: {
-            attributeKey: { key: "email" },
-            value: emailValue,
-          },
-        },
-      },
-    });
-
-    if (existingContactByEmail) {
+    if (await findContactWithAttribute(directory.id, identityKey, identityValue)) {
       return err({
         type: "conflict",
-        details: [{ field: "email", issue: "contact with this email already exists" }],
+        details: [{ field: identityKey, issue: `contact with this ${identityKey} already exists` }],
       });
     }
 
-    // Check for existing contact with same userId (if provided)
-    if (userId) {
-      const existingContactByUserId = await prisma.contact.findFirst({
-        where: {
-          workspaceId,
-          attributes: {
-            some: {
-              attributeKey: { key: "userId" },
-              value: userId,
-            },
-          },
-        },
+    // userId in an email directory, email in a userId one
+    const uniqueValueKey = getUniqueValueKey(identityKey);
+    const uniqueValue = attributes[uniqueValueKey];
+    if (uniqueValue && (await findContactWithAttribute(directory.id, uniqueValueKey, uniqueValue))) {
+      return err({
+        type: "conflict",
+        details: [{ field: uniqueValueKey, issue: `contact with this ${uniqueValueKey} already exists` }],
       });
-
-      if (existingContactByUserId) {
-        return err({
-          type: "conflict",
-          details: [{ field: "userId", issue: "contact with this userId already exists" }],
-        });
-      }
     }
 
     // Get all attribute keys that need to exist
     const attributeKeys = Object.keys(attributes);
 
-    // Check which attribute keys exist in the workspace
+    // Check which attribute keys exist in the directory
     const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
       where: {
-        workspaceId,
+        ...whereAttributeKeysOfDirectory(directory.id),
         key: { in: attributeKeys },
       },
     });
@@ -95,25 +97,34 @@ export const createContact = async (
       };
     });
 
-    const result = await prisma.contact.create({
-      data: {
-        workspaceId,
-        attributes: {
-          createMany: {
-            data: attributeData,
+    // Under the workspace's lock, and only while `directory` is still its directory: a removal that
+    // committed after the checks above refuses the insert instead of leaving the contact behind.
+    const result = await withWorkspaceDirectory(
+      workspaceId,
+      (tx) =>
+        tx.contact.create({
+          data: {
+            // The directory owns the contact; the workspace records where it was created.
+            directoryId: directory.id,
+            workspaceId,
+            attributes: {
+              createMany: {
+                data: attributeData,
+              },
+            },
           },
-        },
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        attributes: {
-          include: {
-            attributeKey: true,
+          select: {
+            id: true,
+            createdAt: true,
+            attributes: {
+              include: {
+                attributeKey: true,
+              },
+            },
           },
-        },
-      },
-    });
+        }),
+      { expectedDirectoryId: directory.id }
+    );
 
     // Format the response with flattened attributes, resolving from typed columns
     const flattenedAttributes: Record<string, string> = {};
@@ -130,6 +141,9 @@ export const createContact = async (
 
     return ok(response);
   } catch (error) {
+    if (error instanceof ContactDirectoryMissingError) {
+      return err({ type: "forbidden", details: [{ field: "workspaceId", issue: error.message }] });
+    }
     return err({
       type: "internal_server_error",
       details: [

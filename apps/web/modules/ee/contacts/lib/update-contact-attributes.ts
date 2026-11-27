@@ -6,7 +6,7 @@ import { TAttributeUpdateMessage } from "./attribute-messages";
 import { updateAttributes } from "./attributes";
 import { getContactAttributeKeys } from "./contact-attribute-keys";
 import { getContactAttributes } from "./contact-attributes";
-import { getContact } from "./contacts";
+import { getContactInWorkspace } from "./contacts";
 
 export interface UpdateContactAttributesResult {
   updatedAttributes: TContactAttributes;
@@ -14,17 +14,20 @@ export interface UpdateContactAttributesResult {
   updatedAttributeKeys?: TContactAttributeKey[];
 }
 
+/**
+ * Updates a contact of the workspace's contact directory. `workspaceId` is the caller's workspace, not
+ * the contact's own (which only records where it was created); keys are read and created in that
+ * workspace's directory.
+ */
 export const updateContactAttributes = async (
   contactId: string,
+  workspaceId: string,
   attributes: TContactAttributesInput
 ): Promise<UpdateContactAttributesResult> => {
-  // Load contact to get workspaceId and current attributes
-  const contact = await getContact(contactId);
+  const contact = await getContactInWorkspace(contactId, workspaceId);
   if (!contact) {
     throw new ResourceNotFoundError("contact", contactId);
   }
-
-  const workspaceId = contact.workspaceId;
 
   // Extract userId from attributes (required by updateAttributes)
   // If missing, pass empty string but note it in messages

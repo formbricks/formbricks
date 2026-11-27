@@ -4,8 +4,9 @@ import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { findApiKeyWorkspaceOnDirectory } from "@/modules/ee/contacts/lib/api-key-directory-access";
+import { withCallerWorkspace } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { CONTACTS_API_V1_NOT_ENABLED_MESSAGE } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
@@ -27,22 +28,24 @@ async function fetchAndAuthorizeContactAttributeKey(
     return { error: responses.forbiddenResponse(CONTACTS_API_V1_NOT_ENABLED_MESSAGE) };
   }
 
-  const attributeKey = await getContactAttributeKey(attributeKeyId);
-  if (!attributeKey) {
+  const row = await getContactAttributeKey(attributeKeyId);
+  if (!row) {
     return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
   }
 
-  if (
-    !(await can(
-      { type: "apiKey", id: authentication.apiKeyId },
-      getWorkspaceAuthorizationActionForMethod(requiredPermission),
-      { type: "workspace", id: attributeKey.workspaceId }
-    ))
-  ) {
+  // A key's own `workspaceId` only records where it was created; access goes through its directory.
+  const { directoryId, ...key } = row;
+  const workspaceId = await findApiKeyWorkspaceOnDirectory(
+    authentication.apiKeyId,
+    getWorkspaceAuthorizationActionForMethod(requiredPermission),
+    directoryId,
+    authentication.workspacePermissions.map((permission) => permission.workspaceId)
+  );
+  if (!workspaceId) {
     return { error: responses.unauthorizedResponse() };
   }
 
-  return { attributeKey };
+  return { attributeKey: withCallerWorkspace(key, workspaceId), workspaceId };
 }
 export const GET = withV1ApiWrapper({
   handler: async ({
@@ -110,7 +113,10 @@ export const DELETE = withV1ApiWrapper({
           response: responses.badRequestResponse("Default Contact Attribute Keys cannot be deleted"),
         };
       }
-      const deletedContactAttributeKey = await deleteContactAttributeKey(params.contactAttributeKeyId);
+      const deletedContactAttributeKey = await deleteContactAttributeKey(
+        params.contactAttributeKeyId,
+        result.workspaceId
+      );
       return {
         response: responses.successResponse(deletedContactAttributeKey),
       };
@@ -179,6 +185,7 @@ export const PUT = withV1ApiWrapper({
       }
       const updatedAttributeClass = await updateContactAttributeKey(
         params.contactAttributeKeyId,
+        result.workspaceId,
         inputValidation.data
       );
       if (updatedAttributeClass) {

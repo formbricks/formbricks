@@ -678,6 +678,12 @@ export const ZResponseFilterCriteria = ZResponseFilterCriteriaFields.refine(
 export const ZResponseContact = z.object({
   id: ZId,
   userId: z.string().optional(),
+  /**
+   * Set by the app's own results reads only: the workspace can no longer reach this contact, because it
+   * sits in another contact directory or the workspace has none. The results then show the identifier
+   * saved on the response, without a link to the contact.
+   */
+  unavailable: z.boolean().optional(),
 });
 
 export type TResponseContact = z.infer<typeof ZResponseContact>;

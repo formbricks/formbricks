@@ -10,14 +10,21 @@ import {
   ZContact,
   ZContactBulkUploadRequest,
   ZContactCSVAttributeMap,
-  ZContactCSVUploadResponse,
+  ZContactCSVRecords,
   ZContactCreateRequest,
   ZContactResponse,
   ZContactTableData,
   ZContactWithAttributes,
-  validateEmailAttribute,
+  getContactBulkUploadRequestSchema,
+  getContactCSVUploadSchema,
+  getContactCreateRequestSchema,
+  validateIdentityAttribute,
   validateUniqueAttributeKeys,
 } from "./contact";
+
+const ZEmailCSVUpload = getContactCSVUploadSchema("email");
+const ZEmailBulkUploadRequest = getContactBulkUploadRequestSchema("email");
+const ZEmailCreateRequest = getContactCreateRequestSchema("email");
 
 describe("ZContact", () => {
   test("should validate valid contact data", () => {
@@ -101,7 +108,7 @@ describe("ZContactWithAttributes", () => {
   });
 });
 
-describe("ZContactCSVUploadResponse", () => {
+describe("getContactCSVUploadSchema (email directory)", () => {
   test("should validate valid CSV upload data", () => {
     const validData = [
       {
@@ -115,7 +122,7 @@ describe("ZContactCSVUploadResponse", () => {
         lastName: "Smith",
       },
     ];
-    const result = ZContactCSVUploadResponse.parse(validData);
+    const result = ZEmailCSVUpload.parse(validData);
     expect(result).toEqual(validData);
   });
 
@@ -126,7 +133,7 @@ describe("ZContactCSVUploadResponse", () => {
         lastName: "Doe",
       },
     ];
-    expect(() => ZContactCSVUploadResponse.parse(invalidData)).toThrow(ZodError);
+    expect(() => ZEmailCSVUpload.parse(invalidData)).toThrow(ZodError);
   });
 
   test("should reject data with empty email", () => {
@@ -137,7 +144,7 @@ describe("ZContactCSVUploadResponse", () => {
         lastName: "Doe",
       },
     ];
-    expect(() => ZContactCSVUploadResponse.parse(invalidData)).toThrow(ZodError);
+    expect(() => ZEmailCSVUpload.parse(invalidData)).toThrow(ZodError);
   });
 
   test("should reject data with duplicate emails", () => {
@@ -153,7 +160,7 @@ describe("ZContactCSVUploadResponse", () => {
         lastName: "Smith",
       },
     ];
-    expect(() => ZContactCSVUploadResponse.parse(invalidData)).toThrow(ZodError);
+    expect(() => ZEmailCSVUpload.parse(invalidData)).toThrow(ZodError);
   });
 
   test("should reject data with duplicate userIds", () => {
@@ -171,7 +178,7 @@ describe("ZContactCSVUploadResponse", () => {
         lastName: "Smith",
       },
     ];
-    expect(() => ZContactCSVUploadResponse.parse(invalidData)).toThrow(ZodError);
+    expect(() => ZEmailCSVUpload.parse(invalidData)).toThrow(ZodError);
   });
 
   test("should reject data exceeding 10000 records", () => {
@@ -180,7 +187,31 @@ describe("ZContactCSVUploadResponse", () => {
       firstName: "John",
       lastName: "Doe",
     }));
-    expect(() => ZContactCSVUploadResponse.parse(invalidData)).toThrow(ZodError);
+    expect(() => ZEmailCSVUpload.parse(invalidData)).toThrow(ZodError);
+  });
+});
+
+describe("getContactCSVUploadSchema (userId directory)", () => {
+  const schema = getContactCSVUploadSchema("userId");
+
+  // An email belongs to one contact of a directory, as identify keeps it, whatever the directory matches by.
+  test("refuses two rows with one email", () => {
+    const result = schema.safeParse([
+      { userId: "user-1", email: "shared@example.com" },
+      { userId: "user-2", email: "shared@example.com" },
+    ]);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe("Duplicate emails found in the records");
+  });
+
+  test("accepts distinct emails, and rows without one", () => {
+    const rows = [
+      { userId: "user-1", email: "a@example.com" },
+      { userId: "user-2", email: "b@example.com" },
+      { userId: "user-3", email: "" },
+      { userId: "user-4", email: "" },
+    ];
+    expect(schema.safeParse(rows).success).toBe(true);
   });
 });
 
@@ -206,6 +237,7 @@ describe("ZContactCSVAttributeMap", () => {
 });
 
 describe("the CSV import's caps", () => {
+  const csvSchema = getContactCSVUploadSchema("email");
   const issues = (result: { success: boolean; error?: ZodError }) =>
     result.error?.issues.map(({ message, path }) => ({ message, path })) ?? [];
   const record = (extra: Record<string, string> = {}) => ({ email: "ada@example.com", ...extra });
@@ -217,8 +249,8 @@ describe("the CSV import's caps", () => {
     const records = (count: number) =>
       Array.from({ length: count }, (_, i) => ({ email: `user${i}@example.com` }));
 
-    expect(ZContactCSVUploadResponse.safeParse(records(CSV_IMPORT_MAX_RECORDS)).success).toBe(true);
-    expect(issues(ZContactCSVUploadResponse.safeParse(records(CSV_IMPORT_MAX_RECORDS + 1)))).toEqual([
+    expect(csvSchema.safeParse(records(CSV_IMPORT_MAX_RECORDS)).success).toBe(true);
+    expect(issues(csvSchema.safeParse(records(CSV_IMPORT_MAX_RECORDS + 1)))).toEqual([
       { message: "Maximum 10000 records allowed at a time.", path: [] },
     ]);
   });
@@ -255,8 +287,8 @@ describe("the CSV import's caps", () => {
       "A column name must not contain NUL characters (record 1)",
     ],
   ])("refuses %s just past the cap, naming it, with one issue", (_label, atLimit, pastLimit, message) => {
-    expect(ZContactCSVUploadResponse.safeParse([atLimit]).success).toBe(true);
-    expect(issues(ZContactCSVUploadResponse.safeParse([record(), pastLimit]))).toEqual([
+    expect(csvSchema.safeParse([atLimit]).success).toBe(true);
+    expect(issues(csvSchema.safeParse([record(), pastLimit]))).toEqual([
       { message: message.replace("record 1", "record 2"), path: [1] },
     ]);
   });
@@ -267,7 +299,7 @@ describe("the CSV import's caps", () => {
       note: 1 as unknown as string,
     }));
 
-    expect(issues(ZContactCSVUploadResponse.safeParse(bad))).toEqual([
+    expect(issues(csvSchema.safeParse(bad))).toEqual([
       { message: "A value must be text (record 1)", path: [0] },
     ]);
   });
@@ -302,7 +334,7 @@ describe("the CSV import's caps", () => {
   });
 });
 
-describe("ZContactBulkUploadRequest", () => {
+describe("getContactBulkUploadRequestSchema (email directory)", () => {
   test("should validate valid bulk upload request", () => {
     const validRequest = {
       workspaceId: "cld1234567890abcdef123456",
@@ -320,7 +352,7 @@ describe("ZContactBulkUploadRequest", () => {
         },
       ],
     };
-    const result = ZContactBulkUploadRequest.parse(validRequest);
+    const result = ZEmailBulkUploadRequest.parse(validRequest);
     expect(result).toEqual(validRequest);
   });
 
@@ -341,7 +373,7 @@ describe("ZContactBulkUploadRequest", () => {
         },
       ],
     };
-    expect(() => ZContactBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject request with empty email value", () => {
@@ -361,7 +393,7 @@ describe("ZContactBulkUploadRequest", () => {
         },
       ],
     };
-    expect(() => ZContactBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject request with invalid email format", () => {
@@ -381,7 +413,7 @@ describe("ZContactBulkUploadRequest", () => {
         },
       ],
     };
-    expect(() => ZContactBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject request with duplicate emails across contacts", () => {
@@ -412,7 +444,7 @@ describe("ZContactBulkUploadRequest", () => {
         },
       ],
     };
-    expect(() => ZContactBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject request with duplicate userIds across contacts", () => {
@@ -457,7 +489,7 @@ describe("ZContactBulkUploadRequest", () => {
         },
       ],
     };
-    expect(() => ZContactBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject request with duplicate attribute keys within same contact", () => {
@@ -484,7 +516,7 @@ describe("ZContactBulkUploadRequest", () => {
         },
       ],
     };
-    expect(() => ZContactBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject request exceeding 250 contacts", () => {
@@ -502,11 +534,11 @@ describe("ZContactBulkUploadRequest", () => {
         ],
       })),
     };
-    expect(() => ZContactBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailBulkUploadRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 });
 
-describe("ZContactCreateRequest", () => {
+describe("getContactCreateRequestSchema (email directory)", () => {
   test("should validate valid create request with simplified flat attributes", () => {
     const validRequest = {
       workspaceId: "cld1234567890abcdef123456",
@@ -516,7 +548,7 @@ describe("ZContactCreateRequest", () => {
         lastName: "Doe",
       },
     };
-    const result = ZContactCreateRequest.parse(validRequest);
+    const result = ZEmailCreateRequest.parse(validRequest);
     expect(result).toEqual(validRequest);
   });
 
@@ -527,7 +559,7 @@ describe("ZContactCreateRequest", () => {
         email: "test@example.com",
       },
     };
-    const result = ZContactCreateRequest.parse(validRequest);
+    const result = ZEmailCreateRequest.parse(validRequest);
     expect(result).toEqual(validRequest);
   });
 
@@ -539,7 +571,7 @@ describe("ZContactCreateRequest", () => {
         lastName: "Doe",
       },
     };
-    expect(() => ZContactCreateRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailCreateRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject create request with invalid email format", () => {
@@ -550,7 +582,7 @@ describe("ZContactCreateRequest", () => {
         firstName: "John",
       },
     };
-    expect(() => ZContactCreateRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailCreateRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject create request with empty email", () => {
@@ -561,7 +593,7 @@ describe("ZContactCreateRequest", () => {
         firstName: "John",
       },
     };
-    expect(() => ZContactCreateRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailCreateRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 
   test("should reject create request with invalid workspaceId", () => {
@@ -571,7 +603,7 @@ describe("ZContactCreateRequest", () => {
         email: "test@example.com",
       },
     };
-    expect(() => ZContactCreateRequest.parse(invalidRequest)).toThrow(ZodError);
+    expect(() => ZEmailCreateRequest.parse(invalidRequest)).toThrow(ZodError);
   });
 });
 
@@ -643,7 +675,7 @@ describe("ZContactResponse", () => {
   });
 });
 
-describe("validateEmailAttribute", () => {
+describe("validateIdentityAttribute", () => {
   test("should validate email attribute successfully", () => {
     const attributes = [
       {
@@ -656,10 +688,10 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as unknown as Parameters<typeof validateEmailAttribute>[1];
-    const result = validateEmailAttribute(attributes, mockCtx);
+    } as unknown as Parameters<typeof validateIdentityAttribute>[1];
+    const result = validateIdentityAttribute(attributes, mockCtx, "email");
     expect(result.isValid).toBe(true);
-    expect(result.emailAttr).toEqual(attributes[0]);
+    expect(result.identityAttr).toEqual(attributes[0]);
   });
 
   test("should fail validation when email attribute is missing", () => {
@@ -674,10 +706,10 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as unknown as Parameters<typeof validateEmailAttribute>[1];
-    const result = validateEmailAttribute(attributes, mockCtx);
+    } as unknown as Parameters<typeof validateIdentityAttribute>[1];
+    const result = validateIdentityAttribute(attributes, mockCtx, "email");
     expect(result.isValid).toBe(false);
-    expect(result.emailAttr).toBeUndefined();
+    expect(result.identityAttr).toBeUndefined();
   });
 
   test("should fail validation when email value is empty", () => {
@@ -692,8 +724,8 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as unknown as Parameters<typeof validateEmailAttribute>[1];
-    const result = validateEmailAttribute(attributes, mockCtx);
+    } as unknown as Parameters<typeof validateIdentityAttribute>[1];
+    const result = validateIdentityAttribute(attributes, mockCtx, "email");
     expect(result.isValid).toBe(false);
   });
 
@@ -709,8 +741,8 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as unknown as Parameters<typeof validateEmailAttribute>[1];
-    const result = validateEmailAttribute(attributes, mockCtx);
+    } as unknown as Parameters<typeof validateIdentityAttribute>[1];
+    const result = validateIdentityAttribute(attributes, mockCtx, "email");
     expect(result.isValid).toBe(false);
   });
 
@@ -726,8 +758,8 @@ describe("validateEmailAttribute", () => {
     ];
     const mockCtx = {
       addIssue: () => {},
-    } as unknown as Parameters<typeof validateEmailAttribute>[1];
-    const result = validateEmailAttribute(attributes, mockCtx, 5);
+    } as unknown as Parameters<typeof validateIdentityAttribute>[1];
+    const result = validateIdentityAttribute(attributes, mockCtx, "email", 5);
     expect(result.isValid).toBe(false);
   });
 });
@@ -809,5 +841,141 @@ describe("validateUniqueAttributeKeys", () => {
     } as unknown as Parameters<typeof validateUniqueAttributeKeys>[1];
     validateUniqueAttributeKeys(attributes, mockCtx, 3);
     expect(issueAdded).toBe(true);
+  });
+});
+
+describe("identity checks for a userId directory", () => {
+  const workspaceId = "cld1234567890abcdef123456";
+  const bulkAttr = (key: string, value: string) => ({ attributeKey: { key, name: key }, value });
+  const issueMessages = (result: { success: boolean; error?: ZodError }) =>
+    result.error?.issues.map((issue) => issue.message) ?? [];
+
+  test("CSV rows need a userId column instead of email", () => {
+    const schema = getContactCSVUploadSchema("userId");
+
+    expect(schema.safeParse([{ userId: "user-1" }]).success).toBe(true);
+    expect(issueMessages(schema.safeParse([{ email: "a@example.com" }]))).toEqual([
+      "Missing userId field for one or more records",
+    ]);
+    expect(issueMessages(schema.safeParse([{ userId: "" }]))).toEqual([
+      "userId field is empty for one or more records",
+    ]);
+    expect(issueMessages(schema.safeParse([{ userId: "user-1" }, { userId: "user-1" }]))).toEqual([
+      "Duplicate userIds found in the records",
+    ]);
+  });
+
+  test("bulk contacts need a unique userId, not a valid email", () => {
+    const schema = getContactBulkUploadRequestSchema("userId");
+
+    expect(
+      schema.safeParse({
+        workspaceId,
+        contacts: [{ attributes: [bulkAttr("userId", "user-1"), bulkAttr("email", "not-an-email")] }],
+      }).success
+    ).toBe(true);
+
+    expect(
+      issueMessages(
+        schema.safeParse({ workspaceId, contacts: [{ attributes: [bulkAttr("email", "a@example.com")] }] })
+      )
+    ).toEqual(["userId attribute is required for contact at index 0"]);
+
+    // One issue for a repeated userId, not a second one from the userId check an email directory runs.
+    const duplicates = schema.safeParse({
+      workspaceId,
+      contacts: [
+        { attributes: [bulkAttr("userId", "user-1")] },
+        { attributes: [bulkAttr("userId", "user-1")] },
+      ],
+    });
+    expect(duplicates.error?.issues).toEqual([
+      expect.objectContaining({
+        message: "Duplicate userIds found in the records, please ensure each userId is unique.",
+        params: { duplicateUserIds: ["user-1"] },
+      }),
+    ]);
+  });
+
+  test("bulk contacts can't repeat an email, as a CSV file can't", () => {
+    const schema = getContactBulkUploadRequestSchema("userId");
+
+    const duplicates = schema.safeParse({
+      workspaceId,
+      contacts: [
+        { attributes: [bulkAttr("userId", "user-1"), bulkAttr("email", "a@example.com")] },
+        { attributes: [bulkAttr("userId", "user-2"), bulkAttr("email", "a@example.com")] },
+        { attributes: [bulkAttr("userId", "user-3")] },
+      ],
+    });
+    expect(duplicates.error?.issues).toEqual([
+      expect.objectContaining({
+        message: "Duplicate emails found in the records, please ensure each email is unique.",
+        params: { duplicateEmails: ["a@example.com"] },
+      }),
+    ]);
+  });
+
+  test("create needs a userId attribute and does not check email format", () => {
+    const schema = getContactCreateRequestSchema("userId");
+
+    expect(schema.safeParse({ workspaceId, attributes: { userId: "user-1", email: "x" } }).success).toBe(
+      true
+    );
+    expect(issueMessages(schema.safeParse({ workspaceId, attributes: { email: "a@example.com" } }))).toEqual([
+      "userId attribute is required",
+    ]);
+  });
+});
+
+describe("base request schemas (checked before the directory is known)", () => {
+  test("accept rows and contacts without any identity attribute", () => {
+    expect(ZContactCSVRecords.safeParse([{ firstName: "John" }]).success).toBe(true);
+    expect(
+      ZContactBulkUploadRequest.safeParse({
+        workspaceId: "cld1234567890abcdef123456",
+        contacts: [{ attributes: [{ attributeKey: { key: "firstName", name: "First" }, value: "J" }] }],
+      }).success
+    ).toBe(true);
+    expect(
+      ZContactCreateRequest.safeParse({
+        workspaceId: "cld1234567890abcdef123456",
+        attributes: { firstName: "John" },
+      }).success
+    ).toBe(true);
+  });
+
+  test("still enforce the row limit and unique userIds", () => {
+    expect(ZContactCSVRecords.safeParse(Array.from({ length: 10001 }, () => ({}))).success).toBe(false);
+    expect(
+      ZContactBulkUploadRequest.safeParse({
+        workspaceId: "cld1234567890abcdef123456",
+        contacts: [
+          { attributes: [{ attributeKey: { key: "userId", name: "User Id" }, value: "u-1" }] },
+          { attributes: [{ attributeKey: { key: "userId", name: "User Id" }, value: "u-1" }] },
+        ],
+      }).success
+    ).toBe(false);
+  });
+});
+
+describe("email directory messages stay as before", () => {
+  test("CSV, bulk and create keep their email texts", () => {
+    expect(
+      ZEmailCSVUpload.safeParse([{ firstName: "J" }]).error?.issues.map((issue) => issue.message)
+    ).toEqual(["Missing email field for one or more records"]);
+    expect(ZEmailCSVUpload.safeParse([{ email: "" }]).error?.issues[0].message).toBe(
+      "Email field is empty for one or more records"
+    );
+    expect(
+      ZEmailBulkUploadRequest.safeParse({
+        workspaceId: "cld1234567890abcdef123456",
+        contacts: [{ attributes: [{ attributeKey: { key: "email", name: "Email" }, value: "bad" }] }],
+      }).error?.issues[0].message
+    ).toBe("Invalid email format for contact at index 0");
+    expect(
+      ZEmailCreateRequest.safeParse({ workspaceId: "cld1234567890abcdef123456", attributes: {} }).error
+        ?.issues[0].message
+    ).toBe("Email attribute is required");
   });
 });

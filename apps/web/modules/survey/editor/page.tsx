@@ -21,6 +21,7 @@ import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/lib/delivery";
 import { getWorkspaceCustomCssRecord, parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getSurveyLinkedCreatives } from "@/modules/ee/creatives/lib/survey-linked-creatives";
 import { getSurveyDataRetentionContext } from "@/modules/ee/data-retention/lib/survey-context";
@@ -31,6 +32,7 @@ import {
   getIsWorkflowsEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
+import { getOtherDirectorySegmentId } from "@/modules/survey/editor/lib/segment-directory";
 import { getTeamMemberDetails } from "@/modules/survey/editor/lib/team";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
@@ -97,6 +99,8 @@ export const SurveyEditorPage = async (props: {
     responseCount,
     finishedResponseCount,
     segments,
+    contactDirectoryId,
+    otherDirectorySegmentId,
   ] = await Promise.all([
     getSurvey(params.surveyId),
     getWorkspaceWithTeamIds(params.workspaceId),
@@ -108,6 +112,8 @@ export const SurveyEditorPage = async (props: {
     getUserVisibleSurveyWhere(session.user.id, organization.id).then((where) =>
       getSegments(workspace.id, where)
     ),
+    getWorkspaceContactDirectoryId(workspace.id),
+    getOtherDirectorySegmentId(params.surveyId),
   ]);
 
   if (!workspaceWithTeamIds) {
@@ -191,6 +197,8 @@ export const SurveyEditorPage = async (props: {
       colors={SURVEY_BG_COLORS}
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
+      hasContactDirectory={contactDirectoryId !== null}
+      otherDirectorySegmentId={otherDirectorySegmentId}
       isSpamProtectionAllowed={isSpamProtectionAllowed}
       workspaceLanguages={workspaceLanguages}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}

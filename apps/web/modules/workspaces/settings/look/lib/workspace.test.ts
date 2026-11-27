@@ -21,6 +21,7 @@ const baseWorkspace: Workspace = {
   createdAt: new Date(),
   updatedAt: new Date(),
   legacyEnvironmentId: null,
+  contactDirectoryId: null,
   name: "Workspace 1",
   organizationId: "org1",
   styling: { allowStyleOverwrite: true },

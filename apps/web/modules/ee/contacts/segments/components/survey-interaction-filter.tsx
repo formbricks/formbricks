@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   SURVEY_INTERACTION_OPERATORS,
@@ -9,6 +10,7 @@ import {
   type TSurveyInteractionOperator,
   type TSurveyInteractionTimeUnit,
 } from "@formbricks/types/segment";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   convertOperatorToText,
@@ -51,10 +53,19 @@ export function SurveyInteractionFilter({
   // Pin to the concrete value type: the filter's `value` field is inferred from a refined Zod schema,
   // which TypeScript does not treat as a plain (spreadable) object without this annotation.
   const value: TSegmentSurveyInteractionFilterValue = resource.value;
+  // The workspace the editor is open in. A shared segment may have been made in another workspace of
+  // the directory (decision 24), so `segment.workspaceId` is not the one whose surveys to pick from.
+  const { workspace } = useWorkspace();
+  const workspaceId = workspace?.id ?? segment.workspaceId ?? "";
+  // The ids named when the filter loaded, so a selection change does not refetch.
+  const [initialSurveyIds] = useState(value.surveyIds);
   // The workspace's surveys, loaded once so the "specific surveys" picker is ready the moment the user
-  // switches scope. Self-fetching here avoids prop-drilling surveys through the four SegmentEditor render
-  // sites. Non-fatal on failure: the picker just stays empty.
-  const { data: surveys = [] } = useSegmentFilterSurveys(segment.workspaceId);
+  // switches scope, plus the named ids that are surveys of another workspace on the directory. Self-fetching
+  // here avoids prop-drilling surveys through the four SegmentEditor render sites. Non-fatal on failure: the
+  // picker just stays empty.
+  const { data } = useSegmentFilterSurveys(workspaceId, initialSurveyIds);
+  const surveys = data?.surveys ?? [];
+  const otherWorkspaceSurveyIds = data?.otherWorkspaceSurveyIds ?? [];
 
   const commitValue = (newValue: TSegmentSurveyInteractionFilterValue) => {
     const updatedSegment = structuredClone(segment);
@@ -89,12 +100,21 @@ export function SurveyInteractionFilter({
 
   // Every workspace survey stays selectable, including the one being edited: "have not seen" /
   // "have not completed" on the survey's own segment is a legitimate re-contact rule.
-  const surveyOptions = surveys.map((survey) => ({
-    // Name is the primary label (id beneath it as secondary); search matches both name and id.
-    value: survey.id,
-    label: survey.name || survey.id,
-    description: survey.id,
-  }));
+  const surveyOptions = [
+    ...surveys.map((survey) => ({
+      // Name is the primary label (id beneath it as secondary); search matches both name and id.
+      value: survey.id,
+      label: survey.name || survey.id,
+      description: survey.id,
+    })),
+    // A shared segment can name another workspace's survey (decision 24). It stays selected and
+    // removable, under a fixed label: the caller may not see that survey, so its name is never shown.
+    ...otherWorkspaceSurveyIds.map((surveyId) => ({
+      value: surveyId,
+      label: t("workspace.segments.survey_in_another_workspace"),
+      description: surveyId,
+    })),
+  ];
 
   const handleAmountChange = (raw: string) => {
     const parsed = Number.parseInt(raw, 10);

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { updateAttributes } from "./attributes";
 import { getContactAttributeKeys } from "./contact-attribute-keys";
 import { getContactAttributes } from "./contact-attributes";
-import { getContact } from "./contacts";
+import { getContactInWorkspace } from "./contacts";
 import { updateContactAttributes } from "./update-contact-attributes";
 
 // Mock dependencies
@@ -27,9 +27,10 @@ describe("updateContactAttributes", () => {
       email: "john@example.com",
     };
 
+    // Created in another workspace of the shared directory: keys and writes still use the caller's.
     const mockContact = {
       id: contactId,
-      workspaceId,
+      workspaceId: "origin-workspace",
       attributes: {
         userId,
         firstName: "Jane",
@@ -82,7 +83,7 @@ describe("updateContactAttributes", () => {
       email: "john@example.com",
     };
 
-    vi.mocked(getContact, { partial: true }).mockResolvedValue(mockContact);
+    vi.mocked(getContactInWorkspace, { partial: true }).mockResolvedValue(mockContact);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,
@@ -90,9 +91,9 @@ describe("updateContactAttributes", () => {
     vi.mocked(getContactAttributes).mockResolvedValue(mockUpdatedAttributes);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
 
-    const result = await updateContactAttributes(contactId, attributes);
+    const result = await updateContactAttributes(contactId, workspaceId, attributes);
 
-    expect(getContact).toHaveBeenCalledWith(contactId);
+    expect(getContactInWorkspace).toHaveBeenCalledWith(contactId, workspaceId);
     expect(getContactAttributeKeys).toHaveBeenCalledWith(workspaceId);
     // Should call updateAttributes with deleteRemovedAttributes: true for UI form updates
     expect(updateAttributes).toHaveBeenCalledWith(contactId, userId, workspaceId, attributes, true);
@@ -165,7 +166,7 @@ describe("updateContactAttributes", () => {
       newCustomField: "custom value",
     };
 
-    vi.mocked(getContact, { partial: true }).mockResolvedValue(mockContact);
+    vi.mocked(getContactInWorkspace, { partial: true }).mockResolvedValue(mockContact);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,
@@ -173,7 +174,7 @@ describe("updateContactAttributes", () => {
     vi.mocked(getContactAttributes).mockResolvedValue(mockUpdatedAttributes);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockUpdatedKeys);
 
-    const result = await updateContactAttributes(contactId, attributes);
+    const result = await updateContactAttributes(contactId, workspaceId, attributes);
 
     expect(result.updatedAttributes).toEqual(mockUpdatedAttributes);
     expect(result.updatedAttributeKeys).toEqual([
@@ -225,7 +226,7 @@ describe("updateContactAttributes", () => {
       firstName: "John",
     };
 
-    vi.mocked(getContact, { partial: true }).mockResolvedValue(mockContact);
+    vi.mocked(getContactInWorkspace, { partial: true }).mockResolvedValue(mockContact);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,
@@ -233,7 +234,7 @@ describe("updateContactAttributes", () => {
     vi.mocked(getContactAttributes).mockResolvedValue(mockUpdatedAttributes);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
 
-    const result = await updateContactAttributes(contactId, attributes);
+    const result = await updateContactAttributes(contactId, workspaceId, attributes);
 
     // When userId is not in attributes, pass empty string to updateAttributes
     expect(updateAttributes).toHaveBeenCalledWith(contactId, "", workspaceId, attributes, true);
@@ -275,7 +276,7 @@ describe("updateContactAttributes", () => {
       email: "existing@example.com",
     };
 
-    vi.mocked(getContact, { partial: true }).mockResolvedValue(mockContact);
+    vi.mocked(getContactInWorkspace, { partial: true }).mockResolvedValue(mockContact);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,
@@ -284,20 +285,21 @@ describe("updateContactAttributes", () => {
     vi.mocked(getContactAttributes).mockResolvedValue(mockUpdatedAttributes);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
 
-    const result = await updateContactAttributes(contactId, attributes);
+    const result = await updateContactAttributes(contactId, workspaceId, attributes);
 
     expect(result.messages).toContainEqual({ code: "email_already_exists", params: {} });
   });
 
   test("should throw error if contact not found", async () => {
     const contactId = "contact123";
+    const workspaceId = "env123";
     const attributes = {
       firstName: "John",
     };
 
-    vi.mocked(getContact).mockResolvedValue(null);
+    vi.mocked(getContactInWorkspace).mockResolvedValue(null);
 
-    await expect(updateContactAttributes(contactId, attributes)).rejects.toThrow(
+    await expect(updateContactAttributes(contactId, workspaceId, attributes)).rejects.toThrow(
       "contact with ID contact123 not found"
     );
   });

@@ -18,6 +18,8 @@ import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { toLegacyLanguageCodes } from "@/lib/i18n/utils";
 import { validateInputs } from "@/lib/utils/validate";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
+import { whereSegmentsOfWorkspace } from "@/modules/ee/contacts/segments/lib/segment-scope";
 import {
   MAX_DELIVERED_CREATIVES,
   type TDeliveredCreativeRow,
@@ -324,13 +326,17 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
     }));
 
     // Nested `userIsIn` / `userIsNotIn` filters can hide an interaction filter inside a referenced
-    // segment, and those affect membership at runtime too — so resolve them. Load the workspace's
-    // segments once (a small, indexed query behind the 60s workspace-state cache) only when some
-    // survey actually has filters; the common no-targeting case pays nothing.
+    // segment, and those affect membership at runtime too — so resolve them. Load the segments the
+    // workspace reaches (its directory's shared ones, decision 24) once (a small, indexed query behind
+    // the 60s workspace-state cache) only when some survey actually has filters; the common
+    // no-targeting case pays nothing.
     let segmentFiltersById: Map<string, TBaseFilters> | null = null;
-    if (surveysWithFilters.some((survey) => (survey.segmentFilters?.length ?? 0) > 0)) {
+    const directory = surveysWithFilters.some((survey) => (survey.segmentFilters?.length ?? 0) > 0)
+      ? await getWorkspaceContactDirectory(workspaceId)
+      : null;
+    if (directory) {
       const workspaceSegments = await prisma.segment.findMany({
-        where: { workspaceId },
+        where: whereSegmentsOfWorkspace(workspaceId, directory.id),
         select: { id: true, filters: true },
       });
       segmentFiltersById = new Map(

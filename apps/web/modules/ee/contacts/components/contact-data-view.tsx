@@ -19,6 +19,7 @@ import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { deleteContact as deleteContactRequest } from "../lib/api-client";
+import { getTranslatedContactDeleteError } from "../lib/contact-delete-errors";
 import { contactQueryKeys } from "../lib/query-keys";
 import {
   CONTACT_SORT_VALUES,
@@ -60,6 +61,8 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   isQuotasAllowed: boolean;
+  /** Set when other workspaces use this directory too: its contacts can't be deleted from here. */
+  sharedDirectoryName?: string | null;
 }
 
 /** Contacts on the shared table toolbar: filter by any attribute (ENG-3542), on the server. */
@@ -69,6 +72,7 @@ export const ContactDataView = ({
   contactAttributeKeys,
   isReadOnly,
   isQuotasAllowed,
+  sharedDirectoryName,
 }: Readonly<ContactDataViewProps>) => {
   const { t, i18n } = useTranslation();
   const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en-US") as TUserLocale;
@@ -167,10 +171,15 @@ export const ContactDataView = ({
 
   const deleteContact = async (contactId: string) => {
     try {
-      await deleteContactRequest(contactId);
+      await deleteContactRequest(contactId, workspaceId);
     } catch (error) {
       // The bulk delete shows the message of what it caught.
-      throw new Error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      throw new Error(
+        getTranslatedContactDeleteError(
+          getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
     }
   };
 
@@ -227,6 +236,13 @@ export const ContactDataView = ({
               type="contact"
               deleteAction={deleteContact}
               isQuotasAllowed={isQuotasAllowed}
+              deleteDisabledReason={
+                sharedDirectoryName
+                  ? t("workspace.contacts.delete_contact_shared_directory_note", {
+                      directoryName: sharedDirectoryName,
+                    })
+                  : undefined
+              }
             />
           ) : undefined
         }

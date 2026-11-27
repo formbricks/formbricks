@@ -2,10 +2,15 @@ import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
-import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
-import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
+import {
+  ZContactBulkUploadRequest,
+  getContactBulkUploadRequestSchema,
+  getUniqueValueKey,
+} from "@/modules/ee/contacts/types/contact";
+import { checkContactDirectoryApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const PUT = async (request: Request) =>
@@ -70,11 +75,25 @@ export const PUT = async (request: Request) =>
         );
       }
 
-      const emails = contacts.map(
-        (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value as string
-      );
+      const directoryResult = await checkContactDirectoryApiV2(workspaceId);
+      if (!directoryResult.ok) {
+        return handleApiError(request, directoryResult.error, auditLog);
+      }
+      const directory = directoryResult.data;
 
-      const upsertBulkContactsResult = await upsertBulkContacts(contacts, workspaceId, emails);
+      // The identity attribute depends on the directory's matching key, known only now.
+      const identityCheck = getContactBulkUploadRequestSchema(directory.matchingKey).safeParse(
+        parsedInput.body
+      );
+      if (!identityCheck.success) {
+        return handleApiError(
+          request,
+          { type: "unprocessable_entity", details: formatZodError(identityCheck.error) },
+          auditLog
+        );
+      }
+
+      const upsertBulkContactsResult = await upsertBulkContacts(contacts, workspaceId, directory);
 
       if (!upsertBulkContactsResult.ok) {
         return handleApiError(request, upsertBulkContactsResult.error, auditLog);
@@ -86,8 +105,7 @@ export const PUT = async (request: Request) =>
         return responses.multiStatusResponse({
           data: {
             status: "success",
-            message:
-              "Contacts bulk upload partially successful. Some contacts were skipped due to conflicting userIds.",
+            message: `Contacts bulk upload partially successful. Some contacts were skipped due to conflicting ${getUniqueValueKey(directory.matchingKey)}s.`,
             meta: {
               skippedContacts: contactIdxWithConflictingUserIds.map((idx) => ({
                 index: idx,

@@ -37,11 +37,17 @@ const getDataTypeIcon = (dataType: string) => {
 
 interface EditAttributeModalProps {
   attribute: TContactAttributeKey;
+  workspaceId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAttributeModalProps>) {
+export function EditAttributeModal({
+  attribute,
+  workspaceId,
+  open,
+  setOpen,
+}: Readonly<EditAttributeModalProps>) {
   const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -55,7 +61,7 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
     setIsUpdating(true);
 
     try {
-      await updateAttributeKey(attribute.id, {
+      await updateAttributeKey(attribute.id, workspaceId, {
         name: formData.name || undefined,
         description: formData.description || undefined,
       });

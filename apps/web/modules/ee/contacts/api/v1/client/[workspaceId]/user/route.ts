@@ -11,6 +11,7 @@ import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { NULL_BYTE_REASON, hasNullByte } from "@/lib/utils/postgres-text";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
+import { ContactDirectoryMissingError } from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { updateUser } from "./lib/update-user";
 
@@ -21,6 +22,10 @@ const handleError = (err: unknown, url: string): { response: Response; error?: u
 
   if (err instanceof ValidationError) {
     return { response: responses.badRequestResponse(err.message, undefined, true) };
+  }
+
+  if (err instanceof ContactDirectoryMissingError) {
+    return { response: responses.forbiddenResponse(err.message, true) };
   }
 
   logger.error({ error: err, url }, "Error in POST /api/v1/client/[workspaceId]/user");

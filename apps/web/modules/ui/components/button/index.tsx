@@ -9,26 +9,29 @@ import { cn } from "@/modules/ui/lib/utils";
 // Hover is gated on `not-disabled:` (`:not(:disabled)`), never `enabled:`. `:enabled` only matches
 // form controls, so every `<Button asChild><Link/></Button>` renders an `<a>` that can never match
 // it — the classes sit in the DOM and do nothing (ENG-3138). `:not(:disabled)` matches both a live
-// `<button>` and an `<a>`, and still drops out on a disabled `<button>`.
+// `<button>` and an `<a>`, and still drops out on a disabled `<button>`. `not-aria-disabled:` does the
+// same for a button that is `aria-disabled` (kept hoverable so a tooltip can say why), styled as disabled.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground not-disabled:hover:bg-primary/80",
-        destructive: "bg-destructive text-destructive-foreground not-disabled:hover:bg-destructive/80",
+        default: "bg-primary text-primary-foreground not-disabled:not-aria-disabled:hover:bg-primary/80",
+        destructive:
+          "bg-destructive text-destructive-foreground not-disabled:not-aria-disabled:hover:bg-destructive/80",
         outline:
-          "border border-input bg-background not-disabled:hover:bg-accent not-disabled:hover:text-accent-foreground",
+          "border border-input bg-background not-disabled:not-aria-disabled:hover:bg-accent not-disabled:not-aria-disabled:hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary/30 border border-primary/5 not-disabled:hover:border-primary/20",
+          "bg-secondary text-secondary-foreground not-disabled:not-aria-disabled:hover:bg-secondary/30 border border-primary/5 not-disabled:not-aria-disabled:hover:border-primary/20",
         // AI flavours. These deliberately step outside the Quiet Primary Rule: a generative action
         // is a different class of thing from a save, and marking it is the point. Reserved for
         // actions that actually invoke a model — a save that follows one stays `default`.
-        "ai-primary": "bg-ai-strong text-white not-disabled:hover:bg-ai-strong/90",
+        "ai-primary": "bg-ai-strong text-white not-disabled:not-aria-disabled:hover:bg-ai-strong/90",
         "ai-secondary":
-          "bg-ai-subtle text-ai-dark border border-ai-dark/10 not-disabled:hover:bg-ai-subtle/60 not-disabled:hover:border-ai-dark/20",
-        ghost: "not-disabled:hover:bg-accent not-disabled:hover:text-accent-foreground text-primary",
-        link: "text-primary underline-offset-4 not-disabled:hover:underline",
+          "bg-ai-subtle text-ai-dark border border-ai-dark/10 not-disabled:not-aria-disabled:hover:bg-ai-subtle/60 not-disabled:not-aria-disabled:hover:border-ai-dark/20",
+        ghost:
+          "not-disabled:not-aria-disabled:hover:bg-accent not-disabled:not-aria-disabled:hover:text-accent-foreground text-primary",
+        link: "text-primary underline-offset-4 not-disabled:not-aria-disabled:hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2",

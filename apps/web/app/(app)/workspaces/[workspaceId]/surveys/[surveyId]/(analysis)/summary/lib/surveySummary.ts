@@ -41,10 +41,12 @@ import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "@/lib/response/pagination";
+import { resultsContactSelection, toResultsResponseContact } from "@/lib/response/results-contact";
 import { buildWhereClause } from "@/lib/response/where-clause";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
+import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
 import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { summarizeSignatureAnswers } from "./signature-summary";
 import { convertFloatTo2Decimal } from "./utils";
@@ -1325,51 +1327,40 @@ export const getResponsesForSummary = reactCache(
         ...buildWhereClause(survey, filterCriteria),
       };
 
-      const responses = await prisma.response.findMany({
-        where: whereAfterResponseCursor(whereClause, cursor),
-        select: {
-          id: true,
-          createdAt: true,
-          data: true,
-          updatedAt: true,
-          contact: {
-            select: {
-              id: true,
-              attributes: {
-                select: { attributeKey: true, value: true },
-              },
+      const [workspaceDirectoryId, responses] = await Promise.all([
+        getWorkspaceContactDirectoryId(survey.workspaceId),
+        prisma.response.findMany({
+          where: whereAfterResponseCursor(whereClause, cursor),
+          select: {
+            id: true,
+            createdAt: true,
+            data: true,
+            updatedAt: true,
+            contact: { select: resultsContactSelection },
+            contactAttributes: true,
+            language: true,
+            ttc: true,
+            finished: true,
+            notShown: true,
+          },
+          orderBy: [
+            {
+              createdAt: "desc",
             },
-          },
-          contactAttributes: true,
-          language: true,
-          ttc: true,
-          finished: true,
-          notShown: true,
-        },
-        orderBy: [
-          {
-            createdAt: "desc",
-          },
-          {
-            id: "desc", // Secondary sort by ID for consistent pagination
-          },
-        ],
-        take: queryLimit,
-      });
+            {
+              id: "desc", // Secondary sort by ID for consistent pagination
+            },
+          ],
+          take: queryLimit,
+        }),
+      ]);
 
       const transformedResponses: TSurveySummaryResponseRow[] = responses.map((responsePrisma) => ({
         id: responsePrisma.id,
         createdAt: responsePrisma.createdAt,
         data: (responsePrisma.data ?? {}) as TResponseData,
         updatedAt: responsePrisma.updatedAt,
-        contact: responsePrisma.contact
-          ? {
-              id: responsePrisma.contact.id,
-              userId: responsePrisma.contact.attributes.find(
-                (attribute) => attribute.attributeKey.key === "userId"
-              )?.value as string,
-            }
-          : null,
+        contact: toResultsResponseContact(responsePrisma.contact, workspaceDirectoryId),
         contactAttributes: (responsePrisma.contactAttributes ?? {}) as TResponseContactAttributes,
         language: responsePrisma.language,
         ttc: (responsePrisma.ttc ?? {}) as TResponseTtc,

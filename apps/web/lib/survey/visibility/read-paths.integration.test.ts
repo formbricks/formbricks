@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { getResponsesByWorkspaceIds } from "@/app/api/v1/management/responses/lib/response";
 import { getSurveys as getV1Surveys } from "@/app/api/v1/management/surveys/lib/surveys";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { createWorkspaceWithContactDirectory } from "@/integration/contact-directory-fixture";
 import { resetDb } from "@/integration/reset-db";
 import {
   clearProjectionScopeReady,
@@ -50,11 +51,10 @@ const surveyIdsOf = (rows: ReadonlyArray<{ surveyId: string }>) =>
 beforeAll(async () => {
   await resetDb();
   const organization = await prisma.organization.create({ data: { name: "Read Paths Org" } });
-  const workspace = await prisma.workspace.create({
-    data: { name: "Read Paths", organizationId: organization.id },
-  });
+  // On a contact directory, as every migrated workspace is: contact reads are scoped by it.
+  const { workspaceId } = await createWorkspaceWithContactDirectory(organization.id, "Read Paths");
   ids.organization = organization.id;
-  ids.workspace = workspace.id;
+  ids.workspace = workspaceId;
 
   const makeUser = async (label: string, role: "manager" | "member", permission?: "read" | "readWrite") => {
     const user = await prisma.user.create({ data: { email: `${label}@read-paths.test`, name: label } });
@@ -64,7 +64,7 @@ beforeAll(async () => {
     if (permission) {
       const team = await prisma.team.create({ data: { name: label, organizationId: organization.id } });
       await prisma.teamUser.create({ data: { role: "contributor", teamId: team.id, userId: user.id } });
-      await prisma.workspaceTeam.create({ data: { permission, teamId: team.id, workspaceId: workspace.id } });
+      await prisma.workspaceTeam.create({ data: { permission, teamId: team.id, workspaceId } });
     }
     return user.id;
   };
@@ -76,18 +76,18 @@ beforeAll(async () => {
     data: { hashedKey: "read-paths-hash", label: "key", organizationId: organization.id },
   });
   await prisma.apiKeyWorkspace.create({
-    data: { apiKeyId: apiKey.id, permission: "manage", workspaceId: workspace.id },
+    data: { apiKeyId: apiKey.id, permission: "manage", workspaceId },
   });
   ids.apiKey = apiKey.id;
 
-  const contact = await prisma.contact.create({ data: { workspaceId: workspace.id } });
-  const tag = await prisma.tag.create({ data: { name: "Flagged", workspaceId: workspace.id } });
+  const contact = await prisma.contact.create({ data: { workspaceId } });
+  const tag = await prisma.tag.create({ data: { name: "Flagged", workspaceId } });
   ids.contact = contact.id;
   ids.tag = tag.id;
 
   const survey = async (name: string, visibility: "restricted" | "workspace") => {
     const created = await prisma.survey.create({
-      data: { name, ownerId: ids.owner, slug: `${visibility}-slug`, visibility, workspaceId: workspace.id },
+      data: { name, ownerId: ids.owner, slug: `${visibility}-slug`, visibility, workspaceId },
     });
     await prisma.response.create({
       data: {

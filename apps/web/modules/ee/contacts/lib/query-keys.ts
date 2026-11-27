@@ -8,9 +8,9 @@ export const contactQueryKeys = {
   segmentList: (workspaceId: string, params: readonly (readonly [string, string])[] | null) =>
     [...contactQueryKeys.all, "segments", workspaceId, params] as const,
   /** The values an attribute has, for the segment editor's value picker. */
-  attributeKeyValues: (contactAttributeKeyId: string) =>
-    [...contactQueryKeys.all, "attribute-key-values", contactAttributeKeyId] as const,
+  attributeKeyValues: (contactAttributeKeyId: string, workspaceId: string) =>
+    [...contactQueryKeys.all, "attribute-key-values", contactAttributeKeyId, workspaceId] as const,
   /** The surveys a segment's survey-interaction filter can name, for the segment editor's picker. */
-  segmentFilterSurveys: (workspaceId: string) =>
-    [...contactQueryKeys.all, "segment-filter-surveys", workspaceId] as const,
+  segmentFilterSurveys: (workspaceId: string, surveyIds: readonly string[] = []) =>
+    [...contactQueryKeys.all, "segment-filter-surveys", workspaceId, surveyIds] as const,
 };

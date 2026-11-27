@@ -2,62 +2,51 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
   DatabaseError,
-  InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
 import {
-  DATE_OPERATORS,
-  TAllOperators,
   TBaseFilters,
-  TDateOperator,
-  TEvaluateSegmentUserAttributeData,
-  TEvaluateSegmentUserData,
   TSegment,
-  TSegmentAttributeFilter,
-  TSegmentConnector,
   TSegmentCreateInput,
-  TSegmentDeviceFilter,
-  TSegmentFilterValue,
-  TSegmentPersonFilter,
-  TSegmentSegmentFilter,
-  TSegmentSurveyInteractionFilter,
   TSegmentUpdateInput,
   TSegmentWithSurveyRefs,
-  ZRelativeDateValue,
   ZSegmentCreateInput,
   ZSegmentFilters,
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
+import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import {
+  ContactDirectoryMissingError,
+  getWorkspaceContactDirectory,
+  getWorkspaceContactDirectoryId,
+  requireWorkspaceContactDirectory,
+  withWorkspaceDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
+import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
-  isResourceFilter,
   searchForAttributeKeyInSegment,
 } from "@/modules/ee/contacts/segments/lib/utils";
-import { isSameDay, subtractTimeUnit } from "./date-utils";
-import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
-import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "./segment-errors";
-
-export type PrismaSegment = Prisma.SegmentGetPayload<{
-  include: {
-    surveys: {
-      select: {
-        id: true;
-        name: true;
-        status: true;
-      };
-    };
-  };
-}>;
+import {
+  isSegmentVisibleToWorkspace,
+  privateSegmentKey,
+  whereSegmentsOfDirectoryOrWorkspace,
+  whereSegmentsOfWorkspace,
+} from "./segment-scope";
+import {
+  assertPrivateSegmentKeepsTitle,
+  assertTitleIsNotSurveyId,
+  needsSurveyIdTitleCheck,
+  throwSegmentTitleTaken,
+} from "./segment-titles";
 
 export const selectSegment = {
   id: true,
@@ -66,6 +55,7 @@ export const selectSegment = {
   title: true,
   description: true,
   workspaceId: true,
+  directoryId: true,
   filters: true,
   isPrivate: true,
   surveys: {
@@ -77,7 +67,29 @@ export const selectSegment = {
   },
 } satisfies Prisma.SegmentSelect;
 
-export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurveyRefs => {
+export type PrismaSegment = Prisma.SegmentGetPayload<{ select: typeof selectSegment }>;
+
+/**
+ * `selectSegment` for a list `workspaceId` reads: the segment's surveys are only that workspace's, through
+ * the viewer's visibility clause. A shared segment can target surveys of every workspace on its directory
+ * (decision 24); the names and ids of another workspace's surveys never leave the server.
+ */
+export const selectSegmentForWorkspace = (workspaceId: string, visibleSurveyWhere: Prisma.SurveyWhereInput) =>
+  ({
+    ...selectSegment,
+    surveys: {
+      ...selectSegment.surveys,
+      where: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
+    },
+  }) satisfies Prisma.SegmentSelect;
+
+/**
+ * A segment as the service reads it, with the contact directory it belongs to. Every scope check compares
+ * that directory (decision 24): `workspaceId` is only the workspace the segment was created in.
+ */
+export type TSegmentWithDirectory = TSegmentWithSurveyRefs & { directoryId: string | null };
+
+export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithDirectory => {
   const activeSurveys = segment.surveys
     .filter((survey) => survey.status === "inProgress")
     .map((survey) => ({ id: survey.id, name: survey.name }));
@@ -94,7 +106,7 @@ export const transformPrismaSegment = (segment: PrismaSegment): TSegmentWithSurv
   };
 };
 
-export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithSurveyRefs> => {
+export const getSegment = reactCache(async (segmentId: string): Promise<TSegmentWithDirectory> => {
   validateInputs([segmentId, ZId]);
   try {
     const segment = await prisma.segment.findUnique({
@@ -120,9 +132,11 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
 
 /**
  * The filters of several segments in one read, for the recursion check: a level of references costs one
- * query instead of one per segment. Scoped to the workspace, like every other nested-segment read, so a
- * tree naming another workspace's segment is refused rather than followed. Only ids that exist come back;
- * the caller reports a missing one, so it names the id its walk met.
+ * query instead of one per segment. Scoped to the segments the workspace reaches, like every other
+ * nested-segment read: its directory's shared segments and its own private ones (decision 24), or its own
+ * segments while it has no directory (decision 3). A tree naming a segment outside that is refused rather
+ * than followed. Only ids that exist come back; the caller reports a missing one, so it names the id its
+ * walk met.
  */
 export const getSegmentsByIds = async (
   segmentIds: string[],
@@ -130,8 +144,16 @@ export const getSegmentsByIds = async (
 ): Promise<{ id: string; filters: TBaseFilters }[]> => {
   validateInputs([segmentIds, z.array(ZId)], [workspaceId, ZId]);
   try {
+    const directory = await getWorkspaceContactDirectory(workspaceId);
     const segments = await prisma.segment.findMany({
-      where: { id: { in: segmentIds }, workspaceId },
+      where: {
+        id: { in: segmentIds },
+        // Without a directory, only the workspace's own directoryless segments: the rows it left in a
+        // former directory keep its id but are that directory's.
+        ...(directory
+          ? whereSegmentsOfWorkspace(workspaceId, directory.id)
+          : { workspaceId, directoryId: null }),
+      },
       select: { id: true, filters: true },
     });
     return segments.map((segment) => ({ id: segment.id, filters: segment.filters as TBaseFilters }));
@@ -145,14 +167,16 @@ export const getSegmentsByIds = async (
 };
 
 /**
- * `getSegments`' survey-reference scope for the server-side callers that need every survey a segment is
- * attached to, visible to the viewer or not — reference validation and copy naming, whose results never
- * reach a browser. A shared constant, not an inline `{}`, so `reactCache` keeps its dedupe and every
+ * `getSegments`' survey-reference scope for the server-side callers that need every survey of the workspace
+ * a segment is attached to, visible to the viewer or not — reference validation and copy naming, whose
+ * results never reach a browser. A shared constant, not an inline `{}`, so `reactCache` keeps its dedupe and every
  * unscoped caller is greppable.
  */
 export const ALL_SEGMENT_SURVEY_REFS: Prisma.SurveyWhereInput = Object.freeze({});
 
 /**
+ * Each segment's `surveys` / `activeSurveys` / `inactiveSurveys` are the workspace's own surveys only
+ * (`selectSegmentForWorkspace`).
  * @param visibleSurveyWhere ENG-3282: the `Survey` clause each segment's `activeSurveys` /
  *   `inactiveSurveys` are read through. Required, so no page can forget it and ship restricted survey
  *   names and ids to the browser: pass `getUserVisibleSurveyWhere(...)` for anything a viewer sees, and
@@ -162,17 +186,15 @@ export const getSegments = reactCache(
   async (
     workspaceId: string,
     visibleSurveyWhere: Prisma.SurveyWhereInput
-  ): Promise<TSegmentWithSurveyRefs[]> => {
+  ): Promise<TSegmentWithDirectory[]> => {
     validateInputs([workspaceId, ZId]);
     try {
+      const directory = await getWorkspaceContactDirectory(workspaceId);
+      if (!directory) return [];
+
       const segments = await prisma.segment.findMany({
-        where: {
-          workspaceId,
-        },
-        select:
-          Object.keys(visibleSurveyWhere).length > 0
-            ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
-            : selectSegment,
+        where: whereSegmentsOfWorkspace(workspaceId, directory.id),
+        select: selectSegmentForWorkspace(workspaceId, visibleSurveyWhere),
       });
 
       if (!segments) {
@@ -277,47 +299,70 @@ export const getExistingWorkspaceSurveyIds = reactCache(
 );
 
 /**
- * ENG-6956: a survey's private targeting segment is stored under the survey's id as its title, and the
- * survey save finds (or connects to) it by that title. A segment a caller titles freely must therefore
- * never take a survey's id, or it would be picked up as that survey's targeting.
+ * The segment the caller acts on through `workspaceId`, the workspace they work in. A segment belongs to
+ * its contact directory and every workspace on it may use it (decision 24), so its own `workspaceId` says
+ * nothing about access. One in another directory, or any for a workspace with no directory, is not found.
  */
-const assertTitleIsNotSurveyId = async (workspaceId: string, title: string): Promise<void> => {
-  const survey = await prisma.survey.findFirst({ where: { id: title, workspaceId }, select: { id: true } });
-  if (survey) {
-    throw new InvalidInputError("A segment cannot be titled with the id of a survey");
+export const getSegmentInWorkspace = async (
+  segmentId: string,
+  workspaceId: string
+): Promise<TSegmentWithDirectory> => {
+  const segment = await getSegment(segmentId);
+  if (!(await isSegmentOfWorkspace(segment, workspaceId))) {
+    throw new ResourceNotFoundError("segment", segmentId);
   }
-};
-
-const isRename = (data: TSegmentUpdateInput, current: TSegment): boolean =>
-  data.title !== undefined && data.title !== current.title;
-
-/**
- * A segment that stays private keeps its survey's id as title: the survey save finds it by that title, so
- * a renamed one would be left behind and a new one created (ENG-6956). Turning it shared may rename it.
- */
-const assertPrivateSegmentKeepsTitle = (data: TSegmentUpdateInput, current: TSegment): void => {
-  const staysPrivate = current.isPrivate && data.isPrivate !== false;
-  if (staysPrivate && isRename(data, current)) {
-    throw new InvalidInputError("A private segment keeps the id of its survey as title");
-  }
+  return segment;
 };
 
 /**
- * A rename, or a private segment turned shared while it keeps its survey's id as title, stores a title
- * the caller chose for a segment the survey save may later pick up by that title (ENG-6956).
+ * Whether `workspaceId` may use the segment: it is in the workspace's contact directory (decision 24) and
+ * is shared, or is a private one of this workspace's own surveys (the rule of `whereSegmentsOfWorkspace`).
  */
-const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSegment): boolean => {
-  const becomesShared = current.isPrivate && data.isPrivate === false;
-  return isRename(data, current) || becomesShared;
+export const isSegmentOfWorkspace = async (
+  segment: Pick<TSegmentWithDirectory, "directoryId" | "isPrivate" | "workspaceId">,
+  workspaceId: string
+): Promise<boolean> => {
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (segment.directoryId !== directory?.id) return false;
+  return isSegmentVisibleToWorkspace(segment, workspaceId);
 };
 
 /**
- * Titles are unique per workspace, so a create or rename onto a title another segment holds (a survey's
- * private segment included) is the caller's input error, not a database fault.
+ * The subset of `surveyIds` that are surveys of another workspace on `workspaceId`'s contact directory. A
+ * shared segment's survey-interaction filters can name them (decision 24); the editor shows each as
+ * "Survey in another workspace" and keeps it. Ids only: the caller may not see those surveys, so their
+ * names never leave the server. Empty for a workspace with no directory.
  */
-const throwSegmentTitleTaken = (error: unknown): void => {
-  if (isUniqueConstraintError(error)) {
-    throw new InvalidInputError(SEGMENT_TITLE_TAKEN_ERROR_MESSAGE);
+export const getOtherWorkspaceSurveyIds = async (
+  workspaceId: string,
+  surveyIds: string[]
+): Promise<string[]> => {
+  validateInputs([workspaceId, ZId], [surveyIds, z.array(ZId)]);
+  const uniqueSurveyIds = Array.from(new Set(surveyIds));
+  if (uniqueSurveyIds.length === 0) return [];
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (!directory) return [];
+  try {
+    const otherWorkspaceSurveyIds: string[] = [];
+    for (let i = 0; i < uniqueSurveyIds.length; i += SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE) {
+      const batch = uniqueSurveyIds.slice(i, i + SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE);
+      // Sequential on purpose: caps concurrent database work, as getSurveyWorkspaceIdMap does.
+      const surveys = await prisma.survey.findMany({
+        where: {
+          id: { in: batch },
+          workspaceId: { not: workspaceId },
+          workspace: { contactDirectoryId: directory.id },
+        },
+        select: { id: true },
+      });
+      otherWorkspaceSurveyIds.push(...surveys.map((survey) => survey.id));
+    }
+    return otherWorkspaceSurveyIds;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
   }
 };
 
@@ -334,17 +379,19 @@ const upsertPrivateSegment = async ({
   description,
   filters,
 }: Pick<TSegmentCreateInput, "workspaceId" | "surveyId" | "description" | "filters">) => {
+  const directoryId = await getWorkspaceContactDirectoryId(workspaceId);
   const upsert = () =>
     prisma.segment.upsert({
       // A shared segment holding the title, or a private one other surveys also use (only possible
       // through older bugs), is not this survey's to rewrite: the create clashes and the save is refused.
       where: {
-        workspaceId_title: { workspaceId, title: surveyId },
+        ...privateSegmentKey(workspaceId, directoryId, surveyId),
         isPrivate: true,
         surveys: { every: { id: surveyId } },
       },
       create: {
         workspaceId,
+        directoryId,
         title: surveyId,
         description,
         isPrivate: true,
@@ -375,11 +422,14 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
       return transformPrismaSegment(await upsertPrivateSegment(segmentCreateInput));
     }
 
-    await assertTitleIsNotSurveyId(workspaceId, title);
+    // A shared segment belongs to the directory, so a workspace with none cannot make one (decision 13).
+    const directory = await requireWorkspaceContactDirectory(workspaceId);
+    await assertTitleIsNotSurveyId(directory.id, workspaceId, title);
 
     const segment = await prisma.segment.create({
       data: {
         workspaceId,
+        directoryId: directory.id,
         title,
         description,
         isPrivate,
@@ -400,8 +450,16 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
   }
 };
 
-export const cloneSegment = async (segmentId: string, surveyId: string): Promise<TSegment> => {
-  validateInputs([segmentId, ZId], [surveyId, ZId]);
+/**
+ * A copy of the segment for the survey, in the segment's directory. `workspaceId` is the survey's
+ * workspace, recorded as the copy's origin; the caller has checked the segment is in its directory.
+ */
+export const cloneSegment = async (
+  segmentId: string,
+  surveyId: string,
+  workspaceId: string
+): Promise<TSegment> => {
+  validateInputs([segmentId, ZId], [surveyId, ZId], [workspaceId, ZId]);
 
   try {
     const segment = await getSegment(segmentId);
@@ -409,26 +467,28 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
-    if (!segment.workspaceId) {
-      throw new DatabaseError("Segment is not associated with a workspace");
+    if (!segment.directoryId) {
+      throw new DatabaseError("Segment is not associated with a contact directory");
     }
 
-    const allSegments = await getSegments(segment.workspaceId, ALL_SEGMENT_SURVEY_REFS);
+    // Titles are unique per directory, so the copy's number counts the directory's copies.
+    const copyTitles = await prisma.segment.findMany({
+      where: {
+        directoryId: segment.directoryId,
+        title: { startsWith: escapeLikePattern(`Copy of ${segment.title}`) },
+      },
+      select: { title: true },
+    });
 
-    // Find the last "Copy of" title and extract the number from it
-    const lastCopyTitle = allSegments
-      .map((existingSegment) => existingSegment.title)
-      .filter((title) => title.startsWith(`Copy of ${segment.title}`))
-      .pop();
-
-    let suffix = 1;
-    if (lastCopyTitle) {
-      const regex = /\((\d+)\)$/;
-      const match = regex.exec(lastCopyTitle);
-      if (match) {
-        suffix = parseInt(match[1], 10) + 1;
-      }
-    }
+    // The next number after the highest "Copy of <title> (n)". Other titles that only start the same
+    // ("Copy of <title> Plus") don't count.
+    const copyPrefix = `Copy of ${segment.title} (`;
+    const suffix =
+      copyTitles.reduce((highest, { title }) => {
+        if (!title.startsWith(copyPrefix) || !title.endsWith(")")) return highest;
+        const number = title.slice(copyPrefix.length, -1);
+        return /^\d+$/.test(number) ? Math.max(highest, Number.parseInt(number, 10)) : highest;
+      }, 0) + 1;
 
     // Construct the title for the cloned segment
     const clonedTitle = `Copy of ${segment.title} (${suffix})`;
@@ -439,20 +499,34 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
       throw new ValidationError("Invalid filters");
     }
 
-    const clonedSegment = await prisma.segment.create({
-      data: {
-        title: clonedTitle,
-        description: segment.description,
-        isPrivate: segment.isPrivate,
-        workspaceId: segment.workspaceId,
-        filters: segment.filters,
-        surveys: {
-          connect: {
-            id: surveyId,
+    // Under the workspace's lock, and only while the segment's directory is still the workspace's: the
+    // caller checked that, but a removal committed since must not get a copy into the old directory.
+    const segmentDirectoryId = segment.directoryId;
+    const clonedSegment = await withWorkspaceDirectory(
+      workspaceId,
+      (tx) =>
+        tx.segment.create({
+          data: {
+            title: clonedTitle,
+            description: segment.description,
+            isPrivate: segment.isPrivate,
+            workspaceId,
+            directoryId: segmentDirectoryId,
+            filters: segment.filters,
+            surveys: {
+              connect: {
+                id: surveyId,
+              },
+            },
           },
-        },
-      },
-      select: selectSegment,
+          select: selectSegment,
+        }),
+      { expectedDirectoryId: segmentDirectoryId }
+    ).catch((error: unknown) => {
+      // The workspace no longer reaches the segment.
+      if (error instanceof ContactDirectoryMissingError)
+        throw new ResourceNotFoundError("segment", segmentId);
+      throw error;
     });
 
     return transformPrismaSegment(clonedSegment);
@@ -503,13 +577,15 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
     throw new ResourceNotFoundError("survey", surveyId);
   }
 
+  const directoryId = await getWorkspaceContactDirectoryId(survey.workspaceId);
+
   try {
     return await prisma.$transaction(async (tx) => {
-      // for this survey, does a private segment already exist. Titles are unique per workspace only, so
-      // another workspace can hold a private segment titled with this survey's id (ENG-7389).
+      // for this survey, does a private segment already exist. Titles are unique per directory only, so
+      // another directory can hold a private segment titled with this survey's id (ENG-7389).
       const segment = await tx.segment.findFirst({
         where: {
-          workspaceId: survey.workspaceId,
+          ...whereSegmentsOfDirectoryOrWorkspace(directoryId, survey.workspaceId),
           title: surveyId,
           isPrivate: true,
         },
@@ -543,6 +619,7 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
             filters: [],
             surveys: { connect: { id: surveyId } },
             workspaceId: survey.workspaceId,
+            directoryId,
           },
           select: selectSegment,
         });
@@ -624,7 +701,11 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
 
     assertPrivateSegmentKeepsTitle(data, currentSegment);
     if (needsSurveyIdTitleCheck(data, currentSegment)) {
-      await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title ?? currentSegment.title);
+      await assertTitleIsNotSurveyId(
+        currentSegment.directoryId,
+        currentSegment.workspaceId,
+        data.title ?? currentSegment.title
+      );
     }
 
     const segment = await prisma.segment.update({
@@ -650,10 +731,11 @@ export const getSegmentsByAttributeKey = reactCache(async (workspaceId: string, 
   validateInputs([workspaceId, ZId], [attributeKey, ZString]);
 
   try {
+    const directory = await getWorkspaceContactDirectory(workspaceId);
+    if (!directory) return [];
+
     const segments = await prisma.segment.findMany({
-      where: {
-        workspaceId,
-      },
+      where: whereSegmentsOfWorkspace(workspaceId, directory.id),
       select: selectSegment,
     });
 
@@ -673,262 +755,3 @@ export const getSegmentsByAttributeKey = reactCache(async (workspaceId: string, 
     throw error;
   }
 });
-
-const evaluateAttributeFilter = (
-  attributes: TEvaluateSegmentUserAttributeData,
-  filter: TSegmentAttributeFilter
-): boolean => {
-  const { value, qualifier, root } = filter;
-  const { contactAttributeKey } = root;
-  const { operator } = qualifier;
-
-  const attributeValue = attributes[contactAttributeKey];
-
-  // Handle isSet and isNotSet operators first - they have special logic
-  if (operator === "isSet") {
-    // Return true if the attribute exists and has a truthy value
-    return attributeValue !== undefined && attributeValue !== null && attributeValue !== "";
-  }
-
-  if (operator === "isNotSet") {
-    // Return true if the attribute doesn't exist or has a falsy value
-    return attributeValue === undefined || attributeValue === null || attributeValue === "";
-  }
-
-  // For all other operators, if the attribute doesn't exist, return false
-  if (attributeValue === undefined || attributeValue === null) {
-    return false;
-  }
-
-  // Check if this is a date operator
-  if (isDateOperator(operator)) {
-    return evaluateDateFilter(String(attributeValue), value, operator);
-  }
-
-  // Use standard comparison for non-date operators
-  // For non-date operators, value is always string | number
-  const attResult = compareValues(attributeValue, value as string | number, operator);
-  return attResult;
-};
-
-const evaluatePersonFilter = (userId: string, filter: TSegmentPersonFilter): boolean => {
-  const { value, qualifier, root } = filter;
-  const { personIdentifier } = root;
-
-  if (personIdentifier === "userId") {
-    // For userId comparison, value is always string | number
-    const attResult = compareValues(userId, value as string | number, qualifier.operator);
-    return attResult;
-  }
-
-  return false;
-};
-
-const evaluateSegmentFilter = async (
-  userData: TEvaluateSegmentUserData,
-  filter: TSegmentSegmentFilter
-): Promise<boolean> => {
-  const { qualifier, root } = filter;
-  const { segmentId } = root;
-  const { operator } = qualifier;
-
-  const segment = await getSegment(segmentId);
-
-  if (!segment) {
-    return false;
-  }
-
-  const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
-  if (!parsedFilters.success) {
-    return false;
-  }
-
-  const isInSegment = await evaluateSegment(userData, parsedFilters.data);
-
-  if (operator === "userIsIn") {
-    return isInSegment;
-  }
-
-  if (operator === "userIsNotIn") {
-    return !isInSegment;
-  }
-
-  return false;
-};
-
-const evaluateDeviceFilter = (device: "phone" | "desktop", filter: TSegmentDeviceFilter): boolean => {
-  const { value, qualifier } = filter;
-  // For device comparison, value is always string | number
-  return compareValues(device, value as string | number, qualifier.operator);
-};
-
-/**
- * Checks if an operator is a date-specific operator
- */
-const isDateOperator = (operator: TAllOperators): operator is TDateOperator => {
-  return DATE_OPERATORS.includes(operator as TDateOperator);
-};
-
-/**
- * Evaluates a date filter against an attribute value
- */
-const evaluateDateFilter = (
-  attributeValue: string,
-  filterValue: TSegmentFilterValue,
-  operator: TDateOperator
-): boolean => {
-  // Parse the attribute value as a date
-  const attrDate = new Date(attributeValue);
-
-  // Validate the attribute value is a valid date
-  if (Number.isNaN(attrDate.getTime())) {
-    return false;
-  }
-
-  // Check if filterValue is a relative date value (e.g., { amount: 30, unit: "days" })
-  const relativeDateParsed = ZRelativeDateValue.safeParse(filterValue);
-
-  if (relativeDateParsed.success) {
-    const now = new Date();
-    const threshold = subtractTimeUnit(now, relativeDateParsed.data.amount, relativeDateParsed.data.unit);
-    return operator === "isOlderThan" ? attrDate < threshold : attrDate >= threshold;
-  }
-
-  // Handle absolute date operators
-  switch (operator) {
-    case "isBefore":
-    case "isAfter":
-    case "isSameDay": {
-      if (typeof filterValue !== "string") return false;
-      const compareDate = new Date(filterValue);
-      if (operator === "isBefore") return attrDate < compareDate;
-      if (operator === "isAfter") return attrDate > compareDate;
-      return isSameDay(attrDate, compareDate);
-    }
-    case "isBetween": {
-      if (!Array.isArray(filterValue) || filterValue.length !== 2) return false;
-      const startDate = new Date(filterValue[0]);
-      const endDate = new Date(filterValue[1]);
-      return attrDate >= startDate && attrDate <= endDate;
-    }
-    default:
-      return false;
-  }
-};
-
-export const compareValues = (
-  a: string | number | undefined,
-  b: string | number,
-  operator: TAllOperators
-): boolean => {
-  switch (operator) {
-    case "equals":
-      return a === b;
-    case "notEquals":
-      return a !== b;
-    case "lessThan":
-      return (a as number) < (b as number);
-    case "lessEqual":
-      return (a as number) <= (b as number);
-    case "greaterThan":
-      return (a as number) > (b as number);
-    case "greaterEqual":
-      return (a as number) >= (b as number);
-    case "isSet":
-      return a !== undefined;
-    case "isNotSet":
-      return a === "" || a === null || a === undefined;
-    case "contains":
-      return (a as string).includes(b as string);
-    case "doesNotContain":
-      return !(a as string).includes(b as string);
-    case "startsWith":
-      return (a as string).startsWith(b as string);
-    case "endsWith":
-      return (a as string).endsWith(b as string);
-    default:
-      throw new Error(`Unexpected operator: ${operator}`);
-  }
-};
-
-type ResultConnectorPair = {
-  result: boolean;
-  connector: TSegmentConnector;
-};
-
-export const evaluateSegment = async (
-  userData: TEvaluateSegmentUserData,
-  filters: TBaseFilters
-): Promise<boolean> => {
-  if (!filters.length) {
-    // if there are no filters, the segment will be evaluated as true
-    return true;
-  }
-
-  const resultPairs: ResultConnectorPair[] = [];
-  const now = new Date();
-
-  try {
-    for (const filterItem of filters) {
-      const { resource } = filterItem;
-
-      let result: boolean;
-
-      if (isResourceFilter(resource)) {
-        const { type } = resource.root;
-
-        // Exhaustive switch: a new filter root type must be handled here or the `default` throws —
-        // this replaces an if-chain that silently dropped unhandled types (e.g. surveyInteraction),
-        // leaving `result` unassigned and corrupting segment membership.
-        switch (type) {
-          case "attribute":
-            result = evaluateAttributeFilter(userData.attributes, resource as TSegmentAttributeFilter);
-            break;
-          case "person":
-            result = evaluatePersonFilter(userData.userId, resource as TSegmentPersonFilter);
-            break;
-          case "segment":
-            result = await evaluateSegmentFilter(userData, resource as TSegmentSegmentFilter);
-            break;
-          case "device":
-            result = evaluateDeviceFilter(userData.deviceType, resource as TSegmentDeviceFilter);
-            break;
-          case "surveyInteraction":
-            // This in-process evaluator can only resolve interaction filters when the caller supplies
-            // the contact's interaction history. Throwing (rather than silently skipping) guarantees a
-            // surveyInteraction filter can never be dropped here; the contact-sync and Prisma paths
-            // evaluate these filters without needing this branch.
-            if (!userData.interactionData) {
-              throw new Error(
-                "Cannot evaluate a surveyInteraction filter without interactionData on userData; evaluate via the contact-sync in-memory path or the Prisma query path instead."
-              );
-            }
-            result = evaluateSurveyInteractionFilterInMemory(
-              resource as TSegmentSurveyInteractionFilter,
-              userData.interactionData,
-              now
-            );
-            break;
-          default:
-            throw new Error(`Unsupported segment filter root type: ${type as string}`);
-        }
-      } else {
-        // this is a sub-group and we need to evaluate the sub-group
-        result = await evaluateSegment(userData, resource);
-      }
-
-      resultPairs.push({
-        result,
-        connector: filterItem.connector,
-      });
-    }
-
-    // Combine the per-filter results with AND-before-OR precedence (shared with the in-memory
-    // survey-interaction evaluator so both paths agree on connector semantics).
-    return combineFilterResults(resultPairs);
-  } catch (error) {
-    logger.error(error instanceof Error ? error : new Error(String(error)), "Error evaluating segment");
-
-    throw error;
-  }
-};

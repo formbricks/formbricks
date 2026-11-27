@@ -2,12 +2,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { ValidationError } from "@formbricks/types/errors";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getContactAttributeKeysOfDirectory } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
   getContactAttributes,
   hasEmailAttribute,
   hasUserIdAttribute,
 } from "@/modules/ee/contacts/lib/contact-attributes";
+import {
+  ContactDirectoryMissingError,
+  requireWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { formatAttributeMessage } from "./attribute-messages";
 import { updateAttributes } from "./attributes";
 
@@ -18,7 +22,7 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
-  getContactAttributeKeys: vi.fn(),
+  getContactAttributeKeysOfDirectory: vi.fn(),
 }));
 vi.mock("@/modules/ee/contacts/lib/contact-attributes", async () => {
   const actual = await vi.importActual("@/modules/ee/contacts/lib/contact-attributes");
@@ -29,17 +33,24 @@ vi.mock("@/modules/ee/contacts/lib/contact-attributes", async () => {
     hasUserIdAttribute: vi.fn(),
   };
 });
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>();
+  return { ...actual, requireWorkspaceContactDirectory: vi.fn() };
+});
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),
     contactAttribute: { upsert: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
     contactAttributeKey: { createManyAndReturn: vi.fn(), findMany: vi.fn() },
+    // The contact is in the workspace's directory unless a test says otherwise.
+    contact: { findFirst: vi.fn(async () => ({ id: "contact-1" })) },
   },
 }));
 
 const contactId = "contact-1";
 const userId = "user-1";
 const workspaceId = "workspace-1";
+const directoryId = "directory-1";
 
 const attributeKeys: TContactAttributeKey[] = [
   {
@@ -81,11 +92,12 @@ const attributeKeys: TContactAttributeKey[] = [
 ];
 
 /** A full attribute-key row, as `createManyAndReturn` and `findMany` return it. */
-const keyRow = (id: string, key: string): TContactAttributeKey => ({
+const keyRow = (id: string, key: string): TContactAttributeKey & { directoryId: string | null } => ({
   ...attributeKeys[2],
   id,
   key,
   name: key,
+  directoryId: null,
 });
 
 /** Interactive transactions run their callback against the mocked client, as Prisma's tx would. */
@@ -99,6 +111,7 @@ const runTransactionCallbacks = () =>
 describe("updateAttributes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(requireWorkspaceContactDirectory).mockResolvedValue({ id: directoryId, matchingKey: "email" });
     // Set default mock return values - these will be overridden in individual tests
     vi.mocked(getContactAttributes).mockResolvedValue({});
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -106,8 +119,24 @@ describe("updateAttributes", () => {
     vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
   });
 
+  test("writes nothing when the contact is not in the directory the keys come from", async () => {
+    // The workspace changed directory after the caller found the contact.
+    vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce(null);
+
+    await expect(updateAttributes(contactId, userId, workspaceId, { name: "Jane" })).rejects.toThrow(
+      "contact"
+    );
+    expect(prisma.contact.findFirst).toHaveBeenCalledWith({
+      where: { id: contactId, directoryId },
+      select: { id: true },
+    });
+    expect(prisma.contactAttribute.upsert).not.toHaveBeenCalled();
+    expect(prisma.contactAttributeKey.createManyAndReturn).not.toHaveBeenCalled();
+    expect(prisma.contactAttribute.deleteMany).not.toHaveBeenCalled();
+  });
+
   test("updates existing attributes", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
     vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -121,7 +150,7 @@ describe("updateAttributes", () => {
   });
 
   test("skips updating email if it already exists", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
     vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(true);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -151,7 +180,7 @@ describe("updateAttributes", () => {
         workspaceId: workspaceId,
       },
     ];
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeysWithUserId);
     vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", userId: "old-user-id" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(true);
@@ -182,7 +211,7 @@ describe("updateAttributes", () => {
         workspaceId: workspaceId,
       },
     ];
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeysWithUserId);
     vi.mocked(getContactAttributes).mockResolvedValue({
       name: "Jane",
       email: "old@example.com",
@@ -206,7 +235,7 @@ describe("updateAttributes", () => {
   test("creates new attributes if under limit", async () => {
     // Use name and email keys (2 existing keys), MAX is mocked to 2
     // We update existing attributes, no new ones created
-    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[0], attributeKeys[1]]); // name, email
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue([attributeKeys[0], attributeKeys[1]]); // name, email
     vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -221,7 +250,7 @@ describe("updateAttributes", () => {
   });
 
   test("does not create new attributes if over the limit", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
     vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -240,7 +269,7 @@ describe("updateAttributes", () => {
   });
 
   test("skips creating reserved future default attributes", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[1]]);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue([attributeKeys[1]]);
     vi.mocked(getContactAttributes).mockResolvedValue({ email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -264,7 +293,7 @@ describe("updateAttributes", () => {
   });
 
   test("returns success with only email attribute", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[1]]); // email key
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue([attributeKeys[1]]); // email key
     vi.mocked(getContactAttributes).mockResolvedValue({ email: "existing@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -280,7 +309,7 @@ describe("updateAttributes", () => {
     // Reset mocks explicitly for this test
     vi.mocked(prisma.contactAttribute.deleteMany).mockClear();
 
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
     vi.mocked(getContactAttributes).mockResolvedValue({
       name: "Jane",
       email: "jane@example.com",
@@ -310,7 +339,7 @@ describe("updateAttributes", () => {
     // Reset mocks explicitly for this test
     vi.mocked(prisma.contactAttribute.deleteMany).mockClear();
 
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
     vi.mocked(getContactAttributes).mockResolvedValue({
       name: "Jane",
       email: "jane@example.com",
@@ -382,7 +411,7 @@ describe("updateAttributes", () => {
         workspaceId: workspaceId,
       },
     ];
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithDefaults);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeysWithDefaults);
     vi.mocked(getContactAttributes).mockResolvedValue({
       email: "test@example.com",
       userId: "user-123",
@@ -402,7 +431,7 @@ describe("updateAttributes", () => {
   });
 
   test("preserves existing email when empty string is submitted", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
     vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "existing@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -437,7 +466,7 @@ describe("updateAttributes", () => {
         workspaceId: workspaceId,
       },
     ];
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithUserId);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeysWithUserId);
     vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", userId: "existing-user-id" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -472,7 +501,7 @@ describe("updateAttributes", () => {
         workspaceId: workspaceId,
       },
     ];
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeysWithBoth);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeysWithBoth);
     vi.mocked(getContactAttributes).mockResolvedValue({
       name: "Jane",
       email: "existing@example.com",
@@ -492,7 +521,7 @@ describe("updateAttributes", () => {
   });
 
   test("coerces boolean attribute values to strings", async () => {
-    vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+    vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
     vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
     vi.mocked(hasEmailAttribute).mockResolvedValue(false);
     vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
@@ -527,19 +556,19 @@ describe("updateAttributes", () => {
     });
 
     test("refuses a NULL byte in a value written to an existing key", async () => {
-      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
 
       await expectRefused({ email: "jane@example.com", name: "Jo\u0000hn" }, "name");
     });
 
     test("refuses a NULL byte in a value that would create a key", async () => {
-      vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[1]]);
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue([attributeKeys[1]]);
 
       await expectRefused({ email: "jane@example.com", plan: "pro\u0000" }, "plan");
     });
 
     test("refuses a NULL byte in the email before looking it up", async () => {
-      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
 
       await expectRefused({ email: "jane@example.com\u0000" }, "email");
       expect(hasEmailAttribute).not.toHaveBeenCalled();
@@ -550,7 +579,7 @@ describe("updateAttributes", () => {
       ["a reserved key", [attributeKeys[1]], { user_id: "x\u0000" }],
       ["a key over the attribute limit", attributeKeys, { plan: "x\u0000" }],
     ])("lets the rest through when the value sits under %s", async (_, keys, skipped) => {
-      vi.mocked(getContactAttributeKeys).mockResolvedValue(keys);
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(keys);
 
       const result = await updateAttributes(contactId, userId, workspaceId, {
         email: "john@example.com",
@@ -565,7 +594,7 @@ describe("updateAttributes", () => {
 
   describe("concurrent-identify deadlock protection (ENG-2252)", () => {
     test("upserts existing attributes in attributeKeyId order regardless of payload key order", async () => {
-      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
       vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
       vi.mocked(hasEmailAttribute).mockResolvedValue(false);
 
@@ -582,7 +611,7 @@ describe("updateAttributes", () => {
     });
 
     test("retries the upsert transaction once when it deadlocks, and succeeds", async () => {
-      vi.mocked(getContactAttributeKeys).mockResolvedValue(attributeKeys);
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue(attributeKeys);
       vi.mocked(getContactAttributes).mockResolvedValue({ name: "Jane", email: "jane@example.com" });
       vi.mocked(hasEmailAttribute).mockResolvedValue(false);
       // The driver-adapter deadlock shape seen in Sentry (FORMBRICKS-19P).
@@ -600,7 +629,7 @@ describe("updateAttributes", () => {
     });
 
     test("creates new attribute keys in key order regardless of payload key order", async () => {
-      vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue([]);
       vi.mocked(getContactAttributes).mockResolvedValue({});
       runTransactionCallbacks();
       vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
@@ -616,6 +645,63 @@ describe("updateAttributes", () => {
     });
   });
 
+  describe("contact directory (ENG-7493)", () => {
+    beforeEach(() => {
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue([]);
+      vi.mocked(getContactAttributes).mockResolvedValue({});
+      vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+      runTransactionCallbacks();
+    });
+
+    test("refuses a workspace with no directory before reading or writing anything", async () => {
+      vi.mocked(requireWorkspaceContactDirectory).mockRejectedValue(new ContactDirectoryMissingError());
+
+      await expect(
+        updateAttributes(contactId, userId, workspaceId, { plan: "pro", email: "a@b.co" })
+      ).rejects.toThrow(ContactDirectoryMissingError);
+      expect(requireWorkspaceContactDirectory).toHaveBeenCalledWith(workspaceId);
+      expect(getContactAttributeKeysOfDirectory).not.toHaveBeenCalled();
+      expect(prisma.contactAttributeKey.createManyAndReturn).not.toHaveBeenCalled();
+      expect(prisma.contactAttribute.upsert).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    test("reads the keys of the workspace's directory", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
+        keyRow("key-plan", "plan"),
+      ]);
+
+      await updateAttributes(contactId, userId, workspaceId, { plan: "pro" });
+
+      expect(getContactAttributeKeysOfDirectory).toHaveBeenCalledWith(directoryId);
+    });
+
+    test("creates a new key on the directory, with the sending workspace as its origin", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
+        keyRow("key-plan", "plan"),
+      ]);
+
+      await updateAttributes(contactId, userId, workspaceId, { plan: "pro" });
+
+      const { data } = vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mock.calls[0][0] ?? {};
+      expect([data].flat()).toEqual([expect.objectContaining({ key: "plan", directoryId, workspaceId })]);
+    });
+
+    // An email or userId held by a contact created from another workspace of a shared directory is
+    // still taken: the checks count the whole directory.
+    test("checks email and userId duplicates across the whole directory", async () => {
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue([
+        keyRow("key-email", "email"),
+        keyRow("key-userId", "userId"),
+      ]);
+
+      await updateAttributes(contactId, userId, workspaceId, { email: "a@b.co", userId: "u-2" });
+
+      expect(hasEmailAttribute).toHaveBeenCalledWith("a@b.co", directoryId, contactId);
+      expect(hasUserIdAttribute).toHaveBeenCalledWith("u-2", directoryId, contactId);
+    });
+  });
+
   describe("concurrent identify calls creating the same new key (ENG-4018)", () => {
     const racedKey = keyRow("key-raced", "plan");
     const upsertedValues = () =>
@@ -625,7 +711,7 @@ describe("updateAttributes", () => {
       }));
 
     beforeEach(() => {
-      vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
+      vi.mocked(getContactAttributeKeysOfDirectory).mockResolvedValue([]);
       vi.mocked(getContactAttributes).mockResolvedValue({});
       runTransactionCallbacks();
     });
@@ -650,7 +736,7 @@ describe("updateAttributes", () => {
 
       expect(result.success).toBe(true);
       expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-        where: { workspaceId, key: { in: ["plan"] } },
+        where: { directoryId, key: { in: ["plan"] } },
       });
       expect(upsertedValues()).toEqual([{ attributeKeyId: "key-raced", value: "pro" }]);
       expect(result.messages?.some((m) => m.code === "new_attribute_created") ?? false).toBe(false);
@@ -694,6 +780,27 @@ describe("updateAttributes", () => {
       );
     });
 
+    // In a shared directory the winning call may come from another workspace, and a directory's default
+    // keys have no workspace at all; the key is still this directory's key, so the value is written.
+    test("writes onto a raced key that another workspace of the directory created", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
+        { ...racedKey, workspaceId: "workspace-2" },
+        { ...keyRow("key-seats", "seats"), workspaceId: null },
+      ]);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, { plan: "pro", seats: "5" });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(upsertedValues()).toEqual(
+        expect.arrayContaining([
+          { attributeKeyId: "key-raced", value: "pro" },
+          { attributeKeyId: "key-seats", value: "5" },
+        ])
+      );
+    });
+
     test("does not re-read keys when every key was created by this call", async () => {
       vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
         keyRow("key-plan", "plan"),
@@ -731,15 +838,14 @@ describe("updateAttributes", () => {
 });
 
 describe("formatAttributeMessage", () => {
-  test("describes the duplicate email/userId checks as workspace-scoped", () => {
-    // The checks behind these two codes call hasEmailAttribute/hasUserIdAttribute with workspaceId,
-    // and the UI renders the same conditions via workspace.contacts.attributes_msg_* — so the
-    // English templates must not describe the scope as an environment.
+  test("describes the duplicate email/userId checks as directory-scoped", () => {
+    // Contacts belong to a contact directory, so the duplicate checks behind these two codes look across
+    // the directory, and the UI renders the same conditions via workspace.contacts.attributes_msg_*.
     expect(formatAttributeMessage({ code: "email_already_exists", params: {} })).toBe(
-      "The email already exists for this workspace and was not updated."
+      "The email already exists in this contact directory and was not updated."
     );
     expect(formatAttributeMessage({ code: "userid_already_exists", params: {} })).toBe(
-      "The userId already exists for this workspace and was not updated."
+      "The userId already exists in this contact directory and was not updated."
     );
   });
 

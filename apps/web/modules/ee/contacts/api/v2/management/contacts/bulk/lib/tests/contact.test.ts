@@ -21,6 +21,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       createMany: vi.fn(),
     },
+    workspace: { findUnique: vi.fn() },
     $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback(prisma)),
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn(),
@@ -29,9 +30,13 @@ vi.mock("@formbricks/database", () => ({
 
 describe("upsertBulkContacts", () => {
   const mockWorkspaceId = "workspace_123";
+  const mockDirectory = { id: "directory_123", matchingKey: "email" as const };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue({
+      contactDirectory: mockDirectory,
+    } as never);
   });
 
   test("should create new contacts when all provided contacts have unique user IDs and emails", async () => {
@@ -70,7 +75,7 @@ describe("upsertBulkContacts", () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
 
     // Execute the function
-    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockParsedEmails);
+    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockDirectory);
 
     // Assert that the result is ok and data is as expected
     if (!result.ok) throw new Error("Expected result.ok to be true");
@@ -79,10 +84,7 @@ describe("upsertBulkContacts", () => {
     // Verify that existing user IDs were checked
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: {
-        attributeKey: {
-          workspaceId: mockWorkspaceId,
-          key: "userId",
-        },
+        attributeKey: { key: "userId", directoryId: "directory_123" },
         value: {
           in: ["user-123", "user-456"],
         },
@@ -93,18 +95,18 @@ describe("upsertBulkContacts", () => {
     // Verify that attribute keys were fetched
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
       where: {
+        directoryId: "directory_123",
         key: { in: ["email", "userId", "name"] },
-        workspaceId: mockWorkspaceId,
       },
     });
 
-    // Verify that existing contacts were looked up by email
+    // Verify that existing contacts of the directory were looked up by email, oldest first
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: {
-        workspaceId: mockWorkspaceId,
+        directoryId: "directory_123",
         attributes: {
           some: {
-            attributeKey: { key: "email" },
+            attributeKey: { key: "email", directoryId: "directory_123" },
             value: { in: mockParsedEmails },
           },
         },
@@ -120,6 +122,7 @@ describe("upsertBulkContacts", () => {
         },
         id: true,
       },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
 
     // Inherits the app client's transaction budget rather than overriding it with a shorter one (ENG-3285).
@@ -128,8 +131,8 @@ describe("upsertBulkContacts", () => {
     // Verify that new contacts were created in the transaction
     expect(prisma.contact.createMany).toHaveBeenCalledWith({
       data: [
-        { id: "mock-id", workspaceId: mockWorkspaceId },
-        { id: "mock-id", workspaceId: mockWorkspaceId },
+        { id: "mock-id", directoryId: "directory_123", workspaceId: mockWorkspaceId },
+        { id: "mock-id", directoryId: "directory_123", workspaceId: mockWorkspaceId },
       ],
     });
 
@@ -147,8 +150,6 @@ describe("upsertBulkContacts", () => {
         ],
       },
     ];
-
-    const mockParsedEmails = ["john@example.com"];
 
     // Mock: no existing userIds conflict
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
@@ -175,7 +176,7 @@ describe("upsertBulkContacts", () => {
     ] as unknown as Awaited<ReturnType<typeof prisma.contact.findMany>>);
 
     // Execute the function
-    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockParsedEmails);
+    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockDirectory);
 
     if (!result.ok) throw new Error("Expected result.ok to be true");
     expect(result.data).toEqual({ contactIdxWithConflictingUserIds: [] });
@@ -239,7 +240,7 @@ describe("upsertBulkContacts", () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
 
     // Execute the function
-    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockParsedEmails);
+    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockDirectory);
 
     if (result.ok) {
       // Assertions - verify that the function correctly identified contacts with conflicting user IDs
@@ -248,10 +249,7 @@ describe("upsertBulkContacts", () => {
       // Verify that the function checked for existing user IDs
       expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
         where: {
-          attributeKey: {
-            workspaceId: mockWorkspaceId,
-            key: "userId",
-          },
+          attributeKey: { key: "userId", directoryId: "directory_123" },
           value: {
             in: ["user-123", "existing-user-1", "existing-user-2"],
           },
@@ -267,10 +265,10 @@ describe("upsertBulkContacts", () => {
       // Verify that the function checked for existing contacts by email
       expect(prisma.contact.findMany).toHaveBeenCalledWith({
         where: {
-          workspaceId: mockWorkspaceId,
+          directoryId: "directory_123",
           attributes: {
             some: {
-              attributeKey: { key: "email" },
+              attributeKey: { key: "email", directoryId: "directory_123" },
               value: { in: mockParsedEmails },
             },
           },
@@ -286,13 +284,14 @@ describe("upsertBulkContacts", () => {
           },
           id: true,
         },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
 
       // Verify that only non-conflicting contacts were processed
       expect(prisma.contact.createMany).toHaveBeenCalledWith({
         data: [
-          { id: "mock-id", workspaceId: mockWorkspaceId },
-          { id: "mock-id", workspaceId: mockWorkspaceId },
+          { id: "mock-id", directoryId: "directory_123", workspaceId: mockWorkspaceId },
+          { id: "mock-id", directoryId: "directory_123", workspaceId: mockWorkspaceId },
         ],
       });
 
@@ -317,7 +316,6 @@ describe("upsertBulkContacts", () => {
         ],
       },
     ];
-    const mockParsedEmails = ["john@example.com", "jane@example.com"];
 
     // Mock: no existing user IDs
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
@@ -336,7 +334,7 @@ describe("upsertBulkContacts", () => {
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
 
     // Execute the function
-    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockParsedEmails);
+    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockDirectory);
 
     // creation of new attribute keys now happens with a raw query
     // so we need to mock that
@@ -351,8 +349,8 @@ describe("upsertBulkContacts", () => {
     // Verify that new contacts were created
     expect(prisma.contact.createMany).toHaveBeenCalledWith({
       data: [
-        { id: "mock-id", workspaceId: mockWorkspaceId },
-        { id: "mock-id", workspaceId: mockWorkspaceId },
+        { id: "mock-id", directoryId: "directory_123", workspaceId: mockWorkspaceId },
+        { id: "mock-id", directoryId: "directory_123", workspaceId: mockWorkspaceId },
       ],
     });
 
@@ -370,15 +368,13 @@ describe("upsertBulkContacts", () => {
       },
     ];
 
-    const mockParsedEmails = ["john@example.com"];
-
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
     vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
       { id: "attr-key-email", key: "email", workspaceId: mockWorkspaceId, name: "Email" },
     ]);
 
-    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockParsedEmails);
+    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockDirectory);
     expect(result.ok).toBe(false);
     expect(prisma.contact.createMany).not.toHaveBeenCalled();
 
@@ -406,8 +402,6 @@ describe("upsertBulkContacts", () => {
         ],
       },
     ];
-
-    const mockParsedEmails = ["john@example.com"];
 
     // Mock: no existing userIds conflict
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
@@ -444,6 +438,9 @@ describe("upsertBulkContacts", () => {
 
     // Mock the transaction
     const mockTransaction = {
+      workspace: {
+        findUnique: vi.fn(async () => ({ contactDirectory: { id: "directory_123", matchingKey: "email" } })),
+      },
       contact: {
         createMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
@@ -456,12 +453,185 @@ describe("upsertBulkContacts", () => {
     });
 
     // Execute the function
-    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockParsedEmails);
+    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockDirectory);
 
     if (!result.ok) throw new Error("Expected result.ok to be true");
     expect(result.data).toEqual({ contactIdxWithConflictingUserIds: [] });
 
     // Verify that the raw SQL query was executed for updating attribute keys
     vi.mocked(prisma.$queryRaw).mockResolvedValue([{ id: "attr-key-name", key: "name", name: "Full Name" }]);
+  });
+  describe("contacts matched by the directory's matching key", () => {
+    const existingContact = (id: string, attributes: Record<string, string>) => ({
+      id,
+      attributes: Object.entries(attributes).map(([key, value]) => ({
+        id: `${id}-${key}`,
+        attributeKey: { key },
+        value,
+        createdAt: new Date("2024-01-01"),
+      })),
+    });
+
+    /** The contact ids of the attribute rows written by the raw upsert: its fourth bound array. */
+    // The attribute upsert's contact ids, from its statement (the lock's statements come first).
+    const upsertedContactIds = (): unknown =>
+      vi
+        .mocked(prisma.$executeRaw)
+        .mock.calls.find(([sql]) => (sql as unknown as string[]).join("").includes("ContactAttribute"))?.[4];
+
+    const attributeKeys = (keys: string[]) =>
+      keys.map((key) => ({ id: `key-${key}`, key, name: key, dataType: "string" as const }));
+
+    test("a contact matching several existing ones updates the one with its userId", async () => {
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce(
+        attributeKeys(["email", "userId", "plan"])
+      );
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existingContact("oldest", { email: "a@example.com", userId: "u-old" }),
+        existingContact("same-user", { email: "a@example.com", userId: "u-1" }),
+      ]);
+
+      const result = await upsertBulkContacts(
+        [
+          {
+            attributes: [
+              { attributeKey: { key: "email", name: "email" }, value: "a@example.com" },
+              { attributeKey: { key: "userId", name: "userId" }, value: "u-1" },
+              { attributeKey: { key: "plan", name: "plan" }, value: "pro" },
+            ],
+          },
+        ],
+        mockWorkspaceId,
+        mockDirectory
+      );
+
+      expect(result).toEqual({ ok: true, data: { contactIdxWithConflictingUserIds: [] } });
+      expect(prisma.contact.createMany).not.toHaveBeenCalled();
+      expect(upsertedContactIds()).toEqual(["same-user"]);
+    });
+
+    test("a contact matching several existing ones with no userId match updates the oldest", async () => {
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce(
+        attributeKeys(["email", "plan"])
+      );
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existingContact("oldest", { email: "a@example.com" }),
+        existingContact("newer", { email: "a@example.com" }),
+      ]);
+
+      await upsertBulkContacts(
+        [
+          {
+            attributes: [
+              { attributeKey: { key: "email", name: "email" }, value: "a@example.com" },
+              { attributeKey: { key: "plan", name: "plan" }, value: "pro" },
+            ],
+          },
+        ],
+        mockWorkspaceId,
+        mockDirectory
+      );
+
+      expect(upsertedContactIds()).toEqual(["oldest"]);
+    });
+
+    /** The workspace is on the userId directory these tests upload to. */
+    const onUserIdDirectory = () =>
+      vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue({
+        contactDirectory: { id: "directory_user", matchingKey: "userId" },
+      } as never);
+
+    test("a userId directory matches on userId", async () => {
+      onUserIdDirectory();
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce(
+        attributeKeys(["userId", "plan"])
+      );
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existingContact("user-contact", { userId: "user-1" }),
+      ]);
+
+      await upsertBulkContacts(
+        [
+          {
+            attributes: [
+              { attributeKey: { key: "userId", name: "userId" }, value: "user-1" },
+              { attributeKey: { key: "plan", name: "plan" }, value: "pro" },
+            ],
+          },
+        ],
+        mockWorkspaceId,
+        { id: "directory_user", matchingKey: "userId" }
+      );
+
+      expect(prisma.contact.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            directoryId: "directory_user",
+            attributes: {
+              some: {
+                attributeKey: { key: "userId", directoryId: "directory_user" },
+                value: { in: ["user-1"] },
+              },
+            },
+          },
+        })
+      );
+      expect(upsertedContactIds()).toEqual(["user-contact"]);
+    });
+
+    test("a userId directory skips a contact taking an email another contact has", async () => {
+      onUserIdDirectory();
+      // "taken@example.com" belongs to a contact that is not in the request.
+      vi.mocked(prisma.contactAttribute.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        { value: "taken@example.com" },
+      ]);
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce(
+        attributeKeys(["userId", "email"])
+      );
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        existingContact("user-contact", { userId: "user-1", email: "old@example.com" }),
+      ]);
+
+      const result = await upsertBulkContacts(
+        [
+          // An update to the taken email and a new contact with it: both skipped.
+          {
+            attributes: [
+              { attributeKey: { key: "userId", name: "userId" }, value: "user-1" },
+              { attributeKey: { key: "email", name: "email" }, value: "taken@example.com" },
+            ],
+          },
+          {
+            attributes: [
+              { attributeKey: { key: "userId", name: "userId" }, value: "user-2" },
+              { attributeKey: { key: "email", name: "email" }, value: "taken@example.com" },
+            ],
+          },
+          {
+            attributes: [
+              { attributeKey: { key: "userId", name: "userId" }, value: "user-3" },
+              { attributeKey: { key: "email", name: "email" }, value: "free@example.com" },
+            ],
+          },
+        ],
+        mockWorkspaceId,
+        { id: "directory_user", matchingKey: "userId" }
+      );
+
+      expect(result).toEqual({ ok: true, data: { contactIdxWithConflictingUserIds: [0, 1] } });
+      expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
+        where: {
+          attributeKey: { key: "email", directoryId: "directory_user" },
+          value: { in: ["taken@example.com", "taken@example.com", "free@example.com"] },
+        },
+        select: { value: true },
+      });
+      expect(prisma.contact.createMany).toHaveBeenCalledWith({
+        data: [{ id: "mock-id", directoryId: "directory_user", workspaceId: mockWorkspaceId }],
+      });
+    });
   });
 });

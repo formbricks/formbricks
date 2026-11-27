@@ -9,23 +9,34 @@ import { TBaseFilters } from "@formbricks/types/segment";
 import { cache } from "@/lib/cache";
 import { effectivelyRestrictedWhere } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
+import { getWorkspaceContactDirectory } from "@/modules/ee/contacts/lib/contact-directory";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import {
   type TContactInteractionData,
   hasAnyScopeInteractionFilter,
   tryEvaluateSurveyInteractionSegmentInMemory,
 } from "@/modules/ee/contacts/segments/lib/filter/survey-interaction";
+import { whereSegmentsOfWorkspace } from "@/modules/ee/contacts/segments/lib/segment-scope";
 
+/**
+ * The segments the workspace's surveys can target: the shared ones of its contact directory, whichever
+ * workspace made them (decision 24), and its own surveys' private ones. Cached per workspace, so a shared
+ * segment edited in another workspace reaches this one's SDK within the TTL, as an edit here does.
+ */
 export const getSegments = reactCache(
   async (workspaceId: string) =>
     await cache.withCache(
       async () => {
         try {
+          const directory = await getWorkspaceContactDirectory(workspaceId);
+          if (!directory) return [];
+
           const segments = await prisma.segment.findMany({
-            where: { workspaceId },
+            where: whereSegmentsOfWorkspace(workspaceId, directory.id),
             select: {
               id: true,
               filters: true,
+              directoryId: true,
             },
           });
 
@@ -53,9 +64,10 @@ export type TContactInteractionRows = {
  * The rows the in-memory evaluator reads, each marked with whether it counts for `any` scope (ENG-6870:
  * only workspace-visible surveys do). The restricted surveys among the contact's own are looked up only
  * when `needsAnyScope`, in one query, so a workspace without `any` filters pays nothing on this hot path.
+ * In a shared directory the rows include other workspaces' surveys, so the lookup isn't limited to one
+ * workspace: a restricted survey anywhere doesn't count, as in the Prisma path.
  */
 export const buildContactInteractionData = async (
-  workspaceId: string,
   rows: TContactInteractionRows,
   needsAnyScope: boolean
 ): Promise<TContactInteractionData> => {
@@ -65,7 +77,7 @@ export const buildContactInteractionData = async (
       ? new Set(
           (
             await prisma.survey.findMany({
-              where: { workspaceId, id: { in: surveyIds }, AND: [effectivelyRestrictedWhere] },
+              where: { id: { in: surveyIds }, AND: [effectivelyRestrictedWhere] },
               select: { id: true },
             })
           ).map((survey) => survey.id)
@@ -92,7 +104,6 @@ const loadInteractionData = async (
 ): Promise<TContactInteractionData | null> => {
   try {
     return await buildContactInteractionData(
-      workspaceId,
       rows,
       segments.some((segment) => hasAnyScopeInteractionFilter((segment.filters ?? []) as TBaseFilters))
     );
@@ -130,6 +141,18 @@ const evaluateInMemory = (
 };
 
 /**
+ * The workspace's segments in the contact's directory, which the caller read once. The segment list is
+ * cached for a minute and the workspace may have changed directory since, so segments of any other
+ * directory are dropped: the contact can't be in them, not even in one without filters.
+ */
+const getSegmentsOfContactDirectory = async (workspaceId: string, directoryId: string) => {
+  const cachedSegments = await getSegments(workspaceId);
+  return Array.isArray(cachedSegments)
+    ? cachedSegments.filter((segment) => segment.directoryId === directoryId)
+    : [];
+};
+
+/**
  * The ids of the workspace's segments the contact belongs to. A failed segment or membership query throws
  * (ENG-3725): an empty result would read as "this contact is in no segments" and silently stop every
  * segment-targeted survey until the SDK's next sync, while a failed request answers 500 and reaches Sentry.
@@ -137,19 +160,17 @@ const evaluateInMemory = (
  */
 export const getPersonSegmentIds = async (
   workspaceId: string,
+  directoryId: string,
   contactId: string,
   contactUserId: string,
   deviceType: "phone" | "desktop",
   interactionRows: TContactInteractionRows
 ): Promise<string[]> => {
   try {
-    validateInputs([workspaceId, ZId], [contactId, ZId], [contactUserId, ZString]);
+    validateInputs([workspaceId, ZId], [directoryId, ZId], [contactId, ZId], [contactUserId, ZString]);
 
-    const segments = await getSegments(workspaceId);
-
-    if (!segments || !Array.isArray(segments) || segments.length === 0) {
-      return [];
-    }
+    const segments = await getSegmentsOfContactDirectory(workspaceId, directoryId);
+    if (segments.length === 0) return [];
 
     const interactionData = await loadInteractionData(workspaceId, contactId, interactionRows, segments);
 
@@ -184,7 +205,13 @@ export const getPersonSegmentIds = async (
         continue;
       }
 
-      const queryResult = await segmentFilterToPrismaQuery(segment.id, filters, workspaceId, deviceType);
+      const queryResult = await segmentFilterToPrismaQuery(
+        segment.id,
+        filters,
+        directoryId,
+        workspaceId,
+        deviceType
+      );
 
       if (!queryResult.ok) {
         logger.warn(

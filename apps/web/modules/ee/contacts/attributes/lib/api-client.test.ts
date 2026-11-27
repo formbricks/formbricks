@@ -44,23 +44,29 @@ describe("contact attribute keys API client", () => {
     expect(sentBody()).toEqual(body);
   });
 
-  test("PATCHes a key's label at its own path, leaving out what isn't set", async () => {
-    routeFetch({ [`PATCH ${BASE}/${KEY_ID}`]: [json({ data: { ...key, name: "Tier" } })] });
+  test("PATCHes a key's label at its own path, naming the workspace, leaving out what isn't set", async () => {
+    routeFetch({
+      [`PATCH ${BASE}/${KEY_ID}?workspaceId=${WORKSPACE_ID}`]: [json({ data: { ...key, name: "Tier" } })],
+    });
 
-    await updateAttributeKey(KEY_ID, { name: "Tier", description: undefined });
+    await updateAttributeKey(KEY_ID, WORKSPACE_ID, { name: "Tier", description: undefined });
     expect(sentBody()).toEqual({ name: "Tier" });
   });
 
-  test("DELETEs a key", async () => {
-    routeFetch({ [`DELETE ${BASE}/${KEY_ID}`]: [new Response(null, { status: 204 })] });
-    await expect(deleteAttributeKey(KEY_ID)).resolves.toBeUndefined();
+  test("DELETEs a key, naming the workspace", async () => {
+    routeFetch({
+      [`DELETE ${BASE}/${KEY_ID}?workspaceId=${WORKSPACE_ID}`]: [new Response(null, { status: 204 })],
+    });
+    await expect(deleteAttributeKey(KEY_ID, WORKSPACE_ID)).resolves.toBeUndefined();
   });
 
   test("surfaces the server's reason for a refusal", async () => {
     const detail = "Contacts are not enabled for this organization";
-    routeFetch({ [`DELETE ${BASE}/${KEY_ID}`]: [json({ status: 403, detail }, 403)] });
+    routeFetch({
+      [`DELETE ${BASE}/${KEY_ID}?workspaceId=${WORKSPACE_ID}`]: [json({ status: 403, detail }, 403)],
+    });
 
-    const failure = deleteAttributeKey(KEY_ID);
+    const failure = deleteAttributeKey(KEY_ID, WORKSPACE_ID);
     await expect(failure).rejects.toBeInstanceOf(V3ApiError);
     await expect(failure).rejects.toMatchObject({ status: 403, detail });
   });

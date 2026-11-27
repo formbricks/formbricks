@@ -11,6 +11,7 @@ import {
 const CONTACT_ID = "clcontact1111111111111111";
 const SURVEY_ID = "clsurvey11111111111111111";
 const BASE = `/api/internal/contacts/${CONTACT_ID}`;
+const PAGE_WORKSPACE_ID = "clpage1111111111111111111";
 
 const sentBody = () => JSON.parse(String(vi.mocked(global.fetch).mock.calls[0][1]?.body));
 
@@ -23,16 +24,24 @@ describe("contacts API client", () => {
     vi.unstubAllGlobals();
   });
 
-  test("DELETEs a contact", async () => {
-    routeFetch({ [`DELETE ${BASE}`]: [new Response(null, { status: 204 })] });
-    await expect(deleteContact(CONTACT_ID)).resolves.toBeUndefined();
+  test("DELETEs a contact, naming the workspace the page acts from", async () => {
+    routeFetch({
+      [`DELETE ${BASE}?workspaceId=${PAGE_WORKSPACE_ID}`]: [new Response(null, { status: 204 })],
+    });
+    await expect(deleteContact(CONTACT_ID, PAGE_WORKSPACE_ID)).resolves.toBeUndefined();
   });
 
   test("PUTs the attributes, answering the save's messages", async () => {
     const messages = [{ code: "email_already_exists", params: {} }];
-    routeFetch({ [`PUT ${BASE}/attributes`]: [json({ data: { contactId: CONTACT_ID, messages } })] });
+    routeFetch({
+      [`PUT ${BASE}/attributes?workspaceId=${PAGE_WORKSPACE_ID}`]: [
+        json({ data: { contactId: CONTACT_ID, messages } }),
+      ],
+    });
 
-    expect(await updateContactAttributes(CONTACT_ID, { email: "ada@example.com", seats: 3 })).toEqual({
+    expect(
+      await updateContactAttributes(CONTACT_ID, PAGE_WORKSPACE_ID, { email: "ada@example.com", seats: 3 })
+    ).toEqual({
       contactId: CONTACT_ID,
       messages,
     });

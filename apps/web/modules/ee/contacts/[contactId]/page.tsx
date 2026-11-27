@@ -1,8 +1,11 @@
 import { notFound } from "next/navigation";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
+import { getTranslate } from "@/lingodotdev/server";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { ContactControlBar } from "@/modules/ee/contacts/[contactId]/components/contact-control-bar";
+import { ContactDirectoryIndicator } from "@/modules/ee/contacts/components/contact-directory-indicator";
+import { getSharedContactDirectoryName } from "@/modules/ee/contacts/directories/lib/directory-service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContactAuth } from "@/modules/ee/contacts/lib/contact-auth";
@@ -21,21 +24,28 @@ export const SingleContactPage = async (props: {
 
   // Ties the contact in the URL to the workspace in the URL: authorizing the workspace alone would
   // let any authenticated user read a foreign contact's PII through their own workspace.
-  const { isReadOnly, organization, session, workspace } = await getContactAuth(
+  const { isReadOnly, isOwner, isManager, organization, session, workspace } = await getContactAuth(
     params.workspaceId,
     params.contactId
   );
   // ENG-3282: a contact's responses, displays and link pickers only cover surveys the viewer may see.
   const visibleSurveyWhere = await getUserVisibleSurveyWhere(session.user.id, organization.id);
 
-  const [environmentTags, contact, publishedLinkSurveys, attributesWithKeyInfo, allAttributeKeys] =
-    await Promise.all([
-      getTagsByWorkspaceId(workspace.id),
-      getContactInWorkspace(params.contactId, workspace.id),
-      getPublishedLinkSurveys(workspace.id, visibleSurveyWhere),
-      getContactAttributesWithKeyInfo(params.contactId, workspace.id),
-      getContactAttributeKeys(workspace.id),
-    ]);
+  const [
+    environmentTags,
+    contact,
+    publishedLinkSurveys,
+    attributesWithKeyInfo,
+    allAttributeKeys,
+    sharedDirectoryName,
+  ] = await Promise.all([
+    getTagsByWorkspaceId(workspace.id),
+    getContactInWorkspace(params.contactId, workspace.id),
+    getPublishedLinkSurveys(workspace.id, visibleSurveyWhere),
+    getContactAttributesWithKeyInfo(params.contactId, workspace.id),
+    getContactAttributeKeys(workspace.id),
+    getSharedContactDirectoryName(workspace.id),
+  ]);
 
   if (!contact) {
     return notFound();
@@ -50,16 +60,36 @@ export const SingleContactPage = async (props: {
 
   const contactIdentifier = getAttributeValue("email") || getAttributeValue("userId") || "";
 
+  const t = await getTranslate();
+
   const getContactControlBar = () => {
-    return (
+    const controlBar = (
       <ContactControlBar
         contactId={params.contactId}
+        workspaceId={workspace.id}
         isReadOnly={isReadOnly}
         isQuotasAllowed={isQuotasAllowed}
+        sharedDirectoryName={sharedDirectoryName}
         publishedLinkSurveys={publishedLinkSurveys}
         currentAttributes={attributesWithKeyInfo}
         allAttributeKeys={allAttributeKeys}
       />
+    );
+    if (!sharedDirectoryName) return controlBar;
+    // Spec decision 20, as on the Contacts tabs: the shared directory, left of the icon bar.
+    return (
+      <div className="flex items-center gap-2">
+        <ContactDirectoryIndicator
+          label={t("workspace.contacts.directory_line", { directoryName: sharedDirectoryName })}
+          href={
+            isOwner || isManager
+              ? `/organizations/${organization.id}/settings/contact-directories`
+              : undefined
+          }
+          className="size-[38px]"
+        />
+        {controlBar}
+      </div>
     );
   };
 

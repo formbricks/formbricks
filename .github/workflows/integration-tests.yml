@@ -150,6 +150,7 @@ jobs:
           src/scripts/online-upgrade.integration.test.ts
           src/scripts/migration-runner.integration.test.ts
           migration/20261104140000_backfill_matrix_condition_ids/migration.integration.test.ts
+          migration/20261123120002_backfill_contact_directories/migration.integration.test.ts
         env:
           ONLINE_UPGRADE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 

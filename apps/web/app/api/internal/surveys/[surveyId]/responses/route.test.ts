@@ -133,11 +133,12 @@ describe("POST /api/internal/surveys/{surveyId}/responses/queries", () => {
     ]);
   });
 
-  test("reads the page the action read: the filter's dates revived, with what each respondent was not shown", async () => {
+  test("reads the page the action read: the filter's dates revived, with what each respondent was not shown and which contacts are out of reach", async () => {
     await queryResponses({ limit: 25, offset: 50, filterCriteria });
 
     expect(mocks.getResponses).toHaveBeenCalledWith(SURVEY_ID, 25, 50, revivedFilterCriteria, undefined, {
       withNotShown: true,
+      withContactAvailability: true,
     });
   });
 
@@ -146,6 +147,7 @@ describe("POST /api/internal/surveys/{surveyId}/responses/queries", () => {
 
     expect(mocks.getResponses).toHaveBeenCalledWith(SURVEY_ID, undefined, undefined, undefined, undefined, {
       withNotShown: true,
+      withContactAvailability: true,
     });
   });
 

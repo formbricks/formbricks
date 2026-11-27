@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { whereAttributeKeysOfWorkspace } from "@/modules/ee/contacts/lib/attribute-key-scope";
 
 /** More attribute columns than this make a file nobody reads; the keys past it are left out. */
 const MAX_CONTACT_ATTRIBUTE_COLUMNS = 100;
@@ -11,7 +12,7 @@ const MAX_CONTACT_ATTRIBUTE_COLUMNS = 100;
  */
 export const getContactAttributeKeys = async (workspaceId: string): Promise<string[]> => {
   const keys = await prisma.contactAttributeKey.findMany({
-    where: { workspaceId, attributes: { some: {} } },
+    where: { ...whereAttributeKeysOfWorkspace(workspaceId), attributes: { some: {} } },
     select: { key: true },
     orderBy: { key: "asc" },
     take: MAX_CONTACT_ATTRIBUTE_COLUMNS,

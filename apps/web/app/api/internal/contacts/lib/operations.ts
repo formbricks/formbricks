@@ -13,15 +13,20 @@ import {
 } from "@/app/api/v3/lib/response";
 import { can } from "@/lib/authorization";
 import { capturePostHogEvent } from "@/lib/posthog";
-import {
-  getOrganizationIdFromContactId,
-  getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromContactId,
-  getWorkspaceIdFromSurveyId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE } from "@/modules/ee/contacts/lib/contact-delete-errors";
+import {
+  ContactDirectoryMissingError,
+  requireWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { createContactsFromCSV, deleteContact, getContact } from "@/modules/ee/contacts/lib/contacts";
+import {
+  ContactInSharedDirectoryError,
+  deleteContactInWorkspace,
+  getContactInWorkspace,
+} from "@/modules/ee/contacts/lib/contacts";
+import { createContactsFromCSV } from "@/modules/ee/contacts/lib/contacts-csv-upload";
 import { ensureContactsEnabled } from "@/modules/ee/contacts/lib/contacts-entitlement";
 import { CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { updateContactAttributes } from "@/modules/ee/contacts/lib/update-contact-attributes";
@@ -34,26 +39,35 @@ import {
 
 /**
  * Contact writes, for the contact page, the contacts table and its CSV import. Every operation authorizes a
- * write in the workspace (`workspace.write`) — the contact's own, or the import's — charges the workspace's
- * state-mutation budget, then needs the Contacts licence (`ensureContactsEnabled`), in the order of the
- * server actions they replace. Audited on the contact.
+ * write in a workspace (`workspace.write`) — the one the page acts from, the survey's for a personal link, or
+ * the import's — charges the workspace's state-mutation budget, then needs the Contacts licence
+ * (`ensureContactsEnabled`), in the order of the server actions they replace. Audited on the contact.
+ *
+ * Contacts belong to a contact directory that several workspaces may share, so the workspace always comes
+ * from the request, never from the contact: a contact's own `workspaceId` only records where it was created
+ * (and is null once that workspace is gone). The contact must then be in that workspace's directory.
  */
 
 type TContactAccess = { userId: string; organizationId: string; workspaceId: string };
 
+/** A workspace with no contact directory: 403 with the reason, as the caller was authorized. */
+const directoryMissingResponse = (error: unknown, { requestId, instance }: TRequestContext) =>
+  error instanceof ContactDirectoryMissingError ? problemForbidden(requestId, error.message, instance) : null;
+
 /**
- * Authorize a write on the contact's workspace, read off the contact (an unknown contact throws
- * `ResourceNotFoundError`: the wrapper's uniform 403), charge its budget, then check the Contacts licence
- * (403 "Contacts are not enabled for this organization"). The contact and its organization go into the
- * audit entry once all three passed, as the actions recorded them.
+ * Authorize a write on `workspaceId` (an unknown workspace throws `ResourceNotFoundError`: the wrapper's
+ * uniform 403), charge its budget, check the Contacts licence (403 "Contacts are not enabled for this
+ * organization"), then require the contact in the workspace's directory (the uniform 403 otherwise, the
+ * same as a contact that doesn't exist). The contact and its organization go into the audit entry once all
+ * passed, as the actions recorded them.
  */
 async function requireContactWrite(
   context: TRequestContext,
-  contactId: string
+  contactId: string,
+  workspaceId: string
 ): Promise<Response | TContactAccess> {
   const { authentication, requestId, instance, auditLog } = context;
-  const organizationId = await getOrganizationIdFromContactId(contactId);
-  const workspaceId = await getWorkspaceIdFromContactId(contactId);
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
   const access = await requireWorkspaceActionAccess({
     authentication,
@@ -73,6 +87,10 @@ async function requireContactWrite(
   const notLicensed = await forbidOnRefusal(() => ensureContactsEnabled(organizationId), requestId, instance);
   if (notLicensed) return notLicensed;
 
+  if (!(await getContactInWorkspace(contactId, workspaceId))) {
+    return problemForbidden(requestId, undefined, instance);
+  }
+
   if (auditLog) {
     auditLog.organizationId = organizationId;
     auditLog.targetId = contactId;
@@ -80,18 +98,35 @@ async function requireContactWrite(
   return { userId: access.userId, organizationId, workspaceId };
 }
 
-/** `DELETE /api/internal/contacts/{contactId}`: delete a contact. Audited as `deleted`, with the contact. */
+/**
+ * `DELETE /api/internal/contacts/{contactId}?workspaceId=`: delete a contact of the workspace's directory.
+ * Refused (403 with `CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE`, which the page translates) while another
+ * workspace uses the directory: the delete would take that workspace's responses and displays with it.
+ * Audited as `deleted`, with the contact.
+ */
 export async function deleteContactOperation({
   contactId,
+  workspaceId,
   ...context
-}: TRequestContext & { contactId: string }): Promise<Response> {
-  const access = await requireContactWrite(context, contactId);
+}: TRequestContext & { contactId: string; workspaceId: string }): Promise<Response> {
+  const { requestId, instance } = context;
+  const access = await requireContactWrite(context, contactId, workspaceId);
   if (access instanceof Response) return access;
 
-  const deleted = await deleteContact(contactId);
+  let deleted: Awaited<ReturnType<typeof deleteContactInWorkspace>>;
+  try {
+    deleted = await deleteContactInWorkspace(contactId, workspaceId);
+  } catch (error) {
+    if (error instanceof ContactInSharedDirectoryError) {
+      return problemForbidden(requestId, CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE, instance);
+    }
+    const refused = refusalResponse(error, requestId, instance);
+    if (refused) return refused;
+    throw error;
+  }
 
   if (context.auditLog) context.auditLog.oldObject = deleted;
-  return noContentResponse({ requestId: context.requestId });
+  return noContentResponse({ requestId });
 }
 
 /**
@@ -101,20 +136,22 @@ export async function deleteContactOperation({
  */
 export async function updateContactAttributesOperation({
   contactId,
+  workspaceId,
   body,
   ...context
-}: TRequestContext & { contactId: string; body: TContactAttributesBody }): Promise<Response> {
+}: TRequestContext & {
+  contactId: string;
+  workspaceId: string;
+  body: TContactAttributesBody;
+}): Promise<Response> {
   const { requestId, instance, auditLog } = context;
-  const access = await requireContactWrite(context, contactId);
+  const access = await requireContactWrite(context, contactId, workspaceId);
   if (access instanceof Response) return access;
 
-  // Deleted meanwhile: the uniform 403.
-  const contact = await getContact(contactId);
-  if (!contact) return problemForbidden(requestId, undefined, instance);
-
+  // Deleted meanwhile, or moved out of the directory: `ResourceNotFoundError`, the uniform 403.
   let result: Awaited<ReturnType<typeof updateContactAttributes>>;
   try {
-    result = await updateContactAttributes(contactId, body.attributes);
+    result = await updateContactAttributes(contactId, workspaceId, body.attributes);
   } catch (error) {
     const refused = refusalResponse(error, requestId, instance);
     if (refused) return refused;
@@ -129,26 +166,46 @@ export async function updateContactAttributesOperation({
 
 /**
  * `POST /api/internal/contacts/{contactId}/personal-links`: a personal link to a survey for the contact.
- * Besides the contact's write checks, the survey must be in the contact's workspace (422 with
- * `CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE`, which the dialog translates) and the caller must be able
- * to write it (ENG-3282), since the link writes responses into it. Audited as `created` on the contact with
- * the survey, and captured in PostHog as `personal_link_created`.
+ * Authorized on the survey's workspace (an unknown survey is the wrapper's uniform 403); the contact must be
+ * in that workspace's contact directory (422 with `CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE`, which the
+ * dialog translates), so a caller cannot mint a link for a contact of another directory, and the caller must
+ * be able to write the survey (ENG-3282), since the link writes responses into it. Audited as `created` on
+ * the contact with the survey, and captured in PostHog as `personal_link_created`.
  */
 export async function createContactPersonalLinkOperation({
   contactId,
   body,
   ...context
 }: TRequestContext & { contactId: string; body: TContactPersonalLinkBody }): Promise<Response> {
-  const { requestId, instance, auditLog } = context;
-  const access = await requireContactWrite(context, contactId);
-  if (access instanceof Response) return access;
-  const { userId, organizationId, workspaceId } = access;
+  const { authentication, requestId, instance, auditLog } = context;
+  const workspaceId = await getWorkspaceIdFromSurveyId(body.surveyId);
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
-  // Cross-tenant guard: authorization above is derived from the contact only, so a survey from another
-  // workspace would otherwise get a working personal link.
-  const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(body.surveyId);
-  if (surveyWorkspaceId !== workspaceId) {
+  const access = await requireWorkspaceActionAccess({
+    authentication,
+    workspaceId,
+    action: "workspace.write",
+    requestId,
+    instance,
+  });
+  if (access instanceof Response) return access;
+  const { userId } = access;
+
+  const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.stateMutation, workspaceId, {
+    requestId,
+    instance,
+  });
+  if (limited) return limited;
+
+  const notLicensed = await forbidOnRefusal(() => ensureContactsEnabled(organizationId), requestId, instance);
+  if (notLicensed) return notLicensed;
+
+  if (!(await getContactInWorkspace(contactId, workspaceId))) {
     return problemUnprocessableContent(requestId, CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE, { instance });
+  }
+  if (auditLog) {
+    auditLog.organizationId = organizationId;
+    auditLog.targetId = contactId;
   }
   if (!(await can({ type: "user", id: userId }, "survey.write", { type: "survey", id: body.surveyId }))) {
     return problemForbidden(requestId, undefined, instance);
@@ -216,13 +273,17 @@ export async function createContactImportOperation({
   const notLicensed = await forbidOnRefusal(() => ensureContactsEnabled(organizationId), requestId, instance);
   if (notLicensed) return notLicensed;
 
-  const existingContactCount = await prisma.contact.count({ where: { workspaceId } });
-
   let result: Awaited<ReturnType<typeof createContactsFromCSV>>;
+  let existingContactCount: number;
   try {
+    // Before any write: a workspace with no directory gets the decision 13 message and nothing is created.
+    const directory = await requireWorkspaceContactDirectory(workspaceId);
+    existingContactCount = await prisma.contact.count({ where: { directoryId: directory.id } });
+    // The identity column (the directory's matching key) is checked here, once the directory is known.
     result = await createContactsFromCSV(
       body.csvData,
       workspaceId,
+      directory,
       body.duplicateContactsAction,
       body.attributeMap
     );
@@ -230,6 +291,8 @@ export async function createContactImportOperation({
     if (error instanceof ValidationError) {
       return problemUnprocessableContent(requestId, error.message, { instance });
     }
+    const missing = directoryMissingResponse(error, context);
+    if (missing) return missing;
     throw error;
   }
 

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { can } from "@/lib/authorization";
+import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
@@ -15,7 +15,29 @@ import {
   ZContactAttributeKeyUpdateSchema,
 } from "@/modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { findApiKeyWorkspaceOnDirectory } from "@/modules/ee/contacts/lib/api-key-directory-access";
+import { withCallerWorkspace } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { checkContactsEnabledApiV2 } from "@/modules/ee/license-check/lib/contacts-api-guard";
+
+type TKeyWithDirectory = Extract<Awaited<ReturnType<typeof getContactAttributeKey>>, { ok: true }>["data"];
+
+/**
+ * A key's own `workspaceId` only records where it was created, so access goes through its directory: the
+ * API key must reach a workspace that uses it. Returns that workspace and the key as it reports there.
+ */
+const authorizeKey = async (
+  authentication: TAuthenticationApiKey,
+  { directoryId, ...key }: TKeyWithDirectory,
+  method: "GET" | "PUT" | "DELETE"
+) => {
+  const workspaceId = await findApiKeyWorkspaceOnDirectory(
+    authentication.apiKeyId,
+    getWorkspaceAuthorizationActionForMethod(method),
+    directoryId,
+    authentication.workspacePermissions.map((permission) => permission.workspaceId)
+  );
+  return workspaceId ? { workspaceId, key: withCallerWorkspace(key, workspaceId) } : null;
+};
 
 export const GET = async (
   request: NextRequest,
@@ -41,20 +63,15 @@ export const GET = async (
         return handleApiError(request, res.error as ApiErrorResponseV2);
       }
 
-      if (
-        !(await can(
-          { type: "apiKey", id: authentication.apiKeyId },
-          getWorkspaceAuthorizationActionForMethod("GET"),
-          { type: "workspace", id: res.data.workspaceId }
-        ))
-      ) {
+      const authorized = await authorizeKey(authentication, res.data, "GET");
+      if (!authorized) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "environment", issue: "unauthorized" }],
         });
       }
 
-      return responses.successResponse(res);
+      return responses.successResponse({ data: authorized.key });
     },
   });
 
@@ -86,13 +103,8 @@ export const PUT = async (
       if (!res.ok) {
         return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
-      if (
-        !(await can(
-          { type: "apiKey", id: authentication.apiKeyId },
-          getWorkspaceAuthorizationActionForMethod("PUT"),
-          { type: "workspace", id: res.data.workspaceId }
-        ))
-      ) {
+      const authorized = await authorizeKey(authentication, res.data, "PUT");
+      if (!authorized) {
         return handleApiError(
           request,
           {
@@ -125,14 +137,18 @@ export const PUT = async (
         );
       }
 
-      const updatedContactAttributeKey = await updateContactAttributeKey(params.contactAttributeKeyId, body);
+      const updatedContactAttributeKey = await updateContactAttributeKey(
+        params.contactAttributeKeyId,
+        authorized.workspaceId,
+        body
+      );
 
       if (!updatedContactAttributeKey.ok) {
         return handleApiError(request, updatedContactAttributeKey.error, auditLog);
       }
 
       if (auditLog) {
-        auditLog.oldObject = res.data;
+        auditLog.oldObject = authorized.key;
         auditLog.newObject = updatedContactAttributeKey.data;
       }
 
@@ -170,13 +186,8 @@ export const DELETE = async (
         return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (
-        !(await can(
-          { type: "apiKey", id: authentication.apiKeyId },
-          getWorkspaceAuthorizationActionForMethod("DELETE"),
-          { type: "workspace", id: res.data.workspaceId }
-        ))
-      ) {
+      const authorized = await authorizeKey(authentication, res.data, "DELETE");
+      if (!authorized) {
         return handleApiError(
           request,
           {
@@ -209,14 +220,17 @@ export const DELETE = async (
         );
       }
 
-      const deletedContactAttributeKey = await deleteContactAttributeKey(params.contactAttributeKeyId);
+      const deletedContactAttributeKey = await deleteContactAttributeKey(
+        params.contactAttributeKeyId,
+        authorized.workspaceId
+      );
 
       if (!deletedContactAttributeKey.ok) {
         return handleApiError(request, deletedContactAttributeKey.error, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
       if (auditLog) {
-        auditLog.oldObject = res.data;
+        auditLog.oldObject = authorized.key;
       }
 
       return responses.successResponse(deletedContactAttributeKey);

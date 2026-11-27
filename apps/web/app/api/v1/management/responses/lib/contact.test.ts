@@ -21,6 +21,7 @@ const mockContactDbData = {
   createdAt: new Date(),
   updatedAt: new Date(),
   workspaceId,
+  directoryId: null,
   attributes: [
     { attributeKey: { key: "userId" }, value: userId },
     { attributeKey: { key: "email" }, value: "test@example.com" },
@@ -46,7 +47,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              workspaceId,
+              directory: { workspaces: { some: { id: workspaceId } } },
             },
             value: userId,
           },
@@ -79,7 +80,7 @@ describe("getContactByUserId", () => {
           some: {
             attributeKey: {
               key: "userId",
-              workspaceId,
+              directory: { workspaces: { some: { id: workspaceId } } },
             },
             value: userId,
           },

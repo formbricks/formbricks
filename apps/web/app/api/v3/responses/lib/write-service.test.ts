@@ -473,15 +473,19 @@ describe("createScopedResponse — what actually reaches Prisma", () => {
    * `workspaceId`, and workspace-only scoping loses the cross-survey check ENG-825 was about and the
    * reuse check behind ENG-827 / ENG-1923.
    */
-  test("the contact connect carries the workspace, not just the id", async () => {
-    const tx = runTx(
-      txStub({ contact: { findFirst: vi.fn().mockResolvedValue({ id: "clct1", attributes: [] }) } })
-    );
+  // A contact of any workspace on the survey workspace's contact directory, never one of another directory.
+  test("the contact lookup and connect carry the workspace's directory, not just the id", async () => {
+    const findFirst = vi.fn().mockResolvedValue({ id: "clct1", attributes: [] });
+    const tx = runTx(txStub({ contact: { findFirst } }));
 
     await createScopedResponse(createInput({ contactId: "clct1" }));
 
+    const directoryScope = { directory: { workspaces: { some: { id: survey.workspaceId } } } };
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "clct1", ...directoryScope } })
+    );
     expect(tx.response.create.mock.calls[0][0].data.contact).toEqual({
-      connect: { id: "clct1", workspaceId: survey.workspaceId },
+      connect: { id: "clct1", ...directoryScope },
     });
   });
 

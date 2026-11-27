@@ -1,9 +1,15 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { InvalidInputError, ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
+import {
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE } from "@/modules/ee/contacts/lib/contact-delete-errors";
 import { CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { CONTACT_ATTRIBUTE_VALUE_MAX_LENGTH } from "../schemas";
 import { PUT } from "./attributes/route";
@@ -17,26 +23,35 @@ const mocks = vi.hoisted(() => ({
   queueAuditEvent: vi.fn(),
   capturePostHogEvent: vi.fn(),
   getIsContactsEnabled: vi.fn(),
-  getOrganizationIdFromContactId: vi.fn(),
-  getWorkspaceIdFromContactId: vi.fn(),
+  getOrganizationIdFromWorkspaceId: vi.fn(),
   getWorkspaceIdFromSurveyId: vi.fn(),
-  deleteContact: vi.fn(),
-  getContact: vi.fn(),
+  deleteContactInWorkspace: vi.fn(),
+  getContactInWorkspace: vi.fn(),
   updateContactAttributes: vi.fn(),
   getContactSurveyLink: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can, assertCan: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromContactId: mocks.getOrganizationIdFromContactId,
-  getWorkspaceIdFromContactId: mocks.getWorkspaceIdFromContactId,
+  getOrganizationIdFromWorkspaceId: mocks.getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromSurveyId: mocks.getWorkspaceIdFromSurveyId,
 }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: mocks.getIsContactsEnabled }));
-vi.mock("@/modules/ee/contacts/lib/contacts", () => ({
-  deleteContact: mocks.deleteContact,
-  getContact: mocks.getContact,
-}));
+vi.mock("@/modules/ee/contacts/lib/contacts", async () => {
+  const { OperationNotAllowedError: Refusal } = await import("@formbricks/types/errors");
+  return {
+    ContactInSharedDirectoryError: class extends Refusal {
+      constructor() {
+        super(
+          "This contact is in a contact directory that other workspaces use, or has responses in another workspace, so it can't be deleted."
+        );
+      }
+    },
+    deleteContactInWorkspace: mocks.deleteContactInWorkspace,
+    getContactInWorkspace: mocks.getContactInWorkspace,
+  };
+});
+vi.mock("@/modules/ee/contacts/lib/contacts-csv-upload", () => ({ createContactsFromCSV: vi.fn() }));
 vi.mock("@/modules/ee/contacts/lib/update-contact-attributes", () => ({
   updateContactAttributes: mocks.updateContactAttributes,
 }));
@@ -79,9 +94,12 @@ const send = (method: "PUT" | "POST", url: string, body: unknown, headers = SAME
     body: JSON.stringify(body),
   });
 
-const remove = (headers: Record<string, string> = SAME_ORIGIN_HEADERS) =>
-  DELETE(new NextRequest(BASE, { method: "DELETE", headers }), props);
-const saveAttributes = (body: unknown) => PUT(send("PUT", `${BASE}/attributes`, body), props);
+// The workspace the page acts from: a contact belongs to a directory several workspaces may share.
+const IN_WORKSPACE = `?workspaceId=${WORKSPACE_ID}`;
+const remove = (headers: Record<string, string> = SAME_ORIGIN_HEADERS, query = IN_WORKSPACE) =>
+  DELETE(new NextRequest(`${BASE}${query}`, { method: "DELETE", headers }), props);
+const saveAttributes = (body: unknown, query = IN_WORKSPACE) =>
+  PUT(send("PUT", `${BASE}/attributes${query}`, body), props);
 const createLink = (body: unknown = { surveyId: SURVEY_ID }) =>
   POST(send("POST", `${BASE}/personal-links`, body), props);
 
@@ -97,11 +115,10 @@ beforeEach(() => {
   mocks.can.mockResolvedValue(true);
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.getIsContactsEnabled.mockResolvedValue(true);
-  mocks.getOrganizationIdFromContactId.mockResolvedValue(ORG_ID);
-  mocks.getWorkspaceIdFromContactId.mockResolvedValue(WORKSPACE_ID);
+  mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(ORG_ID);
   mocks.getWorkspaceIdFromSurveyId.mockResolvedValue(WORKSPACE_ID);
-  mocks.deleteContact.mockResolvedValue(storedContact);
-  mocks.getContact.mockResolvedValue(storedContact);
+  mocks.deleteContactInWorkspace.mockResolvedValue(storedContact);
+  mocks.getContactInWorkspace.mockResolvedValue(storedContact);
   mocks.updateContactAttributes.mockResolvedValue({ updatedAttributes: { email: "ada@example.com" } });
   mocks.getContactSurveyLink.mockResolvedValue({ ok: true, data: "https://f.test/c/token" });
 });
@@ -111,7 +128,7 @@ describe("the contact write gate, shared by every route", () => {
     ["DELETE", () => remove()],
     ["PUT attributes", () => saveAttributes({ attributes: { email: "ada@example.com" } })],
     ["POST personal-links", () => createLink()],
-  ])("%s authorizes the contact's workspace, then the budget, then the licence", async (_label, call) => {
+  ])("%s authorizes the request's workspace, then the budget, then the licence", async (_label, call) => {
     await call();
     expect(checkedActions()[0]).toEqual(["workspace.write", { type: "workspace", id: WORKSPACE_ID }]);
     expect(operationLimits()).toEqual([[rateLimitConfigs.actions.stateMutation.namespace, WORKSPACE_ID]]);
@@ -127,16 +144,44 @@ describe("the contact write gate, shared by every route", () => {
     expect((await response.json()).detail).toBe("You are not authorized to access this resource");
     expect(operationLimits()).toEqual([]);
     expect(mocks.getIsContactsEnabled).not.toHaveBeenCalled();
-    expect(mocks.deleteContact).not.toHaveBeenCalled();
+    expect(mocks.deleteContactInWorkspace).not.toHaveBeenCalled();
   });
 
-  test("answers the uniform 403 for a contact that doesn't exist", async () => {
-    mocks.getOrganizationIdFromContactId.mockRejectedValue(new ResourceNotFoundError("contact", CONTACT_ID));
+  test("answers the uniform 403 for a workspace that doesn't exist, before authorizing", async () => {
+    mocks.getOrganizationIdFromWorkspaceId.mockRejectedValue(
+      new ResourceNotFoundError("workspace", WORKSPACE_ID)
+    );
 
     const response = await remove();
 
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+    expect(mocks.can).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["DELETE", () => remove()],
+    ["PUT attributes", () => saveAttributes({ attributes: { email: "ada@example.com" } })],
+  ])(
+    "%s answers the uniform 403 for a contact that isn't in the workspace's directory, or doesn't exist",
+    async (_label, call) => {
+      mocks.getContactInWorkspace.mockResolvedValue(null);
+
+      const response = await call();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+      expect(mocks.getContactInWorkspace).toHaveBeenCalledWith(CONTACT_ID, WORKSPACE_ID);
+      expect(mocks.deleteContactInWorkspace).not.toHaveBeenCalled();
+      expect(mocks.updateContactAttributes).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each([
+    ["DELETE", () => remove(SAME_ORIGIN_HEADERS, "")],
+    ["PUT attributes", () => saveAttributes({ attributes: {} }, "")],
+  ])("%s answers 400 without the workspace the page acts from", async (_label, call) => {
+    expect((await call()).status).toBe(400);
     expect(mocks.can).not.toHaveBeenCalled();
   });
 
@@ -148,7 +193,7 @@ describe("the contact write gate, shared by every route", () => {
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe("Contacts are not enabled for this organization");
     expect(operationLimits()).toHaveLength(1);
-    expect(mocks.deleteContact).not.toHaveBeenCalled();
+    expect(mocks.deleteContactInWorkspace).not.toHaveBeenCalled();
   });
 
   test("answers 429 when the workspace's write budget is spent", async () => {
@@ -160,12 +205,12 @@ describe("the contact write gate, shared by every route", () => {
 
     expect((await remove()).status).toBe(429);
     expect(mocks.getIsContactsEnabled).not.toHaveBeenCalled();
-    expect(mocks.deleteContact).not.toHaveBeenCalled();
+    expect(mocks.deleteContactInWorkspace).not.toHaveBeenCalled();
   });
 
   test("refuses a cross-site request (CSRF)", async () => {
     expect((await remove({ "sec-fetch-site": "cross-site" })).status).toBe(403);
-    expect(mocks.deleteContact).not.toHaveBeenCalled();
+    expect(mocks.deleteContactInWorkspace).not.toHaveBeenCalled();
   });
 
   test("answers 401 without a session", async () => {
@@ -179,7 +224,7 @@ describe("DELETE /api/internal/contacts/{contactId}", () => {
     const response = await remove();
 
     expect(response.status).toBe(204);
-    expect(mocks.deleteContact).toHaveBeenCalledWith(CONTACT_ID);
+    expect(mocks.deleteContactInWorkspace).toHaveBeenCalledWith(CONTACT_ID, WORKSPACE_ID);
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "deleted",
@@ -190,6 +235,26 @@ describe("DELETE /api/internal/contacts/{contactId}", () => {
         oldObject: storedContact,
       })
     );
+  });
+
+  test("refuses a contact other workspaces share, with the code the page translates", async () => {
+    const { ContactInSharedDirectoryError } = await import("@/modules/ee/contacts/lib/contacts");
+    mocks.deleteContactInWorkspace.mockRejectedValue(new ContactInSharedDirectoryError());
+
+    const response = await remove();
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe(CONTACT_IN_SHARED_DIRECTORY_ERROR_CODE);
+  });
+
+  test("answers the uniform 403 for a contact deleted meanwhile", async () => {
+    mocks.deleteContactInWorkspace.mockRejectedValue(new ResourceNotFoundError("contact", CONTACT_ID));
+    expect((await remove()).status).toBe(403);
+  });
+
+  test("answers another refusal with its own reason", async () => {
+    mocks.deleteContactInWorkspace.mockRejectedValue(new OperationNotAllowedError("Not now"));
+    expect((await (await remove()).json()).detail).toBe("Not now");
   });
 });
 
@@ -207,7 +272,7 @@ describe("PUT /api/internal/contacts/{contactId}/attributes", () => {
 
     expect(response.status).toBe(200);
     expect((await response.json()).data).toEqual({ contactId: CONTACT_ID, messages });
-    expect(mocks.updateContactAttributes).toHaveBeenCalledWith(CONTACT_ID, {
+    expect(mocks.updateContactAttributes).toHaveBeenCalledWith(CONTACT_ID, WORKSPACE_ID, {
       email: "ada@example.com",
       plan: "pro",
       seats: 3,
@@ -230,10 +295,9 @@ describe("PUT /api/internal/contacts/{contactId}/attributes", () => {
   });
 
   test("answers the uniform 403 for a contact deleted meanwhile", async () => {
-    mocks.getContact.mockResolvedValue(null);
+    mocks.updateContactAttributes.mockRejectedValue(new ResourceNotFoundError("contact", CONTACT_ID));
 
     expect((await saveAttributes({ attributes: {} })).status).toBe(403);
-    expect(mocks.updateContactAttributes).not.toHaveBeenCalled();
   });
 
   test("answers 422 with the service's reason for a save it can't take", async () => {
@@ -315,8 +379,16 @@ describe("POST /api/internal/contacts/{contactId}/personal-links", () => {
     expect(mocks.capturePostHogEvent).not.toHaveBeenCalled();
   });
 
-  test("answers 422 with the code the dialog translates for a survey in another workspace", async () => {
+  test("authorizes on the survey's workspace and finds the contact in its directory", async () => {
     mocks.getWorkspaceIdFromSurveyId.mockResolvedValue(OTHER_WORKSPACE_ID);
+
+    expect((await createLink()).status).toBe(200);
+    expect(checkedActions()[0]).toEqual(["workspace.write", { type: "workspace", id: OTHER_WORKSPACE_ID }]);
+    expect(mocks.getContactInWorkspace).toHaveBeenCalledWith(CONTACT_ID, OTHER_WORKSPACE_ID);
+  });
+
+  test("answers 422 with the code the dialog translates for a contact outside the survey's directory", async () => {
+    mocks.getContactInWorkspace.mockResolvedValue(null);
 
     const response = await createLink();
 

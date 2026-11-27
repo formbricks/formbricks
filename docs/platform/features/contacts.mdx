@@ -4,7 +4,7 @@ description: "Contacts are the people you survey. Store what you already know ab
 icon: "address-book"
 ---
 
-A **contact** is one person in a workspace, with a set of attributes you supply. Contacts let you do two things you cannot do with anonymous responses: target a survey at a specific group, and see who said what.
+A **contact** is one person in a workspace's [contact directory](/platform/features/contact-directories), with a set of attributes you supply. Contacts let you do two things you cannot do with anonymous responses: target a survey at a specific group, and see who said what.
 
 Contacts live under **Contacts** in the main navigation, which has three tabs — Contacts, Attributes and Segments.
 
@@ -24,7 +24,7 @@ Contacts arrive in three ways:
 - **From a CSV**, using **Upload CSV**. Useful for a list you already hold outside your product.
 - **From the API** — `POST /api/v2/management/contacts` for one, `PUT /api/v2/management/contacts/bulk` for many. Both need every attribute key to exist already. See the [API v2 reference](/api-v2-reference/introduction).
 
-Contacts are scoped to a **workspace**. A person known in one workspace is not automatically known in another.
+Contacts belong to the workspace's **contact directory**. Workspaces that share a directory share their contacts; a person known in a workspace on another directory is not known here. See [Contact directories](/platform/features/contact-directories).
 
 ## Attributes
 
@@ -40,7 +40,7 @@ Two kinds:
 Each key carries a label, the key your code uses, and a data type.
 
 <Note>
-  A workspace can hold up to **150 attribute keys**. That is a limit on the number of distinct fields, not on how many contacts have them.
+  A contact directory can hold up to **150 attribute keys**. That is a limit on the number of distinct fields, not on how many contacts have them.
 </Note>
 
 ## Segments

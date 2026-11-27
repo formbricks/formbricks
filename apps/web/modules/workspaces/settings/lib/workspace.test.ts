@@ -30,6 +30,7 @@ const baseWorkspace = {
   appSetupCompleted: false,
   organizationId: "org1",
   legacyEnvironmentId: null,
+  contactDirectoryId: null,
   languages: [],
   recontactDays: 0,
   linkSurveyBranding: false,
@@ -45,7 +46,7 @@ const baseWorkspace = {
   customHeadScripts: null,
   customCss: null,
   customCssPrevious: null,
-} satisfies TWorkspace & { customCss: null; customCssPrevious: null };
+} satisfies TWorkspace & { customCss: null; customCssPrevious: null; contactDirectoryId: null };
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -637,25 +638,16 @@ describe("workspace lib", () => {
       expect(createArgs.data).toHaveProperty("languages.create", [{ code: "en-US", alias: null }]);
     });
 
-    test("seeds the default contact attribute keys when creating a workspace", async () => {
+    test("creates a workspace with no contact directory and no attribute keys", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-defaults" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace);
 
       await createWorkspace("org1", { name: "Workspace defaults" }, NEW_ORGANIZATION);
 
       const createArgs = vi.mocked(prisma.workspace.create).mock.calls[0][0];
-      const attributeCreate = (createArgs.data as { contactAttributeKeys: { create: unknown } })
-        .contactAttributeKeys.create as Array<{
-        key: string;
-        type: string;
-        isUnique?: boolean;
-      }>;
-      expect(attributeCreate.map((a) => a.key).sort()).toEqual(
-        ["email", "firstName", "language", "lastName", "userId"].sort()
-      );
-      expect(attributeCreate.every((a) => a.type === "default")).toBe(true);
-      const uniqueKeys = attributeCreate.filter((a) => a.isUnique).map((a) => a.key);
-      expect(uniqueKeys.sort()).toEqual(["email", "userId"].sort());
+      expect(createArgs.data).not.toHaveProperty("contactAttributeKeys");
+      expect(createArgs.data).not.toHaveProperty("contactDirectory");
+      expect(createArgs.data).not.toHaveProperty("contactDirectoryId");
     });
 
     test("creates workspace without teams and does not auto-link any FRD", async () => {

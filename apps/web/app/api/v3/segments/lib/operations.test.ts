@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { resolveV3VisibleSurveyWhere } from "@/app/api/v3/surveys/visibility-context";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listV3Segments } from "./operations";
 
@@ -16,10 +20,15 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
 vi.mock("@/app/api/v3/surveys/visibility-context", () => ({ resolveV3VisibleSurveyWhere: vi.fn() }));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>()),
+  getWorkspaceContactDirectory: vi.fn(),
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: vi.fn() }));
 
 const workspaceId = "clws0000000000000000000001";
 const organizationId = "clorg000000000000000000001";
+const directoryId = "cldir000000000000000000001";
 const visibleSurveyWhere = { visibility: "workspace" };
 
 const segmentRow = (id: string, title: string, updatedAt: string) => ({
@@ -52,6 +61,7 @@ describe("listV3Segments", () => {
     vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
     vi.mocked(resolveV3VisibleSurveyWhere).mockResolvedValue(visibleSurveyWhere as never);
     vi.mocked(prisma.segment.count).mockResolvedValue(2);
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue({ id: directoryId, matchingKey: "email" });
   });
 
   test("excludes private segments, scopes survey refs by visibility, and serializes the table shape", async () => {
@@ -86,17 +96,24 @@ describe("listV3Segments", () => {
     expect(body.meta).toEqual({ limit: 1, nextCursor: expect.any(String), totalCount: 2 });
 
     const args = vi.mocked(prisma.segment.findMany).mock.calls[0][0];
+    // Decision 24: the shared segments of the workspace's directory, whichever workspace made them.
     const where = {
-      workspaceId,
+      directoryId,
       isPrivate: false,
       title: { contains: String.raw`50\%`, mode: "insensitive" },
     };
     expect(args?.where).toEqual(where);
     expect(args?.orderBy).toEqual([{ updatedAt: "desc" }, { id: "desc" }]);
     expect(args?.take).toBe(2);
-    expect((args!.select as { surveys: { where: unknown } }).surveys.where).toBe(visibleSurveyWhere);
+    // Only the caller's workspace's surveys, through its visibility clause: a shared segment's other
+    // workspaces' surveys never leave the server.
+    expect((args!.select as { surveys: { where: unknown } }).surveys.where).toEqual({
+      workspaceId,
+      AND: [visibleSurveyWhere],
+    });
     expect(resolveV3VisibleSurveyWhere).toHaveBeenCalledWith(null, organizationId);
     expect(prisma.segment.count).toHaveBeenCalledWith({ where });
+    expect(getWorkspaceContactDirectory).toHaveBeenCalledTimes(1);
   });
 
   test("takes survey ids the caller cannot see out of survey-interaction filters", async () => {
@@ -126,7 +143,13 @@ describe("listV3Segments", () => {
     const body = await (await call()).json();
 
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
-      where: { AND: [{ workspaceId, id: { in: [visibleId, hiddenId] } }, visibleSurveyWhere] },
+      where: {
+        id: { in: [visibleId, hiddenId] },
+        OR: [
+          { AND: [{ workspaceId }, visibleSurveyWhere] },
+          { workspaceId: { not: workspaceId }, workspace: { contactDirectoryId: directoryId } },
+        ],
+      },
       select: { id: true },
     });
     const [filter, group] = body.data[0].filters;
@@ -161,13 +184,25 @@ describe("listV3Segments", () => {
 
     expect(vi.mocked(prisma.segment.findMany).mock.calls[0][0]?.where).toEqual({
       AND: [
-        { workspaceId, isPrivate: false },
+        { directoryId, isPrivate: false },
         { OR: [{ title: { gt: "Alpha" } }, { title: "Alpha", id: { gt: "clsg0000000000000000000001" } }] },
       ],
     });
   });
 
-  test("re-reads a title too long for the cursor from its segment, in the same workspace", async () => {
+  // Decision 24: a segment another workspace of the directory made (or one whose workspace was deleted)
+  // is listed for this workspace, under this workspace's id.
+  test("lists a shared segment made in another workspace under the caller's workspace", async () => {
+    vi.mocked(prisma.segment.findMany).mockResolvedValue([
+      { ...segmentRow("clsg0000000000000000000001", "Alpha", "2026-02-01T00:00:00.000Z"), workspaceId: null },
+    ] as never);
+
+    const body = await (await call()).json();
+
+    expect(body.data[0].workspaceId).toBe(workspaceId);
+  });
+
+  test("re-reads a title too long for the cursor from its segment, in the same directory", async () => {
     const longTitle = "A".repeat(2000);
     vi.mocked(prisma.segment.findMany).mockResolvedValue([
       segmentRow("clsg0000000000000000000001", longTitle, "2026-02-01T00:00:00.000Z"),
@@ -192,11 +227,11 @@ describe("listV3Segments", () => {
     expect(next.status).toBe(200);
     expect(vi.mocked(prisma.segment.findFirst).mock.calls[0][0]?.where).toEqual({
       id: "clsg0000000000000000000001",
-      workspaceId,
+      directoryId,
     });
     expect(vi.mocked(prisma.segment.findMany).mock.calls[0][0]?.where).toEqual({
       AND: [
-        { workspaceId, isPrivate: false },
+        { directoryId, isPrivate: false },
         {
           OR: [{ title: { gt: longTitle } }, { title: longTitle, id: { gt: "clsg0000000000000000000001" } }],
         },
@@ -217,6 +252,14 @@ describe("listV3Segments", () => {
     const body = await (await call([["includeTotalCount", "false"]])).json();
     expect(body.meta).toEqual({ limit: 50, nextCursor: null, totalCount: null });
     expect(prisma.segment.count).not.toHaveBeenCalled();
+  });
+
+  test("403 with the no-directory message when the workspace has no contact directory", async () => {
+    vi.mocked(getWorkspaceContactDirectory).mockResolvedValue(null);
+    const response = await call();
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe(CONTACT_DIRECTORY_MISSING_MESSAGE);
+    expect(prisma.segment.findMany).not.toHaveBeenCalled();
   });
 
   test("403 without the Contacts entitlement, before reading segments", async () => {

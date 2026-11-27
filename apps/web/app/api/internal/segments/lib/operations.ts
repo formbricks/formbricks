@@ -17,23 +17,26 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { getUserVisibleSurveyWhere, resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import {
-  getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromContactAttributeKeyId,
-  getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getDistinctAttributeValues } from "@/modules/ee/contacts/lib/contact-attributes";
+import {
+  CONTACT_DIRECTORY_MISSING_MESSAGE,
+  ContactDirectoryMissingError,
+  getWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import {
   assertCanTargetWithSegment,
   checkAdvancedTargetingPermission,
 } from "@/modules/ee/contacts/segments/lib/access";
 import {
   assertAddedSegmentSurveyFiltersVisible,
+  assertAddedSurveyInteractionSurveyIds,
+  assertNewSegmentSurveyInteractionSurveyIds,
   assertSegmentSurveyFiltersVisible,
-  assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   restoreHiddenSegmentSurveyIds,
@@ -43,7 +46,8 @@ import {
   cloneSegment,
   createSegment,
   deleteSegment,
-  getSegment,
+  getOtherWorkspaceSurveyIds,
+  getSegmentInWorkspace,
   getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap,
   resetSegmentInSurvey,
@@ -51,7 +55,7 @@ import {
 } from "@/modules/ee/contacts/segments/lib/segments";
 import type { TSegmentCreateBody, TSegmentUpdateBody } from "../schemas";
 import {
-  type TSegmentFilterSurveyResource,
+  type TSegmentFilterSurveysResource,
   type TSurveySegmentResource,
   serializeSegment,
 } from "../serializers";
@@ -64,6 +68,11 @@ import {
  * visible to the caller (ENG-6870). The services' refusals answer 422 with their reason (filters that read a
  * survey the caller can't see, a survey from another workspace, a recursive filter), and a segment or
  * survey that is gone the uniform 403.
+ *
+ * A segment belongs to its contact directory and every workspace on it may use it (decision 24): a shared
+ * one, or a private one of the workspace's own surveys. So the workspace always comes from the request (the
+ * page's, or the survey's), never from the segment, whose own `workspaceId` only records where it was made.
+ * A segment the workspace can't use answers the uniform 403, the same as one that doesn't exist.
  */
 
 const SAME_WORKSPACE_MESSAGE = "Survey and segment are not in the same workspace";
@@ -73,10 +82,10 @@ const invalidFiltersMessage = (issues: { code: string; message: string }[]) =>
   issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
 
 /** A service's refusal as its 403 or 422 (see `refusalResponse`); any other error is rethrown. */
-export const SEGMENT_TITLE_TAKEN = "A segment with this title already exists in this workspace.";
+export const SEGMENT_TITLE_TAKEN = "A segment with this title already exists in this contact directory.";
 
 /**
- * Whether a failed create or rename lost to the workspace's unique title, which the service refuses with
+ * Whether a failed create or rename lost to the directory's unique title, which the service refuses with
  * its own message. A conflict with existing state, so a 409 rather than the 422 of other invalid input.
  */
 const isSegmentTitleTaken = (error: unknown): boolean =>
@@ -86,9 +95,25 @@ const segmentTitleTaken = ({ requestId, instance }: TRequestContext): Response =
   problemConflict(requestId, SEGMENT_TITLE_TAKEN, instance);
 
 const refusalOrThrow = (error: unknown, { requestId, instance }: TRequestContext): Response => {
+  // A workspace with no contact directory has no segments: 403 with the reason, as the caller was authorized.
+  if (error instanceof ContactDirectoryMissingError)
+    return problemForbidden(requestId, error.message, instance);
   const refused = refusalResponse(error, requestId, instance);
   if (refused) return refused;
   throw error;
+};
+
+/**
+ * The segment as the caller's workspace may see it: a shared segment can target surveys of every workspace on
+ * its directory, and the ids of another workspace's surveys never leave the server.
+ */
+const scopeSegmentToWorkspace = async (segment: TSegment, workspaceId: string): Promise<TSegment> => {
+  if (segment.surveys.length === 0) return segment;
+  const surveyWorkspaceIdMap = await getSurveyWorkspaceIdMap(segment.surveys);
+  return {
+    ...segment,
+    surveys: segment.surveys.filter((surveyId) => surveyWorkspaceIdMap.get(surveyId) === workspaceId),
+  };
 };
 
 /**
@@ -175,7 +200,9 @@ export async function createSegmentOperation({
 
   let segment: TSegment;
   try {
-    await assertSurveyInteractionSurveyIds(
+    // As for an edit, a survey id copied from a segment the workspace reaches may name another workspace's
+    // survey on the directory ("Save as new segment"); every other id must be the caller's to see.
+    await assertNewSegmentSurveyInteractionSurveyIds(
       body.filters,
       workspaceId,
       await getUserVisibleSurveyWhere(userId, organizationId)
@@ -209,19 +236,25 @@ export async function createSegmentOperation({
 }
 
 /**
- * `PATCH /api/internal/segments/{segmentId}`: change a segment, or connect surveys to it. Every connected
- * survey must be in the segment's workspace (ENG-1920) and visible to the caller; the stored survey ids
- * the caller can't see are kept in its filters; the saved tree is held to the filter bounds and may not
- * refer to the segment itself. Audited as `updated`, from the segment as it was to the segment as saved.
+ * `PATCH /api/internal/segments/{segmentId}?workspaceId=`: change a segment the workspace can use, or connect
+ * surveys to it. A survey the edit connects must be in the caller's workspace (ENG-1920) and visible to the
+ * caller; the ones already connected stay (a shared segment can target another workspace's survey). Only the
+ * survey ids the edit adds to the filters must be the caller's to see; the stored ones stay. The saved tree
+ * is held to the filter bounds and may not refer to the segment itself. Audited as `updated`, from the
+ * segment as it was to the segment as saved.
  */
 export async function updateSegmentOperation({
   segmentId,
+  workspaceId,
   body,
   ...context
-}: TRequestContext & { segmentId: string; body: TSegmentUpdateBody }): Promise<Response> {
+}: TRequestContext & {
+  segmentId: string;
+  workspaceId: string;
+  body: TSegmentUpdateBody;
+}): Promise<Response> {
   const { requestId, instance, auditLog } = context;
-  const organizationId = await getOrganizationIdFromSegmentId(segmentId);
-  const workspaceId = await getWorkspaceIdFromSegmentId(segmentId);
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
   const access = await requireSegmentAccess(context, {
     workspaceId,
@@ -231,25 +264,34 @@ export async function updateSegmentOperation({
   if (access instanceof Response) return access;
   const { userId } = access;
 
-  // ENG-1920: the surveys are connected by id alone, so every one must belong to the segment's workspace,
-  // in one batched lookup; an unknown id is absent from the map and refused the same way.
-  if (body.surveys && body.surveys.length > 0) {
-    const surveyWorkspaceIdMap = await getSurveyWorkspaceIdMap(body.surveys);
-    if (!body.surveys.every((surveyId) => surveyWorkspaceIdMap.get(surveyId) === workspaceId)) {
+  let oldObject: TSegment;
+  try {
+    oldObject = await getSegmentInWorkspace(segmentId, workspaceId);
+  } catch (error) {
+    return refusalOrThrow(error, context);
+  }
+
+  // ENG-1920: the surveys are connected by id alone, so a survey the segment is not on yet must belong to
+  // the caller's workspace — otherwise a caller could re-point another tenant's survey to their segment, or
+  // a survey of another workspace on the directory they cannot write. One batched lookup; an unknown id is
+  // absent from the map and refused the same way.
+  const connectedSurveyIds = new Set(oldObject.surveys);
+  const addedSurveyIds = (body.surveys ?? []).filter((surveyId) => !connectedSurveyIds.has(surveyId));
+  if (addedSurveyIds.length > 0) {
+    const surveyWorkspaceIdMap = await getSurveyWorkspaceIdMap(addedSurveyIds);
+    if (!addedSurveyIds.every((surveyId) => surveyWorkspaceIdMap.get(surveyId) === workspaceId)) {
       return problemUnprocessableContent(requestId, SAME_WORKSPACE_MESSAGE, { instance });
     }
   }
 
-  let oldObject: TSegment;
   let updated: TSegment;
   try {
     const visibleSurveyWhere = await getUserVisibleSurveyWhere(userId, organizationId);
     const isVisibilityScoped = Object.keys(visibleSurveyWhere).length > 0;
-    if (body.surveys?.length && isVisibilityScoped) {
-      await assertSurveysInWorkspace(body.surveys, workspaceId, visibleSurveyWhere);
+    if (addedSurveyIds.length > 0 && isVisibilityScoped) {
+      await assertSurveysInWorkspace(addedSurveyIds, workspaceId, visibleSurveyWhere);
     }
 
-    oldObject = await getSegment(segmentId);
     const actor = await resolveSurveyActorContext({ type: "user", id: userId }, organizationId);
     const data: TSegmentUpdateInput = body.filters
       ? {
@@ -264,8 +306,7 @@ export async function updateSegmentOperation({
       : body;
 
     // ENG-6870: connecting a survey targets it with the whole stored tree, as attaching one does.
-    const connectedSurveyIds = new Set(oldObject.surveys);
-    if (body.surveys?.some((surveyId) => !connectedSurveyIds.has(surveyId))) {
+    if (addedSurveyIds.length > 0) {
       await assertSegmentSurveyFiltersVisible(
         data.filters ?? oldObject.filters,
         workspaceId,
@@ -286,11 +327,14 @@ export async function updateSegmentOperation({
     auditLog.oldObject = oldObject;
     auditLog.newObject = updated;
   }
-  return successResponse(serializeSegment(updated), { requestId });
+  return successResponse(serializeSegment(await scopeSegmentToWorkspace(updated, workspaceId)), {
+    requestId,
+  });
 }
 
 /**
- * The filter tree an edit stores. Only the ids the caller sent must be visible to them; the stored ones they
+ * The filter tree an edit stores. Only the ids the caller added must be surveys of their workspace they can
+ * see; the stored ones stay (a shared segment can name another workspace's survey), and the stored ones they
  * could not see are put back afterwards, since the editor never held them. The merged tree is what gets
  * stored, so it is the one held to the bounds and checked for recursion.
  */
@@ -309,7 +353,7 @@ async function prepareEditedFilters(
     visibleSurveyWhere: Awaited<ReturnType<typeof getUserVisibleSurveyWhere>>;
   }
 ): Promise<TSegment["filters"]> {
-  await assertSurveyInteractionSurveyIds(filters, workspaceId, visibleSurveyWhere);
+  await assertAddedSurveyInteractionSurveyIds(filters, oldObject.filters, workspaceId, visibleSurveyWhere);
   // ENG-6870: and the surveys nested segment filters read, where the edit adds them.
   await assertAddedSegmentSurveyFiltersVisible(filters, oldObject.filters, workspaceId, actor, segmentId);
   const merged =
@@ -327,15 +371,15 @@ async function prepareEditedFilters(
 
 /**
  * A survey-segment write: the caller needs write access to the survey's workspace, its budget and the
- * licence, and `survey.write` on the survey; only then must the segment share the survey's workspace (a
- * segment from another one gets the uniform 403, the same as one the caller can't see: the targeting card
- * only offers its own workspace's segments); and sight of every survey the segment's filters read
- * (ENG-6870). Answers with the caller and the survey's organization.
+ * licence, and `survey.write` on the survey; only then must the survey's workspace be able to use the
+ * segment (one of its contact directory, decision 24; any other gets the uniform 403, the same as one the
+ * caller can't see); and sight of every survey the segment's filters read (ENG-6870). Answers with the
+ * caller, the survey's organization and its workspace.
  */
 async function requireSurveySegmentWrite(
   context: TRequestContext,
   { surveyId, segmentId }: { surveyId: string; segmentId: string }
-): Promise<Response | { userId: string; organizationId: string }> {
+): Promise<Response | { userId: string; organizationId: string; workspaceId: string }> {
   const { requestId, instance, auditLog } = context;
   const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(surveyId);
   const organizationId = await getOrganizationIdFromSurveyId(surveyId);
@@ -350,18 +394,18 @@ async function requireSurveySegmentWrite(
   const surveyRefused = await requireSurveyWrite(userId, surveyId, context);
   if (surveyRefused) return surveyRefused;
 
-  if ((await getWorkspaceIdFromSegmentId(segmentId)) !== surveyWorkspaceId) {
-    return problemForbidden(requestId, undefined, instance);
-  }
-
   try {
-    await assertCanTargetWithSegment(userId, organizationId, segmentId);
+    const segment = await getSegmentInWorkspace(segmentId, surveyWorkspaceId);
+    await assertCanTargetWithSegment(userId, organizationId, segment, surveyWorkspaceId);
   } catch (error) {
+    // No directory: no segment of it to use, the same 403 as one the caller can't see.
+    if (error instanceof ContactDirectoryMissingError)
+      return problemForbidden(requestId, undefined, instance);
     return refusalOrThrow(error, context);
   }
 
   if (auditLog) auditLog.organizationId = organizationId;
-  return { userId, organizationId };
+  return { userId, organizationId, workspaceId: surveyWorkspaceId };
 }
 
 /**
@@ -381,7 +425,7 @@ export async function copySegmentOperation({
 
   let copy: TSegment;
   try {
-    copy = await cloneSegment(segmentId, surveyId);
+    copy = await cloneSegment(segmentId, surveyId, access.workspaceId);
   } catch (error) {
     return refusalOrThrow(error, context);
   }
@@ -391,16 +435,16 @@ export async function copySegmentOperation({
 }
 
 /**
- * `DELETE /api/internal/segments/{segmentId}`: delete a segment. One still connected to a survey is a 409
- * with the service's reason. Audited as `deleted`, with the segment as it was.
+ * `DELETE /api/internal/segments/{segmentId}?workspaceId=`: delete a segment the workspace can use. One still
+ * connected to a survey is a 409 with the service's reason. Audited as `deleted`, with the segment as it was.
  */
 export async function deleteSegmentOperation({
   segmentId,
+  workspaceId,
   ...context
-}: TRequestContext & { segmentId: string }): Promise<Response> {
+}: TRequestContext & { segmentId: string; workspaceId: string }): Promise<Response> {
   const { requestId, instance, auditLog } = context;
-  const organizationId = await getOrganizationIdFromSegmentId(segmentId);
-  const workspaceId = await getWorkspaceIdFromSegmentId(segmentId);
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
   const access = await requireSegmentAccess(context, {
     workspaceId,
@@ -410,7 +454,7 @@ export async function deleteSegmentOperation({
   if (access instanceof Response) return access;
 
   try {
-    const existing = await getSegment(segmentId);
+    const existing = await getSegmentInWorkspace(segmentId, workspaceId);
     if (auditLog) {
       auditLog.targetId = segmentId;
       auditLog.oldObject = existing;
@@ -452,7 +496,10 @@ export async function attachSurveySegmentOperation({
   if (auditLog) auditLog.newObject = survey;
   // The survey keeps the segment just connected; none would mean it was changed meanwhile.
   if (!survey.segment) return problemForbidden(requestId, undefined, instance);
-  const resource: TSurveySegmentResource = { surveyId, segment: serializeSegment(survey.segment) };
+  const resource: TSurveySegmentResource = {
+    surveyId,
+    segment: serializeSegment(await scopeSegmentToWorkspace(survey.segment, access.workspaceId)),
+  };
   return successResponse(resource, { requestId });
 }
 
@@ -496,15 +543,17 @@ export async function resetSurveySegmentOperation({
 }
 
 /**
- * `GET /api/internal/contact-attribute-keys/{contactAttributeKeyId}/values`: the first distinct values an
- * attribute has, for the segment editor's value picker. Read access to the key's workspace and the
- * advanced-targeting licence.
+ * `GET /api/internal/contact-attribute-keys/{contactAttributeKeyId}/values?workspaceId=`: the first distinct
+ * values an attribute has among the contacts of the workspace's directory, for the segment editor's value
+ * picker. A key belongs to the directory and records only the workspace it was made from (none for a
+ * directory's default keys), so the caller names the workspace they act from: read access to it and the
+ * advanced-targeting licence. A key of another directory has no values here.
  */
 export async function getContactAttributeKeyValuesOperation({
   contactAttributeKeyId,
+  workspaceId,
   ...context
-}: TRequestContext & { contactAttributeKeyId: string }): Promise<Response> {
-  const workspaceId = await getWorkspaceIdFromContactAttributeKeyId(contactAttributeKeyId);
+}: TRequestContext & { contactAttributeKeyId: string; workspaceId: string }): Promise<Response> {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
   const access = await requireSegmentAccess(context, {
@@ -514,19 +563,27 @@ export async function getContactAttributeKeyValuesOperation({
   });
   if (access instanceof Response) return access;
 
-  const values: string[] = await getDistinctAttributeValues(contactAttributeKeyId);
+  const directory = await getWorkspaceContactDirectory(workspaceId);
+  if (!directory) {
+    return problemForbidden(context.requestId, CONTACT_DIRECTORY_MISSING_MESSAGE, context.instance);
+  }
+
+  const values: string[] = await getDistinctAttributeValues(contactAttributeKeyId, directory.id);
   return successResponse(values, { requestId: context.requestId });
 }
 
 /**
  * `GET /api/internal/workspaces/{workspaceId}/segment-filter-surveys`: the workspace's surveys a
  * survey-interaction filter can name, for the segment editor's survey picker: the ones the caller can see
- * (ENG-3282), most recently updated first, bounded. Read access and the advanced-targeting licence.
+ * (ENG-3282), most recently updated first, bounded. Also which of `surveyIds` (the ids the filter already
+ * names) are surveys of another workspace on the directory, so the picker shows them as such (decision 24);
+ * ids only, as the caller may not see those surveys. Read access and the advanced-targeting licence.
  */
 export async function listSegmentFilterSurveysOperation({
   workspaceId,
+  surveyIds,
   ...context
-}: TRequestContext & { workspaceId: string }): Promise<Response> {
+}: TRequestContext & { workspaceId: string; surveyIds: string[] }): Promise<Response> {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
 
   const access = await requireSegmentAccess(context, {
@@ -536,14 +593,13 @@ export async function listSegmentFilterSurveysOperation({
   });
   if (access instanceof Response) return access;
 
-  const surveys = await getSurveyRefsForWorkspace(
-    workspaceId,
-    await getUserVisibleSurveyWhere(access.userId, organizationId)
-  );
-  const resource: TSegmentFilterSurveyResource[] = surveys.map(({ id, name, status }) => ({
-    id,
-    name,
-    status,
-  }));
+  const [surveys, otherWorkspaceSurveyIds] = await Promise.all([
+    getSurveyRefsForWorkspace(workspaceId, await getUserVisibleSurveyWhere(access.userId, organizationId)),
+    getOtherWorkspaceSurveyIds(workspaceId, surveyIds),
+  ]);
+  const resource: TSegmentFilterSurveysResource = {
+    surveys: surveys.map(({ id, name, status }) => ({ id, name, status })),
+    otherWorkspaceSurveyIds,
+  };
   return successResponse(resource, { requestId: context.requestId });
 }

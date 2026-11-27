@@ -3,6 +3,7 @@
 import {
   BellIcon,
   BlocksIcon,
+  BookUserIcon,
   BrushIcon,
   Building2Icon,
   ChartColumnIcon,
@@ -369,6 +370,14 @@ export const SettingsSidebarContent = ({
       disabled: !isOwnerOrManager,
     },
     {
+      id: "org-contact-directories",
+      label: t("workspace.settings.contact_directories.nav_label"),
+      href: organizationSettingsPath(organizationId, "contact-directories"),
+      icon: <BookUserIcon className={iconClassName} />,
+      hidden: isMember,
+      disabled: !isOwnerOrManager,
+    },
+    {
       id: "org-data-retention",
       label: t("workspace.settings.data_retention.nav_label"),
       href: organizationSettingsPath(organizationId, "data-retention"),
@@ -392,7 +401,7 @@ export const SettingsSidebarContent = ({
     },
     {
       id: "org-enterprise",
-      label: t("common.enterprise_license"),
+      label: t("common.license"),
       href: organizationSettingsPath(organizationId, "enterprise"),
       icon: <ShieldIcon className={iconClassName} />,
       hidden: isFormbricksCloud,

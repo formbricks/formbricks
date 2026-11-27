@@ -19,6 +19,9 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/contact-attribute-keys` | POST | session | dashboard | `/api/internal` | `app/api/internal/contact-attribute-keys/route.ts` |
 | `/api/internal/contact-attribute-keys/{contactAttributeKeyId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/contact-attribute-keys/[contactAttributeKeyId]/route.ts` |
 | `/api/internal/contact-attribute-keys/{contactAttributeKeyId}/values` | GET | session | dashboard | `/api/internal` | `app/api/internal/contact-attribute-keys/[contactAttributeKeyId]/values/route.ts` |
+| `/api/internal/contact-directories` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/contact-directories/route.ts` |
+| `/api/internal/contact-directories/{directoryId}` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/contact-directories/[directoryId]/route.ts` |
+| `/api/internal/contact-directories/{directoryId}/targeted-surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/contact-directories/[directoryId]/targeted-surveys/route.ts` |
 | `/api/internal/contacts/{contactId}` | DELETE | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/route.ts` |
 | `/api/internal/contacts/{contactId}/attributes` | PUT | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/attributes/route.ts` |
 | `/api/internal/contacts/{contactId}/personal-links` | POST | session | dashboard | `/api/internal` | `app/api/internal/contacts/[contactId]/personal-links/route.ts` |

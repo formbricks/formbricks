@@ -34,6 +34,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan, can: vi.fn() }));
 vi.mock("@/app/api/v3/lib/workspace-context", () => ({ resolveV3WorkspaceContext: mocks.resolveWorkspace }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: mocks.getIsContactsEnabled }));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  ContactDirectoryMissingError: class extends Error {
+    constructor() {
+      super("A contact directory needs to be set up for this workspace before contacts are available.");
+      this.name = "ContactDirectoryMissingError";
+    }
+  },
+}));
 vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
   createContactAttributeKey: mocks.createContactAttributeKey,
   updateContactAttributeKey: mocks.updateContactAttributeKey,
@@ -106,9 +114,15 @@ const create = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_HEA
     {}
   );
 
-const update = (body: unknown, { id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
+// The workspace the page acts from: a key belongs to a contact directory several workspaces may share.
+const IN_WORKSPACE = `?workspaceId=${WORKSPACE_ID}`;
+
+const update = (
+  body: unknown,
+  { id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS, query = IN_WORKSPACE } = {}
+) =>
   PATCH(
-    new NextRequest(`${BASE}/${id}`, {
+    new NextRequest(`${BASE}/${id}${query}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
@@ -116,8 +130,8 @@ const update = (body: unknown, { id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEAD
     { params: Promise.resolve({ contactAttributeKeyId: id }) }
   );
 
-const remove = ({ id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
-  DELETE(new NextRequest(`${BASE}/${id}`, { method: "DELETE", headers }), {
+const remove = ({ id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS, query = IN_WORKSPACE } = {}) =>
+  DELETE(new NextRequest(`${BASE}/${id}${query}`, { method: "DELETE", headers }), {
     params: Promise.resolve({ contactAttributeKeyId: id }),
   });
 
@@ -214,6 +228,17 @@ describe("POST /api/internal/contact-attribute-keys", () => {
     expect(mocks.capturePostHogEvent).not.toHaveBeenCalled();
   });
 
+  test("refuses a workspace with no contact directory, with the reason", async () => {
+    const { ContactDirectoryMissingError } = await import("@/modules/ee/contacts/lib/contact-directory");
+    mocks.createContactAttributeKey.mockRejectedValue(new ContactDirectoryMissingError());
+
+    const response = await create(createBody());
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe(new ContactDirectoryMissingError().message);
+    expect(mocks.capturePostHogEvent).not.toHaveBeenCalled();
+  });
+
   test("answers 429 when the workspace's write budget is spent", async () => {
     mocks.applyRateLimit.mockImplementation(async (config: { namespace: string }) => {
       if (config.namespace === rateLimitConfigs.actions.stateMutation.namespace) {
@@ -255,7 +280,7 @@ describe("POST /api/internal/contact-attribute-keys", () => {
 });
 
 describe("PATCH /api/internal/contact-attribute-keys/{contactAttributeKeyId}", () => {
-  test("relabels the key in its own workspace, and audits the old key and the saved one", async () => {
+  test("relabels the key in the caller's workspace's directory, and audits the old key and the saved one", async () => {
     const response = await update({ name: "Tier", description: "Plan" });
 
     expect(response.status).toBe(200);
@@ -263,7 +288,8 @@ describe("PATCH /api/internal/contact-attribute-keys/{contactAttributeKeyId}", (
     expect(checkedActions()).toEqual([["workspace.write", { type: "workspace", id: WORKSPACE_ID }]]);
     expect(operationLimits()).toEqual([[rateLimitConfigs.actions.stateMutation.namespace, WORKSPACE_ID]]);
     expect(mocks.getIsContactsEnabled).toHaveBeenCalledWith(ORG_ID);
-    expect(mocks.updateContactAttributeKey).toHaveBeenCalledWith(KEY_ID, {
+    expect(mocks.getContactAttributeKeyById).toHaveBeenCalledWith(KEY_ID, WORKSPACE_ID);
+    expect(mocks.updateContactAttributeKey).toHaveBeenCalledWith(KEY_ID, WORKSPACE_ID, {
       name: "Tier",
       description: "Plan",
     });
@@ -279,14 +305,20 @@ describe("PATCH /api/internal/contact-attribute-keys/{contactAttributeKeyId}", (
     );
   });
 
-  test("answers the uniform 403 for a key that doesn't exist", async () => {
+  test("answers the uniform 403 for a key that isn't in the workspace's directory, or doesn't exist", async () => {
     mocks.getContactAttributeKeyById.mockResolvedValue(null);
 
     const response = await update({ name: "Tier" });
 
     expect(response.status).toBe(403);
-    expect(mocks.assertCan).not.toHaveBeenCalled();
+    // Authorized first: a caller without access learns nothing about the key.
+    expect(checkedActions()).toEqual([["workspace.write", { type: "workspace", id: WORKSPACE_ID }]]);
     expect(mocks.updateContactAttributeKey).not.toHaveBeenCalled();
+  });
+
+  test("answers 400 without the workspace the page acts from", async () => {
+    expect((await update({ name: "Tier" }, { query: "" })).status).toBe(400);
+    expect(mocks.getContactAttributeKeyById).not.toHaveBeenCalled();
   });
 
   test("answers the uniform 403 to a caller who may not write the key's workspace", async () => {
@@ -347,7 +379,7 @@ describe("DELETE /api/internal/contact-attribute-keys/{contactAttributeKeyId}", 
     expect(checkedActions()).toEqual([["workspace.write", { type: "workspace", id: WORKSPACE_ID }]]);
     expect(operationLimits()).toEqual([[rateLimitConfigs.actions.stateMutation.namespace, WORKSPACE_ID]]);
     expect(mocks.getIsContactsEnabled).toHaveBeenCalledWith(ORG_ID);
-    expect(mocks.deleteContactAttributeKey).toHaveBeenCalledWith(KEY_ID);
+    expect(mocks.deleteContactAttributeKey).toHaveBeenCalledWith(KEY_ID, WORKSPACE_ID);
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "deleted",

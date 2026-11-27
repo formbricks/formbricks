@@ -3,11 +3,12 @@ import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import type { TV3SegmentSort } from "./parse-v3-segments-list-query";
 
 /**
- * The list filter. Private segments are survey-local targeting drafts, never listed — the Segments page
+ * The list filter: the shared segments of the workspace's contact directory, whichever workspace made
+ * them (decision 24). Private segments are survey-local targeting drafts, never listed — the Segments page
  * dropped them client-side; here they never leave the database.
  */
-export const buildV3SegmentsWhere = (workspaceId: string, search?: string): SegmentWhereInput => ({
-  workspaceId,
+export const buildV3SegmentsWhere = (directoryId: string, search?: string): SegmentWhereInput => ({
+  directoryId,
   isPrivate: false,
   ...(search && { title: { contains: escapeLikePattern(search), mode: "insensitive" } }),
 });

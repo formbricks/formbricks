@@ -14,13 +14,13 @@ export interface TAttributeUpdateMessage {
 const MESSAGE_TEMPLATES: Record<string, string> = {
   email_or_userid_required: "Either email or userId is required. The existing values were preserved.",
   attribute_type_validation_error: "{error} (attribute '{key}' has dataType: {dataType})",
-  email_already_exists: "The email already exists for this workspace and was not updated.",
-  userid_already_exists: "The userId already exists for this workspace and was not updated.",
+  email_already_exists: "The email already exists in this contact directory and was not updated.",
+  userid_already_exists: "The userId already exists in this contact directory and was not updated.",
   invalid_attribute_keys:
     "Skipped creating attribute(s) with invalid key(s): {keys}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.",
   reserved_attribute_keys: "{issue}",
   attribute_limit_exceeded:
-    "Could not create {count} new attribute(s) as it would exceed the maximum limit of {limit} attribute classes. Existing attributes were updated successfully.",
+    "Could not create {count} new attribute(s): a contact directory can have at most {limit} attributes. Existing attributes were updated successfully.",
   new_attribute_created: "Created new attribute '{key}' with type '{dataType}'",
   invalid_language_ignored: "Ignored invalid language code '{language}'. The existing value was preserved.",
 };

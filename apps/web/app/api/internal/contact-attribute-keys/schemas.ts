@@ -51,3 +51,9 @@ export const ZUpdateContactAttributeKeyBody = z
 export type TUpdateContactAttributeKeyBody = z.infer<typeof ZUpdateContactAttributeKeyBody>;
 
 export const ZContactAttributeKeyParams = z.object({ contactAttributeKeyId: ZId }).strict();
+
+/**
+ * The workspace a key write acts from: the page's, authorized. A key belongs to the workspace's contact
+ * directory, and its own `workspaceId` only records where it was created.
+ */
+export const ZContactAttributeKeyWorkspaceQuery = z.object({ workspaceId: ZId }).strict();

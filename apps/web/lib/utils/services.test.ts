@@ -3,12 +3,10 @@ import { prisma } from "@formbricks/database";
 import {
   ActionClass,
   ApiKey,
-  Contact,
   Invite,
   Language,
   Prisma,
   Response,
-  Segment,
   Survey,
   Tag,
   Team,
@@ -22,13 +20,10 @@ import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 import {
   getActionClass,
   getApiKey,
-  getContact,
-  getContactAttributeKey,
   getInvite,
   getLanguage,
   getQuota,
   getResponse,
-  getSegment,
   getSurvey,
   getTag,
   getTeam,
@@ -82,16 +77,7 @@ vi.mock("@formbricks/database", () => ({
     document: {
       findUnique: vi.fn(),
     },
-    contact: {
-      findUnique: vi.fn(),
-    },
-    segment: {
-      findUnique: vi.fn(),
-    },
     surveyQuota: {
-      findUnique: vi.fn(),
-    },
-    contactAttributeKey: {
       findUnique: vi.fn(),
     },
   },
@@ -470,104 +456,6 @@ describe("Service Functions", () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
       await expect(isTeamPartOfOrganization(organizationId, teamId)).rejects.toThrow(ResourceNotFoundError);
-    });
-  });
-
-  describe("getContact", () => {
-    const contactId = "contact123";
-
-    test("returns the contact when found", async () => {
-      const mockContact = { workspaceId: "ws123" } as unknown as Contact;
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContact);
-
-      const result = await getContact(contactId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-        where: { id: contactId },
-        select: { workspaceId: true },
-      });
-      expect(result).toEqual(mockContact);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.contact.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getContact(contactId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getSegment", () => {
-    const segmentId = "segment123";
-
-    test("returns the segment when found", async () => {
-      const mockSegment = { workspaceId: "ws123" } as unknown as Segment;
-      vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegment);
-
-      const result = await getSegment(segmentId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.segment.findUnique).toHaveBeenCalledWith({
-        where: { id: segmentId },
-        select: { workspaceId: true },
-      });
-      expect(result).toEqual(mockSegment);
-    });
-
-    test("throws DatabaseError when database operation fails", async () => {
-      vi.mocked(prisma.segment.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getSegment(segmentId)).rejects.toThrow(DatabaseError);
-    });
-  });
-
-  describe("getContactAttributeKey", () => {
-    const contactAttributeKeyId = "attrKey123";
-
-    test("returns the contact attribute key when found", async () => {
-      const mockAttributeKey = { workspaceId: "ws123" };
-      vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue(mockAttributeKey as never);
-
-      const result = await getContactAttributeKey(contactAttributeKeyId);
-      expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.contactAttributeKey.findUnique).toHaveBeenCalledWith({
-        where: { id: contactAttributeKeyId },
-        select: { workspaceId: true },
-      });
-      expect(result).toEqual(mockAttributeKey);
-    });
-
-    test("returns null when contact attribute key not found", async () => {
-      vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue(null);
-
-      const result = await getContactAttributeKey(contactAttributeKeyId);
-      expect(result).toBeNull();
-    });
-
-    test("throws DatabaseError when Prisma throws a known request error", async () => {
-      vi.mocked(prisma.contactAttributeKey.findUnique).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("Error", {
-          code: "P2002",
-          clientVersion: "4.7.0",
-        })
-      );
-
-      await expect(getContactAttributeKey(contactAttributeKeyId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("rethrows unknown errors", async () => {
-      const unknownError = new Error("Something unexpected");
-      vi.mocked(prisma.contactAttributeKey.findUnique).mockRejectedValue(unknownError);
-
-      await expect(getContactAttributeKey(contactAttributeKeyId)).rejects.toThrow(unknownError);
     });
   });
 });

@@ -20,10 +20,14 @@ describe("segment editor option hooks", () => {
     vi.unstubAllGlobals();
   });
 
-  test("reads an attribute's values", async () => {
-    routeFetch({ [`GET /api/internal/contact-attribute-keys/${KEY_ID}/values`]: [json({ data: ["pro"] })] });
+  test("reads an attribute's values through the editor's workspace", async () => {
+    routeFetch({
+      [`GET /api/internal/contact-attribute-keys/${KEY_ID}/values?workspaceId=${WORKSPACE_ID}`]: [
+        json({ data: ["pro"] }),
+      ],
+    });
 
-    const { result } = renderHook(() => useContactAttributeKeyValues(KEY_ID), {
+    const { result } = renderHook(() => useContactAttributeKeyValues(KEY_ID, WORKSPACE_ID), {
       wrapper: createQueryWrapper().wrapper,
     });
 
@@ -31,8 +35,11 @@ describe("segment editor option hooks", () => {
     expect(result.current.data).toEqual(["pro"]);
   });
 
-  test("asks nothing until there is an attribute key", () => {
-    const { result } = renderHook(() => useContactAttributeKeyValues(""), {
+  test.each([
+    ["an attribute key", "", WORKSPACE_ID],
+    ["a workspace", KEY_ID, undefined],
+  ])("asks nothing until there is %s", (_label, keyId, workspaceId) => {
+    const { result } = renderHook(() => useContactAttributeKeyValues(keyId, workspaceId), {
       wrapper: createQueryWrapper().wrapper,
     });
 
@@ -40,17 +47,23 @@ describe("segment editor option hooks", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  test("reads the surveys a survey-interaction filter can name", async () => {
-    const surveys = [{ id: "clsurvey11111111111111111", name: "Onboarding", status: "inProgress" }];
+  test("reads the surveys a survey-interaction filter can name, and which named ids are elsewhere", async () => {
+    const OTHER_SURVEY_ID = "clother1111111111111111111";
+    const data = {
+      surveys: [{ id: "clsurvey11111111111111111", name: "Onboarding", status: "inProgress" }],
+      otherWorkspaceSurveyIds: [OTHER_SURVEY_ID],
+    };
     routeFetch({
-      [`GET /api/internal/workspaces/${WORKSPACE_ID}/segment-filter-surveys`]: [json({ data: surveys })],
+      [`GET /api/internal/workspaces/${WORKSPACE_ID}/segment-filter-surveys?surveyIds=${OTHER_SURVEY_ID}`]: [
+        json({ data }),
+      ],
     });
 
-    const { result } = renderHook(() => useSegmentFilterSurveys(WORKSPACE_ID), {
+    const { result } = renderHook(() => useSegmentFilterSurveys(WORKSPACE_ID, [OTHER_SURVEY_ID]), {
       wrapper: createQueryWrapper().wrapper,
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toEqual(surveys);
+    expect(result.current.data).toEqual(data);
   });
 });

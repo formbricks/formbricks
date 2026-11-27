@@ -3,13 +3,10 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
-  getContact,
-  getContactAttributeKey,
   getInvite,
   getLanguage,
   getQuota,
   getResponse,
-  getSegment,
   getSurvey,
   getTag,
   getTeam,
@@ -48,24 +45,6 @@ export const getOrganizationIdFromResponseId = async (responseId: string) => {
   return await getOrganizationIdFromSurveyId(response.surveyId);
 };
 
-export const getOrganizationIdFromContactId = async (contactId: string) => {
-  const contact = await getContact(contactId);
-  if (!contact) {
-    throw new ResourceNotFoundError("contact", contactId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(contact.workspaceId);
-};
-
-export const getOrganizationIdFromContactAttributeKeyId = async (contactAttributeKeyId: string) => {
-  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
-  if (!contactAttributeKey) {
-    throw new ResourceNotFoundError("ContactAttributeKey", contactAttributeKeyId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(contactAttributeKey.workspaceId);
-};
-
 export const getOrganizationIdFromTagId = async (tagId: string) => {
   const tag = await getTag(tagId);
   if (!tag) {
@@ -73,15 +52,6 @@ export const getOrganizationIdFromTagId = async (tagId: string) => {
   }
 
   return await getOrganizationIdFromWorkspaceId(tag.workspaceId);
-};
-
-export const getOrganizationIdFromSegmentId = async (segmentId: string) => {
-  const segment = await getSegment(segmentId);
-  if (!segment) {
-    throw new ResourceNotFoundError("segment", segmentId);
-  }
-
-  return await getOrganizationIdFromWorkspaceId(segment.workspaceId);
 };
 
 export const getOrganizationIdFromActionClassId = async (actionClassId: string) => {
@@ -154,15 +124,6 @@ export const getWorkspaceIdFromSurveyId = async (surveyId: string) => {
   return survey.workspaceId;
 };
 
-export const getWorkspaceIdFromSegmentId = async (segmentId: string) => {
-  const segment = await getSegment(segmentId);
-  if (!segment) {
-    throw new ResourceNotFoundError("segment", segmentId);
-  }
-
-  return segment.workspaceId;
-};
-
 export const getWorkspaceIdFromActionClassId = async (actionClassId: string) => {
   const actionClass = await getActionClass(actionClassId);
   if (!actionClass) {
@@ -197,24 +158,6 @@ export const getWorkspaceIdFromResponseId = async (responseId: string) => {
   }
 
   return await getWorkspaceIdFromSurveyId(response.surveyId);
-};
-
-export const getWorkspaceIdFromContactId = async (contactId: string) => {
-  const contact = await getContact(contactId);
-  if (!contact) {
-    throw new ResourceNotFoundError("contact", contactId);
-  }
-
-  return contact.workspaceId;
-};
-
-export const getWorkspaceIdFromContactAttributeKeyId = async (contactAttributeKeyId: string) => {
-  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
-  if (!contactAttributeKey) {
-    throw new ResourceNotFoundError("ContactAttributeKey", contactAttributeKeyId);
-  }
-
-  return contactAttributeKey.workspaceId;
 };
 
 export const getWorkspaceIdFromWebhookId = async (webhookId: string) => {

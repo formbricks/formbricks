@@ -189,8 +189,9 @@ oneOf:
     additionalProperties: false
   - title: SurveyInteractionFilter
     description: >-
-      Matches on how the contact interacted with surveys within a time window. `surveyIds` only names
-      surveys the caller may see; ids of other surveys the segment targets are left out.
+      Matches on how the contact interacted with surveys within a time window. `surveyIds` names the
+      surveys of the listed workspace the caller may see, and surveys of other workspaces on the same
+      contact directory (ids only); ids of other surveys the segment targets are left out.
     type: object
     required:
       - id

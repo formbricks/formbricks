@@ -26,6 +26,10 @@ afterEach(() => {
 
 beforeEach(() => {
   prisma.contact.findFirst.mockResolvedValue(mockContact);
+  // The workspace's contact directory, which a display with a userId looks the contact up in (ENG-7493).
+  vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue({
+    contactDirectory: { id: "clcd0000000000000000dir1", matchingKey: "email" },
+  } as never);
   vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue({
     id: mockSurveyId,
     name: "Test Survey",

@@ -27,6 +27,7 @@ import {
   type TSurveyWriteTransaction,
 } from "@/lib/survey/write-transaction";
 import { invalidateCustomCssCaches, resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
+import { getWorkspaceContactDirectoryId } from "@/modules/ee/contacts/lib/contact-directory";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasMatrixElement, syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
@@ -149,6 +150,26 @@ type TV3SegmentFilterWrite = {
   filters: NonNullable<TV3SurveyDocument["targeting"]>["filters"];
 };
 
+const assertV3SurveySegmentInWorkspaceDirectory = async (
+  workspaceId: string,
+  segmentId: string,
+  tx: Prisma.TransactionClient = prisma
+): Promise<void> => {
+  const [segment, directoryId] = await Promise.all([
+    tx.segment.findUnique({ where: { id: segmentId }, select: { directoryId: true } }),
+    getWorkspaceContactDirectoryId(workspaceId),
+  ]);
+  if (segment?.directoryId && segment.directoryId !== directoryId) {
+    throw new V3SurveyReferenceValidationError([
+      {
+        name: "targeting.filters",
+        reason:
+          "This survey targets a segment from another contact directory. Reset its targeting in the survey editor before changing filters.",
+      },
+    ]);
+  }
+};
+
 /**
  * Apply the app-only distribution onto the survey update `data` (display scalars + the triggers diff)
  * and return the segment-filter write to perform, if targeting actually changed. Trigger ids are
@@ -214,6 +235,10 @@ async function buildV3AppSurveyPatchWrites(params: {
       },
     ]);
   }
+
+  // A survey whose workspace left the segment's contact directory keeps that segment so it reaches
+  // nobody (ADR 0061). Its filters belong to the other directory and must not be rewritten from here.
+  await assertV3SurveySegmentInWorkspaceDirectory(currentSurvey.workspaceId, segmentId, transaction?.tx);
 
   // Validate attribute-key references on the changed filters before the write (mirrors trigger ids).
   await assertV3SurveyTargetingFilterReferences(

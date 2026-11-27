@@ -33,14 +33,13 @@ const mocks = vi.hoisted(() => ({
   capturePostHogEvent: vi.fn(),
   getIsContactsEnabled: vi.fn(),
   getOrganization: vi.fn(),
-  getOrganizationIdFromSegmentId: vi.fn(),
   getOrganizationIdFromSurveyId: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
-  getWorkspaceIdFromContactAttributeKeyId: vi.fn(),
-  getWorkspaceIdFromSegmentId: vi.fn(),
   getWorkspaceIdFromSurveyId: vi.fn(),
   getSurveyWorkspaceIdMap: vi.fn(),
-  getSegment: vi.fn(),
+  getSegmentInWorkspace: vi.fn(),
+  getOtherWorkspaceSurveyIds: vi.fn(),
+  getWorkspaceContactDirectory: vi.fn(),
   createSegment: vi.fn(),
   updateSegment: vi.fn(),
   deleteSegment: vi.fn(),
@@ -53,7 +52,8 @@ const mocks = vi.hoisted(() => ({
   resolveSurveyActorContext: vi.fn(),
   restoreHiddenSegmentSurveyIds: vi.fn(),
   assertSurveysInWorkspace: vi.fn(),
-  assertSurveyInteractionSurveyIds: vi.fn(),
+  assertAddedSurveyInteractionSurveyIds: vi.fn(),
+  assertNewSegmentSurveyInteractionSurveyIds: vi.fn(),
   assertSegmentSurveyFiltersVisible: vi.fn(),
   assertAddedSegmentSurveyFiltersVisible: vi.fn(),
   checkForRecursiveSegmentFilter: vi.fn(),
@@ -61,12 +61,19 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can, assertCan: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromSegmentId: mocks.getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId: mocks.getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId: mocks.getOrganizationIdFromWorkspaceId,
-  getWorkspaceIdFromContactAttributeKeyId: mocks.getWorkspaceIdFromContactAttributeKeyId,
-  getWorkspaceIdFromSegmentId: mocks.getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId: mocks.getWorkspaceIdFromSurveyId,
+}));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  CONTACT_DIRECTORY_MISSING_MESSAGE: "A contact directory needs to be set up for this workspace.",
+  ContactDirectoryMissingError: class extends Error {
+    constructor() {
+      super("A contact directory needs to be set up for this workspace.");
+      this.name = "ContactDirectoryMissingError";
+    }
+  },
+  getWorkspaceContactDirectory: mocks.getWorkspaceContactDirectory,
 }));
 vi.mock("@/lib/organization/service", () => ({ getOrganization: mocks.getOrganization }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsContactsEnabled: mocks.getIsContactsEnabled }));
@@ -74,7 +81,8 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
   cloneSegment: mocks.cloneSegment,
   createSegment: mocks.createSegment,
   deleteSegment: mocks.deleteSegment,
-  getSegment: mocks.getSegment,
+  getOtherWorkspaceSurveyIds: mocks.getOtherWorkspaceSurveyIds,
+  getSegmentInWorkspace: mocks.getSegmentInWorkspace,
   getSurveyRefsForWorkspace: mocks.getSurveyRefsForWorkspace,
   getSurveyWorkspaceIdMap: mocks.getSurveyWorkspaceIdMap,
   resetSegmentInSurvey: mocks.resetSegmentInSurvey,
@@ -83,7 +91,8 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
 vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
   assertAddedSegmentSurveyFiltersVisible: mocks.assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible: mocks.assertSegmentSurveyFiltersVisible,
-  assertSurveyInteractionSurveyIds: mocks.assertSurveyInteractionSurveyIds,
+  assertAddedSurveyInteractionSurveyIds: mocks.assertAddedSurveyInteractionSurveyIds,
+  assertNewSegmentSurveyInteractionSurveyIds: mocks.assertNewSegmentSurveyInteractionSurveyIds,
   assertSurveysInWorkspace: mocks.assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter: mocks.checkForRecursiveSegmentFilter,
   restoreHiddenSegmentSurveyIds: mocks.restoreHiddenSegmentSurveyIds,
@@ -123,6 +132,7 @@ const COPY_ID = "clsegment2222222222222222";
 const SURVEY_ID = "clsurvey11111111111111111";
 const SURVEY_2_ID = "clsurvey22222222222222222";
 const KEY_ID = "clkey11111111111111111111";
+const DIRECTORY_ID = "cldirectory11111111111111";
 const DATE = new Date("2026-10-01T10:00:00.000Z");
 const HIDDEN_FILTERS_MESSAGE = "Segment filters reference a survey you don't have access to";
 
@@ -190,21 +200,24 @@ const createBody = (overrides: Record<string, unknown> = {}) => ({
 
 const create = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_HEADERS) =>
   POST(json("POST", `${BASE}/segments`, body, headers), {});
-const update = (body: unknown) =>
-  PATCH(json("PATCH", `${BASE}/segments/${SEGMENT_ID}`, body), segmentProps());
-const remove = () => DELETE(json("DELETE", `${BASE}/segments/${SEGMENT_ID}`), segmentProps());
+// The workspace the page acts from: a segment belongs to a contact directory several workspaces may share.
+const IN_WORKSPACE = `?workspaceId=${WORKSPACE_ID}`;
+const update = (body: unknown, query = IN_WORKSPACE) =>
+  PATCH(json("PATCH", `${BASE}/segments/${SEGMENT_ID}${query}`, body), segmentProps());
+const remove = (query = IN_WORKSPACE) =>
+  DELETE(json("DELETE", `${BASE}/segments/${SEGMENT_ID}${query}`), segmentProps());
 const copy = (body: unknown = { surveyId: SURVEY_ID }) =>
   copySegment(json("POST", `${BASE}/segments/${SEGMENT_ID}/copies`, body), segmentProps());
 const attach = (body: unknown = { segmentId: SEGMENT_ID }) =>
   attachSurveySegment(json("PUT", `${BASE}/surveys/${SURVEY_ID}/segment`, body), surveyProps);
 const reset = () =>
   resetSurveySegment(json("POST", `${BASE}/surveys/${SURVEY_ID}/segment/resets`), surveyProps);
-const attributeValues = () =>
-  getAttributeValues(new NextRequest(`${BASE}/contact-attribute-keys/${KEY_ID}/values`), {
+const attributeValues = (query = IN_WORKSPACE) =>
+  getAttributeValues(new NextRequest(`${BASE}/contact-attribute-keys/${KEY_ID}/values${query}`), {
     params: Promise.resolve({ contactAttributeKeyId: KEY_ID }),
   });
-const filterSurveys = () =>
-  listFilterSurveys(new NextRequest(`${BASE}/workspaces/${WORKSPACE_ID}/segment-filter-surveys`), {
+const filterSurveys = (query = "") =>
+  listFilterSurveys(new NextRequest(`${BASE}/workspaces/${WORKSPACE_ID}/segment-filter-surveys${query}`), {
     params: Promise.resolve({ workspaceId: WORKSPACE_ID }),
   });
 
@@ -226,11 +239,10 @@ beforeEach(() => {
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.getIsContactsEnabled.mockResolvedValue(true);
   mocks.getOrganization.mockResolvedValue({ id: ORG_ID });
-  mocks.getOrganizationIdFromSegmentId.mockResolvedValue(ORG_ID);
   mocks.getOrganizationIdFromSurveyId.mockResolvedValue(ORG_ID);
   mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(ORG_ID);
-  mocks.getWorkspaceIdFromContactAttributeKeyId.mockResolvedValue(WORKSPACE_ID);
-  mocks.getWorkspaceIdFromSegmentId.mockResolvedValue(WORKSPACE_ID);
+  mocks.getWorkspaceContactDirectory.mockResolvedValue({ id: DIRECTORY_ID, matchingKey: "email" });
+  mocks.getOtherWorkspaceSurveyIds.mockResolvedValue([]);
   mocks.getWorkspaceIdFromSurveyId.mockResolvedValue(WORKSPACE_ID);
   mocks.getSurveyWorkspaceIdMap.mockResolvedValue(
     new Map([
@@ -241,7 +253,7 @@ beforeEach(() => {
   mocks.getUserVisibleSurveyWhere.mockResolvedValue(visibleWhere);
   mocks.resolveSurveyActorContext.mockResolvedValue(memberActor);
   mocks.restoreHiddenSegmentSurveyIds.mockImplementation(async (filters: unknown) => filters);
-  mocks.getSegment.mockResolvedValue(storedSegment());
+  mocks.getSegmentInWorkspace.mockResolvedValue(storedSegment());
   mocks.createSegment.mockResolvedValue(storedSegment());
   mocks.updateSegment.mockResolvedValue(storedSegment({ title: "Renamed" }));
   mocks.deleteSegment.mockResolvedValue(storedSegment());
@@ -304,8 +316,38 @@ describe("the segment write gate, shared by every write", () => {
     expect(mocks.deleteSegment).not.toHaveBeenCalled();
   });
 
-  test("answers the uniform 403 for a segment that doesn't exist", async () => {
-    mocks.getOrganizationIdFromSegmentId.mockRejectedValue(new ResourceNotFoundError("segment", SEGMENT_ID));
+  test.each([
+    ["PATCH", () => update({ title: "Renamed" })],
+    ["DELETE", () => remove()],
+  ])(
+    "%s answers the uniform 403 for a segment the workspace can't use, after authorizing it",
+    async (_label, call) => {
+      // Another directory's segment, another workspace's private one, or none at all.
+      mocks.getSegmentInWorkspace.mockRejectedValue(new ResourceNotFoundError("segment", SEGMENT_ID));
+
+      const response = await call();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe("You are not authorized to access this resource");
+      expect(checkedActions()).toEqual([["workspace.write", { type: "workspace", id: WORKSPACE_ID }]]);
+      expect(mocks.getSegmentInWorkspace).toHaveBeenCalledWith(SEGMENT_ID, WORKSPACE_ID);
+      expect(mocks.updateSegment).not.toHaveBeenCalled();
+      expect(mocks.deleteSegment).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each([
+    ["PATCH", () => update({ title: "Renamed" }, "")],
+    ["DELETE", () => remove("")],
+  ])("%s answers 400 without the workspace the page acts from", async (_label, call) => {
+    expect((await call()).status).toBe(400);
+    expect(mocks.can).not.toHaveBeenCalled();
+  });
+
+  test("answers the uniform 403 for a workspace that doesn't exist", async () => {
+    mocks.getOrganizationIdFromWorkspaceId.mockRejectedValue(
+      new ResourceNotFoundError("workspace", WORKSPACE_ID)
+    );
 
     expect((await update({ title: "Renamed" })).status).toBe(403);
     expect(mocks.can).not.toHaveBeenCalled();
@@ -407,7 +449,7 @@ describe("POST /api/internal/segments", () => {
 
     expect(response.status).toBe(409);
     expect((await response.json()).detail).toBe(
-      "A segment with this title already exists in this workspace."
+      "A segment with this title already exists in this contact directory."
     );
   });
 
@@ -445,7 +487,11 @@ describe("POST /api/internal/segments", () => {
   test("checks interaction filters against the caller's visibility, and the surveys nested segments read", async () => {
     await create(createBody());
 
-    expect(mocks.assertSurveyInteractionSurveyIds).toHaveBeenCalledWith(FILTERS, WORKSPACE_ID, visibleWhere);
+    expect(mocks.assertNewSegmentSurveyInteractionSurveyIds).toHaveBeenCalledWith(
+      FILTERS,
+      WORKSPACE_ID,
+      visibleWhere
+    );
     expect(mocks.resolveSurveyActorContext).toHaveBeenCalledWith({ type: "user", id: USER_ID }, ORG_ID);
     expect(mocks.assertSegmentSurveyFiltersVisible).toHaveBeenCalledWith(FILTERS, WORKSPACE_ID, memberActor);
   });
@@ -524,23 +570,38 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 
-  test("checks every connected survey in one batched, visibility-scoped lookup", async () => {
+  test("checks every survey the edit connects in one batched, visibility-scoped lookup", async () => {
     mocks.assertSurveysInWorkspace.mockRejectedValueOnce(
       new InvalidInputError(`Survey not found in workspace: ${SURVEY_2_ID}`)
     );
 
+    // SURVEY_ID is already connected: only the added SURVEY_2_ID is checked.
     expect((await update({ surveys: [SURVEY_ID, SURVEY_2_ID] })).status).toBe(422);
-    expect(mocks.getSurveyWorkspaceIdMap).toHaveBeenCalledWith([SURVEY_ID, SURVEY_2_ID]);
+    expect(mocks.getSurveyWorkspaceIdMap).toHaveBeenCalledWith([SURVEY_2_ID]);
     expect(mocks.assertSurveysInWorkspace).toHaveBeenCalledOnce();
-    expect(mocks.assertSurveysInWorkspace).toHaveBeenCalledWith(
-      [SURVEY_ID, SURVEY_2_ID],
-      WORKSPACE_ID,
-      visibleWhere
-    );
+    expect(mocks.assertSurveysInWorkspace).toHaveBeenCalledWith([SURVEY_2_ID], WORKSPACE_ID, visibleWhere);
     expect(mocks.updateSegment).not.toHaveBeenCalled();
 
     expect((await update({ surveys: [SURVEY_ID, SURVEY_2_ID] })).status).toBe(200);
     expect(mocks.updateSegment).toHaveBeenCalledOnce();
+  });
+
+  // Decision 24: a shared segment may already target a survey of another workspace on the directory.
+  test("keeps a connected survey of another workspace, and answers only the caller's", async () => {
+    mocks.getSegmentInWorkspace.mockResolvedValue(storedSegment({ surveys: [SURVEY_ID, SURVEY_2_ID] }));
+    mocks.updateSegment.mockResolvedValue(storedSegment({ surveys: [SURVEY_ID, SURVEY_2_ID] }));
+    mocks.getSurveyWorkspaceIdMap.mockResolvedValue(
+      new Map([
+        [SURVEY_ID, WORKSPACE_ID],
+        [SURVEY_2_ID, OTHER_WORKSPACE_ID],
+      ])
+    );
+
+    const response = await update({ surveys: [SURVEY_ID, SURVEY_2_ID] });
+
+    expect(response.status).toBe(200);
+    expect(mocks.assertSurveysInWorkspace).not.toHaveBeenCalled();
+    expect((await response.json()).data.surveys).toEqual([SURVEY_ID]);
   });
 
   test("skips the visibility lookup where the caller sees every survey", async () => {
@@ -552,14 +613,19 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.restoreHiddenSegmentSurveyIds).not.toHaveBeenCalled();
   });
 
-  test("checks the ids the caller sent and keeps the stored ones they can't see", async () => {
+  test("checks the ids the caller added and keeps the stored ones they can't see", async () => {
     const stored = [{ id: "clfilter0000000000000009", connector: null, resource: FILTERS }];
-    mocks.getSegment.mockResolvedValue(storedSegment({ filters: stored }));
+    mocks.getSegmentInWorkspace.mockResolvedValue(storedSegment({ filters: stored }));
     mocks.restoreHiddenSegmentSurveyIds.mockResolvedValue(stored);
 
     await update({ filters: FILTERS });
 
-    expect(mocks.assertSurveyInteractionSurveyIds).toHaveBeenCalledWith(FILTERS, WORKSPACE_ID, visibleWhere);
+    expect(mocks.assertAddedSurveyInteractionSurveyIds).toHaveBeenCalledWith(
+      FILTERS,
+      stored,
+      WORKSPACE_ID,
+      visibleWhere
+    );
     expect(mocks.restoreHiddenSegmentSurveyIds).toHaveBeenCalledWith(
       FILTERS,
       stored,
@@ -598,7 +664,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
 
     expect(response.status).toBe(409);
     expect((await response.json()).detail).toBe(
-      "A segment with this title already exists in this workspace."
+      "A segment with this title already exists in this contact directory."
     );
   });
 
@@ -802,7 +868,7 @@ describe("POST /api/internal/segments/{segmentId}/copies", () => {
     expect((await response.json()).data).toEqual(
       serialized({ id: COPY_ID, title: "Copy of Power users (1)" })
     );
-    expect(mocks.cloneSegment).toHaveBeenCalledWith(SEGMENT_ID, SURVEY_ID);
+    expect(mocks.cloneSegment).toHaveBeenCalledWith(SEGMENT_ID, SURVEY_ID, WORKSPACE_ID);
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "created",
@@ -843,7 +909,7 @@ describe("PUT /api/internal/surveys/{surveyId}/segment", () => {
   });
 
   test("answers the uniform 403 for a segment that is gone", async () => {
-    mocks.getWorkspaceIdFromSegmentId.mockRejectedValue(new ResourceNotFoundError("segment", SEGMENT_ID));
+    mocks.getSegmentInWorkspace.mockRejectedValue(new ResourceNotFoundError("segment", SEGMENT_ID));
     expect((await attach()).status).toBe(403);
     expect(mocks.loadNewSegmentInSurvey).not.toHaveBeenCalled();
   });
@@ -858,17 +924,30 @@ describe("attaching or copying a segment onto a survey", () => {
     ["PUT /surveys/{id}/segment", () => attach()],
     ["POST /segments/{id}/copies", () => copy()],
   ])(
-    "%s answers a segment from another workspace with the uniform 403, after authorizing the survey",
+    "%s answers a segment the survey's workspace can't use with the uniform 403, after authorizing the survey",
     async (_label, call) => {
-      mocks.getWorkspaceIdFromSegmentId.mockResolvedValue(OTHER_WORKSPACE_ID);
+      mocks.getSegmentInWorkspace.mockRejectedValue(new ResourceNotFoundError("segment", SEGMENT_ID));
 
       const response = await call();
 
       expect(response.status).toBe(403);
       expect((await response.json()).detail).toBe("You are not authorized to access this resource");
       expect(mocks.can).toHaveBeenCalled();
+      expect(mocks.getSegmentInWorkspace).toHaveBeenCalledWith(SEGMENT_ID, WORKSPACE_ID);
     }
   );
+
+  test("checks a shared segment made in another workspace against the survey's workspace", async () => {
+    mocks.getSegmentInWorkspace.mockResolvedValue(storedSegment({ workspaceId: OTHER_WORKSPACE_ID }));
+
+    expect((await attach()).status).toBe(200);
+    expect(mocks.assertSegmentSurveyFiltersVisible).toHaveBeenCalledWith(
+      FILTERS,
+      WORKSPACE_ID,
+      memberActor,
+      SEGMENT_ID
+    );
+  });
 
   // ENG-6870: the survey's responses would show who the segment's filters match.
   test.each([
@@ -915,7 +994,7 @@ describe("POST /api/internal/surveys/{surveyId}/segment/resets", () => {
 });
 
 describe("the segment editor's reads", () => {
-  test("GET attribute values asks read access to the key's workspace and the licence, without a write budget", async () => {
+  test("GET attribute values asks read access to the editor's workspace and the licence, without a write budget", async () => {
     const response = await attributeValues();
 
     expect(response.status).toBe(200);
@@ -923,18 +1002,40 @@ describe("the segment editor's reads", () => {
     expect(checkedActions()).toEqual([["workspace.read", { type: "workspace", id: WORKSPACE_ID }]]);
     expect(operationLimits()).toEqual([]);
     expect(mocks.getIsContactsEnabled).toHaveBeenCalledWith(ORG_ID);
-    expect(mocks.getDistinctAttributeValues).toHaveBeenCalledWith(KEY_ID);
+    expect(mocks.getDistinctAttributeValues).toHaveBeenCalledWith(KEY_ID, DIRECTORY_ID);
   });
 
   test("GET segment-filter-surveys lists the surveys the caller can see", async () => {
     const response = await filterSurveys();
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data).toEqual([
-      { id: SURVEY_ID, name: "Onboarding", status: "inProgress" },
-    ]);
+    expect((await response.json()).data).toEqual({
+      surveys: [{ id: SURVEY_ID, name: "Onboarding", status: "inProgress" }],
+      otherWorkspaceSurveyIds: [],
+    });
     expect(checkedActions()).toEqual([["workspace.read", { type: "workspace", id: WORKSPACE_ID }]]);
     expect(mocks.getSurveyRefsForWorkspace).toHaveBeenCalledWith(WORKSPACE_ID, visibleWhere);
+    expect(mocks.getOtherWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, []);
+  });
+
+  test("GET segment-filter-surveys answers which named ids are surveys of another workspace", async () => {
+    mocks.getOtherWorkspaceSurveyIds.mockResolvedValue([SURVEY_2_ID]);
+
+    const response = await filterSurveys(`?surveyIds=${SURVEY_ID},${SURVEY_2_ID}`);
+
+    expect((await response.json()).data.otherWorkspaceSurveyIds).toEqual([SURVEY_2_ID]);
+    expect(mocks.getOtherWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID, SURVEY_2_ID]);
+  });
+
+  test.each([
+    ["an id that isn't one", "?surveyIds=survey-1"],
+    [
+      "more ids than a filter holds",
+      `?surveyIds=${Array.from({ length: MAX_SEGMENT_SURVEYS + 1 }, () => SURVEY_ID).join(",")}`,
+    ],
+  ])("GET segment-filter-surveys answers 400 for %s", async (_label, query) => {
+    expect((await filterSurveys(query)).status).toBe(400);
+    expect(mocks.getOtherWorkspaceSurveyIds).not.toHaveBeenCalled();
   });
 
   test.each([
@@ -960,10 +1061,18 @@ describe("the segment editor's reads", () => {
     expect((await response.json()).detail).toBe("Advanced targeting is not allowed for this organization");
   });
 
-  test("GET attribute values answers the uniform 403 for a key that doesn't exist", async () => {
-    mocks.getWorkspaceIdFromContactAttributeKeyId.mockRejectedValue(
-      new ResourceNotFoundError("ContactAttributeKey", KEY_ID)
-    );
-    expect((await attributeValues()).status).toBe(403);
+  test("GET attribute values refuses a workspace with no contact directory, with the reason", async () => {
+    mocks.getWorkspaceContactDirectory.mockResolvedValue(null);
+
+    const response = await attributeValues();
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("A contact directory needs to be set up for this workspace.");
+    expect(mocks.getDistinctAttributeValues).not.toHaveBeenCalled();
+  });
+
+  test("GET attribute values answers 400 without the workspace the editor is open in", async () => {
+    expect((await attributeValues("")).status).toBe(400);
+    expect(mocks.getDistinctAttributeValues).not.toHaveBeenCalled();
   });
 });

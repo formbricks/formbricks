@@ -1,14 +1,22 @@
 import type { TSegment, TSegmentCreateInput, TSegmentUpdateInput } from "@formbricks/types/segment";
 import type {
-  TSegmentFilterSurveyResource,
+  TSegmentFilterSurveysResource,
   TSegmentResource,
   TSurveySegmentResource,
 } from "@/app/api/internal/segments/serializers";
-import { getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
+import { buildApiUrl, getApiData, sendApiRequest } from "@/modules/api/lib/internal-api-client";
 
 const SEGMENTS_PATH = "/api/internal/segments";
 
 const segmentPath = (segmentId: string) => `${SEGMENTS_PATH}/${encodeURIComponent(segmentId)}`;
+
+/**
+ * A segment belongs to its contact directory and every workspace on it may use it (decision 24), so an
+ * edit or a delete names the workspace the caller acts from; the segment's own `workspaceId` is only where
+ * it was made.
+ */
+const segmentInWorkspacePath = (segmentId: string, workspaceId: string) =>
+  buildApiUrl(segmentPath(segmentId), { workspaceId });
 const surveySegmentPath = (surveyId: string) =>
   `/api/internal/surveys/${encodeURIComponent(surveyId)}/segment`;
 
@@ -39,9 +47,13 @@ export const createSegment = async ({ surveyId, ...input }: TSegmentCreateInput)
  * Change a segment, or connect surveys to it. Only the fields a segment update takes are sent, so a caller
  * may pass a whole segment.
  */
-export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput): Promise<TSegment> =>
+export const updateSegment = async (
+  segmentId: string,
+  workspaceId: string,
+  data: TSegmentUpdateInput
+): Promise<TSegment> =>
   toSegment(
-    await sendApiRequest<TSegmentResource>(segmentPath(segmentId), {
+    await sendApiRequest<TSegmentResource>(segmentInWorkspacePath(segmentId, workspaceId), {
       method: "PATCH",
       body: {
         title: data.title,
@@ -54,8 +66,8 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
   );
 
 /** Delete a segment no survey uses. */
-export const deleteSegment = (segmentId: string) =>
-  sendApiRequest<void>(segmentPath(segmentId), { method: "DELETE" });
+export const deleteSegment = (segmentId: string, workspaceId: string) =>
+  sendApiRequest<void>(segmentInWorkspacePath(segmentId, workspaceId), { method: "DELETE" });
 
 /** Copy a segment and attach the copy to a survey. */
 export const copySegment = async (segmentId: string, surveyId: string): Promise<TSegment> =>
@@ -83,19 +95,34 @@ export const resetSurveySegment = async (surveyId: string): Promise<TSegment> =>
   return toSegment(segment);
 };
 
-/** The first distinct values an attribute has. */
+/**
+ * The first distinct values an attribute has among the contacts of the workspace's directory. Keys belong to
+ * the directory, so the values are read through the workspace the editor is open in.
+ */
 export const getContactAttributeKeyValues = (
   contactAttributeKeyId: string,
+  workspaceId: string,
   { signal }: { signal?: AbortSignal } = {}
 ) =>
   getApiData<string[]>(
-    `/api/internal/contact-attribute-keys/${encodeURIComponent(contactAttributeKeyId)}/values`,
+    buildApiUrl(`/api/internal/contact-attribute-keys/${encodeURIComponent(contactAttributeKeyId)}/values`, {
+      workspaceId,
+    }),
     { signal }
   );
 
-/** The workspace's surveys a survey-interaction filter can name. */
-export const listSegmentFilterSurveys = (workspaceId: string, { signal }: { signal?: AbortSignal } = {}) =>
-  getApiData<TSegmentFilterSurveyResource[]>(
-    `/api/internal/workspaces/${encodeURIComponent(workspaceId)}/segment-filter-surveys`,
+/**
+ * The workspace's surveys a survey-interaction filter can name, and which of `surveyIds` (the ids the filter
+ * already names) are surveys of another workspace on the directory, so the picker can show those as such.
+ */
+export const listSegmentFilterSurveys = (
+  workspaceId: string,
+  surveyIds: readonly string[],
+  { signal }: { signal?: AbortSignal } = {}
+) =>
+  getApiData<TSegmentFilterSurveysResource>(
+    buildApiUrl(`/api/internal/workspaces/${encodeURIComponent(workspaceId)}/segment-filter-surveys`, {
+      surveyIds: surveyIds.length > 0 ? surveyIds.join(",") : undefined,
+    }),
     { signal }
   );

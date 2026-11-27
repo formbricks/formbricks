@@ -63,6 +63,9 @@ vi.mock("@/lib/cache", () => ({
 
 // The licence includes Creatives unless a test says otherwise (ENG-6602).
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsCreativesEnabled: vi.fn(async () => true) }));
+vi.mock("@/modules/ee/contacts/lib/contact-directory", () => ({
+  getWorkspaceContactDirectory: vi.fn(async () => ({ id: "directory-1", matchingKey: "email" })),
+}));
 
 // No custom CSS unless a test says otherwise (ENG-3552).
 vi.mock("@/modules/survey/link/lib/respondent-custom-css", () => ({
@@ -526,8 +529,9 @@ describe("getWorkspaceStateData", () => {
       onResponse: false,
       onFinished: true,
     });
+    // Decision 24: a nested segment may be a shared one another workspace of the directory made.
     expect(prisma.segment.findMany).toHaveBeenCalledWith({
-      where: { workspaceId },
+      where: { directoryId: "directory-1", OR: [{ isPrivate: false }, { workspaceId }] },
       select: { id: true, filters: true },
     });
   });

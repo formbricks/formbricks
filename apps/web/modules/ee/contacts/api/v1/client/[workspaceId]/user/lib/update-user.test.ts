@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
+import {
+  ContactDirectoryMissingError,
+  requireWorkspaceContactDirectory,
+} from "@/modules/ee/contacts/lib/contact-directory";
 import { getPersonSegmentIds } from "./segments";
 import { updateUser } from "./update-user";
 
@@ -17,6 +21,11 @@ vi.mock("@/modules/ee/contacts/lib/attributes", async (importOriginal) => {
     ...actual,
     updateAttributes: vi.fn(),
   };
+});
+
+vi.mock("@/modules/ee/contacts/lib/contact-directory", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ee/contacts/lib/contact-directory")>();
+  return { ...actual, requireWorkspaceContactDirectory: vi.fn() };
 });
 
 vi.mock("@formbricks/database", () => ({
@@ -36,6 +45,7 @@ vi.mock("./segments", () => ({
 }));
 
 const mockWorkspaceId = "workspace-id-mock";
+const mockDirectoryId = "directory-id-mock";
 const mockUserId = "test-user-id";
 const mockContactId = "test-contact-id";
 
@@ -52,6 +62,10 @@ const mockContactData = {
 describe("updateUser", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(requireWorkspaceContactDirectory).mockResolvedValue({
+      id: mockDirectoryId,
+      matchingKey: "email",
+    });
     // Mock successful attribute updates
     vi.mocked(updateAttributes).mockResolvedValue({ success: true, messages: [] });
     // Mock segments
@@ -72,12 +86,13 @@ describe("updateUser", () => {
 
     expect(prisma.contact.create).toHaveBeenCalledWith({
       data: {
+        directory: { connect: { id: mockDirectoryId } },
         workspace: { connect: { id: mockWorkspaceId } },
         attributes: {
           create: [
             {
               attributeKey: {
-                connect: { key_workspaceId: { key: "userId", workspaceId: mockWorkspaceId } },
+                connect: { directoryId_key: { directoryId: mockDirectoryId, key: "userId" } },
               },
               value: mockUserId,
             },
@@ -93,12 +108,18 @@ describe("updateUser", () => {
           },
         },
         responses: {
-          select: { surveyId: true, createdAt: true, finished: true },
+          select: {
+            surveyId: true,
+            createdAt: true,
+            finished: true,
+            survey: { select: { workspaceId: true } },
+          },
         },
         displays: {
           select: {
             surveyId: true,
             createdAt: true,
+            survey: { select: { workspaceId: true } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -115,6 +136,39 @@ describe("updateUser", () => {
       })
     );
     expect(result.messages).toBeUndefined();
+  });
+
+  // A shared directory has one contact per userId, whichever workspace created it, so the lookup is by
+  // directory only and never by the contact's or the key's origin workspace.
+  test("finds the contact by its userId in the workspace's directory", async () => {
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
+
+    const result = await updateUser(mockWorkspaceId, mockUserId, "desktop");
+
+    expect(prisma.contact.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          directoryId: mockDirectoryId,
+          attributes: {
+            some: { attributeKey: { key: "userId", directoryId: mockDirectoryId }, value: mockUserId },
+          },
+        },
+      })
+    );
+    expect(prisma.contact.create).not.toHaveBeenCalled();
+    expect(result.state.data?.contactId).toBe(mockContactId);
+  });
+
+  test("refuses a workspace with no directory before reading or creating anything", async () => {
+    vi.mocked(requireWorkspaceContactDirectory).mockRejectedValue(new ContactDirectoryMissingError());
+
+    await expect(updateUser(mockWorkspaceId, mockUserId, "desktop", { plan: "pro" })).rejects.toThrow(
+      ContactDirectoryMissingError
+    );
+    expect(requireWorkspaceContactDirectory).toHaveBeenCalledWith(mockWorkspaceId);
+    expect(prisma.contact.findFirst).not.toHaveBeenCalled();
+    expect(prisma.contact.create).not.toHaveBeenCalled();
+    expect(updateAttributes).not.toHaveBeenCalled();
   });
 
   test("should update existing contact attributes and canonicalize the language", async () => {
@@ -257,19 +311,33 @@ describe("updateUser", () => {
   test("should use device type 'phone'", async () => {
     vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     await updateUser(mockWorkspaceId, mockUserId, "phone");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "phone", {
-      displays: [],
-      responses: [],
-    });
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(
+      mockWorkspaceId,
+      mockDirectoryId,
+      mockContactId,
+      mockUserId,
+      "phone",
+      {
+        displays: [],
+        responses: [],
+      }
+    );
   });
 
   test("should use device type 'desktop'", async () => {
     vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     await updateUser(mockWorkspaceId, mockUserId, "desktop");
-    expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "desktop", {
-      displays: [],
-      responses: [],
-    });
+    expect(getPersonSegmentIds).toHaveBeenCalledWith(
+      mockWorkspaceId,
+      mockDirectoryId,
+      mockContactId,
+      mockUserId,
+      "desktop",
+      {
+        displays: [],
+        responses: [],
+      }
+    );
   });
 
   // ENG-3725: a failed segment check must fail the request, not report "no segments".

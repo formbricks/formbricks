@@ -1,31 +1,83 @@
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import type { ContactAttributeKeySelect, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase } from "@formbricks/types/safe-identifier";
 import {
+  whereAttributeKeysOfDirectory,
+  whereAttributeKeysOfWorkspace,
+} from "@/modules/ee/contacts/lib/attribute-key-scope";
+import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "./attribute-key-policy";
+import { ContactDirectoryMissingError, withWorkspaceDirectory } from "./contact-directory";
 
+/** The columns of `TContactAttributeKey`. A key's `directoryId` stays out of every read that uses it. */
+export const selectContactAttributeKey = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  isUnique: true,
+  key: true,
+  name: true,
+  description: true,
+  type: true,
+  dataType: true,
+} satisfies ContactAttributeKeySelect;
+
+/**
+ * A key belongs to a contact directory, and its own `workspaceId` only records where it was created: it
+ * is null for a directory's default keys and for keys whose workspace was deleted. A read made through a
+ * workspace reports that workspace, so `TContactAttributeKey` and the API responses keep their shape.
+ * Unlike a contact (`withCreatingOrCallerWorkspace`), a key always reports the caller's workspace.
+ */
+export const withCallerWorkspace = <T extends object>(
+  key: T,
+  workspaceId: string
+): T & { workspaceId: string } => ({
+  ...key,
+  workspaceId,
+});
+
+/** Every key of the workspace's contact directory, whichever workspace created it. */
 export const getContactAttributeKeys = reactCache(
   async (workspaceId: string): Promise<TContactAttributeKey[]> => {
-    return await prisma.contactAttributeKey.findMany({
-      where: { workspaceId },
+    const keys = await prisma.contactAttributeKey.findMany({
+      where: whereAttributeKeysOfWorkspace(workspaceId),
+      select: selectContactAttributeKey,
     });
+    return keys.map((key) => withCallerWorkspace(key, workspaceId));
   }
 );
 
+export type TDirectoryAttributeKey = Pick<TContactAttributeKey, "id" | "key" | "dataType">;
+
+/**
+ * Every key of a contact directory, for the contact write paths. Unlike `getContactAttributeKeys`, it
+ * keeps keys with no origin workspace (a directory's default keys, or keys whose workspace was deleted).
+ */
+export const getContactAttributeKeysOfDirectory = reactCache(
+  async (directoryId: string): Promise<TDirectoryAttributeKey[]> =>
+    prisma.contactAttributeKey.findMany({
+      where: whereAttributeKeysOfDirectory(directoryId),
+      select: { id: true, key: true, dataType: true },
+    })
+);
+
+/** A key of the workspace's contact directory, or null when the id names no key there. */
 export const getContactAttributeKeyById = async (
-  id: string
+  id: string,
+  workspaceId: string
 ): Promise<Pick<TContactAttributeKey, "id" | "workspaceId" | "type" | "name" | "description"> | null> => {
-  const key = await prisma.contactAttributeKey.findUnique({
-    where: { id },
-    select: { id: true, workspaceId: true, type: true, name: true, description: true },
+  const key = await prisma.contactAttributeKey.findFirst({
+    where: { id, ...whereAttributeKeysOfWorkspace(workspaceId) },
+    select: { id: true, type: true, name: true, description: true },
   });
 
-  return key;
+  return key ? withCallerWorkspace(key, workspaceId) : null;
 };
 
 export const createContactAttributeKey = async (data: {
@@ -40,18 +92,23 @@ export const createContactAttributeKey = async (data: {
   }
 
   try {
-    const contactAttributeKey = await prisma.contactAttributeKey.create({
-      data: {
-        key: data.key,
-        name: data.name ?? formatSnakeCaseToTitleCase(data.key),
-        description: data.description ?? null,
-        workspaceId: data.workspaceId,
-        type: "custom",
-        ...(data.dataType && { dataType: data.dataType }),
-      },
-    });
+    // Under the workspace's lock: a workspace with no directory, or one just removed from it, creates nothing.
+    const contactAttributeKey = await withWorkspaceDirectory(data.workspaceId, (tx, directory) =>
+      tx.contactAttributeKey.create({
+        data: {
+          key: data.key,
+          name: data.name ?? formatSnakeCaseToTitleCase(data.key),
+          description: data.description ?? null,
+          directoryId: directory.id,
+          workspaceId: data.workspaceId,
+          type: "custom",
+          ...(data.dataType && { dataType: data.dataType }),
+        },
+        select: selectContactAttributeKey,
+      })
+    );
 
-    return contactAttributeKey;
+    return withCallerWorkspace(contactAttributeKey, data.workspaceId);
   } catch (error) {
     if (error instanceof Error && "code" in error) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
@@ -62,52 +119,62 @@ export const createContactAttributeKey = async (data: {
   }
 };
 
+/**
+ * Runs `write` on a custom key of the workspace's contact directory, in one transaction with the check and
+ * under the workspace's lock (`withWorkspaceDirectory`), so a directory removal can't land in between.
+ * `ResourceNotFoundError` for any other key; `OperationNotAllowedError` for a default key.
+ */
+const writeCustomKeyOfWorkspace = <T>(
+  id: string,
+  workspaceId: string,
+  verb: "update" | "delete",
+  write: (tx: Prisma.TransactionClient) => Promise<T>
+): Promise<T> =>
+  withWorkspaceDirectory(workspaceId, async (tx, directory) => {
+    const existingKey = await tx.contactAttributeKey.findFirst({
+      where: { id, ...whereAttributeKeysOfDirectory(directory.id) },
+      select: { type: true },
+    });
+    if (!existingKey) throw new ResourceNotFoundError("contactAttributeKey", id);
+    if (existingKey.type === "default") {
+      throw new OperationNotAllowedError(`Cannot ${verb} default contact attribute key`);
+    }
+    return write(tx);
+  }).catch((error: unknown) => {
+    // A workspace with no directory reaches no key.
+    if (error instanceof ContactDirectoryMissingError)
+      throw new ResourceNotFoundError("contactAttributeKey", id);
+    throw error;
+  });
+
+/** Updates a key of the workspace's contact directory; `ResourceNotFoundError` for any other key. */
 export const updateContactAttributeKey = async (
   id: string,
+  workspaceId: string,
   data: {
     name?: string;
     description?: string;
   }
 ): Promise<TContactAttributeKey> => {
-  const existingKey = await prisma.contactAttributeKey.findUnique({
-    where: { id },
-  });
+  const updatedKey = await writeCustomKeyOfWorkspace(id, workspaceId, "update", (tx) =>
+    tx.contactAttributeKey.update({
+      where: { id },
+      data: { name: data.name, description: data.description },
+      select: selectContactAttributeKey,
+    })
+  );
 
-  if (!existingKey) {
-    throw new ResourceNotFoundError("contactAttributeKey", id);
-  }
-
-  if (existingKey.type === "default") {
-    throw new OperationNotAllowedError("Cannot update default contact attribute key");
-  }
-
-  const updatedKey = await prisma.contactAttributeKey.update({
-    where: { id },
-    data: {
-      name: data.name,
-      description: data.description,
-    },
-  });
-
-  return updatedKey;
+  return withCallerWorkspace(updatedKey, workspaceId);
 };
 
-export const deleteContactAttributeKey = async (id: string): Promise<TContactAttributeKey> => {
-  const existingKey = await prisma.contactAttributeKey.findUnique({
-    where: { id },
-  });
+/** Deletes a key of the workspace's contact directory; `ResourceNotFoundError` for any other key. */
+export const deleteContactAttributeKey = async (
+  id: string,
+  workspaceId: string
+): Promise<TContactAttributeKey> => {
+  const deletedKey = await writeCustomKeyOfWorkspace(id, workspaceId, "delete", (tx) =>
+    tx.contactAttributeKey.delete({ where: { id }, select: selectContactAttributeKey })
+  );
 
-  if (!existingKey) {
-    throw new ResourceNotFoundError("contactAttributeKey", id);
-  }
-
-  if (existingKey.type === "default") {
-    throw new OperationNotAllowedError("Cannot delete default contact attribute key");
-  }
-
-  const deletedKey = await prisma.contactAttributeKey.delete({
-    where: { id },
-  });
-
-  return deletedKey;
+  return withCallerWorkspace(deletedKey, workspaceId);
 };

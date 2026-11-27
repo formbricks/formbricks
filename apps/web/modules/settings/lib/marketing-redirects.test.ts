@@ -23,6 +23,7 @@ describe("getSettingsDestination", () => {
     [["teams"], "/organizations/org-1/settings/teams"],
     [["api-keys"], "/organizations/org-1/settings/api-keys"],
     [["feedback-directories"], "/organizations/org-1/settings/feedback-directories"],
+    [["contact-directories"], "/organizations/org-1/settings/contact-directories"],
     [["billing"], "/organizations/org-1/settings/billing"],
     [["enterprise"], "/organizations/org-1/settings/billing"],
     [["profile"], "/account/settings/profile"],
