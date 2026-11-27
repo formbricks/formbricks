@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import type { TRequestContext } from "@/app/api/internal/lib/types";
-import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
 import { applyRateLimitOrRespond } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   createdResponse,
@@ -50,6 +50,9 @@ import type {
  * Every source is reached through its own row — the workspace it is authorized against is the one it
  * lives in, never one the caller names — and through the dataset it writes to
  * (`feedbackDirectoryAssignment.*`), so a workspace member can't feed another team's dataset.
+ *
+ * Every route also needs the organization's Unify Feedback licence (ENG-3683). The dataset checks don't
+ * imply it: an organization whose licence lapsed keeps its datasets.
  */
 
 const FORBIDDEN = "You are not authorized to access this resource";
@@ -111,7 +114,7 @@ async function authorizeSource(context: TRequestContext, feedbackSourceId: strin
   const scope = await getFeedbackSourceScope(feedbackSourceId);
   if (!userId || !scope) return problemForbidden(requestId, FORBIDDEN, instance);
 
-  const access = await requireSessionWorkspaceAccess(
+  const access = await requireUnifyFeedbackWorkspaceAccess(
     authentication,
     scope.workspaceId,
     "readWrite",
@@ -135,7 +138,7 @@ export async function createFeedbackSourceOperation({
   const userId = sessionUserId(authentication);
   if (!userId) return problemForbidden(requestId, FORBIDDEN, instance);
 
-  const access = await requireSessionWorkspaceAccess(
+  const access = await requireUnifyFeedbackWorkspaceAccess(
     authentication,
     workspaceId,
     "readWrite",

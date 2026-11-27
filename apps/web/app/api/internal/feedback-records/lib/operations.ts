@@ -1,6 +1,7 @@
 import "server-only";
 import type { TWorkspaceRequestContext } from "@/app/api/internal/lib/types";
 import { getV3SessionUserId } from "@/app/api/v3/lib/auth";
+import { requireUnifyFeedbackWorkspaceAccess } from "@/app/api/v3/lib/feedback-access";
 import { hubErrorToProblemResponse } from "@/app/api/v3/lib/hub-errors";
 import {
   noContentResponse,
@@ -9,7 +10,6 @@ import {
   problemUnauthorized,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import { assertCan } from "@/lib/authorization";
 import {
   assertFeedbackDirectoryAssignmentAccess,
   assertRecordBelongsToWorkspace,
@@ -140,11 +140,18 @@ export async function lookupFeedbackRecordContactsOperation({
   userIds,
   ...context
 }: TWorkspaceRequestContext & { userIds: string[] }): Promise<Response> {
-  const { workspaceId, requestId } = context;
+  const { authentication, workspaceId, requestId, instance } = context;
   const session = requireSessionUser(context);
   if (session instanceof Response) return session;
-  const { userId } = session;
 
-  await assertCan({ type: "user", id: userId }, "workspace.read", { type: "workspace", id: workspaceId });
+  // Read access to the workspace, then the Unify licence (ENG-3683), as the feedback-source routes do.
+  const access = await requireUnifyFeedbackWorkspaceAccess(
+    authentication,
+    workspaceId,
+    "read",
+    requestId,
+    instance
+  );
+  if (access instanceof Response) return access;
   return successResponse(await getContactIdsByUserIds(workspaceId, userIds), { requestId });
 }

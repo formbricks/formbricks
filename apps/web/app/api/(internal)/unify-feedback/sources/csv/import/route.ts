@@ -4,6 +4,7 @@ import {
   AuthenticationError,
   AuthorizationError,
   InvalidInputError,
+  OperationNotAllowedError,
   ResourceNotFoundError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
@@ -18,6 +19,7 @@ import { getUser } from "@/lib/user/service";
 import { getSession } from "@/modules/auth/lib/session";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { ensureUnifyEnabled } from "@/modules/ee/unify-feedback/lib/access";
 import {
   CSV_FILE_TOO_LARGE_ERROR_CODE,
   CSV_IMPORT_FAILED_ERROR_CODE,
@@ -97,8 +99,14 @@ const getSessionUser = async () => {
   return user;
 };
 
+/**
+ * Write access to the workspace, then the Unify licence (ENG-3683: a lapsed licence keeps its datasets, so
+ * the assignment check below doesn't imply it), then write access to the source's dataset. The licence comes
+ * after authorization so an outsider learns nothing about the organization's plan.
+ */
 const assertCanImport = async (userId: string, workspaceId: string, feedbackSourceId: string) => {
   await assertCan({ type: "user", id: userId }, "workspace.write", { type: "workspace", id: workspaceId });
+  await ensureUnifyEnabled(workspaceId);
 
   const feedbackSource = await getFeedbackSourceWithMappingsById(feedbackSourceId, workspaceId);
   if (!feedbackSource) {
@@ -119,7 +127,9 @@ const mapImportError = (error: unknown, requestId: string): Response => {
     return problemTooManyRequests(requestId, error.message, error.retryAfter);
   }
   if (error instanceof AuthenticationError) return buildCsvImportErrorResponse(error.message, 401);
-  if (error instanceof AuthorizationError) return buildCsvImportErrorResponse(error.message, 403);
+  if (error instanceof AuthorizationError || error instanceof OperationNotAllowedError) {
+    return buildCsvImportErrorResponse(error.message, 403);
+  }
   if (error instanceof InvalidInputError || error instanceof ResourceNotFoundError) {
     return buildCsvImportErrorResponse(error.message, 400);
   }

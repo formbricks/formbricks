@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => ({
   importHistoricalResponses: vi.fn(),
   getSurvey: vi.fn(),
   assertVisible: vi.fn(),
+  isUnifyEnabled: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ assertCan: mocks.assertCan, can: vi.fn() }));
@@ -50,6 +51,9 @@ vi.mock("@/lib/survey/service", () => ({ getSurvey: mocks.getSurvey }));
 vi.mock("@/lib/survey/visibility/outbound", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/survey/visibility/outbound")>()),
   assertNewlyAttachedSurveysWorkspaceVisible: mocks.assertVisible,
+}));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsFeedbackDirectoriesEnabled: mocks.isUnifyEnabled,
 }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
@@ -147,6 +151,7 @@ beforeEach(() => {
   mocks.importHistoricalResponses.mockResolvedValue({ successes: 3, failures: 0, skipped: 1 });
   mocks.getSurvey.mockResolvedValue({ id: SURVEY_ID, workspaceId: WORKSPACE_ID });
   mocks.assertVisible.mockResolvedValue(undefined);
+  mocks.isUnifyEnabled.mockResolvedValue(true);
 });
 
 describe("POST /api/internal/feedback-sources", () => {
@@ -498,17 +503,64 @@ describe("POST /api/internal/feedback-sources/{feedbackSourceId}/imports", () =>
   });
 });
 
+const sourceWrites = [
+  ["create", () => create()],
+  ["update", () => update({ source: { name: "Renamed" } })],
+  ["delete", () => remove()],
+] as const;
+
+describe("every source route", () => {
+  const routes = [...sourceWrites, ["import", () => runImport()]] as const;
+  const writes = [
+    mocks.createFeedbackSourceWithMappings,
+    mocks.updateFeedbackSourceWithMappings,
+    mocks.deleteFeedbackSource,
+    mocks.importHistoricalResponses,
+  ];
+
+  // ENG-3683: a lapsed licence leaves the datasets behind, so the dataset checks alone don't stop this.
+  test.each(routes)(
+    "%s refuses an organization without the Unify licence, before spending budget or writing",
+    async (_name, send) => {
+      mocks.isUnifyEnabled.mockResolvedValue(false);
+
+      const response = await send();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toMatch(/^Unify Feedback is not enabled for this organization/);
+      expect(mocks.isUnifyEnabled).toHaveBeenCalledWith(ORG_ID);
+      // The route wrapper's own `api:internal` budget is spent before any handler; these are the sources'.
+      for (const budget of [
+        rateLimitConfigs.actions.feedbackSourceMutation,
+        rateLimitConfigs.actions.historicalResponseImport,
+      ]) {
+        expect(mocks.applyRateLimit).not.toHaveBeenCalledWith(budget, USER_ID);
+      }
+      for (const write of writes) expect(write).not.toHaveBeenCalled();
+    }
+  );
+
+  test.each(routes)(
+    "%s checks the licence only after the caller is authorized, so it reveals nothing to outsiders",
+    async (_name, send) => {
+      refuse("workspace.write");
+
+      expect((await send()).status).toBe(403);
+      expect(mocks.isUnifyEnabled).not.toHaveBeenCalled();
+    }
+  );
+});
+
 describe("every source write", () => {
-  test.each([
-    ["create", () => create()],
-    ["update", () => update({ source: { name: "Renamed" } })],
-    ["delete", () => remove()],
-  ])("%s spends the per-user source budget and records the source and organization", async (_name, send) => {
-    expect((await send()).ok).toBe(true);
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
-      rateLimitConfigs.actions.feedbackSourceMutation,
-      USER_ID
-    );
-    expect(lastAudit()).toMatchObject({ status: "success", organizationId: ORG_ID, targetId: SOURCE_ID });
-  });
+  test.each(sourceWrites)(
+    "%s spends the per-user source budget and records the source and organization",
+    async (_name, send) => {
+      expect((await send()).ok).toBe(true);
+      expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+        rateLimitConfigs.actions.feedbackSourceMutation,
+        USER_ID
+      );
+      expect(lastAudit()).toMatchObject({ status: "success", organizationId: ORG_ID, targetId: SOURCE_ID });
+    }
+  );
 });
