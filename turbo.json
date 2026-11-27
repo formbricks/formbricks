@@ -105,6 +105,10 @@
       "cache": false,
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
+    "@formbricks/i18n-utils#test:coverage": {
+      "cache": false,
+      "dependsOn": ["@formbricks/i18n-utils#build"]
+    },
     "@formbricks/jobs#build": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
       "outputs": ["dist/**"]

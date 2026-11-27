@@ -55,6 +55,15 @@ vi.mock("@/modules/ee/workflows/lib/api-client", () => ({
   unarchiveWorkflow: (...args: unknown[]) => unarchiveWorkflow(...args),
 }));
 
+// The real window is 2 s. The autosave tests wait it out many times, on real timers, so they run
+// with a shorter one: every wait below is derived from it, so the order of events is unchanged.
+const { AUTOSAVE_DELAY_MS } = vi.hoisted(() => ({ AUTOSAVE_DELAY_MS: 250 }));
+// Keystrokes spaced well inside one window, and a settle past two: long enough for a timer that
+// should have been cancelled to fire.
+const KEYSTROKE_GAP_MS = AUTOSAVE_DELAY_MS / 5;
+const SETTLE_PAST_WINDOW_MS = AUTOSAVE_DELAY_MS * 2;
+vi.mock("@/modules/ee/workflows/lib/constants", () => ({ WORKFLOW_AUTOSAVE_DELAY_MS: AUTOSAVE_DELAY_MS }));
+
 vi.mock("@/modules/ee/workflows/lib/definition-to-flow", () => ({
   workflowDefinitionToFlowNodes: () => [],
 }));
@@ -356,22 +365,29 @@ describe("autosave", () => {
     const { result, store } = renderBuilder({ workflowId: "wf-api", isReadOnly: false });
     await waitFor(() => expect(result.current.workflow?.id).toBe("wf-api"));
 
-    // Keystrokes spaced under the debounce window: each one must restart the timer rather than
-    // queue its own PATCH.
-    for (const name of ["N", "Na", "Nam", "Name"]) {
-      act(() => {
-        store.set(setWorkflowNameAtom, name);
-      });
-      await new Promise((resolve) => setTimeout(resolve, 200));
-    }
-    expect(updateWorkflow).not.toHaveBeenCalled();
+    // A fake clock from here on: a runner pausing between keystrokes must not let a window elapse.
+    vi.useFakeTimers();
+    try {
+      // Keystrokes spaced under the debounce window: each one must restart the timer rather than
+      // queue its own PATCH.
+      for (const name of ["N", "Na", "Nam", "Name"]) {
+        act(() => {
+          store.set(setWorkflowNameAtom, name);
+        });
+        await act(() => vi.advanceTimersByTimeAsync(KEYSTROKE_GAP_MS));
+      }
+      expect(updateWorkflow).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
-    // The first PATCH carries "Name" either way — save() reads the store, not the timer's closure —
-    // so settle past a full debounce window: an uncancelled timer would land its own call here.
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-    expect(updateWorkflow).toHaveBeenCalledTimes(1);
-    expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "Name" }));
+      await act(() => vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS));
+      expect(updateWorkflow).toHaveBeenCalledTimes(1);
+      // The first PATCH carries "Name" either way — save() reads the store, not the timer's closure —
+      // so settle past a full debounce window: an uncancelled timer would land its own call here.
+      await act(() => vi.advanceTimersByTimeAsync(SETTLE_PAST_WINDOW_MS));
+      expect(updateWorkflow).toHaveBeenCalledTimes(1);
+      expect(updateWorkflow).toHaveBeenCalledWith("wf-api", expect.objectContaining({ name: "Name" }));
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("does not autosave for read-only viewers", async () => {
@@ -384,7 +400,7 @@ describe("autosave", () => {
       store.set(setWorkflowNameAtom, "Renamed");
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_PAST_WINDOW_MS));
     expect(updateWorkflow).not.toHaveBeenCalled();
   });
 
@@ -406,7 +422,7 @@ describe("autosave", () => {
       // The parsed payload differs structurally from the editor state (schemaVersion default),
       // but the saved snapshot must be the editor state itself — clean, no repeat saves.
       await waitFor(() => expect(result.current.isDirty).toBe(false));
-      await new Promise((resolve) => setTimeout(resolve, 2600));
+      await new Promise((resolve) => setTimeout(resolve, SETTLE_PAST_WINDOW_MS));
       expect(updateWorkflow).toHaveBeenCalledTimes(1);
     }
   );
@@ -424,7 +440,7 @@ describe("autosave", () => {
     await waitFor(() => expect(updateWorkflow).toHaveBeenCalledTimes(1), { timeout: 4000 });
 
     // The same draft is not retried on the next debounce window (no PATCH/toast loop)…
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_PAST_WINDOW_MS));
     expect(updateWorkflow).toHaveBeenCalledTimes(1);
 
     // …but a further edit produces a fresh attempt.
@@ -448,7 +464,7 @@ describe("autosave", () => {
     await waitFor(() => expect(store.get(workflowSaveErrorAtom)?.kind).toBe("unreachable"));
 
     // The guard holds the identical draft back while nothing has changed…
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_PAST_WINDOW_MS));
     expect(updateWorkflow).toHaveBeenCalledTimes(1);
 
     // …until the browser reports it is back online, which clears the guard and re-arms the debounce
@@ -480,7 +496,7 @@ describe("autosave", () => {
     act(() => {
       window.dispatchEvent(new Event("online"));
     });
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await new Promise((resolve) => setTimeout(resolve, SETTLE_PAST_WINDOW_MS));
     expect(updateWorkflow).toHaveBeenCalledTimes(1);
     expect(store.get(workflowSaveErrorAtom)?.detail).toBe("Definition is invalid.");
   });

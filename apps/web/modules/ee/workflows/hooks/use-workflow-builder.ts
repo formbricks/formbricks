@@ -28,6 +28,7 @@ import {
   getWorkflowApiErrorMessage,
   isTriggerSurveyRestrictedRefusal,
 } from "@/modules/ee/workflows/lib/api-error";
+import { WORKFLOW_AUTOSAVE_DELAY_MS } from "@/modules/ee/workflows/lib/constants";
 import { workflowDefinitionToFlowNodes } from "@/modules/ee/workflows/lib/definition-to-flow";
 import {
   hydrateWorkflowEditorAtom,
@@ -63,10 +64,6 @@ interface UseWorkflowBuilderArgs {
    */
   loadOnMount?: boolean;
 }
-
-// Long enough to batch a typing burst into one PATCH, short enough that edits are on the server
-// before the user reaches for Test or navigates away.
-const WORKFLOW_AUTOSAVE_DELAY_MS = 2000;
 
 /** Why a draft can't be sent at all. Distinct from a save the API refused — nothing was attempted. */
 type TInvalidWorkflowDraft = { code: "name_required" | "definition"; detail?: string };

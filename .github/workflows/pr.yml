@@ -23,6 +23,44 @@ jobs:
   test:
     name: Run Unit Tests
     uses: ./.github/workflows/test.yml
+    with:
+      # Backport pull requests (base `release/*`) deliberately carry no tests, so they collect no
+      # coverage and the SonarQube job tells Sonar to ignore it. `github.base_ref` is empty on
+      # `merge_group`, so the merge queue collects coverage as before.
+      coverage: ${{ !startsWith(github.base_ref, 'release/') }}
+
+  # The required `SonarQube` check. It scans the coverage the unit-test run above already produced
+  # instead of running the whole suite a second time (ENG-7529); sonarqube.yml still scans pushes to
+  # `main`. A job, not a reusable workflow, so the check keeps the bare name branch protection
+  # requires. No `required` entry: it never had one. Fork pull requests get no SONAR_TOKEN, as before.
+  sonarqube:
+    name: SonarQube
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      # The commit the unit tests ran on (test.yml checks out the PR head through
+      # dangerous-git-checkout), so the lcov line numbers match the sources Sonar reads. Empty on
+      # `merge_group`, where both check out the queued merge commit.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+          persist-credentials: false
+
+      - uses: ./.github/actions/sonarqube-scan
+        with:
+          coverage: ${{ !startsWith(github.base_ref, 'release/') }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   lint:
     name: Run Linters

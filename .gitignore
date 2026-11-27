@@ -8,6 +8,8 @@
 
 # testing
 **/coverage
+# Vitest blob reports of a sharded run (`--reporter=blob`), merged with `vitest --merge-reports`
+**/.vitest-reports
 
 # next.js
 **/.next/

@@ -1,19 +1,32 @@
 name: Tests
 on:
   workflow_call:
+    inputs:
+      coverage:
+        description: >
+          Collect coverage and upload it for the SonarQube scan. Off for backport pull requests
+          (base `release/*`), which carry no tests and tell Sonar to ignore coverage.
+        type: boolean
+        default: true
+      save-build-cache:
+        description: Save the Turborepo cache of package builds. Only pushes to `main` set it.
+        type: boolean
+        default: false
 permissions:
   contents: read
 
+# The suite runs once per pull request (ENG-7529). The packages and the web app's shards run in
+# parallel; `Unit Tests` gates on all of them, so branch protection and `PR Check Summary` still see
+# one result whatever the shard count. With `coverage`, each job uploads what the SonarQube job needs:
+# the packages' lcov reports and one Vitest blob report per web shard, which that job merges (and
+# checks the coverage thresholds of) before it scans.
 jobs:
-  build:
-    name: Unit Tests
+  packages:
+    name: Unit Tests (packages)
     runs-on: ubuntu-latest
-    # The web suite alone takes about 12 minutes with the internal API's route tests, plus setup; 15 left
-    # no headroom and cancelled green runs. Still bounds a hung run.
-    timeout-minutes: 25
+    timeout-minutes: 15
     permissions:
       contents: read
-
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -25,24 +38,114 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/dangerous-git-checkout
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-
-      - name: Setup Node.js (version from .nvmrc)
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: ./.github/actions/setup-unit-tests
         with:
-          node-version-file: ".nvmrc"
-          cache: pnpm
+          cache-scope: packages
+          restore-build-cache: ${{ !inputs.save-build-cache }}
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
-
-      - name: Create .env
-        run: pnpm dev:setup
-
-      - name: Adjust CI-specific env values
-        run: |
-          sed -i "s|REDIS_URL=.*|REDIS_URL=|" .env
-
+      # Every workspace but the web app, plus the root scripts' suite (`//#test:root`), which has no
+      # coverage variant and never fed Sonar.
       - name: Test
-        run: pnpm test
+        run: pnpm turbo run ${{ inputs.coverage && 'test:coverage' || 'test' }} test:root --filter='!@formbricks/web'
+
+      - name: Upload coverage
+        if: inputs.coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unit-test-coverage-packages
+          path: packages/*/coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Save the package build cache
+        if: inputs.save-build-cache
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-unit-${{ runner.os }}-packages-${{ github.sha }}
+
+  web:
+    name: Unit Tests (web ${{ matrix.shard }}/${{ strategy.job-total }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      # One failing shard must not cancel the others: their failures are part of the answer.
+      fail-fast: false
+      matrix:
+        # The shard count is this list's length (`strategy.job-total`); nothing else names it.
+        shard: [1, 2, 3]
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/dangerous-git-checkout
+
+      - uses: ./.github/actions/setup-unit-tests
+        with:
+          cache-scope: web
+          restore-build-cache: ${{ !inputs.save-build-cache }}
+
+      # Two steps, not `turbo run test -- --shard=…`: Turbo hashes pass-through arguments into every
+      # task of the run, builds included, so each shard would miss the build cache (and append its
+      # flags to every build script). `^...` is the web app's workspace dependencies: the packages
+      # `@formbricks/web#test` depends on in turbo.json, and `js-core`.
+      - name: Build the packages the web app imports
+        run: pnpm turbo run build --filter='@formbricks/web^...'
+
+      # A third of the web app's test files. The blob reporter records this shard's results and
+      # coverage for the SonarQube job; apps/web/vite.config.mts skips the coverage thresholds and
+      # reports on a shard.
+      - name: Test
+        run: >
+          pnpm --filter @formbricks/web run ${{ inputs.coverage && 'test:coverage' || 'test' }}
+          --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+          --reporter=default --reporter=github-actions
+          ${{ inputs.coverage && '--reporter=blob' || '' }}
+
+      - name: Upload the blob report
+        if: inputs.coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unit-test-blob-web-${{ matrix.shard }}
+          path: apps/web/.vitest-reports/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+      # Every shard builds the same packages, so one saves them.
+      - name: Save the package build cache
+        if: inputs.save-build-cache && matrix.shard == 1
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo/cache
+          key: turbo-unit-${{ runner.os }}-web-${{ github.sha }}
+
+  # The required check (`Run Unit Tests / Unit Tests`). `always()`, not the default: a job whose
+  # `needs` failed is skipped, and branch protection counts a skipped check as passing.
+  unit-tests:
+    name: Unit Tests
+    needs: [packages, web]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Fail unless the packages and every web shard passed
+        env:
+          PACKAGES: ${{ needs.packages.result }}
+          WEB: ${{ needs.web.result }}
+        run: |
+          echo "packages: $PACKAGES, web shards: $WEB"
+          [[ "$PACKAGES" == "success" && "$WEB" == "success" ]]

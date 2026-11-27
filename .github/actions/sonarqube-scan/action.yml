@@ -1,0 +1,78 @@
+name: SonarQube scan
+description: >
+  Merges the coverage the unit-test jobs of this run uploaded and scans the repository with
+  SonarQube. Run it after test.yml in the same workflow run, from a checkout with full history.
+inputs:
+  coverage:
+    description: >
+      "true" when test.yml collected coverage. "false" for backport pull requests (base `release/*`),
+      which carry no tests: the scan then ignores coverage.
+    required: true
+  sonar-token:
+    description: The SonarQube token.
+    required: true
+  github-token:
+    description: Lets the scanner read the pull request it reports on.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+    - name: Setup Node.js (version from .nvmrc)
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: ".nvmrc"
+        cache: pnpm
+
+    - name: Setup Java 21
+      uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+      with:
+        distribution: temurin
+        java-version: "21"
+
+    # The scanner's TypeScript analysis resolves types through node_modules, and the web app's
+    # coverage merge runs Vitest, so the dependencies are installed as before the scan moved here.
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
+
+    - name: Create .env
+      shell: bash
+      run: pnpm dev:setup
+
+    - name: Download the packages' coverage
+      if: inputs.coverage == 'true'
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: unit-test-coverage-packages
+        path: packages
+
+    - name: Download the web shards' blob reports
+      if: inputs.coverage == 'true'
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        pattern: unit-test-blob-web-*
+        path: apps/web/.vitest-reports
+        merge-multiple: true
+
+    # One combined report for the web app: every shard's results, and the coverage of all of them,
+    # written to apps/web/coverage/lcov.info. The coverage thresholds in apps/web/vite.config.mts are
+    # checked here, where the whole suite's coverage is known, and fail this job as they failed the
+    # coverage run this replaced.
+    - name: Merge the web shards' reports and coverage
+      if: inputs.coverage == 'true'
+      shell: bash
+      working-directory: apps/web
+      run: pnpm exec vitest run --merge-reports --coverage
+
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
+      with:
+        args: >
+          -Dsonar.verbose=true
+          ${{ inputs.coverage != 'true' && '-Dsonar.coverage.exclusions=**/*' || '' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        SONAR_TOKEN: ${{ inputs.sonar-token }}

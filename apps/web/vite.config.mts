@@ -4,6 +4,13 @@ import { PluginOption, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
+// CI runs the suite in shards (`vitest run --shard=<i>/<n> --reporter=blob`, see
+// .github/workflows/test.yml) and merges them with `vitest run --merge-reports --coverage`. A shard
+// covers a fraction of the files, so its own coverage would fail every threshold below, and its reports
+// are discarded anyway: it only records its coverage in the blob report, and the merge writes the
+// reports and checks the thresholds against the whole suite.
+const isShardRun = process.argv.some((arg) => arg.startsWith("--shard"));
+
 export default defineConfig({
   test: {
     // Integration tests run only via `pnpm test:integration` (vitest.integration.config.mts) against a
@@ -64,7 +71,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: "v8", // Use V8 as the coverage provider
-      reporter: ["text", "html", "lcov"], // Generate text summary and HTML reports
+      reporter: isShardRun ? [] : ["text", "html", "lcov"], // Generate text summary and HTML reports
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
       include: [
         "app/**/*.ts",
@@ -164,17 +171,19 @@ export default defineConfig({
         "modules/auth/lib/cutover/**", // One-time ENG-1054 cutover migration scripts (run once, not app runtime)
         "**/*.mjs", // ES modules
       ],
-      thresholds: {
-        // ENG-1054: keep the new Better Auth code well-tested. Glob aggregate (not perFile) so a single
-        // thin file can't trip the gate; the integration-only BA instance/wiring is excluded above.
-        "modules/auth/lib/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
-        // ENG-1718: keep the AuthZed client, projections, and backfill/repair tooling well-tested —
-        // this code rewrites the authorization graph. Glob aggregate (not perFile) so a single thin
-        // file can't trip the gate. `**/scripts/**` is excluded above, so every decision the tooling
-        // makes (argv parsing, scoping, classification, prune guards, exit codes) lives under
-        // lib/authzed and is covered here; apps/web/scripts/authzed-*.ts stay thin argv shims.
-        "lib/authzed/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
-      },
+      thresholds: isShardRun
+        ? undefined
+        : {
+            // ENG-1054: keep the new Better Auth code well-tested. Glob aggregate (not perFile) so a single
+            // thin file can't trip the gate; the integration-only BA instance/wiring is excluded above.
+            "modules/auth/lib/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
+            // ENG-1718: keep the AuthZed client, projections, and backfill/repair tooling well-tested —
+            // this code rewrites the authorization graph. Glob aggregate (not perFile) so a single thin
+            // file can't trip the gate. `**/scripts/**` is excluded above, so every decision the tooling
+            // makes (argv parsing, scoping, classification, prune guards, exit codes) lives under
+            // lib/authzed and is covered here; apps/web/scripts/authzed-*.ts stay thin argv shims.
+            "lib/authzed/**": { statements: 80, branches: 80, functions: 80, lines: 80 },
+          },
     },
   },
   plugins: [tsconfigPaths(), react() as PluginOption],
