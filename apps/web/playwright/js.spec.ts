@@ -333,7 +333,7 @@ const trackAction = (key: string) => {
   return sdk.track(key);
 };
 
-test.describe("Show conditions and the visit (ENG-3926)", () => {
+test.describe("The visit: show conditions and attribution (ENG-3926, ENG-7430)", () => {
   let server: http.Server;
   let hostUrl: string;
 
@@ -423,20 +423,15 @@ test.describe("Show conditions and the visit (ENG-3926)", () => {
           visitUrls: "/plans · /plans/compare",
           visitTimeOnSite: expect.any(Number),
         });
+      // Neither page carried a campaign, so none is invented (ENG-7430).
+      const { meta } = await prisma.response.findFirstOrThrow({
+        where: { surveyId: seeded.surveyId },
+        select: { meta: true },
+      });
+      for (const key of ["utmSource", "utmMedium", "utmCampaign", "utmTerm", "utmContent"]) {
+        expect(meta).not.toHaveProperty(key);
+      }
     });
-  });
-});
-
-test.describe("Landing-page campaign on a later page (ENG-7430)", () => {
-  let server: http.Server;
-  let hostUrl: string;
-
-  test.beforeAll(async () => {
-    ({ server, hostUrl } = await serveVisitHostPage());
-  });
-
-  test.afterAll(async () => {
-    await new Promise((resolve) => server.close(resolve));
   });
 
   const waitForSdk = (page: Page) =>
@@ -497,25 +492,5 @@ test.describe("Landing-page campaign on a later page (ENG-7430)", () => {
       // `utm_medium=` carried no value, and the visit never had a term or content.
       for (const key of ["utmMedium", "utmTerm", "utmContent"]) expect(meta).not.toHaveProperty(key);
     });
-  });
-
-  test("a visit that landed without a campaign gets no UTM fields", async ({ page, users }) => {
-    const seeded = await seedAppSurvey(users);
-    await page.addInitScript((workspaceId) => {
-      (window as unknown as { __workspaceId: string }).__workspaceId = workspaceId;
-    }, seeded.workspaceId);
-
-    await page.goto(`${hostUrl}/?ref=ad`);
-    await waitForSdk(page);
-    await page.goto(`${hostUrl}/plans`);
-    await waitForSdk(page);
-    await page.evaluate(trackAction, seeded.actionKey);
-
-    const meta = await answerAndReadMeta(page, seeded.surveyId);
-
-    expect(meta).toMatchObject({ url: `${hostUrl}/plans`, pagePath: "/plans" });
-    for (const key of ["utmSource", "utmMedium", "utmCampaign", "utmTerm", "utmContent"]) {
-      expect(meta).not.toHaveProperty(key);
-    }
   });
 });

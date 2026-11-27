@@ -1,6 +1,6 @@
 import type { TResponseUpdate } from "@formbricks/types/responses";
 import type { TVisitSnapshot } from "@formbricks/types/show-conditions";
-import { UTM_PARAMS, VISIT_URLS_SEPARATOR } from "@formbricks/types/visit";
+import { type TVisitUtm, UTM_PARAMS, VISIT_URLS_SEPARATOR, readUtmParams } from "@formbricks/types/visit";
 
 /**
  * The `meta` the renderer contributes to a response: the browser-runtime context it can observe,
@@ -77,11 +77,6 @@ export const readPageContextMeta = (): TWebSurveyMeta => {
     }
   })();
 
-  const utm: Record<string, string | undefined> = {};
-  for (const [param, key] of UTM_PARAMS) {
-    utm[key] = readString(() => searchParams?.get(param));
-  }
-
   return compact({
     // `url` and `source` predate this snapshot and keep their existing meaning; they are captured
     // here so the *whole* client-side meta is frozen together at display, rather than half of it
@@ -90,7 +85,8 @@ export const readPageContextMeta = (): TWebSurveyMeta => {
     source: readString(() => searchParams?.get("source")),
     pagePath: readString(() => window.location.pathname),
     pageReferrer: readString(() => document.referrer),
-    ...utm,
+    // The same rule the web SDK keeps the landing campaign by: trimmed, and an empty value is absent.
+    ...readUtmParams(searchParams?.toString() ?? ""),
   });
 };
 
@@ -140,7 +136,7 @@ const hasUtm = (meta: TWebSurveyMeta): boolean => UTM_PARAMS.some(([, key]) => m
  * missing (an older SDK) or not the shape this version expects.
  */
 const readVisitUtmMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta => {
-  const utm: Record<string, string | undefined> = {};
+  const utm: TVisitUtm = {};
   for (const [, key] of UTM_PARAMS) {
     utm[key] = readString(() => visit?.utm?.[key]);
   }
