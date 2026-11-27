@@ -51,21 +51,25 @@ export const isI18nObject = (obj: unknown): obj is TI18nString => {
   return typeof obj === "object" && obj !== null && Object.keys(obj).includes("default");
 };
 
+/**
+ * The translation stored under `language`, own keys only. The language can be caller-supplied (a response's
+ * `language` on public routes), so `constructor` or `__proto__` must read as "no translation", not as an
+ * inherited Object.prototype member (ENG-3726).
+ */
+const getOwnTranslation = (value: TI18nString, language: string): string | undefined => {
+  const translation = Object.hasOwn(value, language) ? value[language] : undefined;
+  return typeof translation === "string" ? translation : undefined;
+};
+
 export const isLabelValidForAllLanguages = (label: TI18nString, languages: string[]): boolean => {
-  return languages.every((language) => label[language] && label[language].trim() !== "");
+  return languages.every((language) => (getOwnTranslation(label, language)?.trim() ?? "") !== "");
 };
 
 export const getLocalizedValue = (value: TI18nString | undefined, languageId: string): string => {
-  if (!value) {
+  if (!value || !isI18nObject(value)) {
     return "";
   }
-  if (isI18nObject(value)) {
-    if (value[languageId]) {
-      return value[languageId];
-    }
-    return "";
-  }
-  return "";
+  return getOwnTranslation(value, languageId) ?? "";
 };
 
 export const extractLanguageCodes = (surveyLanguages: TSurveyLanguage[]): string[] => {
@@ -244,14 +248,18 @@ export const sortedAppLanguages = [...appLanguages].sort((a, b) =>
 // Reverse of the canonical map: canonical code → the legacy codes that canonicalize to it (excluding
 // the identity). Using the real map (not a mechanical region-strip) is what surfaces alias codes a
 // strip would miss — e.g. `fil-PH` → `tl`, `ak-GH` → `ak`/`tw`, `zh-Hant-TW` → `zh-Hant`/`zh-TW`.
-const LEGACY_CODES_BY_CANONICAL: Readonly<Record<string, string[]>> = Object.entries(
+// A Map, not an object literal, so a caller-supplied `constructor` or `__proto__` can't hit an
+// inherited member (ENG-3726).
+const LEGACY_CODES_BY_CANONICAL: ReadonlyMap<string, readonly string[]> = Object.entries(
   LANGUAGE_CANONICAL_MAP
-).reduce<Record<string, string[]>>((reverse, [legacy, canonical]) => {
+).reduce((reverse, [legacy, canonical]) => {
   if (legacy !== canonical) {
-    (reverse[canonical] ??= []).push(legacy);
+    const aliases = reverse.get(canonical);
+    if (aliases) aliases.push(legacy);
+    else reverse.set(canonical, [legacy]);
   }
   return reverse;
-}, {});
+}, new Map<string, string[]>());
 
 /**
  * Transitional SDK back-compat (ENG-1067).
@@ -276,4 +284,4 @@ const LEGACY_CODES_BY_CANONICAL: Readonly<Record<string, string[]>> = Object.ent
 export const toLegacyLanguageCodes = (canonicalCode: string): string[] =>
   // Return a fresh copy, never the cached array by reference, so a caller mutating the result
   // (sort/push/etc.) can't corrupt LEGACY_CODES_BY_CANONICAL and poison every later lookup.
-  [...(LEGACY_CODES_BY_CANONICAL[canonicalCode] ?? [])];
+  [...(LEGACY_CODES_BY_CANONICAL.get(canonicalCode) ?? [])];

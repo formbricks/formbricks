@@ -668,8 +668,9 @@ export function normalizeLanguageCode(input: string | null | undefined): string 
   if (!input) return null;
   const cleaned = input.trim().replace(/_/g, "-");
   if (cleaned.length === 0) return null;
-  const exactMatch = LANGUAGE_CANONICAL_MAP[cleaned];
-  if (exactMatch) return exactMatch;
+  // Own keys only: the map is an object literal, so `constructor`, `toString` and the other
+  // Object.prototype members would otherwise "match" and return a function (ENG-3726).
+  if (Object.hasOwn(LANGUAGE_CANONICAL_MAP, cleaned)) return LANGUAGE_CANONICAL_MAP[cleaned];
   const caseInsensitiveMatch = LANGUAGE_CANONICAL_MAP_BY_LOWERCASE.get(cleaned.toLowerCase());
   if (caseInsensitiveMatch) return caseInsensitiveMatch;
   return canonicalizeViaCldr(cleaned);

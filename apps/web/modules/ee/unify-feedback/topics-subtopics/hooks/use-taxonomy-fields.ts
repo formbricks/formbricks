@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { isAuthFailure } from "@/modules/api/lib/v3-client";
 import { getTaxonomyFields } from "../lib/api-client";
 import { EMBEDDING_POLL_INTERVAL_MS, pendingEmbeddingsForFields } from "../lib/gate";
 import { taxonomyKeys } from "../lib/query";
@@ -21,6 +22,12 @@ export const useTaxonomyFields = ({
     queryFn: ({ signal }) => getTaxonomyFields({ workspaceId, directoryId, signal }),
     staleTime: 30_000,
     refetchInterval: (query) => {
+      // The last good answer may still show work pending, but a lost session or access won't come back by
+      // asking again (ENG-2254). A remount, an invalidation, or a refocus once the 30s staleTime has passed
+      // resumes the poll once it does.
+      if (isAuthFailure(query.state.error)) {
+        return false;
+      }
       const data = query.state.data;
       if (!data || data.unavailable) {
         return false;

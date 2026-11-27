@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { V3ApiError } from "@/modules/api/lib/v3-client";
+import { V3ApiError, isAuthFailure } from "@/modules/api/lib/v3-client";
 import { getTaxonomyRun } from "../lib/api-client";
 import { taxonomyKeys } from "../lib/query";
 
@@ -25,7 +25,8 @@ export const isTaxonomyRunGone = (error: unknown): boolean =>
  *
  * A 404 is the exception, and the reason this stops rather than self-recovering: the run is gone — reaped,
  * or a stale id after a regenerate — so no amount of polling brings it back, and "keep trying" means
- * "generating…" forever at one request every five seconds. */
+ * "generating…" forever at one request every five seconds. A 401 or 403 stops it too (`isAuthFailure`):
+ * the caller, not the Hub, is the problem, and a refocus or remount picks the poll back up once it clears. */
 export const useTaxonomyRun = ({
   workspaceId,
   directoryId,
@@ -43,8 +44,9 @@ export const useTaxonomyRun = ({
     },
     staleTime: 0,
     refetchInterval: (query) => {
-      // A run that no longer exists is terminal however many times we ask.
-      if (isTaxonomyRunGone(query.state.error)) {
+      // A run that no longer exists is terminal however many times we ask, and so is a caller whose
+      // session or access is gone until something else refetches.
+      if (isTaxonomyRunGone(query.state.error) || isAuthFailure(query.state.error)) {
         return false;
       }
 
