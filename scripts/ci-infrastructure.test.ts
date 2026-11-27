@@ -244,10 +244,11 @@ const lockIsFree = (path: string) =>
     path,
   ]).status === 0;
 
-const waitForLocks = (dpkg: string) => [
+const waitForLocks = (dpkg: string, seconds = 3) => [
   "-c",
-  'source scripts/ci-network.sh; ci_wait_for_dpkg_lock 3 "$1"',
+  'source scripts/ci-network.sh; ci_wait_for_dpkg_lock "$1" "$2"',
   "test",
+  String(seconds),
   dpkg,
 ];
 
@@ -272,18 +273,19 @@ test.each([
 test("ci_wait_for_dpkg_lock keeps lock-frontend while it waits for lock, so no apt-get slips in between", async () => {
   const { env, dpkg } = lockWaitFixture();
   const lock = await holdLock(join(dpkg, "lock"));
-  const waiting = spawn("bash", waitForLocks(dpkg), { cwd: repository, env, stdio: "ignore" });
+  // The deadline is not under test here; leave room for a loaded runner to start the helper.
+  const waiting = spawn("bash", waitForLocks(dpkg, 20), { cwd: repository, env, stdio: "ignore" });
   holders.push(waiting);
   const exited = new Promise<number | null>((resolve) => waiting.once("exit", resolve));
   // lock stays held until released below, so the wait is still running whenever lock-frontend is taken.
-  const deadline = Date.now() + 2_500;
+  const deadline = Date.now() + 15_000;
   while (lockIsFree(join(dpkg, "lock-frontend")) && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
   expect(lockIsFree(join(dpkg, "lock-frontend"))).toBe(false);
   lock.release();
   expect(await exited).toBe(0);
-}, 15_000);
+}, 30_000);
 
 test.each(["pull", "validation"])("a permanent %s failure remains red", (failure) => {
   const { directory, env, command } = fixture();
