@@ -40,7 +40,7 @@ import {
   ZV3SurveyCustomCss,
 } from "@/app/api/v3/surveys/schemas";
 import { ZV3WorkspaceCustomCssPatchBody } from "@/app/api/v3/workspaces/lib/custom-css-schemas";
-import { confirmArgument } from "./confirm-argument";
+import { confirmArgument, confirmArgumentFor } from "./confirm-argument";
 
 /**
  * Every array argument is declared through `lengthBoundedArray`, never a bare `z.array().max()`: the
@@ -580,13 +580,17 @@ export const ZMcpSurveyIdInput = z
  * with the whole workspace, which exposes its responses: `confirm` counts only where the client cannot show
  * the prompt, as on the delete tools.
  */
-export const ZMcpArchiveSurveyInput = ZMcpSurveyIdInput.extend({ confirm: confirmArgument }).strict();
+export const ZMcpArchiveSurveyInput = ZMcpSurveyIdInput.extend({
+  confirm: confirmArgumentFor("archiving this survey"),
+}).strict();
 
 export const ZMcpSetSurveyVisibilityInput = ZMcpSurveyIdInput.extend({
   visibility: ZSurveyVisibility.describe(
     "`workspace` shares the survey with the whole workspace; `restricted` limits it to its owner and organization owners/managers."
   ),
-  confirm: confirmArgument,
+  confirm: confirmArgumentFor(
+    "sharing this survey with the whole workspace (only a change to `workspace` asks; restricting does not)"
+  ),
 }).strict();
 
 /** Deprecated with `delete_survey` (ENG-6575): removed in 7.0, prefer `archive_survey`. */
