@@ -232,6 +232,12 @@ describe.runIf(canRun)("Prisma CLI TLS verification", () => {
         ["sslmode=prefer", {}],
         ["sslaccept=strict", { PGSSLMODE: "disable" }],
         [`sslrootcert=${caFile}`, {}],
+        // URL forms the app's pg reads as TLS (ENG-7464).
+        ["ssl=true", {}],
+        ["ssl=1", {}],
+        ["ssl=no-verify", {}],
+        [`sslcert=${caFile}`, {}],
+        ["sslnegotiation=direct", {}],
       ];
       for (const [query, env] of cases) {
         const cli = await preparePrismaCliEnvironment(declinerUrl(query), env);
@@ -260,6 +266,24 @@ describe.runIf(canRun)("Prisma CLI TLS verification", () => {
       `sslmode=verify-full&sslrootcert=${otherCaFile}&sslcert=${caFile}`,
       `sslaccept=strict&sslrootcert=${otherCaFile}&sslcert=${caFile}`,
     ]) {
+      const cli = await preparePrismaCliEnvironment(url(query), {});
+      try {
+        const result = await migrate({ ...process.env, ...cli.env });
+        expect(result.attempted).toBeGreaterThan(0);
+        expect(result.completed).toBe(0);
+      } finally {
+        await cli.cleanup();
+      }
+    }
+  }, 180_000);
+
+  test("ssl=true reaches the CLI unverified raw; translated, it verifies against the OS store", async () => {
+    // The server's CA is private, so a verifying client refuses it, as the app's pg does with ssl=true.
+    const raw = await migrate({ ...process.env, DATABASE_URL: url("ssl=true") });
+    // If this starts failing, Prisma reads ssl=true itself: revisit prisma-cli-tls.
+    expect(raw.completed).toBeGreaterThan(0);
+
+    for (const query of ["ssl=true", "ssl=1", `sslcert=${otherCaFile}`, "sslnegotiation=direct"]) {
       const cli = await preparePrismaCliEnvironment(url(query), {});
       try {
         const result = await migrate({ ...process.env, ...cli.env });

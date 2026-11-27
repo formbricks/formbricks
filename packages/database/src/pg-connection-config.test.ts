@@ -108,15 +108,21 @@ describe("PostgreSQL connection TLS configuration", () => {
     expect(new Client(config).ssl).toEqual(expected);
   });
 
-  test.each([
-    ["accept_invalid_certs&sslaccept=strict", { rejectUnauthorized: true }],
-    ["strict&sslaccept=accept_invalid_certs", { rejectUnauthorized: false }],
-  ])("reads the last of repeated sslaccept=%s, as Prisma does", (query, ssl) => {
-    expect(getPgConnectionConfig(`${databaseUrl}?sslaccept=${query}`)).toEqual({
+  test("reads a repeated sslaccept with one value", () => {
+    expect(getPgConnectionConfig(`${databaseUrl}?sslaccept=strict&sslaccept=strict`)).toEqual({
       connectionString: databaseUrl,
-      ssl,
+      ssl: { rejectUnauthorized: true },
     });
   });
+
+  test.each(["accept_invalid_certs&sslaccept=strict", "strict&sslaccept=accept_invalid_certs"])(
+    "rejects conflicting repeated sslaccept=%s, without echoing the URL",
+    (query) => {
+      const call = () => getPgConnectionConfig(`${databaseUrl}?sslaccept=${query}`);
+      expect(call).toThrow("sslaccept more than once");
+      expect(call).not.toThrow(/secret/);
+    }
+  );
 
   test("preserves the fragment when sslaccept is the only query parameter", () => {
     const config = getPgConnectionConfig(`${databaseUrl}?sslaccept=strict#keep`);

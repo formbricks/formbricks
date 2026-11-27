@@ -6,6 +6,7 @@ import { logger } from "@formbricks/logger";
 import {
   PrismaCliTlsConfigError,
   TLS_VERIFICATION_FAILED_HINT,
+  TLS_VERIFICATION_SKIPPED_WARNING,
   assertPrismaCliTlsSupported,
   preparePrismaCliEnvironment,
   resolvePrismaCliTls,
@@ -90,8 +91,23 @@ describe("resolvePrismaCliTls", () => {
     ],
     ["a libpq client certificate with the OS store", "sslmode=verify-full&sslcert=/c.pem"],
     ["Prisma's CA next to a pinned CA", `sslaccept=strict&sslrootcert=${caFile}&sslcert=/c.pem`],
+    [
+      "a client certificate with sslrootcert=system and sslaccept",
+      "sslrootcert=system&sslaccept=strict&sslcert=/c.pem",
+    ],
+    [
+      "a client certificate with its key and sslaccept",
+      "sslmode=verify-full&sslaccept=strict&sslcert=/c.pem&sslkey=/k.pem",
+    ],
   ])("drops sslcert, which Prisma would trust as a root, for %s", (_name, query) => {
     expect(new URL(resolve(`${base}?${query}`).databaseUrl).searchParams.has("sslcert")).toBe(false);
+  });
+
+  test("drops a client certificate (sslcert with sslkey) when no verification is asked for, too", () => {
+    expect(resolve(`${base}?sslmode=require&sslaccept=strict&sslcert=/c.crt&sslkey=/k.key`)).toEqual({
+      databaseUrl: `${base}?sslmode=require&sslaccept=strict&sslkey=%2Fk.key`,
+      verifiesServerCertificate: true,
+    });
   });
 
   test("keeps sslcert as the CA when the URL speaks Prisma's dialect without sslrootcert", () => {
@@ -145,12 +161,19 @@ describe("resolvePrismaCliTls", () => {
       databaseUrl: strictUrl(),
       verifiesServerCertificate: true,
     });
-    expect(
-      resolve(`${base}?sslmode=verify-full&sslaccept=strict&sslaccept=accept_invalid_certs`)
-    ).toMatchObject({
-      verifiesServerCertificate: false,
+    expect(resolve(`${base}?sslmode=verify-full&sslaccept=strict&sslaccept=strict`)).toMatchObject({
+      verifiesServerCertificate: true,
     });
   });
+
+  test.each(["strict&sslaccept=accept_invalid_certs", "accept_invalid_certs&sslaccept=strict"])(
+    "rejects conflicting repeated sslaccept=%s, whose last value would win silently",
+    (query) => {
+      expect(() => resolve(`${base}?sslmode=verify-full&sslaccept=${query}`)).toThrow(
+        "sslaccept more than once"
+      );
+    }
+  );
 
   test("rejects a root certificate path that is a directory", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "prisma-cli-tls-dir-"));
@@ -192,6 +215,7 @@ describe("resolvePrismaCliTls", () => {
     ).toEqual({
       databaseUrl: `${base}?sslmode=require&sslaccept=accept_invalid_certs`,
       verifiesServerCertificate: false,
+      verificationSkipped: true,
     });
   });
 
@@ -404,6 +428,22 @@ describe("runPrismaCli", () => {
       runPrismaCli(bin, [], { cwd: dir, databaseUrl: `${base}?sslmode=verify-full`, baseEnv: {} })
     ).rejects.toThrow();
     expect(error).toHaveBeenCalledWith(TLS_VERIFICATION_FAILED_HINT);
+  });
+
+  test("warns before starting the CLI when sslaccept=accept_invalid_certs skips a requested check", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const bin = await stubCli(0);
+
+    await runPrismaCli(bin, [], {
+      cwd: dir,
+      databaseUrl: `${base}?sslmode=verify-full&sslaccept=accept_invalid_certs`,
+      baseEnv: {},
+    });
+    expect(warn).toHaveBeenCalledWith(TLS_VERIFICATION_SKIPPED_WARNING);
+
+    warn.mockClear();
+    await runPrismaCli(bin, [], { cwd: dir, databaseUrl: `${base}?sslmode=verify-full`, baseEnv: {} });
+    expect(warn).not.toHaveBeenCalled();
   });
 
   test.each([

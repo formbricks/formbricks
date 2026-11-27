@@ -1,6 +1,12 @@
 import type { ClientConfig } from "pg";
 import { logger } from "@formbricks/logger";
-import { joinConnectionUrl, lastParam, splitConnectionUrl } from "./connection-url";
+import {
+  SSLACCEPT_CONFLICT_MESSAGE,
+  hasConflictingValues,
+  joinConnectionUrl,
+  lastParam,
+  splitConnectionUrl,
+} from "./connection-url";
 
 // Prisma's sslaccept enables TLS; native pg URL settings retain their usual precedence.
 const sslConfigFromSslAccept = (value: string | null): ClientConfig["ssl"] | undefined => {
@@ -30,6 +36,11 @@ export const getPgConnectionConfig = (
     return { connectionString: databaseUrl };
   }
 
+  // The last value would win silently, possibly the weaker one, so a conflict fails closed. The message never holds
+  // the URL.
+  if (hasConflictingValues(parts.params, "sslaccept")) {
+    throw new Error(SSLACCEPT_CONFLICT_MESSAGE);
+  }
   const ssl = sslConfigFromSslAccept(lastParam(parts.params, "sslaccept"));
   parts.params.delete("sslaccept");
 

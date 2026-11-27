@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { joinConnectionUrl, lastParam, splitConnectionUrl } from "./connection-url";
+import {
+  hasConflictingValues,
+  joinConnectionUrl,
+  lastParam,
+  rawQueryString,
+  splitConnectionUrl,
+} from "./connection-url";
 
 describe("connection URL query rewriting", () => {
   test.each([
@@ -39,5 +45,27 @@ describe("connection URL query rewriting", () => {
 
     expect(lastParam(params, "sslmode")).toBe("verify-full");
     expect(lastParam(params, "sslaccept")).toBeNull();
+  });
+});
+
+describe("rawQueryString", () => {
+  test.each([
+    ["postgresql://u:p@db/app", ""],
+    ["postgresql://u:p@db/app?ssl%6Dode=x&a=b c", "ssl%6Dode=x&a=b c"],
+    ["postgresql://u:p@db/app?a=1#frag?b=2", "a=1"],
+    ["postgresql://u:p@db/app#frag", ""],
+  ])("returns the query of %s as written", (url, query) => {
+    expect(rawQueryString(url)).toBe(query);
+  });
+});
+
+describe("hasConflictingValues", () => {
+  test.each([
+    ["", false],
+    ["a=1", false],
+    ["a=1&a=1", false],
+    ["a=1&a=2", true],
+  ])("reports %s as conflicting: %s", (query, expected) => {
+    expect(hasConflictingValues(new URLSearchParams(query), "a")).toBe(expected);
   });
 });

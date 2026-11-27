@@ -176,6 +176,20 @@ DATABASE_URL=postgresql://formbricks:<password>@db.example.com:5432/formbricks?s
   to keep both consistent.
 - Migrations use TLS whenever the app's connections do: with any `sslmode` other than `disable`, or with
   `sslaccept` when no `sslmode` is set. They never fall back to an unencrypted connection.
+- Without `sslmode`, migrations follow the other URL settings the app reads as TLS: `ssl=true` (or `ssl=1`),
+  `sslcert` and `sslkey` verify the server against the OS certificate store, `ssl=no-verify` requires TLS without
+  a check, and `ssl=0` turns TLS off. Migrations also verify with `sslnegotiation=direct`, which the app ignores. Any other `ssl` value or an empty TLS
+  setting stops the migrations, and `sslaccept` given twice with different values stops the app too. Prefer
+  `sslmode=verify-full`, which both read the same way.
+- The app ignores `PGSSLMODE` once the URL has TLS settings (other than `sslnegotiation`). Migrations then refuse
+  a `PGSSLMODE` that would weaken what the URL asks for.
+- Migrations don't pass a client certificate (`sslcert`, `sslkey`) to the database: the migration tool would
+  trust `sslcert` as a CA instead. They keep `sslcert` only as their CA, when the URL sets `sslaccept` and neither
+  `sslrootcert` nor `sslkey`.
+- Write TLS setting names without `%` escapes, and encode spaces in the URL as `%20`. A space (also one at the end
+  of the URL) or a malformed `%` escape makes the app read TLS settings differently from the migrations, so the
+  migrations stop. So does
+  a tab, newline or other control character inside the URL.
 
 If the migrations stop with Prisma error `P1011` while the app connects fine, the migration tool could not verify
 the server where the app could (a CA added only through `NODE_EXTRA_CA_CERTS`, or an IP host without an IP entry in
