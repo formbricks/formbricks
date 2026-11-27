@@ -12,6 +12,7 @@ import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
+import { TruncationTooltip } from "@/modules/ui/components/info-tooltip";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface SurveyStatusIndicatorProps {
@@ -190,9 +191,7 @@ export const SurveyStatusPill = ({
           <SurveyStatusIndicator status={status} isScheduled={isScheduled} />
         )}
       </div>
-      <span className="min-w-0 truncate" title={statusLabel}>
-        {statusLabel}
-      </span>
+      <TruncationTooltip className="min-w-0 truncate">{statusLabel}</TruncationTooltip>
     </div>
   );
 };

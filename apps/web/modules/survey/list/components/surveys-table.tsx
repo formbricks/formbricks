@@ -114,7 +114,7 @@ const getSurveyColumns = ({
     id: "name",
     header: t("common.name"),
     meta: { label: t("common.name") },
-    size: 260,
+    size: 235,
     cell: ({ row }) => {
       const state = rowStates.get(row.original.id);
       const nameCell = (
@@ -141,7 +141,7 @@ const getSurveyColumns = ({
     id: "status",
     header: t("common.status"),
     meta: { label: t("common.status") },
-    size: 160,
+    size: 185,
     cell: ({ row }) => {
       const state = rowStates.get(row.original.id);
       return (
@@ -313,6 +313,8 @@ export const SurveysTable = ({
     <ListTable
       table={table}
       testId="survey-list-table"
+      // Below this the card scrolls sideways, so Status and Type keep room for their labels (ENG-7083).
+      minWidth={1150}
       isLoading={isLoading}
       hasFilters={hasFilters}
       onClearFilters={onClearFilters}
