@@ -206,6 +206,13 @@ export async function POST(req: Request) {
   return new RegExp(pattern).test(seen);
 };
 `,
+  // The body runs before the update expression, so the update sees the body's write.
+  "for-update-after-body.ts": `export const run = ({ parsedInput }: any) => {
+  for (let p = "", i = 0; i < 1; new RegExp(p).test("x"), i++) {
+    p = parsedInput.pattern;
+  }
+};
+`,
   "global-regexp.ts": `export const run = ({ parsedInput }: any) => new globalThis.RegExp(parsedInput.pattern).test("x");
 `,
   "reduce-callback.ts": `export const run = ({ parsedInput }: any) =>

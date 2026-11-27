@@ -738,7 +738,8 @@ function walkTaint(program, policy) {
         case "ForStatement":
           scopes.push(blockScope());
           visit(node.init);
-          inBranch(() => [node.test, node.update, node.body].forEach(visit));
+          // The order JavaScript runs them in: the body before the update.
+          inBranch(() => [node.test, node.body, node.update].forEach(visit));
           scopes.pop();
           return;
         default:
