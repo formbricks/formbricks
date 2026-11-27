@@ -1361,6 +1361,19 @@ describe("Response Utils", () => {
       expect(result.userAttributes).toContain("email");
     });
 
+    // ENG-3682: a multi-paragraph headline used to export as "First lineSecond line".
+    test("separates the paragraphs of an HTML headline with a space in the column header", () => {
+      const survey = structuredClone(mockSurvey) as TSurvey;
+      survey.blocks[0].elements[0].headline = { default: "<p>First line</p><p>Second line</p>" };
+
+      const result = extractSurveyDetails(survey, mockResponses as TResponse[]);
+
+      expect(result.elements[0]).toEqual([
+        "1. First line Second line",
+        "1. First line Second line - Option ID",
+      ]);
+    });
+
     // ENG-1847: the reserved column set is catalog-derived and stable — the four decisions below
     // (stability, shadowing, anonymize, basics dedupe) are each a rule reused from elsewhere, pinned
     // here so the export cannot drift from the response table.
