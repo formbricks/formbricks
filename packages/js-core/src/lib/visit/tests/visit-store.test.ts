@@ -274,6 +274,13 @@ describe("visit store — the campaign the visit arrived with (ENG-7430)", () =>
     });
   });
 
+  test("never keeps half of a character cut at the cap", () => {
+    const value = `${"x".repeat(MAX_UTM_VALUE_LENGTH - 1)}😀`;
+    land("/", `?utm_campaign=${encodeURIComponent(value)}`, T0);
+
+    expect(getVisitSnapshot(T0)?.utm?.utmCampaign).toBe("x".repeat(MAX_UTM_VALUE_LENGTH - 1));
+  });
+
   test("a new tab starts without another visit's campaign", () => {
     land("/", "?utm_campaign=oe2027", T0);
 

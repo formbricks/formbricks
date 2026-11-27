@@ -195,7 +195,12 @@ export const recordCampaign = (search: string): void => {
   if (!state) return;
 
   state.utm = Object.fromEntries(
-    Object.entries(utm).map(([key, value]) => [key, value.slice(0, MAX_UTM_VALUE_LENGTH)])
+    // Counted in UTF-16 units, so a cut through an emoji would keep half of it, which PostgreSQL's
+    // JSON input rejects when the response is saved: drop a trailing lone high surrogate.
+    Object.entries(utm).map(([key, value]) => [
+      key,
+      value.slice(0, MAX_UTM_VALUE_LENGTH).replace(/[\uD800-\uDBFF]$/, ""),
+    ])
   );
   saveState(state);
 };
