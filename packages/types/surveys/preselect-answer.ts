@@ -139,6 +139,6 @@ export const resolvePreselectedAnswer = (
   const labels = value.choiceIds.map((choiceId) =>
     getLabelInLanguage(element.choices?.find((choice) => choice.id === choiceId)?.label, languageId)
   );
-  if (labels.some((label) => label === "")) return undefined;
+  if (labels.includes("")) return undefined;
   return element.type === SINGLE_SELECT ? labels[0] : labels;
 };

@@ -97,11 +97,11 @@ describe("resolvePreselectedAnswer", () => {
   });
 
   test("gives nothing for a pre-selection that no longer fits its question", () => {
-    expect(resolvePreselectedAnswer(single, { type: "choices", choiceIds: ["deleted"] }, "default")).toBe(
-      undefined
-    );
-    expect(resolvePreselectedAnswer(text, { type: "choices", choiceIds: ["open"] }, "default")).toBe(
-      undefined
-    );
+    expect(
+      resolvePreselectedAnswer(single, { type: "choices", choiceIds: ["deleted"] }, "default")
+    ).toBeUndefined();
+    expect(
+      resolvePreselectedAnswer(text, { type: "choices", choiceIds: ["open"] }, "default")
+    ).toBeUndefined();
   });
 });
