@@ -162,7 +162,9 @@ export async function setV3SurveySegmentFilters(
         id: segmentId,
         workspaceId,
         isPrivate: true,
-        surveys: { every: { id: ownerSurveyId } },
+        // Still linked to the survey, and to no other: a survey moved to another segment since the read
+        // doesn't write the one it left.
+        surveys: { some: { id: ownerSurveyId }, every: { id: ownerSurveyId } },
         filters: { equals: storedFilters ?? [] },
       },
       data: { filters },
@@ -170,8 +172,8 @@ export async function setV3SurveySegmentFilters(
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
-        // Still the survey's own private segment: only its filters moved under the request (409).
-        // Otherwise it was shared, or isn't this workspace's, since the read (422, as the pre-check says).
+        // Private and used by no other survey: its filters changed, or the survey moved to another segment,
+        // since the read (409). Otherwise it was shared, or isn't this workspace's (422, as the pre-check says).
         const stillOwn = await client.segment.findFirst({
           where: { id: segmentId, workspaceId, isPrivate: true, surveys: { every: { id: ownerSurveyId } } },
           select: { id: true },

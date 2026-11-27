@@ -169,7 +169,7 @@ describe("setV3SurveySegmentFilters", () => {
     id,
     workspaceId: "ws_1",
     isPrivate: true,
-    surveys: { every: { id: "survey_1" } },
+    surveys: { some: { id: "survey_1" }, every: { id: "survey_1" } },
     filters: { equals: STORED },
   });
   const notFound = () =>

@@ -187,7 +187,7 @@ describe("updateSegment's connected-survey guard (ENG-7269)", () => {
       updateSegment(
         ids.target,
         { filters: next },
-        { connectedSurveyIds: [ids.visible], expectedFilters: stored as TBaseFilters }
+        { connectedSurveyIds: [ids.visible], expectedFilters: stored }
       )
     ).resolves.toMatchObject({ filters: next });
   });
@@ -369,6 +369,14 @@ describe("setV3SurveySegmentFilters' own-private guard (ENG-7269)", () => {
 
     await v3Write(own.id, ids.restricted, next, []);
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: own.id } })).filters).toEqual(next);
+
+    // A survey moved to another segment since the read doesn't write the one it left.
+    await prisma.survey.update({ where: { id: ids.restricted }, data: { segmentId: null } });
+    await expect(v3Write(own.id, ids.restricted, [], next)).rejects.toBeInstanceOf(
+      V3SurveyTargetingChangedError
+    );
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: own.id } })).filters).toEqual(next);
+    await prisma.survey.update({ where: { id: ids.restricted }, data: { segmentId: own.id } });
 
     // A private segment another survey was connected to is no longer this survey's own.
     await prisma.segment.update({
