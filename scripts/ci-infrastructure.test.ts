@@ -166,12 +166,30 @@ if [[ "$*" == *install-deps* && ! -e "$FIXTURE/apt-failed" ]]; then touch "$FIXT
     .filter((line) => line && !line.startsWith("sudo tee") && !line.startsWith("sudo python3 - "));
   expect(commands).toEqual([
     "exec playwright install-deps chromium",
-    "sudo pkill -TERM -x apt-get",
+    "sudo pkill -TERM -f -- (^|[ /])apt-get( |$)",
     expect.stringMatching(/^sudo python3 -c .*fcntl\.lockf.* \/var\/lib\/dpkg$/),
     "sudo dpkg --configure -a",
     "exec playwright install-deps chromium",
     "exec playwright install chromium",
   ]);
+});
+
+test.each([
+  ["apt-get update", true],
+  ["/usr/bin/apt-get install -y --no-install-recommends libnss3", true],
+  ["sh -c apt-get update&& apt-get install -y --no-install-recommends libnss3", true],
+  ["sudo -- sh -c apt-get update&& apt-get install -y libnss3", true],
+  ["/usr/bin/dpkg --status-fd 35 --configure --pending", false],
+  ["sudo pkill -TERM -f -- (^|[ /])apt-get( |$)", false],
+  ["node playwright install-deps chromium", false],
+])("the stray-apt pattern matches %j: %s", (commandLine, matches) => {
+  // pkill -f matches the joined command line with POSIX extended regular expressions, as [[ =~ ]] does.
+  const result = spawnSync(
+    "bash",
+    ["-c", 'source scripts/ci-network.sh; [[ "$1" =~ $CI_APT_PROCESS_PATTERN ]]', "bash", commandLine],
+    { cwd: repository }
+  );
+  expect(result.status).toBe(matches ? 0 : 1);
 });
 
 test.each([
@@ -287,6 +305,9 @@ test.each(["direct", "mirror-file"])(
     expect(readFileSync(thirdParty, "utf8")).toBe(thirdPartyContents);
     expect(readFileSync(join(apt, "apt.conf.d/99formbricks-ci"), "utf8")).toContain(
       'APT::Update::Error-Mode "any";'
+    );
+    expect(readFileSync(join(apt, "apt.conf.d/99formbricks-ci"), "utf8")).toContain(
+      'DPkg::Lock::Timeout "30";'
     );
   }
 );

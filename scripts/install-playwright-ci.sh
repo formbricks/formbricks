@@ -13,8 +13,8 @@ ci_configure_apt
 # download.
 if ! timeout --kill-after=5s 120s pnpm exec playwright install-deps "$@"; then
   echo '::warning::Playwright OS dependency install failed; retrying against the fallback Ubuntu mirror.'
-  # The timeout above does not reach the apt-get Playwright started through sudo, so stop it and wait
-  # for the dpkg lock before touching dpkg again (ENG-7557).
+  # The timeout above does not reach the apt chain Playwright started through sudo, so stop it and
+  # wait for the dpkg locks before touching dpkg again (ENG-7557).
   ci_stop_stray_apt
   ci_wait_for_dpkg_lock 30
   # A timeout during package configuration can leave dpkg interrupted even after its lock is released.
