@@ -1,4 +1,5 @@
 import "server-only";
+import { isDeepStrictEqual } from "node:util";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { type TSegment, type TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { forbidOnRefusal, refusalResponse } from "@/app/api/internal/lib/refusal";
@@ -75,7 +76,8 @@ import {
 const SAME_WORKSPACE_MESSAGE = "Survey and segment are not in the same workspace";
 
 /** ENG-7269: a segment edit refused for a survey it targets that the caller can't edit, which it never names. */
-const TARGETS_UNWRITABLE_SURVEYS_MESSAGE = "This segment targets surveys you can't edit";
+const TARGETS_UNWRITABLE_SURVEYS_MESSAGE =
+  "This segment targets surveys you can't edit, so you can't change it. Copy it to change your own survey's targeting.";
 
 /** The message the server actions refused an invalid filter tree with: its first custom issue. */
 const invalidFiltersMessage = (issues: { code: string; message: string }[]) =>
@@ -291,14 +293,18 @@ export async function updateSegmentOperation({
   let oldObject: TSegment;
   let updated: TSegment;
   try {
-    // Independent reads: who the caller may see, the segment as stored, and (only when the filters change,
-    // the one change that reaches them) the surveys on segments nesting this one.
-    const [visibleSurveyWhere, storedSegment, nestingSurveyIds] = await Promise.all([
+    const [visibleSurveyWhere, storedSegment] = await Promise.all([
       getUserVisibleSurveyWhere(userId, organizationId),
       getSegment(segmentId),
-      body.filters ? getSurveyIdsTargetedThroughNesting(workspaceId, segmentId) : Promise.resolve([]),
     ]);
     oldObject = storedSegment;
+    // Only a filter change reaches the surveys on segments nesting this one; the editor sends the filters
+    // with every save, so compare. The sent tree lacks the ids the caller can't see, so a viewer missing
+    // some always looks up the nesting surveys (fails closed).
+    const changesFilters = body.filters !== undefined && !isDeepStrictEqual(body.filters, oldObject.filters);
+    const nestingSurveyIds = changesFilters
+      ? await getSurveyIdsTargetedThroughNesting(workspaceId, segmentId)
+      : [];
 
     // ENG-7269: a segment's stored filters are the targeting of every survey it is connected to, and of
     // every survey on a segment that nests it, so a write needs `survey.write` on each — the ones this body

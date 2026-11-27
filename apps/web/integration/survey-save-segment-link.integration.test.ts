@@ -192,6 +192,20 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
     ).rejects.toThrow("A segment filter can't use a survey's own targeting segment");
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.segmentW } })).filters).toEqual([]);
 
+    // A draft autosave stores its tree unchecked: a malformed node naming a private segment still counts.
+    const w2 = await loadSurvey(ids.W);
+    await expect(
+      updateSurveyInternal(
+        {
+          ...w2,
+          segment: { ...w2.segment!, filters: [{ type: "segment", segmentId: ids.segmentR }] } as never,
+        },
+        true,
+        { targetingActor: member() }
+      )
+    ).rejects.toThrow("A segment filter can't use a survey's own targeting segment");
+    expect((await prisma.segment.findUniqueOrThrow({ where: { id: ids.segmentW } })).filters).toEqual([]);
+
     // A tree that already holds the reference (written before the rule) keeps saving.
     await prisma.segment.update({ where: { id: ids.segmentW }, data: { filters: nestsR } });
     const stored = await loadSurvey(ids.W);

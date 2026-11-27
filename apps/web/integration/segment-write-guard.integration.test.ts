@@ -10,6 +10,7 @@ import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { assertNoAddedPrivateSegmentReferences } from "@/modules/ee/contacts/segments/lib/helper";
 import { SegmentSurveysChangedError } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
+  createSegment,
   deletePrivateSegmentIfUnused,
   deleteSegment,
   getExistingWorkspaceSurveyIds,
@@ -408,6 +409,17 @@ describe("a private segment nested before the rule (ENG-7269)", () => {
         resource: { ...filter.resource, id: expect.any(String) },
       }))
     );
+
+    // Nor can the editor's first-save path, which writes the survey's private segment by its title.
+    await expect(
+      createSegment({
+        workspaceId,
+        surveyId: ids.restricted,
+        title: ids.restricted,
+        isPrivate: true,
+        filters: attributeFilters("rewritten@example.com"),
+      })
+    ).rejects.toThrow("This survey's targeting is used inside another segment");
 
     // Once nothing nests it, the survey owns its targeting again.
     await prisma.segment.update({ where: { id: ids.target }, data: { filters: [] } });

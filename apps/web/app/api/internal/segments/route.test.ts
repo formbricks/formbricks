@@ -563,7 +563,9 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     const refused = await update({ surveys: [SURVEY_ID, SURVEY_2_ID] });
 
     expect(refused.status).toBe(403);
-    expect((await refused.json()).detail).toBe("This segment targets surveys you can't edit");
+    expect((await refused.json()).detail).toBe(
+      "This segment targets surveys you can't edit, so you can't change it. Copy it to change your own survey's targeting."
+    );
     expect(mocks.getSurveyWorkspaceIdMap).toHaveBeenCalledWith([SURVEY_ID, SURVEY_2_ID]);
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledOnce();
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
@@ -583,12 +585,15 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     const response = await update({ title: "Renamed" });
 
     expect(response.status).toBe(403);
-    expect((await response.json()).detail).toBe("This segment targets surveys you can't edit");
+    expect((await response.json()).detail).toBe(
+      "This segment targets surveys you can't edit, so you can't change it. Copy it to change your own survey's targeting."
+    );
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], visibleWhere);
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 
   test("requires survey.write on the surveys of segments that nest this one", async () => {
+    mocks.getSegment.mockResolvedValue(storedSegment({ filters: [] }));
     mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
     mocks.getExistingWorkspaceSurveyIds.mockResolvedValueOnce(new Set([SURVEY_ID]));
 
@@ -604,15 +609,20 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 
-  test("skips the nesting lookup when the filters don't change (ENG-7269)", async () => {
+  test.each([
+    ["no filters", { title: "Renamed" }],
+    // The editor sends the stored filters back with a rename.
+    ["the stored filters", { title: "Renamed", filters: FILTERS }],
+  ])("skips the nesting lookup for a body with %s (ENG-7269)", async (_label, body) => {
     mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
 
-    expect((await update({ title: "Renamed" })).status).toBe(200);
+    expect((await update(body)).status).toBe(200);
     expect(mocks.getSurveyIdsTargetedThroughNesting).not.toHaveBeenCalled();
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], visibleWhere);
   });
 
   test("guards the write on the directly connected surveys only, not the nesting ones", async () => {
+    mocks.getSegment.mockResolvedValue(storedSegment({ filters: [] }));
     mocks.getSurveyIdsTargetedThroughNesting.mockResolvedValue([SURVEY_2_ID]);
 
     expect((await update({ filters: FILTERS })).status).toBe(200);

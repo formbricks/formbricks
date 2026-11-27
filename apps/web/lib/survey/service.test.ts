@@ -1170,8 +1170,20 @@ describe("Tests for updateSurvey", () => {
         expect(prisma.segment.updateMany).toHaveBeenCalled();
       });
 
+      test("refuses filters that add a nested private segment, even as a malformed node (ENG-7269)", async () => {
+        const privateSegmentId = "clprivatesegment000000001";
+        prisma.segment.findMany.mockResolvedValue([
+          { id: privateSegmentId, isPrivate: true, filters: [] },
+        ] as never);
+
+        await expect(save([{ type: "segment", segmentId: privateSegmentId }])).rejects.toThrow(
+          "A segment filter can't use a survey's own targeting segment"
+        );
+        expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+      });
+
       test("refuses changed filters while another segment nests the survey's segment (ENG-7269)", async () => {
-        prisma.$queryRaw.mockResolvedValue([{ id: "clnestingsegment000000001" }]);
+        prisma.$queryRaw.mockResolvedValue([{ nested: true }]);
 
         await expect(save(attributeFilters)).rejects.toThrow(
           "This survey's targeting is used inside another segment, so changing it would change other surveys' targeting. Remove it from that segment first."

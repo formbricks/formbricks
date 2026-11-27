@@ -63,6 +63,7 @@ vi.mock("@formbricks/database", () => ({
     },
     $transaction: vi.fn((callback) => callback(prisma)), // Mock transaction to execute the callback
     $queryRaw: vi.fn(),
+    $executeRaw: vi.fn(),
   },
 }));
 
@@ -645,21 +646,17 @@ describe("Segment Service Tests", () => {
 
     beforeEach(() => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(segmentToDeletePrisma);
-      vi.mocked(prisma.segment.delete).mockResolvedValue(segmentToDeletePrisma);
-      vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
+      vi.mocked(prisma.$executeRaw).mockResolvedValue(1);
     });
 
-    test("should delete a segment successfully", async () => {
-      const result = await deleteSegment(segmentId);
-      expect(result).toEqual(segmentToDelete);
-      expect(prisma.segment.findUnique).toHaveBeenCalledWith({
-        where: { id: segmentId },
-        select: selectSegment,
-      });
-      expect(prisma.segment.delete).toHaveBeenCalledWith({
-        where: { id: segmentId, surveys: { none: {} } },
-        select: selectSegment,
-      });
+    test("deletes an unused segment in one guarded statement, scoped to its workspace", async () => {
+      await expect(deleteSegment(segmentId)).resolves.toEqual(segmentToDelete);
+
+      expect(prisma.$executeRaw).toHaveBeenCalledOnce();
+      expect(vi.mocked(prisma.$executeRaw).mock.calls[0].slice(1)).toEqual(
+        expect.arrayContaining([segmentId, workspaceId])
+      );
+      expect(prisma.segment.delete).not.toHaveBeenCalled();
     });
 
     test("should throw ResourceNotFoundError if segment not found", async () => {
@@ -667,49 +664,50 @@ describe("Segment Service Tests", () => {
       await expect(deleteSegment(segmentId)).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("should throw OperationNotAllowedError if segment is linked to surveys", async () => {
+    test("refuses a segment linked to surveys without trying the delete", async () => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
-      await expect(deleteSegment(segmentId)).rejects.toThrow(OperationNotAllowedError);
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      await expect(deleteSegment(segmentId)).rejects.toThrow(
+        new OperationNotAllowedError("Cannot delete a segment that is associated with a survey")
+      );
+      expect(prisma.$executeRaw).not.toHaveBeenCalled();
     });
 
-    test("should throw OperationNotAllowedError if another segment's filters nest it (ENG-7269)", async () => {
-      vi.mocked(prisma.$queryRaw).mockResolvedValue([{ id: "nesting-segment" }]);
+    test("names nesting when the guarded delete matched nothing and no survey links it (ENG-7269)", async () => {
+      vi.mocked(prisma.$executeRaw).mockResolvedValue(0);
+      vi.mocked(prisma.segment.findUnique)
+        .mockResolvedValueOnce(segmentToDeletePrisma)
+        .mockResolvedValueOnce({ _count: { surveys: 0 } } as never);
 
       await expect(deleteSegment(segmentId)).rejects.toThrow(
         new OperationNotAllowedError("Cannot delete a segment that another segment's filters use")
       );
-
-      // The lookup is scoped to the segment's workspace and excludes the segment itself.
-      const [, ...params] = vi.mocked(prisma.$queryRaw).mock.calls[0];
-      expect(params).toEqual(expect.arrayContaining([workspaceId, segmentId]));
-      expect(prisma.segment.delete).not.toHaveBeenCalled();
     });
 
-    test("refuses a delete a survey connected to since the read (ENG-7269)", async () => {
-      vi.mocked(prisma.segment.delete).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("No record found", { code: "P2025", clientVersion: "test" })
-      );
+    test("names a survey connected since the read (ENG-7269)", async () => {
+      vi.mocked(prisma.$executeRaw).mockResolvedValue(0);
+      vi.mocked(prisma.segment.findUnique)
+        .mockResolvedValueOnce(segmentToDeletePrisma)
+        .mockResolvedValueOnce({ _count: { surveys: 1 } } as never);
 
       await expect(deleteSegment(segmentId)).rejects.toThrow(
         new OperationNotAllowedError("Cannot delete a segment that is associated with a survey")
       );
     });
 
-    test("answers a segment deleted under the delete with ResourceNotFoundError (ENG-7269)", async () => {
+    test("answers a segment deleted meanwhile with ResourceNotFoundError (ENG-7269)", async () => {
+      vi.mocked(prisma.$executeRaw).mockResolvedValue(0);
       vi.mocked(prisma.segment.findUnique)
         .mockResolvedValueOnce(segmentToDeletePrisma)
         .mockResolvedValueOnce(null);
-      vi.mocked(prisma.segment.delete).mockRejectedValue(
-        new Prisma.PrismaClientKnownRequestError("No record found", { code: "P2025", clientVersion: "test" })
-      );
 
       await expect(deleteSegment(segmentId)).rejects.toThrow(ResourceNotFoundError);
     });
 
-    test("should throw DatabaseError on Prisma delete error", async () => {
-      vi.mocked(prisma.segment.delete).mockRejectedValue(new Error("DB delete error"));
-      await expect(deleteSegment(segmentId)).rejects.toThrow(Error);
+    test("maps a Prisma error to DatabaseError", async () => {
+      vi.mocked(prisma.$executeRaw).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("boom", { code: "P2010", clientVersion: "test" })
+      );
+      await expect(deleteSegment(segmentId)).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -772,7 +770,7 @@ describe("Segment Service Tests", () => {
         ...privateSegmentPrisma,
         filters: [{ id: "f1" }],
       });
-      vi.mocked(prisma.$queryRaw).mockResolvedValue([{ id: "nesting-segment" }]);
+      vi.mocked(prisma.$queryRaw).mockResolvedValue([{ nested: true }]);
 
       await expect(resetSegmentInSurvey(surveyId)).rejects.toThrow(InvalidInputError);
       expect(prisma.segment.update).not.toHaveBeenCalled();

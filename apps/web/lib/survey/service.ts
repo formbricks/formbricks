@@ -1609,10 +1609,16 @@ const unlinkSurveySegment = async (
   }
 };
 
+/**
+ * The segment a survey write links must be in the survey's workspace (ENG-1920). `sharedOnly` (survey
+ * create, ENG-7269) also refuses a private segment: it is another survey's own targeting (a new survey has
+ * none yet), and a second survey on it would stop that survey's saves writing it.
+ */
 const assertSurveySegmentBelongsToWorkspace = async (
   workspaceId: string,
   segment: { id?: string | null } | null | undefined,
-  client: Prisma.TransactionClient = prisma
+  client: Prisma.TransactionClient = prisma,
+  { sharedOnly = false }: { sharedOnly?: boolean } = {}
 ): Promise<void> => {
   if (!segment?.id) {
     return;
@@ -1620,34 +1626,13 @@ const assertSurveySegmentBelongsToWorkspace = async (
 
   const existingSegment = await client.segment.findUnique({
     where: { id: segment.id },
-    select: { workspaceId: true },
-  });
-
-  if (existingSegment?.workspaceId !== workspaceId) {
-    throw new ResourceNotFoundError("Segment", segment.id);
-  }
-};
-
-/**
- * The segment a new survey links, in one read: it must be in the survey's workspace (ENG-1920), and shared
- * (ENG-7269). A private segment is another survey's own targeting (the new survey has none yet), and a
- * second survey on it would stop that survey's saves writing it.
- */
-const assertCreateSegmentLinkable = async (
-  workspaceId: string,
-  segment: { id?: string | null } | null | undefined,
-  client: Prisma.TransactionClient = prisma
-): Promise<void> => {
-  if (!segment?.id) return;
-
-  const existingSegment = await client.segment.findUnique({
-    where: { id: segment.id },
     select: { workspaceId: true, isPrivate: true },
   });
+
   if (existingSegment?.workspaceId !== workspaceId) {
     throw new ResourceNotFoundError("Segment", segment.id);
   }
-  if (existingSegment.isPrivate) {
+  if (sharedOnly && existingSegment.isPrivate) {
     throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
   }
 };
@@ -1818,7 +1803,7 @@ export const createSurvey = async (
     // the languages, action classes and shared fields this survey points at in that same transaction.
     const db = transaction?.tx ?? prisma;
     await assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages, db);
-    await assertCreateSegmentLinkable(parsedWorkspaceId, segment, db);
+    await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment, db, { sharedOnly: true });
     await assertCreateTargetingVisible(parsedWorkspaceId, segment, privateSegmentFilters, targetingActor, db);
 
     // ENG-1839: `existing` is empty because a create authors every name fresh — there is nothing to
