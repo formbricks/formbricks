@@ -599,6 +599,78 @@ describe("Survey flow wiring", () => {
     expect(getRecaptchaToken).toHaveBeenCalledTimes(1);
   });
 
+  test("a pre-selection in a block show-if hides on open never reaches the rules after it", async () => {
+    // A start rule pre-selects q1, but block-1 is hidden (`src` is not set), so the survey opens on
+    // block-2, whose rule would jump to ending-2 if q1 held the pre-selected answer.
+    const hiddenUnlessSrc = {
+      id: "showifgroup0000000000001",
+      connector: "and",
+      conditions: [
+        {
+          id: "showifcond00000000000001",
+          leftOperand: { type: "hiddenField", value: "src" },
+          operator: "isSet",
+        },
+      ],
+    };
+    renderFlowSurvey(
+      flowSurvey({
+        startLogic: [
+          {
+            id: "startrule000000000000001",
+            conditions: { id: "startgroup00000000000001", connector: "and", conditions: [] },
+            actions: [
+              {
+                id: "startaction0000000000001",
+                objective: "preselectAnswer",
+                target: "q1",
+                value: { type: "static", value: "pre" },
+              },
+            ],
+          },
+        ],
+        blocks: [
+          {
+            ...baseSurvey.blocks[0],
+            elements: [{ ...baseSurvey.blocks[0].elements[0], showIf: hiddenUnlessSrc }],
+          },
+          {
+            ...baseSurvey.blocks[1],
+            logic: [
+              {
+                id: "preselrule00000000000001",
+                conditions: {
+                  id: "preselgroup0000000000001",
+                  connector: "and",
+                  conditions: [
+                    {
+                      id: "preselcond00000000000001",
+                      operator: "equals",
+                      leftOperand: { type: "element", value: "q1" },
+                      rightOperand: { type: "static", value: "pre" },
+                    },
+                  ],
+                },
+                actions: [{ id: "preselaction000000000001", objective: "jumpToBlock", target: "ending-2" }],
+              },
+            ],
+          },
+        ],
+        endings: [{ id: "ending-1" }, { id: "ending-2" }],
+      })
+    );
+
+    fireEvent.click(await screen.findByTestId("submit-block-2"));
+
+    await waitFor(() => {
+      expect(apiClientMocks.createResponse).toHaveBeenCalledWith(
+        expect.objectContaining({ finished: true, endingId: "ending-1" })
+      );
+    });
+    const [request] = apiClientMocks.createResponse.mock.calls[0];
+    expect(request.data).not.toHaveProperty("q1");
+  });
+
   test("the block a start rule jumped to shows no Back: the respondent saw no page before it", async () => {
     renderFlowSurvey(flowSurvey({ startLogic: [startRule("block-2")] }));
 

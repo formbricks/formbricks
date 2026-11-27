@@ -599,6 +599,17 @@ export function Survey({
   useLayoutEffect(() => {
     const block = localSurvey.blocks.find((candidate) => candidate.id === cardVisit.blockId);
     if (!block) return;
+    // A block show-if hides is passed over unseen (the entry check below, on first mount): its
+    // pre-selections stay pending, so they never reach `responseData` or the rules after it.
+    const shown = getPageVisibility({
+      survey: localSurvey,
+      blockId: block.id,
+      responseData,
+      variables: currentVariables,
+      selectedLanguage,
+      reservedFieldValues: reservedValues,
+    }).shown;
+    if (!shown) return;
     const opened = openPage(preselectionRef.current, block, responseData, selectedLanguage);
     preselectionRef.current = opened.state;
     if (Object.keys(opened.data).length > 0) setResponseData((prev) => ({ ...prev, ...opened.data }));
