@@ -434,10 +434,17 @@ test.describe("The visit: show conditions and attribution (ENG-3926, ENG-7430)",
     });
   });
 
-  const waitForSdk = (page: Page) =>
-    page.waitForFunction(() => Boolean((window as unknown as { formbricks?: unknown }).formbricks), null, {
-      timeout: 120000,
-    });
+  // `window.formbricks` exists before `setup()` has run, and setup is what records the page into the
+  // visit and patches `history.pushState`. Leaving the page earlier would leave it out of the visit, so
+  // wait for the patch, which setup adds after recording the page.
+  const waitForSetup = (page: Page) =>
+    page.waitForFunction(
+      () =>
+        Boolean((window as unknown as { formbricks?: unknown }).formbricks) &&
+        !String(window.history.pushState).includes("[native code]"),
+      null,
+      { timeout: 120000 }
+    );
 
   const answerAndReadMeta = async (page: Page, surveyId: string) => {
     const widget = page.locator("#formbricks-modal-container");
@@ -469,9 +476,9 @@ test.describe("The visit: show conditions and attribution (ENG-3926, ENG-7430)",
 
     await test.step("land with a campaign, then load another page in full", async () => {
       await page.goto(`${hostUrl}/?utm_source=newsletter&utm_campaign=oe2027&utm_medium=`);
-      await waitForSdk(page);
+      await waitForSetup(page);
       await page.goto(`${hostUrl}/plans?ref=nav`);
-      await waitForSdk(page);
+      await waitForSetup(page);
     });
 
     await test.step("navigate inside the single-page app, then trigger the survey", async () => {
