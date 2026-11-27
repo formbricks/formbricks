@@ -11,5 +11,3 @@ export interface InviteWithCreator extends Pick<
     locale: TUserLocale;
   };
 }
-
-export type CreateMembershipInvite = Pick<Invite, "organizationId" | "role" | "teamIds">;

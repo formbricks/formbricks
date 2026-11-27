@@ -2,6 +2,7 @@ import { emitDebugVisitEvent, isDebugEnabled } from "@/lib/common/debug";
 import { getDeviceInfo } from "@/lib/visit/device";
 import {
   getVisitSnapshot,
+  recordCampaign,
   recordNavigation,
   recordPageHide,
   recordPageLoad,
@@ -16,11 +17,15 @@ const reportVisit = (): void => {
 
 const onNavigation = (): void => {
   recordNavigation(window.location.pathname);
+  recordCampaign(window.location.search);
   reportVisit();
 };
 
 const onPathReplace = (): void => {
   recordPathReplace(window.location.pathname);
+  // A router that strips the UTM parameters after landing (a common clean-up) leaves the campaign the
+  // page load already kept; one that adds them is keeping the campaign this page was reached with.
+  recordCampaign(window.location.search);
 };
 
 const onPageShow = (event: PageTransitionEvent): void => {
@@ -28,6 +33,7 @@ const onPageShow = (event: PageTransitionEvent): void => {
   // place it gets counted. A normal load also fires `pageshow`, with `persisted: false`.
   if (!event.persisted) return;
   recordPageLoad(window.location.pathname, document.referrer);
+  recordCampaign(window.location.search);
   reportVisit();
 };
 
@@ -50,6 +56,7 @@ export const startVisitTracking = (): void => {
   isTrackingVisit = true;
 
   recordPageLoad(window.location.pathname, document.referrer);
+  recordCampaign(window.location.search);
   reportVisit();
 
   // `pushstate` / `replacestate` are dispatched by js-core's own history patch (no-code-action.ts).
