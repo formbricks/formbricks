@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import { ZWorkflowDefinitionInput, ZWorkflowDefinitionInputStrict } from ".";
+import { toStrictSchema } from "./strict";
 
 const surveyId = "cm9zr4mps000008l8btfy1vtz";
 
@@ -215,5 +216,13 @@ describe("ZWorkflowDefinitionInputStrict (ENG-2437)", () => {
       JSON.stringify(json).match(/"description":"(?:[^"\\]|\\.)*"/g) ?? [];
 
     expect(descriptions(strict)).toEqual(descriptions(lenient));
+  });
+});
+
+describe("toStrictSchema", () => {
+  test("refuses a schema kind it can't make strict, instead of leaving it lenient", () => {
+    const withTuple = z.object({ pair: z.tuple([z.object({ id: z.string() }), z.string()]) });
+
+    expect(() => toStrictSchema(withTuple)).toThrow('toStrictSchema does not handle Zod "tuple" schemas yet');
   });
 });
