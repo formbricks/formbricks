@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import {
   AsteriskIcon,
   EqualIcon,
+  ListChecksIcon,
   type LucideIcon,
   type LucideProps,
   ShieldAlertIcon,
@@ -19,13 +20,20 @@ import type { TFlowRuleType } from "@/modules/survey/editor/lib/flow-outline";
  */
 
 /** The order the menus list them in. */
-export const RULE_TYPES: readonly TFlowRuleType[] = ["jump", "setValue", "requireAnswer", "markLowQuality"];
+export const RULE_TYPES: readonly TFlowRuleType[] = [
+  "jump",
+  "setValue",
+  "preselectAnswer",
+  "requireAnswer",
+  "markLowQuality",
+];
 
 export const RULE_TYPE_OBJECTIVE: Record<TFlowRuleType, TSurveyBlockLogicActionObjective> = {
   jump: "jumpToBlock",
   setValue: "calculate",
   requireAnswer: "requireAnswer",
   markLowQuality: "markLowQuality",
+  preselectAnswer: "preselectAnswer",
 };
 
 const RULE_TYPE_ICON: Record<TFlowRuleType, LucideIcon> = {
@@ -33,6 +41,7 @@ const RULE_TYPE_ICON: Record<TFlowRuleType, LucideIcon> = {
   setValue: EqualIcon,
   requireAnswer: AsteriskIcon,
   markLowQuality: ShieldAlertIcon,
+  preselectAnswer: ListChecksIcon,
 };
 
 /** The type's colour, on the white tile icon's background and on a plain icon. */
@@ -41,6 +50,7 @@ const RULE_TYPE_COLOR: Record<TFlowRuleType, { tile: string; text: string }> = {
   setValue: { tile: "bg-emerald-500", text: "text-emerald-500" },
   requireAnswer: { tile: "bg-violet-500", text: "text-violet-500" },
   markLowQuality: { tile: "bg-orange-500", text: "text-orange-500" },
+  preselectAnswer: { tile: "bg-cyan-500", text: "text-cyan-500" },
 };
 
 export const getRuleTypeLabel = (type: TFlowRuleType, t: TFunction): string => {
@@ -53,6 +63,8 @@ export const getRuleTypeLabel = (type: TFlowRuleType, t: TFunction): string => {
       return t("workspace.surveys.edit.require_answer");
     case "markLowQuality":
       return t("workspace.surveys.edit.mark_as_low_quality");
+    case "preselectAnswer":
+      return t("workspace.surveys.edit.flow.preselect_answer");
   }
 };
 

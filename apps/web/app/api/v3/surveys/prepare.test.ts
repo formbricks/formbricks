@@ -2396,3 +2396,71 @@ describe("Mark as low quality on the v3 survey document (ENG-6933)", () => {
     ]);
   });
 });
+
+describe("Pre-select answer on the v3 survey document (ENG-7437)", () => {
+  const {
+    visibility: _visibility,
+    owner: _owner,
+    access: _access,
+    ...resource
+  } = serializeV3SurveyResource(surveyFlowFixture, TEST_VISIBILITY);
+  // The Heavy users block (index 2) comes before "fav", which is in the Overall block (index 4).
+  const rule = { blockIdx: 2, ruleIdx: 1 };
+
+  const withAction = (action: Record<string, unknown>, at: "block" | "start") => {
+    const body = structuredClone(resource) as unknown as {
+      blocks: { logic: { actions: unknown[] }[] }[];
+      startLogic: { actions: unknown[] }[];
+    };
+    if (at === "block") body.blocks[rule.blockIdx].logic[rule.ruleIdx].actions = [action];
+    else body.startLogic[0].actions = [action];
+    return prepareV3SurveyPatchInput(surveyFlowFixture, body);
+  };
+  const preselect = (value: Record<string, unknown>, target = "fav") => ({
+    id: "clact923456789012345678901",
+    objective: "preselectAnswer",
+    target,
+    value,
+  });
+  const invalidNames = (preparation: ReturnType<typeof withAction>) =>
+    preparation.ok ? [] : preparation.validation.invalidParams.map((param) => param.name);
+
+  test("is accepted in a block rule and before the first question, and patches back unchanged", () => {
+    const action = preselect({ type: "choices", choiceIds: ["prime"] });
+
+    for (const at of ["block", "start"] as const) {
+      const preparation = withAction(action, at);
+      expect(invalidNames(preparation)).toEqual([]);
+      if (!preparation.ok) return;
+      const actions =
+        at === "block"
+          ? preparation.document.blocks[rule.blockIdx].logic?.[rule.ruleIdx].actions
+          : preparation.document.startLogic?.[0].actions;
+      expect(actions).toEqual([action]);
+    }
+  });
+
+  test("refuses keys its value has no use for", () => {
+    expect(invalidNames(withAction(preselect({ type: "static", value: "x", label: "y" }, "email"), "block"))).toEqual([
+      "blocks.2.logic.1.actions.0.value.label",
+    ]);
+  });
+
+  test("refuses an answer that doesn't fit the question, naming the action's value", () => {
+    expect(
+      invalidNames(withAction(preselect({ type: "choices", choiceIds: ["netflix", "prime"] }), "block"))
+    ).toEqual(["blocks.2.logic.1.actions.0.value"]);
+    expect(invalidNames(withAction(preselect({ type: "static", value: "lots" }, "hours"), "start"))).toEqual([
+      "startLogic.0.actions.0.value",
+    ]);
+  });
+
+  test("refuses a question in an earlier block and one that doesn't exist, naming the target", () => {
+    expect(
+      invalidNames(withAction(preselect({ type: "choices", choiceIds: ["netflix"] }, "services"), "block"))
+    ).toEqual(["blocks.2.logic.1.actions.0.target"]);
+    expect(invalidNames(withAction(preselect({ type: "static", value: "x" }, "gone"), "block"))).toEqual([
+      "blocks.2.logic.1.actions.0.target",
+    ]);
+  });
+});

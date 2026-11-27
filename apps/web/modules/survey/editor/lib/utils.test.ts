@@ -32,6 +32,8 @@ import {
   getFormatLeftOperandValue,
   getFormatRightOperandValue,
   getMatchValueProps,
+  getPreselectChoiceOptions,
+  getPreselectTargetOptions,
   isComputedBooleanField,
   isComputedDateField,
 } from "./utils";
@@ -820,6 +822,34 @@ describe("removal guards also see show-if (ENG-6931)", () => {
     expect(findElementUsedInLogic(survey, "fav")).toBe(flatIndexOf(survey, "apple_reason"));
   });
 
+  // ENG-7437: removing a question or option a Pre-select answer step fills in would leave it dangling.
+  test("a question and an option a Pre-select answer step targets are reported as used", () => {
+    const preselect = {
+      id: "preselectrule00000000001",
+      conditions: { id: "preselectgroup0000000001", connector: "and" as const, conditions: [] },
+      actions: [
+        {
+          id: "preselectaction000000001",
+          objective: "preselectAnswer" as const,
+          target: "bundle",
+          value: { type: "choices" as const, choiceIds: ["no_bundle"] },
+        },
+      ],
+    };
+    const inBlock = withoutLogic();
+    inBlock.blocks[3].logic = [preselect];
+    const inStart: TSurvey = { ...withoutLogic(), startLogic: [preselect] };
+
+    expect(findElementUsedInLogic(inBlock, "bundle")).toBe(flatIndexOf(inBlock, "concept"));
+    expect(findOptionUsedInLogic(inBlock, "bundle", "no_bundle")).toBe(flatIndexOf(inBlock, "concept"));
+    expect(findOptionUsedInLogic(inBlock, "bundle", "netflix_prime")).toBe(-1);
+    expect(findElementUse(inStart, "bundle")).toEqual({ kind: "startLogic", elementIndex: START_LOGIC_USE_INDEX });
+    expect(findOptionUse(inStart, "bundle", "no_bundle")).toEqual({
+      kind: "startLogic",
+      elementIndex: START_LOGIC_USE_INDEX,
+    });
+  });
+
   test("an option a show-if compares against is reported as used", () => {
     const survey = withoutLogic();
 
@@ -913,16 +943,34 @@ describe("getActionObjectiveOptions", () => {
     );
   });
 
+  test("Pre-select answer offers the select and free text questions after the rule's block, never Other (ENG-7437)", () => {
+    const after = (scope: number) =>
+      getPreselectTargetOptions(surveyFlowFixture, scope, t).map((option) => option.value);
+
+    // After the Concept block (index 3): the Overall block's questions, then the Profile block's.
+    expect(after(3)).toEqual(["fav", "apple_reason", "bundle", "email", "recommend"]);
+    // Before the first question every block comes later, the first one included.
+    expect(after(-1)[0]).toBe("services");
+    expect(after(-1)).toContain("hours");
+    expect(after(5)).toEqual([]);
+
+    const fav = surveyFlowFixture.blocks[4].elements[0];
+    const withOther = { ...fav, choices: [...("choices" in fav ? fav.choices : []), { id: "other", label: { default: "Other" }, code: "9" }] };
+    expect(getPreselectChoiceOptions(withOther as typeof fav).map((option) => option.value)).not.toContain("other");
+    expect(getPreselectChoiceOptions(undefined)).toEqual([]);
+  });
+
   test("lists the rule types in Add logic's order, each with its own icon", () => {
     const options = getActionObjectiveOptions(t);
 
     expect(options.map((option) => [option.value, option.label])).toEqual([
       ["jumpToBlock", "workspace.surveys.edit.flow.jump_to"],
       ["calculate", "workspace.surveys.edit.flow.set_value"],
+      ["preselectAnswer", "workspace.surveys.edit.flow.preselect_answer"],
       ["requireAnswer", "workspace.surveys.edit.require_answer"],
       ["markLowQuality", "workspace.surveys.edit.mark_as_low_quality"],
     ]);
-    expect(new Set(options.map((option) => option.icon)).size).toBe(4);
+    expect(new Set(options.map((option) => option.icon)).size).toBe(5);
     expect(options.every((option) => option.icon)).toBe(true);
   });
 });

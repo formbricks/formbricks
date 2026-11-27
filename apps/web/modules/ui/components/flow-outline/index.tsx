@@ -14,7 +14,14 @@ import { cn } from "@/lib/cn";
  * for Low quality.
  */
 
-export type TFlowOutlineTone = "block" | "jump" | "setValue" | "requireAnswer" | "markLowQuality" | "ending";
+export type TFlowOutlineTone =
+  | "block"
+  | "jump"
+  | "setValue"
+  | "requireAnswer"
+  | "markLowQuality"
+  | "preselectAnswer"
+  | "ending";
 
 interface FlowOutlineProps {
   /** Left of the header: e.g. the Expand / Collapse toggle and an info button saying how to read it. */
@@ -102,6 +109,7 @@ const TONE_CARD: Record<TFlowOutlineTone, string> = {
   setValue: "border-emerald-500 bg-emerald-50",
   requireAnswer: "border-violet-500 bg-violet-50",
   markLowQuality: "border-orange-500 bg-orange-50",
+  preselectAnswer: "border-cyan-500 bg-cyan-50",
   ending: ENDING_TONE.card,
 };
 
@@ -111,6 +119,7 @@ const TONE_ICON: Record<TFlowOutlineTone, string> = {
   setValue: "size-5 bg-emerald-500",
   requireAnswer: "size-5 bg-violet-500",
   markLowQuality: "size-5 bg-orange-500",
+  preselectAnswer: "size-5 bg-cyan-500",
   ending: `size-6 ${ENDING_TONE.tile}`,
 };
 
@@ -121,6 +130,7 @@ const TONE_DIVIDER: Record<TFlowOutlineTone, string> = {
   setValue: "border-emerald-500",
   requireAnswer: "border-violet-500",
   markLowQuality: "border-orange-500",
+  preselectAnswer: "border-cyan-500",
   ending: ENDING_TONE.divider,
 };
 
@@ -131,6 +141,7 @@ const TONE_HOVER: Record<TFlowOutlineTone, string> = {
   setValue: "hover:bg-emerald-100/70",
   requireAnswer: "hover:bg-violet-100/70",
   markLowQuality: "hover:bg-orange-100/70",
+  preselectAnswer: "hover:bg-cyan-100/70",
   ending: ENDING_TONE.hover,
 };
 

@@ -17,6 +17,7 @@ import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
   type TActionCalculate as TBlockActionCalculate,
+  type TActionPreselectAnswer,
   TSurveyBlockLogic,
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,
@@ -247,6 +248,22 @@ export const createEmptyFormulaAction = (id: string, variableId = ""): TSurveyBl
   value: { type: "expression", value: { type: "static", value: "" } },
 });
 
+/**
+ * The empty Pre-select answer action (ENG-7437): no question yet, so no options. Refused on save until
+ * a question and its answer are picked; picking a question resets the answer to fit it
+ * ({@link getEmptyPreselectValue}).
+ */
+export const createEmptyPreselectAnswerAction = (id: string): TSurveyBlockLogicAction => ({
+  id,
+  objective: "preselectAnswer",
+  target: "",
+  value: { type: "choices", choiceIds: [] },
+});
+
+/** The empty answer that fits a question: no options for a select, an empty value for free text. */
+export const getEmptyPreselectValue = (elementType: string | undefined): TActionPreselectAnswer["value"] =>
+  elementType === "openText" ? { type: "static", value: "" } : { type: "choices", choiceIds: [] };
+
 export const getUpdatedActionBody = (
   action: TSurveyBlockLogicAction,
   objective: TSurveyBlockLogicActionObjective
@@ -269,6 +286,8 @@ export const getUpdatedActionBody = (
       };
     case "markLowQuality":
       return { id: action.id, objective: "markLowQuality" };
+    case "preselectAnswer":
+      return createEmptyPreselectAnswerAction(action.id);
     default:
       return action;
   }

@@ -358,4 +358,22 @@ describe("rules before the first question", () => {
       ]
     );
   });
+
+  // ENG-7437: before the first question every question comes later, the first one included.
+  test("a pre-select answer may target any question, and its value must fit it", () => {
+    const preselect = (target: string, value: unknown) =>
+      ({ id: "startaction0000000000001", objective: "preselectAnswer", target, value }) as TSurveyBlockLogicAction;
+
+    expect(
+      issuesOf(withStartLogic([rule([preselect("services", { type: "choices", choiceIds: ["netflix"] })])]))
+    ).toEqual([]);
+    expectIssues(
+      issuesOf(withStartLogic([rule([preselect("gone", { type: "static", value: "x" })])])),
+      [[["startLogic", 0, "actions", 0, "target"], "Element ID gone does not exist"]]
+    );
+    expectIssues(
+      issuesOf(withStartLogic([rule([preselect("hours", { type: "static", value: "many" })])])),
+      [[["startLogic", 0, "actions", 0, "value"], "takes a number"]]
+    );
+  });
 });

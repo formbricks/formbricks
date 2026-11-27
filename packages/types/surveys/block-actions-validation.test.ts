@@ -61,6 +61,9 @@ const jump = (target: string, id = "blockaction0000000000001"): TSurveyBlockLogi
   target,
 });
 
+const preselect = (target: string, value: unknown): TSurveyBlockLogicAction =>
+  ({ id: "blockaction0000000000001", objective: "preselectAnswer", target, value }) as TSurveyBlockLogicAction;
+
 describe("block rule actions", () => {
   test("the rule used here is valid with a jump to an ending", () => {
     expect(issuesOf(withConceptActions([jump(ids.endings.thanks)]))).toEqual([]);
@@ -275,5 +278,69 @@ describe("a condition's fixed value", () => {
       ["blocks", HEAVY_USERS, "logic", 0, "conditions"],
       "Static value is required"
     );
+  });
+
+  // ENG-7437: Pre-select answer, on the Concept block (block 4); "fav" and "email" are in block 5.
+  describe("Pre-select answer", () => {
+    const actionPath = [...rulePath, "actions", 0];
+
+    test("accepts an option of a later single select and a value in a later free text question", () => {
+      expect(
+        issuesOf(withConceptActions([preselect("fav", { type: "choices", choiceIds: ["prime"] })]))
+      ).toEqual([]);
+      expect(
+        issuesOf(withConceptActions([preselect("email", { type: "static", value: "a@b.co" })]))
+      ).toEqual([]);
+    });
+
+    test("refuses a question in the rule's own block or an earlier one", () => {
+      expectIssue(
+        withConceptActions([preselect("concept", { type: "static", value: "x" })]),
+        [...actionPath, "target"],
+        "must target a question in a later block"
+      );
+      expectIssue(
+        withConceptActions([preselect("services", { type: "choices", choiceIds: ["netflix"] })]),
+        [...actionPath, "target"],
+        "must target a question in a later block"
+      );
+    });
+
+    test("refuses a question that doesn't exist", () => {
+      expectIssue(
+        withConceptActions([preselect("gone", { type: "static", value: "x" })]),
+        [...actionPath, "target"],
+        "Element ID gone does not exist"
+      );
+    });
+
+    test("refuses an answer that doesn't fit the question, at its value", () => {
+      expectIssue(
+        withConceptActions([preselect("fav", { type: "choices", choiceIds: ["netflix", "prime"] })]),
+        [...actionPath, "value"],
+        "exactly one option"
+      );
+      expectIssue(
+        withConceptActions([preselect("fav", { type: "choices", choiceIds: ["hbo"] })]),
+        [...actionPath, "value"],
+        "has no option hbo"
+      );
+    });
+
+    test("refuses an empty answer and keys the value has no use for", () => {
+      expectIssue(
+        withConceptActions([preselect("fav", { type: "choices", choiceIds: [] })]),
+        [...actionPath, "value", "choiceIds"],
+        "Choose at least one option"
+      );
+      expectIssue(
+        withConceptActions([preselect("email", { type: "static", value: "" })]),
+        [...actionPath, "value", "value"],
+        "Enter the answer to pre-fill"
+      );
+      expect(
+        issuesOf(withConceptActions([preselect("email", { type: "static", value: "x", label: "y" })])).length
+      ).toBeGreaterThan(0);
+    });
   });
 });

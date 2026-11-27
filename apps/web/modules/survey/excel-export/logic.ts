@@ -298,6 +298,18 @@ const actionPhrase = (ctx: TLogicContext, action: TSurveyBlockLogicAction): stri
       return calculationPhrase(ctx, action);
     case "markLowQuality":
       return ctx.t("workspace.surveys.export.logic.mark_low_quality");
+    case "preselectAnswer": {
+      // ENG-7437: the options by their labels, as a condition names them, or the value as typed.
+      const target: TDynamicLogicFieldValue = { type: "element", value: action.target };
+      const answers =
+        action.value.type === "static"
+          ? [action.value.value]
+          : action.value.choiceIds.map((choiceId) => staticValueText(ctx, choiceId, target));
+      return ctx.t("workspace.surveys.export.logic.preselect_answer", {
+        answer: answers.map((answer) => quote(ctx, answer)).join(", "),
+        question: questionPhrase(ctx, action.target),
+      });
+    }
   }
 };
 

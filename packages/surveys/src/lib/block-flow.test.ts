@@ -687,6 +687,7 @@ describe("startSurvey: rules before the first question (ENG-6932)", () => {
       endingId: undefined,
       variables: { score: 0 },
       markLowQuality: false,
+      preselections: {},
     });
   });
 

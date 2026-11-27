@@ -263,6 +263,8 @@ export type TFlowActionText =
   | { kind: "calculate"; label: string }
   /** ENG-6933: names nothing, so the row reads "Mark as low quality". */
   | { kind: "markLowQuality"; label: string }
+  /** ENG-7437: `label` is the question, `answer` what it opens with. */
+  | { kind: "preselectAnswer"; label: string; answer: string }
   | { kind: "unknown"; label: string };
 
 /** A formula in the formula box's text form, its references as chips (ENG-6950). */
@@ -325,6 +327,25 @@ const describeCalculateParts = (
 };
 
 /**
+ * What a Pre-select answer action puts in its question (ENG-7437), as the creator wrote it: the
+ * options' labels in the survey's default language, or the value. "…" while nothing is picked.
+ */
+const describePreselectedAnswer = (
+  action: Extract<TSurveyBlockLogicAction, { objective: "preselectAnswer" }>,
+  survey: TSurvey
+): string => {
+  if (action.value.type === "static") return action.value.value === "" ? "…" : quote(action.value.value);
+  const element = findElement(survey, action.target);
+  const choices = element && "choices" in element ? (element.choices ?? []) : [];
+  const labels = action.value.choiceIds.map((choiceId) => {
+    const choice = choices.find((item) => item.id === choiceId);
+    const label = choice && "label" in choice ? getLocalizedValue(choice.label, "default") : "";
+    return quote(getTextContent(label) || choiceId);
+  });
+  return labels.length > 0 ? labels.join(", ") : "…";
+};
+
+/**
  * Splits a sentence around the placeholders its translation holds, for chips in their place: `SLOT`
  * for `fill`, and `VALUE_SLOT` for `valueFill` when the sentence has a second one.
  */
@@ -370,6 +391,12 @@ export const describeFirstStepParts = (
       ]);
     case "calculate":
       return describeCalculateParts(action, survey, t, format);
+    case "preselectAnswer":
+      return fillSentence(
+        t("workspace.surveys.edit.flow.preselect_answer_in", { answer: VALUE_SLOT, question: SLOT }),
+        [questionChip(survey, action.target)],
+        [text(describePreselectedAnswer(action, survey))]
+      );
     default:
       return [text(getActionPlainText(describeAction(action, survey, t, format), t))];
   }
@@ -407,6 +434,12 @@ export const describeAction = (
       return { kind: "calculate", label: toPlainText(describeCalculateParts(action, survey, t, format)) };
     case "markLowQuality":
       return { kind: "markLowQuality", label: "" };
+    case "preselectAnswer":
+      return {
+        kind: "preselectAnswer",
+        label: toPlainText([questionChip(survey, action.target)]),
+        answer: describePreselectedAnswer(action, survey),
+      };
     default: {
       // An objective this editor doesn't know yet, from a newer survey: named as it is stored.
       const { objective } = action as { objective?: unknown };
@@ -456,6 +489,11 @@ export const getActionPlainText = (action: TFlowActionText, t: TFunction): strin
       return t("workspace.surveys.edit.flow.require_answer_to", { question: action.label });
     case "markLowQuality":
       return t("workspace.surveys.edit.mark_as_low_quality");
+    case "preselectAnswer":
+      return t("workspace.surveys.edit.flow.preselect_answer_in", {
+        answer: action.answer,
+        question: action.label,
+      });
     default:
       return action.label;
   }

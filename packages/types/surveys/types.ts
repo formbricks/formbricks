@@ -26,9 +26,11 @@ import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
 import { ZLanguage } from "../workspace";
 import {
+  type TActionPreselectAnswer,
   type TSurveyBlock,
   type TSurveyBlockLogicAction,
   ZActionMarkLowQuality,
+  ZActionPreselectAnswer,
   ZSurveyBlockLogic,
   ZSurveyBlocks,
 } from "./blocks";
@@ -79,6 +81,7 @@ import {
 } from "./logic";
 import { type TFindMatrix, findUnknownMatrixIds, isMatrixRowCondition } from "./matrix-conditions";
 import { OPTION_LIST_NAMES } from "./not-shown";
+import { getPreselectAnswerValueIssue } from "./preselect-answer";
 import { getOptionLists } from "./show-if";
 import { validateStartLogic } from "./start-logic-validation";
 import {
@@ -461,12 +464,14 @@ const ZActionJumpToQuestion = ZActionBase.extend({
  */
 export type TActionJumpToQuestion = z.infer<typeof ZActionJumpToQuestion>;
 
-// `markLowQuality` (ENG-6933) is carried as it is, so the v1 questions view round-trips a block rule using it.
+// `markLowQuality` (ENG-6933) and `preselectAnswer` (ENG-7437) are carried as they are, so the v1
+// questions view round-trips a block rule using them.
 export const ZSurveyLogicAction = z.union([
   ZActionCalculate,
   ZActionRequireAnswer,
   ZActionJumpToQuestion,
   ZActionMarkLowQuality,
+  ZActionPreselectAnswer,
 ]);
 
 export type TSurveyLogicAction = z.infer<typeof ZSurveyLogicAction>;
@@ -4200,6 +4205,44 @@ const validateBlockRequireAnswerAction = (
   return undefined;
 };
 
+/**
+ * Pre-select answer (ENG-7437) must target a question in a later block, as Require answer does: the
+ * rule runs when its block is submitted, so a question on this page or an earlier one has had its
+ * chance. The value must fit the question (`getPreselectAnswerValueIssue`).
+ */
+const validateBlockPreselectAnswerAction = (
+  ctx: TBlockActionContext,
+  action: TActionPreselectAnswer,
+  actionIndex: number
+): z.core.$ZodIssue | undefined => {
+  const { blockIndex, logicIndex, allElements } = ctx;
+  const path = ["blocks", blockIndex, "logic", logicIndex, "actions", actionIndex];
+  const rule = `rule ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`;
+  const targetElementInfo = allElements.get(action.target);
+
+  if (!targetElementInfo) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Element ID ${action.target} does not exist for the pre-select answer action in ${rule}`,
+      path: [...path, "target"],
+    };
+  }
+
+  if (targetElementInfo.block <= blockIndex) {
+    return {
+      code: "custom",
+      message: `Conditional Logic: Pre-select answer in ${rule} must target a question in a later block; ${action.target} is in block ${String(targetElementInfo.block + 1)}.`,
+      path: [...path, "target"],
+    };
+  }
+
+  const valueIssue = getPreselectAnswerValueIssue(targetElementInfo.data, action.value);
+  if (valueIssue) {
+    return { code: "custom", message: `Conditional Logic: ${valueIssue}`, path: [...path, "value"] };
+  }
+  return undefined;
+};
+
 /** A jump must go to a block or an ending that exists, and not to its own block. */
 const validateBlockJumpAction = (
   ctx: TBlockActionContext,
@@ -4249,6 +4292,8 @@ const validateBlockActions = (
         return validateBlockRequireAnswerAction(ctx, action.target);
       case "jumpToBlock":
         return validateBlockJumpAction(ctx, action.target);
+      case "preselectAnswer":
+        return validateBlockPreselectAnswerAction(ctx, action, actionIndex);
       default:
         // `markLowQuality` (ENG-6933) has nothing to check: it takes no target.
         return undefined;

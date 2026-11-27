@@ -1,5 +1,5 @@
 import { type JSX } from "preact";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { applyIngestContract } from "@formbricks/types/embedded-data-ingest";
 import {
@@ -26,6 +26,7 @@ import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
+import type { TPreselections } from "@formbricks/types/surveys/preselect-answer";
 import { withOptionsShown } from "@formbricks/types/surveys/show-if";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
@@ -80,6 +81,7 @@ import {
   patchSurveyProgressSnapshot,
   saveSurveyProgress,
 } from "@/lib/offline-storage";
+import { getBlockPreselection } from "@/lib/prefill";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { clearSignatureDrafts, createSignatureDraftStore } from "@/lib/signature-answer";
@@ -585,6 +587,28 @@ export function Survey({
   const [entryNotShownStep, setEntryNotShownStep] = useState<TNotShownStep | null>(null);
   const isNavigatingBackRef = useRef(false);
   const [responseData, setResponseData] = useState<TResponseData>(ingestedFieldsRecord);
+  /**
+   * Answers rules pre-selected (ENG-7437) that no page has opened with yet, by question id. A page
+   * opens with its questions' pre-selections (`getBlockPreselection`) and uses them up: from then on
+   * the answer is the respondent's, also after Back.
+   */
+  const pendingPreselectionsRef = useRef<TPreselections>(startOutcome.preselections);
+  const addPreselections = (preselections: TPreselections): void => {
+    pendingPreselectionsRef.current = { ...pendingPreselectionsRef.current, ...preselections };
+  };
+  // A layout effect, so the page paints with its pre-selections; it runs before the page's own mount
+  // effect, whose URL prefill therefore wins, and it only fills questions without an answer.
+  useLayoutEffect(() => {
+    const block = localSurvey.blocks.find((candidate) => candidate.id === cardVisit.blockId);
+    if (!block) return;
+    const pending = pendingPreselectionsRef.current;
+    if (!block.elements.some((element) => Object.hasOwn(pending, element.id))) return;
+    const remaining = { ...pending };
+    for (const element of block.elements) delete remaining[element.id];
+    pendingPreselectionsRef.current = remaining;
+    setResponseData((prev) => ({ ...prev, ...getBlockPreselection(block, pending, prev, selectedLanguage) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per card visit, with the language it opens in
+  }, [cardVisit]);
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
@@ -1262,6 +1286,7 @@ export function Survey({
     if (entry.requiredQuestionIds.length > 0) makeQuestionsRequired(entry.requiredQuestionIds);
     // Travels with the first write, like the values the passed-over blocks set.
     if (entry.markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
+    addPreselections(entry.preselections);
     // Sent by the finish-on-load effect below, once the display has settled.
     if (entry.finished) {
       setAllHiddenFinish({
@@ -1408,6 +1433,7 @@ export function Survey({
       optionsNotShown,
       markLowQuality,
       skippedBlockIds,
+      preselections,
     } = advanceFromBlock({
       survey: localSurvey,
       blockId,
@@ -1454,6 +1480,8 @@ export function Survey({
     // A rule marked the response Low quality (ENG-6933): this submit's write carries the flag. The
     // respondent sees nothing.
     if (markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
+    // ENG-7437: the pages these questions are on open with them.
+    addPreselections(preselections);
 
     void onResponseCreateOrUpdate({
       data: submittedData,

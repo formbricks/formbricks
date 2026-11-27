@@ -26,6 +26,7 @@ import {
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
+import type { TPreselections } from "@formbricks/types/surveys/preselect-answer";
 import { getElementsFromSurveyBlocks } from "./utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -101,11 +102,14 @@ export const performActions = (
   calculations: TResponseVariables;
   /** A Mark as low quality action ran (ENG-6933): the next response write carries the flag. */
   markLowQuality: boolean;
+  /** Pre-select answer actions that ran (ENG-7437), by question id; a later one wins. */
+  preselections: TPreselections;
 } => {
   let jumpTarget: string | undefined;
   const requiredQuestionIds: string[] = [];
   const calculations: TResponseVariables = { ...calculationResults };
   let markLowQuality = false;
+  const preselections: TPreselections = {};
 
   actions.forEach((action) => {
     switch (action.objective) {
@@ -126,10 +130,13 @@ export const performActions = (
       case "markLowQuality":
         markLowQuality = true;
         break;
+      case "preselectAnswer":
+        preselections[action.target] = action.value;
+        break;
     }
   });
 
-  return { jumpTarget, requiredQuestionIds, calculations, markLowQuality };
+  return { jumpTarget, requiredQuestionIds, calculations, markLowQuality, preselections };
 };
 
 type TElementOperand = Extract<TSingleCondition["leftOperand"], { type: "element" }>;

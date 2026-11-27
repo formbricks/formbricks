@@ -53,11 +53,13 @@ programming or UI concepts, and no implementation details.
 
 **Copied options** — The options of a question copied from an earlier question, keeping their ids and answer codes, each shown only if it was picked in the source. _Avoid_: carry-forward list, piped options.
 
-**Start logic** — The rules that run before the respondent sees the first block: they can screen out to an ending, jump, or set a value. The editor labels it "Before the first question". _Avoid_: pre-qualification logic, pre-Q1 logic.
+**Start logic** — The rules that run before the respondent sees the first block: they can screen out to an ending, jump, set a value, mark the response Low quality or pre-select an answer. The editor labels it "Before the first question". _Avoid_: pre-qualification logic, pre-Q1 logic.
 
 **Embedded Data** — Values stored on a response that the respondent didn't type: set by rules, links or the SDK.
 
 **Set value** — The rule action that writes a computed Embedded Data field from a fixed value, an answer, another field or an expression. The editor names it "Set value" whether or not the rule has a condition; a rule with none reads "Always". _Avoid_: assign, variable update, calculation, "Set a value".
+
+**Pre-select answer** — The rule action that opens a later single select, multi select or free text question with an answer already given: options picked by id, or a value typed in. The respondent can change it, and the response stores only what their page submits, so a question on a page they never see has no answer. It never writes Embedded Data; that is Set value. _Avoid_: default answer, default value, prefill (that is the URL parameter).
 
 **Expression** — A formula a Set value computes from answers, Embedded Data fields and fixed values, using arithmetic and a fixed list of functions. A rule's conditions never contain one. _Avoid_: formula, script.
 

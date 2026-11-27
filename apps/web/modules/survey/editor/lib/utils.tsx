@@ -32,6 +32,7 @@ import {
   resolveMatrixColumnValue,
   resolveMatrixRowIndex,
 } from "@formbricks/types/surveys/matrix-conditions";
+import { OTHER_CHOICE_ID, isPreselectableElement } from "@formbricks/types/surveys/preselect-answer";
 import { getOptionLists } from "@formbricks/types/surveys/show-if";
 import {
   TSurvey,
@@ -971,6 +972,40 @@ export const getMatchValueProps = (
   };
 };
 
+/**
+ * The questions a Pre-select answer action (ENG-7437) may target: single select, multi select and
+ * free text questions in the blocks after the rule's own. Before the first question (`scopeBlockIdx`
+ * -1) that is every block.
+ */
+export const getPreselectTargetOptions = (
+  localSurvey: TSurvey,
+  scopeBlockIdx: number,
+  t: TFunction
+): TComboboxOption[] =>
+  localSurvey.blocks
+    .slice(scopeBlockIdx + 1)
+    .flatMap((block) => block.elements)
+    .filter((element) => isPreselectableElement(element))
+    .map((element) => ({
+      icon: getElementIconMapping(t)[element.type],
+      label: getElementPickerLabel(localSurvey, element, t),
+      value: element.id,
+    }));
+
+/**
+ * The options a select question can open with, labelled in the survey's default language. "Other"
+ * takes the respondent's own text, so it is not offered.
+ */
+export const getPreselectChoiceOptions = (element: TSurveyElement | undefined): TComboboxOption[] => {
+  if (!element || !("choices" in element)) return [];
+  return element.choices
+    .filter((choice) => choice.id !== OTHER_CHOICE_ID && "label" in choice)
+    .map((choice) => ({
+      label: getTextContent(getLocalizedValue("label" in choice ? choice.label : undefined, "default")),
+      value: choice.id,
+    }));
+};
+
 export const getActionTargetOptions = (
   action: TSurveyBlockLogicAction,
   localSurvey: TSurvey,
@@ -1343,7 +1378,10 @@ export const findElementUse = (survey: TSurvey, elementId: string): TUse | null 
   };
 
   const isUsedInAction = (action: TSurveyBlockLogicAction): boolean => {
-    if (action.objective === "requireAnswer" && action.target === elementId) {
+    if (
+      (action.objective === "requireAnswer" || action.objective === "preselectAnswer") &&
+      action.target === elementId
+    ) {
       return true;
     }
 
@@ -1385,8 +1423,14 @@ export const findElementUse = (survey: TSurvey, elementId: string): TUse | null 
     );
   });
 
+  // ENG-7437: a rule before the first question that pre-selects an answer in this question.
+  const preselectsInStartLogic = (rule: TSurveyBlockLogic): boolean =>
+    rule.actions.some((action) => action.objective === "preselectAnswer" && action.target === elementId);
+
   return firstUse(
-    firstUse(usageAt("logic", logicIndex), () =>
+    firstUse(
+      firstUse(usageAt("logic", logicIndex), () => startLogicUse(survey, preselectsInStartLogic)),
+      () =>
       // ENG-6938: a question another question copies its options from. Checked before show-if: a copy
       // writes "picked in the source" show-ifs on every option it copies, so the show-if check would
       // otherwise always find the copy first and name it as a show-if.
@@ -1627,14 +1671,26 @@ export const findOptionUse = (
     return false;
   };
 
+  // ENG-7437: a Pre-select answer action that opens the question with this option.
+  const preselectsOption = (logicRule: TSurveyBlockLogic): boolean =>
+    logicRule.actions.some(
+      (action) =>
+        action.objective === "preselectAnswer" &&
+        action.target === elementId &&
+        action.value.type === "choices" &&
+        action.value.choiceIds.includes(optionId)
+    );
+
   const isUsedInLogicRule = (logicRule: TSurveyBlockLogic): boolean => {
-    return isUsedInCondition(logicRule.conditions);
+    return isUsedInCondition(logicRule.conditions) || preselectsOption(logicRule);
   };
 
   return firstUse(usageAt("logic", findElementIndexByBlockLogic(survey, isUsedInLogicRule)), () =>
-    usageAt(
-      "showIf",
-      findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+    firstUse(startLogicUse(survey, preselectsOption), () =>
+      usageAt(
+        "showIf",
+        findElementIndexByShowIf(survey, (group) => isUsedInCondition(group))
+      )
     )
   );
 };

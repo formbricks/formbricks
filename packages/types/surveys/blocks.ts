@@ -9,6 +9,7 @@ import {
   ZConditionGroup,
   ZDynamicLogicFieldValue,
 } from "./logic";
+import { PRESELECT_ANSWER_MAX_CHOICES, PRESELECT_ANSWER_MAX_TEXT_LENGTH } from "./preselect-answer";
 
 export const ZSurveyBlockId = ZId;
 
@@ -94,7 +95,8 @@ export type TSurveyBlockLogicActionObjective =
   | "calculate"
   | "requireAnswer"
   | "jumpToBlock"
-  | "markLowQuality";
+  | "markLowQuality"
+  | "preselectAnswer";
 
 // RequireAnswer action - targets element IDs
 
@@ -151,6 +153,54 @@ export const ZActionMarkLowQuality = z.object({
 
 export type TActionMarkLowQuality = z.infer<typeof ZActionMarkLowQuality>;
 
+// PreselectAnswer action (ENG-7437): when the rule fires, a later question opens with this answer
+// already given (options by id, or a free text value); the respondent can change it. See
+// `preselect-answer.ts` for what fits which question.
+
+const ZPreselectTarget = z
+  .string()
+  .min(1, "Conditional Logic: Choose the question to pre-select an answer in")
+  .superRefine((id, ctx) => {
+    if (!ZSurveyElementId.safeParse(id).success) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Conditional Logic: Target element id is not a valid element id",
+        path: ["target"],
+      });
+    }
+  });
+
+export const ZActionPreselectAnswer = z.object({
+  id: ZId,
+  objective: z.literal("preselectAnswer"),
+  target: ZPreselectTarget,
+  value: z.discriminatedUnion("type", [
+    z.strictObject({
+      type: z.literal("choices"),
+      choiceIds: z
+        .array(z.string().min(1))
+        .min(1, "Conditional Logic: Choose at least one option to pre-select")
+        .max(
+          PRESELECT_ANSWER_MAX_CHOICES,
+          `Conditional Logic: At most ${String(PRESELECT_ANSWER_MAX_CHOICES)} options can be pre-selected`
+        ),
+    }),
+    z.strictObject({
+      type: z.literal("static"),
+      value: z
+        .string()
+        .min(1, "Conditional Logic: Enter the answer to pre-fill")
+        .max(
+          PRESELECT_ANSWER_MAX_TEXT_LENGTH,
+          `Conditional Logic: A pre-filled answer has at most ${String(PRESELECT_ANSWER_MAX_TEXT_LENGTH)} characters`
+        )
+        .refine((value) => !value.includes("\u0000"), "Conditional Logic: A pre-filled answer can't contain a null character"),
+    }),
+  ]),
+});
+
+export type TActionPreselectAnswer = z.infer<typeof ZActionPreselectAnswer>;
+
 // Block logic actions
 
 export const ZSurveyBlockLogicAction = z.union([
@@ -158,6 +208,7 @@ export const ZSurveyBlockLogicAction = z.union([
   ZActionRequireAnswer,
   ZActionJumpToBlock,
   ZActionMarkLowQuality,
+  ZActionPreselectAnswer,
 ]);
 
 export type TSurveyBlockLogicAction = z.infer<typeof ZSurveyBlockLogicAction>;

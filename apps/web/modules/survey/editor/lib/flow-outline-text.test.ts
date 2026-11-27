@@ -27,6 +27,10 @@ const t = ((key: string, options?: { blockNumber?: number; value?: string; field
   if (key === "workspace.surveys.edit.flow.append_value_to_field") {
     return `append ${options?.value} to ${options?.field}`;
   }
+  if (key === "workspace.surveys.edit.flow.preselect_answer_in") {
+    const { answer, question } = options as { answer?: string; question?: string };
+    return `Pre-select ${answer} in ${question}`;
+  }
   return key.split(".").pop();
 }) as never;
 
@@ -198,6 +202,30 @@ describe("describeAction", () => {
       kind: "markLowQuality",
       label: "",
     });
+  });
+
+  test("Pre-select answer names its options by label, or its value, and its question (ENG-7437)", () => {
+    const options: TSurveyBlockLogicAction = {
+      id: "a",
+      objective: "preselectAnswer",
+      target: "fav",
+      value: { type: "choices", choiceIds: ["prime", "netflix"] },
+    };
+    const value: TSurveyBlockLogicAction = {
+      id: "b",
+      objective: "preselectAnswer",
+      target: "email",
+      value: { type: "static", value: "a@b.co" },
+    };
+
+    expect(describeAction(options, surveyFlowFixture, t)).toMatchObject({
+      kind: "preselectAnswer",
+      answer: "“Prime Video”, “Netflix”",
+    });
+    expect(toPlainText(describeFirstStepParts([options], surveyFlowFixture, t))).toMatch(
+      /^Pre-select “Prime Video”, “Netflix” in “.+”$/
+    );
+    expect(describeAction(value, surveyFlowFixture, t)).toMatchObject({ answer: "“a@b.co”" });
   });
 
   test("a Set value step reads as field = formula (ENG-6935)", () => {

@@ -25,7 +25,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
  * menu and the "then" dropdown. One per action objective; a rule with several kinds of action reads
  * as its first action's.
  */
-export type TFlowRuleType = "jump" | "setValue" | "requireAnswer" | "markLowQuality";
+export type TFlowRuleType = "jump" | "setValue" | "requireAnswer" | "markLowQuality" | "preselectAnswer";
 
 /** Why a row or badge is shown read-only. */
 export type TFlowReadOnlyReason = "unsupportedAction" | "unsupportedValue" | "unsupportedCondition";
@@ -113,7 +113,13 @@ export interface TFlowOutline {
   counts: { blocks: number; endings: number };
 }
 
-const EDITABLE_ACTION_OBJECTIVES = new Set(["jumpToBlock", "requireAnswer", "calculate", "markLowQuality"]);
+const EDITABLE_ACTION_OBJECTIVES = new Set([
+  "jumpToBlock",
+  "requireAnswer",
+  "calculate",
+  "markLowQuality",
+  "preselectAnswer",
+]);
 const EDITABLE_VALUE_TYPES = new Set(["static", "element", "variable", "hiddenField", "reserved"]);
 // ENG-6935: a calculation's value may also be a Set value expression, edited in the formula box, in a
 // block's rules and before the first question alike.
@@ -122,11 +128,11 @@ const EDITABLE_OPERAND_TYPES = new Set(["element", "variable", "hiddenField", "r
 
 /**
  * Before the first question the editor offers no answers and no "require answer" (ENG-6932), but does
- * offer "mark as low quality" (ENG-6952). A rule written there through the API with an answer or a
+ * offer "mark as low quality" (ENG-6952) and "pre-select answer" (ENG-7437). A rule written there through the API with an answer or a
  * "require answer" is shown read-only, as the validator refuses it anyway.
  */
 const START_EDITABLE = {
-  objectives: new Set(["jumpToBlock", "calculate", "markLowQuality"]),
+  objectives: new Set(["jumpToBlock", "calculate", "markLowQuality", "preselectAnswer"]),
   valueTypes: new Set(["static", "variable", "hiddenField", "reserved"]),
   operandTypes: new Set(["variable", "hiddenField", "reserved"]),
 };
@@ -186,6 +192,7 @@ const RULE_TYPE_BY_OBJECTIVE: Record<string, TFlowRuleType> = {
   calculate: "setValue",
   requireAnswer: "requireAnswer",
   markLowQuality: "markLowQuality",
+  preselectAnswer: "preselectAnswer",
 };
 
 /** The first action's type; an action the editor doesn't know is passed over, and a jump is the default. */
