@@ -31,7 +31,31 @@ Acquire::http::Timeout "10";
 Acquire::https::Timeout "10";
 Acquire::Languages "none";
 APT::Update::Error-Mode "any";
+DPkg::Lock::Timeout "30";
 APT
+}
+
+ci_stop_stray_apt() {
+  # Playwright runs apt-get through sudo, whose own session the caller's `timeout` does not reach: it
+  # ends Playwright, but apt-get carries on and keeps the dpkg lock (ENG-7557). On these disposable
+  # runners no other apt-get may run beside this setup, so stop every one before retrying. A dpkg that
+  # apt-get had started keeps running; ci_wait_for_dpkg_lock waits for it to finish.
+  sudo pkill -TERM -x apt-get || true
+}
+
+ci_wait_for_dpkg_lock() {
+  local seconds="$1" dpkg_dir="${2:-/var/lib/dpkg}"
+  # apt holds lock-frontend and hands dpkg the run, and dpkg then takes lock itself, which outlives an
+  # apt-get stopped mid-install. Take both, in dpkg's order and with the same fcntl locks, and let go at
+  # once: that proves neither apt nor dpkg still runs. `timeout` bounds the whole wait.
+  if ! timeout --kill-after=5s "${seconds}s" sudo python3 -c '
+import fcntl, os, sys
+for name in ("lock-frontend", "lock"):
+    fcntl.lockf(open(os.path.join(sys.argv[1], name), "a"), fcntl.LOCK_EX)
+' "$dpkg_dir"; then
+    echo "::error::The dpkg locks in ${dpkg_dir} were still held after ${seconds}s." >&2
+    return 1
+  fi
 }
 
 ci_use_fallback_apt_mirror() {

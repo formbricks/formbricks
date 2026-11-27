@@ -1,5 +1,5 @@
 import yaml from "js-yaml";
-import { execFile, execFileSync, spawnSync } from "node:child_process";
+import { type ChildProcess, execFile, execFileSync, spawn, spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
@@ -10,6 +10,7 @@ import { afterEach, expect, test } from "vitest";
 
 const repository = fileURLToPath(new URL("../", import.meta.url));
 const directories: string[] = [];
+const holders: ChildProcess[] = [];
 
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), "formbricks-ci-network-"));
@@ -49,6 +50,7 @@ function fixture() {
 }
 
 afterEach(() => {
+  for (const holder of holders.splice(0)) holder.kill();
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });
 
@@ -140,6 +142,87 @@ test("a persistent apt failure stops setup before any browser install", () => {
     "exec playwright install-deps chromium",
   ]);
 });
+
+test("the apt fallback stops a stray apt-get and waits for the dpkg locks before touching dpkg", () => {
+  // Playwright's apt-get runs under sudo, outside the process group `timeout` stops (ENG-7557).
+  const { directory, env, command } = fixture();
+  // One line per call, even for the multi-line Python lock helper.
+  command("sudo", 'line="sudo $*"; echo "${line//$\'\\n\'/ }" >> "$FIXTURE/commands"');
+  command(
+    "pnpm",
+    `
+echo "$*" >> "$FIXTURE/commands"
+if [[ "$*" == *install-deps* && ! -e "$FIXTURE/apt-failed" ]]; then touch "$FIXTURE/apt-failed"; exit 124; fi`
+  );
+  const result = spawnSync("bash", ["scripts/install-playwright-ci.sh", "chromium"], {
+    cwd: repository,
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status, result.stdout + result.stderr).toBe(0);
+  const commands = readFileSync(join(directory, "commands"), "utf8")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("sudo tee") && !line.startsWith("sudo python3 - "));
+  expect(commands).toEqual([
+    "exec playwright install-deps chromium",
+    "sudo pkill -TERM -x apt-get",
+    expect.stringMatching(/^sudo python3 -c .*fcntl\.lockf.* \/var\/lib\/dpkg$/),
+    "sudo dpkg --configure -a",
+    "exec playwright install-deps chromium",
+    "exec playwright install chromium",
+  ]);
+});
+
+test.each([
+  ["waits for apt's lock-frontend to be released", "lock-frontend", 1, 0],
+  ["waits for the lock a dpkg left running by a stopped apt-get still holds", "lock", 1, 0],
+  ["fails when a dpkg lock is still held at the deadline", "lock", 30, 1],
+])(
+  "ci_wait_for_dpkg_lock %s",
+  async (_name, lockName, holdSeconds, expectedStatus) => {
+    const { directory, env, command } = fixture();
+    command("sudo", 'exec "$@"');
+    // A bounded run like GNU timeout's, for runners (and macOS) without one. The watchdog takes its
+    // sleep down with it, so nothing outlives the test.
+    command(
+      "timeout",
+      `while [[ "$1" == --* ]]; do shift; done; limit="\${1%s}"; shift
+"$@" & pid=$!
+( trap 'kill "$nap" 2>/dev/null; exit 0' TERM; /bin/sleep "$limit" & nap=$!; wait "$nap"; kill "$pid" 2>/dev/null ) &
+watchdog=$!
+status=0; wait "$pid" || status=$?
+kill "$watchdog" 2>/dev/null || true
+exit "$status"`
+    );
+    const dpkg = join(directory, "dpkg");
+    mkdirSync(dpkg);
+    for (const name of ["lock-frontend", "lock"]) writeFileSync(join(dpkg, name), "");
+    // Hold one lock as apt or dpkg does (fcntl), and report it is held before the helper starts waiting.
+    const holder = spawn(
+      "python3",
+      [
+        "-c",
+        "import fcntl, sys, time; f = open(sys.argv[1], 'a'); fcntl.lockf(f, fcntl.LOCK_EX); print('held', flush=True); time.sleep(float(sys.argv[2]))",
+        join(dpkg, lockName),
+        String(holdSeconds),
+      ],
+      { stdio: ["ignore", "pipe", "inherit"] }
+    );
+    holders.push(holder);
+    await new Promise<void>((resolve) => holder.stdout.once("data", () => resolve()));
+    const started = Date.now();
+    const result = spawnSync(
+      "bash",
+      ["-c", 'source scripts/ci-network.sh; ci_wait_for_dpkg_lock 3 "$1"', "test", dpkg],
+      { cwd: repository, env, encoding: "utf8" }
+    );
+    expect(result.status, result.stderr).toBe(expectedStatus);
+    if (expectedStatus === 0) expect(Date.now() - started).toBeGreaterThanOrEqual(500);
+    else expect(result.stderr).toContain("were still held after 3s");
+  },
+  15_000
+);
 
 test.each(["pull", "validation"])("a permanent %s failure remains red", (failure) => {
   const { directory, env, command } = fixture();
