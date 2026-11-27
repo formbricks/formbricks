@@ -14,6 +14,7 @@ import {
   checkForRecursiveSegmentFilter,
   collectSurveyIdsFromSegmentFilters,
   getSurveyIdsReadBySegments,
+  isPrivateSegmentOfHiddenSurvey,
   segmentFiltersReadHiddenSurvey,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment, getSegmentsByIds } from "@/modules/ee/contacts/segments/lib/segments";
@@ -622,5 +623,54 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     await expect(
       assertSegmentSurveyFiltersVisible(tree(interaction("specific", [restrictedId])), workspaceId, member)
     ).rejects.toThrow(new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE));
+  });
+});
+
+describe("isPrivateSegmentOfHiddenSurvey (ENG-7556)", () => {
+  const workspaceId = "ws1";
+  const restrictedId = "clrestricted00000000000001";
+  const member: TSurveyActorContext = {
+    enforced: true,
+    isOrganizationAdmin: false,
+    kind: "user",
+    userId: "u1",
+  };
+  const admin: TSurveyActorContext = {
+    enforced: true,
+    isOrganizationAdmin: true,
+    kind: "user",
+    userId: "u0",
+  };
+  const segment = (isPrivate: boolean, surveys: string[]) => ({ isPrivate, surveys, workspaceId });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSurveyFindFirst.mockResolvedValue(null);
+  });
+
+  test("a private segment attached to a hidden survey is hidden", async () => {
+    mockSurveyFindFirst.mockResolvedValue({ id: restrictedId });
+
+    expect(await isPrivateSegmentOfHiddenSurvey(segment(true, [restrictedId]), member)).toBe(true);
+    expect(mockSurveyFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: { in: [restrictedId] }, workspaceId }) })
+    );
+  });
+
+  test("a private segment attached to a visible survey is not", async () => {
+    expect(await isPrivateSegmentOfHiddenSurvey(segment(true, [restrictedId]), member)).toBe(false);
+  });
+
+  // Fails closed, like getSegments' scoped read: an orphan has no survey to vouch for it.
+  test("a private segment attached to no survey is hidden from a member", async () => {
+    expect(await isPrivateSegmentOfHiddenSurvey(segment(true, []), member)).toBe(true);
+    expect(mockSurveyFindFirst).not.toHaveBeenCalled();
+  });
+
+  test("a shared segment, and anything for an organization owner or manager, costs no query", async () => {
+    expect(await isPrivateSegmentOfHiddenSurvey(segment(false, [restrictedId]), member)).toBe(false);
+    expect(await isPrivateSegmentOfHiddenSurvey(segment(true, [restrictedId]), admin)).toBe(false);
+    expect(await isPrivateSegmentOfHiddenSurvey(segment(true, []), admin)).toBe(false);
+    expect(mockSurveyFindFirst).not.toHaveBeenCalled();
   });
 });

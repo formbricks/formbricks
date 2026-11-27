@@ -198,7 +198,13 @@ describe("Segment Service Tests", () => {
         expect.objectContaining({
           where: {
             workspaceId: "workspace-id-mock",
-            OR: [{ isPrivate: false }, { surveys: { some: visibleSurveyWhere } }],
+            OR: [
+              { isPrivate: false },
+              {
+                isPrivate: true,
+                AND: [{ surveys: { some: {} } }, { surveys: { every: visibleSurveyWhere } }],
+              },
+            ],
           },
         })
       );
