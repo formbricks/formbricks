@@ -32,6 +32,7 @@ import {
   getFormatLeftOperandValue,
   getFormatRightOperandValue,
   getMatchValueProps,
+  getNextPreselectChoiceIds,
   getPreselectChoiceOptions,
   getPreselectTargetOptions,
   isComputedBooleanField,
@@ -969,6 +970,14 @@ describe("getActionObjectiveOptions", () => {
       "other"
     );
     expect(getPreselectChoiceOptions(undefined)).toEqual([]);
+  });
+
+  test('a multi select\'s "None of these" is picked alone: it clears the others, and another pick clears it', () => {
+    expect(getNextPreselectChoiceIds(["a", "b"], ["a", "b", "none"])).toEqual(["none"]);
+    expect(getNextPreselectChoiceIds(["none"], ["none", "a"])).toEqual(["a"]);
+    expect(getNextPreselectChoiceIds(["a"], ["a", "b"])).toEqual(["a", "b"]);
+    // Removing a pick changes nothing else.
+    expect(getNextPreselectChoiceIds(["a", "b"], ["b"])).toEqual(["b"]);
   });
 
   test("lists the rule types in Add logic's order, each with its own icon", () => {

@@ -6,7 +6,11 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { PRESELECT_ANSWER_MAX_TEXT_LENGTH } from "@formbricks/types/surveys/preselect-answer";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getEmptyPreselectValue } from "@/lib/surveyLogic/utils";
-import { getPreselectChoiceOptions, getPreselectTargetOptions } from "@/modules/survey/editor/lib/utils";
+import {
+  getNextPreselectChoiceIds,
+  getPreselectChoiceOptions,
+  getPreselectTargetOptions,
+} from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Input } from "@/modules/ui/components/input";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
@@ -62,7 +66,7 @@ export function PreselectAnswerFields({
     }
 
     const isMulti = element.type === TSurveyElementTypeEnum.MultipleChoiceMulti;
-    const choiceIds = action.value.type === "choices" ? action.value.choiceIds : [];
+    const choiceIdsNow = action.value.type === "choices" ? action.value.choiceIds : [];
     return (
       <InputCombobox
         id={`${id}-choices`}
@@ -73,10 +77,11 @@ export function PreselectAnswerFields({
         aria-label={t("workspace.surveys.edit.flow.preselect_answer_options")}
         placeholder={t("workspace.surveys.edit.flow.preselect_answer_options")}
         options={getPreselectChoiceOptions(element)}
-        value={isMulti ? choiceIds : (choiceIds[0] ?? null)}
+        value={isMulti ? [...choiceIdsNow] : (choiceIdsNow[0] ?? null)}
         onChangeValue={(val: string | number | string[]) => {
           const picked = Array.isArray(val) ? val : [String(val)];
-          onChange({ value: { type: "choices", choiceIds: picked } });
+          const choiceIds = isMulti ? getNextPreselectChoiceIds(choiceIdsNow, picked) : picked;
+          onChange({ value: { type: "choices", choiceIds } });
         }}
         comboboxClasses="grow"
       />

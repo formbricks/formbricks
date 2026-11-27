@@ -53,7 +53,56 @@ export interface TPreselectableElement {
 export const isPreselectableElement = (element: { type: string }): boolean =>
   PRESELECTABLE_ELEMENT_TYPES.has(element.type);
 
-const isNumeric = (value: string): boolean => value.trim() !== "" && Number.isFinite(Number(value));
+/**
+ * A number as a number input shows it: the HTML "valid floating-point number" form (`-1.5`, `2e3`).
+ * `Number()` would also take `0x10` or `0b1`, which the input clears, so the respondent would see an
+ * empty field while the answer held the text.
+ */
+const NUMBER_INPUT_VALUE = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][-+]?\d+)?$/;
+const isNumeric = (value: string): boolean => NUMBER_INPUT_VALUE.test(value);
+
+/** Why a free text question can't open with `value`, or `undefined`. */
+const getTextValueIssue = (
+  element: TPreselectableElement,
+  value: TPreselectAnswerValue
+): string | undefined => {
+  if (value.type !== "static") {
+    return `Question ${element.id} is a free text question: pre-select a value, not options.`;
+  }
+  if (element.inputType === "number" && !isNumeric(value.value)) {
+    return `Question ${element.id} takes a number: "${value.value}" is not one.`;
+  }
+  return undefined;
+};
+
+/** Why a select question can't open with these options, or `undefined`. */
+const getChoicesIssue = (
+  element: TPreselectableElement,
+  choiceIds: readonly string[]
+): string | undefined => {
+  // Checked here, not by the schema's array bounds: inside the action union those surface as a bare
+  // "Invalid input", while this names the limit (CODING_STANDARDS "Input Limits").
+  if (choiceIds.length > PRESELECT_ANSWER_MAX_CHOICES) {
+    return `At most ${String(PRESELECT_ANSWER_MAX_CHOICES)} options can be pre-selected.`;
+  }
+  if (element.type === SINGLE_SELECT && choiceIds.length > 1) {
+    return `Question ${element.id} is a single select question: pre-select exactly one option.`;
+  }
+  if (new Set(choiceIds).size !== choiceIds.length) {
+    return `Question ${element.id}: an option is pre-selected twice.`;
+  }
+  if (choiceIds.includes(OTHER_OPTION_ID)) {
+    return `Question ${element.id}: the "Other" option takes the respondent's own text, so it can't be pre-selected.`;
+  }
+  if (choiceIds.includes(NONE_OPTION_ID) && choiceIds.length > 1) {
+    return `Question ${element.id}: "None of these" is picked alone, so it can't be pre-selected with other options.`;
+  }
+  const known = new Set((element.choices ?? []).map((choice) => choice.id));
+  const missing = choiceIds.find((choiceId) => !known.has(choiceId));
+  return missing === undefined
+    ? undefined
+    : `Question ${element.id} has no option ${missing}. Choose one of its options.`;
+};
 
 /**
  * Why `value` can't be pre-selected in `element`, or `undefined` when it can. The message is a
@@ -66,38 +115,11 @@ export const getPreselectAnswerValueIssue = (
   if (!isPreselectableElement(element)) {
     return `An answer can only be pre-selected in a single select, multi select or free text question; question ${element.id} is a ${element.type} question.`;
   }
-
-  if (element.type === OPEN_TEXT) {
-    if (value.type !== "static") {
-      return `Question ${element.id} is a free text question: pre-select a value, not options.`;
-    }
-    if (element.inputType === "number" && !isNumeric(value.value)) {
-      return `Question ${element.id} takes a number: "${value.value}" is not one.`;
-    }
-    return undefined;
-  }
-
+  if (element.type === OPEN_TEXT) return getTextValueIssue(element, value);
   if (value.type !== "choices") {
     return `Question ${element.id} is a select question: pre-select one of its options, not a value.`;
   }
-  if (element.type === SINGLE_SELECT && value.choiceIds.length > 1) {
-    return `Question ${element.id} is a single select question: pre-select exactly one option.`;
-  }
-  if (new Set(value.choiceIds).size !== value.choiceIds.length) {
-    return `Question ${element.id}: an option is pre-selected twice.`;
-  }
-  if (value.choiceIds.includes(OTHER_OPTION_ID)) {
-    return `Question ${element.id}: the "Other" option takes the respondent's own text, so it can't be pre-selected.`;
-  }
-  if (value.choiceIds.includes(NONE_OPTION_ID) && value.choiceIds.length > 1) {
-    return `Question ${element.id}: "None of these" is picked alone, so it can't be pre-selected with other options.`;
-  }
-  const choiceIds = new Set((element.choices ?? []).map((choice) => choice.id));
-  const missing = value.choiceIds.find((choiceId) => !choiceIds.has(choiceId));
-  if (missing !== undefined) {
-    return `Question ${element.id} has no option ${missing}. Choose one of its options.`;
-  }
-  return undefined;
+  return getChoicesIssue(element, value.choiceIds);
 };
 
 /**

@@ -10,15 +10,16 @@ import { getBlockPreselection } from "@/lib/prefill";
  * - `pending`: pre-selections no page has opened with yet, by question id.
  * - `applied`: answers a page opened with that the respondent has not submitted yet, as they were
  *   applied. Submitting the page makes them the respondent's own.
- * - `steps`: one entry per submit, next to the survey's `history`: what `pending` was before it, and
- *   which questions it pre-selected.
+ * - `steps`: one entry per submit, next to the survey's `history`: what `pending` was before it, which
+ *   questions it pre-selected (`added`), and which pre-selections the page it led to opened with
+ *   (`opened`), from this submit or an earlier one.
  *
  * Plain JSON, so offline progress can store it as it is.
  */
 export interface TPreselectionState {
   pending: TPreselections;
   applied: TResponseData;
-  steps: { pending: TPreselections; added: string[] }[];
+  steps: { pending: TPreselections; added: string[]; opened: string[] }[];
 }
 
 export const createPreselectionState = (pending: TPreselections = {}): TPreselectionState => ({
@@ -41,7 +42,7 @@ export const recordSubmit = (
   return {
     pending: { ...state.pending, ...preselections },
     applied,
-    steps: [...state.steps, { pending: state.pending, added: Object.keys(preselections) }],
+    steps: [...state.steps, { pending: state.pending, added: Object.keys(preselections), opened: [] }],
   };
 };
 
@@ -70,15 +71,20 @@ export const openPage = (
   const data = getBlockPreselection(block, state.pending, answers, languageId);
   const pending = { ...state.pending };
   for (const element of onPage) delete pending[element.id];
-  return { data, state: { ...state, pending, applied: { ...state.applied, ...data } } };
+  // The page belongs to the last submit: Back past it undoes what it opened with too.
+  const steps = state.steps.map((step, idx) =>
+    idx === state.steps.length - 1 ? { ...step, opened: [...step.opened, ...Object.keys(data)] } : step
+  );
+  return { data, state: { pending, applied: { ...state.applied, ...data }, steps } };
 };
 
 const isSameAnswer = (a: TResponseDataValue | undefined, b: TResponseDataValue | undefined): boolean =>
   JSON.stringify(a) === JSON.stringify(b);
 
 /**
- * Back undoes the last submit: `pending` returns to what it was before it, and a page it pre-selected
- * that the respondent has not submitted, nor changed, loses that answer again (`dropElementIds`). If
+ * Back undoes the last submit: `pending` returns to what it was before it, and an answer it
+ * pre-selected, or that the page it led to opened with, loses that answer again when the respondent
+ * has neither submitted nor changed it (`dropElementIds`). If
  * they then answer differently and the rule no longer matches, nothing is pre-selected; if it still
  * matches, the page opens with it again. An answer the respondent changed stays theirs.
  */
@@ -90,7 +96,7 @@ export const undoSubmit = (
   if (!step) return { state, dropElementIds: [] };
 
   const applied = { ...state.applied };
-  const dropElementIds = step.added.filter(
+  const dropElementIds = [...new Set([...step.added, ...step.opened])].filter(
     (elementId) => Object.hasOwn(applied, elementId) && isSameAnswer(answers[elementId], applied[elementId])
   );
   for (const elementId of dropElementIds) delete applied[elementId];

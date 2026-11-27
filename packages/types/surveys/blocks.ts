@@ -9,11 +9,7 @@ import {
   ZConditionGroup,
   ZDynamicLogicFieldValue,
 } from "./logic";
-import {
-  PRESELECT_ANSWER_MAX_CHOICES,
-  PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH,
-  PRESELECT_ANSWER_MAX_TEXT_LENGTH,
-} from "./preselect-answer";
+import { PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH, PRESELECT_ANSWER_MAX_TEXT_LENGTH } from "./preselect-answer";
 
 export const ZSurveyBlockId = ZId;
 
@@ -191,11 +187,8 @@ export const ZActionPreselectAnswer = z.object({
               `Conditional Logic: An option id has at most ${String(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH)} characters`
             )
         )
-        .min(1, "Conditional Logic: Choose at least one option to pre-select")
-        .max(
-          PRESELECT_ANSWER_MAX_CHOICES,
-          `Conditional Logic: At most ${String(PRESELECT_ANSWER_MAX_CHOICES)} options can be pre-selected`
-        ),
+        // The count cap is in `getPreselectAnswerValueIssue`, which names it.
+        .min(1, "Conditional Logic: Choose at least one option to pre-select"),
     }),
     z.strictObject({
       type: z.literal("static"),

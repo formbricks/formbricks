@@ -86,3 +86,23 @@ describe("pre-selections across Back", () => {
     expect(JSON.parse(JSON.stringify(state))).toEqual(state);
   });
 });
+
+describe("pre-selections a later page opened with", () => {
+  test("Back past the page undoes one an earlier submit made, so a different rule on the page in between wins", () => {
+    // Page 1 pre-selects "Open/Pending" for page 3; page 2 has no rule for it; page 3 opens with it.
+    const afterPage1 = recordSubmit(createPreselectionState(), ["plan"], ruleFired);
+    const afterPage2 = recordSubmit(afterPage1, ["reason"], {});
+    const opened = openPage(afterPage2, page2, {}, "default");
+    expect(opened.data).toEqual({ status: "Open/Pending" });
+
+    // Back from page 3 undoes page 2's submit, and with it what page 3 opened with.
+    const back = undoSubmit(opened.state, { plan: "Business", reason: "x", ...opened.data });
+    expect(back.dropElementIds).toEqual(["status"]);
+
+    // Page 2 now pre-selects "Closed": page 3 opens with it, not with the stale "Open/Pending".
+    const resubmitted = recordSubmit(back.state, ["reason"], {
+      status: { type: "choices", choiceIds: ["closed"] },
+    });
+    expect(openPage(resubmitted, page2, {}, "default").data).toEqual({ status: "Closed" });
+  });
+});

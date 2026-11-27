@@ -10125,7 +10125,7 @@ components:
       additionalProperties: false
     SurveyPreselectAnswerAction:
       type: object
-      description: 'Pre-selects an answer in a later question when the rule fires: the question''s page opens with it already given, and the respondent can change it. The response stores only what the page submits, so a question on a page the respondent never sees (jumped over, or not shown) stores nothing. A question that already has an answer (the respondent came back, or a URL prefill gave it) keeps it. `target` is a `multipleChoiceSingle`, `multipleChoiceMulti` or `openText` element in a later block (any block when used in `startLogic`). For a select question, `value` is `{ type: choices, choiceIds }`: option ids, never labels, so one action works in every survey language; exactly one for a single select, and not the `other` option. For a free text question, `value` is `{ type: static, value }`, a number written as text when the question takes a number. It never writes Embedded Data; use `calculate` for that. A value that does not fit the question is rejected with a 422 naming the action''s `value`.'
+      description: 'Pre-selects an answer in a later question when the rule fires: the question''s page opens with it already given, and the respondent can change it. The response stores only what the page submits, so a question on a page the respondent never sees (jumped over, or not shown) stores nothing. A question that already has an answer (the respondent came back, or a URL prefill gave it) keeps it. `target` is a `multipleChoiceSingle`, `multipleChoiceMulti` or `openText` element in a later block (any block when used in `startLogic`). For a select question, `value` is `{ type: choices, choiceIds }`: option ids, never labels, so one action works in every survey language; exactly one for a single select, not the `other` option, and `none` only on its own. For a free text question, `value` is `{ type: static, value }`, a number written as text when the question takes a number. It never writes Embedded Data; use `calculate` for that. A value that does not fit the question is rejected with a 422 naming the action''s `value`.'
       required:
         - id
         - objective
@@ -10162,6 +10162,7 @@ components:
                   items:
                     type: string
                     minLength: 1
+                    maxLength: 200
               additionalProperties: false
             - type: object
               description: The answer of a free text question.

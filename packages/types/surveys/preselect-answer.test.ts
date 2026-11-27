@@ -34,6 +34,7 @@ describe("getPreselectAnswerValueIssue", () => {
     ).toBeUndefined();
     expect(getPreselectAnswerValueIssue(text, { type: "static", value: "0" })).toBeUndefined();
     expect(getPreselectAnswerValueIssue(number, { type: "static", value: "-1.5" })).toBeUndefined();
+    expect(getPreselectAnswerValueIssue(number, { type: "static", value: "2e3" })).toBeUndefined();
   });
 
   test.each([
@@ -66,6 +67,9 @@ describe("getPreselectAnswerValueIssue", () => {
     ["options for a free text question", text, { type: "choices", choiceIds: ["open"] }, "free text"],
     ["a value for a select question", single, { type: "static", value: "Open/Pending" }, "not a value"],
     ["text for a number question", number, { type: "static", value: "zero" }, "not one"],
+    // Number() takes these, but a number input clears them, so the respondent would see nothing.
+    ["a hexadecimal number", number, { type: "static", value: "0x10" }, "not one"],
+    ["a number with spaces around it", number, { type: "static", value: " 1 " }, "not one"],
   ] as const)("refuses %s", (_case, element, value, message) => {
     expect(getPreselectAnswerValueIssue(element, value)).toContain(message);
   });

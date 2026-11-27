@@ -835,7 +835,8 @@ export function Survey({
       setHistory(getRestorableHistory(localSurvey, progress.history));
       setNotShownSteps(getRestorableNotShownSteps(localSurvey, progress.notShownSteps ?? []));
       lowQualityFlagRef.current = resumeLowQualityFlag(progress.lowQualitySent);
-      if (progress.preselections) preselectionRef.current = progress.preselections;
+      // An entry written before pre-selections were stored restores with none, as its bundle had none.
+      preselectionRef.current = progress.preselections ?? createPreselectionState();
       setSelectedLanguage(progress.selectedLanguage);
 
       // Restore survey state from snapshot

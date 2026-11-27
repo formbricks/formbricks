@@ -354,13 +354,17 @@ describe("a condition's fixed value", () => {
       const ids = (count: number) => Array.from({ length: count }, (_, idx) => `o${String(idx)}`);
       const issuesFor = (choiceIds: string[]) =>
         issuesOf(withConceptActions([preselect("fav", { type: "choices", choiceIds })]));
-      // At the cap the schema takes it, and the refinement names what is wrong with the options. One
-      // over, the action's union refuses it as a whole ("Invalid input"), at the action.
+      // At the cap the refinement looks the options up; one over, it names the limit.
       expect(issuesFor(ids(PRESELECT_ANSWER_MAX_CHOICES))).toContainEqual({
         path: [...actionPath, "value"],
         message: expect.stringContaining("exactly one option") as string,
       });
-      expect(issuesFor(ids(PRESELECT_ANSWER_MAX_CHOICES + 1)).map(({ path }) => path)).toEqual([actionPath]);
+      expect(issuesFor(ids(PRESELECT_ANSWER_MAX_CHOICES + 1))).toEqual([
+        {
+          path: [...actionPath, "value"],
+          message: `Conditional Logic: At most ${String(PRESELECT_ANSWER_MAX_CHOICES)} options can be pre-selected.`,
+        },
+      ]);
       const idOf = (length: number) => ["x".repeat(length)];
       expect(issuesFor(idOf(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH)).map(({ path }) => path)).toEqual([
         [...actionPath, "value"],

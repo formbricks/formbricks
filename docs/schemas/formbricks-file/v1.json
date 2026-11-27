@@ -2842,7 +2842,6 @@
                           },
                           "choiceIds": {
                             "minItems": 1,
-                            "maxItems": 200,
                             "type": "array",
                             "items": {
                               "$ref": "#/$defs/__schema83"

@@ -13,7 +13,7 @@ import {
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
-import { OTHER_OPTION_ID } from "@formbricks/types/surveys/codes";
+import { NONE_OPTION_ID, OTHER_OPTION_ID } from "@formbricks/types/surveys/codes";
 import { getOptionsCopiedFrom } from "@formbricks/types/surveys/copied-options";
 import {
   TSurveyElement,
@@ -1005,6 +1005,20 @@ export const getPreselectChoiceOptions = (element: TSurveyElement | undefined): 
       label: getTextContent(getLocalizedValue("label" in choice ? choice.label : undefined, "default")),
       value: choice.id,
     }));
+};
+
+/**
+ * A multi select's next pre-selected options after a pick in the editor (ENG-7437). "None of these" is
+ * picked alone (`getPreselectAnswerValueIssue` refuses it with others), so picking it clears the
+ * others, and picking another option clears it.
+ */
+export const getNextPreselectChoiceIds = (
+  previous: readonly string[],
+  picked: readonly string[]
+): string[] => {
+  const added = picked.filter((choiceId) => !previous.includes(choiceId));
+  if (added.includes(NONE_OPTION_ID)) return [NONE_OPTION_ID];
+  return added.length > 0 ? picked.filter((choiceId) => choiceId !== NONE_OPTION_ID) : [...picked];
 };
 
 export const getActionTargetOptions = (
