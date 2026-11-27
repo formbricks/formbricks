@@ -38,6 +38,21 @@ reconnected.
 - **A wrong key by mistake is recoverable.** Editing an affected integration's settings keeps the stored token as it
   is, so putting the previous `ENCRYPTION_KEY` back restores the integration without reconnecting.
 
+## SSO accounts sign in with SSO
+
+From 6.3, an account linked to an SSO provider can't sign in with a password while Formbricks offers one of its
+providers. Such an account could hold a password from before it was linked, and signing in with it skipped your
+identity provider's multi-factor authentication, conditional access and deprovisioning.
+
+- **Users who sign in that way today get "Your account uses single sign-on. Sign in with {provider}."** Tell them to
+  use the SSO button. Nothing changes for accounts that signed up with email and password and aren't linked to SSO.
+- **Forgot password sends these accounts an email naming their provider** instead of a reset link.
+- **Nobody is locked out when SSO stops working.** While none of an account's providers is available (license
+  lapsed, SAML without a SAML license, provider no longer configured) its password works again, and forgot password
+  sends a reset link, also to users who never had a password.
+
+There is nothing to configure. See [Authentication Behavior](/self-hosting/auth-behavior#password-sign-in-for-sso-accounts).
+
 ## Rate limits return without Envoy
 
 Without `ENVOY_RATE_LIMITING_ENABLED=1`, the app enforces the rate limits itself again:
