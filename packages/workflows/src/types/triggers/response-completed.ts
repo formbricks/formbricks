@@ -11,6 +11,7 @@ export const ZResponseCompletedTriggerConfig = z.object({
 });
 export type TResponseCompletedTriggerConfig = z.infer<typeof ZResponseCompletedTriggerConfig>;
 
+// oxlint-disable-next-line formbricks/no-loose-schema -- a payload the server builds, kept inside the run data's JSON value.
 export const ZWorkflowResponseCompletedTriggerPayload = z
   .object({
     type: z.literal(WORKFLOW_TRIGGERS.RESPONSE_COMPLETED),

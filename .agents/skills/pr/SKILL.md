@@ -65,11 +65,11 @@ most. A link to the PR's Files tab points at nothing. Nothing risky? Say so in o
 
 - `Rerun:` carries one command that reruns the table, so no row repeats it.
 - One Coverage row per behaviour the diff changes, six at most; fold the rest. `How` is one of
-  `unit (red on main)`, `unit (mutation)`, `unit (guard)`, `e2e`, `manual`, defined in
-  `CODING_STANDARDS.md` under "Testing Guidelines", which also says how to pick the cheapest level
-  that can fail. Every `unit` and `e2e` row names its test or spec, in the row or in `Rerun:`; a
-  `mutation` row names the mutated `file:line`. `Outcome` is what you observed in fifteen words, naming
-  the account, plan or flag state where it matters.
+  `unit (red on main)`, `unit (mutation)`, `unit (guard)`, `integration`, `e2e`, `manual`, defined in
+  `CODING_STANDARDS.md` under "Testing Guidelines", which also says how to pick the cheapest level that
+  can fail. Every `unit`, `integration` and `e2e` row names its test or spec, in the row or in `Rerun:`;
+  a `mutation` row names the mutated `file:line`. `Outcome` is what you observed in fifteen words,
+  naming the account, plan or flag state where it matters.
 - A UI change gets a before/after pair per surface, placed under the table:
   [SCREENSHOTS.md](SCREENSHOTS.md). Any other change writes `No UI change`.
 - **Open gaps** lists what you could not verify and why, three bullets at most. It is a claim the

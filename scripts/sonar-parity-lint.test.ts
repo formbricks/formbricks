@@ -31,6 +31,13 @@ const complexFunction = `function complex(a: number[], b: boolean) {
   }
 }`;
 
+// S1479: 31 cases is one over Sonar's threshold; 30 passes.
+const switchWith = (cases: number) =>
+  `export const pick = (n: number) => {\n  switch (n) {\n${Array.from(
+    { length: cases },
+    (_, index) => `    case ${index}:\n      return ${index};\n`
+  ).join("")}    default:\n      return -1;\n  }\n};\n`;
+
 const violations = `import { z } from "zod";
 
 ${complexFunction}
@@ -45,7 +52,7 @@ export const isoTimestamp =
 export const nullish = (o?: { a: number }) => o || { a: 1 };
 // zod 4 deprecates \`.finite()\`, a no-op there.
 export const finiteNumber = z.number().finite();
-`;
+${switchWith(31)}`;
 
 const testViolations =
   'import { expect, test } from "vitest";\ntest("x", () => { expect([1].length).toBe(1); });\n';
@@ -59,7 +66,10 @@ describe("Sonar-parity lint rules", () => {
     writeFileSync(`${root}${typesFixture}`, violations);
     writeFileSync(`${root}${typesTestFixture}`, testViolations);
     writeFileSync(`${root}${uiFixture}`, focusableAriaHidden);
-    writeFileSync(`${root}${cleanFixture}`, "export const clean = (n: number) => (n > 1 ? 1 : 0);\n");
+    writeFileSync(
+      `${root}${cleanFixture}`,
+      `export const clean = (n: number) => (n > 1 ? 1 : 0);\n${switchWith(30)}`
+    );
   });
 
   afterAll(() => {
@@ -76,6 +86,7 @@ describe("Sonar-parity lint rules", () => {
       "sonarjs/no-nested-conditional",
       "sonarjs/no-nested-template-literals",
       "sonarjs/no-nested-functions",
+      "sonarjs/max-switch-cases",
       "unicorn-js/prefer-string-raw",
       "typescript/prefer-optional-chain",
       "vitest/prefer-to-have-length",
@@ -104,6 +115,7 @@ describe("Sonar-parity lint rules", () => {
     "sonarjs/no-nested-functions",
     "sonarjs/no-nested-conditional",
     "sonarjs/no-nested-template-literals",
+    "sonarjs/max-switch-cases",
     "unicorn-js/prefer-string-raw",
     "typescript/prefer-optional-chain",
     "typescript/prefer-nullish-coalescing",

@@ -356,10 +356,781 @@ const preferReadOnlyProps = {
   },
 };
 
+/*
+ * Taint tracking for `no-request-regexp` (ENG-7450). A JS plugin sees one file at a time, so a value
+ * is followed only inside the file: through variables, destructuring, object spreads, closures declared
+ * after the value, and the parameters of a function the file declares and calls with it
+ * (`helper(tainted)`, `.action(fn)`, `rows.map(check)`). Not followed: a source in another file, the
+ * return value of the file's own functions, `this.method(x)`, an unknown call (`decodeURIComponent(x)`
+ * clears the taint), and a same-file call chain longer than the pass cap. A write clears a label only in
+ * straight-line code of the scope (function or block) that declares the name; in a branch that scope does
+ * not own, a loop or a closure it may not run, so it only adds to the label. A loop body is walked once,
+ * so taint a later iteration carries back to an earlier line is missed; a labeled block's early `break`
+ * and an optional call `o?.f(…)` count as straight-line. A one-argument `.search(q)` on a search client
+ * reads as a sink.
+ *
+ * A label says what is tainted: `false` (nothing), `true` (the whole value) or an object whose keys
+ * label the value's properties (`{ parsedInput: true }` for a server action's first argument).
+ */
+const EXPRESSION_WRAPPERS = new Set([
+  "ChainExpression",
+  "ParenthesizedExpression",
+  "TSAsExpression",
+  "TSNonNullExpression",
+  "TSSatisfiesExpression",
+  "TSTypeAssertion",
+]);
+const FUNCTION_TYPES = new Set(["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"]);
+const BLOCK_SCOPES = new Set(["BlockStatement", "StaticBlock"]);
+// Type positions hold no values; skipping them keeps the walk cheap.
+const TYPE_KEYS = new Set(["parent", "returnType", "typeAnnotation", "typeArguments", "typeParameters"]);
+// A same-file call can taint a function visited earlier, so the walk repeats until the labels settle.
+const MAX_TAINT_PASSES = 8;
+
+const unwrapExpression = (node) => {
+  let current = node;
+  while (current && EXPRESSION_WRAPPERS.has(current.type)) current = current.expression;
+  return current;
+};
+
+const keyOf = (node) => {
+  if (!node.computed) return node.key?.name ?? node.property?.name ?? node.key?.value;
+  const key = node.key ?? node.property;
+  if (key?.type === "TemplateLiteral" && key.expressions.length === 0) return key.quasis[0].value.cooked;
+  return key?.type === "Literal" ? key.value : undefined;
+};
+
+// Merges per key at every depth, so a wider taint from one call site never hides behind a narrower one.
+const union = (a, b) => {
+  if (a === true || b === true) return true;
+  if (!a) return b;
+  if (!b) return a;
+  const merged = { ...a };
+  for (const [key, value] of Object.entries(b)) merged[key] = union(merged[key], value);
+  return merged;
+};
+
+const memberLabel = (label, key, deep) => {
+  if (label === true) return deep;
+  if (label && key !== undefined && Object.hasOwn(label, key)) return label[key];
+  return false;
+};
+
+const unionLabels = (a = [], b = []) =>
+  Array.from({ length: Math.max(a.length, b.length) }, (_, index) => union(a[index], b[index]) || false);
+
+const sameLabels = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+// A function scope's `branchDepth` counts the conditional constructs (if, loop, switch, try, `? :`, `&&`)
+// the walk is inside; a scope's `depth` is that count where the scope opened.
+const newScope = (isFunction, depth = 0) => ({
+  vars: new Map(),
+  fns: new Map(),
+  isFunction,
+  depth,
+  branchDepth: 0,
+});
+
+// `export function f` / `export const f = …` declare `f` like the unwrapped statement.
+const declarationOf = (statement) =>
+  statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
+    ? statement.declaration
+    : statement;
+
+/*
+ * Walks `program` and calls `policy.sink(node, labelOf)` on every call and `new` expression, once the
+ * labels have settled. `policy` decides what is a source:
+ * - `deep`: a property of a tainted value is tainted.
+ * - `sourceKeys`: property names whose value is a source wherever they are read (`.searchParams`).
+ * - `strings`: a template, a concatenation or a string method carries the taint of its operands.
+ * - `callLabel(node, labelOf)`: the label of a call's result, for sources (`req.json()`) and
+ *   pass-throughs (`schema.parse(tainted)`).
+ * - `paramLabels(fn)`: labels every function's parameters start with.
+ * - `callbackLabels(node, labelOf, setParams)`: for a call, the labels of the parameters of a function
+ *   among its arguments (a `.map` callback).
+ */
+function walkTaint(program, policy) {
+  // Labels the file's own calls pass to each function it declares, kept across passes.
+  const calledWith = new Map();
+  let changed = false;
+  let reporting = false;
+
+  const pass = () => {
+    const scopes = [newScope(true)];
+    const presetParams = new Map();
+
+    const scopeOf = (name) => {
+      for (let index = scopes.length - 1; index >= 0; index -= 1) {
+        if (scopes[index].vars.has(name) || scopes[index].fns.has(name)) return scopes[index];
+      }
+      return undefined;
+    };
+    const lookup = (name) => scopeOf(name)?.vars.get(name) ?? false;
+    const currentFunction = () => scopes.findLast((scope) => scope.isFunction);
+    const blockScope = () => newScope(false, currentFunction().branchDepth);
+    // A write replaces the label only in straight-line code of the scope that declares the name. In a
+    // branch that scope does not own, or from a closure that may never run, it may not happen, so it
+    // only adds to the label.
+    const assign = (name, label) => {
+      const index = scopes.findLastIndex((scope) => scope.vars.has(name) || scope.fns.has(name));
+      if (index === -1) return;
+      const target = scopes[index];
+      const owner = scopes.slice(0, index + 1).findLast((scope) => scope.isFunction);
+      const current = currentFunction();
+      const replaces = owner === current && current.branchDepth === target.depth;
+      target.vars.set(name, replaces ? label : union(target.vars.get(name), label) || false);
+    };
+    const inBranch = (walk) => {
+      const fn = currentFunction();
+      fn.branchDepth += 1;
+      walk();
+      fn.branchDepth -= 1;
+    };
+    const functionNamed = (expression) => {
+      const node = unwrapExpression(expression);
+      if (node?.type !== "Identifier") return undefined;
+      return scopeOf(node.name)?.fns.get(node.name);
+    };
+    const passTo = (fn, labels) => {
+      const merged = unionLabels(calledWith.get(fn), labels);
+      if (sameLabels(merged, calledWith.get(fn) ?? [])) return;
+      calledWith.set(fn, merged);
+      changed = true;
+    };
+    // An inline function takes the labels for this pass; a named one through `calledWith`.
+    const setParams = (fn, labels) => {
+      const node = unwrapExpression(fn);
+      if (node?.type === "ArrowFunctionExpression" || node?.type === "FunctionExpression") {
+        presetParams.set(node, labels);
+        return;
+      }
+      const named = functionNamed(node);
+      if (named) passTo(named, labels);
+    };
+
+    const memberExpressionLabel = (node) => {
+      const key = keyOf(node);
+      // A length is a number, not a pattern.
+      if (key === "length") return false;
+      if (policy.sourceKeys?.has(key)) return true;
+      return memberLabel(labelOf(node.object), key, policy.deep);
+    };
+
+    const objectLabel = (node) => {
+      let label = false;
+      for (const property of node.properties) {
+        if (property.type === "SpreadElement") {
+          label = union(label, labelOf(property.argument));
+          continue;
+        }
+        const value = labelOf(property.value);
+        const key = keyOf(property);
+        if (value && key !== undefined && label !== true) label = union(label, { [key]: value });
+      }
+      return label;
+    };
+
+    function labelOf(expression) {
+      const node = unwrapExpression(expression);
+      switch (node?.type) {
+        case "Identifier":
+          return lookup(node.name);
+        case "MemberExpression":
+          return memberExpressionLabel(node);
+        case "AwaitExpression":
+          return labelOf(node.argument);
+        case "AssignmentExpression":
+          return labelOf(node.right);
+        case "SequenceExpression":
+          return labelOf(node.expressions.at(-1));
+        case "ConditionalExpression":
+          return union(labelOf(node.consequent), labelOf(node.alternate));
+        case "LogicalExpression":
+          return union(labelOf(node.left), labelOf(node.right));
+        case "ObjectExpression":
+          return objectLabel(node);
+        case "TemplateLiteral":
+          return policy.strings && node.expressions.some((part) => labelOf(part) === true);
+        case "BinaryExpression":
+          return (
+            policy.strings &&
+            node.operator === "+" &&
+            (labelOf(node.left) === true || labelOf(node.right) === true)
+          );
+        case "ArrayExpression":
+          return (
+            policy.deep &&
+            node.elements.some((element) => element && labelOf(element.argument ?? element) === true)
+          );
+        case "CallExpression":
+          return policy.callLabel(node, labelOf) || false;
+        default:
+          return false;
+      }
+    }
+
+    // `var` belongs to the enclosing function, `let` and `const` to the block.
+    const declareIn = (kind) => {
+      const scope = kind === "var" ? scopes.findLast((candidate) => candidate.isFunction) : scopes.at(-1);
+      return (name, label) => scope.vars.set(name, label);
+    };
+    // `{ searchParams: sp } = url` binds a source key like `url.searchParams` reads it.
+    const propertyLabel = (label, key) =>
+      policy.sourceKeys?.has(key) ? true : memberLabel(label, key, policy.deep);
+    const bind = (pattern, label, set) => {
+      switch (pattern?.type) {
+        case "Identifier":
+          set(pattern.name, label);
+          return;
+        case "ObjectPattern":
+          for (const property of pattern.properties) {
+            if (property.type === "RestElement") bind(property.argument, label, set);
+            else bind(property.value, propertyLabel(label, keyOf(property)), set);
+          }
+          return;
+        case "ArrayPattern":
+          pattern.elements.forEach((element, index) => {
+            if (element?.type === "RestElement")
+              bind(element.argument, label === true ? policy.deep : false, set);
+            else bind(element, memberLabel(label, index, policy.deep), set);
+          });
+          return;
+        case "AssignmentPattern":
+          bind(pattern.left, union(label, labelOf(pattern.right)), set);
+          return;
+        case "RestElement":
+          bind(pattern.argument, label, set);
+          return;
+        case "TSParameterProperty":
+          bind(pattern.parameter, label, set);
+          return;
+        default:
+      }
+    };
+
+    // Function declarations and function-valued `const`s are callable before their line is reached.
+    const hoistDeclaration = (declaration, scope) => {
+      if (declaration?.type === "FunctionDeclaration" && declaration.id) {
+        scope.fns.set(declaration.id.name, declaration);
+        return;
+      }
+      if (declaration?.type !== "VariableDeclaration") return;
+      const target =
+        declaration.kind === "var" ? scopes.findLast((candidate) => candidate.isFunction) : scope;
+      for (const declarator of declaration.declarations) {
+        const init = unwrapExpression(declarator.init);
+        if (declarator.id.type === "Identifier" && FUNCTION_TYPES.has(init?.type)) {
+          target.fns.set(declarator.id.name, init);
+        }
+      }
+    };
+    const hoist = (statements) => {
+      const scope = scopes.at(-1);
+      for (const statement of statements ?? []) hoistDeclaration(declarationOf(statement), scope);
+    };
+
+    const visitChildren = (node) => {
+      for (const key of Object.keys(node)) {
+        if (TYPE_KEYS.has(key)) continue;
+        const child = node[key];
+        if (Array.isArray(child)) for (const item of child) visit(item);
+        else if (child && typeof child.type === "string") visit(child);
+      }
+    };
+
+    const visitFunction = (fn) => {
+      const labels = unionLabels(presetParams.get(fn) ?? policy.paramLabels?.(fn) ?? [], calledWith.get(fn));
+      scopes.push(newScope(true));
+      const set = declareIn("let");
+      fn.params.forEach((param, index) => {
+        if (param.type === "AssignmentPattern") visit(param.right);
+        bind(param, labels[index] ?? false, set);
+      });
+      if (fn.body?.type === "BlockStatement") {
+        hoist(fn.body.body);
+        fn.body.body.forEach(visit);
+      } else {
+        visit(fn.body);
+      }
+      scopes.pop();
+    };
+
+    const visitLoop = (node) => {
+      visit(node.right);
+      const label = labelOf(node.right);
+      // `for (const x of tainted)` yields its elements; `for (const k in tainted)` its keys.
+      const element = label === true ? policy.deep : false;
+      inBranch(() => {
+        // Opened inside the branch: each iteration's loop variable belongs to the body.
+        scopes.push(blockScope());
+        if (node.left.type === "VariableDeclaration") {
+          bind(node.left.declarations[0].id, element, declareIn(node.left.kind));
+        } else if (node.left.type === "Identifier") {
+          assign(node.left.name, element);
+        }
+        visit(node.body);
+        scopes.pop();
+      });
+    };
+
+    const visitDeclaration = (node) => {
+      const set = declareIn(node.kind);
+      for (const declarator of node.declarations) {
+        visit(declarator.init);
+        bind(declarator.id, labelOf(declarator.init), set);
+      }
+    };
+
+    const visitAssignment = (node) => {
+      // `a ??= b`, `a ||= b`, `a &&= b` may not evaluate `b`.
+      if (["??=", "||=", "&&="].includes(node.operator)) inBranch(() => visit(node.right));
+      else visit(node.right);
+      if (node.left.type === "Identifier") {
+        const right = labelOf(node.right);
+        assign(node.left.name, node.operator === "=" ? right : union(lookup(node.left.name), right));
+      } else if (node.left.type === "ObjectPattern" || node.left.type === "ArrayPattern") {
+        bind(node.left, labelOf(node.right), assign);
+      } else {
+        visit(node.left);
+      }
+    };
+
+    const visitCall = (node) => {
+      policy.callbackLabels?.(node, labelOf, setParams);
+      visit(node.callee);
+      // Each argument's label as JavaScript reads it: before a later argument can reassign it.
+      const argumentLabels = node.arguments.map((argument) => {
+        visit(argument);
+        return argument.type === "SpreadElement" ? false : labelOf(argument);
+      });
+      const callee = node.type === "CallExpression" ? functionNamed(node.callee) : undefined;
+      if (callee) passTo(callee, argumentLabels);
+      if (!reporting) return;
+      policy.sink(node, (expression) => {
+        const index = node.arguments.indexOf(expression);
+        return index === -1 ? labelOf(expression) : argumentLabels[index];
+      });
+    };
+
+    // The parts of a conditional construct that may not run, walked as a branch.
+    const visitConditional = (node) => {
+      switch (node.type) {
+        case "IfStatement":
+        case "ConditionalExpression":
+          visit(node.test);
+          inBranch(() => {
+            visit(node.consequent);
+            visit(node.alternate);
+          });
+          return;
+        case "LogicalExpression":
+          visit(node.left);
+          inBranch(() => visit(node.right));
+          return;
+        case "SwitchStatement":
+          visit(node.discriminant);
+          inBranch(() => {
+            scopes.push(blockScope());
+            node.cases.forEach(visit);
+            scopes.pop();
+          });
+          return;
+        case "ForStatement":
+          scopes.push(blockScope());
+          visit(node.init);
+          // The order JavaScript runs them in: the body before the update.
+          inBranch(() => [node.test, node.body, node.update].forEach(visit));
+          scopes.pop();
+          return;
+        default:
+          // WhileStatement, DoWhileStatement, TryStatement.
+          inBranch(() => visitChildren(node));
+      }
+    };
+
+    function visit(node) {
+      if (!node || typeof node.type !== "string") return;
+      switch (node.type) {
+        case "ArrowFunctionExpression":
+        case "FunctionExpression":
+        case "FunctionDeclaration":
+          visitFunction(node);
+          return;
+        case "VariableDeclaration":
+          visitDeclaration(node);
+          return;
+        case "AssignmentExpression":
+          visitAssignment(node);
+          return;
+        case "CatchClause":
+          scopes.push(blockScope());
+          bind(node.param, false, declareIn("let"));
+          visit(node.body);
+          scopes.pop();
+          return;
+        case "ForOfStatement":
+        case "ForInStatement":
+          visitLoop(node);
+          return;
+        case "CallExpression":
+        case "NewExpression":
+          visitCall(node);
+          return;
+        case "IfStatement":
+        case "ConditionalExpression":
+        case "LogicalExpression":
+        case "SwitchStatement":
+        case "ForStatement":
+        case "WhileStatement":
+        case "DoWhileStatement":
+        case "TryStatement":
+          visitConditional(node);
+          return;
+        default:
+      }
+      const scoped = BLOCK_SCOPES.has(node.type);
+      if (scoped) {
+        scopes.push(blockScope());
+        if (node.type === "BlockStatement") hoist(node.body);
+      }
+      visitChildren(node);
+      if (scoped) scopes.pop();
+    }
+
+    hoist(program.body);
+    program.body.forEach(visit);
+  };
+
+  for (let index = 0; index < MAX_TAINT_PASSES; index += 1) {
+    changed = false;
+    pass();
+    if (!changed) break;
+  }
+  reporting = true;
+  pass();
+}
+
+const calleeName = (node) => {
+  const callee = unwrapExpression(node.callee);
+  if (callee?.type === "Identifier") return callee.name;
+  return callee?.type === "MemberExpression" ? keyOf(callee) : undefined;
+};
+
+const calleeObject = (node) => {
+  const callee = unwrapExpression(node.callee);
+  return callee?.type === "MemberExpression" ? callee.object : undefined;
+};
+
+// A rule's `allow` option: repo-relative paths of the files that predate it.
+const isAllowlisted = (context) => {
+  const filename = context.filename.replaceAll("\\", "/");
+  const allow = context.options[0]?.allow ?? [];
+  return allow.some((entry) => filename.endsWith(`/${entry}`));
+};
+
+const ALLOW_OPTION_SCHEMA = [
+  {
+    type: "object",
+    properties: { allow: { type: "array", items: { type: "string" }, uniqueItems: true } },
+    additionalProperties: false,
+  },
+];
+
+/*
+ * `no-loose-schema` (ENG-7127): a zod schema open to unknown keys (`.loose()`, `.passthrough()`,
+ * `z.looseObject()`, `.catchall(x)` unless `x` is `z.never()`) keeps every key the caller sent. When its
+ * output reaches a Prisma write, those keys become relation writes (`workspace: { connect }`) and
+ * foreign keys (`segmentId`) the caller should never set. ENG-7127's schema, the action and the write
+ * sat in three files, so the rule flags the declaration itself. The `allow` option lists the files whose
+ * open schemas never reach a write, each with its reason in `LOOSE_SCHEMA_ALLOWLIST` (base.mjs).
+ */
+const LOOSE_SCHEMA_METHODS = new Set(["loose", "passthrough"]);
+
+// The identifier a call or member chain starts from: `z` in `z.object({}).catchall(…)`.
+const chainRoot = (expression) => {
+  let node = unwrapExpression(expression);
+  while (node?.type === "CallExpression" || node?.type === "MemberExpression") {
+    node = unwrapExpression(node.type === "CallExpression" ? node.callee : node.object);
+  }
+  return node?.type === "Identifier" ? node.name : undefined;
+};
+
+// `catchall` is a common method name, so it counts only on a zod chain: one that starts from a zod
+// import or a `ZName` schema, or that takes a zod schema as its argument.
+const isZodChain = (expression, zodNames) => {
+  const root = chainRoot(expression);
+  return root !== undefined && (zodNames.has(root) || /^Z[A-Z]/.test(root));
+};
+
+const isOpenSchemaCall = (node, zodNames) => {
+  const name = calleeName(node);
+  if (name === "looseObject") return true;
+  const receiver = calleeObject(node);
+  if (!receiver) return false;
+  if (LOOSE_SCHEMA_METHODS.has(name)) return node.arguments.length === 0;
+  if (name !== "catchall") return false;
+  const rest = unwrapExpression(node.arguments[0]);
+  if (rest?.type === "CallExpression" && calleeName(rest) === "never") return false;
+  return isZodChain(receiver, zodNames) || isZodChain(rest, zodNames);
+};
+
+const noLooseSchema = {
+  meta: {
+    type: "problem",
+    docs: { description: "Disallow zod schemas that keep unknown keys." },
+    schema: ALLOW_OPTION_SCHEMA,
+  },
+  create(context) {
+    if (isAllowlisted(context)) return {};
+    // Local names bound by `import … from "zod"` (and its subpaths); imports come first in the walk.
+    const zodNames = new Set();
+    return {
+      ImportDeclaration(node) {
+        if (!/^zod(?:\/|$)/.test(String(node.source.value))) return;
+        for (const specifier of node.specifiers) zodNames.add(specifier.local.name);
+      },
+      // A name bound to a zod chain (`const base = z.object({})`, `ZBase.extend({})`) starts one too.
+      VariableDeclarator(node) {
+        if (node.id.type === "Identifier" && isZodChain(node.init, zodNames)) zodNames.add(node.id.name);
+      },
+      CallExpression(node) {
+        if (!isOpenSchemaCall(node, zodNames)) return;
+        context.report({
+          node,
+          message:
+            "This zod schema keeps every key the caller sends; in a Prisma write they become relation writes and foreign keys (ENG-7127). Use a strict schema, or add the file to LOOSE_SCHEMA_ALLOWLIST (packages/config-oxlint/base.mjs) with the reason its output never reaches a write.",
+        });
+      },
+    };
+  },
+};
+
+/*
+ * `no-request-regexp` (ENG-7109's class): a pattern the caller sends, compiled into a regular
+ * expression, can take the event loop for seconds (ReDoS); a length cap does not prevent it. Run such
+ * patterns in a linear-time engine (apps/web/modules/api/lib/linear-pattern-matcher.ts) or not at all.
+ * Sinks: `new RegExp(p)` / `RegExp(p)` whose result is used (a discarded one only checks the syntax),
+ * and `.match(p)`, `.matchAll(p)`, `.search(p)`, which compile a string argument. `.split(p)` and
+ * `.replace(p, …)` take a string as text, not as a pattern. Sources: the `parsedInput` and
+ * `searchParams` of a function's first argument (server actions, v3 handlers, Next pages),
+ * `.json()`/`.formData()`/`.text()` on a `req` or `request` (also `ctx.req`), and any `.searchParams`
+ * read, destructured or not. Patterns loaded from storage (a survey's validation rules, the shipped
+ * ENG-7109 case) are not sources here: they stay a review check (CODING_STANDARDS.md, Security).
+ */
+const STRING_METHODS = new Set([
+  "at",
+  "concat",
+  "get",
+  "getAll",
+  "join",
+  "normalize",
+  "padEnd",
+  "padStart",
+  "repeat",
+  "replace",
+  "replaceAll",
+  "slice",
+  "split",
+  "substr",
+  "substring",
+  "toLocaleLowerCase",
+  "toLocaleUpperCase",
+  "toLowerCase",
+  "toString",
+  "toUpperCase",
+  "trim",
+  "trimEnd",
+  "trimStart",
+  "valueOf",
+]);
+const ELEMENT_CALLBACKS = new Set([
+  "every",
+  "filter",
+  "find",
+  "findIndex",
+  "findLast",
+  "flatMap",
+  "forEach",
+  "map",
+  "reduce",
+  "reduceRight",
+  "some",
+]);
+const IMPLICIT_REGEXP_METHODS = new Set(["match", "matchAll", "search"]);
+const REQUEST_BODY_READERS = new Set(["formData", "json", "text"]);
+const REQUEST_NAMES = new Set(["req", "request"]);
+const REGEXP_SINK_TEXT = /RegExp|(?:\.\s*|\[\s*["'`])(?:match|matchAll|search)\b/;
+
+// `RegExp` or `globalThis.RegExp`, not `something.RegExp`.
+const isGlobalReference = (callee) => {
+  const node = unwrapExpression(callee);
+  if (node?.type === "Identifier") return true;
+  const object = node?.type === "MemberExpression" ? unwrapExpression(node.object) : undefined;
+  return object?.type === "Identifier" && object.name === "globalThis";
+};
+
+const isRequestRead = (node) => {
+  const object = unwrapExpression(calleeObject(node));
+  const name = calleeName(node);
+  if (REQUEST_BODY_READERS.has(name)) {
+    if (object?.type === "Identifier") return REQUEST_NAMES.has(object.name);
+    return object?.type === "MemberExpression" && REQUEST_NAMES.has(keyOf(object));
+  }
+  // `x.searchParams.get()` is covered by `sourceKeys`; a bare `searchParams` (a page prop, a hook) here.
+  return (
+    (name === "get" || name === "getAll") && object?.type === "Identifier" && object.name === "searchParams"
+  );
+};
+
+// `value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")`: a global character class holding every
+// metacharacter, each match prefixed with a backslash, so the result matches only itself.
+const REGEXP_METACHARACTERS = [...String.raw`\^$.*+?()[]{}|`];
+const ESCAPE_CLASS = /[\dA-Za-z]/;
+// The literal characters a character class body matches, or null when it holds a range (`a-z`), an
+// escape class (`\d`) or an unescaped `]` (which closes the class: `[a]|[^b]` is two classes).
+const classMembers = (body) => {
+  const members = new Set();
+  for (let index = 0; index < body.length; index += 1) {
+    let character = body[index];
+    if (character === "\\") {
+      index += 1;
+      character = body[index];
+      if (character === undefined || ESCAPE_CLASS.test(character)) return null;
+    } else if (character === "]" || (character === "-" && index > 0 && index < body.length - 1)) {
+      return null;
+    }
+    members.add(character);
+  }
+  return members;
+};
+// Every metacharacter, and nothing a backslash turns into syntax (`b` would become `\b`, `1` a backreference).
+const isMetacharacterClass = (members) =>
+  members !== null &&
+  REGEXP_METACHARACTERS.every((character) => members.has(character)) &&
+  [...members].every((character) => !ESCAPE_CLASS.test(character));
+const isRegExpEscape = (node) => {
+  if (calleeName(node) !== "replace" && calleeName(node) !== "replaceAll") return false;
+  const [pattern, replacement] = node.arguments.map(unwrapExpression);
+  const source = pattern?.type === "Literal" ? (pattern.regex?.pattern ?? "") : "";
+  return (
+    /^\[[^^].*\]$/.test(source) &&
+    isMetacharacterClass(classMembers(source.slice(1, -1))) &&
+    // `g` escapes every match; `y` stops at the first non-match; `v` reads `[`, `&&`, `--` as set syntax.
+    /^[^vy]*g[^vy]*$/.test(pattern.regex.flags) &&
+    replacement?.type === "Literal" &&
+    replacement.value === String.raw`\$&`
+  );
+};
+
+const noRequestRegexp = {
+  meta: {
+    type: "problem",
+    docs: { description: "Disallow compiling a regular expression from request input." },
+    schema: [],
+  },
+  create(context) {
+    return {
+      Program(program) {
+        if (!REGEXP_SINK_TEXT.test(context.sourceCode.text)) return;
+        walkTaint(program, {
+          deep: true,
+          strings: true,
+          sourceKeys: new Set(["searchParams"]),
+          paramLabels: () => [{ parsedInput: true, searchParams: true }],
+          callLabel(node, labelOf) {
+            const name = calleeName(node);
+            const object = calleeObject(node);
+            if (isRequestRead(node)) return true;
+            if (isRegExpEscape(node)) return false;
+            const firstArgument = node.arguments[0];
+            if (!object) return name === "String" && labelOf(firstArgument) === true;
+            const receiver = unwrapExpression(object);
+            if (receiver.type === "Identifier" && receiver.name === "JSON") {
+              return name === "parse" && labelOf(firstArgument) === true;
+            }
+            if (receiver.type === "Identifier" && receiver.name === "Object") {
+              return ["entries", "values", "keys"].includes(name) && labelOf(firstArgument) === true;
+            }
+            // A schema's output carries the label of what it parsed, no more: parsing an object that
+            // holds request input under some keys (a handler's first argument) taints those keys only.
+            if (name === "parse" || name === "parseAsync") return labelOf(firstArgument);
+            if (name === "safeParse" || name === "safeParseAsync") {
+              const parsed = labelOf(firstArgument);
+              return parsed && { data: parsed };
+            }
+            return STRING_METHODS.has(name) && labelOf(object) === true;
+          },
+          callbackLabels(node, labelOf, setParams) {
+            const name = calleeName(node);
+            if (node.type !== "CallExpression" || !ELEMENT_CALLBACKS.has(name)) return;
+            const object = calleeObject(node);
+            if (!object || labelOf(object) !== true) return;
+            // `reduce((accumulator, element) => …)` gets the element second, and with no initial value
+            // the first element as the accumulator too.
+            const reduces = name === "reduce" || name === "reduceRight";
+            setParams(node.arguments[0], reduces ? [node.arguments.length < 2, true] : [true]);
+          },
+          sink(node, labelOf) {
+            const name = calleeName(node);
+            if (name === "RegExp" && isGlobalReference(node.callee)) {
+              if (node.parent?.type === "ExpressionStatement") return;
+            } else if (
+              node.type !== "CallExpression" ||
+              !IMPLICIT_REGEXP_METHODS.has(name) ||
+              !calleeObject(node) ||
+              // The String methods take one argument; query-key factories and search clients often more.
+              node.arguments.length !== 1
+            ) {
+              return;
+            }
+            if (labelOf(node.arguments[0]) !== true) return;
+            context.report({
+              node,
+              message:
+                "This regular expression is compiled from request input, which can block the event loop (ReDoS); a length cap does not prevent it (ENG-7109). Match it in a linear-time engine (modules/api/lib/linear-pattern-matcher.ts), escape it, or don't run it.",
+            });
+          },
+        });
+      },
+    };
+  },
+};
+
+/*
+ * `no-tsx-unit-test`: CODING_STANDARDS.md, Testing Guidelines: "Do not write component or UI unit tests
+ * for `.tsx` files." Mechanically, a unit test is a `*.test.ts`: this fails a test file that needs JSX
+ * (`*.test.tsx`, `*.spec.tsx`, and their `.jsx` forms). A component test written in `.ts` is still a
+ * review finding. The `allow` option lists the repo-relative paths of the tests that predate the check.
+ */
+const TSX_TEST = /\.(?:test|spec)\.[jt]sx$/;
+
+const noTsxUnitTest = {
+  meta: {
+    type: "problem",
+    docs: { description: "Disallow component and UI unit tests in .tsx/.jsx test files." },
+    schema: ALLOW_OPTION_SCHEMA,
+  },
+  create(context) {
+    if (!TSX_TEST.test(context.filename.replaceAll("\\", "/")) || isAllowlisted(context)) return {};
+    return {
+      Program(node) {
+        context.report({
+          node,
+          message:
+            "Component and UI unit tests in `.tsx`/`.jsx` are not written here (CODING_STANDARDS.md, Testing Guidelines). Lift the logic into a `.ts` module and test it there; the feature journeys cover the rendering.",
+        });
+      },
+    };
+  },
+};
+
 export default {
   meta: { name: "formbricks" },
   rules: {
     "no-inline-lint-config": noInlineLintConfig,
+    "no-loose-schema": noLooseSchema,
+    "no-request-regexp": noRequestRegexp,
+    "no-tsx-unit-test": noTsxUnitTest,
     "prefer-read-only-props": preferReadOnlyProps,
     "restricted-syntax": restrictedSyntax,
   },
