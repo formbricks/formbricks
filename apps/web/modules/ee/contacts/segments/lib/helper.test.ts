@@ -8,12 +8,15 @@ import {
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import {
   SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE,
+  assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
   collectSurveyIdsFromSegmentFilters,
+  getAddedSegmentSurveyIds,
   getSurveyIdsReadBySegments,
+  restoreHiddenSegmentSurveyIds,
   segmentFiltersReadHiddenSurvey,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment, getSegmentsByIds } from "@/modules/ee/contacts/segments/lib/segments";
@@ -622,5 +625,176 @@ describe("segmentFiltersReadHiddenSurvey (ENG-6870)", () => {
     await expect(
       assertSegmentSurveyFiltersVisible(tree(interaction("specific", [restrictedId])), workspaceId, member)
     ).rejects.toThrow(new InvalidInputError(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE));
+  });
+});
+
+describe("edits of a filter holding a hidden survey (ENG-6955)", () => {
+  const workspaceId = "ws1";
+  const hiddenId = "clrestricted00000000000001";
+  const visibleId = "clvisible000000000000000001";
+  const nestedSegmentId = "clnested000000000000000001";
+  const member: TSurveyActorContext = {
+    enforced: true,
+    isOrganizationAdmin: false,
+    kind: "user",
+    userId: "u1",
+  };
+  const owner: TSurveyActorContext = { ...member, isOrganizationAdmin: true, userId: "u0" };
+  const leaf = (id: string, surveyIds: string[], operator = "haveCompleted", amount = 30) =>
+    ({
+      id,
+      connector: null,
+      resource: {
+        id: `${id}-r`,
+        root: { type: "surveyInteraction" },
+        qualifier: { operator },
+        value: { surveyScope: "specific", surveyIds, within: { amount, unit: "days" } },
+      },
+    }) as unknown as TBaseFilters[number];
+  const nested = (segmentId: string) =>
+    ({
+      id: `seg-${segmentId}`,
+      connector: "and",
+      resource: {
+        id: "r2",
+        root: { type: "segment", segmentId },
+        qualifier: { operator: "userIsIn" },
+        value: segmentId,
+      },
+    }) as unknown as TBaseFilters[number];
+  const stored = [leaf("f1", [hiddenId])];
+  const surveyIdsOf = (filters: TBaseFilters) =>
+    filters.map(
+      (filter) => (filter.resource as unknown as { value: { surveyIds: string[] } }).value.surveyIds
+    );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSurveyFindFirst.mockResolvedValue({ id: hiddenId });
+  });
+
+  test("an unchanged filter adds nothing and the member passes", async () => {
+    expect(await getAddedSegmentSurveyIds([leaf("f1", [hiddenId])], stored, workspaceId)).toEqual([]);
+    await expect(
+      assertAddedSegmentSurveyFiltersVisible([leaf("f1", [hiddenId])], stored, workspaceId, member)
+    ).resolves.toBeUndefined();
+    expect(mockSurveyFindFirst).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["operator", leaf("f1", [hiddenId], "haveNotCompleted")],
+    ["within", leaf("f1", [hiddenId], "haveCompleted", 7)],
+  ])("a changed %s makes the hidden id count as added and the member is refused", async (_, edited) => {
+    expect(await getAddedSegmentSurveyIds([edited], stored, workspaceId)).toEqual([hiddenId]);
+    await expect(
+      assertAddedSegmentSurveyFiltersVisible([edited], stored, workspaceId, member)
+    ).rejects.toThrow(SEGMENT_FILTERS_READ_HIDDEN_SURVEY_MESSAGE);
+  });
+
+  test("a changed filter is refused even when a sibling filter still reads the same hidden survey", async () => {
+    const twoReaders = [leaf("f1", [hiddenId]), leaf("f2", [hiddenId], "haveSeen")];
+    const edited = [leaf("f1", [hiddenId], "haveNotCompleted"), leaf("f2", [hiddenId], "haveSeen")];
+    expect(await getAddedSegmentSurveyIds(edited, twoReaders, workspaceId)).toEqual([hiddenId]);
+    await expect(
+      assertAddedSegmentSurveyFiltersVisible(edited, twoReaders, workspaceId, member)
+    ).rejects.toThrow(InvalidInputError);
+  });
+
+  test("a changed filter is refused even when a nested segment in the stored tree reads the same survey", async () => {
+    vi.mocked(getSegment).mockResolvedValue({
+      id: nestedSegmentId,
+      workspaceId,
+      filters: [leaf("n1", [hiddenId])],
+    } as unknown as Awaited<ReturnType<typeof getSegment>>);
+    const withSegment = [leaf("f1", [hiddenId]), nested(nestedSegmentId)];
+    const edited = [leaf("f1", [hiddenId], "haveNotCompleted"), nested(nestedSegmentId)];
+    expect(await getAddedSegmentSurveyIds(edited, withSegment, workspaceId)).toEqual([hiddenId]);
+    // The same tree, unchanged, adds nothing.
+    expect(await getAddedSegmentSurveyIds(withSegment, withSegment, workspaceId)).toEqual([]);
+  });
+
+  test("a nested segment that is new still counts by set difference", async () => {
+    vi.mocked(getSegment).mockResolvedValue({
+      id: nestedSegmentId,
+      workspaceId,
+      filters: [leaf("n1", [hiddenId])],
+    } as unknown as Awaited<ReturnType<typeof getSegment>>);
+    expect(await getAddedSegmentSurveyIds([nested(nestedSegmentId)], [], workspaceId)).toEqual([hiddenId]);
+  });
+
+  test("a duplicated filter id counts the hidden id as added", async () => {
+    const copies = [leaf("f1", [hiddenId]), leaf("f1", [hiddenId])];
+    expect(await getAddedSegmentSurveyIds(copies, stored, workspaceId)).toEqual([hiddenId]);
+    await expect(assertAddedSegmentSurveyFiltersVisible(copies, stored, workspaceId, member)).rejects.toThrow(
+      InvalidInputError
+    );
+  });
+
+  test("adding or removing a visible survey in a filter holding a hidden one counts the hidden one as added", async () => {
+    const mixed = [leaf("f1", [visibleId, hiddenId])];
+    expect(await getAddedSegmentSurveyIds([leaf("f1", [hiddenId])], mixed, workspaceId)).toEqual([hiddenId]);
+    expect(
+      await getAddedSegmentSurveyIds(
+        [leaf("f1", [visibleId, hiddenId])],
+        [leaf("f1", [hiddenId])],
+        workspaceId
+      )
+    ).toEqual([visibleId, hiddenId]);
+  });
+
+  test("an organization owner changes the filter freely", async () => {
+    await expect(
+      assertAddedSegmentSurveyFiltersVisible(
+        [leaf("f1", [hiddenId], "haveNotCompleted", 7)],
+        stored,
+        workspaceId,
+        owner
+      )
+    ).resolves.toBeUndefined();
+  });
+
+  test("restoring refuses a redacted filter whose terms changed, and keeps an unchanged one", async () => {
+    mockSurveyFindMany.mockResolvedValue([]);
+    const where = { visibility: "workspace" as const };
+    await expect(
+      restoreHiddenSegmentSurveyIds([leaf("f1", [], "haveNotCompleted")], stored, workspaceId, where)
+    ).rejects.toThrow(InvalidInputError);
+
+    const restored = await restoreHiddenSegmentSurveyIds([leaf("f1", [])], stored, workspaceId, where);
+    expect(surveyIdsOf(restored)).toEqual([[hiddenId]]);
+  });
+
+  test("restoring refuses reshaping [visible, hidden] into [other visible, hidden]", async () => {
+    mockSurveyFindMany.mockResolvedValue([{ id: visibleId }]);
+    const where = { visibility: "workspace" as const };
+    const storedMixed = [leaf("f1", [visibleId, hiddenId])];
+    await expect(
+      restoreHiddenSegmentSurveyIds([leaf("f1", [])], storedMixed, workspaceId, where)
+    ).rejects.toThrow(InvalidInputError);
+    const restored = await restoreHiddenSegmentSurveyIds(
+      [leaf("f1", [visibleId])],
+      storedMixed,
+      workspaceId,
+      where
+    );
+    expect(surveyIdsOf(restored)).toEqual([[visibleId, hiddenId]]);
+  });
+
+  test("a filter switched to scope any gives the same outcome on both paths: hidden ids dropped, no refusal", async () => {
+    mockSurveyFindMany.mockResolvedValue([]);
+    const anyScope = {
+      ...leaf("f1", []),
+      resource: {
+        ...(leaf("f1", []).resource as object),
+        value: { surveyScope: "any", surveyIds: [], within: { amount: 30, unit: "days" } },
+      },
+    } as unknown as TBaseFilters[number];
+    const restored = await restoreHiddenSegmentSurveyIds([anyScope], stored, workspaceId, {
+      visibility: "workspace",
+    });
+    expect(surveyIdsOf(restored)).toEqual([[]]);
+    await expect(
+      assertAddedSegmentSurveyFiltersVisible([anyScope], stored, workspaceId, member)
+    ).resolves.toBeUndefined();
   });
 });

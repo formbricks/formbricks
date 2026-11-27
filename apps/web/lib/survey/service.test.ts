@@ -3648,6 +3648,70 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     );
   });
 
+  // ENG-6955: a stored hidden id only rides along in a filter that keeps its operator, scope and window.
+  test.each([
+    ["operator", { qualifier: { operator: "haveNotCompleted" } }],
+    ["within", { value: { surveyScope: "specific", within: { amount: 7, unit: "days" } } }],
+  ])("refuses a member who changes the %s of a filter holding a restricted survey", async (_, change) => {
+    storeSegment(interaction([restrictedId]));
+    vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({ id: restrictedId });
+    const [base] = interaction([restrictedId]);
+    const edited = [
+      {
+        ...base,
+        resource: {
+          ...base.resource,
+          ...change,
+          value: {
+            ...base.resource.value,
+            surveyIds: [restrictedId],
+            ...(change as { value?: object }).value,
+          },
+        },
+      },
+    ];
+
+    await expect(save(edited, { targetingActor: MEMBER_TARGETING_ACTOR })).rejects.toThrow(InvalidInputError);
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("refuses a member who changes a filter while a sibling filter still reads the same restricted survey", async () => {
+    const [base] = interaction([restrictedId]);
+    const sibling = { ...base, id: "clf21234567890123456789012" };
+    storeSegment([base, sibling]);
+    vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({ id: restrictedId });
+    const edited = [
+      { ...base, resource: { ...base.resource, qualifier: { operator: "haveNotCompleted" } } },
+      sibling,
+    ];
+
+    await expect(save(edited, { targetingActor: MEMBER_TARGETING_ACTOR })).rejects.toThrow(InvalidInputError);
+    expect(prisma.segment.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("refuses a member who drops the only other survey from a filter holding a restricted one", async () => {
+    const visibleId = "clvisible000000000000000001";
+    const stored = interaction([visibleId, restrictedId]);
+    storeSegment(stored);
+    vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({ id: restrictedId });
+
+    await expect(
+      save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR })
+    ).rejects.toThrow(InvalidInputError);
+  });
+
+  test("lets an organization owner change a filter holding a restricted survey", async () => {
+    storeSegment(interaction([restrictedId]));
+    const [base] = interaction([restrictedId]);
+    const edited = [{ ...base, resource: { ...base.resource, qualifier: { operator: "haveNotCompleted" } } }];
+
+    await save(edited, {
+      targetingActor: { enforced: true, isOrganizationAdmin: true, kind: "user", userId: "u0" },
+    });
+
+    expect(prisma.segment.updateMany).toHaveBeenCalled();
+  });
+
   test("fails closed when a save adds a survey with no actor to check it against", async () => {
     storeSegment([]);
 
