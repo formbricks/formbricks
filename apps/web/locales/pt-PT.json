@@ -4101,6 +4101,7 @@
       "archive_survey_description": "Podes restaurá-lo a qualquer momento nos próximos 30 dias.",
       "archive_survey_description_in_progress": "Deixará de recolher respostas imediatamente.",
       "archive_survey_warning": "Este inquérito e todas as suas respostas serão permanentemente eliminados após 30 dias.",
+      "archive_survey_warning_exempt": "Este inquérito tem uma isenção de retenção de dados até {date}. Tanto o inquérito como todas as respostas serão eliminados permanentemente 30 dias após o fim da isenção.",
       "archiving_survey": "A arquivar inquérito...",
       "change_status": "Alterar estado",
       "completed_responses": "Concluídos",

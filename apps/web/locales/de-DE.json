@@ -4101,6 +4101,7 @@
       "archive_survey_description": "Du kannst sie jederzeit innerhalb der nächsten 30 Tage wiederherstellen.",
       "archive_survey_description_in_progress": "Die Umfrage wird sofort keine Antworten mehr sammeln.",
       "archive_survey_warning": "Diese Umfrage und alle zugehörigen Antworten werden nach 30 Tagen endgültig gelöscht.",
+      "archive_survey_warning_exempt": "Für diese Umfrage gilt bis zum {date} eine Ausnahme von der Datenaufbewahrung. Sie und alle zugehörigen Antworten werden 30 Tage nach Ablauf der Ausnahme endgültig gelöscht.",
       "archiving_survey": "Umfrage wird archiviert...",
       "change_status": "Status ändern",
       "completed_responses": "Abgeschlossen",

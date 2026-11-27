@@ -4101,6 +4101,7 @@
       "archive_survey_description": "你可以在接下來的 30 天內隨時還原。",
       "archive_survey_description_in_progress": "它將立即停止收集回覆。",
       "archive_survey_warning": "這份問卷及其所有回覆將在 30 天後永久刪除。",
+      "archive_survey_warning_exempt": "這份問卷享有資料保留豁免，期限至 {date}。豁免期結束 30 天後，問卷及其所有回覆都會被永久刪除。",
       "archiving_survey": "正在封存問卷...",
       "change_status": "變更狀態",
       "completed_responses": "已完成",

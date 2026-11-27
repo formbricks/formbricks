@@ -4101,6 +4101,7 @@
       "archive_survey_description": "You can restore it anytime within the next 30 days.",
       "archive_survey_description_in_progress": "It will stop collecting responses immediately.",
       "archive_survey_warning": "This survey and all its responses will be permanently deleted after 30 days.",
+      "archive_survey_warning_exempt": "This survey has a data retention exemption until {date}. It and all its responses will be permanently deleted 30 days after the exemption ends.",
       "archiving_survey": "Archiving survey…",
       "change_status": "Change status",
       "completed_responses": "Completed",

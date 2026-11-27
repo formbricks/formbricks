@@ -4101,6 +4101,7 @@
       "archive_survey_description": "30日以内であればいつでも復元できます。",
       "archive_survey_description_in_progress": "すぐに回答の収集が停止されます。",
       "archive_survey_warning": "このアンケートとすべての回答は30日後に完全に削除されます。",
+      "archive_survey_warning_exempt": "このアンケートには{date}までデータ保持の免除が適用されています。免除期間の終了から30日後に、アンケートとすべての回答が完全に削除されます。",
       "archiving_survey": "アンケートをアーカイブ中...",
       "change_status": "ステータスを変更",
       "completed_responses": "完了",

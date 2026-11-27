@@ -10,6 +10,7 @@ import {
   getRetentionHistoryCounts,
   getRetentionPolicyLabel,
   getRetentionPolicySummary,
+  getSurveyExemptionEnd,
   getSurveyRetentionDueWarning,
   getSurveyRetentionExemptLines,
   getSurveyRetentionLines,
@@ -288,5 +289,78 @@ describe("survey retention copy", () => {
         formatDate
       )
     ).toBeNull();
+  });
+});
+
+describe("getSurveyExemptionEnd", () => {
+  const now = new Date("2030-06-01T00:00:00.000Z");
+  const exemption = (
+    until: string,
+    rest: { policy?: "responses" | "surveys"; revokedAt?: string | null } = {}
+  ) => ({
+    id: `clexm_${until}`,
+    surveyId: "clsrv",
+    surveyName: "Site visit",
+    workspaceId: "clwsp",
+    policy: rest.policy ?? ("surveys" as const),
+    until,
+    source: "manual" as const,
+    reason: "Audit",
+    createdBy: null,
+    createdAt: "2030-01-01T00:00:00.000Z",
+    revokedAt: rest.revokedAt ?? null,
+  });
+
+  test("is null without an exemption", () => {
+    expect(getSurveyExemptionEnd([], now)).toBeNull();
+  });
+
+  test("is the end of an active exemption, whatever its policy", () => {
+    expect(getSurveyExemptionEnd([exemption("2031-03-31T00:00:00.000Z")], now)).toBe(
+      "2031-03-31T00:00:00.000Z"
+    );
+    expect(getSurveyExemptionEnd([exemption("2031-03-31T00:00:00.000Z", { policy: "responses" })], now)).toBe(
+      "2031-03-31T00:00:00.000Z"
+    );
+  });
+
+  test("ignores a revoked exemption", () => {
+    expect(
+      getSurveyExemptionEnd(
+        [exemption("2031-03-31T00:00:00.000Z", { revokedAt: "2030-05-01T00:00:00.000Z" })],
+        now
+      )
+    ).toBeNull();
+  });
+
+  test("ignores an expired exemption, and one ending exactly now", () => {
+    expect(
+      getSurveyExemptionEnd(
+        [exemption("2030-05-31T23:59:59.999Z"), exemption("2030-06-01T00:00:00.000Z")],
+        now
+      )
+    ).toBeNull();
+  });
+
+  test("ends at the revocation when it is scheduled before the end date", () => {
+    expect(
+      getSurveyExemptionEnd(
+        [exemption("2031-03-31T00:00:00.000Z", { revokedAt: "2030-09-01T00:00:00.000Z" })],
+        now
+      )
+    ).toBe("2030-09-01T00:00:00.000Z");
+  });
+
+  test("is the latest end when several are active", () => {
+    expect(
+      getSurveyExemptionEnd(
+        [
+          exemption("2031-03-31T00:00:00.000Z"),
+          exemption("2031-06-30T00:00:00.000Z", { policy: "responses" }),
+          exemption("2032-01-01T00:00:00.000Z", { revokedAt: "2030-01-01T00:00:00.000Z" }),
+        ],
+        now
+      )
+    ).toBe("2031-06-30T00:00:00.000Z");
   });
 });
