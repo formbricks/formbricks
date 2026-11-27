@@ -44,6 +44,7 @@ import {
 } from "./better-auth-observability";
 import { passwordByteLimitBeforeHandler } from "./better-auth-password-bytes";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
+import { isPasswordSignInRequest } from "./better-auth-request-context";
 import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
 import { trustDeviceBeforeHandler } from "./better-auth-trust-device-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
@@ -323,10 +324,11 @@ export const auth = betterAuth({
     // EMAIL_VERIFICATION_DISABLED the user still receives it but isn't blocked from signing in —
     // requireEmailVerification (above) gates that.
     sendOnSignUp: true,
-    // Resend a fresh verification link when an unverified user tries to sign in (the original sign-up
-    // link may have expired). The login form surfaces this as a "check your inbox" message — without
-    // this flag BA would throw EMAIL_NOT_VERIFIED without sending anything, leaving no recovery path
-    // and making that message untrue. (ENG-1054)
+    // Resend a fresh verification link when an unverified user tries to sign in with the right password
+    // (the original sign-up link may have expired). Without this flag BA would throw EMAIL_NOT_VERIFIED
+    // without sending anything, leaving no recovery path (ENG-1054). Since ENG-2099 that answer is
+    // rewritten to the wrong-password one (`maskUnverifiedSignInAfterHandler`), so this email is the
+    // only place the user learns they still have to verify.
     sendOnSignIn: true,
     // OFF since ENG-2562, and the reason is worth keeping: this used to be `true` "because clicking the
     // signed link proves email ownership". It does — but it does not prove the clicker chose the
@@ -349,7 +351,7 @@ export const auth = betterAuth({
     //  2. a FALSY RETURN — `sendEmail` returns false without throwing when SMTP isn't configured, and
     //     Better Auth ignores the return value entirely. Silent on every path.
     // So: treat both as failures and make them attributable — log with the user id, and rethrow so the
-    // paths that DO propagate (resend, sign-in resend) fail loudly instead of claiming success.
+    // path that DOES propagate (resend) fails loudly instead of claiming success.
     // Deliberately NOT surfaced in the sign-up response: that response must not vary by what happened to
     // one address, or it becomes an account-existence oracle (ENG-2099). The verification-requested
     // screen derives its "nothing was sent" state from IS_SMTP_CONFIGURED instead.
@@ -358,8 +360,13 @@ export const auth = betterAuth({
     // an address it just created, so waiting on SMTP there made a free address answer measurably slower
     // than a registered one. The sign-up path never surfaced a send failure anyway (see 1. above), and
     // `deliverVerificationEmail` logs its own, so nothing is lost by not awaiting it.
+    //
+    // ENG-2099: the same holds for the resend on a password sign-in. Better Auth sends only when the
+    // password matched an unverified account, so awaiting SMTP there made that answer slower than the
+    // identical wrong-password one. Better Auth also calls it through `runInBackgroundOrAwait`, so a
+    // failed send never reached that response either.
     sendVerificationEmail: async ({ user, url }) => {
-      if (isInSignupRequest()) {
+      if (isInSignupRequest() || isPasswordSignInRequest()) {
         after(() => deliverVerificationEmail(user, url).catch(() => undefined));
         return;
       }

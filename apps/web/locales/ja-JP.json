@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "ここでは2要素認証によるサインインを完了できません",
       "oauth_signup_not_allowed_description": "IDプロバイダーによるサインインは成功しましたが、このFormbricksインスタンスではこの方法で新しいアカウントを作成できない設定になっています。管理者に招待を依頼してから、もう一度お試しください。",
       "oauth_signup_not_allowed_title": "アカウントを作成できませんでした",
-      "please_verify_your_email_to_continue": "メールアドレスを確認してください。確認リンクをお送りしました。",
       "use_a_backup_code": "バックアップコードを使用"
     },
     "oauth": {

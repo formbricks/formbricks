@@ -73,7 +73,6 @@ checksums:
     auth/login/oauth_second_factor_unavailable_title: feaba4c3c7933fcafbab42ffe9bcc69c
     auth/login/oauth_signup_not_allowed_description: a03f3faa0668235bcf6f91b861d1df4a
     auth/login/oauth_signup_not_allowed_title: 8afe5de3881de0b4c5d8893ac9ff4a87
-    auth/login/please_verify_your_email_to_continue: 2ac048d93a4ec24950404a0c5fbfcd3a
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
     auth/oauth/access/all: b818d4def14a915a46730e6326127e1e
     auth/oauth/access/all_hint: c1270b19103dca8170db5ca4bcc3e88e

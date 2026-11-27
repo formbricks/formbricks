@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "無法在此完成兩步驟驗證登入",
       "oauth_signup_not_allowed_description": "你的身分提供者已成功驗證,但這個 Formbricks 實例未設定以此方式建立新帳號。請要求管理員邀請你,然後再試一次。",
       "oauth_signup_not_allowed_title": "我們無法建立你的帳號",
-      "please_verify_your_email_to_continue": "請驗證您的電子郵件地址。我們已向您發送了一個驗證連結。",
       "use_a_backup_code": "使用備份碼"
     },
     "oauth": {

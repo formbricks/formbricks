@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "A kétlépcsős bejelentkezés itt nem fejezhető be",
       "oauth_signup_not_allowed_description": "A személyazonosság-szolgáltatója bejelentkeztette Önt, de ez a Formbricks-példány nem úgy van beállítva, hogy ilyen módon új fiókokat hozzon létre. Kérjen meg egy adminisztrátort, hogy hívja meg Önt, majd próbálja meg újra.",
       "oauth_signup_not_allowed_title": "Nem sikerült létrehoznunk a fiókját",
-      "please_verify_your_email_to_continue": "Ellenőrizze az e-mail-címét. Küldtünk Önnek egy ellenőrzési hivatkozást.",
       "use_a_backup_code": "Visszaszerzési kód használata"
     },
     "oauth": {
