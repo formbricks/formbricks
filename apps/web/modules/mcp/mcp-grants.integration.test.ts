@@ -146,7 +146,7 @@ const renameSurvey = (accessToken: string, setup: TSetup) =>
   callMcpTool({ accessToken }, "patch_survey", { surveyId: setup.surveyId, data: { name: "Renamed" } });
 
 const archiveSurvey = (accessToken: string, setup: TSetup) =>
-  callMcpTool({ accessToken }, "archive_survey", { surveyId: setup.surveyId });
+  callMcpTool({ accessToken }, "archive_survey", { surveyId: setup.surveyId, confirm: true });
 
 const restoreSurvey = (accessToken: string, setup: TSetup) =>
   callMcpTool({ accessToken }, "restore_survey", { surveyId: setup.surveyId });

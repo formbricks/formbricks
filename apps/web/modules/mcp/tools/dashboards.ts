@@ -26,6 +26,7 @@ import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, isMcpDashboardViewerOnly } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import type { TMcpPermissionRequirement } from "../permissions";
+import { resolveMcpChartDateRange } from "./chart-date-range";
 import {
   type TMcpAddChartToDashboardInput,
   type TMcpChartIdInput,
@@ -240,8 +241,9 @@ export function registerDashboardTools(server: McpServer): void {
     ],
     async (input: TMcpPreviewChartInput, ctx) => {
       const context = toolContext(ctx);
+      const { bodyDateRange } = resolveMcpChartDateRange(input.dateRange);
       return await responseToMcpToolResult(
-        await previewV3Chart({ body: input, ...context }),
+        await previewV3Chart({ body: { ...input, dateRange: bodyDateRange }, ...context }),
         context.requestId
       );
     }
@@ -287,7 +289,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Get chart data",
       description:
-        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) replaces the chart's own range on collectedAt; without one the chart's saved range applies. Pass dashboardId to read the chart through a dashboard it sits on, as the dashboard shows it: filters (a field, an operator and values each, on any dimension of the chart's dataset or an embedded-data field) are then ANDed onto the chart's saved filters and never widen it, and a filter on a field the chart's Feedback Dataset lacks returns no rows and names the filter in unfilterableFilters, as does a filter on Sentiment, Sentiment Score or Emotions that needs a value, on a chart that reads no text answer (its saved filters pin fieldType to non-text types, or every measure is an NPS, CSAT, CES or rating one). Without dashboardId filters are not accepted. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
+        "Read a saved chart's rows. A dateRange (a preset, 'all-time', { from, to }, or a relative { last, unit } resolved to inclusive days before the read) replaces the chart's own range on collectedAt; without one the chart's saved range applies. Pass dashboardId to read the chart through a dashboard it sits on, as the dashboard shows it: filters (a field, an operator and values each, on any dimension of the chart's dataset or an embedded-data field) are then ANDed onto the chart's saved filters and never widen it, and a filter on a field the chart's Feedback Dataset lacks returns no rows and names the filter in unfilterableFilters, as does a filter on Sentiment, Sentiment Score or Emotions that needs a value, on a chart that reads no text answer (its saved filters pin fieldType to non-text types, or every measure is an NPS, CSAT, CES or rating one). Without dashboardId filters are not accepted. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
       inputSchema: ZMcpGetChartDataInput,
       outputSchema: ZMcpGetChartDataOutput,
       annotations: READ_ANNOTATIONS,
@@ -306,7 +308,7 @@ export function registerDashboardTools(server: McpServer): void {
     },
     async ({ dashboardId, chartId, dateRange, filters }: TMcpGetChartDataInput, ctx) => {
       const context = toolContext(ctx);
-      const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      const { query: range } = resolveMcpChartDateRange(dateRange);
       const response = dashboardId
         ? await getV3DashboardChartData({
             dashboardId,
@@ -377,7 +379,7 @@ export function registerDashboardTools(server: McpServer): void {
       ctx
     ) => {
       const context = toolContext(ctx);
-      const range = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      const { query: range } = resolveMcpChartDateRange(dateRange);
       // The filter listed is `f1`; the ones already applied follow it.
       return await responseToMcpToolResult(
         await listV3DashboardFilterValues({

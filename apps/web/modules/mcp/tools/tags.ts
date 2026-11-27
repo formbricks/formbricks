@@ -159,6 +159,7 @@ export function registerTagTools(server: McpServer): void {
         confirm: input.confirm,
         ctx,
         run: () => mergeTags(input, ctx),
+        wording: { action: "The merge", unchanged: "no tag was merged" },
       });
     }
   );

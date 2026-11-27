@@ -223,6 +223,42 @@ describe("the tools reach the operations", () => {
     expect(mergeV3Tags).not.toHaveBeenCalled();
   });
 
+  // The refusal names the merge, not a deletion, so the model tells the user what did not happen.
+  test.each([
+    ["dismissed", { action: "decline" }, undefined, "The merge was not confirmed, so no tag was merged."],
+    [
+      "unticked",
+      { action: "accept", content: { confirm: false } },
+      undefined,
+      "The merge was declined, so no tag was merged.",
+    ],
+    [
+      "sealed for another merge",
+      { action: "accept", content: { confirm: true } },
+      { tool: "merge_tags", resourceKey: `${OTHER_TAG_ID}->${TAG_ID}` },
+      "The confirmation did not match this request, so no tag was merged.",
+    ],
+  ])("merge_tags refuses a %s confirmation in its own words", async (_label, answer, state, reason) => {
+    const tool = createToolServer().get("merge_tags")!;
+    const context = elicitingOAuthContext(oauthAuthInfo(["responses:read", "responses:write"]));
+
+    const result = await tool.handler(
+      { tagId: TAG_ID, newTagId: OTHER_TAG_ID },
+      {
+        ...context,
+        mcpReq: {
+          ...context.mcpReq,
+          inputResponses: { confirm: answer },
+          requestState: () => (state ? { tool: state.tool, resourceId: state.resourceKey } : undefined),
+        },
+      }
+    );
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.structuredContent)).toContain(reason);
+    expect(mergeV3Tags).not.toHaveBeenCalled();
+  });
+
   test("merge_tags refuses an API key with a 403 before asking to confirm", async () => {
     const result = await call("merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID }, apiKeyAuthInfo);
 

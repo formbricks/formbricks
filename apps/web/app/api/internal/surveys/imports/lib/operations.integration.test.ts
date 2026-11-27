@@ -852,6 +852,27 @@ describe("a reviewed draft that carries no references (Qualtrics, Word, Excel, C
     );
     expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before);
   });
+
+  // ENG-7508: the client sends the draft back, so it cannot choose the survey's visibility.
+  test.each(["workspace", "restricted"])(
+    "refuses a draft naming visibility %s, and creates nothing",
+    async (visibility) => {
+      const target = fixture.otherWorkspaceId;
+      const before = await prisma.survey.count({ where: { workspaceId: target } });
+
+      const response = await commit({
+        workspaceId: target,
+        payload: { ...documentDraft(target), visibility },
+      });
+
+      expect(response.status).toBe(422);
+      const problem = (await response.json()) as { invalid_params: { name: string; code?: string }[] };
+      expect(problem.invalid_params).toContainEqual(
+        expect.objectContaining({ name: "survey.visibility", code: "unsupported_field" })
+      );
+      expect(await prisma.survey.count({ where: { workspaceId: target } })).toBe(before);
+    }
+  );
 });
 
 describe("a reviewed draft past the caps every import holds a survey to", () => {

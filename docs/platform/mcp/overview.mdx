@@ -42,8 +42,8 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 
 | Scope | Tools | What it allows |
 | --- | --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` | Read surveys, creatives and their counts, and surveys' custom CSS, and validate survey documents and CSS |
-| `surveys:write` | `create_survey`, `generate_survey`⁴, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `archive_survey`, `restore_survey`, `delete_survey`⁷, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, archive, restore and delete surveys; create, update, delete, archive and restore creatives; and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
+| `surveys:read` | `list_surveys`, `get_survey`, `get_survey_visibility`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` | Read surveys, their visibility, creatives and their counts, and surveys' custom CSS, and validate survey documents and CSS |
+| `surveys:write` | `create_survey`, `generate_survey`⁴, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `archive_survey`, `restore_survey`, `set_survey_visibility`, `delete_survey`⁷, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, archive, restore and delete surveys; change a survey's visibility; create, update, delete, archive and restore creatives; and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹ | Read workflows and their runs |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow`, `get_webhook_url`⁶, `regenerate_webhook_url`, `set_sample_payload`, `send_test_request`, `set_expected_response`, `run_test` | Create, update, and delete workflows, and manage Webhook Secret URLs |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read, count and search feedback records in a workspace's feedback dataset |
@@ -227,8 +227,12 @@ more so you can approve `audience:read`. API keys have no grant and work as befo
 
 Feedback records can be filtered by source, question, submission, end user, chosen option, language, date
 range, and by enrichment output — sentiment, emotions and whether a record has been enriched or translated
-at all. Any filter accepts several values, which are OR-ed, while different filters are AND-ed, and the
-listing can be ordered by when feedback was collected or when it was stored. `count_feedback_records`
+at all. A filter on ids, types, sources, questions, languages, options, sentiment or emotions accepts
+several values, which are OR-ed; the date and number bounds (`since`/`until`, `created_*`, `updated_*`,
+`value_date_*`, `value_number_*`, `sentiment_score_*`) and the `has_*` switches take one value each. Different filters are
+AND-ed. Dates are RFC 3339 date-times such as `2026-10-05T00:00:00Z`; a date alone is refused. The listing
+can be ordered by when feedback was collected, when it was stored, or when it last changed
+(`sort: updated_at`, which pairs with `updated_since`). `count_feedback_records`
 answers "how many" without fetching the records themselves — so an agent can report totals without pulling
 anyone's feedback text into the conversation.
 

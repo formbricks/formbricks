@@ -69,6 +69,17 @@ properties:
       - paused
       - completed
     default: draft
+  visibility:
+    allOf:
+      - $ref: ./SurveyVisibility.yml
+    description: >-
+      Initial visibility, create only. Omitted: a signed-in creator's survey is `restricted` when
+      survey visibility is enabled for the organization and `workspace` otherwise; a survey created
+      with an API key is always `workspace`. `restricted` needs a signed-in user and the feature —
+      otherwise nothing is written and the create is refused with 403 `visibility_not_enabled`, or
+      with 422 `visibility_change_not_allowed` for an API key, which owns no survey. Not accepted by
+      `PATCH /api/v3/surveys/{surveyId}`; change it afterwards with
+      `POST /api/v3/surveys/{surveyId}/visibility`.
   metadata:
     allOf:
       - $ref: ./SurveyMetadata.yml

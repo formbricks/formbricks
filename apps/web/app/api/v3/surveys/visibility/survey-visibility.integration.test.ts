@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
@@ -15,7 +15,9 @@ import { expectedSurveyRelationships } from "@/lib/authzed/survey-relationships"
 import { getSurveysWithCustomCssAndOwnerName } from "@/lib/survey/service";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
-import { listV3Surveys } from "../lib/operations";
+import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
+import { createV3SurveyResponse, listV3Surveys } from "../lib/operations";
+import { ZV3CreateSurveyBody } from "../schemas";
 import { changeV3SurveyVisibility, getV3SurveyVisibility } from "./operations";
 
 /**
@@ -247,6 +249,83 @@ describe("POST …/visibility against the real stack", () => {
       surveyId,
     });
     expect(byKey.status).toBe(403);
+  });
+});
+
+describe("POST /api/v3/surveys with visibility (ENG-7508)", () => {
+  afterEach(() => {
+    vi.mocked(getAccessControlPermission).mockResolvedValue(true);
+  });
+
+  test("an API-key create asking for restricted answers 422 and writes no survey", async () => {
+    const body = ZV3CreateSurveyBody.parse({
+      workspaceId: ids.workspace,
+      name: "Key restricted",
+      visibility: "restricted",
+      blocks: [
+        {
+          name: "Main",
+          elements: [
+            {
+              id: "feedback",
+              type: "openText",
+              headline: { "en-US": "What should we improve?" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = await createV3SurveyResponse({
+      body,
+      authentication: apiKeyAuthentication(),
+      requestId: "req",
+      instance,
+    });
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({
+      code: "visibility_change_not_allowed",
+      status: 422,
+    });
+    // A refused visibility is decided before the write, so not even a workspace-visible row exists.
+    expect(await prisma.survey.count({ where: { workspaceId: ids.workspace } })).toBe(0);
+  });
+
+  test("a signed-in create asking for restricted without the feature answers 403 and writes no survey", async () => {
+    // Every entitlement read in this create sees the feature off, whatever order they run in.
+    vi.mocked(getAccessControlPermission).mockResolvedValue(false);
+    const body = ZV3CreateSurveyBody.parse({
+      workspaceId: ids.workspace,
+      name: "User restricted",
+      visibility: "restricted",
+      blocks: [
+        {
+          name: "Main",
+          elements: [
+            {
+              id: "feedback",
+              type: "openText",
+              headline: { "en-US": "What should we improve?" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = await createV3SurveyResponse({
+      body,
+      authentication: session(ids.owner),
+      requestId: "req",
+      instance,
+    });
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ code: "visibility_not_enabled", status: 403 });
+    // Never downgraded to a workspace-visible survey: nothing is written.
+    expect(await prisma.survey.count({ where: { workspaceId: ids.workspace } })).toBe(0);
   });
 });
 

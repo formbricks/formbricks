@@ -135,28 +135,28 @@ export const ZV3FeedbackRecordFilters = z
     }),
 
     since: timestampFilter(
-      "Only records collected at or after this ISO 8601 timestamp (bounds collected_at, inclusive). Must fall between 1970-01-01 and 2080-12-31."
+      "Only records collected at or after this RFC 3339 date-time (bounds collected_at, inclusive), for example 2026-10-05T00:00:00Z; a date alone is refused. Must fall between 1970-01-01 and 2080-12-31. Every timestamp filter takes this format."
     ),
     until: timestampFilter(
-      "Only records collected at or before this ISO 8601 timestamp (bounds collected_at, inclusive). Must fall between 1970-01-01 and 2080-12-31."
+      "Only records collected at or before this RFC 3339 date-time (bounds collected_at, inclusive). Must fall between 1970-01-01 and 2080-12-31."
     ),
     created_since: timestampFilter(
-      "Only records Hub stored at or after this ISO 8601 timestamp (bounds created_at, inclusive). Use this for 'what did this import bring in'; collected_at and created_at diverge when historical data is imported."
+      "Only records Hub stored at or after this RFC 3339 date-time (bounds created_at, inclusive). Use this for 'what did this import bring in'; collected_at and created_at diverge when historical data is imported."
     ),
     created_until: timestampFilter(
-      "Only records Hub stored at or before this ISO 8601 timestamp (bounds created_at, inclusive)."
+      "Only records Hub stored at or before this RFC 3339 date-time (bounds created_at, inclusive)."
     ),
     updated_since: timestampFilter(
-      "Only records created or changed at or after this ISO 8601 timestamp (bounds updated_at, inclusive). updated_at is stamped on create, on every correction and on every translation, sentiment and emotion result (not on embeddings or topic assignment), so this answers one-off questions like 'what was created or changed since Monday'. Use a time the user gives you, and pair it with sort updated_at, order asc. Do not chain calls by feeding the newest updated_at you received back in as the next value: a write still committing when you read past its timestamp carries an older one, and would be skipped. Repeated incremental extraction belongs on the REST API, which documents a safe procedure. Deleted records are never returned."
+      "Only records created or changed at or after this RFC 3339 date-time (bounds updated_at, inclusive). updated_at is stamped on create, on every correction and on every translation, sentiment and emotion result (not on embeddings or topic assignment), so this answers one-off questions like 'what was created or changed since Monday'. Use a time the user gives you, and pair it with sort updated_at, order asc. Do not chain calls by feeding the newest updated_at you received back in as the next value: a write still committing when you read past its timestamp carries an older one, and would be skipped. Repeated incremental extraction belongs on the REST API, which documents a safe procedure. Deleted records are never returned."
     ),
     updated_until: timestampFilter(
-      "Only records last created or changed at or before this ISO 8601 timestamp (bounds updated_at, inclusive)."
+      "Only records last created or changed at or before this RFC 3339 date-time (bounds updated_at, inclusive)."
     ),
     value_date_min: timestampFilter(
-      "Only records whose date answer is at or after this ISO 8601 timestamp (inclusive). Bounds the answer itself, not when it was collected. Excludes every record that carries no date."
+      "Only records whose date answer is at or after this RFC 3339 date-time (inclusive). Bounds the answer itself, not when it was collected. Excludes every record that carries no date."
     ),
     value_date_max: timestampFilter(
-      "Only records whose date answer is at or before this ISO 8601 timestamp (inclusive). Excludes every record that carries no date."
+      "Only records whose date answer is at or before this RFC 3339 date-time (inclusive). Excludes every record that carries no date."
     ),
 
     value_number_min: z
@@ -356,7 +356,7 @@ export const ZV3FeedbackRecordCreateBodyFields = z.object({
   value_text: z.string().max(30000).optional().describe("Open-ended text response."),
   value_number: z.number().optional().describe("Numeric response (ratings, NPS, numbers)."),
   value_boolean: z.boolean().optional().describe("Boolean (yes/no) response."),
-  value_date: z.string().trim().min(1).optional().describe("Date response as an ISO 8601 timestamp."),
+  value_date: z.string().trim().min(1).optional().describe("Date response as an RFC 3339 date-time."),
   value_id: z
     .string()
     .max(255)
@@ -378,7 +378,7 @@ export const ZV3FeedbackRecordCreateBodyFields = z.object({
     .trim()
     .min(1)
     .optional()
-    .describe("When the feedback was collected, as an ISO 8601 timestamp. Defaults to now."),
+    .describe("When the feedback was collected, as an RFC 3339 date-time. Defaults to now."),
   metadata: z
     .record(z.string(), z.unknown())
     // Byte length, not string length: JSON.stringify(...).length counts UTF-16 code units, so a CJK or

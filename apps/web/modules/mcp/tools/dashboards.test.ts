@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
@@ -693,6 +693,86 @@ describe("chart and dashboard MCP tools", () => {
       expect(result.isError).toBeUndefined();
       expect(outputSchema.safeParse(result.structuredContent).success).toBe(true);
     }
+  });
+});
+
+describe("relative chart date ranges", () => {
+  const NOW = new Date("2026-11-24T12:00:00.000Z");
+
+  beforeEach(() => {
+    vi.useFakeTimers({ now: NOW });
+    vi.mocked(getV3ChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(getV3DashboardChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(listV3DashboardFilterValues).mockResolvedValue(
+      successResponse({ values: [], hasMore: false }, { requestId: "req" })
+    );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("get_chart_data sends the resolved inclusive days, never the relative object, to the v3 query", async () => {
+    const result = await call("get_chart_data", { chartId: CHART_ID, dateRange: { last: 8, unit: "week" } }, [
+      "dashboards:read",
+      "feedbackRecords:read",
+    ]);
+
+    expect(result.isError).toBeFalsy();
+    expect(getV3ChartData).toHaveBeenCalledWith(
+      expect.objectContaining({ chartId: CHART_ID, query: { from: "2026-09-30", to: "2026-11-24" } })
+    );
+    expect(vi.mocked(getV3ChartData).mock.calls[0][0].query).not.toHaveProperty("last");
+  });
+
+  test("a preset still reaches the v3 query as { dateRange }, unchanged", async () => {
+    await call("get_chart_data", { chartId: CHART_ID, dateRange: "last 7 days" }, [
+      "dashboards:read",
+      "feedbackRecords:read",
+    ]);
+
+    expect(getV3ChartData).toHaveBeenCalledWith(
+      expect.objectContaining({ chartId: CHART_ID, query: { dateRange: "last 7 days" } })
+    );
+  });
+
+  test("preview_chart sends the resolved days as its body's dateRange", async () => {
+    await call(
+      "preview_chart",
+      {
+        workspaceId: WORKSPACE_ID,
+        datasetId: DATASET_ID,
+        type: "bar",
+        query: { measures: ["FeedbackRecords.count"] },
+        dateRange: { last: 3, unit: "month" },
+      },
+      ["dashboards:read", "feedbackRecords:read"]
+    );
+
+    expect(previewV3Chart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ dateRange: { from: "2026-08-24", to: "2026-11-24" } }),
+      })
+    );
+    expect(vi.mocked(previewV3Chart).mock.calls[0][0].body.dateRange).not.toHaveProperty("last");
+  });
+
+  test("list_dashboard_filter_values sends the resolved days to its v3 query", async () => {
+    await call(
+      "list_dashboard_filter_values",
+      {
+        dashboardId: DASHBOARD_ID,
+        field: "FeedbackRecords.sourceName",
+        dateRange: { last: 60, unit: "day" },
+      },
+      ["dashboards:read", "feedbackRecords:read"]
+    );
+
+    expect(listV3DashboardFilterValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: expect.objectContaining({ from: "2026-09-26", to: "2026-11-24" }),
+      })
+    );
   });
 });
 

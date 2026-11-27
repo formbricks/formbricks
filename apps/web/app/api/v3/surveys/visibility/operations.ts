@@ -5,6 +5,7 @@ import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   problemBadRequest,
   problemForbidden,
@@ -18,6 +19,7 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 import { lockSurveyVisibility, reconcileSurveyRelationships } from "@/lib/authzed/survey";
 import { getPendingVisibility } from "@/lib/survey/visibility/policy";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   type TLinkedCreative,
   toUnlinkedCreativeAuditEvents,
@@ -138,6 +140,24 @@ const findRelevantBlockers = (row: TVisibilityRow): Promise<TSurveyVisibilityBlo
     ? Promise.resolve([])
     : findSurveyOutboundBlockers(row.id, row.workspaceId);
 
+const toStateResult = (
+  row: TVisibilityRow,
+  visibility: TV3SurveyResourceVisibility,
+  blockers: Awaited<ReturnType<typeof findRelevantBlockers>>,
+  impact: Awaited<ReturnType<typeof getSurveyVisibilityImpact>>
+) => ({
+  id: row.id,
+  ...serializeV3SurveyVisibilityFields(row, visibility.ownerName, visibility),
+  blockers,
+  impact,
+  pending: getPendingVisibility(row),
+  version: row.visibilityVersion,
+  allowedTargets: getAllowedVisibilityTargets(row, blockers.length),
+});
+
+/** The `GET …/visibility` result; the MCP output schema is checked against it at compile time. */
+export type TV3SurveyVisibilityStateResult = ReturnType<typeof toStateResult>;
+
 export async function getV3SurveyVisibility(params: TVisibilityOperationParams): Promise<Response> {
   const log = logger.withContext({ requestId: params.requestId, surveyId: params.surveyId });
 
@@ -151,18 +171,10 @@ export async function getV3SurveyVisibility(params: TVisibilityOperationParams):
       getSurveyVisibilityImpact(row, organizationId),
     ]);
 
-    return successResponse(
-      {
-        id: row.id,
-        ...serializeV3SurveyVisibilityFields(row, visibility.ownerName, visibility),
-        blockers,
-        impact,
-        pending: getPendingVisibility(row),
-        version: row.visibilityVersion,
-        allowedTargets: getAllowedVisibilityTargets(row, blockers.length),
-      },
-      { requestId: params.requestId, cache: "private, no-store" }
-    );
+    return successResponse(toStateResult(row, visibility, blockers, impact), {
+      requestId: params.requestId,
+      cache: "private, no-store",
+    });
   } catch (error) {
     return mapV3ThrownError(error, {
       instance: params.instance,
@@ -271,6 +283,9 @@ const toChangeResult = async (row: TVisibilityRow, visibility: TV3SurveyResource
   changedBy: await serializeChangedBy(row),
 });
 
+/** The `POST …/visibility` result; the MCP output schema is checked against it at compile time. */
+export type TV3SurveyVisibilityChangeResult = Awaited<ReturnType<typeof toChangeResult>>;
+
 export async function changeV3SurveyVisibility(
   params: TVisibilityOperationParams & Readonly<{ auditLog?: TV3AuditLog; body: unknown }>
 ): Promise<Response> {
@@ -278,6 +293,22 @@ export async function changeV3SurveyVisibility(
   const log = logger.withContext({ requestId, surveyId });
 
   try {
+    // The route wrapper's custom limit never sees an MCP call, so the mutation charges its own budget
+    // here, once, for both surfaces: a loop of workspace → restricted is capped at 10/min per actor,
+    // which is what keeps the deployment-wide freshness guard (ENG-3282) out of reach.
+    const limited = await applyV3OperationRateLimit({
+      config: rateLimitConfigs.api.v3SurveyVisibility,
+      authentication: params.authentication,
+      requestId,
+      instance,
+    });
+    if (limited) {
+      // The wrapper's own 429s are not audited (it builds the entry after limiting); match that, and
+      // keep an over-limit row from carrying an unknown organization and target.
+      skipV3AuditLog(auditLog);
+      return limited;
+    }
+
     const parsed = ZV3SurveyVisibilityBody.safeParse(body);
     if (!parsed.success) {
       return problemBadRequest(requestId, "Invalid request body", {

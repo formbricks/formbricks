@@ -1,14 +1,9 @@
 import { createId } from "@paralleldrive/cuid2";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
-import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
-import {
-  buildV3SurveyCreateInput,
-  getV3SurveyCreateInputInvalidParams,
-} from "@/app/api/v3/surveys/create-input";
+import { checkV3SurveyCreateInputWithoutWriting } from "@/app/api/v3/surveys/create-input";
 import { type TV3SurveyEmbeddedField, toLinkedEmbeddedFields } from "@/app/api/v3/surveys/embedded-fields";
-import { deriveV3SurveyLanguageRequests } from "@/app/api/v3/surveys/languages";
-import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
+import { ZV3CreateSurveyImportDraftBody, formatV3ZodInvalidParams } from "@/app/api/v3/surveys/schemas";
 import { validateV3SurveyDocument } from "@/app/api/v3/surveys/validation";
 import type { TSurveyImportPayload } from "./draft";
 
@@ -29,7 +24,7 @@ export function checkImportDraft(document: TSurveyImportPayload): InvalidParam[]
   const parsed = parseDraft(document);
   if (!parsed.ok) return parsed.invalidParams;
   const invalidReferences = validateDraft(parsed.data);
-  return invalidReferences.length > 0 ? invalidReferences : checkCreateInput(document, parsed.data);
+  return invalidReferences.length > 0 ? invalidReferences : checkCreateInput(parsed.data);
 }
 
 /**
@@ -47,16 +42,16 @@ export async function checkImportDraftInSlices(
   const invalidReferences = validateDraft(parsed.data);
   if (invalidReferences.length > 0) return invalidReferences;
   await between();
-  return checkCreateInput(document, parsed.data);
+  return checkCreateInput(parsed.data);
 }
 
-type TParsedDraft = ReturnType<typeof ZV3CreateSurveyBody.parse>;
+type TParsedDraft = ReturnType<typeof ZV3CreateSurveyImportDraftBody.parse>;
 
-/** The v3 request schema, as the create parses the body. */
+/** The v3 request schema, as the import commit parses the draft (no `visibility`: ENG-7508). */
 function parseDraft(
   document: TSurveyImportPayload
 ): { ok: true; data: TParsedDraft } | { ok: false; invalidParams: InvalidParam[] } {
-  const parsed = ZV3CreateSurveyBody.safeParse(document);
+  const parsed = ZV3CreateSurveyImportDraftBody.safeParse(document);
   return parsed.success
     ? { ok: true, data: parsed.data }
     : { ok: false, invalidParams: formatV3ZodInvalidParams(parsed.error, "data") };
@@ -68,29 +63,9 @@ function validateDraft(data: TParsedDraft): InvalidParam[] {
   return validation.valid ? [] : validation.invalidParams;
 }
 
-/** The survey service's write schema, with placeholder language rows. */
-function checkCreateInput(document: TSurveyImportPayload, data: TParsedDraft): InvalidParam[] {
-  const now = new Date();
-  const languages: TSurveyLanguage[] = deriveV3SurveyLanguageRequests(data).map((request) => ({
-    language: {
-      id: createId(),
-      code: request.code,
-      alias: null,
-      workspaceId: document.workspaceId,
-      createdAt: now,
-      updatedAt: now,
-    },
-    default: request.default,
-    enabled: request.enabled,
-  }));
-
-  return getV3SurveyCreateInputInvalidParams(
-    buildV3SurveyCreateInput(data, {
-      languages,
-      createdBy: null,
-      embeddedFields: toCheckedEmbeddedFields(data),
-    })
-  );
+/** The survey service's write schema, checked as the create and the validate dry run check it. */
+function checkCreateInput(data: TParsedDraft): InvalidParam[] {
+  return checkV3SurveyCreateInputWithoutWriting(data, toCheckedEmbeddedFields(data));
 }
 
 /**

@@ -490,12 +490,27 @@ export function problemSurveyHasLinkedCreatives(
   );
 }
 
+/**
+ * One code, one meaning — this caller cannot make the survey restricted — with the detail each request
+ * can act on. A change is told to duplicate the survey; a create (ENG-7508: `restricted` asked by a
+ * principal that can own nothing, such as an API key) has no survey to duplicate yet.
+ */
+const VISIBILITY_CHANGE_NOT_ALLOWED_DETAIL = {
+  change: "A survey without an author can't be restricted. Duplicate it to get a restricted copy you own.",
+  create:
+    'A survey created without an owner can\'t be restricted: only a signed-in user can own a survey. Send visibility "workspace", or create it from the app as a signed-in user.',
+} as const;
+
 /** ENG-3282: `restricted` refused because the survey has no owner (Decision log #3). */
-export function problemVisibilityChangeNotAllowed(requestId: string, instance?: string): Response {
+export function problemVisibilityChangeNotAllowed(
+  requestId: string,
+  instance?: string,
+  context: "change" | "create" = "change"
+): Response {
   return problemResponse(
     422,
     "Unprocessable Content",
-    "A survey without an author can't be restricted. Duplicate it to get a restricted copy you own.",
+    VISIBILITY_CHANGE_NOT_ALLOWED_DETAIL[context],
     requestId,
     { code: "visibility_change_not_allowed", instance }
   );

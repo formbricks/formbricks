@@ -21,8 +21,11 @@ import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { SurveyWriteAfterCommitError, type TSurveyWriteTransaction } from "@/lib/survey/write-transaction";
 import { resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { buildV3SurveyCreateInput, getV3SurveyCreateInputInvalidParams } from "./create-input";
-import { v3DistributionToScalars } from "./distribution";
+import {
+  buildV3AppSurveyScalarFields,
+  buildV3SurveyCreateInput,
+  getV3SurveyCreateInputInvalidParams,
+} from "./create-input";
 import {
   type TV3SurveyEmbeddedField,
   V3SurveyEmbeddedFieldsError,
@@ -191,7 +194,7 @@ async function buildV3AppSurveyCreateFields(
     return {};
   }
 
-  const fields: Partial<TSurveyCreateInput> = { ...v3DistributionToScalars(distribution), triggers: [] };
+  const fields = buildV3AppSurveyScalarFields(input);
 
   if (distribution.triggers.length > 0) {
     const actionClasses = transaction
@@ -340,8 +343,9 @@ export async function executeV3SurveyCreate(params: {
     );
   }
 
-  // ENG-3282: who owns the survey and whether it starts restricted, decided by the principal — never by
-  // the body, whose schema has no such fields. Both reads happen before any write, as does the cap.
+  // ENG-3282: who owns the survey and whether it starts restricted, decided by the principal and, on
+  // create alone, its explicit `visibility` (ENG-7508). The creation facts are resolved before any
+  // write, as is the cap, and a refusal here lands before the language upserts: nothing is written.
   const actor = getV3AuthorizationActor(authentication);
   const organizationId =
     actor?.type === "user"
@@ -353,7 +357,11 @@ export async function executeV3SurveyCreate(params: {
     );
   }
   await assertWorkspaceSurveyLimit(input.workspaceId);
-  const creationFacts = await resolveSurveyCreationFacts({ actor, organizationId });
+  const creationFacts = await resolveSurveyCreationFacts({
+    actor,
+    organizationId,
+    requestedVisibility: input.visibility,
+  });
 
   const embeddedFields = await toV3SurveyCreateEmbeddedFields(input, transaction);
   const languages = await ensureV3WorkspaceLanguages(

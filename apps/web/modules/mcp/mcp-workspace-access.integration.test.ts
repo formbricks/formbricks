@@ -409,9 +409,11 @@ describe("organization & workspace access on MCP calls", () => {
 
     const outOfGrant = await callMcpTool({ accessToken: setup.accessToken }, "archive_survey", {
       surveyId: setup.outside.surveyId,
+      confirm: true,
     });
     const madeUp = await callMcpTool({ accessToken: setup.accessToken }, "archive_survey", {
       surveyId: "z6p0x2v7q0m7r4c9k1n3b5h8",
+      confirm: true,
     });
     expect(problemOf(outOfGrant)).toEqual({
       ...problemOf(madeUp),

@@ -15,6 +15,7 @@ import {
   ZSurveyStatus,
   ZSurveyType,
   ZSurveyVariables,
+  ZSurveyVisibility,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { lengthBoundedArray } from "@/app/api/v3/lib/bounded-array";
@@ -394,6 +395,7 @@ function createV3SurveyDocumentNormalizer(options: {
 const ROOT_KEYS = new Set([
   "customCss",
   "workspaceId",
+  "visibility",
   "name",
   "type",
   "status",
@@ -414,11 +416,12 @@ const ROOT_KEYS = new Set([
 ]);
 /**
  * The create body's root keys a survey document has as a Formbricks file carries it: without the
- * workspace, and without `metadata`, the link survey's share settings, which are the survey's own and
- * not content to carry to another one.
+ * workspace; without `metadata`, the link survey's share settings, which are the survey's own and not
+ * content to carry to another one; and without `visibility`, an authorization fact of this workspace
+ * rather than survey content — a file must not be able to import a survey as restricted.
  */
 const DOCUMENT_ROOT_KEYS = new Set(
-  [...ROOT_KEYS].filter((key) => key !== "workspaceId" && key !== "metadata")
+  [...ROOT_KEYS].filter((key) => key !== "workspaceId" && key !== "metadata" && key !== "visibility")
 );
 const PATCH_ROOT_KEYS = new Set([
   "customCss",
@@ -1562,7 +1565,16 @@ function addCreateSurveyIssues(body: z.output<typeof ZV3CreateSurveyDocumentObje
 const ZV3CreateSurveyBodyBase = z.preprocess(
   normalizeV3CreateSurveyDocument,
   z
-    .object({ workspaceId: z.cuid2(), ...V3_CREATE_SURVEY_DOCUMENT_SHAPE })
+    .object({
+      workspaceId: z.cuid2(),
+      // ENG-7508: the create-only initial visibility. Omitted, the rule is unchanged: a signed-in
+      // creator gets `restricted` when the gates are on, everyone else `workspace`. A requested
+      // `restricted` is honoured or refused — never downgraded. PATCH does not accept it.
+      visibility: ZSurveyVisibility.optional().describe(
+        "Initial visibility, create only. Omitted: a signed-in creator gets `restricted` when survey visibility is enabled for the organization, `workspace` otherwise. `workspace`: readable by everyone with workspace access. `restricted`: owner and organization owners/managers only; needs a signed-in user and the feature, refused 403 `visibility_not_enabled` or 422 `visibility_change_not_allowed` otherwise."
+      ),
+      ...V3_CREATE_SURVEY_DOCUMENT_SHAPE,
+    })
     .strict()
     .superRefine(addCreateSurveyIssues)
 );
@@ -1593,14 +1605,26 @@ export const ZV3CreateSurveyDocumentInput = z
   })
   .pipe(ZV3CreateSurveyDocument);
 
-export const ZV3CreateSurveyBody = z
-  .unknown()
-  .superRefine((value, ctx) => {
-    for (const issue of getUnsupportedV3SurveyDocumentFields(value, ROOT_KEYS)) {
-      addInvalidParamZodIssue(ctx, issue);
-    }
-  })
-  .pipe(boundedSchema(ZV3CreateSurveyBodyBase));
+const createV3SurveyBodySchema = (rootKeys: Set<string>) =>
+  z
+    .unknown()
+    .superRefine((value, ctx) => {
+      for (const issue of getUnsupportedV3SurveyDocumentFields(value, rootKeys)) {
+        addInvalidParamZodIssue(ctx, issue);
+      }
+    })
+    .pipe(boundedSchema(ZV3CreateSurveyBodyBase));
+
+export const ZV3CreateSurveyBody = createV3SurveyBodySchema(ROOT_KEYS);
+
+/**
+ * The create body for a reviewed import draft (`POST /api/internal/surveys/imports`): the client sends the
+ * draft back, so like a Formbricks file it cannot choose `visibility` (ENG-7508) — the survey gets the
+ * creator's default, and a draft naming one is refused as an `unsupported_field`.
+ */
+export const ZV3CreateSurveyImportDraftBody = createV3SurveyBodySchema(
+  new Set([...ROOT_KEYS].filter((key) => key !== "visibility"))
+);
 
 /**
  * Where a created survey came from, for the `survey_created` analytics event and, through the request

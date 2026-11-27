@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZV3MergeTagBody, ZV3RenameTagBody } from "@/app/api/v3/tags/lib/schemas";
-import { confirmArgument } from "./confirm-argument";
+import { confirmArgumentFor } from "./confirm-argument";
 
 /**
  * Input schemas for the tag tools (outputs: `tag-output-schemas.ts`). Every input is `.strict()`, and the edit and merge inputs
@@ -27,6 +27,6 @@ export const ZMcpMergeTagsInput = ZV3MergeTagBody.extend({
   newTagId: ZV3MergeTagBody.shape.newTagId.describe(
     "Tag to keep. Must be in the same workspace and differ from tagId."
   ),
-  confirm: confirmArgument,
+  confirm: confirmArgumentFor("merging these tags"),
 }).strict();
 export type TMcpMergeTagsInput = z.infer<typeof ZMcpMergeTagsInput>;

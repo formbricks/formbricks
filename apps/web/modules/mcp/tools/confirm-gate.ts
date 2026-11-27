@@ -17,8 +17,13 @@ import { type TMcpToolContext, getMcpToolAuthInfo } from "../auth";
  * elicitation, so they fall on the "cannot ask" side. See "Confirmation and untrusted text" in the
  * MCP server handbook.
  */
+/** Whether this call is an API-key connection: a headless integration, with no person to ask. */
+export function isApiKeyCaller(ctx: TMcpToolContext): boolean {
+  return getMcpToolAuthInfo(ctx)?.extra?.authMethod === "apiKey";
+}
+
 export function mayAssertConfirm(ctx: TMcpToolContext): boolean {
-  if (getMcpToolAuthInfo(ctx)?.extra?.authMethod === "apiKey") {
+  if (isApiKeyCaller(ctx)) {
     return true;
   }
 

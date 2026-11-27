@@ -9,7 +9,9 @@ import {
   problemConfirmationRequired,
   problemConflict,
   problemForbidden,
+  problemProjectionPending,
   problemSurveyHasLinkedCreatives,
+  problemVisibilityBlocked,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -26,7 +28,12 @@ import {
   setV3SurveyBlockOrderResponse,
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
-import { ZMcpSurveyLifecycleOutput } from "./survey-output-schemas";
+import { changeV3SurveyVisibility, getV3SurveyVisibility } from "@/app/api/v3/surveys/visibility/operations";
+import {
+  ZMcpSurveyLifecycleOutput,
+  ZMcpSurveyVisibilityChangeOutput,
+  ZMcpSurveyVisibilityStateOutput,
+} from "./survey-output-schemas";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
 import {
   FULL_MCP_GRANT,
@@ -71,6 +78,11 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
 
 vi.mock("@/app/api/v3/surveys/generate/operations", () => ({ generateV3Survey: vi.fn() }));
 
+vi.mock("@/app/api/v3/surveys/visibility/operations", () => ({
+  changeV3SurveyVisibility: vi.fn(),
+  getV3SurveyVisibility: vi.fn(),
+}));
+
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -78,6 +90,7 @@ vi.mock("@/app/api/v3/lib/audit", () => ({
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    warn: vi.fn(),
     withContext: vi.fn(() => ({
       error: vi.fn(),
       warn: vi.fn(),
@@ -106,6 +119,8 @@ const authInfo = {
   clientId: "key_1",
   scopes: ["surveys:read", "surveys:write"],
   extra: {
+    // As `createApiKeyMcpAuthInfo` builds it: the auth method is what the confirmation gate reads.
+    authMethod: "apiKey",
     formbricksAuthentication: apiKeyAuth,
     requestId: "req_tool",
   },
@@ -209,7 +224,7 @@ describe("registerSurveyTools", () => {
   test("registers survey tools with planning annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(11);
+    expect(server.registerTool).toHaveBeenCalledTimes(13);
     expect(tools.get("list_surveys")?.config).toMatchObject({
       title: "List surveys",
       annotations: {
@@ -291,6 +306,30 @@ describe("registerSurveyTools", () => {
         idempotentHint: false,
       },
     });
+    expect(tools.get("get_survey_visibility")?.config).toMatchObject({
+      title: "Get survey visibility",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      },
+    });
+    expect(tools.get("set_survey_visibility")?.config).toMatchObject({
+      title: "Set survey visibility",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+      },
+    });
+    expect(tools.get("get_survey_visibility")?.config.outputSchema).toBe(ZMcpSurveyVisibilityStateOutput);
+    expect(tools.get("set_survey_visibility")?.config.outputSchema).toBe(ZMcpSurveyVisibilityChangeOutput);
+    expect(
+      ZMcpSurveyVisibilityStateOutput.safeParse({ data: { id: "clxx1234567890123456789012" } }).success
+    ).toBe(false);
+    expect(
+      ZMcpSurveyVisibilityChangeOutput.safeParse({ data: { id: "clxx1234567890123456789012" } }).success
+    ).toBe(false);
     expect(tools.get("delete_survey")?.config).toMatchObject({
       title: "Delete survey (deprecated)",
       annotations: {
@@ -524,7 +563,10 @@ describe("registerSurveyTools", () => {
 
       const result = await tools
         .get("patch_survey")!
-        .handler({ surveyId: survey.id, data: { name: "Renamed" } }, { http: { authInfo } });
+        .handler(
+          { surveyId: survey.id, data: { name: "Renamed" }, response_format: "detailed" },
+          { http: { authInfo } }
+        );
 
       expect(result.structuredContent.data).toEqual(withoutTargeting);
     });
@@ -688,6 +730,36 @@ describe("registerSurveyTools", () => {
     ).toBe(false);
   });
 
+  test("create_survey takes an optional create-only visibility and forwards it to v3", async () => {
+    const { tools } = createToolServer();
+    const schema = tools.get("create_survey")!.config.inputSchema as z.ZodType;
+    const base = {
+      workspaceId: "clxx1234567890123456789012",
+      name: "Visible",
+      blocks: [{ name: "Block", elements: [] }],
+    };
+
+    expect(schema.safeParse(base).success).toBe(true);
+    expect(schema.safeParse({ ...base, visibility: "workspace" }).success).toBe(true);
+    expect(schema.safeParse({ ...base, visibility: "restricted" }).success).toBe(true);
+    expect(schema.safeParse({ ...base, visibility: "secret" }).success).toBe(false);
+
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+    vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
+      createdResponse({ id: "clxx1234567890123456789012" }, { requestId: "req_tool", location: "/survey" })
+    );
+
+    await tools
+      .get("create_survey")!
+      .handler({ ...base, visibility: "restricted", response_format: "detailed" }, { http: { authInfo } });
+
+    // The only MCP-only key is the projection switch; `visibility` is part of the v3 create body.
+    expect(vi.mocked(createV3SurveyResponseFromRawInput).mock.calls[0][0].body).toEqual({
+      ...base,
+      visibility: "restricted",
+    });
+  });
+
   test("create_survey takes typed embeddedFields (ENG-6930)", () => {
     const { tools } = createToolServer();
     const schema = tools.get("create_survey")!.config.inputSchema as z.ZodType;
@@ -778,6 +850,8 @@ describe("registerSurveyTools", () => {
       data: {
         name: "Updated survey",
       },
+      // detailed, so this audit-log test also asserts the resource reaches the caller unchanged.
+      response_format: "detailed" as const,
     };
     vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(patchV3SurveyResponse).mockResolvedValue(
@@ -880,9 +954,11 @@ describe("registerSurveyTools", () => {
     vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(archiveV3Survey).mockResolvedValue(successResponse(ack, { requestId: "req_tool" }));
 
+    // An API key cannot be asked, so its `confirm` stands in for the user (see the gate tests below).
     const result = await tools.get("archive_survey")!.handler(
       {
         surveyId: "clxx1234567890123456789012",
+        confirm: true,
       },
       { http: { authInfo } }
     );
@@ -929,7 +1005,7 @@ describe("registerSurveyTools", () => {
     expect(ZMcpSurveyLifecycleOutput.safeParse(result.structuredContent).success).toBe(true);
   });
 
-  test("archive_survey and restore_survey take only a valid survey id", () => {
+  test("archive_survey and restore_survey validate the survey id; only archive takes confirm", () => {
     const { tools } = createToolServer();
     const surveyId = "clxx1234567890123456789012";
 
@@ -938,10 +1014,152 @@ describe("registerSurveyTools", () => {
       expect(schema.safeParse({ surveyId }).success, name).toBe(true);
       expect(schema.safeParse({}).success, name).toBe(false);
       expect(schema.safeParse({ surveyId: "not-a-cuid" }).success, name).toBe(false);
-      // No confirmation argument: archive and restore are reversible, and an unknown key is refused.
-      expect(schema.safeParse({ surveyId, confirm: true }).success, name).toBe(false);
-      expect(String(tools.get(name)!.config.description), name).not.toMatch(/confirm/i);
     }
+    const archive = tools.get("archive_survey")!.config.inputSchema as z.ZodType;
+    const restore = tools.get("restore_survey")!.config.inputSchema as z.ZodType;
+    expect(archive.safeParse({ surveyId, confirm: true }).success).toBe(true);
+    // Restore is not destructive, so it has no confirmation, and an unknown key is refused.
+    expect(restore.safeParse({ surveyId, confirm: true }).success).toBe(false);
+  });
+
+  // Archiving pauses a live survey and starts the purge clock, so text the user did not write must not be
+  // able to trigger it: a client that can show a prompt is asked, whatever the model passes (finding 07).
+  test("archive_survey asks a client that can show a prompt, whatever the model passes", async () => {
+    const { tools } = createToolServer();
+
+    for (const input of [
+      { surveyId: "clxx1234567890123456789012" },
+      { surveyId: "clxx1234567890123456789012", confirm: true },
+    ]) {
+      const result = (await tools
+        .get("archive_survey")!
+        .handler(input, elicitingOAuthContext(authInfo))) as Record<string, unknown>;
+      expect(result.resultType).toBe("input_required");
+    }
+    expect(archiveV3Survey).not.toHaveBeenCalled();
+  });
+
+  test("an API key archiving without confirm is asked, and nothing is archived", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("archive_survey")!
+      .handler({ surveyId: "clxx1234567890123456789012" }, { http: { authInfo } });
+
+    expect(result).toMatchObject({ resultType: "input_required" });
+    expect(archiveV3Survey).not.toHaveBeenCalled();
+  });
+
+  test("a declined archive says nothing was archived, and is not reported as success", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const context = elicitingOAuthContext(authInfo);
+
+    const result = await tools.get("archive_survey")!.handler(
+      { surveyId },
+      {
+        ...context,
+        mcpReq: {
+          ...context.mcpReq,
+          inputResponses: { confirm: { action: "decline" } },
+          requestState: () => ({ tool: "archive_survey", resourceId: surveyId }),
+        },
+      }
+    );
+
+    expect(archiveV3Survey).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.structuredContent)).toContain(
+      "Archiving was not confirmed, so nothing was archived."
+    );
+  });
+
+  describe("set_survey_visibility sharing confirmation", () => {
+    const surveyId = "clxx1234567890123456789012";
+    const userAuthInfo = { ...readOnlyOAuthAuthInfo, scopes: ["surveys:read", "surveys:write"] };
+    const answered = (state: { tool: string; resourceId: string }) => {
+      const context = elicitingOAuthContext(userAuthInfo);
+      return {
+        ...context,
+        mcpReq: {
+          ...context.mcpReq,
+          inputResponses: { confirm: { action: "accept", content: { confirm: true } } },
+          requestState: () => state,
+        },
+      };
+    };
+
+    beforeEach(() => {
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+      vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+        successResponse({ id: surveyId, visibility: "workspace" }, { requestId: "req_tool" })
+      );
+    });
+
+    test("shares once the user accepts the prompt for this survey", async () => {
+      const result = await createToolServer()
+        .tools.get("set_survey_visibility")!
+        .handler(
+          { surveyId, visibility: "workspace" },
+          answered({ tool: "set_survey_visibility", resourceId: `${surveyId}->workspace` })
+        );
+
+      expect(result.isError).toBeFalsy();
+      expect(changeV3SurveyVisibility).toHaveBeenCalledTimes(1);
+    });
+
+    test.each([
+      ["another tool", { tool: "archive_survey", resourceId: surveyId }],
+      [
+        "another survey",
+        { tool: "set_survey_visibility", resourceId: "clyy1234567890123456789012->workspace" },
+      ],
+    ])("refuses an agreement sealed for %s", async (_label, state) => {
+      const result = await createToolServer()
+        .tools.get("set_survey_visibility")!
+        .handler({ surveyId, visibility: "workspace" }, answered(state));
+
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.structuredContent)).toContain("the survey's visibility did not change");
+      expect(changeV3SurveyVisibility).not.toHaveBeenCalled();
+    });
+
+    test("an API key is never prompted: the operation answers it directly", async () => {
+      await createToolServer()
+        .tools.get("set_survey_visibility")!
+        .handler({ surveyId, visibility: "workspace" }, { http: { authInfo } });
+
+      expect(changeV3SurveyVisibility).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // Sharing exposes the responses to the whole workspace, which a later restriction cannot take back.
+  test("set_survey_visibility asks before sharing with the workspace, but not before restricting", async () => {
+    const { tools } = createToolServer();
+    // A signed-in user: an API key never reaches the prompt, since the operation refuses it anyway.
+    const userAuthInfo = { ...readOnlyOAuthAuthInfo, scopes: ["surveys:read", "surveys:write"] };
+    const surveyId = "clxx1234567890123456789012";
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+    vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+      successResponse({ id: surveyId, visibility: "restricted" }, { requestId: "req_tool" })
+    );
+
+    for (const input of [
+      { surveyId, visibility: "workspace" },
+      { surveyId, visibility: "workspace", confirm: true },
+    ]) {
+      const result = (await tools
+        .get("set_survey_visibility")!
+        .handler(input, elicitingOAuthContext(userAuthInfo))) as Record<string, unknown>;
+      expect(result.resultType).toBe("input_required");
+    }
+    expect(changeV3SurveyVisibility).not.toHaveBeenCalled();
+
+    const restricted = await tools
+      .get("set_survey_visibility")!
+      .handler({ surveyId, visibility: "restricted" }, elicitingOAuthContext(userAuthInfo));
+    expect(restricted.isError).toBeFalsy();
+    expect(changeV3SurveyVisibility).toHaveBeenCalledTimes(1);
   });
 
   test("a refused archive is audited as a failed archived event", async () => {
@@ -1004,9 +1222,11 @@ describe("registerSurveyTools", () => {
       problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
     );
 
+    // An API key cannot be asked, so its `confirm` stands in for the user (see the gate tests below).
     const result = await tools.get("archive_survey")!.handler(
       {
         surveyId: "clxx1234567890123456789012",
+        confirm: true,
       },
       { http: { authInfo } }
     );
@@ -1045,6 +1265,130 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  test("get_survey_visibility reads the state without auditing and returns it", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const state = {
+      id: surveyId,
+      visibility: "workspace",
+      owner: { name: "Ada" },
+      access: { canManageVisibility: true, via: "owner" },
+      blockers: [],
+      impact: { memberCount: 2, responseCount: 5 },
+      pending: null,
+      version: 1,
+      allowedTargets: ["restricted"],
+    };
+    vi.mocked(getV3SurveyVisibility).mockResolvedValue(successResponse(state, { requestId: "req_tool" }));
+
+    const result = await tools.get("get_survey_visibility")!.handler({ surveyId }, { http: { authInfo } });
+
+    expect(getV3SurveyVisibility).toHaveBeenCalledWith({
+      surveyId,
+      authentication: apiKeyAuth,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+    });
+    expect(buildV3AuditLog).not.toHaveBeenCalled();
+    expect(result.structuredContent).toEqual({ data: state, requestId: "req_tool" });
+    expect(ZMcpSurveyVisibilityStateOutput.safeParse(result.structuredContent).success).toBe(true);
+  });
+
+  test("set_survey_visibility changes the value, queues a visibilityChanged audit and returns the result", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const auditLog = { status: "failure" as const };
+    const changed = {
+      id: surveyId,
+      visibility: "workspace",
+      owner: { name: "Ada" },
+      access: { canManageVisibility: true, via: "owner" },
+      version: 2,
+      pending: null,
+      changedAt: "2026-11-24T10:00:00.000Z",
+      changedBy: { type: "user", id: "user_1", name: "Ada" },
+    };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
+    vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+      successResponse(changed, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("set_survey_visibility")!
+      .handler({ surveyId, visibility: "workspace" }, { http: { authInfo } });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      apiKeyAuth,
+      "visibilityChanged",
+      "survey",
+      ABSOLUTE_MCP_AUDIT_URL
+    );
+    expect(changeV3SurveyVisibility).toHaveBeenCalledWith({
+      surveyId,
+      body: { visibility: "workspace" },
+      authentication: apiKeyAuth,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+      auditLog,
+    });
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+    expect(result.structuredContent).toEqual({ data: changed, requestId: "req_tool" });
+    expect(ZMcpSurveyVisibilityChangeOutput.safeParse(result.structuredContent).success).toBe(true);
+  });
+
+  test("set_survey_visibility relays the blocker list on a refused restriction", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    const blockers = [{ id: "clwh1234567890123456789012", name: "Zapier", type: "webhook" }];
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+    vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+      problemVisibilityBlocked("req_conflict", blockers, "/api/mcp")
+    );
+
+    const result = await tools
+      .get("set_survey_visibility")!
+      .handler({ surveyId, visibility: "restricted" }, { http: { authInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({
+      status: 409,
+      code: "visibility_blocked_by_connections",
+      details: { blockers },
+    });
+  });
+
+  test("set_survey_visibility relays a pending projection as a stored change to retry", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+    vi.mocked(changeV3SurveyVisibility).mockResolvedValue(
+      problemProjectionPending("req_pending", "/api/mcp")
+    );
+
+    const result = await tools
+      .get("set_survey_visibility")!
+      .handler({ surveyId, visibility: "workspace" }, { http: { authInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ status: 503, code: "projection_pending" });
+  });
+
+  test("get_survey_visibility is reachable with a read-only OAuth scope", async () => {
+    const { tools } = createToolServer();
+    const surveyId = "clxx1234567890123456789012";
+    vi.mocked(getV3SurveyVisibility).mockResolvedValue(
+      successResponse({ id: surveyId }, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("get_survey_visibility")!
+      .handler({ surveyId }, { http: { authInfo: readOnlyOAuthAuthInfo } });
+
+    expect(getV3SurveyVisibility).toHaveBeenCalled();
+    expect(result.isError).toBeUndefined();
+  });
+
   test("write tools return MCP errors for read-only OAuth scopes", async () => {
     const { tools } = createToolServer();
     const surveyId = "clxx1234567890123456789012";
@@ -1056,6 +1400,7 @@ describe("registerSurveyTools", () => {
       ["restore_survey", { surveyId }, restoreV3Survey],
       ["edit_survey_blocks", { surveyId, ops: [{ op: "remove", id: "blk_a" }] }, editV3SurveyBlocksResponse],
       ["set_survey_block_order", { surveyId, order: ["blk_a"] }, setV3SurveyBlockOrderResponse],
+      ["set_survey_visibility", { surveyId, visibility: "workspace" }, changeV3SurveyVisibility],
       // Writes nothing, but spends AI budget on the caller's behalf: Surveys: Write, like the REST route.
       ["generate_survey", { workspaceId: surveyId, prompt: "A survey about onboarding" }, generateV3Survey],
     ];
@@ -1072,6 +1417,15 @@ describe("registerSurveyTools", () => {
         requestId: "req_tool",
       });
     }
+
+    // The refused visibility change is recorded: the tool's `audit` declaration is what makes the guard
+    // write it (ENG-2872). Dropping the declaration leaves no event and fails here.
+    expect(buildV3AuditLog).toHaveBeenCalledWith(
+      readOnlyOAuthAuthInfo.extra.formbricksAuthentication,
+      "visibilityChanged",
+      "survey",
+      expect.any(String)
+    );
   });
 
   // Covers the MCP scope gate only — validateV3SurveyFromRawInput is mocked here, so this passed
@@ -1119,6 +1473,131 @@ describe("registerSurveyTools", () => {
       code: "forbidden",
       detail: expect.stringContaining("its OAuth token lacks the scope surveys:read."),
       requestId: "req_tool",
+    });
+  });
+
+  /**
+   * ENG-7508: a survey write answers with a handle by default. The full resource is what the editor
+   * needs, not what an agent that just changed one name needs — `updatedAt` is the next call's
+   * `expectedUpdatedAt`, and `warnings`/`visibility` are the two facts a write tells the caller about
+   * itself that the projection must not swallow: dropping `warnings` hides that CSS was altered, and
+   * dropping `visibility` hides that the survey landed restricted.
+   */
+  describe("concise survey writes (ENG-7508)", () => {
+    const surveyId = "clxx1234567890123456789012";
+    const workspaceId = "clws1234567890123456789012";
+    const updatedAt = "2026-04-21T10:00:00.000Z";
+    const warnings = [{ message: "Removed `position: fixed` from the light theme." }];
+    const fullResource = {
+      id: surveyId,
+      workspaceId,
+      name: "Survey",
+      updatedAt,
+      visibility: "restricted",
+      blocks: [{ id: "blk_a" }, { id: "blk_b" }],
+      endings: [],
+    };
+    const concise = {
+      data: { id: surveyId, updatedAt, blockCount: 2, visibility: "restricted" },
+      warnings,
+      requestId: "req_tool",
+    };
+    const createInput = {
+      workspaceId,
+      name: "Survey",
+      blocks: [{ id: "blk_a", name: "Main", elements: [] }],
+    };
+
+    test("create_survey is concise by default and never forwards response_format", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+      vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
+        createdResponse(fullResource, {
+          requestId: "req_tool",
+          location: `/api/v3/surveys/${surveyId}`,
+          extensions: { warnings },
+        })
+      );
+
+      const result = await tools.get("create_survey")!.handler(createInput, { http: { authInfo } });
+
+      const forwarded = vi.mocked(createV3SurveyResponseFromRawInput).mock.calls[0][0].body;
+      expect(forwarded).toEqual(createInput);
+      expect(forwarded).not.toHaveProperty("response_format");
+      expect(result.structuredContent).toEqual(concise);
+    });
+
+    test("create_survey returns the full resource with response_format: detailed", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+      vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
+        createdResponse(fullResource, {
+          requestId: "req_tool",
+          location: `/api/v3/surveys/${surveyId}`,
+          extensions: { warnings },
+        })
+      );
+
+      const result = await tools
+        .get("create_survey")!
+        .handler({ ...createInput, response_format: "detailed" }, { http: { authInfo } });
+
+      // The projection switch is still not part of the survey document it sends to v3.
+      expect(vi.mocked(createV3SurveyResponseFromRawInput).mock.calls[0][0].body).toEqual(createInput);
+      expect(result.structuredContent).toEqual({ data: fullResource, warnings, requestId: "req_tool" });
+    });
+
+    test("patch_survey is concise by default and keeps warnings and visibility", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+      vi.mocked(patchV3SurveyResponse).mockResolvedValue(
+        successResponse(fullResource, { requestId: "req_tool", extensions: { warnings } })
+      );
+
+      const result = await tools
+        .get("patch_survey")!
+        .handler({ surveyId, data: { name: "Renamed" } }, { http: { authInfo } });
+
+      const forwarded = vi.mocked(patchV3SurveyResponse).mock.calls[0][0];
+      expect(forwarded).toMatchObject({ surveyId, body: { name: "Renamed" } });
+      expect(forwarded.body).not.toHaveProperty("response_format");
+      expect(result.structuredContent).toEqual(concise);
+    });
+
+    test("patch_survey returns the full resource with response_format: detailed", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
+      vi.mocked(patchV3SurveyResponse).mockResolvedValue(
+        successResponse(fullResource, { requestId: "req_tool", extensions: { warnings } })
+      );
+
+      const result = await tools
+        .get("patch_survey")!
+        .handler(
+          { surveyId, data: { name: "Renamed" }, response_format: "detailed" },
+          { http: { authInfo } }
+        );
+
+      expect(vi.mocked(patchV3SurveyResponse).mock.calls[0][0].body).toEqual({ name: "Renamed" });
+      expect(result.structuredContent).toEqual({ data: fullResource, warnings, requestId: "req_tool" });
+    });
+
+    test("returns the unprojected response instead of failing an already-committed write", async () => {
+      const { tools } = createToolServer();
+      const auditLog = { status: "failure" as const };
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
+      // A 201 whose body is not JSON: the projection cannot parse it, which is the path under test.
+      vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
+        new Response("not json", { status: 201 })
+      );
+
+      const result = await tools.get("create_survey")!.handler(createInput, { http: { authInfo } });
+
+      // The survey exists by now, so its event must still be a success — not one caused to look failed by
+      // the projection — and the caller must not get an error for a write that already landed.
+      expect(auditLog.status).toBe("success");
+      expect(result.isError).toBeFalsy();
+      expect(result.structuredContent).toEqual({ requestId: "req_tool" });
     });
   });
 });
@@ -1176,20 +1655,18 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
     expect(listV3Surveys).not.toHaveBeenCalled();
   });
 
-  test.each(["archive_survey", "restore_survey"] as const)(
-    "%s rejects an undeclared argument instead of silently dropping it",
-    async (name) => {
-      const outcome = await callTool(name, {
-        surveyId: "clxx1234567890123456789012",
-        confirm: true,
-      });
+  // archive_survey and set_survey_visibility take `confirm` (their confirmation gate); these two do not.
+  test.each([
+    ["get_survey_visibility", { surveyId: "clxx1234567890123456789012", visible: true }, "visible"],
+    ["restore_survey", { surveyId: "clxx1234567890123456789012", confirm: true }, "confirm"],
+  ])("%s rejects an undeclared argument instead of silently dropping it", async (name, args, expected) => {
+    const outcome = await callTool(name, args);
 
-      expect(outcome.result?.isError).toBe(true);
-      expect(errorText(outcome)).toContain("confirm");
-      expect(archiveV3Survey).not.toHaveBeenCalled();
-      expect(restoreV3Survey).not.toHaveBeenCalled();
-    }
-  );
+    expect(outcome.result?.isError).toBe(true);
+    expect(errorText(outcome)).toContain(expected);
+    expect(getV3SurveyVisibility).not.toHaveBeenCalled();
+    expect(restoreV3Survey).not.toHaveBeenCalled();
+  });
 
   test("accepts the declared spelling and reaches the operation", async () => {
     vi.mocked(listV3Surveys).mockResolvedValue(
@@ -1206,6 +1683,32 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     expect(outcome.result?.isError).toBeUndefined();
     expect(listV3Surveys).toHaveBeenCalled();
+  });
+
+  /**
+   * ENG-7508 added `response_format` to `create_survey` and `patch_survey`. A misspelled one must fail
+   * loudly rather than be dropped: a caller that asked for `detailed` would otherwise receive the
+   * concise default and have no way to tell it was not the whole resource.
+   */
+  describe("the response_format argument", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    test.each([
+      [
+        "create_survey",
+        { workspaceId: "clxx1234567890123456789012", name: "Survey", blocks: [{ elements: [] }] },
+      ],
+      ["patch_survey", { surveyId: "clxx1234567890123456789012", data: { name: "Renamed" } }],
+    ])("%s rejects a misspelled response_format", async (name, args) => {
+      const outcome = await callTool(name, { ...args, responseFormats: "detailed" });
+
+      expect(outcome.result?.isError).toBe(true);
+      expect(errorText(outcome)).toContain("responseFormats");
+      expect(createV3SurveyResponseFromRawInput).not.toHaveBeenCalled();
+      expect(patchV3SurveyResponse).not.toHaveBeenCalled();
+    });
   });
 
   describe("block editing tools (ENG-3069)", () => {

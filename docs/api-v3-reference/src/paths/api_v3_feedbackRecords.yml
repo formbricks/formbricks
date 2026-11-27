@@ -147,20 +147,20 @@ get:
       schema:
         type: string
         format: date-time
-      description: "`collected_at >= since` (ISO 8601, inclusive). Must be between 1970-01-01 and 2080-12-31."
+      description: "`collected_at >= since` (RFC 3339 date-time such as `2026-10-05T00:00:00Z`, inclusive; a date alone is refused). Must be between 1970-01-01 and 2080-12-31."
     - in: query
       name: until
       schema:
         type: string
         format: date-time
-      description: "`collected_at <= until` (ISO 8601, inclusive)."
+      description: "`collected_at <= until` (RFC 3339 date-time, inclusive)."
     - in: query
       name: created_since
       schema:
         type: string
         format: date-time
       description: >-
-        `created_at >= created_since` (ISO 8601, inclusive). `created_at` is when the record was
+        `created_at >= created_since` (RFC 3339 date-time, inclusive). `created_at` is when the record was
         stored; `collected_at` (see `since`) is when the feedback was given. They diverge on a
         historical re-import, so this is the filter for "what did this import bring in".
     - in: query
@@ -168,14 +168,14 @@ get:
       schema:
         type: string
         format: date-time
-      description: "`created_at <= created_until` (ISO 8601, inclusive)."
+      description: "`created_at <= created_until` (RFC 3339 date-time, inclusive)."
     - in: query
       name: updated_since
       schema:
         type: string
         format: date-time
       description: >-
-        `updated_at >= updated_since` (ISO 8601, inclusive). `updated_at` is stamped when a record is
+        `updated_at >= updated_since` (RFC 3339 date-time, inclusive). `updated_at` is stamped when a record is
         created, corrected, or enriched (translation, sentiment, emotions), so this selects records
         created **or changed** since a point — the filter for incremental extraction. Deleted records
         are never returned; see "Incremental extraction" above for choosing the next value and for
@@ -185,7 +185,7 @@ get:
       schema:
         type: string
         format: date-time
-      description: "`updated_at <= updated_until` (ISO 8601, inclusive)."
+      description: "`updated_at <= updated_until` (RFC 3339 date-time, inclusive)."
     - in: query
       name: value_number_min
       schema:

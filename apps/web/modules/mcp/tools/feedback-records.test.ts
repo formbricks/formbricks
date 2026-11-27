@@ -23,6 +23,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { responseToMcpToolResult } from "../errors";
 import { registerFeedbackRecordTools } from "./feedback-records";
 import { ZMcpUpdateFeedbackRecordInput } from "./schemas";
 import {
@@ -43,6 +44,12 @@ const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mc
 vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
 vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
+// Real behaviour, wrapped so one test can make building the result fail after the write committed.
+vi.mock("../errors", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../errors")>();
+  return { ...actual, responseToMcpToolResult: vi.fn(actual.responseToMcpToolResult) };
+});
+
 vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
   countV3FeedbackRecords: vi.fn(),
   createV3FeedbackRecord: vi.fn(),
@@ -62,7 +69,7 @@ vi.mock("@/app/api/v3/lib/audit", () => ({
 }));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
+  logger: { warn: vi.fn(), withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
 }));
 
 const recordId = "019fa338-f494-7384-b34e-01739783d280";
@@ -118,7 +125,7 @@ describe("feedback-record tool input schemas", () => {
   };
   const shapeOf = (tool: string) => schemaOf(tool).shape;
 
-  test("exposes every filter the Hub accepts on list_feedback_records", () => {
+  test("exposes every filter the Hub accepts on list_feedback_records, plus the fields projection", () => {
     const shape = shapeOf("list_feedback_records");
 
     expect(Object.keys(shape).sort()).toEqual([
@@ -130,6 +137,7 @@ describe("feedback-record tool input schemas", () => {
       "field_group_id",
       "field_id",
       "field_type",
+      "fields",
       "has_emotions",
       "has_sentiment",
       "has_translation",
@@ -184,7 +192,24 @@ describe("feedback-record tool input schemas", () => {
     expect(schema.safeParse({ workspaceId, userId: "u1" }).success).toBe(false);
   });
 
-  test("describes every filter, since the description is what the model reads", () => {
+  /**
+   * `fields` is a projection, so a name no record carries must be an error: dropped, the caller would
+   * get records without the key it asked for and read the absence as "not recorded". `id` is rejected
+   * too, because it is always kept and listing it would suggest it can be dropped. An empty list is
+   * rejected as well: it would read as "ids only", which is not a projection a caller can act on.
+   */
+  test("only accepts field names a record actually carries on the fields projection", () => {
+    const schema = schemaOf("list_feedback_records");
+
+    expect(
+      schema.safeParse({ workspaceId, fields: ["field_label", "value_text", "sentiment"] }).success
+    ).toBe(true);
+    expect(schema.safeParse({ workspaceId, fields: ["value"] }).success).toBe(false);
+    expect(schema.safeParse({ workspaceId, fields: ["id"] }).success).toBe(false);
+    expect(schema.safeParse({ workspaceId, fields: [] }).success).toBe(false);
+  });
+
+  test("describes every argument, since the description is what the model reads", () => {
     const shape = shapeOf("list_feedback_records");
 
     for (const [name, field] of Object.entries(shape)) {
@@ -281,6 +306,33 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
     expect(outcome.result?.isError).toBeUndefined();
     expect(createV3FeedbackRecords).toHaveBeenCalled();
   });
+
+  /**
+   * ENG-7508's `fields` projection. A name no record carries must be refused at the surface: dropped, a
+   * caller would read the missing key as "not recorded", which is a wrong answer rather than an error.
+   */
+  test.each(["modern", "legacy"] as const)(
+    "rejects an unknown fields projection name (%s era)",
+    async (era) => {
+      const outcome = await callTool("list_feedback_records", { workspaceId, fields: ["bogus"] }, era);
+
+      expect(outcome.result?.isError).toBe(true);
+      expect(errorText(outcome)).toContain("fields");
+      expect(listV3FeedbackRecords).not.toHaveBeenCalled();
+    }
+  );
+
+  test("accepts a declared fields projection and keeps it out of the operation", async () => {
+    vi.mocked(listV3FeedbackRecords).mockResolvedValue(
+      successListResponse([], { limit: 20, nextCursor: null }, { requestId: "req_tool" })
+    );
+
+    const outcome = await callTool("list_feedback_records", { workspaceId, fields: ["value_text"] });
+
+    expect(outcome.result?.isError).toBeUndefined();
+    // The projection is MCP-local; the v3 list schema is strict and would answer 422 to a stray `fields`.
+    expect(vi.mocked(listV3FeedbackRecords).mock.calls[0][0]).not.toHaveProperty("fields");
+  });
 });
 
 describe("registerFeedbackRecordTools", () => {
@@ -365,6 +417,24 @@ describe("list_feedback_datasets", () => {
 });
 
 describe("list_feedback_records", () => {
+  const record = {
+    id: "019fa338-f494-7384-b34e-01739783d280",
+    dataset_id: directoryId,
+    source_type: "survey",
+    field_id: "q1",
+    field_type: "text",
+    field_label: "What should we improve?",
+    value_text: "Faster checkout.",
+    sentiment: "negative",
+    collected_at: "2026-04-21T10:00:00.000Z",
+  };
+  const meta = {
+    datasetId: directoryId,
+    datasetName: "Support",
+    limit: 20,
+    nextCursor: null,
+  };
+
   test("passes filters through to listV3FeedbackRecords", async () => {
     vi.mocked(listV3FeedbackRecords).mockResolvedValue(
       successListResponse([], { limit: 25, nextCursor: null }, { requestId: "req_tool" })
@@ -387,6 +457,43 @@ describe("list_feedback_records", () => {
         field_type: "text",
       })
     );
+  });
+
+  /**
+   * `fields` is projected here rather than remotely, and it must not reach the operation: the v3 list
+   * schema is strict, so a stray `fields` would be refused as an unknown parameter before the Hub call.
+   */
+  test("projects each record down to the requested fields, keeping id", async () => {
+    vi.mocked(listV3FeedbackRecords).mockResolvedValue(
+      successListResponse([record], meta, { requestId: "req_tool" })
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("list_feedback_records")!
+      .handler({ workspaceId, fields: ["field_label", "value_text"] }, { http: { authInfo } });
+
+    expect(vi.mocked(listV3FeedbackRecords).mock.calls[0][0]).not.toHaveProperty("fields");
+    expect(result.structuredContent).toEqual({
+      data: [{ id: record.id, field_label: record.field_label, value_text: record.value_text }],
+      meta,
+      requestId: "req_tool",
+    });
+  });
+
+  test("returns full records when fields is omitted", async () => {
+    vi.mocked(listV3FeedbackRecords).mockResolvedValue(
+      successListResponse([record], meta, { requestId: "req_tool" })
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools.get("list_feedback_records")!.handler({ workspaceId }, { http: { authInfo } });
+
+    expect(result.structuredContent).toEqual({
+      data: [record],
+      meta,
+      requestId: "req_tool",
+    });
   });
 
   test("returns an insufficient-scope error and skips the op without the read scope", async () => {
@@ -709,6 +816,74 @@ describe("create_feedback_records", () => {
     expect(createV3FeedbackRecords).not.toHaveBeenCalled();
   });
 
+  /**
+   * ENG-7508: the batch answer is the created ids plus `meta` by default. An import loops over thousands
+   * of records, and echoing each full record back is the largest thing in that loop's context for no
+   * information the caller did not just send — except the ids, which `meta.failures` and a follow-up
+   * fetch need.
+   */
+  describe("response_format", () => {
+    const createdRecord = {
+      id: "019fa338-f494-7384-b34e-01739783d280",
+      dataset_id: directoryId,
+      source_type: "call_notes",
+      field_id: "note",
+      field_type: "text",
+      value_text: "one",
+    };
+    const meta = {
+      requested: 2,
+      created: 1,
+      failed: 1,
+      failures: [{ index: 1, detail: "duplicate record for (tenant_id, submission_id, field_id)" }],
+      datasetId: directoryId,
+      datasetName: "Support",
+    };
+
+    test("is concise by default: created ids and meta, never the full records", async () => {
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(makeAuditLog());
+      vi.mocked(createV3FeedbackRecords).mockResolvedValue(
+        successListResponse([createdRecord], meta, { requestId: "req_tool" })
+      );
+      const { tools } = createToolServer();
+
+      const result = await tools.get("create_feedback_records")!.handler(input, { http: { authInfo } });
+
+      const forwarded = vi.mocked(createV3FeedbackRecords).mock.calls[0][0];
+      // `response_format` is an MCP projection switch, not a record field for the v3 body.
+      expect(forwarded.body).toEqual(input);
+      expect(forwarded.body).not.toHaveProperty("response_format");
+      expect(result.structuredContent).toEqual({
+        data: [{ id: createdRecord.id }],
+        meta,
+        requestId: "req_tool",
+      });
+    });
+
+    test("returns the full created records with response_format: detailed", async () => {
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(makeAuditLog());
+      vi.mocked(createV3FeedbackRecords).mockResolvedValue(
+        successListResponse([createdRecord], meta, { requestId: "req_tool" })
+      );
+      const { tools } = createToolServer();
+
+      const result = await tools
+        .get("create_feedback_records")!
+        .handler({ ...input, response_format: "detailed" }, { http: { authInfo } });
+
+      expect(vi.mocked(createV3FeedbackRecords).mock.calls[0][0].body).toEqual({
+        workspaceId,
+        records,
+      });
+      expect(vi.mocked(createV3FeedbackRecords).mock.calls[0][0].body).not.toHaveProperty("response_format");
+      expect(result.structuredContent).toEqual({
+        data: [createdRecord],
+        meta,
+        requestId: "req_tool",
+      });
+    });
+  });
+
   // One creation is one audit event, so a batch of N creations must be N events — not one summary event
   // that loses which records were written.
   test("queues one success audit event per created record", async () => {
@@ -736,6 +911,63 @@ describe("create_feedback_records", () => {
     // audit trail that invents records is worse than one with gaps.
     expect(built[1].targetId).toBe(UNKNOWN_DATA);
     expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toBe(built[0]);
+  });
+
+  /**
+   * The success events must be queued exactly once even when building the result throws: the wrapper
+   * queues them on the way out, and the catch queues again on a throw, so building the result before
+   * `queueOutcome` is what keeps that failure from duplicating every creation.
+   */
+  test("does not queue a creation twice when building the result throws after the write", async () => {
+    const built: Partial<TV3AuditLog>[] = [];
+    vi.mocked(buildV3AuditLog, { partial: true }).mockImplementation(() => {
+      const auditLog = makeAuditLog();
+      built.push(auditLog);
+      return auditLog;
+    });
+    vi.mocked(createV3FeedbackRecords).mockImplementation(async ({ auditLogs }) => {
+      const [created] = auditLogs ?? [];
+      if (created) created.targetId = "rec-1";
+      return successResponse({ data: [{ id: "rec-1" }], meta: { created: 1, failed: 0, failures: [] } });
+    });
+    vi.mocked(responseToMcpToolResult).mockRejectedValueOnce(new Error("boom"));
+    const { tools } = createToolServer();
+
+    await expect(
+      tools.get("create_feedback_records")!.handler(input, { http: { authInfo } })
+    ).rejects.toThrow("boom");
+
+    // One event, once: the stamped creation, queued by the catch because the call failed after it.
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toBe(built[0]);
+    expect(built[0].status).toBe("success");
+  });
+
+  /** A body the concise projection cannot read is handed back unprojected rather than failing the call. */
+  test("queues a committed creation once, as a success, when its response cannot be projected", async () => {
+    const built: Partial<TV3AuditLog>[] = [];
+    vi.mocked(buildV3AuditLog, { partial: true }).mockImplementation(() => {
+      const auditLog = makeAuditLog();
+      built.push(auditLog);
+      return auditLog;
+    });
+    vi.mocked(createV3FeedbackRecords).mockImplementation(async ({ auditLogs }) => {
+      const [created] = auditLogs ?? [];
+      if (created) created.targetId = "rec-1";
+      // A 200 whose body is not JSON: the concise projection cannot read it and hands it back unchanged.
+      return new Response("not json", { status: 200 });
+    });
+    const { tools } = createToolServer();
+
+    const result = await tools.get("create_feedback_records")!.handler(input, { http: { authInfo } });
+
+    // Not reported as a failure: the write committed, and the caller can list the records it made.
+    expect(result.isError).toBeFalsy();
+
+    // The records exist, so the event says so, once.
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toBe(built[0]);
+    expect(built[0].status).toBe("success");
   });
 
   test("still queues a failure event when the batch operation throws, and rethrows", async () => {
