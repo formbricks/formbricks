@@ -27,6 +27,11 @@ export const S = ZBase.catchall(rest);
 const rest = z.unknown();
 export const S = base.catchall(rest);
 `,
+  "catchall-local-from-zname.ts": `${header}declare const ZBase: z.ZodObject<{}>;
+declare const rest: unknown;
+const base = ZBase.extend({});
+export const S = base.catchall(rest as z.ZodType);
+`,
   "catchall.ts": `${header}export const S = z.object({ name: z.string() }).catchall(z.unknown());\n`,
 };
 

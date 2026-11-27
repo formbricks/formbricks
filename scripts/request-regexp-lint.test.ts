@@ -323,6 +323,15 @@ export const run = ({ parsedInput }: any) => {
   }
 };
 `,
+  "escaped-loop-variable.ts": `declare const escapeRegExp: (value: string) => string;
+export const run = ({ parsedInput }: any) => {
+  for (let term of parsedInput.terms) {
+    term = escapeRegExp(term);
+    if (new RegExp(term).test("x")) return true;
+  }
+  return false;
+};
+`,
   "disable-comment.ts": `export const run = ({ parsedInput }: any) =>
   // oxlint-disable-next-line formbricks/no-request-regexp -- fixture: a disable comment with its reason
   new RegExp(parsedInput.pattern).test("x");

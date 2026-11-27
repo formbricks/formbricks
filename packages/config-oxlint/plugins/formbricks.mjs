@@ -363,9 +363,11 @@ const preferReadOnlyProps = {
  * (`helper(tainted)`, `.action(fn)`, `rows.map(check)`). Not followed: a source in another file, the
  * return value of the file's own functions, `this.method(x)`, an unknown call (`decodeURIComponent(x)`
  * clears the taint), and a same-file call chain longer than the pass cap. A write clears a label only in
- * straight-line code of the function that declares the name; in a branch, a loop or a closure it may not
- * run, so it only adds to the label. A loop body is walked once, so taint a later iteration carries back
- * to an earlier line is missed. A one-argument `.search(q)` on a search client reads as a sink.
+ * straight-line code of the scope (function or block) that declares the name; in a branch that scope does
+ * not own, a loop or a closure it may not run, so it only adds to the label. A loop body is walked once,
+ * so taint a later iteration carries back to an earlier line is missed; a labeled block's early `break`
+ * and an optional call `o?.f(…)` count as straight-line. A one-argument `.search(q)` on a search client
+ * reads as a sink.
  *
  * A label says what is tainted: `false` (nothing), `true` (the whole value) or an object whose keys
  * label the value's properties (`{ parsedInput: true }` for a server action's first argument).
@@ -655,19 +657,20 @@ function walkTaint(program, policy) {
 
     const visitLoop = (node) => {
       visit(node.right);
-      scopes.push(blockScope());
       const label = labelOf(node.right);
       // `for (const x of tainted)` yields its elements; `for (const k in tainted)` its keys.
       const element = label === true ? policy.deep : false;
       inBranch(() => {
+        // Opened inside the branch: each iteration's loop variable belongs to the body.
+        scopes.push(blockScope());
         if (node.left.type === "VariableDeclaration") {
           bind(node.left.declarations[0].id, element, declareIn(node.left.kind));
         } else if (node.left.type === "Identifier") {
           assign(node.left.name, element);
         }
         visit(node.body);
+        scopes.pop();
       });
-      scopes.pop();
     };
 
     const visitDeclaration = (node) => {
@@ -853,6 +856,11 @@ const chainRoot = (expression) => {
 
 // `catchall` is a common method name, so it counts only on a zod chain: one that starts from a zod
 // import or a `ZName` schema, or that takes a zod schema as its argument.
+const isZodChain = (expression, zodNames) => {
+  const root = chainRoot(expression);
+  return root !== undefined && (zodNames.has(root) || /^Z[A-Z]/.test(root));
+};
+
 const isOpenSchemaCall = (node, zodNames) => {
   const name = calleeName(node);
   if (name === "looseObject") return true;
@@ -862,11 +870,7 @@ const isOpenSchemaCall = (node, zodNames) => {
   if (name !== "catchall") return false;
   const rest = unwrapExpression(node.arguments[0]);
   if (rest?.type === "CallExpression" && calleeName(rest) === "never") return false;
-  const isZod = (expression) => {
-    const root = chainRoot(expression);
-    return root !== undefined && (zodNames.has(root) || /^Z[A-Z]/.test(root));
-  };
-  return isZod(receiver) || isZod(rest);
+  return isZodChain(receiver, zodNames) || isZodChain(rest, zodNames);
 };
 
 const noLooseSchema = {
@@ -884,12 +888,9 @@ const noLooseSchema = {
         if (!/^zod(?:\/|$)/.test(String(node.source.value))) return;
         for (const specifier of node.specifiers) zodNames.add(specifier.local.name);
       },
-      // A name bound to a zod chain (`const base = z.object({})`) starts a zod chain too.
+      // A name bound to a zod chain (`const base = z.object({})`, `ZBase.extend({})`) starts one too.
       VariableDeclarator(node) {
-        const root = chainRoot(node.init);
-        if (node.id.type === "Identifier" && root !== undefined && zodNames.has(root)) {
-          zodNames.add(node.id.name);
-        }
+        if (node.id.type === "Identifier" && isZodChain(node.init, zodNames)) zodNames.add(node.id.name);
       },
       CallExpression(node) {
         if (!isOpenSchemaCall(node, zodNames)) return;
