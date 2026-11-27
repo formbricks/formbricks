@@ -102,7 +102,7 @@ describe("getOrganizationRoleLabels", () => {
       manager: "Manager",
       member: "Member",
       billing: "Billing",
-      dashboard_viewer: "Dashboard viewer",
+      dashboard_viewer: "Dashboard Viewer",
     });
   });
 });

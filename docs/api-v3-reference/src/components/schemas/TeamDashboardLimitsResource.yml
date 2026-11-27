@@ -1,0 +1,52 @@
+type: object
+description: >-
+  A team's dashboard limits: the dashboards its members whose organization role is Dashboard Viewer
+  open in the workspaces the team is granted. Not limited means all of them; limited with an empty
+  `dashboardIds` means none. Other members are never limited.
+required:
+  - teamId
+  - limited
+  - dashboardIds
+properties:
+  teamId:
+    type: string
+    format: cuid2
+  limited:
+    type: boolean
+    description: >-
+      Whether the team's Dashboard Viewers are limited to `dashboardIds`. Writing a non-empty
+      `dashboardIds` sets it, an empty one clears it. It stays set when every selected dashboard is
+      deleted, and the team's Dashboard Viewers then open no dashboard.
+  dashboardIds:
+    type: array
+    maxItems: 200
+    items:
+      type: string
+      format: cuid2
+  dashboards:
+    type: array
+    description: >-
+      Only on a read: every dashboard of the organization (at most 1,000), in any workspace, to pick
+      the limit from. A write accepts only dashboards of the workspaces the team is granted, so not
+      every listed dashboard can be submitted (422 otherwise).
+    maxItems: 1000
+    items:
+      type: object
+      required:
+        - id
+        - name
+        - workspaceId
+        - workspaceName
+      properties:
+        id:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        workspaceId:
+          type: string
+          format: cuid2
+        workspaceName:
+          type: string
+      additionalProperties: false
+additionalProperties: false

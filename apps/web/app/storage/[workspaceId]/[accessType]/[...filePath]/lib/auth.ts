@@ -5,6 +5,7 @@ import { type TAuthorizationActor, can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
 import { SURVEY_ACTION_FOR_METHOD } from "@/lib/survey/visibility/api-key";
 import { getSession } from "@/modules/auth/lib/session";
+import { canReadDashboardImageFile } from "@/modules/ee/dashboard-access/lib/dashboard-image-access";
 import { getStorageFileNameScope } from "@/modules/storage/utils";
 
 /**
@@ -50,6 +51,15 @@ export const authorizePrivateDownload = async (
       getWorkspaceAuthorizationActionForMethod(action),
       { type: "workspace", id: workspaceId }
     );
+    // A Dashboard Viewer never reads the workspace, but sees a dashboard's image upload through an image
+    // block on a page they open (ENG-7482).
+    const isDashboardImageReader =
+      !isUserAuthorized &&
+      action === "GET" &&
+      (await canReadDashboardImageFile(session.user.id, workspaceId, filePath.join("/")));
+    if (isDashboardImageReader) {
+      return ok({ authType: "session", userId: session.user.id });
+    }
     if (
       !isUserAuthorized ||
       !(await canReachSurveyFile({ type: "user", id: session.user.id }, filePath, action))

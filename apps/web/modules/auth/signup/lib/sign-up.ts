@@ -14,6 +14,9 @@ import {
 } from "@formbricks/types/errors";
 import { ZUser, ZUserLocale } from "@formbricks/types/user";
 import type { TSignupBody } from "@/app/api/internal/signups/schemas";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import {
   AUDIT_LOG_ENABLED,
   IS_FORMBRICKS_CLOUD,
@@ -51,11 +54,10 @@ import {
 import { updateUser } from "@/modules/auth/lib/user";
 import {
   type InviteMatch,
-  deleteInvite,
+  acceptInviteInTransaction,
   getInvite,
   resolveInviteMatch,
 } from "@/modules/auth/signup/lib/invite";
-import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import {
@@ -202,11 +204,22 @@ async function handleInviteAcceptance(
     throw new Error("Invalid invite ID");
   }
 
-  await createMembership(invite.organizationId, user.id, {
-    accepted: true,
-    role: invite.role,
-  });
+  // Spending the invite, the membership, its teams and the invite's Member attribute values commit
+  // together, under the invite's row lock, as on the existing-account acceptance path (ENG-7468).
+  // An invite spent or expired since it was checked rolls everything back and throws, recorded as a failed
+  // provisioning.
+  const { teamIds } = await acceptInviteInTransaction(invite, user.id);
   trail.organizationId = invite.organizationId;
+
+  // SpiceDB follows PostgreSQL only after the commit, as for every other membership write.
+  await reconcileOrganizationMembership(invite.organizationId, user.id);
+  if (teamIds.length > 0) {
+    await runPostCommitProjection("signup_team_membership_create", () =>
+      reconcileTeamWorkspaceRelationships({
+        teamMemberships: teamIds.map((teamId) => ({ teamId, userId: user.id })),
+      })
+    );
+  }
 
   try {
     const invitedOrganization = await getOrganization(invite.organizationId);
@@ -220,17 +233,6 @@ async function handleInviteAcceptance(
     logger.warn({ error, organizationId: invite.organizationId }, "Failed to identify org group in PostHog");
   }
 
-  if (invite.teamIds) {
-    await createTeamMembership(
-      {
-        organizationId: invite.organizationId,
-        role: invite.role,
-        teamIds: invite.teamIds,
-      },
-      user.id
-    );
-  }
-
   await updateUser(user.id, {
     notificationSettings: {
       alert: {},
@@ -239,8 +241,8 @@ async function handleInviteAcceptance(
     },
   });
 
-  // Best-effort: the membership exists by now, so a notice the SMTP server refuses must not leave the used
-  // invite behind.
+  // Best-effort: the membership is committed by now, so a notice the SMTP server refuses must not fail the
+  // sign-up.
   try {
     await sendInviteAcceptedEmail(
       invite.creator.name ?? "",
@@ -253,7 +255,6 @@ async function handleInviteAcceptance(
   } catch (error) {
     logger.error({ err: error }, "Failed to send invite accepted email");
   }
-  await deleteInvite(invite.id);
 }
 
 /** Create the user's own organization and workspace, when multi-org is on. */

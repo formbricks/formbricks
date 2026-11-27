@@ -1,0 +1,285 @@
+import { toCsvLine } from "@/lib/utils/csv-cell";
+import { MEMBER_ATTRIBUTE_MAX_BULK_ROWS } from "@/modules/ee/member-attributes/lib/limits";
+import { prepareMemberAttributeValues } from "@/modules/ee/member-attributes/lib/values";
+
+/**
+ * The members CSV import (ENG-7475): one file for new and existing members. Each column that names a
+ * Member attribute key (by key or label) is an attribute; several values in a cell are separated by a
+ * comma or a semicolon. Rows match members and pending invites by email: a new email becomes an invite
+ * carrying its values, an existing one keeps its role and teams and only gets attribute updates.
+ *
+ * Pure, so the preview the import shows before applying and what it then sends are one decision.
+ */
+
+/** The member columns, with the spellings the template and the older template use. */
+export const MEMBER_CSV_COLUMNS = {
+  name: ["Full Name", "name"],
+  email: ["Email Address", "email"],
+  role: ["Organization Role", "Role", "role"],
+  teams: ["Teams", "teams"],
+} as const;
+
+const MEMBER_COLUMN_NAMES = new Set(
+  Object.values(MEMBER_CSV_COLUMNS)
+    .flat()
+    .map((name) => name.toLowerCase())
+);
+
+/** A loose email check, so an obviously broken cell is shown as invalid before anything is sent. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
+
+export type TCsvAttributeKey = { key: string; label: string };
+
+export type TMemberCsvRowProblem =
+  | "missing_email"
+  | "invalid_email"
+  | "duplicate_email"
+  | "too_many_values"
+  | "value_too_long";
+
+export type TMemberCsvEntry = {
+  /** Row number in the file, 1 for the first data row. */
+  rowNumber: number;
+  name: string;
+  email: string;
+  roleCell: string;
+  teamsCell: string;
+  /** Values per attribute `key`, for the keys this file has a column for (an empty cell clears the key). */
+  attributes: Record<string, string[]>;
+  action: "invite" | "update" | "invalid";
+  problems: TMemberCsvRowProblem[];
+};
+
+export type TMemberCsvPlan = {
+  entries: TMemberCsvEntry[];
+  /** Attribute keys the file has columns for, in the file's order. */
+  attributeColumns: TCsvAttributeKey[];
+  /** Columns that are neither a member column nor an attribute key: ignored on import. */
+  unknownColumns: string[];
+  summary: { rows: number; invites: number; updates: number; invalid: number };
+  /** More rows than one import takes (`MEMBER_ATTRIBUTE_MAX_BULK_ROWS`). */
+  tooManyRows: boolean;
+};
+
+export type TMemberCsvRecord = Record<string, string | undefined>;
+
+const readCell = (row: TMemberCsvRecord, names: readonly string[]): string => {
+  for (const name of names) {
+    const value = row[name];
+    if (typeof value === "string" && value !== "") return value;
+  }
+  return "";
+};
+
+/** Which attribute key a header names: its key exactly, or its label ignoring case and spaces. */
+const resolveAttributeColumn = (
+  header: string,
+  keys: readonly TCsvAttributeKey[]
+): TCsvAttributeKey | undefined => {
+  const normalized = header.trim().toLowerCase();
+  return (
+    keys.find((key) => key.key === normalized) ??
+    keys.find((key) => key.label.trim().toLowerCase() === normalized)
+  );
+};
+
+export const planMemberCsvImport = ({
+  headers,
+  rows,
+  attributeKeys,
+  existingEmails,
+}: {
+  headers: readonly string[];
+  rows: readonly TMemberCsvRecord[];
+  attributeKeys: readonly TCsvAttributeKey[];
+  /** Emails of members and pending invites, any case. */
+  existingEmails: Iterable<string>;
+}): TMemberCsvPlan => {
+  const existing = new Set([...existingEmails].map((email) => email.trim().toLowerCase()));
+  const attributeColumns: { header: string; key: TCsvAttributeKey }[] = [];
+  const unknownColumns: string[] = [];
+
+  for (const header of headers) {
+    if (header.trim() === "" || MEMBER_COLUMN_NAMES.has(header.trim().toLowerCase())) continue;
+    const key = resolveAttributeColumn(header, attributeKeys);
+    if (key && !attributeColumns.some((column) => column.key.key === key.key)) {
+      attributeColumns.push({ header, key });
+    } else if (!key) {
+      unknownColumns.push(header);
+    }
+  }
+
+  const seen = new Set<string>();
+  const entries = rows.slice(0, MEMBER_ATTRIBUTE_MAX_BULK_ROWS).map((row, index): TMemberCsvEntry => {
+    const email = readCell(row, MEMBER_CSV_COLUMNS.email).trim().toLowerCase();
+    const problems: TMemberCsvRowProblem[] = [];
+
+    if (email === "") problems.push("missing_email");
+    else if (!EMAIL_PATTERN.test(email)) problems.push("invalid_email");
+    else if (seen.has(email)) problems.push("duplicate_email");
+    if (email !== "") seen.add(email);
+
+    const attributes: Record<string, string[]> = {};
+    for (const { header, key } of attributeColumns) {
+      const prepared = prepareMemberAttributeValues(splitAttributeCell(row[header] ?? ""));
+      if (prepared.ok) {
+        attributes[key.key] = prepared.values;
+      } else if (prepared.problem.code === "too_many_values") {
+        problems.push("too_many_values");
+      } else {
+        problems.push("value_too_long");
+      }
+    }
+
+    let action: TMemberCsvEntry["action"] = "invite";
+    if (problems.length > 0) action = "invalid";
+    else if (existing.has(email)) action = "update";
+
+    return {
+      rowNumber: index + 1,
+      name: readCell(row, MEMBER_CSV_COLUMNS.name).trim(),
+      email,
+      roleCell: readCell(row, MEMBER_CSV_COLUMNS.role),
+      teamsCell: readCell(row, MEMBER_CSV_COLUMNS.teams),
+      attributes,
+      action,
+      problems,
+    };
+  });
+
+  return {
+    entries,
+    attributeColumns: attributeColumns.map(({ key }) => key),
+    unknownColumns,
+    summary: {
+      rows: entries.length,
+      invites: entries.filter((entry) => entry.action === "invite").length,
+      updates: entries.filter((entry) => entry.action === "update").length,
+      invalid: entries.filter((entry) => entry.action === "invalid").length,
+    },
+    tooManyRows: rows.length > MEMBER_ATTRIBUTE_MAX_BULK_ROWS,
+  };
+};
+
+/**
+ * The bulk values rows an import sends: every valid row that has attribute columns, invites included
+ * (their values attach to the invite once it is created, and move to the membership on acceptance).
+ */
+export const toBulkAttributeRows = (
+  plan: TMemberCsvPlan
+): { email: string; attributes: Record<string, string[]> }[] =>
+  plan.attributeColumns.length === 0
+    ? []
+    : plan.entries
+        .filter((entry) => entry.action !== "invalid")
+        .map((entry) => ({ email: entry.email, attributes: entry.attributes }));
+
+/**
+ * The CSV template: the member columns, then one column per attribute key, and one example row. Every
+ * cell goes through `toCsvLine`, which defangs formula injection — a key or label is user-controlled.
+ */
+export const buildMemberCsvTemplate = (attributeKeys: readonly TCsvAttributeKey[]): string =>
+  toCsvLine([
+    MEMBER_CSV_COLUMNS.name[0],
+    MEMBER_CSV_COLUMNS.email[0],
+    MEMBER_CSV_COLUMNS.role[0],
+    MEMBER_CSV_COLUMNS.teams[0],
+    ...attributeKeys.map((key) => key.key),
+  ]) + toCsvLine(["Jane Doe", "jane@example.com", "Member", "", ...attributeKeys.map(() => "")]);
+
+/**
+ * The values in one attribute cell. Commas, semicolons and line breaks separate values, as in the tags
+ * field, except inside double quotes: `"Washington, D.C."; Oslo` is two values, and `""` inside quotes is
+ * one quote. The member list download writes cells this way, so a value with a separator survives the
+ * round trip instead of splitting into two (and possibly widening what it grants).
+ */
+export const splitAttributeCell = (cell: string): string[] => {
+  const values: string[] = [];
+  let current = "";
+  let quoted = false;
+  for (let i = 0; i < cell.length; i++) {
+    const char = cell[i];
+    if (quoted) {
+      if (char === '"' && cell[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (char === '"') {
+        quoted = false;
+      } else {
+        current += char;
+      }
+    } else if (char === '"' && current.trim() === "") {
+      quoted = true;
+      current = "";
+    } else if (/[,;\n\r\t]/.test(char)) {
+      values.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  values.push(current);
+  return values.map((value) => unprotectFormula(value.trim())).filter((value) => value !== "");
+};
+
+/**
+ * Spreadsheet formula protection that survives the round trip. A value that starts like a formula
+ * (`=Paris`), or with apostrophes before one (`'=Paris`), gets one more apostrophe on download, so a
+ * spreadsheet shows it as text; the import takes exactly one apostrophe off such a value again. An
+ * apostrophe before anything else (`'tis`) is left alone both ways.
+ */
+const PROTECTED_FORMULA = /^'*[=+\-@]/;
+const protectFormula = (value: string): string => (PROTECTED_FORMULA.test(value) ? `'${value}` : value);
+const unprotectFormula = (value: string): string =>
+  value.startsWith("'") && PROTECTED_FORMULA.test(value) ? value.slice(1) : value;
+
+/**
+ * `splitAttributeCell` reversed: values joined with "; ", each one with a separator or quote quoted, and
+ * formula-leading values protected (see `protectFormula`).
+ */
+export const joinAttributeCell = (values: readonly string[]): string =>
+  values
+    .map(protectFormula)
+    .map((value) => (/[,;"\n\r\t]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value))
+    .join("; ");
+
+/** "dashboard_viewer" as the import reads it back: words, not the translated label. */
+const toRoleCell = (role: string): string =>
+  role
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+/**
+ * The member list in the import's own format: the template's columns, one row per member and pending
+ * invite, so it can be edited and uploaded again through Invite member. Several values in a cell are
+ * written by `joinAttributeCell`, which the import's `splitAttributeCell` reverses exactly. Cells go through `toCsvLine` (formula defanging).
+ */
+export const buildMemberCsvExport = (
+  rows: ReadonlyArray<{
+    name: string;
+    email: string;
+    role: string;
+    teams: ReadonlyArray<{ name: string }>;
+    attributes: Record<string, string[]>;
+  }>,
+  attributeKeys: readonly TCsvAttributeKey[]
+): string =>
+  toCsvLine([
+    MEMBER_CSV_COLUMNS.name[0],
+    MEMBER_CSV_COLUMNS.email[0],
+    MEMBER_CSV_COLUMNS.role[0],
+    MEMBER_CSV_COLUMNS.teams[0],
+    ...attributeKeys.map((key) => key.key),
+  ]) +
+  rows
+    .map((row) =>
+      toCsvLine([
+        row.name,
+        row.email,
+        toRoleCell(row.role),
+        row.teams.map((team) => team.name).join(", "),
+        ...attributeKeys.map((key) => joinAttributeCell(row.attributes[key.key] ?? [])),
+      ])
+    )
+    .join("");

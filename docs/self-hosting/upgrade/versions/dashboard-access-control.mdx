@@ -1,0 +1,62 @@
+---
+title: "Unreleased: Dashboard access control"
+description: "The permission schema change that limits Dashboard viewers to selected dashboards and pages, and the maintenance-window upgrade it needs."
+icon: "chart-line"
+---
+
+**Applies to:** the first release with Dashboard access control. This change is on `main` and not in any
+released version yet.
+**Upgrade impact: Action required** for every self-hosted installation: the permission schema changes, and the
+upgrade needs a maintenance window. There is no rolling upgrade for this release.
+
+## What changes
+
+- A team can be limited to selected dashboards of its workspaces. Its Dashboard viewers then open only those.
+  A team without a limit still opens every dashboard of its workspaces.
+- Every dashboard gets pages. A database migration gives each existing dashboard one page called "Overview" and
+  moves its widgets there, so everyone sees what they saw before. A page can be limited to selected teams; a page
+  without a limit is open to everyone who can open its dashboard.
+- Owners, managers and members, and API keys, keep reaching every dashboard and page of the workspaces they can
+  read. The limits only apply to Dashboard viewers.
+- The permission schema (`authzed/schema.zed`) changes. Dashboards and pages are now written to SpiceDB through
+  the AuthZed outbox, with the new outbox target types `dashboard` and `dashboard_page`. The migration queues
+  every existing dashboard and page, and permission preparation writes them to SpiceDB.
+
+## Before you upgrade
+
+| Who | What to do |
+| --- | --- |
+| Everyone | Plan a maintenance window. Because the schema changes, permission preparation needs the current schema digest. See [schema changes](/self-hosting/upgrade/prepare#schema-changes). |
+| Kubernetes with `upgrade.mode: online` | Online mode doesn't support this upgrade. Set `upgrade.mode: maintenance` for it. |
+
+## Upgrade
+
+The order of the steps matters: the database migrations queue the dashboards and pages, and permission preparation
+applies the new schema and then delivers what is queued. Preparing before the migrations have run leaves the
+dashboards and pages out of SpiceDB, and Dashboard viewers then see none of them.
+
+1. **Stop every writer.** Stop the Formbricks app, its job workers and everything else that writes to the
+   database, as listed in [prepare permissions](/self-hosting/upgrade/prepare#before-the-maintenance-window).
+   Nothing of the previous version may run until the upgrade is done.
+2. **Run the database migrations** from the new image.
+3. **Run permission preparation** from the new image: `formbricks-authzed upgrade prepare` with
+   `--expected-current-digest <remoteDigest>`. It applies the new schema, delivers the queued dashboards and
+   pages, repairs relationships and audits the result. It must report `status: prepared` and exit `0`.
+4. **Start the new version**, then run `formbricks-authzed upgrade check` in one of its containers. It must
+   report `status: ready` and exit `0`.
+
+The [Kubernetes](/self-hosting/upgrade/kubernetes) and [Docker Compose](/self-hosting/upgrade/docker) runbooks do
+steps 2 and 3 in one command, `formbricks-authzed-prepare`, which runs the migrations before permission
+preparation. On one-click, `./formbricks.sh update` stops with a schema drift (exit `2`) if preparation hasn't
+run; nothing has been stopped or migrated at that point, so run the preparation step and then the update again.
+
+Don't limit a team or a page until the upgrade is done and its checks pass.
+
+## If something goes wrong
+
+The previous version can't run on the migrated database: it doesn't know dashboard pages, and it doesn't deliver
+`dashboard` or `dashboard_page` outbox events. To go back, keep the writers stopped and restore the PostgreSQL and
+SpiceDB backups you took before step 2, as described in [backup and restore](/self-hosting/operate/backup-restore).
+Pages, limits and anything else changed since the upgrade are lost. If you restore only the previous schema in
+SpiceDB rather than its whole backup, run `formbricks-authzed backfill --apply` from the previous version's image
+afterwards.

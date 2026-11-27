@@ -1,0 +1,43 @@
+type: object
+additionalProperties: false
+description: >-
+  One member's, or one pending invite's, Member attribute values. `attributes` maps each attribute
+  `key` the row holds a value for to its values, as stored (trimmed, first spelling of values that differ
+  only by case). Keys with no value are absent. A `member` row carries `userId`, an `invite` row
+  `inviteId`.
+required:
+  - type
+  - name
+  - email
+  - role
+  - attributes
+properties:
+  type:
+    type: string
+    enum:
+      - member
+      - invite
+  userId:
+    type: string
+  inviteId:
+    type: string
+  name:
+    type:
+      - string
+      - "null"
+  email:
+    type: string
+  role:
+    type: string
+    enum:
+      - owner
+      - manager
+      - member
+      - billing
+      - dashboard_viewer
+  attributes:
+    type: object
+    additionalProperties:
+      type: array
+      items:
+        type: string

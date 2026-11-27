@@ -14,6 +14,8 @@ import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-ur
 // The data migrations the reconnect path depends on (auto-discovered by the migration runner at deploy).
 import { grantAudienceScope } from "../../../../packages/database/migration/20261112130000_grant_audience_scope/migration";
 import { grantAudienceScopeToClients } from "../../../../packages/database/migration/20261112130001_grant_audience_scope_to_clients/migration";
+import { grantOrganizationScope } from "../../../../packages/database/migration/20261123130000_grant_organization_scope/migration";
+import { grantOrganizationScopeToClients } from "../../../../packages/database/migration/20261123130001_grant_organization_scope_to_clients/migration";
 import type { TMcpGrantPermissions } from "./grant";
 import { getMcpGrant, lockMcpGrant, writeMcpGrant } from "./grant-store";
 
@@ -313,6 +315,9 @@ describe("a client connected before audience:read existed", () => {
     // The release's migrations, then the client reconnects asking for what the metadata advertises.
     await grantAudienceScope.run!({ prisma: prisma as never, tx: prisma as never });
     await grantAudienceScopeToClients.run!({ prisma: prisma as never, tx: prisma as never });
+    // The later organization family's repairs too, since the client reconnects asking for everything advertised.
+    await grantOrganizationScope.run!({ prisma: prisma as never, tx: prisma as never });
+    await grantOrganizationScopeToClients.run!({ prisma: prisma as never, tx: prisma as never });
     const after = await grant(setup.cookie, setup.clientId, EVERYTHING);
 
     expect(after.scope.split(" ")).toContain("audience:read");

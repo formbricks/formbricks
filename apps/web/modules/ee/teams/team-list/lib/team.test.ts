@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { TeamDashboardLimitsInvalidError } from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
 import {
   TeamAssignmentOutsideOrganizationError,
   TeamNameTakenError,
@@ -37,6 +38,13 @@ const teamNameP2002 = () =>
       },
     },
   });
+
+const dashboardLimits = vi.hoisted(() => ({ replaceInTransaction: vi.fn() }));
+
+vi.mock("@/modules/ee/dashboard-access/lib/team-dashboard-limits", async (importActual) => ({
+  ...(await importActual<typeof import("@/modules/ee/dashboard-access/lib/team-dashboard-limits")>()),
+  replaceTeamDashboardLimitsInTransaction: dashboardLimits.replaceInTransaction,
+}));
 
 const lockedMemberships = vi.hoisted(() => ({
   rows: [] as Array<{ role: string }>,
@@ -73,8 +81,22 @@ vi.mock("@/lib/authzed/team-workspace", () => ({
 }));
 
 const mockTeams = [
-  { id: "t1", name: "Team 1", organizationId: "org1", createdAt: new Date(), updatedAt: new Date() },
-  { id: "t2", name: "Team 2", organizationId: "org1", createdAt: new Date(), updatedAt: new Date() },
+  {
+    id: "t1",
+    name: "Team 1",
+    organizationId: "org1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    dashboardLimited: false,
+  },
+  {
+    id: "t2",
+    name: "Team 2",
+    organizationId: "org1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    dashboardLimited: false,
+  },
 ];
 const mockUserTeams = [
   {
@@ -83,6 +105,7 @@ const mockUserTeams = [
     organizationId: "org1",
     createdAt: new Date(),
     updatedAt: new Date(),
+    dashboardLimited: false,
     teamUsers: [{ role: "admin" }],
     _count: { teamUsers: 2 },
   },
@@ -94,6 +117,7 @@ const mockOtherTeams = [
     organizationId: "org1",
     createdAt: new Date(),
     updatedAt: new Date(),
+    dashboardLimited: false,
     _count: { teamUsers: 3 },
   },
 ];
@@ -109,6 +133,7 @@ const mockTeamDetails = {
   organizationId: "org1",
   createdAt: new Date(),
   updatedAt: new Date(),
+  dashboardLimited: false,
   teamUsers: [
     { userId: "u1", role: "admin", user: { name: "User 1" } },
     { userId: "u2", role: "member", user: { name: "User 2" } },
@@ -203,6 +228,7 @@ describe("createTeam", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     const result = await createTeam("org1", "Team 1");
     expect(result).toBe("t1");
@@ -215,6 +241,7 @@ describe("createTeam", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     await expect(createTeam("org1", "Team 1")).rejects.toThrow(TeamNameTakenError);
   });
@@ -279,6 +306,7 @@ describe("deleteTeam", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
       workspaceTeams: [{ workspaceId: "p1" }],
     };
     vi.mocked(prisma.team.delete).mockResolvedValueOnce(mockTeam);
@@ -310,6 +338,7 @@ describe("updateTeamDetails", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(mockTeamDetails);
     vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockUserTeams);
@@ -322,9 +351,10 @@ describe("updateTeamDetails", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     const result = await updateTeamDetails("t1", data);
-    expect(result).toBe(true);
+    expect(result).toEqual({ dashboardLimits: null });
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
       teamIds: ["t1"],
       teamMemberships: [
@@ -342,12 +372,15 @@ describe("updateTeamDetails", () => {
         name: "Team 1",
         createdAt: new Date(),
         updatedAt: new Date(),
+        dashboardLimited: false,
       })
       .mockResolvedValueOnce({ ...mockTeamDetails, teamUsers: [], workspaceTeams: [] } as never);
     vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
     vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
 
-    await expect(updateTeamDetails("t1", { ...data, members: [] })).resolves.toBe(true);
+    await expect(updateTeamDetails("t1", { ...data, members: [] })).resolves.toEqual({
+      dashboardLimits: null,
+    });
     expect(prisma.membership.count).not.toHaveBeenCalled();
     // The team had no grant before, so the update itself has to write it.
     expect(prisma.team.update).toHaveBeenCalledWith({
@@ -372,6 +405,7 @@ describe("updateTeamDetails", () => {
         name: "Team 1",
         createdAt: new Date(),
         updatedAt: new Date(),
+        dashboardLimited: false,
       })
       .mockResolvedValueOnce(mockTeamDetails);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
@@ -379,7 +413,52 @@ describe("updateTeamDetails", () => {
     vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
     vi.mocked(reconcileTeamWorkspaceRelationships).mockRejectedValueOnce(new Error("private"));
 
-    await expect(updateTeamDetails("t1", data)).resolves.toBe(true);
+    await expect(updateTeamDetails("t1", data)).resolves.toEqual({ dashboardLimits: null });
+  });
+  test("writes the dashboard limit in the team's transaction, after the grants, only when one is sent", async () => {
+    const arrange = () => {
+      vi.mocked(prisma.team.findUnique)
+        .mockResolvedValueOnce({ id: "t1", organizationId: "org1", name: "Team 1" } as never)
+        .mockResolvedValueOnce(mockTeamDetails);
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
+    };
+
+    arrange();
+    await expect(updateTeamDetails("t1", data)).resolves.toEqual({ dashboardLimits: null });
+    expect(dashboardLimits.replaceInTransaction).not.toHaveBeenCalled();
+
+    arrange();
+    // The write's own before and after snapshots come back for the audit.
+    const change = {
+      before: { teamId: "t1", limited: false, dashboardIds: [] },
+      after: { teamId: "t1", limited: true, dashboardIds: ["d1"] },
+    };
+    dashboardLimits.replaceInTransaction.mockResolvedValueOnce(change);
+    await expect(updateTeamDetails("t1", data, ["d1"])).resolves.toEqual({ dashboardLimits: change });
+    expect(dashboardLimits.replaceInTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ team: prisma.team }),
+      "org1",
+      "t1",
+      ["d1"]
+    );
+    expect(vi.mocked(prisma.team.update).mock.invocationCallOrder[1]).toBeLessThan(
+      dashboardLimits.replaceInTransaction.mock.invocationCallOrder[0]
+    );
+  });
+  test("lets a refused dashboard limit fail the whole save, before the projection", async () => {
+    vi.mocked(prisma.team.findUnique)
+      .mockResolvedValueOnce({ id: "t1", organizationId: "org1", name: "Team 1" } as never)
+      .mockResolvedValueOnce(mockTeamDetails);
+    vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.team.update).mockResolvedValueOnce({ id: "t1" } as never);
+    const refused = new TeamDashboardLimitsInvalidError(["d1"]);
+    dashboardLimits.replaceInTransaction.mockRejectedValueOnce(refused);
+
+    await expect(updateTeamDetails("t1", data, ["d1"])).rejects.toBe(refused);
+    expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
   });
   test("throws ResourceNotFoundError if team not found", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
@@ -393,6 +472,7 @@ describe("updateTeamDetails", () => {
         name: "Team 1",
         createdAt: new Date(),
         updatedAt: new Date(),
+        dashboardLimited: false,
       })
       .mockResolvedValueOnce(mockTeamDetails);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
@@ -416,6 +496,7 @@ describe("updateTeamDetails", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
     await expect(updateTeamDetails("t1", data)).rejects.toThrow("Team with ID t1 not found");
@@ -427,6 +508,7 @@ describe("updateTeamDetails", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
       id: "t1",
@@ -434,6 +516,7 @@ describe("updateTeamDetails", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
       teamUsers: [],
       workspaceTeams: [],
     } as Awaited<ReturnType<typeof prisma.team.findUnique>>);
@@ -449,6 +532,7 @@ describe("updateTeamDetails", () => {
       name: "Team 1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
       id: "t1",
@@ -456,6 +540,7 @@ describe("updateTeamDetails", () => {
       organizationId: "org1",
       createdAt: new Date(),
       updatedAt: new Date(),
+      dashboardLimited: false,
       teamUsers: [],
       workspaceTeams: [],
     } as Awaited<ReturnType<typeof prisma.team.findUnique>>);
@@ -477,6 +562,7 @@ describe("updateTeamDetails", () => {
         name: "Team 1",
         createdAt: new Date(),
         updatedAt: new Date(),
+        dashboardLimited: false,
       })
       .mockResolvedValueOnce(mockTeamDetails);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);

@@ -66,13 +66,29 @@ info:
     login: the token in its path is the credential.
 
 
+    **Member attributes**: an organization's Member attribute keys (**GET**, **POST
+    /api/v3/organizations/{organizationId}/member-attribute-keys**; **GET**, **PATCH**, **DELETE
+    /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}**) and members' values for them
+    (**GET /api/v3/organizations/{organizationId}/member-attributes**, **PUT
+    /api/v3/organizations/{organizationId}/member-attributes/bulk**), which Dashboard Viewer access
+    matches on. Owners and Managers, or an API key with Access Control read or write; they need Access
+    Control and Dashboards.
+
+
+    **Dashboard access**: a Feedback Dataset's Dashboard Viewer access (**GET**, **PUT
+    /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access**) and a team's dashboard limits
+    (**GET**, **PUT /api/v3/teams/{teamId}/dashboard-limits**). Same access and plan as Member attributes.
+
+
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**;
     **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST
     /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**,
     **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET
     /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**;
     **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST
-    /api/v3/dashboards/{dashboardId}/duplicate**; **POST
+    /api/v3/dashboards/{dashboardId}/duplicate**; its pages (**POST
+    /api/v3/dashboards/{dashboardId}/pages**; **PATCH**, **DELETE
+    /api/v3/dashboards/{dashboardId}/pages/{pageId}**); **POST
     /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE
     /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard,
     **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values,
@@ -99,12 +115,17 @@ info:
       Editing it changes all of them — duplicate it and repoint one dashboard's widget to change it
       there only. A chart still on a dashboard cannot be deleted: **409 `chart_in_use`** lists them in
       `details.dashboards`.
-    - **Grid.** Widgets sit on a 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
-      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed, overlaps answer **422** naming the widget, and a
-      chart appears at most once per dashboard (**409**). A widget added without a layout takes the
-      first open slot at its chart type's default size.
-    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name and every widget at once
-      and removes widgets left out. Send the `updatedAt` you read: if the dashboard changed since,
+    - **Pages.** A dashboard has one or more pages (tabs), each with its own grid; every widget names
+      its `pageId`. A chart appears at most once per page (**409**) but can sit on several pages of one
+      dashboard. Besides charts, a page holds layout blocks: images, text blocks and separators
+      (`kind`). A page can be limited to selected teams (`limited`, `teamIds`), or to none; the limit
+      binds Dashboard Viewers only, and only a signed-in Owner or Manager with Access Control may change
+      it.
+    - **Grid.** Widgets sit on a page's 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
+      `1 ≤ h ≤ 32`, `0 ≤ y ≤ 4000`). Gaps are allowed and overlaps on a page answer **422** naming the
+      widget. A widget added without a layout takes the first open slot at its default size.
+    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name, the pages and every widget
+      at once, creates the new ones and removes the ones left out. Send the `updatedAt` you read: if the dashboard changed since,
       nothing is saved and **409** carries `expectedUpdatedAt` and `currentUpdatedAt` in `details`.
       Every widget change moves `updatedAt`.
 
@@ -486,6 +507,10 @@ paths:
     $ref: paths/api_v3_dashboards_{dashboardId}.yml
   /api/v3/dashboards/{dashboardId}/duplicate:
     $ref: paths/api_v3_dashboards_{dashboardId}_duplicate.yml
+  /api/v3/dashboards/{dashboardId}/pages:
+    $ref: paths/api_v3_dashboards_{dashboardId}_pages.yml
+  /api/v3/dashboards/{dashboardId}/pages/{pageId}:
+    $ref: paths/api_v3_dashboards_{dashboardId}_pages_{pageId}.yml
   /api/v3/dashboards/{dashboardId}/widgets:
     $ref: paths/api_v3_dashboards_{dashboardId}_widgets.yml
   /api/v3/dashboards/{dashboardId}/widgets/{widgetId}:
@@ -528,6 +553,18 @@ paths:
     $ref: paths/api_v3_tags_{tagId}_merge.yml
   /api/v3/workspaces/{workspaceId}/custom-css:
     $ref: paths/api_v3_workspaces_{workspaceId}_custom-css.yml
+  /api/v3/organizations/{organizationId}/member-attribute-keys:
+    $ref: paths/api_v3_organizations_{organizationId}_member-attribute-keys.yml
+  /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}:
+    $ref: paths/api_v3_organizations_{organizationId}_member-attribute-keys_{keyId}.yml
+  /api/v3/organizations/{organizationId}/member-attributes:
+    $ref: paths/api_v3_organizations_{organizationId}_member-attributes.yml
+  /api/v3/organizations/{organizationId}/member-attributes/bulk:
+    $ref: paths/api_v3_organizations_{organizationId}_member-attributes_bulk.yml
+  /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access:
+    $ref: paths/api_v3_feedback-datasets_{datasetId}_dashboard-viewer-access.yml
+  /api/v3/teams/{teamId}/dashboard-limits:
+    $ref: paths/api_v3_teams_{teamId}_dashboard-limits.yml
   /api/v3/feedbackRecords:
     $ref: paths/api_v3_feedbackRecords.yml
   /api/v3/feedbackRecords/search/semantic:

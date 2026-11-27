@@ -97,3 +97,45 @@ export const ZWidgetLayout = z.object({
 });
 
 export type TWidgetLayout = z.infer<typeof ZWidgetLayout>;
+
+// ── Dashboard widget kinds and layout-block content (ENG-7467, ENG-7249–7251) ───────────
+
+export const ZDashboardWidgetKind = z.enum(["chart", "image", "text", "separator"]);
+export type TDashboardWidgetKind = z.infer<typeof ZDashboardWidgetKind>;
+
+/** Longest text a text block's headline may hold. */
+export const MAX_TEXT_BLOCK_HEADLINE_LENGTH = 200;
+/** Longest text a text block's description may hold, line breaks included. */
+export const MAX_TEXT_BLOCK_DESCRIPTION_LENGTH = 2000;
+/** Longest alt text an image block may hold. */
+export const MAX_IMAGE_BLOCK_ALT_LENGTH = 300;
+/** Longest storage URL an image block may hold. */
+export const MAX_IMAGE_BLOCK_URL_LENGTH = 2048;
+
+/**
+ * An image block's content. `fileUrl` is a private storage URL (`/storage/<workspaceId>/private/...`),
+ * served only to callers who can open the page the block sits on (ENG-7482). Null while the block is empty.
+ */
+export const ZDashboardImageContent = z
+  .object({
+    fileUrl: z.string().max(MAX_IMAGE_BLOCK_URL_LENGTH).nullable(),
+    fit: z.enum(["fit", "fill"]),
+    position: z.enum(["left", "center", "right"]),
+    alt: z.string().max(MAX_IMAGE_BLOCK_ALT_LENGTH),
+  })
+  .strict();
+export type TDashboardImageContent = z.infer<typeof ZDashboardImageContent>;
+
+/** A text block's content: plain text only. Either part may be empty, but not both. */
+export const ZDashboardTextContent = z
+  .object({
+    headline: z.string().max(MAX_TEXT_BLOCK_HEADLINE_LENGTH),
+    description: z.string().max(MAX_TEXT_BLOCK_DESCRIPTION_LENGTH),
+  })
+  .strict()
+  .refine((content) => content.headline.trim().length > 0 || content.description.trim().length > 0, {
+    message: "A text block needs a headline or a description.",
+  });
+export type TDashboardTextContent = z.infer<typeof ZDashboardTextContent>;
+
+export type TDashboardWidgetContent = TDashboardImageContent | TDashboardTextContent;

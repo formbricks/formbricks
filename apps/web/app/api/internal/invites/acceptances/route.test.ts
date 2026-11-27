@@ -21,6 +21,8 @@ const mocks = vi.hoisted(() => ({
   sendInviteAcceptedEmail: vi.fn(),
   deleteInvites: vi.fn(),
   findMembership: vi.fn(),
+  readInviteAttributeValues: vi.fn(),
+  copyInviteAttributeValuesToMembership: vi.fn(),
   log: [] as string[],
   // Callbacks handed to `after()`, captured so a test can tell "after the response" from "before it".
   afterCallbacks: [] as (() => unknown)[],
@@ -48,6 +50,10 @@ vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: mocks.reconcileTeamWorkspaceRelationships,
 }));
 vi.mock("@/modules/email", () => ({ sendInviteAcceptedEmail: mocks.sendInviteAcceptedEmail }));
+vi.mock("@/modules/ee/member-attributes/lib/service", () => ({
+  readInviteAttributeValues: mocks.readInviteAttributeValues,
+  copyInviteAttributeValuesToMembership: mocks.copyInviteAttributeValuesToMembership,
+}));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
@@ -131,6 +137,14 @@ beforeEach(() => {
     return { count: 1 };
   });
   mocks.findMembership.mockResolvedValue(null);
+  mocks.readInviteAttributeValues.mockImplementation(async () => {
+    mocks.log.push("readInviteAttributeValues");
+    return [];
+  });
+  mocks.copyInviteAttributeValuesToMembership.mockImplementation(async () => {
+    mocks.log.push("copyInviteAttributeValues");
+    return 0;
+  });
   mocks.createMembership.mockImplementation(async (organizationId: string, userId: string, data: object) => {
     mocks.log.push("createMembership");
     return { organizationId, userId, ...data };
@@ -167,10 +181,12 @@ describe("POST /api/internal/invites/acceptances — accepting", () => {
 
     expect(response.status).toBe(201);
     expect((await response.json()).data).toEqual({ organizationId: ORG_ID, role: "member" });
-    expect(mocks.log.slice(0, 4)).toEqual([
+    expect(mocks.log.slice(0, 6)).toEqual([
+      "readInviteAttributeValues",
       "deleteInvite",
       "createMembership",
       "createTeamMembership",
+      "copyInviteAttributeValues",
       "commit",
     ]);
     expect(mocks.deleteInvites).toHaveBeenCalledWith({
@@ -187,6 +203,24 @@ describe("POST /api/internal/invites/acceptances — accepting", () => {
       USER_ID,
       { projection: "deferred", transaction: TX }
     );
+  });
+
+  test("copies the invite's Member attribute values, read before the invite is spent, onto the membership", async () => {
+    const values = [{ attributeKeyId: "key-1", value: "Berlin", normalizedValue: "berlin" }];
+    mocks.readInviteAttributeValues.mockResolvedValue(values);
+
+    expect((await accept()).status).toBe(201);
+    expect(mocks.readInviteAttributeValues).toHaveBeenCalledWith(
+      { inviteId: INVITE_ID, organizationId: ORG_ID },
+      TX
+    );
+    expect(mocks.copyInviteAttributeValuesToMembership).toHaveBeenCalledWith({
+      inviteId: INVITE_ID,
+      organizationId: ORG_ID,
+      userId: USER_ID,
+      values,
+      transaction: TX,
+    });
   });
 
   test("projects the membership and its teams to SpiceDB only after the commit", async () => {

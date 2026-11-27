@@ -2,10 +2,10 @@ import "server-only";
 import type { TV3ChartOperationContext } from "@/app/api/v3/charts/lib/access";
 import {
   type TDashboardViewerAccessOptions,
+  type TDashboardsAccessContext,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
 import { problemForbidden } from "@/app/api/v3/lib/response";
-import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export type TV3DashboardOperationContext = TV3ChartOperationContext;
@@ -21,7 +21,7 @@ export async function authorizeLoadedDashboard<TRow extends { workspaceId: strin
   minPermission: TTeamPermission,
   { authentication, requestId, instance }: TV3DashboardOperationContext,
   options?: TDashboardViewerAccessOptions
-): Promise<Response | { row: TRow; access: V3WorkspaceContext }> {
+): Promise<Response | { row: TRow; access: TDashboardsAccessContext }> {
   if (!row) return problemForbidden(requestId, undefined, instance);
 
   const access = await requireDashboardsAccess(

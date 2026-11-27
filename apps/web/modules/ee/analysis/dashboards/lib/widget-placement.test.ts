@@ -115,9 +115,9 @@ describe("findOverlappingWidget", () => {
 
 describe("getDefaultWidgetLayout", () => {
   test("sizes a widget for its chart type", () => {
-    expect(getDefaultWidgetLayout("big_number")).toEqual({ x: 0, y: 0, w: 3, h: 2 });
-    expect(getDefaultWidgetLayout("matrix")).toEqual({ x: 0, y: 0, w: 6, h: 5 });
-    expect(getDefaultWidgetLayout("bar")).toEqual({ x: 0, y: 0, w: 4, h: 4 });
+    expect(getDefaultWidgetLayout("big_number")).toEqual({ x: 0, y: 0, w: 3, h: 8 });
+    expect(getDefaultWidgetLayout("matrix")).toEqual({ x: 0, y: 0, w: 6, h: 20 });
+    expect(getDefaultWidgetLayout("bar")).toEqual({ x: 0, y: 0, w: 4, h: 16 });
   });
 });
 

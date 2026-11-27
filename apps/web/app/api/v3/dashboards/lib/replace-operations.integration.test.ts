@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   outcomeOf,
@@ -64,7 +65,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await prisma.dashboard.deleteMany({ where: { workspaceId: fixture.workspaceId } });
-  const dashboard = await prisma.dashboard.create({
+  const dashboard = await createTestDashboard({
     data: {
       name: "Board",
       workspaceId: fixture.workspaceId,
@@ -130,7 +131,7 @@ describe("PUT /api/v3/dashboards/{dashboardId}", () => {
   });
 
   test("refuses overlapping widgets and a name already taken without saving any of the change", async () => {
-    await prisma.dashboard.create({ data: { name: "Taken", workspaceId: fixture.workspaceId } });
+    await createTestDashboard({ data: { name: "Taken", workspaceId: fixture.workspaceId } });
     const before = await snapshot();
     const keepAll = [
       { widgetId: widgets.a, layout: { x: 0, y: 4, w: 4, h: 4 }, order: 0 },
@@ -160,7 +161,7 @@ describe("PUT /api/v3/dashboards/{dashboardId}", () => {
   });
 
   test("refuses a widget that is not on the dashboard", async () => {
-    const other = await prisma.dashboard.create({
+    const other = await createTestDashboard({
       data: {
         name: "Other",
         workspaceId: fixture.workspaceId,
@@ -319,7 +320,7 @@ describe("a dashboard that grew past the widget cap before it existed", () => {
       })),
       select: { id: true },
     });
-    const board = await prisma.dashboard.create({
+    const board = await createTestDashboard({
       data: {
         name: "Pre-cap board",
         workspaceId: fixture.workspaceId,

@@ -6,6 +6,7 @@ import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { listV3DashboardFilterFields } from "@/app/api/v3/dashboards/lib/filter-fields-operations";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import { sessionOf } from "@/integration/dashboards-fixture";
 import {
   type TMcpToolCallOutcome,
@@ -211,7 +212,7 @@ const seedWorkspace = async (
       config: {},
     },
   });
-  const dashboard = await prisma.dashboard.create({
+  const dashboard = await createTestDashboard({
     data: { name: `${name} dashboard`, workspaceId, createdBy: userId },
   });
   const creative = await prisma.creative.create({

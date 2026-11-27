@@ -1,0 +1,40 @@
+type: object
+additionalProperties: false
+required:
+  - rows
+properties:
+  rows:
+    type: array
+    minItems: 1
+    maxItems: 500
+    description: >-
+      Up to 500 rows, applied in one transaction. Each row replaces the member's (or pending invites')
+      values for the keys it names; keys it does not name are left alone, and an empty list clears a key.
+    items:
+      type: object
+      additionalProperties: false
+      required:
+        - email
+        - attributes
+      properties:
+        email:
+          type: string
+          minLength: 1
+          maxLength: 320
+          description: >-
+            Matched against members' login emails, then pending invites, ignoring case and surrounding
+            spaces. A member wins over an invite to the same address. A second row for the same email is
+            reported `invalid`.
+        attributes:
+          type: object
+          maxProperties: 50
+          description: >-
+            Values per attribute `key`. Values are trimmed, empty ones dropped and duplicates ignoring case
+            merged. A key with more than 50 values, a value longer than 255 characters, or a key the
+            organization does not have makes the row `invalid`, and nothing of it is written.
+          additionalProperties:
+            type: array
+            maxItems: 200
+            items:
+              type: string
+              maxLength: 1020

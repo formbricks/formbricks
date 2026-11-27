@@ -93,6 +93,7 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
       "dashboards:read",
       "feedbackRecords:read",
       "audience:read",
+      "organization:read",
     ],
   },
   get_workspace_custom_css: ["surveys:read"],
@@ -171,6 +172,10 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   add_chart_to_dashboard: ["dashboards:write", "dashboards:read"],
   update_widget: ["dashboards:write", "dashboards:read"],
   remove_chart_from_dashboard: ["dashboards:write"],
+  add_dashboard_block: ["dashboards:write"],
+  create_dashboard_page: ["dashboards:write"],
+  update_dashboard_page: ["dashboards:write"],
+  delete_dashboard_page: ["dashboards:write"],
   update_dashboard_layout: ["dashboards:write", "dashboards:read"],
   set_dashboard_filters: ["dashboards:write", "dashboards:read"],
   duplicate_chart: {
@@ -190,6 +195,10 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_contact_attribute_values: ["audience:read"],
   list_segments: ["audience:read"],
   list_action_classes: ["audience:read"],
+  list_member_attribute_keys: ["organization:read"],
+  list_member_attributes: ["organization:read"],
+  get_team_dashboard_limits: ["organization:read"],
+  get_dashboard_viewer_access: ["organization:read"],
 };
 
 /**
@@ -245,6 +254,8 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
       "contactAttributes:read",
       "segments:read",
       "actionClasses:read",
+      "memberAttributes:read",
+      "accessSettings:read",
     ],
   },
   get_workspace_custom_css: ["surveyStyling:read"],
@@ -323,6 +334,10 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   add_chart_to_dashboard: ["dashboards:write", "charts:read"],
   update_widget: ["dashboards:write", "charts:read"],
   remove_chart_from_dashboard: ["dashboards:write"],
+  add_dashboard_block: ["dashboards:write"],
+  create_dashboard_page: ["dashboards:write"],
+  update_dashboard_page: ["dashboards:write"],
+  delete_dashboard_page: ["dashboards:write"],
   update_dashboard_layout: ["dashboards:write", "charts:read"],
   set_dashboard_filters: ["dashboards:write", "charts:read"],
   duplicate_chart: {
@@ -341,6 +356,10 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   list_contact_attribute_values: ["contactAttributes:read"],
   list_segments: ["segments:read", "contactAttributes:read"],
   list_action_classes: ["actionClasses:read"],
+  list_member_attribute_keys: ["memberAttributes:read"],
+  list_member_attributes: ["memberAttributes:read"],
+  get_team_dashboard_limits: ["accessSettings:read"],
+  get_dashboard_viewer_access: ["accessSettings:read"],
 };
 
 const VIEWER = { extra: { dashboardViewerOnly: true } } as unknown as AuthInfo;
@@ -405,6 +424,8 @@ const loadRegistrations = async () => {
   dashboards.registerDashboardTools(server);
   tags.registerTagTools(server);
   (await import("./audience")).registerAudienceTools(server);
+  (await import("./member-attributes")).registerMemberAttributeTools(server);
+  (await import("./access-settings")).registerAccessSettingsTools(server);
   return registrations;
 };
 

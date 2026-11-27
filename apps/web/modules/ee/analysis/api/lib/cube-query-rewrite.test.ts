@@ -13,6 +13,7 @@ type TEmbeddedDimensionSpec = {
   name: string;
   equalsName: string;
   numberName: string;
+  normalizedName: string;
   valueSql: string;
   keyLiteral: string;
 };
@@ -716,6 +717,13 @@ describe("cube queryRewrite: answer filters", () => {
       },
     ],
     [
+      "an embedded normalized twin",
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "FeedbackRecords.edv_plan_64879f7d", operator: "equals", values: ["x"] }],
+      },
+    ],
+    [
       "the answer member as a dimension",
       { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.answer"] },
     ],
@@ -782,6 +790,7 @@ describe("cube embedded-data members", () => {
     const [spec] = specsFor(["区域 🎉"]);
     expect(spec.name).toMatch(/^ed_[0-9a-f]{8}$/);
     expect(spec.equalsName).toBe(spec.name.replace(/^ed_/, "edc_"));
+    expect(spec.normalizedName).toBe(spec.name.replace(/^ed_/, "edv_"));
   });
 
   test("drops blank keys, keys over 128 characters, non-strings and duplicates, and caps at 110", () => {
@@ -952,5 +961,120 @@ describe("cube embedded-data members", () => {
     expect(joined).toEqual(
       Array.from({ length: cubeConfig.ANSWER_FILTER_ALIAS_COUNT }, (_, index) => index + 1)
     );
+  });
+});
+
+describe("cube queryRewrite: Dashboard Viewer access (ADR-0061)", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const rewrite = (viewerAccess: unknown) =>
+    queryRewrite(
+      { measures: ["FeedbackRecords.count"], filters: [] },
+      { securityContext: { ...securityContext, viewerAccess } }
+    ).filters as Record<string, unknown>[];
+
+  test("appends an and group of case-insensitive equals filters, with every value trimmed", () => {
+    const filters = rewrite({
+      join: "all",
+      conditions: [
+        { member: "FeedbackRecords.metadataCountry", values: [" Germany ", "FRANCE"] },
+        { member: "FeedbackRecords.sourceName", values: ["Web"] },
+      ],
+    });
+    expect(filters[0]).toEqual({
+      and: [
+        {
+          member: "FeedbackRecords.metadataCountryNormalized",
+          operator: "equals",
+          values: ["germany", "france"],
+        },
+        { member: "FeedbackRecords.sourceNameNormalized", operator: "equals", values: ["web"] },
+      ],
+    });
+    expect(filters[1]).toMatchObject({ member: "FeedbackRecords.tenantId", values: ["frd-1"] });
+  });
+
+  test("an any join becomes an or group", () => {
+    const filters = rewrite({
+      join: "any",
+      conditions: [
+        { member: "FeedbackRecords.metadataCountry", values: ["DE"] },
+        { member: "FeedbackRecords.language", values: ["de"] },
+      ],
+    });
+    expect(Object.keys(filters[0])).toEqual(["or"]);
+  });
+
+  test("a condition without a value matches nothing", () => {
+    const filters = rewrite({
+      join: "any",
+      conditions: [{ member: "FeedbackRecords.metadataCountry", values: ["  "] }],
+    });
+    expect(filters[0]).toEqual({
+      or: [
+        { member: "FeedbackRecords.tenantId", operator: "equals", values: ["__viewer_access_no_match__"] },
+      ],
+    });
+  });
+
+  test("an embedded-key condition matches on the key's normalized twin, ignoring case and spaces", () => {
+    const filters = rewrite({
+      join: "all",
+      conditions: [{ member: "FeedbackRecords.ed_region_1a2b3c4d", values: [" Sweden ", "EU"] }],
+    });
+    // Not the equals twin: its exact containment prefilter would drop " sweden" or "SWEDEN" records.
+    expect(filters[0]).toEqual({
+      and: [{ member: "FeedbackRecords.edv_region_1a2b3c4d", operator: "equals", values: ["sweden", "eu"] }],
+    });
+  });
+
+  test("leaves a caller's embedded equals filter exact, beside a normalized viewer condition", () => {
+    const filters = queryRewrite(
+      {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "FeedbackRecords.ed_region_1a2b3c4d", operator: "equals", values: ["EU"] }],
+      },
+      {
+        securityContext: {
+          ...securityContext,
+          viewerAccess: {
+            join: "all",
+            conditions: [{ member: "FeedbackRecords.ed_region_1a2b3c4d", values: ["eu"] }],
+          },
+        },
+      }
+    ).filters as Record<string, unknown>[];
+    expect(filters.slice(0, 2)).toEqual([
+      { member: "FeedbackRecords.edc_region_1a2b3c4d", operator: "equals", values: ["EU"] },
+      { and: [{ member: "FeedbackRecords.edv_region_1a2b3c4d", operator: "equals", values: ["eu"] }] },
+    ]);
+  });
+
+  test("refuses a claim outside its bounds or naming another member", () => {
+    const tooMany = Array.from({ length: 11 }, () => ({
+      member: "FeedbackRecords.language",
+      values: ["de"],
+    }));
+    for (const claim of [
+      { join: "some", conditions: [{ member: "FeedbackRecords.language", values: ["de"] }] },
+      { join: "all", conditions: [] },
+      { join: "all", conditions: tooMany },
+      { join: "all", conditions: [{ member: "FeedbackRecords.valueText", values: ["x"] }] },
+      { join: "all", conditions: [{ member: "FeedbackRecords.language", values: Array(51).fill("de") }] },
+      { join: "all", conditions: [{ member: "FeedbackRecords.language", values: ["x".repeat(256)] }] },
+    ]) {
+      expect(() => rewrite(claim)).toThrow("invalid viewerAccess claim");
+    }
+  });
+
+  test("no claim leaves the query as before", () => {
+    const filters = rewrite(undefined);
+    expect(filters).toHaveLength(1);
   });
 });

@@ -58,6 +58,8 @@ describe("OAuth protected resource metadata", () => {
         "dashboards:read",
         "dashboards:write",
         "audience:read",
+        // ENG-7479: read-only like audience, with the migrations that grant it to existing clients.
+        "organization:read",
         "offline_access",
       ],
       bearer_methods_supported: ["header"],

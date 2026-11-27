@@ -50,6 +50,7 @@ const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   CreativeDailyPageStat_pkey: ["creativeId", "date", "page"],
   CreativeDailyStat_pkey: ["creativeId", "date", "deviceType"],
   CreativeLanguage_pkey: ["languageId", "creativeId"],
+  DashboardPageTeam_pkey: ["pageId", "teamId"],
   FeedbackDirectoryWorkspace_pkey: ["feedbackDirectoryId", "workspaceId"],
   FeedbackSourceFieldMapping_workspaceId_feedbackSourceId_sourceF: [
     "workspaceId",
@@ -62,6 +63,11 @@ const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     "feedback_source_id",
     "surveyId",
     "elementId",
+  ],
+  InviteAttributeValue_inviteId_attributeKeyId_normalizedValu_key: [
+    "inviteId",
+    "attributeKeyId",
+    "normalizedValue",
   ],
   McpGrantOrganization_pkey: ["grantId", "organizationId"],
   McpGrantWorkspace_pkey: ["grantId", "workspaceId"],
@@ -76,6 +82,7 @@ const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   RetentionSurveyRestore_pkey: ["surveyId"],
   SurveyLanguage_pkey: ["languageId", "surveyId"],
   TagsOnResponses_pkey: ["responseId", "tagId"],
+  TeamDashboard_pkey: ["teamId", "dashboardId"],
   TeamUser_pkey: ["teamId", "userId"],
   WorkspaceTeam_pkey: ["workspaceId", "teamId"],
 };

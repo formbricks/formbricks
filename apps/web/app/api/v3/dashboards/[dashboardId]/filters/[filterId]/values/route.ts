@@ -18,6 +18,7 @@ export const GET = withV3ApiWrapper({
       dashboardId: parsedInput.params.dashboardId,
       filterId: parsedInput.params.filterId,
       query: parsedInput.query,
+      viewAs: parsedInput.query.viewAs,
       authentication,
       requestId,
       instance,

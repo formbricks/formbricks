@@ -85,7 +85,22 @@ export const setupDashboard = async (
       workspaceId,
       createdBy: owner.id,
       filters: filters as unknown as object[],
-      widgets: { create: { chartId: chart.id, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 } },
+    },
+  });
+  // Every dashboard has a page; the chart sits on its first.
+  await prisma.dashboardPage.create({
+    data: {
+      dashboardId: dashboard.id,
+      name: "Overview",
+      order: 0,
+      widgets: {
+        create: {
+          dashboardId: dashboard.id,
+          chartId: chart.id,
+          layout: { x: 0, y: 0, w: 6, h: 4 },
+          order: 0,
+        },
+      },
     },
   });
 
@@ -142,7 +157,7 @@ export const addDashboardViewer = async (
   return viewer;
 };
 
-const waitForOutboxDelivered = async (id: string): Promise<void> => {
+export const waitForOutboxDelivered = async (id: string): Promise<void> => {
   const deadline = Date.now() + 20_000;
   for (;;) {
     const pending = await prisma.authzedProjectionOutbox.count({

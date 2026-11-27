@@ -59,6 +59,8 @@ const writeResult = (result: object): void => {
 const emptySource: TAuthzedOrganizationSource = {
   apiKeyIds: [],
   apiKeyWorkspaceGrants: [],
+  dashboardIds: [],
+  dashboardPageIds: [],
   expectedRelationships: [],
   feedbackDirectoryAssignments: [],
   feedbackDirectoryIds: [],
@@ -159,6 +161,8 @@ const run = async (): Promise<void> => {
       readSurveySource: () => Promise.resolve({ expectedRelationships: [], surveyIds: [] }),
       readWorkspaceSource: async () => ({
         apiKeyWorkspaceGrants: [],
+        dashboardIds: [],
+        dashboardPageIds: [],
         expectedRelationships: [],
         feedbackDirectoryAssignments: [],
         invalidApiKeyWorkspaceGrants: [],
@@ -193,6 +197,7 @@ const run = async (): Promise<void> => {
         apply: {
           deleteFeedbackDirectoryAssignmentResources: record,
           reconcileApiKeys: record,
+          reconcileDashboards: record,
           reconcileFeedbackDirectories: record,
           reconcileMcpGrants: record,
           reconcileMemberships: record,

@@ -29,6 +29,7 @@ export const ZAuditTarget = z.enum([
   "chart",
   "dashboard",
   "dashboardWidget",
+  "dashboardPage",
   "cubeQuery",
   "feedbackDirectory",
   "feedbackRecord",
@@ -41,6 +42,10 @@ export const ZAuditTarget = z.enum([
   "retentionRun",
   // A user's grant to an MCP client (ENG-7149): created on Allow, deleted on Revoke.
   "mcpGrant",
+  // Dashboard Access Control (ENG-7473): an organization's Member attribute keys, and members' and
+  // invites' values for them (one bulk write is one event).
+  "memberAttributeKey",
+  "memberAttributes",
 ]);
 export const ZAuditAction = z.enum([
   "created",
@@ -97,6 +102,8 @@ export const ZAuditAction = z.enum([
   "testRunStarted",
   // ENG-7177: a workflow's Webhook Secret URL was replaced; the old URL stopped working.
   "webhookUrlRegenerated",
+  // ENG-7484: an Owner or Manager opened a dashboard as a chosen member sees it (View as). Read-only.
+  "viewedAs",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

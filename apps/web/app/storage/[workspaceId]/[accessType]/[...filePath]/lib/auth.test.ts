@@ -4,6 +4,7 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { can } from "@/lib/authorization";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getSession } from "@/modules/auth/lib/session";
+import { canReadDashboardImageFile } from "@/modules/ee/dashboard-access/lib/dashboard-image-access";
 import { authorizePrivateDownload } from "./auth";
 
 vi.mock("server-only", () => ({}));
@@ -11,6 +12,9 @@ vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/lib/authorization", () => ({ can: vi.fn() }));
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn() }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
+vi.mock("@/modules/ee/dashboard-access/lib/dashboard-image-access", () => ({
+  canReadDashboardImageFile: vi.fn(async () => false),
+}));
 
 const request = new NextRequest("http://localhost/storage/ws-1/private/file");
 
@@ -127,5 +131,35 @@ describe("authorizePrivateDownload survey scoping", () => {
 
     expect(result.ok).toBe(false);
     expect(surveyChecks()).toHaveLength(1);
+  });
+});
+
+describe("authorizePrivateDownload dashboard images (ENG-7482)", () => {
+  const file = ["dashboards", "clda000000000000000000001", "logo.png"];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getSession).mockResolvedValue({ user: { id: "viewer-1" } } as never);
+    vi.mocked(can).mockResolvedValue(false);
+  });
+
+  test("a Dashboard Viewer downloads an image a page they open shows", async () => {
+    vi.mocked(canReadDashboardImageFile).mockResolvedValue(true);
+    const result = await authorizePrivateDownload(request, "ws-1", "GET", file);
+    expect(result).toEqual({ ok: true, data: { authType: "session", userId: "viewer-1" } });
+    expect(canReadDashboardImageFile).toHaveBeenCalledWith("viewer-1", "ws-1", file.join("/"));
+  });
+
+  test("refuses a file no readable page shows, and never deletes through it", async () => {
+    vi.mocked(canReadDashboardImageFile).mockResolvedValue(false);
+    expect(await authorizePrivateDownload(request, "ws-1", "GET", file)).toEqual({
+      ok: false,
+      error: { unauthorized: true },
+    });
+    vi.mocked(canReadDashboardImageFile).mockResolvedValue(true);
+    expect(await authorizePrivateDownload(request, "ws-1", "DELETE", file)).toEqual({
+      ok: false,
+      error: { unauthorized: true },
+    });
   });
 });

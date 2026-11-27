@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   deleteTeam: vi.fn(),
   getTeamRoleByTeamIdUserId: vi.fn(),
   queueAuditEvent: vi.fn(),
+  getIsDashboardViewerRoleEnabled: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
@@ -34,6 +35,18 @@ vi.mock("@/modules/ee/teams/team-list/lib/team", () => ({
   getTeamDetails: mocks.getTeamDetails,
   updateTeamDetails: mocks.updateTeamDetails,
   deleteTeam: mocks.deleteTeam,
+}));
+vi.mock("@/modules/ee/dashboard-access/lib/team-dashboard-limits", async () => {
+  const { TeamDashboardLimitsInvalidError } = await vi.importActual<
+    typeof import("@/modules/ee/dashboard-access/lib/team-dashboard-limits")
+  >("@/modules/ee/dashboard-access/lib/team-dashboard-limits");
+  return {
+    TEAM_DASHBOARD_LIMIT_MAX: 200,
+    TeamDashboardLimitsInvalidError,
+  };
+});
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsDashboardViewerRoleEnabled: mocks.getIsDashboardViewerRoleEnabled,
 }));
 vi.mock("@/modules/ee/teams/lib/roles", () => ({
   getTeamRoleByTeamIdUserId: mocks.getTeamRoleByTeamIdUserId,
@@ -132,9 +145,10 @@ beforeEach(() => {
   mocks.checkRoleManagementPermission.mockResolvedValue(undefined);
   mocks.createTeam.mockResolvedValue(TEAM_ID);
   mocks.getTeamDetails.mockResolvedValue(team());
-  mocks.updateTeamDetails.mockResolvedValue(true);
+  mocks.updateTeamDetails.mockResolvedValue({ dashboardLimits: null });
   mocks.deleteTeam.mockResolvedValue(true);
   mocks.getTeamRoleByTeamIdUserId.mockResolvedValue("admin");
+  mocks.getIsDashboardViewerRoleEnabled.mockResolvedValue(true);
 });
 
 describe("POST /api/internal/teams", () => {
@@ -311,7 +325,7 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
     expect(response.status).toBe(200);
     expect((await response.json()).data).toEqual(team({ name: "Renamed" }));
     expect(checkedActions()).toEqual(["team.manage"]);
-    expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody());
+    expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody(), undefined);
     expect(lastAudit()).toEqual(
       expect.objectContaining({
         action: "updated",
@@ -355,7 +369,7 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
     const workspaces = [{ workspaceId: WORKSPACE_ID, permission: "manage" }];
     expect((await update(updateBody({ workspaces }))).status).toBe(200);
     expect(checkedActions()).toEqual(["team.manage", "organization.manage"]);
-    expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody({ workspaces }));
+    expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody({ workspaces }), undefined);
   });
 
   test("refuses a caller without team.manage with 403, and audits the refusal against the team", async () => {
@@ -397,7 +411,7 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
 
   test("accepts a team with no members, which can still hold workspace access", async () => {
     expect((await update(updateBody({ members: [] }))).status).toBe(200);
-    expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody({ members: [] }));
+    expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody({ members: [] }), undefined);
   });
 
   test("answers 403 when the team is gone by the time it is written", async () => {
@@ -459,6 +473,79 @@ describe("PATCH /api/internal/teams/{teamId}", () => {
   test("refuses a cross-site request (CSRF)", async () => {
     expect((await update(updateBody(), { headers: { "sec-fetch-site": "cross-site" } })).status).toBe(403);
     expect(mocks.updateTeamDetails).not.toHaveBeenCalled();
+  });
+
+  describe("with a dashboard limit", () => {
+    const DASHBOARD_ID = "cldash1111111111111111111";
+    const workspaces = [...updateBody().workspaces, { workspaceId: OTHER_WORKSPACE_ID, permission: "read" }];
+
+    test("saves the grants and the limit in one write behind Access Control write, and audits both as the write saw them", async () => {
+      allow("team.manage", "organization.manage", "organization.manage_access");
+      const limited = { teamId: TEAM_ID, limited: true, dashboardIds: [DASHBOARD_ID] };
+      // The audit takes the limit from the write's own transaction, not from reads around it.
+      mocks.updateTeamDetails.mockResolvedValueOnce({
+        dashboardLimits: { before: { teamId: TEAM_ID, limited: false, dashboardIds: [] }, after: limited },
+      });
+      mocks.getTeamDetails.mockResolvedValueOnce(team()).mockResolvedValueOnce(team({ name: "Renamed" }));
+
+      const response = await update(updateBody({ workspaces, dashboardIds: [DASHBOARD_ID] }));
+
+      expect(response.status).toBe(200);
+      expect(checkedActions()).toEqual(["team.manage", "organization.manage", "organization.manage_access"]);
+      expect(mocks.getIsDashboardViewerRoleEnabled).toHaveBeenCalledWith(ORG_ID);
+      expect(mocks.updateTeamDetails).toHaveBeenCalledTimes(1);
+      expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody({ workspaces }), [
+        DASHBOARD_ID,
+      ]);
+      expect(lastAudit()).toEqual(
+        expect.objectContaining({
+          status: "success",
+          oldObject: { ...team(), dashboardLimits: { teamId: TEAM_ID, limited: false, dashboardIds: [] } },
+          newObject: { ...team({ name: "Renamed" }), dashboardLimits: limited },
+        })
+      );
+    });
+
+    test("passes an empty list through as All dashboards", async () => {
+      allow("team.manage", "organization.manage_access");
+      expect((await update(updateBody({ dashboardIds: [] }))).status).toBe(200);
+      expect(mocks.updateTeamDetails).toHaveBeenCalledWith(TEAM_ID, updateBody(), []);
+    });
+
+    test("refuses a caller without Access Control write, and writes neither the team nor the limit", async () => {
+      allow("team.manage", "organization.manage");
+      const response = await update(updateBody({ workspaces, dashboardIds: [DASHBOARD_ID] }));
+
+      expect(response.status).toBe(403);
+      expect(mocks.updateTeamDetails).not.toHaveBeenCalled();
+    });
+
+    test("refuses without the Access Control and Dashboards plan, and writes nothing", async () => {
+      allow("team.manage", "organization.manage", "organization.manage_access");
+      mocks.getIsDashboardViewerRoleEnabled.mockResolvedValue(false);
+      const response = await update(updateBody({ workspaces, dashboardIds: [DASHBOARD_ID] }));
+
+      expect(response.status).toBe(403);
+      expect(mocks.updateTeamDetails).not.toHaveBeenCalled();
+    });
+
+    test("answers 422 naming a dashboard outside the team's workspaces", async () => {
+      allow("team.manage", "organization.manage", "organization.manage_access");
+      const { TeamDashboardLimitsInvalidError } =
+        await import("@/modules/ee/dashboard-access/lib/team-dashboard-limits");
+      mocks.updateTeamDetails.mockRejectedValue(new TeamDashboardLimitsInvalidError([DASHBOARD_ID]));
+      const response = await update(updateBody({ workspaces, dashboardIds: [DASHBOARD_ID] }));
+
+      expect(response.status).toBe(422);
+      expect((await response.json()).invalid_params).toEqual([
+        expect.objectContaining({ name: "dashboardIds" }),
+      ]);
+    });
+
+    test("answers 400 for a dashboard id that is not a cuid", async () => {
+      expect((await update(updateBody({ dashboardIds: ["not a cuid"] }))).status).toBe(400);
+      expect(mocks.updateTeamDetails).not.toHaveBeenCalled();
+    });
   });
 });
 

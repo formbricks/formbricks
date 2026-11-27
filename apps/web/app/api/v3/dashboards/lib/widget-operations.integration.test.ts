@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { createTestDashboard, createTestWidget, createTestWidgetMany } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -7,6 +8,7 @@ import {
   seedDashboardsFixture,
   sessionOf,
 } from "@/integration/dashboards-fixture";
+import { replaceDashboardRow } from "./replace-service";
 import type { TV3DashboardWidget } from "./resources";
 import { MAX_DASHBOARD_WIDGETS, MAX_WIDGET_ORDER, ZV3WidgetLayoutInput } from "./schemas";
 import { renameDashboardRow } from "./service";
@@ -16,7 +18,6 @@ import {
   removeV3DashboardWidget,
   updateV3DashboardWidget,
 } from "./widget-operations";
-import { replaceDashboardRow } from "./widget-service";
 
 /**
  * Widget operations against real PostgreSQL and SpiceDB (ENG-6593): placement, the no-overlap and
@@ -78,9 +79,8 @@ beforeAll(async () => {
   charts.spare = (await chart("Spare", "bar")).id;
   charts.foreign = (await chart("Foreign", "bar", fixture.foreignWorkspaceId)).id;
 
-  dashboardId = (
-    await prisma.dashboard.create({ data: { name: "Widgets", workspaceId: fixture.workspaceId } })
-  ).id;
+  dashboardId = (await createTestDashboard({ data: { name: "Widgets", workspaceId: fixture.workspaceId } }))
+    .id;
 }, 120_000);
 
 beforeEach(async () => {
@@ -94,13 +94,13 @@ describe("POST /api/v3/dashboards/{dashboardId}/widgets", () => {
     const widget = (await bodyOf<{ data: TV3DashboardWidget }>(first)).data;
     firstWidgetId = widget.id;
     expect(first.headers.get("Location")).toBe(`/api/v3/dashboards/${dashboardId}/widgets/${widget.id}`);
-    expect(widget).toMatchObject({ chartId: charts.bar, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 });
-    expect(widget.chart.id).toBe(charts.bar);
+    expect(widget).toMatchObject({ chartId: charts.bar, layout: { x: 0, y: 0, w: 4, h: 16 }, order: 0 });
+    expect(widget.chart?.id).toBe(charts.bar);
     expect(await updatedAt()).toBeGreaterThan(STALE.getTime());
 
     // Beside the bar chart, not below it, at the big number's own size.
     const second = (await bodyOf<{ data: TV3DashboardWidget }>(await add(charts.bigNumber))).data;
-    expect(second).toMatchObject({ layout: { x: 4, y: 0, w: 3, h: 2 }, order: 1 });
+    expect(second).toMatchObject({ layout: { x: 4, y: 0, w: 3, h: 8 }, order: 1 });
   });
 
   test("serves the widget its Location names to a reader, and nothing for a widget not on that dashboard", async () => {
@@ -114,7 +114,7 @@ describe("POST /api/v3/dashboards/{dashboardId}/widgets", () => {
       chartId: charts.bar,
     });
 
-    const other = await prisma.dashboard.create({
+    const other = await createTestDashboard({
       data: { name: "Other", workspaceId: fixture.workspaceId },
     });
     expect(await outcomeOf(await read(editor(), other.id))).toEqual({ status: 403, code: "forbidden" });
@@ -161,10 +161,10 @@ describe("POST /api/v3/dashboards/{dashboardId}/widgets", () => {
 
 describe("widget order at the column's limit", () => {
   test("adds after a widget a save gave the highest order the column holds, instead of overflowing it", async () => {
-    const board = await prisma.dashboard.create({
+    const board = await createTestDashboard({
       data: { name: "Order cap", workspaceId: fixture.workspaceId },
     });
-    await prisma.dashboardWidget.create({
+    await createTestWidget({
       data: {
         dashboardId: board.id,
         chartId: charts.bar,
@@ -195,7 +195,7 @@ describe("widget order at the column's limit", () => {
 
 describe("the widget cap", () => {
   test("refuses an add past the most widgets a save carries, and takes one again once there is room", async () => {
-    const full = await prisma.dashboard.create({ data: { name: "Full", workspaceId: fixture.workspaceId } });
+    const full = await createTestDashboard({ data: { name: "Full", workspaceId: fixture.workspaceId } });
     const chartIds = await prisma.chart.createManyAndReturn({
       data: Array.from({ length: MAX_DASHBOARD_WIDGETS + 1 }, (_, index) => ({
         name: `Cap ${index}`,
@@ -207,7 +207,7 @@ describe("the widget cap", () => {
       })),
       select: { id: true },
     });
-    await prisma.dashboardWidget.createMany({
+    await createTestWidgetMany({
       data: chartIds.slice(0, MAX_DASHBOARD_WIDGETS).map(({ id }, index) => ({
         dashboardId: full.id,
         chartId: id,
@@ -237,7 +237,7 @@ describe("the widget cap", () => {
 
 describe("concurrent widget writes", () => {
   test("adding many charts to one dashboard at once places every one, without overlaps", async () => {
-    const board = await prisma.dashboard.create({
+    const board = await createTestDashboard({
       data: { name: "Parallel adds", workspaceId: fixture.workspaceId },
     });
     const parallelCharts = await Promise.all(
@@ -276,7 +276,7 @@ describe("concurrent widget writes", () => {
 
   test("every write moves updatedAt, even within one millisecond, so a stale save is still refused", async () => {
     const instant = new Date("2026-06-01T12:00:00.000Z");
-    const board = await prisma.dashboard.create({
+    const board = await createTestDashboard({
       data: { name: "Same millisecond", workspaceId: fixture.workspaceId, updatedAt: instant },
     });
     const [first, second] = await Promise.all(
@@ -314,6 +314,7 @@ describe("concurrent widget writes", () => {
 
       // An editor who read the dashboard after the first add saves over it: refused, not a silent overwrite.
       const save = await replaceDashboardRow({
+        workspaceId: fixture.workspaceId,
         dashboardId: board.id,
         expectedUpdatedAt: new Date(editorsToken),
         widgets: [],
@@ -327,14 +328,14 @@ describe("concurrent widget writes", () => {
 
 describe("layout bounds", () => {
   test("hold a layout to the 12-column grid and the grid's own size limits", () => {
-    const valid = { x: 8, y: 0, w: 4, h: 8 };
+    const valid = { x: 8, y: 0, w: 4, h: 32 };
     expect(ZV3WidgetLayoutInput.safeParse(valid).success).toBe(true);
     for (const invalid of [
       { ...valid, x: 9 }, // x + w past 12 columns
       { ...valid, w: 0 },
       { ...valid, w: 13, x: 0 },
-      { ...valid, h: 9 },
-      { ...valid, y: 1001 },
+      { ...valid, h: 33 },
+      { ...valid, y: 4001 },
       { ...valid, x: 1.5 },
       { ...valid, extra: 1 },
     ]) {
@@ -354,18 +355,18 @@ describe("PATCH /api/v3/dashboards/{dashboardId}/widgets/{widgetId}", () => {
     });
 
   test("moves a widget and moves updatedAt; refuses moving it onto another widget", async () => {
-    const moved = await update({ layout: { x: 0, y: 4, w: 6, h: 4 } });
+    const moved = await update({ layout: { x: 0, y: 16, w: 6, h: 16 } });
     expect(moved.status).toBe(200);
     expect((await bodyOf<{ data: TV3DashboardWidget }>(moved)).data.layout).toEqual({
       x: 0,
-      y: 4,
+      y: 16,
       w: 6,
-      h: 4,
+      h: 16,
     });
     expect(await updatedAt()).toBeGreaterThan(STALE.getTime());
 
     await markStale();
-    // The big number sits at x 4..7, y 0..2.
+    // The big number sits at x 4..7, y 0..8.
     expect((await update({ layout: { x: 3, y: 0, w: 4, h: 4 } })).status).toBe(422);
     expect(await updatedAt()).toBe(STALE.getTime());
   });
@@ -381,9 +382,9 @@ describe("PATCH /api/v3/dashboards/{dashboardId}/widgets/{widgetId}", () => {
     expect(repointed).toMatchObject({
       id: firstWidgetId,
       chartId: charts.spare,
-      layout: { x: 0, y: 4, w: 6, h: 4 },
+      layout: { x: 0, y: 16, w: 6, h: 16 },
     });
-    expect(repointed.chart.id).toBe(charts.spare);
+    expect(repointed.chart?.id).toBe(charts.spare);
     expect(await updatedAt()).toBeGreaterThan(STALE.getTime());
   });
 
@@ -393,7 +394,7 @@ describe("PATCH /api/v3/dashboards/{dashboardId}/widgets/{widgetId}", () => {
       code: "forbidden",
     });
 
-    const elsewhere = await prisma.dashboard.create({
+    const elsewhere = await createTestDashboard({
       data: { name: "Elsewhere", workspaceId: fixture.workspaceId },
     });
     expect(
@@ -433,7 +434,7 @@ describe("DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}", () => {
 
 describe("the grid's last row", () => {
   test("refuses an auto-placed widget past it, and the dashboard still saves whole", async () => {
-    const board = await prisma.dashboard.create({
+    const board = await createTestDashboard({
       data: { name: "Last row", workspaceId: fixture.workspaceId },
     });
     const chartIds = await prisma.chart.createManyAndReturn({
@@ -448,11 +449,11 @@ describe("the grid's last row", () => {
       select: { id: true },
     });
     // 126 full-width, full-height widgets stacked down to the grid's last row: no gap is left.
-    await prisma.dashboardWidget.createMany({
+    await createTestWidgetMany({
       data: chartIds.slice(0, 126).map(({ id }, index) => ({
         dashboardId: board.id,
         chartId: id,
-        layout: { x: 0, y: index * 8, w: 12, h: 8 },
+        layout: { x: 0, y: index * 32, w: 12, h: 32 },
         order: index,
       })),
     });
@@ -475,6 +476,7 @@ describe("the grid's last row", () => {
       }),
     ]);
     const replaced = await replaceDashboardRow({
+      workspaceId: fixture.workspaceId,
       dashboardId: board.id,
       expectedUpdatedAt: dashboard.updatedAt,
       widgets: widgets.map((widget) => ({

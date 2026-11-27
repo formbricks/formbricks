@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { NO_AUTOFILL_PROPS } from "@/modules/ui/lib/no-autofill";
 import { cn } from "@/modules/ui/lib/utils";
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
@@ -61,6 +62,7 @@ function CommandInput({
   return (
     <CommandPrimitive.Input
       data-slot="command-input"
+      {...NO_AUTOFILL_PROPS}
       className={cn(
         "flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-hidden placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-50",
         className

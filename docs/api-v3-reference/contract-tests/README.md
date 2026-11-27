@@ -93,6 +93,11 @@ Three things to know before reading the result:
   visibility enforced, then drains the outbox (`authzed:outbox drain`). The fixtures make surveys
   restricted, which queues revocations; with no worker to deliver them, the freshness guard would fail
   every authorization check closed after 60 seconds. Locally, a running dev worker does this for you.
+- **The eight Member attribute operations answer 403 to the seed key** (ENG-7473). They need an API
+  key with Access Control read or write, which the seed key deliberately lacks, plus Access Control and
+  Dashboards in the licence. `read.organizationId` points them at the seed organization, so each is
+  checked against its documented 403 on a real organization; their 200/409/422 shapes are covered by
+  the unit suites.
 - **Rate limiting.** Set `RATE_LIMITING_DISABLED=1`, otherwise a burst of cases can turn into
   documented-but-uninteresting 429s.
 

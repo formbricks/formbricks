@@ -20,7 +20,7 @@ interface ReactivateMemberButtonProps {
  * "Reactivate" on an inactive member (ENG-3610): owners and managers bring back someone the members
  * policy, or anyone, deactivated, which restarts their retention clock. The API refuses someone who
  * also belongs to another organisation, and the toast says so. Runs under the member list's query
- * client (`MembersInfo`).
+ * client (`MemberAttributesQueryProvider` around the Members table).
  */
 export const ReactivateMemberButton = ({
   organizationId,

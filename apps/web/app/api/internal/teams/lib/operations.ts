@@ -6,6 +6,7 @@ import {
   createdResponse,
   noContentResponse,
   problemConflict,
+  problemDashboardAccessPlanRequired,
   problemForbidden,
   problemUnauthorized,
   problemUnprocessableContent,
@@ -13,6 +14,12 @@ import {
 } from "@/app/api/v3/lib/response";
 import { can } from "@/lib/authorization";
 import { getTeam } from "@/lib/utils/services";
+import {
+  type TTeamDashboardLimits,
+  type TTeamDashboardLimitsChange,
+  TeamDashboardLimitsInvalidError,
+} from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
+import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
 import { requireRoleManagementEntitlement } from "@/modules/ee/role-management/lib/api-access";
 import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import {
@@ -135,10 +142,61 @@ export async function getTeamOperation({
 }
 
 /**
+ * A dashboard limit sent with a team update is checked as `PUT /api/v3/teams/{teamId}/dashboard-limits`
+ * checks it: Access Control write (`organization.manage_access`), then the Access Control and Dashboards
+ * plan. The refusal, or `null` when allowed.
+ */
+async function authorizeDashboardLimitsUpdate(
+  context: TRequestContext,
+  organizationId: string
+): Promise<Response | null> {
+  const access = await requireOrgActionAccess({
+    ...context,
+    organizationId,
+    action: "organization.manage_access",
+  });
+  if (access instanceof Response) return access;
+  if (!(await getIsDashboardViewerRoleEnabled(organizationId))) {
+    return problemDashboardAccessPlanRequired(context.requestId, context.instance);
+  }
+  return null;
+}
+
+/** The answer to a refused team update, or `undefined` for an error that is not a refusal. */
+const updateRefusal = (error: unknown, context: TRequestContext): Response | undefined => {
+  const { requestId, instance } = context;
+  if (error instanceof TeamNameTakenError) return teamNameTaken(error, context);
+  if (error instanceof TeamAssignmentOutsideOrganizationError) {
+    return problemUnprocessableContent(requestId, error.message, {
+      instance,
+      invalid_params: [{ name: error.field, reason: error.message }],
+    });
+  }
+  if (error instanceof TeamDashboardLimitsInvalidError) {
+    return problemUnprocessableContent(requestId, error.message, {
+      instance,
+      invalid_params: error.dashboardIds.map((id) => ({
+        name: "dashboardIds",
+        reason: `${id} is not a dashboard in a workspace the team is granted`,
+      })),
+    });
+  }
+  return undefined;
+};
+
+/** The team for the audit entry, with its dashboard limit when the update wrote one. */
+const withDashboardLimits = <T extends object>(team: T, limits: TTeamDashboardLimits | null | undefined) =>
+  limits === undefined ? team : { ...team, dashboardLimits: limits };
+
+/**
  * `PATCH /api/internal/teams/{teamId}`: rename the team and replace its members and workspace grants.
  * Owners, managers and the team's admins; changing workspace grants is owners' and managers' only. A name
  * another team of the organization has is a 409, as on create; a member or workspace from outside the
  * organization is a 422 naming the field.
+ *
+ * `dashboardIds` also replaces the team's dashboard limit in the same transaction, with the checks of
+ * `PUT /api/v3/teams/{teamId}/dashboard-limits`: Access Control write (`organization.manage_access`) and
+ * the Access Control and Dashboards plan; a dashboard outside the team's workspaces is a 422.
  */
 export async function updateTeamOperation({
   teamId,
@@ -164,24 +222,28 @@ export async function updateTeamOperation({
     if (orgAccess instanceof Response) return orgAccess;
   }
 
+  const { dashboardIds, ...teamDetails } = body;
+  if (dashboardIds !== undefined) {
+    const refusal = await authorizeDashboardLimitsUpdate(context, access.organizationId);
+    if (refusal) return refusal;
+  }
+
+  let limits: TTeamDashboardLimitsChange | null;
   try {
-    await updateTeamDetails(teamId, body);
+    ({ dashboardLimits: limits } = await updateTeamDetails(teamId, teamDetails, dashboardIds));
   } catch (error) {
-    if (error instanceof TeamNameTakenError) return teamNameTaken(error, context);
-    if (error instanceof TeamAssignmentOutsideOrganizationError) {
-      return problemUnprocessableContent(requestId, error.message, {
-        instance,
-        invalid_params: [{ name: error.field, reason: error.message }],
-      });
-    }
+    const refusal = updateRefusal(error, context);
+    if (refusal) return refusal;
     throw error;
   }
   const after = await getTeamDetails(teamId);
   if (!after) return problemForbidden(requestId, undefined, instance);
 
   if (auditLog) {
-    auditLog.oldObject = before;
-    auditLog.newObject = after;
+    // A limit saved with the team is audited beside it, as the limits route audits it: as the save's
+    // transaction found and left it.
+    auditLog.oldObject = withDashboardLimits(before, limits?.before);
+    auditLog.newObject = withDashboardLimits(after, limits?.after);
   }
   return successResponse(serializeTeam(after), { requestId });
 }

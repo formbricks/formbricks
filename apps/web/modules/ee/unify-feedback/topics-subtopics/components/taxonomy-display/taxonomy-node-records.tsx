@@ -7,6 +7,7 @@ import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import type { FeedbackRecordData, TaxonomyNode } from "@/modules/hub/types";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { EmptyState } from "@/modules/ui/components/empty-state";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -99,8 +100,8 @@ export const TaxonomyNodeRecords = ({
           }
           if (isLoading) {
             return (
-              <div className="flex items-center justify-center py-10">
-                <Loader2Icon className="size-5 animate-spin text-slate-400" />
+              <div className="py-10">
+                <LoadingSpinner />
               </div>
             );
           }

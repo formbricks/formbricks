@@ -23,11 +23,13 @@ import type {
   TDashboardFilter,
   TLockedDashboardFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import { DEFAULT_IMAGE_CONTENT } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import type {
   AnalyticsResponse,
   TChartDataRow,
   TChartType,
   TChartWithCreator,
+  TDashboardPage,
   TDashboardWidget,
 } from "@/modules/ee/analysis/types/analysis";
 
@@ -39,6 +41,25 @@ import type {
 
 const CHARTS_PATH = "/api/v3/charts";
 const DASHBOARDS_PATH = "/api/v3/dashboards";
+
+/** The query parameter View as (ENG-7484) is carried in, on the dashboard page and on its reads. */
+export const VIEW_AS_PARAM = "viewAs";
+
+/**
+ * The member an Owner or Manager is viewing the dashboard as, from the page's URL, or `null`. Only the
+ * dashboard reads carry it; the server refuses it on anything else. Starting or stopping View as reloads
+ * the page, so no read cached for one viewer is ever shown for another.
+ */
+export const getViewAsUserId = (): string | null =>
+  typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(VIEW_AS_PARAM);
+
+/** `url` with the page's View as member, if any. */
+const withViewAs = (url: string): string => {
+  const viewAs = getViewAsUserId();
+  if (!viewAs) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}${VIEW_AS_PARAM}=${encodeURIComponent(viewAs)}`;
+};
+
 /** A problem's `details` are typed `unknown`; the operations that set them put a JSON object there. */
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -229,7 +250,9 @@ export const getDashboardChartData = async ({
 }): Promise<TAppDashboardChartData> => {
   const search = dashboardReadParams(dateRange, filters).toString();
   const base = `${dashboardPath(dashboardId)}/charts/${encodeURIComponent(chartId)}/data`;
-  const data = await getApiData<TV3DashboardChartData>(search ? `${base}?${search}` : base, { signal });
+  const data = await getApiData<TV3DashboardChartData>(withViewAs(search ? `${base}?${search}` : base), {
+    signal,
+  });
   return { ...toAppChartData(data), unfilterableFilters: data.unfilterableFilters };
 };
 
@@ -258,7 +281,7 @@ export const listDashboardFilterValues = async ({
   if (search) params.set("search", search);
   const query = params.toString();
   const base = `${dashboardPath(dashboardId)}/filters/f1/values`;
-  return getApiData<TV3DashboardFilterValues>(query ? `${base}?${query}` : base, { signal });
+  return getApiData<TV3DashboardFilterValues>(withViewAs(query ? `${base}?${query}` : base), { signal });
 };
 
 /**
@@ -269,7 +292,7 @@ export const listDashboardFilterFields = async (
   dashboardId: string,
   signal?: AbortSignal
 ): Promise<TV3DashboardFilterFields> =>
-  getApiData<TV3DashboardFilterFields>(`${dashboardPath(dashboardId)}/filter-fields`, { signal });
+  getApiData<TV3DashboardFilterFields>(withViewAs(`${dashboardPath(dashboardId)}/filter-fields`), { signal });
 
 /** A saved chart's rows, for its own date range or a requested one that narrows it. */
 export const getChartData = async ({
@@ -342,17 +365,57 @@ const toAppDashboardListItem = (item: TV3DashboardListItem): TAppDashboardListIt
  */
 export type TAppDashboard = Pick<TV3DashboardResource, "id" | "workspaceId" | "name" | "updatedAt"> & {
   filters: TLockedDashboardFilter[];
+  /** In tab order. */
+  pages: TDashboardPage[];
   widgets: TDashboardWidget[];
+  /** What the reader's Dashboard Viewer access leaves them (ENG-7478); only on a dashboard read. */
+  viewerAccess?: NonNullable<TV3DashboardResource["viewerAccess"]>;
 };
 
-const toAppDashboardWidget = (dashboardId: string, widget: TV3DashboardWidget): TDashboardWidget => ({
-  id: widget.id,
-  dashboardId,
-  chartId: widget.chartId,
-  layout: widget.layout,
-  order: widget.order,
-  chart: toAppChart(widget.chart),
-});
+/**
+ * A widget as the page renders it, narrowed by kind. A chart widget whose chart did not come back (a row
+ * the API could not read whole) is dropped by the caller rather than drawn without one.
+ */
+const toAppDashboardWidget = (dashboardId: string, widget: TV3DashboardWidget): TDashboardWidget | null => {
+  const base = {
+    id: widget.id,
+    dashboardId,
+    pageId: widget.pageId,
+    layout: widget.layout,
+    order: widget.order,
+  };
+  switch (widget.kind) {
+    case "chart":
+      return widget.chart && widget.chartId
+        ? { ...base, kind: "chart", chartId: widget.chartId, chart: toAppChart(widget.chart), content: null }
+        : null;
+    case "image":
+      return {
+        ...base,
+        kind: "image",
+        chartId: null,
+        chart: null,
+        content: widget.content && "fit" in widget.content ? widget.content : { ...DEFAULT_IMAGE_CONTENT },
+      };
+    case "text":
+      return {
+        ...base,
+        kind: "text",
+        chartId: null,
+        chart: null,
+        content:
+          widget.content && "headline" in widget.content ? widget.content : { headline: "", description: "" },
+      };
+    case "separator":
+      return { ...base, kind: "separator", chartId: null, chart: null, content: null };
+  }
+};
+
+const requireAppWidget = (dashboardId: string, widget: TV3DashboardWidget): TDashboardWidget => {
+  const app = toAppDashboardWidget(dashboardId, widget);
+  if (!app) throw new Error("The widget has no chart.");
+  return app;
+};
 
 export const toAppDashboard = (resource: TV3DashboardResource): TAppDashboard => ({
   id: resource.id,
@@ -360,7 +423,12 @@ export const toAppDashboard = (resource: TV3DashboardResource): TAppDashboard =>
   name: resource.name,
   updatedAt: resource.updatedAt,
   filters: resource.filters,
-  widgets: resource.widgets.map((widget) => toAppDashboardWidget(resource.id, widget)),
+  pages: resource.pages,
+  viewerAccess: resource.viewerAccess,
+  widgets: resource.widgets.flatMap((widget) => {
+    const app = toAppDashboardWidget(resource.id, widget);
+    return app ? [app] : [];
+  }),
 });
 
 export type TDashboardListFilters = { nameContains?: string; chartId?: string };
@@ -390,9 +458,12 @@ export const listDashboards = async ({
 
 export const getDashboard = async (dashboardId: string, signal?: AbortSignal): Promise<TAppDashboard> =>
   toAppDashboard(
-    await getApiData<TV3DashboardResource>(`${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`, {
-      signal,
-    })
+    await getApiData<TV3DashboardResource>(
+      withViewAs(`${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`),
+      {
+        signal,
+      }
+    )
   );
 
 const dashboardPath = (dashboardId: string) => `${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`;
@@ -411,10 +482,32 @@ export const createDashboard = async ({
     })
   );
 
+/** A page as the whole-dashboard save sends it: an existing one by id, a new one by its draft key. */
+export type TSavedPage = {
+  pageId?: string;
+  key?: string;
+  name: string;
+  order: number;
+  teamIds?: string[] | null;
+};
+
+/** A widget as the whole-dashboard save sends it: an existing one by id, or a new one by kind. */
+export type TSavedWidget = {
+  widgetId?: string;
+  kind?: TDashboardWidget["kind"];
+  chartId?: string;
+  pageId?: string;
+  pageKey?: string;
+  content?: TDashboardWidget["content"];
+  layout: TDashboardWidget["layout"];
+  order: number;
+};
+
 /**
- * Saves the whole edited dashboard — its name, every widget's place and its filters — in one call. `expectedUpdatedAt` is the
- * version the edit started from; if the dashboard changed since, nothing is saved and the call throws
- * the 409 `isStaleDashboardError` recognises. A widget left out is removed.
+ * Saves the whole edited dashboard — its name, pages, every widget's page, place and content, and its
+ * filters — in one call. `expectedUpdatedAt` is the version the edit started from; if the dashboard
+ * changed since, nothing is saved and the call throws the 409 `isStaleDashboardError` recognises. A
+ * widget or page left out is removed; new pages and widgets are created.
  */
 export const replaceDashboard = async (
   dashboardId: string,
@@ -422,7 +515,8 @@ export const replaceDashboard = async (
     name: string;
     expectedUpdatedAt: string;
     filters?: TLockedDashboardFilter[];
-    widgets: { widgetId: string; layout: TDashboardWidget["layout"]; order: number }[];
+    pages?: TSavedPage[];
+    widgets: TSavedWidget[];
   }
 ): Promise<TAppDashboard> =>
   toAppDashboard(
@@ -452,12 +546,15 @@ export const deleteDashboard = (dashboardId: string): Promise<void> => sendDelet
 
 const widgetsPath = (dashboardId: string) => `${dashboardPath(dashboardId)}/widgets`;
 
-/** Puts a chart on a dashboard; without a `layout` it lands in the first open slot. */
+/**
+ * Puts a chart on a dashboard page — the first page without `pageId`; without a `layout` it lands in the
+ * first open slot.
+ */
 export const addDashboardWidget = async (
   dashboardId: string,
-  widget: { chartId: string; layout?: TDashboardWidget["layout"] }
+  widget: { chartId: string; pageId?: string; layout?: TDashboardWidget["layout"] }
 ): Promise<TDashboardWidget> =>
-  toAppDashboardWidget(
+  requireAppWidget(
     dashboardId,
     await sendApiRequest<TV3DashboardWidget>(widgetsPath(dashboardId), { method: "POST", body: widget })
   );
@@ -482,22 +579,22 @@ const placeOrFirstOpenSlot = async <T>(
   }
 };
 
-/** Puts a removed widget's chart back where it was, or in the first open slot if that was taken. */
+/** Puts a removed widget's chart back on its page where it was, or in the first open slot if that was taken. */
 export const restoreDashboardWidget = (
   dashboardId: string,
-  widget: Pick<TDashboardWidget, "chartId" | "layout">
+  widget: { chartId: string; pageId: string; layout: TDashboardWidget["layout"] }
 ): Promise<TDashboardWidget> =>
   placeOrFirstOpenSlot(widget.layout, (layout) =>
-    addDashboardWidget(dashboardId, { chartId: widget.chartId, layout })
+    addDashboardWidget(dashboardId, { chartId: widget.chartId, pageId: widget.pageId, layout })
   );
 
 /**
- * Copies a chart. With a `dashboardId` the copy goes on that dashboard in the same call — at `layout`,
- * or in the first open slot if that was taken meanwhile — so a failure never leaves a stray copy.
+ * Copies a chart. With a `dashboardId` the copy goes on that dashboard's page `pageId` in the same call —
+ * at `layout`, or in the first open slot if that was taken meanwhile — so a failure never leaves a stray copy.
  */
 export const duplicateChart = async (
   chartId: string,
-  placement?: { dashboardId: string; layout: TDashboardWidget["layout"] }
+  placement?: { dashboardId: string; pageId?: string; layout: TDashboardWidget["layout"] }
 ): Promise<TAppChart> => {
   const send = async (body: Record<string, unknown>) =>
     toAppChart(
@@ -508,8 +605,53 @@ export const duplicateChart = async (
     );
   if (!placement) return send({});
   return placeOrFirstOpenSlot(placement.layout, (layout) =>
-    send({ dashboardId: placement.dashboardId, ...(layout ? { layout } : {}) })
+    send({
+      dashboardId: placement.dashboardId,
+      ...(placement.pageId ? { pageId: placement.pageId } : {}),
+      ...(layout ? { layout } : {}),
+    })
   );
+};
+
+const INTERNAL_DASHBOARDS_PATH = "/api/internal/dashboards";
+
+/** What the Manage pages dialog needs: whether this person may limit pages, and the teams to show. */
+export type TDashboardPageAccess = {
+  canManageAccess: boolean;
+  /** `selectable` false: a team a page is limited to that can no longer be added. */
+  teams: { id: string; name: string; selectable: boolean }[];
+};
+
+export const getDashboardPageAccess = async (
+  dashboardId: string,
+  signal?: AbortSignal
+): Promise<TDashboardPageAccess> =>
+  getApiData<TDashboardPageAccess>(
+    `${INTERNAL_DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}/page-access`,
+    {
+      signal,
+    }
+  );
+
+/**
+ * Uploads an image block's file as a private file of the dashboard's workspace and answers the `fileUrl`
+ * the block then holds: the server presigns the upload, the browser sends the file straight to storage.
+ */
+export const uploadDashboardImage = async (dashboardId: string, file: File): Promise<string> => {
+  const { signedUrl, presignedFields, fileUrl } = await sendApiRequest<{
+    signedUrl: string;
+    presignedFields: Record<string, string>;
+    fileUrl: string;
+  }>(`${INTERNAL_DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}/image-uploads`, {
+    method: "POST",
+    body: { fileName: file.name },
+  });
+  const form = new FormData();
+  for (const [key, value] of Object.entries(presignedFields)) form.append(key, value);
+  form.append("file", file);
+  const upload = await fetch(signedUrl, { method: "POST", body: form });
+  if (!upload.ok) throw new Error(`Upload failed with ${upload.status}`);
+  return fileUrl;
 };
 
 /** Deletes a chart on no dashboard. A chart still on one is refused: see `chartInUseDashboards`. */
@@ -571,3 +713,35 @@ export const setEmbeddedFieldLabel = async ({
     method: "PUT",
     body: { workspaceId, key, label, expectedLabel },
   });
+
+export type TDashboardAccessOverview = {
+  organizationId: string;
+  teams: {
+    id: string;
+    name: string;
+    permission: "read" | "readWrite" | "manage";
+    limitedDashboardCount: number | null;
+    memberCount: number;
+  }[];
+  members: {
+    userId: string;
+    name: string;
+    email: string;
+    role: string;
+    attributes: { label: string; values: string[] }[];
+    /** Whether they open this dashboard; viewing as someone who does not shows why not. */
+    hasAccess: boolean;
+  }[];
+};
+
+/** Who opens the dashboard and whom View as offers (ENG-7484): Owners and Managers only. */
+export const getDashboardAccessOverview = async (
+  dashboardId: string,
+  signal?: AbortSignal
+): Promise<TDashboardAccessOverview> =>
+  getApiData<TDashboardAccessOverview>(
+    `${INTERNAL_DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}/access`,
+    {
+      signal,
+    }
+  );

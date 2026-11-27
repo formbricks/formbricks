@@ -38,7 +38,8 @@ export interface UseChartDialogProps {
   autoAddToDashboardId?: string;
   /** Pre-loaded chart metadata; when provided for edit, skips the chart read */
   initialChart?: TChartWithCreator;
-  onSuccess?: () => void;
+  /** Called after a save, with the saved chart's id. */
+  onSuccess?: (chartId?: string) => void;
   directories?: { id: string; name: string }[];
 }
 
@@ -306,7 +307,7 @@ export function useChartDialog({
       openAutoAddDashboard();
       void queryClient.invalidateQueries({ queryKey: chartKeys.all });
       void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
-      onSuccess?.();
+      onSuccess?.(savedChartId);
     } catch (error: unknown) {
       toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_save_chart")));
       if (autoAddToDashboardId && newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);

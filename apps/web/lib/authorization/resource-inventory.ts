@@ -40,6 +40,10 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   CreativeLanguage: "parent_derived_or_data_integrity",
   CreativeTrigger: "parent_derived_or_data_integrity",
   Dashboard: "direct_authorization_resource",
+  // A Dashboard page is projected into SpiceDB with its team limits (ADR-0060); `DashboardPageTeam` and
+  // `TeamDashboard` are the limits it is projected from.
+  DashboardPage: "direct_authorization_resource",
+  DashboardPageTeam: "relationship_or_grant_source",
   DashboardWidget: "parent_derived_or_data_integrity",
   DataMigration: "public_or_out_of_scope",
   // A system queue of cleanup work (Hub records, storage files) left by deletes; no user reads it.
@@ -50,6 +54,9 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   // read-write Dashboards check, read with the workspace's charts.
   EmbeddedFieldLabel: "workspace_inherited_resource",
   FeedbackDirectory: "direct_authorization_resource",
+  // A Feedback Dataset's Dashboard Viewer access (ADR-0061): written behind Access Control write on the
+  // dataset's organization, and turned into the signed Cube claim that narrows a Dashboard Viewer's records.
+  FeedbackDirectoryViewerCondition: "parent_derived_or_data_integrity",
   FeedbackDirectoryWorkspace: "relationship_or_grant_source",
   FeedbackSource: "parent_derived_or_data_integrity",
   FeedbackSourceFieldMapping: "parent_derived_or_data_integrity",
@@ -58,7 +65,15 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   InstanceSetup: "authentication_or_application",
   Integration: "workspace_inherited_resource",
   Invite: "authentication_or_application",
+  // Member attribute values an invite carries (ENG-7468); written behind the organization's
+  // `manage_access`, copied onto the membership on acceptance, deleted with the invite.
+  InviteAttributeValue: "parent_derived_or_data_integrity",
   Language: "parent_derived_or_data_integrity",
+  // Member attributes (ENG-7468): keys and values are organization settings, read behind
+  // `organization.manage` / `read_access` and written behind `manage_access`
+  // (`app/api/v3/lib/organization-access.ts`); values are deleted with their membership.
+  MemberAttributeKey: "parent_derived_or_data_integrity",
+  MemberAttributeValue: "parent_derived_or_data_integrity",
   // A user's grant to an MCP client and its organization & workspace selections (ENG-7149, ADR-0041).
   McpGrant: "relationship_or_grant_source",
   McpGrantOrganization: "relationship_or_grant_source",
@@ -93,6 +108,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Tag: "workspace_inherited_resource",
   TagsOnResponses: "parent_derived_or_data_integrity",
   Team: "direct_authorization_resource",
+  TeamDashboard: "relationship_or_grant_source",
   TeamUser: "relationship_or_grant_source",
   TwoFactor: "authentication_or_application",
   User: "authentication_or_application",
@@ -126,6 +142,7 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   creative: "workspace_inherited_resource",
   cubeQuery: "parent_derived_or_data_integrity",
   dashboard: "direct_authorization_resource",
+  dashboardPage: "direct_authorization_resource",
   dashboardWidget: "parent_derived_or_data_integrity",
   // Every write to a shared Embedded Data field is authorized as `workspace.read` / `workspace.write`
   // against the workspace resolved from the row, so the audit target inherits from the workspace even
@@ -139,6 +156,8 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   invite: "authentication_or_application",
   language: "parent_derived_or_data_integrity",
   mcpGrant: "relationship_or_grant_source",
+  memberAttributeKey: "parent_derived_or_data_integrity",
+  memberAttributes: "parent_derived_or_data_integrity",
   membership: "relationship_or_grant_source",
   organization: "direct_authorization_resource",
   quota: "parent_derived_or_data_integrity",

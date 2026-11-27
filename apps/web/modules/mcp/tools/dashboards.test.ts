@@ -16,6 +16,11 @@ import {
   setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
+import {
+  createV3DashboardPage,
+  deleteV3DashboardPage,
+  updateV3DashboardPage,
+} from "@/app/api/v3/dashboards/lib/page-operations";
 import { MAX_WIDGETS_PER_WRITE } from "@/app/api/v3/dashboards/lib/schemas";
 import {
   addV3DashboardWidget,
@@ -63,6 +68,11 @@ vi.mock("@/app/api/v3/dashboards/lib/operations", () => ({
   renameV3Dashboard: vi.fn(),
   setV3DashboardFilters: vi.fn(),
   updateV3DashboardLayout: vi.fn(),
+}));
+vi.mock("@/app/api/v3/dashboards/lib/page-operations", () => ({
+  createV3DashboardPage: vi.fn(),
+  deleteV3DashboardPage: vi.fn(),
+  updateV3DashboardPage: vi.fn(),
 }));
 vi.mock("@/app/api/v3/dashboards/lib/widget-operations", () => ({
   addV3DashboardWidget: vi.fn(),
@@ -472,7 +482,12 @@ describe("chart and dashboard MCP tools", () => {
     expect(String(tools.get("duplicate_dashboard")?.config.description)).toMatch(
       /shares the original's charts/
     );
-    expect([...tools.keys()].filter((name) => /delete/.test(name))).toEqual([]);
+    // A page can be deleted — its widgets go, every chart stays, as remove_chart_from_dashboard — but no tool
+    // deletes a chart or a dashboard.
+    expect([...tools.keys()].filter((name) => /delete/.test(name))).toEqual(["delete_dashboard_page"]);
+    expect(String(tools.get("delete_dashboard_page")?.config.description)).toMatch(
+      /charts themselves are kept/
+    );
   });
 
   test("the widget tools need dashboards:write and map their arguments onto the operations", async () => {
@@ -503,6 +518,85 @@ describe("chart and dashboard MCP tools", () => {
     expect(removeV3DashboardWidget).toHaveBeenCalledWith(
       expect.objectContaining({ dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID })
     );
+  });
+
+  test("the page and block tools need dashboards:write and map their arguments onto the operations", async () => {
+    const PAGE_ID = "clpg000000000000000000001";
+    vi.mocked(addV3DashboardWidget).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(createV3DashboardPage).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(updateV3DashboardPage).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(deleteV3DashboardPage).mockResolvedValue(new Response(null, { status: 204 }));
+    const writes = [
+      ["create_dashboard_page", { dashboardId: DASHBOARD_ID, name: "Sales" }],
+      ["update_dashboard_page", { dashboardId: DASHBOARD_ID, pageId: PAGE_ID, name: "Sales EMEA" }],
+      ["delete_dashboard_page", { dashboardId: DASHBOARD_ID, pageId: PAGE_ID }],
+      [
+        "add_dashboard_block",
+        {
+          dashboardId: DASHBOARD_ID,
+          pageId: PAGE_ID,
+          kind: "text",
+          text: { headline: "Q3", description: "" },
+        },
+      ],
+      ["add_dashboard_block", { dashboardId: DASHBOARD_ID, kind: "image", image: { alt: "Logo" } }],
+    ] as const;
+
+    for (const [name, input] of writes) {
+      expect((await call(name, input, ["dashboards:read"])).isError).toBe(true);
+    }
+    expect(createV3DashboardPage).not.toHaveBeenCalled();
+
+    for (const [name, input] of writes) {
+      expect((await call(name, input, ["dashboards:write"])).isError, name).toBeUndefined();
+    }
+    expect(createV3DashboardPage).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: DASHBOARD_ID, body: { name: "Sales" } })
+    );
+    expect(updateV3DashboardPage).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: DASHBOARD_ID, pageId: PAGE_ID, body: { name: "Sales EMEA" } })
+    );
+    expect(deleteV3DashboardPage).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: DASHBOARD_ID, pageId: PAGE_ID })
+    );
+    expect(addV3DashboardWidget).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: { pageId: PAGE_ID, kind: "text", content: { headline: "Q3", description: "" } },
+      })
+    );
+    // An agent can add an empty image block and set how it shows, never point it at a file.
+    expect(addV3DashboardWidget).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: { kind: "image", content: { fileUrl: null, fit: "fit", position: "center", alt: "Logo" } },
+      })
+    );
+  });
+
+  test("MCP can read a page's team limit but never change it", () => {
+    const tools = createToolServer();
+    const accepts = (name: string, input: unknown) => {
+      const schema = tools.get(name)?.config.inputSchema as
+        | { safeParse: (value: unknown) => { success: boolean } }
+        | undefined;
+      return schema?.safeParse(input).success ?? false;
+    };
+    const PAGE_ID = "clpg000000000000000000001";
+    expect(accepts("update_dashboard_page", { dashboardId: DASHBOARD_ID, pageId: PAGE_ID, name: "A" })).toBe(
+      true
+    );
+    expect(
+      accepts("update_dashboard_page", { dashboardId: DASHBOARD_ID, pageId: PAGE_ID, name: "A", teamIds: [] })
+    ).toBe(false);
+    expect(accepts("create_dashboard_page", { dashboardId: DASHBOARD_ID, name: "A", teamIds: [] })).toBe(
+      false
+    );
+    expect(
+      accepts("add_dashboard_block", {
+        dashboardId: DASHBOARD_ID,
+        kind: "image",
+        image: { fileUrl: "/storage/x/private/dashboards/y/z.png" },
+      })
+    ).toBe(false);
   });
 
   test("remove_chart_from_dashboard says the chart is kept", () => {
@@ -664,11 +758,13 @@ describe("chart and dashboard MCP tools", () => {
 
     expect(destructive).toEqual(
       [
+        "delete_dashboard_page",
         "remove_chart_from_dashboard",
         "set_dashboard_filters",
         "update_chart",
         "update_dashboard",
         "update_dashboard_layout",
+        "update_dashboard_page",
         "update_widget",
       ].sort()
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, UsersIcon } from "lucide-react";
+import { UsersIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import { type TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { formatDate, timeSinceDate } from "@/lib/time";
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface SegmentDetailProps {
   readonly segment: TSegment;
@@ -94,7 +95,7 @@ const SegmentDetail = ({
       }}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-slate-50 opacity-80">
-          <Loader2 className="size-6 animate-spin" />
+          <LoadingSpinner />
         </div>
       )}
       <div className="col-span-3 flex items-center pl-6 text-sm">

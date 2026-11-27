@@ -17,6 +17,8 @@ export type TV3ChartOperationContext = {
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
+  /** View as (ENG-7484): the member a dashboard-bound read runs as. Only dashboard reads honor it. */
+  viewAs?: string;
 };
 
 /**

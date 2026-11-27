@@ -2,6 +2,7 @@ import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
+import { createTestDashboard, createTestWidget } from "@/integration/dashboard-rows";
 import { type TDashboardsFixture, seedDashboardsFixture, sessionOf } from "@/integration/dashboards-fixture";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
 import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
@@ -122,7 +123,7 @@ beforeAll(async () => {
     })
   ).id;
   ids.dashboard = (
-    await prisma.dashboard.create({
+    await createTestDashboard({
       data: {
         name: "D",
         workspaceId: fixture.workspaceId,
@@ -139,7 +140,7 @@ beforeAll(async () => {
       },
     })
   ).id;
-  await prisma.dashboardWidget.create({
+  await createTestWidget({
     data: { dashboardId: ids.dashboard, chartId: ids.chart, layout: { x: 0, y: 0, w: 4, h: 3 }, order: 0 },
   });
   ids.survey = (await prisma.survey.create({ data: { name: "S", workspaceId: fixture.workspaceId } })).id;

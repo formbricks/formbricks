@@ -1,6 +1,7 @@
 import "server-only";
 import { reconcileApiKeyRelationships } from "./api-key";
 import type { TAuthzedBackfillApply } from "./backfill";
+import { reconcileDashboardRelationships } from "./dashboard";
 import {
   deleteFeedbackDirectoryAssignmentRelationships,
   reconcileFeedbackDirectoryRelationships,
@@ -17,6 +18,7 @@ const inert = () => Promise.resolve(INERT_RESULT);
 export const createAuthzedBackfillNoopApply = (): TAuthzedBackfillApply => ({
   deleteFeedbackDirectoryAssignmentResources: inert,
   reconcileApiKeys: inert,
+  reconcileDashboards: inert,
   reconcileFeedbackDirectories: inert,
   reconcileMcpGrants: inert,
   reconcileMemberships: inert,
@@ -28,6 +30,7 @@ export const createAuthzedBackfillNoopApply = (): TAuthzedBackfillApply => ({
 export const createAuthzedBackfillApply = (): TAuthzedBackfillApply => ({
   deleteFeedbackDirectoryAssignmentResources: deleteFeedbackDirectoryAssignmentRelationships,
   reconcileApiKeys: reconcileApiKeyRelationships,
+  reconcileDashboards: reconcileDashboardRelationships,
   reconcileFeedbackDirectories: reconcileFeedbackDirectoryRelationships,
   reconcileMcpGrants: reconcileMcpGrantRelationships,
   reconcileMemberships: reconcileOrganizationMemberships,

@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { can } from "@/lib/authorization";
-import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
+import { lookupAuthorizedWorkspaceIds, lookupReadableDashboardIds } from "@/lib/authorization/resource-list";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -33,11 +33,43 @@ export const listDashboardViewerWorkspaces = async (
   const workspaceIds = await lookupAuthorizedWorkspaceIds({ type: "user", id: userId }, "dashboard_read");
   if (workspaceIds.length === 0) return [];
 
-  return prisma.workspace.findMany({
+  const workspaces = await prisma.workspace.findMany({
     where: { organizationId, id: { in: [...workspaceIds] } },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
+  return keepWorkspacesWithReadableDashboards(userId, workspaces);
+};
+
+/**
+ * Of a viewer's granted workspaces, those where a dashboard opens for them (ADR-0060), by a dashboard
+ * lookup: a team dashboard limit can leave a granted workspace with nothing to open, and the viewer is
+ * not sent there. A workspace with no dashboards at all stays, so a new grant shows its empty list.
+ */
+const keepWorkspacesWithReadableDashboards = async <TWorkspace extends { id: string }>(
+  userId: string,
+  workspaces: TWorkspace[]
+): Promise<TWorkspace[]> => {
+  if (workspaces.length === 0) return workspaces;
+  const workspaceIds = workspaces.map(({ id }) => id);
+  // Two facts per workspace, grouped in the database: does it hold any dashboard, and a readable one.
+  const workspacesWith = async (dashboardIds?: ReadonlyArray<string>): Promise<Set<string>> => {
+    const rows = await prisma.dashboard.groupBy({
+      by: ["workspaceId"],
+      where: {
+        workspaceId: { in: workspaceIds },
+        ...(dashboardIds ? { id: { in: [...dashboardIds] } } : {}),
+      },
+    });
+    return new Set(rows.map(({ workspaceId }) => workspaceId));
+  };
+  const [readableIds, withDashboards] = await Promise.all([
+    lookupReadableDashboardIds({ type: "user", id: userId }),
+    workspacesWith(),
+  ]);
+  if (withDashboards.size === 0) return workspaces;
+  const withReadable = readableIds.length > 0 ? await workspacesWith(readableIds) : new Set<string>();
+  return workspaces.filter(({ id }) => !withDashboards.has(id) || withReadable.has(id));
 };
 
 /**
@@ -127,9 +159,10 @@ export const listDashboardViewerWorkspacesForUser = async (
   const organizationIds = entitled.filter((id): id is string => id !== null);
   if (organizationIds.length === 0 || workspaceIds.length === 0) return [];
 
-  return prisma.workspace.findMany({
+  const workspaces = await prisma.workspace.findMany({
     where: { organizationId: { in: organizationIds }, id: { in: [...workspaceIds] } },
     select: { id: true, name: true, organizationId: true },
     orderBy: [{ organizationId: "asc" }, { name: "asc" }],
   });
+  return keepWorkspacesWithReadableDashboards(userId, workspaces);
 };

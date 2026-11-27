@@ -50,6 +50,7 @@ export const ListTable = <TData,>({
   testId,
   minWidth,
   pinnedColumnIds = [],
+  variant = "default",
 }: Readonly<{
   table: TTable<TData>;
   isLoading: boolean;
@@ -73,7 +74,14 @@ export const ListTable = <TData,>({
    * date). Pinning switches the table to pixel widths, so each pinned column's offset is exact.
    */
   pinnedColumnIds?: readonly string[];
+  /**
+   * `embedded` is for a table that sits inside a card (a settings card): the card is the frame, so the
+   * table drops its own border and radius and shades its header row instead, rather than drawing a card
+   * inside the card.
+   */
+  variant?: "default" | "embedded";
 }>) => {
+  const isEmbedded = variant === "embedded";
   const { t } = useTranslation();
   const visibleColumns = table.getVisibleLeafColumns();
   const columnCount = visibleColumns.length;
@@ -107,7 +115,7 @@ export const ListTable = <TData,>({
   const pinClass = (columnId: string, isHeader = false) =>
     pinOffsets.has(columnId) &&
     cn(
-      "bg-white",
+      isHeader && isEmbedded ? "bg-slate-50" : "bg-white",
       !isHeader && "group-hover:bg-slate-50 group-data-[state=selected]:bg-slate-50",
       columnId === lastPinnedId && "border-r border-slate-200"
     );
@@ -220,11 +228,18 @@ export const ListTable = <TData,>({
 
   return (
     <div className="space-y-4" data-testid={testId}>
-      <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div
+        className={cn(
+          "w-full overflow-x-auto bg-white",
+          isEmbedded ? "border-t border-slate-200" : "rounded-xl border border-slate-200"
+        )}>
         <Table className="w-full table-fixed" style={tableStyle()}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-white">
+              <TableRow
+                key={headerGroup.id}
+                // TableRow paints bg-white, which would hide the shaded header until hovered.
+                className={isEmbedded ? "bg-slate-50 hover:bg-slate-50" : "hover:bg-white"}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}

@@ -29,6 +29,7 @@ interface FeedbackDirectoryTableProps {
   orgWorkspaces: TOrganizationWorkspace[];
   workspaceAccessByWorkspace: TWorkspaceFeedbackDirectoryAccess[];
   membershipRole: TOrganizationRole;
+  isDashboardViewerAccessEnabled: boolean;
 }
 
 /**
@@ -130,6 +131,7 @@ export const FeedbackDirectoryTable = ({
   orgWorkspaces,
   workspaceAccessByWorkspace,
   membershipRole,
+  isDashboardViewerAccessEnabled,
 }: Readonly<FeedbackDirectoryTableProps>) => {
   const { t } = useTranslation();
   const [openCreateModal, setOpenCreateModal] = useState(false);
@@ -261,6 +263,7 @@ export const FeedbackDirectoryTable = ({
           orgWorkspaces={orgWorkspaces}
           workspaceAccessByWorkspace={workspaceAccessByWorkspace}
           membershipRole={membershipRole}
+          isDashboardViewerAccessEnabled={isDashboardViewerAccessEnabled}
         />
       )}
     </>

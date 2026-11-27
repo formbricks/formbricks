@@ -198,7 +198,7 @@ charts out on a 12-column grid. The same chart can sit on several dashboards.
   `dashboardId` to place the copy in the same call) and point that dashboard's widget at the copy.
 - **Deleting.** A chart still on a dashboard is refused with `409` `chart_in_use`, listing the dashboards in
   `details.dashboards`; remove it from them first. Deleting a dashboard keeps its charts.
-- **The grid.** Widgets use whole units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 8`. Gaps are fine; overlaps are a
+- **The grid.** Widgets use whole units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 32`. Gaps are fine; overlaps are a
   `422` naming the other widget. Leave out the layout and the chart takes the first open slot.
 - **Saving a whole dashboard.** `PUT /api/v3/dashboards/{dashboardId}` replaces the name and every widget's place
   at once, and removes widgets you leave out. Send the `updatedAt` you read: if someone changed the dashboard

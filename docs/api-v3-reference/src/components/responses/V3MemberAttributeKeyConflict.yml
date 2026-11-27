@@ -1,0 +1,19 @@
+description: >-
+  Conflict. `code: conflict` when the key changed since the `expectedUpdatedAt` sent
+  (`details.currentUpdatedAt` holds the current one) or, on create, when the organization already has a
+  key with this `key`. `code: member_attribute_key_in_use` when Dashboard Viewer access of a Feedback
+  Dataset matches on the key, so it cannot be deleted: `details.datasets` names up to 20 of them
+  (`id`, `name`) and `details.datasetCount` says how many there are.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

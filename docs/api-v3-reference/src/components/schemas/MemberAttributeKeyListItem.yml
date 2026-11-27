@@ -1,0 +1,43 @@
+type: object
+additionalProperties: false
+description: A Member attribute key with how widely members use it.
+required:
+  - id
+  - key
+  - label
+  - description
+  - createdAt
+  - updatedAt
+  - memberCount
+  - distinctValueCount
+properties:
+  id:
+    type: string
+    format: cuid2
+  key:
+    type: string
+    pattern: "^[a-z][a-z0-9_]*$"
+    maxLength: 64
+  label:
+    type: string
+    minLength: 1
+    maxLength: 100
+  description:
+    type:
+      - string
+      - "null"
+    maxLength: 500
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  memberCount:
+    type: integer
+    minimum: 0
+    description: Members holding at least one value for the key. Pending invites are not counted.
+  distinctValueCount:
+    type: integer
+    minimum: 0
+    description: Distinct values members hold for the key, ignoring case and surrounding spaces.

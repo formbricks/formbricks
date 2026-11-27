@@ -1,0 +1,7 @@
+in: path
+name: datasetId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Feedback Dataset identifier.

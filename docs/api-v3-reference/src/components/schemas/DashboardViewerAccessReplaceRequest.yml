@@ -1,0 +1,43 @@
+type: object
+required:
+  - join
+  - conditions
+  - expectedUpdatedAt
+properties:
+  join:
+    type: string
+    enum:
+      - all
+      - any
+  conditions:
+    type: array
+    maxItems: 10
+    description: The whole list, in order. Empty lets Dashboard Viewers see every record.
+    items:
+      type: object
+      required:
+        - field
+        - attributeKeyId
+      properties:
+        field:
+          type: string
+          minLength: 1
+          maxLength: 300
+          description: >-
+            One of `FeedbackRecords.sourceName`, `FeedbackRecords.sourceType`,
+            `FeedbackRecords.metadataCountry`, `FeedbackRecords.metadataSource`,
+            `FeedbackRecords.metadataDevice`, `FeedbackRecords.metadataBrowser`,
+            `FeedbackRecords.metadataOs`, `FeedbackRecords.metadataAction`, `FeedbackRecords.language`, or
+            `ed:<key>` for an embedded-data key. Answers and measures are never conditions.
+        attributeKeyId:
+          type:
+            - string
+            - "null"
+          format: cuid2
+          description: A Member attribute of the dataset's organization; `null` for Email.
+      additionalProperties: false
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: The `updatedAt` from your read; **409** when the dataset changed since.
+additionalProperties: false

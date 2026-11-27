@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { getV3Chart } from "@/app/api/v3/charts/lib/operations";
+import { createTestDashboard, createTestWidget } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -70,7 +71,7 @@ beforeAll(async () => {
   ids.solo = (await chart("Solo chart")).id;
 
   const dashboard = (name: string, createdAt: string) =>
-    prisma.dashboard.create({
+    createTestDashboard({
       data: {
         name,
         workspaceId: fixture.workspaceId,
@@ -83,16 +84,16 @@ beforeAll(async () => {
   ids.empty = (await dashboard("Scratch", "2026-03-01T00:00:00Z")).id;
 
   ids.widgetSolo = (
-    await prisma.dashboardWidget.create({
+    await createTestWidget({
       data: { dashboardId: ids.newer, chartId: ids.solo, layout: { x: 6, y: 0, w: 6, h: 4 }, order: 1 },
     })
   ).id;
   ids.widgetShared = (
-    await prisma.dashboardWidget.create({
+    await createTestWidget({
       data: { dashboardId: ids.newer, chartId: ids.shared, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 },
     })
   ).id;
-  await prisma.dashboardWidget.create({
+  await createTestWidget({
     data: { dashboardId: ids.older, chartId: ids.shared, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 },
   });
 }, 120_000);
@@ -254,7 +255,7 @@ describe("POST /api/v3/dashboards", () => {
 
 describe("PATCH /api/v3/dashboards/{dashboardId}", () => {
   test("renames and moves updatedAt; a taken name is 409 and a viewer is refused", async () => {
-    const { id } = await prisma.dashboard.create({
+    const { id } = await createTestDashboard({
       data: {
         name: "To rename",
         workspaceId: fixture.workspaceId,
@@ -332,7 +333,7 @@ describe("POST /api/v3/dashboards/{dashboardId}/duplicate", () => {
   });
 
   test("refuses a viewer and a dashboard in another workspace", async () => {
-    const foreign = await prisma.dashboard.create({
+    const foreign = await createTestDashboard({
       data: { name: "Foreign", workspaceId: fixture.foreignWorkspaceId },
     });
     for (const [dashboardId, authentication] of [
@@ -359,7 +360,7 @@ describe("DELETE /api/v3/dashboards/{dashboardId}", () => {
         config: {},
       },
     });
-    const doomed = await prisma.dashboard.create({
+    const doomed = await createTestDashboard({
       data: {
         name: "Doomed",
         workspaceId: fixture.workspaceId,

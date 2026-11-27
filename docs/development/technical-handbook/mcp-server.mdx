@@ -127,7 +127,7 @@ Supported scopes:
 | `responses:read`        | `list_responses`, `count_responses`, `get_response`, `list_tags`                                                                                                                                                                                                                                                                                                                                                      |
 | `responses:write`       | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`, `merge_tags`                                                                                                                                                                                                                                                           |
 | `dashboards:read`       | `list_dashboards`, `get_dashboard`, `list_charts`, `get_chart`; with `feedbackRecords:read`, `list_chart_fields`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
-| `dashboards:write`      | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `remove_chart_from_dashboard`; with `dashboards:read` (Charts: Read, since their answers carry each widget's chart, as `get_dashboard` does), `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`                                                         |
+| `dashboards:write`      | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `remove_chart_from_dashboard`, `add_dashboard_block`, `create_dashboard_page`, `update_dashboard_page`, `delete_dashboard_page`; with `dashboards:read` (Charts: Read, since their answers carry each widget's chart, as `get_dashboard` does), `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`                                                         |
 | `audience:read`         | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` (read-only family: there is no `audience:write`)                                                                                                                                                                                                                                              |
 | `openid`                | OpenID Connect subject interoperability                                                                                                                                                                                                                                                                                                                                                                               |
 | `profile`               | User profile claims                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -403,7 +403,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `list_dashboard_filter_fields`                                                                                                                                                                              | `read`; a feedback dataset the caller cannot read through the dashboard is left out of the list, and a Dashboard viewer gets only the keys a chart on the dashboard groups by |
 | `list_dashboard_filter_values`                                                                                                                                                                              | `read`, and read access to each feedback dataset its charts read                                                                                                              |
 | `create_chart`, `duplicate_chart`                                                                                                                                                                           | `write` or `manage`, and write access to the feedback dataset                                                                                                                 |
-| `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage`                                                                                                                                                           |
+| `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard`, `add_dashboard_block`, `create_dashboard_page`, `update_dashboard_page`, `delete_dashboard_page` | `write` or `manage`                                                                                                                                                           |
 | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes`                                                                                     | `read`; all but `list_action_classes` also need the Contacts entitlement                                                                                                      |
 
 Synthesized MCP scopes for an API key: every `:read` scope always (`surveys`, `workflows`,
@@ -1900,10 +1900,12 @@ API key has never had tag access, and the tools refuse one with a `403` rather t
 
 ### Chart and dashboard tools
 
-Twenty-one tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
+Twenty-five tools over the v3 chart and dashboard operations (`modules/mcp/tools/dashboards.ts`), one per
 operation, minus deletion: there is no tool that deletes a chart or a dashboard, so a vague prompt such as
-"clean up old charts" cannot remove anything permanently. There is no AI generation tool either — an agent
-writes the chart query itself.
+"clean up old charts" cannot remove a chart or a dashboard. Widgets are another matter:
+`delete_dashboard_page` permanently removes a page with its widgets, and `remove_chart_from_dashboard` removes
+one widget. The charts stay, but a removed text or image block's content is gone. There is no AI generation
+tool either — an agent writes the chart query itself.
 
 - **Write against the catalog.** `list_chart_fields` returns every field a chart query may use; the query
   validator refuses anything else with `invalid_params` naming each problem. `preview_chart` runs an unsaved
@@ -1935,6 +1937,15 @@ writes the chart query itself.
   agent uses as a filter's `field` in `set_dashboard_filters`, `get_chart_data` and `list_dashboard_filter_values`.
   A Dashboard viewer cannot call `list_chart_fields`, so this is how its agent finds them. It is gated like
   `list_dashboard_filter_values`, and spends from the default v3 budget.
+- **Pages and blocks.** `get_dashboard` returns the dashboard's `pages` (with each page's `teamIds`) and each
+  widget's `pageId`, `kind` and `content`. `create_dashboard_page`, `update_dashboard_page` (rename only) and
+  `delete_dashboard_page` are `POST`, `PATCH` and `DELETE /api/v3/dashboards/{dashboardId}/pages[/{pageId}]`;
+  `add_dashboard_block` is `POST /api/v3/dashboards/{dashboardId}/widgets` with a `kind` of `text`, `image` or
+  `separator`. An agent adds an empty image block and sets how it shows; the file itself is uploaded in the
+  app. `add_chart_to_dashboard` and `duplicate_chart` take a `pageId` (the first page without one), and
+  `update_widget` moves a widget to another page and edits a block's text or image settings. No tool takes
+  `teamIds`: which teams see a page is an Owner's or Manager's decision, made in the app or over HTTP
+  (ENG-7481), so MCP can read a page's limit but never change it.
 - **Shared charts.** `update_chart`'s description says an edit shows on every dashboard holding the chart, and
   points at `duplicate_chart` + `update_widget` for a per-dashboard change. `duplicate_dashboard` says the copy
   shares its charts. `remove_chart_from_dashboard` says the chart is kept.
@@ -1975,6 +1986,41 @@ and the Contacts entitlement (all but action classes), exactly as over REST.
   `isNotSet` take none, so a filter is never dropped silently.
 - **Untrusted text.** Contact attribute values are written by end users and SDK calls. The descriptions tell the
   agent to treat them as data; nothing on our side acts on them.
+
+### Member attribute tools
+
+Two read-only, idempotent tools over the v3 Member attribute operations (`modules/mcp/tools/member-attributes.ts`),
+with no write tools: an agent can answer "what is Anna's Country?" but cannot change anyone's attributes or
+access (ENG-7479). Both declare Member attributes: Read, in the Organization category, capped by the read-only
+`organization:read` family (migrations 20261123130000 and 20261123130001).
+
+| Tool                         | REST operation                                                  | Permission              |
+| ---------------------------- | --------------------------------------------------------------- | ----------------------- |
+| `list_member_attribute_keys` | `GET /api/v3/organizations/{organizationId}/member-attribute-keys` | Member attributes: Read |
+| `list_member_attributes`     | `GET /api/v3/organizations/{organizationId}/member-attributes`     | Member attributes: Read |
+
+- **Owners and Managers only.** The operations ask `organization.manage` of a user (an OAuth token acts as its
+  user) and Access Control read of an API key, then the Access Control + Dashboards plan gate.
+- **Smaller pages.** `list_member_attributes` defaults to 20 and caps at 50 (the API allows 250); `search` finds
+  one person by name or email.
+- **Untrusted text.** Names, labels and values are typed by people or imported from a CSV. The descriptions
+  tell the agent to treat them as data; `member-attributes.test.ts` carries an injection fixture.
+
+### Access settings tools
+
+Two read-only, idempotent tools over the dashboard access settings (`modules/mcp/tools/access-settings.ts`),
+with no write tools: an agent can explain who sees which dashboards and records, but cannot change access
+(ENG-7479). Both declare Access settings: Read, in the Organization category, capped by `organization:read`.
+Same access as the Member attribute tools: Owners and Managers, or an API key with Access Control read, on a
+plan with Access Control and Dashboards.
+
+| Tool                          | REST operation                                                    | Permission            |
+| ----------------------------- | ----------------------------------------------------------------- | --------------------- |
+| `get_team_dashboard_limits`   | `GET /api/v3/teams/{teamId}/dashboard-limits`                     | Access settings: Read |
+| `get_dashboard_viewer_access` | `GET /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access` | Access settings: Read |
+
+- **Untrusted text.** Dashboard, workspace and attribute names and embedded-data keys are typed by people. The
+  descriptions tell the agent to treat them as data; `access-settings.test.ts` carries an injection fixture.
 
 ### list_feedback_datasets
 

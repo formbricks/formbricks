@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { EMPTY_PAGES_WALKED_PER_BATCH } from "../lib/empty-page-walk";
 import { useDashboards } from "./use-dashboards";
 
 const WORKSPACE_ID = "clws000000000000000000001";
@@ -63,6 +64,59 @@ describe("useDashboards", () => {
     expect(firstUrl.get("filter[name][contains]")).toBe("match");
     expect(secondUrl.get("cursor")).toBe("cursor-2");
     expect(secondUrl.get("filter[name][contains]")).toBe("match");
+  });
+
+  test("walks past empty pages that carry a cursor until it reaches a readable dashboard", async () => {
+    // A Dashboard Viewer's first scans hit only dashboards they cannot open: empty pages, each with a cursor.
+    fetchMock
+      .mockResolvedValueOnce(page([], "cursor-2"))
+      .mockResolvedValueOnce(page([], "cursor-3"))
+      .mockResolvedValueOnce(page(["d9"], null));
+
+    const { result } = render();
+
+    await waitFor(() => expect(result.current.dashboards.map((dashboard) => dashboard.id)).toEqual(["d9"]));
+    expect(result.current.hasNextPage).toBe(false);
+    expect(result.current.isWalkingEmptyPages).toBe(false);
+    const cursors = fetchMock.mock.calls.map(([url]) => new URL(url, "http://x").searchParams.get("cursor"));
+    expect(cursors).toEqual([null, "cursor-2", "cursor-3"]);
+  });
+
+  test("stops after a batch of empty pages and walks one more batch on Load more", async () => {
+    let call = 0;
+    fetchMock.mockImplementation(async () => {
+      call += 1;
+      return page([], `cursor-${String(call + 1)}`);
+    });
+
+    const { result } = render();
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(EMPTY_PAGES_WALKED_PER_BATCH));
+    await waitFor(() => expect(result.current.isFetching).toBe(false));
+    // The batch is used up: the list waits, still offering the next page.
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(EMPTY_PAGES_WALKED_PER_BATCH);
+    expect(result.current.hasNextPage).toBe(true);
+    expect(result.current.isWalkingEmptyPages).toBe(false);
+
+    await act(() => result.current.fetchNextPage());
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(EMPTY_PAGES_WALKED_PER_BATCH * 2));
+    await waitFor(() => expect(result.current.isFetching).toBe(false));
+    expect(fetchMock).toHaveBeenCalledTimes(EMPTY_PAGES_WALKED_PER_BATCH * 2);
+  });
+
+  test("does not walk past a page that has rows", async () => {
+    fetchMock.mockResolvedValueOnce(page(["d1"], "cursor-2"));
+
+    const { result } = render();
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   test("fetches nothing while disabled", async () => {

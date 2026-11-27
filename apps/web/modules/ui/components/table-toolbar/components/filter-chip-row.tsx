@@ -190,7 +190,10 @@ export const FilterChipRow = ({
   const propertyById = new Map(properties.map((property) => [property.id, property]));
 
   const lockedFilters = locked?.filters ?? [];
-  if (filters.length === 0 && lockedFilters.length === 0 && !draftProperty) return null;
+  const lockedForYou = locked?.forYou ?? [];
+  if (filters.length === 0 && lockedFilters.length === 0 && lockedForYou.length === 0 && !draftProperty) {
+    return null;
+  }
 
   return (
     <div
@@ -199,6 +202,18 @@ export const FilterChipRow = ({
       <ul
         className="flex min-w-0 flex-wrap items-center gap-1.5"
         aria-label={t("common.table_toolbar.active_filters")}>
+        {lockedForYou.map((filter, index) => (
+          <li key={`for-you-${filter.label}-${index}`} className="max-w-full">
+            <FilterChip
+              label={filter.label}
+              value={filter.value}
+              accessibleName={`${filter.label} ${filter.value}`}
+              lockedHint={filter.hint}
+              lockedFor="you"
+              disabled={disabled}
+            />
+          </li>
+        ))}
         {lockedFilters.map((filter, index) => {
           // A locked filter can be on a property this person cannot filter by themselves: named by its own
           // label then, and read as text.
@@ -220,7 +235,7 @@ export const FilterChipRow = ({
             </li>
           );
         })}
-        {lockedFilters.length > 0 && (filters.length > 0 || draftProperty) && (
+        {lockedFilters.length + lockedForYou.length > 0 && (filters.length > 0 || draftProperty) && (
           <li aria-hidden="true" className="mx-0.5 h-5 w-px bg-slate-300" />
         )}
         {filters.map((filter, index) => {

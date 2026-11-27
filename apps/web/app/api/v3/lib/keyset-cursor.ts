@@ -45,7 +45,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
  * implementations are missing.
  */
 
-const CURSOR_VERSION = 1 as const;
+export const CURSOR_VERSION = 1 as const;
 
 /** Bounds the token before it reaches `JSON.parse`. A real cursor is ~150 bytes. */
 export const MAX_CURSOR_LENGTH = 512;

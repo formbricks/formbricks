@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2Icon, FoldersIcon, Loader2, SettingsIcon } from "lucide-react";
+import { Building2Icon, FoldersIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuSeparator,
 } from "@/modules/ui/components/dropdown-menu";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 type SwitcherType = "organization" | "workspace";
 
@@ -82,11 +83,7 @@ export const SwitcherDropdownBody = ({
         <Icon className="mr-2 inline size-4" strokeWidth={1.5} />
         {headerLabel}
       </div>
-      {isLoading && (
-        <div className="flex items-center justify-center py-2">
-          <Loader2 className="size-4 animate-spin" />
-        </div>
-      )}
+      {isLoading && <LoadingSpinner className="size-4" />}
       {!isLoading && error && (
         <div className="px-2 py-4">
           <p className="mb-2 text-sm text-red-600">{error}</p>

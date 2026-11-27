@@ -20,6 +20,10 @@ import { createMembership } from "@/lib/membership/service";
 import { getUser, updateUser } from "@/lib/user/service";
 import { getInvite } from "@/modules/auth/invite/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
+import {
+  copyInviteAttributeValuesToMembership,
+  readInviteAttributeValues,
+} from "@/modules/ee/member-attributes/lib/service";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import type { TInviteAcceptanceBody } from "../schemas";
 import { serializeInviteAcceptance } from "../serializers";
@@ -41,13 +45,18 @@ type TInvite = NonNullable<Awaited<ReturnType<typeof getInvite>>>;
  * The acceptance's writes, all or nothing. The invite is spent first, conditioned on still existing and not
  * having expired, so two acceptances of one invite cannot both get past it: the second waits on the first's
  * row lock and then finds nothing to delete. An existing membership refuses the whole acceptance, so an
- * invite never overwrites a role someone already holds (ENG-7097).
+ * invite never overwrites a role someone already holds (ENG-7097). The invite's Member attribute values are
+ * read before it is spent (spending it deletes them) and copied onto the new membership (ENG-7468).
  */
 const acceptInviteInTransaction = (
   invite: TInvite,
   userId: string
 ): Promise<{ membership: TMembership; teamIds: string[] }> =>
   prisma.$transaction(async (tx) => {
+    const attributeValues = await readInviteAttributeValues(
+      { inviteId: invite.id, organizationId: invite.organizationId },
+      tx
+    );
     const spent = await tx.invite.deleteMany({
       where: { id: invite.id, organizationId: invite.organizationId, expiresAt: { gt: new Date() } },
     });
@@ -73,6 +82,13 @@ const acceptInviteInTransaction = (
             { projection: "deferred", transaction: tx }
           )
         : [];
+    await copyInviteAttributeValuesToMembership({
+      inviteId: invite.id,
+      organizationId: invite.organizationId,
+      userId,
+      values: attributeValues,
+      transaction: tx,
+    });
     return { membership, teamIds };
   });
 

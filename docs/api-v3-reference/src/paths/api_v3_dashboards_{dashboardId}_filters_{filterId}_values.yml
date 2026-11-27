@@ -30,8 +30,10 @@ get:
 
     Needs read access to the dashboard's workspace and to every Feedback Dataset its charts read.
     Every request counts against the default v3 budget, cached or not. Lists are cached
-    for 60 seconds per dashboard version, chart versions, filter, picks, date range and search,
-    shared by everyone who may read the dashboard; an uncached list also counts one unit of the
+    for 60 seconds per dashboard version, filter definitions, picks, date range and search, the
+    charts the reader's list draws on (for a Dashboard Viewer, only those on pages they can open) with
+    their versions, and each Feedback Dataset's Dashboard Viewer access claim for the reader. Readers
+    share a cached list only when all of these match; an uncached list also counts one unit of the
     chart-query budget (600 per minute, 20 at once, per user or API key) per Cube query it runs.
   tags:
     - V3 Dashboards
@@ -43,6 +45,7 @@ get:
     - $ref: ../components/parameters/DashboardDateToQuery.yml
     - $ref: ../components/parameters/DashboardFilterRulesQuery.yml
     - $ref: ../components/parameters/DashboardFilterPicksQuery.yml
+    - $ref: ../components/parameters/ViewAsQuery.yml
     - in: query
       name: search
       schema:

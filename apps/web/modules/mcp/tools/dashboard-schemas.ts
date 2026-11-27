@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  MAX_TEXT_BLOCK_DESCRIPTION_LENGTH,
+  MAX_TEXT_BLOCK_HEADLINE_LENGTH,
+  ZDashboardImageContent,
+} from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { refuseLayoutWithoutDashboard } from "@/app/api/v3/charts/lib/duplicate-schemas";
 import {
@@ -13,12 +18,14 @@ import {
   ZV3DashboardFilterFields,
   ZV3DashboardFilterValues,
   ZV3DashboardListItem,
+  ZV3DashboardPage,
   ZV3DashboardResource,
   ZV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/resources";
 import {
   MAX_WIDGETS_PER_WRITE,
   ZV3DashboardName,
+  ZV3DashboardPageName,
   ZV3WidgetLayoutInput,
   refuseEmptyWidgetUpdate,
   refuseInvalidDashboardFilters,
@@ -34,6 +41,7 @@ import {
   ZLockedDashboardFilter,
   lockedValuesProblem,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
+import { LAYOUT_BLOCK_KINDS } from "@/modules/ee/analysis/dashboards/lib/widget-blocks";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
 
@@ -327,10 +335,17 @@ const ZMcpWidgetLayout = ZV3WidgetLayoutInput.describe(
   "Position and size on the 12-column grid in whole units: x 0-11, w 1-12 with x + w <= 12, y 0-1000, h 1-8. Widgets may leave gaps but not overlap; get_dashboard shows where the others are."
 );
 
+const ZMcpPageId = ZId.describe(
+  "A page of the dashboard, from get_dashboard's pages. Leave it out for the first page."
+);
+
 export const ZMcpAddChartToDashboardInput = z
   .object({
     dashboardId: ZId.describe("The dashboard to add the chart to."),
-    chartId: ZId.describe("A chart in the same workspace. A chart appears at most once per dashboard."),
+    chartId: ZId.describe(
+      "A chart in the same workspace. A chart appears at most once per page, but can sit on several pages."
+    ),
+    pageId: ZMcpPageId.optional(),
     layout: ZMcpWidgetLayout.optional().describe(
       "Where to put it. Leave it out to place the chart in the first open slot at its type's default size."
     ),
@@ -338,18 +353,109 @@ export const ZMcpAddChartToDashboardInput = z
   .strict();
 export type TMcpAddChartToDashboardInput = z.infer<typeof ZMcpAddChartToDashboardInput>;
 
+/**
+ * An image block's settings as an agent sets them. The file itself is uploaded in the app; an agent can
+ * add an empty image block or change how an uploaded image shows, never point it at a file.
+ */
+const ZMcpImageBlockSettings = ZDashboardImageContent.omit({ fileUrl: true })
+  .partial()
+  .strict()
+  .describe("fit (fit | fill), position (left | center | right) and alt text.");
+
+/** A text block's content: plain text, a headline, a description, or both. */
+const ZMcpTextBlockContent = z
+  .object({
+    headline: z.string().max(MAX_TEXT_BLOCK_HEADLINE_LENGTH).describe("Shown as a heading. Plain text."),
+    description: z
+      .string()
+      .max(MAX_TEXT_BLOCK_DESCRIPTION_LENGTH)
+      .describe("Shown below, line breaks kept. Plain text, no links."),
+  })
+  .strict();
+
+export const ZMcpAddDashboardBlockInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard to add the block to."),
+    pageId: ZMcpPageId.optional(),
+    kind: z
+      .enum(LAYOUT_BLOCK_KINDS)
+      .describe(
+        "text: a headline and description; separator: a horizontal line; image: an empty image block."
+      ),
+    text: ZMcpTextBlockContent.optional().describe(
+      "For kind text: its content; headline or description non-empty."
+    ),
+    image: ZMcpImageBlockSettings.optional().describe("For kind image: how the image shows once uploaded."),
+    layout: ZMcpWidgetLayout.optional().describe(
+      "Where to put it. Leave it out for the first open slot: text 9 columns wide, image 3, separator the full row."
+    ),
+  })
+  .strict()
+  .superRefine((input, ctx) => {
+    if (input.kind === "text" && !input.text) {
+      ctx.addIssue({ code: "custom", message: "A text block needs text.", path: ["text"] });
+    }
+    if (input.kind !== "text" && input.text) {
+      ctx.addIssue({ code: "custom", message: "Only a text block takes text.", path: ["text"] });
+    }
+    if (input.kind !== "image" && input.image) {
+      ctx.addIssue({ code: "custom", message: "Only an image block takes image.", path: ["image"] });
+    }
+  });
+export type TMcpAddDashboardBlockInput = z.infer<typeof ZMcpAddDashboardBlockInput>;
+
 export const ZMcpUpdateWidgetInput = z
   .object({
     dashboardId: ZId.describe("The dashboard the widget is on."),
     widgetId: ZId.describe("The widget to change, from get_dashboard."),
     layout: ZMcpWidgetLayout.optional(),
     chartId: ZId.optional().describe(
-      "Show another chart in this widget's place, e.g. a copy made with duplicate_chart. It must not already be on the dashboard."
+      "Chart widgets only: show another chart in this widget's place, e.g. a copy made with duplicate_chart. It must not already be on the widget's page."
     ),
+    pageId: ZId.optional().describe(
+      "Move the widget to another page of the dashboard; without a layout it takes the first open slot there."
+    ),
+    text: ZMcpTextBlockContent.partial()
+      .strict()
+      .optional()
+      .describe("Text blocks only: the parts of the text to replace."),
+    image: ZMcpImageBlockSettings.optional().describe("Image blocks only: the settings to change."),
   })
   .strict()
-  .superRefine(refuseEmptyWidgetUpdate);
+  .superRefine((input, ctx) => {
+    if (input.text && input.image) {
+      ctx.addIssue({ code: "custom", message: "Send text or image, not both.", path: ["image"] });
+    }
+    refuseEmptyWidgetUpdate({ ...input, content: input.text ?? input.image }, ctx);
+  });
 export type TMcpUpdateWidgetInput = z.infer<typeof ZMcpUpdateWidgetInput>;
+
+export const ZMcpCreateDashboardPageInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard to add the page to."),
+    name: ZV3DashboardPageName.describe("The page's tab name."),
+  })
+  .strict();
+export type TMcpCreateDashboardPageInput = z.infer<typeof ZMcpCreateDashboardPageInput>;
+
+export const ZMcpUpdateDashboardPageInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard the page is on."),
+    pageId: ZId.describe("The page to rename, from get_dashboard."),
+    name: ZV3DashboardPageName.describe("The new tab name."),
+  })
+  .strict();
+export type TMcpUpdateDashboardPageInput = z.infer<typeof ZMcpUpdateDashboardPageInput>;
+
+export const ZMcpDeleteDashboardPageInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard the page is on."),
+    pageId: ZId.describe("The page to delete, from get_dashboard. Not the dashboard's only page."),
+  })
+  .strict();
+export type TMcpDeleteDashboardPageInput = z.infer<typeof ZMcpDeleteDashboardPageInput>;
+
+export const ZMcpDashboardPageOutput = mcpToolOutput(ZV3DashboardPage);
 
 export const ZMcpRemoveChartFromDashboardInput = z
   .object({
@@ -445,6 +551,9 @@ export const ZMcpDuplicateChartInput = z
     ),
     dashboardId: ZId.optional().describe(
       "Also put the copy on this dashboard, in the same step: if that fails, no copy is left behind."
+    ),
+    pageId: ZId.optional().describe(
+      "The page of dashboardId to put the copy on; its first page without one."
     ),
     layout: ZMcpWidgetLayout.optional().describe(
       "Where to put the copy on dashboardId. Leave it out for the first open slot."

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { formatDate, timeSinceDate } from "@/lib/time";
 import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
 import { LoadMoreOnScroll } from "@/modules/ee/analysis/components/load-more-on-scroll";
+import { Button } from "@/modules/ui/components/button";
 import { useDashboards } from "../hooks/use-dashboards";
 import { CreateDashboardButton } from "./create-dashboard-button";
 import { DashboardDropdownMenu } from "./dashboard-dropdown-menu";
@@ -21,8 +22,17 @@ interface DashboardsTableProps {
 
 export const DashboardsTable = ({ workspaceId, isReadOnly }: Readonly<DashboardsTableProps>) => {
   const { t } = useTranslation();
-  const { dashboards, isPending, isError, error, refetch, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useDashboards({ workspaceId, limit: DASHBOARDS_PAGE_SIZE });
+  const {
+    dashboards,
+    isPending,
+    isError,
+    error,
+    refetch,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    isWalkingEmptyPages,
+  } = useDashboards({ workspaceId, limit: DASHBOARDS_PAGE_SIZE });
 
   const columnHeaders = [
     t("common.title"),
@@ -32,7 +42,19 @@ export const DashboardsTable = ({ workspaceId, isReadOnly }: Readonly<Dashboards
     t("common.updated"),
   ];
 
-  if (isPending) return <DashboardsListSkeleton columnHeaders={columnHeaders} />;
+  // A Dashboard Viewer's first pages can come back empty while readable dashboards lie further on: keep
+  // the skeleton up while the list walks past them, rather than flashing "No dashboards yet".
+  const isStillLooking =
+    dashboards.length === 0 && hasNextPage && (isWalkingEmptyPages || isFetchingNextPage);
+  if (isPending || isStillLooking) return <DashboardsListSkeleton columnHeaders={columnHeaders} />;
+
+  // The walk past empty pages stopped after a batch with more dashboards left to check: say so, and let the
+  // reader go on. Otherwise someone who can't create a dashboard (a Dashboard viewer, a read-only member) is
+  // told who can instead.
+  let emptyDescription = t("workspace.analysis.dashboards.no_dashboards_found_description");
+  if (hasNextPage) emptyDescription = t("workspace.analysis.dashboards.more_dashboards_to_check");
+  else if (isReadOnly)
+    emptyDescription = t("workspace.analysis.dashboards.no_dashboards_read_only_description");
   if (isError) return <ListLoadError error={error} onRetry={refetch} />;
 
   return (
@@ -52,18 +74,16 @@ export const DashboardsTable = ({ workspaceId, isReadOnly }: Readonly<Dashboards
             <p className="text-sm font-medium text-slate-900">
               {t("workspace.analysis.dashboards.no_dashboards_found")}
             </p>
-            <p className="text-sm text-slate-500">
-              {
-                // Someone who can't create a dashboard (a Dashboard viewer, a read-only member) is told
-                // who can instead.
-                isReadOnly
-                  ? t("workspace.analysis.dashboards.no_dashboards_read_only_description")
-                  : t("workspace.analysis.dashboards.no_dashboards_found_description")
-              }
-            </p>
+            <p className="text-sm text-slate-500">{emptyDescription}</p>
           </div>
-          {!isReadOnly && (
-            <CreateDashboardButton workspaceId={workspaceId} buttonProps={{ variant: "secondary" }} />
+          {hasNextPage ? (
+            <Button variant="secondary" size="sm" onClick={() => fetchNextPage()}>
+              {t("common.load_more")}
+            </Button>
+          ) : (
+            !isReadOnly && (
+              <CreateDashboardButton workspaceId={workspaceId} buttonProps={{ variant: "secondary" }} />
+            )
           )}
         </div>
       ) : (

@@ -4,6 +4,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { getFeedbackDirectoryAssignmentAuthorizationScope } from "@/lib/authorization/resolvers";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
+import { uniqueDashboards } from "./dashboard-refs";
 
 /**
  * Persistence for the v3 chart operations. Every read is scoped by the caller's authorized workspace or
@@ -143,7 +144,7 @@ export const deleteChartRow = (chartId: string): Promise<TChartDeleteResult> =>
         select: { dashboard: { select: { id: true, name: true } } },
       });
       if (widgets.length > 0) {
-        return { kind: "inUse", dashboards: widgets.map((widget) => widget.dashboard) };
+        return { kind: "inUse", dashboards: uniqueDashboards(widgets.map((widget) => widget.dashboard)) };
       }
 
       await tx.chart.delete({ where: { id: chartId } });

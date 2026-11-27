@@ -2,6 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { cubeFake, resetCubeFake } from "@/integration/cube-fake";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -9,6 +10,7 @@ import {
   seedDashboardsFixture,
   sessionOf,
 } from "@/integration/dashboards-fixture";
+import { drainAuthzedOutbox } from "@/lib/authzed/outbox-processor";
 import { getEmbeddedMemberName } from "@/modules/ee/analysis/lib/embedded-member-name";
 import { getV3DashboardChartData } from "./chart-data-operations";
 import { listV3DashboardFilterFields } from "./filter-fields-operations";
@@ -62,23 +64,26 @@ const createChart = async (datasetId: string, dimensions: string[] = []) =>
     })
   ).id;
 
-const createDashboard = async (chartIds: string[]) =>
-  (
-    await prisma.dashboard.create({
-      data: {
-        name: `Board ${++sequence}`,
-        workspaceId: fixture.workspaceId,
-        widgets: {
-          create: chartIds.map((chartId, order) => ({
-            chartId,
-            layout: { x: order * 4, y: 0, w: 4, h: 4 },
-            order,
-          })),
-        },
+/** A dashboard with its charts, projected to SpiceDB so a Dashboard viewer's `dashboard#read` reaches it. */
+const createDashboard = async (chartIds: string[]) => {
+  const { id } = await createTestDashboard({
+    data: {
+      name: `Board ${++sequence}`,
+      workspaceId: fixture.workspaceId,
+      widgets: {
+        create: chartIds.map((chartId, order) => ({
+          chartId,
+          layout: { x: order * 4, y: 0, w: 4, h: 4 },
+          order,
+        })),
       },
-      select: { id: true },
-    })
-  ).id;
+    },
+    select: { id: true },
+  });
+  const drained = await drainAuthzedOutbox();
+  expect(drained.status).toBe("drained");
+  return id;
+};
 
 const read = (dashboardId: string, authentication = sessionOf(fixture.users.editor)) =>
   listV3DashboardFilterFields({ dashboardId, authentication, requestId: "req", instance: "/api/v3" });

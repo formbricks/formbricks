@@ -3,6 +3,8 @@ import "server-only";
 export const AUTHZED_OUTBOX_TARGET_TYPES = [
   "api_key",
   "api_key_workspace",
+  "dashboard",
+  "dashboard_page",
   "feedback_directory",
   "feedback_directory_assignment",
   "mcp_grant",

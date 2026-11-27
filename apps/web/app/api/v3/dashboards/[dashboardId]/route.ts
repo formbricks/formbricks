@@ -1,18 +1,30 @@
 /**
  * GET, PATCH (rename), PUT (save the whole dashboard) and DELETE /api/v3/dashboards/{dashboardId}.
  *
- * The workspace is resolved from the dashboard, never from the request: any query parameter is a 400.
+ * The workspace is resolved from the dashboard, never from the request. A read takes only `viewAs`
+ * (ENG-7484); any other query parameter is a 400.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
 import { deleteV3Dashboard, getV3Dashboard, renameV3Dashboard, replaceV3Dashboard } from "../lib/operations";
-import { ZV3DashboardIdParams, ZV3DashboardRenameBody, ZV3DashboardReplaceBody } from "../lib/schemas";
+import {
+  ZV3DashboardIdParams,
+  ZV3DashboardReadQuery,
+  ZV3DashboardRenameBody,
+  ZV3DashboardReplaceBody,
+} from "../lib/schemas";
 
 export const GET = withV3ApiWrapper({
   auth: "both",
-  schemas: { params: ZV3DashboardIdParams, query: ZV3EmptyQuery },
+  schemas: { params: ZV3DashboardIdParams, query: ZV3DashboardReadQuery },
   handler: async ({ authentication, parsedInput, requestId, instance }) =>
-    getV3Dashboard({ dashboardId: parsedInput.params.dashboardId, authentication, requestId, instance }),
+    getV3Dashboard({
+      dashboardId: parsedInput.params.dashboardId,
+      viewAs: parsedInput.query.viewAs,
+      authentication,
+      requestId,
+      instance,
+    }),
 });
 
 export const PATCH = withV3ApiWrapper({

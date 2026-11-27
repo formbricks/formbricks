@@ -89,6 +89,8 @@ export type TTableToolbarProps = {
   };
   /** Rows matching the filters, not rows loaded. Null while unknown. */
   matchCount?: { count: number | null; isCapped?: boolean };
+  /** Controls that narrow what the table shows, on the left after Filter (a date range). */
+  controls?: ReactNode;
   /** Page actions on the right: import, refresh, create. */
   actions?: ReactNode;
   /** Shown instead of the controls while rows are selected (bulk actions). */
@@ -107,6 +109,7 @@ export const TableToolbar = ({
   search,
   filter,
   matchCount,
+  controls,
   actions,
   selectionContent,
   isLoading,
@@ -193,6 +196,7 @@ export const TableToolbar = ({
                 locked={filter.locked}
               />
             )}
+            {controls}
           </div>
         )}
         <div className="flex shrink-0 items-center gap-3">

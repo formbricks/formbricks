@@ -13,6 +13,8 @@ import {
 import { PRE_LOGIN_BODY_LIMIT_BYTES } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { flushAfter } from "@/integration/after";
+import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
+import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { getIsFreshInstance, markInstanceSetupCompleted } from "@/lib/instance/service";
 import { createEmailToken, verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
@@ -28,7 +30,12 @@ import {
   readSignupIntent,
 } from "@/modules/auth/lib/signup-intent";
 import { updateUser } from "@/modules/auth/lib/user";
-import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
+import {
+  InviteNoLongerValidError,
+  acceptInviteInTransaction,
+  getInvite,
+  resolveInviteMatch,
+} from "@/modules/auth/signup/lib/invite";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -91,11 +98,13 @@ vi.mock("@/lib/user/service", () => ({ getUserByEmail: vi.fn() }));
 vi.mock("@/modules/auth/lib/user", () => ({ updateUser: vi.fn() }));
 vi.mock("@/lib/jwt", () => ({ verifyInviteToken: vi.fn(), createEmailToken: vi.fn() }));
 vi.mock("@/modules/auth/signup/lib/invite", () => ({
+  InviteNoLongerValidError: class InviteNoLongerValidError extends Error {},
+  acceptInviteInTransaction: vi.fn(),
   getInvite: vi.fn(),
-  deleteInvite: vi.fn(),
   resolveInviteMatch: vi.fn(),
 }));
-vi.mock("@/modules/auth/signup/lib/team", () => ({ createTeamMembership: vi.fn() }));
+vi.mock("@/lib/authzed/organization-membership", () => ({ reconcileOrganizationMembership: vi.fn() }));
+vi.mock("@/lib/authzed/team-workspace", () => ({ reconcileTeamWorkspaceRelationships: vi.fn() }));
 vi.mock("@/modules/auth/signup/lib/utils", () => ({ verifyTurnstileToken: vi.fn() }));
 vi.mock("@/lib/membership/service", () => ({ createMembership: vi.fn() }));
 vi.mock("@/lib/organization/service", () => ({ createOrganization: vi.fn(), getOrganization: vi.fn() }));
@@ -202,6 +211,7 @@ const acceptInvite = () => {
   vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
   vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" });
   vi.mocked(getInvite).mockResolvedValue(validInvite as never);
+  vi.mocked(acceptInviteInTransaction).mockResolvedValue({ teamIds: [] });
 };
 
 beforeEach(() => {
@@ -467,9 +477,9 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
     );
   });
 
-  // The notice to the inviter is sent after the membership exists, so a failed send must not fail the
-  // sign-up or leave the used invite behind.
-  test("completes an invite sign-up and deletes the invite when the inviter's notice fails", async () => {
+  // The notice to the inviter is sent after the acceptance committed, so a failed send must not fail the
+  // sign-up.
+  test("completes an invite sign-up when the inviter's notice fails", async () => {
     acceptInvite();
     vi.mocked(sendInviteAcceptedEmail).mockRejectedValue(new Error("smtp unavailable"));
 
@@ -477,8 +487,43 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
     await flushAfter();
 
     expect(await response.json()).toEqual(SUCCESS);
-    expect(createMembership).toHaveBeenCalled();
-    expect(deleteInvite).toHaveBeenCalledWith("invite-1");
+    // Spending the invite, the membership and the copied Member attribute values commit as one (ENG-7468).
+    expect(acceptInviteInTransaction).toHaveBeenCalledWith(validInvite, createdUser.id);
+    expect(createMembership).not.toHaveBeenCalled();
+  });
+
+  // SpiceDB follows PostgreSQL only once the acceptance committed, for the membership and each team written.
+  test("projects the accepted membership and its teams after the acceptance commits", async () => {
+    acceptInvite();
+    vi.mocked(acceptInviteInTransaction).mockResolvedValue({ teamIds: ["team-1"] });
+
+    await signUp({ ...baseInput, inviteToken: "invite-jwt-123" });
+    await flushAfter();
+
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org-1", createdUser.id);
+    expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
+      teamMemberships: [{ teamId: "team-1", userId: createdUser.id }],
+    });
+    expect(vi.mocked(acceptInviteInTransaction).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(reconcileOrganizationMembership).mock.invocationCallOrder[0]
+    );
+  });
+
+  // An invite spent or expired between the admission check and the acceptance rolls the acceptance back,
+  // granting nothing; the account is recorded as a failed provisioning.
+  test("grants nothing when the invite was spent during the sign-up", async () => {
+    acceptInvite();
+    vi.mocked(acceptInviteInTransaction).mockRejectedValue(new InviteNoLongerValidError());
+
+    const response = await signUp({ ...baseInput, inviteToken: "invite-jwt-123" });
+    await flushAfter();
+
+    expect(await response.json()).toEqual(SUCCESS);
+    expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+    expect(sendInviteAcceptedEmail).not.toHaveBeenCalled();
+    expect(createdAuditEvents()).toEqual([
+      expect.objectContaining({ organizationId: UNKNOWN_DATA, status: "failure" }),
+    ]);
   });
 
   // Regression: signup-form.tsx sends `inviteToken: inviteToken ?? ""`, so an uninvited sign-up arrives
@@ -515,7 +560,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
       // The stable code, not just "some error": the sign-up form maps this to localized copy.
       expect(response.status).toBe(422);
       expect(await reasonOf(response)).toBe(INVITE_TOKEN_INVALID_ERROR_CODE);
-      expect(createMembership).not.toHaveBeenCalled();
+      expect(acceptInviteInTransaction).not.toHaveBeenCalled();
       // Rejected before the account is written, so a bad token leaves no orphaned user behind.
       expect(auth.api.signUpEmail).not.toHaveBeenCalled();
       // A refusal is still audited, as a failure.
@@ -722,7 +767,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
 
       expect((await signUp({ ...baseInput, inviteToken: "invite-jwt-123" })).status).toBe(200);
       await flushAfter();
-      expect(createMembership).toHaveBeenCalled();
+      expect(acceptInviteInTransaction).toHaveBeenCalled();
     });
   });
 });

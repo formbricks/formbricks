@@ -12,7 +12,8 @@ export interface CreateChartDialogProps {
   initialChart?: TChartWithCreator;
   /** A chart the AI dialog just produced, opened here for review and naming. */
   generatedChart?: AnalyticsResponse | null;
-  onSuccess?: () => void;
+  /** Called after a save, with the saved chart's id. */
+  onSuccess?: (chartId?: string) => void;
   directories: { id: string; name: string }[];
 }
 

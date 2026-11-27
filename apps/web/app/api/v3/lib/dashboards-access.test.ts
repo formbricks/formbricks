@@ -142,7 +142,10 @@ describe("dashboard-bound reads admit a Dashboard viewer through SpiceDB (ADR-00
     vi.mocked(getIsDashboardsEnabled).mockResolvedValue(true);
 
     await expect(requireDashboardsAccess(session, WORKSPACE_ID, "read", "req", "/i", allow)).resolves.toEqual(
-      context
+      {
+        ...context,
+        readerUserId: "user_1",
+      }
     );
     expect(can).toHaveBeenCalledTimes(1);
     expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "workspace.read", {
@@ -173,6 +176,7 @@ describe("dashboard-bound reads admit a Dashboard viewer through SpiceDB (ADR-00
       {
         ...context,
         asDashboardViewer: true,
+        readerUserId: "user_1",
       }
     );
     expect(can).toHaveBeenCalledTimes(1);
@@ -287,5 +291,21 @@ describe("dashboard-bound reads admit a Dashboard viewer through SpiceDB (ADR-00
       "feedbackDirectoryAssignment.write",
       resource
     );
+  });
+});
+
+describe("View as (ENG-7484)", () => {
+  test("refuses an API key, and any write, before asking anything", async () => {
+    const apiKey = { type: "apiKey", apiKeyId: "key_1", organizationId: "org" } as never;
+    const asKey = await requireDashboardsAccess(apiKey, WORKSPACE_ID, "read", "req", "/i", {
+      allowDashboardViewer: true,
+      viewAs: "user_2",
+    });
+    expect((asKey as Response).status).toBe(403);
+    const write = await requireDashboardsAccess(session, WORKSPACE_ID, "readWrite", "req", "/i", {
+      allowDashboardViewer: true,
+      viewAs: "user_2",
+    });
+    expect((write as Response).status).toBe(403);
   });
 });

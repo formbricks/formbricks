@@ -288,6 +288,12 @@ const EMBEDDED_EQUALS_MEMBER_PREFIX = "edc_";
  */
 const EMBEDDED_NUMBER_MEMBER_PREFIX = "edn_";
 /**
+ * Normalized twin of an embedded dimension: LOWER(BTRIM(value, <the characters JS trim() removes>)). Only a Dashboard Viewer access condition
+ * names it (ADR-0061: matching ignores case and surrounding spaces), and it has no containment
+ * prefilter, since an exact `@>` would drop records whose stored value differs in case or spacing.
+ */
+const EMBEDDED_NORMALIZED_MEMBER_PREFIX = "edv_";
+/**
  * The text a Postgres numeric reads: an optional sign, digits with an optional point (or a point and
  * digits), an optional exponent of at most three digits, blanks around. Written without `?`, which Cube
  * rewrites in generated SQL.
@@ -397,6 +403,7 @@ function getEmbeddedDimensionSpecs(compileContext) {
       name: `${EMBEDDED_MEMBER_PREFIX}${suffix}`,
       equalsName: `${EMBEDDED_EQUALS_MEMBER_PREFIX}${suffix}`,
       numberName: `${EMBEDDED_NUMBER_MEMBER_PREFIX}${suffix}`,
+      normalizedName: `${EMBEDDED_NORMALIZED_MEMBER_PREFIX}${suffix}`,
       valueSql,
       keyLiteral,
     });
@@ -591,14 +598,18 @@ function expandAnswerRules(filters, securityContext) {
 }
 
 /**
- * Members only the rewrite may write: the answer-filter joins, the embedded `equals` twins, and the
- * answer member anywhere but a filter (it has no column to select or sort by).
+ * Members only the rewrite may write: the answer-filter joins, the embedded `equals` and normalized
+ * twins, and the answer member anywhere but a filter (it has no column to select or sort by).
  */
 function assertNoReservedMember(query) {
   const cubeQuery = query ?? {};
   for (const member of collectQueryMembers(cubeQuery)) {
     const [cubeName, memberName = ""] = member.split(".");
-    if (ANSWER_FILTER_CUBE.test(cubeName) || memberName.startsWith(EMBEDDED_EQUALS_MEMBER_PREFIX)) {
+    if (
+      ANSWER_FILTER_CUBE.test(cubeName) ||
+      memberName.startsWith(EMBEDDED_EQUALS_MEMBER_PREFIX) ||
+      memberName.startsWith(EMBEDDED_NORMALIZED_MEMBER_PREFIX)
+    ) {
       throw new Error("Cube query rejected: reserved member");
     }
   }
@@ -631,6 +642,87 @@ function getCompilerCacheOptions() {
   };
 }
 
+// ── Dashboard Viewer access ─────────────────────────────────────────────────────────────────────
+// ADR-0061: when a Dashboard Viewer reads a dataset with conditions, the app signs a `viewerAccess` claim
+// ({ join: "all" | "any", conditions: [{ member, values }] }) into the token. queryRewrite appends it to
+// every query as one filter group, after the caller's filters, so no query of that token reads past it.
+// The bounds and the member list mirror apps/web/modules/ee/dashboard-access/lib/viewer-access-claim.ts.
+const VIEWER_ACCESS_MAX_CONDITIONS = 10;
+const VIEWER_ACCESS_MAX_VALUES = 50;
+const VIEWER_ACCESS_MAX_VALUE_LENGTH = 255;
+const VIEWER_ACCESS_MEMBERS = new Set([
+  "FeedbackRecords.sourceName",
+  "FeedbackRecords.sourceType",
+  "FeedbackRecords.metadataCountry",
+  "FeedbackRecords.metadataSource",
+  "FeedbackRecords.metadataDevice",
+  "FeedbackRecords.metadataBrowser",
+  "FeedbackRecords.metadataOs",
+  "FeedbackRecords.metadataAction",
+  "FeedbackRecords.language",
+]);
+// A filter no record passes: no tenant is ever named this. A condition the viewer holds no value for
+// becomes this, so an empty attribute fails closed instead of dropping the condition.
+const VIEWER_ACCESS_NO_MATCH = {
+  member: "FeedbackRecords.tenantId",
+  operator: "equals",
+  values: ["__viewer_access_no_match__"],
+};
+
+/**
+ * The claim's filter group, or `null` when the token carries none. Throws on a claim outside its bounds:
+ * a token that names one was minted wrong, and running it without the claim would widen what it reads.
+ */
+function getViewerAccessFilter(securityContext) {
+  const claim = securityContext?.viewerAccess;
+  if (claim === undefined || claim === null) {
+    return null;
+  }
+  if (typeof claim !== "object" || (claim.join !== "all" && claim.join !== "any")) {
+    throw new Error("Cube query rejected: invalid viewerAccess claim");
+  }
+  const { conditions } = claim;
+  if (
+    !Array.isArray(conditions) ||
+    conditions.length === 0 ||
+    conditions.length > VIEWER_ACCESS_MAX_CONDITIONS
+  ) {
+    throw new Error("Cube query rejected: invalid viewerAccess claim");
+  }
+  const filters = conditions.map((condition) => {
+    const member = condition?.member;
+    const values = condition?.values;
+    if (
+      typeof member !== "string" ||
+      !(VIEWER_ACCESS_MEMBERS.has(member) || EMBEDDED_MEMBER_PATTERN.test(member)) ||
+      !Array.isArray(values) ||
+      values.length > VIEWER_ACCESS_MAX_VALUES ||
+      values.some((value) => typeof value !== "string" || value.length > VIEWER_ACCESS_MAX_VALUE_LENGTH)
+    ) {
+      throw new Error("Cube query rejected: invalid viewerAccess claim");
+    }
+    // Surrounding spaces never count; a blank value matches nothing, like no value at all.
+    const kept = values.map((value) => value.trim()).filter((value) => value.length > 0);
+    if (kept.length === 0) {
+      return VIEWER_ACCESS_NO_MATCH;
+    }
+    // An embedded key has no normalized companion in CASE_INSENSITIVE_EQUALS_DIMENSIONS: it matches on
+    // its LOWER(TRIM()) twin, which no containment prefilter narrows.
+    if (EMBEDDED_MEMBER_PATTERN.test(member)) {
+      return {
+        member: member.replace(
+          `FeedbackRecords.${EMBEDDED_MEMBER_PREFIX}`,
+          `FeedbackRecords.${EMBEDDED_NORMALIZED_MEMBER_PREFIX}`
+        ),
+        operator: "equals",
+        values: kept.map((value) => value.toLowerCase()),
+      };
+    }
+    return { member, operator: "equals", values: kept };
+  });
+  return claim.join === "all" ? { and: filters } : { or: filters };
+}
+
 function queryRewrite(query, rewriteContext) {
   const cubeQuery = query ?? {};
   let context;
@@ -643,8 +735,10 @@ function queryRewrite(query, rewriteContext) {
   }
 
   let expandedFilters;
+  let viewerAccessFilter;
   try {
     assertNoCallerTenantMember(cubeQuery);
+    viewerAccessFilter = getViewerAccessFilter(rewriteContext.securityContext);
     assertNoReservedMember(cubeQuery);
     expandedFilters = expandAnswerRules(cubeQuery.filters, rewriteContext.securityContext);
   } catch (error) {
@@ -653,7 +747,12 @@ function queryRewrite(query, rewriteContext) {
   }
 
   const queriedCubePrefixes = new Set(collectQueryMembers(cubeQuery).map((member) => member.split(".")[0]));
-  const normalizedFilters = normalizeCaseInsensitiveFilters(expandedFilters);
+  // The viewer access group goes through the same normalization and embedded-equals move as the caller's
+  // filters, so it matches ignoring case and surrounding spaces wherever the field allows.
+  const normalizedFilters = normalizeCaseInsensitiveFilters([
+    ...(Array.isArray(expandedFilters) ? expandedFilters : []),
+    ...(viewerAccessFilter ? [viewerAccessFilter] : []),
+  ]);
   const embeddedFilters = Array.isArray(normalizedFilters)
     ? normalizedFilters.map(moveEmbeddedEqualsFilter)
     : normalizedFilters;
@@ -686,6 +785,7 @@ for (const [name, value] of Object.entries({
   getEmbeddedContainmentSql,
   getEmbeddedMemberSuffix,
   getEmbeddedKeys,
+  getViewerAccessFilter,
   toSafeSqlStringLiteral,
   toSafeNumericSql,
   ANSWER_FILTER_ALIAS_COUNT,

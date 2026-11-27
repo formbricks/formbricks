@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -10,7 +9,7 @@ import { CreateChartButton } from "@/modules/ee/analysis/charts/components/creat
 import { useCharts } from "@/modules/ee/analysis/charts/hooks/use-charts";
 import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
 import { LoadMoreOnScroll } from "@/modules/ee/analysis/components/load-more-on-scroll";
-import { addDashboardWidget } from "@/modules/ee/analysis/lib/api-client";
+import { type TAppChart, getChart, getChartApiErrorMessage } from "@/modules/ee/analysis/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import {
@@ -23,14 +22,17 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 
 interface AddExistingChartsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
-  dashboardId: string;
+  /** The charts already on the page being edited: listed, but not picked again. */
+  placedChartIds: ReadonlySet<string>;
   directories: { id: string; name: string }[];
-  onSuccess: () => void;
+  /** The charts picked, or the one just created, for the edit to place on its page. */
+  onPick: (charts: TAppChart[]) => void;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -47,15 +49,17 @@ export function AddExistingChartsDialog({
   open,
   onOpenChange,
   workspaceId,
-  dashboardId,
+  placedChartIds,
   directories,
-  onSuccess,
+  onPick,
   isAIAvailable,
   aiUnavailableReason,
 }: Readonly<AddExistingChartsDialogProps>) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const [selectedChartIds, setSelectedChartIds] = useState<string[]>([]);
+  // The picked charts themselves, not their ids: the list holds only the current search's results, and a
+  // chart picked under an earlier search must still be added.
+  const [selectedCharts, setSelectedCharts] = useState<TAppChart[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const nameContains = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
 
@@ -70,41 +74,33 @@ export function AddExistingChartsDialog({
   const handleOpenChange = (next: boolean) => {
     if (!next) {
       setSearch("");
-      setSelectedChartIds([]);
+      setSelectedCharts([]);
     }
     onOpenChange(next);
   };
 
-  const toggleChart = (chartId: string, checked: boolean) =>
-    setSelectedChartIds((current) =>
-      checked ? [...current, chartId] : current.filter((selected) => selected !== chartId)
-    );
+  const toggleChart = (chart: TAppChart, checked: boolean) =>
+    setSelectedCharts((current) => {
+      const others = current.filter((selected) => selected.id !== chart.id);
+      return checked ? [...others, chart] : others;
+    });
 
-  const handleAdd = async () => {
-    if (selectedChartIds.length === 0) return;
+  // Picked charts go into the edit's draft, placed on the current page; the dashboard's save adds them.
+  const handleAdd = () => {
+    if (selectedCharts.length === 0) return;
+    onPick(selectedCharts);
+    handleOpenChange(false);
+  };
 
+  // A chart created from here joins the draft too, read back so the page can draw it.
+  const handleCreated = async (chartId?: string) => {
+    handleOpenChange(false);
+    if (!chartId) return;
     setIsAdding(true);
     try {
-      const results = await Promise.allSettled(
-        selectedChartIds.map((chartId) => addDashboardWidget(dashboardId, { chartId }))
-      );
-      const successes = results.filter((result) => result.status === "fulfilled").length;
-      const failures = results.length - successes;
-
-      if (failures === 0) {
-        toast.success(
-          t("workspace.analysis.dashboards.charts_added_to_dashboard", { count: selectedChartIds.length })
-        );
-      } else if (successes > 0) {
-        toast.error(t("workspace.analysis.dashboards.charts_add_partial_failure", { count: failures }));
-      } else {
-        toast.error(t("workspace.analysis.dashboards.charts_add_failed"));
-      }
-
-      if (successes > 0) {
-        handleOpenChange(false);
-        onSuccess();
-      }
+      onPick([await getChart(chartId)]);
+    } catch (error) {
+      toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.charts_add_failed")));
     } finally {
       setIsAdding(false);
     }
@@ -114,7 +110,7 @@ export function AddExistingChartsDialog({
     if (isPending) {
       return (
         <div className="flex items-center justify-center py-6">
-          <Loader2Icon className="size-5 animate-spin text-slate-400" aria-hidden="true" />
+          <LoadingSpinner />
           <span className="sr-only">{t("common.loading")}</span>
         </div>
       );
@@ -141,15 +137,15 @@ export function AddExistingChartsDialog({
     return (
       <ul className="max-h-72 space-y-1 overflow-y-auto">
         {charts.map((chart) => {
-          const isOnDashboard = chart.dashboards.some((dashboard) => dashboard.id === dashboardId);
+          const isOnDashboard = placedChartIds.has(chart.id);
           const checkboxId = `add-chart-${chart.id}`;
           return (
             <li key={chart.id} className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-slate-50">
               <Checkbox
                 id={checkboxId}
-                checked={isOnDashboard || selectedChartIds.includes(chart.id)}
+                checked={isOnDashboard || selectedCharts.some((selected) => selected.id === chart.id)}
                 disabled={isOnDashboard || isAdding}
-                onCheckedChange={(checked) => toggleChart(chart.id, checked === true)}
+                onCheckedChange={(checked) => toggleChart(chart, checked === true)}
               />
               <label
                 htmlFor={checkboxId}
@@ -159,7 +155,7 @@ export function AddExistingChartsDialog({
                 {chart.name}
                 {isOnDashboard && (
                   <span className="ml-2 text-xs">
-                    ({t("workspace.analysis.dashboards.already_on_this_dashboard")})
+                    ({t("workspace.analysis.dashboards.already_on_this_page")})
                   </span>
                 )}
               </label>
@@ -199,12 +195,8 @@ export function AddExistingChartsDialog({
           <CreateChartButton
             workspaceId={workspaceId}
             directories={directories}
-            autoAddToDashboardId={dashboardId}
             label={t("workspace.analysis.dashboards.create_new_chart")}
-            onSuccess={() => {
-              handleOpenChange(false);
-              onSuccess();
-            }}
+            onSuccess={(chartId) => void handleCreated(chartId)}
             buttonProps={{ variant: "secondary", size: "default", disabled: isAdding }}
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}
@@ -213,12 +205,9 @@ export function AddExistingChartsDialog({
             <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isAdding}>
               {t("common.cancel")}
             </Button>
-            <Button
-              onClick={handleAdd}
-              loading={isAdding}
-              disabled={selectedChartIds.length === 0 || isAdding}>
-              {selectedChartIds.length > 0
-                ? t("workspace.analysis.dashboards.add_count_charts", { count: selectedChartIds.length })
+            <Button onClick={handleAdd} loading={isAdding} disabled={selectedCharts.length === 0 || isAdding}>
+              {selectedCharts.length > 0
+                ? t("workspace.analysis.dashboards.add_count_charts", { count: selectedCharts.length })
                 : t("common.add")}
             </Button>
           </div>

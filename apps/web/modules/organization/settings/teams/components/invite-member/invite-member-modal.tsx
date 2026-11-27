@@ -32,6 +32,8 @@ interface InviteMemberModalProps {
   userAdminTeamIds?: string[];
   enterpriseLicenseRequestFormUrl: string;
   isBulkInviteAllowed: boolean;
+  /** The CSV import also sets Member attributes (ENG-7475). */
+  isMemberAttributesEnabled?: boolean;
 }
 
 export const InviteMemberModal = ({
@@ -49,6 +51,7 @@ export const InviteMemberModal = ({
   userAdminTeamIds,
   enterpriseLicenseRequestFormUrl,
   isBulkInviteAllowed,
+  isMemberAttributesEnabled = false,
 }: Readonly<InviteMemberModalProps>) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
@@ -86,6 +89,7 @@ export const InviteMemberModal = ({
         isFormbricksCloud={isFormbricksCloud}
         isDashboardViewerRoleEnabled={isDashboardViewerRoleEnabled}
         isBulkInviteAllowed={isBulkInviteAllowed}
+        isMemberAttributesEnabled={isMemberAttributesEnabled}
         membershipRole={membershipRole}
         enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
       />

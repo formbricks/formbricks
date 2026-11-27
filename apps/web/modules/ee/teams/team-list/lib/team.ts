@@ -15,6 +15,11 @@ import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspac
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { validateInputs } from "@/lib/utils/validate";
 import {
+  type TTeamDashboardLimitsChange,
+  deleteTeamDashboardLimitsInWorkspaces,
+  replaceTeamDashboardLimitsInTransaction,
+} from "@/modules/ee/dashboard-access/lib/team-dashboard-limits";
+import {
   TeamAssignmentOutsideOrganizationError,
   TeamNameTakenError,
 } from "@/modules/ee/teams/team-list/lib/errors";
@@ -352,7 +357,17 @@ const assertMembersAndWorkspacesInOrganization = async (
   }
 };
 
-export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormSchema): Promise<boolean> => {
+/**
+ * Renames the team and replaces its members and workspace grants. With `dashboardIds`, also replaces the
+ * team's dashboard limit (ENG-7483; empty = All dashboards) in the same transaction, after the grants, so
+ * a newly granted workspace never commits without its limit. The caller authorizes the limit write.
+ * Returns the limit before and after as that transaction saw it, for the audit; `null` when none was sent.
+ */
+export const updateTeamDetails = async (
+  teamId: string,
+  data: TTeamSettingsFormSchema,
+  dashboardIds?: readonly string[]
+): Promise<{ dashboardLimits: TTeamDashboardLimitsChange | null }> => {
   validateInputs([teamId, ZId], [data, ZTeamSettingsFormSchema]);
 
   try {
@@ -423,7 +438,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
     };
 
     const adminIds = members.filter((m) => m.role === "admin").map((m) => m.userId);
-    await prisma.$transaction(async (tx) => {
+    const dashboardLimits = await prisma.$transaction(async (tx) => {
       // A Dashboard viewer can't be a team admin (ADR-0025): admins manage the team and invite people.
       // Checked in the write's transaction with the admins' memberships locked, so a concurrent change
       // of one of them to Dashboard viewer either commits first and is seen here, or waits and then
@@ -443,6 +458,16 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
         where: { id: teamId },
         data: payload,
       });
+      // A sent limit is replaced before the lost grants' limits are removed, so its `before` is the limit
+      // as this save found it. It refuses a dashboard of a workspace the team just lost, so the removal
+      // below never touches what it wrote.
+      const limits =
+        dashboardIds === undefined
+          ? null
+          : await replaceTeamDashboardLimitsInTransaction(tx, team.organizationId, teamId, dashboardIds);
+      // A lost workspace grant takes the team's dashboard limits there with it (ENG-7483).
+      await deleteTeamDashboardLimitsInWorkspaces(tx, teamId, deletedWorkspaces);
+      return limits;
     });
 
     const membershipUserIds = new Set([
@@ -465,7 +490,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       })
     );
 
-    return true;
+    return { dashboardLimits };
   } catch (error) {
     if (isTeamNameTaken(error)) throw new TeamNameTakenError();
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

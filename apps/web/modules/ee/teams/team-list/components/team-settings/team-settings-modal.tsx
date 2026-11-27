@@ -3,13 +3,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import {
+  DashboardViewerRoleSettings,
+  type TDashboardLimitDraft,
+  dashboardLimitDraftIds,
+  isDashboardLimitDraftValid,
+  useTeamDashboardLimits,
+} from "@/modules/ee/teams/team-list/components/team-settings/dashboard-viewer-role-settings";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { MemberRow } from "@/modules/ee/teams/team-list/components/team-settings/member-row";
 import { WorkspaceRow } from "@/modules/ee/teams/team-list/components/team-settings/workspace-row";
@@ -51,6 +58,8 @@ interface TeamSettingsModalProps {
   readonly membershipRole?: TOrganizationRole;
   readonly userTeamRole: TTeamRole | undefined;
   readonly currentUserId: string;
+  /** Access Control and Dashboards: the plan team dashboard limits need (ENG-7483). */
+  readonly isDashboardAccessEnabled?: boolean;
 }
 
 export const TeamSettingsModal = ({
@@ -62,8 +71,16 @@ export const TeamSettingsModal = ({
   userTeamRole,
   membershipRole,
   currentUserId,
+  isDashboardAccessEnabled = false,
 }: TeamSettingsModalProps) => {
   const { t } = useTranslation();
+  // Team dashboard limits (ENG-7483): only Owners and Managers read them, and only on the plan.
+  const { isOwner: isOwnerRole, isManager: isManagerRole } = getAccessFlags(membershipRole);
+  // The section shows for everyone who opens the settings on the plan; only Owners and Managers read the
+  // limits (the v3 read refuses anyone else), so for others it stays empty and read-only.
+  const showDashboardLimits = isDashboardAccessEnabled && (isOwnerRole || isManagerRole);
+  const dashboardLimits = useTeamDashboardLimits(team.id, showDashboardLimits);
+  const [dashboardLimitDraft, setDashboardLimitDraft] = useState<TDashboardLimitDraft | null>(null);
 
   const { isOwner, isManager, isMember } = getAccessFlags(membershipRole);
 
@@ -122,12 +139,46 @@ export const TeamSettingsModal = ({
     setOpen(false);
   };
 
+  /**
+   * The draft limit as it would be saved with the team keeping `workspaceIds`: only dashboards of those
+   * workspaces, since losing a grant drops the limits there (ENG-7483). `null` when nothing changed.
+   */
+  const draftForWorkspaces = (workspaceIds: string[]): TDashboardLimitDraft | null => {
+    if (!showDashboardLimits || dashboardLimitDraft === null || !dashboardLimits.data) return null;
+    const kept = new Set(
+      (dashboardLimits.data.dashboards ?? [])
+        .filter(({ workspaceId }) => workspaceIds.includes(workspaceId))
+        .map(({ id }) => id)
+    );
+    return {
+      mode: dashboardLimitDraft.mode,
+      dashboardIds: dashboardLimitDraft.dashboardIds.filter((id) => kept.has(id)),
+    };
+  };
+
   const handleUpdateTeam: SubmitHandler<TTeamSettingsFormSchema> = async (data) => {
     const members = data.members.filter((m) => m.userId);
     const workspaces = data.workspaces.filter((p) => p.workspaceId);
+    // "Specific dashboards" with none picked (or none left in the kept workspaces) would save as "All
+    // dashboards": refuse it before anything is saved.
+    const limitDraft = draftForWorkspaces(workspaces.map(({ workspaceId }) => workspaceId));
+    if (limitDraft && !isDashboardLimitDraftValid(limitDraft)) {
+      toast.error(t("workspace.settings.teams.dashboard_access_pick_one"));
+      return;
+    }
 
     try {
-      await updateTeam({ teamId: team.id, body: { name: data.name, members, workspaces } });
+      // An edited dashboard limit is saved in the team's transaction, after its grants: a new workspace
+      // never opens without its limit, and a refused limit leaves the team as it was.
+      await updateTeam({
+        teamId: team.id,
+        body: {
+          name: data.name,
+          members,
+          workspaces,
+          ...(limitDraft && { dashboardIds: dashboardLimitDraftIds(limitDraft) }),
+        },
+      });
       toast.success(t("workspace.settings.teams.team_updated_successfully"));
       closeSettingsModal();
       router.refresh();
@@ -356,6 +407,15 @@ export const TeamSettingsModal = ({
                   </Button>
                 </TooltipRenderer>
               </div>
+              {showDashboardLimits && (
+                <DashboardViewerRoleSettings
+                  canEdit={isOwnerOrManager}
+                  limits={dashboardLimits.data}
+                  selectedWorkspaceIds={selectedWorkspaceIds}
+                  value={dashboardLimitDraft}
+                  onChange={setDashboardLimitDraft}
+                />
+              )}
             </DialogBody>
             <DialogFooter>
               <div className="w-full">

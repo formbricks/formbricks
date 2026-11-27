@@ -1,13 +1,15 @@
 post:
   operationId: addDashboardWidgetV3
-  summary: Add a chart to a dashboard
+  summary: Add a chart or a layout block to a dashboard
   description: |
-    Puts an existing chart on a dashboard. Without a `layout` the chart lands in the first open slot
-    at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
-    a layout covering another widget answers 422 naming it. A chart appears at most once per
-    dashboard (409), and must live in the dashboard's workspace. A dashboard holds at most 250
-    widgets, and a new widget takes the first open slot: an add past the cap, or with no open slot
-    above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
+    Puts an existing chart (`chartId`), or a layout block (`kind` image, text or separator), on a
+    dashboard page — `pageId`, or the dashboard's first page. Without a `layout` it lands in the first
+    open slot at its default size; with one, exactly there. Widgets may leave gaps but not overlap on
+    a page: a layout covering another widget answers 422 naming it. A chart appears at most once per
+    page (409), can sit on several pages, and must live in the dashboard's workspace. An image's
+    `fileUrl` must be a dashboard image uploaded to this workspace (422 otherwise). A dashboard holds
+    at most 250 widgets, and a new widget takes the first open slot: an add past the cap, or with no
+    open slot above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
     Needs write access to the dashboard's workspace.
   tags:
     - V3 Dashboards

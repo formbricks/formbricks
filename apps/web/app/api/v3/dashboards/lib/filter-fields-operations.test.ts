@@ -13,7 +13,18 @@ import { getDashboardChartsRow } from "./service";
  */
 
 vi.mock("server-only", () => ({}));
-vi.mock("./service", () => ({ getDashboardChartsRow: vi.fn() }));
+vi.mock("./service", () => ({
+  getDashboardChartsRow: vi.fn(),
+  keepChartsOnPages: <TRow>(row: TRow) => row,
+}));
+vi.mock("./dashboard-read-access", () => ({
+  refuseUnlessDashboardOpenable: vi.fn(async () => null),
+  getReadablePageIdsCached: vi.fn(async () => new Set(["page"])),
+}));
+vi.mock("@/modules/ee/dashboard-access/lib/viewer-data-access", () => ({
+  getViewerAccessClaimForDataset: vi.fn(async () => null),
+}));
+
 vi.mock("./chart-data-operations", () => ({
   authorizeDashboardRead: vi.fn(),
   refuseUnlessDashboardDatasetReadable: vi.fn(),

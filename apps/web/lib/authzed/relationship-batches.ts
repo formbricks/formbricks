@@ -27,11 +27,17 @@ export const packRelationshipUpdateGroups = (
   return batches;
 };
 
+/**
+ * Deletes in batches of at most `AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES` parallel calls. `beforeBatch`
+ * runs before each batch starts and may throw to stop the remaining ones (e.g. a lock deadline).
+ */
 export const deleteRelationshipsInBoundedBatches = async (
   client: TAuthzedClient,
-  filters: ReadonlyArray<TAuthzedRelationshipFilter>
+  filters: ReadonlyArray<TAuthzedRelationshipFilter>,
+  beforeBatch?: () => void
 ): Promise<void> => {
   for (let start = 0; start < filters.length; start += AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES) {
+    beforeBatch?.();
     await Promise.all(
       filters
         .slice(start, start + AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES)

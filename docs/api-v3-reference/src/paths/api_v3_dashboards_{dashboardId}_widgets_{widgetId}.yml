@@ -47,11 +47,13 @@ get:
     - bearerAuth: []
 patch:
   operationId: updateDashboardWidgetV3
-  summary: Move a widget or show another chart in it
+  summary: Move a widget, show another chart in it, or change a block
   description: |
-    Moves or resizes a widget, points it at another chart, or both. A layout covering another widget
-    answers 422 naming it; a chart already on the dashboard answers 409. Moves the dashboard's
-    `updatedAt`. Needs write access to the dashboard's workspace.
+    Moves or resizes a widget (on its page, or to another page with `pageId`), points a chart widget at
+    another chart, or changes an image or text block's `content`. A layout covering another widget
+    answers 422 naming it; a chart already on the page answers 409; a chart for a layout block, content
+    for a chart or an invalid content answers 422. Moves the dashboard's `updatedAt`. Needs write access
+    to the dashboard's workspace.
   tags:
     - V3 Dashboards
   parameters:

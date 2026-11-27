@@ -46,10 +46,13 @@ properties:
       - conflict
       - creatives_not_entitled
       - custom_css_plan_required
+      - dashboard_access_plan_required
       - dashboards_plan_required
       - forbidden
       - internal_server_error
       - invalid_workflow_state
+      - member_attribute_key_in_use
+      - member_attributes_plan_required
       - not_authenticated
       - not_found
       - payload_too_large

@@ -1,13 +1,24 @@
 "use client";
 
 import { Command as CommandPrimitive } from "cmdk";
-import { X } from "lucide-react";
+import { PlusIcon, X } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
 import { Badge } from "@/modules/ui/components/multi-select/badge";
+import { splitPastedInput, splitTypedInput } from "@/modules/ui/components/multi-select/lib/typed-input";
+import { addChips } from "@/modules/ui/components/tags-combobox/lib/chips";
+import { NO_AUTOFILL_PROPS } from "@/modules/ui/lib/no-autofill";
 import { cn } from "@/modules/ui/lib/utils";
+
+/** The chip for typed `value`: the chosen one, else a matching option, else the text itself. */
+const toTypedOption = <T extends string>(
+  chosen: readonly TOption<T>[],
+  value: string,
+  resolve: (value: T) => TOption<T> | undefined
+): TOption<T> =>
+  chosen.find((s) => s.value === value) ?? resolve(value as T) ?? { value: value as T, label: value };
 
 interface TOption<T> {
   value: T;
@@ -32,19 +43,76 @@ interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
   disabled?: boolean;
   placeholder?: string;
   containerClassName?: string;
+  /** Focus the input on mount, which opens the options list. */
+  focusOnMount?: boolean;
+  /**
+   * Lets the person add a value that is not among `options`: while typing, an "Add …" entry appears, and a
+   * chosen value no option matches still shows as a chip. For free-text lists such as a Member attribute's
+   * values, where `options` are only suggestions.
+   */
+  creatable?: boolean;
+  /**
+   * With `creatable`: a comma or semicolon typed ends a value, and pasted text with separators
+   * (`Denmark; Finland`) becomes one chip per value, as in the tags field (ENG-7248).
+   */
+  splitOnSeparators?: boolean;
+  /** Caps the characters of the input, e.g. a value's maximum length. */
+  inputMaxLength?: number;
+  /** Stops offering options once this many are chosen. */
+  maxSelected?: number;
+  /** The input's id and label, for a field with a visible `<label>`. */
+  inputId?: string;
+  ariaLabelledBy?: string;
+  /** Shows the chips alone: no input, no remove buttons. */
+  readOnly?: boolean;
+  /**
+   * Shown in the open list when there is nothing to offer (no options left, or none matching the typed
+   * text), so a focused field never looks like a free-text input. Without it the list stays closed.
+   */
+  emptyMessage?: string;
 }
+
+/** The "Add …" entry for typed text; it never reaches `onChange` as such, only the text does. */
+type TCreateOption = { value: string; isCreate: true };
 
 export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   props: Readonly<MultiSelectProps<T, K>>
 ) {
-  const { options, value, onChange, disabled = false, placeholder, containerClassName } = props;
+  const {
+    options,
+    value,
+    onChange,
+    disabled = false,
+    placeholder,
+    containerClassName,
+    focusOnMount,
+    creatable = false,
+    splitOnSeparators = false,
+    inputMaxLength,
+    maxSelected,
+    inputId,
+    ariaLabelledBy,
+    readOnly = false,
+    emptyMessage,
+  } = props;
   const { t } = useTranslation();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  React.useEffect(() => {
+    if (focusOnMount) inputRef.current?.focus();
+  }, [focusOnMount]);
+
+  // A chosen value no option matches is dropped, unless the field is creatable: then it is a typed value.
+  const resolveOption = React.useCallback(
+    (val: T): TOption<T> | undefined =>
+      options.find((o) => o.value === val) ?? (creatable ? { value: val, label: val } : undefined),
+    [options, creatable]
+  );
+
   const [selected, setSelected] = React.useState<TOption<T>[]>(() => {
     if (value) {
-      return value.map((val) => options.find((o) => o.value === val)).filter((o): o is TOption<T> => !!o);
+      return value.map((val) => resolveOption(val)).filter((o): o is TOption<T> => !!o);
     }
     return [];
   });
@@ -60,9 +128,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
 
   React.useEffect(() => {
     if (value) {
-      const newSelected = value
-        .map((val) => options.find((o) => o.value === val))
-        .filter((o): o is TOption<T> => !!o);
+      const newSelected = value.map((val) => resolveOption(val)).filter((o): o is TOption<T> => !!o);
       // Only update if different (avoid unnecessary updates)
       const currentValues = selected.map((s) => s.value);
       const newValues = newSelected.map((s) => s.value);
@@ -75,7 +141,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- syncs the `value` prop into local state; `selected` is only read for comparison, depending on it would re-run on every user selection
-  }, [value, options]);
+  }, [value, options, resolveOption]);
 
   // Sync user-initiated selected changes to parent via onChange (deferred to avoid render issues)
   const prevSelectedRef = React.useRef(selected);
@@ -111,10 +177,61 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     [disabled]
   );
 
-  const handleSelect = (option: TOption<T>) => {
-    if (disabled || option.disabled) return;
+  const isFull = maxSelected !== undefined && selected.length >= maxSelected;
+
+  const handleSelect = (option: TOption<T> | TCreateOption) => {
+    if (disabled || readOnly || isFull) return;
+    if ("isCreate" in option) {
+      isUserInitiatedRef.current = true; // Mark as user-initiated
+      setSelected((prev) => [...prev, { value: option.value as T, label: option.value }]);
+      setInputValue("");
+      return;
+    }
+    if (option.disabled) return;
     isUserInitiatedRef.current = true; // Mark as user-initiated
     setSelected((prev) => [...prev, option]);
+    setInputValue("");
+  };
+
+  // Appends typed values as chips: trimmed, without blanks or case-insensitive repeats, up to the caps.
+  const addTypedValues = (texts: readonly string[]) => {
+    if (disabled || readOnly) return;
+    isUserInitiatedRef.current = true;
+    setSelected((prev) => {
+      const values = addChips(
+        prev.map((s) => s.value as string),
+        texts,
+        { maxValues: maxSelected, maxLength: inputMaxLength }
+      );
+      if (values.length === prev.length) return prev;
+      return values.map((v) => toTypedOption(prev, v, resolveOption));
+    });
+  };
+
+  const splitsTyping = creatable && splitOnSeparators;
+
+  const handleInputChange = (next: string) => {
+    if (!splitsTyping) {
+      setInputValue(next);
+      return;
+    }
+    const { commit, rest } = splitTypedInput(next);
+    if (commit.length > 0) addTypedValues(commit);
+    setInputValue(rest);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (!splitsTyping) return;
+    const { selectionStart, selectionEnd } = e.currentTarget;
+    const values = splitPastedInput(
+      inputValue,
+      e.clipboardData.getData("text"),
+      selectionStart ?? inputValue.length,
+      selectionEnd ?? selectionStart ?? inputValue.length
+    );
+    if (!values) return;
+    e.preventDefault();
+    addTypedValues(values);
     setInputValue("");
   };
 
@@ -151,6 +268,16 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
       });
   }, [options, selected, inputValue]);
 
+  // The typed text as a value of its own, unless it is already chosen or is exactly an offered option.
+  const createCandidate = React.useMemo((): TCreateOption | null => {
+    const text = inputValue.trim();
+    if (!creatable || text === "") return null;
+    const needle = text.toLowerCase();
+    const taken = [...selected.map((s) => s.value as string), ...selectableOptions.map((o) => o.label)];
+    if (taken.some((existing) => existing.toLowerCase() === needle)) return null;
+    return { value: text, isCreate: true };
+  }, [creatable, inputValue, selected, selectableOptions]);
+
   // Cluster consecutive options that share a `group` into labelled sections, preserving the caller's
   // ordering. Options without a group form a single unlabelled section. Because empty groups are
   // never created, filtering hides section headers that have no matches.
@@ -172,7 +299,9 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     return groups;
   }, [selectableOptions]);
 
-  const isDropdownVisible = open && selectableOptions.length > 0 && !disabled;
+  const hasEntries = selectableOptions.length > 0 || createCandidate !== null;
+  const isDropdownVisible =
+    open && (hasEntries || emptyMessage !== undefined) && !disabled && !readOnly && !isFull;
 
   // Escape with the dropdown open closes only the dropdown. A Radix dialog around this component
   // listens for Escape on `document` in the capture phase, before the React handler above runs, so
@@ -256,34 +385,43 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                 ) : null}
                 <span className="truncate">{option.label}</span>
                 {disabled ? null : option.badgeAction}
-                <button
-                  type="button"
-                  aria-label={t("common.remove_item", { item: option.label })}
-                  className="ring-offset-background ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleUnselect(option);
-                    }
-                  }}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={() => handleUnselect(option)}>
-                  <X className="text-muted-foreground hover:text-foreground size-3" />
-                </button>
+                {readOnly ? null : (
+                  <button
+                    type="button"
+                    aria-label={t("common.remove_item", { item: option.label })}
+                    className="ring-offset-background ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleUnselect(option);
+                      }
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={() => handleUnselect(option)}>
+                    <X className="text-muted-foreground hover:text-foreground size-3" />
+                  </button>
+                )}
               </Badge>
             ))}
-          <CommandPrimitive.Input
-            ref={inputRef}
-            value={inputValue}
-            onValueChange={setInputValue}
-            onBlur={() => setOpen(false)}
-            onFocus={() => setOpen(true)}
-            placeholder={placeholder}
-            disabled={disabled}
-            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-hidden"
-          />
+          {readOnly ? null : (
+            <CommandPrimitive.Input
+              ref={inputRef}
+              {...NO_AUTOFILL_PROPS}
+              id={inputId}
+              aria-labelledby={ariaLabelledBy}
+              maxLength={inputMaxLength}
+              value={inputValue}
+              onValueChange={handleInputChange}
+              onPaste={handlePaste}
+              onBlur={() => setOpen(false)}
+              onFocus={() => setOpen(true)}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-hidden"
+            />
+          )}
         </div>
       </div>
       {isDropdownVisible &&
@@ -343,6 +481,26 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                     ))}
                   </CommandGroup>
                 ))}
+                {!hasEntries && emptyMessage ? (
+                  <p className="px-3 py-2.5 text-sm text-slate-500">{emptyMessage}</p>
+                ) : null}
+                {createCandidate ? (
+                  <CommandGroup>
+                    <CommandItem
+                      key={`create-${createCandidate.value}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onSelect={() => handleSelect(createCandidate)}
+                      className="cursor-pointer items-start gap-2">
+                      <PlusIcon className="mt-0.5 size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+                      <span className="truncate text-slate-900">
+                        {t("common.tags_field.add_new_value", { value: createCandidate.value })}
+                      </span>
+                    </CommandItem>
+                  </CommandGroup>
+                ) : null}
               </div>
             </CommandList>
           </div>,

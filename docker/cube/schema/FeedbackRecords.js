@@ -12,6 +12,20 @@ const {
   toSafeNumericSql,
 } = require("/cube/conf/cube.js");
 
+// Every code point JavaScript's `String.prototype.trim()` removes. A Dashboard Viewer's attribute value is
+// trimmed with it (apps/web `normalizeMemberAttributeValue`, and the claim's values in cube.js), so the
+// normalized twin below strips the same set, not only the ASCII spaces SQL `TRIM` removes: a value stored
+// with a non-breaking space (U+00A0) around it then still matches.
+const JS_TRIM_WHITESPACE_CODE_POINTS = [
+  0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x0020, 0x00a0, 0x1680, 0x2000, 0x2001, 0x2002, 0x2003, 0x2004,
+  0x2005, 0x2006, 0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000, 0xfeff,
+];
+// Built with chr() so the SQL holds no raw control characters, backslashes or `?`.
+const JS_TRIM_WHITESPACE_SQL = JS_TRIM_WHITESPACE_CODE_POINTS.map((codePoint) => `chr(${codePoint})`).join(
+  " || "
+);
+const trimLikeJavaScript = (sql) => `BTRIM(${sql}, ${JS_TRIM_WHITESPACE_SQL})`;
+
 asyncModule(async () => {
   const embeddedSpecs = getEmbeddedDimensionSpecs(COMPILE_CONTEXT);
 
@@ -27,6 +41,12 @@ asyncModule(async () => {
     // `equals` filters are moved onto this twin by queryRewrite; its containment predicate is in `sql`.
     embeddedDimensions[spec.equalsName] = {
       sql: (CUBE) => `${CUBE}.${spec.valueSql}`,
+      type: `string`,
+      shown: false,
+    };
+    // The key's value lowercased and trimmed: what a Dashboard Viewer access condition matches on (ADR-0061).
+    embeddedDimensions[spec.normalizedName] = {
+      sql: (CUBE) => `LOWER(${trimLikeJavaScript(`${CUBE}.${spec.valueSql}`)})`,
       type: `string`,
       shown: false,
     };

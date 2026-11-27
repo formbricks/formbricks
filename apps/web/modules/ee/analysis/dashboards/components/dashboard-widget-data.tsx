@@ -27,6 +27,8 @@ interface DashboardWidgetDataProps {
   /** Saved display settings of the chart behind this widget. */
   config?: TChartConfig;
   view?: TWidgetView;
+  /** Added in edit mode and not saved yet: read through the chart, not the dashboard. */
+  isUnsaved?: boolean;
 }
 
 /**
@@ -42,6 +44,7 @@ export function DashboardWidgetData({
   chartType,
   config,
   view = DEFAULT_WIDGET_VIEW,
+  isUnsaved = false,
 }: Readonly<DashboardWidgetDataProps>) {
   const { t, i18n } = useTranslation();
   const {
@@ -49,7 +52,7 @@ export function DashboardWidgetData({
     isPending,
     isError,
     error,
-  } = useChartData({ dashboardId, chartId, dateRange, filters });
+  } = useChartData({ dashboardId, chartId, dateRange, filters, isUnsaved });
 
   if (isPending) return <DashboardWidgetSkeleton />;
 

@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  MAX_TEXT_BLOCK_DESCRIPTION_LENGTH,
+  MAX_TEXT_BLOCK_HEADLINE_LENGTH,
+  ZDashboardImageContent,
+  ZDashboardWidgetKind,
+} from "@formbricks/types/analysis";
 import { ZV3ChartData, ZV3ChartResource } from "@/app/api/v3/charts/lib/resources";
 import { DASHBOARD_FILTER_OPERATORS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 
@@ -27,17 +33,50 @@ const dashboardBase = {
 export const ZV3DashboardListItem = z.object({ ...dashboardBase, widgetCount: z.number().int() }).strict();
 export type TV3DashboardListItem = z.infer<typeof ZV3DashboardListItem>;
 
-/** One chart's placement on a dashboard. `chart` is exactly what reading the chart returns. */
+/**
+ * A text block's content as read: the write refuses both parts empty, the read describes what is stored.
+ */
+const ZV3TextBlockContent = z
+  .object({
+    headline: z.string().max(MAX_TEXT_BLOCK_HEADLINE_LENGTH),
+    description: z.string().max(MAX_TEXT_BLOCK_DESCRIPTION_LENGTH),
+  })
+  .strict();
+
+/**
+ * One block on one Dashboard page: a chart's placement (`kind: chart`, with `chartId` and `chart`, exactly
+ * what reading the chart returns) or a layout block — an image or text block with its `content`, or a
+ * separator. `chartId` and `chart` are null on a layout block; `content` is null on a chart and a separator.
+ */
 export const ZV3DashboardWidget = z
   .object({
     id: z.string(),
-    chartId: z.string(),
+    pageId: z.string(),
+    kind: ZDashboardWidgetKind,
+    chartId: z.string().nullable(),
     layout: ZV3WidgetLayout,
     order: z.number().int(),
-    chart: ZV3ChartResource,
+    chart: ZV3ChartResource.nullable(),
+    content: z.union([ZDashboardImageContent, ZV3TextBlockContent]).nullable(),
   })
   .strict();
 export type TV3DashboardWidget = z.infer<typeof ZV3DashboardWidget>;
+
+/**
+ * A Dashboard page: a tab of the dashboard, in `order`. While `limited` is false every team that can open
+ * the dashboard sees it ("All teams"); while it is true only the Dashboard Viewers of `teamIds` do, and none
+ * when `teamIds` is empty (a page limited to no team, or whose limited teams were all deleted).
+ */
+export const ZV3DashboardPage = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    order: z.number().int(),
+    limited: z.boolean(),
+    teamIds: z.array(z.string()),
+  })
+  .strict();
+export type TV3DashboardPage = z.infer<typeof ZV3DashboardPage>;
 
 /**
  * One locked dashboard filter as read: the field, the operator and the values an editor locked it to, and
@@ -54,8 +93,31 @@ export const ZV3DashboardFilter = z
   .strict();
 export type TV3DashboardFilter = z.infer<typeof ZV3DashboardFilter>;
 
+/**
+ * What the reader's Dashboard Viewer access (ADR-0061) leaves them, on a dashboard read: one chip per
+ * condition of the datasets on the pages they can open, and whether they see every record
+ * (`unrestricted`), only matching ones (`restricted`), or nothing because an attribute a condition needs
+ * has no value (`unmatched`). Owners, Managers, Members and API keys always read `unrestricted`.
+ */
+export const ZV3DashboardViewerAccess = z
+  .object({
+    status: z.enum(["unrestricted", "restricted", "unmatched"]),
+    chips: z.array(
+      z.object({ label: z.string(), values: z.array(z.string()), attributeLabel: z.string() }).strict()
+    ),
+  })
+  .strict();
+export type TV3DashboardViewerAccess = z.infer<typeof ZV3DashboardViewerAccess>;
+
 export const ZV3DashboardResource = z
-  .object({ ...dashboardBase, filters: z.array(ZV3DashboardFilter), widgets: z.array(ZV3DashboardWidget) })
+  .object({
+    ...dashboardBase,
+    filters: z.array(ZV3DashboardFilter),
+    pages: z.array(ZV3DashboardPage),
+    widgets: z.array(ZV3DashboardWidget),
+    /** Only on `GET /api/v3/dashboards/{dashboardId}`: the reader's Dashboard Viewer access. */
+    viewerAccess: ZV3DashboardViewerAccess.optional(),
+  })
   .strict();
 export type TV3DashboardResource = z.infer<typeof ZV3DashboardResource>;
 

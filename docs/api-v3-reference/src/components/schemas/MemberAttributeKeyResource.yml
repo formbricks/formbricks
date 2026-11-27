@@ -1,0 +1,41 @@
+type: object
+additionalProperties: false
+description: >-
+  A Member attribute key: one entry of the organization-wide list Owners and Managers define, such as
+  Country. Dashboard Viewer access matches a Feedback Record field against a viewer's values for it. The
+  built-in Email attribute is the login email and is never listed.
+required:
+  - id
+  - key
+  - label
+  - description
+  - createdAt
+  - updatedAt
+properties:
+  id:
+    type: string
+    format: cuid2
+  key:
+    type: string
+    pattern: "^[a-z][a-z0-9_]*$"
+    maxLength: 64
+    description: >-
+      The identifier used in Dashboard Viewer access, CSV columns and the bulk values request. Set at
+      creation and never changes.
+  label:
+    type: string
+    minLength: 1
+    maxLength: 100
+    description: The name shown as a column and field label.
+  description:
+    type:
+      - string
+      - "null"
+    maxLength: 500
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    description: Send it back as `expectedUpdatedAt` to change or delete the key.

@@ -1,5 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { createTestDashboard } from "@/integration/dashboard-rows";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -61,12 +62,12 @@ beforeEach(async () => {
   await prisma.chart.deleteMany({ where: { name: { startsWith: "Weekly NPS (copy" } } });
   await prisma.dashboard.deleteMany({ where: { workspaceId: fixture.workspaceId } });
   dashboardId = (
-    await prisma.dashboard.create({
+    await createTestDashboard({
       data: {
         name: "Board",
         workspaceId: fixture.workspaceId,
         updatedAt: STALE,
-        widgets: { create: [{ chartId: sourceId, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }] },
+        widgets: { create: [{ chartId: sourceId, layout: { x: 0, y: 0, w: 6, h: 16 }, order: 0 }] },
       },
     })
   ).id;
@@ -110,7 +111,7 @@ describe("POST /api/v3/charts/{chartId}/duplicate", () => {
     expect(copy.dashboards).toEqual([{ id: dashboardId, name: "Board" }]);
 
     const widget = await prisma.dashboardWidget.findFirstOrThrow({ where: { chartId: copy.id } });
-    expect(widget).toMatchObject({ dashboardId, layout: { x: 6, y: 0, w: 4, h: 4 }, order: 1 });
+    expect(widget).toMatchObject({ dashboardId, layout: { x: 6, y: 0, w: 4, h: 16 }, order: 1 });
     expect(await dashboardUpdatedAt()).toBeGreaterThan(STALE.getTime());
   });
 
@@ -146,7 +147,7 @@ describe("POST /api/v3/charts/{chartId}/duplicate", () => {
   });
 
   test("needs write access to the workspace and the dataset, and a dashboard in the same workspace", async () => {
-    const foreignDashboard = await prisma.dashboard.create({
+    const foreignDashboard = await createTestDashboard({
       data: { name: "Foreign", workspaceId: fixture.foreignWorkspaceId },
     });
     const unassigned = await prisma.chart.create({

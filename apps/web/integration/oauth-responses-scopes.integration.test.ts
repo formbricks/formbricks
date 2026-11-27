@@ -8,6 +8,7 @@ import { eng2862GrantResponsesScopes } from "../../../packages/database/migratio
 import { grantDashboardsScopes } from "../../../packages/database/migration/20261022120000_grant_dashboards_scopes/migration";
 // And the next family's (ENG-7151).
 import { grantAudienceScope } from "../../../packages/database/migration/20261112130000_grant_audience_scope/migration";
+import { grantOrganizationScope } from "../../../packages/database/migration/20261123130000_grant_organization_scope/migration";
 
 /**
  * ENG-2862 against real Postgres. This migration exists because the failure it prevents is silent:
@@ -71,6 +72,7 @@ describe("ENG-2862 responses scope grant", () => {
     await runGrant();
     await grantDashboardsScopes.run!({ prisma, tx: prisma as never });
     await grantAudienceScope.run!({ prisma, tx: prisma as never });
+    await grantOrganizationScope.run!({ prisma, tx: prisma as never });
 
     const allowed = new Set(await scopesOf(identifier));
     expect(MCP_OAUTH_SCOPES.filter((scope) => !allowed.has(scope))).toEqual([]);

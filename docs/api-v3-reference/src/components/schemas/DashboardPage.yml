@@ -1,0 +1,33 @@
+type: object
+description: >-
+  A dashboard page: one tab of the dashboard. Every dashboard has at least one. While `limited` is
+  false, every team that can open the dashboard sees the page. While it is true, only the Dashboard
+  Viewers of the `teamIds` teams do, and none when `teamIds` is empty (a page limited to no team, or
+  whose limited teams were all deleted). The limit binds Dashboard Viewers only: Owners, Managers,
+  Members and API keys see every page.
+required:
+  - id
+  - name
+  - order
+  - limited
+  - teamIds
+properties:
+  id:
+    type: string
+    format: cuid2
+  name:
+    type: string
+    maxLength: 100
+  order:
+    type: integer
+    minimum: 0
+    description: Sort key of the tab, ascending.
+  limited:
+    type: boolean
+    description: Whether the page is limited to `teamIds`.
+  teamIds:
+    type: array
+    items:
+      type: string
+      format: cuid2
+additionalProperties: false

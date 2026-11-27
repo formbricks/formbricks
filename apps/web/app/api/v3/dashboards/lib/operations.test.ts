@@ -2,12 +2,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import {
+  getDashboardReadSubject,
   refuseUnlessFeedbackDatasetAccess,
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
 import { problemDashboardsPlanRequired, problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { createViewerDashboardListScope, limitEmbeddedChartDashboards } from "./dashboard-read-access";
 import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
 import {
   createV3Dashboard,
@@ -20,6 +23,8 @@ import {
   setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "./operations";
+import { canManageDashboardAccess } from "./page-access";
+import { type TDashboardReplaceResult, replaceDashboardRow } from "./replace-service";
 import type { TV3DashboardReplaceBody } from "./schemas";
 import {
   type TDashboardListRow,
@@ -30,9 +35,9 @@ import {
   getDashboardResourceRow,
   getDashboardWorkspaceRow,
   listDashboardRows,
+  listReadableDashboardRows,
   renameDashboardRow,
 } from "./service";
-import { type TDashboardReplaceResult, replaceDashboardRow } from "./widget-service";
 
 vi.mock("server-only", () => ({}));
 // vitestSetup fakes createHash; the cursor's filter fingerprint needs the real one to round-trip.
@@ -44,6 +49,19 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   requireDashboardsAccess: vi.fn(),
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
+  getDashboardReadSubject: vi.fn(() => null),
+  getViewerAccessReader: vi.fn(() => null),
+  queueViewedAsAudit: vi.fn(async () => undefined),
+}));
+vi.mock("./dashboard-read-access", () => ({
+  refuseUnlessDashboardOpenable: vi.fn(async () => null),
+  getReadablePageIds: vi.fn(async (_access: unknown, pageIds: string[]) => new Set(pageIds)),
+  createViewerDashboardListScope: vi.fn(),
+  limitEmbeddedChartDashboards: vi.fn(async (_access: unknown, widgets: unknown[]) => widgets),
+}));
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
+vi.mock("@/modules/ee/dashboard-access/lib/viewer-data-access", () => ({
+  getViewerAccessSummary: vi.fn(async () => ({ status: "unrestricted", chips: [] })),
 }));
 vi.mock("./embedded-filter-fields", () => ({ findUnknownEmbeddedFilterFields: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
@@ -54,9 +72,14 @@ vi.mock("./service", () => ({
   getDashboardResourceRow: vi.fn(),
   getDashboardWorkspaceRow: vi.fn(),
   listDashboardRows: vi.fn(),
+  listReadableDashboardRows: vi.fn(),
   renameDashboardRow: vi.fn(),
 }));
-vi.mock("./widget-service", () => ({ replaceDashboardRow: vi.fn() }));
+vi.mock("./replace-service", () => ({ replaceDashboardRow: vi.fn() }));
+vi.mock("./page-access", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./page-access")>()),
+  canManageDashboardAccess: vi.fn(async () => false),
+}));
 
 const WORKSPACE_ID = "clws000000000000000000001";
 const ORGANIZATION_ID = "clor000000000000000000001";
@@ -65,6 +88,7 @@ const COPY_ID = "clda000000000000000000002";
 const WIDGET_A = "clwi000000000000000000001";
 const WIDGET_B = "clwi000000000000000000002";
 const CHART_ID = "clch000000000000000000001";
+const PAGE_ID = "clpg000000000000000000001";
 const USER_ID = "clus000000000000000000001";
 const REQUEST_ID = "req_1";
 const INSTANCE = "/api/v3/dashboards";
@@ -116,8 +140,18 @@ const dashboardRow = (overrides: Partial<TDashboardResourceRow> = {}): TDashboar
     createdAt: new Date("2026-02-01T00:00:00.000Z"),
     updatedAt: new Date("2026-02-02T00:00:00.000Z"),
     creator: { name: "Editor" },
+    pages: [{ id: PAGE_ID, name: "Overview", order: 0, teamLimited: false, teamLimits: [] }],
     widgets: [
-      { id: WIDGET_A, chartId: CHART_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0, chart: chartRow },
+      {
+        id: WIDGET_A,
+        pageId: PAGE_ID,
+        kind: "chart",
+        chartId: CHART_ID,
+        content: null,
+        layout: { x: 0, y: 0, w: 6, h: 4 },
+        order: 0,
+        chart: chartRow,
+      },
     ],
     ...overrides,
   }) as TDashboardResourceRow;
@@ -162,6 +196,73 @@ describe("listV3Dashboards", () => {
       }
     );
     expect(listDashboardRows).not.toHaveBeenCalled();
+  });
+
+  test("a Dashboard Viewer's list walks readable rows, and resumes after the scan ceiling", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValue({ ...granted, asDashboardViewer: true } as never);
+    vi.mocked(getDashboardReadSubject).mockReturnValueOnce({ type: "user", id: "viewer-1" } as never);
+    const readable = vi.fn();
+    vi.mocked(createViewerDashboardListScope).mockReturnValue({ readable, widgetCount: () => 0 });
+    const last = listRow("clda000000000000000000099", "2026-02-01T00:00:00.000Z");
+    vi.mocked(listReadableDashboardRows).mockResolvedValue({ rows: [], resumeAfter: last });
+
+    const response = await list({ "filter[chartId][eq]": CHART_ID });
+
+    expect(response.status).toBe(200);
+    expect(listDashboardRows).not.toHaveBeenCalled();
+    expect(createViewerDashboardListScope).toHaveBeenCalledWith(
+      { type: "user", id: "viewer-1" },
+      WORKSPACE_ID,
+      CHART_ID
+    );
+    expect(vi.mocked(listReadableDashboardRows).mock.calls[0][0].readable).toBe(readable);
+    const body = await response.json();
+    expect(body.data).toEqual([]);
+    expect(typeof body.meta.nextCursor).toBe("string");
+  });
+
+  test("a Dashboard Viewer's list counts only the widgets on pages they can open", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValue({ ...granted, asDashboardViewer: true } as never);
+    vi.mocked(getDashboardReadSubject).mockReturnValueOnce({ type: "user", id: "viewer-1" } as never);
+    vi.mocked(createViewerDashboardListScope).mockReturnValue({ readable: vi.fn(), widgetCount: () => 2 });
+    vi.mocked(listReadableDashboardRows).mockResolvedValue({
+      rows: [listRow(DASHBOARD_ID, "2026-03-01T00:00:00.000Z", 5)],
+      resumeAfter: null,
+    });
+
+    const body = await (await list()).json();
+
+    expect(body.data.map((row: { widgetCount: number }) => row.widgetCount)).toEqual([2]);
+  });
+
+  test("audits a View as list once against the workspace, even when it lists nothing", async () => {
+    vi.mocked(requireDashboardsAccess).mockResolvedValue({
+      ...granted,
+      viewAs: { userId: "clus000000000000000000009", actorUserId: USER_ID },
+    });
+    vi.mocked(listDashboardRows).mockResolvedValue([]);
+
+    const response = await list({ viewAs: "clus000000000000000000009" });
+
+    expect(response.status).toBe(200);
+    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "viewedAs",
+        targetType: "workspace",
+        targetId: WORKSPACE_ID,
+        userId: USER_ID,
+        organizationId: ORGANIZATION_ID,
+        newObject: { workspaceId: WORKSPACE_ID, viewedAsUserId: "clus000000000000000000009" },
+      })
+    );
+  });
+
+  test("does not audit an ordinary list read", async () => {
+    vi.mocked(listDashboardRows).mockResolvedValue([]);
+
+    expect((await list()).status).toBe(200);
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
   });
 
   test("scopes the read to the authorized workspace and serializes a widget count", async () => {
@@ -286,15 +387,31 @@ describe("getV3Dashboard", () => {
       creator: { name: "Editor" },
       createdAt: "2026-02-01T00:00:00.000Z",
     });
+    expect(data.pages).toEqual([{ id: PAGE_ID, name: "Overview", order: 0, limited: false, teamIds: [] }]);
     expect(data.widgets).toEqual([
       {
         id: WIDGET_A,
+        pageId: PAGE_ID,
+        kind: "chart",
         chartId: CHART_ID,
         layout: { x: 0, y: 0, w: 6, h: 4 },
         order: 0,
         chart: expect.objectContaining({ id: CHART_ID, dashboards: [{ id: DASHBOARD_ID, name: "Board" }] }),
+        content: null,
       },
     ]);
+  });
+
+  test("embeds each chart with only the dashboards the reader can open", async () => {
+    vi.mocked(getDashboardResourceRow).mockResolvedValue(dashboardRow());
+    vi.mocked(limitEmbeddedChartDashboards).mockImplementationOnce(async (_access, widgets) =>
+      widgets.map((widget) => ({ ...widget, chart: widget.chart && { ...widget.chart, widgets: [] } }))
+    );
+
+    const { data } = await (await get()).json();
+
+    expect(vi.mocked(limitEmbeddedChartDashboards).mock.calls[0][1]).toHaveLength(1);
+    expect(data.widgets[0].chart.dashboards).toEqual([]);
   });
 
   test("passes a plan refusal through", async () => {
@@ -647,7 +764,8 @@ describe("replaceV3Dashboard (PUT)", () => {
   test("writes the name and every widget against the caller's updatedAt, and audits before and after", async () => {
     const previous = {
       name: "Board",
-      widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 }],
+      pages: [{ id: PAGE_ID, name: "Overview", order: 0, limited: false, teamIds: [] }],
+      widgets: [{ id: WIDGET_A, pageId: PAGE_ID, layout: { x: 0, y: 0, w: 4, h: 4 }, order: 0 }],
     };
     resultIs({ kind: "ok", row: dashboardRow({ name: "Saved" }), previous });
     const log = auditLog();
@@ -657,9 +775,11 @@ describe("replaceV3Dashboard (PUT)", () => {
     expect(response.status).toBe(200);
     expect(replaceDashboardRow).toHaveBeenCalledWith({
       dashboardId: DASHBOARD_ID,
+      workspaceId: WORKSPACE_ID,
       expectedUpdatedAt: new Date(EXPECTED_UPDATED_AT),
       name: "Saved",
       widgets,
+      canManageAccess: false,
     });
     expect((await response.json()).data).toMatchObject({ id: DASHBOARD_ID, name: "Saved" });
     expect(log).toEqual({
@@ -669,9 +789,35 @@ describe("replaceV3Dashboard (PUT)", () => {
       newObject: {
         name: "Saved",
         filters: [],
-        widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
+        pages: [{ id: PAGE_ID, name: "Overview", order: 0, limited: false, teamIds: [] }],
+        widgets: [{ id: WIDGET_A, pageId: PAGE_ID, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
       },
     });
+  });
+
+  test("asks whether the caller may manage access only when the save carries team limits", async () => {
+    resultIs({ kind: "ok", row: dashboardRow(), previous: { name: "Board", pages: [], widgets: [] } });
+    const body = {
+      name: "Saved",
+      expectedUpdatedAt: EXPECTED_UPDATED_AT,
+      pages: [{ pageId: PAGE_ID, name: "Overview", order: 0, teamIds: ["clte000000000000000000001"] }],
+      widgets,
+    };
+    vi.mocked(canManageDashboardAccess).mockResolvedValueOnce(true);
+    expect((await replaceV3Dashboard({ dashboardId: DASHBOARD_ID, body, ...contextOf() })).status).toBe(200);
+    expect(canManageDashboardAccess).toHaveBeenCalledWith(session, DASHBOARD_ID, ORGANIZATION_ID);
+    expect(replaceDashboardRow).toHaveBeenCalledWith(
+      expect.objectContaining({ pages: body.pages, canManageAccess: true })
+    );
+  });
+
+  test("answers 403 for a team limit change the caller may not make, and 422 for a team it cannot pick", async () => {
+    resultIs({ kind: "accessDenied" });
+    expect((await replace()).status).toBe(403);
+    resultIs({ kind: "ineligibleTeams", teamIds: ["clte000000000000000000001"] });
+    const response = await replace();
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params[0].name).toBe("pages");
   });
 
   test("answers 409 with both timestamps when the dashboard changed since the caller's read", async () => {
@@ -829,7 +975,7 @@ describe("updateV3DashboardLayout (MCP update_dashboard_layout)", () => {
     vi.mocked(replaceDashboardRow).mockResolvedValue({
       kind: "ok",
       row: dashboardRow(),
-      previous: { name: "Board", widgets: [] },
+      previous: { name: "Board", pages: [], widgets: [] },
     });
     const log = auditLog();
 
@@ -838,6 +984,7 @@ describe("updateV3DashboardLayout (MCP update_dashboard_layout)", () => {
     expect(response.status).toBe(200);
     expect(replaceDashboardRow).toHaveBeenCalledWith({
       dashboardId: DASHBOARD_ID,
+      workspaceId: WORKSPACE_ID,
       expectedUpdatedAt: new Date(EXPECTED_UPDATED_AT),
       widgets,
       requireEveryWidget: true,
@@ -896,7 +1043,7 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
     vi.mocked(replaceDashboardRow).mockResolvedValue({
       kind: "ok",
       row: dashboardRow(),
-      previous: { name: "Board", filters: [], widgets: [] },
+      previous: { name: "Board", filters: [], pages: [], widgets: [] },
     });
     const log = auditLog();
 
@@ -905,6 +1052,7 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
     expect(response.status).toBe(200);
     expect(replaceDashboardRow).toHaveBeenCalledWith({
       dashboardId: DASHBOARD_ID,
+      workspaceId: WORKSPACE_ID,
       expectedUpdatedAt: new Date(EXPECTED_UPDATED_AT),
       filters,
     });
@@ -915,7 +1063,7 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
     vi.mocked(replaceDashboardRow).mockResolvedValue({
       kind: "ok",
       row: dashboardRow(),
-      previous: { name: "Board", filters, widgets: [] },
+      previous: { name: "Board", filters, pages: [], widgets: [] },
     });
 
     expect((await setFilters(undefined, [])).status).toBe(200);
@@ -939,7 +1087,7 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
     vi.mocked(replaceDashboardRow).mockResolvedValue({
       kind: "ok",
       row: dashboardRow(),
-      previous: { name: "Board", filters: [], widgets: [] },
+      previous: { name: "Board", filters: [], pages: [], widgets: [] },
     });
     vi.mocked(refuseUnlessFeedbackDatasetAccess).mockImplementation(async (_auth, _access, datasetId) =>
       datasetId === "clds000000000000000000002" ? refused() : null

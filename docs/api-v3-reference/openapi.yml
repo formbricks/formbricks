@@ -18,7 +18,11 @@ info:
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET /api/v3/workflows/{workflowId}/webhook**, **POST /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request** and **PUT /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response**, Test runs **POST /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no login: the token in its path is the credential.
 
-    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
+    **Member attributes**: an organization's Member attribute keys (**GET**, **POST /api/v3/organizations/{organizationId}/member-attribute-keys**; **GET**, **PATCH**, **DELETE /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}**) and members' values for them (**GET /api/v3/organizations/{organizationId}/member-attributes**, **PUT /api/v3/organizations/{organizationId}/member-attributes/bulk**), which Dashboard Viewer access matches on. Owners and Managers, or an API key with Access Control read or write; they need Access Control and Dashboards.
+
+    **Dashboard access**: a Feedback Dataset's Dashboard Viewer access (**GET**, **PUT /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access**) and a team's dashboard limits (**GET**, **PUT /api/v3/teams/{teamId}/dashboard-limits**). Same access and plan as Member attributes.
+
+    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; its pages (**POST /api/v3/dashboards/{dashboardId}/pages**; **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/pages/{pageId}**); **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
       them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
       …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
@@ -39,12 +43,17 @@ info:
       Editing it changes all of them — duplicate it and repoint one dashboard's widget to change it
       there only. A chart still on a dashboard cannot be deleted: **409 `chart_in_use`** lists them in
       `details.dashboards`.
-    - **Grid.** Widgets sit on a 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
-      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed, overlaps answer **422** naming the widget, and a
-      chart appears at most once per dashboard (**409**). A widget added without a layout takes the
-      first open slot at its chart type's default size.
-    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name and every widget at once
-      and removes widgets left out. Send the `updatedAt` you read: if the dashboard changed since,
+    - **Pages.** A dashboard has one or more pages (tabs), each with its own grid; every widget names
+      its `pageId`. A chart appears at most once per page (**409**) but can sit on several pages of one
+      dashboard. Besides charts, a page holds layout blocks: images, text blocks and separators
+      (`kind`). A page can be limited to selected teams (`limited`, `teamIds`), or to none; the limit
+      binds Dashboard Viewers only, and only a signed-in Owner or Manager with Access Control may change
+      it.
+    - **Grid.** Widgets sit on a page's 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
+      `1 ≤ h ≤ 32`, `0 ≤ y ≤ 4000`). Gaps are allowed and overlaps on a page answer **422** naming the
+      widget. A widget added without a layout takes the first open slot at its default size.
+    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name, the pages and every widget
+      at once, creates the new ones and removes the ones left out. Send the `updatedAt` you read: if the dashboard changed since,
       nothing is saved and **409** carries `expectedUpdatedAt` and `currentUpdatedAt` in `details`.
       Every widget change moves `updatedAt`.
 
@@ -5225,10 +5234,16 @@ paths:
       description: |
         Lists a workspace's dashboards, newest first, page by page, each with its widget count.
         `filter[chartId][eq]` lists the dashboards that hold a chart. Needs read access to the workspace.
+
+        A Dashboard Viewer lists only the dashboards their team dashboard limits leave them and that have
+        at least one page they can open; `widgetCount` counts only the widgets on those pages, and
+        `filter[chartId][eq]` matches only a chart on such a page. A list read with `viewAs` is audited
+        once as `viewedAs` against the workspace, whatever it returns.
       tags:
         - V3 Dashboards
       parameters:
         - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/ViewAsQuery'
         - in: query
           name: limit
           schema:
@@ -5354,12 +5369,15 @@ paths:
         Returns a dashboard with every widget and its full chart, and its filters, so one call tells a
         caller what is on it. Read each widget's numbers from
         `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`. The workspace is resolved
-        from the dashboard, so the operation takes no query parameters. Needs read access to the
+        from the dashboard, so the only query parameter is `viewAs`. Needs read access to the
         dashboard's workspace; a dashboard the caller cannot see, or that does not exist, answers 403.
+        A Dashboard Viewer reads it only when a team dashboard limit leaves it to them, and sees only the
+        pages they can open, with their widgets; `viewerAccess` tells them which records they see.
       tags:
         - V3 Dashboards
       parameters:
         - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/ViewAsQuery'
       responses:
         '200':
           description: The dashboard
@@ -5453,8 +5471,11 @@ paths:
       operationId: replaceDashboardV3
       summary: Save a whole dashboard
       description: |
-        Replaces a dashboard's name and every widget's place in one transaction — all of it or none of
-        it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
+        Replaces a dashboard's name, its pages and every widget's page, place and content in one
+        transaction — all of it or none of it. A widget left out is removed; its chart is kept. A page
+        left out of `pages` is removed with its widgets; new pages and widgets are created. Widgets may
+        leave gaps but not overlap on a page (422), and a chart appears at most once per page (409).
+        Changing a page's `teamIds` needs a signed-in Owner or Manager with Access Control (403).
         Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
         is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
 
@@ -5505,7 +5526,7 @@ paths:
         '403':
           $ref: '#/components/responses/V3DashboardsForbidden'
         '409':
-          description: 'Conflict — the dashboard changed since your read, or the name is already used in the workspace. Nothing was written. For a changed dashboard, `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`: read it again and retry.'
+          description: 'Conflict — the dashboard changed since your read, the name is already used in the workspace, a chart appears twice on one page, or new widgets would take the dashboard past 250 widgets. Nothing was written. For a changed dashboard, `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`: read it again and retry.'
           headers:
             X-Request-Id:
               schema:
@@ -5626,17 +5647,170 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/pages:
+    post:
+      operationId: createDashboardPageV3
+      summary: Add a page to a dashboard
+      description: |
+        Adds a page (a tab) after the dashboard's last one, open to every team that can open the dashboard.
+        A dashboard holds at most 50 pages: an add past that answers 409. Pages are reordered with
+        `PUT /api/v3/dashboards/{dashboardId}`. Moves the dashboard's `updatedAt`. Needs write access to the
+        dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardPageCreateRequest'
+      responses:
+        '201':
+          description: The new page
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/dashboards/cldash00000000000000000001/pages/clpage0000000000000000001
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardPage'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/pages/{pageId}:
+    patch:
+      operationId: updateDashboardPageV3
+      summary: Rename a page or limit it to teams
+      description: |
+        Renames a page, sets which teams' Dashboard Viewers see it (`teamIds`: a list of teams, an empty
+        list for no team, or `null` for every team), or both. Changing the team
+        limit needs an Owner or Manager signed in and the Access Control feature — an API key gets 403 — and
+        a team that holds no grant on the dashboard's workspace, or whose dashboard limit leaves this
+        dashboard out, answers 422 naming it. A limit sent back unchanged needs neither. Moves the
+        dashboard's `updatedAt`. Needs write access to the dashboard's workspace; a page of another
+        dashboard answers 403.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/PageIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardPageUpdateRequest'
+      responses:
+        '200':
+          description: The updated page
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardPage'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteDashboardPageV3
+      summary: Delete a page
+      description: |
+        Deletes a page and every widget on it; the charts they showed are kept. A dashboard keeps at least
+        one page: deleting its last answers 409. Moves the dashboard's `updatedAt`. Needs write access to
+        the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/PageIdPath'
+      responses:
+        '204':
+          description: Page deleted with its widgets; the charts are kept
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/dashboards/{dashboardId}/widgets:
     post:
       operationId: addDashboardWidgetV3
-      summary: Add a chart to a dashboard
+      summary: Add a chart or a layout block to a dashboard
       description: |
-        Puts an existing chart on a dashboard. Without a `layout` the chart lands in the first open slot
-        at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
-        a layout covering another widget answers 422 naming it. A chart appears at most once per
-        dashboard (409), and must live in the dashboard's workspace. A dashboard holds at most 250
-        widgets, and a new widget takes the first open slot: an add past the cap, or with no open slot
-        above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
+        Puts an existing chart (`chartId`), or a layout block (`kind` image, text or separator), on a
+        dashboard page — `pageId`, or the dashboard's first page. Without a `layout` it lands in the first
+        open slot at its default size; with one, exactly there. Widgets may leave gaps but not overlap on
+        a page: a layout covering another widget answers 422 naming it. A chart appears at most once per
+        page (409), can sit on several pages, and must live in the dashboard's workspace. An image's
+        `fileUrl` must be a dashboard image uploaded to this workspace (422 otherwise). A dashboard holds
+        at most 250 widgets, and a new widget takes the first open slot: an add past the cap, or with no
+        open slot above the grid's last row, answers 409. Moves the dashboard's `updatedAt`.
         Needs write access to the dashboard's workspace.
       tags:
         - V3 Dashboards
@@ -5741,11 +5915,13 @@ paths:
         - bearerAuth: []
     patch:
       operationId: updateDashboardWidgetV3
-      summary: Move a widget or show another chart in it
+      summary: Move a widget, show another chart in it, or change a block
       description: |
-        Moves or resizes a widget, points it at another chart, or both. A layout covering another widget
-        answers 422 naming it; a chart already on the dashboard answers 409. Moves the dashboard's
-        `updatedAt`. Needs write access to the dashboard's workspace.
+        Moves or resizes a widget (on its page, or to another page with `pageId`), points a chart widget at
+        another chart, or changes an image or text block's `content`. A layout covering another widget
+        answers 422 naming it; a chart already on the page answers 409; a chart for a layout block, content
+        for a chart or an invalid content answers 422. Moves the dashboard's `updatedAt`. Needs write access
+        to the dashboard's workspace.
       tags:
         - V3 Dashboards
       parameters:
@@ -5861,6 +6037,7 @@ paths:
         - $ref: '#/components/parameters/DashboardDateToQuery'
         - $ref: '#/components/parameters/DashboardFilterRulesQuery'
         - $ref: '#/components/parameters/DashboardFilterPicksQuery'
+        - $ref: '#/components/parameters/ViewAsQuery'
       responses:
         '200':
           description: The chart's rows, narrowed by the dashboard date range and the picks
@@ -5982,8 +6159,10 @@ paths:
 
         Needs read access to the dashboard's workspace and to every Feedback Dataset its charts read.
         Every request counts against the default v3 budget, cached or not. Lists are cached
-        for 60 seconds per dashboard version, chart versions, filter, picks, date range and search,
-        shared by everyone who may read the dashboard; an uncached list also counts one unit of the
+        for 60 seconds per dashboard version, filter definitions, picks, date range and search, the
+        charts the reader's list draws on (for a Dashboard Viewer, only those on pages they can open) with
+        their versions, and each Feedback Dataset's Dashboard Viewer access claim for the reader. Readers
+        share a cached list only when all of these match; an uncached list also counts one unit of the
         chart-query budget (600 per minute, 20 at once, per user or API key) per Cube query it runs.
       tags:
         - V3 Dashboards
@@ -5995,6 +6174,7 @@ paths:
         - $ref: '#/components/parameters/DashboardDateToQuery'
         - $ref: '#/components/parameters/DashboardFilterRulesQuery'
         - $ref: '#/components/parameters/DashboardFilterPicksQuery'
+        - $ref: '#/components/parameters/ViewAsQuery'
         - in: query
           name: search
           schema:
@@ -6106,8 +6286,8 @@ paths:
         A dashboard-bound read: it needs read access to the dashboard's workspace, which a Dashboard viewer
         has, unlike the field catalog. A Feedback Dataset the caller cannot read through the dashboard is
         left out rather than failing the list. A dashboard with no charts lists nothing. The workspace is
-        resolved from the dashboard, so the operation takes no query parameters; a dashboard the caller
-        cannot see, or that does not exist, answers 403.
+        resolved from the dashboard, so the only query parameter is `viewAs`; any other, such as
+        `workspaceId`, answers 400. A dashboard the caller cannot see, or that does not exist, answers 403.
 
         A Dashboard viewer gets only the keys some chart on the dashboard groups by: a key can hold anything,
         so a viewer filters by, and lists the values of, only what the charts already show them. Naming any
@@ -6116,6 +6296,7 @@ paths:
         - V3 Dashboards
       parameters:
         - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/ViewAsQuery'
       responses:
         '200':
           description: The dashboard's embedded-data filter fields
@@ -7979,6 +8160,583 @@ paths:
                       line: 3
                       column: 1
                       reason: Unexpected end of input
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/organizations/{organizationId}/member-attribute-keys:
+    get:
+      operationId: listMemberAttributeKeysV3
+      summary: List Member attribute keys
+      description: |
+        Returns the organization's Member attribute keys, oldest first (at most 50, so the list is not
+        paginated), each with how many members hold a value for it. The built-in Email attribute is the login
+        email and is not listed.
+
+        Needs an Owner or Manager session, or an API key of this organization with Access Control read or
+        write. Member attributes need Access Control and Dashboards (**403** `member_attributes_plan_required`
+        without them). Takes no query parameters: any query parameter answers **400**.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      responses:
+        '200':
+          description: The organization's Member attribute keys
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    maxItems: 50
+                    items:
+                      $ref: '#/components/schemas/MemberAttributeKeyListItem'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    post:
+      operationId: createMemberAttributeKeyV3
+      summary: Create a Member attribute key
+      description: |
+        Adds a key to the organization's list, such as `country`. Its `key` never changes afterwards; its
+        label and description can. An organization can have at most 50 keys (**422** naming `key` with
+        `limit_exceeded`); a `key` it already has answers **409**.
+
+        Needs an Owner or Manager session above the organization's user-management floor, or an API key of
+        this organization with Access Control write. Audited. Takes no query parameters: any query parameter answers **400**.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberAttributeKeyCreateRequest'
+      responses:
+        '201':
+          description: The created key
+          headers:
+            Location:
+              schema:
+                type: string
+              description: The key's URL
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberAttributeKeyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '409':
+          $ref: '#/components/responses/V3MemberAttributeKeyConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/organizations/{organizationId}/member-attribute-keys/{keyId}:
+    get:
+      operationId: getMemberAttributeKeyV3
+      summary: Get a Member attribute key
+      description: |
+        Returns one key. A key that does not exist in the organization answers **403**. Same access as the
+        list. Takes no query parameters: any query parameter answers **400**.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/MemberAttributeKeyIdPath'
+      responses:
+        '200':
+          description: The key
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberAttributeKeyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: updateMemberAttributeKeyV3
+      summary: Update a Member attribute key
+      description: |
+        Changes a key's label, description or both. Its `key` never changes. Send the `updatedAt` from your
+        read as `expectedUpdatedAt`: if the key changed since, the request answers **409** and nothing is
+        written. Same access as create. Audited. Takes no query parameters: any query parameter answers **400**.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/MemberAttributeKeyIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberAttributeKeyUpdateRequest'
+      responses:
+        '200':
+          description: The updated key
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberAttributeKeyResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '409':
+          $ref: '#/components/responses/V3MemberAttributeKeyConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteMemberAttributeKeyV3
+      summary: Delete a Member attribute key
+      description: |
+        Deletes a key and every value members and pending invites hold for it. Refused with **409**
+        `member_attribute_key_in_use` while Dashboard Viewer access of a Feedback Dataset matches on the key;
+        `details.datasets` names them. Send the `updatedAt` from your read as the required `expectedUpdatedAt`
+        query parameter (**400** without it): if the key changed since, the request answers **409** and nothing
+        is deleted. Same access as create. Audited.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - $ref: '#/components/parameters/MemberAttributeKeyIdPath'
+        - in: query
+          name: expectedUpdatedAt
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: 'The key''s `updatedAt` from your read. Required: deleting a key removes every value members hold for it, so the stale-write check is not optional.'
+      responses:
+        '200':
+          description: The key was deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - id
+                    properties:
+                      id:
+                        type: string
+                        format: cuid2
+                        description: The deleted key's id.
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '409':
+          $ref: '#/components/responses/V3MemberAttributeKeyConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/organizations/{organizationId}/member-attributes:
+    get:
+      operationId: listMemberAttributesV3
+      summary: List members' Member attribute values
+      description: |
+        Returns members' and pending invites' Member attribute values, keyed by attribute `key`: every
+        member first, then every pending invite. Use `meta.nextCursor` for the next page. `search` matches
+        name or email, ignoring case.
+
+        Needs an Owner or Manager session, or an API key of this organization with Access Control read or
+        write. Member attributes need Access Control and Dashboards (**403** `member_attributes_plan_required`
+        without them).
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250).
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: search
+          schema:
+            type: string
+            maxLength: 255
+          description: Case-insensitive substring match over name and email.
+      responses:
+        '200':
+          description: One page of members' values
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MemberAttributeRow'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/organizations/{organizationId}/member-attributes/bulk:
+    put:
+      operationId: bulkSetMemberAttributesV3
+      summary: Set members' Member attribute values in bulk
+      description: |
+        Sets Member attribute values for up to 500 people at once, matched by email: a member by their login
+        email, otherwise every pending invite to it (the values are copied onto the membership when the
+        person accepts). Each row replaces the values of the keys it names and leaves the others alone; an
+        empty list clears a key. All rows apply in one transaction.
+
+        The response reports every row: `updated_member`, `updated_invite`, `unknown_email` (invite the
+        person first, then send the row again) or `invalid` with its `problems` (an unknown key, a value past
+        a limit, a second row for the same email). A refused row writes nothing; the others still apply.
+
+        Needs an Owner or Manager session above the organization's user-management floor, or an API key of
+        this organization with Access Control write. Rate-limited to 20 requests a minute per caller on top of
+        the default limit. One audit event per request. Takes no query parameters: any query parameter answers **400**.
+      tags:
+        - V3 Member Attributes
+      parameters:
+        - $ref: '#/components/parameters/OrganizationIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberAttributesBulkRequest'
+      responses:
+        '200':
+          description: What each row did
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/MemberAttributesBulkResult'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3MemberAttributesForbidden'
+        '409':
+          description: 'Conflict (`code: conflict`). A matched member or invite was removed while the batch was being applied, so nothing was saved. Retry the request; the removed email is then reported as `unknown_email`.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/feedback-datasets/{datasetId}/dashboard-viewer-access:
+    get:
+      operationId: getDashboardViewerAccessV3
+      summary: Get a Feedback Dataset's Dashboard Viewer access
+      description: |
+        Which records of the dataset a Dashboard Viewer sees: its conditions, in order, and whether all or
+        any of them must hold. Owners and Managers, or an API key with Access Control read; needs Access
+        Control and Dashboards.
+      tags:
+        - V3 Dashboard Access
+      parameters:
+        - $ref: '#/components/parameters/DatasetIdPath'
+      responses:
+        '200':
+          description: The Dashboard Viewer access
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardViewerAccessResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardAccessForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    put:
+      operationId: replaceDashboardViewerAccessV3
+      summary: Replace a Feedback Dataset's Dashboard Viewer access
+      description: |
+        Replaces the join and every condition (at most 10). Send the `updatedAt` from your read as
+        `expectedUpdatedAt`: if the dataset changed since, the request answers **409** and nothing is
+        written. A field that is not a Feedback Record string field or `ed:<key>`, or a Member attribute of
+        another organization, answers **422**. A condition that repeats an earlier one (the same field
+        and the same Member attribute) answers **400**. Owners and Managers, or an API key with Access Control write;
+        needs Access Control and Dashboards. Audited.
+      tags:
+        - V3 Dashboard Access
+      parameters:
+        - $ref: '#/components/parameters/DatasetIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardViewerAccessReplaceRequest'
+      responses:
+        '200':
+          description: The replaced Dashboard Viewer access
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardViewerAccessResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardAccessForbidden'
+        '409':
+          description: 'Conflict — the dataset changed since the `expectedUpdatedAt` sent, so nothing was written. `details.currentUpdatedAt` holds the current one. Retrying with the same `expectedUpdatedAt` fails again: read the access again, reconcile your changes with its conditions, and retry with its `updatedAt`.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: The Feedback Dataset changed since it was read
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  currentUpdatedAt: '2026-10-22T11:30:00.000Z'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/teams/{teamId}/dashboard-limits:
+    get:
+      operationId: getTeamDashboardLimitsV3
+      summary: Get a team's dashboard limits
+      description: |
+        The dashboards the team's Dashboard Viewer members open in the team's workspaces. Read `limited`
+        to interpret an empty `dashboardIds`: with `limited: false` they open all of them; with
+        `limited: true` (every selected dashboard was deleted) they open none. `dashboards` lists every
+        dashboard of the organization (at most 1,000), to pick the limit from; a write accepts only those in
+        workspaces the team is granted. Owners and Managers, or an API key with Access Control read; needs
+        Access Control and Dashboards.
+      tags:
+        - V3 Dashboard Access
+      parameters:
+        - $ref: '#/components/parameters/TeamIdPath'
+      responses:
+        '200':
+          description: The team's dashboard limits
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TeamDashboardLimitsResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardAccessForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    put:
+      operationId: replaceTeamDashboardLimitsV3
+      summary: Replace a team's dashboard limits
+      description: |
+        Replaces the dashboards the team's Dashboard Viewer members open; an empty list opens every
+        dashboard of the team's workspaces. Each dashboard must be in a workspace the team is granted
+        (**422** otherwise). Losing a workspace grant removes the team's limits there. Owners and Managers,
+        or an API key with Access Control write; needs Access Control and Dashboards. Audited.
+      tags:
+        - V3 Dashboard Access
+      parameters:
+        - $ref: '#/components/parameters/TeamIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dashboardIds
+              properties:
+                dashboardIds:
+                  type: array
+                  maxItems: 200
+                  items:
+                    type: string
+                    format: cuid2
+              additionalProperties: false
+      responses:
+        '200':
+          description: The replaced dashboard limits
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TeamDashboardLimitsResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardAccessForbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -11331,10 +12089,13 @@ components:
             - conflict
             - creatives_not_entitled
             - custom_css_plan_required
+            - dashboard_access_plan_required
             - dashboards_plan_required
             - forbidden
             - internal_server_error
             - invalid_workflow_state
+            - member_attribute_key_in_use
+            - member_attributes_plan_required
             - not_authenticated
             - not_found
             - payload_too_large
@@ -16552,7 +17313,7 @@ components:
       additionalProperties: false
     WidgetLayout:
       type: object
-      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
+      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 32`, `0 ≤ y ≤ 4000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn. A unit of `y` and `h` is 24px, a quarter of the 96px a row occupied in earlier releases, so a height of 4 is what 1 used to be.'
       required:
         - x
         - 'y'
@@ -16566,7 +17327,7 @@ components:
         'y':
           type: integer
           minimum: 0
-          maximum: 1000
+          maximum: 4000
         w:
           type: integer
           minimum: 1
@@ -16574,7 +17335,7 @@ components:
         h:
           type: integer
           minimum: 1
-          maximum: 8
+          maximum: 32
       additionalProperties: false
     ChartDuplicateRequest:
       type: object
@@ -16588,6 +17349,10 @@ components:
           type: string
           format: cuid2
           description: 'Also put the copy on this dashboard, in the same transaction: if placing it fails, no copy is left behind. Must be in the chart''s workspace.'
+        pageId:
+          type: string
+          format: cuid2
+          description: The page of `dashboardId` to put the copy on. Without one, the dashboard's first page.
         layout:
           $ref: '#/components/schemas/WidgetLayout'
           description: Where to put the copy on `dashboardId`. Without one, the first open slot.
@@ -16702,39 +17467,174 @@ components:
           example:
             - Website
       additionalProperties: false
-    DashboardWidget:
+    DashboardPage:
       type: object
-      description: One chart's placement on the dashboard. `chart` is exactly what reading the chart returns.
+      description: 'A dashboard page: one tab of the dashboard. Every dashboard has at least one. While `limited` is false, every team that can open the dashboard sees the page. While it is true, only the Dashboard Viewers of the `teamIds` teams do, and none when `teamIds` is empty (a page limited to no team, or whose limited teams were all deleted). The limit binds Dashboard Viewers only: Owners, Managers, Members and API keys see every page.'
       required:
         - id
-        - chartId
-        - layout
+        - name
         - order
-        - chart
+        - limited
+        - teamIds
       properties:
         id:
           type: string
           format: cuid2
-        chartId:
+        name:
+          type: string
+          maxLength: 100
+        order:
+          type: integer
+          minimum: 0
+          description: Sort key of the tab, ascending.
+        limited:
+          type: boolean
+          description: Whether the page is limited to `teamIds`.
+        teamIds:
+          type: array
+          items:
+            type: string
+            format: cuid2
+      additionalProperties: false
+    DashboardImageContent:
+      type: object
+      description: An image block's content. `fileUrl` is a private file of the dashboard's workspace, uploaded in the app (`/storage/{workspaceId}/private/dashboards/{dashboardId}/{file}`); `null` while the block is empty. `fit` shows the whole image (`fit`) or fills the block's width (`fill`); `position` places a fitted image left, centre or right.
+      required:
+        - fileUrl
+        - fit
+        - position
+        - alt
+      properties:
+        fileUrl:
+          oneOf:
+            - type: string
+              maxLength: 2048
+            - type: 'null'
+        fit:
+          type: string
+          enum:
+            - fit
+            - fill
+        position:
+          type: string
+          enum:
+            - left
+            - center
+            - right
+        alt:
+          type: string
+          maxLength: 300
+          description: Alternative text for screen readers.
+      additionalProperties: false
+    DashboardTextContent:
+      type: object
+      description: 'A text block''s content: plain text, no markup or links. The description keeps its line breaks. A write needs a headline or a description (422 when both are blank).'
+      required:
+        - headline
+        - description
+      properties:
+        headline:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+      additionalProperties: false
+    DashboardWidget:
+      type: object
+      description: 'One block on one dashboard page: a chart''s placement (`kind: chart`; `chart` is exactly what reading the chart returns) or a layout block — an image, a text block or a separator. `chartId` and `chart` are `null` on a layout block; `content` is `null` on a chart and a separator.'
+      required:
+        - id
+        - pageId
+        - kind
+        - chartId
+        - layout
+        - order
+        - chart
+        - content
+      properties:
+        id:
           type: string
           format: cuid2
+        pageId:
+          type: string
+          format: cuid2
+          description: The dashboard page the widget sits on.
+        kind:
+          type: string
+          enum:
+            - chart
+            - image
+            - text
+            - separator
+        chartId:
+          oneOf:
+            - type: string
+              format: cuid2
+            - type: 'null'
         layout:
           $ref: '#/components/schemas/WidgetLayout'
         order:
           type: integer
           minimum: 0
         chart:
-          $ref: '#/components/schemas/ChartResource'
+          description: The chart, as reading it returns it, except that for a Dashboard Viewer its `dashboards` lists only the dashboards they can open.
+          oneOf:
+            - $ref: '#/components/schemas/ChartResource'
+            - type: 'null'
+        content:
+          oneOf:
+            - $ref: '#/components/schemas/DashboardImageContent'
+            - $ref: '#/components/schemas/DashboardTextContent'
+            - type: 'null'
+      additionalProperties: false
+    DashboardViewerAccess:
+      type: object
+      description: 'What the reader''s Dashboard Viewer access leaves them on this dashboard, decided from the conditions and the reader''s Member attribute values alone, without reading any record: `unrestricted` (every record: Owners, Managers, Members, API keys, and Dashboard Viewers of datasets without conditions), `restricted` (only records matching the conditions of the Feedback Datasets on the pages they can open; the reader''s values may still match no record), or `unmatched` (every dataset on those pages has conditions and each needs a Member attribute value the reader does not have). One chip per condition; conditions joined with "any" are one chip whose labels are joined with " or ".'
+      required:
+        - status
+        - chips
+      properties:
+        status:
+          type: string
+          enum:
+            - unrestricted
+            - restricted
+            - unmatched
+        chips:
+          type: array
+          description: 'One per distinct condition, across every dataset on the pages the reader can open: up to 10 per dataset, with no overall cap.'
+          items:
+            type: object
+            required:
+              - label
+              - values
+              - attributeLabel
+            properties:
+              label:
+                type: string
+                description: The dataset field the condition matches, as people read it.
+              values:
+                type: array
+                description: The reader's values the field must equal. Empty when they have none.
+                maxItems: 50
+                items:
+                  type: string
+              attributeLabel:
+                type: string
+                description: The Member attribute the values come from; `Email` for the built-in one.
+            additionalProperties: false
       additionalProperties: false
     DashboardResource:
       type: object
-      description: 'A dashboard: a named grid of widgets in a workspace, and the filters pinned to its top bar. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`.'
+      description: 'A dashboard: named pages of widgets in a workspace, and the filters pinned to its top bar. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data`.'
       required:
         - id
         - workspaceId
         - name
         - creator
         - filters
+        - pages
         - widgets
         - createdAt
         - updatedAt
@@ -16756,11 +17656,20 @@ components:
           maxItems: 10
           items:
             $ref: '#/components/schemas/DashboardFilter'
+        pages:
+          type: array
+          description: The dashboard's pages, in tab order. Always at least one.
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/DashboardPage'
         widgets:
           type: array
-          description: In display order.
+          description: Every widget on every page, in display order; each names its page in `pageId`.
           items:
             $ref: '#/components/schemas/DashboardWidget'
+        viewerAccess:
+          $ref: '#/components/schemas/DashboardViewerAccess'
         createdAt:
           type: string
           format: date-time
@@ -16771,7 +17680,7 @@ components:
       additionalProperties: false
     DashboardReplaceRequest:
       type: object
-      description: 'The whole edited dashboard: its name, every widget''s place and, optionally, its filters. A widget left out of `widgets` is removed (its chart is kept); without `filters` the saved ones are kept. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
+      description: 'The whole edited dashboard: its name, every widget''s page and place and, optionally, its filters and its pages. A widget left out of `widgets` is removed (its chart is kept); a page left out of `pages` is removed with the widgets still on it. Without `filters` or `pages` the saved ones are kept. New pages (by `key`) and new widgets (without `widgetId`) are created by the same write. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
       required:
         - name
         - expectedUpdatedAt
@@ -16791,19 +17700,74 @@ components:
           description: Every dashboard filter, in top-bar order, replacing the saved ones. At most 10; each `field` must be a catalog dimension and `operator` one it allows (422 naming the filter otherwise), and each `id` may appear once.
           items:
             $ref: '#/components/schemas/DashboardFilter'
-        widgets:
+        pages:
           type: array
-          maxItems: 1000
+          minItems: 1
+          maxItems: 50
+          description: 'Every page, in tab order: an existing one by `pageId`, or a new one by a `key` of your choosing that the save''s widgets use as `pageKey`. Each page appears once. `teamIds` sets which teams'' Dashboard Viewers see the page: a list limits it to those teams, an empty list to no team, and `null` removes the limit (every team); left out, the page keeps its limit (a new page: every team). Changing a limit needs an Owner or Manager signed in and the Access Control feature (403 otherwise), and each team must hold a grant on the dashboard''s workspace without a dashboard limit leaving this dashboard out (422 otherwise).'
           items:
             type: object
             required:
-              - widgetId
+              - name
+              - order
+            properties:
+              pageId:
+                type: string
+                format: cuid2
+              key:
+                type: string
+                pattern: ^[A-Za-z0-9_-]{1,64}$
+              name:
+                type: string
+                minLength: 1
+                maxLength: 100
+              order:
+                type: integer
+                minimum: 0
+                maximum: 2147483647
+              teamIds:
+                oneOf:
+                  - type: array
+                    maxItems: 100
+                    items:
+                      type: string
+                      format: cuid2
+                  - type: 'null'
+            additionalProperties: false
+        widgets:
+          type: array
+          maxItems: 1000
+          description: 'Every widget to keep or create. An existing widget by `widgetId` keeps its kind and chart (repoint a chart with the widget update) and its page unless `pageId` or `pageKey` moves it; a new one needs `kind`, `chartId` for a chart and `content` for a text block, and goes on the first page without a page. On each page a chart appears at most once (409) and widgets may not overlap (422). A dashboard holds at most 250 widgets, counted on every page: a save that creates widgets and leaves more than 250 answers 409. A save that creates none is not capped, so a dashboard already above 250 can still be saved and shrunk.'
+          items:
+            type: object
+            required:
               - layout
               - order
             properties:
               widgetId:
                 type: string
                 format: cuid2
+              kind:
+                type: string
+                enum:
+                  - chart
+                  - image
+                  - text
+                  - separator
+              chartId:
+                type: string
+                format: cuid2
+              pageId:
+                type: string
+                format: cuid2
+              pageKey:
+                type: string
+                pattern: ^[A-Za-z0-9_-]{1,64}$
+              content:
+                oneOf:
+                  - $ref: '#/components/schemas/DashboardImageContent'
+                  - $ref: '#/components/schemas/DashboardTextContent'
+                  - type: 'null'
               layout:
                 $ref: '#/components/schemas/WidgetLayout'
               order:
@@ -16834,22 +17798,123 @@ components:
           maxLength: 255
           description: Name for the copy, unique within the workspace. Without one the copy is named "<original> (copy)", then "(copy 2)" and so on — never "(copy) (copy)".
       additionalProperties: false
+    DashboardPageCreateRequest:
+      type: object
+      description: A new page, added after the last one and visible to every team that can open the dashboard.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The tab's name; leading and trailing whitespace is trimmed. Names may repeat.
+      additionalProperties: false
+    DashboardPageUpdateRequest:
+      type: object
+      description: 'Send a `name`, `teamIds`, or both. `teamIds` limits which teams'' Dashboard Viewers see the page: a list limits it to those teams, an empty list to no team, and `null` removes the limit (every team). Changing the limit needs an Owner or Manager signed in and the Access Control feature — an API key never may (403) — and each team must hold a grant on the dashboard''s workspace without a dashboard limit leaving this dashboard out (422). A limit sent back unchanged needs neither. Limit changes are audited.'
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        teamIds:
+          oneOf:
+            - type: array
+              maxItems: 100
+              items:
+                type: string
+                format: cuid2
+            - type: 'null'
+      additionalProperties: false
     WidgetCreateRequest:
       type: object
-      required:
-        - chartId
+      description: A chart (`chartId`, with `kind` left out or `chart`) or a layout block (`kind` `image`, `text` or `separator`). A text block needs `content`; an image block without `content` starts empty. Only a chart takes a `chartId`, and only an image or text block takes non-null `content`.
       properties:
+        kind:
+          type: string
+          enum:
+            - chart
+            - image
+            - text
+            - separator
+          default: chart
         chartId:
           type: string
           format: cuid2
-          description: A chart in the dashboard's workspace. A chart appears at most once per dashboard.
+          description: A chart in the dashboard's workspace, for a chart widget. A chart appears at most once per page, and can sit on several pages of one dashboard.
+        pageId:
+          type: string
+          format: cuid2
+          description: The dashboard page to put it on. Without one, the dashboard's first page.
+        content:
+          oneOf:
+            - $ref: '#/components/schemas/DashboardImageContent'
+            - $ref: '#/components/schemas/DashboardTextContent'
+            - type: 'null'
+          description: An image or text block's content. An image's `fileUrl` must be a dashboard image uploaded to this workspace, or `null`.
         layout:
           $ref: '#/components/schemas/WidgetLayout'
-          description: Where to put the chart. Without one it lands in the first open slot at its chart type's default size.
+          description: 'Where to put it. Without one it lands in the first open slot at its default size: a chart''s by its type, a text block 9 columns wide, an image 3, a separator the full row.'
+      allOf:
+        - if:
+            properties:
+              kind:
+                const: chart
+          then:
+            required:
+              - chartId
+            properties:
+              content:
+                type: 'null'
+        - if:
+            required:
+              - kind
+            properties:
+              kind:
+                const: text
+          then:
+            required:
+              - content
+            not:
+              required:
+                - chartId
+            properties:
+              content:
+                $ref: '#/components/schemas/DashboardTextContent'
+        - if:
+            required:
+              - kind
+            properties:
+              kind:
+                const: image
+          then:
+            not:
+              required:
+                - chartId
+            properties:
+              content:
+                oneOf:
+                  - $ref: '#/components/schemas/DashboardImageContent'
+                  - type: 'null'
+        - if:
+            required:
+              - kind
+            properties:
+              kind:
+                const: separator
+          then:
+            not:
+              required:
+                - chartId
+            properties:
+              content:
+                type: 'null'
       additionalProperties: false
     WidgetUpdateRequest:
       type: object
-      description: Send a `layout`, a `chartId`, or both. Repointing shows another chart in the widget's place — the way to give one dashboard its own copy of a shared chart.
+      description: 'Send a `layout`, a `chartId`, `content`, a `pageId`, or several. Repointing a chart widget shows another chart in its place — the way to give one dashboard its own copy of a shared chart. `content` changes an image or text block: the fields sent replace the stored ones, the rest stay, so an image keeps its file when only its settings change. `pageId` moves the widget to another page of the dashboard, into the first open slot there unless a `layout` is sent too.'
       minProperties: 1
       properties:
         layout:
@@ -16857,7 +17922,46 @@ components:
         chartId:
           type: string
           format: cuid2
-          description: A chart in the dashboard's workspace that is not already on the dashboard.
+          description: A chart in the dashboard's workspace that is not already on the widget's page.
+        content:
+          description: Fields of the block's content (`DashboardImageContent` or `DashboardTextContent`) to replace; the fields left out keep their stored values. The merged content must be valid for the block's kind, so a field of the other kind, or any unknown field, answers 422.
+          anyOf:
+            - type: object
+              title: Image content fields
+              properties:
+                fileUrl:
+                  oneOf:
+                    - type: string
+                      maxLength: 2048
+                    - type: 'null'
+                fit:
+                  type: string
+                  enum:
+                    - fit
+                    - fill
+                position:
+                  type: string
+                  enum:
+                    - left
+                    - center
+                    - right
+                alt:
+                  type: string
+                  maxLength: 300
+              additionalProperties: false
+            - type: object
+              title: Text content fields
+              properties:
+                headline:
+                  type: string
+                  maxLength: 200
+                description:
+                  type: string
+                  maxLength: 2000
+              additionalProperties: false
+        pageId:
+          type: string
+          format: cuid2
       additionalProperties: false
     DashboardChartData:
       type: object
@@ -18606,6 +19710,425 @@ components:
             - type: 'null'
           description: Replaces both fields. `null` clears all workspace CSS. Adding or editing CSS needs the Scale plan on Formbricks Cloud; clearing either field or all CSS never does.
       additionalProperties: false
+    MemberAttributeKeyListItem:
+      type: object
+      additionalProperties: false
+      description: A Member attribute key with how widely members use it.
+      required:
+        - id
+        - key
+        - label
+        - description
+        - createdAt
+        - updatedAt
+        - memberCount
+        - distinctValueCount
+      properties:
+        id:
+          type: string
+          format: cuid2
+        key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          maxLength: 64
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        memberCount:
+          type: integer
+          minimum: 0
+          description: Members holding at least one value for the key. Pending invites are not counted.
+        distinctValueCount:
+          type: integer
+          minimum: 0
+          description: Distinct values members hold for the key, ignoring case and surrounding spaces.
+    MemberAttributeKeyCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - label
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[a-z][a-z0-9_]*$
+          description: Lowercase letters, numbers and underscores, starting with a letter. Never changes after creation. `email`, `name`, `full_name`, `role`, `teams` and `constructor` are reserved (**400**); a key the organization already has answers **409**.
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Trimmed; must not be empty.
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+          description: Optional. Trimmed; an empty string is stored as `null`.
+    MemberAttributeKeyResource:
+      type: object
+      additionalProperties: false
+      description: 'A Member attribute key: one entry of the organization-wide list Owners and Managers define, such as Country. Dashboard Viewer access matches a Feedback Record field against a viewer''s values for it. The built-in Email attribute is the login email and is never listed.'
+      required:
+        - id
+        - key
+        - label
+        - description
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+          maxLength: 64
+          description: The identifier used in Dashboard Viewer access, CSV columns and the bulk values request. Set at creation and never changes.
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: The name shown as a column and field label.
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          description: Send it back as `expectedUpdatedAt` to change or delete the key.
+    MemberAttributeKeyUpdateRequest:
+      type: object
+      additionalProperties: false
+      description: Changes a key's label, description or both; the `key` itself never changes (sending it is a **400**). At least one of `label` and `description` is required.
+      required:
+        - expectedUpdatedAt
+      anyOf:
+        - required:
+            - label
+        - required:
+            - description
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: The key's `updatedAt` from your read. If it changed since, the request answers **409** with the current one in `details.currentUpdatedAt` and nothing is written.
+    MemberAttributeRow:
+      type: object
+      additionalProperties: false
+      description: One member's, or one pending invite's, Member attribute values. `attributes` maps each attribute `key` the row holds a value for to its values, as stored (trimmed, first spelling of values that differ only by case). Keys with no value are absent. A `member` row carries `userId`, an `invite` row `inviteId`.
+      required:
+        - type
+        - name
+        - email
+        - role
+        - attributes
+      properties:
+        type:
+          type: string
+          enum:
+            - member
+            - invite
+        userId:
+          type: string
+        inviteId:
+          type: string
+        name:
+          type:
+            - string
+            - 'null'
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+            - owner
+            - manager
+            - member
+            - billing
+            - dashboard_viewer
+        attributes:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    MemberAttributesBulkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          minItems: 1
+          maxItems: 500
+          description: Up to 500 rows, applied in one transaction. Each row replaces the member's (or pending invites') values for the keys it names; keys it does not name are left alone, and an empty list clears a key.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - email
+              - attributes
+            properties:
+              email:
+                type: string
+                minLength: 1
+                maxLength: 320
+                description: Matched against members' login emails, then pending invites, ignoring case and surrounding spaces. A member wins over an invite to the same address. A second row for the same email is reported `invalid`.
+              attributes:
+                type: object
+                maxProperties: 50
+                description: Values per attribute `key`. Values are trimmed, empty ones dropped and duplicates ignoring case merged. A key with more than 50 values, a value longer than 255 characters, or a key the organization does not have makes the row `invalid`, and nothing of it is written.
+                additionalProperties:
+                  type: array
+                  maxItems: 200
+                  items:
+                    type: string
+                    maxLength: 1020
+    MemberAttributesBulkResult:
+      type: object
+      additionalProperties: false
+      required:
+        - summary
+        - rows
+      properties:
+        summary:
+          type: object
+          additionalProperties: false
+          required:
+            - updatedMembers
+            - updatedInvites
+            - unknownEmails
+            - invalid
+          properties:
+            updatedMembers:
+              type: integer
+              minimum: 0
+            updatedInvites:
+              type: integer
+              minimum: 0
+            unknownEmails:
+              type: integer
+              minimum: 0
+            invalid:
+              type: integer
+              minimum: 0
+        rows:
+          type: array
+          description: One outcome per request row, in request order.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - index
+              - email
+              - status
+            properties:
+              index:
+                type: integer
+                minimum: 0
+                description: The row's position in the request.
+              email:
+                type: string
+                description: The row's email, trimmed and lowercased.
+              status:
+                type: string
+                enum:
+                  - updated_member
+                  - updated_invite
+                  - unknown_email
+                  - invalid
+                description: '`updated_member` and `updated_invite` were written; `unknown_email` names no member or pending invite (invite the person first); `invalid` lists its `problems` and wrote nothing.'
+              userId:
+                type: string
+                description: The member written, for `updated_member`.
+              inviteIds:
+                type: array
+                items:
+                  type: string
+                description: The pending invites written, for `updated_invite`.
+              problems:
+                type: array
+                description: Why the row was refused, for `invalid`.
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                    - name
+                    - reason
+                    - code
+                  properties:
+                    name:
+                      type: string
+                      description: '`email` or `attributes.<key>`.'
+                    reason:
+                      type: string
+                    code:
+                      type: string
+                      enum:
+                        - invalid_reference
+                        - limit_exceeded
+                        - duplicate_identifier
+                        - unsupported_field
+    DashboardViewerAccessResource:
+      type: object
+      description: 'A Feedback Dataset''s Dashboard Viewer access: the conditions a record must meet for a Dashboard Viewer to see it. Each condition says a dataset field equals one of the viewer''s values for a Member attribute. Without conditions, Dashboard Viewers see every record. Owners, Managers and Members always see every record.'
+      required:
+        - datasetId
+        - join
+        - conditions
+        - updatedAt
+      properties:
+        datasetId:
+          type: string
+          format: cuid2
+        join:
+          type: string
+          enum:
+            - all
+            - any
+          description: Show a record when all of the conditions are true, or any of them.
+        conditions:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            required:
+              - field
+              - fieldLabel
+              - attributeKeyId
+              - attributeLabel
+            properties:
+              field:
+                type: string
+                description: A Feedback Record string field (for example `FeedbackRecords.sourceName`), or `ed:<key>` for an embedded-data key.
+              fieldLabel:
+                type: string
+              attributeKeyId:
+                type:
+                  - string
+                  - 'null'
+                format: cuid2
+                description: The Member attribute matched against; `null` is the built-in Email attribute.
+              attributeLabel:
+                type: string
+            additionalProperties: false
+        updatedAt:
+          type: string
+          format: date-time
+          description: Send it back as `expectedUpdatedAt` on a replace.
+      additionalProperties: false
+    DashboardViewerAccessReplaceRequest:
+      type: object
+      required:
+        - join
+        - conditions
+        - expectedUpdatedAt
+      properties:
+        join:
+          type: string
+          enum:
+            - all
+            - any
+        conditions:
+          type: array
+          maxItems: 10
+          description: The whole list, in order. Empty lets Dashboard Viewers see every record.
+          items:
+            type: object
+            required:
+              - field
+              - attributeKeyId
+            properties:
+              field:
+                type: string
+                minLength: 1
+                maxLength: 300
+                description: One of `FeedbackRecords.sourceName`, `FeedbackRecords.sourceType`, `FeedbackRecords.metadataCountry`, `FeedbackRecords.metadataSource`, `FeedbackRecords.metadataDevice`, `FeedbackRecords.metadataBrowser`, `FeedbackRecords.metadataOs`, `FeedbackRecords.metadataAction`, `FeedbackRecords.language`, or `ed:<key>` for an embedded-data key. Answers and measures are never conditions.
+              attributeKeyId:
+                type:
+                  - string
+                  - 'null'
+                format: cuid2
+                description: A Member attribute of the dataset's organization; `null` for Email.
+            additionalProperties: false
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: The `updatedAt` from your read; **409** when the dataset changed since.
+      additionalProperties: false
+    TeamDashboardLimitsResource:
+      type: object
+      description: 'A team''s dashboard limits: the dashboards its members whose organization role is Dashboard Viewer open in the workspaces the team is granted. Not limited means all of them; limited with an empty `dashboardIds` means none. Other members are never limited.'
+      required:
+        - teamId
+        - limited
+        - dashboardIds
+      properties:
+        teamId:
+          type: string
+          format: cuid2
+        limited:
+          type: boolean
+          description: Whether the team's Dashboard Viewers are limited to `dashboardIds`. Writing a non-empty `dashboardIds` sets it, an empty one clears it. It stays set when every selected dashboard is deleted, and the team's Dashboard Viewers then open no dashboard.
+        dashboardIds:
+          type: array
+          maxItems: 200
+          items:
+            type: string
+            format: cuid2
+        dashboards:
+          type: array
+          description: 'Only on a read: every dashboard of the organization (at most 1,000), in any workspace, to pick the limit from. A write accepts only dashboards of the workspaces the team is granted, so not every listed dashboard can be submitted (422 otherwise).'
+          maxItems: 1000
+          items:
+            type: object
+            required:
+              - id
+              - name
+              - workspaceId
+              - workspaceName
+            properties:
+              id:
+                type: string
+                format: cuid2
+              name:
+                type: string
+              workspaceId:
+                type: string
+                format: cuid2
+              workspaceName:
+                type: string
+            additionalProperties: false
+      additionalProperties: false
     FeedbackRecordFieldType:
       type: string
       description: 'The type of a feedback field, which determines which `value_*` member carries the answer: `text` → `value_text` (the only enrichable type), `categorical` → `value_text` + `value_id`, `nps` / `csat` / `ces` / `rating` / `number` → `value_number`, `boolean` → `value_boolean`, `date` → `value_date`.'
@@ -19439,7 +20962,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3DashboardsConflict:
-      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, a dashboard already holding its 250 widgets, a dashboard with no open slot left above its grid''s last row, or a dashboard changed since the `expectedUpdatedAt` the caller sent.'
+      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the page, a dashboard already holding its 250 widgets or 50 pages, the last page of a dashboard, a page with no open slot left above its grid''s last row, or a dashboard changed since the `expectedUpdatedAt` the caller sent.'
       headers:
         X-Request-Id:
           schema:
@@ -19540,6 +21063,51 @@ components:
                 requestId: req_01j8z5
     V3UnauthorizedSession:
       description: Not authenticated (no valid session).
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3MemberAttributesForbidden:
+      description: 'Forbidden. `code: forbidden` when the caller is not an Owner or Manager of the organization (or, for writes, is below the organization''s user-management floor), when an API key belongs to another organization or lacks Access Control read (reads) or write (writes), or when the key named does not exist in the organization (404 is not used, to avoid leaking existence). `code: member_attributes_plan_required` when the caller is authorized but the organization does not have Access Control and Dashboards — checked after authorization, so a caller without access never learns the organization''s plan.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3MemberAttributeKeyConflict:
+      description: 'Conflict. `code: conflict` when the key changed since the `expectedUpdatedAt` sent (`details.currentUpdatedAt` holds the current one) or, on create, when the organization already has a key with this `key`. `code: member_attribute_key_in_use` when Dashboard Viewer access of a Feedback Dataset matches on the key, so it cannot be deleted: `details.datasets` names up to 20 of them (`id`, `name`) and `details.datasetCount` says how many there are.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3DashboardAccessForbidden:
+      description: 'Forbidden. `code: forbidden` when the caller is not an Owner or Manager of the organization the resource belongs to (or, for writes, is below the organization''s user-management floor), when an API key belongs to another organization or lacks Access Control read (reads) or write (writes), or when the resource does not exist (404 is not used, to avoid leaking existence). `code: dashboard_access_plan_required` when the caller is authorized but the organization does not have Access Control and Dashboards.'
       headers:
         X-Request-Id:
           schema:
@@ -19736,6 +21304,14 @@ components:
         type: string
         format: cuid2
       description: Chart identifier.
+    ViewAsQuery:
+      in: query
+      name: viewAs
+      required: false
+      schema:
+        type: string
+        format: cuid2
+      description: 'View as: the user ID of a member of the dashboard''s organization whose view this read returns. Only an Owner or Manager session of an organization with Access Control and Dashboards may pass it; the read is then decided with that member''s dashboard and page access and their Dashboard Viewer access, and is audited as `viewedAs`. An API key, a caller who cannot manage access, or a user who is not a member answers 403. Reads only: no write takes it.'
     DashboardIdPath:
       in: path
       name: dashboardId
@@ -19744,6 +21320,14 @@ components:
         type: string
         format: cuid2
       description: Dashboard identifier.
+    PageIdPath:
+      in: path
+      name: pageId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Dashboard page identifier.
     WidgetIdPath:
       in: path
       name: widgetId
@@ -19837,6 +21421,38 @@ components:
         type: string
         format: cuid2
       description: Workspace identifier.
+    OrganizationIdPath:
+      in: path
+      name: organizationId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Organization identifier. An API key only ever reaches its own organization.
+    MemberAttributeKeyIdPath:
+      in: path
+      name: keyId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Member attribute key identifier (its `id`, not its `key`).
+    DatasetIdPath:
+      in: path
+      name: datasetId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Feedback Dataset identifier.
+    TeamIdPath:
+      in: path
+      name: teamId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Team identifier.
     FeedbackRecordsTenantIdQuery:
       in: query
       name: tenant_id

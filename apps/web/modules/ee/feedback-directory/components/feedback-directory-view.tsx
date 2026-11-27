@@ -6,6 +6,7 @@ import {
   getFeedbackDirectories,
   getWorkspaceFeedbackDirectoryAccess,
 } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getIsDashboardViewerRoleEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getWorkspacesByOrganizationId } from "@/modules/ee/teams/team-list/lib/workspace";
 
 interface FeedbackDirectoryViewProps {
@@ -19,11 +20,14 @@ export const FeedbackDirectoryView = async ({
 }: FeedbackDirectoryViewProps) => {
   const t = await getTranslate();
 
-  const [directories, orgWorkspaces, workspaceAccessByWorkspace] = await Promise.all([
-    getFeedbackDirectories(organizationId),
-    getWorkspacesByOrganizationId(organizationId),
-    getWorkspaceFeedbackDirectoryAccess(organizationId),
-  ]);
+  const [directories, orgWorkspaces, workspaceAccessByWorkspace, isDashboardViewerAccessEnabled] =
+    await Promise.all([
+      getFeedbackDirectories(organizationId),
+      getWorkspacesByOrganizationId(organizationId),
+      getWorkspaceFeedbackDirectoryAccess(organizationId),
+      // Dashboard Viewer access needs what the role needs: Access Control and Dashboards (ENG-7476).
+      getIsDashboardViewerRoleEnabled(organizationId),
+    ]);
 
   return (
     <SettingsCard
@@ -36,6 +40,7 @@ export const FeedbackDirectoryView = async ({
         orgWorkspaces={orgWorkspaces}
         workspaceAccessByWorkspace={workspaceAccessByWorkspace}
         membershipRole={membershipRole}
+        isDashboardViewerAccessEnabled={isDashboardViewerAccessEnabled}
       />
     </SettingsCard>
   );

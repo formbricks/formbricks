@@ -1,0 +1,12 @@
+in: query
+name: viewAs
+required: false
+schema:
+  type: string
+  format: cuid2
+description: >-
+  View as: the user ID of a member of the dashboard's organization whose view this read returns. Only
+  an Owner or Manager session of an organization with Access Control and Dashboards may pass it; the read
+  is then decided with that member's dashboard and page access and their Dashboard Viewer access, and is
+  audited as `viewedAs`. An API key, a caller who cannot manage access, or a user who is not a member
+  answers 403. Reads only: no write takes it.

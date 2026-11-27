@@ -301,29 +301,28 @@ export const FilterMenu = ({
 
   return (
     <DropdownMenu open={open} onOpenChange={handleOpenChange}>
-      <TooltipRenderer tooltipContent={buttonLabel} triggerClass="flex">
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label={buttonLabel}
-            data-testid="table-filter-button"
-            className={cn(
-              "relative size-8 shrink-0 bg-white",
-              isActive &&
-                "border-slate-900 bg-slate-900 text-white not-disabled:hover:bg-slate-800 not-disabled:hover:text-white"
-            )}>
-            {isActive ? <ListFilterIcon /> : <FilterIcon />}
-            {isActive && (
-              <span
-                aria-hidden="true"
-                className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full border border-slate-900 bg-white text-[10px] leading-none font-semibold text-slate-900">
-                {activeCount}
-              </span>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-      </TooltipRenderer>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label={buttonLabel}
+          data-testid="table-filter-button"
+          className={cn(
+            "relative h-8 shrink-0 bg-white text-sm",
+            isActive &&
+              "border-slate-900 bg-slate-900 text-white not-disabled:hover:bg-slate-800 not-disabled:hover:text-white"
+          )}>
+          {t("common.filter")}
+          {isActive ? <ListFilterIcon /> : <FilterIcon />}
+          {isActive && (
+            <span
+              aria-hidden="true"
+              className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full border border-slate-900 bg-white text-[10px] leading-none font-semibold text-slate-900">
+              {activeCount}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
       {/* The property list scrolls on its own so Advanced filter stays reachable with many properties. */}
       <DropdownMenuContent
         align="start"

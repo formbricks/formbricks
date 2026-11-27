@@ -41,6 +41,7 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import {
   Select,
   SelectContent,
@@ -525,7 +526,7 @@ export const CreateFeedbackSourceModal = ({
           {isImporting && (
             <div className="absolute inset-0 z-50 flex items-center justify-center rounded-lg bg-white/80">
               <div className="flex flex-col items-center gap-3">
-                <Loader2Icon className="size-8 animate-spin text-slate-500" />
+                <LoadingSpinner />
                 <p className="text-sm font-medium text-slate-700">
                   {t("workspace.unify.importing_historical_data")}
                 </p>

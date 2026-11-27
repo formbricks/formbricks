@@ -1,4 +1,7 @@
-import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
+import type { TDashboardPage, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
+import { isDraftId, samePageLimit } from "./dashboard-draft";
+
+export { toSavedWidgets } from "./dashboard-draft";
 
 /**
  * What saving an edit over a dashboard that changed meanwhile would remove without the editor asking:
@@ -15,17 +18,63 @@ export const widgetsRemovedByOverwrite = (
 };
 
 /**
+ * The editor's pages, as a save over the latest version can send them: a page someone else deleted
+ * meanwhile is no longer there to keep, so it is dropped; pages the editor added stay.
+ */
+export const draftPagesOverLatest = (
+  latest: TDashboardPage[],
+  draft: TDashboardPage[],
+  base: TDashboardPage[] = []
+): TDashboardPage[] => {
+  const latestById = new Map(latest.map((page) => [page.id, page]));
+  const baseById = new Map(base.map((page) => [page.id, page]));
+  const kept = draft.flatMap((page) => {
+    if (isDraftId(page.id)) return [page];
+    const current = latestById.get(page.id);
+    if (!current) return [];
+    // A name or team limit the editor left as the edit found it is the latest one, so a change someone
+    // else made meanwhile survives the overwrite (as the dashboard's name does).
+    const before = baseById.get(page.id);
+    if (!before) return [page];
+    return [
+      {
+        ...page,
+        name: page.name === before.name ? current.name : page.name,
+        ...(samePageLimit(page, before)
+          ? { limited: current.limited, teamIds: current.teamIds }
+          : { limited: page.limited, teamIds: page.teamIds }),
+      },
+    ];
+  });
+  return kept.length > 0 ? kept : latest;
+};
+
+/**
+ * The pages saving an edit over the latest version would remove without the editor asking: a page that
+ * appeared after the edit began and is not in the draft. A page the editor deleted is in `base`.
+ */
+export const pagesRemovedByOverwrite = (
+  latest: TDashboardPage[],
+  draft: TDashboardPage[],
+  base: ReadonlySet<string>
+): TDashboardPage[] => {
+  const kept = new Set(draft.map((page) => page.id));
+  return latest.filter((page) => !kept.has(page.id) && !base.has(page.id));
+};
+
+/**
  * The editor's widgets, as a save over the latest version can send them: a widget someone else removed
- * meanwhile is no longer there to place, so it is dropped rather than failing the whole save.
+ * meanwhile is no longer there to place, and one on a page that is gone has nowhere to go, so both are
+ * dropped rather than failing the whole save. Widgets the editor added stay.
  */
 export const draftOverLatest = (
   latest: TDashboardWidget[],
-  draft: TDashboardWidget[]
+  draft: TDashboardWidget[],
+  pages?: TDashboardPage[]
 ): TDashboardWidget[] => {
   const present = new Set(latest.map((widget) => widget.id));
-  return draft.filter((widget) => present.has(widget.id));
+  const pageIds = pages ? new Set(pages.map((page) => page.id)) : null;
+  return draft.filter(
+    (widget) => (isDraftId(widget.id) || present.has(widget.id)) && (!pageIds || pageIds.has(widget.pageId))
+  );
 };
-
-/** The widgets as the whole-dashboard save sends them, ordered as they are listed. */
-export const toSavedWidgets = (widgets: TDashboardWidget[]) =>
-  widgets.map((widget, order) => ({ widgetId: widget.id, layout: widget.layout, order }));

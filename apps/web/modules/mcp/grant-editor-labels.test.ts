@@ -45,6 +45,7 @@ describe("getMcpGrantSummaryChips", () => {
       "auth.oauth.grant.categories.dashboards": "Dashboards",
       "auth.oauth.grant.categories.feedback": "Feedback",
       "auth.oauth.grant.categories.audience": "Audience",
+      "auth.oauth.grant.categories.organization": "Organization",
       "auth.oauth.grant.levels.no_access": "No access",
       "auth.oauth.grant.levels.read": "Read",
       "auth.oauth.grant.levels.write": "Write",
@@ -65,6 +66,7 @@ describe("getMcpGrantSummaryChips", () => {
       "Dashboards · Read",
       "Feedback · No access",
       "Audience · No access",
+      "Organization · No access",
     ]);
     expect(chips[0].level).toBe("mixed");
   });
