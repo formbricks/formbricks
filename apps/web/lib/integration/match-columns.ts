@@ -15,6 +15,10 @@ export type TColumnChoice = { existing: number } | { create: string };
  * 2. A changed label takes its new-label column, else its legacy-label column. When it repeats, its
  *    occurrences take those columns in column order: a column appended later belongs to a later
  *    occurrence, so each occurrence keeps its column from one write to the next.
+ *    A new label that other questions share with a different legacy label (`<p>A</p><p>BC</p>` and
+ *    `<p>AB</p><p>C</p>` both read "A B C", or a plain "A B C" headline) cannot say whose column a column
+ *    of that name is, so those changed questions only use, and create, columns under their legacy label,
+ *    which still tells them apart.
  * 3. A label left without a column gets a new one, named by its label unless another column already has
  *    that name; then by its legacy label, so two questions whose labels now coincide still get a column
  *    each, as they did before. Unchanged labels pick their names first.
@@ -37,6 +41,13 @@ export const matchLabelsToColumns = (
   };
 
   const isChanged = (index: number) => legacyLabels[index] !== labels[index];
+  const legacyLabelsByLabel = new Map<string, Set<string>>();
+  labels.forEach((label, index) => {
+    legacyLabelsByLabel.set(label, (legacyLabelsByLabel.get(label) ?? new Set()).add(legacyLabels[index]));
+  });
+  /** A changed label that other questions share with a different legacy label. */
+  const isAmbiguous = (index: number) =>
+    isChanged(index) && (legacyLabelsByLabel.get(labels[index])?.size ?? 0) > 1;
   const unchanged = labels.map((_, index) => index).filter((index) => !isChanged(index));
   const changed = labels.map((_, index) => index).filter(isChanged);
   const matched = new Map<number, number>();
@@ -58,7 +69,9 @@ export const matchLabelsToColumns = (
   for (const members of groups.values()) {
     const label = labels[members[0]];
     const legacyLabel = legacyLabels[members[0]];
-    const candidates = [...freeColumns(label), ...freeColumns(legacyLabel)];
+    const candidates = isAmbiguous(members[0])
+      ? [...freeColumns(legacyLabel)]
+      : [...freeColumns(label), ...freeColumns(legacyLabel)];
     if (members.length > 1) candidates.sort((a, b) => a - b);
     members.forEach((index, occurrence) => {
       const column = candidates[occurrence];
@@ -73,8 +86,10 @@ export const matchLabelsToColumns = (
   const created = new Map<number, string>();
   for (const index of [...unchanged, ...changed]) {
     if (matched.has(index)) continue;
-    const name =
-      [labels[index], legacyLabels[index]].find((candidate) => !takenNames.has(candidate)) ?? labels[index];
+    const name = isAmbiguous(index)
+      ? legacyLabels[index]
+      : ([labels[index], legacyLabels[index]].find((candidate) => !takenNames.has(candidate)) ??
+        labels[index]);
     takenNames.add(name);
     created.set(index, name);
   }

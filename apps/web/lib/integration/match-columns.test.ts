@@ -69,6 +69,29 @@ describe("matchLabelsToColumns", () => {
     });
   });
 
+  describe("when two changed labels coincide but their legacy labels differ", () => {
+    // `<p>A</p><p>BC</p>` and `<p>AB</p><p>C</p>` both read "A B C" now.
+    const labels = ["A B C", "A B C"];
+    const legacyLabels = ["A BC", "AB C"];
+
+    test("gives each its legacy column, and creates a missing one under its legacy label", () => {
+      expect(matchLabelsToColumns(["A BC"], labels, legacyLabels)).toEqual([existing(0), create("AB C")]);
+    });
+
+    test("never uses a column named by the shared new label", () => {
+      expect(matchLabelsToColumns(["A B C", "A BC", "AB C"], labels, legacyLabels)).toEqual([
+        existing(1),
+        existing(2),
+      ]);
+    });
+
+    test("keeps each question in its column across writes", () => {
+      const first = write(["A BC"], labels, legacyLabels);
+      const second = write(first.columns, labels, legacyLabels);
+      expect(second).toEqual(first);
+    });
+  });
+
   test("never lets a legacy fallback take the column another question owns by its own label", () => {
     // q1 is `<p>A</p><p>B</p>` (legacy "AB"); q2 is a plain "AB" headline that owns the "AB" column.
     expect(matchLabelsToColumns(["AB"], ["A B", "AB"], ["AB", "AB"])).toEqual([create("A B"), existing(0)]);
