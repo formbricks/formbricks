@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma, type Team, type WorkspaceTeam } from "@formbricks/database/prisma";
+import { Prisma, type Team } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -22,12 +22,10 @@ const mockUser = {
   identityProviderAccountId: "provider-account-id",
   role: "admin",
   memberships: [{ organizationId: "org456", role: "admin" }],
-  teamUsers: [{ team: { name: "Test Team", id: "team123", workspaceTeams: [{ workspaceId: "proj789" }] } }],
+  teamUsers: [{ team: { name: "Test Team", id: "team123" } }],
 };
 
-type TExistingTeam = Pick<Team, "id" | "name"> & {
-  workspaceTeams: Pick<WorkspaceTeam, "workspaceId">[];
-};
+type TExistingTeam = Pick<Team, "id" | "name">;
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -168,9 +166,7 @@ describe("Users Lib", () => {
 
   describe("createUser", () => {
     test("creates user and revalidates caches", async () => {
-      const existingTeams = [
-        { id: "team123", name: "Test Team", workspaceTeams: [] },
-      ] satisfies TExistingTeam[];
+      const existingTeams = [{ id: "team123", name: "Test Team" }] satisfies TExistingTeam[];
 
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce(existingTeams as never);
       vi.mocked(prisma.user.create, { partial: true }).mockResolvedValueOnce(mockUser);
@@ -739,7 +735,7 @@ describe("Users Lib", () => {
   describe("createUser with teams", () => {
     test("creates user with existing teams", async () => {
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce([
-        { id: "team123", name: "MyTeam", workspaceTeams: [{ workspaceId: "proj789" }] },
+        { id: "team123", name: "MyTeam" },
       ] as unknown as Awaited<ReturnType<typeof prisma.team.findMany>>);
       vi.mocked(prisma.user.create).mockResolvedValueOnce({
         ...mockUser,
@@ -760,12 +756,10 @@ describe("Users Lib", () => {
     test("removes a team and adds new team", async () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
         ...mockUser,
-        teamUsers: [
-          { team: { id: "team123", name: "OldTeam", workspaceTeams: [{ workspaceId: "proj789" }] } },
-        ],
+        teamUsers: [{ team: { id: "team123", name: "OldTeam" } }],
       } as unknown as Awaited<ReturnType<typeof prisma.user.findFirst>>);
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce([
-        { id: "team456", name: "NewTeam", workspaceTeams: [] },
+        { id: "team456", name: "NewTeam" },
       ] as unknown as Awaited<ReturnType<typeof prisma.team.findMany>>);
       runInTransaction();
       lockedAccount();
