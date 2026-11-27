@@ -13,13 +13,29 @@ import {
 } from "./lib/metadata-utils";
 
 /**
+ * Every page that shows a survey to a respondent asks search engines not to index it, whatever the survey's
+ * settings: a personal /c/ link that ends up public must not be indexed any more than an /s/ one (ENG-7436).
+ * Links are still followed. A fresh object per call, since Next receives it by reference.
+ */
+const getSurveyNoIndexRobots = (): Metadata["robots"] => ({
+  index: false,
+  follow: true,
+  googleBot: {
+    index: false,
+    follow: true,
+    noimageindex: true,
+  },
+});
+
+/**
  * What a survey page shows while it can't name the survey: /c/<token> with a bad token or a survey that isn't
- * public, and /s/<id> for a single-use survey opened without a valid link. A fresh object per call, since Next
- * receives it by reference.
+ * public, and /s/<id> for a single-use survey opened without a valid link. It carries the same no-index rules
+ * as a named survey. A fresh object per call, since Next receives it by reference.
  */
 export const getGenericSurveyMetadata = (): Metadata => ({
   title: "Survey",
   description: "Please complete this survey.",
+  robots: getSurveyNoIndexRobots(),
 });
 
 /** Title, description, social previews and favicon for a survey the link page serves. */
@@ -96,15 +112,7 @@ export const getMetadataForLinkSurvey = async ({
     alternates: {
       canonical: `/s/${surveyId}`,
     },
-    robots: {
-      index: false,
-      follow: true,
-      googleBot: {
-        index: false,
-        follow: true,
-        noimageindex: true,
-      },
-    },
+    robots: getSurveyNoIndexRobots(),
   };
 
   // Same single-use gate as the page, sharing its one resolution per request. Without a valid link the page
@@ -132,7 +140,8 @@ export const getMetadataForLinkSurvey = async ({
  * public (draft, archived, non-link) even with a valid token, so its name or welcome headline must not
  * reach <title> / og:title either (ENG-4032). A survey that can't be loaded gets the same generic metadata, and
  * so does a single-use survey opened without its link, which the page shows as "link invalid", or through one
- * already answered (ENG-4041).
+ * already answered (ENG-4041). Every case carries the same no-index rules as /s, but not its canonical URL
+ * (ENG-7436).
  */
 export const getMetadataForContactSurvey = async ({
   surveyId,
@@ -161,5 +170,8 @@ export const getMetadataForContactSurvey = async ({
   if (!singleUse.allowed) {
     return getGenericSurveyMetadata();
   }
-  return getServableSurveyMetadata(survey, undefined, acceptedLanguages);
+  return {
+    ...(await getServableSurveyMetadata(survey, undefined, acceptedLanguages)),
+    robots: getSurveyNoIndexRobots(),
+  };
 };
