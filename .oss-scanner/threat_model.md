@@ -66,9 +66,10 @@ Treat all of the following as adversarial:
   endpoints and rated as such. Every body, query and path segment is
   attacker-controlled.
 - **Auth and identity surfaces** — credentials and sessions (Better Auth),
-  OAuth/OIDC callbacks, SAML assertions (EE), email verification, password
-  reset, invite links, 2FA (EE), and the MCP OAuth endpoints
-  (`/.well-known/oauth-*`, `/api/mcp`).
+  OAuth/OIDC callbacks, SAML assertions, email verification, password reset,
+  invite links, two-factor auth, and the MCP OAuth endpoints
+  (`/.well-known/oauth-*`, `/api/mcp`). The parts of these that live under
+  `apps/web/modules/ee/**` are out of scope (see "Out of scope").
 - **Stored tenant content** — survey definitions and logic, rich text and
   branding, response values, contact attributes, uploaded files and feedback
   records. A stored XSS that executes in another user's or another workspace's
@@ -92,8 +93,6 @@ Treat all of the following as adversarial:
   authorization, storage and env validation.
 - `packages/database` — Prisma schema and queries; tenant scoping belongs in
   every query.
-- `apps/web/modules/ee/**` — SSO/SAML, two-factor auth, role management,
-  workflows, audit logs, licence checks.
 - `packages/storage`, `packages/ai`, `packages/jobs`, `packages/workflows` —
   file handling, model calls, background jobs.
 
@@ -166,6 +165,10 @@ operator or database owner to be malicious is not a vulnerability.
 
 ## Out of scope
 
+- The Enterprise Edition code under `apps/web/modules/ee/**`. It is not open
+  source (`apps/web/modules/ee/LICENSE`), so do not report findings whose
+  faulty code sits there. It stays in the image because the web app imports
+  it; code outside that directory that calls into it remains in scope.
 - Vulnerabilities that live only in third-party dependencies. Report them only
   when Formbricks's own code misuses the dependency in a way that creates the
   issue.
