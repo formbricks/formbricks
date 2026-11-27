@@ -34,24 +34,71 @@ APT::Update::Error-Mode "any";
 APT
 }
 
+ci_apt_running() {
+  # Zombies hold no locks and only wait to be reaped, so count running, sleeping and blocked processes.
+  # pgrep exits 1 for "none". Any other failure means we cannot tell, so answer "running": the caller
+  # then still waits and KILLs, rather than retrying into a lock it never checked.
+  # Call it only as a condition (`if`, `||`): its "not running" status is non-zero and would trip `set -e`.
+  local status=0
+  sudo pgrep -x --runstates DRS 'apt-get|apt|dpkg' >/dev/null || status=$?
+  if (( status > 1 )) && [[ -z "${CI_APT_PGREP_WARNED:-}" ]]; then
+    CI_APT_PGREP_WARNED=1
+    echo "::warning::pgrep failed (exit ${status}); treating apt as still running."
+  fi
+  (( status != 1 ))
+}
+
+ci_stop_apt() {
+  # `timeout` signals its own process group, but `sudo` runs apt-get in a new session, so a timed-out
+  # `playwright install-deps` can leave apt-get running and holding /var/lib/apt/lists/lock; the
+  # retry then fails at once with "Could not get lock" (exit 100). Stop any apt/dpkg still running,
+  # bounded so the caller's budget holds: TERM, up to 20s to exit, then KILL and up to 5s more. The
+  # kernel releases their locks when they exit. Only for disposable runners, like everything else here.
+  local second
+  sudo pkill -TERM -x 'apt-get|apt|dpkg' || true
+  for ((second = 0; second < 20; second++)); do
+    ci_apt_running || return 0
+    sleep 1
+  done
+  sudo pkill -KILL -x 'apt-get|apt|dpkg' || true
+  for ((second = 0; second < 5; second++)); do
+    ci_apt_running || return 0
+    sleep 1
+  done
+  echo '::warning::apt or dpkg is still running after KILL; the retry may hit its lock.'
+}
+
 ci_use_fallback_apt_mirror() {
-  local apt_dir="${1:-/etc/apt}"
-  # Handle both legacy .list and deb822 .sources files. Only Ubuntu archive/security hosts
-  # change; GitHub's Ubuntu mirror+file source also becomes a direct fallback URL.
-  # Package signatures, suites and third-party repositories remain as configured.
-  sudo python3 - "$apt_dir" <<'PY'
+  local apt_dir="${1:-/etc/apt}" architecture
+  # Handle both legacy .list and deb822 .sources files. Only Ubuntu archive, security and ports hosts
+  # change; GitHub's and Blacksmith's Ubuntu mirror+file sources also become a direct fallback URL.
+  # Package signatures, suites and third-party repositories remain as configured. Azure's archive mirror
+  # carries amd64 and i386 only, so other architectures (the arm64 release smoke jobs) use its ports mirror.
+  architecture="$(dpkg --print-architecture)"
+  sudo python3 - "$apt_dir" "$architecture" <<'PY'
 from pathlib import Path
 import re
 import sys
 
 root = Path(sys.argv[1])
+mirror_files = r'|mirror\+file:/etc/apt/(?:apt|blacksmith-ubuntu)-mirrors\.txt(?=\s|$)'
+if sys.argv[2] in ('amd64', 'i386'):
+    ubuntu = r'https?://(?:[\w.-]+\.)?archive\.ubuntu\.com/ubuntu\b|https?://security\.ubuntu\.com/ubuntu\b'
+    fallback = 'https://azure.archive.ubuntu.com/ubuntu'
+else:
+    ubuntu = r'https?://(?:[\w.-]+\.)?ports\.ubuntu\.com/ubuntu-ports\b'
+    fallback = 'https://azure.ports.ubuntu.com/ubuntu-ports'
+rewritten = 0
 for path in [root / 'sources.list', *root.glob('sources.list.d/*.list'), *root.glob('sources.list.d/*.sources')]:
     if path.is_file():
         original = path.read_text()
-        updated = re.sub(r'https?://(?:[\w.-]+\.)?archive\.ubuntu\.com/ubuntu\b|https?://security\.ubuntu\.com/ubuntu\b'
-                         r'|mirror\+file:/etc/apt/apt-mirrors\.txt(?=\s|$)',
-                         'https://azure.archive.ubuntu.com/ubuntu', original)
+        updated, count = re.subn(ubuntu + mirror_files, fallback, original)
+        rewritten += count
         if updated != original:
             path.write_text(updated)
+# A runner image that names its Ubuntu mirror differently would otherwise retry the same stalled mirror
+# silently; say so where the failure will show.
+if rewritten == 0:
+    print('::warning::No Ubuntu apt source matched the fallback-mirror rewrite; the retry uses the same mirrors.')
 PY
 }

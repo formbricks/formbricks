@@ -42,6 +42,7 @@ function fixture() {
   const command = (name: string, body: string) =>
     writeFileSync(join(directory, "bin", name), `#!/usr/bin/env bash\nset -eu\n${body}\n`, { mode: 0o755 });
   command("sleep", ":");
+  command("dpkg", "echo amd64");
   command("sudo", ": # Never change the host apt configuration in a test");
   // pnpm supplies the simulated timeout status; the harness also runs on stock macOS.
   command("timeout", 'while [[ "$1" == --* ]]; do shift; done; shift; exec "$@"');
@@ -141,6 +142,62 @@ test("a persistent apt failure stops setup before any browser install", () => {
   ]);
 });
 
+// A timed-out install-deps leaves the apt-get that sudo started running, holding apt's lock; the
+// fallback retry then failed at once with "Could not get lock" (exit 100) until it was stopped first.
+test("apt left running by a timed-out attempt is stopped before the fallback retry", () => {
+  const { directory, env, command } = fixture();
+  command("pnpm", 'echo "pnpm $*" >> "$FIXTURE/commands"; exit 124');
+  command("sudo", 'echo "sudo $*" >> "$FIXTURE/commands"; [[ "$1" != pgrep ]]');
+  const result = spawnSync("bash", ["scripts/install-playwright-ci.sh", "chromium"], {
+    cwd: repository,
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status).toBe(124);
+  const commands = readFileSync(join(directory, "commands"), "utf8").trim().split("\n");
+  const attempts = commands.flatMap((line, index) => (line.includes("install-deps") ? [index] : []));
+  expect(attempts).toHaveLength(2);
+  const stop = commands.indexOf("sudo pkill -TERM -x apt-get|apt|dpkg");
+  const repair = commands.indexOf("sudo dpkg --configure -a");
+  expect(attempts[0]).toBeLessThan(stop);
+  expect(stop).toBeLessThan(repair);
+  expect(repair).toBeLessThan(attempts[1]);
+  // Nothing was left running, so no KILL.
+  expect(commands).not.toContain("sudo pkill -KILL -x apt-get|apt|dpkg");
+});
+
+test("apt that ignores TERM is killed after a bounded wait, and the retry still runs", () => {
+  const { directory, env, command } = fixture();
+  command("pnpm", 'echo "pnpm $*" >> "$FIXTURE/commands"; exit 124');
+  // pgrep always finds apt running: the wait must end on its own instead of spinning.
+  command("sudo", 'echo "sudo $*" >> "$FIXTURE/commands"');
+  const result = spawnSync("bash", ["scripts/install-playwright-ci.sh", "chromium"], {
+    cwd: repository,
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status).toBe(124);
+  const commands = readFileSync(join(directory, "commands"), "utf8").trim().split("\n");
+  expect(commands.filter((line) => line.startsWith("sudo pgrep"))).toHaveLength(25);
+  expect(commands.filter((line) => line === "sudo pkill -KILL -x apt-get|apt|dpkg")).toHaveLength(1);
+  expect(commands.filter((line) => line.includes("install-deps"))).toHaveLength(2);
+  expect(result.stdout).toContain("::warning::apt or dpkg is still running after KILL");
+});
+
+test("a pgrep failure is reported once and treated as still running, so apt is still killed", () => {
+  const { directory, env, command } = fixture();
+  command("sudo", 'echo "sudo $*" >> "$FIXTURE/commands"; [[ "$1" != pgrep ]] || exit 3');
+  const result = spawnSync("bash", ["-c", "source scripts/ci-network.sh; ci_stop_apt"], {
+    cwd: repository,
+    env,
+    encoding: "utf8",
+  });
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stdout.match(/::warning::pgrep failed \(exit 3\)/g)).toHaveLength(1);
+  const commands = readFileSync(join(directory, "commands"), "utf8").trim().split("\n");
+  expect(commands).toContain("sudo pkill -KILL -x apt-get|apt|dpkg");
+});
+
 test.each(["pull", "validation"])("a permanent %s failure remains red", (failure) => {
   const { directory, env, command } = fixture();
   command(
@@ -160,7 +217,7 @@ esac`
   expect(commands.filter((line) => line === "run")).toHaveLength(failure === "pull" ? 0 : 1);
 });
 
-test.each(["direct", "mirror-file"])(
+test.each(["direct", "mirror-file", "blacksmith-mirror-file"])(
   "apt fallback handles %s Ubuntu sources and preserves third-party sources",
   (format) => {
     const { directory, env, command } = fixture();
@@ -168,7 +225,11 @@ test.each(["direct", "mirror-file"])(
     const apt = join(directory, "apt");
     mkdirSync(join(apt, "apt.conf.d"), { recursive: true });
     mkdirSync(join(apt, "sources.list.d"));
-    const mirrorUri = "mirror+file:/etc/apt/apt-mirrors.txt";
+    // GitHub-hosted runners list Ubuntu mirrors in apt-mirrors.txt; Blacksmith runners in their own file.
+    const mirrorUri =
+      format === "blacksmith-mirror-file"
+        ? "mirror+file:/etc/apt/blacksmith-ubuntu-mirrors.txt"
+        : "mirror+file:/etc/apt/apt-mirrors.txt";
     const legacyUri = format === "direct" ? "http://us-east-2.ec2.archive.ubuntu.com/ubuntu" : mirrorUri;
     const uris =
       format === "direct"
@@ -205,8 +266,62 @@ test.each(["direct", "mirror-file"])(
     expect(readFileSync(join(apt, "apt.conf.d/99formbricks-ci"), "utf8")).toContain(
       'APT::Update::Error-Mode "any";'
     );
+    expect(result.stdout).not.toContain("::warning::No Ubuntu apt source matched");
   }
 );
+
+// The arm64 release image smoke jobs run this too; Azure's archive mirror has no arm64 packages.
+test("apt fallback on arm64 switches ports sources to the Azure ports mirror", () => {
+  const { directory, env, command } = fixture();
+  command("sudo", 'exec "$@"');
+  command("dpkg", "echo arm64");
+  const apt = join(directory, "apt");
+  mkdirSync(join(apt, "sources.list.d"), { recursive: true });
+  // Blacksmith's and GitHub's (ubuntu-24.04-arm) runner mirror lists, as legacy .list lines.
+  writeFileSync(
+    join(apt, "sources.list"),
+    "deb mirror+file:/etc/apt/blacksmith-ubuntu-mirrors.txt noble main\ndeb mirror+file:/etc/apt/apt-mirrors.txt noble main\n"
+  );
+  const sources = join(apt, "sources.list.d/ubuntu.sources");
+  writeFileSync(sources, "URIs: http://ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-security\n");
+  const thirdParty = join(apt, "sources.list.d/docker.list");
+  writeFileSync(thirdParty, "deb https://download.docker.com/linux/ubuntu noble stable\n");
+  const result = spawnSync(
+    "bash",
+    ["-c", 'source scripts/ci-network.sh; ci_use_fallback_apt_mirror "$1"', "test", apt],
+    { cwd: repository, env, encoding: "utf8" }
+  );
+  expect(result.status, result.stderr).toBe(0);
+  expect(readFileSync(join(apt, "sources.list"), "utf8")).toBe(
+    "deb https://azure.ports.ubuntu.com/ubuntu-ports noble main\ndeb https://azure.ports.ubuntu.com/ubuntu-ports noble main\n"
+  );
+  expect(readFileSync(sources, "utf8")).toBe(
+    "URIs: https://azure.ports.ubuntu.com/ubuntu-ports/\nSuites: noble noble-security\n"
+  );
+  expect(readFileSync(thirdParty, "utf8")).toBe(
+    "deb https://download.docker.com/linux/ubuntu noble stable\n"
+  );
+  expect(result.stdout).not.toContain("::warning::");
+});
+
+test("a fallback that matches no Ubuntu source says so instead of retrying silently", () => {
+  const { directory, env, command } = fixture();
+  command("sudo", 'exec "$@"');
+  const apt = join(directory, "apt");
+  mkdirSync(join(apt, "sources.list.d"), { recursive: true });
+  writeFileSync(join(apt, "sources.list.d/vendor.sources"), "URIs: mirror+file:/etc/apt/other-mirrors.txt\n");
+  const result = spawnSync(
+    "bash",
+    ["-c", 'source scripts/ci-network.sh; ci_use_fallback_apt_mirror "$1"', "test", apt],
+    {
+      cwd: repository,
+      env,
+      encoding: "utf8",
+    }
+  );
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stdout).toContain("::warning::No Ubuntu apt source matched the fallback-mirror rewrite");
+});
 
 test("a kind download failure skips cluster diagnostics without an isolated kubeconfig", () => {
   const { directory, env, command } = fixture();
