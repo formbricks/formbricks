@@ -158,6 +158,24 @@ export const getSurveyExemptionEnd = (exemptions: readonly TRetentionExemption[]
     "surveys"
   )?.until ?? null;
 
+/**
+ * The archive dialog's deletion warning (ENG-3991): the exemption copy with its end date for a held
+ * survey, today's text otherwise. Today's text too while the retention loads or after it fails, even
+ * when a failed refetch keeps an older answer, so the warning never blocks archiving.
+ */
+export const getArchiveSurveyWarning = (
+  retention: Readonly<{ data: TSurveyRetention | undefined; isError: boolean }>,
+  now: Date,
+  t: TFunction,
+  formatDate: (iso: string) => string
+): string => {
+  const exemptionEnd =
+    retention.data && !retention.isError ? getSurveyExemptionEnd(retention.data.exemptions, now) : null;
+  return exemptionEnd
+    ? t("workspace.surveys.archive_survey_warning_exempt", { date: formatDate(exemptionEnd) })
+    : t("workspace.surveys.archive_survey_warning");
+};
+
 /** One policy's line for a survey: what it does next and when, or that the survey is exempt. */
 const describeSurveyRetentionPlan = (
   retention: TSurveyRetention,
